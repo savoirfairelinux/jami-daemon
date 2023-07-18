@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6bbcf0c1_0929e796",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 533,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-18T17:10:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f4c0d632_a7a9c4cb",
+      "range": {
+        "startLine": 532,
+        "startChar": 17,
+        "endLine": 533,
+        "endChar": 15
+      },
+      "revId": "c1c0097716911916984b9011b311cbc7d6ee9dcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9a4550f4_c620a7b4",
@@ -54,6 +78,30 @@
       "writtenOn": "2023-07-18T14:26:48Z",
       "side": 1,
       "message": "JAMI_ERROR(\"{} not correctly signed\", signature.first);",
+      "range": {
+        "startLine": 158,
+        "startChar": 17,
+        "endLine": 158,
+        "endChar": 77
+      },
+      "revId": "c1c0097716911916984b9011b311cbc7d6ee9dcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1a56e92c_83420e1f",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-07-18T17:10:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9a4550f4_c620a7b4",
       "range": {
         "startLine": 158,
         "startChar": 17,
