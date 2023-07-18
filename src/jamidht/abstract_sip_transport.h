@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "connectivity/ip_utils.h"
+#include <dhtnet/ip_utils.h>
 #include "connectivity/sip_utils.h"
 
 #include <pjsip.h>
@@ -50,7 +50,7 @@ public:
 
     virtual pjsip_transport* getTransportBase() = 0;
 
-    virtual IpAddr getLocalAddress() const = 0;
+    virtual dhtnet::IpAddr getLocalAddress() const = 0;
 };
 
 } // namespace tls

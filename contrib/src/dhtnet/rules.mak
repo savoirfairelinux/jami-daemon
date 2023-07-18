@@ -21,7 +21,7 @@ dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK) -C $(UNPACK_DIR)
 	$(MOVE)
 
-.dhtnet: dhtnet .sum-dhtnet
+.dhtnet: dhtnet toolchain.cmake .sum-dhtnet
 	cd $< && mkdir -p build
 	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(DHTNET_CONF) ..
 	cd $< && cd build && $(MAKE) install

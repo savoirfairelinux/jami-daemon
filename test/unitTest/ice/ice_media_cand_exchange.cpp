@@ -17,13 +17,6 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
-
-#include <condition_variable>
-#include <string>
-
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 #include "sip/sipaccount.h"
@@ -34,10 +27,16 @@
 #include "call_const.h"
 #include "account_const.h"
 #include "sip/sipcall.h"
-
-#include "connectivity/upnp/upnp_control.h"
-
 #include "common.h"
+
+#include <dhtnet/upnp/upnp_control.h>
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <condition_variable>
+#include <string>
 
 using namespace libjami::Account;
 using namespace libjami::Call;
@@ -70,7 +69,7 @@ struct CallData
     bool deviceAnnounced_ {false};
     bool upnpEnabled_ {false};
     bool turnEnabled_ {false};
-    IpAddr dest_ {};
+    dhtnet::IpAddr dest_ {};
     // SIP accounts only
     uint16_t listeningPort_ {0};
 };
@@ -355,7 +354,7 @@ IceMediaCandExchangeTest::setupSipAccount(CallData& user)
     details = account->getAccountDetails();
     user.userName_ = details[ConfProperties::USERNAME];
     user.alias_ = details[ConfProperties::ALIAS];
-    user.dest_ = ip_utils::getLocalAddr(AF_INET);
+    user.dest_ = dhtnet::ip_utils::getLocalAddr(AF_INET);
     user.dest_.setPort(user.listeningPort_);
 }
 
@@ -701,13 +700,13 @@ IceMediaCandExchangeTest::check_upnp()
     auto publishedAddr = account->getPublishedIpAddress(AF_INET);
 
     const std::chrono::seconds TIME_OUT {15};
-    auto upnpCtrl = std::make_shared<upnp::Controller>();
-    upnp::Mapping map {upnp::PortType::UDP};
+    auto upnpCtrl = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
+    dhtnet::upnp::Mapping map {dhtnet::upnp::PortType::UDP};
     std::string upnpAddr {};
 
     map.setNotifyCallback([this_ = this, &publishedAddr, &upnpAddr](
-                              upnp::Mapping::sharedPtr_t mapRes) {
-        if (mapRes->getState() == upnp::MappingState::OPEN) {
+                              dhtnet::upnp::Mapping::sharedPtr_t mapRes) {
+        if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
             upnpAddr = mapRes->getExternalAddress();
             this_->upnpAddrSameAsPublished_ = publishedAddr.toString(false).compare(upnpAddr) == 0;
             this_->hasUpnp_ = true;

@@ -41,7 +41,7 @@ ContactList::ContactList(const std::string& accountId,
     , accountId_(accountId)
 {
     if (cert) {
-        trust_ = std::make_unique<tls::TrustStore>(jami::Manager::instance().certStore(accountId_));
+        trust_ = std::make_unique<dhtnet::tls::TrustStore>(jami::Manager::instance().certStore(accountId_));
         accountTrust_.add(*cert);
     }
 }
@@ -66,7 +66,7 @@ ContactList::save()
 
 bool
 ContactList::setCertificateStatus(const std::string& cert_id,
-                                  const tls::TrustStore::PermissionStatus status)
+                                  const dhtnet::tls::TrustStore::PermissionStatus status)
 {
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
         JAMI_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
@@ -77,7 +77,7 @@ ContactList::setCertificateStatus(const std::string& cert_id,
 
 bool
 ContactList::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                            tls::TrustStore::PermissionStatus status,
+                            dhtnet::tls::TrustStore::PermissionStatus status,
                             bool local)
 {
     return trust_->setCertificateStatus(cert, status, local);
@@ -100,7 +100,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     c->second.conversationId = conversationId;
     c->second.confirmed |= confirmed;
     auto hStr = h.toString();
-    trust_->setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
+    trust_->setCertificateStatus(hStr, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
     callbacks_.contactAdded(hStr, c->second.confirmed);
     return true;
@@ -128,8 +128,8 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     c->second.banned = ban;
     auto uri = h.toString();
     trust_->setCertificateStatus(uri,
-                                ban ? tls::TrustStore::PermissionStatus::BANNED
-                                    : tls::TrustStore::PermissionStatus::UNDEFINED);
+                                ban ? dhtnet::tls::TrustStore::PermissionStatus::BANNED
+                                    : dhtnet::tls::TrustStore::PermissionStatus::UNDEFINED);
     if (trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
@@ -212,12 +212,12 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         if (trustRequests_.erase(id) > 0)
             saveTrustRequests();
         if (c->second.isActive()) {
-            trust_->setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
+            trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
         } else {
             if (c->second.banned)
                 trust_->setCertificateStatus(id.toString(),
-                                            tls::TrustStore::PermissionStatus::BANNED);
+                                            dhtnet::tls::TrustStore::PermissionStatus::BANNED);
             callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
     }
@@ -516,7 +516,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
             unsigned int status = crt->ocspResponse->getCertificateStatus();
             if (status == GNUTLS_OCSP_CERT_REVOKED) {
                 JAMI_ERR("Certificate %s has revoked OCSP status", id.to_c_str());
-                trust_->setCertificateStatus(crt, tls::TrustStore::PermissionStatus::BANNED, false);
+                trust_->setCertificateStatus(crt, dhtnet::tls::TrustStore::PermissionStatus::BANNED, false);
             }
         }
         saveKnownDevices();

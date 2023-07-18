@@ -21,7 +21,7 @@
 #include "channeled_transport.h"
 
 #include "logger.h"
-#include "connectivity/multiplexed_socket.h"
+#include <dhtnet/multiplexed_socket.h>
 #include "connectivity/sip_utils.h"
 
 #include <pjsip/sip_transport.h>
@@ -33,7 +33,7 @@ namespace jami {
 namespace tls {
 
 ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
-                                             const std::shared_ptr<ChannelSocket>& socket,
+                                             const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                                              onShutdownCb&& cb)
     : socket_(socket)
     , shutdownCb_(std::move(cb))
