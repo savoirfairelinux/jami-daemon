@@ -320,7 +320,7 @@ public:
     void setReceivedParameter(const std::string& received)
     {
         receivedParameter_ = received;
-        via_addr_.host = sip_utils::CONST_PJ_STR(receivedParameter_);
+        via_addr_.host = dhtnet::sip_utils::CONST_PJ_STR(receivedParameter_);
     }
 
     const std::string& getReceivedParameter() const { return receivedParameter_; }

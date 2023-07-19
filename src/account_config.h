@@ -15,7 +15,6 @@
  *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "connectivity/sip_utils.h"
 #include "config/serializable.h"
 #include "string_utils.h"
 

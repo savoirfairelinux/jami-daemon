@@ -51,7 +51,7 @@ decode(std::string_view str)
         return {};
 
     int output_length = PJ_BASE64_TO_BASE256_LEN(str.length());
-    auto input = sip_utils::CONST_PJ_STR(str);
+    auto input = dhtnet::sip_utils::CONST_PJ_STR(str);
 
     std::vector<uint8_t> out;
     out.resize(output_length);

@@ -30,7 +30,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 
 /**
  * the pair<string, string> we receive is expected to be in the format <mime type, payload>
@@ -67,9 +67,9 @@ createMessageBody(pj_pool_t* pool,
         throw im::InstantMessageException("invalid mime type");
     }
 
-    auto type = sip_utils::CONST_PJ_STR(mimeType.substr(0, sep));
-    auto subtype = sip_utils::CONST_PJ_STR(mimeType.substr(sep + 1));
-    auto message = sip_utils::CONST_PJ_STR(payload.second);
+    auto type = dhtnet::sip_utils::CONST_PJ_STR(mimeType.substr(0, sep));
+    auto subtype = dhtnet::sip_utils::CONST_PJ_STR(mimeType.substr(sep + 1));
+    auto message = dhtnet::sip_utils::CONST_PJ_STR(payload.second);
 
     // create part
     *body_p = pjsip_msg_body_create(pool, &type, &subtype, &message);
@@ -91,8 +91,8 @@ createMessageBody(pj_pool_t* pool,
             throw im::InstantMessageException("invalid parameter");
         }
 
-        auto arg = sip_utils::CONST_PJ_STR(paramPair.substr(0, paramSplit));
-        auto value = sip_utils::CONST_PJ_STR(paramPair.substr(paramSplit + 1));
+        auto arg = dhtnet::sip_utils::CONST_PJ_STR(paramPair.substr(0, paramSplit));
+        auto value = dhtnet::sip_utils::CONST_PJ_STR(paramPair.substr(paramSplit + 1));
         pj_strtrim(&arg);
         pj_strtrim(&value);
         pj_str_t arg_pj, value_pj;

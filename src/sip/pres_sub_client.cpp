@@ -48,7 +48,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 
 int PresSubClient::modId_ = 0; // used to extract data structure from event_subscription
 

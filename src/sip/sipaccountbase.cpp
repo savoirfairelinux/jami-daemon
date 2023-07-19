@@ -106,7 +106,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
         sip_utils::PJDialogLock dlg_lock {dialog};
 
         // Append "Subject: Phone Call" header
-        constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
+        constexpr auto subj_hdr_name = dhtnet::sip_utils::CONST_PJ_STR("Subject");
         auto subj_hdr = reinterpret_cast<pjsip_hdr*>(
             pjsip_parse_hdr(dialog->pool,
                             &subj_hdr_name,

@@ -155,7 +155,7 @@ Sdp::generateSdesAttribute()
 
     std::string crypto_attr = "1 "s + jami::CryptoSuites[cryptoSuite].name
                               + " inline:" + base64::encode(keyAndSalt);
-    pj_str_t val {sip_utils::CONST_PJ_STR(crypto_attr)};
+    pj_str_t val {dhtnet::sip_utils::CONST_PJ_STR(crypto_attr)};
     return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
 }
 
@@ -261,12 +261,12 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     switch (type) {
     case MediaType::MEDIA_AUDIO:
-        med->desc.media = sip_utils::CONST_PJ_STR("audio");
+        med->desc.media = dhtnet::sip_utils::CONST_PJ_STR("audio");
         med->desc.port = mediaAttr.enabled_ ? localAudioRtpPort_ : 0;
         med->desc.fmt_count = audio_codec_list_.size();
         break;
     case MediaType::MEDIA_VIDEO:
-        med->desc.media = sip_utils::CONST_PJ_STR("video");
+        med->desc.media = dhtnet::sip_utils::CONST_PJ_STR("video");
         med->desc.port = mediaAttr.enabled_ ? localVideoRtpPort_ : 0;
         med->desc.fmt_count = video_codec_list_.size();
         break;
@@ -278,8 +278,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     med->desc.port_count = 1;
 
     // Set the transport protocol of the media
-    med->desc.transport = secure ? sip_utils::CONST_PJ_STR("RTP/SAVP")
-                                 : sip_utils::CONST_PJ_STR("RTP/AVP");
+    med->desc.transport = secure ? dhtnet::sip_utils::CONST_PJ_STR("RTP/SAVP")
+                                 : dhtnet::sip_utils::CONST_PJ_STR("RTP/AVP");
 
     unsigned dynamic_payload = 96;
 
@@ -299,7 +299,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
             if (accountAudioCodec->audioformat.nb_channels > 1) {
                 channels = std::to_string(accountAudioCodec->audioformat.nb_channels);
-                rtpmap.param = sip_utils::CONST_PJ_STR(channels);
+                rtpmap.param = dhtnet::sip_utils::CONST_PJ_STR(channels);
             }
             // G722 requires G722/8000 media description even though it's @ 16000 Hz
             // See http://tools.ietf.org/html/rfc3551#section-4.5.2
@@ -316,14 +316,14 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         }
 
         auto payloadStr = std::to_string(payload);
-        auto pjPayload = sip_utils::CONST_PJ_STR(payloadStr);
+        auto pjPayload = dhtnet::sip_utils::CONST_PJ_STR(payloadStr);
         pj_strdup(memPool_.get(), &med->desc.fmt[i], &pjPayload);
 
         // Add a rtpmap field for each codec
         // We could add one only for dynamic payloads because the codecs with static RTP payloads
         // are entirely defined in the RFC 3351
         rtpmap.pt = med->desc.fmt[i];
-        rtpmap.enc_name = sip_utils::CONST_PJ_STR(enc_name);
+        rtpmap.enc_name = dhtnet::sip_utils::CONST_PJ_STR(enc_name);
 
         pjmedia_sdp_attr* attr;
         pjmedia_sdp_rtpmap_to_attr(memPool_.get(), &rtpmap, &attr);
@@ -384,10 +384,10 @@ Sdp::setPublishedIP(const std::string& addr, pj_uint16_t addr_type)
     publishedIpAddrType_ = addr_type;
     if (localSession_) {
         if (addr_type == pj_AF_INET6())
-            localSession_->origin.addr_type = sip_utils::CONST_PJ_STR("IP6");
+            localSession_->origin.addr_type = dhtnet::sip_utils::CONST_PJ_STR("IP6");
         else
-            localSession_->origin.addr_type = sip_utils::CONST_PJ_STR("IP4");
-        localSession_->origin.addr = sip_utils::CONST_PJ_STR(publishedIpAddr_);
+            localSession_->origin.addr_type = dhtnet::sip_utils::CONST_PJ_STR("IP4");
+        localSession_->origin.addr = dhtnet::sip_utils::CONST_PJ_STR(publishedIpAddr_);
         localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
             JAMI_ERR("Could not validate SDP");
@@ -410,15 +410,15 @@ Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 
     pjmedia_sdp_attr* attr_rtpmap = static_cast<pjmedia_sdp_attr*>(
         pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));
-    attr_rtpmap->name = sip_utils::CONST_PJ_STR("rtpmap");
-    attr_rtpmap->value = sip_utils::CONST_PJ_STR("101 telephone-event/8000");
+    attr_rtpmap->name = dhtnet::sip_utils::CONST_PJ_STR("rtpmap");
+    attr_rtpmap->value = dhtnet::sip_utils::CONST_PJ_STR("101 telephone-event/8000");
 
     med->attr[med->attr_count++] = attr_rtpmap;
 
     pjmedia_sdp_attr* attr_fmtp = static_cast<pjmedia_sdp_attr*>(
         pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));
-    attr_fmtp->name = sip_utils::CONST_PJ_STR("fmtp");
-    attr_fmtp->value = sip_utils::CONST_PJ_STR("101 0-15");
+    attr_fmtp->name = dhtnet::sip_utils::CONST_PJ_STR("fmtp");
+    attr_fmtp->value = dhtnet::sip_utils::CONST_PJ_STR("101 0-15");
 
     med->attr[med->attr_count++] = attr_fmtp;
 }
@@ -514,15 +514,15 @@ Sdp::createLocalSession(SdpDirection direction)
 
     // Use Network Time Protocol format timestamp to ensure uniqueness.
     localSession_->origin.id = tv.sec + 2208988800UL;
-    localSession_->origin.net_type = sip_utils::CONST_PJ_STR("IN");
+    localSession_->origin.net_type = dhtnet::sip_utils::CONST_PJ_STR("IN");
     if (publishedIpAddrType_ == pj_AF_INET6())
-        localSession_->origin.addr_type = sip_utils::CONST_PJ_STR("IP6");
+        localSession_->origin.addr_type = dhtnet::sip_utils::CONST_PJ_STR("IP6");
     else
-        localSession_->origin.addr_type = sip_utils::CONST_PJ_STR("IP4");
-    localSession_->origin.addr = sip_utils::CONST_PJ_STR(publishedIpAddr_);
+        localSession_->origin.addr_type = dhtnet::sip_utils::CONST_PJ_STR("IP4");
+    localSession_->origin.addr = dhtnet::sip_utils::CONST_PJ_STR(publishedIpAddr_);
 
     // Use the call IDs for s= line
-    localSession_->name = sip_utils::CONST_PJ_STR(sessionName_);
+    localSession_->name = dhtnet::sip_utils::CONST_PJ_STR(sessionName_);
 
     localSession_->conn->net_type = localSession_->origin.net_type;
     localSession_->conn->addr_type = localSession_->origin.addr_type;
@@ -767,8 +767,8 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 {
     if (!session)
         return {};
-    static constexpr pj_str_t STR_RTPMAP {sip_utils::CONST_PJ_STR("rtpmap")};
-    static constexpr pj_str_t STR_FMTP {sip_utils::CONST_PJ_STR("fmtp")};
+    static constexpr pj_str_t STR_RTPMAP {dhtnet::sip_utils::CONST_PJ_STR("rtpmap")};
+    static constexpr pj_str_t STR_FMTP {dhtnet::sip_utils::CONST_PJ_STR("fmtp")};
 
     std::vector<MediaDescription> ret;
     for (unsigned i = 0; i < session->media_count; i++) {
@@ -904,7 +904,7 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
     auto media = localSession_->media[media_index];
 
     for (const auto& item : cands) {
-        const pj_str_t val = sip_utils::CONST_PJ_STR(item);
+        const pj_str_t val = dhtnet::sip_utils::CONST_PJ_STR(item);
         pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create(memPool_.get(), "candidate", &val);
 
         if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
@@ -954,13 +954,13 @@ Sdp::getIceCandidates(unsigned media_index) const
 void
 Sdp::addIceAttributes(const dhtnet::IceTransport::Attribute&& ice_attrs)
 {
-    pj_str_t value = sip_utils::CONST_PJ_STR(ice_attrs.ufrag);
+    pj_str_t value = dhtnet::sip_utils::CONST_PJ_STR(ice_attrs.ufrag);
     pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-ufrag", &value);
 
     if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
         throw SdpException("Could not add ICE.ufrag attribute to local SDP");
 
-    value = sip_utils::CONST_PJ_STR(ice_attrs.pwd);
+    value = dhtnet::sip_utils::CONST_PJ_STR(ice_attrs.pwd);
     attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-pwd", &value);
 
     if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)

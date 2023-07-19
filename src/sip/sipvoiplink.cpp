@@ -71,7 +71,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
@@ -329,13 +329,13 @@ transaction_request_cb(pjsip_rx_data* rdata)
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
             if (payloads.size() > 0) {
-                constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
+                constexpr pj_str_t STR_MESSAGE_ID = jami::dhtnet::sip_utils::CONST_PJ_STR("Message-ID");
                 auto* msgId = (pjsip_generic_string_hdr*)
                     pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &STR_MESSAGE_ID, nullptr);
                 std::string id = {};
                 if (!msgId) {
                     // Supports imdn message format https://tools.ietf.org/html/rfc5438#section-7.1.1.3
-                    constexpr pj_str_t STR_IMDN_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR(
+                    constexpr pj_str_t STR_IMDN_MESSAGE_ID = jami::dhtnet::sip_utils::CONST_PJ_STR(
                         "imdn.Message-ID");
                     msgId = (pjsip_generic_string_hdr*)
                         pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
@@ -680,7 +680,7 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_100rel_init_module(endpt_));
 
     // Initialize and register ring module
-    mod_ua_.name = sip_utils::CONST_PJ_STR(PACKAGE);
+    mod_ua_.name = dhtnet::sip_utils::CONST_PJ_STR(PACKAGE);
     mod_ua_.id = -1;
     mod_ua_.priority = PJSIP_MOD_PRIORITY_APPLICATION;
     mod_ua_.on_rx_request = &transaction_request_cb;

@@ -41,7 +41,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 
 SIPPresence::SIPPresence(SIPAccount* acc)
     : publish_sess_()

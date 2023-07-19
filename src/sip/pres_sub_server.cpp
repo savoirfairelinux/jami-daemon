@@ -32,7 +32,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 
 /* Callback called when *server* subscription state has changed. */
 void

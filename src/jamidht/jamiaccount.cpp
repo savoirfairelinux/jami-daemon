@@ -103,7 +103,7 @@ using namespace std::placeholders;
 
 namespace jami {
 
-constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
+constexpr pj_str_t STR_MESSAGE_ID = jami::dhtnet::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
@@ -798,17 +798,17 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
     std::string toUri(getToUri(call.getPeerNumber() + "@"
                                + target.toString(true))); // expecting a fully well formed sip uri
 
-    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
+    pj_str_t pjTo = dhtnet::sip_utils::CONST_PJ_STR(toUri);
 
     // Create the from header
     std::string from(getFromUri());
-    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjFrom = dhtnet::sip_utils::CONST_PJ_STR(from);
 
     std::string targetStr = getToUri(target.toString(true));
-    pj_str_t pjTarget = sip_utils::CONST_PJ_STR(targetStr);
+    pj_str_t pjTarget = dhtnet::sip_utils::CONST_PJ_STR(targetStr);
 
     auto contact = call.getContactHeader();
-    auto pjContact = sip_utils::CONST_PJ_STR(contact);
+    auto pjContact = dhtnet::sip_utils::CONST_PJ_STR(contact);
 
     JAMI_DBG("contact header: %s / %s -> %s / %s",
              contact.c_str(),
@@ -3765,9 +3765,9 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Build SIP message
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
-                                         sip_utils::CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
-    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
-    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
+                                         dhtnet::sip_utils::CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
+    pj_str_t pjFrom = dhtnet::sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjTo = dhtnet::sip_utils::CONST_PJ_STR(toURI);
 
     // Create request.
     pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(),
@@ -3787,7 +3787,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Add Date Header.
     pj_str_t date_str;
-    constexpr auto key = sip_utils::CONST_PJ_STR("Date");
+    constexpr auto key = dhtnet::sip_utils::CONST_PJ_STR("Date");
     pjsip_hdr* hdr;
     auto time = std::time(nullptr);
     auto date = std::ctime(&time);
@@ -3801,7 +3801,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // https://tools.ietf.org/html/rfc5438#section-6.3
     auto token_str = to_hex_string(token);
-    auto pjMessageId = sip_utils::CONST_PJ_STR(token_str);
+    auto pjMessageId = dhtnet::sip_utils::CONST_PJ_STR(token_str);
     hdr = reinterpret_cast<pjsip_hdr*>(
         pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
     pjsip_msg_add_hdr(tdata->msg, hdr);

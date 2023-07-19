@@ -73,7 +73,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 using namespace libjami::Call;
 
 #ifdef ENABLE_VIDEO

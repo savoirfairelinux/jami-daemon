@@ -85,7 +85,7 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
+using dhtnet::sip_utils::CONST_PJ_STR;
 
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
@@ -345,11 +345,11 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     call->addLocalIceAttributes();
 
     const std::string& toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
-    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
+    pj_str_t pjTo = dhtnet::sip_utils::CONST_PJ_STR(toUri);
 
     // Create the from header
     std::string from(getFromUri());
-    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjFrom = dhtnet::sip_utils::CONST_PJ_STR(from);
 
     auto transport = call->getTransport();
     if (!transport) {
@@ -360,7 +360,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     std::string contact = getContactHeader();
     JAMI_DEBUG("contact header: {:s} / {:s} -> {:s}", contact, from, toUri);
 
-    pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
+    pj_str_t pjContact = dhtnet::sip_utils::CONST_PJ_STR(contact);
     auto local_sdp = isEmptyOffersEnabled() ? nullptr : call->getSDP().getLocalSdpSession();
 
     pjsip_dialog* dialog {nullptr};
@@ -745,7 +745,7 @@ SIPAccount::sendRegister()
 
     // Generate the FROM header
     std::string from(getFromUri());
-    pj_str_t pjFrom(sip_utils::CONST_PJ_STR(from));
+    pj_str_t pjFrom(dhtnet::sip_utils::CONST_PJ_STR(from));
 
     // Get the received header
     const std::string& received(getReceivedParameter());
@@ -772,7 +772,7 @@ SIPAccount::sendRegister()
     }
 
     pj_status_t status = PJ_SUCCESS;
-    pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
+    pj_str_t pjContact = dhtnet::sip_utils::CONST_PJ_STR(contact);
 
     if ((status
          = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire()))
@@ -1056,10 +1056,10 @@ SIPAccount::initStunConfiguration()
     std::string_view stunServer(config().stunServer);
     auto pos = stunServer.find(':');
     if (pos == std::string_view::npos) {
-        stunServerName_ = sip_utils::CONST_PJ_STR(stunServer);
+        stunServerName_ = dhtnet::sip_utils::CONST_PJ_STR(stunServer);
         stunPort_ = PJ_STUN_PORT;
     } else {
-        stunServerName_ = sip_utils::CONST_PJ_STR(stunServer.substr(0, pos));
+        stunServerName_ = dhtnet::sip_utils::CONST_PJ_STR(stunServer.substr(0, pos));
         auto serverPort = stunServer.substr(pos + 1);
         stunPort_ = to_int<uint16_t>(serverPort);
     }
@@ -1624,7 +1624,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
         matched = contact_addr == recv_addr;
     } else {
         // Compare the addresses as string, as before
-        auto pjContactAddr = sip_utils::CONST_PJ_STR(contact_addr.toString());
+        auto pjContactAddr = dhtnet::sip_utils::CONST_PJ_STR(contact_addr.toString());
         matched = (contact_addr.getPort() == rport and pj_stricmp(&pjContactAddr, via_addr) == 0);
     }
 
@@ -1693,7 +1693,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
 
     if (regc_ != nullptr) {
         auto contactHdr = getContactHeader();
-        auto pjContact = sip_utils::CONST_PJ_STR(contactHdr);
+        auto pjContact = dhtnet::sip_utils::CONST_PJ_STR(contactHdr);
         pjsip_regc_update_contact(regc_, 1, &pjContact);
 
         /*  Perform new registration at the next registration cycle */
@@ -1820,8 +1820,8 @@ SIPAccount::sendMessage(const std::string& to,
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
                                          CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
     std::string from(getFromUri());
-    pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
-    pj_str_t pjTo = sip_utils::CONST_PJ_STR(toUri);
+    pj_str_t pjFrom = dhtnet::sip_utils::CONST_PJ_STR(from);
+    pj_str_t pjTo = dhtnet::sip_utils::CONST_PJ_STR(toUri);
 
     /* Create request. */
     pjsip_tx_data* tdata;
