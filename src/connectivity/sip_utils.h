@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "connectivity/ip_utils.h"
 #include "media/media_codec.h"
 #include "media/audio/audiobuffer.h"
 #include "noncopyable.h"
@@ -29,6 +28,8 @@
 #include <string>
 #include <vector>
 #include <cstring> // strcmp
+
+#include <dhtnet/ip_utils.h>
 
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
@@ -115,36 +116,6 @@ void addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata);
 std::string_view getPeerUserAgent(const pjsip_rx_data* rdata);
 std::vector<std::string> getPeerAllowMethods(const pjsip_rx_data* rdata);
 void logMessageHeaders(const pjsip_hdr* hdr_list);
-
-std::string sip_strerror(pj_status_t code);
-
-// Helper function that return a constant pj_str_t from an array of any types
-// that may be statically casted into char pointer.
-// Per convention, the input array is supposed to be null terminated.
-template<typename T, std::size_t N>
-constexpr const pj_str_t
-CONST_PJ_STR(T (&a)[N]) noexcept
-{
-    return {const_cast<char*>(a), N - 1};
-}
-
-inline const pj_str_t
-CONST_PJ_STR(const std::string& str) noexcept
-{
-    return {const_cast<char*>(str.c_str()), (pj_ssize_t) str.size()};
-}
-
-inline constexpr pj_str_t
-CONST_PJ_STR(const std::string_view& str) noexcept
-{
-    return {const_cast<char*>(str.data()), (pj_ssize_t) str.size()};
-}
-
-inline constexpr std::string_view
-as_view(const pj_str_t& str) noexcept
-{
-    return {str.ptr, (size_t) str.slen};
-}
 
 constexpr std::string_view DEFAULT_VIDEO_STREAMID = "video_0";
 constexpr std::string_view DEFAULT_AUDIO_STREAMID = "audio_0";

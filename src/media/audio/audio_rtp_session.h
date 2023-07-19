@@ -56,7 +56,7 @@ public:
                     const std::shared_ptr<MediaRecorder>& rec);
     virtual ~AudioRtpSession();
 
-    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
+    void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
     void setMuted(bool muted, Direction dir = Direction::SEND) override;
