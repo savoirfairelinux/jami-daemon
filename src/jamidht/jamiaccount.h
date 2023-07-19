@@ -27,33 +27,32 @@
 #include "config.h"
 #endif
 
-#include "connectivity/security/tls_session.h"
-#include "connectivity/security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
 #include "jami/datatransfer_interface.h"
 #include "jamidht/conversation.h"
-#include "connectivity/multiplexed_socket.h"
 #include "data_transfer.h"
 #include "uri.h"
 #include "jamiaccount_config.h"
-#include "connectivity/peer_connection.h"
 
 #include "noncopyable.h"
-#include "connectivity/ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
-#include "connectivity/security/certstore.h"
 #include "scheduled_executor.h"
-#include "connectivity/connectionmanager.h"
 #include "gitserver.h"
 #include "channel_handler.h"
 #include "conversation_module.h"
 #include "sync_module.h"
 #include "conversationrepository.h"
 
+#include <dhtnet/diffie-hellman.h>
+#include <dhtnet/tls_session.h>
+#include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/certstore.h>
+#include <dhtnet/connectionmanager.h>
+#include <dhtnet/upnp/mapping.h>
+#include <dhtnet/ip_utils.h>
+
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
-
-#include "connectivity/upnp/protocol/mapping.h"
 
 #include <pjsip/sip_types.h>
 
@@ -267,11 +266,11 @@ public:
 
     virtual bool getSrtpFallback() const override { return false; }
 
-    bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              tls::TrustStore::PermissionStatus status,
+                              dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
 
     bool findCertificate(const std::string& id);
     bool findCertificate(
@@ -332,7 +331,7 @@ public:
     /**
      * Create and return ICE options.
      */
-    IceTransportOptions getIceOptions() const noexcept;
+    dhtnet::IceTransportOptions getIceOptions() const noexcept;
 
     /* Devices */
     void addDevice(const std::string& password);
@@ -429,7 +428,7 @@ public:
     std::map<std::string, std::string> getNearbyPeers() const override;
 
 #ifdef LIBJAMI_TESTABLE
-    ConnectionManager& connectionManager()
+    dhtnet::ConnectionManager& connectionManager()
     {
         return *connectionManager_;
     }
@@ -593,7 +592,7 @@ public:
     };
 #endif
 
-    tls::CertificateStore& certStore() const
+    dhtnet::tls::CertificateStore& certStore() const
     {
         return *certStore_;
     }
@@ -635,14 +634,14 @@ private:
 
     void onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                                  const std::string& to_id,
-                                 IpAddr target);
+                                 dhtnet::IpAddr target);
 
     /**
      * Start a SIP Call
      * @param call  The current call
      * @return true if all is correct
      */
-    bool SIPStartCall(SIPCall& call, const IpAddr& target);
+    bool SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target);
 
     /**
      * Update tracking info when buddy appears offline.
@@ -701,8 +700,6 @@ private:
      */
     void generateDhParams();
 
-    template<class... Args>
-    std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
@@ -749,7 +746,7 @@ private:
     }
 
     /* Current UPNP mapping */
-    upnp::Mapping dhtUpnpMapping_ {upnp::PortType::UDP};
+    dhtnet::upnp::Mapping dhtUpnpMapping_ {dhtnet::upnp::PortType::UDP};
 
     /**
      * Proxy
@@ -768,7 +765,7 @@ private:
     pjsip_transport* via_tp_ {nullptr};
 
     mutable std::mutex connManagerMtx_ {};
-    std::unique_ptr<ConnectionManager> connectionManager_;
+    std::unique_ptr<dhtnet::ConnectionManager> connectionManager_;
 
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
@@ -784,9 +781,7 @@ private:
      * Jami, or for each connectivityChange()
      */
     // TODO move in separate class
-    void testTurn(IpAddr server);
-    std::unique_ptr<TurnTransport> testTurnV4_;
-    std::unique_ptr<TurnTransport> testTurnV6_;
+    void testTurn(dhtnet::IpAddr server);
     void refreshTurnDelay(bool scheduleNext);
 
     std::chrono::seconds turnRefreshDelay_ {std::chrono::seconds(10)};
@@ -799,7 +794,7 @@ private:
         std::shared_ptr<SipTransport> transport;
         // Needs to keep track of that channel to access underlying ICE
         // informations, as the SipTransport use a generic transport
-        std::shared_ptr<ChannelSocket> channel;
+        std::shared_ptr<dhtnet::ChannelSocket> channel;
     };
     // NOTE: here we use a vector to avoid race conditions. In fact the contact
     // can ask for a SIP channel when we are creating a new SIP Channel with this
@@ -838,7 +833,7 @@ private:
      * @param peerId    The contact who owns the device
      * @param deviceId  Device linked to that transport
      */
-    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& channel,
+    void cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& channel,
                             const std::string& peerId,
                             const DeviceId& deviceId);
     /**
@@ -847,7 +842,7 @@ private:
      * @param peerId    The contact who owns the device
      * @param deviceId  Device linked to that transport
      */
-    void shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel,
+    void shutdownSIPConnection(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                                const std::string& peerId,
                                const DeviceId& deviceId);
 
@@ -892,7 +887,7 @@ private:
 
     void initConnectionManager();
 
-    std::unique_ptr<tls::CertificateStore> certStore_;
+    std::unique_ptr<dhtnet::tls::CertificateStore> certStore_;
 };
 
 static inline std::ostream&

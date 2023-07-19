@@ -20,11 +20,12 @@
 
 #pragma once
 
-#include "connectivity/multiplexed_socket.h"
+#include <dhtnet/multiplexed_socket.h>
 
 namespace jami {
 
-using ConnectCb = std::function<void(std::shared_ptr<ChannelSocket>, const DeviceId&)>;
+using DeviceId = dht::PkId;
+using ConnectCb = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&)>;
 
 /**
  * A Channel handler is used to make the link between JamiAccount and ConnectionManager
@@ -60,7 +61,7 @@ public:
      */
     virtual void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                          const std::string& name,
-                         std::shared_ptr<ChannelSocket> channel)
+                         std::shared_ptr<dhtnet::ChannelSocket> channel)
         = 0;
 };
 

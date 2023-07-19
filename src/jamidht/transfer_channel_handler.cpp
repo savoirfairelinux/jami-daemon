@@ -27,7 +27,7 @@
 namespace jami {
 
 TransferChannelHandler::TransferChannelHandler(const std::shared_ptr<JamiAccount>& account,
-                                               ConnectionManager& cm)
+                                               dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(account)
     , connectionManager_(cm)
@@ -89,7 +89,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
 void
 TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
                                 const std::string& name,
-                                std::shared_ptr<ChannelSocket> channel)
+                                std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     auto acc = account_.lock();
     if (!acc)
