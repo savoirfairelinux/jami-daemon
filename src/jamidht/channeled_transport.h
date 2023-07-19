@@ -24,6 +24,8 @@
 #include "scheduled_executor.h"
 #include "jamidht/abstract_sip_transport.h"
 
+#include <dhtnet/multiplexed_socket.h>
+
 #include <atomic>
 #include <condition_variable>
 #include <chrono>
@@ -35,7 +37,6 @@
 
 namespace jami {
 
-class ChannelSocket;
 using onShutdownCb = std::function<void(void)>;
 
 namespace tls {
@@ -49,7 +50,7 @@ class ChanneledSIPTransport : public AbstractSIPTransport
 {
 public:
     ChanneledSIPTransport(pjsip_endpoint* endpt,
-                          const std::shared_ptr<ChannelSocket>& socket,
+                          const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                           onShutdownCb&& cb);
     ~ChanneledSIPTransport();
 
@@ -60,16 +61,16 @@ public:
 
     pjsip_transport* getTransportBase() override { return &trData_.base; }
 
-    IpAddr getLocalAddress() const override { return local_; }
+    dhtnet::IpAddr getLocalAddress() const override { return local_; }
 
 private:
     NON_COPYABLE(ChanneledSIPTransport);
 
     // The SIP transport uses a ChannelSocket to send and receive datas
-    std::shared_ptr<ChannelSocket> socket_ {};
+    std::shared_ptr<dhtnet::ChannelSocket> socket_ {};
     onShutdownCb shutdownCb_ {};
-    IpAddr local_ {};
-    IpAddr remote_ {};
+    dhtnet::IpAddr local_ {};
+    dhtnet::IpAddr remote_ {};
 
     // PJSIP transport backend
     TransportData trData_ {}; // uplink to "this" (used by PJSIP called C-callbacks)

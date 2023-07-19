@@ -27,7 +27,7 @@
 #include "config.h"
 #endif
 
-#include "certstore.h"
+#include <dhtnet/certstore.h>
 
 #include "fileutils.h"
 #include "logger.h"
@@ -220,11 +220,11 @@ const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool>
         /* NUMBER   */ {{false, false, true, false, false, true}},
     }};
 
-TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& crtChain)
+TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& crtChain)
     : TlsValidator(certStore, std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
 {}
 
-TlsValidator::TlsValidator(const tls::CertificateStore& certStore,
+TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
                            const std::string& certificate,
                            const std::string& privatekey,
                            const std::string& privatekeyPasswd,
@@ -268,7 +268,7 @@ TlsValidator::TlsValidator(const tls::CertificateStore& certStore,
     }
 }
 
-TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw)
+TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw)
     : certStore_(certStore)
 {
     try {
@@ -280,7 +280,7 @@ TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::ve
     }
 }
 
-TlsValidator::TlsValidator(const tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>& crt)
+TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>& crt)
     : certStore_(certStore)
     , certificateFound_(true)
 {

@@ -47,11 +47,11 @@
 
 #include "pres_sub_server.h"
 
-#include "connectivity/ip_utils.h"
 #include "connectivity/sip_utils.h"
 #include "string_utils.h"
 #include "logger.h"
 
+#include <dhtnet/ip_utils.h>
 #include <opendht/thread_pool.h>
 
 #include <pjsip/sip_endpoint.h>
@@ -423,7 +423,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     auto family = pjsip_transport_type_get_af(
         pjsip_transport_get_type_from_flag(transport->get()->flag));
 
-    IpAddr addrSdp;
+    dhtnet::IpAddr addrSdp;
     if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         addrSdp = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
@@ -431,12 +431,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
     } else {
         addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                       ? account->getPublishedIpAddress()
-                      : ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+                      : dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
     }
 
     /* fallback on local address */
     if (not addrSdp)
-        addrSdp = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+        addrSdp = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     // Try to obtain display name from From: header first, fallback on Contact:
     auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.from);
@@ -630,7 +630,7 @@ SIPVoIPLink::SIPVoIPLink()
 
     TRY(pjsip_endpt_create(&cp_.factory, pj_gethostname()->ptr, &endpt_));
 
-    auto ns = ip_utils::getLocalNameservers();
+    auto ns = dhtnet::ip_utils::getLocalNameservers();
     if (not ns.empty()) {
         std::vector<pj_str_t> dns_nameservers(ns.size());
         std::vector<pj_uint16_t> dns_ports(ns.size());
@@ -1038,9 +1038,9 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
                 family = tr->local_addr.addr.sa_family;
         }
     }
-    auto ifaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+    auto ifaceAddr = dhtnet::ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
-    IpAddr address;
+    dhtnet::IpAddr address;
     if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         address = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
@@ -1534,11 +1534,11 @@ SIPVoIPLink::resolveSrvName(const std::string& name,
                     JAMI_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.",
                               name.c_str());
                     dht::ThreadPool::io().run([=, cb = std::move(cb)]() {
-                        auto ips = ip_utils::getAddrList(name.c_str());
+                        auto ips = dhtnet::ip_utils::getAddrList(name.c_str());
                         runOnMainThread(std::bind(cb, std::move(ips)));
                     });
                 } else {
-                    std::vector<IpAddr> ips;
+                    std::vector<dhtnet::IpAddr> ips;
                     ips.reserve(r->count);
                     for (unsigned i = 0; i < r->count; i++)
                         ips.push_back(r->entry[i].addr);
@@ -1625,7 +1625,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
     port = sip_utils::DEFAULT_SIP_PORT;
 
     // Get Local IP address
-    auto localIp = ip_utils::getLocalAddr(pj_AF_INET());
+    auto localIp = dhtnet::ip_utils::getLocalAddr(pj_AF_INET());
     if (not localIp) {
         JAMI_WARN("Failed to find local IP");
         return false;
@@ -1663,7 +1663,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
 
     case PJ_SUCCESS:
         port = pj_sockaddr_in_get_port(&mapped_addr);
-        addr = IpAddr((const sockaddr_in&) mapped_addr).toString(true);
+        addr = dhtnet::IpAddr((const sockaddr_in&) mapped_addr).toString(true);
         JAMI_DEBUG("STUN server {:s} replied '{}'", sip_utils::as_view(*stunServerName), addr);
         return true;
 
