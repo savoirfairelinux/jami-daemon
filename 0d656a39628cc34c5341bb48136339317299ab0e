@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d2374690_c41a9f76",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 736,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-19T15:56:19Z",
+      "side": 1,
+      "message": "true.",
+      "parentUuid": "8eef701c_7f9c8ab1",
+      "range": {
+        "startLine": 735,
+        "startChar": 0,
+        "endLine": 736,
+        "endChar": 5
+      },
+      "revId": "0d656a39628cc34c5341bb48136339317299ab0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1e9c756a_da5e6caa",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-07-18T03:01:25Z",
       "side": 1,
       "message": "odd to see this here, was difficult to understand at first. Also seems unecessary to have this logic outside of impl ?",
+      "range": {
+        "startLine": 1917,
+        "startChar": 0,
+        "endLine": 1922,
+        "endChar": 5
+      },
+      "revId": "0d656a39628cc34c5341bb48136339317299ab0e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "04acc40f_32a9ae9b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1922,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-19T15:56:19Z",
+      "side": 1,
+      "message": "the is no shared_from_this in impl. But I renamed the methods",
+      "parentUuid": "1e9c756a_da5e6caa",
       "range": {
         "startLine": 1917,
         "startChar": 0,
