@@ -2676,6 +2676,12 @@ JamiAccount::getFromUri() const
 }
 
 std::string
+JamiAccount::getAccountIdentifier() const
+{
+    return accountManager_->getInfo()->accountId;
+}
+
+std::string
 JamiAccount::getToUri(const std::string& to) const
 {
     return fmt::format("<sips:{};transport=tls>", to);

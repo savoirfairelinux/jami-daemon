@@ -588,6 +588,8 @@ public:
         return *certStore_;
     }
 
+    std::string getAccountIdentifier() const;
+
 private:
     NON_COPYABLE(JamiAccount);
 
