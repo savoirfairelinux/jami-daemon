@@ -116,9 +116,35 @@ Call::Call(const std::shared_ptr<Account>& account,
         }
 
         if (!isSubcall()) {
-            if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
+            if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min()) {
                 duration_start_ = clock::now();
-            else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
+#ifdef ENABLE_PLUGIN
+                if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
+                    auto& pluginChatManager
+                        = Manager::instance().getJamiPluginManager().getChatServicesManager();
+                    if (pluginChatManager.hasHandlers()) {
+                        auto finalUri = peerNumber_.substr(0, peerNumber_.find("@ring.dht"));
+                        finalUri = finalUri.substr(0, peerNumber_.find("@jami.dht"));
+                        auto convId = jamiAccount->convModule()->getOneToOneConversation(finalUri);
+                        if (!convId.empty()) {
+                            std::map<std::string, std::string> message;
+                            message["to"] = finalUri;
+                            message["type"] = "application/call-history+json";
+                            message["callId"] = getCallId();
+                            message["duration"] = std::to_string(-1); //indicates to plugin that call have just started
+                            // This message is never actually sent to the peer, just to the plugin system
+                            auto cm = std::make_shared<JamiMessage>(jamiAccount->getAccountID(),
+                                                                    convId,
+                                                                    true,
+                                                                    message,
+                                                                    false);
+                            cm->isSwarm = true;
+                            pluginChatManager.publishMessage(std::move(cm));
+                        }
+                    }
+                }
+#endif
+            } else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
                     // TODO: This will be removed when 1:1 swarm will have a conference.
                     // For now, only commit for 1:1 calls

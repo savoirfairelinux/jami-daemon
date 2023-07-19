@@ -19,6 +19,7 @@
 #include "chatservicesmanager.h"
 #include "pluginmanager.h"
 #include "logger.h"
+#include "sip/sipcall.h"
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 #include "fileutils.h"
@@ -111,6 +112,65 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
 
     // Services are registered to the PluginManager.
     pluginManager.registerService("sendTextMessage", sendTextMessage);
+
+    // getContactConversation is a service that allows plugins to look for a 1:1 conversationId.
+    auto getContactConversation = [](const DLPlugin*, void* data) {
+        auto contact = static_cast<std::map<std::string, std::string>*>(data);
+
+        try {
+            if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                contact->at("accountId"))) {
+                acc->addContact(contact->at("contactUri"), false);
+                std::string vcard = "BEGIN:VCARD\n\
+VERSION:2.1\n\
+FN:" + Uri(acc->getUserUri()).authority() + "\n\
+DESCRIPTION:DESC\n\
+END:VCARD";
+                std::vector<uint8_t> payload(vcard.begin(), vcard.end());
+                acc->sendTrustRequest(contact->at("contactUri"), payload);
+                contact->at("contactConversationId") = acc->convModule()->getOneToOneConversation(contact->at("contactUri"));
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERR("Exception during getContactConversation: %s", e.what());
+        }
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("getContactConversation", getContactConversation);
+
+    // getUserAvailability is a service that allows plugins to check if the user in currently in a
+    // cal or if it is disabled.
+    auto getUserAvailability = [](const DLPlugin*, void* data) {
+        auto contact = static_cast<std::pair<std::string, bool>*>(data);
+
+        try {
+            if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                contact->first))
+                    contact->second = acc->isActive() && acc->getCallList().empty();
+        } catch (const std::exception& e) {
+            JAMI_ERR("Exception during getUserAvailability: %s", e.what());
+        }
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("getUserAvailability", getUserAvailability);
+
+    // referCall is a service that allows plugins to refer a call to another peer
+    auto referCall = [](const DLPlugin*, void* data) {
+        auto referData = static_cast<std::map<std::string, std::string>*>(data);
+
+        try {
+            referData->at("status") = Manager::instance().transferCall(referData->at("accountId"), referData->at("callId"), referData->at("agentUri"));
+        } catch (const std::exception& e) {
+            JAMI_ERR("Exception during referCall: %s", e.what());
+        }
+        return 0;
+    };
+
+    // Services are registered to the PluginManager.
+    pluginManager.registerService("referCall", referCall);
 }
 
 bool
