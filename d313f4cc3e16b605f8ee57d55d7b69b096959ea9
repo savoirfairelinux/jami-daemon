@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dbb0b331_88e2055c",
+        "filename": "src/logger.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-19T14:45:41Z",
+      "side": 0,
+      "message": "seems we lose colors in logs, is this wanted?",
+      "range": {
+        "startLine": 70,
+        "startChar": 9,
+        "endLine": 70,
+        "endChar": 25
+      },
+      "revId": "d313f4cc3e16b605f8ee57d55d7b69b096959ea9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
