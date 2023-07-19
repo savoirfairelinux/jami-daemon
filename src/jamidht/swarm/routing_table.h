@@ -22,35 +22,36 @@
 
 #include "manager.h"
 
+#include <dhtnet/multiplexed_socket.h>
+
 #include <opendht/infohash.h>
+
+#include <asio.hpp>
+#include <asio/detail/deadline_timer_service.hpp>
+
 #include <vector>
 #include <memory>
 #include <list>
 #include <set>
 #include <algorithm>
-#include <asio.hpp>
-#include <asio/detail/deadline_timer_service.hpp>
 
 using NodeId = dht::PkId;
 
 namespace jami {
-
-class ChannelSocketInterface;
-class io_context;
 
 static constexpr const std::chrono::minutes FIND_PERIOD {10};
 
 struct NodeInfo
 {
     bool isMobile_ {false};
-    std::shared_ptr<ChannelSocketInterface> socket {};
+    std::shared_ptr<dhtnet::ChannelSocketInterface> socket {};
     asio::steady_timer refresh_timer {*Manager::instance().ioContext(), FIND_PERIOD};
     NodeInfo() = delete;
     NodeInfo(NodeInfo&&) = default;
-    NodeInfo(std::shared_ptr<ChannelSocketInterface> socket_)
+    NodeInfo(std::shared_ptr<dhtnet::ChannelSocketInterface> socket_)
         : socket(socket_)
     {}
-    NodeInfo(bool mobile, std::shared_ptr<ChannelSocketInterface> socket_)
+    NodeInfo(bool mobile, std::shared_ptr<dhtnet::ChannelSocketInterface> socket_)
         : isMobile_(mobile)
         , socket(socket_)
     {}
@@ -71,7 +72,7 @@ public:
      * @param socket
      * @return true if node was added, false if not
      */
-    bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    bool addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
 
     /**
      * Add NodeInfo to bucket
@@ -231,7 +232,7 @@ public:
      * @param socket
      * @return timer
      */
-    asio::steady_timer& getNodeTimer(const std::shared_ptr<ChannelSocketInterface>& socket);
+    asio::steady_timer& getNodeTimer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
 
     /**
      * Shutdowns socket and removes it from nodes.
@@ -292,7 +293,7 @@ public:
      * Get sockets from bucket
      * @return set of sockets
      */
-    std::set<std::shared_ptr<ChannelSocketInterface>> getNodeSockets() const;
+    std::set<std::shared_ptr<dhtnet::ChannelSocketInterface>> getNodeSockets() const;
 
 private:
     NodeId lowerLimit_;
@@ -315,7 +316,7 @@ public:
      * @param socket
      * @return true if socket was added, false if not
      */
-    bool addNode(const std::shared_ptr<ChannelSocketInterface>& socket);
+    bool addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
 
     /**
      * Add socket to specific bucket
@@ -323,7 +324,7 @@ public:
      * @param bucket
      * @return true if socket was added to bucket, false if not
      */
-    bool addNode(const std::shared_ptr<ChannelSocketInterface>& channel,
+    bool addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel,
                  std::list<Bucket>::iterator& bucket);
 
     /**

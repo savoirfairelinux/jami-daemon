@@ -29,12 +29,9 @@
 #include "configurationmanager_interface.h"
 #include "account_schema.h"
 #include "manager.h"
-#include "connectivity/security/tlsvalidator.h"
-#include "connectivity/security/certstore.h"
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
-#include "connectivity/ip_utils.h"
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
 #include "sip/sipaccount_config.h"
@@ -43,8 +40,12 @@
 #include "system_codec_container.h"
 #include "account_const.h"
 #include "client/ring_signal.h"
-#include "connectivity/upnp/upnp_context.h"
 #include "audio/ringbufferpool.h"
+#include "connectivity/security/tlsvalidator.h"
+
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/upnp/upnp_context.h>
+#include <dhtnet/certstore.h>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -209,7 +210,7 @@ setCertificateStatus(const std::string& accountId,
 {
     try {
         if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-            auto status = jami::tls::TrustStore::statusFromStr(ststr.c_str());
+            auto status = dhtnet::tls::TrustStore::statusFromStr(ststr.c_str());
             return acc->setCertificateStatus(certId, status);
         }
     } catch (const std::out_of_range&) {
@@ -220,7 +221,7 @@ setCertificateStatus(const std::string& accountId,
 std::vector<std::string>
 getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
 {
-    auto status = jami::tls::TrustStore::statusFromStr(ststr.c_str());
+    auto status = dhtnet::tls::TrustStore::statusFromStr(ststr.c_str());
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->getCertificatesByStatus(status);
     return {};
@@ -906,19 +907,19 @@ setAccountsOrder(const std::string& order)
 std::string
 getAddrFromInterfaceName(const std::string& interface)
 {
-    return jami::ip_utils::getInterfaceAddr(interface, AF_INET);
+    return dhtnet::ip_utils::getInterfaceAddr(interface, AF_INET);
 }
 
 std::vector<std::string>
 getAllIpInterface()
 {
-    return jami::ip_utils::getAllIpInterface();
+    return dhtnet::ip_utils::getAllIpInterface();
 }
 
 std::vector<std::string>
 getAllIpInterfaceByName()
 {
-    return jami::ip_utils::getAllIpInterfaceByName();
+    return dhtnet::ip_utils::getAllIpInterfaceByName();
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -953,7 +954,7 @@ connectivityChanged()
     // reset the UPnP context
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     try {
-        jami::upnp::UPnPContext::getUPnPContext()->connectivityChanged();
+        jami::Manager::instance().upnpContext()->connectivityChanged();
     } catch (std::runtime_error& e) {
         JAMI_ERR("UPnP context error: %s", e.what());
     }
