@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "55dbf4e7_af7f6f84",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-19T17:06:06Z",
+      "side": 1,
+      "message": "small nitpick.",
+      "revId": "d28a93eb307868623ba235d43a83024ceaff88c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "191e9b3a_24a0904d",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1435,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-19T17:06:06Z",
+      "side": 1,
+      "message": "clang-format installed? cause the if is not correctly formatted",
+      "range": {
+        "startLine": 1435,
+        "startChar": 4,
+        "endLine": 1435,
+        "endChar": 14
+      },
+      "revId": "d28a93eb307868623ba235d43a83024ceaff88c0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
