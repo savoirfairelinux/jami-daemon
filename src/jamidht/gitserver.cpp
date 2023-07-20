@@ -21,8 +21,8 @@
 #include "logger.h"
 #include "gittransport.h"
 #include "manager.h"
-#include "connectivity/multiplexed_socket.h"
-#include "opendht/thread_pool.h"
+#include <opendht/thread_pool.h>
+#include <dhtnet/multiplexed_socket.h>
 
 #include <charconv>
 #include <ctime>
@@ -46,7 +46,7 @@ class GitServer::Impl
 public:
     Impl(const std::string& repositoryId,
          const std::string& repository,
-         const std::shared_ptr<ChannelSocket>& socket)
+         const std::shared_ptr<dhtnet::ChannelSocket>& socket)
         : repositoryId_(repositoryId)
         , repository_(repository)
         , socket_(socket)
@@ -80,7 +80,7 @@ public:
 
     std::string repositoryId_ {};
     std::string repository_ {};
-    std::shared_ptr<ChannelSocket> socket_ {};
+    std::shared_ptr<dhtnet::ChannelSocket> socket_ {};
     std::string wantedReference_ {};
     std::string common_ {};
     std::vector<std::string> haveRefs_ {};
@@ -463,7 +463,7 @@ GitServer::Impl::getParameters(std::string_view pkt_line)
 
 GitServer::GitServer(const std::string& accountId,
                      const std::string& conversationId,
-                     const std::shared_ptr<ChannelSocket>& client)
+                     const std::shared_ptr<dhtnet::ChannelSocket>& client)
 {
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId + DIR_SEPARATOR_STR
                 + "conversations" + DIR_SEPARATOR_STR + conversationId;

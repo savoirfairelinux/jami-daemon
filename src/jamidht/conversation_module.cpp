@@ -48,7 +48,7 @@ struct PendingConversationFetch
     std::map<std::string, std::string> preferences {};
     std::map<std::string, std::string> lastDisplayed {};
     std::set<std::string> connectingTo {};
-    std::shared_ptr<ChannelSocket> socket {};
+    std::shared_ptr<dhtnet::ChannelSocket> socket {};
 };
 
 class ConversationModule::Impl : public std::enable_shared_from_this<Impl>
@@ -2303,7 +2303,7 @@ ConversationModule::isBanned(const std::string& convId, const std::string& uri) 
     }
     // If 1:1 we check the certificate status
     if (auto acc = pimpl_->account_.lock()) {
-        return acc->accountManager()->getCertificateStatus(uri) == tls::TrustStore::PermissionStatus::BANNED;
+        return acc->accountManager()->getCertificateStatus(uri) == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
     }
     return true;
 }
@@ -2722,7 +2722,7 @@ ConversationModule::getConversation(const std::string& convId)
     return nullptr;
 }
 
-std::shared_ptr<ChannelSocket>
+std::shared_ptr<dhtnet::ChannelSocket>
 ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId) const
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
@@ -2738,7 +2738,7 @@ ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId
 void
 ConversationModule::addGitSocket(std::string_view deviceId,
                                  std::string_view convId,
-                                 const std::shared_ptr<ChannelSocket>& channel)
+                                 const std::shared_ptr<dhtnet::ChannelSocket>& channel)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto convIt = pimpl_->conversations_.find(convId);
@@ -2767,7 +2767,7 @@ ConversationModule::shutdownConnections()
 }
 void
 ConversationModule::addSwarmChannel(const std::string& conversationId,
-                                    std::shared_ptr<ChannelSocket> channel)
+                                    std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
     auto convIt = pimpl_->conversations_.find(conversationId);

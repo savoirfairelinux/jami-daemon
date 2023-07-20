@@ -16,20 +16,21 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
-
-#include <condition_variable>
-
 #include "manager.h"
-#include "connectivity/connectionmanager.h"
-#include "connectivity/multiplexed_socket.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
 #include "common.h"
+
+#include <dhtnet/connectionmanager.h>
+#include <dhtnet/multiplexed_socket.h>
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <condition_variable>
 
 using namespace libjami::Account;
 using namespace std::literals::chrono_literals;
@@ -151,7 +152,7 @@ ConnectionManagerTest::testConnectDevice()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -189,13 +190,13 @@ ConnectionManagerTest::testAcceptConnection()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string& name,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<dhtnet::ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -231,14 +232,14 @@ ConnectionManagerTest::testMultipleChannels()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket)
                 receiverConnected += 1;
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -248,7 +249,7 @@ ConnectionManagerTest::testMultipleChannels()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected2 = true;
@@ -287,7 +288,7 @@ ConnectionManagerTest::testMultipleChannelsOneDeclined()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string&, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket)
                 receiverConnected += 1;
             cv.notify_one();
@@ -295,7 +296,7 @@ ConnectionManagerTest::testMultipleChannelsOneDeclined()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (!socket)
                                                             successfullyNotConnected = true;
@@ -304,7 +305,7 @@ ConnectionManagerTest::testMultipleChannelsOneDeclined()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket)
                                                             successfullyConnected2 = true;
@@ -340,14 +341,14 @@ ConnectionManagerTest::testMultipleChannelsSameName()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket)
                 receiverConnected += 1;
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -358,7 +359,7 @@ ConnectionManagerTest::testMultipleChannelsSameName()
     // We can open two sockets with the same name, it will be two different channel
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected2 = true;
@@ -399,7 +400,7 @@ ConnectionManagerTest::testSendReceiveData()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket && (name == "test" || name == "other")) {
                 receiverConnected = true;
                 std::error_code ec;
@@ -419,7 +420,7 @@ ConnectionManagerTest::testSendReceiveData()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "test",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -432,7 +433,7 @@ ConnectionManagerTest::testSendReceiveData()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "other",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected2 = true;
@@ -476,14 +477,14 @@ ConnectionManagerTest::testDeclineConnection()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string&,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket)
                 receiverConnected = true;
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -522,13 +523,13 @@ ConnectionManagerTest::testAcceptsICERequest()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string& name,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<dhtnet::ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -567,13 +568,13 @@ ConnectionManagerTest::testDeclineICERequest()
     bobAccount->connectionManager().onConnectionReady(
         [&receiverConnected](const DeviceId&,
                              const std::string& name,
-                             std::shared_ptr<ChannelSocket> socket) {
+                             std::shared_ptr<dhtnet::ChannelSocket> socket) {
             receiverConnected = socket && (name == "git://*");
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -603,13 +604,13 @@ ConnectionManagerTest::testChannelRcvShutdown()
     bool successfullyConnected = false;
     bool shutdownReceived = false;
 
-    std::shared_ptr<ChannelSocket> bobSock;
+    std::shared_ptr<dhtnet::ChannelSocket> bobSock;
 
     bobAccount->connectionManager().onChannelRequest(
         [](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId& did, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId& did, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket && name == "git://*" && did != bobDeviceId) {
                 bobSock = socket;
                 cv.notify_one();
@@ -618,7 +619,7 @@ ConnectionManagerTest::testChannelRcvShutdown()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             socket->onShutdown([&] {
@@ -661,7 +662,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket) {
                 socket->onShutdown([&] {
                     shutdownReceived = true;
@@ -673,7 +674,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -717,7 +718,7 @@ ConnectionManagerTest::testCloseConnectionWith()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket) {
                 socket->onShutdown([&] {
                     events += 1;
@@ -729,7 +730,7 @@ ConnectionManagerTest::testCloseConnectionWith()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             socket->onShutdown([&] {
@@ -781,13 +782,13 @@ ConnectionManagerTest::testShutdownCallbacks()
         });
 
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             receiverConnected = socket && (name == "1");
         });
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -803,7 +804,7 @@ ConnectionManagerTest::testShutdownCallbacks()
     bool channel2NotConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         channel2NotConnected = !socket;
                                                         rcv.notify_one();
@@ -829,7 +830,7 @@ ConnectionManagerTest::testFloodSocket()
     bool successfullyConnected = false;
     bool successfullyReceive = false;
     bool receiverConnected = false;
-    std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
+    std::shared_ptr<dhtnet::ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
     bobAccount->connectionManager().onChannelRequest(
         [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
                                const std::string& name) {
@@ -837,7 +838,7 @@ ConnectionManagerTest::testFloodSocket()
             return true;
         });
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             receiverConnected = socket != nullptr;
             if (name == "1")
                 rcvSock1 = socket;
@@ -848,7 +849,7 @@ ConnectionManagerTest::testFloodSocket()
         });
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             sendSock = socket;
@@ -864,7 +865,7 @@ ConnectionManagerTest::testFloodSocket()
     receiverConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             sendSock2 = socket;
@@ -877,7 +878,7 @@ ConnectionManagerTest::testFloodSocket()
     receiverConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "3",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             sendSock3 = socket;
@@ -932,7 +933,7 @@ ConnectionManagerTest::testDestroyWhileSending()
     bool successfullyConnected = false;
     bool successfullyReceive = false;
     bool receiverConnected = false;
-    std::shared_ptr<ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
+    std::shared_ptr<dhtnet::ChannelSocket> rcvSock1, rcvSock2, rcvSock3, sendSock, sendSock2, sendSock3;
     bobAccount->connectionManager().onChannelRequest(
         [&successfullyReceive](const std::shared_ptr<dht::crypto::Certificate>&,
                                const std::string& name) {
@@ -940,7 +941,7 @@ ConnectionManagerTest::testDestroyWhileSending()
             return true;
         });
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             receiverConnected = socket != nullptr;
             if (name == "1")
                 rcvSock1 = socket;
@@ -951,7 +952,7 @@ ConnectionManagerTest::testDestroyWhileSending()
         });
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "1",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             sendSock = socket;
@@ -966,7 +967,7 @@ ConnectionManagerTest::testDestroyWhileSending()
     receiverConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "2",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             sendSock2 = socket;
@@ -979,7 +980,7 @@ ConnectionManagerTest::testDestroyWhileSending()
     receiverConnected = false;
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "3",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             sendSock3 = socket;
@@ -1033,7 +1034,7 @@ ConnectionManagerTest::testIsConnecting()
     CPPUNIT_ASSERT(!aliceAccount->connectionManager().isConnecting(bobDeviceId, "sip"));
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             successfullyConnected = true;
@@ -1064,11 +1065,11 @@ ConnectionManagerTest::testCanSendBeacon()
     std::condition_variable cv;
     bool successfullyConnected = false;
 
-    std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
+    std::shared_ptr<dhtnet::MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
         [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string&, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1076,7 +1077,7 @@ ConnectionManagerTest::testCanSendBeacon()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
@@ -1119,11 +1120,11 @@ ConnectionManagerTest::testCannotSendBeacon()
     std::condition_variable cv;
     bool successfullyConnected = false;
 
-    std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
+    std::shared_ptr<dhtnet::MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
         [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string&, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1131,7 +1132,7 @@ ConnectionManagerTest::testCannotSendBeacon()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
@@ -1168,11 +1169,11 @@ ConnectionManagerTest::testConnectivityChangeTriggerBeacon()
     std::condition_variable cv;
     bool successfullyConnected = false;
 
-    std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
+    std::shared_ptr<dhtnet::MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
         [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string&, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1180,7 +1181,7 @@ ConnectionManagerTest::testConnectivityChangeTriggerBeacon()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
@@ -1216,11 +1217,11 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
     std::condition_variable cv;
     bool successfullyConnected = false;
 
-    std::shared_ptr<MultiplexedSocket> aliceSocket, bobSocket;
+    std::shared_ptr<dhtnet::MultiplexedSocket> aliceSocket, bobSocket;
     bobAccount->connectionManager().onChannelRequest(
         [&](const std::shared_ptr<dht::crypto::Certificate>&, const std::string&) { return true; });
     bobAccount->connectionManager().onConnectionReady(
-        [&](const DeviceId&, const std::string&, std::shared_ptr<ChannelSocket> socket) {
+        [&](const DeviceId&, const std::string&, std::shared_ptr<dhtnet::ChannelSocket> socket) {
             if (socket && socket->name() == "sip")
                 bobSocket = socket->underlyingSocket();
             cv.notify_one();
@@ -1228,7 +1229,7 @@ ConnectionManagerTest::testOnNoBeaconTriggersShutdown()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "sip",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         if (socket) {
                                                             aliceSocket = socket->underlyingSocket();
@@ -1272,7 +1273,7 @@ ConnectionManagerTest::testShutdownWhileNegotiating()
 
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
                                                     "git://*",
-                                                    [&](std::shared_ptr<ChannelSocket> socket,
+                                                    [&](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                         const DeviceId&) {
                                                         notConnected = !socket;
                                                         cv.notify_one();

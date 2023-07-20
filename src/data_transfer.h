@@ -21,8 +21,9 @@
 #pragma once
 
 #include "jami/datatransfer_interface.h"
-#include "connectivity/multiplexed_socket.h"
 #include "noncopyable.h"
+
+#include <dhtnet/multiplexed_socket.h>
 
 #include <fstream>
 #include <functional>
@@ -58,13 +59,13 @@ typedef std::function<void()> OnFinishedCb;
 class FileInfo
 {
 public:
-    FileInfo(const std::shared_ptr<ChannelSocket>& channel,
+    FileInfo(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
              const std::string& fileId,
              const std::string& interactionId,
              const libjami::DataTransferInfo& info);
     virtual ~FileInfo() {}
     virtual void process() = 0;
-    std::shared_ptr<ChannelSocket> channel() const { return channel_; }
+    std::shared_ptr<dhtnet::ChannelSocket> channel() const { return channel_; }
     libjami::DataTransferInfo info() const { return info_; }
     virtual void cancel() = 0;
     void onFinished(std::function<void(uint32_t)>&& cb) { finishedCb_ = std::move(cb); }
@@ -75,14 +76,14 @@ protected:
     std::string fileId_ {};
     std::string interactionId_ {};
     libjami::DataTransferInfo info_ {};
-    std::shared_ptr<ChannelSocket> channel_ {};
+    std::shared_ptr<dhtnet::ChannelSocket> channel_ {};
     std::function<void(uint32_t)> finishedCb_ {};
 };
 
 class IncomingFile : public FileInfo, public std::enable_shared_from_this<IncomingFile>
 {
 public:
-    IncomingFile(const std::shared_ptr<ChannelSocket>& channel,
+    IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                  const libjami::DataTransferInfo& info,
                  const std::string& fileId,
                  const std::string& interactionId,
@@ -103,7 +104,7 @@ private:
 class OutgoingFile : public FileInfo
 {
 public:
-    OutgoingFile(const std::shared_ptr<ChannelSocket>& channel,
+    OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                  const std::string& fileId,
                  const std::string& interactionId,
                  const libjami::DataTransferInfo& info,
@@ -134,7 +135,7 @@ public:
      * @param start         start offset
      * @param end           end
      */
-    void transferFile(const std::shared_ptr<ChannelSocket>& channel,
+    void transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                       const std::string& fileId,
                       const std::string& interactionId,
                       const std::string& path,
@@ -181,7 +182,7 @@ public:
      * @param channel   Related channel
      */
     void onIncomingFileTransfer(const std::string& fileId,
-                                const std::shared_ptr<ChannelSocket>& channel);
+                                const std::shared_ptr<dhtnet::ChannelSocket>& channel);
 
     /**
      * Retrieve path of a file
@@ -195,7 +196,7 @@ public:
      */
     std::vector<WaitingRequest> waitingRequests() const;
     bool isWaiting(const std::string& fileId) const;
-    void onIncomingProfile(const std::shared_ptr<ChannelSocket>& channel, const std::string& sha3Sum = "");
+    void onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel, const std::string& sha3Sum = "");
 
     /**
      * @param contactId     contact's id

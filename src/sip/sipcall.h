@@ -29,9 +29,9 @@
 #endif
 
 #include "call.h"
-#include "connectivity/ice_transport.h"
-#include "media/media_codec.h" // for MediaType enum
+#include <dhtnet/ice_transport.h>
 #include "connectivity/sip_utils.h"
+#include "media/media_codec.h" // for MediaType enum
 #include "sip/sdp.h"
 
 #include "media/rtp_session.h"
@@ -56,19 +56,21 @@ struct pj_ice_sess_cand;
 struct pjsip_rx_data;
 }
 
+namespace dhtnet {
+class IceSocket;
+namespace upnp {
+class Controller;
+}
+}
+
 namespace jami {
 
 class Sdp;
 class SIPAccountBase;
 class SipTransport;
 class AudioRtpSession;
-class IceSocket;
 
 using IceCandidate = pj_ice_sess_cand;
-
-namespace upnp {
-class Controller;
-}
 
 /**
  * @file sipcall.h
@@ -90,8 +92,8 @@ public:
         std::shared_ptr<RtpSession> rtpSession_ {};
         std::shared_ptr<MediaAttribute> mediaAttribute_ {};
         std::shared_ptr<MediaAttribute> remoteMediaAttribute_;
-        std::unique_ptr<IceSocket> rtpSocket_;
-        std::unique_ptr<IceSocket> rtcpSocket_;
+        std::unique_ptr<dhtnet::IceSocket> rtpSocket_;
+        std::unique_ptr<dhtnet::IceSocket> rtcpSocket_;
     };
 
     /**
@@ -253,14 +255,14 @@ public:
     bool remoteHasValidIceAttributes() const;
     void addLocalIceAttributes();
 
-    std::shared_ptr<IceTransport> getIceMedia() const
+    std::shared_ptr<dhtnet::IceTransport> getIceMedia() const
     {
         std::lock_guard<std::mutex> lk(transportMtx_);
         return reinvIceMedia_ ? reinvIceMedia_ : iceMedia_;
     };
 
     // Set ICE instance. Must be called only for sub-calls
-    void setIceMedia(std::shared_ptr<IceTransport> ice, bool isReinvite = false);
+    void setIceMedia(std::shared_ptr<dhtnet::IceTransport> ice, bool isReinvite = false);
 
     // Switch to re-invite ICE media if needed
     void switchToIceReinviteIfNeeded();
@@ -315,7 +317,7 @@ public:
     // The initialization is performed asynchronously, i.e, the instance
     // may not be ready to use when this method returns.
     bool initIceMediaTransport(bool master,
-                               std::optional<IceTransportOptions> options = std::nullopt);
+                               std::optional<dhtnet::IceTransportOptions> options = std::nullopt);
 
     std::vector<std::string> getLocalIceCandidates(unsigned compId) const;
 
@@ -343,7 +345,7 @@ private:
 
     bool isIceRunning() const;
 
-    std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
+    std::unique_ptr<dhtnet::IceSocket> newIceSocket(unsigned compId);
 
     void deinitRecorder();
 
@@ -354,7 +356,7 @@ private:
     void sendMuteState(bool state);
     void sendVoiceActivity(std::string_view streamId, bool state);
 
-    void resetTransport(std::shared_ptr<IceTransport>&& transport);
+    void resetTransport(std::shared_ptr<dhtnet::IceTransport>&& transport);
 
     /**
      * Send device orientation through SIP INFO
@@ -440,7 +442,7 @@ private:
     // Find the stream index with the matching label
     int findRtpStreamIndex(const std::string& label) const;
 
-    std::vector<IceCandidate> getAllRemoteCandidates(IceTransport& transport) const;
+    std::vector<IceCandidate> getAllRemoteCandidates(dhtnet::IceTransport& transport) const;
 
     inline std::shared_ptr<const SIPCall> shared() const
     {
@@ -489,7 +491,7 @@ private:
 
     std::string contactHeader_ {};
 
-    std::shared_ptr<jami::upnp::Controller> upnp_;
+    std::shared_ptr<dhtnet::upnp::Controller> upnp_;
 
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};
@@ -502,9 +504,9 @@ private:
     bool rtcpMuxEnabled_ {false};
 
     // ICE media transport
-    std::shared_ptr<IceTransport> iceMedia_;
+    std::shared_ptr<dhtnet::IceTransport> iceMedia_;
     // Re-invite (temporary) ICE media transport.
-    std::shared_ptr<IceTransport> reinvIceMedia_;
+    std::shared_ptr<dhtnet::IceTransport> reinvIceMedia_;
 
     std::string peerUri_ {};
 

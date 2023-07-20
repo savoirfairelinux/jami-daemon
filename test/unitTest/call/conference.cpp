@@ -25,7 +25,6 @@
 
 #include "manager.h"
 #include "client/videomanager.h"
-#include "connectivity/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
@@ -35,6 +34,8 @@
 #include "media/video/sinkclient.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
+
+#include <dhtnet/connectionmanager.h>
 
 using namespace libjami::Account;
 using namespace std::literals::chrono_literals;

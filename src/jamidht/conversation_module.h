@@ -47,7 +47,7 @@ struct SyncMsg
     MSGPACK_DEFINE(ds, c, cr, p, ld)
 };
 
-using ChannelCb = std::function<bool(const std::shared_ptr<ChannelSocket>&)>;
+using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
 using NeedSocketCb
     = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 using SengMsgCb = std::function<
@@ -460,12 +460,12 @@ public:
      * @param conversationId    Related conversation
      * @return the related socket
      */
-    std::shared_ptr<ChannelSocket> gitSocket(std::string_view deviceId,
+    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view deviceId,
                                              std::string_view convId) const;
     void removeGitSocket(std::string_view deviceId, std::string_view convId);
     void addGitSocket(std::string_view deviceId,
                       std::string_view convId,
-                      const std::shared_ptr<ChannelSocket>& channel);
+                      const std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Clear all connection (swarm channels)
      */
@@ -475,7 +475,7 @@ public:
      * @param conversationId
      * @param socket
      */
-    void addSwarmChannel(const std::string& conversationId, std::shared_ptr<ChannelSocket> socket);
+    void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
     /**
      * Triggers a bucket maintainance for DRTs
      */

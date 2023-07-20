@@ -27,10 +27,7 @@
 
 #include "account_schema.h"
 #include "manager.h"
-#include "connectivity/ice_transport.h"
-
 #include "config/yamlparser.h"
-
 #include "client/ring_signal.h"
 #include "jami/account_const.h"
 #include "string_utils.h"
@@ -39,11 +36,12 @@
 #include "connectivity/utf8_utils.h"
 #include "uri.h"
 
-#include "manager.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
 #include "plugin/streamdata.h"
 #endif
+
+#include <dhtnet/ice_transport.h>
 
 #include <fmt/core.h>
 #include <json/json.h>
@@ -140,18 +138,20 @@ SIPAccountBase::loadConfig()
 {
     Account::loadConfig();
     const auto& conf = config();
-    IpAddr publishedIp {conf.publishedIp};
+    dhtnet::IpAddr publishedIp {conf.publishedIp};
     if (not conf.publishedSameasLocal and publishedIp)
         setPublishedAddress(publishedIp);
-    TurnTransportParams turnParams;
+    dhtnet::TurnTransportParams turnParams;
     turnParams.domain = conf.turnServer;
     turnParams.username = conf.turnServerUserName;
     turnParams.password = conf.turnServerPwd;
     turnParams.realm = conf.turnServerRealm;
     if (!turnCache_) {
         auto cachePath = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID();
-        turnCache_ = std::make_shared<TurnCache>(getAccountID(),
+        turnCache_ = std::make_shared<dhtnet::TurnCache>(getAccountID(),
                                                  cachePath,
+                                                 Manager::instance().ioContext(),
+                                                 Logger::dhtLogger(),
                                                  turnParams,
                                                  conf.turnEnabled);
     }
@@ -246,16 +246,16 @@ SIPAccountBase::generateVideoPort() const
 }
 #endif
 
-IceTransportOptions
+dhtnet::IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept
 {
-    IceTransportOptions opts;
+    dhtnet::IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
 
     if (config().turnEnabled && turnCache_) {
         auto turnAddr = turnCache_->getResolvedTurn();
         if (turnAddr != std::nullopt) {
-            opts.turnServers.emplace_back(TurnServerInfo()
+            opts.turnServers.emplace_back(dhtnet::TurnServerInfo()
                                               .setUri(turnAddr->toString(true))
                                               .setUsername(config().turnServerUserName)
                                               .setPassword(config().turnServerPwd)
@@ -312,7 +312,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
     }
 }
 
-IpAddr
+dhtnet::IpAddr
 SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 {
     if (family == AF_INET)
@@ -332,7 +332,7 @@ SIPAccountBase::getPublishedIpAddress(uint16_t family) const
 }
 
 void
-SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
+SIPAccountBase::setPublishedAddress(const dhtnet::IpAddr& ip_addr)
 {
     if (ip_addr.getFamily() == AF_INET) {
         publishedIp_[0] = ip_addr;
