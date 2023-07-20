@@ -19,7 +19,7 @@
  */
 
 #include "swarm_manager.h"
-#include "connectivity/multiplexed_socket.h"
+#include <dhtnet/multiplexed_socket.h>
 #include <opendht/thread_pool.h>
 
 constexpr const std::chrono::minutes FIND_PERIOD {10};
@@ -64,7 +64,7 @@ SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
 }
 
 void
-SwarmManager::addChannel(const std::shared_ptr<ChannelSocketInterface>& channel)
+SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel)
 {
     // JAMI_WARNING("[SwarmManager {}] addChannel! with {}", fmt::ptr(this), channel->deviceId().to_view());
     if (channel) {
@@ -166,7 +166,7 @@ SwarmManager::maintainBuckets()
 }
 
 void
-SwarmManager::sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
+SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
                           NodeId& nodeId,
                           Query q,
                           int numberNodes)
@@ -191,7 +191,7 @@ SwarmManager::sendRequest(const std::shared_ptr<ChannelSocketInterface>& socket,
 }
 
 void
-SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, const Message& msg_)
+SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const Message& msg_)
 {
     std::lock_guard<std::mutex> lock(mutex);
 
@@ -223,7 +223,7 @@ SwarmManager::sendAnswer(const std::shared_ptr<ChannelSocketInterface>& socket, 
 }
 
 void
-SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& socket)
+SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
     struct DecodingContext
     {
@@ -233,7 +233,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
     };
 
     socket->setOnRecv([w = weak(),
-                       wsocket = std::weak_ptr<ChannelSocketInterface>(socket),
+                       wsocket = std::weak_ptr<dhtnet::ChannelSocketInterface>(socket),
                        ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
         ctx->pac.reserve_buffer(len);
         std::copy_n(buf, len, ctx->pac.buffer());
@@ -282,7 +282,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<ChannelSocketInterface>& sock
 
 void
 SwarmManager::resetNodeExpiry(const asio::error_code& ec,
-                              const std::shared_ptr<ChannelSocketInterface>& socket,
+                              const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
                               NodeId node)
 {
     NodeId idToFind;
@@ -317,7 +317,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 {
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
-                      [w = weak(), nodeId](const std::shared_ptr<ChannelSocketInterface>& socket) {
+                      [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                           auto shared = w.lock();
                           if (!shared)
                               return true;

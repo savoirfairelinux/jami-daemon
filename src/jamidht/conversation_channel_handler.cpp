@@ -23,7 +23,7 @@
 namespace jami {
 
 ConversationChannelHandler::ConversationChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                                       ConnectionManager& cm)
+                                                       dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -66,7 +66,7 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
 void
 ConversationChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
                                     const std::string&,
-                                    std::shared_ptr<ChannelSocket>)
+                                    std::shared_ptr<dhtnet::ChannelSocket>)
 {}
 
 } // namespace jami
