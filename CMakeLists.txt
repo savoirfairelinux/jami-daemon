@@ -539,6 +539,7 @@ else()
         PkgConfig::secp256k1
         PUBLIC
         PkgConfig::avutil
+        nettle
     )
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden

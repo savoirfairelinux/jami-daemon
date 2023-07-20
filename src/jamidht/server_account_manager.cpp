@@ -19,6 +19,7 @@
 #include "server_account_manager.h"
 #include "base64.h"
 #include "jami/account_const.h"
+#include "url_encode.h"
 
 #include <opendht/http.h>
 #include <opendht/log.h>
@@ -178,9 +179,9 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                                             if (!nameServer.empty() && nameServer[0] == '/')
                                                 nameServer = this_.managerHostname_ + nameServer;
                                             this_.nameDir_ = NameDirectory::instance(nameServer);
-                                            config
-                                                .emplace(libjami::Account::ConfProperties::RingNS::URI,
-                                                         std::move(nameServer));
+                                            config.emplace(
+                                                libjami::Account::ConfProperties::RingNS::URI,
+                                                std::move(nameServer));
                                         } else if (name == "userPhoto"sv) {
                                             this_.info_->photo = json["userPhoto"].asString();
                                         } else {
@@ -517,8 +518,7 @@ ServerAccountManager::registerName(const std::string&, const std::string&, Regis
 bool
 ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
 {
-    // TODO escape url query
-    const std::string url = managerHostname_ + PATH_SEARCH + "?queryString=" + query;
+    const std::string url = managerHostname_ + PATH_SEARCH + "?queryString=" + url_encode(query);
     JAMI_WARN("[Search] Searching user %s at %s", query.c_str(), url.c_str());
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
