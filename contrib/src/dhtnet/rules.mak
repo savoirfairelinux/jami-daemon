@@ -1,5 +1,5 @@
 # DHTNET
-DHTNET_VERSION := 9132a8100871e45bf2941e5a0792073ef8835b14
+DHTNET_VERSION := 8b831a809c4ff5e2bea95a9aba1e4d53776c9c60
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
@@ -21,7 +21,7 @@ dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK) -C $(UNPACK_DIR)
 	$(MOVE)
 
-.dhtnet: dhtnet .sum-dhtnet
+.dhtnet: dhtnet toolchain.cmake .sum-dhtnet
 	cd $< && mkdir -p build
 	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(DHTNET_CONF) ..
 	cd $< && cd build && $(MAKE) install
