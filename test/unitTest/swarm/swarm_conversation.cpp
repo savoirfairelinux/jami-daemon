@@ -29,9 +29,8 @@
 #include "jami.h"
 #include "../common.h"
 #include "jamidht/swarm/swarm_manager.h"
-#include "connectivity/multiplexed_socket.h"
+#include <dhtnet/multiplexed_socket.h>
 
-#include "connectivity/peer_connection.h"
 #include <opendht/thread_pool.h>
 
 #include "../../test_runner.h"

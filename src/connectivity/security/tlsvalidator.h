@@ -21,11 +21,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef TLS_VALIDATOR_H
-#define TLS_VALIDATOR_H
+#pragma once
 
-#include "certstore.h"
 #include "enumclass_utils.h"
+#include <dhtnet/certstore.h>
 
 #include <string>
 #include <vector>
@@ -184,17 +183,17 @@ public:
      * @param privatekeyPasswd An optional private key password
      * @param caList An optional CA list to use for certificate validation
      */
-    TlsValidator(const tls::CertificateStore& certStore,
+    TlsValidator(const dhtnet::tls::CertificateStore& certStore,
                  const std::string& certificate,
                  const std::string& privatekey = "",
                  const std::string& privatekeyPasswd = "",
                  const std::string& caList = "");
 
-    TlsValidator(const tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
+    TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 
-    TlsValidator(const tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw);
+    TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw);
 
-    TlsValidator(const tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>&);
+    TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>&);
 
     ~TlsValidator();
 
@@ -280,7 +279,7 @@ private:
 
     static const Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
 
-    const tls::CertificateStore&  certStore_;
+    const dhtnet::tls::CertificateStore&  certStore_;
     std::string certificatePath_;
     std::string privateKeyPath_;
     std::string caListPath_ {};
@@ -326,5 +325,3 @@ public:
 
 } // namespace tls
 } // namespace jami
-
-#endif

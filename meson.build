@@ -16,6 +16,7 @@ endif
 #################################################
 depthreads        = dependency('threads')
 depopendht        = dependency('opendht', version: '>= 2.1.0')
+depdhtnet         = dependency('dhtnet')
 depgnutls         = dependency('gnutls', version: '>= 3.6.7')
 depnettle         = dependency('nettle', version: '>= 3.0.0')
 deplibpjproject   = dependency('libpjproject') # a custom fork, see contrib/src/pjproject/rules.mak
@@ -73,24 +74,6 @@ conf.set10('HAVE_JACK', depjack.found())
 
 depportaudio = dependency('portaudio-2.0', required: get_option('portaudio'))
 conf.set10('HAVE_PORTAUDIO', depportaudio.found())
-
-deplibupnp = dependency('libupnp', required: get_option('upnp'))
-conf.set10('HAVE_LIBUPNP', deplibupnp.found())
-
-if get_option('natpmp_prefix') == ''
-    depnatpmp = meson.get_compiler('cpp').find_library('natpmp', has_headers: 'natpmp.h', required: get_option('natpmp'))
-else
-    depnatpmp_ = meson.get_compiler('cpp').find_library('natpmp', dirs: get_option('natpmp_prefix') / 'lib', required: get_option('natpmp'))
-    if depnatpmp_.found()
-        depnatpmp = declare_dependency(
-            compile_args: '-I' + get_option('natpmp_prefix') / 'include',
-            dependencies: depnatpmp_
-        )
-    else
-        depnatpmp = depnatpmp_
-    endif
-endif
-conf.set10('HAVE_LIBNATPMP', depnatpmp.found())
 
 depopenssl = dependency('openssl', required: get_option('name_service'))
 conf.set10('HAVE_RINGNS', depopenssl.found())

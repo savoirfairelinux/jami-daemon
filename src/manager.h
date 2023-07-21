@@ -37,7 +37,7 @@
 #include "media/audio/audiolayer.h"
 #include "scheduled_executor.h"
 #include "gittransport.h"
-#include "connectivity/security/certstore.h"
+#include <dhtnet/certstore.h>
 
 #include <algorithm>
 #include <atomic>
@@ -54,17 +54,20 @@ namespace asio {
 class io_context;
 }
 
+namespace dhtnet {
+class ChannelSocket;
+class IceTransportFactory;
+}
+
 namespace jami {
 namespace video {
 class SinkClient;
 class VideoGenerator;
 } // namespace video
-class ChannelSocket;
 class RingBufferPool;
 struct VideoManager;
 class Conference;
 class AudioLoop;
-class IceTransportFactory;
 class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
@@ -783,12 +786,12 @@ public:
 
     CallFactory callFactory;
 
-    IceTransportFactory& getIceTransportFactory();
-
-    ScheduledExecutor& scheduler();
+    dhtnet::IceTransportFactory& getIceTransportFactory();
 
     std::shared_ptr<asio::io_context> ioContext() const;
+    std::shared_ptr<dhtnet::upnp::UPnPContext> upnpContext() const;
 
+    ScheduledExecutor& scheduler();
     std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
                                        std::chrono::steady_clock::time_point when,
                                        const char* filename = CURRENT_FILENAME(),
@@ -856,7 +859,7 @@ public:
      * @param conversationId    Related conversation
      * @return std::optional<std::weak_ptr<ChannelSocket>> the related socket
      */
-    std::shared_ptr<ChannelSocket> gitSocket(const std::string_view accountId,
+    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const std::string_view accountId,
                                              const std::string_view deviceId,
                                              const std::string_view conversationId);
 
@@ -870,7 +873,7 @@ public:
     void insertGitTransport(git_smart_subtransport* tr, std::unique_ptr<P2PSubTransport>&& sub);
     void eraseGitTransport(git_smart_subtransport* tr);
 
-    tls::CertificateStore& certStore(const std::string& accountId) const;
+    dhtnet::tls::CertificateStore& certStore(const std::string& accountId) const;
 
 private:
     Manager();

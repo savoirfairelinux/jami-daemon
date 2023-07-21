@@ -236,12 +236,12 @@ public:
         const dht::PkId& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
-    bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              tls::TrustStore::PermissionStatus status,
+                              dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
-    tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;
+    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
+    dhtnet::tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;
     bool isAllowed(const crypto::Certificate& crt, bool allowPublic = false);
 
     static std::shared_ptr<dht::Value> parseAnnounce(const std::string& announceBase64,
@@ -265,7 +265,7 @@ public:
                               RegistrationCallback cb)
         = 0;
 
-    tls::CertificateStore& certStore() const;
+    dhtnet::tls::CertificateStore& certStore() const;
 
 protected:
     std::string path_;

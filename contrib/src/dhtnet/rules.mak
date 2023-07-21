@@ -1,5 +1,5 @@
 # DHTNET
-DHTNET_VERSION := 3f93ddf762103fb757462f0ac324955885819f0c
+DHTNET_VERSION := cf5694026ea74c94a8b1a8e65e3fd397141d0432
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
@@ -19,6 +19,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	mkdir -p $(UNPACK_DIR)
 	$(UNPACK) -C $(UNPACK_DIR)
+	$(APPLY) $(SRC)/dhtnet/libjami-testable.patch
 	$(MOVE)
 
 .dhtnet: dhtnet toolchain.cmake .sum-dhtnet

@@ -14,23 +14,10 @@ libjami_sources = files(
     'client/ring_signal.cpp',
     'client/videomanager.cpp',
     'config/yamlparser.cpp',
-    'connectivity/security/certstore.cpp',
-    'connectivity/security/diffie-hellman.cpp',
     'connectivity/security/memory.cpp',
-    'connectivity/security/tls_session.cpp',
     'connectivity/security/tlsvalidator.cpp',
-    'connectivity/upnp/protocol/igd.cpp',
-    'connectivity/upnp/protocol/mapping.cpp',
-    'connectivity/upnp/upnp_context.cpp',
-    'connectivity/upnp/upnp_control.cpp',
-    'connectivity/connectionmanager.cpp',
-    'connectivity/ice_transport.cpp',
     'connectivity/ip_utils.cpp',
-    'connectivity/multiplexed_socket.cpp',
-    'connectivity/peer_connection.cpp',
     'connectivity/sip_utils.cpp',
-    'connectivity/turn_cache.cpp',
-    'connectivity/turn_transport.cpp',
     'connectivity/utf8_utils.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
@@ -137,6 +124,7 @@ endif
 libjami_dependencies = [
     depthreads,
     depopendht,
+    depdhtnet,
     depgnutls,
     depnettle,
     deplibpjproject,
@@ -207,22 +195,6 @@ if conf.get('HAVE_COREAUDIO') == 1
             'media/audio/coreaudio/osx/corelayer.cpp'
         )
     endif
-endif
-
-if conf.get('HAVE_LIBUPNP') == 1
-    libjami_sources += files(
-        'connectivity/upnp/protocol/pupnp/pupnp.cpp',
-        'connectivity/upnp/protocol/pupnp/upnp_igd.cpp'
-    )
-    libjami_dependencies += deplibupnp
-endif
-
-if conf.get('HAVE_LIBNATPMP') == 1
-    libjami_sources += files(
-        'connectivity/upnp/protocol/natpmp/nat_pmp.cpp',
-        'connectivity/upnp/protocol/natpmp/pmp_igd.cpp'
-    )
-    libjami_dependencies += depnatpmp
 endif
 
 if conf.get('HAVE_RINGNS') == 1

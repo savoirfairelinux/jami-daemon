@@ -23,10 +23,9 @@
 #include "jami.h"
 #include "../common.h"
 #include "jamidht/swarm/swarm_manager.h"
-#include "connectivity/multiplexed_socket.h"
 #include <algorithm>
 
-#include "connectivity/peer_connection.h"
+#include <dhtnet/multiplexed_socket.h>
 #include "nodes.h"
 
 #include <opendht/thread_pool.h>
@@ -90,7 +89,7 @@ private:
     std::mt19937_64 rd {dht::crypto::getSeededRandomEngine<std::mt19937_64>()};
     std::mutex channelSocketsMtx_;
     std::vector<NodeId> randomNodeIds;
-    std::map<NodeId, std::map<NodeId, std::shared_ptr<jami::ChannelSocketTest>>> channelSockets_;
+    std::map<NodeId, std::map<NodeId, std::shared_ptr<dhtnet::ChannelSocketTest>>> channelSockets_;
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagers;
     std::map<NodeId, std::set<NodeId>> nodesToConnect;
     std::set<NodeId> messageNode;
@@ -240,7 +239,7 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
             auto sm = wsm.lock();
             if (!sm || sm->isShutdown())
                 return;
-            NodeId node = DeviceId(nodeId);
+            NodeId node = dhtnet::DeviceId(nodeId);
             std::lock_guard<std::mutex> lk(channelSocketsMtx_);
             if (auto smRemote = getManager(node)) {
                 if (sm->isShutdown()) {
@@ -251,12 +250,12 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                 auto& cstRemote = channelSockets_[node][myId];
                 auto& cstMe = channelSockets_[myId][node];
                 if (!cstRemote) {
-                    cstRemote = std::make_shared<ChannelSocketTest>(myId, "test1", 0);
+                    cstRemote = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), myId, "test1", 0);
                 }
                 if (!cstMe) {
-                    cstMe = std::make_shared<ChannelSocketTest>(node, "test1", 0);
+                    cstMe = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), node, "test1", 0);
                 }
-                ChannelSocketTest::link(cstMe, cstRemote);
+                dhtnet::ChannelSocketTest::link(cstMe, cstRemote);
                 onSocket(cstMe);
                 smRemote->addChannel(cstRemote);
             }
@@ -296,7 +295,7 @@ RoutingTableTest::testBucketMainFunctions()
 
     NodeInfo InfoNode1(true, sNode2);
 
-    std::set<std::shared_ptr<ChannelSocketInterface>> socketsCheck {sNode1, sNode2};
+    std::set<std::shared_ptr<dhtnet::ChannelSocketInterface>> socketsCheck {sNode1, sNode2};
     std::set<NodeId> nodesCheck {node1, node2};
 
     Bucket bucket(node0);

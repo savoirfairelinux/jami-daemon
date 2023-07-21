@@ -33,8 +33,7 @@
 #include "jami.h"
 #include "../common.h"
 #include "jamidht/swarm/swarm_manager.h"
-#include "connectivity/multiplexed_socket.h"
-#include "connectivity/peer_connection.h"
+#include <dhtnet/multiplexed_socket.h>
 #include "nodes.h"
 
 using namespace std::string_literals;
@@ -108,8 +107,8 @@ private:
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagers;
     std::map<NodeId,
              std::map<NodeId,
-                      std::pair<std::shared_ptr<jami::ChannelSocketTest>,
-                                std::shared_ptr<jami::ChannelSocketTest>>>>
+                      std::pair<std::shared_ptr<dhtnet::ChannelSocketTest>,
+                                std::shared_ptr<dhtnet::ChannelSocketTest>>>>
         channelSockets_;
     std::vector<NodeId> randomNodeIds;
     std::vector<std::shared_ptr<jami::SwarmManager>> swarmManagersShuffled;
@@ -122,8 +121,8 @@ private:
 
     void generateSwarmManagers();
     void needSocketCallBack(const std::shared_ptr<SwarmManager>& sm);
-    void sendMessage(const std::shared_ptr<ChannelSocketInterface>& socket, Message msg);
-    void receiveMessage(const NodeId nodeId, const std::shared_ptr<ChannelSocketInterface>& socket);
+    void sendMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, Message msg);
+    void receiveMessage(const NodeId nodeId, const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket);
     void relayMessageToRoutingTable(const NodeId nodeId, const NodeId sourceId, const Message msg);
     void updateHops(int hops);
     void crossNodes(NodeId nodeId);
@@ -192,7 +191,7 @@ SwarmMessageSpread::crossNodes(NodeId nodeId)
 }
 
 void
-SwarmMessageSpread::sendMessage(const std::shared_ptr<ChannelSocketInterface>& socket, Message msg)
+SwarmMessageSpread::sendMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, Message msg)
 {
     auto buffer = std::make_shared<msgpack::sbuffer>(32);
     msgpack::packer<msgpack::sbuffer> pk(buffer.get());
@@ -208,7 +207,7 @@ SwarmMessageSpread::sendMessage(const std::shared_ptr<ChannelSocketInterface>& s
 
 void
 SwarmMessageSpread::receiveMessage(const NodeId nodeId,
-                                   const std::shared_ptr<ChannelSocketInterface>& socket)
+                                   const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
     struct DecodingContext
     {
@@ -218,7 +217,7 @@ SwarmMessageSpread::receiveMessage(const NodeId nodeId,
     };
 
     socket->setOnRecv([this,
-                       wsocket = std::weak_ptr<ChannelSocketInterface>(socket),
+                       wsocket = std::weak_ptr<dhtnet::ChannelSocketInterface>(socket),
                        ctx = std::make_shared<DecodingContext>(),
                        nodeId](const uint8_t* buf, size_t len) {
         auto socket = wsocket.lock();
@@ -282,7 +281,7 @@ SwarmMessageSpread::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                 if (!sm)
                     return;
 
-                NodeId node = DeviceId(nodeId);
+                NodeId node = dhtnet::DeviceId(nodeId);
                 if (auto smRemote = getManager(node)) {
                     auto myId = sm->getId();
                     std::unique_lock<std::mutex> lk(channelSocketsMtx_);
@@ -291,19 +290,19 @@ SwarmMessageSpread::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                     if (cstMe.second && cstMe.first)
                         return;
                     if (!cstMe.second) {
-                        cstMe.second = std::make_shared<ChannelSocketTest>(node, "test1", 1);
-                        cstRemote.second = std::make_shared<ChannelSocketTest>(myId, "test1", 1);
+                        cstMe.second = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), node, "test1", 1);
+                        cstRemote.second = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), myId, "test1", 1);
                     }
                     if (!cstMe.first) {
-                        cstRemote.first = std::make_shared<ChannelSocketTest>(myId, "swarm1", 0);
-                        cstMe.first = std::make_shared<ChannelSocketTest>(node, "swarm1", 0);
+                        cstRemote.first = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), myId, "swarm1", 0);
+                        cstMe.first = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), node, "swarm1", 0);
                     }
                     lk.unlock();
-                    ChannelSocketTest::link(cstMe.second, cstRemote.second);
+                    dhtnet::ChannelSocketTest::link(cstMe.second, cstRemote.second);
                     receiveMessage(myId, cstMe.second);
                     receiveMessage(node, cstRemote.second);
                     // std::this_thread::sleep_for(std::chrono::seconds(5));
-                    ChannelSocketTest::link(cstMe.first, cstRemote.first);
+                    dhtnet::ChannelSocketTest::link(cstMe.first, cstRemote.first);
                     smRemote->addChannel(cstRemote.first);
                     onSocket(cstMe.first);
                 }

@@ -302,7 +302,7 @@ public:
      * Get the contact address
      * @return The current contact address
      */
-    IpAddr getContactAddress() const;
+    dhtnet::IpAddr getContactAddress() const;
     /**
      * Get the contact header
      * @return The current contact header
@@ -412,7 +412,7 @@ public:
      * Create the Ip address that the transport uses
      * @return IpAddr created
      */
-    IpAddr createBindingAddress();
+    dhtnet::IpAddr createBindingAddress();
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
     bool isSrtpEnabled() const override
@@ -542,7 +542,7 @@ private:
     /**
      * Resolved IP of hostname_ (for registration)
      */
-    IpAddr hostIp_;
+    dhtnet::IpAddr hostIp_;
 
     /**
      * The pjsip client registration information
@@ -619,7 +619,7 @@ private:
     // Contact header
     std::string contactHeader_;
     // Contact address (the address part of a SIP URI)
-    IpAddr contactAddress_ {};
+    dhtnet::IpAddr contactAddress_ {};
     pjsip_transport* via_tp_ {nullptr};
 
     /**
