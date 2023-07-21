@@ -20,8 +20,8 @@
 #pragma once
 
 #include "jami_contact.h"
-#include "connectivity/security/certstore.h"
 
+#include <dhtnet/certstore.h>
 #include <opendht/infohash.h>
 #include <opendht/crypto.h>
 
@@ -77,18 +77,18 @@ public:
     void updateConversation(const dht::InfoHash& h, const std::string& conversationId);
 
     bool setCertificateStatus(const std::string& cert_id,
-                              const tls::TrustStore::PermissionStatus status);
+                              const dhtnet::tls::TrustStore::PermissionStatus status);
 
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              tls::TrustStore::PermissionStatus status,
+                              dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
 
-    tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const
+    dhtnet::tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const
     {
         return trust_->getCertificateStatus(cert_id);
     }
 
-    std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status) const
+    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status) const
     {
         return trust_->getCertificatesByStatus(status);
     }
@@ -157,7 +157,7 @@ private:
     // Trust store with account main certificate as the only CA
     dht::crypto::TrustList accountTrust_;
     // Trust store for to match peer certificates
-    std::unique_ptr<tls::TrustStore> trust_;
+    std::unique_ptr<dhtnet::tls::TrustStore> trust_;
     std::string path_;
     std::string accountUri_;
 

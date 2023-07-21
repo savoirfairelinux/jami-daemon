@@ -49,9 +49,11 @@ struct Certificate;
 }
 } // namespace dht
 
-namespace jami {
-
+namespace dhtnet {
 class ChannelSocket;
+} // namespace dhtnet
+
+namespace jami {
 class SIPAccountBase;
 using onShutdownCb = std::function<void(void)>;
 
@@ -140,7 +142,6 @@ private:
     TlsInfos tlsInfos_;
 };
 
-class IpAddr;
 class IceTransport;
 namespace tls {
 struct TlsParams;
@@ -155,19 +156,19 @@ public:
     SipTransportBroker(pjsip_endpoint* endpt);
     ~SipTransportBroker();
 
-    std::shared_ptr<SipTransport> getUdpTransport(const IpAddr&);
+    std::shared_ptr<SipTransport> getUdpTransport(const dhtnet::IpAddr&);
 
-    std::shared_ptr<TlsListener> getTlsListener(const IpAddr&, const pjsip_tls_setting*);
+    std::shared_ptr<TlsListener> getTlsListener(const dhtnet::IpAddr&, const pjsip_tls_setting*);
 
     std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&,
-                                                  const IpAddr& remote,
+                                                  const dhtnet::IpAddr& remote,
                                                   const std::string& remote_name = {});
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
     std::shared_ptr<SipTransport> getChanneledTransport(
         const std::shared_ptr<SIPAccountBase>& account,
-        const std::shared_ptr<ChannelSocket>& socket,
+        const std::shared_ptr<dhtnet::ChannelSocket>& socket,
         onShutdownCb&& cb);
 
     /**
@@ -188,7 +189,7 @@ private:
      * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
      * @return a pointer to the new transport
      */
-    std::shared_ptr<SipTransport> createUdpTransport(const IpAddr&);
+    std::shared_ptr<SipTransport> createUdpTransport(const dhtnet::IpAddr&);
 
     /**
      * List of transports so we can bubble the events up.
@@ -200,7 +201,7 @@ private:
      * Transports are stored in this map in order to retrieve them in case
      * several accounts would share the same port number.
      */
-    std::map<IpAddr, pjsip_transport*> udpTransports_;
+    std::map<dhtnet::IpAddr, pjsip_transport*> udpTransports_;
 
     pjsip_endpoint* endpt_;
     std::atomic_bool isDestroying_ {false};

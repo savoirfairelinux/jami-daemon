@@ -24,9 +24,11 @@
 #include "def.h"
 #include "jamidht/conversationrepository.h"
 
-namespace jami {
-
+namespace dhtnet {
 class ChannelSocket;
+}
+
+namespace jami {
 
 using onFetchedCb = std::function<void(const std::string&)>;
 
@@ -45,7 +47,7 @@ public:
      */
     GitServer(const std::string& accountId,
               const std::string& conversationId,
-              const std::shared_ptr<ChannelSocket>& client);
+              const std::shared_ptr<dhtnet::ChannelSocket>& client);
     ~GitServer();
 
     /**
