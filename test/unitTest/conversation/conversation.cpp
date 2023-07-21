@@ -37,7 +37,7 @@
 #include "fileutils.h"
 #include "jami.h"
 #include "manager.h"
-#include "connectivity/security/certstore.h"
+#include <dhtnet/certstore.h>
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;

@@ -583,6 +583,9 @@ dnl check for openDHT
 PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.3.2],,
   AC_MSG_FAILURE([Missing OpenDHT]))
 
+PKG_CHECK_MODULES([DHTNET], [dhtnet],,
+  AC_MSG_FAILURE([Missing DhtNet]))
+
 PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],,
   AC_MSG_FAILURE([Missing secp256k1]))
 

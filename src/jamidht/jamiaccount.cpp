@@ -30,7 +30,6 @@
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
 #include "jamidht/channeled_transport.h"
-#include "connectivity/multiplexed_socket.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "transfer_channel_handler.h"
@@ -41,7 +40,6 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 #include "connectivity/sip_utils.h"
-#include "connectivity/ice_transport.h"
 
 #include "uri.h"
 
@@ -49,12 +47,12 @@
 #include "jami/call_const.h"
 #include "jami/account_const.h"
 
-#include "connectivity/upnp/upnp_control.h"
 #include "system_codec_container.h"
 
 #include "account_schema.h"
 #include "manager.h"
 #include "connectivity/utf8_utils.h"
+#include "connectivity/ip_utils.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -69,11 +67,16 @@
 #include "archiver.h"
 #include "data_transfer.h"
 
-#include "connectivity/security/certstore.h"
 #include "libdevcrypto/Common.h"
 #include "base64.h"
 #include "vcard.h"
 #include "im/instant_messaging.h"
+
+#include <dhtnet/ice_transport.h>
+#include <dhtnet/ice_transport_factory.h>
+#include <dhtnet/upnp/upnp_control.h>
+#include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/certstore.h>
 
 #include <opendht/thread_pool.h>
 #include <opendht/peer_discovery.h>
@@ -127,7 +130,7 @@ struct TextMessageCtx
     DeviceId deviceId;
     uint64_t id;
     bool retryOnTimeout;
-    std::shared_ptr<ChannelSocket> channel;
+    std::shared_ptr<dhtnet::ChannelSocket> channel;
     bool onlyConnected;
     std::shared_ptr<PendingConfirmation> confirmation;
 };
@@ -266,22 +269,6 @@ dhtStatusStr(dht::NodeStatus status)
                : (status == dht::NodeStatus::Connecting ? "connecting" : "disconnected");
 }
 
-/**
- * Local ICE Transport factory helper
- *
- * JamiAccount must use this helper than direct IceTransportFactory API
- */
-template<class... Args>
-std::shared_ptr<IceTransport>
-JamiAccount::createIceTransport(const Args&... args)
-{
-    auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
-    if (!ice)
-        throw std::runtime_error("ICE transport creation failed");
-
-    return ice;
-}
-
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
     , dht_(new dht::DhtRunner)
@@ -290,7 +277,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
-    , certStore_ {std::make_unique<tls::CertificateStore>(accountId)}
+    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
 {}
 
 JamiAccount::~JamiAccount() noexcept
@@ -384,7 +371,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
-                or not call->initIceMediaTransport(true, std::forward<IceTransportOptions>(opts))) {
+                or not call->initIceMediaTransport(true, std::forward<dhtnet::IceTransportOptions>(opts))) {
                 return;
             }
         }
@@ -573,7 +560,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     }
 
     // TODO: for now, we automatically trust all explicitly called peers
-    setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
+    setCertificateStatus(toUri, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
 
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
@@ -644,7 +631,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             requestSIPConnection(toUri, deviceId, type, true, dev_call);
         };
 
-    std::vector<std::shared_ptr<ChannelSocket>> channels;
+    std::vector<std::shared_ptr<dhtnet::ChannelSocket>> channels;
     for (auto& [key, value] : sipConns_) {
         if (key.first != toUri)
             continue;
@@ -744,15 +731,15 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 void
 JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
                                      const std::string& to_id,
-                                     IpAddr target)
+                                     dhtnet::IpAddr target)
 {
     if (!call)
         return;
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
-    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
+    const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
 
-    IpAddr addrSdp = getPublishedSameasLocal()
+    dhtnet::IpAddr addrSdp = getPublishedSameasLocal()
                          ? localAddress
                          : connectionManager_->getPublishedIpAddress(target.getFamily());
 
@@ -801,7 +788,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 }
 
 bool
-JamiAccount::SIPStartCall(SIPCall& call, const IpAddr& target)
+JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
 {
     JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
 
@@ -898,12 +885,12 @@ JamiAccount::loadConfig()
     if (connectionManager_) {
         if (auto c = connectionManager_->getConfig()) {
             // Update connectionManager's config
-            c->upnpEnabled_ = config().upnpEnabled;
-            c->turnEnabled_ = config().turnEnabled;
-            c->turnServer_ = config().turnServer;
-            c->turnServerUserName_ = config().turnServerUserName;
-            c->turnServerPwd_ = config().turnServerPwd;
-            c->turnServerRealm_ = config().turnServerRealm;
+            c->upnpEnabled = config().upnpEnabled;
+            c->turnEnabled = config().turnEnabled;
+            c->turnServer = config().turnServer;
+            c->turnServerUserName = config().turnServerUserName;
+            c->turnServerPwd = config().turnServerPwd;
+            c->turnServerRealm = config().turnServerRealm;
         }
     }
     try {
@@ -1503,7 +1490,7 @@ JamiAccount::registerAsyncOps()
         dhtUpnpMapping_.setNotifyCallback([w = weak(),
                                            onLoad,
                                            update = std::make_shared<bool>(false)](
-                                              upnp::Mapping::sharedPtr_t mapRes) {
+                                              dhtnet::upnp::Mapping::sharedPtr_t mapRes) {
             if (auto accPtr = w.lock()) {
                 auto& dhtMap = accPtr->dhtUpnpMapping_;
                 const auto& accId = accPtr->getAccountID();
@@ -1519,9 +1506,9 @@ JamiAccount::registerAsyncOps()
                         // The connectivity must be restarted, if either:
                         // - the state changed to "OPEN",
                         // - the state changed to "FAILED" and the mapping was in use.
-                        if (mapRes->getState() == upnp::MappingState::OPEN
-                            or (mapRes->getState() == upnp::MappingState::FAILED
-                                and dhtMap.getState() == upnp::MappingState::OPEN)) {
+                        if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN
+                            or (mapRes->getState() == dhtnet::upnp::MappingState::FAILED
+                                and dhtMap.getState() == dhtnet::upnp::MappingState::OPEN)) {
                             // Update the mapping and restart the registration.
                             dhtMap.updateFrom(mapRes);
 
@@ -1541,7 +1528,7 @@ JamiAccount::registerAsyncOps()
                 } else {
                     *update = true;
                     // Set connection info and load the account.
-                    if (mapRes->getState() == upnp::MappingState::OPEN) {
+                    if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
                         dhtMap.updateFrom(mapRes);
                         JAMI_LOG(
                             "[Account {:s}] Mapping {:s} successfully allocated: starting the DHT",
@@ -1899,7 +1886,7 @@ JamiAccount::doRegister_()
                         channelHandlers_[Uri::Scheme::SYNC]
                             ->connect(crt->getLongId(),
                                       "",
-                                      [this](std::shared_ptr<ChannelSocket> socket,
+                                      [this](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                              const DeviceId& deviceId) {
                                           if (socket)
                                               syncModule()->syncWith(deviceId, socket);
@@ -1940,7 +1927,7 @@ JamiAccount::doRegister_()
         connectionManager_->onICERequest([this](const DeviceId& deviceId) {
             std::promise<bool> accept;
             std::future<bool> fut = accept.get_future();
-            connectionManager_->findCertificate(
+            accountManager_->findCertificate(
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
@@ -1985,7 +1972,7 @@ JamiAccount::doRegister_()
             });
         connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
-                                                     std::shared_ptr<ChannelSocket> channel) {
+                                                     std::shared_ptr<dhtnet::ChannelSocket> channel) {
             if (channel) {
                 auto cert = channel->peerCertificate();
                 if (!cert || !cert->issuer)
@@ -2162,7 +2149,7 @@ JamiAccount::convModule()
                     shared->connectionManager_->connectDevice(
                         DeviceId(deviceId),
                         "git://" + deviceId + "/" + convId,
-                        [shared, cb, convId](std::shared_ptr<ChannelSocket> socket,
+                        [shared, cb, convId](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                              const DeviceId&) {
                             if (socket) {
                                 socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
@@ -2195,7 +2182,7 @@ JamiAccount::convModule()
                         shared->connectionManager_->connectDevice(
                             DeviceId(deviceId),
                             fmt::format("swarm://{}", convId),
-                            [w, cb](std::shared_ptr<ChannelSocket> socket,
+                            [w, cb](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                     const DeviceId& deviceId) {
                                 if (socket) {
                                     auto shared = w.lock();
@@ -2204,7 +2191,7 @@ JamiAccount::convModule()
                                     auto remoteCert = socket->peerCertificate();
                                     auto uri = remoteCert->issuer->getId().toString();
                                     if (shared->accountManager()->getCertificateStatus(uri)
-                                        == tls::TrustStore::PermissionStatus::BANNED) {
+                                        == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
                                         cb(nullptr);
                                         return;
                                     }
@@ -2388,8 +2375,8 @@ JamiAccount::findCertificate(
     const dht::InfoHash& h,
     std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    if (connectionManager_)
-        return connectionManager_->findCertificate(h, std::move(cb));
+    if (accountManager_)
+        return accountManager_->findCertificate(h, std::move(cb));
     return false;
 }
 
@@ -2397,35 +2384,35 @@ bool
 JamiAccount::findCertificate(
     const dht::PkId& id, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    if (connectionManager_)
-        return connectionManager_->findCertificate(id, std::move(cb));
+    if (accountManager_)
+        return accountManager_->findCertificate(id, std::move(cb));
     return false;
 }
 
 bool
 JamiAccount::findCertificate(const std::string& crt_id)
 {
-    if (connectionManager_)
-        return connectionManager_->findCertificate(dht::InfoHash(crt_id));
+    if (accountManager_)
+        return accountManager_->findCertificate(dht::InfoHash(crt_id));
     return false;
 }
 
 bool
 JamiAccount::setCertificateStatus(const std::string& cert_id,
-                                  tls::TrustStore::PermissionStatus status)
+                                  dhtnet::tls::TrustStore::PermissionStatus status)
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
         findCertificate(cert_id);
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
-            getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
+            getAccountID(), cert_id, dhtnet::tls::TrustStore::statusToStr(status));
     }
     return done;
 }
 
 bool
 JamiAccount::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                                  tls::TrustStore::PermissionStatus status,
+                                  dhtnet::tls::TrustStore::PermissionStatus status,
                                   bool local)
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert, status, local)
@@ -2433,13 +2420,13 @@ JamiAccount::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& ce
     if (done) {
         findCertificate(cert->getId().toString());
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(
-            getAccountID(), cert->getId().toString(), tls::TrustStore::statusToStr(status));
+            getAccountID(), cert->getId().toString(), dhtnet::tls::TrustStore::statusToStr(status));
     }
     return done;
 }
 
 std::vector<std::string>
-JamiAccount::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
+JamiAccount::getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status)
 {
     if (accountManager_)
         return accountManager_->getCertificatesByStatus(status);
@@ -2672,8 +2659,8 @@ JamiAccount::generateDhParams()
 {
     // make sure cachePath_ is writable
     fileutils::check_dir(cachePath_.c_str(), 0700);
-    dhParams_ = dht::ThreadPool::computation().get<tls::DhParams>(
-        std::bind(tls::DhParams::loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
+    dhParams_ = dht::ThreadPool::computation().get<dhtnet::tls::DhParams>(
+        std::bind(dhtnet::tls::DhParams::loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
 }
 
 MatchRank
@@ -3318,7 +3305,7 @@ JamiAccount::onIsComposing(const std::string& conversationId,
     }
 }
 
-IceTransportOptions
+dhtnet::IceTransportOptions
 JamiAccount::getIceOptions() const noexcept
 {
     return connectionManager_->getIceOptions();
@@ -3667,7 +3654,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
     connectionManager_->connectDevice(
         deviceId,
         "sip",
-        [w = weak(), id = std::move(id), pc = std::move(pc)](std::shared_ptr<ChannelSocket> socket,
+        [w = weak(), id = std::move(id), pc = std::move(pc)](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                              const DeviceId&) {
             if (socket)
                 return;
@@ -3709,7 +3696,7 @@ JamiAccount::sendProfile(const std::string& convId,
                  0,
                  currentSha3,
                  fileutils::lastWriteTimeInSeconds(profilePath()),
-                 std::move([accId = getAccountID(), peerUri, deviceId]() {
+                 [accId = getAccountID(), peerUri, deviceId]() {
                      // Mark the VCard as sent
                      auto sendDir = fmt::format("{}/{}/vcard/{}",
                                                 fileutils::get_cache_dir(),
@@ -3721,7 +3708,7 @@ JamiAccount::sendProfile(const std::string& convId,
                      if (fileutils::isFile(path))
                          return;
                      fileutils::ofstream(path);
-                 }));
+                 });
 }
 
 bool
@@ -3856,7 +3843,7 @@ JamiAccount::profilePath() const
 }
 
 void
-JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
+JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                                 const std::string& peerId,
                                 const DeviceId& deviceId)
 {
@@ -3928,7 +3915,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
 }
 
 void
-JamiAccount::shutdownSIPConnection(const std::shared_ptr<ChannelSocket>& channel,
+JamiAccount::shutdownSIPConnection(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                                    const std::string& peerId,
                                    const DeviceId& deviceId)
 {
@@ -4069,7 +4056,7 @@ JamiAccount::transferFile(const std::string& conversationId,
                          interactionId,
                          start,
                          end,
-                         onFinished = std::move(onFinished)](std::shared_ptr<ChannelSocket> socket,
+                         onFinished = std::move(onFinished)](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                                              const DeviceId&) {
                             if (!socket)
                                 return;
@@ -4121,7 +4108,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         connectionManager_->connectDevice(
             did,
             channelName,
-            [this, conversationId, fileId, interactionId](std::shared_ptr<ChannelSocket> channel,
+            [this, conversationId, fileId, interactionId](std::shared_ptr<dhtnet::ChannelSocket> channel,
                                                           const DeviceId&) {
                 if (!channel)
                     return;
@@ -4176,7 +4163,7 @@ JamiAccount::askForProfile(const std::string& conversationId,
     connectionManager_->connectDevice(
         DeviceId(deviceId),
         channelName,
-        [this, conversationId](std::shared_ptr<ChannelSocket> channel, const DeviceId&) {
+        [this, conversationId](std::shared_ptr<dhtnet::ChannelSocket> channel, const DeviceId&) {
             if (!channel)
                 return;
             dht::ThreadPool::io().run([w = weak(), conversationId, channel] {
@@ -4192,18 +4179,22 @@ void
 JamiAccount::initConnectionManager()
 {
     if (!connectionManager_) {
-        auto connectionManagerConfig
-            = std::make_shared<ConnectionManager::Config>(dht(),
-                                                          identity(),
-                                                          certStore(),
-                                                          upnpCtrl_,
-                                                          config().turnServer,
-                                                          config().turnServerUserName,
-                                                          config().turnServerPwd,
-                                                          config().turnServerRealm,
-                                                          config().turnEnabled);
+        auto connectionManagerConfig = std::make_shared<dhtnet::ConnectionManager::Config>();
+        connectionManagerConfig->ioContext = Manager::instance().ioContext();
+        connectionManagerConfig->dht = dht();
+        connectionManagerConfig->certStore = certStore_.get();
+        connectionManagerConfig->id = identity();
+        connectionManagerConfig->turnCache = turnCache_;
+        connectionManagerConfig->upnpCtrl = upnpCtrl_;
+        connectionManagerConfig->turnServer = config().turnServer;
+        connectionManagerConfig->turnServerUserName = config().turnServerUserName;
+        connectionManagerConfig->turnServerPwd = config().turnServerPwd;
+        connectionManagerConfig->turnServerRealm = config().turnServerRealm;
+        connectionManagerConfig->turnEnabled = config().turnEnabled;
         connectionManagerConfig->cachePath = cachePath_;
-        connectionManager_ = std::make_unique<ConnectionManager>(connectionManagerConfig);
+        connectionManagerConfig->logger = Logger::dhtLogger();
+        connectionManagerConfig->factory = &Manager::instance().getIceTransportFactory();
+        connectionManager_ = std::make_unique<dhtnet::ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::SWARM]
             = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT]

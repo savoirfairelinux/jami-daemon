@@ -21,9 +21,9 @@
 #pragma once
 
 #include "jamidht/channel_handler.h"
-#include "connectivity/connectionmanager.h"
 #include "jamidht/conversation_channel_handler.h"
 
+#include <dhtnet/multiplexed_socket.h>
 #include "logger.h"
 
 namespace jami {
@@ -38,7 +38,7 @@ class JamiAccount;
 class SwarmChannelHandler : public ChannelHandlerInterface
 {
 public:
-    SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, ConnectionManager& cm);
+    SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm);
     ~SwarmChannelHandler();
 
 #ifdef LIBJAMI_TESTABLE
@@ -67,11 +67,11 @@ public:
      */
     void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
-                 std::shared_ptr<ChannelSocket> channel) override;
+                 std::shared_ptr<dhtnet::ChannelSocket> channel) override;
 
 private:
     std::weak_ptr<JamiAccount> account_;
-    ConnectionManager& connectionManager_;
+    dhtnet::ConnectionManager& connectionManager_;
 };
 
 } // namespace jami

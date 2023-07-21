@@ -20,9 +20,9 @@
 
 #include "sync_module.h"
 
-#include "connectivity/multiplexed_socket.h"
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
+#include <dhtnet/multiplexed_socket.h>
 
 namespace jami {
 
@@ -35,7 +35,7 @@ public:
 
     // Sync connections
     std::recursive_mutex syncConnectionsMtx_;
-    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<ChannelSocket>>> syncConnections_;
+    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> syncConnections_;
 
     std::weak_ptr<Impl> weak() { return std::static_pointer_cast<Impl>(shared_from_this()); }
 
@@ -43,7 +43,7 @@ public:
      * Build SyncMsg and send it on socket
      * @param socket
      */
-    void syncInfos(const std::shared_ptr<ChannelSocket>& socket,
+    void syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                    const std::shared_ptr<SyncMsg>& syncMsg);
 };
 
@@ -52,7 +52,7 @@ SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
 {}
 
 void
-SyncModule::Impl::syncInfos(const std::shared_ptr<ChannelSocket>& socket,
+SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                             const std::shared_ptr<SyncMsg>& syncMsg)
 {
     auto acc = account_.lock();
@@ -151,7 +151,7 @@ SyncModule::SyncModule(std::weak_ptr<JamiAccount>&& account)
 {}
 
 void
-SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
+SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                                 const std::string& peerId,
                                 const DeviceId& device)
 {
@@ -199,7 +199,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<ChannelSocket>&& socket,
 
 void
 SyncModule::syncWith(const DeviceId& deviceId,
-                     const std::shared_ptr<ChannelSocket>& socket,
+                     const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                      const std::shared_ptr<SyncMsg>& syncMsg)
 {
     if (!socket)
