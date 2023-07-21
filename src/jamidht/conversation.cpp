@@ -570,13 +570,13 @@ public:
         return {};
     }
 
-    std::shared_ptr<ChannelSocket> gitSocket(const DeviceId& deviceId) const
+    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
         return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
     }
 
-    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket)
     {
         gitSocketList_[deviceId] = socket;
     }
@@ -825,14 +825,14 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
     });
 }
 
-std::shared_ptr<ChannelSocket>
+std::shared_ptr<dhtnet::ChannelSocket>
 Conversation::gitSocket(const DeviceId& deviceId) const
 {
     return pimpl_->gitSocket(deviceId);
 }
 
 void
-Conversation::addGitSocket(const DeviceId& deviceId, const std::shared_ptr<ChannelSocket>& socket)
+Conversation::addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket)
 {
     pimpl_->addGitSocket(deviceId, socket);
 }
@@ -1930,7 +1930,7 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
     };
 }
 void
-Conversation::addSwarmChannel(std::shared_ptr<ChannelSocket> channel)
+Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     pimpl_->swarmManager_->addChannel(std::move(channel));
 }
