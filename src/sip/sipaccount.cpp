@@ -55,11 +55,13 @@
 
 #include "system_codec_container.h"
 
-#include "connectivity/upnp/upnp_control.h"
-#include "connectivity/ip_utils.h"
+
 #include "string_utils.h"
 
 #include "im/instant_messaging.h"
+
+#include <dhtnet/ip_utils.h>
+#include <dhtnet/upnp/upnp_control.h>
 
 #include <opendht/crypto.h>
 
@@ -183,15 +185,15 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         throw std::runtime_error("Failed to create the call");
 
     if (isIP2IP()) {
-        bool ipv6 = IpAddr::isIpv6(toUrl);
-        to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
+        bool ipv6 = dhtnet::IpAddr::isIpv6(toUrl);
+        to = ipv6 ? dhtnet::IpAddr(toUrl).toString(false, true) : toUrl;
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
         std::shared_ptr<SipTransport> t
             = isTlsEnabled()
                   ? link_.sipTransportBroker->getTlsTransport(tlsListener_,
-                                                              IpAddr(sip_utils::getHostFromUri(to)))
+                                                              dhtnet::IpAddr(sip_utils::getHostFromUri(to)))
                   : transport_;
         setTransport(t);
         call->setSipTransport(t, getContactHeader());
@@ -219,9 +221,9 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
     call->setPeerNumber(toUri);
     call->setPeerUri(toUri);
 
-    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
+    const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), family);
 
-    IpAddr addrSdp;
+    dhtnet::IpAddr addrSdp;
     if (getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         addrSdp = getPublishedSameasLocal() ? getUPnPIpAddress() : getPublishedIpAddress();
@@ -477,12 +479,12 @@ SIPAccount::getVolatileAccountDetails() const
 bool
 SIPAccount::mapPortUPnP()
 {
-    upnp::Mapping map(upnp::PortType::UDP, config().publishedPort, config().localPort);
-    map.setNotifyCallback([w = weak()](upnp::Mapping::sharedPtr_t mapRes) {
+    dhtnet::upnp::Mapping map(dhtnet::upnp::PortType::UDP, config().publishedPort, config().localPort);
+    map.setNotifyCallback([w = weak()](dhtnet::upnp::Mapping::sharedPtr_t mapRes) {
         if (auto accPtr = w.lock()) {
             auto oldPort = static_cast<in_port_t>(accPtr->publishedPortUsed_);
-            bool success = mapRes->getState() == upnp::MappingState::OPEN
-                           or mapRes->getState() == upnp::MappingState::IN_PROGRESS;
+            bool success = mapRes->getState() == dhtnet::upnp::MappingState::OPEN
+                           or mapRes->getState() == dhtnet::upnp::MappingState::IN_PROGRESS;
             auto newPort = success ? mapRes->getExternalPort() : accPtr->config().publishedPort;
             if (not success and not accPtr->isRegistered()) {
                 JAMI_WARNING(
@@ -513,7 +515,7 @@ SIPAccount::mapPortUPnP()
     });
 
     auto mapRes = upnpCtrl_->reserveMapping(map);
-    if (mapRes and mapRes->getState() == upnp::MappingState::OPEN) {
+    if (mapRes and mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
         return true;
     }
 
@@ -589,7 +591,7 @@ SIPAccount::doRegister1_()
 
     link_.resolveSrvName(hasServiceRoute() ? getServiceRoute() : config().hostname,
                          config().tlsEnable ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
-                         [w = weak()](std::vector<IpAddr> host_ips) {
+                         [w = weak()](std::vector<dhtnet::IpAddr> host_ips) {
                              if (auto acc = w.lock()) {
                                  std::lock_guard<std::recursive_mutex> lock(
                                      acc->configurationMutex_);
@@ -614,7 +616,7 @@ SIPAccount::doRegister2_()
         return;
     }
 
-    IpAddr bindAddress = createBindingAddress();
+    dhtnet::IpAddr bindAddress = createBindingAddress();
     if (not bindAddress) {
         setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
         JAMI_ERROR("Can't compute address to bind.");
@@ -1096,9 +1098,9 @@ SIPAccount::hostnameMatch(std::string_view hostname) const
 {
     if (hostname == config().hostname)
         return true;
-    const auto a = ip_utils::getAddrList(hostname);
-    const auto b = ip_utils::getAddrList(config().hostname);
-    return ip_utils::haveCommonAddr(a, b);
+    const auto a = dhtnet::ip_utils::getAddrList(hostname);
+    const auto b = dhtnet::ip_utils::getAddrList(config().hostname);
+    return dhtnet::ip_utils::haveCommonAddr(a, b);
 }
 
 bool
@@ -1106,9 +1108,9 @@ SIPAccount::proxyMatch(std::string_view hostname) const
 {
     if (hostname == config().serviceRoute)
         return true;
-    const auto a = ip_utils::getAddrList(hostname);
-    const auto b = ip_utils::getAddrList(config().hostname);
-    return ip_utils::haveCommonAddr(a, b);
+    const auto a = dhtnet::ip_utils::getAddrList(hostname);
+    const auto b = dhtnet::ip_utils::getAddrList(config().hostname);
+    return dhtnet::ip_utils::haveCommonAddr(a, b);
 }
 
 std::string
@@ -1153,8 +1155,8 @@ SIPAccount::getFromUri() const
         hostname = sip_utils::as_view(*pj_gethostname());
     }
 
-    if (IpAddr::isIpv6(hostname))
-        hostname = IpAddr(hostname).toString(false, true);
+    if (dhtnet::IpAddr::isIpv6(hostname))
+        hostname = dhtnet::IpAddr(hostname).toString(false, true);
 
     std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
     if (not conf.displayName.empty())
@@ -1184,8 +1186,8 @@ SIPAccount::getToUri(const std::string& username) const
     if (username.find('@') == std::string::npos)
         hostname = config().hostname;
 
-    if (not hostname.empty() and IpAddr::isIpv6(hostname))
-        hostname = IpAddr(hostname).toString(false, true);
+    if (not hostname.empty() and dhtnet::IpAddr::isIpv6(hostname))
+        hostname = dhtnet::IpAddr(hostname).toString(false, true);
 
     auto ltSymbol = username.find('<') == std::string::npos ? "<" : "";
     auto gtSymbol = username.find('>') == std::string::npos ? ">" : "";
@@ -1209,15 +1211,15 @@ SIPAccount::getServerUri() const
     }
 
     std::string host;
-    if (IpAddr::isIpv6(config().hostname))
-        host = IpAddr(config().hostname).toString(false, true);
+    if (dhtnet::IpAddr::isIpv6(config().hostname))
+        host = dhtnet::IpAddr(config().hostname).toString(false, true);
     else
         host = config().hostname;
 
     return "<" + scheme + host + transport + ">";
 }
 
-IpAddr
+dhtnet::IpAddr
 SIPAccount::getContactAddress() const
 {
     std::lock_guard<std::mutex> lock(contactMutex_);
@@ -1319,7 +1321,7 @@ SIPAccount::initContactAddress()
     }
 
     std::lock_guard<std::mutex> lock(contactMutex_);
-    contactAddress_ = IpAddr(address);
+    contactAddress_ = dhtnet::IpAddr(address);
     contactAddress_.setPort(port);
 
     return contactAddress_;
@@ -1582,8 +1584,8 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     const pj_str_t* via_addr = via->recvd_param.slen != 0 ? &via->recvd_param : &via->sent_by.host;
     std::string via_addrstr(sip_utils::as_view(*via_addr));
     /* Enclose IPv6 address in square brackets */
-    if (IpAddr::isIpv6(via_addrstr))
-        via_addrstr = IpAddr(via_addrstr).toString(false, true);
+    if (dhtnet::IpAddr::isIpv6(via_addrstr))
+        via_addrstr = dhtnet::IpAddr(via_addrstr).toString(false, true);
 
     JAMI_DBG("Checking received VIA address: %s", via_addrstr.c_str());
 
@@ -1598,10 +1600,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     // Set published Ip address
-    setPublishedAddress(IpAddr(via_addrstr));
+    setPublishedAddress(dhtnet::IpAddr(via_addrstr));
 
     /* Compare received and rport with the URI in our registration */
-    IpAddr contact_addr = getContactAddress();
+    dhtnet::IpAddr contact_addr = getContactAddress();
 
     // TODO. Why note save the port in contact uri/header?
     if (contact_addr.getPort() == 0) {
@@ -1614,7 +1616,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
      * (http://trac.pjsip.org/repos/ticket/863)
      */
     bool matched = false;
-    IpAddr recv_addr {};
+    dhtnet::IpAddr recv_addr {};
     auto status = pj_sockaddr_parse(pj_AF_UNSPEC(), 0, via_addr, recv_addr.pjPtr());
     recv_addr.setPort(rport);
     if (status == PJ_SUCCESS) {
@@ -1632,7 +1634,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     /* Get server IP */
-    IpAddr srv_ip = {std::string_view(param->rdata->pkt_info.src_name)};
+    dhtnet::IpAddr srv_ip = {std::string_view(param->rdata->pkt_info.src_name)};
 
     /* At this point we've detected that the address as seen by registrar.
      * has changed.
@@ -1964,17 +1966,17 @@ SIPAccount::getUserUri() const
     return getFromUri();
 }
 
-IpAddr
+dhtnet::IpAddr
 SIPAccount::createBindingAddress()
 {
     auto family = hostIp_ ? hostIp_.getFamily() : PJ_AF_INET;
     const auto& conf = config();
 
-    IpAddr ret = conf.bindAddress.empty()
-                     ? (conf.interface == ip_utils::DEFAULT_INTERFACE || conf.interface.empty()
-                            ? ip_utils::getAnyHostAddr(family)
-                            : ip_utils::getInterfaceAddr(getLocalInterface(), family))
-                     : IpAddr(conf.bindAddress, family);
+    dhtnet::IpAddr ret = conf.bindAddress.empty()
+                     ? (conf.interface == dhtnet::ip_utils::DEFAULT_INTERFACE || conf.interface.empty()
+                            ? dhtnet::ip_utils::getAnyHostAddr(family)
+                            : dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), family))
+                     : dhtnet::IpAddr(conf.bindAddress, family);
 
     if (ret.getPort() == 0) {
         ret.setPort(conf.tlsEnable ? conf.tlsListenerPort : conf.localPort);

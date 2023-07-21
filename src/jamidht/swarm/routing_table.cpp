@@ -19,8 +19,9 @@
  */
 
 #include "routing_table.h"
-#include "connectivity/multiplexed_socket.h"
-#include "opendht/infohash.h"
+
+#include <dhtnet/multiplexed_socket.h>
+#include <opendht/infohash.h>
 
 #include <math.h>
 #include <stdio.h>
@@ -41,9 +42,9 @@ Bucket::Bucket(const NodeId& id)
 {}
 
 bool
-Bucket::addNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+Bucket::addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
-    return addNode(std::move(NodeInfo(socket)));
+    return addNode(NodeInfo(socket));
 }
 
 bool
@@ -157,7 +158,7 @@ Bucket::getKnownNodesRandom(unsigned numberNodes, std::mt19937_64& rd) const
 }
 
 asio::steady_timer&
-Bucket::getNodeTimer(const std::shared_ptr<ChannelSocketInterface>& socket)
+Bucket::getNodeTimer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
     auto node = nodes.find(socket->deviceId());
     if (node == nodes.end()) {
@@ -235,10 +236,10 @@ Bucket::changeMobility(const NodeId& nodeId, bool isMobile)
 
 // For tests
 
-std::set<std::shared_ptr<ChannelSocketInterface>>
+std::set<std::shared_ptr<dhtnet::ChannelSocketInterface>>
 Bucket::getNodeSockets() const
 {
-    std::set<std::shared_ptr<ChannelSocketInterface>> sockets;
+    std::set<std::shared_ptr<dhtnet::ChannelSocketInterface>> sockets;
     for (auto const& info : nodes)
         sockets.insert(info.second.socket);
     return sockets;
@@ -252,14 +253,14 @@ RoutingTable::RoutingTable()
 }
 
 bool
-RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& socket)
+RoutingTable::addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
     auto bucket = findBucket(socket->deviceId());
     return addNode(socket, bucket);
 }
 
 bool
-RoutingTable::addNode(const std::shared_ptr<ChannelSocketInterface>& channel,
+RoutingTable::addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel,
                       std::list<Bucket>::iterator& bucket)
 {
     NodeId nodeId = channel->deviceId();

@@ -16,18 +16,8 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <cppunit/TestAssert.h>
-#include <cppunit/TestFixture.h>
-#include <cppunit/extensions/HelperMacros.h>
-
-#include <condition_variable>
-#include <string>
-#include <fstream>
-#include <streambuf>
-
 #include "manager.h"
 #include "jamidht/conversationrepository.h"
-#include "connectivity/connectionmanager.h"
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
@@ -38,6 +28,17 @@
 #include "common.h"
 
 #include <git2.h>
+
+#include <dhtnet/connectionmanager.h>
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <condition_variable>
+#include <string>
+#include <fstream>
+#include <streambuf>
 #include <filesystem>
 
 using namespace std::string_literals;
