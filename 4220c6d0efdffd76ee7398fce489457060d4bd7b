@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "90a25d47_b8554061",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2023-07-21T21:55:37Z",
+      "side": 1,
+      "message": "Thank you for your response.\n\nIf you use a variable and/or string name, `diacritics` (superset) seems more appropriate than `accents` (subset).\n\nhttps://transvision.mozfr.org/?recherche\u003ddiacritics\u0026repo\u003dall_projects\u0026sourcelocale\u003den-US\u0026locale\u003dfr\u0026search_type\u003dstrings\n\nhttps://en.wikipedia.org/wiki/Diacritic\n\nUnfortunately, don’t have JAMS nor have an account on JAMS so are unable to test JAMS functionality, features and translations.",
+      "parentUuid": "42706ffe_a3f946d9",
+      "revId": "4220c6d0efdffd76ee7398fce489457060d4bd7b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "12534704_b96434a5",
