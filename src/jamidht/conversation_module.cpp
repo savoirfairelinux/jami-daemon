@@ -2680,14 +2680,13 @@ ConversationModule::addConvInfo(const ConvInfo& info)
 }
 
 void
-ConversationModule::setConversationMembers(const std::string& convId,
+ConversationModule::Impl::setConversationMembers(const std::string& convId,
                                            const std::vector<std::string>& members)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
-    auto convIt = pimpl_->convInfos_.find(convId);
-    if (convIt != pimpl_->convInfos_.end()) {
-        convIt->second.members = members;
-        pimpl_->saveConvInfos();
+    if (auto conv = getConversation(convId)) {
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        conv->info.members = members;
+        addConvInfo(conv->info);
     }
 }
 

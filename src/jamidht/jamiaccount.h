@@ -451,10 +451,6 @@ public:
 
     std::string_view currentDeviceId() const;
 
-    // Member management
-    void saveMembers(const std::string& convId,
-                     const std::vector<std::string>& members); // Save confInfos
-
     // Received a new commit notification
 
     bool handleMessage(const std::string& from,
