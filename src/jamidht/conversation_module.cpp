@@ -72,16 +72,10 @@ struct SyncedConversation {
         if (pending) {
             if (pending->ready)
                 return false; // Already doing stuff
-            // if (pending->deviceId == deviceId)
-            //     return false; // Already fetching
-            if (pending->connectingTo.find(deviceId) != pending->connectingTo.end())
-                return false; // Already connecting to this device
         } else {
             pending = std::make_unique<PendingConversationFetch>();
-            pending->connectingTo.insert(deviceId);
-            return true;
         }
-        return true;
+        return pending->connectingTo.insert(deviceId).second;
     }
 
     void stopFetch(const std::string& deviceId)
