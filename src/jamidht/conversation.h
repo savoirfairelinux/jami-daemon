@@ -111,7 +111,13 @@ struct ConvInfo
     std::string lastDisplayed {};
 
     ConvInfo() = default;
-    ConvInfo(const Json::Value& json);
+    ConvInfo(const ConvInfo&) = default;
+    ConvInfo(ConvInfo&&) = default;
+    ConvInfo(const std::string& id) : id(id) {};
+    explicit ConvInfo(const Json::Value& json);
+
+    ConvInfo& operator=(const ConvInfo&) = default;
+    ConvInfo& operator=(ConvInfo&&) = default;
 
     Json::Value toJson() const;
 
