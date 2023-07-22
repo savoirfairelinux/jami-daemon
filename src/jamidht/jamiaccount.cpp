@@ -3461,13 +3461,6 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
     config_->activeCodecs = getActiveCodecs(MEDIA_ALL);
 }
 
-// Member management
-void
-JamiAccount::saveMembers(const std::string& convId, const std::vector<std::string>& members)
-{
-    convModule()->setConversationMembers(convId, members);
-}
-
 void
 JamiAccount::sendInstantMessage(const std::string& convId,
                                 const std::map<std::string, std::string>& msg)
