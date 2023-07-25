@@ -41,6 +41,7 @@ constexpr std::string_view PATH_DEVICE = JAMI_PATH_AUTH "/device";
 constexpr std::string_view PATH_DEVICES = JAMI_PATH_AUTH "/devices";
 constexpr std::string_view PATH_SEARCH = JAMI_PATH_AUTH "/directory/search";
 constexpr std::string_view PATH_CONTACTS = JAMI_PATH_AUTH "/contacts";
+constexpr std::string_view PATH_BLUEPRINT = JAMI_PATH_AUTH "/policyData";
 
 ServerAccountManager::ServerAccountManager(const std::string& path,
                                            OnAsync&& onAsync,
@@ -467,6 +468,38 @@ ServerAccountManager::syncDevices()
         logger_));
 }
 
+void
+ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
+{
+    auto syncBlueprintCallback = std::make_shared<SyncBlueprintCallback>(onSuccess);
+    const std::string urlBlueprints = managerHostname_ + PATH_BLUEPRINT;
+    JAMI_DEBUG("[Auth] synchronize blueprint configuration {}", urlBlueprints);
+    sendDeviceRequest(std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        urlBlueprints,
+        [syncBlueprintCallback, onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
+            onAsync([=](AccountManager& accountManager) {
+                JAMI_DEBUG("[Auth] Got sync request callback with status code={}", response.status_code);
+                auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+                if (response.status_code >= 200 && response.status_code < 300) {
+                    try {
+                        std::map<std::string, std::string> config;
+                        for (auto itr = json.begin(); itr != json.end(); ++itr) {
+                            const auto& name = itr.name();
+                            config.emplace(name, itr->asString());
+                        }
+                        (*syncBlueprintCallback)(config);
+                    } catch (const std::exception& e) {
+                        JAMI_ERROR("Error when iterating blueprint config json: {}", e.what());
+                    }
+                } else if (response.status_code == 401)
+                    this_.authError(TokenScope::Device);
+                this_.clearRequest(response.request);
+            });
+        },
+        logger_));
+}
+
 bool
 ServerAccountManager::revokeDevice(const std::string& password,
                                    const std::string& device,
@@ -517,7 +550,6 @@ ServerAccountManager::registerName(const std::string&, const std::string&, Regis
 bool
 ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
 {
-    // TODO escape url query
     const std::string url = managerHostname_ + PATH_SEARCH + "?queryString=" + query;
     JAMI_WARN("[Search] Searching user %s at %s", query.c_str(), url.c_str());
     sendDeviceRequest(std::make_shared<Request>(

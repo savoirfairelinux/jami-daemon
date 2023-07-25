@@ -1212,6 +1212,15 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
             convModule()->loadConversations();
+            if (!conf.managerUri.empty()) {
+                if (accountManager_ == nullptr) {
+                    return;
+                }
+                dynamic_cast<ServerAccountManager*>(accountManager_.get())
+                    ->syncBlueprintConfig([this](const std::map<std::string, std::string>& config) {
+                        editConfig([&](JamiAccountConfig& conf) { conf.fromMap(config); });
+                    });
+            }
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
