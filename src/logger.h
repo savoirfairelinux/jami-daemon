@@ -121,11 +121,13 @@ public:
     LIBJAMI_PUBLIC
     static void write(int level, const char* file, int line, std::string&& message);
 
-    static inline void writeDht(dht::log::LogLevel level, std::string&& message) {
-        write(dhtLevel(level), nullptr, 0, std::move(message));
+    static inline void writeDht(dht::log::LogLevel level, std::string&& message, const char* name = nullptr) {
+        write(dhtLevel(level), name, 0, std::move(message));
     }
-    static inline std::shared_ptr<dht::log::Logger> dhtLogger() {
-        return std::make_shared<dht::Logger>(&Logger::writeDht);
+    static inline std::shared_ptr<dht::log::Logger> dhtLogger(const char* name = nullptr) {
+        return std::make_shared<dht::Logger>([name](dht::log::LogLevel level, std::string&& message) {
+            writeDht(level, std::move(message), name);
+        });
     }
 
     ///
