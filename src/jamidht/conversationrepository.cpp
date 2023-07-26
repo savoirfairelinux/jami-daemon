@@ -1187,9 +1187,6 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
                                               const std::string& commitId,
                                               const std::string& parentId) const
 {
-    auto userUri = uriFromDevice(userDevice);
-    if (userUri.empty())
-        return false;
     // Check no other files changed
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     auto invitedFile = fmt::format("invited/{}", uriMember);
@@ -1213,27 +1210,47 @@ ConversationRepository::Impl::checkValidJoins(const std::string& userDevice,
 
     // Check /invited
     if (fileAtTree(invitedFile, treeNew)) {
-        JAMI_ERROR("{} invited not removed", userUri);
+        JAMI_ERROR("{} invited not removed", uriMember);
         return false;
     }
     if (!fileAtTree(invitedFile, treeOld)) {
-        JAMI_ERROR("{} invited not found", userUri);
+        JAMI_ERROR("{} invited not found", uriMember);
         return false;
     }
 
     // Check /members added
     if (!fileAtTree(membersFile, treeNew)) {
-        JAMI_ERROR("{} members not found", userUri);
+        JAMI_ERROR("{} members not found", uriMember);
         return false;
     }
     if (fileAtTree(membersFile, treeOld)) {
-        JAMI_ERROR("{} members found too soon", userUri);
+        JAMI_ERROR("{} members found too soon", uriMember);
         return false;
     }
 
     // Check /devices added
     if (!fileAtTree(deviceFile, treeNew)) {
-        JAMI_ERROR("{} devices not found", userUri);
+        JAMI_ERROR("{} devices not found", uriMember);
+        return false;
+    }
+
+    // Check certificate
+    auto blob_device = fileAtTree(deviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", deviceFile);
+        return false;
+    }
+    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
+    auto deviceCert = dht::crypto::Certificate(as_view(blob));
+    auto blob_member = fileAtTree(membersFile, treeNew);
+    if (!blob_member) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    blob = reinterpret_cast<git_blob*>(blob_member.get());
+    auto memberCert = dht::crypto::Certificate(as_view(blob));
+    if (memberCert.getId().toString() != deviceCert.getIssuerUID() || deviceCert.getIssuerUID() != uriMember) {
+        JAMI_ERROR("Incorrect device certificate {} for user {}", userDevice, uriMember);
         return false;
     }
 
