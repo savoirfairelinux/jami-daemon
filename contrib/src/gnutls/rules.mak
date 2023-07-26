@@ -1,7 +1,7 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.7.6
-GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.7/gnutls-$(GNUTLS_VERSION).tar.xz
+GNUTLS_VERSION := 3.8.0
+GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
 
@@ -18,7 +18,7 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
-	$(APPLY) $(SRC)/gnutls/0001-m4-remove-malloc-realloc.patch
+#	$(APPLY) $(SRC)/gnutls/0001-m4-remove-malloc-realloc.patch
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
@@ -27,6 +27,7 @@ endif
 	$(MOVE)
 
 GNUTLS_CONF := \
+    --enable-heartbeat-support \
 	--disable-gtk-doc \
 	--without-p11-kit \
 	--disable-cxx \
