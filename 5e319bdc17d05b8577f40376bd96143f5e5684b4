@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b71a8b24_a96eef31",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1232,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-26T12:32:36Z",
+      "side": 1,
+      "message": "clang-format ;)",
+      "range": {
+        "startLine": 1230,
+        "startChar": 41,
+        "endLine": 1232,
+        "endChar": 27
+      },
+      "revId": "5e319bdc17d05b8577f40376bd96143f5e5684b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4745edbc_c276f6a1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1234,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-26T12:32:36Z",
+      "side": 1,
+      "message": "dynamic_pointer_cast for shared_ptr is working",
+      "range": {
+        "startLine": 1234,
+        "startChar": 16,
+        "endLine": 1234,
+        "endChar": 28
+      },
+      "revId": "5e319bdc17d05b8577f40376bd96143f5e5684b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eb459c29_d298f9cd",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-26T12:32:36Z",
+      "side": 1,
+      "message": "oops",
+      "range": {
+        "startLine": 210,
+        "startChar": 4,
+        "endLine": 210,
+        "endChar": 15
+      },
+      "revId": "5e319bdc17d05b8577f40376bd96143f5e5684b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ce0d79b_6437913c",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-26T12:32:36Z",
+      "side": 1,
+      "message": "JAMI_DEBUG(\"[Auth] synchronize blueprint configuration {}\", urlBlueprint);",
+      "range": {
+        "startLine": 477,
+        "startChar": 2,
+        "endLine": 477,
+        "endChar": 70
+      },
+      "revId": "5e319bdc17d05b8577f40376bd96143f5e5684b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f730ce05_d82c16b8",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 483,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-26T12:32:36Z",
+      "side": 1,
+      "message": "JAMI_DEBUG with {} instead %u",
+      "range": {
+        "startLine": 483,
+        "startChar": 16,
+        "endLine": 483,
+        "endChar": 24
+      },
+      "revId": "5e319bdc17d05b8577f40376bd96143f5e5684b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7dde9543_494fb1c1",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 494,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-26T12:32:36Z",
+      "side": 1,
+      "message": "JAMI_ERROR",
+      "range": {
+        "startLine": 494,
+        "startChar": 24,
+        "endLine": 494,
+        "endChar": 32
+      },
+      "revId": "5e319bdc17d05b8577f40376bd96143f5e5684b4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
