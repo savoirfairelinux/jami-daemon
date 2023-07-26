@@ -264,13 +264,31 @@ public:
 
     void bootstrapCb(const std::string& convId);
 
-    // The following methods modify what is stored on the disk
     /**
-     * @note convInfosMtx_ should be locked
+     * @note convInfosMtx_ must be locked
+     * 
      */
-    void saveConvInfos() const { ConversationModule::saveConvInfos(accountId_, convInfos_); }
+    void saveConvInfos() {
+        JAMI_WARNING("saveConvInfos() {}", accountId_);
+        if (!convInfosDirty_) {
+            convInfosDirty_ = true;
+            convInfosTimer_.expires_after(std::chrono::milliseconds(100));
+            convInfosTimer_.async_wait([w = weak()](const auto& ec) {
+                if (!ec)
+                    if (auto sthis = w.lock())
+                        sthis->doSaveConvInfos();
+            });
+        }
+    }
+    // The following methods modify what is stored on the disk
+    void doSaveConvInfos() {
+        JAMI_WARNING("Saving conv infos {}", accountId_);
+        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        ConversationModule::saveConvInfos(accountId_, convInfos_);
+        convInfosDirty_ = false;
+    }
     /**
-     * @note conversationsRequestsMtx_ should be locked
+     * @note conversationsRequestsMtx_ must be locked
      */
     void saveConvRequests() const
     {
@@ -347,6 +365,8 @@ public:
     // The following informations are stored on the disk
     mutable std::mutex convInfosMtx_; // Note, should be locked after conversationsMtx_ if needed
     std::map<std::string, ConvInfo> convInfos_;
+    bool convInfosDirty_ {false};
+    asio::steady_timer convInfosTimer_;
 
     // When sending a new message, we need to send the notification to some peers of the
     // conversation However, the conversation may be not bootstraped, so the list will be empty.
@@ -382,6 +402,7 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
     , onNeedSwarmSocket_(onNeedSwarmSocket)
     , updateConvReqCb_(updateConvReqCb)
     , oneToOneRecvCb_(oneToOneRecvCb)
+    , convInfosTimer_(*Manager::instance().ioContext())
 {
     if (auto shared = account.lock()) {
         accountId_ = shared->getAccountID();

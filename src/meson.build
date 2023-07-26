@@ -14,7 +14,6 @@ libjami_sources = files(
     'client/ring_signal.cpp',
     'client/videomanager.cpp',
     'config/yamlparser.cpp',
-    'connectivity/security/diffie-hellman.cpp',
     'connectivity/security/memory.cpp',
     'connectivity/security/tlsvalidator.cpp',
     'connectivity/ip_utils.cpp',
