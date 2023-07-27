@@ -447,7 +447,6 @@ public:
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
     static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
     void addConvInfo(const ConvInfo& info);
-    void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
 
     /**
      * Get a conversation
