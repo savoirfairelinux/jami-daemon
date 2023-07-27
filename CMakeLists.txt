@@ -672,7 +672,7 @@ else()
             PkgConfig::avcodec
             PkgConfig::swresample
             PkgConfig::swscale
-            jsoncpp
+            PkgConfig::jsoncpp
             yaml-cpp
             PkgConfig::fmt
             PkgConfig::secp256k1
