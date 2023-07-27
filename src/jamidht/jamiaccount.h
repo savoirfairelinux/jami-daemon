@@ -377,11 +377,6 @@ public:
         return id_;
     }
 
-    const std::shared_future<dhtnet::tls::DhParams> dhParams() const
-    {
-        return dhParams_;
-    }
-
     void forEachDevice(const dht::InfoHash& to,
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
@@ -752,10 +747,6 @@ private:
      * Proxy
      */
     std::string proxyServerCached_ {};
-
-    std::mutex dhParamsMtx_ {};
-    std::shared_future<dhtnet::tls::DhParams> dhParams_;
-    std::condition_variable dhParamsCv_;
 
     /**
      * Optional: via_addr construct from received parameters
