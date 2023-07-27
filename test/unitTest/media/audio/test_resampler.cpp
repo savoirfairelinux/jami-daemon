@@ -91,7 +91,7 @@ ResamplerTest::testAudioFrame()
 
     AudioBuffer inbuf(1024, infmt);
     auto input = inbuf.toAVFrame();
-    CPPUNIT_ASSERT(input->pointer()->data && input->pointer()->data[0]);
+    CPPUNIT_ASSERT(input->pointer() && input->pointer()->data[0]);
     CPPUNIT_ASSERT(input->pointer()->data[0][0] == 0);
 
     libjami::AudioFrame out;
@@ -102,7 +102,7 @@ ResamplerTest::testAudioFrame()
 
     int ret = resampler_->resample(input->pointer(), output);
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
-    CPPUNIT_ASSERT(output->data && output->data[0]);
+    CPPUNIT_ASSERT(output && output->data[0]);
     CPPUNIT_ASSERT(output->data[0][0] == 0);
 }
 
@@ -114,21 +114,21 @@ ResamplerTest::testRematrix()
     resampler_.reset(new Resampler);
 
     auto input = std::make_unique<libjami::AudioFrame>(inFormat, 882);
-    CPPUNIT_ASSERT(input->pointer() && input->pointer()->data);
+    CPPUNIT_ASSERT(input->pointer() && input->pointer()->data[0]);
 
     auto output1 = std::make_unique<libjami::AudioFrame>(AudioFormat::STEREO(), 960);
-    CPPUNIT_ASSERT(output1->pointer() && output1->pointer()->data);
+    CPPUNIT_ASSERT(output1->pointer() && output1->pointer()->data[0]);
 
     ret = resampler_->resample(input->pointer(), output1->pointer());
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
-    CPPUNIT_ASSERT(output1->pointer()->data && output1->pointer()->data[0]);
+    CPPUNIT_ASSERT(output1->pointer() && output1->pointer()->data[0]);
 
     auto output2 = std::make_unique<libjami::AudioFrame>(AudioFormat::MONO(), 960);
-    CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data);
+    CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data[0]);
 
     ret = resampler_->resample(input->pointer(), output2->pointer());
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
-    CPPUNIT_ASSERT(output2->pointer()->data && output2->pointer()->data[0]);
+    CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data[0]);
 }
 
 }} // namespace jami::test
