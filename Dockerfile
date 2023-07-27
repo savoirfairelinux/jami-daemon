@@ -44,7 +44,9 @@ RUN apt-get update && apt-get install -y \
     guile-3.0-dev \
     nasm \
     pkg-config \
-    yasm
+    yasm \
+    libcppunit-dev \
+    sip-tester
 
 # Install Node
 RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
@@ -61,17 +63,11 @@ RUN git clone https://github.com/swig/swig.git && \
     make install
 
 WORKDIR /daemon
-COPY contrib/ contrib/
-
-# Build daemon dependencies
-RUN mkdir -p contrib/native && \
-    cd contrib/native && \
-    ../bootstrap && \
-    make -j$(nproc)
 
 COPY . .
 
 # Build the daemon
-RUN ./autogen.sh && \
-    ./configure $config_args && \
+RUN mkdir -p build && \
+    cd build && \
+    cmake .. -DJAMI_NODEJS=On && \
     make -j$(nproc)

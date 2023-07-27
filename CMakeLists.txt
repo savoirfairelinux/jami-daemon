@@ -14,14 +14,21 @@ set(PROJECT_LABEL "libjami")
 option(JAMI_NATPMP "Build with NAT-PMP" ON)
 option(JAMI_PUPNP "Build with PUPNP" ON)
 option(JAMI_PLUGIN "Build with plugin support" ON)
+option(JAMI_NODEJS "Build the NODEJS binding" OFF)
 option(JAMI_JNI "Build the JNI binding" OFF)
 option(JAMI_DBUS "Build the DBUS binding" OFF)
 option(JAMI_VIDEO "Build with video support" ON)
 option(JAMI_VIDEO_ACCEL "Build video hardware acceleration support" ON)
+option(JAMI_POSITION_INDEPENDANT "Build jami with position independant code" OFF)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 
 include(CTest)
+
+if(JAMI_NODEJS)
+    # Required for nodejs binding
+    set(JAMI_POSITION_INDEPENDANT ON)
+endif()
 
 if(NOT MSVC)
     ################################################################################
@@ -542,13 +549,21 @@ else()
         PkgConfig::fmt
         PkgConfig::avutil
     )
-    target_compile_options(${PROJECT_NAME} PRIVATE
+
+    set(COMPILE_OPTIONS
         -fvisibility=hidden
         -Wall -Wextra
         -Wnon-virtual-dtor
         -Wno-deprecated
         -Wno-deprecated-declarations
         -Wno-unknown-pragmas
+    )
+    if(JAMI_POSITION_INDEPENDANT)
+        list(APPEND COMPILE_OPTIONS -fPIC)
+    endif()
+
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        ${COMPILE_OPTIONS}
     )
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         JAMI_DATADIR="${JAMI_DATADIR}"
@@ -581,6 +596,33 @@ else()
         target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
     endif()
     install (TARGETS ${PROJECT_NAME})
+
+    if (JAMI_NODEJS)
+        # Build nodejs binding
+        include (UseSWIG)
+        find_package(SWIG 4.2 COMPONENTS javascript REQUIRED)
+        execute_process(
+            # We'd like to execute this command only when .i files are modified
+            # However, attempts to do so with add_custom_command have been unsuccessfull
+            COMMAND ${SWIG_EXECUTABLE} -v -c++ -javascript -node -o jami_wrapper.cpp nodejs_interface.i
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
+        )
+        execute_process(
+            # In binding.gyp, replace the text between "'-L" and "'," for the path to the build directory
+            COMMAND sed -i "s#\\('-L\\).*\\(',\\)#\\1${CMAKE_BINARY_DIR}\\2#" binding.gyp
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
+        )
+        add_custom_command(
+            TARGET ${PROJECT_NAME}
+            POST_BUILD
+            COMMAND node-gyp rebuild --target=v16.14.2 --arch=x64
+            DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/binding.gyp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/callback.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/jami_wrapper.cpp
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
+        )
+    endif()
 
     if (JAMI_JNI)
         # Build jni binding
