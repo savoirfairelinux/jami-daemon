@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b00e04cd_41454062",
+        "filename": "Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 957
+      },
+      "writtenOn": "2023-07-27T16:27:34Z",
+      "side": 1,
+      "message": "Just showing it compiles. I don\u0027t plan to include any change to the Dockerfile for this commit.",
+      "revId": "ffc3acf83818500d2b2ce088df2a3a7db05a2d96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
