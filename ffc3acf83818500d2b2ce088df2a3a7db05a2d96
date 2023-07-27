@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a24c0e09_56d21ee3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 957
+      },
+      "writtenOn": "2023-07-27T16:34:13Z",
+      "side": 1,
+      "message": "!build",
+      "revId": "ffc3acf83818500d2b2ce088df2a3a7db05a2d96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b00e04cd_41454062",
         "filename": "Dockerfile",
         "patchSetId": 1
