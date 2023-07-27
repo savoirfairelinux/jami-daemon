@@ -1580,10 +1580,6 @@ JamiAccount::doRegister()
         || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION)
         return;
 
-    if (not dhParams_.valid()) {
-        generateDhParams();
-    }
-
     setRegistrationState(RegistrationState::TRYING);
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnpCtrl_ or proxyServerCached_.empty()) {
@@ -2652,15 +2648,6 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
             JAMI_WARNING("Cannot write into {}", proxyCachePath);
     }
     return proxyServerCached_;
-}
-
-void
-JamiAccount::generateDhParams()
-{
-    // make sure cachePath_ is writable
-    fileutils::check_dir(cachePath_.c_str(), 0700);
-    dhParams_ = dht::ThreadPool::computation().get<dhtnet::tls::DhParams>(
-        std::bind(dhtnet::tls::DhParams::loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
 }
 
 MatchRank
