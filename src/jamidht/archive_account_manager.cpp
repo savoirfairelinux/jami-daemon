@@ -653,15 +653,18 @@ ArchiveAccountManager::changePassword(const std::string& password_old,
 }
 
 std::string
-generatePIN(size_t length = 8)
+generatePIN(size_t length = 16, size_t split = 8)
 {
     static constexpr const char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     dht::crypto::random_device rd;
     std::uniform_int_distribution<size_t> dis(0, sizeof(alphabet) - 2);
     std::string ret;
     ret.reserve(length);
-    for (size_t i = 0; i < length; i++)
+    for (size_t i = 0; i < length; i++) {
         ret.push_back(alphabet[dis(rd)]);
+        if (i % split == split - 1 and i != length - 1)
+            ret.push_back('-');
+    }
     return ret;
 }
 
