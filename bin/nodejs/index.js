@@ -23,7 +23,7 @@
 class JamiDaemon {
     constructor(callbackMap) {
         if (callbackMap){
-            this.jami = require("./build/Release/jami.node");
+            this.jami = require("./build/Release/jamid.node");
             this.jami.init(callbackMap);
         }
     }
