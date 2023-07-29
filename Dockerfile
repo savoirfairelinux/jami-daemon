@@ -1,7 +1,7 @@
 FROM ubuntu:22.04 AS jami-daemon
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG config_args
+ARG cmake_args
 RUN apt-get update && apt-get install -y \
     autoconf \
     automake \
@@ -44,14 +44,16 @@ RUN apt-get update && apt-get install -y \
     guile-3.0-dev \
     nasm \
     pkg-config \
-    yasm
+    yasm \
+    libcppunit-dev \
+    sip-tester
 
 # Install Node
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g node-gyp
 
-# Install latest Swig (4.1)
+# Install latest Swig (4.2)
 WORKDIR /swig
 RUN git clone https://github.com/swig/swig.git && \
     cd swig && \
@@ -61,17 +63,11 @@ RUN git clone https://github.com/swig/swig.git && \
     make install
 
 WORKDIR /daemon
-COPY contrib/ contrib/
-
-# Build daemon dependencies
-RUN mkdir -p contrib/native && \
-    cd contrib/native && \
-    ../bootstrap && \
-    make -j$(nproc)
 
 COPY . .
 
 # Build the daemon
-RUN ./autogen.sh && \
-    ./configure $config_args && \
+RUN mkdir -p build && \
+    cd build && \
+    cmake .. $cmake_args && \
     make -j$(nproc)

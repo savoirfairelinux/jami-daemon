@@ -14,6 +14,7 @@ set(PROJECT_LABEL "libjami")
 option(JAMI_NATPMP "Build with NAT-PMP" ON)
 option(JAMI_PUPNP "Build with PUPNP" ON)
 option(JAMI_PLUGIN "Build with plugin support" ON)
+option(JAMI_NODEJS "Build the NODEJS binding" OFF)
 option(JAMI_JNI "Build the JNI binding" OFF)
 option(JAMI_DBUS "Build the DBUS binding" OFF)
 option(JAMI_VIDEO "Build with video support" ON)
@@ -22,6 +23,11 @@ option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 
 include(CTest)
+
+if(JAMI_NODEJS)
+    # Required for nodejs binding
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 if(NOT MSVC)
     ################################################################################
@@ -581,6 +587,72 @@ else()
         target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_WEBRTC_AP)
     endif()
     install (TARGETS ${PROJECT_NAME})
+
+    if (JAMI_NODEJS)
+        # Build nodejs binding
+        include (UseSWIG)
+        find_package(SWIG 4.2 COMPONENTS javascript REQUIRED)
+        file(GLOB NODEJS_INTERFACE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/*.i)
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/jami_wrapper.cpp
+            COMMAND ${SWIG_EXECUTABLE} -v -c++ -javascript -node -o jami_wrapper.cpp nodejs_interface.i
+            DEPENDS
+            ${NODEJS_INTERFACE_FILES}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
+        )
+
+        # Generate binding.gyp
+        # We need to pass the link flags to node-gyp
+        set(_gyp_flags "")
+        get_target_property(_linked_libs ${PROJECT_NAME} LINK_LIBRARIES)
+        foreach(LIB IN LISTS _linked_libs)
+            if ("${LIB}" MATCHES "^PkgConfig::")
+                string(REPLACE "PkgConfig::" "" PKG_NAME ${LIB})
+                string(APPEND _gyp_flags " ${${PKG_NAME}_LDFLAGS}")
+            elseif ("${LIB}" MATCHES ".so$")
+                get_filename_component(LIB_DIRECTORY ${LIB} DIRECTORY)
+                get_filename_component(LIB_NAME_WE ${LIB} NAME_WE)
+                string(REPLACE "lib" "" LIB_NAME_WE ${LIB_NAME_WE})
+                string(APPEND _gyp_flags " -L${LIB_DIRECTORY} -l${LIB_NAME_WE}")
+            elseif (TARGET ${LIB})
+                # TODO generate cmake targets automatically
+                #string(APPEND _gyp_flags " $<TARGET_FILE:${LIB}>")
+            else()
+                string(APPEND _gyp_flags " -l${LIB}")
+            endif()
+        endforeach()
+
+        list(REVERSE _gyp_flags)
+        list(REMOVE_DUPLICATES _gyp_flags)
+        list(REVERSE _gyp_flags)
+
+        foreach(item ${_gyp_flags})
+            if (NOT "${QUOTED_JSON_LIST}" STREQUAL "")
+                set(QUOTED_JSON_LIST "${QUOTED_JSON_LIST},")
+            endif()
+            set(QUOTED_JSON_LIST "${QUOTED_JSON_LIST}\"${item}\"")
+        endforeach()
+        string(REPLACE ";" "," _gyp_flags_str ${QUOTED_JSON_LIST})
+
+        set(JAMI_LINK_LIBRARIES ${_gyp_flags_str})
+        set(JAMI_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR})
+        configure_file(
+            ${CMAKE_SOURCE_DIR}/bin/nodejs/binding.gyp.in
+            ${CMAKE_SOURCE_DIR}/bin/nodejs/binding.gyp
+        )
+
+        # Build nodejs binding
+        add_custom_target(jamid
+            ALL
+            COMMAND node-gyp rebuild --target=v18.17.0 --arch=x64
+            DEPENDS
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/binding.gyp
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/callback.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/jami_wrapper.cpp
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs
+        )
+        add_dependencies(jamid ${PROJECT_NAME})
+    endif()
 
     if (JAMI_JNI)
         # Build jni binding

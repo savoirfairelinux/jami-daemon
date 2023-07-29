@@ -193,7 +193,7 @@ docker build --tag jami-daemon .
 # To build with custom build args
 
 ```bash
-docker build --tag jami-daemon --build-arg config_args="--with-nodejs" .
+docker build --tag jami-daemon --build-arg cmake_args="-DJAMI_NODEJS=On" .
 ```
 
 Common Issues
