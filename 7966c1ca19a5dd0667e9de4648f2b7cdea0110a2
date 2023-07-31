@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a254bbe7_5dec1b91",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 30
+      },
+      "lineNbr": 1825,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-31T12:24:14Z",
+      "side": 1,
+      "message": "14",
+      "range": {
+        "startLine": 1825,
+        "startChar": 30,
+        "endLine": 1825,
+        "endChar": 32
+      },
+      "revId": "7966c1ca19a5dd0667e9de4648f2b7cdea0110a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5743120b_f264f9ab",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 30
+      },
+      "lineNbr": 1981,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-07-31T12:24:14Z",
+      "side": 1,
+      "message": "14",
+      "range": {
+        "startLine": 1981,
+        "startChar": 32,
+        "endLine": 1981,
+        "endChar": 33
+      },
+      "revId": "7966c1ca19a5dd0667e9de4648f2b7cdea0110a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
