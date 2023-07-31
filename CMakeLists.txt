@@ -237,6 +237,21 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/audiostream.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulselayer.cpp
     )
+elseif (APPLE)
+    if (IOS)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/iosvideo/video_device_impl.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/iosvideo/video_device_monitor_impl.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/coreaudio/ios/corelayer.mm
+        )
+    else()
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/osxvideo/video_device_impl.mm
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/osxvideo/video_device_monitor_impl.mm
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/coreaudio/osx/corelayer.mm
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/coreaudio/osx/audiodevice.cpp
+        )
+    endif()
 elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
@@ -561,6 +576,8 @@ else()
             PkgConfig::udev
             PkgConfig::pulseaudio
         )
+    elseif (APPLE)
+        target_link_libraries(${PROJECT_NAME} PRIVATE resolv)
     endif()
     if (JAMI_NATPMP)
         if (natpmp_FOUND)
