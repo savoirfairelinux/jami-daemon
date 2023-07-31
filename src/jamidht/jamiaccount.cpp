@@ -1829,7 +1829,7 @@ JamiAccount::doRegister_()
 
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
-            logger_ = Logger::dhtLogger();
+            context.logger = Logger::dhtLogger();
         }
         context.certificateStore = [&](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
