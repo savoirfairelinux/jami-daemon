@@ -49,6 +49,10 @@ Uri::Uri(const std::string_view& uri)
     } else {
         authority_ = uri;
     }
+    auto posParams = authority_.find(';');
+    if (posParams != std::string::npos) {
+        authority_ = authority_.substr(0, posParams);
+    }
 }
 
 const std::string&
