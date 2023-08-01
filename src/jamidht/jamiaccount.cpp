@@ -106,9 +106,7 @@ namespace jami {
 constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
-static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
-static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
 static constexpr const char FILE_URI[] {"file://"};
 static constexpr const char VCARD_URI[] {"vcard://"};
 static constexpr const char DATA_TRANSFER_URI[] {"data-transfer://"};
@@ -2833,7 +2831,7 @@ JamiAccount::updateConvForContact(const std::string& uri,
             auto details = getContactDetails(uri);
             auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
             if (itDetails != details.end() && itDetails->second != oldConv) {
-                JAMI_DBG("Old conversation is not found in details %s", oldConv.c_str());
+                JAMI_DEBUG("Old conversation is not found in details {} - found: {}", oldConv, itDetails->second);
                 return false;
             }
             info->contacts->updateConversation(urih, newConv);
@@ -3433,13 +3431,6 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_VP8);
     }
     config_->activeCodecs = getActiveCodecs(MEDIA_ALL);
-}
-
-// Member management
-void
-JamiAccount::saveMembers(const std::string& convId, const std::vector<std::string>& members)
-{
-    convModule()->setConversationMembers(convId, members);
 }
 
 void
