@@ -222,8 +222,7 @@ SocketPair::waitForRTCP(std::chrono::seconds interval)
 {
     std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
     return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
-        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty()
-               or not readBlockingMode_;
+        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
     });
 }
 
