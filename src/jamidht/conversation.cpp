@@ -443,8 +443,8 @@ public:
                 }
             }
 
-            if (announceMember) {
-                shared->saveMembers(convId, repository_->memberUris("", {}));
+            if (announceMember && onMembersChanged_) {
+                onMembersChanged_(repository_->memberUris("", {}));
             }
         }
     }
@@ -624,6 +624,7 @@ public:
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
     mutable std::map<std::string, std::string> lastDisplayed_ {};
     std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
+    OnMembersChanged onMembersChanged_ {};
 
     // Manage hosted calls on this device
     std::string hostedCallsPath_ {};
@@ -1919,6 +1920,12 @@ Conversation::onLastDisplayedUpdated(
     std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb)
 {
     pimpl_->lastDisplayedUpdatedCb_ = std::move(lastDisplayedUpdatedCb);
+}
+
+void
+Conversation::onMembersChanged(OnMembersChanged&& cb)
+{
+    pimpl_->onMembersChanged_ = std::move(cb);
 }
 
 void
