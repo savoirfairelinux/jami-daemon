@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0d2caaf0_e03cb4c6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-08-01T18:32:59Z",
+      "side": 1,
+      "message": "OpenDht and Jami support fmt 7+",
+      "revId": "4751d1f61aca6dc7d57737f62319b80a06806b1e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
