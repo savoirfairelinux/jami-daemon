@@ -111,7 +111,13 @@ struct ConvInfo
     std::string lastDisplayed {};
 
     ConvInfo() = default;
-    ConvInfo(const Json::Value& json);
+    ConvInfo(const ConvInfo&) = default;
+    ConvInfo(ConvInfo&&) = default;
+    ConvInfo(const std::string& id) : id(id) {};
+    explicit ConvInfo(const Json::Value& json);
+
+    ConvInfo& operator=(const ConvInfo&) = default;
+    ConvInfo& operator=(ConvInfo&&) = default;
 
     Json::Value toJson() const;
 
@@ -129,6 +135,7 @@ using OnLoadMessages
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
+using OnMembersChanged = std::function<void(const std::vector<std::string>&)>;
 using DeviceId = dht::PkId;
 using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
@@ -183,6 +190,8 @@ public:
      */
     void onLastDisplayedUpdated(
         std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb);
+
+    void onMembersChanged(OnMembersChanged&& cb);
 
     /**
      * Set the callback that will be called whenever a new socket will be needed
