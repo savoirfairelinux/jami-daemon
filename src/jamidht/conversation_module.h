@@ -31,6 +31,8 @@
 #include <msgpack.hpp>
 
 namespace jami {
+static constexpr const char MIME_TYPE_INVITE[] {"application/invite"};
+static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
 
 class SIPCall;
 
@@ -447,7 +449,6 @@ public:
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
     static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
     void addConvInfo(const ConvInfo& info);
-    void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
 
     /**
      * Get a conversation
