@@ -59,7 +59,7 @@ public:
      * @brief Parses a manifest file and return its content
      * along with other internally added values.
      * @param rootPath installation path
-     * @return Map where the keyset is {"name", "description", "version", "iconPath", "soPath"}
+     * @return Map where the keyset is {"id", "name", "description", "version", "iconPath", "soPath"}
      */
     std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
 
