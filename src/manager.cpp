@@ -2984,6 +2984,12 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
         if (active) {
             acc->doRegister();
         } else {
+            // End all calls before unregistering
+            for (const auto& call : callFactory.getAllCalls()) {
+                JAMI_WARN() << "@@@ " << accountID << " " << call->getAccountId();
+                if (!call->isSubcall() && call->getAccountId() == accountID)
+                    hangupCall(accountID, call->getCallId());
+            }
             acc->doUnregister();
             if (shutdownConnections) {
                 if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(acc)) {
