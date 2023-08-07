@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd2defdd_3e90ac3b",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-07T15:06:26Z",
+      "side": 1,
+      "message": "doing only this breaks compatibility with old plugins, i would rather use  \"id\" if available but fallback to \"name\" if not",
+      "range": {
+        "startLine": 72,
+        "startChar": 71,
+        "endLine": 72,
+        "endChar": 84
+      },
+      "revId": "297442d640f2c1bbe6e86c09f49f7cb13ef0ca8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
