@@ -1,6 +1,6 @@
- pjlib/build/pjlib.vcxproj      | 12 +++++++++---
+ pjlib/build/pjlib.vcxproj     | 12 +++++++++---
+ pjmedia/build/pjmedia.vcxproj | 12 +++++++++---
  pjlib/include/pj/config_site.h |  3 +++
- pjmedia/build/pjmedia.vcxproj  | 12 +++++++++---
  3 files changed, 21 insertions(+), 6 deletions(-)
 
 diff --git a/pjlib/build/pjlib.vcxproj b/pjlib/build/pjlib.vcxproj
@@ -42,17 +42,6 @@ index 227c3f045..b85c896bd 100644
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
      <Midl />
-diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
-index 85cf2ed..fe65725 100644
---- a/pjlib/include/pj/config_site.h
-+++ b/pjlib/include/pj/config_site.h
-@@ -29,3 +29,6 @@
-  * WINDOWS settings.
-  */
- #define THIRD_PARTY_MEDIA                       0
-+#define PJ_OS_HAS_CHECK_STACK                   0
-+#define PJ_HAS_SSL_SOCK                         1
-+#define PJ_SSL_SOCK_IMP                         PJ_SSL_SOCK_IMP_GNUTLS
 diff --git a/pjmedia/build/pjmedia.vcxproj b/pjmedia/build/pjmedia.vcxproj
 index 146bfa8de..1dac92caf 100644
 --- a/pjmedia/build/pjmedia.vcxproj
@@ -92,3 +81,14 @@ index 146bfa8de..1dac92caf 100644
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
      <Midl />
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+index 85cf2ed..fe65725 100644
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -29,3 +29,6 @@
+  * WINDOWS settings.
+  */
+ #define THIRD_PARTY_MEDIA                       0
++#define PJ_OS_HAS_CHECK_STACK                   0
++#define PJ_HAS_SSL_SOCK                         1
++#define PJ_SSL_SOCK_IMP                         PJ_SSL_SOCK_IMP_GNUTLS
