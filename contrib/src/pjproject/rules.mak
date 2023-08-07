@@ -1,6 +1,6 @@
 # PJPROJECT
-PJPROJECT_VERSION := e4b83585a0bdf1523e808a4fc1946ec82ac733d0
-PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
+PJPROJECT_VERSION := 6a06a04c1be5b0ba8e19f9ecec7ce27fc9b66b29
+PJPROJECT_URL := https://github.com/AmarOk1412/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
                      --enable-video         \
@@ -21,7 +21,7 @@ PJPROJECT_OPTIONS := --disable-sound        \
                      --disable-openh264     \
                      --disable-resample     \
                      --disable-libwebrtc    \
-                     --with-gnutls=$(PREFIX)
+                     --enable-debug \
 
 PKGS += pjproject
 
