@@ -84,7 +84,7 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
         auto itImage = details.find("backgroundPath");
         itImage->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
 
-        details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["name"] + LIB_TYPE;
+        details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["id"] + LIB_TYPE;
         details["author"] = getPluginAuthor(rootPath, details["name"]);
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
