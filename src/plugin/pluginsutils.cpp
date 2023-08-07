@@ -91,12 +91,15 @@ std::map<std::string, std::string>
 checkManifestJsonContentValidity(const Json::Value& root)
 {
     std::string name = root.get("name", "").asString();
+    std::string id = root.get("id", name).asString();
     std::string description = root.get("description", "").asString();
     std::string version = root.get("version", "").asString();
     std::string iconPath = root.get("iconPath", "icon.png").asString();
     std::string background = root.get("backgroundPath", "background.jpg").asString();
     if (!name.empty() || !version.empty()) {
-        return {{"name", name},
+        return {
+                {"id", id},
+                {"name", name},
                 {"description", description},
                 {"version", version},
                 {"iconPath", iconPath},
