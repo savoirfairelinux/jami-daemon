@@ -421,7 +421,9 @@ IceTest::testTurnSlaveIceConnection()
     ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(10), [&] { return iceMasterReady && iceSlaveReady; }));
+        cv.wait_for(lk, std::chrono::seconds(10), [&] {
+            JAMI_ERROR("@@@ {} {}", iceMasterReady, iceSlaveReady);
+            return iceMasterReady && iceSlaveReady; }));
     CPPUNIT_ASSERT(ice_slave->getLocalAddress(1).toString(false) == turnV4_->toString(false));
 }
 
