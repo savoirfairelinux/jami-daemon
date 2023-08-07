@@ -1,6 +1,6 @@
 # PJPROJECT
-PJPROJECT_VERSION := e4b83585a0bdf1523e808a4fc1946ec82ac733d0
-PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
+PJPROJECT_VERSION := 7baa3fa64bd9e52b96e965bdca9fd1465824c6e6
+PJPROJECT_URL := https://github.com/AmarOk1412/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
                      --enable-video         \
@@ -21,7 +21,7 @@ PJPROJECT_OPTIONS := --disable-sound        \
                      --disable-openh264     \
                      --disable-resample     \
                      --disable-libwebrtc    \
-                     --with-gnutls=$(PREFIX)
+                     --enable-debug \
 
 PKGS += pjproject
 
@@ -53,6 +53,7 @@ ifdef HAVE_IOS
 	$(APPLY) $(SRC)/pjproject/0003-disable-ios-pointtopoint.patch
 	$(APPLY) $(SRC)/pjproject/0004-ios-16.patch
 endif
+	$(APPLY) $(SRC)/pjproject/debug.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
@@ -62,7 +63,7 @@ ifdef HAVE_IOS
 else ifdef HAVE_MACOSX
 	cd $< && ARCH="-arch $(ARCH)" $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
-	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
+	cd $< && $(HOSTVARS) CFLAGS+=" -g" EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+	cd $< && CFLAGS+=" -g" EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
 	touch $@

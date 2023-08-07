@@ -1,0 +1,219 @@
+ pjnath/src/pjnath/ice_session.c |  2 ++
+ pjnath/src/pjnath/ice_strans.c  |  3 +++
+ pjnath/src/pjnath/stun_sock.c   | 41 +++++++++++++++++++++++++----------------
+ 3 files changed, 30 insertions(+), 16 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index e665f65d6..acda07dc9 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -2375,6 +2375,8 @@ static pj_status_t add_rcand_and_update_checklist(
+ 
+         for (i=highest_comp; i<ice->comp_cnt; ++i) {
+             if (ice->comp[i].stun_sess) {
++                printf("@@@---TRICKLE %p\n", &ice->comp[i]);
++
+                 pj_stun_session_destroy(ice->comp[i].stun_sess);
+                 pj_bzero(&ice->comp[i], sizeof(ice->comp[i]));
+             }
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index bfdf7fb74..0f5014e22 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1276,6 +1276,7 @@ static void destroy_ice_st(pj_ice_strans *ice_st)
+             unsigned j;
+             for (j = 0; j < ice_st->cfg.stun_tp_cnt; ++j) {
+                 if (comp->stun[j].sock) {
++                    printf("@@@ DESTROY ALL %p\n", comp->stun[j].sock);
+                     pj_stun_sock_destroy(comp->stun[j].sock);
+                     comp->stun[j].sock = NULL;
+                 }
+@@ -1469,6 +1470,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_update_comp_cnt( pj_ice_strans *ice_st,
+         /* Destroy the component */
+         for (j = 0; j < ice_st->cfg.stun_tp_cnt; ++j) {
+             if (comp->stun[j].sock) {
++                printf("@@@ DESTROY %p\n", comp->stun[j].sock);
+                 pj_stun_sock_destroy(comp->stun[j].sock);
+                 comp->stun[j].sock = NULL;
+             }
+@@ -2878,6 +2880,7 @@ static pj_status_t ice_close_remaining_tcp(pj_ice_sess *ice)
+ 			}
+ 			if (ice_st->cfg.stun_tp[j].af != valid_check->rcand->addr.addr.sa_family) {
+ 				// If the valid candidate got the other address family we can close.
++                printf("@@@ DESTROxY %p\n", st_comp->stun[j].sock);
+ 				pj_stun_sock_destroy(st_comp->stun[j].sock);
+ 			}
+ 		}
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 9bedf680a..c97b1e90a 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -198,7 +198,9 @@ PJ_DEF(const char*) pj_stun_sock_op_name(pj_stun_sock_op op)
+         "DNS resolution",
+         "STUN Binding request",
+         "Keep-alive",
+-        "Mapped addr. changed"
++        "Mapped addr. changed",
++        "Stun session destroyed",
++        "TCP connect error"
+     };
+ 
+     return op < PJ_ARRAY_SIZE(names) ? names[op] : "???";
+@@ -424,8 +426,8 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+             // Will be ready to accept incoming connections from the external world
+             status = pj_sock_listen(stun_sock->sock_fd, PJ_SOMAXCONN);
+             if (status != PJ_SUCCESS) {
++                printf("@@@ CREATE %p\n", stun_sock);
+                 pj_stun_sock_destroy(stun_sock);
+-                pj_grp_lock_release(stun_sock->grp_lock);
+                 return status;
+             }
+         } else {
+@@ -441,8 +443,8 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+                                     &activesock_cb, stun_sock,
+                                     &stun_sock->active_sock);
+         if (status != PJ_SUCCESS) {
++                printf("@@@ CREATE2 %p\n", stun_sock);
+             pj_stun_sock_destroy(stun_sock);
+-            pj_grp_lock_release(stun_sock->grp_lock);
+             return status;
+         }
+ 
+@@ -461,8 +463,8 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+                     "Failed to connect to %s",
+                     pj_sockaddr_print(&bound_addr, addrinfo,
+                                         sizeof(addrinfo), 3));
++                printf("@@@ CREATE3 %p\n", stun_sock);
+             pj_stun_sock_destroy(stun_sock);
+-            pj_grp_lock_release(stun_sock->grp_lock);
+             return status;
+         }
+ #else
+@@ -510,6 +512,7 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+     return PJ_SUCCESS;
+ 
+ on_error:
++                printf("@@@ CREATE4 %p\n", stun_sock);
+     pj_stun_sock_destroy(stun_sock);
+     return status;
+ 
+@@ -523,7 +526,7 @@ static pj_bool_t on_stun_sock_ready(pj_activesock_t *asock, pj_status_t status)
+     pj_stun_sock *stun_sock;
+     stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
+     if (!stun_sock)
+-	return PJ_FALSE;
++	    return PJ_FALSE;
+ 
+     pj_grp_lock_acquire(stun_sock->grp_lock);
+ 
+@@ -531,15 +534,17 @@ static pj_bool_t on_stun_sock_ready(pj_activesock_t *asock, pj_status_t status)
+      * See ticket #1557 (http://trac.pjsip.org/repos/ticket/1557).
+      */
+     if (!stun_sock->stun_sess) {
+-	sess_fail(stun_sock, PJ_STUN_SESS_DESTROYED, status);
+-	pj_grp_lock_release(stun_sock->grp_lock);
+-	return PJ_FALSE;
++        printf("@@@2 %p\n", stun_sock);
++        sess_fail(stun_sock, PJ_STUN_SESS_DESTROYED, status);
++        pj_grp_lock_release(stun_sock->grp_lock);
++        return PJ_FALSE;
+     }
+ 
+     if (status != PJ_SUCCESS) {
+-	sess_fail(stun_sock, PJ_STUN_TCP_CONNECT_ERROR, status);
+-	pj_grp_lock_release(stun_sock->grp_lock);
+-	return PJ_FALSE;
++        printf("@@@3\n");
++        sess_fail(stun_sock, PJ_STUN_TCP_CONNECT_ERROR, status);
++        pj_grp_lock_release(stun_sock->grp_lock);
++	    return PJ_FALSE;
+     }
+ 
+     if (stun_sock->conn_type != PJ_STUN_TP_UDP)
+@@ -550,7 +555,7 @@ static pj_bool_t on_stun_sock_ready(pj_activesock_t *asock, pj_status_t status)
+     result = pj_activesock_start_recvfrom(asock, stun_sock->pool,
+ 					  stun_sock->cfg.max_pkt_size, 0);
+     if (result != PJ_SUCCESS)
+-	return PJ_FALSE;
++	    return PJ_FALSE;
+ 
+     /* Associate us with the STUN session */
+     pj_stun_session_set_user_data(stun_sock->stun_sess, stun_sock);
+@@ -572,7 +577,6 @@ static pj_bool_t on_stun_sock_ready(pj_activesock_t *asock, pj_status_t status)
+ 
+     if (status != PJ_SUCCESS) {
+ 	pj_stun_sock_destroy(stun_sock);
+-	pj_grp_lock_release(stun_sock->grp_lock);
+ 	return status;
+     }
+ 
+@@ -846,8 +850,8 @@ static pj_bool_t on_stun_sock_accept(pj_activesock_t *active_sock,
+ 				  &activesock_cfg, stun_sock->stun_cfg.ioqueue,
+ 				  &activesock_cb, stun_sock, asock);
+     if (status != PJ_SUCCESS) {
++        printf("@@@-------- %p\n", stun_sock);
+         pj_stun_sock_destroy(stun_sock);
+-        pj_grp_lock_release(stun_sock->grp_lock);
+         return status;
+     }
+ 
+@@ -1021,6 +1025,7 @@ PJ_DEF(pj_status_t) pj_stun_sock_destroy(pj_stun_sock *stun_sock)
+     }
+ 
+     if (stun_sock->stun_sess) {
++        printf("@@@--- %p\n", stun_sock);
+         pj_stun_session_destroy(stun_sock->stun_sess);
+     }
+     pj_grp_lock_dec_ref(stun_sock->grp_lock);
+@@ -1083,6 +1088,7 @@ static void dns_srv_resolver_cb(void *user_data,
+     /* Handle error */
+     if (status != PJ_SUCCESS) {
+         stun_sock->last_err = status;
++        printf("@@@-\n");
+         sess_fail(stun_sock, PJ_STUN_SOCK_DNS_OP, status);
+         pj_grp_lock_release(stun_sock->grp_lock);
+         return;
+@@ -1137,6 +1143,7 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
+     return PJ_SUCCESS;
+ 
+ on_error:
++    printf("@@@X\n");
+     sess_fail(stun_sock, PJ_STUN_SOCK_BINDING_OP, status);
+     return status;
+ }
+@@ -1327,8 +1334,8 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect(pj_stun_sock *stun_sock,
+ 
+     pj_status_t status = pj_sock_socket(af, sock_type, 0, fd);
+     if (status != PJ_SUCCESS) {
++        printf("@@@-----2--- %p\n", stun_sock);
+         pj_stun_sock_destroy(stun_sock);
+-        pj_grp_lock_release(stun_sock->grp_lock);
+         return status;
+     }
+ 
+@@ -1336,8 +1343,8 @@ PJ_DECL(pj_status_t) pj_stun_sock_connect(pj_stun_sock *stun_sock,
+     status = pj_sock_apply_qos2(*fd, stun_sock->cfg.qos_type,
+                                 &stun_sock->cfg.qos_params, 2, stun_sock->obj_name, NULL);
+     if (status != PJ_SUCCESS && !stun_sock->cfg.qos_ignore_error) {
++        printf("@@@--3------ %p\n", stun_sock);
+         pj_stun_sock_destroy(stun_sock);
+-        pj_grp_lock_release(stun_sock->grp_lock);
+         return status;
+     }
+ 
+@@ -1620,6 +1627,7 @@ static void sess_on_request_complete(pj_stun_session *sess,
+ 
+     /* Handle failure */
+     if (status != PJ_SUCCESS) {
++        printf("@@@\n");
+         resched = sess_fail(stun_sock, op, status);
+         goto on_return;
+     }
+@@ -1637,6 +1645,7 @@ static void sess_on_request_complete(pj_stun_session *sess,
+     }
+ 
+     if (mapped_attr == NULL) {
++        printf("@@@1\n");
+         resched = sess_fail(stun_sock, op, PJNATH_ESTUNNOMAPPEDADDR);
+         goto on_return;
+     }
