@@ -56,6 +56,17 @@
 
 namespace jami {
 
+std::string
+JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::string& pluginId)
+{
+    auto cert = PluginUtils::readPluginCertificate(rootPath, pluginId);
+    if (!cert) {
+        JAMI_ERROR("Could not read plugin certificate");
+        return {};
+    }
+    return cert->getIssuerName();
+}
+
 std::map<std::string, std::string>
 JamiPluginManager::getPluginDetails(const std::string& rootPath)
 {
@@ -67,9 +78,14 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
     std::map<std::string, std::string> details = PluginUtils::parseManifestFile(
         PluginUtils::manifestPath(rootPath));
     if (!details.empty()) {
-        auto it = details.find("iconPath");
-        it->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
+        auto itIcon = details.find("iconPath");
+        itIcon->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
+
+        auto itImage = details.find("backgroundPath");
+        itImage->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
+
         details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["name"] + LIB_TYPE;
+        details["author"] = getPluginAuthor(rootPath, details["name"]);
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
     }

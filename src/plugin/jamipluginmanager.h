@@ -56,10 +56,18 @@ public:
     }
 
     /**
+     * @brief get the plugin's author
+     * @param rootPath
+     * @param pluginId
+     * @return string
+    */
+    std::string getPluginAuthor(const std::string& rootPath, const std::string& pluginId);
+
+    /**
      * @brief Parses a manifest file and return its content
      * along with other internally added values.
      * @param rootPath installation path
-     * @return Map where the keyset is {"name", "description", "version", "iconPath", "soPath"}
+     * @return Map where the keyset is {"id", "name", "description", "version", "iconPath", "imagePath","soPath"}
      */
     std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
 

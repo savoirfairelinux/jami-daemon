@@ -94,11 +94,14 @@ checkManifestJsonContentValidity(const Json::Value& root)
     std::string description = root.get("description", "").asString();
     std::string version = root.get("version", "").asString();
     std::string iconPath = root.get("iconPath", "icon.png").asString();
+    std::string background = root.get("backgroundPath", "background.jpg").asString();
     if (!name.empty() || !version.empty()) {
         return {{"name", name},
                 {"description", description},
                 {"version", version},
-                {"iconPath", iconPath}};
+                {"iconPath", iconPath},
+                {"backgroundPath", background},
+                };
     } else {
         throw std::runtime_error("plugin manifest file: bad format");
     }
@@ -171,6 +174,19 @@ readPluginManifestFromArchive(const std::string& jplPath)
 }
 
 std::unique_ptr<dht::crypto::Certificate>
+readPluginCertificate(const std::string& rootPath, const std::string& pluginId)
+{
+    std::string certPath = rootPath + DIR_SEPARATOR_CH + pluginId + ".crt";
+    try {
+        auto cert = fileutils::loadFile(certPath);
+        return std::make_unique<dht::crypto::Certificate>(cert);
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+    return {};
+}
+
+std::unique_ptr<dht::crypto::Certificate>
 readPluginCertificateFromArchive(const std::string& jplPath) {
     try {
         auto manifest = readPluginManifestFromArchive(jplPath);
@@ -215,14 +231,14 @@ uncompressJplFunction(std::string_view relativeFileName)
     // manifest.json and files under data/ folder remains in the same structure
     // but libraries files are extracted from the folder that matches the running ABI to
     // the main installation path.
-    if (relativeFileName == "manifest.json" || std::regex_match(relativeFileName, DATA_REGEX)) {
-        return std::make_pair(true, relativeFileName);
-    } else if (std::regex_search(relativeFileName, match, SO_REGEX)) {
-        if (std::svsub_match_view(match[1]) == ABI) {
+    if (std::regex_search(relativeFileName, match, SO_REGEX)) {
+        if (std::svsub_match_view(match[1]) != ABI) {
+            return std::make_pair(false, std::string_view {});
+        } else {
             return std::make_pair(true, std::svsub_match_view(match[2]));
         }
     }
-    return std::make_pair(false, std::string_view {});
+    return std::make_pair(true, relativeFileName);
 }
 } // namespace PluginUtils
 } // namespace jami

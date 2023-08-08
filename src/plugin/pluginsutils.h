@@ -99,6 +99,13 @@ bool checkPluginValidity(const std::string& rootPath);
 std::map<std::string, std::string> readPluginManifestFromArchive(const std::string& jplPath);
 
 /**
+ * @brief Read the plugin's certificate
+ * @param rootPath
+ * @param pluginId
+ * @return Certificate object pointer
+*/
+std::unique_ptr<dht::crypto::Certificate> readPluginCertificate(const std::string& rootPath, const std::string& pluginId);
+/**
  * @brief Read plugin certificate without uncompressing the whole archive.and
  * return an object Certificate
  * @param jplPath
