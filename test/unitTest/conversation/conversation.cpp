@@ -78,6 +78,7 @@ public:
 
 private:
     void testCreateConversation();
+    void testCreateConversationInvalidDisplayName();
     void testGetConversation();
     void testGetConversationsAfterRm();
     void testRemoveInvalidConversation();
@@ -131,6 +132,7 @@ private:
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
+    CPPUNIT_TEST(testCreateConversationInvalidDisplayName);
     CPPUNIT_TEST(testGetConversation);
     CPPUNIT_TEST(testGetConversationsAfterRm);
     CPPUNIT_TEST(testRemoveInvalidConversation);
@@ -269,6 +271,59 @@ ConversationTest::testCreateConversation()
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)),
                              std::istreambuf_iterator<char>());
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationTest::testCreateConversationInvalidDisplayName()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    bool aliceRegistered = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    aliceRegistered = true;
+                    cv.notify_one();
+                }
+            }));
+    auto messageAliceReceived = 0;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*message*/) {
+            if (accountId == aliceId) {
+                messageAliceReceived += 1;
+            }
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+
+    std::map<std::string, std::string> details;
+    details[ConfProperties::DISPLAYNAME] = " ";
+    libjami::setAccountDetails(aliceId, details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceRegistered; }));
+
+    // Start conversation
+    auto convId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    messageAliceReceived = 0;
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 1; }));
 }
 
 void

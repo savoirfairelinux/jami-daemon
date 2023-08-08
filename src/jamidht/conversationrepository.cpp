@@ -521,9 +521,9 @@ add_initial_files(GitRepository& repo,
  */
 std::string
 initial_commit(GitRepository& repo,
-               const std::shared_ptr<JamiAccount>& account,
-               ConversationMode mode,
-               const std::string& otherMember = "")
+                const std::shared_ptr<JamiAccount>& account,
+                ConversationMode mode,
+                const std::string& otherMember = "")
 {
     auto deviceId = std::string(account->currentDeviceId());
     auto name = account->getDisplayName();
@@ -538,8 +538,10 @@ initial_commit(GitRepository& repo,
 
     // Sign commit's buffer
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERROR("Unable to create a commit signature.");
-        return {};
+        if (git_signature_new(&sig_ptr, deviceId.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+            JAMI_ERROR("Unable to create a commit signature.");
+            return {};
+        }
     }
     GitSignature sig {sig_ptr, git_signature_free};
 
@@ -630,8 +632,11 @@ ConversationRepository::Impl::signature()
     // Sign commit's buffer
     auto deviceId = std::string(account->currentDeviceId());
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERROR("Unable to create a commit signature.");
-        return {nullptr, git_signature_free};
+        // Maybe the display name is invalid (like " ") - try without
+        if (git_signature_new(&sig_ptr, deviceId.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+            JAMI_ERROR("Unable to create a commit signature.");
+            return {nullptr, git_signature_free};
+        }
     }
     return {sig_ptr, git_signature_free};
 }
@@ -1745,19 +1750,10 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 {
     if (verifyDevice && !validateDevice())
         return {};
+    GitSignature sig = signature();
+    if (!sig)
+        return {};
     auto account = account_.lock();
-    auto name = getDisplayName();
-    if (!account || name.empty())
-        return {};
-
-    git_signature* sig_ptr = nullptr;
-    // Sign commit's buffer
-    auto deviceId = std::string(account->currentDeviceId());
-    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERROR("Unable to create a commit signature.");
-        return {};
-    }
-    GitSignature sig {sig_ptr, git_signature_free};
 
     // Retrieve current index
     git_index* index_ptr = nullptr;
@@ -2934,24 +2930,12 @@ ConversationRepository::addMember(const std::string& uri)
 std::string
 ConversationRepository::amend(const std::string& id, const std::string& msg)
 {
+    GitSignature sig = pimpl_->signature();
+    if (!sig)
+        return {};
     auto account = pimpl_->account_.lock();
-    if (!account)
-        return {};
-    auto deviceId = std::string(account->currentDeviceId());
-    auto name = pimpl_->getDisplayName();
-    if (name.empty())
-        return {};
 
-    git_signature* sig_ptr = nullptr;
     git_oid tree_id, commit_id;
-
-    // Sign commit's buffer
-    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERROR("Unable to create a commit signature.");
-        return {};
-    }
-    GitSignature sig {sig_ptr, git_signature_free};
-
     git_commit* commit_ptr = nullptr;
     auto repo = pimpl_->repository();
     if (!repo || git_oid_fromstr(&tree_id, id.c_str()) < 0
