@@ -25,6 +25,7 @@
 
 #include "logger.h"
 
+#include <algorithm>
 #include <fstream>
 #include <stdexcept>
 #include <msgpack.hpp>
@@ -436,32 +437,55 @@ JamiPluginManager::registerServices()
 {
     // Register getPluginPreferences so that plugin's can receive it's preferences
     pm_.registerService("getPluginPreferences", [](const DLPlugin* plugin, void* data) {
-        auto ppp = static_cast<std::map<std::string, std::string>*>(data);
-        *ppp = PluginPreferencesUtils::getPreferencesValuesMap(
+        auto s = static_cast<char*>(data);
+        auto ppp = PluginPreferencesUtils::getPreferencesValuesMap(
             PluginUtils::getRootPathFromSoPath(plugin->getPath()));
+
+        Json::Value root;
+        for (const auto& pair : ppp) {
+            root[pair.first] = pair.second;
+        }
+
+        Json::StreamWriterBuilder builder;
+        std::string json_string = Json::writeString(builder, root);
+        std::copy_n(json_string.c_str(), 4096, s);
+
         return 0;
     });
 
     // Register getPluginDataPath so that plugin's can receive the path to it's data folder
     pm_.registerService("getPluginDataPath", [](const DLPlugin* plugin, void* data) {
-        auto dataPath = static_cast<std::string*>(data);
-        dataPath->assign(PluginUtils::dataPath(plugin->getPath()));
+        auto dataPath = static_cast<char*>(data);
+        std::copy_n(PluginUtils::dataPath(plugin->getPath()).c_str(), 4096, dataPath);
         return 0;
     });
 
     // getPluginAccPreferences is a service that allows plugins to load saved per account preferences.
     auto getPluginAccPreferences = [](const DLPlugin* plugin, void* data) {
         const auto path = PluginUtils::getRootPathFromSoPath(plugin->getPath());
-        auto preferencesPtr {(static_cast<PreferencesMap*>(data))};
-        if (!preferencesPtr)
-            return -1;
+        auto s = static_cast<char*>(data);
+        Json::Value root;
 
-        preferencesPtr->emplace("default",
-                                PluginPreferencesUtils::getPreferencesValuesMap(path, "default"));
+        Json::Value defaultData;
+        auto defaultPreferences = PluginPreferencesUtils::getPreferencesValuesMap(path, "default");
+        for (const auto& pair : defaultPreferences) {
+            defaultData[pair.first] = pair.second;
+        }
+        root["default"] = defaultData;
 
-        for (const auto& accId : jami::Manager::instance().getAccountList())
-            preferencesPtr->emplace(accId,
-                                    PluginPreferencesUtils::getPreferencesValuesMap(path, accId));
+        for (const auto& accId : jami::Manager::instance().getAccountList()) {
+            Json::Value data;
+            auto preferences = PluginPreferencesUtils::getPreferencesValuesMap(path, accId);
+            for (const auto& pair : preferences) {
+                data[pair.first] = pair.second;
+            }
+            root[accId] = data;
+        }
+
+        Json::StreamWriterBuilder builder;
+        std::string json_string = Json::writeString(builder, root);
+        std::copy_n(json_string.c_str(), 4096, s);
+
         return 0;
     };
 

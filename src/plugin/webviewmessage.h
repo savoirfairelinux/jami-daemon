@@ -18,25 +18,38 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #pragma once
-#include <string>
 
-namespace jami {
+#ifdef __cplusplus
+#define EXTERNAL_C_LINKAGE extern "C"
+// clang-format off
+#define C_INTERFACE_START EXTERNAL_C_LINKAGE {
+#define C_INTERFACE_END }
+// clang-format on
+#else
+#define C_LINKAGE
+#define C_INTERFACE_START
+#define C_INTERFACE_END
+#endif
+
+C_INTERFACE_START;
+
 /**
  * @struct WebViewMessage
  * @brief Contains data about a web view message
  * Used by WebViewServicesManager. Passed from a plugin to the daemon. After that, this struct is no
  * longer used.
  */
-struct WebViewMessage
+typedef struct WebViewMessage
 {
     // Which webview is this message about
-    const std::string webViewId;
+    const char* webViewId;
 
     // Message identifier
-    const std::string messageId;
+    const char* messageId;
 
     // The actual message itself. Can be a path, JSON, XML, or anything,
     // as long as it fits in a string
-    const std::string payload;
-};
-} // namespace jami
+    const char* payload;
+} WebViewMessage;
+
+C_INTERFACE_END;

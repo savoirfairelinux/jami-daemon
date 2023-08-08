@@ -65,7 +65,7 @@ struct JAMI_PluginAPI;
  */
 typedef struct JAMI_PluginObjectParams
 {
-    const JAMI_PluginAPI* pluginApi; // this API
+    const struct JAMI_PluginAPI* pluginApi; // this API
     const char* type;
 } JAMI_PluginObjectParams;
 
@@ -88,7 +88,7 @@ typedef struct JAMI_PluginObjectFactory
 } JAMI_PluginObjectFactory;
 
 // Plugins exposed API prototype
-typedef int32_t (*JAMI_PluginFunc)(const JAMI_PluginAPI* api, const char* name, void* data);
+typedef int32_t (*JAMI_PluginFunc)(const struct JAMI_PluginAPI* api, const char* name, void* data);
 
 /**
  * @struct JAMI_PluginAPI
