@@ -342,7 +342,32 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
 
     libjami::FrameBuffer outFrame(av_frame_alloc());
     av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
+
     if (crop_.w || crop_.h) {
+#ifdef RING_ACCEL
+        auto desc = av_pix_fmt_desc_get(
+            (AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
+        /*
+         Cropping does not work for hardware-decoded frames.
+         They need to be transferred to main memory.
+         */
+        if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+            std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
+            try {
+                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
+                                                                frame_p),
+                                                            AV_PIX_FMT_NV12);
+            } catch (const std::runtime_error& e) {
+                JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
+                         this,
+                         e.what());
+                return;
+            }
+            if (not frame)
+                return;
+            av_frame_ref(outFrame.get(), frame->pointer());
+        }
+#endif
         outFrame->crop_top = crop_.y;
         outFrame->crop_bottom = (size_t) outFrame->height - crop_.y - crop_.h;
         outFrame->crop_left = crop_.x;
@@ -474,7 +499,11 @@ SinkClient::setFrameSize(int width, int height)
                  width,
                  height,
                  mixer_ ? "Yes" : "No");
-        emitSignal<libjami::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
+        emitSignal<libjami::VideoSignal::DecodingStarted>(getId(),
+                                                          openedName(),
+                                                          width,
+                                                          height,
+                                                          mixer_);
         started_ = true;
     } else if (started_) {
         JAMI_DBG("[Sink:%p] Stopped - size=%dx%d, mixer=%s",
