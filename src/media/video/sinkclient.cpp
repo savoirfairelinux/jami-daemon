@@ -339,9 +339,30 @@ void
 SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
 {
     notify(frame_p);
-
     libjami::FrameBuffer outFrame(av_frame_alloc());
+#ifdef RING_ACCEL
+    auto desc = av_pix_fmt_desc_get((AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
+    // Cropping does not work for hardware-decoded frames. They need to be transferred to main memory.
+    if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL) && (crop_.w || crop_.h)) {
+        std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
+        try {
+            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+        } catch (const std::runtime_error& e) {
+            JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
+                     this,
+                     e.what());
+            return;
+        }
+        if (not frame)
+            return;
+        av_frame_ref(outFrame.get(), frame->pointer());
+    } else {
+        av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
+    }
+#else
     av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
+#endif
+
     if (crop_.w || crop_.h) {
         outFrame->crop_top = crop_.y;
         outFrame->crop_bottom = (size_t) outFrame->height - crop_.y - crop_.h;
@@ -349,6 +370,7 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
         outFrame->crop_right = (size_t) outFrame->width - crop_.x - crop_.w;
         av_frame_apply_cropping(outFrame.get(), AV_FRAME_CROP_UNALIGNED);
     }
+
     if (outFrame->height != height_ || outFrame->width != width_) {
         setFrameSize(outFrame->width, outFrame->height);
         return;
