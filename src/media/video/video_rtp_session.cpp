@@ -405,6 +405,9 @@ VideoRtpSession::stop()
     stopSender();
     stopReceiver();
 
+    if (socketPair_)
+        socketPair_->interrupt();
+
     rtcpCheckerThread_.join();
 
     // reset default video quality if exist
@@ -414,8 +417,6 @@ VideoRtpSession::stop()
     videoBitrateInfo_.videoBitrateCurrent = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
     storeVideoBitrateInfo();
 
-    if (socketPair_)
-        socketPair_->interrupt();
     socketPair_.reset();
     videoLocal_.reset();
 }
