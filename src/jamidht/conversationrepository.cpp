@@ -158,7 +158,6 @@ public:
     GitObject memberCertificate(std::string_view memberUri, const GitTree& tree) const;
     // NOTE! GitDiff needs to be deteleted before repo
     GitTree treeAtCommit(git_repository* repo, const std::string& commitId) const;
-    std::string getCommitType(const std::string& commitMsg) const;
 
     std::vector<std::string> getInitialMembers() const;
 
@@ -956,11 +955,15 @@ ConversationRepository::Impl::checkEdit(const std::string& userDevice,
         JAMI_ERROR("Edited commit {:s} got a different author ({:s})", editedId, commit.id);
         return false;
     }
-    if (editedCommitMap->at("type") != "text/plain") {
-        JAMI_ERROR("Edited commit {:s} is not text!", editedId);
-        return false;
+    if (editedCommitMap->at("type") == "text/plain") {
+        return true;
     }
-    return true;
+    if (editedCommitMap->at("type") == "application/data-transfer+json") {
+        if (editedCommitMap->find("tid") != editedCommitMap->end())
+            return true;
+    }
+    JAMI_ERROR("Edited commit {:s} is not valid!", editedId);
+    return false;
 }
 
 bool
@@ -2223,22 +2226,6 @@ ConversationRepository::Impl::treeAtCommit(git_repository* repo, const std::stri
     return GitTree {tree, git_tree_free};
 }
 
-std::string
-ConversationRepository::Impl::getCommitType(const std::string& commitMsg) const
-{
-    std::string type = {};
-    std::string err;
-    Json::Value cm;
-    Json::CharReaderBuilder rbuilder;
-    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-    if (reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &cm, &err)) {
-        type = cm["type"].asString();
-    } else {
-        JAMI_WARNING("{}", err);
-    }
-    return type;
-}
-
 std::vector<std::string>
 ConversationRepository::Impl::getInitialMembers() const
 {
@@ -2604,7 +2591,23 @@ ConversationRepository::Impl::validCommits(
                 return false;
             }
         } else if (commit.parents.size() == 1) {
-            auto type = getCommitType(commit.commit_msg);
+            std::string type = {}, editId = {};
+            std::string err;
+            Json::Value cm;
+            Json::CharReaderBuilder rbuilder;
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (reader->parse(commit.commit_msg.data(), commit.commit_msg.data() + commit.commit_msg.size(), &cm, &err)) {
+                type = cm["type"].asString();
+                editId = cm["edit"].asString();
+            } else {
+                JAMI_WARNING("{}", err);
+                if (auto shared = account_.lock()) {
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        shared->getAccountID(), id_, EVALIDFETCH, "Malformed commit");
+                }
+                return false;
+            }
+
             if (type == "vote") {
                 // Check that vote is valid
                 if (!checkVote(userDevice, commit.id, commit.parents[0])) {
@@ -2618,23 +2621,8 @@ ConversationRepository::Impl::validCommits(
                     return false;
                 }
             } else if (type == "member") {
-                std::string err;
-                Json::Value root;
-                Json::CharReaderBuilder rbuilder;
-                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                if (!reader->parse(commit.commit_msg.data(),
-                                   commit.commit_msg.data() + commit.commit_msg.size(),
-                                   &root,
-                                   &err)) {
-                    JAMI_ERROR("Failed to parse: {}", err);
-                    if (auto shared = account_.lock()) {
-                        emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            shared->getAccountID(), id_, EVALIDFETCH, "Malformed member commit");
-                    }
-                    return false;
-                }
-                std::string action = root["action"].asString();
-                std::string uriMember = root["uri"].asString();
+                std::string action = cm["action"].asString();
+                std::string uriMember = cm["uri"].asString();
                 if (action == "add") {
                     if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
                         JAMI_WARNING(
@@ -2730,7 +2718,7 @@ ConversationRepository::Impl::validCommits(
                     }
                     return false;
                 }
-            } else if (type == "application/edited-message") {
+            } else if (type == "application/edited-message" || !editId.empty()) {
                 if (!checkEdit(userDevice, commit)) {
                     JAMI_ERROR("Commit {:s} malformed", commit.id);
                     if (auto shared = account_.lock()) {
