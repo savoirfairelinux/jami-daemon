@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c9790eae_d9cbf1a3",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2990,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-09T17:25:25Z",
+      "side": 1,
+      "message": "This should not be necessary.\n\ndoUnregister calls\n\n```\n    if (not isEnabled())\n        shutdownConnections();\n```\n\nthat sends a shutdown on the SIP socket causing calls to close anyway.\n\nI can\u0027t reproduce the issue on current master (Android\u003c-\u003eLinux or Linux\u003c-\u003eLinux)",
+      "range": {
+        "startLine": 2990,
+        "startChar": 20,
+        "endLine": 2990,
+        "endChar": 30
+      },
+      "revId": "52e508db2b1643b3c6aed9d82ee07baf267dfbd8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
