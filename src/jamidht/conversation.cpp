@@ -897,10 +897,13 @@ Conversation::Impl::handleEdition(History& history, const std::shared_ptr<libjam
         auto baseCommit = it->second;
         if (baseCommit) {
             auto itReact = baseCommit->body.find("react-to");
-            auto body = sharedCommit->body.at("body");
+            auto toReplace = "body";
+            if (baseCommit->type == "application/data-transfer+json")
+                toReplace = "tid";
+            auto body = sharedCommit->body.at(toReplace);
             // Edit reaction
             if (itReact != baseCommit->body.end()) {
-                baseCommit->body["body"] = body; // Replace body if pending
+                baseCommit->body[toReplace] = body; // Replace body if pending
                 it = history.quickAccess.find(itReact->second);
                 auto itPending = history.pendingReactions.find(itReact->second);
                 if (it != history.quickAccess.end()) {
@@ -909,7 +912,7 @@ Conversation::Impl::handleEdition(History& history, const std::shared_ptr<libjam
                         return reaction.at("id") == editId;
                     });
                     if (itPreviousReact != baseCommit->reactions.end()) {
-                        (*itPreviousReact)["body"] = body;
+                        (*itPreviousReact)[toReplace] = body;
                         if (body.empty()) {
                             baseCommit->reactions.erase(itPreviousReact);
                             emitSignal<libjami::ConversationSignal::ReactionRemoved>(accountId_, repository_->id(), baseCommit->id, editId);
@@ -921,7 +924,7 @@ Conversation::Impl::handleEdition(History& history, const std::shared_ptr<libjam
                         return reaction.at("id") == editId;
                     });
                     if (itReaction != itPending->second.end()) {
-                        (*itReaction)["body"] = body;
+                        (*itReaction)[toReplace] = body;
                         if (body.empty())
                             itPending->second.erase(itReaction);
                     }
@@ -933,7 +936,7 @@ Conversation::Impl::handleEdition(History& history, const std::shared_ptr<libjam
             } else {
                 // Normal message
                 it->second->editions.emplace(it->second->editions.begin(), it->second->body);
-                it->second->body["body"] = sharedCommit->body["body"];
+                it->second->body[toReplace] = sharedCommit->body[toReplace];
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *it->second);
             }
         }
@@ -968,7 +971,11 @@ Conversation::Impl::handleMessage(History& history, const std::shared_ptr<libjam
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
     if (peditIt != history.pendingEditions.end()) {
         auto oldBody = sharedCommit->body;
-        sharedCommit->body["body"] = peditIt->second.front()->body["body"];
+        if (sharedCommit->type == "application/data-transfer+json") {
+            sharedCommit->body["tid"] = peditIt->second.front()->body["tid"];
+        } else {
+            sharedCommit->body["body"] = peditIt->second.front()->body["body"];
+        }
         peditIt->second.pop_front();
         for (const auto& commit: peditIt->second) {
             sharedCommit->editions.emplace_back(commit->body);

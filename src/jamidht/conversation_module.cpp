@@ -1083,13 +1083,17 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
 {
     // Check that editedId is a valid commit, from ourself and plain/text
     auto validCommit = false;
+    std::string type, tid;
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard<std::mutex> lk(conv->mtx);
         if (conv->conversation) {
             auto commit = conv->conversation->getCommit(editedId);
             if (commit != std::nullopt) {
+                type = commit->at("type");
+                if (type == "application/data-transfer+json")
+                    tid = commit->at("tid");
                 validCommit = commit->at("author") == username_
-                              && commit->at("type") == "text/plain";
+                              && (type == "text/plain" || type == "application/data-transfer+json");
             }
         }
     }
@@ -1099,9 +1103,18 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
     }
     // Commit message edition
     Json::Value json;
-    json["body"] = newBody;
+    if (type == "application/data-transfer+json") {
+        json["tid"] = "";
+        // Remove file!
+        auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
+                        + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + conversationId
+                        + DIR_SEPARATOR_STR + editedId + "_" + tid;
+        fileutils::remove(path, true);
+    } else {
+        json["body"] = newBody;
+    }
     json["edit"] = editedId;
-    json["type"] = "application/edited-message";
+    json["type"] = type;
     sendMessage(conversationId, std::move(json));
 }
 
