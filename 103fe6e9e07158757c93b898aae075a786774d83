@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f403b5ac_f7fd3102",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-09T13:18:37Z",
+      "side": 1,
+      "message": "that check breaks old plugins installation. i would only add it after all plugins are published with it.\nNote: plugins SDK should also be updated.",
+      "range": {
+        "startLine": 103,
+        "startChar": 16,
+        "endLine": 103,
+        "endChar": 47
+      },
+      "revId": "103fe6e9e07158757c93b898aae075a786774d83",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
