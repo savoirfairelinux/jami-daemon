@@ -154,7 +154,7 @@ VideoRtpSession::startSender()
                 return;
             }
 
-#ifdef __ANDROID__
+#if (defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
             if (auto input1 = std::static_pointer_cast<VideoInput>(videoLocal_)) {
                 input1->setupSink();
                 input1->setFrameSize(localVideoParams_.width, localVideoParams_.height);
