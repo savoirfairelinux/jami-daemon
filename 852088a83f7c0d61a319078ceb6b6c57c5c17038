@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07cc3fd7_8afe4a2c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-09T11:27:24Z",
+      "side": 1,
+      "message": "A blocks B\nB calls A\nA receives call :/",
+      "revId": "852088a83f7c0d61a319078ceb6b6c57c5c17038",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
