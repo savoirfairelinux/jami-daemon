@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b317878f_8fdea4e1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-09T13:52:00Z",
+      "side": 1,
+      "message": "check comments at https://review.jami.net/c/jami-plugins/+/25462",
+      "revId": "58336163a9c1f8984f973671c1ce55680b83f171",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
