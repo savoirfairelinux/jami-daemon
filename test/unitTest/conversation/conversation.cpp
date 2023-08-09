@@ -2443,7 +2443,7 @@ ConversationTest::testMessageEdition()
         !cv.wait_for(lk, 10s, [&]() { return bobData.messagesUpdated.size() == bobMsgSize + 1; }));
     // Add invalid edition
     Json::Value root;
-    root["type"] = "application/edited-message";
+    root["type"] = "text/plain";
     root["edit"] = convId;
     root["body"] = "new";
     Json::StreamWriterBuilder wbuilder;

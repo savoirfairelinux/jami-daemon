@@ -85,6 +85,7 @@ private:
     void testTransferInfo();
     void testRemoveHardLink();
     void testTooLarge();
+    void testDeleteFile();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
     CPPUNIT_TEST(testConversationFileTransfer);
@@ -97,6 +98,7 @@ private:
     CPPUNIT_TEST(testTransferInfo);
     CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST(testTooLarge);
+    CPPUNIT_TEST(testDeleteFile);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1083,6 +1085,71 @@ FileTransferTest::testTooLarge()
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
 
     libjami::unregisterSignalHandlers();
+}
+
+void
+FileTransferTest::testDeleteFile()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto convId = libjami::startConversation(aliceId);
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    std::string iid, tid;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            libjami::SwarmMessage message) {
+            if (message.type == "application/data-transfer+json") {
+                if (accountId == aliceId) {
+                    iid = message.id;
+                    tid = message.body["tid"];
+                }
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    bool messageUpdated = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            libjami::SwarmMessage message) {
+            if (accountId == aliceId && message.type == "application/data-transfer+json" && message.body["tid"].empty()) {
+                messageUpdated = true;
+            }
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Create file to send
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(64000, 'A');
+    sendFile.close();
+
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !iid.empty(); }));
+    auto dataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceId
+                    + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + convId;
+    CPPUNIT_ASSERT(fileutils::isFile(fmt::format("{}/{}_{}", dataPath, iid, tid)));
+
+    // Delete file
+    libjami::sendMessage(aliceId, convId, ""s, iid, 1);
+
+    // Verify message is updated
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageUpdated; }));
+    // Verify file is deleted
+    CPPUNIT_ASSERT(!fileutils::isFile(fmt::format("{}/{}_{}", dataPath, iid, tid)));
+
+    libjami::unregisterSignalHandlers();
+    std::this_thread::sleep_for(5s);
 }
 
 } // namespace test
