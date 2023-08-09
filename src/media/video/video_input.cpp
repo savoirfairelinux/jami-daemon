@@ -69,13 +69,7 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
         inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
     }
-#ifdef __ANDROID__
     sink_ = Manager::instance().createSinkClient(id_);
-#else
-    if (inputMode_ == VideoInputMode::ManagedByDaemon) {
-        sink_ = Manager::instance().createSinkClient(id_);
-    }
-#endif
     switchInput(id_);
 }
 
