@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0b5b487d_2fb7abe4",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-09T13:53:53Z",
+      "side": 1,
+      "message": "why don\u0027t do the transfer only if there is a crop to be performed?",
+      "range": {
+        "startLine": 366,
+        "startChar": 4,
+        "endLine": 366,
+        "endChar": 29
+      },
+      "revId": "4bcfdde5051261022f061d3ef8b6b3072b42dd96",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
