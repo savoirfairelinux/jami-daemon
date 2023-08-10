@@ -2013,9 +2013,6 @@ ConversationTest::testReplayConversation()
     aliceAccount->sendTrustRequest(bobUri, {});
     // Should retrieve previous conversation
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        JAMI_ERROR("@@@ {}", bobData.messages.size());
-        if (bobData.messages.size() > 0)
-            JAMI_ERROR("@@@ {}", bobData.messages[0].body["body"]);
         return bobData.messages.size() == 2 && bobData.messages[0].body["body"] == "foo" && bobData.messages[1].body["body"] == "bar";
     }));
 }

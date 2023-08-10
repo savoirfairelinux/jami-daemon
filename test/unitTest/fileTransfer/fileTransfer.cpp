@@ -44,6 +44,18 @@ using namespace std::literals::chrono_literals;
 namespace jami {
 namespace test {
 
+struct UserData {
+    std::string conversationId;
+    bool removed {false};
+    bool requestReceived {false};
+    bool registered {false};
+    bool stopped {false};
+    bool deviceAnnounced {false};
+    int code {0};
+    std::vector<libjami::SwarmMessage> messages;
+    std::vector<libjami::SwarmMessage> messagesUpdated;
+};
+
 class FileTransferTest : public CppUnit::TestFixture
 {
 public:
@@ -62,8 +74,11 @@ public:
     void tearDown();
 
     std::string aliceId;
+    UserData aliceData;
     std::string bobId;
+    UserData bobData;
     std::string carlaId;
+    UserData carlaData;
 
     std::string sendPath {std::filesystem::current_path() / "SEND"};
     std::string recvPath {std::filesystem::current_path() / "RECV"};
@@ -72,6 +87,8 @@ public:
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
+
+    void connectSignals();
 
 private:
     void testConversationFileTransfer();
@@ -128,6 +145,9 @@ FileTransferTest::setUp()
     aliceId = actors["alice"];
     bobId = actors["bob"];
     carlaId = actors["carla"];
+    aliceData = {};
+    bobData = {};
+    carlaData = {};
 }
 
 void
@@ -137,6 +157,89 @@ FileTransferTest::tearDown()
     std::remove(recvPath.c_str());
     std::remove(recv2Path.c_str());
     wait_for_removal_of({aliceId, bobId, carlaId});
+}
+
+void
+FileTransferTest::connectSignals()
+{
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                aliceData.conversationId = conversationId;
+            } else if (accountId == bobId) {
+                bobData.conversationId = conversationId;
+            } else if (accountId == carlaId) {
+                carlaData.conversationId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == aliceId) {
+                    aliceData.requestReceived = true;
+                } else if (accountId == bobId) {
+                    bobData.requestReceived = true;
+                } else if (accountId == carlaId) {
+                    carlaData.requestReceived = true;
+                }
+                cv.notify_one();
+            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            libjami::SwarmMessage message) {
+            if (accountId == aliceId) {
+                aliceData.messages.emplace_back(message);
+            } else if (accountId == bobId) {
+                bobData.messages.emplace_back(message);
+            } else if (accountId == carlaId) {
+                carlaData.messages.emplace_back(message);
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            libjami::SwarmMessage message) {
+            if (accountId == aliceId) {
+                aliceData.messagesUpdated.emplace_back(message);
+            } else if (accountId == bobId) {
+                bobData.messagesUpdated.emplace_back(message);
+            } else if (accountId == carlaId) {
+                carlaData.messagesUpdated.emplace_back(message);
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
+            [&](const std::string& accountId, const std::string&) {
+                if (accountId == aliceId)
+                    aliceData.removed = true;
+                else if (accountId == bobId)
+                    bobData.removed = true;
+                cv.notify_one();
+            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
+        [&](const std::string& accountId,
+            const std::string& conversationId,
+            const std::string&,
+            const std::string& fileId,
+            int code) {
+            if (conversationId.empty())
+                return;
+            if (accountId == aliceId)
+                aliceData.code = code;
+            else if (accountId == bobId)
+                bobData.code = code;
+            else if (accountId == carlaId)
+                carlaData.code = code;
+            cv.notify_one();
+        }));
+    libjami::registerSignalHandlers(confHandlers);
 }
 
 void
@@ -153,80 +256,21 @@ FileTransferTest::testConversationFileTransfer()
     Manager::instance().sendRegister(carlaId, true);
     wait_for_announcement_of(carlaId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    auto requestReceived = 0;
-    auto conversationReady = 0;
-    auto memberJoined = 0;
-    std::string tidBob, tidCarla, iidBob, iidCarla;
-    std::string hostAcceptanceBob = {}, hostAcceptanceCarla = {};
-    std::vector<std::string> peerAcceptance = {}, finished = {};
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    tidBob = message["fileId"];
-                    iidBob = message["id"];
-                } else if (accountId == carlaId) {
-                    tidCarla = message["fileId"];
-                    iidCarla = message["id"];
-                }
-            } else if (accountId == aliceId && message["type"] == "member"
-                       && message["action"] == "join") {
-                memberJoined += 1;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived += 1;
-                if (requestReceived >= 2)
-                    cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-            conversationReady += 1;
-            if (conversationReady >= 3)
-                cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string& fileId,
-            int code) {
-            if (conversationId.empty())
-                return;
-            if (code == static_cast<int>(libjami::DataTransferEventCode::wait_host_acceptance)) {
-                if (accountId == bobId)
-                    hostAcceptanceBob = fileId;
-                else if (accountId == carlaId)
-                    hostAcceptanceCarla = fileId;
-                cv.notify_one();
-            } else if (code
-                       == static_cast<int>(libjami::DataTransferEventCode::wait_peer_acceptance)) {
-                peerAcceptance.emplace_back(fileId);
-                cv.notify_one();
-            } else if (code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
-                finished.emplace_back(fileId);
-                cv.notify_one();
-            }
-        }));
-    libjami::registerSignalHandlers(confHandlers);
+    connectSignals();
 
     auto convId = libjami::startConversation(aliceId);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
     libjami::addConversationMember(aliceId, convId, carlaUri);
-    cv.wait_for(lk, 60s, [&]() { return requestReceived == 2; });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData.requestReceived && carlaData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
     libjami::acceptConversationRequest(carlaId, convId);
-    cv.wait_for(lk, 30s, [&]() { return conversationReady == 3 && memberJoined == 2; });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size(); }));
 
     // Send file
     std::ofstream sendFile(sendPath);
@@ -234,16 +278,18 @@ FileTransferTest::testConversationFileTransfer()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    bobMsgSize = bobData.messages.size();
+    auto carlaMsgSize = carlaData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return !tidBob.empty() && !tidCarla.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return bobData.messages.size() == bobMsgSize + 1 && carlaData.messages.size() == carlaMsgSize + 1; }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
 
-    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    libjami::downloadFile(carlaId, convId, iidCarla, tidCarla, recv2Path);
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    libjami::downloadFile(carlaId, convId, id, fileId, recv2Path);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return finished.size() == 3; }));
-
-    libjami::unregisterSignalHandlers();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return carlaData.code == static_cast<int>(libjami::DataTransferEventCode::finished) && bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
 }
 
 void
@@ -253,67 +299,16 @@ FileTransferTest::testFileTransferInConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
+
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool bobJoined = false;
-    std::string tidBob, iidBob;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    tidBob = message["fileId"];
-                    iidBob = message["id"];
-                }
-            }
-            if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
-                bobJoined = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferAFinished = false, transferBFinished = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (code == static_cast<int>(libjami::DataTransferEventCode::finished)
-                && conversationId == convId) {
-                if (accountId == aliceId)
-                    transferAFinished = true;
-                else if (accountId == bobId)
-                    transferBFinished = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady && bobJoined; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -321,17 +316,15 @@ FileTransferTest::testFileTransferInConversation()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize  + 1== bobData.messages.size(); }));
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
 
-    transferAFinished = false;
-    transferBFinished = false;
-    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferAFinished && transferBFinished; }));
-
-    libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(5s);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished) && bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
 }
 
 void
@@ -341,67 +334,15 @@ FileTransferTest::testVcfFileTransferInConversation()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool bobJoined = false;
-    std::string tidBob, iidBob;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    tidBob = message["fileId"];
-                    iidBob = message["id"];
-                }
-            }
-            if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
-                bobJoined = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferAFinished = false, transferBFinished = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (code == static_cast<int>(libjami::DataTransferEventCode::finished)
-                && conversationId == convId) {
-                if (accountId == aliceId)
-                    transferAFinished = true;
-                else if (accountId == bobId)
-                    transferBFinished = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady && bobJoined; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -409,17 +350,15 @@ FileTransferTest::testVcfFileTransferInConversation()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
 
-    transferAFinished = false;
-    transferBFinished = false;
-    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferAFinished && transferBFinished; }));
-
-    libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(5s);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished) && bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
 }
 
 void
@@ -429,76 +368,15 @@ FileTransferTest::testBadSha3sumOut()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool memberJoin = false;
-    std::string mid = {}, iid;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (accountId == bobId) {
-                if (message["type"] == "application/data-transfer+json") {
-                    mid = message["fileId"];
-                    iid = message["id"];
-                }
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferAFinished = false, transferBFinished = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (conversationId == convId
-                && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
-                if (accountId == aliceId)
-                    transferAFinished = true;
-                if (accountId == bobId)
-                    transferBFinished = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
-            [&](const std::string& accountId,
-                const std::string& conversationId,
-                const std::string& uri,
-                int event) {
-                if (accountId == aliceId && conversationId == convId && uri == bobUri
-                    && event == 1) {
-                    memberJoin = true;
-                }
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady && memberJoin; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -506,9 +384,9 @@ FileTransferTest::testBadSha3sumOut()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !mid.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     // modifiy file
     sendFile = std::ofstream(sendPath);
@@ -516,14 +394,11 @@ FileTransferTest::testBadSha3sumOut()
     sendFile << std::string(64000, 'B');
     sendFile.close();
 
-    transferAFinished = false;
-    transferBFinished = false;
-    libjami::downloadFile(bobId, convId, iid, mid, recvPath);
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
 
-    // The file transfer will not be sent as modified
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return transferAFinished || transferBFinished; }));
-
-    libjami::unregisterSignalHandlers();
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 45s, [&]() { return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished) || bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
 }
 
 void
@@ -533,76 +408,15 @@ FileTransferTest::testBadSha3sumIn()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool memberJoin = false;
-    std::string mid = {}, iid;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (accountId == bobId) {
-                if (message["type"] == "application/data-transfer+json") {
-                    mid = message["fileId"];
-                    iid = message["id"];
-                }
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferAFinished = false, transferBFinished = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (conversationId == convId
-                && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
-                if (accountId == aliceId)
-                    transferAFinished = true;
-                if (accountId == bobId)
-                    transferBFinished = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
-            [&](const std::string& accountId,
-                const std::string& conversationId,
-                const std::string& uri,
-                int event) {
-                if (accountId == aliceId && conversationId == convId && uri == bobUri
-                    && event == 1) {
-                    memberJoin = true;
-                }
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady && memberJoin; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -611,8 +425,9 @@ FileTransferTest::testBadSha3sumIn()
     sendFile.close();
 
     aliceAccount->noSha3sumVerification(true);
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !mid.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     // modifiy file
     sendFile = std::ofstream(sendPath);
@@ -621,16 +436,15 @@ FileTransferTest::testBadSha3sumIn()
     sendFile << std::string(64000, 'B');
     sendFile.close();
 
-    transferAFinished = false;
-    transferBFinished = false;
-    libjami::downloadFile(bobId, convId, iid, mid, recvPath);
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
 
     // The file transfer will be sent but refused by bob
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferAFinished; }));
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return transferBFinished; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
 
     std::remove(sendPath.c_str());
-    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -642,88 +456,20 @@ FileTransferTest::testAskToMultipleParticipants()
     auto aliceUri = aliceAccount->getUsername();
     auto bobUri = bobAccount->getUsername();
     auto carlaUri = carlaAccount->getUsername();
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool memberJoin = false;
-    std::string bobTid, carlaTid, iidBob, iidCarla;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    bobTid = message["fileId"];
-                    iidBob = message["id"];
-                } else if (accountId == carlaId) {
-                    carlaTid = message["fileId"];
-                    iidCarla = message["id"];
-                }
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId || accountId == carlaId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferBFinished = false, transferCFinished = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (conversationId == convId
-                && code == static_cast<int>(libjami::DataTransferEventCode::finished)) {
-                if (accountId == carlaId)
-                    transferCFinished = true;
-                if (accountId == bobId)
-                    transferBFinished = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
-            [&](const std::string& accountId,
-                const std::string& conversationId,
-                const std::string& uri,
-                int event) {
-                if (accountId == aliceId && conversationId == convId
-                    && (uri == bobUri || uri == carlaUri) && event == 1) {
-                    memberJoin = true;
-                }
-                cv.notify_one();
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
-    requestReceived = false;
     libjami::addConversationMember(aliceId, convId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData.requestReceived && carlaData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady && memberJoin; }));
-
-    conversationReady = false;
-    memberJoin = false;
-
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
     libjami::acceptConversationRequest(carlaId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return conversationReady && memberJoin; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -731,21 +477,21 @@ FileTransferTest::testAskToMultipleParticipants()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    bobMsgSize = bobData.messages.size();
+    auto carlaMsgSize = carlaData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobTid.empty() && !carlaTid.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return bobData.messages.size() == bobMsgSize + 1 && carlaData.messages.size() == carlaMsgSize + 1; }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
 
-    transferCFinished = false;
-    libjami::downloadFile(carlaId, convId, iidCarla, carlaTid, recv2Path);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferCFinished; }));
+    libjami::downloadFile(carlaId, convId, id, fileId, recv2Path);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
     CPPUNIT_ASSERT(fileutils::isFile(recv2Path));
 
-    transferBFinished = false;
-    libjami::downloadFile(bobId, convId, iidBob, bobTid, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBFinished; }));
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
     CPPUNIT_ASSERT(fileutils::isFile(recvPath));
-
-    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -755,69 +501,15 @@ FileTransferTest::testCancelInTransfer()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool bobJoined = false;
-    std::string tidBob, iidBob;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    iidBob = message["id"];
-                    tidBob = message["fileId"];
-                }
-            }
-            if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
-                bobJoined = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferBOngoing = false, transferBCancelled = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (code == static_cast<int>(libjami::DataTransferEventCode::ongoing)
-                && conversationId == convId) {
-                if (accountId == bobId)
-                    transferBOngoing = true;
-            } else if (code > static_cast<int>(libjami::DataTransferEventCode::finished)
-                       && conversationId == convId) {
-                if (accountId == bobId)
-                    transferBCancelled = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady && bobJoined; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -825,20 +517,19 @@ FileTransferTest::testCancelInTransfer()
     sendFile << std::string(640000, 'A');
     sendFile.close();
 
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::ongoing); }));
 
-    transferBOngoing = false;
-    CPPUNIT_ASSERT(libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBOngoing; }));
-    transferBCancelled = false;
-    libjami::cancelDataTransfer(bobId, convId, tidBob);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBCancelled; }));
+    libjami::cancelDataTransfer(bobId, convId, fileId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::closed_by_peer); }));
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
-    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(tidBob));
-
-    libjami::unregisterSignalHandlers();
+    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
 }
 
 void
@@ -848,139 +539,53 @@ FileTransferTest::testTransferInfo()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool requestReceived = false;
-    bool conversationReady = false;
-    bool bobJoined = false;
-    std::string tidBob, iidBob;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    tidBob = message["fileId"];
-                    iidBob = message["id"];
-                }
-            }
-            if (accountId == aliceId && message["type"] == "member" && message["action"] == "join") {
-                bobJoined = true;
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool transferAFinished = false, transferBFinished = false;
-    // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string&,
-            int code) {
-            if (code == static_cast<int>(libjami::DataTransferEventCode::finished)
-                && conversationId == convId) {
-                if (accountId == aliceId)
-                    transferAFinished = true;
-                else if (accountId == bobId)
-                    transferBFinished = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady && bobJoined; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Create file to send
     std::ofstream sendFile(sendPath);
     CPPUNIT_ASSERT(sendFile.is_open());
-    sendFile << std::string(64000, 'A');
+    sendFile << std::string(640000, 'A');
     sendFile.close();
 
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !tidBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
 
     int64_t totalSize, bytesProgress;
     std::string path;
-    CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
+    CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, fileId, path, totalSize, bytesProgress)
                    == libjami::DataTransferError::invalid_argument);
     CPPUNIT_ASSERT(bytesProgress == 0);
     CPPUNIT_ASSERT(!fileutils::isFile(path));
     // No check for total as not started
 
-    transferAFinished = false;
-    transferBFinished = false;
-    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferAFinished && transferBFinished; }));
-    CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
+    CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, fileId, path, totalSize, bytesProgress)
                    == libjami::DataTransferError::success);
-
-    CPPUNIT_ASSERT(bytesProgress == 64000);
-    CPPUNIT_ASSERT(totalSize == 64000);
+    CPPUNIT_ASSERT(bytesProgress == 640000);
+    CPPUNIT_ASSERT(totalSize == 640000);
     CPPUNIT_ASSERT(fileutils::isFile(path));
-
-    libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(5s);
 }
 
 void
 FileTransferTest::testRemoveHardLink()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
-    auto carlaUri = carlaAccount->getUsername();
-    aliceAccount->trackBuddyPresence(carlaUri, true);
-
-    // Enable carla
-    Manager::instance().sendRegister(carlaId, true);
-    wait_for_announcement_of(carlaId);
-
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool messageReceived = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& /*accountId*/,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            messageReceived = true;
-            cv.notify_one();
-        }));
-    auto conversationReady = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-            conversationReady = true;
-        }));
-    auto conversationRemoved = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRemoved>(
-            [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-                conversationRemoved = true;
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData.conversationId.empty(); }));
 
     // Send file
     std::ofstream sendFile(sendPath);
@@ -990,17 +595,14 @@ FileTransferTest::testRemoveHardLink()
 
     libjami::sendFile(aliceId, convId, sendPath, std::filesystem::absolute("SEND"), "");
 
-    messageReceived = false;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return messageReceived; }));
+    auto aliceMsgSize = aliceData.messages.size();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     CPPUNIT_ASSERT(libjami::removeConversation(aliceId, convId));
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationRemoved; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.removed; }));
 
     auto content = fileutils::loadTextFile(sendPath);
     CPPUNIT_ASSERT(content.find("AAA") != std::string::npos);
-
-    libjami::unregisterSignalHandlers();
 }
 
 void
@@ -1009,61 +611,16 @@ FileTransferTest::testTooLarge()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
 
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool memberJoined = false;
-    std::string tidBob, iidBob;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            std::map<std::string, std::string> message) {
-            if (message["type"] == "application/data-transfer+json") {
-                if (accountId == bobId) {
-                    tidBob = message["fileId"];
-                    iidBob = message["id"];
-                }
-            } else if (accountId == aliceId && message["type"] == "member"
-                       && message["action"] == "join") {
-                memberJoined = true;
-            }
-            cv.notify_one();
-        }));
-    auto requestReceived = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
-    auto conversationReady = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-            conversationReady = true;
-            cv.notify_one();
-        }));
-    bool cancelled = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::DataTransferSignal::DataTransferEvent>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            const std::string&,
-            const std::string& fileId,
-            int code) {
-            if (conversationId == convId && code == static_cast<int>(libjami::DataTransferEventCode::closed_by_host))
-                cancelled = true;
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-
     libjami::addConversationMember(aliceId, convId, bobUri);
-    cv.wait_for(lk, 60s, [&]() { return requestReceived; });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
 
-    conversationReady = false;
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    cv.wait_for(lk, 30s, [&]() { return conversationReady && memberJoined; });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Send file
     std::ofstream sendFile(sendPath);
@@ -1071,61 +628,29 @@ FileTransferTest::testTooLarge()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 45s, [&]() { return !tidBob.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
 
     // Add some data for the reception. This will break the final shasum
     std::ofstream recvFile(recvPath);
     CPPUNIT_ASSERT(recvFile.is_open());
     recvFile << std::string(1000, 'B');
     recvFile.close();
-    libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return cancelled; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::closed_by_host); }));
     CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
-
-    libjami::unregisterSignalHandlers();
 }
 
 void
 FileTransferTest::testDeleteFile()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    connectSignals();
     auto convId = libjami::startConversation(aliceId);
-
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false;
-    std::string iid, tid;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            libjami::SwarmMessage message) {
-            if (message.type == "application/data-transfer+json") {
-                if (accountId == aliceId) {
-                    iid = message.id;
-                    tid = message.body["tid"];
-                }
-            }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == bobId) {
-                conversationReady = true;
-                cv.notify_one();
-            }
-        }));
-    bool messageUpdated = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageUpdated>(
-        [&](const std::string& accountId,
-            const std::string& /* conversationId */,
-            libjami::SwarmMessage message) {
-            if (accountId == aliceId && message.type == "application/data-transfer+json" && message.body["tid"].empty()) {
-                messageUpdated = true;
-            }
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
 
     // Create file to send
     std::ofstream sendFile(sendPath);
@@ -1133,23 +658,22 @@ FileTransferTest::testDeleteFile()
     sendFile << std::string(64000, 'A');
     sendFile.close();
 
+    auto aliceMsgSize = aliceData.messages.size();
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !iid.empty(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    auto id = aliceData.messages.rbegin()->id;
+    auto tid = aliceData.messages.rbegin()->body["tid"];
     auto dataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceId
                     + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isFile(fmt::format("{}/{}_{}", dataPath, iid, tid)));
+    CPPUNIT_ASSERT(fileutils::isFile(fmt::format("{}/{}_{}", dataPath, id, tid)));
 
     // Delete file
-    libjami::sendMessage(aliceId, convId, ""s, iid, 1);
+    libjami::sendMessage(aliceId, convId, ""s, id, 1);
 
     // Verify message is updated
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageUpdated; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData.messagesUpdated.empty(); }));
     // Verify file is deleted
-    CPPUNIT_ASSERT(!fileutils::isFile(fmt::format("{}/{}_{}", dataPath, iid, tid)));
-
-    libjami::unregisterSignalHandlers();
-    std::this_thread::sleep_for(5s);
+    CPPUNIT_ASSERT(!fileutils::isFile(fmt::format("{}/{}_{}", dataPath, id, tid)));
 }
 
 } // namespace test
