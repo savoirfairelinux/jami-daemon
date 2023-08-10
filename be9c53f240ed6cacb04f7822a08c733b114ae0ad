@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f50206f_860905a1",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2023-08-10T15:57:28Z",
+      "side": 1,
+      "message": "Is file transfer on Window possible without launching as an admin? https://git.jami.net/savoirfairelinux/jami-client-qt/-/issues/681\n\nCan you cancle the file transfer (if Jami crashes, contact is blocked and/or account is disabled)",
+      "revId": "be9c53f240ed6cacb04f7822a08c733b114ae0ad",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
