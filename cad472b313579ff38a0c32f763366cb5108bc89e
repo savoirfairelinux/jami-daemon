@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "525c308d_c902c85a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-10T22:29:17Z",
+      "side": 1,
+      "message": "\n1) test: jami::test::IceMediaCandExchangeTest::jami_account_with_turn (F) line: 588 ice/ice_media_cand_exchange.cpp\nequality assertion failed\n- Expected: 1\n- Actual  : 0",
+      "revId": "cad472b313579ff38a0c32f763366cb5108bc89e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
