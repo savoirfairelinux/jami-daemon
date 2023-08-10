@@ -1293,6 +1293,12 @@ ConversationModule::loadConversations()
         if (info.removed)
             removed.insert(info.id);
         auto itConv = pimpl_->conversations_.find(info.id);
+        if (itConv == pimpl_->conversations_.end()) {
+            // convInfos_ can contain a conversation that is not yet cloned
+            // so we need to add it there.
+            auto inserted = pimpl_->conversations_.insert({info.id, std::make_shared<SyncedConversation>(info)});
+            itConv = inserted.first;
+        }
         if (itConv != pimpl_->conversations_.end() && itConv->second && itConv->second->conversation && info.removed)
             itConv->second->conversation->setRemovingFlag();
         if (!info.removed && itConv == pimpl_->conversations_.end()) {
@@ -1382,11 +1388,8 @@ ConversationModule::bootstrap(const std::string& convId)
         std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
         for (const auto& [conversationId, convInfo] : pimpl_->convInfos_) {
             auto conv = pimpl_->getConversation(conversationId);
-            if (!conv) {
-                // convInfos_ can contain a conversation that is not yet cloned
-                // so we need to add it there.
-                conv = pimpl_->startConversation(convInfo);
-            }
+            if (!conv)
+                return;
             if ((!conv->conversation && !conv->info.removed)) {
                 // Because we're not tracking contact presence in order to sync now,
                 // we need to ask to clone requests when bootstraping all conversations
