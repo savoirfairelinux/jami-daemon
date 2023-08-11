@@ -102,6 +102,7 @@ private:
      */
     void stateChanged(pa_stream* s);
     void moved(pa_stream* s);
+    void opEnded(pa_operation* s);
 
     /**
      * The pulse audio object
@@ -122,6 +123,11 @@ private:
      * Function called whenever the stream is moved and we check for an echo canceller
      */
     std::function<void(bool)> echoCancelCb;
+
+    std::mutex mutex_;
+    std::condition_variable cond_;
+    std::set<pa_operation*> ongoing_ops;
+    unsigned op_count {0};
 };
 
 } // namespace jami
