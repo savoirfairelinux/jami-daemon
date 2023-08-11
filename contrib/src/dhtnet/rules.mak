@@ -17,7 +17,7 @@ DEPS_dhtnet += opendht pjproject asio upnp
 DHTNET_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_BENCHMARKS=Off \
 	-DBUILD_TOOLS=Off \
-	-DBUILD_TESTING=Off
+	-DBUILD_TESTING=On
 
 $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 	$(call download,$(DHTNET_URL))
@@ -30,6 +30,7 @@ dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	mkdir -p $(UNPACK_DIR)
 	$(UNPACK) -C $(UNPACK_DIR)
 	$(APPLY) $(SRC)/dhtnet/libjami-testable.patch
+	$(APPLY) $(SRC)/dhtnet/test.patch
 	$(MOVE)
 
 .dhtnet: dhtnet toolchain.cmake .sum-dhtnet

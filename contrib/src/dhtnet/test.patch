@@ -1,0 +1,90 @@
+ src/security/certstore.cpp | 26 +++++++++++++++++++-------
+ tests/certstore.cpp        | 26 ++++++++++++++++++++++++++
+ 2 files changed, 45 insertions(+), 7 deletions(-)
+
+diff --git a/src/security/certstore.cpp b/src/security/certstore.cpp
+index ee5b9d6..d681666 100644
+--- a/src/security/certstore.cpp
++++ b/src/security/certstore.cpp
+@@ -600,14 +600,26 @@ TrustStore::PermissionStatus
+ TrustStore::getCertificateStatus(const std::string& cert_id) const
+ {
+     std::lock_guard<std::recursive_mutex> lk(mutex_);
+-    auto s = certStatus_.find(cert_id);
+-    if (s == std::end(certStatus_)) {
+-        auto us = unknownCertStatus_.find(cert_id);
+-        if (us == std::end(unknownCertStatus_))
+-            return PermissionStatus::UNDEFINED;
+-        return us->second.allowed ? PermissionStatus::ALLOWED : PermissionStatus::BANNED;
++    auto cert = certStore_.getCertificate(cert_id);
++    if (!cert)
++        return PermissionStatus::UNDEFINED;
++    auto unknown = true;
++    while (cert) {
++        auto s = certStatus_.find(cert->getId().toString());
++        if (s != std::end(certStatus_) && !s->second.second.allowed) {
++            return PermissionStatus::BANNED;
++        } else {
++            auto us = unknownCertStatus_.find(cert->getId().toString());
++            unknown &= us == std::end(unknownCertStatus_);
++            if (!us->second.allowed)
++                return PermissionStatus::BANNED;
++        }
++        if (cert->getUID() == cert->getIssuerUID())
++            break;
++        cert = cert->issuer? cert->issuer : certStore_.getCertificate(cert->getIssuerUID());
+     }
+-    return s->second.second.allowed ? PermissionStatus::ALLOWED : PermissionStatus::BANNED;
++
++    return unknown? PermissionStatus::UNDEFINED : PermissionStatus::ALLOWED;
+ }
+
+ std::vector<std::string>
+diff --git a/tests/certstore.cpp b/tests/certstore.cpp
+index 0bc7722..9f4fc81 100644
+--- a/tests/certstore.cpp
++++ b/tests/certstore.cpp
+@@ -41,10 +41,12 @@ public:
+ private:
+     void trustStoreTest();
+     void getCertificateWithSplitted();
++    void testBannedParent();
+
+     CPPUNIT_TEST_SUITE(CertStoreTest);
+     CPPUNIT_TEST(trustStoreTest);
+     CPPUNIT_TEST(getCertificateWithSplitted);
++    CPPUNIT_TEST(testBannedParent);
+     CPPUNIT_TEST_SUITE_END();
+ };
+
+@@ -199,6 +201,30 @@ CertStoreTest::getCertificateWithSplitted()
+                    && fullCert->issuer->issuer->getUID() == caCert->getUID());*/
+ }
+
++void
++CertStoreTest::testBannedParent()
++{
++    /*auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
++
++    auto ca = dht::crypto::generateIdentity("test CA");
++    auto account = dht::crypto::generateIdentity("test account", ca, 4096, true);
++    auto device = dht::crypto::generateIdentity("test device", account);
++    auto device2 = dht::crypto::generateIdentity("test device 2", account);
++    auto id = ca.second->getId().toString();
++    auto pinned = aliceAccount->certStore().getPinnedCertificates();
++    CPPUNIT_ASSERT(std::find_if(pinned.begin(), pinned.end(), [&](auto v) { return v == id; })
++                   == pinned.end());
++
++    // Ban account
++    aliceAccount->setCertificateStatus(account.second, dhtnet::tls::TrustStore::PermissionStatus::BANNED);
++    CPPUNIT_ASSERT(aliceAccount->accountManager()->getCertificateStatus(account.second->getId().toString())
++                   == dhtnet::tls::TrustStore::PermissionStatus::BANNED);
++    CPPUNIT_ASSERT(not aliceAccount->accountManager()->isAllowed(*account.second));
++    CPPUNIT_ASSERT(not aliceAccount->accountManager()->isAllowed(*device2.second));
++    CPPUNIT_ASSERT(not aliceAccount->accountManager()->isAllowed(*device.second));*/
++}
++
++
+ } // namespace test
+ } // namespace dhtnet
+
