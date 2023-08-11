@@ -30,6 +30,7 @@ dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	mkdir -p $(UNPACK_DIR)
 	$(UNPACK) -C $(UNPACK_DIR)
 	$(APPLY) $(SRC)/dhtnet/libjami-testable.patch
+	$(APPLY) $(SRC)/dhtnet/test.patch
 	$(MOVE)
 
 .dhtnet: dhtnet toolchain.cmake .sum-dhtnet
