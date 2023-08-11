@@ -118,16 +118,20 @@ protected:
      */
     bool tidyQueues()
     {
-        while (recordQueue_.samples() > recordQueue_.frameSize() * 10) {
-            JAMI_DBG("record overflow %d / %d", recordQueue_.samples(), frameSize_);
+        auto recordFrameSize = recordQueue_.frameSize();
+        auto playbackFrameSize = playbackQueue_.frameSize();
+        while (recordQueue_.samples() > recordFrameSize * 10
+            && 2 * playbackQueue_.samples() * recordFrameSize < recordQueue_.samples() * playbackFrameSize) {
+            JAMI_LOG("record overflow {:d} / {:d} - playback: {:d}", recordQueue_.samples(), frameSize_, playbackQueue_.samples());
             recordQueue_.dequeue();
         }
-        while (playbackQueue_.samples() > playbackQueue_.frameSize() * 10) {
-            JAMI_DBG("playback overflow %d / %d", playbackQueue_.samples(), frameSize_);
+        while (playbackQueue_.samples() > playbackFrameSize * 10
+            && 2 * recordQueue_.samples() * playbackFrameSize < playbackQueue_.samples() * recordFrameSize) {
+            JAMI_LOG("playback overflow {:d} / {:d} - record: {:d}", playbackQueue_.samples(), frameSize_, recordQueue_.samples());
             playbackQueue_.dequeue();
         }
-        if (recordQueue_.samples() < recordQueue_.frameSize()
-            || playbackQueue_.samples() < playbackQueue_.frameSize()) {
+        if (recordQueue_.samples() < recordFrameSize
+            || playbackQueue_.samples() < playbackFrameSize) {
             // If there are not enough samples in either queue, we can't
             // process anything.
             return true;
