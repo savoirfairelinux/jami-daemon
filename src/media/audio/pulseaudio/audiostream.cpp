@@ -24,7 +24,10 @@
 #include "logger.h"
 #include "compiler_intrinsics.h"
 
+#include <string_view>
 #include <stdexcept>
+
+using namespace std::literals;
 
 namespace jami {
 
@@ -177,13 +180,21 @@ AudioStream::stop()
         destroyStream(audiostream_);
     }
     audiostream_ = nullptr;
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto op : ongoing_ops) {
+        pa_operation_set_state_callback(op, nullptr, nullptr);
+        pa_operation_cancel(op);
+        pa_operation_unref(op);
+    }
+    ongoing_ops.clear();
 }
 
 void
 AudioStream::moved(pa_stream* s)
 {
     audiostream_ = s;
-    JAMI_DBG("[audiostream] Stream moved: %d, %s",
+    JAMI_LOG("[audiostream] Stream moved: {:d}, {:s}",
              pa_stream_get_index(s),
              pa_stream_get_device_name(s));
 
@@ -195,35 +206,45 @@ AudioStream::moved(pa_stream* s)
             return;
         }
 
-        pa_context* context = pa_stream_get_context(s);
         auto* op = pa_context_get_source_info_by_name(
-            context,
+            pa_stream_get_context(s),
             name,
             [](pa_context* /*c*/, const pa_source_info* i, int /*eol*/, void* userdata) {
                 AudioStream* thisPtr = (AudioStream*) userdata;
-                // this whole closure gets called twice by pulse for some reason
+                // this closure gets called twice by pulse for some reason
                 // the 2nd time, i is invalid
                 if (!i) {
-                    // JAMI_ERR("[audiostream] source info not found for %s", realName);
+                    // JAMI_ERROR("[audiostream] source info not found");
+                    return;
+                }
+                if (!thisPtr) {
+                    JAMI_ERROR("[audiostream] AudioStream pointer became invalid during pa_source_info_cb_t callback!");
                     return;
                 }
 
                 // string compare
-                bool usingEchoCancel = std::string_view(i->driver) == "module-echo-cancel.c";
-                JAMI_WARN("[audiostream] capture stream using pulse echo cancel module? %s (%s)",
+                bool usingEchoCancel = std::string_view(i->driver) == "module-echo-cancel.c"sv;
+                JAMI_WARNING("[audiostream] capture stream using pulse echo cancel module? {} ({})",
                           usingEchoCancel ? "yes" : "no",
                           i->name);
-                if (!thisPtr) {
-                    JAMI_ERR("[audiostream] AudioStream pointer became invalid during "
-                             "pa_source_info_cb_t callback!");
-                    return;
-                }
                 thisPtr->echoCancelCb(usingEchoCancel);
             },
             this);
 
-        pa_operation_unref(op);
+        std::lock_guard<std::mutex> lock(mutex_);
+        pa_operation_set_state_callback(op, [](pa_operation *op, void *userdata){
+            static_cast<AudioStream*>(userdata)->opEnded(op);
+        }, this);
+        ongoing_ops.emplace(op);
     }
+}
+
+void
+AudioStream::opEnded(pa_operation* op)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    ongoing_ops.erase(op);
+    pa_operation_unref(op);
 }
 
 void
