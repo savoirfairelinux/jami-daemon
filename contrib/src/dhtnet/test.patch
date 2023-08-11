@@ -1,0 +1,52 @@
+diff --git a/src/security/certstore.cpp b/src/security/certstore.cpp
+index ee5b9d6..83a3ca4 100644
+--- a/src/security/certstore.cpp
++++ b/src/security/certstore.cpp
+@@ -600,14 +600,30 @@ TrustStore::PermissionStatus
+ TrustStore::getCertificateStatus(const std::string& cert_id) const
+ {
+     std::lock_guard<std::recursive_mutex> lk(mutex_);
+-    auto s = certStatus_.find(cert_id);
+-    if (s == std::end(certStatus_)) {
+-        auto us = unknownCertStatus_.find(cert_id);
+-        if (us == std::end(unknownCertStatus_))
++    auto cert = certStore_.getCertificate(cert_id);
++    if (!cert)
++        return PermissionStatus::UNDEFINED;
++    auto banned = false;
++    auto unknown = true;
++    while (cert) {
++        auto s = certStatus_.find(cert->getId().toString());
++        unknown &= s == std::end(certStatus_);
++        if (s != std::end(certStatus_) && !s->second.second.allowed) {
++            return PermissionStatus::BANNED;
++        } else {
++            auto us = unknownCertStatus_.find(cert->getId().toString());
++            unknown &= us == std::end(unknownCertStatus_);
++            if (!us->second.allowed)
++                return PermissionStatus::BANNED;
++        }
++        if (cert->getUID() == cert->getIssuerUID())
++            break;
++        cert = cert->issuer ? cert->issuer : certStore_.getCertificate(cert->getIssuerUID());
++        if (!cert)
+             return PermissionStatus::UNDEFINED;
+-        return us->second.allowed ? PermissionStatus::ALLOWED : PermissionStatus::BANNED;
+     }
+-    return s->second.second.allowed ? PermissionStatus::ALLOWED : PermissionStatus::BANNED;
++
++    return unknown ? PermissionStatus::UNDEFINED : PermissionStatus::ALLOWED;
+ }
+ 
+ std::vector<std::string>
+diff --git a/tests/certstore.cpp b/tests/certstore.cpp
+index 0bc7722..428b87b 100644
+--- a/tests/certstore.cpp
++++ b/tests/certstore.cpp
+@@ -45,6 +45,7 @@ private:
+     CPPUNIT_TEST_SUITE(CertStoreTest);
+     CPPUNIT_TEST(trustStoreTest);
+     CPPUNIT_TEST(getCertificateWithSplitted);
++    CPPUNIT_TEST(testBannedParent);
+     CPPUNIT_TEST_SUITE_END();
+ };
