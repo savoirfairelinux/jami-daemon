@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2eef01a5_8e92509e",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-11T16:43:20Z",
+      "side": 1,
+      "message": "missing GitLab ticket",
+      "range": {
+        "startLine": 9,
+        "startChar": 4,
+        "endLine": 9,
+        "endChar": 23
+      },
+      "revId": "914f55cffb51327b586edb199b44ef0c13c56ab9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3f1feb8d_75c1d436",
+        "filename": "src/media/audio/pulseaudio/audiostream.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-11T16:43:20Z",
+      "side": 1,
+      "message": "realName undefined and use JAMI_ERROR",
+      "range": {
+        "startLine": 214,
+        "startChar": 75,
+        "endLine": 214,
+        "endChar": 83
+      },
+      "revId": "914f55cffb51327b586edb199b44ef0c13c56ab9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "87da0fe7_246851f1",
+        "filename": "src/media/audio/pulseaudio/audiostream.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-11T16:43:20Z",
+      "side": 1,
+      "message": "using namespace std::literals",
+      "range": {
+        "startLine": 223,
+        "startChar": 92,
+        "endLine": 223,
+        "endChar": 94
+      },
+      "revId": "914f55cffb51327b586edb199b44ef0c13c56ab9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e395ff3_3a6919f2",
+        "filename": "src/media/audio/pulseaudio/audiostream.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-11T16:43:20Z",
+      "side": 1,
+      "message": "move into opEnded?",
+      "range": {
+        "startLine": 234,
+        "startChar": 12,
+        "endLine": 234,
+        "endChar": 30
+      },
+      "revId": "914f55cffb51327b586edb199b44ef0c13c56ab9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
