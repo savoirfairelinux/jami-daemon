@@ -209,8 +209,8 @@ AudioLayer::createAudioProcessor()
         audioProcessor.reset(new WebRTCAudioProcessor(formatForProcessor, frame_size));
 #else
         JAMI_ERR("[audiolayer] audioProcessor preference is webrtc, but library not linked! "
-                 "using NullAudioProcessor instead");
-        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+                 "using null AudioProcessor instead");
+        audioProcessor.reset();
 #endif
     } else if (pref_.getAudioProcessor() == "speex") {
 #if HAVE_SPEEXDSP
@@ -218,27 +218,29 @@ AudioLayer::createAudioProcessor()
         audioProcessor.reset(new SpeexAudioProcessor(formatForProcessor, frame_size));
 #else
         JAMI_ERR("[audiolayer] audioProcessor preference is speex, but library not linked! "
-                 "using NullAudioProcessor instead");
-        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+                 "using null AudioProcessor instead");
+        audioProcessor.reset();
 #endif
     } else if (pref_.getAudioProcessor() == "null") {
-        JAMI_WARN("[audiolayer] using NullAudioProcessor");
-        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+        JAMI_WARN("[audiolayer] using null AudioProcessor");
+        audioProcessor.reset();
     } else {
-        JAMI_ERR("[audiolayer] audioProcessor preference not recognized, using NullAudioProcessor "
+        JAMI_ERR("[audiolayer] audioProcessor preference not recognized, using null AudioProcessor "
                  "instead");
-        audioProcessor.reset(new NullAudioProcessor(formatForProcessor, frame_size));
+        audioProcessor.reset();
     }
 
-    audioProcessor->enableNoiseSuppression(
-        shouldUseAudioProcessorNoiseSuppression(hasNativeNS_, pref_.getNoiseReduce()));
+    if (audioProcessor) {
+        audioProcessor->enableNoiseSuppression(
+            shouldUseAudioProcessorNoiseSuppression(hasNativeNS_, pref_.getNoiseReduce()));
 
-    audioProcessor->enableAutomaticGainControl(pref_.isAGCEnabled());
+        audioProcessor->enableAutomaticGainControl(pref_.isAGCEnabled());
 
-    audioProcessor->enableEchoCancel(
-        shouldUseAudioProcessorEchoCancel(hasNativeAEC_, pref_.getEchoCanceller()));
+        audioProcessor->enableEchoCancel(
+            shouldUseAudioProcessorEchoCancel(hasNativeAEC_, pref_.getEchoCanceller()));
 
-    audioProcessor->enableVoiceActivityDetection(pref_.getVadEnabled());
+        audioProcessor->enableVoiceActivityDetection(pref_.getVadEnabled());
+    }
 }
 
 // must acquire lock beforehand
@@ -351,7 +353,6 @@ AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
         while (auto rec = audioProcessor->getProcessed()) {
             mainRingBuffer_->put(std::move(rec));
         }
-
     } else {
         mainRingBuffer_->put(std::move(frame));
     }
