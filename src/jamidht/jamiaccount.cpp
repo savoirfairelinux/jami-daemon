@@ -2166,7 +2166,7 @@ JamiAccount::convModule()
                     if (!shared)
                         return;
                     std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
-                    if (!shared->connectionManager_ || shared->convModule()->isBanned(convId, deviceId)) {
+                    if (!shared->connectionManager_) {
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
                     }
