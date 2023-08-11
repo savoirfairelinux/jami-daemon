@@ -112,7 +112,7 @@ AccountManager::loadIdentity(const std::string& accountId,
                              const std::string& key_path,
                              const std::string& key_pwd) const
 {
-    // Return to avoid unnecessary log if certificate or key is missing. Example case: when 
+    // Return to avoid unnecessary log if certificate or key is missing. Example case: when
     // importing an account when the certificate has not been unpacked from the archive.
     if (crt_path.empty() or key_path.empty())
         return {};
