@@ -80,7 +80,8 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                                            unsigned m_bitrate,
                                            unsigned m_sampleRate,
                                            unsigned m_nbChannels,
-                                           unsigned m_payloadType)
+                                           unsigned m_payloadType,
+                                           AVSampleFormat sampleFormat)
     : SystemCodecInfo(codecId,
                       m_avcodecId,
                       longName,
@@ -90,7 +91,7 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                       m_type,
                       m_bitrate,
                       m_payloadType)
-    , audioformat {m_sampleRate, m_nbChannels}
+    , audioformat {m_sampleRate, m_nbChannels, sampleFormat}
 {}
 
 SystemAudioCodecInfo::~SystemAudioCodecInfo() {}
