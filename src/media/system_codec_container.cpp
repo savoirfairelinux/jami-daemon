@@ -121,7 +121,8 @@ SystemCodecContainer::initCodecConfig()
                                                0,
                                                48000,
                                                2,
-                                               104),
+                                               104,
+                                               AV_SAMPLE_FMT_FLT),
 
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_ADPCM_G722,
                                                AV_CODEC_ID_ADPCM_G722,

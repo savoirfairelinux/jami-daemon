@@ -132,7 +132,8 @@ struct SystemAudioCodecInfo : SystemCodecInfo
                          unsigned bitrate = 0,
                          unsigned sampleRate = 0,
                          unsigned nbChannels = 0,
-                         unsigned payloadType = 0);
+                         unsigned payloadType = 0,
+                         AVSampleFormat sampleFormat = AV_SAMPLE_FMT_S16);
 
     ~SystemAudioCodecInfo();
 
