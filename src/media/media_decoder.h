@@ -36,10 +36,11 @@
 #endif
 #include "logger.h"
 
-#include "audio/audiobuffer.h"
+#include "audio/audio_format.h"
 
 #include "media_device.h"
 #include "media_stream.h"
+#include "media_buffer.h"
 #include "noncopyable.h"
 
 #include <map>

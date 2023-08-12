@@ -25,6 +25,7 @@
 #endif
 
 #include "media/media_codec.h"
+#include "jami.h"
 
 namespace jami {
 

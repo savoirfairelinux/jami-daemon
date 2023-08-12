@@ -25,12 +25,14 @@
 #include <config.h>
 #endif
 
-#include "audio/audiobuffer.h" // for AudioFormat
+#include "audio/audio_format.h"
+
 #include <dhtnet/ip_utils.h>
 #include <cctype>
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include <iostream>
 #include <unistd.h>
 

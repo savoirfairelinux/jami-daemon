@@ -26,6 +26,7 @@
 
 #include "media_stream.h"
 #include "noncopyable.h"
+#include "video/video_base.h"
 
 #include <map>
 #include <string>

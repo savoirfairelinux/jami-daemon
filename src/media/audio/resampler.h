@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "audiobuffer.h"
+#include "audio_format.h"
 #include "media/media_buffer.h"
 #include "noncopyable.h"
 
@@ -32,6 +32,8 @@ struct SwrContext;
 }
 
 namespace jami {
+
+class AudioBuffer;
 
 /**
  * @brief Wrapper class for libswresample
