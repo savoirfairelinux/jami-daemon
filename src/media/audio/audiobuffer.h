@@ -93,7 +93,8 @@ struct AudioFormat
 
 std::ostream& operator<<(std::ostream& stream, const AudioFormat& f);
 
-class AudioBuffer
+class
+[[deprecated("Use AudioFrame instead")]] AudioBuffer
 {
 public:
     /**
