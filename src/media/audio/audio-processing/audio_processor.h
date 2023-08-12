@@ -21,7 +21,7 @@
 #include "noncopyable.h"
 #include "media/audio/audio_frame_resizer.h"
 #include "media/audio/resampler.h"
-#include "media/audio/audiobuffer.h"
+#include "media/audio/audio_format.h"
 #include "media/libav_deps.h"
 #include "logger.h"
 

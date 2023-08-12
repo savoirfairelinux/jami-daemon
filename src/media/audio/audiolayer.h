@@ -26,6 +26,7 @@
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
 #include "audio-processing/audio_processor.h"
+#include "audiobuffer.h"
 
 #include <chrono>
 #include <mutex>

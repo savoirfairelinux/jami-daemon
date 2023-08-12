@@ -23,7 +23,7 @@
 #include "libav_deps.h"
 #include "logger.h"
 #include "rational.h"
-#include "audio/audiobuffer.h"
+#include "audio/audio_format.h"
 
 #include <string>
 
