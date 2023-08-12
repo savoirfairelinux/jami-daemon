@@ -636,7 +636,8 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
         // keyframe.
         // encoderCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     } else {
-        encoderCtx->sample_fmt = AV_SAMPLE_FMT_S16;
+        JAMI_WARNING("Codec format: {} {} {} {}", encoderName, audioOpts_.format, audioOpts_.sampleRate, audioOpts_.nbChannels);
+        encoderCtx->sample_fmt = (AVSampleFormat)audioOpts_.format;
         encoderCtx->sample_rate = std::max(8000, audioOpts_.sampleRate);
         encoderCtx->time_base = AVRational {1, encoderCtx->sample_rate};
         if (audioOpts_.nbChannels > 2 || audioOpts_.nbChannels < 1) {
