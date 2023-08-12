@@ -21,7 +21,8 @@
 
 #pragma once
 
-#include "audiobuffer.h"
+#include "audio_format.h"
+#include "media_buffer.h"
 #include "noncopyable.h"
 
 #include <map>

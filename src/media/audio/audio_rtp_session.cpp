@@ -37,7 +37,6 @@
 #include "media_device.h"
 
 #include "audio/audio_input.h"
-#include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "client/videomanager.h"
