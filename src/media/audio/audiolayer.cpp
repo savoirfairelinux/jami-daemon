@@ -70,7 +70,7 @@ AudioLayer::~AudioLayer() {}
 void
 AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 {
-    JAMI_DBG("Hardware audio format available : %s %zu", playback.toString().c_str(), bufSize);
+    JAMI_LOG("Hardware audio format available : {} {}", playback.toString(), bufSize);
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     audioInputFormat_.sampleFormat = audioFormat_.sampleFormat;
     urgentRingBuffer_.setFormat(audioFormat_);
@@ -80,7 +80,10 @@ AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 void
 AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
-    JAMI_DBG("Hardware input audio format available : %s", capture.toString().c_str());
+    JAMI_LOG("Hardware input audio format available : {}", capture.toString());
+    if (capture.sample_rate > audioInputFormat_.sample_rate) {
+        audioInputFormat_.sample_rate = capture.sample_rate;
+    }
 }
 
 void
