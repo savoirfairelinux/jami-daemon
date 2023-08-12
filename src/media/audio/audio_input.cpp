@@ -51,7 +51,7 @@ AudioInput::AudioInput(const std::string& id)
     , deviceGuard_()
     , loop_([] { return true; }, [this] { process(); }, [] {})
 {
-    JAMI_DBG() << "Creating audio input with id: " << id;
+    JAMI_LOG("Creating audio input with id: {} and format {}",  id, format_.toString());
 }
 
 AudioInput::AudioInput(const std::string& id, const std::string& resource)
@@ -133,7 +133,7 @@ AudioInput::readFromDevice()
     }
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    if (bufferPool.getInternalAudioFormat() != format_)
+    if (audioFrame->getFormat() != format_)
         audioFrame = resampler_->resample(std::move(audioFrame), format_);
     resizer_->enqueue(std::move(audioFrame));
 
