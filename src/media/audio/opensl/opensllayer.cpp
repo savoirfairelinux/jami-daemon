@@ -266,8 +266,7 @@ OpenSLLayer::engineServicePlay()
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
         if (auto dat = getToPlay(hardwareFormat_, hardwareBuffSize_)) {
-            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->ch_layout.nb_channels
-                         * sizeof(AudioSample);
+            buf->size_ = dat->pointer()->nb_samples * dat->getFormat().getBytesPerFrame();
             if (buf->size_ > buf->cap_) {
                 JAMI_ERR("buf->size_(%zu) > buf->cap_(%zu)", buf->size_, buf->cap_);
                 break;
@@ -279,9 +278,7 @@ OpenSLLayer::engineServicePlay()
                          dat->pointer()->nb_samples);
                 break;
             }
-            std::copy_n((const AudioSample*) dat->pointer()->data[0],
-                        dat->pointer()->nb_samples,
-                        (AudioSample*) buf->buf_);
+            memcpy(buf->buf_, dat->pointer()->data[0], buf->size_);
             if (!playBufQueue_.push(buf)) {
                 JAMI_WARN("playThread player_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 break;
@@ -299,8 +296,7 @@ OpenSLLayer::engineServiceRing()
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
         if (auto dat = getToRing(hardwareFormat_, hardwareBuffSize_)) {
-            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->ch_layout.nb_channels
-                         * sizeof(AudioSample);
+            buf->size_ = dat->pointer()->nb_samples * dat->getFormat().getBytesPerFrame();
             if (buf->size_ > buf->cap_) {
                 JAMI_ERR("buf->size_(%zu) > buf->cap_(%zu)", buf->size_, buf->cap_);
                 break;
@@ -312,9 +308,7 @@ OpenSLLayer::engineServiceRing()
                          dat->pointer()->nb_samples);
                 break;
             }
-            std::copy_n((const AudioSample*) dat->pointer()->data[0],
-                        dat->pointer()->nb_samples,
-                        (AudioSample*) buf->buf_);
+            memcpy(buf->buf_, dat->pointer()->data[0], buf->size_);
             if (!ringBufQueue_.push(buf)) {
                 JAMI_WARN("playThread ringtone_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 break;
@@ -359,9 +353,7 @@ OpenSLLayer::startAudioCapture()
                     if (isCaptureMuted_)
                         libav_utils::fillWithSilence(out->pointer());
                     else
-                        std::copy_n((const AudioSample*) buf->buf_,
-                                    nb_samples,
-                                    (AudioSample*) out->pointer()->data[0]);
+                        memcpy(out->pointer()->data[0], buf->buf_, buf->size_);
                     putRecorded(std::move(out));
                 }
                 buf->size_ = 0;
