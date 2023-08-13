@@ -196,6 +196,7 @@ public:
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
+    AudioFormat getAudioFormat() const;
 
     void updateStartTime(int64_t startTime);
 
