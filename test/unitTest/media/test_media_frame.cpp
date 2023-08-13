@@ -27,9 +27,9 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 }
 
-#include "media/audio/audiobuffer.h"
 #include "jami.h"
 #include "videomanager_interface.h"
+#include "media/audio/audio_format.h"
 
 #include "../../test_runner.h"
 
@@ -93,16 +93,16 @@ MediaFrameTest::testMix()
     const AudioFormat& format = AudioFormat::STEREO();
     const int nbSamples = format.sample_rate / 50;
     auto a1 = std::make_unique<libjami::AudioFrame>(format, nbSamples);
-    auto d1 = reinterpret_cast<AudioSample*>(a1->pointer()->extended_data[0]);
+    auto d1 = reinterpret_cast<int16_t*>(a1->pointer()->extended_data[0]);
     d1[0] = 0;
     d1[1] = 1;
     d1[2] = 3;
     d1[3] = -2;
     d1[4] = 5;
-    d1[5] = std::numeric_limits<AudioSample>::min();
-    d1[6] = std::numeric_limits<AudioSample>::max();
+    d1[5] = std::numeric_limits<int16_t>::min();
+    d1[6] = std::numeric_limits<int16_t>::max();
     auto a2 = std::make_unique<libjami::AudioFrame>(format, nbSamples);
-    auto d2 = reinterpret_cast<AudioSample*>(a2->pointer()->extended_data[0]);
+    auto d2 = reinterpret_cast<int16_t*>(a2->pointer()->extended_data[0]);
     d2[0] = 0;
     d2[1] = 3;
     d2[2] = -1;
@@ -116,8 +116,8 @@ MediaFrameTest::testMix()
     CPPUNIT_ASSERT(d2[2] == 2);
     CPPUNIT_ASSERT(d2[3] == 1);
     CPPUNIT_ASSERT(d2[4] == -1);
-    CPPUNIT_ASSERT(d2[5] == std::numeric_limits<AudioSample>::min());
-    CPPUNIT_ASSERT(d2[6] == std::numeric_limits<AudioSample>::max());
+    CPPUNIT_ASSERT(d2[5] == std::numeric_limits<int16_t>::min());
+    CPPUNIT_ASSERT(d2[6] == std::numeric_limits<int16_t>::max());
 }
 
 }} // namespace jami::test

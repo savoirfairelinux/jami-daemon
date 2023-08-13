@@ -23,7 +23,6 @@
 #include "libav_deps.h"
 #include "logger.h"
 #include "resampler.h"
-#include "audiobuffer.h"
 
 extern "C" {
 #include <libswresample/swresample.h>
@@ -141,26 +140,6 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
     // Resampling worked, reset count to 1 so reinit isn't called again
     initCount_ = 1;
     return 0;
-}
-
-void
-Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
-{
-    auto inputFrame = dataIn.toAVFrame();
-    auto input = inputFrame->pointer();
-    AudioFrame resampled;
-    auto output = resampled.pointer();
-    output->sample_rate = dataOut.getSampleRate();
-    av_channel_layout_default(&output->ch_layout, dataOut.channels());
-    output->format = AV_SAMPLE_FMT_S16;
-
-    if (resample(input, output) < 0)
-        return;
-
-    dataOut.resize(output->nb_samples);
-    dataOut.deinterleave(reinterpret_cast<const AudioSample*>(output->extended_data[0]),
-                         output->nb_samples,
-                         output->ch_layout.nb_channels);
 }
 
 std::unique_ptr<AudioFrame>
