@@ -37,7 +37,6 @@
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
 #include "jami/media_const.h"
-#include "libav_utils.h"
 #include "call_const.h"
 #include "system_codec_container.h"
 
