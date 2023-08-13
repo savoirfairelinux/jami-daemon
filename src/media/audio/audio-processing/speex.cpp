@@ -34,19 +34,25 @@ extern "C" {
 
 namespace jami {
 
+inline AudioFormat
+audioFormatToSampleFormat(AudioFormat format)
+{
+    return {format.sample_rate, format.nb_channels, AV_SAMPLE_FMT_S16};
+}
+
 SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
-    : AudioProcessor(format, frameSize)
+    : AudioProcessor(format.withSampleFormat(AV_SAMPLE_FMT_S16), frameSize)
     , echoState(speex_echo_state_init_mc((int) frameSize,
                                          (int) frameSize * 16,
-                                         (int) format.nb_channels,
-                                         (int) format.nb_channels),
+                                         (int) format_.nb_channels,
+                                         (int) format_.nb_channels),
                 &speex_echo_state_destroy)
-    , iProcBuffer(frameSize_, format)
+    , procBuffer(std::make_unique<AudioFrame>(format.withSampleFormat(AV_SAMPLE_FMT_S16P), frameSize_))
 {
     JAMI_DBG("[speex-dsp] SpeexAudioProcessor, frame size = %d (=%d ms), channels = %d",
              frameSize,
              frameDurationMs_,
-             format.nb_channels);
+             format_.nb_channels);
     // set up speex echo state
     speex_echo_ctl(echoState.get(), SPEEX_ECHO_SET_SAMPLING_RATE, &format_.sample_rate);
 
@@ -66,10 +72,10 @@ SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
 
     // set up speex preprocess states, one for each channel
     // note that they are not enabled here, but rather in the enable* functions
-    for (unsigned int i = 0; i < format.nb_channels; i++) {
+    for (unsigned int i = 0; i < format_.nb_channels; i++) {
         auto channelPreprocessorState
             = SpeexPreprocessStatePtr(speex_preprocess_state_init((int) frameSize,
-                                                                  (int) format.sample_rate),
+                                                                  (int) format_.sample_rate),
                                       &speex_preprocess_state_destroy);
 
         // set max noise suppression level
@@ -184,11 +190,11 @@ SpeexAudioProcessor::getProcessed()
         return {};
     }
 
-    auto processed = std::make_shared<AudioFrame>(record->getFormat(), record->getFrameSize());
-
+    std::shared_ptr<AudioFrame> processed;
     if (shouldAEC) {
         // we want to echo cancel
         // multichannel, output into processed
+        processed = std::make_shared<AudioFrame>(record->getFormat(), record->getFrameSize());
         speex_echo_cancellation(echoState.get(),
                                 (int16_t*) record->pointer()->data[0],
                                 (int16_t*) playback->pointer()->data[0],
@@ -198,16 +204,7 @@ SpeexAudioProcessor::getProcessed()
         processed = record;
     }
 
-    // deinterleave processed into channels
-    std::vector<int16_t*> procData {format_.nb_channels};
-    iProcBuffer.deinterleave((const AudioSample*) processed->pointer()->data[0],
-                             frameSize_,
-                             format_.nb_channels);
-
-    // point procData to correct channels
-    for (unsigned int channel = 0; channel < format_.nb_channels; channel++) {
-        procData[channel] = iProcBuffer.getChannel(channel)->data();
-    }
+    deinterleaveResampler.resample(processed->pointer(), procBuffer->pointer());
 
     // overall voice activity
     bool overallVad = false;
@@ -218,7 +215,7 @@ SpeexAudioProcessor::getProcessed()
     int channel = 0;
     for (auto& channelPreprocessorState : preprocessorStates) {
         // preprocesses in place, returns voice activity boolean
-        channelVad = speex_preprocess_run(channelPreprocessorState.get(), procData[channel]);
+        channelVad = speex_preprocess_run(channelPreprocessorState.get(), (int16_t*)procBuffer->pointer()->data[channel]);
 
         // boolean OR
         overallVad |= channelVad;
@@ -226,12 +223,10 @@ SpeexAudioProcessor::getProcessed()
         channel += 1;
     }
 
-    // reinterleave into processed
-    iProcBuffer.interleave((AudioSample*) processed->pointer()->data[0]);
+    interleaveResampler.resample(procBuffer->pointer(), processed->pointer());
 
     // add stabilized voice activity to the AudioFrame
     processed->has_voice = shouldDetectVoice && getStabilizedVoiceActivity(overallVad);
-
     return processed;
 }
 
