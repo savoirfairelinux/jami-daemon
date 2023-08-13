@@ -39,12 +39,10 @@ public:
     void tearDown();
 
 private:
-    void testAudioBuffer();
     void testAudioFrame();
     void testRematrix();
 
     CPPUNIT_TEST_SUITE(ResamplerTest);
-    CPPUNIT_TEST(testAudioBuffer);
     CPPUNIT_TEST(testAudioFrame);
     CPPUNIT_TEST(testRematrix);
     CPPUNIT_TEST_SUITE_END();
@@ -67,30 +65,13 @@ ResamplerTest::tearDown()
 }
 
 void
-ResamplerTest::testAudioBuffer()
-{
-    const constexpr AudioFormat infmt(44100, 1);
-    const constexpr AudioFormat outfmt(48000, 2);
-
-    resampler_.reset(new Resampler);
-
-    AudioBuffer inbuf(1024, infmt);
-    AudioBuffer outbuf(0, outfmt);
-
-    resampler_->resample(inbuf, outbuf);
-    CPPUNIT_ASSERT(outbuf.getFormat().sample_rate == 48000);
-    CPPUNIT_ASSERT(outbuf.getFormat().nb_channels == 2);
-}
-
-void
 ResamplerTest::testAudioFrame()
 {
     const constexpr AudioFormat infmt(44100, 1);
 
     resampler_.reset(new Resampler);
 
-    AudioBuffer inbuf(1024, infmt);
-    auto input = inbuf.toAVFrame();
+    auto input = std::make_unique<libjami::AudioFrame>(infmt, 1024);
     CPPUNIT_ASSERT(input->pointer() && input->pointer()->data[0]);
     CPPUNIT_ASSERT(input->pointer()->data[0][0] == 0);
 
