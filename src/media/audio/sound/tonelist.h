@@ -46,10 +46,10 @@ public:
         ZID_COUNTRIES,
     };
 
-    TelephoneTone(const std::string& countryName, unsigned int sampleRate);
+    TelephoneTone(const std::string& countryName, unsigned int sampleRate, AVSampleFormat sampleFormat);
 
     void setCurrentTone(Tone::ToneId toneId);
-    void setSampleRate(unsigned int sampleRate);
+    void setSampleRate(unsigned int sampleRate, AVSampleFormat sampleFormat);
     std::shared_ptr<Tone> getCurrentTone();
 
 private:
@@ -57,7 +57,7 @@ private:
 
     static CountryId getCountryId(const std::string& countryName);
 
-    void buildTones(unsigned int sampleRate);
+    void buildTones(unsigned int sampleRate, AVSampleFormat sampleFormat);
 
     CountryId countryId_;
     std::array<std::shared_ptr<Tone>, (size_t) Tone::ToneId::TONE_NULL> tones_ {};

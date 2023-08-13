@@ -21,8 +21,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef __AUDIOFILE_H__
-#define __AUDIOFILE_H__
+#pragma once
 
 #include <stdexcept>
 #include "audio/audioloop.h"
@@ -43,7 +42,7 @@ public:
 class AudioFile : public AudioLoop
 {
 public:
-    AudioFile(const std::string& filepath, unsigned int sampleRate);
+    AudioFile(const std::string& filepath, unsigned int sampleRate, AVSampleFormat sampleFormat);
 
     std::string getFilePath() const { return filepath_; }
 
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace jami
-
-#endif // __AUDIOFILE_H__

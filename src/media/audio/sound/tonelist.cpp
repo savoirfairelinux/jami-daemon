@@ -47,11 +47,11 @@ TelephoneTone::getCountryId(const std::string& countryName)
         return CountryId::ZID_NORTH_AMERICA; // default
 }
 
-TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sampleRate)
+TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sampleRate, AVSampleFormat sampleFormat)
     : countryId_(getCountryId(countryName))
     , currentTone_(Tone::ToneId::TONE_NULL)
 {
-    buildTones(sampleRate);
+    buildTones(sampleRate, sampleFormat);
 }
 
 void
@@ -64,9 +64,9 @@ TelephoneTone::setCurrentTone(Tone::ToneId toneId)
 }
 
 void
-TelephoneTone::setSampleRate(unsigned int sampleRate)
+TelephoneTone::setSampleRate(unsigned int sampleRate, AVSampleFormat sampleFormat)
 {
-    buildTones(sampleRate);
+    buildTones(sampleRate, sampleFormat);
 }
 
 std::shared_ptr<Tone>
@@ -79,7 +79,7 @@ TelephoneTone::getCurrentTone()
 }
 
 void
-TelephoneTone::buildTones(unsigned int sampleRate)
+TelephoneTone::buildTones(unsigned int sampleRate, AVSampleFormat sampleFormat)
 {
     const char* toneZone[(size_t) TelephoneTone::CountryId::ZID_COUNTRIES]
                         [(size_t) Tone::ToneId::TONE_NULL]
@@ -134,16 +134,16 @@ TelephoneTone::buildTones(unsigned int sampleRate)
            }};
     tones_[(size_t) Tone::ToneId::DIALTONE]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::DIALTONE],
-                                 sampleRate);
+                                 sampleRate, sampleFormat);
     tones_[(size_t) Tone::ToneId::BUSY]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::BUSY],
-                                 sampleRate);
+                                 sampleRate, sampleFormat);
     tones_[(size_t) Tone::ToneId::RINGTONE]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::RINGTONE],
-                                 sampleRate);
+                                 sampleRate, sampleFormat);
     tones_[(size_t) Tone::ToneId::CONGESTION]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::CONGESTION],
-                                 sampleRate);
+                                 sampleRate, sampleFormat);
 }
 
 } // namespace jami

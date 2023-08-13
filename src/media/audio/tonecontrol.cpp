@@ -39,20 +39,21 @@ ToneControl::ToneControl(const Preferences& preferences)
 ToneControl::~ToneControl() {}
 
 void
-ToneControl::setSampleRate(unsigned rate)
+ToneControl::setSampleRate(unsigned rate, AVSampleFormat sampleFormat)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     sampleRate_ = rate;
+    sampleFormat_ = sampleFormat;
     if (!telephoneTone_)
-        telephoneTone_.reset(new TelephoneTone(prefs_.getZoneToneChoice(), rate));
+        telephoneTone_.reset(new TelephoneTone(prefs_.getZoneToneChoice(), rate, sampleFormat));
     else
-        telephoneTone_->setSampleRate(rate);
+        telephoneTone_->setSampleRate(rate, sampleFormat);
     if (!audioFile_) {
         return;
     }
     auto path = audioFile_->getFilePath();
     try {
-        audioFile_.reset(new AudioFile(path, sampleRate_));
+        audioFile_.reset(new AudioFile(path, sampleRate_, sampleFormat));
     } catch (const AudioFileException& e) {
         JAMI_WARN("Audio file error: %s", e.what());
     }
@@ -85,7 +86,7 @@ ToneControl::setAudioFile(const std::string& file)
     }
 
     try {
-        audioFile_.reset(new AudioFile(file, sampleRate_));
+        audioFile_.reset(new AudioFile(file, sampleRate_, sampleFormat_));
     } catch (const AudioFileException& e) {
         JAMI_WARN("Audio file error: %s", e.what());
     }

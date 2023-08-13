@@ -44,7 +44,7 @@ public:
     ToneControl(const Preferences& preferences);
     ~ToneControl();
 
-    void setSampleRate(unsigned rate);
+    void setSampleRate(unsigned rate, AVSampleFormat sampleFormat);
     std::shared_ptr<AudioLoop> getTelephoneTone();
     std::shared_ptr<AudioLoop> getTelephoneFile(void);
     bool setAudioFile(const std::string& file);
@@ -58,6 +58,7 @@ private:
 
     std::mutex mutex_; // protect access to following members
     unsigned sampleRate_;
+    AVSampleFormat sampleFormat_;
     std::unique_ptr<TelephoneTone> telephoneTone_;
     std::shared_ptr<AudioFile> audioFile_;
 };
