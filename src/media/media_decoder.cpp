@@ -808,6 +808,12 @@ MediaDecoder::getPixelFormat() const
     return decoderCtx_->pix_fmt;
 }
 
+AudioFormat
+MediaDecoder::getAudioFormat() const
+{
+    return {(unsigned)decoderCtx_->sample_rate, (unsigned)decoderCtx_->ch_layout.nb_channels, decoderCtx_->sample_fmt};
+}
+
 int
 MediaDecoder::correctPixFmt(int input_pix_fmt)
 {
