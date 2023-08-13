@@ -251,9 +251,9 @@ AudioLayer::destroyAudioProcessor()
 }
 
 void
-AudioLayer::putUrgent(AudioBuffer& buffer)
+AudioLayer::putUrgent(std::shared_ptr<AudioFrame> buffer)
 {
-    urgentRingBuffer_.put(buffer.toAVFrame());
+    urgentRingBuffer_.put(std::move(buffer));
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
@@ -271,7 +271,7 @@ AudioLayer::notifyIncomingCall()
 
     lastNotificationTime_ = now;
 
-    Tone tone("440/160", getSampleRate());
+    Tone tone("440/160", getSampleRate(), audioFormat_.sampleFormat);
     size_t nbSample = tone.getSize();
 
     /* Put the data in the urgent ring buffer */

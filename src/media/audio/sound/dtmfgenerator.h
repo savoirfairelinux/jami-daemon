@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef DTMFGENERATOR_H
-#define DTMFGENERATOR_H
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -57,15 +56,15 @@ private:
     struct DTMFTone
     {
         unsigned char code; /** Code of the tone */
-        int lower;          /** Lower frequency */
-        int higher;         /** Higher frequency */
+        unsigned lower;          /** Lower frequency */
+        unsigned higher;         /** Higher frequency */
     };
 
     /** State of the DTMF generator */
     struct DTMFState
     {
         unsigned int offset; /** Offset in the sample currently being played */
-        AudioSample* sample; /** Currently generated code */
+        AVFrame* sample; /** Currently generated code */
     };
 
     /** State of the DTMF generator */
@@ -75,10 +74,10 @@ private:
     static const DTMFTone tones_[NUM_TONES];
 
     /** Generated samples for each tone */
-    AudioSample* toneBuffers_[NUM_TONES];
+    std::array<libjami::FrameBuffer, NUM_TONES> toneBuffers_;
 
     /** Sampling rate of generated dtmf */
-    int sampleRate_;
+    unsigned sampleRate_;
 
     /** A tone object */
     Tone tone_;
@@ -89,7 +88,7 @@ public:
      * and can build one DTMF.
      * @param sampleRate frequency of the sample (ex: 8000 hz)
      */
-    DTMFGenerator(unsigned int sampleRate);
+    DTMFGenerator(unsigned int sampleRate, AVSampleFormat sampleFormat);
 
     ~DTMFGenerator();
 
@@ -100,14 +99,14 @@ public:
      * @param buffer a AudioSample vector
      * @param code   dtmf code to get sound
      */
-    void getSamples(std::vector<AudioSample>& buffer, unsigned char code);
+    void getSamples(AVFrame* frame, unsigned char code);
 
     /*
      * Get next n samples (continues where previous call to
      * genSample or genNextSamples stopped
      * @param buffer a AudioSample vector
      */
-    void getNextSamples(std::vector<AudioSample>& buffer);
+    void getNextSamples(AVFrame* frame);
 
 private:
     /**
@@ -115,9 +114,7 @@ private:
      * @param index of the tone in the array tones_
      * @return AudioSample* The generated data
      */
-    AudioSample* fillToneBuffer(int index);
+    libjami::FrameBuffer fillToneBuffer(int index);
 };
 
 } // namespace jami
-
-#endif // DTMFGENERATOR_H

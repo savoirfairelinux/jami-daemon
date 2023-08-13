@@ -24,7 +24,12 @@
 
 #include "ring_types.h"
 #include "noncopyable.h"
-#include "audiobuffer.h"
+#include "audio_format.h"
+#include "media_buffer.h"
+
+extern "C" {
+#include <libavutil/frame.h>
+}
 
 /**
  * @file audioloop.h
@@ -36,9 +41,7 @@ namespace jami {
 class AudioLoop
 {
 public:
-    AudioLoop() {}
-
-    AudioLoop(unsigned int sampleRate);
+    AudioLoop(AudioFormat format);
 
     AudioLoop& operator=(AudioLoop&& o) noexcept
     {
@@ -56,7 +59,7 @@ public:
      * @param nb of int16 to send
      * @param gain The gain [-1.0, 1.0]
      */
-    void getNext(AudioBuffer& output, double gain);
+    void getNext(AVFrame* output, double gain);
     std::unique_ptr<AudioFrame> getNext(size_t samples = 0, double gain = 1);
 
     void seek(double relative_position);
@@ -70,12 +73,13 @@ public:
      * Accessor to the size of the buffer
      * @return unsigned int The size
      */
-    size_t getSize() const { return buffer_->frames(); }
-    AudioFormat getFormat() const { return buffer_->getFormat(); }
+    size_t getSize() const { return buffer_->nb_samples; }
+    AudioFormat getFormat() const { return format; }
 
 protected:
+    AudioFormat format;
     /** The data buffer */
-    AudioBuffer* buffer_ {nullptr};
+    libjami::FrameBuffer buffer_ {};
 
     /** current position, set to 0, when initialize */
     size_t pos_ {0};
