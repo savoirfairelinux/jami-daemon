@@ -394,7 +394,7 @@ struct Manager::ManagerPimpl
     std::unique_ptr<DTMF> dtmfKey_;
 
     /** Buffer to generate DTMF */
-    AudioBuffer dtmfBuf_;
+    std::shared_ptr<AudioFrame> dtmfBuf_;
 
     // To handle volume control
     // short speakerVolume_;
@@ -456,7 +456,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , ioContext_(std::make_shared<asio::io_context>())
     , upnpContext_(std::make_shared<dhtnet::upnp::UPnPContext>(nullptr, Logger::dhtLogger()))
     , toneCtrl_(base.preferences)
-    , dtmfBuf_(0, AudioFormat::MONO())
+    , dtmfBuf_(std::make_shared<AudioFrame>())
     , ringbufferpool_(new RingBufferPool)
 #ifdef ENABLE_VIDEO
     , videoManager_(new VideoManager)
@@ -853,8 +853,9 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         pimpl_->initAudioDriver();
         if (pimpl_->audiodriver_) {
-            pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
-            pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate()));
+            auto format = pimpl_->audiodriver_->getFormat();
+            pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
+            pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate(), getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
     }
     registerAccounts();
@@ -1853,14 +1854,15 @@ Manager::playDtmf(char code)
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    int size = (int) ((pulselen * (float) pimpl_->audiodriver_->getSampleRate()) / 1000);
-    pimpl_->dtmfBuf_.resize(size);
+    unsigned size = (unsigned) ((pulselen * (long) pimpl_->audiodriver_->getSampleRate()) / 1000ul);
+    if (!pimpl_->dtmfBuf_ or pimpl_->dtmfBuf_->getFrameSize() != size)
+        pimpl_->dtmfBuf_ = std::make_shared<AudioFrame>(pimpl_->audiodriver_->getFormat(), size);
 
     // Handle dtmf
     pimpl_->dtmfKey_->startTone(code);
 
     // copy the sound
-    if (pimpl_->dtmfKey_->generateDTMF(*pimpl_->dtmfBuf_.getChannel(0))) {
+    if (pimpl_->dtmfKey_->generateDTMF(pimpl_->dtmfBuf_->pointer())) {
         // Put buffer to urgentRingBuffer
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
@@ -2155,7 +2157,8 @@ Manager::playRingtone(const std::string& accountID)
         // start audio if not started AND flush all buffers (main and urgent)
         auto oldGuard = std::move(pimpl_->toneDeviceGuard_);
         pimpl_->toneDeviceGuard_ = startAudioStream(AudioDeviceType::RINGTONE);
-        pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
+        auto format = pimpl_->audiodriver_->getFormat();
+        pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
     }
 
     if (not pimpl_->toneCtrl_.setAudioFile(account->getRingtonePath().string()))
@@ -2350,7 +2353,8 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
 
         auto oldGuard = std::move(pimpl_->toneDeviceGuard_);
         pimpl_->toneDeviceGuard_ = startAudioStream(AudioDeviceType::RINGTONE);
-        pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
+        auto format = pimpl_->audiodriver_->getFormat();
+        pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
     }
 
     return pimpl_->toneCtrl_.setAudioFile(filepath);
@@ -2662,8 +2666,8 @@ Manager::audioFormatUsed(AudioFormat format)
              format.toString());
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
-    pimpl_->toneCtrl_.setSampleRate(format.sample_rate);
-    pimpl_->dtmfKey_.reset(new DTMF(format.sample_rate));
+    pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
+    pimpl_->dtmfKey_.reset(new DTMF(format.sample_rate, format.sampleFormat));
 
     return format;
 }

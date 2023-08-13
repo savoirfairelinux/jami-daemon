@@ -28,38 +28,39 @@
 
 #include "audioloop.h"
 #include "logger.h"
+#include "libav_deps.h"
 
 #include <algorithm> // std::min
 
 namespace jami {
 
-AudioLoop::AudioLoop(unsigned int sampleRate)
-    : buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1)))
+AudioLoop::AudioLoop(AudioFormat format)
+    : format(format)
+    , buffer_(av_frame_alloc())
     , pos_(0)
-{}
+{
+}
 
 AudioLoop::~AudioLoop()
-{
-    delete buffer_;
-}
+{}
 
 void
 AudioLoop::seek(double relative_position)
 {
-    pos_ = static_cast<double>(buffer_->frames() * relative_position * 0.01);
+    pos_ = static_cast<double>(getSize() * relative_position * 0.01);
 }
 
 void
-AudioLoop::getNext(AudioBuffer& output, double gain)
+AudioLoop::getNext(AVFrame* output, double gain)
 {
     if (!buffer_) {
         JAMI_ERR("buffer is NULL");
         return;
     }
 
-    const size_t buf_samples = buffer_->frames();
+    const size_t buf_samples = buffer_->nb_samples;
     size_t pos = pos_;
-    size_t total_samples = output.frames();
+    size_t total_samples = output->nb_samples;
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
@@ -72,13 +73,13 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
 
     while (total_samples != 0) {
         size_t samples = std::min(total_samples, buf_samples - pos);
-        output.copy(*buffer_, samples, pos, output_pos);
+        av_samples_copy(output->data, buffer_->data, output_pos, pos, samples, format.nb_channels, format.sampleFormat);
         output_pos += samples;
         pos = (pos + samples) % buf_samples;
         total_samples -= samples;
     }
 
-    output.applyGain(gain);
+    //output.applyGain(gain);
     pos_ = pos;
     onBufferFinish();
 }
@@ -91,11 +92,11 @@ std::unique_ptr<AudioFrame>
 AudioLoop::getNext(size_t samples, double gain)
 {
     if (samples == 0) {
-        samples = buffer_->getSampleRate() / 50;
+        samples = buffer_->sample_rate / 50;
     }
-    AudioBuffer buff(samples, buffer_->getFormat());
-    getNext(buff, gain);
-    return buff.toAVFrame();
+    auto buffer = std::make_unique<AudioFrame>(format, samples);
+    getNext(buffer->pointer(), gain);
+    return buffer;
 }
 
 } // namespace jami
