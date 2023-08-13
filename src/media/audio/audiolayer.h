@@ -26,7 +26,6 @@
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
 #include "audio-processing/audio_processor.h"
-#include "audiobuffer.h"
 
 #include <chrono>
 #include <mutex>
@@ -115,7 +114,7 @@ public:
      * Copy data in the urgent buffer.
      * @param buffer The buffer containing the data to be played ( ringtones )
      */
-    void putUrgent(AudioBuffer& buffer);
+    void putUrgent(std::shared_ptr<AudioFrame> buffer);
 
     /**
      * Start/Stop playing the incoming call notification sound (beep)

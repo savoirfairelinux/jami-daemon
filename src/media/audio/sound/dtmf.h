@@ -36,7 +36,7 @@ public:
      * Create a new DTMF.
      * @param sampleRate frequency of the sample (ex: 8000 hz)
      */
-    DTMF(unsigned int sampleRate);
+    DTMF(unsigned int sampleRate, AVSampleFormat sampleFormat);
 
     /**
      * Start the done for th given dtmf
@@ -48,7 +48,7 @@ public:
      * Copy the sound inside the sampling* buffer
      * @param buffer : a vector of AudioSample
      */
-    bool generateDTMF(std::vector<AudioSample>& buffer);
+    bool generateDTMF(AVFrame* frame);
 
 private:
     char currentTone_;
