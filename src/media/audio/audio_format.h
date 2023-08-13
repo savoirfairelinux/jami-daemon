@@ -59,6 +59,12 @@ struct AudioFormat
         return fmt::format("{{{}, {} channels, {}Hz}}", av_get_sample_fmt_name(sampleFormat), nb_channels, sample_rate);
     }
 
+    inline AudioFormat withSampleFormat(AVSampleFormat format)
+    {
+        return {sample_rate, nb_channels, format};
+    }
+
+
     /**
      * Returns bytes necessary to hold one frame of audio data.
      */

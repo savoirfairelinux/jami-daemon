@@ -21,7 +21,6 @@
 #pragma once
 
 #include "audio_processor.h"
-#include "media/audio/audiobuffer.h"
 
 // typedef speex C structs
 extern "C" {
@@ -57,7 +56,9 @@ private:
     // one for each channel
     std::vector<SpeexPreprocessStatePtr> preprocessorStates;
 
-    AudioBuffer iProcBuffer;
+    std::unique_ptr<AudioFrame> procBuffer {};
+    Resampler deinterleaveResampler;
+    Resampler interleaveResampler;
 
     // if we should do echo cancellation
     bool shouldAEC {false};
