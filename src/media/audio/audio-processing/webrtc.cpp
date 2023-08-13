@@ -23,12 +23,6 @@
 
 namespace jami {
 
-inline AudioFormat
-audioFormatToFloatPlanar(AudioFormat format)
-{
-    return {format.sample_rate, format.nb_channels, AV_SAMPLE_FMT_FLTP};
-}
-
 inline size_t
 webrtcFrameSize(AudioFormat format)
 {
@@ -38,19 +32,19 @@ webrtcFrameSize(AudioFormat format)
 constexpr int webrtcNoError = webrtc::AudioProcessing::kNoError;
 
 WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned /* frameSize */)
-    : AudioProcessor(audioFormatToFloatPlanar(format), webrtcFrameSize(format))
+    : AudioProcessor(format.withSampleFormat(AV_SAMPLE_FMT_FLTP), webrtcFrameSize(format))
 {
     JAMI_LOG("[webrtc-ap] WebRTCAudioProcessor, frame size = {:d} (={:d} ms), channels = {:d}",
              frameSize_,
              frameDurationMs_,
-             format.nb_channels);
+             format_.nb_channels);
     webrtc::Config config;
     config.Set<webrtc::ExtendedFilter>(new webrtc::ExtendedFilter(true));
     config.Set<webrtc::DelayAgnostic>(new webrtc::DelayAgnostic(true));
 
     apm.reset(webrtc::AudioProcessing::Create(config));
 
-    webrtc::StreamConfig streamConfig((int) format.sample_rate, (int) format.nb_channels);
+    webrtc::StreamConfig streamConfig((int) format_.sample_rate, (int) format_.nb_channels);
     webrtc::ProcessingConfig pconfig = {
         streamConfig, /* input stream */
         streamConfig, /* output stream */
