@@ -32,19 +32,35 @@ namespace opensl {
 #define DEVICE_SHADOW_BUFFER_QUEUE_LEN    4
 #define BUF_COUNT                         16
 
-inline SLDataFormat_PCM
+inline SLAndroidDataFormat_PCM_EX
 convertToSLSampleFormat(const jami::AudioFormat& infos)
-{
-    return SLDataFormat_PCM {
-        .formatType = SL_DATAFORMAT_PCM,
-        .numChannels = infos.nb_channels <= 1 ? 1u : 2u,
-        .samplesPerSec = infos.sample_rate * 1000,
-        .bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16,
-        .containerSize = SL_PCMSAMPLEFORMAT_FIXED_16,
-        .channelMask = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
-                                              : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
-        .endianness = SL_BYTEORDER_LITTLEENDIAN,
-    };
+{    
+    if (infos.sample_format == AV_SAMPLE_FMT_S16)
+        return SLAndroidDataFormat_PCM_EX {
+            .formatType = SL_DATAFORMAT_PCM,
+            .numChannels = infos.nb_channels <= 1 ? 1u : 2u,
+            .samplesPerSec = infos.sample_rate * 1000,
+            .bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16,
+            .containerSize = SL_PCMSAMPLEFORMAT_FIXED_16,
+            .channelMask = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
+                                                : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+            .endianness = SL_BYTEORDER_LITTLEENDIAN,
+            .representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT,
+        };
+    else if (infos.sample_format == AV_SAMPLE_FMT_FLT)
+        return SLAndroidDataFormat_PCM_EX {
+            .formatType = SL_ANDROID_DATAFORMAT_PCM_EX,
+            .numChannels = infos.nb_channels <= 1 ? 1u : 2u,
+            .samplesPerSec = infos.sample_rate * 1000,
+            .bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_32,
+            .containerSize = SL_PCMSAMPLEFORMAT_FIXED_32,
+            .channelMask = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
+                                                : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+            .endianness = SL_BYTEORDER_LITTLEENDIAN,
+            .representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT,
+        };
+    else
+        throw std::runtime_error("Unsupported sample format");
 }
 
 #define SLASSERT(x) \
