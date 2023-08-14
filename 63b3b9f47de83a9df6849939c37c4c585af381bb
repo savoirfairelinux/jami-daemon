@@ -22,6 +22,30 @@
       },
       "revId": "63b3b9f47de83a9df6849939c37c4c585af381bb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed6439ca_2b3951eb",
+        "filename": "src/media/audio/pulseaudio/audiostream.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-08-14T21:51:34Z",
+      "side": 1,
+      "message": "It was uncommented at first, but its actually a known, predictable and normal behavior. I think PulseAudio uses this as a sort of \u0027end of list\u0027 indicator (since other variants of this API can return multiple devices).",
+      "parentUuid": "a806e7e7_bfe2559d",
+      "range": {
+        "startLine": 215,
+        "startChar": 19,
+        "endLine": 215,
+        "endChar": 27
+      },
+      "revId": "63b3b9f47de83a9df6849939c37c4c585af381bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
