@@ -85,6 +85,7 @@ void
 AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
                     const std::shared_ptr<jami::MediaFrame>& framePtr)
 {
+    JAMI_WARN() << "@@@ ENCODER!: " << this;
     auto frame = framePtr->pointer();
     frame->pts = sent_samples;
     sent_samples += frame->nb_samples;

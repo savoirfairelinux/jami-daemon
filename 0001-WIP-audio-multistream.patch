@@ -1,0 +1,615 @@
+From f5a5f4fd688dfdbf2c06f3c7ba4ca0256f9fc9b8 Mon Sep 17 00:00:00 2001
+From: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+Date: Tue, 15 Aug 2023 12:41:48 -0300
+Subject: [PATCH] WIP: audio multistream
+
+Change-Id: I36dab2df729d9fd7646e7b500bb2f50b8037ad9e
+---
+ src/conference.cpp                       |  56 ++++++++---
+ src/manager.cpp                          |  42 +++++++-
+ src/media/audio/audio_input.cpp          |  15 ++-
+ src/media/audio/audio_receive_thread.cpp |   2 +-
+ src/media/audio/audio_rtp_session.cpp    |   6 +-
+ src/media/audio/audio_sender.cpp         |   1 +
+ src/media/media_decoder.cpp              | 120 ++++++++++++++++++++++-
+ src/media/media_decoder.h                |   3 +
+ src/media/media_device.h                 |   1 +
+ src/media/video/video_receive_thread.cpp |   2 +-
+ src/sip/sipcall.cpp                      |  15 ++-
+ 11 files changed, 229 insertions(+), 34 deletions(-)
+
+diff --git a/src/conference.cpp b/src/conference.cpp
+index 63b674ec3..480088217 100644
+--- a/src/conference.cpp
++++ b/src/conference.cpp
+@@ -913,16 +913,19 @@ Conference::attachLocalParticipant()
+ 
+         auto& rbPool = Manager::instance().getRingBufferPool();
+         for (const auto& participant : getParticipantList()) {
++            // SHOULD LOOP AUDIO STREAMS DONE
+             if (auto call = Manager::instance().getCallFromCallID(participant)) {
+-                if (isMuted(call->getCallId()))
+-                    rbPool.bindHalfDuplexOut(participant, RingBufferPool::DEFAULT_ID);
+-                else
+-                    rbPool.bindCallID(participant, RingBufferPool::DEFAULT_ID);
+-                rbPool.flush(participant);
++                auto medias = call->getMediaAttributeList();
++                for (const auto& media : medias) {
++                    if (media.type_ == MEDIA_AUDIO) {
++                        if (media.muted_)
++                            rbPool.bindHalfDuplexOut(participant+"_"+media.label_, RingBufferPool::DEFAULT_ID);
++                        else
++                            rbPool.bindCallID(participant+"_"+media.label_, RingBufferPool::DEFAULT_ID);
++                        rbPool.flush(participant+"_"+media.label_);
++                    }
++                }
+             }
+-
+-            // Reset ringbuffer's readpointers
+-            rbPool.flush(participant);
+         }
+         rbPool.flush(RingBufferPool::DEFAULT_ID);
+ 
+@@ -948,11 +951,16 @@ void
+ Conference::detachLocalParticipant()
+ {
+     JAMI_INFO("Detach local participant from conference %s", id_.c_str());
+-
++    // SHOULD LOOP AUDIO STREAMS DONE
+     if (getState() == State::ACTIVE_ATTACHED) {
+         foreachCall([&](auto call) {
+-            Manager::instance().getRingBufferPool().unBindCallID(call->getCallId(),
+-                                                                 RingBufferPool::DEFAULT_ID);
++            auto medias = call->getMediaAttributeList();
++            for (const auto& media : medias) {
++                if (media.type_ == MEDIA_AUDIO) {
++                    Manager::instance().getRingBufferPool().unBindCallID(call->getCallId()+"_"+media.label_,
++                                                                        RingBufferPool::DEFAULT_ID);
++                }
++            }
+         });
+ 
+ #ifdef ENABLE_VIDEO
+@@ -979,6 +987,7 @@ Conference::bindParticipant(const std::string& participant_id)
+     auto& rbPool = Manager::instance().getRingBufferPool();
+ 
+     for (const auto& item : getParticipantList()) {
++        // SHOULD LOOP AUDIO STREAMS
+         if (participant_id != item) {
+             // Do not attach muted participants
+             if (auto call = Manager::instance().getCallFromCallID(item)) {
+@@ -1005,8 +1014,16 @@ Conference::bindParticipant(const std::string& participant_id)
+ void
+ Conference::unbindParticipant(const std::string& participant_id)
+ {
++    // SHOULD LOOP AUDIO STREAMS DONE
+     JAMI_INFO("Unbind participant %s from conference %s", participant_id.c_str(), id_.c_str());
+-    Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(participant_id);
++    if (auto call = Manager::instance().getCallFromCallID(participant_id)) {
++        auto medias = call->getMediaAttributeList();
++        for (const auto& media : medias) {
++            if (media.type_ == MEDIA_AUDIO) {
++                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(participant_id+"_"+media.label_);
++            }
++        }
++    }
+ }
+ 
+ void
+@@ -1015,13 +1032,17 @@ Conference::bindHost()
+     JAMI_LOG("Bind host to conference {}", id_);
+ 
+     auto& rbPool = Manager::instance().getRingBufferPool();
++    // SHOULD LOOP AUDIO STREAMS DONE
+ 
+     for (const auto& item : getParticipantList()) {
+         if (auto call = Manager::instance().getCallFromCallID(item)) {
+-            if (isMuted(call->getCallId()))
+-                continue;
+-            rbPool.bindCallID(item, RingBufferPool::DEFAULT_ID);
+-            rbPool.flush(RingBufferPool::DEFAULT_ID);
++            auto medias = call->getMediaAttributeList();
++            for (const auto& media : medias) {
++                if (media.type_ == MEDIA_AUDIO && !media.muted_) {
++                    rbPool.bindCallID(item+"_"+media.label_, RingBufferPool::DEFAULT_ID);
++                    rbPool.flush(RingBufferPool::DEFAULT_ID);
++                }
++            }
+         }
+     }
+ }
+@@ -1029,6 +1050,7 @@ Conference::bindHost()
+ void
+ Conference::unbindHost()
+ {
++    // SHOULD LOOP AUDIO STREAMS DONE
+     JAMI_INFO("Unbind host from conference %s", id_.c_str());
+     Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
+ }
+@@ -1148,6 +1170,7 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+ 
+     // Audio
+     // Create ghost participant for ringbufferpool
++    // SHOULD LOOP AUDIO STREAMS DONE
+     auto& rbPool = Manager::instance().getRingBufferPool();
+     ghostRingBuffer_ = rbPool.createRingBuffer(getConfId());
+ 
+@@ -1177,6 +1200,7 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
+     if (auto ob = rec->getStream("a:mixer"))
+         audioMixer_->detach(ob);
+     audioMixer_.reset();
++    // SHOULD LOOP AUDIO STREAMS DONE
+     Manager::instance().getRingBufferPool().unBindAll(getConfId());
+     ghostRingBuffer_.reset();
+ }
+diff --git a/src/manager.cpp b/src/manager.cpp
+index fe89df7bc..ff132af79 100644
+--- a/src/manager.cpp
++++ b/src/manager.cpp
+@@ -543,8 +543,18 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
+ 
+     if (n > 1) {
+         // Reset ringbuffer's readpointers
+-        for (const auto& p : participants)
+-            base_.getRingBufferPool().flush(p);
++        for (const auto& p : participants) {
++            // SHOULD LOOP AUDIO STREAMS DONE
++            if (auto call = base_.getCallFromCallID(p)) {
++                auto medias = call->getMediaAttributeList();
++                for (const auto& media : medias) {
++                    if (media.type_ == MEDIA_AUDIO) {
++                        JAMI_DBG("[call:%s] Remove local audio", (p+"_"+media.label_).c_str());
++                        base_.getRingBufferPool().flush(p+"_"+media.label_);
++                    }
++                }
++            }
++        }
+ 
+         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
+     } else if (n == 1) {
+@@ -687,7 +697,14 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
+ 
+     JAMI_DEBUG("[call:{}] bind to conference {} (callState={})", callId, confId, state);
+ 
+-    base_.getRingBufferPool().unBindAll(callId);
++    // SHOULD LOOP AUDIO STREAMS DONE
++    auto medias = call.getMediaAttributeList();
++    for (const auto& media : medias) {
++        if (media.type_ == MEDIA_AUDIO) {
++            JAMI_DBG("[call:%s] Remove local audio", (callId+"_"+media.label_).c_str());
++            base_.getRingBufferPool().unBindAll(callId+"_"+media.label_);
++        }
++    }
+ 
+     conf.addParticipant(callId);
+ 
+@@ -1631,7 +1648,14 @@ Manager::addAudio(Call& call)
+         JAMI_DBG("[call:%s] Attach audio", callId.c_str());
+ 
+         // bind to main
+-        getRingBufferPool().bindCallID(callId, RingBufferPool::DEFAULT_ID);
++        // SHOULD LOOP AUDIO STREAMS DONE
++        auto medias = call.getMediaAttributeList();
++        for (const auto& media : medias) {
++            if (media.type_ == MEDIA_AUDIO) {
++                JAMI_DBG("[call:%s] Attach audio", (callId+"_"+media.label_).c_str());
++                getRingBufferPool().bindCallID(callId+"_"+media.label_, RingBufferPool::DEFAULT_ID);
++            }
++        }
+         auto oldGuard = std::move(call.audioGuard);
+         call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
+ 
+@@ -1648,9 +1672,17 @@ Manager::addAudio(Call& call)
+ void
+ Manager::removeAudio(Call& call)
+ {
++    // SHOULD LOOP AUDIO STREAMS DONE
+     const auto& callId = call.getCallId();
+     JAMI_DBG("[call:%s] Remove local audio", callId.c_str());
+-    getRingBufferPool().unBindAll(callId);
++
++    auto medias = call.getMediaAttributeList();
++    for (const auto& media : medias) {
++        if (media.type_ == MEDIA_AUDIO) {
++            JAMI_DBG("[call:%s] Remove local audio", (callId+"_"+media.label_).c_str());
++            getRingBufferPool().unBindAll(callId+"_"+media.label_);
++        }
++    }
+     call.audioGuard.reset();
+ }
+ 
+diff --git a/src/media/audio/audio_input.cpp b/src/media/audio/audio_input.cpp
+index db669c56a..fae29c01c 100644
+--- a/src/media/audio/audio_input.cpp
++++ b/src/media/audio/audio_input.cpp
+@@ -162,6 +162,7 @@ AudioInput::readFromFile()
+     if (!decoder_)
+         return;
+     const auto ret = decoder_->decode();
++    JAMI_WARN() << "@@@ DECODED " << id_, fileId_;
+     switch (ret) {
+     case MediaDemuxer::Status::Success:
+         break;
+@@ -183,6 +184,7 @@ bool
+ AudioInput::initDevice(const std::string& device)
+ {
+     devOpts_ = {};
++    devOpts_.isAudio = true;
+     devOpts_.input = device;
+     devOpts_.channel = format_.nb_channels;
+     devOpts_.framerate = format_.sample_rate;
+@@ -200,6 +202,7 @@ AudioInput::configureFilePlayback(const std::string& path,
+     Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+     fileBuf_.reset();
+     devOpts_ = {};
++    devOpts_.isAudio = true;
+     devOpts_.input = path;
+     devOpts_.name = path;
+     auto decoder
+@@ -241,12 +244,15 @@ AudioInput::flushBuffers()
+ bool
+ AudioInput::initFile(const std::string& path)
+ {
++    JAMI_WARN() << "@@@ INITFILE";
++    fileBuf_.reset();
+     if (access(path.c_str(), R_OK) != 0) {
+         JAMI_ERR() << "File '" << path << "' not available";
+         return false;
+     }
+ 
+     devOpts_ = {};
++    devOpts_.isAudio = true;
+     devOpts_.input = path;
+     devOpts_.name = path;
+     devOpts_.loop = "1";
+@@ -319,6 +325,7 @@ AudioInput::switchInput(const std::string& resource)
+     wakeUp_ = std::chrono::high_resolution_clock::now() + MS_PER_PACKET;
+     lk.unlock();
+     loop_.start();
++    JAMI_WARN() << id_ << " loopstarted";
+     if (onSuccessfulSetup_)
+         onSuccessfulSetup_(MEDIA_AUDIO, 0);
+     return futureDevOpts_;
+@@ -359,13 +366,11 @@ AudioInput::createDecoder()
+ 
+     auto decoder = std::make_unique<MediaDecoder>([this](std::shared_ptr<MediaFrame>&& frame) {
+         fileBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
++        notify(std::static_pointer_cast<MediaFrame>(frame));
+     });
+ 
+     // NOTE don't emulate rate, file is read as frames are needed
+ 
+-    decoder->setInterruptCallback(
+-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+-
+     if (decoder->openInput(devOpts_) < 0) {
+         JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";
+         foundDevOpts(devOpts_);
+@@ -378,6 +383,10 @@ AudioInput::createDecoder()
+         return false;
+     }
+ 
++    decoder->setInterruptCallback(
++        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
++
++
+     auto ms = decoder->getStream(devOpts_.input);
+     devOpts_.channel = ms.nbChannels;
+     devOpts_.framerate = ms.sampleRate;
+diff --git a/src/media/audio/audio_receive_thread.cpp b/src/media/audio/audio_receive_thread.cpp
+index 2f8010e3c..78cf534e9 100644
+--- a/src/media/audio/audio_receive_thread.cpp
++++ b/src/media/audio/audio_receive_thread.cpp
+@@ -78,7 +78,7 @@ AudioReceiveThread::setup()
+ 
+     audioDecoder_->setIOContext(sdpContext_.get());
+     audioDecoder_->setFEC(true);
+-    if (audioDecoder_->openInput(args_)) {
++    if (audioDecoder_->openInput(args_) < 0) {
+         JAMI_ERR("Could not open input \"%s\"", SDP_FILENAME);
+         return false;
+     }
+diff --git a/src/media/audio/audio_rtp_session.cpp b/src/media/audio/audio_rtp_session.cpp
+index d835e1e8a..7b5b5ed14 100644
+--- a/src/media/audio/audio_rtp_session.cpp
++++ b/src/media/audio/audio_rtp_session.cpp
+@@ -58,7 +58,7 @@ AudioRtpSession::AudioRtpSession(const std::string& callId,
+     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
+ 
+     // don't move this into the initializer list or Cthulus will emerge
+-    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callId_);
++    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId_);
+ }
+ 
+ AudioRtpSession::~AudioRtpSession()
+@@ -94,7 +94,7 @@ AudioRtpSession::startSender()
+         audioInput_->detach(sender_.get());
+ 
+     // sender sets up input correctly, we just keep a reference in case startSender is called
+-    audioInput_ = jami::getAudioInput(callId_);
++    audioInput_ = jami::getAudioInput(streamId_);
+     audioInput_->setRecorderCallback([this](const MediaStream& ms) { attachLocalRecorder(ms); });
+     audioInput_->setMuted(muteState_);
+     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
+@@ -169,7 +169,7 @@ AudioRtpSession::startReceiver()
+         JAMI_WARN("Restarting audio receiver");
+ 
+     auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(receive_.codec);
+-    receiveThread_.reset(new AudioReceiveThread(callId_,
++    receiveThread_.reset(new AudioReceiveThread(streamId_,
+                                                 accountAudioCodec->audioformat,
+                                                 receive_.receiving_sdp,
+                                                 mtu_));
+diff --git a/src/media/audio/audio_sender.cpp b/src/media/audio/audio_sender.cpp
+index a645c9518..48e4ca33e 100644
+--- a/src/media/audio/audio_sender.cpp
++++ b/src/media/audio/audio_sender.cpp
+@@ -85,6 +85,7 @@ void
+ AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
+                     const std::shared_ptr<jami::MediaFrame>& framePtr)
+ {
++    JAMI_WARN() << "@@@ ENCODER!: " << this;
+     auto frame = framePtr->pointer();
+     frame->pts = sent_samples;
+     sent_samples += frame->nb_samples;
+diff --git a/src/media/media_decoder.cpp b/src/media/media_decoder.cpp
+index f86f25790..623bc7783 100644
+--- a/src/media/media_decoder.cpp
++++ b/src/media/media_decoder.cpp
+@@ -25,6 +25,7 @@
+ #include "media_device.h"
+ #include "media_buffer.h"
+ #include "media_io_handle.h"
++#include "media_const.h"
+ #include "audio/audiobuffer.h"
+ #include "audio/ringbuffer.h"
+ #include "audio/resampler.h"
+@@ -92,6 +93,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
+ {
+     inputParams_ = params;
+     auto iformat = av_find_input_format(params.format.c_str());
++    JAMI_WARN() << "@@@ FORMAT: " << params.format << " " << iformat;
+ 
+     if (!iformat && !params.format.empty())
+         JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
+@@ -161,6 +163,8 @@ MediaDemuxer::openInput(const DeviceParams& params)
+         "fpsprobesize",
+         1,
+         AV_OPT_SEARCH_CHILDREN); // Don't waste time fetching framerate when finding stream info
++    JAMI_WARN() << "@@@ " << input;
++
+     int ret = avformat_open_input(&inputCtx_, input.c_str(), iformat, options_ ? &options_ : NULL);
+ 
+     if (ret) {
+@@ -169,9 +173,10 @@ MediaDemuxer::openInput(const DeviceParams& params)
+         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
+         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
+         JAMI_DBG("Using format %s and resolution %dx%d",
+-                 params.format.c_str(),
+-                 baseWidth_,
+-                 baseHeight_);
++                params.format.c_str(),
++                baseWidth_,
++                baseHeight_);
++        JAMI_WARN() << "@@@ NO FAIL!";
+     }
+ 
+     return ret;
+@@ -408,6 +413,115 @@ MediaDemuxer::decode()
+     return Status::Success;
+ }
+ 
++std::vector<MediaAttribute>
++MediaDemuxer::validateMediaTypes(const std::vector<MediaAttribute>& medias)
++{
++    std::vector<MediaAttribute> newMedias {};
++    for (size_t i = 0; i < medias.size(); i++) {
++        JAMI_WARN() << "@@@ i: " << i;
++        auto media = medias.at(i);
++        if (!media.enabled_)
++            continue;
++        auto resource = media.sourceUri_;
++        JAMI_WARN() << "@@@ resource: " << resource;
++        JAMI_WARN() << "@@@ type: " << media.type_;
++        // Supported MRL schemes
++        static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
++
++        const auto pos = resource.find(sep);
++        if (pos == std::string::npos)
++            continue;
++
++        const auto prefix = resource.substr(0, pos);
++        if ((pos + sep.size()) >= resource.size())
++            continue;
++
++        const auto suffix = resource.substr(pos + sep.size());
++
++        if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
++            JAMI_WARN() << "@@@ IS FILE!";
++            AVFormatContext* decFormatCtx = avformat_alloc_context();
++
++
++            // Open
++            if (avformat_open_input(&decFormatCtx, suffix.c_str(), NULL, NULL) != 0) {
++                JAMI_WARN() << "@@@ NO avformat_open_input";
++                avformat_close_input(&decFormatCtx);
++                avformat_free_context(decFormatCtx);
++                continue;;
++            }
++            // Retrieve stream information
++            if (avformat_find_stream_info(decFormatCtx, NULL) < 0) {
++                JAMI_WARN() << "@@@ NO avformat_find_stream_info";
++                avformat_close_input(&decFormatCtx);
++                avformat_free_context(decFormatCtx);
++                continue;
++            }
++
++            // Find the first video stream
++            auto videoStream = av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
++
++            if (videoStream < 0) {
++                if (media.type_ == MEDIA_VIDEO) {
++                    media.type_ = MEDIA_AUDIO;
++                    std::string label = "audio_";
++                    auto idx = 0;
++                    for (auto data: medias) {
++                        if (data.type_ == MEDIA_AUDIO)
++                            idx++;
++                    }
++                    label += std::to_string(idx);
++                    media.label_ = label;
++                }
++                JAMI_WARN() << "@@@ NO video!";
++            }
++            JAMI_WARN() << "@@@ " << videoStream;
++
++            // Find the first audio stream
++            auto audioStream = av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
++
++            if (audioStream < 0) {
++                if (media.type_ == MEDIA_AUDIO) {
++                    media.type_ = MEDIA_NONE;
++                    media.enabled_ = false;
++                }
++                JAMI_WARN() << "@@@ NO audio!";
++            }
++            JAMI_WARN() << "@@@ " << audioStream;
++            avformat_close_input(&decFormatCtx);
++            avformat_free_context(decFormatCtx);
++
++            if (audioStream >= 0 && videoStream >= 0) {
++                JAMI_WARN() << "@@@ BOTH STREAMS!";
++                auto it = std::find_if(medias.begin(), medias.end(), [media](const MediaAttribute iter){
++                    return media.sourceUri_ == iter.sourceUri_ && media.type_ != iter.type_;
++                });
++                if (it == medias.end()) {
++                    JAMI_WARN() << "@@@ adding audio STREAM!";
++                    auto newType = media.type_ == MEDIA_AUDIO ? MEDIA_VIDEO : MEDIA_AUDIO;
++                    std::string label = newType == MEDIA_AUDIO ? "audio_" : "video_";
++                    auto idx = 0;
++                    for (auto data: medias) {
++                        if (data.type_ == newType)
++                            idx++;
++                    }
++                    label += std::to_string(idx);
++                    MediaAttribute newMedia(media.type_ == MEDIA_AUDIO ? MEDIA_VIDEO : MEDIA_AUDIO,
++                                            media.muted_,
++                                            media.secure_,
++                                            media.enabled_,
++                                            media.sourceUri_,
++                                            label,
++                                            media.onHold_);
++                    newMedias.emplace_back(newMedia);
++                }
++            }
++        }
++        newMedias.emplace_back(media);
++    }
++    return newMedias;
++}
++
+ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index)
+     : demuxer_(demuxer)
+     , avStream_(demuxer->getStream(index))
+diff --git a/src/media/media_decoder.h b/src/media/media_decoder.h
+index 8384ff89d..db4ba6bcc 100644
+--- a/src/media/media_decoder.h
++++ b/src/media/media_decoder.h
+@@ -40,6 +40,7 @@
+ 
+ #include "media_device.h"
+ #include "media_stream.h"
++#include "media_attribute.h"
+ #include "noncopyable.h"
+ 
+ #include <map>
+@@ -141,6 +142,8 @@ public:
+     void setNeedFrameCb(std::function<void()> cb);
+     void emitFrame(bool isAudio);
+ 
++    static std::vector<MediaAttribute> validateMediaTypes(const std::vector<MediaAttribute>& medias);
++
+ private:
+     bool streamInfoFound_ {false};
+     AVFormatContext* inputCtx_ = nullptr;
+diff --git a/src/media/media_device.h b/src/media/media_device.h
+index 2c2a75bce..041496734 100644
+--- a/src/media/media_device.h
++++ b/src/media/media_device.h
+@@ -53,6 +53,7 @@ struct DeviceParams
+     int orientation {};
+     std::string window_id {};
+     int is_area {};
++    bool isAudio {};
+ };
+ 
+ } // namespace jami
+diff --git a/src/media/video/video_receive_thread.cpp b/src/media/video/video_receive_thread.cpp
+index 24341615b..807c3c380 100644
+--- a/src/media/video/video_receive_thread.cpp
++++ b/src/media/video/video_receive_thread.cpp
+@@ -142,7 +142,7 @@ VideoReceiveThread::setup()
+         videoDecoder_->setIOContext(&sdpContext_);
+     }
+ 
+-    if (videoDecoder_->openInput(args_)) {
++    if (videoDecoder_->openInput(args_) < 0) {
+         JAMI_ERR("Could not open input \"%s\"", args_.input.c_str());
+         return false;
+     }
+diff --git a/src/sip/sipcall.cpp b/src/sip/sipcall.cpp
+index 38ddfa3fb..6078156dc 100644
+--- a/src/sip/sipcall.cpp
++++ b/src/sip/sipcall.cpp
+@@ -71,6 +71,8 @@
+ 
+ #include "tracepoint.h"
+ 
++#include "media/media_decoder.h"
++
+ namespace jami {
+ 
+ using sip_utils::CONST_PJ_STR;
+@@ -188,10 +190,12 @@ SIPCall::createRtpSession(RtpStream& stream)
+     // To get audio_0 ; video_0
+     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
+     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
++        JAMI_WARN() << "@@@ AUDIO SESSION " << stream.mediaAttribute_->sourceUri_;
+         stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId, recorder_);
+     }
+ #ifdef ENABLE_VIDEO
+     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
++        JAMI_WARN() << "@@@ VIDEO SESSION " << stream.mediaAttribute_->sourceUri_;
+         stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_,
+                                                                       streamId,
+                                                                       getVideoSettings(),
+@@ -2497,6 +2501,7 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
+ {
+     std::lock_guard<std::recursive_mutex> lk {callMutex_};
+     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
++    mediaAttrList = MediaDemuxer::validateMediaTypes(mediaAttrList);
+ 
+     // Disable video if disabled in the account.
+     auto account = getSIPAccount();
+@@ -3100,10 +3105,16 @@ SIPCall::exitConference()
+     std::lock_guard<std::recursive_mutex> lk {callMutex_};
+     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
+ 
++    // SHOULD LOOP AUDIO STREAMS DONE
++    auto medias = getMediaAttributeList();
+     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
+-    if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
++    if (hasAudio) {
+         auto& rbPool = Manager::instance().getRingBufferPool();
+-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
++        for (const auto& media : medias) {
++            if (media.type_ == MEDIA_AUDIO && !media.muted_) {
++                rbPool.bindCallID(getCallId()+"_"+media.label_, RingBufferPool::DEFAULT_ID);
++            }
++        }
+         rbPool.flush(RingBufferPool::DEFAULT_ID);
+     }
+ #ifdef ENABLE_VIDEO
+-- 
+2.34.1
+
