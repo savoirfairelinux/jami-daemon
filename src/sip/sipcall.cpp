@@ -71,6 +71,8 @@
 
 #include "tracepoint.h"
 
+#include "media/media_decoder.h"
+
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -188,10 +190,12 @@ SIPCall::createRtpSession(RtpStream& stream)
     // To get audio_0 ; video_0
     auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+        JAMI_WARN() << "@@@ AUDIO SESSION " << stream.mediaAttribute_->sourceUri_;
         stream.rtpSession_ = std::make_shared<AudioRtpSession>(id_, streamId, recorder_);
     }
 #ifdef ENABLE_VIDEO
     else if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
+        JAMI_WARN() << "@@@ VIDEO SESSION " << stream.mediaAttribute_->sourceUri_;
         stream.rtpSession_ = std::make_shared<video::VideoRtpSession>(id_,
                                                                       streamId,
                                                                       getVideoSettings(),
@@ -2497,6 +2501,36 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    // Removed file sharing audio only stream if any
+    {
+        for (size_t i = 0; i < mediaAttrList.size(); i++) {
+            auto media = mediaAttrList[i];
+            int audioIdx = -1;
+            int videoIdx = -1;
+            // Supported MRL schemes
+            static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+
+            const auto pos = media.sourceUri_.find(sep);
+            if (pos == std::string::npos)
+                continue;
+
+            const auto prefix = media.sourceUri_.substr(0, pos);
+            if ((pos + sep.size()) >= media.sourceUri_.size())
+                continue;
+
+            const auto suffix = media.sourceUri_.substr(pos + sep.size());
+
+            if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
+                if (media.type_ == MEDIA_AUDIO) audioIdx = i;
+                if (media.type_ == MEDIA_VIDEO) videoIdx = i;
+            }
+            if (audioIdx >= 0 && videoIdx < 0) {
+                mediaAttrList.erase(mediaAttrList.begin() + i);
+                break;
+            }
+        }
+    }
+    mediaAttrList = MediaDemuxer::validateMediaTypes(mediaAttrList);
 
     // Disable video if disabled in the account.
     auto account = getSIPAccount();
@@ -3100,10 +3134,16 @@ SIPCall::exitConference()
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
+    // SHOULD LOOP AUDIO STREAMS DONE
+    auto medias = getMediaAttributeList();
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
-    if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
+    if (hasAudio) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
+        for (const auto& media : medias) {
+            if (media.type_ == MEDIA_AUDIO && !media.muted_) {
+                rbPool.bindCallID(getCallId()+"_"+media.label_, RingBufferPool::DEFAULT_ID);
+            }
+        }
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO

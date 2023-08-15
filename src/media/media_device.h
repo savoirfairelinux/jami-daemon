@@ -53,6 +53,7 @@ struct DeviceParams
     int orientation {};
     std::string window_id {};
     int is_area {};
+    bool isAudio {};
 };
 
 } // namespace jami

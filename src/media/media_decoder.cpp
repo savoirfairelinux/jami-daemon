@@ -25,6 +25,7 @@
 #include "media_device.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
+#include "media_const.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
@@ -92,6 +93,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
 {
     inputParams_ = params;
     auto iformat = av_find_input_format(params.format.c_str());
+    JAMI_WARN() << "@@@ FORMAT: " << params.format << " " << iformat;
 
     if (!iformat && !params.format.empty())
         JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
@@ -161,6 +163,8 @@ MediaDemuxer::openInput(const DeviceParams& params)
         "fpsprobesize",
         1,
         AV_OPT_SEARCH_CHILDREN); // Don't waste time fetching framerate when finding stream info
+    JAMI_WARN() << "@@@ " << input;
+
     int ret = avformat_open_input(&inputCtx_, input.c_str(), iformat, options_ ? &options_ : NULL);
 
     if (ret) {
@@ -169,9 +173,10 @@ MediaDemuxer::openInput(const DeviceParams& params)
         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
         JAMI_DBG("Using format %s and resolution %dx%d",
-                 params.format.c_str(),
-                 baseWidth_,
-                 baseHeight_);
+                params.format.c_str(),
+                baseWidth_,
+                baseHeight_);
+        JAMI_WARN() << "@@@ NO FAIL!";
     }
 
     return ret;
@@ -406,6 +411,117 @@ MediaDemuxer::decode()
             return Status::FallBack;
     }
     return Status::Success;
+}
+
+std::vector<MediaAttribute>
+MediaDemuxer::validateMediaTypes(const std::vector<MediaAttribute>& medias)
+{
+    std::vector<MediaAttribute> newMedias {};
+    for (size_t i = 0; i < medias.size(); i++) {
+        JAMI_WARN() << "@@@ i: " << i;
+        auto media = medias.at(i);
+        if (!media.enabled_)
+            continue;
+        auto resource = media.sourceUri_;
+        JAMI_WARN() << "@@@ resource: " << resource;
+        JAMI_WARN() << "@@@ type: " << media.type_;
+        // Supported MRL schemes
+        static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+
+        const auto pos = resource.find(sep);
+        if (pos == std::string::npos)
+            continue;
+
+        const auto prefix = resource.substr(0, pos);
+        if ((pos + sep.size()) >= resource.size())
+            continue;
+
+        const auto suffix = resource.substr(pos + sep.size());
+
+        if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
+            JAMI_WARN() << "@@@ IS FILE!";
+            AVFormatContext* decFormatCtx = avformat_alloc_context();
+
+
+            // Open
+            if (avformat_open_input(&decFormatCtx, suffix.c_str(), NULL, NULL) != 0) {
+                JAMI_WARN() << "@@@ NO avformat_open_input";
+                avformat_close_input(&decFormatCtx);
+                avformat_free_context(decFormatCtx);
+                continue;;
+            }
+            // Retrieve stream information
+            if (avformat_find_stream_info(decFormatCtx, NULL) < 0) {
+                JAMI_WARN() << "@@@ NO avformat_find_stream_info";
+                avformat_close_input(&decFormatCtx);
+                avformat_free_context(decFormatCtx);
+                continue;
+            }
+
+            // Find the first video stream
+            auto videoStream = av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+
+            if (videoStream < 0) {
+                // continue here if we do not want to let audio only files
+                continue;
+                if (media.type_ == MEDIA_VIDEO) {
+                    media.type_ = MEDIA_AUDIO;
+                    std::string label = "audio_";
+                    auto idx = 0;
+                    for (auto data: medias) {
+                        if (data.type_ == MEDIA_AUDIO)
+                            idx++;
+                    }
+                    label += std::to_string(idx);
+                    media.label_ = label;
+                }
+                JAMI_WARN() << "@@@ NO video!";
+            }
+            JAMI_WARN() << "@@@ " << videoStream;
+
+            // Find the first audio stream
+            auto audioStream = av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+
+            if (audioStream < 0) {
+                if (media.type_ == MEDIA_AUDIO) {
+                    media.type_ = MEDIA_NONE;
+                    media.enabled_ = false;
+                }
+                JAMI_WARN() << "@@@ NO audio!";
+            }
+            JAMI_WARN() << "@@@ " << audioStream;
+            avformat_close_input(&decFormatCtx);
+            avformat_free_context(decFormatCtx);
+
+            if (audioStream >= 0 && videoStream >= 0) {
+                JAMI_WARN() << "@@@ BOTH STREAMS!";
+                auto it = std::find_if(medias.begin(), medias.end(), [media](const MediaAttribute iter){
+                    return media.sourceUri_ == iter.sourceUri_ && media.type_ != iter.type_;
+                });
+                if (it == medias.end()) {
+                    JAMI_WARN() << "@@@ adding audio STREAM!";
+                    auto newType = media.type_ == MEDIA_AUDIO ? MEDIA_VIDEO : MEDIA_AUDIO;
+                    std::string label = newType == MEDIA_AUDIO ? "audio_" : "video_";
+                    auto idx = 0;
+                    for (auto data: medias) {
+                        if (data.type_ == newType)
+                            idx++;
+                    }
+                    label += std::to_string(idx);
+                    MediaAttribute newMedia(media.type_ == MEDIA_AUDIO ? MEDIA_VIDEO : MEDIA_AUDIO,
+                                            media.muted_,
+                                            media.secure_,
+                                            media.enabled_,
+                                            media.sourceUri_,
+                                            label,
+                                            media.onHold_);
+                    newMedias.emplace_back(newMedia);
+                }
+            }
+        }
+        newMedias.emplace_back(media);
+    }
+    return newMedias;
 }
 
 MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index)

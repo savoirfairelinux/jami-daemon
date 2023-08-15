@@ -124,6 +124,7 @@ AudioInput::readFromDevice()
 
     auto& bufferPool = Manager::instance().getRingBufferPool();
     auto audioFrame = bufferPool.getData(id_);
+    // JAMI_WARN() << "@@@ read data! " << audioFrame << " " << id_;
     if (not audioFrame)
         return;
 
@@ -133,9 +134,11 @@ AudioInput::readFromDevice()
     }
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    if (bufferPool.getInternalAudioFormat() != format_)
-        audioFrame = resampler_->resample(std::move(audioFrame), format_);
+    // if (bufferPool.getInternalAudioFormat() != format_)
+    audioFrame = resampler_->resample(std::move(audioFrame), format_);
+    // JAMI_WARN() << "@@@ RESAMPLED";
     resizer_->enqueue(std::move(audioFrame));
+    // JAMI_WARN() << "@@@ ENQUEUED";
 
     if (recorderCallback_ && settingMS_.exchange(false)) {
         recorderCallback_(MediaStream("a:local", format_, sent_samples));
@@ -162,6 +165,7 @@ AudioInput::readFromFile()
     if (!decoder_)
         return;
     const auto ret = decoder_->decode();
+    // JAMI_WARN() << "@@@ DECODED " << id_, fileId_;
     switch (ret) {
     case MediaDemuxer::Status::Success:
         break;
@@ -183,6 +187,7 @@ bool
 AudioInput::initDevice(const std::string& device)
 {
     devOpts_ = {};
+    devOpts_.isAudio = true;
     devOpts_.input = device;
     devOpts_.channel = format_.nb_channels;
     devOpts_.framerate = format_.sample_rate;
@@ -200,6 +205,7 @@ AudioInput::configureFilePlayback(const std::string& path,
     Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     fileBuf_.reset();
     devOpts_ = {};
+    devOpts_.isAudio = true;
     devOpts_.input = path;
     devOpts_.name = path;
     auto decoder
@@ -211,6 +217,8 @@ AudioInput::configureFilePlayback(const std::string& path,
               fileBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
           });
     decoder->emulateRate();
+    decoder->setInterruptCallback(
+        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
     playingFile_ = true;
@@ -241,12 +249,15 @@ AudioInput::flushBuffers()
 bool
 AudioInput::initFile(const std::string& path)
 {
+    JAMI_WARN() << "@@@ INITFILE";
+    fileBuf_.reset();
     if (access(path.c_str(), R_OK) != 0) {
         JAMI_ERR() << "File '" << path << "' not available";
         return false;
     }
 
     devOpts_ = {};
+    devOpts_.isAudio = true;
     devOpts_.input = path;
     devOpts_.name = path;
     devOpts_.loop = "1";
@@ -256,6 +267,7 @@ AudioInput::initFile(const std::string& path)
         return initDevice("");
     }
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    Manager::instance().getRingBufferPool().bindCallID(id_, RingBufferPool::DEFAULT_ID);
     // have file audio mixed into the call buffer so it gets sent to the peer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
     // have file audio mixed into the local buffer so it gets played
@@ -319,6 +331,7 @@ AudioInput::switchInput(const std::string& resource)
     wakeUp_ = std::chrono::high_resolution_clock::now() + MS_PER_PACKET;
     lk.unlock();
     loop_.start();
+    JAMI_WARN() << id_ << " loopstarted";
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_AUDIO, 0);
     return futureDevOpts_;
@@ -363,8 +376,8 @@ AudioInput::createDecoder()
 
     // NOTE don't emulate rate, file is read as frames are needed
 
-    decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+    // decoder->setInterruptCallback(
+    //     [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
     if (decoder->openInput(devOpts_) < 0) {
         JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";
