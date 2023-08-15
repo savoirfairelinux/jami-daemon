@@ -78,7 +78,7 @@ AudioReceiveThread::setup()
 
     audioDecoder_->setIOContext(sdpContext_.get());
     audioDecoder_->setFEC(true);
-    if (audioDecoder_->openInput(args_)) {
+    if (audioDecoder_->openInput(args_) < 0) {
         JAMI_ERR("Could not open input \"%s\"", SDP_FILENAME);
         return false;
     }
@@ -91,6 +91,7 @@ AudioReceiveThread::setup()
     }
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
+    Manager::instance().getRingBufferPool().bindCallID(id_, RingBufferPool::DEFAULT_ID);
 
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_AUDIO, 1);
@@ -156,6 +157,7 @@ AudioReceiveThread::getInfo() const
 void
 AudioReceiveThread::startReceiver()
 {
+    JAMI_WARN() << "@@@ RECEIVE LOOP STARTED!" << id_;
     loop_.start();
 }
 
