@@ -20,6 +20,7 @@
  */
 
 #include "pluginpreferencesutils.h"
+#include "pluginsutils.h"
 
 #include <msgpack.hpp>
 #include <sstream>
@@ -58,51 +59,6 @@ PluginPreferencesUtils::getAllowDenyListsPath()
 {
     return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH
            + "allowdeny.msgpack";
-}
-
-std::map<std::string, std::string>
-PluginPreferencesUtils::processLocaleFile(const std::string& preferenceLocaleFilePath)
-{
-    if (!fileutils::isFile(preferenceLocaleFilePath)) {
-        return {};
-    }
-    std::ifstream file(preferenceLocaleFilePath);
-    Json::Value root;
-    Json::CharReaderBuilder rbuilder;
-    rbuilder["collectComments"] = false;
-    std::string errs;
-    std::map<std::string, std::string> locales {};
-    if (file) {
-        // Read the file to a json format
-        if (Json::parseFromStream(rbuilder, file, &root, &errs)) {
-            auto keys = root.getMemberNames();
-            for (const auto& key : keys) {
-                locales[key] = root.get(key, "").asString();
-            }
-        }
-    }
-    return locales;
-}
-
-std::map<std::string, std::string>
-PluginPreferencesUtils::getLocales(const std::string& rootPath, const std::string& lang)
-{
-    auto pluginName = rootPath.substr(rootPath.find_last_of(DIR_SEPARATOR_CH) + 1);
-    auto basePath = fmt::format("{}/data/locale/{}", rootPath, pluginName + "_");
-
-    std::map<std::string, std::string> locales = {};
-
-    // Get language translations
-    if (!lang.empty()) {
-        locales = processLocaleFile(basePath + lang + ".json");
-    }
-
-    // Get default english values if no translations were found
-    if (locales.empty()) {
-        locales = processLocaleFile(basePath + "en.json");
-    }
-
-    return locales;
 }
 
 std::string
@@ -159,48 +115,8 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
     std::vector<std::map<std::string, std::string>> preferences;
     if (file) {
         // Get preferences locale
-        std::string lang;
-        if (auto envLang = std::getenv("JAMI_LANG"))
-            lang = envLang;
-        else
-            JAMI_INFO() << "Error getting JAMI_LANG env, trying to get system language";
-        // If language preference is empty, try to get from the system.
-        if (lang.empty()) {
-#ifdef WIN32
-            WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
-            if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
-                char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
-                WideCharToMultiByte(CP_UTF8,
-                                    0,
-                                    localeBuffer,
-                                    LOCALE_NAME_MAX_LENGTH,
-                                    utf8Buffer,
-                                    LOCALE_NAME_MAX_LENGTH,
-                                    nullptr,
-                                    nullptr);
-
-                lang.append(utf8Buffer);
-                string_replace(lang, "-", "_");
-            }
-            // Even though we default to the system variable in windows, technically this
-            // part of the code should not be reached because the client-qt must define that
-            // variable and we cannot run the client and the daemon in diferent processes in Windows.
-#else
-            // The same way described in the comment just above, the android should not reach this
-            // part of the code given the client-android must define "JAMI_LANG" system variable.
-            // And even if this part is reached, it should not work since std::locale is not
-            // supported by the NDK.
-
-            // LC_COLLATE is used to grab the locale for the case when the system user has set different
-            // values for the preferred Language and Format.
-            lang = setlocale(LC_COLLATE, "");
-            // We set the environment to avoid checking from system everytime.
-            // This is the case when running daemon and client in different processes
-            // like with dbus.
-            setenv("JAMI_LANG", lang.c_str(), 1);
-#endif // WIN32
-        }
-        auto locales = getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
+        const auto& lang = PluginUtils::getLanguage();
+        auto locales = PluginUtils::getLocales(rootPath, std::string(string_remove_suffix(lang, '.')));
 
         // Read the file to a json format
         bool ok = Json::parseFromStream(rbuilder, file, &root, &errs);
