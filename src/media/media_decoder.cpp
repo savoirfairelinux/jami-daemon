@@ -147,10 +147,10 @@ MediaDemuxer::openInput(const DeviceParams& params)
     std::string input = params.input;
 #endif
 
-    JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf",
-             input.c_str(),
-             params.format.c_str(),
-             params.pixel_format.c_str(),
+    JAMI_LOG("Trying to open input {} with format {}, pixel format {}, size {}x{}, rate {}",
+             input,
+             params.format,
+             params.pixel_format,
              params.width,
              params.height,
              params.framerate.real());
@@ -597,6 +597,8 @@ MediaDecoder::prepareDecoderContext()
         if (decoderCtx_->codec_id == AV_CODEC_ID_OPUS) {
             av_opt_set_int(decoderCtx_, "decode_fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
         }
+        decoderCtx_->sample_fmt = AV_SAMPLE_FMT_FLT;
+        decoderCtx_->request_sample_fmt = AV_SAMPLE_FMT_FLT;
     }
     return 0;
 }
