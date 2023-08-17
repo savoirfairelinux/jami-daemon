@@ -76,7 +76,7 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
     }
 
     std::map<std::string, std::string> details = PluginUtils::parseManifestFile(
-        PluginUtils::manifestPath(rootPath));
+        PluginUtils::manifestPath(rootPath), rootPath);
     if (!details.empty()) {
         auto itIcon = details.find("iconPath");
         itIcon->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
@@ -231,7 +231,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                         + DIR_SEPARATOR_CH + name};
             // Find if there is an existing version of this plugin
             const auto alreadyInstalledManifestMap = PluginUtils::parseManifestFile(
-                PluginUtils::manifestPath(destinationDir));
+                PluginUtils::manifestPath(destinationDir), destinationDir);
 
             if (!alreadyInstalledManifestMap.empty()) {
                 if (force) {

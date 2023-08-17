@@ -81,7 +81,15 @@ std::map<std::string, std::string> checkManifestValidity(const std::vector<uint8
  * @param manifestFilePath
  * @return Map with manifest contents
  */
-std::map<std::string, std::string> parseManifestFile(const std::string& manifestFilePath);
+std::map<std::string, std::string> parseManifestFile(const std::string& manifestFilePath, const std::string& rootPath);
+
+/**
+ * @brief Parses the manifest file of an installed plugin if it's valid.
+ * @param rootPath
+ * @param manifestFile
+ * @return Map with manifest contents
+ */
+std::string parseManifestTranslation(const std::string& rootPath, std::ifstream& manifestFile);
 
 /**
  * @brief Validates a plugin based on its manifest.json file.
@@ -134,5 +142,29 @@ std::vector<uint8_t> readSignatureFileFromArchive(const std::string& jplPath);
  * @return Pair <bool, string> meaning if file should be extracted and where to.
  */
 std::pair<bool, std::string_view> uncompressJplFunction(std::string_view relativeFileName);
+
+/**
+ * @brief Returns the language of the current locale.
+ * @return language
+ */
+std::string getLanguage();
+
+/**
+ * @brief Returns the available keys and translations for a given plugin.
+ * If the locale is not available, return the english default.
+ * @param rootPath
+ * @param lang
+ * @return locales map
+ */
+std::map<std::string, std::string> getLocales(const std::string& rootPath,
+                                                     const std::string& lang);
+
+/**
+ * @brief Returns the available keys and translations for a given file.
+ * If the locale is not available, return empty map.
+ * @param localeFilePath
+ * @return locales map
+ */
+std::map<std::string, std::string> processLocaleFile(const std::string& localeFilePath);
 } // namespace PluginUtils
 } // namespace jami
