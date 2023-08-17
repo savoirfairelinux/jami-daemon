@@ -116,7 +116,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     jami_tracepoint(call_start, callId.c_str());
 
     if (account->getUPnPActive())
-        upnp_.reset(new dhtnet::upnp::Controller(Manager::instance().upnpContext()));
+        upnp_ = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
 
     setCallMediaLocal();
 

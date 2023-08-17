@@ -101,7 +101,7 @@ Account::updateUpnpController()
 
     // UPNP enabled. Create new controller if needed.
     if (not upnpCtrl_) {
-        upnpCtrl_.reset(new dhtnet::upnp::Controller(Manager::instance().upnpContext()));
+        upnpCtrl_ = std::make_shared<dhtnet::upnp::Controller>(Manager::instance().upnpContext());
         if (not upnpCtrl_) {
             throw std::runtime_error("Failed to create a UPNP Controller instance!");
         }
