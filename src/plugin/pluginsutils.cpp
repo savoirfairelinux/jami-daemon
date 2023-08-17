@@ -142,13 +142,14 @@ checkManifestValidity(const std::vector<uint8_t>& vec)
 }
 
 std::map<std::string, std::string>
-parseManifestFile(const std::string& manifestFilePath)
+parseManifestFile(const std::string& manifestFilePath, const std::string& rootPath)
 {
     std::lock_guard<std::mutex> guard(fileutils::getFileLock(manifestFilePath));
     std::ifstream file(manifestFilePath);
     if (file) {
         try {
-            return checkManifestValidity(file);
+            const auto& traduction = parseManifestTranslation(rootPath, file);
+            return checkManifestValidity(std::vector<uint8_t>(traduction.begin(), traduction.end()));
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
@@ -156,10 +157,36 @@ parseManifestFile(const std::string& manifestFilePath)
     return {};
 }
 
+std::string
+parseManifestTranslation(const std::string& rootPath, std::ifstream& manifestFile)
+{
+    if (manifestFile) {
+        std::stringstream buffer;
+        buffer << manifestFile.rdbuf();
+        std::string manifest = buffer.str();
+        const auto& translation = getLocales(rootPath, getLanguage());
+        std::regex pattern(R"(\{\{([^}]+)\}\})");
+        std::smatch matches;
+        // replace the pattern to the correct translation
+        while (std::regex_search(manifest, matches, pattern)) {
+            if (matches.size() == 2) {
+                auto it = translation.find(matches[1].str());
+                if (it == translation.end()) {
+                    manifest = std::regex_replace(manifest, pattern, "");
+                    continue;
+                }
+                manifest = std::regex_replace(manifest, pattern, it->second, std::regex_constants::format_first_only);
+            }
+        }
+        return manifest;
+    }
+    return {};
+}
+
 bool
 checkPluginValidity(const std::string& rootPath)
 {
-    return !parseManifestFile(manifestPath(rootPath)).empty();
+    return !parseManifestFile(manifestPath(rootPath), rootPath).empty();
 }
 
 std::map<std::string, std::string>
@@ -239,6 +266,98 @@ uncompressJplFunction(std::string_view relativeFileName)
         }
     }
     return std::make_pair(true, relativeFileName);
+}
+
+std::string
+getLanguage()
+{
+    std::string lang;
+        if (auto envLang = std::getenv("JAMI_LANG"))
+            lang = envLang;
+        else
+            JAMI_INFO() << "Error getting JAMI_LANG env, trying to get system language";
+        // If language preference is empty, try to get from the system.
+        if (lang.empty()) {
+#ifdef WIN32
+            WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
+            if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
+                char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
+                WideCharToMultiByte(CP_UTF8,
+                                    0,
+                                    localeBuffer,
+                                    LOCALE_NAME_MAX_LENGTH,
+                                    utf8Buffer,
+                                    LOCALE_NAME_MAX_LENGTH,
+                                    nullptr,
+                                    nullptr);
+
+                lang.append(utf8Buffer);
+                string_replace(lang, "-", "_");
+            }
+            // Even though we default to the system variable in windows, technically this
+            // part of the code should not be reached because the client-qt must define that
+            // variable and we cannot run the client and the daemon in diferent processes in Windows.
+#else
+            // The same way described in the comment just above, the android should not reach this
+            // part of the code given the client-android must define "JAMI_LANG" system variable.
+            // And even if this part is reached, it should not work since std::locale is not
+            // supported by the NDK.
+
+            // LC_COLLATE is used to grab the locale for the case when the system user has set different
+            // values for the preferred Language and Format.
+            lang = setlocale(LC_COLLATE, "");
+            // We set the environment to avoid checking from system everytime.
+            // This is the case when running daemon and client in different processes
+            // like with dbus.
+            setenv("JAMI_LANG", lang.c_str(), 1);
+#endif // WIN32
+    }
+    return lang;
+}
+
+std::map<std::string, std::string>
+getLocales(const std::string& rootPath, const std::string& lang)
+{
+    auto pluginName = rootPath.substr(rootPath.find_last_of(DIR_SEPARATOR_CH) + 1);
+    auto basePath = fmt::format("{}/data/locale/{}", rootPath, pluginName + "_");
+
+    std::map<std::string, std::string> locales = {};
+
+    // Get language translations
+    if (!lang.empty()) {
+        locales = processLocaleFile(basePath + lang + ".json");
+    }
+
+    // Get default english values if no translations were found
+    if (locales.empty()) {
+        locales = processLocaleFile(basePath + "en.json");
+    }
+
+    return locales;
+}
+
+std::map<std::string, std::string>
+processLocaleFile(const std::string& preferenceLocaleFilePath)
+{
+    if (!fileutils::isFile(preferenceLocaleFilePath)) {
+        return {};
+    }
+    std::ifstream file(preferenceLocaleFilePath);
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    rbuilder["collectComments"] = false;
+    std::string errs;
+    std::map<std::string, std::string> locales {};
+    if (file) {
+        // Read the file to a json format
+        if (Json::parseFromStream(rbuilder, file, &root, &errs)) {
+            auto keys = root.getMemberNames();
+            for (const auto& key : keys) {
+                locales[key] = root.get(key, "").asString();
+            }
+        }
+    }
+    return locales;
 }
 } // namespace PluginUtils
 } // namespace jami

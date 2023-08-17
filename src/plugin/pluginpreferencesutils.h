@@ -68,24 +68,6 @@ public:
     static std::string getAllowDenyListsPath();
 
     /**
-     * @brief Returns the available keys and translations for a given file.
-     * If the locale is not available, return empty map.
-     * @param localeFilePath
-     * @return locales map
-     */
-    static std::map<std::string, std::string> processLocaleFile(const std::string& localeFilePath);
-
-    /**
-     * @brief Returns the available keys and translations for a given plugin.
-     * If the locale is not available, return the english default.
-     * @param rootPath
-     * @param lang
-     * @return locales map
-     */
-    static std::map<std::string, std::string> getLocales(const std::string& rootPath,
-                                                         const std::string& lang);
-
-    /**
      * @brief Returns a colon separated string with values from a json::Value containing an array.
      * @param jsonArray
      * @return Colon separated string with jsonArray contents.
