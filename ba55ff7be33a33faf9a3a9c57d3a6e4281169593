@@ -46,6 +46,30 @@
       },
       "revId": "ba55ff7be33a33faf9a3a9c57d3a6e4281169593",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04d6ce7e_b8e039ce",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-18T13:38:50Z",
+      "side": 1,
+      "message": "i think you could try `std::regex_constants::format_first_only`",
+      "parentUuid": "67656f36_52d212fa",
+      "range": {
+        "startLine": 159,
+        "startChar": 0,
+        "endLine": 159,
+        "endChar": 24
+      },
+      "revId": "ba55ff7be33a33faf9a3a9c57d3a6e4281169593",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
