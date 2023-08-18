@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "655d00f5_afafa60d",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-08-18T17:46:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b1184d50_1536c5fb",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 33
+      },
+      "revId": "58336163a9c1f8984f973671c1ce55680b83f171",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b317878f_8fdea4e1",
@@ -37,6 +61,24 @@
       "writtenOn": "2023-08-09T13:52:00Z",
       "side": 1,
       "message": "check comments at https://review.jami.net/c/jami-plugins/+/25462",
+      "revId": "58336163a9c1f8984f973671c1ce55680b83f171",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b575fef0_5b188263",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-08-18T17:46:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b317878f_8fdea4e1",
       "revId": "58336163a9c1f8984f973671c1ce55680b83f171",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
