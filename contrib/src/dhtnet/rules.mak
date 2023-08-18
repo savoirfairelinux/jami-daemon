@@ -1,5 +1,5 @@
 # DHTNET
-DHTNET_VERSION := 370257cdd858927172f4169acc8e873e8ae11f65
+DHTNET_VERSION := 95219efbf7300fb680a35ca8f5b007e845d58730
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
