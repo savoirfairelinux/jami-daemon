@@ -120,24 +120,6 @@ endif()
 
 if(NOT MSVC)
     include(FindPkgConfig)
-    if (JAMI_NATPMP)
-        pkg_search_module (natpmp IMPORTED_TARGET natpmp)
-        if (NOT natpmp_FOUND)
-            find_library(natpmp_LIBRARIES natpmp)
-            if (NOT natpmp_LIBRARIES)
-                message("NAT-PMP not found: disabling")
-                set(JAMI_NATPMP Off)
-            else()
-                message("NAT-PMP found: ${natpmp_LIBRARIES}")
-            endif()
-        endif()
-    endif()
-    if (JAMI_PUPNP)
-        pkg_search_module (upnp IMPORTED_TARGET upnp libupnp)
-        if (NOT upnp_FOUND)
-            set(JAMI_PUPNP Off)
-        endif()
-    endif()
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         pkg_search_module (udev REQUIRED IMPORTED_TARGET libudev)
         pkg_search_module (pulseaudio REQUIRED IMPORTED_TARGET libpulse)
@@ -160,10 +142,6 @@ source_group("Source Files\\config" FILES ${Source_Files__config})
 source_group("Source Files\\connectivity" FILES ${Source_Files__connectivity})
 source_group("Source Files\\connectivity\\security" FILES ${Source_Files__security})
 source_group("Source Files\\connectivity\\sip" FILES ${Source_Files__sip})
-source_group("Source Files\\connectivity\\upnp" FILES ${Source_Files__upnp})
-source_group("Source Files\\connectivity\\upnp\\protocol" FILES ${Source_Files__upnp__protocol})
-source_group("Source Files\\connectivity\\upnp\\protocol\\natpmp" FILES ${Source_Files__upnp__protocol__natpmp})
-source_group("Source Files\\connectivity\\upnp\\protocol\\pupnp" FILES ${Source_Files__upnp__protocol__pupnp})
 source_group("Source Files\\jami" FILES ${Source_Files__jami})
 source_group("Source Files\\hooks" FILES ${Source_Files__hooks})
 source_group("Source Files\\im" FILES ${Source_Files__im})
@@ -206,15 +184,7 @@ list (APPEND ALL_FILES
       ${Source_Files__media__video}
       ${Source_Files__security}
       ${Source_Files__sip}
-      ${Source_Files__upnp}
-      ${Source_Files__upnp__protocol}
 )
-if (JAMI_NATPMP)
-    list (APPEND ALL_FILES ${Source_Files__upnp__protocol__natpmp})
-endif()
-if (JAMI_PUPNP)
-    list (APPEND ALL_FILES ${Source_Files__upnp__protocol__pupnp})
-endif()
 if (JAMI_PLUGIN)
     list (APPEND ALL_FILES ${Source_Files__plugin})
 endif()
@@ -304,10 +274,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/security;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/sip;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/igd;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/protocol;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/connectivity/upnp/mapping;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
@@ -365,7 +331,6 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include/upnp;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/sndfile/src;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/include;"
@@ -578,16 +543,6 @@ else()
         )
     elseif (APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE resolv)
-    endif()
-    if (JAMI_NATPMP)
-        if (natpmp_FOUND)
-            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::natpmp)
-        elseif (natpmp_LIBRARIES)
-            target_link_libraries(${PROJECT_NAME} PRIVATE ${natpmp_LIBRARIES})
-        endif()
-    endif()
-    if (JAMI_PUPNP)
-        target_link_libraries(${PROJECT_NAME} PRIVATE upnp)
     endif()
     if (JAMI_PLUGIN)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)

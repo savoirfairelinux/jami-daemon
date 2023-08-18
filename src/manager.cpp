@@ -452,7 +452,7 @@ struct Manager::ManagerPimpl
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     : base_(base)
     , ioContext_(std::make_shared<asio::io_context>())
-    , upnpContext_(std::make_shared<dhtnet::upnp::UPnPContext>(ioContext_, Logger::dhtLogger()))
+    , upnpContext_(std::make_shared<dhtnet::upnp::UPnPContext>(nullptr, Logger::dhtLogger()))
     , toneCtrl_(base.preferences)
     , dtmfBuf_(0, AudioFormat::MONO())
     , ringbufferpool_(new RingBufferPool)
