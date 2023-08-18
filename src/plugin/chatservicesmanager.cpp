@@ -202,8 +202,9 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
     std::vector<std::string> ret;
     if (it != allowDenyList_.end()) {
         for (const auto& chatHandlerName : it->second)
-            if (chatHandlerName.second) // We only return active ChatHandler ids
+            if (chatHandlerName.second && handlersNameMap_.find(chatHandlerName.first) != handlersNameMap_.end()) { // We only return active ChatHandler ids
                 ret.emplace_back(std::to_string(handlersNameMap_.at(chatHandlerName.first)));
+            }
     }
 
     return ret;
