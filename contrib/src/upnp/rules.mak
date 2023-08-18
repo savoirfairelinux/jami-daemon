@@ -1,5 +1,5 @@
 # UPNP
-UPNP_VERSION := 1.14.13
+UPNP_VERSION := 1.14.16
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
