@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4cd279e8_5f39cf38",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-18T12:30:55Z",
+      "side": 1,
+      "message": "if two translation keys in the description, the second one will be replace with the value of the first.",
+      "range": {
+        "startLine": 159,
+        "startChar": 0,
+        "endLine": 159,
+        "endChar": 24
+      },
+      "revId": "ba55ff7be33a33faf9a3a9c57d3a6e4281169593",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
