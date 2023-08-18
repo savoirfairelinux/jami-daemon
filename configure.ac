@@ -413,12 +413,12 @@ AC_ARG_WITH([dbus],
   [],
   [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"],
-  [PKG_CHECK_MODULES(SDBUSCPP, sdbus-c++,,
-     AC_MSG_WARN([Missing dbus development files]))
+  [PKG_CHECK_MODULES(SDBUSCPP, [sdbus-c++],,
+     AC_MSG_ERROR([sdbus-c++ not found]))
 
    AC_CONFIG_FILES([bin/dbus/Makefile])
 
-   AC_PATH_PROG([SDBUSCPP_XML2CPP], sdbus-c++-xml2cpp,
+   AC_PATH_PROG([SDBUSCPP_XML2CPP], [sdbus-c++-xml2cpp],
      [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
 
    AM_CONDITIONAL(RING_DBUS, true)],
