@@ -1,5 +1,5 @@
 # MINIZIP
-LIBMINIZIP_VERSION := 3.0.8
+LIBMINIZIP_VERSION := 3.0.10
 LIBMINIZIP_URL := https://github.com/zlib-ng/minizip-ng/archive/refs/tags/$(LIBMINIZIP_VERSION).tar.gz
 
 ifdef HAVE_MACOSX
