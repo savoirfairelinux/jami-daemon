@@ -107,6 +107,12 @@
             </arg>
         </method>
 
+        <method name="getPlatformInfo" tp:name-for-bindings="getPlatformInfo">
+            <tp:added version="9.2.0"/>
+            <arg type="a{ss}" name="info" direction="out" tp:type="String_String_Map">
+            </arg>
+        </method>
+
        <method name="getCallMediaHandlers" tp:name-for-bindings="getCallMediaHandlers">
             <tp:added version="9.9.0"/>
             <arg type="as" name="getCallMediaHandlers" direction="out">
