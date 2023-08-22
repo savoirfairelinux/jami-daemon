@@ -77,6 +77,12 @@ std::map<std::string, std::string> checkManifestValidity(std::istream& stream);
 std::map<std::string, std::string> checkManifestValidity(const std::vector<uint8_t>& vec);
 
 /**
+ * @brief Returns a map with platform information.
+ * @return Map with platform information
+*/
+std::map<std::string, std::string> getPlatformInfo();
+
+/**
  * @brief Parses the manifest file of an installed plugin if it's valid.
  * @param manifestFilePath
  * @return Map with manifest contents

@@ -27,6 +27,7 @@ namespace libjami {
 bool loadPlugin(const std::string& path);
 bool unloadPlugin(const std::string& path);
 std::map<std::string,std::string> getPluginDetails(const std::string& path);
+std::map<std::string, std::string> getPlatformInfo();
 std::vector<std::map<std::string,std::string>> getPluginPreferences(const std::string& path, const std::string& accountId);
 bool setPluginPreference(const std::string& path, const std::string& accountId, const std::string& key, const std::string& value);
 std::map<std::string,std::string> getPluginPreferencesValues(const std::string& path, const std::string& accountId);
