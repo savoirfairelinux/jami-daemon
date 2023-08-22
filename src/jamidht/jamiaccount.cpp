@@ -269,13 +269,13 @@ dhtStatusStr(dht::NodeStatus status)
 
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
+    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
     , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId)
     , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
-    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
 {}
 
 JamiAccount::~JamiAccount() noexcept

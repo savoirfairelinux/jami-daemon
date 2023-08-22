@@ -702,6 +702,7 @@ private:
     std::string registeredName_;
 #endif
     std::shared_ptr<dht::Logger> logger_;
+    std::unique_ptr<dhtnet::tls::CertificateStore> certStore_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::unique_ptr<AccountManager> accountManager_;
@@ -876,8 +877,6 @@ private:
     std::unique_ptr<SyncModule> syncModule_;
 
     void initConnectionManager();
-
-    std::unique_ptr<dhtnet::tls::CertificateStore> certStore_;
 };
 
 static inline std::ostream&
