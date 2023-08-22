@@ -22,16 +22,15 @@
 #include "pluginsutils.h"
 #include "fileutils.h"
 #include "archiver.h"
-
 #include "logger.h"
-
-#include <fstream>
-#include <stdexcept>
-#include <msgpack.hpp>
 #include "manager.h"
 #include "preferences.h"
 #include "jami/plugin_manager_interface.h"
 #include "store_ca_crt.cpp"
+
+#include <fstream>
+#include <stdexcept>
+#include <msgpack.hpp>
 
 #define SUCCESS                         0
 #define PLUGIN_ALREADY_INSTALLED        100 /* Plugin already installed with the same version */
@@ -126,6 +125,11 @@ JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert
     return cert && *cert && trust_.verify(*cert);
 }
 
+std::map<std::string, std::string>
+JamiPluginManager::getPlatformInfo()
+{
+    return PluginUtils::getPlatformInfo();
+}
 bool
 JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 {

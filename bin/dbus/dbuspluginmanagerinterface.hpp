@@ -87,6 +87,12 @@ public:
         return libjami::resetPluginPreferencesValues(path, accountId);
     }
 
+    std::map<std::string, std::string>
+    getPlatformInfo()
+    {
+        return libjami::getPlatformInfo();
+    }
+
     auto
     getInstalledPlugins() -> decltype(libjami::getInstalledPlugins())
     {

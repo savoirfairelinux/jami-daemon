@@ -75,6 +75,14 @@ manifestPath(const std::string& rootPath)
     return rootPath + DIR_SEPARATOR_CH + "manifest.json";
 }
 
+std::map<std::string, std::string>
+getPlatformInfo()
+{
+    std::map<std::string, std::string> platformInfo = {};
+    platformInfo["os"] = ABI;
+    return platformInfo;
+}
+
 std::string
 getRootPathFromSoPath(const std::string& soPath)
 {
