@@ -169,6 +169,11 @@ public:
                                                                      const std::string& accountId);
 
     /**
+     * @brief Returns a Map of platform system.
+     */
+    std::map<std::string, std::string> getPlatformInfo();
+
+    /**
      * @brief Modifies a preference value by saving it to a preferences.msgpack.
      * Plugin is reloaded only if the preference cannot take effect immediately.
      * In other words, if we have to reload plugin so that preference may take effect.

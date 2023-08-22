@@ -147,6 +147,14 @@ uninstallPlugin(const std::string& pluginRootPath)
     return -1;
 }
 
+std::map<std::string, std::string>
+getPlatformInfo() {
+#ifdef ENABLE_PLUGIN
+    return jami::Manager::instance().getJamiPluginManager().getPlatformInfo();
+#endif
+    return {};
+}
+
 std::vector<std::string>
 getCallMediaHandlers()
 {

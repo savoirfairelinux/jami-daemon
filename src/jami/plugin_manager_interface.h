@@ -49,6 +49,7 @@ LIBJAMI_PUBLIC bool resetPluginPreferencesValues(const std::string& path,
                                                const std::string& accountId);
 LIBJAMI_PUBLIC std::vector<std::string> getInstalledPlugins();
 LIBJAMI_PUBLIC std::vector<std::string> getLoadedPlugins();
+LIBJAMI_PUBLIC std::map<std::string, std::string> getPlatformInfo();
 LIBJAMI_PUBLIC int installPlugin(const std::string& jplPath, bool force);
 LIBJAMI_PUBLIC int uninstallPlugin(const std::string& pluginRootPath);
 LIBJAMI_PUBLIC std::vector<std::string> getCallMediaHandlers();
