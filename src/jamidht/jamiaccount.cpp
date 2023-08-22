@@ -1177,20 +1177,20 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
     const auto& conf = config();
     try {
-        auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
+        auto onAsync = [w = weak(), wm = std::weak_ptr<AccountManager>(accountManager_)](AccountManager::AsyncUser&& cb) {
             if (auto this_ = w.lock())
-                cb(*this_->accountManager_);
+                if (auto am = wm.lock())
+                     cb(*am);
         };
         if (conf.managerUri.empty()) {
-            accountManager_.reset(new ArchiveAccountManager(
+            accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getPath(),
                 onAsync,
                 [this]() { return getAccountDetails(); },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
-                conf.nameServer));
+                conf.nameServer);
         } else {
-            accountManager_.reset(
-                new ServerAccountManager(getPath(), onAsync, conf.managerUri, conf.nameServer));
+            accountManager_ = std::make_shared<ServerAccountManager>(getPath(), onAsync, conf.managerUri, conf.nameServer);
         }
 
         auto id = accountManager_->loadIdentity(getAccountID(),

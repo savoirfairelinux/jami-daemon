@@ -705,7 +705,7 @@ private:
     std::unique_ptr<dhtnet::tls::CertificateStore> certStore_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
-    std::unique_ptr<AccountManager> accountManager_;
+    std::shared_ptr<AccountManager> accountManager_;
     dht::crypto::Identity id_ {};
 
     mutable std::mutex messageMutex_ {};
