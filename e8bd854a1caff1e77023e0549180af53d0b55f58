@@ -1,0 +1,142 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7437c714_bd9f1289",
+        "filename": "src/media/audio/audioloop.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-23T14:33:52Z",
+      "side": 1,
+      "message": "why out?",
+      "range": {
+        "startLine": 82,
+        "startChar": 4,
+        "endLine": 82,
+        "endChar": 29
+      },
+      "revId": "e8bd854a1caff1e77023e0549180af53d0b55f58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3cc5441_81b4716a",
+        "filename": "src/media/audio/audioloop.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-23T14:33:52Z",
+      "side": 1,
+      "message": "format_ ?",
+      "range": {
+        "startLine": 80,
+        "startChar": 16,
+        "endLine": 80,
+        "endChar": 22
+      },
+      "revId": "e8bd854a1caff1e77023e0549180af53d0b55f58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2f1a24c3_aa6e3059",
+        "filename": "src/media/audio/sound/dtmfgenerator.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-23T14:33:52Z",
+      "side": 1,
+      "message": "ch_layout.nb_channels",
+      "range": {
+        "startLine": 93,
+        "startChar": 96,
+        "endLine": 93,
+        "endChar": 104
+      },
+      "revId": "e8bd854a1caff1e77023e0549180af53d0b55f58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2cf954b2_62672c2e",
+        "filename": "src/media/audio/sound/dtmfgenerator.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-23T14:33:52Z",
+      "side": 1,
+      "message": "ch_layout.nb_channels",
+      "range": {
+        "startLine": 105,
+        "startChar": 96,
+        "endLine": 105,
+        "endChar": 104
+      },
+      "revId": "e8bd854a1caff1e77023e0549180af53d0b55f58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "14d5509a_ceb5bf5f",
+        "filename": "src/media/audio/sound/dtmfgenerator.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-23T14:33:52Z",
+      "side": 1,
+      "message": "ffmpeg6 compatible would be:\nav_channel_layout_from_mask(\u0026ptr-\u003ech_layout, AV_CH_LAYOUT_MONO);",
+      "range": {
+        "startLine": 118,
+        "startChar": 4,
+        "endLine": 119,
+        "endChar": 44
+      },
+      "revId": "e8bd854a1caff1e77023e0549180af53d0b55f58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5dfdef5c_72d82d66",
+        "filename": "src/media/audio/sound/tone.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-08-23T14:33:52Z",
+      "side": 1,
+      "message": "format",
+      "range": {
+        "startLine": 87,
+        "startChar": 0,
+        "endLine": 87,
+        "endChar": 8
+      },
+      "revId": "e8bd854a1caff1e77023e0549180af53d0b55f58",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
