@@ -70,6 +70,30 @@
       },
       "revId": "ba55ff7be33a33faf9a3a9c57d3a6e4281169593",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "90754077_26745ae0",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-08-23T12:40:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "04d6ce7e_b8e039ce",
+      "range": {
+        "startLine": 159,
+        "startChar": 0,
+        "endLine": 159,
+        "endChar": 24
+      },
+      "revId": "ba55ff7be33a33faf9a3a9c57d3a6e4281169593",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

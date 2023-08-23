@@ -16,6 +16,24 @@
       "message": "It would be good to increment the plugins UT with the manifest translation check",
       "revId": "f12477a37ff4a48053a1f46843d3c47f521911aa",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5df5a7ab_aff7dfba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-08-23T12:40:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "03ee6b3d_0e8742fc",
+      "revId": "f12477a37ff4a48053a1f46843d3c47f521911aa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
