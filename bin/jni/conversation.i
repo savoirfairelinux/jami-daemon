@@ -45,6 +45,7 @@ public:
 %}
 
 %feature("director") ConversationCallback;
+%template(SwarmMessageVect) std::vector<libjami::SwarmMessage>;
 
 namespace libjami {
 
