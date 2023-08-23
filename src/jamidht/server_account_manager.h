@@ -55,6 +55,10 @@ public:
 
     void syncDevices() override;
 
+    using SyncBlueprintCallback = std::function<void(const std::map<std::string, std::string>& config)>;
+
+    void syncBlueprintConfig(SyncBlueprintCallback onSuccess);
+
     bool revokeDevice(const std::string& password,
                       const std::string& device,
                       RevokeDeviceCallback cb) override;
