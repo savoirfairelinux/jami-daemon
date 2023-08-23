@@ -27,11 +27,10 @@ public:
     using OnExportConfig = std::function<std::map<std::string, std::string>()>;
 
     ArchiveAccountManager(const std::string& path,
-                          OnAsync&& onAsync,
                           OnExportConfig&& onExportConfig,
                           std::string archivePath,
                           const std::string& nameServer)
-        : AccountManager(path, std::move(onAsync), nameServer)
+        : AccountManager(path, nameServer)
         , onExportConfig_(std::move(onExportConfig))
         , archivePath_(std::move(archivePath)) {}
 

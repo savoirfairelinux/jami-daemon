@@ -43,10 +43,9 @@ constexpr std::string_view PATH_SEARCH = JAMI_PATH_AUTH "/directory/search";
 constexpr std::string_view PATH_CONTACTS = JAMI_PATH_AUTH "/contacts";
 
 ServerAccountManager::ServerAccountManager(const std::string& path,
-                                           OnAsync&& onAsync,
                                            const std::string& managerHostname,
                                            const std::string& nameServer)
-    : AccountManager(path, std::move(onAsync), nameServer)
+    : AccountManager(path, nameServer)
     , managerHostname_(managerHostname)
     , logger_(Logger::dhtLogger()) {}
 
@@ -84,131 +83,125 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
               ctx->credentials->username.c_str(),
               url.c_str());
 
-    dht::ThreadPool::computation().run([onAsync = onAsync_, ctx, url] {
-        onAsync([=](AccountManager& accountManager) {
-            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            Json::Value body;
-            {
-                auto csr = ctx->request.get()->toString();
-                body["csr"] = csr;
-                body["deviceName"] = ctx->deviceName;
-            }
-            auto request = std::make_shared<Request>(
-                *Manager::instance().ioContext(),
-                url,
-                body,
-                [ctx, onAsync](Json::Value json, const dht::http::Response& response) {
-                    JAMI_DBG("[Auth] Got request callback with status code=%u",
-                             response.status_code);
-                    if (response.status_code == 0)
-                        ctx->onFailure(AuthError::SERVER_ERROR, "Can't connect to server");
-                    else if (response.status_code >= 400 && response.status_code < 500)
-                        ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
-                    else if (response.status_code < 200 || response.status_code > 299)
-                        ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
-                    else {
-                        do {
-                            try {
-                                JAMI_WARNING("[Auth] Got server response: {}", response.body);
-                                auto cert = std::make_shared<dht::crypto::Certificate>(
-                                    json["certificateChain"].asString());
-                                auto accountCert = cert->issuer;
-                                if (not accountCert) {
-                                    JAMI_ERR("[Auth] Can't parse certificate: no issuer");
-                                    ctx->onFailure(AuthError::SERVER_ERROR,
-                                                   "Invalid certificate from server");
-                                    break;
-                                }
-                                auto receipt = json["deviceReceipt"].asString();
-                                Json::Value receiptJson;
-                                std::string err;
-                                auto receiptReader = std::unique_ptr<Json::CharReader>(
-                                    Json::CharReaderBuilder {}.newCharReader());
-                                if (!receiptReader->parse(receipt.data(),
-                                                          receipt.data() + receipt.size(),
-                                                          &receiptJson,
-                                                          &err)) {
-                                    JAMI_ERR("[Auth] Can't parse receipt from server: %s",
-                                             err.c_str());
-                                    ctx->onFailure(AuthError::SERVER_ERROR,
-                                                   "Can't parse receipt from server");
-                                    break;
-                                }
-                                onAsync([=](AccountManager& accountManager) mutable {
-                                    auto& this_ = *static_cast<ServerAccountManager*>(
-                                        &accountManager);
-                                    auto receiptSignature = base64::decode(
-                                        json["receiptSignature"].asString());
-
-                                    auto info = std::make_unique<AccountInfo>();
-                                    info->identity.first = ctx->key.get();
-                                    info->identity.second = cert;
-                                    info->devicePk = cert->getSharedPublicKey();
-                                    info->deviceId = info->devicePk->getLongId().toString();
-                                    info->accountId = accountCert->getId().toString();
-                                    info->contacts = std::make_unique<ContactList>(ctx->accountId,
-                                                                                   accountCert,
-                                                                                   this_.path_,
-                                                                                   this_.onChange_);
-                                    // info->contacts->setContacts(a.contacts);
-                                    if (ctx->deviceName.empty())
-                                        ctx->deviceName = info->deviceId.substr(8);
-                                    info->contacts->foundAccountDevice(cert,
-                                                                       ctx->deviceName,
-                                                                       clock::now());
-                                    info->ethAccount = receiptJson["eth"].asString();
-                                    info->announce
-                                        = parseAnnounce(receiptJson["announce"].asString(),
-                                                        info->accountId,
-                                                        info->devicePk->getId().toString());
-                                    if (not info->announce) {
-                                        ctx->onFailure(AuthError::SERVER_ERROR,
-                                                       "Can't parse announce from server");
-                                        return;
-                                    }
-                                    info->username = ctx->credentials->username;
-
-                                    this_.creds_ = std::move(ctx->credentials);
-                                    this_.info_ = std::move(info);
-                                    std::map<std::string, std::string> config;
-                                    for (auto itr = json.begin(); itr != json.end(); ++itr) {
-                                        const auto& name = itr.name();
-                                        if (name == "nameServer"sv) {
-                                            auto nameServer = json["nameServer"].asString();
-                                            if (!nameServer.empty() && nameServer[0] == '/')
-                                                nameServer = this_.managerHostname_ + nameServer;
-                                            this_.nameDir_ = NameDirectory::instance(nameServer);
-                                            config
-                                                .emplace(libjami::Account::ConfProperties::RingNS::URI,
-                                                         std::move(nameServer));
-                                        } else if (name == "userPhoto"sv) {
-                                            this_.info_->photo = json["userPhoto"].asString();
-                                        } else {
-                                            config.emplace(name, itr->asString());
-                                        }
-                                    }
-
-                                    ctx->onSuccess(*this_.info_,
-                                                   std::move(config),
-                                                   std::move(receipt),
-                                                   std::move(receiptSignature));
-                                });
-                            } catch (const std::exception& e) {
-                                JAMI_ERR("Error when loading account: %s", e.what());
-                                ctx->onFailure(AuthError::NETWORK, "");
+    dht::ThreadPool::computation().run([ctx, url, w=weak_from_this()] {
+        auto this_ = static_pointer_cast<ServerAccountManager>(w.lock());
+        if (not this_) return;
+        Json::Value body;
+        {
+            auto csr = ctx->request.get()->toString();
+            body["csr"] = csr;
+            body["deviceName"] = ctx->deviceName;
+        }
+        auto request = std::make_shared<Request>(
+            *Manager::instance().ioContext(),
+            url,
+            body,
+            [ctx, w](Json::Value json, const dht::http::Response& response) {
+                JAMI_DBG("[Auth] Got request callback with status code=%u",
+                            response.status_code);
+                auto this_ = static_pointer_cast<ServerAccountManager>(w.lock());
+                if (response.status_code == 0 || this_ == nullptr)
+                    ctx->onFailure(AuthError::SERVER_ERROR, "Can't connect to server");
+                else if (response.status_code >= 400 && response.status_code < 500)
+                    ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
+                else if (response.status_code < 200 || response.status_code > 299)
+                    ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
+                else {
+                    do {
+                        try {
+                            JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                            auto cert = std::make_shared<dht::crypto::Certificate>(
+                                json["certificateChain"].asString());
+                            auto accountCert = cert->issuer;
+                            if (not accountCert) {
+                                JAMI_ERR("[Auth] Can't parse certificate: no issuer");
+                                ctx->onFailure(AuthError::SERVER_ERROR,
+                                                "Invalid certificate from server");
+                                break;
                             }
-                        } while (false);
-                    }
+                            auto receipt = json["deviceReceipt"].asString();
+                            Json::Value receiptJson;
+                            std::string err;
+                            auto receiptReader = std::unique_ptr<Json::CharReader>(
+                                Json::CharReaderBuilder {}.newCharReader());
+                            if (!receiptReader->parse(receipt.data(),
+                                                        receipt.data() + receipt.size(),
+                                                        &receiptJson,
+                                                        &err)) {
+                                JAMI_ERR("[Auth] Can't parse receipt from server: %s",
+                                            err.c_str());
+                                ctx->onFailure(AuthError::SERVER_ERROR,
+                                                "Can't parse receipt from server");
+                                break;
+                            }
+                            auto receiptSignature = base64::decode(
+                                json["receiptSignature"].asString());
 
-                    onAsync([response](AccountManager& accountManager) {
-                        auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                        this_.clearRequest(response.request);
-                    });
-                },
-                this_.logger_);
-            request->set_auth(ctx->credentials->username, ctx->credentials->password);
-            this_.sendRequest(request);
-        });
+                            auto info = std::make_unique<AccountInfo>();
+                            info->identity.first = ctx->key.get();
+                            info->identity.second = cert;
+                            info->devicePk = cert->getSharedPublicKey();
+                            info->deviceId = info->devicePk->getLongId().toString();
+                            info->accountId = accountCert->getId().toString();
+                            info->contacts = std::make_unique<ContactList>(ctx->accountId,
+                                                                            accountCert,
+                                                                            this_->path_,
+                                                                            this_->onChange_);
+                            // info->contacts->setContacts(a.contacts);
+                            if (ctx->deviceName.empty())
+                                ctx->deviceName = info->deviceId.substr(8);
+                            info->contacts->foundAccountDevice(cert,
+                                                                ctx->deviceName,
+                                                                clock::now());
+                            info->ethAccount = receiptJson["eth"].asString();
+                            info->announce
+                                = parseAnnounce(receiptJson["announce"].asString(),
+                                                info->accountId,
+                                                info->devicePk->getId().toString());
+                            if (not info->announce) {
+                                ctx->onFailure(AuthError::SERVER_ERROR,
+                                                "Can't parse announce from server");
+                                return;
+                            }
+                            info->username = ctx->credentials->username;
+
+                            this_->creds_ = std::move(ctx->credentials);
+                            this_->info_ = std::move(info);
+                            std::map<std::string, std::string> config;
+                            for (auto itr = json.begin(); itr != json.end(); ++itr) {
+                                const auto& name = itr.name();
+                                if (name == "nameServer"sv) {
+                                    auto nameServer = json["nameServer"].asString();
+                                    if (!nameServer.empty() && nameServer[0] == '/')
+                                        nameServer = this_->managerHostname_ + nameServer;
+                                    this_->nameDir_ = NameDirectory::instance(nameServer);
+                                    config
+                                        .emplace(libjami::Account::ConfProperties::RingNS::URI,
+                                                    std::move(nameServer));
+                                } else if (name == "userPhoto"sv) {
+                                    this_->info_->photo = json["userPhoto"].asString();
+                                } else {
+                                    config.emplace(name, itr->asString());
+                                }
+                            }
+
+                            ctx->onSuccess(*this_->info_,
+                                            std::move(config),
+                                            std::move(receipt),
+                                            std::move(receiptSignature));
+                        } catch (const std::exception& e) {
+                            JAMI_ERR("Error when loading account: %s", e.what());
+                            ctx->onFailure(AuthError::NETWORK, "");
+                        }
+                    } while (false);
+                }
+
+                if (auto this_ = static_pointer_cast<ServerAccountManager>(w.lock()))
+                    this_->clearRequest(response.request);
+            },
+            this_->logger_);
+        request->set_auth(ctx->credentials->username, ctx->credentials->password);
+        this_->sendRequest(request);
     });
 }
 
@@ -244,11 +237,9 @@ ServerAccountManager::authenticateDevice()
         *Manager::instance().ioContext(),
         url,
         Json::Value {Json::objectValue},
-        [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-            onAsync([=](AccountManager& accountManager) {
-                static_cast<ServerAccountManager*>(&accountManager)
-                    ->onAuthEnded(json, response, TokenScope::Device);
-            });
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+            if (auto this_ = static_pointer_cast<ServerAccountManager>(w.lock()))
+                this_->onAuthEnded(json, response, TokenScope::Device);
         },
         logger_);
     request->set_identity(info_->identity);
@@ -265,11 +256,9 @@ ServerAccountManager::authenticateAccount(const std::string& username, const std
         *Manager::instance().ioContext(),
         url,
         Json::Value {Json::objectValue},
-        [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-            onAsync([=](AccountManager& accountManager) {
-                static_cast<ServerAccountManager*>(&accountManager)
-                    ->onAuthEnded(json, response, TokenScope::User);
-            });
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+            if (auto this_ = static_pointer_cast<ServerAccountManager>(w.lock()))
+                this_->onAuthEnded(json, response, TokenScope::User);
         },
         logger_);
     request->set_auth(username, password);
@@ -401,33 +390,32 @@ ServerAccountManager::syncDevices()
         *Manager::instance().ioContext(),
         urlContacts,
         jsonContacts,
-        [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-            onAsync([=](AccountManager& accountManager) {
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
                 JAMI_DBG("[Auth] Got contact sync request callback with status code=%u",
                          response.status_code);
-                auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                if (response.status_code >= 200 && response.status_code < 300) {
-                    try {
-                        JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
-                        if (not json.isArray()) {
-                            JAMI_ERR("[Auth] Can't parse server response: not an array");
-                        } else {
-                            for (unsigned i = 0, n = json.size(); i < n; i++) {
-                                const auto& e = json[i];
-                                Contact contact(e);
-                                this_.info_->contacts
-                                    ->updateContact(dht::InfoHash {e["uri"].asString()}, contact);
-                            }
-                            this_.info_->contacts->saveContacts();
+            auto this_ = static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return; 
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    if (not json.isArray()) {
+                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                    } else {
+                        for (unsigned i = 0, n = json.size(); i < n; i++) {
+                            const auto& e = json[i];
+                            Contact contact(e);
+                            this_->info_->contacts
+                                ->updateContact(dht::InfoHash {e["uri"].asString()}, contact);
                         }
-                    } catch (const std::exception& e) {
-                        JAMI_ERR("Error when iterating contact list: %s", e.what());
+                        this_->info_->contacts->saveContacts();
                     }
-                } else if (response.status_code == 401)
-                    this_.authError(TokenScope::Device);
+                } catch (const std::exception& e) {
+                    JAMI_ERR("Error when iterating contact list: %s", e.what());
+                }
+            } else if (response.status_code == 401)
+                this_->authError(TokenScope::Device);
 
-                this_.clearRequest(response.request);
-            });
+            this_->clearRequest(response.request);
         },
         logger_));
 
@@ -435,34 +423,33 @@ ServerAccountManager::syncDevices()
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlDevices,
-        [onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-            onAsync([=](AccountManager& accountManager) {
-                JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
-                auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                if (response.status_code >= 200 && response.status_code < 300) {
-                    try {
-                        JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
-                        if (not json.isArray()) {
-                            JAMI_ERR("[Auth] Can't parse server response: not an array");
-                        } else {
-                            for (unsigned i = 0, n = json.size(); i < n; i++) {
-                                const auto& e = json[i];
-                                dht::PkId deviceId(e["deviceId"].asString());
-                                if (deviceId) {
-                                    this_.info_->contacts->foundAccountDevice(deviceId,
-                                                                              e["alias"].asString(),
-                                                                              clock::now());
-                                }
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+            JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
+            auto this_ = static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return; 
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    if (not json.isArray()) {
+                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                    } else {
+                        for (unsigned i = 0, n = json.size(); i < n; i++) {
+                            const auto& e = json[i];
+                            dht::PkId deviceId(e["deviceId"].asString());
+                            if (deviceId) {
+                                this_->info_->contacts->foundAccountDevice(deviceId,
+                                                                            e["alias"].asString(),
+                                                                            clock::now());
                             }
                         }
-                    } catch (const std::exception& e) {
-                        JAMI_ERR("Error when iterating device list: %s", e.what());
                     }
-                } else if (response.status_code == 401)
-                    this_.authError(TokenScope::Device);
+                } catch (const std::exception& e) {
+                    JAMI_ERR("Error when iterating device list: %s", e.what());
+                }
+            } else if (response.status_code == 401)
+                this_->authError(TokenScope::Device);
 
-                this_.clearRequest(response.request);
-            });
+            this_->clearRequest(response.request);
         },
         logger_));
 }
@@ -482,25 +469,24 @@ ServerAccountManager::revokeDevice(const std::string& password,
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
-        [cb, onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-            onAsync([=](AccountManager& accountManager) {
-                JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
-                auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                if (response.status_code >= 200 && response.status_code < 300) {
-                    try {
-                        JAMI_WARN("[Revoke] Got server response");
-                        if (json["errorDetails"].empty()) {
-                            if (cb)
-                                cb(RevokeDeviceResult::SUCCESS);
-                            this_.syncDevices();
-                        }
-                    } catch (const std::exception& e) {
-                        JAMI_ERR("Error when loading device list: %s", e.what());
+        [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+            JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
+            auto this_ = static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return; 
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARN("[Revoke] Got server response");
+                    if (json["errorDetails"].empty()) {
+                        if (cb)
+                            cb(RevokeDeviceResult::SUCCESS);
+                        this_->syncDevices();
                     }
-                } else if (cb)
-                    cb(RevokeDeviceResult::ERROR_NETWORK);
-                this_.clearRequest(response.request);
-            });
+                } catch (const std::exception& e) {
+                    JAMI_ERR("Error when loading device list: %s", e.what());
+                }
+            } else if (cb)
+                cb(RevokeDeviceResult::ERROR_NETWORK);
+            this_->clearRequest(response.request);
         },
         logger_);
     request->set_method(restinio::http_method_delete());
@@ -523,40 +509,39 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
-        [cb, onAsync = onAsync_](Json::Value json, const dht::http::Response& response) {
-            onAsync([=](AccountManager& accountManager) {
-                JAMI_DBG("[Search] Got request callback with status code=%u", response.status_code);
-                auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                if (response.status_code >= 200 && response.status_code < 300) {
-                    try {
-                        const auto& profiles = json["profiles"];
-                        Json::Value::ArrayIndex rcount = profiles.size();
-                        std::vector<std::map<std::string, std::string>> results;
-                        results.reserve(rcount);
-                        JAMI_WARN("[Search] Got server response: %s", response.body.c_str());
-                        for (Json::Value::ArrayIndex i = 0; i < rcount; i++) {
-                            const auto& ruser = profiles[i];
-                            std::map<std::string, std::string> user;
-                            for (const auto& member : ruser.getMemberNames()) {
-                                const auto& rmember = ruser[member];
-                                if (rmember.isString())
-                                    user[member] = rmember.asString();
-                            }
-                            results.emplace_back(std::move(user));
+        [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+            JAMI_DBG("[Search] Got request callback with status code=%u", response.status_code);
+            auto this_ = static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return; 
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    const auto& profiles = json["profiles"];
+                    Json::Value::ArrayIndex rcount = profiles.size();
+                    std::vector<std::map<std::string, std::string>> results;
+                    results.reserve(rcount);
+                    JAMI_WARN("[Search] Got server response: %s", response.body.c_str());
+                    for (Json::Value::ArrayIndex i = 0; i < rcount; i++) {
+                        const auto& ruser = profiles[i];
+                        std::map<std::string, std::string> user;
+                        for (const auto& member : ruser.getMemberNames()) {
+                            const auto& rmember = ruser[member];
+                            if (rmember.isString())
+                                user[member] = rmember.asString();
                         }
-                        if (cb)
-                            cb(results, SearchResponse::found);
-                    } catch (const std::exception& e) {
-                        JAMI_ERR("[Search] Error during search: %s", e.what());
+                        results.emplace_back(std::move(user));
                     }
-                } else {
-                    if (response.status_code == 401)
-                        this_.authError(TokenScope::Device);
                     if (cb)
-                        cb({}, SearchResponse::error);
+                        cb(results, SearchResponse::found);
+                } catch (const std::exception& e) {
+                    JAMI_ERR("[Search] Error during search: %s", e.what());
                 }
-                this_.clearRequest(response.request);
-            });
+            } else {
+                if (response.status_code == 401)
+                    this_->authError(TokenScope::Device);
+                if (cb)
+                    cb({}, SearchResponse::error);
+            }
+            this_->clearRequest(response.request);
         },
         logger_));
     return true;

@@ -30,7 +30,6 @@ class ServerAccountManager : public AccountManager
 {
 public:
     ServerAccountManager(const std::string& path,
-                         OnAsync&& onAsync,
                          const std::string& managerHostname,
                          const std::string& nameServer);
 

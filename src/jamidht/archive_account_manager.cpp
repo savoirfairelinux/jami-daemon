@@ -66,53 +66,52 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
         return;
     }
 
-    dht::ThreadPool::computation().run([ctx = std::move(ctx), onAsync = onAsync_]() mutable {
-        onAsync([ctx = std::move(ctx)](AccountManager& accountManager) mutable {
-            auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
-            try {
-                if (ctx->credentials->scheme == "file") {
-                    // Import from external archive
-                    this_.loadFromFile(*ctx);
-                } else {
-                    // Create/migrate local account
-                    bool hasArchive = not ctx->credentials->uri.empty()
-                                      and fileutils::isFile(ctx->credentials->uri);
-                    if (hasArchive) {
-                        // Create/migrate from local archive
-                        if (ctx->credentials->updateIdentity.first
-                            and ctx->credentials->updateIdentity.second
-                            and needsMigration(ctx->credentials->updateIdentity)) {
-                            this_.migrateAccount(*ctx);
-                        } else {
-                            this_.loadFromFile(*ctx);
-                        }
-                    } else if (ctx->credentials->updateIdentity.first
-                               and ctx->credentials->updateIdentity.second) {
-                        auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(
-                            &dev::KeyPair::create);
-                        AccountArchive a;
-                        JAMI_WARN("[Auth] converting certificate from old account %s",
-                                  ctx->credentials->updateIdentity.first->getPublicKey()
-                                      .getId()
-                                      .toString()
-                                      .c_str());
-                        a.id = std::move(ctx->credentials->updateIdentity);
-                        try {
-                            a.ca_key = std::make_shared<dht::crypto::PrivateKey>(
-                                fileutils::loadFile("ca.key", this_.path_));
-                        } catch (...) {
-                        }
-                        this_.updateCertificates(a, ctx->credentials->updateIdentity);
-                        a.eth_key = future_keypair.get().secret().makeInsecure().asBytes();
-                        this_.onArchiveLoaded(*ctx, std::move(a));
+    dht::ThreadPool::computation().run([ctx = std::move(ctx), w = weak_from_this()] mutable {
+        auto this_ = static_pointer_cast<ArchiveAccountManager>(w.lock());
+        if (not this_) return;
+        try {
+            if (ctx->credentials->scheme == "file") {
+                // Import from external archive
+                this_->loadFromFile(*ctx);
+            } else {
+                // Create/migrate local account
+                bool hasArchive = not ctx->credentials->uri.empty()
+                                    and fileutils::isFile(ctx->credentials->uri);
+                if (hasArchive) {
+                    // Create/migrate from local archive
+                    if (ctx->credentials->updateIdentity.first
+                        and ctx->credentials->updateIdentity.second
+                        and needsMigration(ctx->credentials->updateIdentity)) {
+                        this_->migrateAccount(*ctx);
                     } else {
-                        this_.createAccount(*ctx);
+                        this_->loadFromFile(*ctx);
                     }
+                } else if (ctx->credentials->updateIdentity.first
+                            and ctx->credentials->updateIdentity.second) {
+                    auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(
+                        &dev::KeyPair::create);
+                    AccountArchive a;
+                    JAMI_WARN("[Auth] converting certificate from old account %s",
+                                ctx->credentials->updateIdentity.first->getPublicKey()
+                                    .getId()
+                                    .toString()
+                                    .c_str());
+                    a.id = std::move(ctx->credentials->updateIdentity);
+                    try {
+                        a.ca_key = std::make_shared<dht::crypto::PrivateKey>(
+                            fileutils::loadFile("ca.key", this_->path_));
+                    } catch (...) {
+                    }
+                    this_->updateCertificates(a, ctx->credentials->updateIdentity);
+                    a.eth_key = future_keypair.get().secret().makeInsecure().asBytes();
+                    this_->onArchiveLoaded(*ctx, std::move(a));
+                } else {
+                    this_->createAccount(*ctx);
                 }
-            } catch (const std::exception& e) {
-                ctx->onFailure(AuthError::UNKNOWN, e.what());
             }
-        });
+        } catch (const std::exception& e) {
+            ctx->onFailure(AuthError::UNKNOWN, e.what());
+        }
     });
 }
 
@@ -283,7 +282,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
         }
     };
 
-    auto search = [ctx, searchEnded, onAsync = onAsync_](bool previous) {
+    auto search = [ctx, searchEnded, w=weak_from_this()](bool previous) {
         std::vector<uint8_t> key;
         dht::InfoHash loc;
         auto& s = previous ? ctx->dhtContext->stateOld : ctx->dhtContext->stateNew;
@@ -301,7 +300,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
             }
             ctx->dhtContext->dht.get(
                 loc,
-                [ctx, key = std::move(key), onAsync](const std::shared_ptr<dht::Value>& val) {
+                [ctx, key = std::move(key), w](const std::shared_ptr<dht::Value>& val) {
                     std::vector<uint8_t> decrypted;
                     try {
                         decrypted = archiver::decompress(dht::crypto::aesDecrypt(val->data, key));
@@ -311,19 +310,17 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                     JAMI_DBG("[Auth] found archive on the DHT");
                     ctx->dhtContext->found = true;
                     dht::ThreadPool::computation().run([ctx,
-                                                        decrypted = std::move(decrypted),
-                                                        onAsync] {
+                                                        decrypted = std::move(decrypted), w] {
                         try {
                             auto archive = AccountArchive(decrypted);
-                            onAsync([&](AccountManager& accountManager) {
-                                auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
+                            if (auto sthis = static_pointer_cast<ArchiveAccountManager>(w.lock())) {
                                 if (ctx->dhtContext) {
                                     ctx->dhtContext->dht.join();
                                     ctx->dhtContext.reset();
                                 }
-                                this_.onArchiveLoaded(*ctx,
+                                sthis->onArchiveLoaded(*ctx,
                                                       std::move(archive) /*, std::move(contacts)*/);
-                            });
+                            }
                         } catch (const std::exception& e) {
                             ctx->onFailure(AuthError::UNKNOWN, "");
                         }
@@ -671,53 +668,51 @@ generatePIN(size_t length = 16, size_t split = 8)
 void
 ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback cb)
 {
-    dht::ThreadPool::computation().run([onAsync = onAsync_, password, cb = std::move(cb)]() mutable {
-        onAsync([password = std::move(password),
-                 cb = std::move(cb)](AccountManager& accountManager) mutable {
-            auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
+    dht::ThreadPool::computation().run([password, cb = std::move(cb), w=weak_from_this()] mutable {
+        auto this_ = static_pointer_cast<ArchiveAccountManager>(w.lock());
+        if (not this_) return;
 
-            std::vector<uint8_t> key;
-            dht::InfoHash loc;
-            std::string pin_str;
-            AccountArchive a;
-            try {
-                JAMI_DBG("[Auth] exporting account");
+        std::vector<uint8_t> key;
+        dht::InfoHash loc;
+        std::string pin_str;
+        AccountArchive a;
+        try {
+            JAMI_DBG("[Auth] exporting account");
 
-                a = this_.readArchive(password);
+            a = this_->readArchive(password);
 
-                // Generate random PIN
-                pin_str = generatePIN();
+            // Generate random PIN
+            pin_str = generatePIN();
 
-                std::tie(key, loc) = computeKeys(password, pin_str);
-            } catch (const std::exception& e) {
-                JAMI_ERR("[Auth] can't export account: %s", e.what());
-                cb(AddDeviceResult::ERROR_CREDENTIALS, {});
-                return;
-            }
-            // now that key and loc are computed, display to user in lowercase
-            std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::tolower);
-            try {
-                this_.updateArchive(a);
-                auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
-                if (not this_.dht_ or not this_.dht_->isRunning())
-                    throw std::runtime_error("DHT is not running..");
-                JAMI_WARN("[Auth] exporting account with PIN: %s at %s (size %zu)",
-                          pin_str.c_str(),
-                          loc.toString().c_str(),
-                          encrypted.size());
-                this_.dht_->put(loc, encrypted, [cb, pin = std::move(pin_str)](bool ok) {
-                    JAMI_DBG("[Auth] account archive published: %s", ok ? "success" : "failure");
-                    if (ok)
-                        cb(AddDeviceResult::SUCCESS_SHOW_PIN, pin);
-                    else
-                        cb(AddDeviceResult::ERROR_NETWORK, {});
-                });
-            } catch (const std::exception& e) {
-                JAMI_ERR("[Auth] can't export account: %s", e.what());
-                cb(AddDeviceResult::ERROR_NETWORK, {});
-                return;
-            }
-        });
+            std::tie(key, loc) = computeKeys(password, pin_str);
+        } catch (const std::exception& e) {
+            JAMI_ERR("[Auth] can't export account: %s", e.what());
+            cb(AddDeviceResult::ERROR_CREDENTIALS, {});
+            return;
+        }
+        // now that key and loc are computed, display to user in lowercase
+        std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::tolower);
+        try {
+            this_->updateArchive(a);
+            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
+            if (not this_->dht_ or not this_->dht_->isRunning())
+                throw std::runtime_error("DHT is not running..");
+            JAMI_WARN("[Auth] exporting account with PIN: %s at %s (size %zu)",
+                        pin_str.c_str(),
+                        loc.toString().c_str(),
+                        encrypted.size());
+            this_->dht_->put(loc, encrypted, [cb, pin = std::move(pin_str)](bool ok) {
+                JAMI_DBG("[Auth] account archive published: %s", ok ? "success" : "failure");
+                if (ok)
+                    cb(AddDeviceResult::SUCCESS_SHOW_PIN, pin);
+                else
+                    cb(AddDeviceResult::ERROR_NETWORK, {});
+            });
+        } catch (const std::exception& e) {
+            JAMI_ERR("[Auth] can't export account: %s", e.what());
+            cb(AddDeviceResult::ERROR_NETWORK, {});
+            return;
+        }
     });
 }
 
@@ -730,45 +725,40 @@ ArchiveAccountManager::revokeDevice(
     auto fa = dht::ThreadPool::computation().getShared<AccountArchive>(
         [this, password] { return readArchive(password); });
     findCertificate(DeviceId(device),
-                    [fa = std::move(fa), password, device, cb, onAsync = onAsync_](
-                        const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
-                        if (not crt) {
-                            cb(RevokeDeviceResult::ERROR_NETWORK);
-                            return;
-                        }
-                        onAsync([cb,
-                                 crt = std::move(crt),
-                                 fa = std::move(fa),
-                                 password = std::move(password)](
-                                    AccountManager& accountManager) mutable {
-                            auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
-                            this_.info_->contacts->foundAccountDevice(crt);
-                            AccountArchive a;
-                            try {
-                                a = fa.get();
-                            } catch (...) {
-                                cb(RevokeDeviceResult::ERROR_CREDENTIALS);
-                                return;
-                            }
-                            // Add revoked device to the revocation list and resign it
-                            if (not a.revoked)
-                                a.revoked = std::make_shared<decltype(a.revoked)::element_type>();
-                            a.revoked->revoke(*crt);
-                            a.revoked->sign(a.id);
-                            // add to CRL cache
-                            this_.certStore().pinRevocationList(a.id.second->getId().toString(), a.revoked);
-                            this_.certStore().loadRevocations(*a.id.second);
+        [fa = std::move(fa), password, device, cb, w=weak_from_this()](
+            const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
+                if (not crt) {
+                    cb(RevokeDeviceResult::ERROR_NETWORK);
+                    return;
+                }
+                auto this_ = static_pointer_cast<ArchiveAccountManager>(w.lock());
+                if (not this_) return;
+                this_->info_->contacts->foundAccountDevice(crt);
+                AccountArchive a;
+                try {
+                    a = fa.get();
+                } catch (...) {
+                    cb(RevokeDeviceResult::ERROR_CREDENTIALS);
+                    return;
+                }
+                // Add revoked device to the revocation list and resign it
+                if (not a.revoked)
+                    a.revoked = std::make_shared<decltype(a.revoked)::element_type>();
+                a.revoked->revoke(*crt);
+                a.revoked->sign(a.id);
+                // add to CRL cache
+                this_->certStore().pinRevocationList(a.id.second->getId().toString(), a.revoked);
+                this_->certStore().loadRevocations(*a.id.second);
 
-                            // Announce CRL immediately
-                            auto h = a.id.second->getId();
-                            this_.dht_->put(h, a.revoked, dht::DoneCallback {}, {}, true);
+                // Announce CRL immediately
+                auto h = a.id.second->getId();
+                this_->dht_->put(h, a.revoked, dht::DoneCallback {}, {}, true);
 
-                            this_.saveArchive(a, password);
-                            this_.info_->contacts->removeAccountDevice(crt->getLongId());
-                            cb(RevokeDeviceResult::SUCCESS);
-                            this_.syncDevices();
-                        });
-                    });
+                this_->saveArchive(a, password);
+                this_->info_->contacts->removeAccountDevice(crt->getLongId());
+                cb(RevokeDeviceResult::SUCCESS);
+                this_->syncDevices();
+            });
     return false;
 }
 
