@@ -10,6 +10,7 @@
         "BUILD_SHARED_LIBS=OFF",
         "USE_SSH=OFF",
         "WINHTTP=OFF",
+        "USE_WINHTTP=OFF",
         "BUILD_TESTS=OFF",
         "BUILD_CLI=OFF",
         "USE_SSH=OFF"

@@ -377,15 +377,21 @@ def remove_archive_if_needed(pkg_build_path, dirty_path):
         getSHrunner().exec_batch('rmdir', ['/s', '/q', dirty_path])
 
 
-def extract_tar(pkg_build_path, name, path):
+def extract_tar(pkg_build_path, name, path, pkg_name):
     with tarfile.open(path, 'r', encoding="utf8", errors='ignore') as tarball:
         tar_common_prefix = os.path.commonprefix(tarball.getnames())
-        dirty_path = contrib_build_dir + '\\' + tar_common_prefix
+        prefix = tar_common_prefix
+        if prefix == "":
+            prefix = pkg_name
+        dirty_path = contrib_build_dir + '\\' + prefix
         remove_archive_if_needed(pkg_build_path, dirty_path)
         log.debug('Decompressing ' + name + ' to ' + pkg_build_path)
-        tarball.extractall(contrib_build_dir)
-        os.rename(contrib_build_dir + '\\' + tar_common_prefix,
-                  pkg_build_path)
+        if tar_common_prefix == "":
+            tarball.extractall(dirty_path)
+        else:
+            tarball.extractall(contrib_build_dir)
+            os.rename(contrib_build_dir + '\\' + tar_common_prefix,
+                    pkg_build_path)
         return True
     return False
 
@@ -406,7 +412,7 @@ def extract_zip(pkg_build_path, name, path):
 def extract_archive(pkg_name, name, path):
     pkg_build_path = contrib_build_dir + '\\' + pkg_name
     if tarfile.is_tarfile(path):
-        return extract_tar(pkg_build_path, name, path)
+        return extract_tar(pkg_build_path, name, path, pkg_name)
     elif zipfile.is_zipfile(path):
         return extract_zip(pkg_build_path, name, path)
 
