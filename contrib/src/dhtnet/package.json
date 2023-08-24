@@ -1,11 +1,14 @@
 {
     "name": "dhtnet",
-    "version": "64bb00fc77f1322c4e0f5c1c7bc54e2fee81f0a6",
+    "version": "24cc01e3deacb1332745929840268af06ebe9068",
     "url": "https://review.jami.net/plugins/gitiles/dhtnet/+archive/__VERSION__.tar.gz",
     "deps": [
         "opendht",
         "pjproject",
-        "asio"
+        "msgpack",
+        "asio",
+        "upnp",
+        "natpmp"
     ],
     "use_cmake" : true,
     "defines": [
@@ -19,6 +22,9 @@
     "custom_scripts": {
         "pre_build": [],
         "build": [],
-        "post_build": []
+        "post_build": [
+            "mkdir \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\"",
+            "xcopy /S /Y \"include\" \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\""
+        ]
     }
 }

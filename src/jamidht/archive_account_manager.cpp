@@ -66,7 +66,7 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
         return;
     }
 
-    dht::ThreadPool::computation().run([ctx = std::move(ctx), w = weak_from_this()] mutable {
+    dht::ThreadPool::computation().run([ctx = std::move(ctx), w = weak_from_this()] {
         auto this_ = std::static_pointer_cast<ArchiveAccountManager>(w.lock());
         if (not this_) return;
         try {
@@ -668,7 +668,7 @@ generatePIN(size_t length = 16, size_t split = 8)
 void
 ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback cb)
 {
-    dht::ThreadPool::computation().run([password, cb = std::move(cb), w=weak_from_this()] mutable {
+    dht::ThreadPool::computation().run([password, cb = std::move(cb), w=weak_from_this()] {
         auto this_ = std::static_pointer_cast<ArchiveAccountManager>(w.lock());
         if (not this_) return;
 
