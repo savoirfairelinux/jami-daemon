@@ -207,6 +207,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     parseBool(details, libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled);
     parseString(details, libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
+    parseString(details, libjami::Account::ConfProperties::UI_CUSTOMIZATION, uiCustomization);
     if (not managerUri.empty() and managerUri.rfind("http", 0) != 0) {
         managerUri = "https://" + managerUri;
     }
