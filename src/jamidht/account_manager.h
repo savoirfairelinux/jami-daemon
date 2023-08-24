@@ -67,20 +67,17 @@ dynamic_unique_cast(std::unique_ptr<From>&& p)
     return {};
 }
 
-class AccountManager
+class AccountManager: public std::enable_shared_from_this<AccountManager>
 {
 public:
-    using AsyncUser = std::function<void(AccountManager&)>;
-    using OnAsync = std::function<void(AsyncUser&&)>;
     using OnChangeCallback = ContactList::OnChangeCallback;
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
     using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
     using OnDeviceAnnouncedCb = std::function<void()>;
 
-    AccountManager(const std::string& path, OnAsync&& onAsync, const std::string& nameServer)
+    AccountManager(const std::string& path, const std::string& nameServer)
         : path_(path)
-        , onAsync_(std::move(onAsync))
         , nameDir_(NameDirectory::instance(nameServer)) {};
 
     virtual ~AccountManager();
@@ -269,7 +266,6 @@ public:
 
 protected:
     std::string path_;
-    OnAsync onAsync_;
     OnChangeCallback onChange_;
     std::unique_ptr<AccountInfo> info_;
     std::shared_ptr<dht::DhtRunner> dht_;

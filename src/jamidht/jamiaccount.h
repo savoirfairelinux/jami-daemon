@@ -698,6 +698,10 @@ private:
     void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
+    std::string idPath_ {};
+    std::string cachePath_ {};
+    std::string dataPath_ {};
+
 #if HAVE_RINGNS
     std::string registeredName_;
 #endif
@@ -705,16 +709,13 @@ private:
     std::unique_ptr<dhtnet::tls::CertificateStore> certStore_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
-    std::unique_ptr<AccountManager> accountManager_;
+    std::shared_ptr<AccountManager> accountManager_;
     dht::crypto::Identity id_ {};
 
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
     std::set<std::string, std::less<>> treatedMessages_ {};
 
-    std::string idPath_ {};
-    std::string cachePath_ {};
-    std::string dataPath_ {};
 
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;

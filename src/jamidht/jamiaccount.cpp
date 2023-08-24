@@ -269,11 +269,11 @@ dhtStatusStr(dht::NodeStatus status)
 
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
-    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
-    , dht_(new dht::DhtRunner)
     , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId)
     , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accountId)
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
+    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
+    , dht_(new dht::DhtRunner)
     , connectionManager_ {}
     , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
 {}
@@ -1177,20 +1177,14 @@ JamiAccount::loadAccount(const std::string& archive_password,
 
     const auto& conf = config();
     try {
-        auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
-            if (auto this_ = w.lock())
-                cb(*this_->accountManager_);
-        };
         if (conf.managerUri.empty()) {
-            accountManager_.reset(new ArchiveAccountManager(
+            accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getPath(),
-                onAsync,
                 [this]() { return getAccountDetails(); },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
-                conf.nameServer));
+                conf.nameServer);
         } else {
-            accountManager_.reset(
-                new ServerAccountManager(getPath(), onAsync, conf.managerUri, conf.nameServer));
+            accountManager_ = std::make_shared<ServerAccountManager>(getPath(), conf.managerUri, conf.nameServer);
         }
 
         auto id = accountManager_->loadIdentity(getAccountID(),
@@ -1265,10 +1259,12 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
-                [this, migrating, hasPassword](const AccountInfo& info,
+                [w=weak(), this, migrating, hasPassword](const AccountInfo& info,
                                                const std::map<std::string, std::string>& config,
                                                std::string&& receipt,
                                                std::vector<uint8_t>&& receipt_signature) {
+                    auto sthis = w.lock();
+                    if (not sthis) return;
                     JAMI_LOG("[Account {}] Auth success!", getAccountID());
 
                     fileutils::check_dir(idPath_.c_str(), 0700);
