@@ -338,7 +338,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/include"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/libarchive;"
@@ -353,7 +353,8 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/include;"
        )
    endif()
 
@@ -467,6 +468,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio_static_x64.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
         /ignore:4006"
    )
 

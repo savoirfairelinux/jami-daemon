@@ -5,17 +5,16 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index d14bc98..e5ad5c6 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -14,6 +14,13 @@ set (libdir "${CMAKE_INSTALL_FULL_LIBDIR}")
- set (includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
- set (VERSION ${CMAKE_PROJECT_VERSION})
- 
-+OPTION(LIBJAMI_TESTABLE "Enable API for tests" ON)
+@@ -20,6 +20,12 @@ option(DHTNET_TESTABLE "Enable API for tests" ON)
+ option(BUILD_TOOLS "Build tools" ON)
+
+ if (NOT MSVC)
++    OPTION(LIBJAMI_TESTABLE "Enable API for tests" ON)
 +
-+IF(LIBJAMI_TESTABLE)
-+    ADD_DEFINITIONS(-DLIBJAMI_TESTABLE)
-+ENDIF(LIBJAMI_TESTABLE)
++    IF(LIBJAMI_TESTABLE)
++        ADD_DEFINITIONS(-DLIBJAMI_TESTABLE)
++    ENDIF(LIBJAMI_TESTABLE)
 +
-+
- find_package (PkgConfig REQUIRED)
- 
- find_package(msgpack-cxx CONFIG)
+     find_package (PkgConfig REQUIRED)
+
+     find_package(msgpack-cxx CONFIG)

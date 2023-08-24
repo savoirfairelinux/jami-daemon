@@ -13,7 +13,8 @@
         "yaml-cpp",
         "libarchive",
         "webrtc-audio-processing",
-        "libgit2"
+        "libgit2",
+        "dhtnet"
     ],
     "configuration": "ReleaseLib_win32",
     "use_cmake": true
