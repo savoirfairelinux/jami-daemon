@@ -22,6 +22,30 @@
       },
       "revId": "98768d04915081ecbb00051e39562737d57fd9fc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a511b9f9_f9de6d00",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 5
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 994
+      },
+      "writtenOn": "2023-08-24T19:45:59Z",
+      "side": 1,
+      "message": "It has been resolved by the new parent patch done by Adrien",
+      "parentUuid": "37d17cb3_218e84cf",
+      "range": {
+        "startLine": 7,
+        "startChar": 18,
+        "endLine": 7,
+        "endChar": 31
+      },
+      "revId": "98768d04915081ecbb00051e39562737d57fd9fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
