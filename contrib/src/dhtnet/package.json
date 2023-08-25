@@ -21,7 +21,7 @@
     "with_env" : "",
     "custom_scripts": {
         "pre_build": [
-            "rmdir /S /Q \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\""
+            "IF exist \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" ( rmdir /S /Q \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" )"
         ],
         "build": [],
         "post_build": [
