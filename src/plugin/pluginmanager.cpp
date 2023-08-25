@@ -64,8 +64,8 @@ PluginManager::load(const std::string& path)
     }
 
     // Get init function from loaded library
-    const auto& init_func = plugin->getInitFunction();
-    if (!init_func) {
+    const auto& initFunc = plugin->getInitFunction();
+    if (!initFunc) {
         JAMI_ERR() << "Plugin: no init symbol" << error;
         return false;
     }

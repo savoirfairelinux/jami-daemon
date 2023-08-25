@@ -34,7 +34,7 @@ Plugin::load(const std::string& path, std::string& error)
     // Clear any existing error
     ::dlerror();
 
-    void* handle = ::dlopen(path.c_str(), RTLD_NOW);
+    void* handle = ::dlopen(path.c_str(), RTLD_GLOBAL | RTLD_NOW);
     if (!handle) {
         error += "Failed to load \"" + path + '"';
 
