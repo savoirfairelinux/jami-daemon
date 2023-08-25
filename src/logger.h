@@ -28,6 +28,7 @@
 #include <fmt/format.h>
 #include <fmt/chrono.h>
 #include <fmt/printf.h>
+#include <fmt/std.h>
 #include <opendht/logger.h>
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
