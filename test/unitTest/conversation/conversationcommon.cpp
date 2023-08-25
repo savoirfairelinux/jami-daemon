@@ -51,10 +51,10 @@ addVote(std::shared_ptr<JamiAccount> account,
         const std::string& votedUri,
         const std::string& content)
 {
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + "votes" + DIR_SEPARATOR_STR + "members";
-    auto voteFile = voteDirectory + DIR_SEPARATOR_STR + votedUri;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
+                    / "conversations" / convId;
+    auto voteDirectory = repoPath / "votes" / "members";
+    auto voteFile = voteDirectory / votedUri;
     if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
         return;
     }
@@ -80,12 +80,11 @@ simulateRemoval(std::shared_ptr<JamiAccount> account,
                 const std::string& convId,
                 const std::string& votedUri)
 {
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    auto memberFile = repoPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + votedUri
-                      + ".crt";
-    auto bannedFile = repoPath + DIR_SEPARATOR_STR + "banned" + DIR_SEPARATOR_STR + "members"
-                      + DIR_SEPARATOR_STR + votedUri + ".crt";
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
+                    / "conversations" / convId;
+    auto memberFile = repoPath / "members" / (votedUri + ".crt");
+    auto bannedFile = repoPath / "banned" / "members"
+                      / (votedUri + ".crt");
     std::rename(memberFile.c_str(), bannedFile.c_str());
 
     git_repository* repo = nullptr;
@@ -126,8 +125,8 @@ addFile(std::shared_ptr<JamiAccount> account,
         const std::string& relativePath,
         const std::string& content)
 {
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
+                    / "conversations" / convId;
     // Add file
     auto p = std::filesystem::path(fileutils::getFullPath(repoPath, relativePath));
     dhtnet::fileutils::recursive_mkdir(p.parent_path());
@@ -156,8 +155,8 @@ addFile(std::shared_ptr<JamiAccount> account,
 void
 addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
 {
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
+                    / "conversations" / convId;
 
     git_repository* repo = nullptr;
     if (git_repository_open(&repo, repoPath.c_str()) != 0)

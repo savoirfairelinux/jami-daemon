@@ -51,7 +51,7 @@ namespace jami {
 
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
-constexpr const char* const CACHE_DIRECTORY {"namecache"};
+constexpr std::strig CACHE_DIRECTORY {"namecache"};
 constexpr const char DEFAULT_SERVER_HOST[] = "https://ns.jami.net";
 
 const std::string HEX_PREFIX = "0x";
@@ -104,8 +104,7 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
     if (!serverUrl_.empty() && serverUrl_.back() == '/')
         serverUrl_.pop_back();
     resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
-    cachePath_ = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY
-                 + DIR_SEPARATOR_STR + resolver_->get_url().host;
+    cachePath_ = fileutils::get_cache_dir() / CACHE_DIRECTORY / resolver_->get_url().host;
 }
 
 NameDirectory::~NameDirectory()
@@ -449,7 +448,7 @@ NameDirectory::scheduleCacheSave()
 void
 NameDirectory::saveCache()
 {
-    dhtnet::fileutils::recursive_mkdir(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY);
+    dhtnet::fileutils::recursive_mkdir(fileutils::get_cache_dir() / CACHE_DIRECTORY);
     std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(cachePath_));
     std::ofstream file = fileutils::ofstream(cachePath_, std::ios::trunc | std::ios::binary);
     {
