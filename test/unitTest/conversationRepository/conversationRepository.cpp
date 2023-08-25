@@ -127,7 +127,7 @@ ConversationRepositoryTest::testCreateRepository()
     CPPUNIT_ASSERT(repository != nullptr);
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
     git_repository* repo;
@@ -148,10 +148,10 @@ ConversationRepositoryTest::testCreateRepository()
     // 2. Check created files
     auto CRLsPath = repoPath + DIR_SEPARATOR_STR + "CRLs" + DIR_SEPARATOR_STR
                     + aliceDeviceId.toString();
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     auto adminCrt = repoPath + DIR_SEPARATOR_STR + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(adminCrt));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(adminCrt));
 
     auto crt = std::ifstream(adminCrt);
     std::string adminCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
@@ -164,7 +164,7 @@ ConversationRepositoryTest::testCreateRepository()
 
     auto deviceCrt = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR
                      + aliceDeviceId.toString() + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(deviceCrt));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(deviceCrt));
 
     crt = std::ifstream(deviceCrt);
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)),
@@ -364,7 +364,7 @@ ConversationRepositoryTest::testMerge()
     CPPUNIT_ASSERT(repository != nullptr);
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
     git_repository* repo;
@@ -399,7 +399,7 @@ ConversationRepositoryTest::testFFMerge()
     CPPUNIT_ASSERT(repository != nullptr);
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
     git_repository* repo;
@@ -455,7 +455,7 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
     CPPUNIT_ASSERT(repository != nullptr);
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
     git_repository* repo;

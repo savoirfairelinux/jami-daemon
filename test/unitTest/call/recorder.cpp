@@ -111,8 +111,8 @@ RecorderTest::setUp()
 {
     // Generate a temporary directory with a file inside
     recordDir = "records";
-    fileutils::recursive_mkdir(recordDir.c_str());
-    CPPUNIT_ASSERT(fileutils::isDirectory(recordDir));
+    dhtnet::fileutils::recursive_mkdir(recordDir.c_str());
+    CPPUNIT_ASSERT(std::filesystem::is_directory(recordDir));
 
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
     aliceId = actors["alice"];
@@ -126,7 +126,7 @@ void
 RecorderTest::tearDown()
 {
     libjami::setIsAlwaysRecording(false);
-    fileutils::removeAll(recordDir);
+    dhtnet::fileutils::removeAll(recordDir);
 
     wait_for_removal_of({aliceId, bobId});
 }
