@@ -125,8 +125,8 @@ ConversationRepositoryTest::testCreateRepository()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -146,11 +146,10 @@ ConversationRepositoryTest::testCreateRepository()
     CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(data, pk));
 
     // 2. Check created files
-    auto CRLsPath = repoPath + DIR_SEPARATOR_STR + "CRLs" + DIR_SEPARATOR_STR
-                    + aliceDeviceId.toString();
+    auto CRLsPath = repoPath / "CRLs" / aliceDeviceId.toString();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
-    auto adminCrt = repoPath + DIR_SEPARATOR_STR + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
+    auto adminCrt = repoPath / "admins" / (uri + ".crt");
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(adminCrt));
 
     auto crt = std::ifstream(adminCrt);
@@ -162,8 +161,7 @@ ConversationRepositoryTest::testCreateRepository()
 
     CPPUNIT_ASSERT(adminCrtStr == parentCert);
 
-    auto deviceCrt = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR
-                     + aliceDeviceId.toString() + ".crt";
+    auto deviceCrt = repoPath / "devices" / (aliceDeviceId.toString() + ".crt");
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(deviceCrt));
 
     crt = std::ifstream(deviceCrt);
@@ -362,8 +360,8 @@ ConversationRepositoryTest::testMerge()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -397,8 +395,8 @@ ConversationRepositoryTest::testFFMerge()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -453,15 +451,15 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
     git_repository* repo;
     CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
 
-    auto profile = std::ofstream(repoPath + DIR_SEPARATOR_STR + "profile.vcf");
+    auto profile = std::ofstream(repoPath / "profile.vcf");
     if (profile.is_open()) {
         profile << "TITLE: SWARM\n";
         profile << "SUBTITLE: Some description\n";
@@ -470,7 +468,7 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
     }
     addAll(repo);
     auto id1 = addCommit(repo, aliceAccount, "main", "add profile");
-    profile = std::ofstream(repoPath + DIR_SEPARATOR_STR + "profile.vcf");
+    profile = std::ofstream(repoPath / "profile.vcf");
     if (profile.is_open()) {
         profile << "TITLE: SWARM\n";
         profile << "SUBTITLE: New description\n";
@@ -489,7 +487,7 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
     git_reference_free(ref);
     git_repository_set_head(repo, "refs/heads/to_merge");
 
-    profile = std::ofstream(repoPath + DIR_SEPARATOR_STR + "profile.vcf");
+    profile = std::ofstream(repoPath / "profile.vcf");
     if (profile.is_open()) {
         profile << "TITLE: SWARM\n";
         profile << "SUBTITLE: Another description\n";

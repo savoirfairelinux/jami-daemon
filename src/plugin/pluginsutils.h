@@ -20,11 +20,12 @@
 
 #pragma once
 
-#include <map>
-#include <vector>
-
 #include <json/json.h>
 #include <opendht/crypto.h>
+
+#include <map>
+#include <vector>
+#include <filesystem>
 
 namespace jami {
 
@@ -40,19 +41,19 @@ namespace PluginUtils {
  * @brief Returns complete manifest.json file path given a installation path.
  * @param rootPath
  */
-std::string manifestPath(const std::string& rootPath);
+std::filesystem::path manifestPath(const std::filesystem::path& rootPath);
 
 /**
  * @brief Returns installation path given a plugin's library path.
  * @param soPath
  */
-std::string getRootPathFromSoPath(const std::string& soPath);
+std::filesystem::path getRootPathFromSoPath(const std::filesystem::path& soPath);
 
 /**
  * @brief Returns data path given a plugin's library path.
  * @param pluginSoPath
  */
-std::string dataPath(const std::string& pluginSoPath);
+std::filesystem::path dataPath(const std::filesystem::path& pluginSoPath);
 
 /**
  * @brief Check if manifest.json has minimum format and parses its content
@@ -81,7 +82,7 @@ std::map<std::string, std::string> checkManifestValidity(const std::vector<uint8
  * @param manifestFilePath
  * @return Map with manifest contents
  */
-std::map<std::string, std::string> parseManifestFile(const std::string& manifestFilePath, const std::string& rootPath);
+std::map<std::string, std::string> parseManifestFile(const std::filesystem::path& manifestFilePath, const std::string& rootPath);
 
 /**
  * @brief Parses the manifest file of an installed plugin if it's valid.
@@ -96,7 +97,7 @@ std::string parseManifestTranslation(const std::string& rootPath, std::ifstream&
  * @param rootPath
  * @return True if valid
  */
-bool checkPluginValidity(const std::string& rootPath);
+bool checkPluginValidity(const std::filesystem::path& rootPath);
 
 /**
  * @brief Reads the manifest file content without uncompressing the whole archive and

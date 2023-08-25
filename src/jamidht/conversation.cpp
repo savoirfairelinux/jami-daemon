@@ -176,19 +176,14 @@ public:
             accountId_ = shared->getAccountID();
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
-            conversationDataPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                                    + shared->getAccountID() + DIR_SEPARATOR_STR
-                                    + "conversation_data" + DIR_SEPARATOR_STR + repository_->id();
-            fetchedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "fetched";
-            sendingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "sending";
-            lastDisplayedPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
-                                 + ConversationMapKeys::LAST_DISPLAYED;
-            preferencesPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
-                               + ConversationMapKeys::PREFERENCES;
-            activeCallsPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
-                               + ConversationMapKeys::ACTIVE_CALLS;
-            hostedCallsPath_ = conversationDataPath_ + DIR_SEPARATOR_STR
-                               + ConversationMapKeys::HOSTED_CALLS;
+            conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID() 
+                                        / "conversation_data" / repository_->id();
+            fetchedPath_ = conversationDataPath_ / "fetched";
+            sendingPath_ = conversationDataPath_ / "sending";
+            lastDisplayedPath_ = conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
+            preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
+            activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
+            hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
             loadFetched();
             loadSending();
             loadLastDisplayed();
@@ -610,18 +605,18 @@ public:
     std::set<std::string> fetchingRemotes_ {}; // store current remote in fetch
     std::deque<std::tuple<std::string, std::string, OnPullCb>> pullcbs_ {};
     std::shared_ptr<TransferManager> transferManager_ {};
-    std::string conversationDataPath_ {};
-    std::string fetchedPath_ {};
+    std::filesystem::path conversationDataPath_ {};
+    std::filesystem::path fetchedPath_ {};
 
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
     // Manage last message displayed and status
-    std::string sendingPath_ {};
+    std::filesystem::path sendingPath_ {};
     std::vector<std::string> sending_ {};
     // Manage last message displayed
     std::string accountId_ {};
-    std::string lastDisplayedPath_ {};
-    std::string preferencesPath_ {};
+    std::filesystem::path lastDisplayedPath_ {};
+    std::filesystem::path preferencesPath_ {};
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
     mutable std::map<std::string, std::string> lastDisplayed_ {};
     std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
@@ -730,8 +725,7 @@ Conversation::Impl::commitsEndedCalls()
 std::string
 Conversation::Impl::repoPath() const
 {
-    return fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_ + DIR_SEPARATOR_STR
-           + "conversations" + DIR_SEPARATOR_STR + repository_->id();
+    return fileutils::get_data_dir() / accountId_ / "conversations" / repository_->id();
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1364,9 +1358,8 @@ Conversation::sync(const std::string& member,
     if (auto account = pimpl_->account_.lock()) {
         // For waiting request, downloadFile
         for (const auto& wr : dataTransfer()->waitingRequests()) {
-            auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                        + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + id()
-                        + DIR_SEPARATOR_STR + wr.fileId;
+            auto path = fileutils::get_data_dir() / account->getAccountID()
+                        / "conversation_data" / id() / wr.fileId;
             auto start = fileutils::size(path);
             if (start < 0)
                 start = 0;

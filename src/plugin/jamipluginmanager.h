@@ -178,7 +178,7 @@ public:
      * @param value
      * @return True if success
      */
-    bool setPluginPreference(const std::string& rootPath,
+    bool setPluginPreference(const std::filesystem::path& rootPath,
                              const std::string& accountId,
                              const std::string& key,
                              const std::string& value);

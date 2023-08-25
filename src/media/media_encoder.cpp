@@ -1136,7 +1136,7 @@ MediaEncoder::isDynPacketLossSupported(AVCodecID codecid)
 void
 MediaEncoder::readConfig(AVCodecContext* encoderCtx)
 {
-    std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";
+    std::string path = fileutils::get_config_dir() / "encoder.json";
     std::string name = encoderCtx->codec->name;
     if (std::filesystem::is_regular_file(path)) {
         JAMI_WARN("encoder.json file found, default settings will be erased");
