@@ -965,7 +965,7 @@ Manager::getConnectionList(const std::string& accountId, const std::string& conv
 
     if (accountId.empty()) {
         for (const auto& account : getAllAccounts<JamiAccount>()) {
-            if (account->getRegistrationState() == RegistrationState::INITIALIZING) {
+            if (account->getRegistrationState() != RegistrationState::INITIALIZING) {
                 const auto& cnl = account->getConnectionList(conversationId);
                 connectionsList.insert(connectionsList.end(), cnl.begin(), cnl.end());
             }
@@ -974,7 +974,7 @@ Manager::getConnectionList(const std::string& accountId, const std::string& conv
         auto account = getAccount(accountId);
         if (account) {
             if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
-                if (acc->getRegistrationState() == RegistrationState::INITIALIZING) {
+                if (acc->getRegistrationState() != RegistrationState::INITIALIZING) {
                     const auto& cnl = acc->getConnectionList(conversationId);
                     connectionsList.insert(connectionsList.end(), cnl.begin(), cnl.end());
                 }
@@ -994,7 +994,7 @@ Manager::getChannelList(const std::string& accountId, const std::string& connect
 
     if (accountId.empty()) {
         for (const auto& account : getAllAccounts<JamiAccount>()) {
-            if (account->getRegistrationState() == RegistrationState::INITIALIZING) {
+            if (account->getRegistrationState() != RegistrationState::INITIALIZING) {
                 // add to channelsList all channels for this account
                 const auto& cnl = account->getChannelList(connectionId);
                 channelsList.insert(channelsList.end(), cnl.begin(), cnl.end());
@@ -1008,7 +1008,7 @@ Manager::getChannelList(const std::string& accountId, const std::string& connect
         auto account = getAccount(accountId);
         if (account) {
             if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
-                if (acc->getRegistrationState() == RegistrationState::INITIALIZING){
+                if (acc->getRegistrationState() != RegistrationState::INITIALIZING){
                     const auto& cnl = acc->getChannelList(connectionId);
                     channelsList.insert(channelsList.end(), cnl.begin(), cnl.end());}
             }
