@@ -271,7 +271,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
     , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId)
     , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accountId)
-    , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
+    , dataPath_(cachePath_ / "values")
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
     , connectionManager_ {}
@@ -317,9 +317,9 @@ JamiAccount::flush()
     // Class base method
     SIPAccountBase::flush();
 
-    fileutils::removeAll(cachePath_);
-    fileutils::removeAll(dataPath_);
-    fileutils::removeAll(idPath_, true);
+    dhtnet::fileutils::removeAll(cachePath_);
+    dhtnet::fileutils::removeAll(dataPath_);
+    dhtnet::fileutils::removeAll(idPath_, true);
 }
 
 std::shared_ptr<SIPCall>
@@ -864,7 +864,7 @@ JamiAccount::saveConfig() const
         YAML::Emitter accountOut;
         config().serialize(accountOut);
         auto accountConfig = config().path + DIR_SEPARATOR_STR + "config.yml";
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
+        std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(accountConfig));
         std::ofstream fout = fileutils::ofstream(accountConfig);
         fout.write(accountOut.c_str(), accountOut.size());
         JAMI_DBG("Saved account config to %s", accountConfig.c_str());
@@ -892,7 +892,7 @@ JamiAccount::loadConfig()
         }
     }
     try {
-        auto str = fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy",
+        auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy",
                                                 std::chrono::hours(24 * 7));
         std::string err;
         Json::Value root;
@@ -1154,9 +1154,8 @@ JamiAccount::loadAccount(const std::string& archive_password,
             dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
                 if (auto shared = w.lock()) {
                     // Remove cached payload if there is one
-                    auto requestPath = shared->cachePath_ + DIR_SEPARATOR_STR + "requests"
-                                       + DIR_SEPARATOR_STR + uri;
-                    fileutils::remove(requestPath);
+                    auto requestPath = shared->cachePath_ / "requests"/ uri;
+                    dhtnet::fileutils::remove(requestPath);
                     if (!convFromReq.empty()) {
                         auto oldConv = shared->convModule()->getOneToOneConversation(uri);
                         // If we previously removed the contact, and re-add it, we may
@@ -1237,7 +1236,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (conf.managerUri.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
                 auto archivePath = fileutils::getFullPath(idPath_, conf.archivePath);
-                bool hasArchive = fileutils::isFile(archivePath);
+                bool hasArchive = std::filesystem::is_regular_file(archivePath);
 
                 if (not archive_path.empty()) {
                     // Importing external archive
@@ -1278,7 +1277,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     if (not sthis) return;
                     JAMI_LOG("[Account {}] Auth success!", getAccountID());
 
-                    fileutils::check_dir(idPath_.c_str(), 0700);
+                    dhtnet::fileutils::check_dir(idPath_.c_str(), 0700);
 
                     auto id = info.identity;
                     editConfig([&](JamiAccountConfig& conf) {
@@ -1712,8 +1711,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (accountManager_) {
             // Retrieve cached payload for trust request.
-            auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests" + DIR_SEPARATOR_STR
-                               + contactId.toString();
+            auto requestPath = cachePath_ / "requests" / contactId.toString();
             std::vector<uint8_t> payload;
             try {
                 payload = fileutils::loadFile(requestPath);
@@ -1794,7 +1792,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Config config {};
         config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
-        config.dht_config.node_config.persist_path = cachePath_ + DIR_SEPARATOR_STR "dhtstate";
+        config.dht_config.node_config.persist_path = cachePath_ / "dhtstate";
         config.dht_config.id = id_;
         config.dht_config.cert_cache_all = true;
         config.push_node_id = getAccountID();
@@ -2476,7 +2474,7 @@ void
 JamiAccount::loadTreatedMessages()
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
-    auto path = cachePath_ + DIR_SEPARATOR_STR "treatedMessages";
+    auto path = cachePath_ / "treatedMessages";
     treatedMessages_ = loadIdList<std::string>(path);
     if (treatedMessages_.empty()) {
         auto messages = loadIdList(path);
@@ -2492,9 +2490,8 @@ JamiAccount::saveTreatedMessages() const
         if (auto sthis = w.lock()) {
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
-            fileutils::check_dir(this_.cachePath_.c_str());
-            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_
-                                                             + DIR_SEPARATOR_STR "treatedMessages",
+            dhtnet::fileutils::check_dir(this_.cachePath_.c_str());
+            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ / "treatedMessages",
                                                          this_.treatedMessages_);
         }
     });
@@ -2537,7 +2534,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
         try {
             std::vector<uint8_t> data;
             {
-                std::lock_guard<std::mutex> lk(fileutils::getFileLock(cachePath));
+                std::lock_guard<std::mutex> lk(dhtnet::fileutils::getFileLock(cachePath));
                 data = fileutils::loadCacheFile(cachePath, cacheDuration);
             }
             dht::http::Response ret;
@@ -2554,7 +2551,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
                     [cb, cachePath, w](const dht::http::Response& response) {
                         if (response.status_code == 200) {
                             try {
-                                std::lock_guard<std::mutex> lk(fileutils::getFileLock(cachePath));
+                                std::lock_guard<std::mutex> lk(dhtnet::fileutils::getFileLock(cachePath));
                                 fileutils::saveFile(cachePath,
                                                     (const uint8_t*) response.body.data(),
                                                     response.body.size(),
@@ -2593,7 +2590,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
             cb(getDhtProxyServer(conf.proxyServer));
         } else {
             loadCachedUrl(conf.proxyListUrl,
-                          cachePath_ + DIR_SEPARATOR_STR "dhtproxylist",
+                          cachePath_ / "dhtproxylist",
                           std::chrono::hours(24 * 3),
                           [w = weak(), cb = std::move(cb)](const dht::http::Response& response) {
                               if (auto sthis = w.lock()) {
@@ -2641,8 +2638,8 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
                      std::uniform_int_distribution<unsigned long>(0, proxys.size() - 1)(rand));
         proxyServerCached_ = *randIt;
         // Cache it!
-        fileutils::check_dir(cachePath_.c_str(), 0700);
-        std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
+        dhtnet::fileutils::check_dir(cachePath_, 0700);
+        auto proxyCachePath = cachePath_ / "dhtproxy";
         std::ofstream file = fileutils::ofstream(proxyCachePath);
         JAMI_DEBUG("Cache DHT proxy server: {}", proxyServerCached_);
         Json::Value node(Json::objectValue);
@@ -2942,9 +2939,9 @@ void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
     // Here we cache payload sent by the client
-    auto requestPath = cachePath_ + DIR_SEPARATOR_STR + "requests";
-    fileutils::recursive_mkdir(requestPath, 0700);
-    auto cachedFile = requestPath + DIR_SEPARATOR_STR + to;
+    auto requestPath = cachePath_ / "requests";
+    dhtnet::fileutils::recursive_mkdir(requestPath, 0700);
+    auto cachedFile = requestPath / to;
     std::ofstream req = fileutils::ofstream(cachedFile, std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
         JAMI_ERR("Could not write data to %s", cachedFile.c_str());
@@ -3663,7 +3660,7 @@ JamiAccount::sendProfile(const std::string& convId,
                          const std::string& peerUri,
                          const std::string& deviceId)
 {
-    if (not fileutils::isFile(profilePath()))
+    if (not std::filesystem::is_regular_file(profilePath()))
         return;
     auto currentSha3 = fileutils::sha3File(profilePath());
     // VCard sync for peerUri
@@ -3688,9 +3685,9 @@ JamiAccount::sendProfile(const std::string& convId,
                                                 accId,
                                                 peerUri);
                      auto path = fmt::format("{}/{}", sendDir, deviceId);
-                     fileutils::recursive_mkdir(sendDir);
-                     std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
-                     if (fileutils::isFile(path))
+                     dhtnet::fileutils::recursive_mkdir(sendDir);
+                     std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(path));
+                     if (std::filesystem::is_regular_file(path))
                          return;
                      fileutils::ofstream(path);
                  });
@@ -3704,7 +3701,7 @@ JamiAccount::needToSendProfile(const std::string& peerUri,
     std::string previousSha3 {};
     auto vCardPath = fmt::format("{}/vcard", cachePath_);
     auto sha3Path = fmt::format("{}/sha3", vCardPath);
-    fileutils::check_dir(vCardPath.c_str(), 0700);
+    dhtnet::fileutils::check_dir(vCardPath, 0700);
     try {
         previousSha3 = fileutils::loadTextFile(sha3Path);
     } catch (...) {
@@ -3713,15 +3710,15 @@ JamiAccount::needToSendProfile(const std::string& peerUri,
     }
     if (sha3Sum != previousSha3) {
         // Incorrect sha3 stored. Update it
-        fileutils::removeAll(vCardPath, true);
-        fileutils::check_dir(vCardPath.c_str(), 0700);
-        fileutils::saveFile(sha3Path, {sha3Sum.begin(), sha3Sum.end()}, 0600);
+        dhtnet::fileutils::removeAll(vCardPath, true);
+        dhtnet::fileutils::check_dir(vCardPath.c_str(), 0700);
+        dhtnet::fileutils::saveFile(sha3Path, {sha3Sum.begin(), sha3Sum.end()}, 0600);
         return true;
     }
-    fileutils::recursive_mkdir(fmt::format("{}/{}/", vCardPath, peerUri));
+    dhtnet::fileutils::recursive_mkdir(fmt::format("{}/{}/", vCardPath, peerUri));
 
     auto path = fmt::format("{}/{}/{}", vCardPath, peerUri, deviceId);
-    auto res = not fileutils::isFile(path);
+    auto res = not std::filesystem::is_regular_file(path);
     return res;
 }
 
@@ -3818,13 +3815,13 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 void
 JamiAccount::clearProfileCache(const std::string& peerUri)
 {
-    fileutils::removeAll(fmt::format("{}/vcard/{}", cachePath_, peerUri));
+    dhtnet::fileutils::removeAll(fmt::format("{}/vcard/{}", cachePath_, peerUri));
 }
 
-std::string
+std::filesystem::path
 JamiAccount::profilePath() const
 {
-    return idPath_ + DIR_SEPARATOR_STR + "profile.vcf";
+    return idPath_ / "profile.vcf";
 }
 
 void
@@ -3987,7 +3984,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                       const std::string& name,
                       const std::string& replyTo)
 {
-    if (!fileutils::isFile(path)) {
+    if (!std::filesystem::is_regular_file(path)) {
         JAMI_ERR() << "invalid filename '" << path << "'";
         return;
     }
@@ -4020,7 +4017,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                     auto extension = fileutils::getFileExtension(path);
                     if (!extension.empty())
                         filelinkPath += "." + extension;
-                    if (path != filelinkPath && !fileutils::isSymLink(filelinkPath)) {
+                    if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
                         if (!fileutils::createFileLink(filelinkPath, path, true)) {
                             JAMI_WARNING(
                                 "Cannot create symlink for file transfer {} - {}. Copy file",

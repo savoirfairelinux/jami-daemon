@@ -720,7 +720,7 @@ PluginsTest::testMessage()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobData.accountId_
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; });
 
