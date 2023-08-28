@@ -145,9 +145,8 @@ void
 OutgoingFile::cancel()
 {
     // Remove link, not original file
-    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data"
-                + DIR_SEPARATOR_STR + info_.accountId + DIR_SEPARATOR_STR + info_.conversationId
-                + DIR_SEPARATOR_STR + fileId_;
+    auto path = fileutils::get_data_dir() / "conversation_data"
+                / info_.accountId / info_.conversationId / fileId_;
     if (std::filesystem::is_symlink(path))
         dhtnet::fileutils::remove(path);
     isUserCancelled_ = true;
@@ -241,14 +240,11 @@ public:
         , to_(to)
     {
         if (!to_.empty()) {
-            conversationDataPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
-                                    + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR
-                                    + to_;
-            dhtnet::fileutils::check_dir(conversationDataPath_.c_str());
-            waitingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "waiting";
+            conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / to_;
+            dhtnet::fileutils::check_dir(conversationDataPath_);
+            waitingPath_ = conversationDataPath_ / "waiting";
         }
-        profilesPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
-                        + DIR_SEPARATOR_STR + "profiles";
+        profilesPath_ = fileutils::get_data_dir() / accountId_ / "profiles";
         loadWaiting();
     }
 
@@ -284,9 +280,9 @@ public:
 
     std::string accountId_ {};
     std::string to_ {};
-    std::string waitingPath_ {};
-    std::string profilesPath_ {};
-    std::string conversationDataPath_ {};
+    std::filesystem::path waitingPath_ {};
+    std::filesystem::path profilesPath_ {};
+    std::filesystem::path conversationDataPath_ {};
 
     std::mutex mapMutex_ {};
     std::map<std::string, WaitingRequest> waitingIds_ {};
@@ -482,7 +478,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
 std::string
 TransferManager::path(const std::string& fileId) const
 {
-    return pimpl_->conversationDataPath_ + DIR_SEPARATOR_STR + fileId;
+    return pimpl_->conversationDataPath_ / fileId;
 }
 
 void
