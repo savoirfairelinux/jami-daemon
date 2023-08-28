@@ -72,7 +72,6 @@
 
 #include <sstream>
 #include <fstream>
-#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -164,16 +163,6 @@ expand_path(const std::string& path)
 
     return result;
 #endif
-}
-
-std::mutex&
-getFileLock(const std::string& path)
-{
-    static std::mutex fileLockLock {};
-    static std::map<std::string, std::mutex> fileLocks {};
-
-    std::lock_guard<std::mutex> l(fileLockLock);
-    return fileLocks[path];
 }
 
 bool
@@ -483,7 +472,7 @@ set_program_dir(char* program_path)
 }
 #endif
 
-std::string
+std::filesystem::path
 get_cache_dir(const char* pkg)
 {
 #ifdef RING_UWP
@@ -508,8 +497,7 @@ get_cache_dir(const char* pkg)
         return paths[0];
     return {};
 #elif defined(__APPLE__)
-    return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR + "Caches"
-           + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() / "Library" / "Caches" / pkg;
 #else
 #ifdef _WIN32
     const std::wstring cache_home(JAMI_CACHE_HOME);
@@ -520,17 +508,17 @@ get_cache_dir(const char* pkg)
     if (not cache_home.empty())
         return cache_home;
 #endif
-    return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() / ".cache" / pkg;
 #endif
 }
 
-std::string
+std::filesystem::path
 get_cache_dir()
 {
     return get_cache_dir(PACKAGE);
 }
 
-std::string
+std::filesystem::path
 get_home_dir()
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -569,11 +557,11 @@ get_home_dir()
             return pw->pw_dir;
     }
 
-    return "";
+    return {};
 #endif
 }
 
-std::string
+std::filesystem::path
 get_data_dir(const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -584,19 +572,16 @@ get_data_dir(const char* pkg)
         return paths[0];
     return {};
 #elif defined(__APPLE__)
-    return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
-           + "Application Support" + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() / "Library" / "Application Support" / pkg;
 #elif defined(_WIN32)
     const std::wstring data_home(JAMI_DATA_HOME);
     if (not data_home.empty())
         return jami::to_string(data_home) + DIR_SEPARATOR_STR + pkg;
 
     if (!strcmp(pkg, "ring")) {
-        return get_home_dir() + DIR_SEPARATOR_STR + ".local" + DIR_SEPARATOR_STR
-               + "share" DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() / ".local" / "share" / pkg;
     } else {
-        return get_home_dir() + DIR_SEPARATOR_STR + "AppData" + DIR_SEPARATOR_STR + "Local"
-               + DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() / "AppData" / "Local" / pkg;
     }
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
@@ -615,21 +600,20 @@ get_data_dir(const char* pkg)
 #else
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
-        return data_home + DIR_SEPARATOR_STR + pkg;
+        return std::filesystem::path(data_home) / pkg;
     // "If $XDG_DATA_HOME is either not set or empty, a default equal to
     // $HOME/.local/share should be used."
-    return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR "share" DIR_SEPARATOR_STR
-           + pkg;
+    return get_home_dir() / ".local" / "share" / pkg;
 #endif
 }
 
-std::string
+std::filesystem::path
 get_data_dir()
 {
     return get_data_dir(PACKAGE);
 }
 
-std::string
+std::filesystem::path
 get_config_dir(const char* pkg)
 {
     std::string configdir;
@@ -644,18 +628,15 @@ get_config_dir(const char* pkg)
     if (not paths.empty())
         configdir = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
 #elif defined(__APPLE__)
-    configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
-                + "Application Support" + DIR_SEPARATOR_STR + pkg;
+    configdir = fileutils::get_home_dir() / "Library" / "Application Support" / pkg;
 #elif defined(_WIN32)
     const std::wstring xdg_env(JAMI_CONFIG_HOME);
     if (not xdg_env.empty()) {
         configdir = jami::to_string(xdg_env) + DIR_SEPARATOR_STR + pkg;
     } else if (!strcmp(pkg, "ring")) {
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR
-                    + pkg;
+        configdir = fileutils::get_home_dir() / ".config" / pkg;
     } else {
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "AppData" + DIR_SEPARATOR_STR
-                    + "Local" + DIR_SEPARATOR_STR + pkg;
+        configdir = fileutils::get_home_dir() / "AppData" / "Local" / pkg;
     }
 #else
     const std::string xdg_env(XDG_CONFIG_HOME);
@@ -673,7 +654,7 @@ get_config_dir(const char* pkg)
     return configdir;
 }
 
-std::string
+std::filesystem::path
 get_config_dir()
 {
     return get_config_dir(PACKAGE);
