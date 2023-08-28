@@ -946,10 +946,10 @@ VERSION:2.1\n\
 FN:TITLE\n\
 DESCRIPTION:DESC\n\
 END:VCARD";
-    auto alicePath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                     + DIR_SEPARATOR_STR + "profile.vcf";
-    auto bobPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                   + DIR_SEPARATOR_STR + "profile.vcf";
+    auto alicePath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                     / "profile.vcf";
+    auto bobPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                   / "profile.vcf";
     // Save VCard
     auto p = std::filesystem::path(alicePath);
     dhtnet::fileutils::recursive_mkdir(p.parent_path());

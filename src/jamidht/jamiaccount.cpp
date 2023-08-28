@@ -269,8 +269,8 @@ dhtStatusStr(dht::NodeStatus status)
 
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
-    , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId)
-    , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accountId)
+    , idPath_(fileutils::get_data_dir() / accountId)
+    , cachePath_(fileutils::get_cache_dir() / accountId)
     , dataPath_(cachePath_ / "values")
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
@@ -4010,10 +4010,9 @@ JamiAccount::sendFile(const std::string& conversationId,
                 [accId = shared->getAccountID(), conversationId, tid, path](
                     const std::string& commitId) {
                     // Create a symlink to answer to re-ask
-                    auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accId
-                                        + DIR_SEPARATOR_STR + "conversation_data"
-                                        + DIR_SEPARATOR_STR + conversationId + DIR_SEPARATOR_STR
-                                        + commitId + "_" + std::to_string(tid);
+                    auto filelinkPath = fileutils::get_data_dir() / accId
+                                        / "conversation_data"
+                                        / conversationId / (commitId + "_" + std::to_string(tid));
                     auto extension = fileutils::getFileExtension(path);
                     if (!extension.empty())
                         filelinkPath += "." + extension;
