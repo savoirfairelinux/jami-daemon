@@ -108,7 +108,8 @@
         </method>
 
         <method name="getPlatformInfo" tp:name-for-bindings="getPlatformInfo">
-            <tp:added version="9.2.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="13.9.0"/>
             <arg type="a{ss}" name="info" direction="out" tp:type="String_String_Map">
             </arg>
         </method>
