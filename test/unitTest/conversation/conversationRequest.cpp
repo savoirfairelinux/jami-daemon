@@ -353,18 +353,17 @@ ConversationRequestTest::testAddContact()
     // Mode must be one to one
     CPPUNIT_ASSERT(repo.mode() == ConversationMode::ONE_TO_ONE);
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return conversationReady && memberMessageGenerated; }));
-    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto clonedPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                      / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
-    auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
-                     + ".crt";
+    auto bobMember = clonedPath / "members" / (bobUri + ".crt");
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobMember));
 }
 
@@ -709,12 +708,12 @@ ConversationRequestTest::testRemoveContact()
     std::this_thread::sleep_for(
         10s); // There is no signal, but daemon should then erase the repository
 
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
 
-    repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-               + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    repoPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+               / "conversations" / convId;
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
 }
 
@@ -851,8 +850,8 @@ ConversationRequestTest::testRemoveSelfDoesntRemoveConversation()
     conversationRemoved = false;
     aliceAccount->removeContact(aliceUri, false);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return conversationRemoved; }));
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 }
 
@@ -980,8 +979,8 @@ ConversationRequestTest::testBanContact()
     memberMessageGenerated = false;
     bobAccount->removeContact(aliceUri, true);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 }
 
@@ -1333,8 +1332,8 @@ ConversationRequestTest::testCacheRequestFromClient()
     aliceAccount->sendTrustRequest(bobUri,
                                    payload); // Random payload, just care with the file
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
-    auto cachedPath = fileutils::get_cache_dir() + DIR_SEPARATOR_CH + aliceAccount->getAccountID()
-                      + DIR_SEPARATOR_CH + "requests" + DIR_SEPARATOR_CH + bobUri;
+    auto cachedPath = fileutils::get_cache_dir() / aliceAccount->getAccountID()
+                      / "requests" / bobUri;
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(cachedPath));
     CPPUNIT_ASSERT(fileutils::loadFile(cachedPath) == payload);
 

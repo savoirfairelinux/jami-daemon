@@ -441,7 +441,7 @@ public:
         const std::string& accountId,
         const std::map<std::string, ConversationRequest>& conversationsRequests);
     static void saveConvRequestsToPath(
-        const std::string& path,
+        const std::filesystem::path& path,
         const std::map<std::string, ConversationRequest>& conversationsRequests);
 
     static std::map<std::string, ConvInfo> convInfos(const std::string& accountId);
