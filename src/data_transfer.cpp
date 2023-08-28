@@ -339,7 +339,6 @@ TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& chan
 bool
 TransferManager::cancel(const std::string& fileId)
 {
-    std::shared_ptr<dhtnet::ChannelSocket> channel;
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     // Remove from waiting, this avoid auto-download
     auto itW = pimpl_->waitingIds_.find(fileId);
