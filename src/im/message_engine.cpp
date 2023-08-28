@@ -39,7 +39,7 @@ MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path)
 {
     auto found = savePath_.find_last_of(DIR_SEPARATOR_CH);
     auto dir = savePath_.substr(0, found);
-    fileutils::check_dir(dir.c_str());
+    dhtnet::fileutils::check_dir(dir.c_str());
 }
 
 MessageToken
@@ -240,7 +240,7 @@ MessageEngine::load()
     try {
         Json::Value root;
         {
-            std::lock_guard<std::mutex> lock(fileutils::getFileLock(savePath_));
+            std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(savePath_));
             std::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             fileutils::openStream(file, savePath_);
@@ -326,7 +326,7 @@ MessageEngine::save_() const
         dht::ThreadPool::computation().run([path = savePath_,
                                             root = std::move(root),
                                             accountID = account_.getAccountID()] {
-            std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
+            std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(path));
             try {
                 Json::StreamWriterBuilder wbuilder;
                 wbuilder["commentStyle"] = "None";
