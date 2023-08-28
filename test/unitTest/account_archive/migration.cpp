@@ -330,7 +330,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; });
 
@@ -348,7 +348,7 @@ MigrationTest::testExpiredDeviceInSwarm()
 
     // check that certificate in conversation is expired
     auto devicePath = fmt::format("{}/devices/{}.crt", repoPath, aliceAccount->currentDeviceId());
-    CPPUNIT_ASSERT(fileutils::isFile(devicePath));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(devicePath));
     auto cert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     now = std::chrono::system_clock::now();
     CPPUNIT_ASSERT(cert.getExpiration() < now);
@@ -362,7 +362,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; }));
 
     // check that certificate in conversation is updated
-    CPPUNIT_ASSERT(fileutils::isFile(devicePath));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(devicePath));
     cert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     now = std::chrono::system_clock::now();
     CPPUNIT_ASSERT(cert.getExpiration() > now);
