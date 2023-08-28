@@ -58,7 +58,7 @@ namespace archiver {
 std::map<std::string, std::string>
 jsonValueToAccount(Json::Value& value, const std::string& accountId)
 {
-    auto idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
+    auto idPath_ = fileutils::get_data_dir() / accountId;
     dhtnet::fileutils::check_dir(idPath_.c_str(), 0700);
     auto detailsMap = libjami::getAccountTemplate(
         value[libjami::Account::ConfProperties::TYPE].asString());
@@ -68,7 +68,7 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId)
             continue;
         if (itr.key().asString().compare(libjami::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
             std::string fileContent(itr->asString());
-            fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key",
+            fileutils::saveFile(idPath_ / "ca.key",
                                 {fileContent.begin(), fileContent.end()},
                                 0600);
 
@@ -76,7 +76,7 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId)
                        libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE)
                    == 0) {
             std::string fileContent(itr->asString());
-            fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.key",
+            fileutils::saveFile(idPath_ / "dht.key",
                                 {fileContent.begin(), fileContent.end()},
                                 0600);
 
@@ -84,7 +84,7 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId)
                        libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE)
                    == 0) {
             std::string fileContent(itr->asString());
-            fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.crt",
+            fileutils::saveFile(idPath_ / "dht.crt",
                                 {fileContent.begin(), fileContent.end()},
                                 0600);
         } else

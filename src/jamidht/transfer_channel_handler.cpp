@@ -33,7 +33,7 @@ TransferChannelHandler::TransferChannelHandler(const std::shared_ptr<JamiAccount
     , connectionManager_(cm)
 {
     auto acc = account_.lock();
-    idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + acc->getAccountID();
+    idPath_ = fileutils::get_data_dir() / acc->getAccountID();
 }
 
 TransferChannelHandler::~TransferChannelHandler() {}

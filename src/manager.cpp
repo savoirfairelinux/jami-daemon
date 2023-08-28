@@ -593,7 +593,7 @@ std::string
 Manager::ManagerPimpl::retrieveConfigPath() const
 {
     // TODO: Migrate config file name from dring.yml to jami.yml.
-    return fileutils::get_config_dir() + DIR_SEPARATOR_STR + "dring.yml";
+    return fileutils::get_config_dir() / "dring.yml";
 }
 
 void
@@ -2883,8 +2883,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                                             &cv,
                                             &remaining,
                                             &lock,
-                                            configFile = accountBaseDir + DIR_SEPARATOR_STR + dir
-                                                         + DIR_SEPARATOR_STR + "config.yml"] {
+                                            configFile = accountBaseDir / dir / "config.yml"] {
             if (std::filesystem::is_regular_file(configFile)) {
                 try {
                     auto configNode = YAML::LoadFile(configFile);
