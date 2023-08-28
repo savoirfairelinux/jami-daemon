@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "jami/def.h"
 
 #include <string>
 #include <vector>
@@ -22,8 +23,8 @@
 #include <mutex>
 #include <cstdio>
 #include <ios>
+#include <filesystem>
 
-#include "jami/def.h"
 #include <dhtnet/fileutils.h>
 
 #ifndef _WIN32
@@ -41,14 +42,14 @@
 namespace jami {
 namespace fileutils {
 
-std::string get_home_dir();
-std::string get_config_dir(const char* pkg);
-std::string get_data_dir(const char* pkg);
-std::string get_cache_dir(const char* pkg);
+std::filesystem::path get_home_dir();
+std::filesystem::path get_config_dir(const char* pkg);
+std::filesystem::path get_data_dir(const char* pkg);
+std::filesystem::path get_cache_dir(const char* pkg);
 
-std::string get_config_dir();
-std::string get_data_dir();
-std::string get_cache_dir();
+std::filesystem::path get_config_dir();
+std::filesystem::path get_data_dir();
+std::filesystem::path get_cache_dir();
 
 /**
  * Check directory existence and create it with given mode if it doesn't.
