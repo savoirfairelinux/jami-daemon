@@ -24,6 +24,7 @@
 #include <json/json.h>
 #include <string>
 #include <set>
+#include <filesystem>
 
 namespace jami {
 
@@ -44,7 +45,7 @@ public:
      * @param accountId
      * @return preference.json file path.
      */
-    static std::string getPreferencesConfigFilePath(const std::string& rootPath,
+    static std::filesystem::path getPreferencesConfigFilePath(const std::filesystem::path& rootPath,
                                                     const std::string& accountId = "");
 
     /**
@@ -56,7 +57,7 @@ public:
      * @param accountId
      * @return preference.msgpack file path.
      */
-    static std::string valuesFilePath(const std::string& rootPath,
+    static std::filesystem::path valuesFilePath(const std::filesystem::path& rootPath,
                                       const std::string& accountId = "");
 
     /**
@@ -89,7 +90,7 @@ public:
      * @return std::vector<std::map<std::string, std::string>> with preferences.json content
      */
     static std::vector<std::map<std::string, std::string>> getPreferences(
-        const std::string& rootPath, const std::string& accountId = "");
+        const std::filesystem::path& rootPath, const std::string& accountId = "");
 
     /**
      * @brief Reads preferences values which were modified from defaultValue
@@ -98,7 +99,7 @@ public:
      * @return Map with preference keys and actuall values.
      */
     static std::map<std::string, std::string> getUserPreferencesValuesMap(
-        const std::string& rootPath, const std::string& accountId = "");
+        const std::filesystem::path& rootPath, const std::string& accountId = "");
 
     /**
      * @brief Reads preferences values

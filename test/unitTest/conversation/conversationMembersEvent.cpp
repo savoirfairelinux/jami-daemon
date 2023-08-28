@@ -175,10 +175,10 @@ ConversationMembersEventTest::generateFakeInvite(std::shared_ptr<JamiAccount> ac
                                                  const std::string& convId,
                                                  const std::string& uri)
 {
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
+                    / "conversations" / convId;
     // remove from member & add into banned without voting for the ban
-    auto memberFile = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + uri;
+    auto memberFile = repoPath / "invited" / uri;
     std::ofstream file(memberFile);
     if (file.is_open()) {
         file.close();
@@ -238,10 +238,10 @@ ConversationMembersEventTest::testRemoveConversationNoMember()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    auto dataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
+    auto dataPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversation_data" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     CPPUNIT_ASSERT(std::filesystem::is_directory(dataPath));
 
@@ -303,21 +303,21 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
-    auto bobInvitedFile = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    auto bobInvitedFile = repoPath / "invited" / bobUri;
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvitedFile));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     memberMessageGenerated = false;
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
-    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto clonedPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                      / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
-    bobInvitedFile = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    bobInvitedFile = clonedPath / "invited" / bobUri;
     CPPUNIT_ASSERT(!std::filesystem::is_regular_file(bobInvitedFile));
     // Remove conversation from alice once member confirmed
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
@@ -366,22 +366,21 @@ ConversationMembersEventTest::testAddMember()
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
-    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    auto bobInvited = repoPath / "invited" / bobUri;
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
-    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto clonedPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                      / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
-    bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    bobInvited = clonedPath / "invited" / bobUri;
     CPPUNIT_ASSERT(!std::filesystem::is_regular_file(bobInvited));
-    auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
-                     + ".crt";
+    auto bobMember = clonedPath / "members" / (bobUri + ".crt");
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobMember));
 }
 
@@ -470,8 +469,8 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
 
     libjami::acceptConversationRequest(carlaId, convId);
     cv.wait_for(lk, 30s, [&]() { return conversationReady; });
-    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto clonedPath = fileutils::get_data_dir() / carlaAccount->getAccountID()
+                      / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     libjami::unregisterSignalHandlers();
 }
@@ -520,8 +519,8 @@ ConversationMembersEventTest::testGetMembers()
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return messageReceived; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     auto members = libjami::getConversationMembers(aliceId, convId);
@@ -1448,8 +1447,8 @@ ConversationMembersEventTest::testCommitUnauthorizedUser()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; }));
@@ -1525,15 +1524,13 @@ ConversationMembersEventTest::testMemberJoinsNoBadFile()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return memberMessageGenerated; }));
 
     // Cp conversations & convInfo
-    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
-    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathAlice = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations";
+    auto repoPathCarla = fileutils::get_data_dir() / carlaAccount->getAccountID() / "conversations";
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
-    auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
-    auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
+    auto ciPathAlice = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                       / "convInfo";
+    auto ciPathCarla = fileutils::get_data_dir() / carlaAccount->getAccountID()
+                       / "convInfo";
     std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
@@ -1627,20 +1624,18 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return memberMessageGenerated; }));
 
     // Cp conversations & convInfo
-    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
-    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathAlice = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations";
+    auto repoPathCarla = fileutils::get_data_dir() / carlaAccount->getAccountID() / "conversations";
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
-    auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
-    auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
+    auto ciPathAlice = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                       / "convInfo";
+    auto ciPathCarla = fileutils::get_data_dir() / carlaAccount->getAccountID()
+                       / "convInfo";
     std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
     // Remove invite but do not add member certificate
-    std::string invitedPath = repoPathCarla + "invited";
+    std::string invitedPath = repoPathCarla / "invited";
     dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, carlaUri));
 
     Json::Value json;
@@ -1720,15 +1715,11 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return memberMessageGenerated; }));
 
     // Cp conversations & convInfo
-    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
-    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
+    auto repoPathAlice = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations";
+    auto repoPathCarla = fileutils::get_data_dir() / carlaAccount->getAccountID() / "conversations";
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
-    auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
-    auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
+    auto ciPathAlice = fileutils::get_data_dir() / aliceAccount->getAccountID() / "convInfo";
+    auto ciPathCarla = fileutils::get_data_dir() / carlaAccount->getAccountID() / "convInfo";
     std::remove(ciPathCarla.c_str());
     std::filesystem::copy(ciPathAlice, ciPathCarla);
 
@@ -1736,9 +1727,9 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     auto cert = carlaAccount->identity().second;
     auto parentCert = cert->issuer;
     auto uri = parentCert->getId().toString();
-    std::string membersPath = fmt::format("{}/{}/members/", repoPathCarla, convId);
-    std::string devicesPath = fmt::format("{}/{}/devices/", repoPathCarla, convId);
-    std::string memberFile = fmt::format("{}{}.crt", membersPath, carlaUri);
+    auto membersPath = repoPathCarla / convId / "members";
+    auto devicesPath = repoPathCarla / convId / "devices";
+    auto memberFile = fmt::format("{}{}.crt", membersPath, carlaUri);
     // Add members/uri.crt
     dhtnet::fileutils::recursive_mkdir(membersPath, 0700);
     dhtnet::fileutils::recursive_mkdir(devicesPath, 0700);
@@ -1928,22 +1919,21 @@ ConversationMembersEventTest::testConversationMemberEvent()
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberAddGenerated; }));
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
-    auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    auto bobInvited = repoPath / "invited" / bobUri;
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
-    auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                      + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto clonedPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                      / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
-    bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
+    bobInvited = clonedPath / "invited" / bobUri;
     CPPUNIT_ASSERT(!std::filesystem::is_regular_file(bobInvited));
-    auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
-                     + ".crt";
+    auto bobMember = clonedPath / "members" / (bobUri + ".crt");
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobMember));
 }
 
