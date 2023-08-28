@@ -5,203 +5,149 @@
         <!-- METHODS !-->
         <method name="loadPlugin" tp:name-for-bindings="loadPlugin">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
-            <arg type="b" name="loaded" direction="out">
-            </arg>
+            <arg type="s" name="path" direction="in"/>
+            <arg type="b" name="loaded" direction="out"/>
         </method>
 
         <method name="unloadPlugin" tp:name-for-bindings="unloadPlugin">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
-            <arg type="b" name="unloaded" direction="out">
-            </arg>
+            <arg type="s" name="path" direction="in"/>
+            <arg type="b" name="unloaded" direction="out"/>
         </method>
 
         <method name="getPluginDetails" tp:name-for-bindings="getPluginDetails">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <tp:added version="9.2.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
+            <arg type="s" name="path" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
-            </arg>
+            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map"/>
         </method>
 
         <method name="getPluginPreferences" tp:name-for-bindings="getPluginPreferences">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <tp:added version="11.1.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
+            <arg type="s" name="path" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
-            <arg type="aa{ss}" name="PluginPreferences" direction="out" tp:type="String_String_Map">
-            </arg>
+            <arg type="aa{ss}" name="PluginPreferences" direction="out" tp:type="String_String_Map"/>
         </method>
 
         <method name="setPluginPreference" tp:name-for-bindings="setPluginPreference">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="s" name="key" direction="in">
-            </arg>
-            <arg type="s" name="value" direction="in">
-            </arg>
-            <arg type="b" name="pluginPreferencesSet" direction="out">
-            </arg>
+            <arg type="s" name="path" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="key" direction="in"/>
+            <arg type="s" name="value" direction="in"/>
+            <arg type="b" name="pluginPreferencesSet" direction="out"/>
         </method>
 
         <method name="getPluginPreferencesValues" tp:name-for-bindings="getPluginPreferencesValues">
+            <tp:added version="9.2.0"/>
+            <arg type="s" name="path" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <tp:added version="9.2.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="preferencesValues" direction="out" tp:type="String_String_Map">
-            </arg>
+            <arg type="a{ss}" name="preferencesValues" direction="out" tp:type="String_String_Map"/>
         </method>
 
-       <method name="resetPluginPreferencesValues" tp:name-for-bindings="resetPluginPreferencesValues">
+        <method name="resetPluginPreferencesValues" tp:name-for-bindings="resetPluginPreferencesValues">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="path" direction="in">
-            </arg>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="b" name="reset" direction="out">
-            </arg>
+            <arg type="s" name="path" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="b" name="reset" direction="out"/>
         </method>
 
-       <method name="getInstalledPlugins" tp:name-for-bindings="getInstalledPlugins">
+        <method name="getInstalledPlugins" tp:name-for-bindings="getInstalledPlugins">
             <tp:added version="9.9.0"/>
-            <arg type="as" name="availablePlugins" direction="out">
-            </arg>
+            <arg type="as" name="availablePlugins" direction="out"/>
         </method>
 
-       <method name="getLoadedPlugins" tp:name-for-bindings="getLoadedPlugins">
+        <method name="getLoadedPlugins" tp:name-for-bindings="getLoadedPlugins">
             <tp:added version="9.9.0"/>
-            <arg type="as" name="LoadedPlugins" direction="out">
-            </arg>
+            <arg type="as" name="LoadedPlugins" direction="out"/>
         </method>
 
-       <method name="installPlugin" tp:name-for-bindings="installPlugin">
+        <method name="installPlugin" tp:name-for-bindings="installPlugin">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="jplPath" direction="in">
-            </arg>
-            <arg type="b" name="force" direction="in">
-            </arg>
-            <arg type="i" name="instaled" direction="out">
-            </arg>
+            <arg type="s" name="jplPath" direction="in"/>
+            <arg type="b" name="force" direction="in"/>
+            <arg type="i" name="instaled" direction="out"/>
         </method>
 
-       <method name="uninstallPlugin" tp:name-for-bindings="uninstallPlugin">
+        <method name="uninstallPlugin" tp:name-for-bindings="uninstallPlugin">
             <tp:added version="9.2.0"/>
-            <arg type="s" name="pluginRootPath" direction="in">
-            </arg>
-            <arg type="i" name="uninstaled" direction="out">
-            </arg>
+            <arg type="s" name="pluginRootPath" direction="in"/>/
+            <arg type="i" name="uninstaled" direction="out"/>/
         </method>
 
         <method name="getPlatformInfo" tp:name-for-bindings="getPlatformInfo">
-            <tp:added version="9.2.0"/>
-            <arg type="a{ss}" name="info" direction="out" tp:type="String_String_Map">
-            </arg>
-        </method>
-
-       <method name="getCallMediaHandlers" tp:name-for-bindings="getCallMediaHandlers">
-            <tp:added version="9.9.0"/>
-            <arg type="as" name="getCallMediaHandlers" direction="out">
-            </arg>
-        </method>
-
-       <method name="getChatHandlers" tp:name-for-bindings="getChatHandlers">
-            <tp:added version="9.9.0"/>
-            <arg type="as" name="getChatHandlers" direction="out">
-            </arg>
-        </method>
-
-       <method name="toggleCallMediaHandler" tp:name-for-bindings="toggleCallMediaHandler">
-            <tp:added version="9.2.0"/>
-            <arg type="s" name="mediaHandlerId" direction="in">
-            </arg>
-            <arg type="s" name="callId" direction="in">
-            </arg>
-            <arg type="b" name="toggle" direction="in">
-            </arg>
-        </method>
-
-       <method name="toggleChatHandler" tp:name-for-bindings="toggleChatHandler">
-            <tp:added version="9.9.0"/>
-            <arg type="s" name="chatHandlerId" direction="in">
-            </arg>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="s" name="peerId" direction="in">
-            </arg>
-            <arg type="b" name="toggle" direction="in">
-            </arg>
-        </method>
-
-       <method name="getCallMediaHandlerDetails" tp:name-for-bindings="getCallMediaHandlerDetails">
+            <tp:added version="13.9.0"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <tp:added version="9.2.0"/>
-            <arg type="s" name="mediaHandlerId" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="CallMediaHandlerDetails" direction="out">
-            </arg>
+            <arg type="a{ss}" name="info" direction="out" tp:type="String_String_Map"/>
         </method>
 
-       <method name="getCallMediaHandlerStatus" tp:name-for-bindings="getCallMediaHandlerStatus">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+        <method name="getCallMediaHandlers" tp:name-for-bindings="getCallMediaHandlers">
+            <tp:added version="9.9.0"/>
+            <arg type="as" name="getCallMediaHandlers" direction="out"/>
+        </method>
+
+        <method name="getChatHandlers" tp:name-for-bindings="getChatHandlers">
+            <tp:added version="9.9.0"/>
+            <arg type="as" name="getChatHandlers" direction="out"/>
+        </method>
+
+        <method name="toggleCallMediaHandler" tp:name-for-bindings="toggleCallMediaHandler">
+            <tp:added version="9.2.0"/>
+            <arg type="s" name="mediaHandlerId" direction="in"/>
+            <arg type="s" name="callId" direction="in"/>
+            <arg type="b" name="toggle" direction="in"/>
+        </method>
+
+        <method name="toggleChatHandler" tp:name-for-bindings="toggleChatHandler">
+            <tp:added version="9.9.0"/>
+            <arg type="s" name="chatHandlerId" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="peerId" direction="in"/>
+            <arg type="b" name="toggle" direction="in"/>
+        </method>
+
+        <method name="getCallMediaHandlerDetails" tp:name-for-bindings="getCallMediaHandlerDetails">
+            <tp:added version="9.2.0"/>
+            <arg type="s" name="mediaHandlerId" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="CallMediaHandlerDetails" direction="out"/>
+        </method>
+
+        <method name="getCallMediaHandlerStatus" tp:name-for-bindings="getCallMediaHandlerStatus">
             <tp:added version="9.3.0"/>
-            <arg type="s" name="callId" direction="in">
-            </arg>
+            <arg type="s" name="callId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
-            <arg type="as" name="getCallMediaHandlerStatus" direction="out">
-            </arg>
+            <arg type="as" name="getCallMediaHandlerStatus" direction="out"/>
         </method>
 
-       <method name="getChatHandlerDetails" tp:name-for-bindings="getChatHandlerDetails">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+        <method name="getChatHandlerDetails" tp:name-for-bindings="getChatHandlerDetails">
             <tp:added version="9.9.0"/>
-            <arg type="s" name="chatHandlerId" direction="in">
-            </arg>
+            <arg type="s" name="chatHandlerId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="ChatHandlerDetails" direction="out">
-            </arg>
+            <arg type="a{ss}" name="ChatHandlerDetails" direction="out"/>
         </method>
 
-       <method name="getChatHandlerStatus" tp:name-for-bindings="getChatHandlerStatus">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+        <method name="getChatHandlerStatus" tp:name-for-bindings="getChatHandlerStatus">
             <tp:added version="9.9.0"/>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="s" name="peerId" direction="in">
-            </arg>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="peerId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
-            <arg type="as" name="getChatHandlerStatus" direction="out">
-            </arg>
+            <arg type="as" name="getChatHandlerStatus" direction="out"/>
         </method>
 
         <method name="getPluginsEnabled" tp:name-for-bindings="getPluginsEnabled">
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
             <tp:added version="9.3.0"/>
-            <arg type="b" name="state" direction="out">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
+            <arg type="b" name="state" direction="out"/>
             <tp:docstring>Returns true if plugins are enabled, false otherwise</tp:docstring>
-            </arg>
         </method>
 
         <method name="setPluginsEnabled" tp:name-for-bindings="setPluginsEnabled">
             <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Bool"/>
             <tp:added version="9.3.0"/>
-            <arg type="b" name="state" direction="in">
-            </arg>
+            <arg type="b" name="state" direction="in"/>
         </method>
 
         <method name="sendWebViewMessage" tp:name-for-bindings="sendWebViewMessage">
@@ -209,14 +155,10 @@
             <tp:docstring>
               Called by the a client's webview to send a message to the plugin
             </tp:docstring>
-            <arg type="s" name="pluginId" direction="in">
-            </arg>
-            <arg type="s" name="webViewId" direction="in">
-            </arg>
-            <arg type="s" name="messageId" direction="in">
-            </arg>
-            <arg type="s" name="payload" direction="in">
-            </arg>
+            <arg type="s" name="pluginId" direction="in"/>
+            <arg type="s" name="webViewId" direction="in"/>
+            <arg type="s" name="messageId" direction="in"/>
+            <arg type="s" name="payload" direction="in"/>
         </method>
 
         <method name="sendWebViewAttach" tp:name-for-bindings="sendWebViewAttach">
@@ -225,17 +167,12 @@
               Called by the a client's webview to notify the plugin that a webview has been created.
               Returns a relative path to an HTML file inside the plugin's datapath.
             </tp:docstring>
-            <arg type="s" name="pluginId" direction="in">
-            </arg>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="s" name="webViewId" direction="in">
-            </arg>
-            <arg type="s" name="action" direction="in">
-            </arg>
+            <arg type="s" name="pluginId" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="webViewId" direction="in"/>
+            <arg type="s" name="action" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QString"/>
-            <arg type="s" name="response" direction="out">
-            </arg>
+            <arg type="s" name="response" direction="out"/>
         </method>
 
         <method name="sendWebViewDetach" tp:name-for-bindings="sendWebViewDetach">
@@ -243,10 +180,8 @@
             <tp:docstring>
               Called by the a client's webview to notify the plugin that a webview has been destroyed
             </tp:docstring>
-            <arg type="s" name="pluginId" direction="in">
-            </arg>
-            <arg type="s" name="webViewId" direction="in">
-            </arg>
+            <arg type="s" name="pluginId" direction="in"/>
+            <arg type="s" name="webViewId" direction="in"/>
         </method>
 
         <!-- SIGNALS !-->
@@ -255,14 +190,10 @@
             <tp:docstring>
               This signal is emitted when a plugin sends a message up to a webview
             </tp:docstring>
-            <arg type="s" name="pluginId">
-            </arg>
-            <arg type="s" name="webViewId">
-            </arg>
-            <arg type="s" name="messageId">
-            </arg>
-            <arg type="s" name="payload">
-            </arg>
+            <arg type="s" name="pluginId"/>
+            <arg type="s" name="webViewId"/>
+            <arg type="s" name="messageId"/>
+            <arg type="s" name="payload"/>
         </signal>
 
     </interface>
