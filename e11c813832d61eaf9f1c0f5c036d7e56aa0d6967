@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb9e274c_1e9c864f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2023-08-28T13:26:20Z",
+      "side": 1,
+      "message": "uses std::filesystem::path::preferred_separator!? wow nice",
+      "range": {
+        "startLine": 179,
+        "startChar": 62,
+        "endLine": 179,
+        "endChar": 63
+      },
+      "revId": "e11c813832d61eaf9f1c0f5c036d7e56aa0d6967",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
