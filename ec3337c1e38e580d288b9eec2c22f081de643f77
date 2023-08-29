@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0922dc60_4f55c147",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-29T17:44:51Z",
+      "side": 1,
+      "message": "wrong commit msg format",
+      "range": {
+        "startLine": 7,
+        "startChar": 18,
+        "endLine": 7,
+        "endChar": 25
+      },
+      "revId": "ec3337c1e38e580d288b9eec2c22f081de643f77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b844741c_cd6b0a86",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-29T17:44:51Z",
+      "side": 1,
+      "message": "```\njamidht/conversationrepository.cpp: In member function \u0027std::string jami::ConversationRepository::Impl::uriFromDevice(const std::string\u0026) const\u0027:\njamidht/conversationrepository.cpp:291:78: error: \u0027loadFile\u0027 is not a member of \u0027jami::fileutils\u0027; did you mean \u0027dhtnet::fileutils::loadFile\u0027?\n  291 |                 cert \u003d std::make_shared\u003cdht::crypto::Certificate\u003e(fileutils::loadFile(deviceFile));\n```",
+      "revId": "ec3337c1e38e580d288b9eec2c22f081de643f77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b7a7744_a7152bca",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-08-29T17:44:51Z",
+      "side": 1,
+      "message": "not in .h",
+      "range": {
+        "startLine": 318,
+        "startChar": 23,
+        "endLine": 318,
+        "endChar": 33
+      },
+      "revId": "ec3337c1e38e580d288b9eec2c22f081de643f77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
