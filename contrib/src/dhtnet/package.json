@@ -1,6 +1,6 @@
 {
     "name": "dhtnet",
-    "version": "24cc01e3deacb1332745929840268af06ebe9068",
+    "version": "b31c37495f6d0e0ccdf36de2a8458c54cce920d2",
     "url": "https://review.jami.net/plugins/gitiles/dhtnet/+archive/__VERSION__.tar.gz",
     "deps": [
         "opendht",
@@ -13,7 +13,8 @@
     "use_cmake" : true,
     "defines": [
         "BUILD_SHARED_LIBS=0",
-        "BUILD_TESTING=0"
+        "BUILD_TESTING=0",
+        "BUILD_BENCHMARKS=0"
     ],
     "patches": [],
     "win_patches": [],

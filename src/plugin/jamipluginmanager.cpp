@@ -96,7 +96,7 @@ JamiPluginManager::getInstalledPlugins()
 {
     // Gets all plugins in standard path
     std::string pluginsPath = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins";
-    std::vector<std::string> pluginsPaths = fileutils::readDirectory(pluginsPath);
+    std::vector<std::string> pluginsPaths = dhtnet::fileutils::readDirectory(pluginsPath);
     std::for_each(pluginsPaths.begin(), pluginsPaths.end(), [&pluginsPath](std::string& x) {
         x = pluginsPath + DIR_SEPARATOR_CH + x;
     });
@@ -135,7 +135,7 @@ bool
 JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 {
     // check if the file exists
-    if (!fileutils::isFile(jplPath)){
+    if (!std::filesystem::is_regular_file(jplPath)){
         return false;
     }
     try {
@@ -164,7 +164,7 @@ JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 bool
 JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert)
 {
-    if (!fileutils::isFile(jplPath))
+    if (!std::filesystem::is_regular_file(jplPath))
         return false;
     try{
         const auto& pk = cert->getPublicKey();
@@ -190,7 +190,7 @@ JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht:
 bool
 JamiPluginManager::checkPluginSignature(const std::string& jplPath, dht::crypto::Certificate* cert)
 {
-    if (!fileutils::isFile(jplPath) || !cert || !*cert)
+    if (!std::filesystem::is_regular_file(jplPath) || !cert || !*cert)
         return false;
     try {
         return  checkPluginSignatureValidity(jplPath, cert) &&
@@ -203,7 +203,7 @@ JamiPluginManager::checkPluginSignature(const std::string& jplPath, dht::crypto:
 std::unique_ptr<dht::crypto::Certificate>
 JamiPluginManager::checkPluginCertificate(const std::string& jplPath, bool force)
 {
-    if (!fileutils::isFile(jplPath))
+    if (!std::filesystem::is_regular_file(jplPath))
         return {};
     try {
         auto cert = PluginUtils::readPluginCertificateFromArchive(jplPath);
@@ -220,7 +220,7 @@ int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
     int r {SUCCESS};
-    if (fileutils::isFile(jplPath)) {
+    if (std::filesystem::is_regular_file(jplPath)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
             const std::string& name = manifestMap["name"];
@@ -290,12 +290,12 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                 }
             }
             for (const auto& accId : jami::Manager::instance().getAccountList())
-                fileutils::removeAll(fileutils::get_data_dir() + DIR_SEPARATOR_CH + accId
+                dhtnet::fileutils::removeAll(fileutils::get_data_dir() + DIR_SEPARATOR_CH + accId
                                      + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH
                                      + detailsIt->second.at("name"));
             pluginDetailsMap_.erase(detailsIt);
         }
-        return fileutils::removeAll(rootPath);
+        return dhtnet::fileutils::removeAll(rootPath);
     } else {
         JAMI_INFO() << "PLUGIN: not installed.";
         return -1;
@@ -405,7 +405,7 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath
             = PluginPreferencesUtils::valuesFilePath(rootPath, acc);
-        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+        std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
             if (force) {
