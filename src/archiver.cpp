@@ -59,7 +59,7 @@ std::map<std::string, std::string>
 jsonValueToAccount(Json::Value& value, const std::string& accountId)
 {
     auto idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
-    fileutils::check_dir(idPath_.c_str(), 0700);
+    dhtnet::fileutils::check_dir(idPath_.c_str(), 0700);
     auto detailsMap = libjami::getAccountTemplate(
         value[libjami::Account::ConfProperties::TYPE].asString());
 
@@ -280,7 +280,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
     void* zip_handle = NULL;
     mz_zip_file* info = NULL;
 
-    fileutils::check_dir(dir.c_str());
+    dhtnet::fileutils::check_dir(dir.c_str());
 
     mz_zip_create(&zip_handle);
     auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
@@ -289,7 +289,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
     while (status == MZ_OK) {
         status |= mz_zip_reader_entry_get_info(zip_handle, &info);
         if (status != MZ_OK) {
-            fileutils::removeAll(dir, true);
+            dhtnet::fileutils::removeAll(dir, true);
             break;
         }
         std::string_view filename(info->filename, (size_t) info->filename_size);
@@ -297,7 +297,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
         if (fileMatchPair.first) {
             auto filePath = dir + DIR_SEPARATOR_STR + fileMatchPair.second;
             std::string directory = filePath.substr(0, filePath.find_last_of(DIR_SEPARATOR_CH));
-            fileutils::check_dir(directory.c_str());
+            dhtnet::fileutils::check_dir(directory.c_str());
             mz_zip_reader_entry_open(zip_handle);
             void* buffStream = NULL;
             buffStream = mz_stream_os_create(&buffStream);
@@ -313,14 +313,14 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
                                                            chunkSize)) {
                     ret = mz_stream_os_write(buffStream, (void*) fileContent.data(), ret);
                     if (ret < 0) {
-                        fileutils::removeAll(dir, true);
+                        dhtnet::fileutils::removeAll(dir, true);
                         status = 1;
                     }
                 }
                 mz_stream_os_close(buffStream);
                 mz_stream_os_delete(&buffStream);
             } else {
-                fileutils::removeAll(dir, true);
+                dhtnet::fileutils::removeAll(dir, true);
                 status = 1;
             }
             mz_zip_reader_entry_close(zip_handle);
@@ -375,7 +375,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             r = archive_write_header(archiveDiskWriter.get(), entry);
             if (r != ARCHIVE_OK) {
                 // Rollback if failed at a write operation
-                fileutils::removeAll(dir);
+                dhtnet::fileutils::removeAll(dir);
                 throw std::runtime_error("Write file header: " + fileEntry + "\t"
                                          + archive_error_string(archiveDiskWriter.get()));
             } else {
@@ -398,7 +398,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
 
                     if (r != ARCHIVE_OK) {
                         // Rollback if failed at a write operation
-                        fileutils::removeAll(dir);
+                        dhtnet::fileutils::removeAll(dir);
                         throw std::runtime_error("Write file data: " + fileEntry + "\t"
                                                  + archive_error_string(archiveDiskWriter.get()));
                     }
