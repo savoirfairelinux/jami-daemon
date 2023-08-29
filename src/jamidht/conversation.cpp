@@ -556,16 +556,16 @@ public:
     std::string_view bannedType(const std::string& uri) const
     {
         auto bannedMember = fmt::format("{}/banned/members/{}.crt", repoPath(), uri);
-        if (fileutils::isFile(bannedMember))
+        if (std::filesystem::is_regular_file(bannedMember))
             return "members"sv;
         auto bannedAdmin = fmt::format("{}/banned/admins/{}.crt", repoPath(), uri);
-        if (fileutils::isFile(bannedAdmin))
+        if (std::filesystem::is_regular_file(bannedAdmin))
             return "admins"sv;
         auto bannedInvited = fmt::format("{}/banned/invited/{}", repoPath(), uri);
-        if (fileutils::isFile(bannedInvited))
+        if (std::filesystem::is_regular_file(bannedInvited))
             return "invited"sv;
         auto bannedDevice = fmt::format("{}/banned/devices/{}.crt", repoPath(), uri);
-        if (fileutils::isFile(bannedDevice))
+        if (std::filesystem::is_regular_file(bannedDevice))
             return "devices"sv;
         return {};
     }
@@ -656,7 +656,7 @@ Conversation::Impl::isAdmin() const
     if (!cert->issuer)
         return false;
     auto uri = cert->issuer->getId().toString();
-    return fileutils::isFile(fileutils::getFullPath(adminsPath, uri + ".crt"));
+    return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, uri + ".crt"));
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1062,7 +1062,7 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
     if (includeInvited)
         pathsToCheck.emplace_back(invitedPath);
     for (const auto& path : pathsToCheck) {
-        for (const auto& certificate : fileutils::readDirectory(path)) {
+        for (const auto& certificate : dhtnet::fileutils::readDirectory(path)) {
             std::string_view crtUri = certificate;
             auto crtIt = crtUri.find(".crt");
             if (path != invitedPath && crtIt == std::string_view::npos) {
@@ -1413,7 +1413,7 @@ void
 Conversation::erase()
 {
     if (pimpl_->conversationDataPath_ != "")
-        fileutils::removeAll(pimpl_->conversationDataPath_, true);
+        dhtnet::fileutils::removeAll(pimpl_->conversationDataPath_, true);
     if (!pimpl_->repository_)
         return;
     std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
@@ -1471,7 +1471,7 @@ Conversation::updatePreferences(const std::map<std::string, std::string>& map)
     auto prefs = map;
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
-        if (fileutils::isFile(filePath)) {
+        if (std::filesystem::is_regular_file(filePath)) {
             auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
                 if (lastModified >= std::stoul(itLast->second))
@@ -1545,12 +1545,12 @@ Conversation::onFileChannelRequest(const std::string& member,
 
     auto path = dataTransfer()->path(fileId);
 
-    if (!fileutils::isFile(path)) {
+    if (!std::filesystem::is_regular_file(path)) {
         // Check if dangling symlink
-        if (fileutils::isSymLink(path)) {
-            fileutils::remove(path, true);
+        if (std::filesystem::is_symlink(path)) {
+            dhtnet::fileutils::remove(path, true);
         }
-        JAMI_DEBUG("[Account {:s}] {:s} asked for non existing file {:s} in {:s}",
+        JAMI_DEBUG("[Account {:s}] {:s} asked for non existing file {} in {:s}",
                    pimpl_->accountId_,
                    member,
                    fileId,
@@ -1684,7 +1684,7 @@ Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
     auto prefs = map;
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
-        if (fileutils::isFile(filePath)) {
+        if (std::filesystem::is_regular_file(filePath)) {
             auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
                 if (lastModified >= std::stoul(itLast->second))
