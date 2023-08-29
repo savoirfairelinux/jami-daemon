@@ -1,9 +1,9 @@
 # UPNP
-UPNP_VERSION := 1.14.13
+UPNP_VERSION := 1.14.18
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
-ifeq ($(call need_pkg,"libupnp >= 1.14.2"),)
+ifeq ($(call need_pkg,"libupnp >= 1.14.18"),)
 PKGS_FOUND += upnp
 endif
 
@@ -21,13 +21,6 @@ endif
 	$(MOVE)
 
 PUPNP_OPTIONS=--disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation
-ifdef HAVE_IOS
-PUPNP_OPTIONS+= --disable-reuseaddr
-else
-ifdef HAVE_MACOSX
-PUPNP_OPTIONS+= --disable-reuseaddr
-endif
-endif
 
 .upnp: upnp
 ifdef HAVE_WIN32
