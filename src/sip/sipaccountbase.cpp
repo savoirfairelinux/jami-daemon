@@ -130,7 +130,7 @@ SIPAccountBase::flush()
 {
     // Class base method
     Account::flush();
-    fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
+    dhtnet::fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
                       + DIR_SEPARATOR_STR "messages");
 }
 

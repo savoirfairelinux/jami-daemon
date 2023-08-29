@@ -242,8 +242,8 @@ ConversationMembersEventTest::testRemoveConversationNoMember()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     auto dataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
-    CPPUNIT_ASSERT(fileutils::isDirectory(dataPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(dataPath));
 
     auto conversations = libjami::getConversations(aliceId);
     CPPUNIT_ASSERT(conversations.size() == 1);
@@ -251,8 +251,8 @@ ConversationMembersEventTest::testRemoveConversationNoMember()
     CPPUNIT_ASSERT(libjami::removeConversation(aliceId, convId));
     conversations = libjami::getConversations(aliceId);
     CPPUNIT_ASSERT(conversations.size() == 0);
-    CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
-    CPPUNIT_ASSERT(!fileutils::isDirectory(dataPath));
+    CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
+    CPPUNIT_ASSERT(!std::filesystem::is_directory(dataPath));
 }
 
 void
@@ -305,10 +305,10 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvitedFile = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvitedFile));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvitedFile));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     memberMessageGenerated = false;
@@ -316,9 +316,9 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     bobInvitedFile = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(!fileutils::isFile(bobInvitedFile));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(bobInvitedFile));
     // Remove conversation from alice once member confirmed
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return memberMessageGenerated; }));
 
@@ -326,7 +326,7 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     libjami::removeConversation(aliceId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobSeeAliceRemoved; }));
     std::this_thread::sleep_for(3s);
-    CPPUNIT_ASSERT(!fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
 }
 
 void
@@ -368,21 +368,21 @@ ConversationMembersEventTest::testAddMember()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(!fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(bobInvited));
     auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
                      + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(bobMember));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobMember));
 }
 
 void
@@ -472,7 +472,7 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
     cv.wait_for(lk, 30s, [&]() { return conversationReady; });
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     libjami::unregisterSignalHandlers();
 }
 
@@ -522,7 +522,7 @@ ConversationMembersEventTest::testGetMembers()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     auto members = libjami::getConversationMembers(aliceId, convId);
     CPPUNIT_ASSERT(members.size() == 2);
@@ -1450,7 +1450,7 @@ ConversationMembersEventTest::testCommitUnauthorizedUser()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; }));
 
@@ -1547,13 +1547,13 @@ ConversationMembersEventTest::testMemberJoinsNoBadFile()
     std::string devicesPath = fmt::format("{}/{}/devices/", repoPathCarla, convId);
     std::string memberFile = fmt::format("{}{}.crt", membersPath, carlaUri);
     // Add members/uri.crt
-    fileutils::recursive_mkdir(membersPath, 0700);
-    fileutils::recursive_mkdir(devicesPath, 0700);
+    dhtnet::fileutils::recursive_mkdir(membersPath, 0700);
+    dhtnet::fileutils::recursive_mkdir(devicesPath, 0700);
     auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
     file << parentCert->toString(true);
     file.close();
     std::string invitedPath = fmt::format("{}/{}/invited/{}", repoPathCarla, convId, carlaUri);
-    fileutils::remove(invitedPath);
+    dhtnet::fileutils::remove(invitedPath);
     std::string devicePath = fmt::format("{}{}.crt", devicesPath, carlaAccount->currentDeviceId());
     file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     file << cert->toString(false);
@@ -1641,7 +1641,7 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
 
     // Remove invite but do not add member certificate
     std::string invitedPath = repoPathCarla + "invited";
-    fileutils::remove(fileutils::getFullPath(invitedPath, carlaUri));
+    dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, carlaUri));
 
     Json::Value json;
     json["action"] = "join";
@@ -1740,8 +1740,8 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     std::string devicesPath = fmt::format("{}/{}/devices/", repoPathCarla, convId);
     std::string memberFile = fmt::format("{}{}.crt", membersPath, carlaUri);
     // Add members/uri.crt
-    fileutils::recursive_mkdir(membersPath, 0700);
-    fileutils::recursive_mkdir(devicesPath, 0700);
+    dhtnet::fileutils::recursive_mkdir(membersPath, 0700);
+    dhtnet::fileutils::recursive_mkdir(devicesPath, 0700);
     auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
     file << parentCert->toString(true);
     file.close();
@@ -1930,21 +1930,21 @@ ConversationMembersEventTest::testConversationMemberEvent()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
     auto clonedPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
     bobInvited = clonedPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(!fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(bobInvited));
     auto bobMember = clonedPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri
                      + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(bobMember));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobMember));
 }
 
 void
