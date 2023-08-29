@@ -66,7 +66,7 @@ MediaDecoderTest::setUp()
 void
 MediaDecoderTest::tearDown()
 {
-    fileutils::remove(filename_);
+    dhtnet::fileutils::remove(filename_);
     libjami::fini();
 }
 

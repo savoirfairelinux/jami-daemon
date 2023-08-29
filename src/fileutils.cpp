@@ -1,23 +1,19 @@
 /*
  *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
- *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
- *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
+ *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -126,28 +122,6 @@ winGetEnv(const wchar_t* name)
 
 namespace jami {
 namespace fileutils {
-
-// returns true if directory exists
-bool
-check_dir(const char* path, mode_t UNUSED dirmode, mode_t parentmode)
-{
-    DIR* dir = opendir(path);
-
-    if (!dir) { // doesn't exist
-        if (not recursive_mkdir(path, parentmode)) {
-            perror(path);
-            return false;
-        }
-#ifndef _WIN32
-        if (chmod(path, dirmode) < 0) {
-            JAMI_ERR("fileutils::check_dir(): chmod() failed on '%s', %s", path, strerror(errno));
-            return false;
-        }
-#endif
-    } else
-        closedir(dir);
-    return true;
-}
 
 std::string
 expand_path(const std::string& path)
@@ -274,60 +248,6 @@ isSymLink(const std::string& path)
     return false;
 }
 
-std::chrono::system_clock::time_point
-writeTime(const std::string& path)
-{
-#ifndef _WIN32
-    struct stat s;
-    auto ret = stat(path.c_str(), &s);
-    if (ret)
-        throw std::runtime_error("Can't check write time for: " + path);
-    return std::chrono::system_clock::from_time_t(s.st_mtime);
-#else
-#if RING_UWP
-    _CREATEFILE2_EXTENDED_PARAMETERS ext_params = {0};
-    ext_params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
-    ext_params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-    ext_params.dwFileFlags = FILE_FLAG_NO_BUFFERING;
-    ext_params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-    ext_params.lpSecurityAttributes = nullptr;
-    ext_params.hTemplateFile = nullptr;
-    HANDLE h = CreateFile2(jami::to_wstring(path).c_str(),
-                           GENERIC_READ,
-                           FILE_SHARE_READ,
-                           OPEN_EXISTING,
-                           &ext_params);
-#elif _WIN32
-    HANDLE h = CreateFileW(jami::to_wstring(path).c_str(),
-                           GENERIC_READ,
-                           FILE_SHARE_READ,
-                           nullptr,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL,
-                           nullptr);
-#endif
-    if (h == INVALID_HANDLE_VALUE)
-        throw std::runtime_error("Can't open: " + path);
-    FILETIME lastWriteTime;
-    if (!GetFileTime(h, nullptr, nullptr, &lastWriteTime))
-        throw std::runtime_error("Can't check write time for: " + path);
-    CloseHandle(h);
-    SYSTEMTIME sTime;
-    if (!FileTimeToSystemTime(&lastWriteTime, &sTime))
-        throw std::runtime_error("Can't check write time for: " + path);
-    struct tm tm
-    {};
-    tm.tm_year = sTime.wYear - 1900;
-    tm.tm_mon = sTime.wMonth - 1;
-    tm.tm_mday = sTime.wDay;
-    tm.tm_hour = sTime.wHour;
-    tm.tm_min = sTime.wMinute;
-    tm.tm_sec = sTime.wSecond;
-    tm.tm_isdst = -1;
-    return std::chrono::system_clock::from_time_t(mktime(&tm));
-#endif
-}
-
 bool
 createSymlink(const std::string& linkFile, const std::string& target)
 {
@@ -394,29 +314,17 @@ getCleanPath(const std::string& base, const std::string& path)
         return path;
 }
 
-std::string
-getFullPath(const std::string& base, const std::string& path)
+std::filesystem::path
+getFullPath(const std::filesystem::path& base, const std::string& path)
 {
     bool isRelative {not base.empty() and isPathRelative(path)};
-    return isRelative ? base + DIR_SEPARATOR_STR + path : path;
+    return isRelative ? base / path : std::filesystem::path(path);
 }
 
 std::vector<uint8_t>
 loadFile(const std::string& path, const std::string& default_dir)
 {
-    std::vector<uint8_t> buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path), std::ios::binary);
-    if (!file)
-        throw std::runtime_error("Can't read file: " + path);
-    file.seekg(0, std::ios::end);
-    auto size = file.tellg();
-    if (size > std::numeric_limits<unsigned>::max())
-        throw std::runtime_error("File is too big: " + path);
-    buffer.resize(size);
-    file.seekg(0, std::ios::beg);
-    if (!file.read((char*) buffer.data(), size))
-        throw std::runtime_error("Can't load file: " + path);
-    return buffer;
+    return dhtnet::fileutils::loadFile(getFullPath(default_dir, path));
 }
 
 std::string
@@ -461,79 +369,28 @@ saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t 
 }
 
 std::vector<uint8_t>
-loadCacheFile(const std::string& path, std::chrono::system_clock::duration maxAge)
+loadCacheFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge)
 {
-    // writeTime throws exception if file doesn't exist
-    auto duration = std::chrono::system_clock::now() - writeTime(path);
-    if (duration > maxAge)
+    // last_write_time throws exception if file doesn't exist
+    auto writeTime = std::filesystem::last_write_time(path);
+    if (decltype(writeTime)::clock::now() - writeTime > maxAge)
         throw std::runtime_error("file too old");
 
-    JAMI_DBG("Loading cache file '%.*s'", (int) path.size(), path.c_str());
-    return loadFile(path);
+    JAMI_LOG("Loading cache file '{}'", path);
+    return dhtnet::fileutils::loadFile(path);
 }
 
 std::string
-loadCacheTextFile(const std::string& path, std::chrono::system_clock::duration maxAge)
+loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge)
 {
-    // writeTime throws exception if file doesn't exist
-    auto duration = std::chrono::system_clock::now() - writeTime(path);
-    if (duration > maxAge)
+    // last_write_time throws exception if file doesn't exist
+    auto writeTime = std::filesystem::last_write_time(path);
+    if (decltype(writeTime)::clock::now() - writeTime > maxAge)
         throw std::runtime_error("file too old");
 
-    JAMI_DBG("Loading cache file '%.*s'", (int) path.size(), path.c_str());
+    JAMI_LOG("Loading cache file '{}'", path);
     return loadTextFile(path);
 }
-
-static size_t
-dirent_buf_size(UNUSED DIR* dirp)
-{
-    long name_max;
-#if defined(HAVE_FPATHCONF) && defined(HAVE_DIRFD) && defined(_PC_NAME_MAX)
-    name_max = fpathconf(dirfd(dirp), _PC_NAME_MAX);
-    if (name_max == -1)
-#if defined(NAME_MAX)
-        name_max = (NAME_MAX > 255) ? NAME_MAX : 255;
-#else
-        return (size_t) (-1);
-#endif
-#else
-#if defined(NAME_MAX)
-    name_max = (NAME_MAX > 255) ? NAME_MAX : 255;
-#else
-#error "buffer size for readdir_r cannot be determined"
-#endif
-#endif
-    size_t name_end = (size_t) offsetof(struct dirent, d_name) + name_max + 1;
-    return name_end > sizeof(struct dirent) ? name_end : sizeof(struct dirent);
-}
-
-std::vector<std::string>
-readDirectory(const std::string& dir)
-{
-    DIR* dp = opendir(dir.c_str());
-    if (!dp)
-        return {};
-
-    size_t size = dirent_buf_size(dp);
-    if (size == (size_t) (-1))
-        return {};
-    std::vector<uint8_t> buf(size);
-    dirent* entry;
-
-    std::vector<std::string> files;
-#ifndef _WIN32
-    while (!readdir_r(dp, reinterpret_cast<dirent*>(buf.data()), &entry) && entry) {
-#else
-    while ((entry = readdir(dp)) != nullptr) {
-#endif
-        std::string fname {entry->d_name};
-        if (fname == "." || fname == "..")
-            continue;
-        files.emplace_back(std::move(fname));
-    }
-    closedir(dp);
-    return files;
-} // namespace fileutils
 
 std::vector<uint8_t>
 readArchive(const std::string& path, const std::string& pwd)
@@ -561,7 +418,7 @@ readArchive(const std::string& path, const std::string& pwd)
     std::vector<uint8_t> data;
     // Read file
     try {
-        data = loadFile(path);
+        data = dhtnet::fileutils::loadFile(path);
     } catch (const std::exception& e) {
         JAMI_ERR("Error loading archive: %s", e.what());
         throw e;
@@ -808,7 +665,7 @@ get_config_dir(const char* pkg)
         configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR
                     + pkg;
 #endif
-    if (fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
+    if (dhtnet::fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
             JAMI_DBG("Cannot create directory: %s!", configdir.c_str());
@@ -820,29 +677,6 @@ std::string
 get_config_dir()
 {
     return get_config_dir(PACKAGE);
-}
-
-bool
-recursive_mkdir(const std::string& path, mode_t mode)
-{
-#ifndef _WIN32
-    if (mkdir(path.data(), mode) != 0) {
-#else
-    if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
-#endif
-        if (errno == ENOENT) {
-            recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_CH)), mode);
-#ifndef _WIN32
-            if (mkdir(path.data(), mode) != 0) {
-#else
-            if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
-#endif
-                JAMI_ERR("Could not create directory.");
-                return false;
-            }
-        }
-    } // namespace jami
-    return true;
 }
 
 #ifdef _WIN32
@@ -978,21 +812,6 @@ remove(const std::string& path, bool erase)
     return std::remove(path.c_str());
 }
 
-int
-removeAll(const std::string& path, bool erase)
-{
-    if (path.empty())
-        return -1;
-    if (isDirectory(path) and !isSymLink(path)) {
-        auto dir = path;
-        if (dir.back() != DIR_SEPARATOR_CH)
-            dir += DIR_SEPARATOR_CH;
-        for (auto& entry : fileutils::readDirectory(dir))
-            removeAll(dir + entry, erase);
-    }
-    return remove(path, erase);
-}
-
 void
 openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode)
 {
@@ -1056,7 +875,7 @@ sha3File(const std::string& path)
 
     std::ifstream file;
     try {
-        if (!fileutils::isFile(path))
+        if (not std::filesystem::is_regular_file(path))
             return {};
         openStream(file, path, std::ios::binary | std::ios::in);
         if (!file)
