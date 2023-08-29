@@ -41,6 +41,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "50049a21_2459fb4a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 7
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-08-29T17:49:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b844741c_cd6b0a86",
+      "revId": "ec3337c1e38e580d288b9eec2c22f081de643f77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3b7a7744_a7152bca",
@@ -54,6 +72,30 @@
       "writtenOn": "2023-08-29T17:44:51Z",
       "side": 1,
       "message": "not in .h",
+      "range": {
+        "startLine": 318,
+        "startChar": 23,
+        "endLine": 318,
+        "endChar": 33
+      },
+      "revId": "ec3337c1e38e580d288b9eec2c22f081de643f77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "38e61b64_8110e022",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-08-29T17:49:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3b7a7744_a7152bca",
       "range": {
         "startLine": 318,
         "startChar": 23,
