@@ -736,12 +736,12 @@ FileTransferTest::testAskToMultipleParticipants()
     transferCFinished = false;
     libjami::downloadFile(carlaId, convId, iidCarla, carlaTid, recv2Path);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferCFinished; }));
-    CPPUNIT_ASSERT(fileutils::isFile(recv2Path));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(recv2Path));
 
     transferBFinished = false;
     libjami::downloadFile(bobId, convId, iidBob, bobTid, recvPath);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBFinished; }));
-    CPPUNIT_ASSERT(fileutils::isFile(recvPath));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(recvPath));
 
     libjami::unregisterSignalHandlers();
 }
@@ -833,7 +833,7 @@ FileTransferTest::testCancelInTransfer()
     transferBCancelled = false;
     libjami::cancelDataTransfer(bobId, convId, tidBob);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferBCancelled; }));
-    CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(recvPath));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(tidBob));
 
     libjami::unregisterSignalHandlers();
@@ -922,7 +922,7 @@ FileTransferTest::testTransferInfo()
     CPPUNIT_ASSERT(libjami::fileTransferInfo(bobId, convId, tidBob, path, totalSize, bytesProgress)
                    == libjami::DataTransferError::invalid_argument);
     CPPUNIT_ASSERT(bytesProgress == 0);
-    CPPUNIT_ASSERT(!fileutils::isFile(path));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(path));
     // No check for total as not started
 
     transferAFinished = false;
@@ -934,7 +934,7 @@ FileTransferTest::testTransferInfo()
 
     CPPUNIT_ASSERT(bytesProgress == 64000);
     CPPUNIT_ASSERT(totalSize == 64000);
-    CPPUNIT_ASSERT(fileutils::isFile(path));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(path));
 
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(5s);
@@ -1080,7 +1080,7 @@ FileTransferTest::testTooLarge()
     libjami::downloadFile(bobId, convId, iidBob, tidBob, recvPath);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return cancelled; }));
-    CPPUNIT_ASSERT(!fileutils::isFile(recvPath));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(recvPath));
 
     libjami::unregisterSignalHandlers();
 }
