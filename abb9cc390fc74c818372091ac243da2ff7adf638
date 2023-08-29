@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e29eca39_61c70343",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 372,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-08-29T17:53:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ec61ebd5_d0b6e677",
+      "range": {
+        "startLine": 372,
+        "startChar": 0,
+        "endLine": 372,
+        "endChar": 50
+      },
+      "revId": "abb9cc390fc74c818372091ac243da2ff7adf638",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4a260dad_c77195d0",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-08-29T17:49:29Z",
       "side": 1,
       "message": ".h is different",
+      "range": {
+        "startLine": 384,
+        "startChar": 8,
+        "endLine": 384,
+        "endChar": 50
+      },
+      "revId": "abb9cc390fc74c818372091ac243da2ff7adf638",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e44d7605_d96c4157",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 384,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-08-29T17:53:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4a260dad_c77195d0",
       "range": {
         "startLine": 384,
         "startChar": 8,
