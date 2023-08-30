@@ -477,7 +477,7 @@ TlsValidator::compareToCa()
         JAMI_WARN("gnutls_x509_trust_list_add_cas failed: %s", gnutls_strerror(err));
 
     if (not caListPath_.empty()) {
-        if (fileutils::isDirectory(caListPath_))
+        if (std::filesystem::is_directory(caListPath_))
             gnutls_x509_trust_list_add_trust_dir(trust,
                                                  caListPath_.c_str(),
                                                  nullptr,

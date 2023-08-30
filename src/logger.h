@@ -28,6 +28,11 @@
 #include <fmt/format.h>
 #include <fmt/chrono.h>
 #include <fmt/printf.h>
+#if __has_include(<fmt/std.h>)
+#include <fmt/std.h>
+#else
+#include <fmt/ostream.h>
+#endif
 #include <opendht/logger.h>
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
