@@ -195,7 +195,7 @@ public:
             return {};
         std::map<std::string, std::vector<DeviceId>> memberDevices;
         std::string deviceDir = fmt::format("{}devices/", git_repository_workdir(repo.get()));
-        for (const auto& file : fileutils::readDirectory(deviceDir)) {
+        for (const auto& file: dhtnet::fileutils::readDirectory(deviceDir)) {
             std::shared_ptr<dht::crypto::Certificate> cert;
             try {
                 cert = std::make_shared<dht::crypto::Certificate>(
@@ -209,7 +209,7 @@ public:
                     // Check that parentCert
                     auto memberFile = fmt::format("{}members/{}.crt", git_repository_workdir(repo.get()), issuerUid);
                     auto adminFile = fmt::format("{}admins/{}.crt", git_repository_workdir(repo.get()), issuerUid);
-                    auto parentCert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(fileutils::isFile(memberFile) ? memberFile : adminFile));
+                    auto parentCert = std::make_shared<dht::crypto::Certificate>(dhtnet::fileutils::loadFile(std::filesystem::is_regular_file(memberFile) ? memberFile : adminFile));
                     if (parentCert && (ignoreExpired || parentCert->getExpiration() < std::chrono::system_clock::now()))
                         acc->certStore().pinCertificate(parentCert, true); // Pin certificate to local store if not already done
                 }
@@ -284,9 +284,8 @@ public:
         auto cert = acc->certStore().getCertificate(deviceId);
         if (!cert || !cert->issuer) {
             // Not pinned, so load certificate from repo
-            std::string deviceFile = git_repository_workdir(repo.get())
-                                     + fmt::format("devices/{}.crt", deviceId);
-            if (!fileutils::isFile(deviceFile))
+            auto deviceFile = std::filesystem::path(git_repository_workdir(repo.get())) / "devices" / fmt::format("{}.crt", deviceId);
+            if (!std::filesystem::is_regular_file(deviceFile))
                 return {};
             try {
                 cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
@@ -426,7 +425,7 @@ add_initial_files(GitRepository& repo,
     std::string invitedPath = repoPath + "invited";
     std::string crlsPath = repoPath + "CRLs" + DIR_SEPARATOR_STR + deviceId;
 
-    if (!fileutils::recursive_mkdir(adminsPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(adminsPath, 0700)) {
         JAMI_ERROR("Error when creating %s. Abort create conversations", adminsPath.c_str());
         return false;
     }
@@ -449,7 +448,7 @@ add_initial_files(GitRepository& repo,
     file << parentCert->toString(true);
     file.close();
 
-    if (!fileutils::recursive_mkdir(devicesPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(devicesPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort create conversations", devicesPath);
         return false;
     }
@@ -464,7 +463,7 @@ add_initial_files(GitRepository& repo,
     file << deviceCert;
     file.close();
 
-    if (!fileutils::recursive_mkdir(crlsPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(crlsPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort create conversations", crlsPath);
         return false;
     }
@@ -486,12 +485,12 @@ add_initial_files(GitRepository& repo,
 
     // /invited for one to one
     if (mode == ConversationMode::ONE_TO_ONE) {
-        if (!fileutils::recursive_mkdir(invitedPath, 0700)) {
+        if (!dhtnet::fileutils::recursive_mkdir(invitedPath, 0700)) {
             JAMI_ERROR("Error when creating {}.", invitedPath);
             return false;
         }
         std::string invitedMemberPath = invitedPath + "/" + otherMember;
-        if (fileutils::isFile(invitedMemberPath)) {
+        if (std::filesystem::is_regular_file(invitedMemberPath)) {
             JAMI_WARNING("Member {} already present!", otherMember);
             return false;
         }
@@ -1420,7 +1419,7 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     auto nbAdmins = 0;
     auto nbVotes = 0;
     std::string repoPath = git_repository_workdir(repo.get());
-    for (const auto& certificate : fileutils::readDirectory(repoPath + "admins")) {
+    for (const auto& certificate : dhtnet::fileutils::readDirectory(repoPath + "admins")) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARNING("Incorrect file found: {}", certificate);
             continue;
@@ -1667,7 +1666,7 @@ ConversationRepository::Impl::validateDevice()
     }
     auto path = fmt::format("devices/{}.crt", account->currentDeviceId());
     std::string devicePath = git_repository_workdir(repo.get()) + path;
-    if (!fileutils::isFile(devicePath)) {
+    if (!std::filesystem::is_regular_file(devicePath)) {
         JAMI_WARNING("Couldn't find file {}", devicePath);
         return false;
     }
@@ -1706,9 +1705,9 @@ ConversationRepository::Impl::validateDevice()
     auto memberPath = fmt::format("members/{}.crt", account->getUsername());
     std::string parentPath = git_repository_workdir(repo.get());
     std::string relativeParentPath;
-    if (fileutils::isFile(parentPath + adminPath))
+    if (std::filesystem::is_regular_file(parentPath + adminPath))
         relativeParentPath = adminPath;
-    else if (fileutils::isFile(parentPath + memberPath))
+    else if (std::filesystem::is_regular_file(parentPath + memberPath))
         relativeParentPath = memberPath;
     parentPath += relativeParentPath;
     if (relativeParentPath.empty()) {
@@ -1727,7 +1726,7 @@ ConversationRepository::Impl::validateDevice()
                   "current one.");
         auto cert = account->identity().second;
         auto newCert = cert->issuer;
-        if (newCert && fileutils::isFile(parentPath)) {
+        if (newCert && std::filesystem::is_regular_file(parentPath)) {
             auto file = fileutils::ofstream(parentPath, std::ios::trunc | std::ios::binary);
             if (!file.is_open()) {
                 JAMI_ERROR("Could not write data to {}", path);
@@ -2441,7 +2440,7 @@ ConversationRepository::Impl::initMembers()
 
     auto i = 0;
     for (const auto& p : paths) {
-        for (const auto& f : fileutils::readDirectory(p)) {
+        for (const auto& f : dhtnet::fileutils::readDirectory(p)) {
             auto pos = f.find(".crt");
             auto uri = f.substr(0, pos);
             auto it = std::find(uris.begin(), uris.end(), uri);
@@ -2555,13 +2554,13 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     random_device rdev;
     auto conversationsPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
                              + DIR_SEPARATOR_STR + "conversations";
-    fileutils::check_dir(conversationsPath.c_str());
+    dhtnet::fileutils::check_dir(conversationsPath.c_str());
     auto tmpPath = conversationsPath + DIR_SEPARATOR_STR + std::to_string(dist(rdev));
-    if (fileutils::isDirectory(tmpPath)) {
+    if (std::filesystem::is_directory(tmpPath)) {
         JAMI_ERROR("{} already exists. Abort create conversations", tmpPath);
         return {};
     }
-    if (!fileutils::recursive_mkdir(tmpPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(tmpPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort create conversations", tmpPath);
         return {};
     }
@@ -2573,7 +2572,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     // Add initial files
     if (!add_initial_files(repo, account, mode, otherMember)) {
         JAMI_ERROR("Error when adding initial files");
-        fileutils::removeAll(tmpPath, true);
+        dhtnet::fileutils::removeAll(tmpPath, true);
         return {};
     }
 
@@ -2581,7 +2580,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     auto id = initial_commit(repo, account, mode, otherMember);
     if (id.empty()) {
         JAMI_ERROR("Couldn't create initial commit in {}", tmpPath);
-        fileutils::removeAll(tmpPath, true);
+        dhtnet::fileutils::removeAll(tmpPath, true);
         return {};
     }
 
@@ -2589,7 +2588,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     auto newPath = conversationsPath + "/" + id;
     if (std::rename(tmpPath.c_str(), newPath.c_str())) {
         JAMI_ERROR("Couldn't move {} in {}", tmpPath, newPath);
-        fileutils::removeAll(tmpPath, true);
+        dhtnet::fileutils::removeAll(tmpPath, true);
         return {};
     }
 
@@ -2605,7 +2604,7 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
 {
     auto conversationsPath = fileutils::get_data_dir() + "/" + account->getAccountID() + "/"
                              + "conversations";
-    fileutils::check_dir(conversationsPath.c_str());
+    dhtnet::fileutils::check_dir(conversationsPath.c_str());
     auto path = conversationsPath + "/" + conversationId;
     auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
@@ -2629,10 +2628,10 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
         return 0;
     };
 
-    if (fileutils::isDirectory(path)) {
+    if (std::filesystem::is_directory(path)) {
         // If a crash occurs during a previous clone, just in case
         JAMI_WARNING("Removing existing directory {} (the dir exists and non empty)", path);
-        if (fileutils::removeAll(path, true) != 0)
+        if (dhtnet::fileutils::removeAll(path, true) != 0)
             return nullptr;
     }
 
@@ -2890,15 +2889,15 @@ ConversationRepository::addMember(const std::string& uri)
         name = deviceId;
 
     // First, we need to add the member file to the repository if not present
-    std::string repoPath = git_repository_workdir(repo.get());
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
 
-    std::string invitedPath = repoPath + "invited";
-    if (!fileutils::recursive_mkdir(invitedPath, 0700)) {
+    std::filesystem::path invitedPath = repoPath / "invited";
+    if (!dhtnet::fileutils::recursive_mkdir(invitedPath, 0700)) {
         JAMI_ERROR("Error when creating {}.", invitedPath);
         return {};
     }
-    std::string devicePath = invitedPath + "/" + uri;
-    if (fileutils::isFile(devicePath)) {
+    std::filesystem::path devicePath = invitedPath / uri;
+    if (std::filesystem::is_regular_file(devicePath)) {
         JAMI_WARNING("Member {} already present!", uri);
         return {};
     }
@@ -2909,7 +2908,7 @@ ConversationRepository::addMember(const std::string& uri)
         return {};
     }
     std::string path = "invited/" + uri;
-    if (!pimpl_->add(path.c_str()))
+    if (!pimpl_->add(path))
         return {};
 
     {
@@ -3085,7 +3084,7 @@ ConversationRepository::Impl::addUserDevice()
     // NOTE: libgit2 uses / for files
     std::string path = fmt::format("devices/{}.crt", account->currentDeviceId());
     std::string devicePath = git_repository_workdir(repo.get()) + path;
-    if (!fileutils::isFile(devicePath)) {
+    if (!std::filesystem::is_regular_file(devicePath)) {
         auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERROR("Could not write data to {}", devicePath);
@@ -3308,15 +3307,15 @@ ConversationRepository::join()
     std::string membersPath = repoPath + "members" + DIR_SEPARATOR_STR;
     std::string memberFile = membersPath + DIR_SEPARATOR_STR + uri + ".crt";
     std::string adminsPath = repoPath + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
-    if (fileutils::isFile(memberFile) or fileutils::isFile(adminsPath)) {
+    if (std::filesystem::is_regular_file(memberFile) or std::filesystem::is_regular_file(adminsPath)) {
         // Already member, nothing to commit
         return {};
     }
     // Remove invited/uri.crt
     std::string invitedPath = repoPath + "invited";
-    fileutils::remove(fileutils::getFullPath(invitedPath, uri));
+    dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, uri));
     // Add members/uri.crt
-    if (!fileutils::recursive_mkdir(membersPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(membersPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort create conversations", membersPath);
         return {};
     }
@@ -3381,12 +3380,12 @@ ConversationRepository::leave()
     std::string memberFile = fmt::format("{}members/{}.crt", repoPath, uri);
     std::string crlsPath = fmt::format("{}CRLs", repoPath);
 
-    if (fileutils::isFile(adminFile)) {
-        fileutils::removeAll(adminFile, true);
+    if (std::filesystem::is_regular_file(adminFile)) {
+        dhtnet::fileutils::removeAll(adminFile, true);
     }
 
-    if (fileutils::isFile(memberFile)) {
-        fileutils::removeAll(memberFile, true);
+    if (std::filesystem::is_regular_file(memberFile)) {
+        dhtnet::fileutils::removeAll(memberFile, true);
     }
 
     // /CRLs
@@ -3394,16 +3393,16 @@ ConversationRepository::leave()
         if (!crl)
             continue;
         std::string crlPath = fmt::format("{}/{}/{}.crl", crlsPath, deviceId, dht::toHex(crl->getNumber()));
-        if (fileutils::isFile(crlPath)) {
-            fileutils::removeAll(crlPath, true);
+        if (std::filesystem::is_regular_file(crlPath)) {
+            dhtnet::fileutils::removeAll(crlPath, true);
         }
     }
 
     // Devices
     for (const auto& d : account->getKnownDevices()) {
         std::string deviceFile = fmt::format("{}devices/{}.crt", repoPath, d.first);
-        if (fileutils::isFile(deviceFile)) {
-            fileutils::removeAll(deviceFile, true);
+        if (std::filesystem::is_regular_file(deviceFile)) {
+            dhtnet::fileutils::removeAll(deviceFile, true);
         }
     }
 
@@ -3436,7 +3435,7 @@ ConversationRepository::erase()
     if (auto repo = pimpl_->repository()) {
         std::string repoPath = git_repository_workdir(repo.get());
         JAMI_LOG("Erasing {}", repoPath);
-        fileutils::removeAll(repoPath, true);
+        dhtnet::fileutils::removeAll(repoPath, true);
     }
 }
 
@@ -3463,7 +3462,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
         return {};
     }
 
-    if (!fileutils::isFile(
+    if (!std::filesystem::is_regular_file(
             fmt::format("{}/{}/{}{}", repoPath, type, uri, (type != "invited" ? ".crt" : "")))) {
         JAMI_WARNING("Didn't found file for {} with type {}", uri, type);
         return {};
@@ -3471,7 +3470,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
 
     auto relativeVotePath = fmt::format("votes/ban/{}/{}", type, uri);
     auto voteDirectory = repoPath + relativeVotePath;
-    if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
@@ -3511,7 +3510,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
 
     auto relativeVotePath = fmt::format("votes/unban/{}/{}", type, uri);
     auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
-    if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
@@ -3549,7 +3548,7 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
 
     auto destPath = bannedPath + DIR_SEPARATOR_STR + type;
     auto destFilePath = fmt::format("{}/{}{}", destPath, uri, crtStr);
-    if (!fileutils::recursive_mkdir(destPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort resolving vote", destPath);
         return false;
     }
@@ -3563,13 +3562,13 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
 
     // If members, remove related devices and mark as banned
     if (type != "devices") {
-        for (const auto& certificate : fileutils::readDirectory(devicesPath)) {
+        for (const auto& certificate : dhtnet::fileutils::readDirectory(devicesPath)) {
             auto certPath = fileutils::getFullPath(devicesPath, certificate);
             try {
                 crypto::Certificate cert(fileutils::loadFile(certPath));
                 if (auto issuer = cert.issuer)
                     if (issuer->toString() == uri)
-                        fileutils::remove(certPath, true);
+                        dhtnet::fileutils::remove(certPath, true);
             } catch (...) {
                 continue;
             }
@@ -3600,7 +3599,7 @@ ConversationRepository::Impl::resolveUnban(const std::string_view type, const st
     auto originFilePath = fmt::format("{}/{}/{}{}", bannedPath, type, uri, crtStr);
     auto destPath = repoPath + DIR_SEPARATOR_STR + type;
     auto destFilePath = fmt::format("{}/{}{}", destPath, uri, crtStr);
-    if (!fileutils::recursive_mkdir(destPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort resolving vote", destPath);
         return false;
     }
@@ -3648,14 +3647,14 @@ ConversationRepository::resolveVote(const std::string& uri,
     auto votePath = fmt::format("{}/{}", voteType, type);
 
     auto voteDirectory = fmt::format("{}/votes/{}/{}", repoPath, votePath, uri);
-    for (const auto& certificate : fileutils::readDirectory(adminsPath)) {
+    for (const auto& certificate : dhtnet::fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARNING("Incorrect file found: {}/{}", adminsPath, certificate);
             continue;
         }
         auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
         nbAdmins += 1;
-        if (fileutils::isFile(fileutils::getFullPath(voteDirectory, adminUri)))
+        if (std::filesystem::is_regular_file(fileutils::getFullPath(voteDirectory, adminUri)))
             nbVotes += 1;
     }
 
@@ -3663,7 +3662,7 @@ ConversationRepository::resolveVote(const std::string& uri,
         JAMI_WARNING("More than half of the admins voted to ban {}, apply the ban", uri);
 
         // Remove vote directory
-        fileutils::removeAll(voteDirectory, true);
+        dhtnet::fileutils::removeAll(voteDirectory, true);
 
         if (voteType == "ban") {
             if (!pimpl_->resolveBan(type, uri))
@@ -3885,7 +3884,7 @@ ConversationRepository::infos() const
             std::string repoPath = git_repository_workdir(repo.get());
             auto profilePath = repoPath + "profile.vcf";
             std::map<std::string, std::string> result;
-            if (fileutils::isFile(profilePath)) {
+            if (std::filesystem::is_regular_file(profilePath)) {
                 auto content = fileutils::loadFile(profilePath);
                 result = ConversationRepository::infosFromVCard(vCard::utils::toMap(
                     std::string_view {(const char*) content.data(), content.size()}));
