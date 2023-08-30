@@ -1,5 +1,5 @@
 # DHTNET
-DHTNET_VERSION := 7fbedf9f148809d4d8c430e525b1bac7d7b209d8
+DHTNET_VERSION := 48afb6f5c8d60c8d62f348809c51990f7bd523ab
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
@@ -9,7 +9,7 @@ DEPS_dhtnet += opendht pjproject asio
 DHTNET_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_BENCHMARKS=Off \
 	-DBUILD_TOOLS=Off \
-	-DBUILD_TESTING=Off
+	-DBUILD_TESTING=Off -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS=" -g "
 
 $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 	$(call download,$(DHTNET_URL))
