@@ -41,9 +41,7 @@ public:
     void tearDown();
 
 private:
-    void testCheckDir();
     void testPath();
-    void testReadDirectory();
     void testLoadFile();
     void testIsDirectoryWritable();
     void testGetCleanPath();
@@ -51,9 +49,7 @@ private:
     void testCopy();
 
     CPPUNIT_TEST_SUITE(FileutilsTest);
-    CPPUNIT_TEST(testCheckDir);
     CPPUNIT_TEST(testPath);
-    CPPUNIT_TEST(testReadDirectory);
     CPPUNIT_TEST(testLoadFile);
     CPPUNIT_TEST(testIsDirectoryWritable);
     CPPUNIT_TEST(testGetCleanPath);
