@@ -173,24 +173,24 @@ restore_backup(const std::string& path)
 void
 check_rename(const std::string& old_dir, const std::string& new_dir)
 {
-    if (old_dir == new_dir or not fileutils::isDirectory(old_dir))
+    if (old_dir == new_dir or not std::filesystem::is_directory(old_dir))
         return;
 
-    if (not fileutils::isDirectory(new_dir)) {
+    if (not std::filesystem::is_directory(new_dir)) {
         JAMI_WARN() << "Migrating " << old_dir << " to " << new_dir;
         std::rename(old_dir.c_str(), new_dir.c_str());
     } else {
-        for (const auto& file : fileutils::readDirectory(old_dir)) {
+        for (const auto& file : dhtnet::fileutils::readDirectory(old_dir)) {
             auto old_dest = fileutils::getFullPath(old_dir, file);
             auto new_dest = fileutils::getFullPath(new_dir, file);
-            if (fileutils::isDirectory(old_dest) and fileutils::isDirectory(new_dest)) {
+            if (std::filesystem::is_directory(old_dest) and std::filesystem::is_directory(new_dest)) {
                 check_rename(old_dest, new_dest);
             } else {
                 JAMI_WARN() << "Migrating " << old_dest << " to " << new_dest;
                 std::rename(old_dest.c_str(), new_dest.c_str());
             }
         }
-        fileutils::removeAll(old_dir);
+        dhtnet::fileutils::removeAll(old_dir);
     }
 }
 
@@ -944,7 +944,7 @@ Manager::monitor(bool continuous)
 #ifdef __linux__
 #if defined(__ANDROID__)
 #else
-    auto opened_files = fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
+    auto opened_files = dhtnet::fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
     JAMI_DBG("Opened files: %lu", opened_files);
 #endif
 #endif
@@ -1779,10 +1779,10 @@ Manager::saveConfig()
         out << YAML::Value << YAML::BeginSeq;
 
         for (const auto& account : accountFactory.getAllAccounts()) {
-            if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
-                auto accountConfig = ringAccount->getPath() + DIR_SEPARATOR_STR + "config.yml";
-                if (not fileutils::isFile(accountConfig)) {
-                    saveConfig(ringAccount);
+            if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
+                auto accountConfig = jamiAccount->getPath() / "config.yml";
+                if (not std::filesystem::is_regular_file(accountConfig)) {
+                    saveConfig(jamiAccount);
                 }
             } else {
                 account->config().serialize(out);
@@ -1802,7 +1802,7 @@ Manager::saveConfig()
         pluginPreferences.serialize(out);
 #endif
 
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
+        std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(pimpl_->path_));
         std::ofstream fout = fileutils::ofstream(pimpl_->path_);
         fout.write(out.c_str(), out.size());
     } catch (const YAML::Exception& e) {
@@ -2867,7 +2867,7 @@ Manager::loadAccountMap(const YAML::Node& node)
     }
 
     auto accountBaseDir = fileutils::get_data_dir();
-    auto dirs = fileutils::readDirectory(accountBaseDir);
+    auto dirs = dhtnet::fileutils::readDirectory(accountBaseDir);
 
     std::condition_variable cv;
     std::mutex lock;
@@ -2885,7 +2885,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                                             &lock,
                                             configFile = accountBaseDir + DIR_SEPARATOR_STR + dir
                                                          + DIR_SEPARATOR_STR + "config.yml"] {
-            if (fileutils::isFile(configFile)) {
+            if (std::filesystem::is_regular_file(configFile)) {
                 try {
                     auto configNode = YAML::LoadFile(configFile);
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
