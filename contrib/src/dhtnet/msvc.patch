@@ -1,0 +1,13 @@
+diff --git a/include/fileutils.h b/include/fileutils.h
+index 80efe42..7b1cc72 100644
+--- a/include/fileutils.h
++++ b/include/fileutils.h
+@@ -26,6 +26,8 @@
+ 
+ #ifndef _WIN32
+ #include <sys/stat.h>               // mode_t
++#else
++#define mode_t                unsigned
+ #endif
+ 
+ namespace dhtnet {

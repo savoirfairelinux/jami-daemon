@@ -16,7 +16,7 @@
         "BUILD_TESTING=0",
         "BUILD_BENCHMARKS=0"
     ],
-    "patches": [],
+    "patches": ["msvc.patch"],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
