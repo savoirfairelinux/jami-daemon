@@ -94,41 +94,12 @@ FileutilsTest::tearDown()
 }
 
 void
-FileutilsTest::testCheckDir()
-{
-    // check existed directory
-    CPPUNIT_ASSERT(check_dir(TEST_PATH.c_str()));
-    CPPUNIT_ASSERT(isDirectory(TEST_PATH.c_str()));
-    // check non-existent directory
-    CPPUNIT_ASSERT(!isDirectory(NON_EXISTANT_PATH));
-    CPPUNIT_ASSERT(check_dir(NON_EXISTANT_PATH.c_str()));
-    CPPUNIT_ASSERT(isDirectory(NON_EXISTANT_PATH));
-    CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == 0);
-    CPPUNIT_ASSERT(!isDirectory(NON_EXISTANT_PATH_BASE));
-    //remove an non existent directory
-    CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == -1);
-}
-
-void
 FileutilsTest::testPath()
 {
     CPPUNIT_ASSERT(isPathRelative("relativePath"));
-    CPPUNIT_ASSERT(isFile(EXISTANT_FILE));
-    CPPUNIT_ASSERT(!isDirectory(EXISTANT_FILE));
-    CPPUNIT_ASSERT(isDirectory(TEST_PATH));
-}
-
-void
-FileutilsTest::testReadDirectory()
-{
-    CPPUNIT_ASSERT(recursive_mkdir(TEST_PATH + DIR_SEPARATOR_STR + "readDirectory" + DIR_SEPARATOR_STR + "test1"));
-    CPPUNIT_ASSERT(recursive_mkdir(TEST_PATH + DIR_SEPARATOR_STR + "readDirectory" + DIR_SEPARATOR_STR + "test2"));
-    auto dirs = readDirectory(TEST_PATH + DIR_SEPARATOR_STR + "readDirectory");
-    CPPUNIT_ASSERT(dirs.size() == 2);
-    CPPUNIT_ASSERT(
-        (dirs.at(0).compare("test1") == 0 && dirs.at(1).compare("test2") == 0)
-        || (dirs.at(1).compare("test1") == 0 && dirs.at(0).compare("test2") == 0));
-    CPPUNIT_ASSERT(removeAll(TEST_PATH + DIR_SEPARATOR_STR + "readDirectory") == 0);
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(EXISTANT_FILE));
+    CPPUNIT_ASSERT(!std::filesystem::is_directory(EXISTANT_FILE));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(TEST_PATH));
 }
 
 void
@@ -145,13 +116,13 @@ FileutilsTest::testLoadFile()
 void
 FileutilsTest::testIsDirectoryWritable()
 {
-    CPPUNIT_ASSERT(recursive_mkdir(NON_EXISTANT_PATH_BASE));
+    CPPUNIT_ASSERT(dhtnet::fileutils::recursive_mkdir(NON_EXISTANT_PATH_BASE));
     CPPUNIT_ASSERT(isDirectoryWritable(NON_EXISTANT_PATH_BASE));
-    CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == 0);
+    CPPUNIT_ASSERT(dhtnet::fileutils::removeAll(NON_EXISTANT_PATH_BASE) == 0);
     // Create directory with permission: read by owner
-    CPPUNIT_ASSERT(recursive_mkdir(NON_EXISTANT_PATH_BASE, 0400));
+    CPPUNIT_ASSERT(dhtnet::fileutils::recursive_mkdir(NON_EXISTANT_PATH_BASE, 0400));
     CPPUNIT_ASSERT(!isDirectoryWritable(NON_EXISTANT_PATH_BASE));
-    CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == 0);
+    CPPUNIT_ASSERT(dhtnet::fileutils::removeAll(NON_EXISTANT_PATH_BASE) == 0);
 }
 
 void
@@ -179,11 +150,11 @@ FileutilsTest::testFullPath()
 void
 FileutilsTest::testCopy()
 {
-    CPPUNIT_ASSERT(isFile(EXISTANT_FILE));
-    CPPUNIT_ASSERT(!isFile(NON_EXISTANT_PATH_BASE));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(EXISTANT_FILE));
+    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(NON_EXISTANT_PATH_BASE));
     CPPUNIT_ASSERT(copy(EXISTANT_FILE, NON_EXISTANT_PATH_BASE));
-    CPPUNIT_ASSERT(isFile(NON_EXISTANT_PATH_BASE));
-    CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == 0);
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(NON_EXISTANT_PATH_BASE));
+    CPPUNIT_ASSERT(dhtnet::fileutils::removeAll(NON_EXISTANT_PATH_BASE) == 0);
 }
 
 }}} // namespace jami::test::fileutils

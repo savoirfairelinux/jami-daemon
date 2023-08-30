@@ -155,7 +155,7 @@ checkManifestValidity(const std::vector<uint8_t>& vec)
 std::map<std::string, std::string>
 parseManifestFile(const std::string& manifestFilePath, const std::string& rootPath)
 {
-    std::lock_guard<std::mutex> guard(fileutils::getFileLock(manifestFilePath));
+    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(manifestFilePath));
     std::ifstream file(manifestFilePath);
     if (file) {
         try {
@@ -350,7 +350,7 @@ getLocales(const std::string& rootPath, const std::string& lang)
 std::map<std::string, std::string>
 processLocaleFile(const std::string& preferenceLocaleFilePath)
 {
-    if (!fileutils::isFile(preferenceLocaleFilePath)) {
+    if (!std::filesystem::is_regular_file(preferenceLocaleFilePath)) {
         return {};
     }
     std::ifstream file(preferenceLocaleFilePath);
