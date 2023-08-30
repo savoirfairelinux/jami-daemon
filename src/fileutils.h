@@ -1,23 +1,19 @@
 /*
  *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
- *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
- *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
+ *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
 #pragma once
 
 #include <string>
@@ -28,6 +24,7 @@
 #include <ios>
 
 #include "jami/def.h"
+#include <dhtnet/fileutils.h>
 
 #ifndef _WIN32
 #include <sys/stat.h>               // mode_t
@@ -59,12 +56,8 @@ std::string get_cache_dir();
  * @param dir last directory creation mode
  * @param parents default mode for all created directories except the last
  */
-bool check_dir(const char* path, mode_t dir = 0755, mode_t parents = 0755);
 LIBJAMI_PUBLIC void set_program_dir(char* program_path); // public because bin/main.cpp uses it
 std::string expand_path(const std::string& path);
-bool isDirectoryWritable(const std::string& directory);
-
-bool recursive_mkdir(const std::string& path, mode_t mode = 0755);
 
 bool isPathRelative(const std::string& path);
 /**
@@ -76,25 +69,13 @@ std::string getCleanPath(const std::string& base, const std::string& path);
 /**
  * If path is relative, it is appended to base.
  */
-std::string getFullPath(const std::string& base, const std::string& path);
-
-bool isFile(const std::string& path, bool resolveSymlink = true);
-bool isDirectory(const std::string& path);
-bool isSymLink(const std::string& path);
-bool hasHardLink(const std::string& path);
-
-std::chrono::system_clock::time_point writeTime(const std::string& path);
+std::filesystem::path getFullPath(const std::filesystem::path& base, const std::string& path);
 
 bool createFileLink(const std::string& src, const std::string& dest, bool hard = false);
 
 std::string_view getFileExtension(std::string_view filename);
 
-/**
- * Read content of the directory.
- * The result is a list of relative (to @param dir) paths of all entries
- * in the directory, without "." and "..".
- */
-std::vector<std::string> readDirectory(const std::string& dir);
+bool isDirectoryWritable(const std::string& directory);
 
 /**
  * Read the full content of a file at path.
@@ -112,28 +93,14 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode 
     saveFile(path, data.data(), data.size(), mode);
 }
 
-std::vector<uint8_t> loadCacheFile(const std::string& path,
+std::vector<uint8_t> loadCacheFile(const std::filesystem::path& path,
                                    std::chrono::system_clock::duration maxAge);
-std::string loadCacheTextFile(const std::string& path, std::chrono::system_clock::duration maxAge);
+std::string loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge);
 
 std::vector<uint8_t> readArchive(const std::string& path, const std::string& password = {});
 void writeArchive(const std::string& data,
                   const std::string& path,
                   const std::string& password = {});
-
-std::mutex& getFileLock(const std::string& path);
-
-/**
- * Remove a file with optional erasing of content.
- * Return the same value as std::remove().
- */
-int remove(const std::string& path, bool erase = false);
-
-/**
- * Prune given directory's content and remove it, symlinks are not followed.
- * Return 0 if succeed, -1 if directory is not removed (content can be removed partially).
- */
-int removeAll(const std::string& path, bool erase = false);
 
 /**
  * Wrappers for fstream opening that will convert paths to wstring

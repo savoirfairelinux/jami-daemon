@@ -76,7 +76,7 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
             } else {
                 // Create/migrate local account
                 bool hasArchive = not ctx->credentials->uri.empty()
-                                    and fileutils::isFile(ctx->credentials->uri);
+                                    and std::filesystem::is_regular_file(ctx->credentials->uri);
                 if (hasArchive) {
                     // Create/migrate from local archive
                     if (ctx->credentials->updateIdentity.first
@@ -373,7 +373,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
                                        AccountArchive&& a)
 {
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
-    fileutils::check_dir(path_.c_str(), 0700);
+    dhtnet::fileutils::check_dir(path_.c_str(), 0700);
 
     auto path = fileutils::getFullPath(path_, archivePath_);
     a.save(path, ctx.credentials ? ctx.credentials->password : "");
