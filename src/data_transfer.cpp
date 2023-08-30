@@ -84,7 +84,7 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
     , start_(start)
     , end_(end)
 {
-    if (!fileutils::isFile(info_.path)) {
+    if (!std::filesystem::is_regular_file(info_.path)) {
         channel_->shutdown();
         return;
     }
@@ -148,8 +148,8 @@ OutgoingFile::cancel()
     auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + "conversation_data"
                 + DIR_SEPARATOR_STR + info_.accountId + DIR_SEPARATOR_STR + info_.conversationId
                 + DIR_SEPARATOR_STR + fileId_;
-    if (fileutils::isSymLink(path))
-        fileutils::remove(path);
+    if (std::filesystem::is_symlink(path))
+        dhtnet::fileutils::remove(path);
     isUserCancelled_ = true;
     emit(libjami::DataTransferEventCode::closed_by_host);
 }
@@ -211,7 +211,7 @@ IncomingFile::process()
             auto sha3Sum = fileutils::sha3File(shared->info_.path);
             if (shared->isUserCancelled_) {
                 JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
-                fileutils::remove(shared->info_.path, true);
+                dhtnet::fileutils::remove(shared->info_.path, true);
             } else if (shared->sha3Sum_ == sha3Sum) {
                 JAMI_INFO() << "New file received: " << shared->info_.path;
                 correct = true;
@@ -219,7 +219,7 @@ IncomingFile::process()
                 JAMI_WARN() << "Invalid sha3sum detected, unfinished file: " << shared->info_.path;
                 if (shared->info_.totalSize != 0 && shared->info_.totalSize < shared->info_.bytesProgress) {
                     JAMI_WARN() << "Remove file, larger file than announced for " << shared->info_.path;
-                    fileutils::remove(shared->info_.path, true);
+                    dhtnet::fileutils::remove(shared->info_.path, true);
                 }
             }
         }
@@ -244,7 +244,7 @@ public:
             conversationDataPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
                                     + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR
                                     + to_;
-            fileutils::check_dir(conversationDataPath_.c_str());
+            dhtnet::fileutils::check_dir(conversationDataPath_.c_str());
             waitingPath_ = conversationDataPath_ + DIR_SEPARATOR_STR + "waiting";
         }
         profilesPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId_
@@ -376,7 +376,7 @@ TransferManager::info(const std::string& fileId,
         total = itI->second->info().totalSize;
         progress = itI->second->info().bytesProgress;
         return true;
-    } else if (fileutils::isFile(path)) {
+    } else if (std::filesystem::is_regular_file(path)) {
         std::ifstream transfer(path, std::ios::binary);
         transfer.seekg(0, std::ios::end);
         progress = transfer.tellg();
@@ -524,7 +524,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     info.conversationId = pimpl_->to_;
 
     auto recvDir = fmt::format("{:s}/{:s}/vcard/", fileutils::get_cache_dir(), pimpl_->accountId_);
-    fileutils::recursive_mkdir(recvDir);
+    dhtnet::fileutils::recursive_mkdir(recvDir);
     info.path =  fmt::format("{:s}{:s}_{:s}_{}", recvDir, deviceId, uri, tid);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "", sha3Sum);

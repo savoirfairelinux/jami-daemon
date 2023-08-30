@@ -67,7 +67,7 @@ MediaEncoderTest::tearDown()
 {
     // clean up behind ourselves
     for (const auto& file : files_)
-        fileutils::remove(file);
+        dhtnet::fileutils::remove(file);
     libjami::fini();
 }
 
