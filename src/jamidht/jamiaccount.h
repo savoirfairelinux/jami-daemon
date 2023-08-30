@@ -55,15 +55,16 @@
 #include <opendht/default_types.h>
 
 #include <pjsip/sip_types.h>
+#include <json/json.h>
 
 #include <chrono>
 #include <functional>
 #include <future>
-#include <json/json.h>
 #include <list>
 #include <map>
 #include <optional>
 #include <vector>
+#include <filesystem>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -121,7 +122,7 @@ public:
         return std::static_pointer_cast<JamiAccount const>(shared_from_this());
     }
 
-    const std::string& getPath() const { return idPath_; }
+    const std::filesystem::path& getPath() const { return idPath_; }
 
     const JamiAccountConfig& config() const
     {
@@ -529,7 +530,7 @@ public:
      */
     void clearProfileCache(const std::string& peerUri);
 
-    std::string profilePath() const;
+    std::filesystem::path profilePath() const;
 
     AccountManager* accountManager()
     {
@@ -698,9 +699,9 @@ private:
     void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
-    std::string idPath_ {};
-    std::string cachePath_ {};
-    std::string dataPath_ {};
+    std::filesystem::path idPath_ {};
+    std::filesystem::path cachePath_ {};
+    std::filesystem::path dataPath_ {};
 
 #if HAVE_RINGNS
     std::string registeredName_;

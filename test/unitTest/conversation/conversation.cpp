@@ -254,10 +254,10 @@ ConversationTest::testCreateConversation()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto adminCrt = repoPath + DIR_SEPARATOR_STR + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(adminCrt));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(adminCrt));
     auto crt = std::ifstream(adminCrt);
     std::string adminCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
     auto cert = aliceAccount->identity().second;
@@ -266,7 +266,7 @@ ConversationTest::testCreateConversation()
     CPPUNIT_ASSERT(adminCrtStr == parentCert);
     auto deviceCrt = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + aliceDeviceId
                      + ".crt";
-    CPPUNIT_ASSERT(fileutils::isFile(deviceCrt));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(deviceCrt));
     crt = std::ifstream(deviceCrt);
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)),
                              std::istreambuf_iterator<char>());
@@ -452,7 +452,7 @@ ConversationTest::testSendMessage()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; });
 
@@ -528,7 +528,7 @@ ConversationTest::testSendMessageWithBadDisplayName()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; });
 
@@ -786,7 +786,7 @@ ConversationTest::testMergeAfterMigration()
     auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
                          + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
     auto p = std::filesystem::path(repoPathCarla);
-    fileutils::recursive_mkdir(p.parent_path());
+    dhtnet::fileutils::recursive_mkdir(p.parent_path());
     std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
     auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "convInfo";
@@ -801,11 +801,11 @@ ConversationTest::testMergeAfterMigration()
 
     std::filesystem::remove_all(repoPathAlice);
     p = std::filesystem::path(repoPathAlice);
-    fileutils::recursive_mkdir(p.parent_path());
+    dhtnet::fileutils::recursive_mkdir(p.parent_path());
     std::filesystem::copy(repoPathCarla, repoPathAlice, std::filesystem::copy_options::recursive);
 
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice));
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice + "/" + convId));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice + "/" + convId));
 
     // Makes different heads
     carlaAccount->convModule()->loadConversations(); // necessary to load conversation
@@ -925,10 +925,10 @@ ConversationTest::testSendMessageToMultipleParticipants()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
@@ -985,7 +985,7 @@ ConversationTest::testPingPongMessages()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     messageBobReceived = 0;
     messageAliceReceived = 0;
     libjami::sendMessage(aliceId, convId, "ping"s, "");
@@ -1061,10 +1061,10 @@ ConversationTest::testIsComposing()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     memberMessageGenerated = false;
     libjami::acceptConversationRequest(bobId, convId);
@@ -1136,10 +1136,10 @@ ConversationTest::testMessageStatus()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     memberMessageGenerated = false;
     libjami::acceptConversationRequest(bobId, convId);
@@ -1215,10 +1215,10 @@ ConversationTest::testSetMessageDisplayed()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     memberMessageGenerated = false;
     libjami::acceptConversationRequest(bobId, convId);
@@ -1328,10 +1328,10 @@ ConversationTest::testSetMessageDisplayedTwice()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Check created files
     auto bobInvited = repoPath + DIR_SEPARATOR_STR + "invited" + DIR_SEPARATOR_STR + bobUri;
-    CPPUNIT_ASSERT(fileutils::isFile(bobInvited));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived; }));
     memberMessageGenerated = false;
     libjami::acceptConversationRequest(bobId, convId);
@@ -1590,7 +1590,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     std::string devicesPath = repoPath + "devices";
     std::string crlsPath = repoPath + "CRLs" + DIR_SEPARATOR_STR + deviceId;
 
-    if (!fileutils::recursive_mkdir(adminsPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(adminsPath, 0700)) {
         JAMI_ERR("Error when creating %s. Abort create conversations", adminsPath.c_str());
     }
 
@@ -1611,7 +1611,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     file << parentCert->toString(true);
     file.close();
 
-    if (!fileutils::recursive_mkdir(devicesPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(devicesPath, 0700)) {
         JAMI_ERR("Error when creating %s. Abort create conversations", devicesPath.c_str());
     }
 
@@ -1624,7 +1624,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     file << (fakeCert.empty() ? deviceCert : fakeCert);
     file.close();
 
-    if (!fileutils::recursive_mkdir(crlsPath, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(crlsPath, 0700)) {
         JAMI_ERR("Error when creating %s. Abort create conversations", crlsPath.c_str());
     }
 
@@ -2828,7 +2828,7 @@ ConversationTest::testDoNotLoadIncorrectConversation()
     auto repoGitPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                        + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId
                        + DIR_SEPARATOR_STR + ".git";
-    fileutils::removeAll(repoGitPath, true); // This make the repository not usable
+    dhtnet::fileutils::removeAll(repoGitPath, true); // This make the repository not usable
 
     aliceAccount->convModule()
         ->loadConversations(); // Refresh. This should detect the incorrect conversations.
@@ -3164,7 +3164,7 @@ END:VCARD";
     auto vCardPath = fmt::format("{}/{}/profile.vcf", fileutils::get_data_dir(), aliceId);
     // Add file
     auto p = std::filesystem::path(vCardPath);
-    fileutils::recursive_mkdir(p.parent_path());
+    dhtnet::fileutils::recursive_mkdir(p.parent_path());
     std::ofstream file(p);
     if (file.is_open()) {
         file << vcard;
@@ -3462,7 +3462,7 @@ ConversationTest::testSendReply()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 30s, [&]() { return messageAliceReceived.size() == 2; });
 
@@ -3881,7 +3881,7 @@ ConversationTest::testRemoveOneToOneNotInDetails()
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + secondConv;
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     aliceAccount->convModule()->loadConversations();
 
@@ -4082,9 +4082,9 @@ ConversationTest::testLoadPartiallyRemovedConversation()
     std::filesystem::remove_all(fmt::format("./{}", convId));
 
     // Reloading conversation should remove directory
-    CPPUNIT_ASSERT(fileutils::isDirectory(repoPathAlice));
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice));
     aliceAccount->convModule()->loadConversations();
-    CPPUNIT_ASSERT(!fileutils::isDirectory(repoPathAlice));
+    CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPathAlice));
 }
 
 } // namespace test
