@@ -55,7 +55,7 @@ addVote(std::shared_ptr<JamiAccount> account,
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     auto voteDirectory = repoPath + DIR_SEPARATOR_STR + "votes" + DIR_SEPARATOR_STR + "members";
     auto voteFile = voteDirectory + DIR_SEPARATOR_STR + votedUri;
-    if (!fileutils::recursive_mkdir(voteDirectory, 0700)) {
+    if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
         return;
     }
 
@@ -130,7 +130,7 @@ addFile(std::shared_ptr<JamiAccount> account,
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
     // Add file
     auto p = std::filesystem::path(fileutils::getFullPath(repoPath, relativePath));
-    fileutils::recursive_mkdir(p.parent_path());
+    dhtnet::fileutils::recursive_mkdir(p.parent_path());
     std::ofstream file(p);
     if (file.is_open()) {
         file << content;

@@ -952,14 +952,14 @@ END:VCARD";
                    + DIR_SEPARATOR_STR + "profile.vcf";
     // Save VCard
     auto p = std::filesystem::path(alicePath);
-    fileutils::recursive_mkdir(p.parent_path());
+    dhtnet::fileutils::recursive_mkdir(p.parent_path());
     std::ofstream aliceFile(alicePath);
     if (aliceFile.is_open()) {
         aliceFile << vcard;
         aliceFile.close();
     }
     p = std::filesystem::path(bobPath);
-    fileutils::recursive_mkdir(p.parent_path());
+    dhtnet::fileutils::recursive_mkdir(p.parent_path());
     std::ofstream bobFile(bobPath);
     if (bobFile.is_open()) {
         bobFile << vcard;
@@ -998,7 +998,7 @@ END:VCARD";
             if (accountId == aliceId && peerId == bobUri) {
                 bobProfileReceived = true;
                 auto p = std::filesystem::path(bobDest);
-                fileutils::recursive_mkdir(p.parent_path());
+                dhtnet::fileutils::recursive_mkdir(p.parent_path());
                 std::rename(path.c_str(), bobDest.c_str());
             } else if (accountId == bobId && peerId == aliceUri) {
                 aliceProfileReceived = true;
@@ -1018,7 +1018,7 @@ END:VCARD";
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return conversationReady && bobProfileReceived && aliceProfileReceived;
     }));
-    CPPUNIT_ASSERT(fileutils::isFile(bobDest));
+    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobDest));
 
     // Now create alice2
     std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");

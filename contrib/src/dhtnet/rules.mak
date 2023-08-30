@@ -1,12 +1,21 @@
 # DHTNET
-DHTNET_VERSION := 24cc01e3deacb1332745929840268af06ebe9068
+DHTNET_VERSION := f7abf971f0445d4add1fc33b2a3856f07eecf430
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
 
-DEPS_dhtnet += opendht pjproject asio
+ifndef HAVE_WIN32
+ifndef HAVE_ANDROID
+ifndef HAVE_IOS
+DEPS_dhtnet += natpmp
+endif
+endif
+endif
+
+DEPS_dhtnet += opendht pjproject asio upnp
 
 DHTNET_CONF = -DBUILD_SHARED_LIBS=Off \
+	-DBUILD_BENCHMARKS=Off \
 	-DBUILD_TOOLS=Off \
 	-DBUILD_TESTING=Off
 
