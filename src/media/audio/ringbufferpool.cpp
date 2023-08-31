@@ -28,7 +28,7 @@
 #include <utility> // for std::pair
 #include <cstring>
 #include <algorithm>
-
+#pragma optimize("", off)
 namespace jami {
 
 const char* const RingBufferPool::DEFAULT_ID = "audiolayer_id";

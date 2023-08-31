@@ -48,14 +48,14 @@
 extern "C" {
 #include <libavutil/display.h>
 }
-
+#pragma optimize("", off)
 namespace jami {
 namespace video {
 
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
+VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_, const std::string& sink)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
@@ -69,7 +69,7 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
         inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
     }
-    sink_ = Manager::instance().createSinkClient(id_);
+    sink_ = Manager::instance().createSinkClient(sink.empty() ? id_ : sink);
     switchInput(id_);
 }
 
@@ -229,7 +229,7 @@ VideoInput::flushBuffers()
 }
 
 void
-VideoInput::configureFilePlayback(const std::string&,
+VideoInput::configureFilePlayback(const std::string& path,
                                   std::shared_ptr<MediaDemuxer>& demuxer,
                                   int index)
 {
@@ -253,6 +253,27 @@ VideoInput::configureFilePlayback(const std::string&,
 
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+
+    decOpts_.width = ((decoder_->getWidth() >> 3) << 3);
+    decOpts_.height = ((decoder_->getHeight() >> 3) << 3);
+    decOpts_.framerate = decoder_->getFps();
+    AVPixelFormat fmt = decoder_->getPixelFormat();
+    if (fmt != AV_PIX_FMT_NONE) {
+        decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
+    } else {
+        JAMI_WARN("Could not determine pixel format, using default");
+        decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
+    }
+
+    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
+             decOpts_.width,
+             decOpts_.height,
+             decOpts_.framerate.real(),
+             decOpts_.pixel_format.c_str());
+    if (onSuccessfulSetup_)
+        onSuccessfulSetup_(MEDIA_VIDEO, 0);
+    foundDecOpts(decOpts_);
+    futureDecOpts_ = foundDecOpts_.get_future().share();
 }
 
 void

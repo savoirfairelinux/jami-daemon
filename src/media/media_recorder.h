@@ -140,8 +140,7 @@ private:
                                  const MediaStream& local) const;
     void setupAudioOutput();
     std::mutex mutexStreamSetup_;
-    std::string buildAudioFilter(const std::vector<MediaStream>& peers,
-                                 const MediaStream& local) const;
+    std::string buildAudioFilter(const std::vector<MediaStream>& peers) const;
 
     std::mutex mutexFrameBuff_;
     std::mutex mutexFilterVideo_;

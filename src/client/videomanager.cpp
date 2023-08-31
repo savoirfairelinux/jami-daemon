@@ -676,7 +676,7 @@ getVideoDeviceMonitor()
 }
 
 std::shared_ptr<video::VideoInput>
-getVideoInput(const std::string& id, video::VideoInputMode inputMode)
+getVideoInput(const std::string& id, video::VideoInputMode inputMode, const std::string& sink)
 {
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.videoMutex);
@@ -687,9 +687,15 @@ getVideoInput(const std::string& id, video::VideoInputMode inputMode)
         }
     }
 
-    auto input = std::make_shared<video::VideoInput>(inputMode, id);
+    auto input = std::make_shared<video::VideoInput>(inputMode, id, sink);
     vmgr.videoInputs[id] = input;
     return input;
+}
+
+bool
+closeVideoInput(const std::string& id)
+{
+    return jami::Manager::instance().getVideoManager().videoInputs.erase(id) > 0;
 }
 
 void
@@ -726,6 +732,12 @@ getAudioInput(const std::string& id)
 }
 
 bool
+closeAudioInput(const std::string& id)
+{
+    return jami::Manager::instance().getVideoManager().audioInputs.erase(id) > 0;
+}
+
+bool
 VideoManager::hasRunningPlayers()
 {
     auto& vmgr = Manager::instance().getVideoManager();
@@ -746,13 +758,19 @@ getMediaPlayer(const std::string& id)
 std::string
 createMediaPlayer(const std::string& path)
 {
-    auto player = std::make_shared<MediaPlayer>(path);
+    auto player = getMediaPlayer(path);
+    if (!player) {
+        JAMI_WARN() << "@@@ CREATING MEDIA PLAYER! " << path;
+        player = std::make_shared<MediaPlayer>(path);
+    } else {
+        JAMI_WARN() << "@@@ RECOVERING MEDIA PLAYER! " << path;
+        return path;
+    }
     if (!player->isInputValid()) {
         return "";
     }
-    auto playerId = player.get()->getId();
-    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
-    return playerId;
+    Manager::instance().getVideoManager().mediaPlayers[path] = player;
+    return path;
 }
 
 bool
@@ -768,6 +786,7 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closeMediaPlayer(const std::string& id)
 {
+    pausePlayer(id, true);
     return Manager::instance().getVideoManager().mediaPlayers.erase(id) > 0;
 }
 

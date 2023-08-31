@@ -38,6 +38,7 @@ class AudioSender;
 class IceSocket;
 class MediaRecorder;
 class RingBuffer;
+class MediaPlayer;
 
 struct RTCPInfo
 {
@@ -52,7 +53,8 @@ class AudioRtpSession : public RtpSession
 public:
     AudioRtpSession(const std::string& callId,
                     const std::string& streamId,
-                    const std::shared_ptr<MediaRecorder>& rec);
+                    const std::shared_ptr<MediaRecorder>& rec,
+                    const std::shared_ptr<MediaPlayer>& player = nullptr);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;
@@ -81,6 +83,7 @@ private:
     std::unique_ptr<AudioReceiveThread> receiveThread_;
     std::shared_ptr<AudioInput> audioInput_;
     std::shared_ptr<RingBuffer> ringbuffer_;
+    std::shared_ptr<MediaPlayer> mediaPlayer_;
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};
     unsigned packetLoss_ {10};

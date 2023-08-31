@@ -24,6 +24,7 @@
 #include "media_decoder.h"
 #include "media_device.h"
 #include "media_buffer.h"
+#include "media_const.h"
 #include "media_io_handle.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
@@ -60,7 +61,7 @@ MediaDemuxer::MediaDemuxer()
 
 MediaDemuxer::~MediaDemuxer()
 {
-    if (inputCtx_)
+        if (inputCtx_)
         avformat_close_input(&inputCtx_);
     av_dict_free(&options_);
 }
@@ -168,9 +169,9 @@ MediaDemuxer::openInput(const DeviceParams& params)
         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
         JAMI_DBG("Using format %s and resolution %dx%d",
-                 params.format.c_str(),
-                 baseWidth_,
-                 baseHeight_);
+                params.format.c_str(),
+                baseWidth_,
+                baseHeight_);
     }
 
     return ret;
@@ -343,7 +344,7 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
-    if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
+        if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
         auto ret = inputCtx_->iformat->read_header(inputCtx_);
         if (ret == AVERROR_EXTERNAL) {
             JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
@@ -400,11 +401,108 @@ MediaDemuxer::decode()
 
     auto& cb = streams_[streamIndex];
     if (cb) {
-        DecodeStatus ret = cb(*packet.get());
+                DecodeStatus ret = cb(*packet.get());
         if (ret == DecodeStatus::FallBack)
             return Status::FallBack;
     }
-    return Status::Success;
+        return Status::Success;
+}
+
+std::vector<MediaAttribute>
+MediaDemuxer::validateMediaTypes(const std::vector<MediaAttribute>& medias)
+{
+    std::vector<MediaAttribute> newMedias {};
+    for (size_t i = 0; i < medias.size(); i++) {
+        auto media = medias.at(i);
+        if (!media.enabled_)
+            continue;
+        auto resource = media.sourceUri_;
+        // Supported MRL schemes
+        static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+
+        const auto pos = resource.find(sep);
+        if (pos == std::string::npos)
+            continue;
+
+        const auto prefix = resource.substr(0, pos);
+        if ((pos + sep.size()) >= resource.size())
+            continue;
+
+        const auto suffix = resource.substr(pos + sep.size());
+
+        if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
+            AVFormatContext* decFormatCtx = avformat_alloc_context();
+
+            // Open
+            if (avformat_open_input(&decFormatCtx, suffix.c_str(), NULL, NULL) != 0) {
+                avformat_close_input(&decFormatCtx);
+                avformat_free_context(decFormatCtx);
+                continue;;
+            }
+            // Retrieve stream information
+            if (avformat_find_stream_info(decFormatCtx, NULL) < 0) {
+                avformat_close_input(&decFormatCtx);
+                avformat_free_context(decFormatCtx);
+                continue;
+            }
+
+            // Find the first video stream
+            auto videoStream = av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0);
+
+            if (videoStream < 0) {
+                continue;
+                if (media.type_ == MEDIA_VIDEO) {
+                    media.type_ = MEDIA_AUDIO;
+                    std::string label = "audio_";
+                    auto idx = 0;
+                    for (auto data: medias) {
+                        if (data.type_ == MEDIA_AUDIO)
+                            idx++;
+                    }
+                    label += std::to_string(idx);
+                    media.label_ = label;
+                }
+            }
+
+            // Find the first audio stream
+            auto audioStream = av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+
+            if (audioStream < 0) {
+                if (media.type_ == MEDIA_AUDIO) {
+                    media.type_ = MEDIA_NONE;
+                    media.enabled_ = false;
+                }
+            }
+            avformat_close_input(&decFormatCtx);
+            avformat_free_context(decFormatCtx);
+
+            if (audioStream >= 0 && videoStream >= 0) {
+                auto it = std::find_if(medias.begin(), medias.end(), [media](const MediaAttribute iter){
+                    return media.sourceUri_ == iter.sourceUri_ && media.type_ != iter.type_;
+                });
+                if (it == medias.end()) {
+                    auto newType = media.type_ == MEDIA_AUDIO ? MEDIA_VIDEO : MEDIA_AUDIO;
+                    std::string label = newType == MEDIA_AUDIO ? "audio_" : "video_";
+                    auto idx = 0;
+                    for (auto data: medias) {
+                        if (data.type_ == newType)
+                            idx++;
+                    }
+                    label += std::to_string(idx);
+                    MediaAttribute newMedia(media.type_ == MEDIA_AUDIO ? MEDIA_VIDEO : MEDIA_AUDIO,
+                                            media.muted_,
+                                            media.secure_,
+                                            media.enabled_,
+                                            media.sourceUri_,
+                                            label,
+                                            media.onHold_);
+                    newMedias.emplace_back(newMedia);
+                }
+            }
+        }
+        newMedias.emplace_back(media);
+    }
+    return newMedias;
 }
 
 MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index)
@@ -443,7 +541,7 @@ MediaDecoder::MediaDecoder(MediaObserver o)
 
 MediaDecoder::~MediaDecoder()
 {
-#ifdef RING_ACCEL
+    #ifdef RING_ACCEL
     if (decoderCtx_ && decoderCtx_->hw_device_ctx)
         av_buffer_unref(&decoderCtx_->hw_device_ctx);
 #endif
@@ -610,7 +708,7 @@ MediaDecoder::updateStartTime(int64_t startTime)
 DecodeStatus
 MediaDecoder::decode(AVPacket& packet)
 {
-    int frameFinished = 0;
+        int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
 #ifdef RING_ACCEL
@@ -695,14 +793,14 @@ MediaDecoder::decode(AVPacket& packet)
 
         if (callback_)
             callback_(std::move(f));
-
+        
         if (contextCallback_ && firstDecode_.load()) {
             firstDecode_.exchange(false);
             contextCallback_();
         }
-        return DecodeStatus::FrameFinished;
+                return DecodeStatus::FrameFinished;
     }
-    return DecodeStatus::Success;
+        return DecodeStatus::Success;
 }
 
 void
