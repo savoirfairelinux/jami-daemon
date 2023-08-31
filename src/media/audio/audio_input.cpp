@@ -1,9 +1,6 @@
 /*
  *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
- *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
- *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
- *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -32,7 +29,7 @@
 
 #include <future>
 #include <memory>
-
+#pragma optimize("", off)
 namespace jami {
 
 static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
@@ -63,7 +60,8 @@ AudioInput::AudioInput(const std::string& id, const std::string& resource)
 AudioInput::~AudioInput()
 {
     if (playingFile_) {
-        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID,
+                                                                    id_);
     }
     loop_.join();
 }
@@ -110,7 +108,6 @@ AudioInput::readFromDevice()
                 readFromFile();
         if (playingFile_) {
             readFromQueue();
-            return;
         }
     }
 
@@ -183,6 +180,7 @@ bool
 AudioInput::initDevice(const std::string& device)
 {
     devOpts_ = {};
+    devOpts_.isAudio = true;
     devOpts_.input = device;
     devOpts_.channel = format_.nb_channels;
     devOpts_.framerate = format_.sample_rate;
@@ -197,9 +195,11 @@ AudioInput::configureFilePlayback(const std::string& path,
                                   int index)
 {
     decoder_.reset();
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    //Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     fileBuf_.reset();
+    fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
     devOpts_ = {};
+    devOpts_.isAudio = true;
     devOpts_.input = path;
     devOpts_.name = path;
     auto decoder
@@ -211,20 +211,32 @@ AudioInput::configureFilePlayback(const std::string& path,
               fileBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
           });
     decoder->emulateRate();
+    decoder->setInterruptCallback(
+        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
-    fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
+    Manager::instance().getRingBufferPool().bindCallID(id_, RingBufferPool::DEFAULT_ID);
+    // have file audio mixed into the call buffer so it gets sent to the peer
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+    // have file audio mixed into the local buffer so it gets played
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
+
     playingFile_ = true;
     decoder_ = std::move(decoder);
+    currentResource_ = path;
+    loop_.start();
 }
 
 void
 AudioInput::setPaused(bool paused)
 {
     if (paused) {
-        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID,
+                                                                    id_);
         deviceGuard_.reset();
     } else {
-        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID,
+                                                                  id_);
         deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
     }
     paused_ = paused;
@@ -241,12 +253,15 @@ AudioInput::flushBuffers()
 bool
 AudioInput::initFile(const std::string& path)
 {
+    JAMI_WARN() << "@@@ INITFILE";
+    fileBuf_.reset();
     if (access(path.c_str(), R_OK) != 0) {
         JAMI_ERR() << "File '" << path << "' not available";
         return false;
     }
 
     devOpts_ = {};
+    devOpts_.isAudio = true;
     devOpts_.input = path;
     devOpts_.name = path;
     devOpts_.loop = "1";
@@ -256,6 +271,7 @@ AudioInput::initFile(const std::string& path)
         return initDevice("");
     }
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    Manager::instance().getRingBufferPool().bindCallID(id_, RingBufferPool::DEFAULT_ID);
     // have file audio mixed into the call buffer so it gets sent to the peer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
     // have file audio mixed into the local buffer so it gets played
@@ -364,7 +380,7 @@ AudioInput::createDecoder()
     // NOTE don't emulate rate, file is read as frames are needed
 
     decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+    [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
     if (decoder->openInput(devOpts_) < 0) {
         JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";

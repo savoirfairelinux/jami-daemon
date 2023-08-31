@@ -44,7 +44,6 @@ public:
 
 private:
     std::string path_;
-    std::string id_;
 
     // media inputs
 #ifdef ENABLE_VIDEO

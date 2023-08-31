@@ -56,7 +56,7 @@ public:
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
-    MediaStream getInfo() const;
+        MediaStream getInfo() const;
     MediaStream getInfo(const std::string& name) const;
     void updateStartTime(int64_t start);
     void setPaused(bool paused);

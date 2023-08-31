@@ -88,7 +88,7 @@ VideoReceiveThread::stopLoop()
 bool
 VideoReceiveThread::setup()
 {
-    JAMI_DBG("[%p] Setupping video receiver", this);
+    JAMI_DBG("[%p] Setting-up video receiver", this);
 
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         libav_utils::AVBufferPtr displayMatrix;
@@ -142,7 +142,7 @@ VideoReceiveThread::setup()
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
-    if (videoDecoder_->openInput(args_)) {
+    if (videoDecoder_->openInput(args_) < 0) {
         JAMI_ERR("Could not open input \"%s\"", args_.input.c_str());
         return false;
     }

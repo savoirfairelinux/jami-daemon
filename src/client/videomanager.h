@@ -71,9 +71,13 @@ public:
 #ifdef ENABLE_VIDEO
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<video::VideoInput> getVideoInput(
-    const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+    const std::string& id,
+    video::VideoInputMode inputMode = video::VideoInputMode::Undefined,
+    const std::string& sink = "");
+bool closeVideoInput(const std::string& id);
 #endif
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
+bool closeAudioInput(const std::string& id);
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);

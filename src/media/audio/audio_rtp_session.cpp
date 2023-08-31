@@ -48,22 +48,26 @@ namespace jami {
 
 AudioRtpSession::AudioRtpSession(const std::string& callId,
                                  const std::string& streamId,
-                                 const std::shared_ptr<MediaRecorder>& rec)
+                                 const std::shared_ptr<MediaRecorder>& rec,
+                                 const std::shared_ptr<MediaPlayer>& player)
     : RtpSession(callId, streamId, MediaType::MEDIA_AUDIO)
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 
 {
+    mediaPlayer_ = player;
     recorder_ = rec;
     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
 
     // don't move this into the initializer list or Cthulus will emerge
-    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callId_);
+    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId_);
 }
 
 AudioRtpSession::~AudioRtpSession()
 {
     deinitRecorder();
     stop();
+    if (mediaPlayer_)
+        closeMediaPlayer(mediaPlayer_->getId());
     JAMI_DBG("Destroyed Audio RTP session: %p - call Id %s", this, callId_.c_str());
 }
 
@@ -93,22 +97,30 @@ AudioRtpSession::startSender()
         audioInput_->detach(sender_.get());
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_ = jami::getAudioInput(callId_);
+    if (mediaPlayer_) {
+        audioInput_ = jami::getAudioInput(mediaPlayer_->getId());
+    }  else
+        audioInput_ = jami::getAudioInput(streamId_);
     audioInput_->setRecorderCallback([this](const MediaStream& ms) { attachLocalRecorder(ms); });
     audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
-    auto newParams = audioInput_->switchInput(input_);
-    try {
-        if (newParams.valid()
-            && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
-            localAudioParams_ = newParams.get();
-        } else {
-            JAMI_ERR() << "No valid new audio parameters";
+    if (!mediaPlayer_) {
+        auto newParams = audioInput_->switchInput(input_);
+        try {
+            if (newParams.valid()
+                && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                localAudioParams_ = newParams.get();
+            } else {
+                JAMI_ERR() << "No valid new audio parameters";
+                return;
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERR() << "Exception while retrieving audio parameters: " << e.what();
             return;
         }
-    } catch (const std::exception& e) {
-        JAMI_ERR() << "Exception while retrieving audio parameters: " << e.what();
-        return;
+    } else {
+        mediaPlayer_->pause(false);
+        mediaPlayer_->muteAudio(false);
     }
 
     send_.fecEnabled = true;
@@ -168,7 +180,7 @@ AudioRtpSession::startReceiver()
         JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(callId_,
+    receiveThread_.reset(new AudioReceiveThread(streamId_,
                                                 accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));

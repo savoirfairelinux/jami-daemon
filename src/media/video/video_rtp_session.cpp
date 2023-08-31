@@ -63,12 +63,14 @@ constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 VideoRtpSession::VideoRtpSession(const string& callId,
                                  const string& streamId,
                                  const DeviceParams& localVideoParams,
-                                 const std::shared_ptr<MediaRecorder>& rec)
+                                 const std::shared_ptr<MediaRecorder>& rec,
+                                 const std::shared_ptr<MediaPlayer>& player)
     : RtpSession(callId, streamId, MediaType::MEDIA_VIDEO)
     , localVideoParams_(localVideoParams)
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 {
+    mediaPlayer_ = player;
     recorder_ = rec;
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
@@ -79,6 +81,8 @@ VideoRtpSession::~VideoRtpSession()
 {
     deinitRecorder();
     stop();
+    if (mediaPlayer_)
+        closeMediaPlayer(mediaPlayer_->getId());
     JAMI_DBG("[%p] Video RTP session destroyed", this);
 }
 
@@ -129,14 +133,16 @@ VideoRtpSession::startSender()
         }
 
         if (not conference_) {
-            auto input = getVideoInput(input_);
-            videoLocal_ = input;
-            if (input) {
+            if (mediaPlayer_)
+                videoLocal_ = getVideoInput(mediaPlayer_->getId());
+            else
+                videoLocal_ = getVideoInput(input_);
+            if (videoLocal_) {
                 videoLocal_->setRecorderCallback(
                     [this](const MediaStream& ms) {
                         attachLocalRecorder(ms);
                     });
-                auto newParams = input->getParams();
+                auto newParams = videoLocal_->getParams();
                 try {
                     if (newParams.valid()
                         && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
@@ -155,11 +161,15 @@ VideoRtpSession::startSender()
             }
 
 #if (defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
-            if (auto input1 = std::static_pointer_cast<VideoInput>(videoLocal_)) {
-                input1->setupSink();
-                input1->setFrameSize(localVideoParams_.width, localVideoParams_.height);
+            if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
+                input->setupSink();
+                input->setFrameSize(localVideoParams_.width, localVideoParams_.height);
             }
 #endif
+            if (mediaPlayer_) {
+                mediaPlayer_->pause(false);
+                mediaPlayer_->muteAudio(false);
+            }
         }
 
         // be sure to not send any packets before saving last RTP seq value

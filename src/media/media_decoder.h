@@ -41,6 +41,7 @@
 #include "media_device.h"
 #include "media_stream.h"
 #include "media_buffer.h"
+#include "media_attribute.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -141,6 +142,8 @@ public:
     bool seekFrame(int stream_index, int64_t timestamp);
     void setNeedFrameCb(std::function<void()> cb);
     void emitFrame(bool isAudio);
+
+    static std::vector<MediaAttribute> validateMediaTypes(const std::vector<MediaAttribute>& medias);
 
 private:
     bool streamInfoFound_ {false};
