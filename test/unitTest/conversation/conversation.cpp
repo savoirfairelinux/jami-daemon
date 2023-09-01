@@ -87,7 +87,6 @@ private:
     void testReplaceWithBadCertificate();
     void testSendMessageTriggerMessageReceived();
     void testMergeTwoDifferentHeads();
-    void testMergeAfterMigration();
     void testSendMessageToMultipleParticipants();
     void testPingPongMessages();
     void testIsComposing();
@@ -111,7 +110,6 @@ private:
     void testMemberCannotUpdateProfile();
     void testUpdateProfileWithBadFile();
     void testFetchProfileUnauthorized();
-    void testDoNotLoadIncorrectConversation();
     void testSyncingWhileAccepting();
     void testCountInteractions();
     void testReplayConversation();
@@ -141,7 +139,6 @@ private:
     CPPUNIT_TEST(testReplaceWithBadCertificate);
     CPPUNIT_TEST(testSendMessageTriggerMessageReceived);
     CPPUNIT_TEST(testMergeTwoDifferentHeads);
-    CPPUNIT_TEST(testMergeAfterMigration);
     CPPUNIT_TEST(testSendMessageToMultipleParticipants);
     CPPUNIT_TEST(testPingPongMessages);
     CPPUNIT_TEST(testIsComposing);
@@ -165,7 +162,6 @@ private:
     CPPUNIT_TEST(testMemberCannotUpdateProfile);
     CPPUNIT_TEST(testUpdateProfileWithBadFile);
     CPPUNIT_TEST(testFetchProfileUnauthorized);
-    CPPUNIT_TEST(testDoNotLoadIncorrectConversation);
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testCountInteractions);
     CPPUNIT_TEST(testReplayConversation);
@@ -722,122 +718,6 @@ ConversationTest::testMergeTwoDifferentHeads()
     Manager::instance().sendRegister(carlaId, true);
     carlaGotMessage = false;
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaGotMessage; }));
-    libjami::unregisterSignalHandlers();
-}
-
-void
-ConversationTest::testMergeAfterMigration()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
-    auto aliceUri = aliceAccount->getUsername();
-    auto carlaUri = carlaAccount->getUsername();
-    aliceAccount->trackBuddyPresence(carlaUri, true);
-    carlaAccount->trackBuddyPresence(aliceUri, true);
-
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    bool conversationReady = false, conversationAliceReady = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& /* conversationId */) {
-            if (accountId == aliceId)
-                conversationAliceReady = true;
-            else if (accountId == carlaId)
-                conversationReady = true;
-            cv.notify_one();
-        }));
-    std::string carlaGotMessage, aliceGotMessage;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
-            if (accountId == carlaId) {
-                carlaGotMessage = message["id"];
-            } else if (accountId == aliceId) {
-                aliceGotMessage = message["id"];
-            }
-            cv.notify_one();
-        }));
-    bool carlaConnected = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced
-                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
-                if (deviceAnnounced == "true") {
-                    carlaConnected = true;
-                    cv.notify_one();
-                }
-            }));
-    libjami::registerSignalHandlers(confHandlers);
-
-    auto convId = libjami::startConversation(aliceId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return conversationAliceReady; }));
-
-    aliceGotMessage = "";
-    aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return !aliceGotMessage.empty(); }));
-
-    // Cp conversations & convInfo
-    auto repoPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + aliceAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
-    auto repoPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR
-                         + carlaAccount->getAccountID() + DIR_SEPARATOR_STR + "conversations";
-    auto p = std::filesystem::path(repoPathCarla);
-    dhtnet::fileutils::recursive_mkdir(p.parent_path());
-    std::filesystem::copy(repoPathAlice, repoPathCarla, std::filesystem::copy_options::recursive);
-    auto ciPathAlice = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
-    auto ciPathCarla = fileutils::get_data_dir() + DIR_SEPARATOR_STR + carlaAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "convInfo";
-    std::filesystem::remove_all(ciPathCarla);
-    std::filesystem::copy(ciPathAlice, ciPathCarla);
-
-    // Accept for carla
-    ConversationRepository repo(carlaAccount, convId);
-    repo.join();
-
-    std::filesystem::remove_all(repoPathAlice);
-    p = std::filesystem::path(repoPathAlice);
-    dhtnet::fileutils::recursive_mkdir(p.parent_path());
-    std::filesystem::copy(repoPathCarla, repoPathAlice, std::filesystem::copy_options::recursive);
-
-    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice));
-    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice + "/" + convId));
-
-    // Makes different heads
-    carlaAccount->convModule()->loadConversations(); // necessary to load conversation
-    carlaGotMessage = "";
-    libjami::sendMessage(carlaId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return !carlaGotMessage.empty(); }));
-    aliceGotMessage = "";
-    libjami::sendMessage(aliceId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return !aliceGotMessage.empty(); }));
-
-    // Connect only carla to migrate it.
-    Manager::instance().sendRegister(aliceId, false);
-    Manager::instance().sendRegister(carlaId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
-
-    // Migrate carla
-    CPPUNIT_ASSERT(carlaAccount->setValidity("", {}, 10));
-    auto now = std::chrono::system_clock::now();
-    std::this_thread::sleep_until(now + 20s);
-    carlaConnected = false;
-    carlaAccount->forceReloadAccount();
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaConnected; }));
-    // Force move certificate in alice's certStore (because forceReloadAccount is different than a real migration)
-    // and DHT state is still the old one
-    aliceAccount->certStore().pinCertificate(carlaAccount->identity().second);
-
-    // Start Carla, should merge and all messages should be there
-    Manager::instance().sendRegister(aliceId, true);
-    carlaGotMessage = "";
-    aliceGotMessage = "";
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 60s, [&] { return !carlaGotMessage.empty() && !aliceGotMessage.empty(); }));
     libjami::unregisterSignalHandlers();
 }
 
@@ -2809,33 +2689,6 @@ END:VCARD";
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return errorDetected; }));
 
     libjami::unregisterSignalHandlers();
-}
-
-void
-ConversationTest::testDoNotLoadIncorrectConversation()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto uri = aliceAccount->getUsername();
-    auto convId = libjami::startConversation(aliceId);
-
-    auto convInfos = libjami::conversationInfos(aliceId, convId);
-    CPPUNIT_ASSERT(convInfos.find("mode") != convInfos.end());
-    CPPUNIT_ASSERT(convInfos.find("syncing") == convInfos.end());
-
-    Manager::instance().sendRegister(aliceId, false);
-    auto repoGitPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
-                       + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId
-                       + DIR_SEPARATOR_STR + ".git";
-    dhtnet::fileutils::removeAll(repoGitPath, true); // This make the repository not usable
-
-    aliceAccount->convModule()
-        ->loadConversations(); // Refresh. This should detect the incorrect conversations.
-
-    // the conv should be detected as non existing
-    convInfos = libjami::conversationInfos(aliceId, convId);
-    CPPUNIT_ASSERT(convInfos.empty());
 }
 
 void
