@@ -16,6 +16,24 @@
       "message": "\n1) test: jami::test::IceMediaCandExchangeTest::jami_account_with_turn (F) line: 588 ice/ice_media_cand_exchange.cpp\nequality assertion failed\n- Expected: 1\n- Actual  : 0",
       "revId": "cad472b313579ff38a0c32f763366cb5108bc89e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ae02bc79_0e79681a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-01T15:38:12Z",
+      "side": 1,
+      "message": "This test already fails on master, I think it\u0027s more related to dhtnet than this.",
+      "parentUuid": "525c308d_c902c85a",
+      "revId": "cad472b313579ff38a0c32f763366cb5108bc89e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
