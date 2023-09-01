@@ -16,6 +16,24 @@
       "message": "completed\n\u001b[0m\u001b[22;36m[1693408788.115|43302] \u001b[0mPUPnP: Instance [0x7f662c000dd0] destroyed\n\u001b[0mpure virtual method called\nterminate called without an active exception\n\u001b[22;36m[1693408788.115|43301] \u001b[0mShutdown completed\n\u001b[0mAborted (core dumped)",
       "revId": "ef2064727cb151397cf7fff75e789f942ce9feb1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88174de0_e67715d6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 18
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-01T14:10:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1008006c_0db6b946",
+      "revId": "ef2064727cb151397cf7fff75e789f942ce9feb1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
