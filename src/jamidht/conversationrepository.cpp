@@ -885,15 +885,6 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
     auto repo = repository();
     if (!repo)
         return false;
-    auto treeNew = treeAtCommit(repo.get(), commitId);
-    if (not treeNew)
-        return false;
-    std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
-    if (!fileAtTree(deviceFile, treeNew)) {
-        JAMI_ERROR("{} announced but not found", deviceFile.c_str());
-        return false;
-    }
-
     // Here, we check that a file device is modified or not.
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     if (changedFiles.size() == 0)
@@ -901,7 +892,15 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
 
     // If a certificate is modified (in the changedFiles), it MUST be a certificate from the user
     // Retrieve userUri
-    auto userUri = uriFromDevice(userDevice);
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+    auto userUri = deviceCert.getIssuerUID();
     if (userUri.empty())
         return false;
 
@@ -924,7 +923,7 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
                 JAMI_ERROR("Invalid certificate {}", changedFile);
                 return false;
             }
-        } else if (changedFile == deviceFile) {
+        } else if (changedFile == userDeviceFile) {
             // In this case, device is added or modified (certificate expiration)
             auto oldFile = fileAtTree(changedFile, treeOld);
             std::string_view oldCert;
@@ -949,7 +948,19 @@ bool
 ConversationRepository::Impl::checkEdit(const std::string& userDevice,
                                         const ConversationCommit& commit) const
 {
-    auto userUri = uriFromDevice(userDevice);
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto treeNew = treeAtCommit(repo.get(), commit.id);
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+    auto userUri = deviceCert.getIssuerUID();
+
     // Check that edited commit is found, for the same author, and editable (plain/text)
     auto commitMap = convCommitToMap(commit);
     if (commitMap == std::nullopt) {
@@ -1017,14 +1028,20 @@ ConversationRepository::Impl::checkVote(const std::string& userDevice,
     if (not treeNew or not treeOld)
         return false;
 
-    if (not deviceFile.empty()) {
-        if (fileAtTree(deviceFile, treeOld)) {
-            JAMI_ERROR("Invalid device file modified: {}", deviceFile);
-            return false;
-        }
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    if (not deviceFile.empty() && deviceFile != userDeviceFile) {
+        JAMI_ERROR("Invalid device file modified: {}", deviceFile);
+        return false;
     }
 
-    auto userUri = uriFromDevice(userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", deviceFile);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+
+    auto userUri = deviceCert.getIssuerUID();
     // Check that voter is admin
     auto adminFile = fmt::format("admins/{}.crt", userUri);
 
@@ -1108,9 +1125,8 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
                                             const std::string& commitId,
                                             const std::string& parentId) const
 {
-    auto userUri = uriFromDevice(userDevice);
     auto repo = repository();
-    if (userUri.empty() or not repo)
+    if (not repo)
         return false;
 
     std::string repoPath = git_repository_workdir(repo.get());
@@ -1122,6 +1138,16 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
             return false;
         }
     }
+
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+    auto userUri = deviceCert.getIssuerUID();
 
     // Check that only /invited/uri.crt is added & deviceFile & CRLs
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
@@ -1159,9 +1185,6 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
 
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeOld)
-        return false;
-    auto treeNew = treeAtCommit(repo.get(), commitId);
-    if (not treeNew)
         return false;
     auto blob_invite = fileAtTree(invitedFile, treeNew);
     if (!blob_invite) {
@@ -1265,8 +1288,6 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
                                                const std::string& commitId,
                                                const std::string& parentId) const
 {
-    auto userUri = uriFromDevice(userDevice);
-
     // Retrieve tree for recent commit
     auto repo = repository();
     if (!repo)
@@ -1304,11 +1325,15 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     // Check that removed devices are for removed member (or directly uriMember)
     for (const auto& deviceUri : devicesRemoved) {
         deviceFile = fmt::format("devices/{}.crt", deviceUri);
-        if (!fileAtTree(deviceFile, treeOld)) {
+        auto blob_device = fileAtTree(deviceFile, treeOld);
+        if (!blob_device) {
             JAMI_ERROR("device not found added ({})", deviceFile);
             return false;
         }
-        if (uriMember != uriFromDevice(deviceUri)
+        auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+        auto userUri = deviceCert.getIssuerUID();
+
+        if (uriMember != userUri
             and uriMember != deviceUri /* If device is removed */) {
             JAMI_ERROR("device removed but not for removed user ({})", deviceFile);
             return false;
@@ -1325,8 +1350,6 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
                                                        const std::string& parentId,
                                                        const std::string& voteType) const
 {
-    auto userUri = uriFromDevice(userDevice);
-
     // Retrieve tree for recent commit
     auto repo = repository();
     if (!repo)
@@ -1408,6 +1431,16 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
         }
     }
 
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+    auto userUri = deviceCert.getIssuerUID();
+
     // Check that voters are admins
     adminFile = fmt::format("admins/{}.crt", userUri);
     if (!fileAtTree(adminFile, treeOld)) {
@@ -1445,7 +1478,24 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
                                                       const std::string& commitId,
                                                       const std::string& parentId) const
 {
-    auto userUri = uriFromDevice(userDevice);
+    // Retrieve tree for recent commit
+    auto repo = repository();
+    if (!repo)
+        return false;
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    auto treeOld = treeAtCommit(repo.get(), parentId);
+    if (not treeNew or not treeOld)
+        return false;
+
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+    auto userUri = deviceCert.getIssuerUID();
+
     auto valid = false;
     {
         std::lock_guard<std::mutex> lk(membersMtx_);
@@ -1460,15 +1510,6 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
         JAMI_ERROR("Profile changed from unauthorized user: {}", userDevice);
         return false;
     }
-
-    // Retrieve tree for recent commit
-    auto repo = repository();
-    if (!repo)
-        return false;
-    auto treeNew = treeAtCommit(repo.get(), commitId);
-    auto treeOld = treeAtCommit(repo.get(), parentId);
-    if (not treeNew or not treeOld)
-        return false;
 
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     // Check that no weird file is added nor removed
@@ -1577,7 +1618,17 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
         JAMI_WARNING("Invalid repository detected");
         return false;
     }
-    auto userUri = uriFromDevice(userDevice);
+
+    auto treeNew = treeAtCommit(repo.get(), commitId);
+    auto userDeviceFile = fmt::format("devices/{}.crt", userDevice);
+    auto blob_device = fileAtTree(userDeviceFile, treeNew);
+    if (!blob_device) {
+        JAMI_ERROR("{} announced but not found", userDevice);
+        return false;
+    }
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
+    auto userUri = deviceCert.getIssuerUID();
+
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, ""));
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
 
@@ -1606,21 +1657,6 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
     std::string crlFile = fmt::format("CRLs/{}", userUri);
     std::string invitedFile = fmt::format("invited/{}", invited);
-
-    git_oid oid;
-    git_commit* commit = nullptr;
-    if (git_oid_fromstr(&oid, commitId.c_str()) < 0
-        || git_commit_lookup(&commit, repo.get(), &oid) < 0) {
-        JAMI_WARNING("Failed to look up commit {}", commitId);
-        return false;
-    }
-    GitCommit gc = {commit, git_commit_free};
-    git_tree* tNew = nullptr;
-    if (git_commit_tree(&tNew, gc.get()) < 0) {
-        JAMI_ERROR("Could not look up initial tree");
-        return false;
-    }
-    GitTree treeNew = {tNew, git_tree_free};
 
     // Check that admin cert is added
     // Check that device cert is added
