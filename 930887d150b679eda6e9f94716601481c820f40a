@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b2cc873_24807d1d",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-09-05T12:56:14Z",
+      "side": 1,
+      "message": "could be called \u0027reset\u0027 ? Also, it should be false by default ?",
+      "range": {
+        "startLine": 73,
+        "startChar": 90,
+        "endLine": 73,
+        "endChar": 95
+      },
+      "revId": "930887d150b679eda6e9f94716601481c820f40a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
