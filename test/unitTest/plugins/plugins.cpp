@@ -507,10 +507,12 @@ PluginsTest::testTranslations()
     Manager::instance().pluginPreferences.setPluginsEnabled(true);
     setenv("JAMI_LANG", "en", true);
     Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true);
-    auto preferences = Manager::instance().getJamiPluginManager().getPluginPreferences(installationPath_, "");
-    CPPUNIT_ASSERT(!preferences.empty());
+
     auto preferencesValuesEN = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
     auto detailsValuesEN = Manager::instance().getJamiPluginManager().getPluginDetails(installationPath_);
+
+    CPPUNIT_ASSERT(!preferencesValuesEN.empty());
+    CPPUNIT_ASSERT(!detailsValuesEN.empty());
 
     setenv("JAMI_LANG", "fr", true);
 

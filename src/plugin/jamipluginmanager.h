@@ -67,9 +67,10 @@ public:
      * @brief Parses a manifest file and return its content
      * along with other internally added values.
      * @param rootPath installation path
+     * @param force If true, overrides previous details values
      * @return Map where the keyset is {"id", "name", "description", "version", "iconPath", "imagePath","soPath"}
      */
-    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
+    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath, bool force = true);
 
     /**
      * @brief Returns a vector with installed plugins

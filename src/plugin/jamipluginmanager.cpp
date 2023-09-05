@@ -67,11 +67,13 @@ JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::strin
 }
 
 std::map<std::string, std::string>
-JamiPluginManager::getPluginDetails(const std::string& rootPath)
+JamiPluginManager::getPluginDetails(const std::string& rootPath, bool force)
 {
     auto detailsIt = pluginDetailsMap_.find(rootPath);
     if (detailsIt != pluginDetailsMap_.end()) {
-        return detailsIt->second;
+        if (!force)
+            return detailsIt->second;
+        pluginDetailsMap_.erase(detailsIt);
     }
 
     std::map<std::string, std::string> details = PluginUtils::parseManifestFile(
@@ -307,7 +309,7 @@ JamiPluginManager::loadPlugin(const std::string& rootPath)
 {
 #ifdef ENABLE_PLUGIN
     try {
-        bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
+        bool status = pm_.load(getPluginDetails(rootPath, false).at("soPath"));
         JAMI_INFO() << "PLUGIN: load status - " << status;
 
         return status;
@@ -325,7 +327,7 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
 {
 #ifdef ENABLE_PLUGIN
     try {
-        bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
+        bool status = pm_.unload(getPluginDetails(rootPath, false).at("soPath"));
         JAMI_INFO() << "PLUGIN: unload status - " << status;
 
         return status;
