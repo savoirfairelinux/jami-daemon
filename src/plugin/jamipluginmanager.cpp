@@ -67,11 +67,13 @@ JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::strin
 }
 
 std::map<std::string, std::string>
-JamiPluginManager::getPluginDetails(const std::string& rootPath)
+JamiPluginManager::getPluginDetails(const std::string& rootPath, bool reset)
 {
     auto detailsIt = pluginDetailsMap_.find(rootPath);
     if (detailsIt != pluginDetailsMap_.end()) {
-        return detailsIt->second;
+        if (!reset)
+            return detailsIt->second;
+        pluginDetailsMap_.erase(detailsIt);
     }
 
     std::map<std::string, std::string> details = PluginUtils::parseManifestFile(

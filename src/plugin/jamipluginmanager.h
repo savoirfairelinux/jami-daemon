@@ -67,9 +67,12 @@ public:
      * @brief Parses a manifest file and return its content
      * along with other internally added values.
      * @param rootPath installation path
+     * @param reset If true, overrides previous details values
+     *              Reset is only used in the UT for now, but it can be useful
+     *              if we want to reset plugins language without restarting the application
      * @return Map where the keyset is {"id", "name", "description", "version", "iconPath", "imagePath","soPath"}
      */
-    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
+    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath, bool reset = false);
 
     /**
      * @brief Returns a vector with installed plugins
