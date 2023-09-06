@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "436038f8_53c0421d",
+        "filename": "test/unitTest/ice/ice.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 414,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-06T17:37:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cc6fa664_62cdb632",
+      "range": {
+        "startLine": 414,
+        "startChar": 0,
+        "endLine": 414,
+        "endChar": 45
+      },
+      "revId": "883a83c9702d77fd093ee6c5f5de6f8aa6ec6a54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "69e02bd7_ac380be7",

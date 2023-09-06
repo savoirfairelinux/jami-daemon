@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7c32e5c_65dba91a",
+        "filename": "contrib/src/pjproject/package.json",
+        "patchSetId": 11
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-06T17:37:37Z",
+      "side": 1,
+      "message": "[1694019737.320|38063] \n!!!FAILURES!!!\nSuccessfully unregistered controller 0x311c3c0Test Results:\n\nRun:  5   Failures: 2   Errors: 0\n\n\n1) test: jami::test::IceTest::testTurnMasterIceConnection (F) line: 305 ice/ice.cpp\nassertion failed\n- Expression: cv.wait_for(lk, std::chrono::seconds(10), [\u0026] { return iceMasterReady \u0026\u0026 iceSlaveReady; })\n\n[1694019737.320|38063] \nStopping UPNP context2) test: jami::test::IceTest::testTurnSlaveIceConnection (F) line: 423 ice/ice.cpp\n\nassertion failed\n- Expression: cv.wait_for(lk, std::chrono::seconds(10), [\u0026] { JAMI_ERROR(\"@@@ {} {}\", iceMasterReady, iceSlaveReady); return iceMasterReady \u0026\u0026 iceSlaveReady; })",
+      "range": {
+        "startLine": 3,
+        "startChar": 16,
+        "endLine": 3,
+        "endChar": 56
+      },
+      "revId": "74f79b5fe628e5ccf5e6de066dd27d056d1f319e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
