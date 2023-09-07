@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "57707498_c63fcadd",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 6
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-07T15:08:40Z",
+      "side": 1,
+      "message": "remove + link GitLab: #892",
+      "range": {
+        "startLine": 15,
+        "startChar": 23,
+        "endLine": 15,
+        "endChar": 26
+      },
+      "revId": "7af3d6c5f72c549327d8ce1aabe60f72b4fbd43d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
