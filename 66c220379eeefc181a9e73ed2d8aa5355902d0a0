@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4090c610_33abe6be",
+        "filename": "contrib/src/pjproject/SHA512SUMS",
+        "patchSetId": 16
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-09-07T13:37:50Z",
+      "side": 1,
+      "message": "I don\u0027t think it is correct",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 187
+      },
+      "revId": "66c220379eeefc181a9e73ed2d8aa5355902d0a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
