@@ -1,0 +1,182 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8b05b5a9_eeb41b2f",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "TODO: add public link to allow download without authentification",
+      "range": {
+        "startLine": 2,
+        "startChar": 28,
+        "endLine": 2,
+        "endChar": 29
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b270866f_5e9ddbdf",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "what do we want if libpipewire not available ? (aka only X11)",
+      "range": {
+        "startLine": 233,
+        "startChar": 3,
+        "endLine": 233,
+        "endChar": 21
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2ce0958a_31d11f71",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "re-add once url is fixed",
+      "range": {
+        "startLine": 356,
+        "startChar": 10,
+        "endLine": 357,
+        "endChar": 9
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "83920060_eabde71b",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "probably remove this hack",
+      "range": {
+        "startLine": 362,
+        "startChar": 1,
+        "endLine": 362,
+        "endChar": 62
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "faafb46b_8b7ebdae",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "Note: screen sharing a moving window will not work on Wayland yet. What do we want to do with \"Share area/Share window\"",
+      "range": {
+        "startLine": 369,
+        "startChar": 24,
+        "endLine": 369,
+        "endChar": 45
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "91656ee6_3f424b56",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "remove it\u0027s ok now, it was the strip",
+      "range": {
+        "startLine": 375,
+        "startChar": 1,
+        "endLine": 375,
+        "endChar": 19
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de925078_175fd96d",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "TODO pass x11grab or pipewiregrab depending the platform. How to inject?",
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5b96be41_b65ada30",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T19:47:39Z",
+      "side": 1,
+      "message": "TODO this doesn\u0027t seem to work on wayland for now (no format detected).",
+      "range": {
+        "startLine": 584,
+        "startChar": 30,
+        "endLine": 584,
+        "endChar": 31
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
