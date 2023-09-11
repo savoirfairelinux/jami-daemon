@@ -5,25 +5,25 @@ Subject: [PATCH] Add dxgi support
 
 ---
  configure                        |   1 +
- libavdevice/Makefile             |   4 +
- libavdevice/alldevices.c         |   1 +
- libavdevice/d3dHelpers.h         |  59 ++++++++
- libavdevice/direct3d11.interop.h |  51 +++++++
- libavdevice/dxgigrab.cpp         | 225 +++++++++++++++++++++++++++++++
- libavdevice/dxgigrab.h           |  83 ++++++++++++
- libavdevice/dxgigrab_c.c         |  59 ++++++++
- libavdevice/dxgigrab_c.h         |  98 ++++++++++++++
- libavdevice/windows_capture.cpp  | 184 +++++++++++++++++++++++++
- libavdevice/windows_capture.h    |  82 +++++++++++
+ Makefile             |   4 +
+ alldevices.c         |   1 +
+ d3dHelpers.h         |  59 ++++++++
+ direct3d11.interop.h |  51 +++++++
+ dxgigrab.cpp         | 225 +++++++++++++++++++++++++++++++
+ dxgigrab.h           |  83 ++++++++++++
+ dxgigrab_c.c         |  59 ++++++++
+ dxgigrab_c.h         |  98 ++++++++++++++
+ windows_capture.cpp  | 184 +++++++++++++++++++++++++
+ windows_capture.h    |  82 +++++++++++
  11 files changed, 847 insertions(+)
- create mode 100644 libavdevice/d3dHelpers.h
- create mode 100644 libavdevice/direct3d11.interop.h
- create mode 100644 libavdevice/dxgigrab.cpp
- create mode 100644 libavdevice/dxgigrab.h
- create mode 100644 libavdevice/dxgigrab_c.c
- create mode 100644 libavdevice/dxgigrab_c.h
- create mode 100644 libavdevice/windows_capture.cpp
- create mode 100644 libavdevice/windows_capture.h
+ create mode 100644 d3dHelpers.h
+ create mode 100644 direct3d11.interop.h
+ create mode 100644 dxgigrab.cpp
+ create mode 100644 dxgigrab.h
+ create mode 100644 dxgigrab_c.c
+ create mode 100644 dxgigrab_c.h
+ create mode 100644 windows_capture.cpp
+ create mode 100644 windows_capture.h
 
 diff --git a/configure b/configure
 index 6b5ef6332e..3606ce5bc3 100755
@@ -37,10 +37,10 @@ index 6b5ef6332e..3606ce5bc3 100755
  iec61883_indev_deps="libiec61883"
  jack_indev_deps="libjack"
  jack_indev_deps_any="sem_timedwait dispatch_dispatch_h"
-diff --git a/libavdevice/Makefile b/libavdevice/Makefile
+diff --git a/Makefile b/Makefile
 index 53efda0514..a6fb30cdea 100644
---- a/libavdevice/Makefile
-+++ b/libavdevice/Makefile
+--- a/Makefile
++++ b/Makefile
 @@ -28,6 +28,7 @@ OBJS-$(CONFIG_FBDEV_INDEV)               += fbdev_dec.o \
  OBJS-$(CONFIG_FBDEV_OUTDEV)              += fbdev_enc.o \
                                              fbdev_common.o
@@ -56,12 +56,12 @@ index 53efda0514..a6fb30cdea 100644
 +SKIPHEADERS-$(CONFIG_DXGIGRAB_INDEV)     += dxgigrab.h \
 +                                            windows_capture.h \
 +                                            dxgigrab_c.h
- 
+
  TESTPROGS-$(CONFIG_JACK_INDEV)           += timefilter
-diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
+diff --git a/alldevices.c b/alldevices.c
 index 22323a0a44..fb0a37513b 100644
---- a/libavdevice/alldevices.c
-+++ b/libavdevice/alldevices.c
+--- a/alldevices.c
++++ b/alldevices.c
 @@ -35,6 +35,7 @@ extern const AVInputFormat  ff_dshow_demuxer;
  extern const AVInputFormat  ff_fbdev_demuxer;
  extern const AVOutputFormat ff_fbdev_muxer;
@@ -70,11 +70,11 @@ index 22323a0a44..fb0a37513b 100644
  extern const AVInputFormat  ff_iec61883_demuxer;
  extern const AVInputFormat  ff_jack_demuxer;
  extern const AVInputFormat  ff_kmsgrab_demuxer;
-diff --git a/libavdevice/d3dHelpers.h b/libavdevice/d3dHelpers.h
+diff --git a/d3dHelpers.h b/d3dHelpers.h
 new file mode 100644
 index 0000000000..d8d2c003ec
 --- /dev/null
-+++ b/libavdevice/d3dHelpers.h
++++ b/d3dHelpers.h
 @@ -0,0 +1,59 @@
 +/*
 + * This file is part of FFmpeg.
@@ -135,11 +135,11 @@ index 0000000000..d8d2c003ec
 +    winrt::check_hresult(hr);
 +    return device;
 +}
-diff --git a/libavdevice/direct3d11.interop.h b/libavdevice/direct3d11.interop.h
+diff --git a/direct3d11.interop.h b/direct3d11.interop.h
 new file mode 100644
 index 0000000000..62c9b0843e
 --- /dev/null
-+++ b/libavdevice/direct3d11.interop.h
++++ b/direct3d11.interop.h
 @@ -0,0 +1,51 @@
 +/*
 + * This file is part of FFmpeg.
@@ -192,11 +192,11 @@ index 0000000000..62c9b0843e
 +    winrt::check_hresult(access->GetInterface(winrt::guid_of<T>(), result.put_void()));
 +    return result;
 +}
-diff --git a/libavdevice/dxgigrab.cpp b/libavdevice/dxgigrab.cpp
+diff --git a/dxgigrab.cpp b/dxgigrab.cpp
 new file mode 100644
 index 0000000000..9774e72ab1
 --- /dev/null
-+++ b/libavdevice/dxgigrab.cpp
++++ b/dxgigrab.cpp
 @@ -0,0 +1,225 @@
 +/*
 + * DXGI video grab interface
@@ -423,11 +423,11 @@ index 0000000000..9774e72ab1
 +
 +    return 0;
 +}
-diff --git a/libavdevice/dxgigrab.h b/libavdevice/dxgigrab.h
+diff --git a/dxgigrab.h b/dxgigrab.h
 new file mode 100644
 index 0000000000..92cad7dab8
 --- /dev/null
-+++ b/libavdevice/dxgigrab.h
++++ b/dxgigrab.h
 @@ -0,0 +1,83 @@
 +/*
 + * DXGI video grab interface
@@ -512,11 +512,11 @@ index 0000000000..92cad7dab8
 +};
 +
 +#endif /* AVDEVICE_DXGI_H */
-diff --git a/libavdevice/dxgigrab_c.c b/libavdevice/dxgigrab_c.c
+diff --git a/dxgigrab_c.c b/dxgigrab_c.c
 new file mode 100644
 index 0000000000..c53d757abd
 --- /dev/null
-+++ b/libavdevice/dxgigrab_c.c
++++ b/dxgigrab_c.c
 @@ -0,0 +1,59 @@
 +/*
 + * DXGI video grab interface
@@ -577,11 +577,11 @@ index 0000000000..c53d757abd
 +    .flags          = AVFMT_NOFILE,
 +    .priv_class     = &dxgigrab_class,
 +};
-diff --git a/libavdevice/dxgigrab_c.h b/libavdevice/dxgigrab_c.h
+diff --git a/dxgigrab_c.h b/dxgigrab_c.h
 new file mode 100644
 index 0000000000..d624ca0683
 --- /dev/null
-+++ b/libavdevice/dxgigrab_c.h
++++ b/dxgigrab_c.h
 @@ -0,0 +1,98 @@
 +/*
 + * DXGI video grab interface
@@ -620,7 +620,7 @@ index 0000000000..d624ca0683
 +extern "C" {
 +#endif
 +
-+#include "libavformat/internal.h"
++#include "internal.h"
 +#include "config.h"
 +#include "libavutil/opt.h"
 +#include "libavutil/time.h"
@@ -681,11 +681,11 @@ index 0000000000..d624ca0683
 +#endif
 +
 +#endif /* AVDEVICE_DXGI_C_H */
-diff --git a/libavdevice/windows_capture.cpp b/libavdevice/windows_capture.cpp
+diff --git a/windows_capture.cpp b/windows_capture.cpp
 new file mode 100644
 index 0000000000..c6b29f1a1d
 --- /dev/null
-+++ b/libavdevice/windows_capture.cpp
++++ b/windows_capture.cpp
 @@ -0,0 +1,184 @@
 +/*
 + * This file is part of FFmpeg.
@@ -871,11 +871,11 @@ index 0000000000..c6b29f1a1d
 +
 +    return 0;
 +}
-diff --git a/libavdevice/windows_capture.h b/libavdevice/windows_capture.h
+diff --git a/windows_capture.h b/windows_capture.h
 new file mode 100644
 index 0000000000..3e9269ed58
 --- /dev/null
-+++ b/libavdevice/windows_capture.h
++++ b/windows_capture.h
 @@ -0,0 +1,82 @@
 +/*
 + * This file is part of FFmpeg.
@@ -959,6 +959,6 @@ index 0000000000..3e9269ed58
 +    std::mutex mtx_;
 +    bool running_;
 +};
--- 
+--
 2.30.2.windows.1
 

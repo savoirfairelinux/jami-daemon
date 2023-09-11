@@ -4,13 +4,13 @@ Date: Mon, 17 Dec 2018 15:27:57 -0500
 Subject: [PATCH] remove mjpeg log
 
 ---
- libavcodec/mjpegdec.c | 4 +---
+ mjpegdec.c | 4 +---
  1 file changed, 1 insertion(+), 3 deletions(-)
 
-diff --git a/libavcodec/mjpegdec.c b/libavcodec/mjpegdec.c
+diff --git a/mjpegdec.c b/mjpegdec.c
 index d1dca84d36..4a26c23cd4 100644
---- a/libavcodec/mjpegdec.c
-+++ b/libavcodec/mjpegdec.c
+--- a/mjpegdec.c
++++ b/mjpegdec.c
 @@ -2294,9 +2294,7 @@ int ff_mjpeg_decode_frame(AVCodecContext *avctx, void *data, int *got_frame,
                     "restart marker: %d\n", start_code & 0x0f);
              /* APP fields */

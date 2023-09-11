@@ -16,17 +16,17 @@ is a RTP stream, where packet loss can be estimated from RTCP packets.
 
 Signed-off-by: Philip-Dylan Gleonec <philip-dylan.gleonec@savoirfairelinux.com>
 ---
- libavcodec/libopusenc.c | 9 +++++++++
+ libopusenc.c | 9 +++++++++
  1 file changed, 9 insertions(+)
 
-diff --git a/libavcodec/libopusenc.c b/libavcodec/libopusenc.c
+diff --git a/libopusenc.c b/libopusenc.c
 index 70d17f802b..c18e8ae7fa 100644
---- a/libavcodec/libopusenc.c
-+++ b/libavcodec/libopusenc.c
+--- a/libopusenc.c
++++ b/libopusenc.c
 @@ -460,6 +460,15 @@ static int libopus_encode(AVCodecContext *avctx, AVPacket *avpkt,
      int ret;
      int discard_padding;
- 
+
 +    if (opus->opts.fec) {
 +        ret = opus_multistream_encoder_ctl(opus->enc,
 +                                           OPUS_SET_PACKET_LOSS_PERC(opus->opts.packet_loss));
@@ -39,6 +39,6 @@ index 70d17f802b..c18e8ae7fa 100644
      if (frame) {
          ret = ff_af_queue_add(&opus->afq, frame);
          if (ret < 0)
--- 
+--
 2.25.1
 

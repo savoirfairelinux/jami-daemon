@@ -1,21 +1,21 @@
 ---
- libavcodec/nvenc.c | 3 ++-
+ nvenc.c | 3 ++-
  1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/libavcodec/nvenc.c b/libavcodec/nvenc.c
+diff --git a/nvenc.c b/nvenc.c
 index 8a28454042..c091fe2d31 100644
---- a/libavcodec/nvenc.c
-+++ b/libavcodec/nvenc.c
+--- a/nvenc.c
++++ b/nvenc.c
 @@ -1853,7 +1853,8 @@ av_cold int ff_nvenc_encode_close(AVCodecContext *avctx)
          p_nvenc->nvEncEncodePicture(ctx->nvencoder, &params);
      }
- 
+
 -    reorder_queue_flush(ctx->reorder_queue);
 +    if (ctx->reorder_queue)
 +        reorder_queue_flush(ctx->reorder_queue);
      av_fifo_freep2(&ctx->reorder_queue);
      av_fifo_freep2(&ctx->output_surface_ready_queue);
      av_fifo_freep2(&ctx->output_surface_queue);
--- 
+--
 2.34.1
 

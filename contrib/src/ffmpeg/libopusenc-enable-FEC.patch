@@ -1,7 +1,7 @@
-diff --git a/libavcodec/libopusencc.c b/libavcodec/libopusencc.c
+diff --git a/libopusencc.c b/libopusencc.c
 index 2a97811d18..40ee7b8fec 100644
---- a/libavcodec/libopusenc.c
-+++ b/libavcodec/libopusenc.c
+--- a/libopusenc.c
++++ b/libopusenc.c
 @@ -33,6 +33,7 @@
  typedef struct LibopusEncOpts {
      int vbr;
@@ -27,7 +27,7 @@ index 2a97811d18..40ee7b8fec 100644
 @@ -452,6 +460,15 @@
      int ret;
      int discard_padding;
- 
+
 +    // Reload packet loss setting
 +    ret = opus_multistream_encoder_ctl(opus->enc,
 +                                       OPUS_SET_PACKET_LOSS_PERC(opus->opts.packet_loss));

@@ -4,17 +4,17 @@ Date: Tue, 19 Jul 2022 13:18:20 -0300
 Subject: [PATCH] ios disable b frames
 
 ---
- libavcodec/videotoolboxenc.c | 14 ++++++++++++++
+ videotoolboxenc.c | 14 ++++++++++++++
  1 file changed, 14 insertions(+)
 
-diff --git a/libavcodec/videotoolboxenc.c b/libavcodec/videotoolboxenc.c
+diff --git a/videotoolboxenc.c b/videotoolboxenc.c
 index 418ff00b8d..9fab30fd69 100644
---- a/libavcodec/videotoolboxenc.c
-+++ b/libavcodec/videotoolboxenc.c
+--- a/videotoolboxenc.c
++++ b/videotoolboxenc.c
 @@ -1434,6 +1434,20 @@ static int vtenc_configure_encoder(AVCodecContext *avctx)
- 
+
      vtctx->codec_id = avctx->codec_id;
- 
+
 +    CFBooleanRef   has_b_frames_cfbool;
 +
 +    int error = VTSessionCopyProperty(vtctx->session,
@@ -31,7 +31,7 @@ index 418ff00b8d..9fab30fd69 100644
 +
      if (vtctx->codec_id == AV_CODEC_ID_H264) {
          vtctx->get_param_set_func = CMVideoFormatDescriptionGetH264ParameterSetAtIndex;
- 
--- 
+
+--
 2.34.1
 

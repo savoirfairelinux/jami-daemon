@@ -1,7 +1,7 @@
-diff --git a/libavcodec/libopusdec.c b/libavcodec/libopusdec.c
+diff --git a/libopusdec.c b/libopusdec.c
 index 9b9a610343..8ec5bfc1ad 100644
---- a/libavcodec/libopusdec.c
-+++ b/libavcodec/libopusdec.c
+--- a/libopusdec.c
++++ b/libopusdec.c
 @@ -45,6 +45,8 @@ struct libopus_context {
  #ifdef OPUS_SET_PHASE_INVERSION_DISABLED_REQUEST
      int apply_phase_inv;
@@ -9,17 +9,17 @@ index 9b9a610343..8ec5bfc1ad 100644
 +    int decode_fec;
 +    int64_t expected_next_pts;
  };
- 
+
  #define OPUS_HEAD_SIZE 19
 @@ -141,6 +143,8 @@ static av_cold int libopus_decode_init(AVCodecContext *avc)
      /* Decoder delay (in samples) at 48kHz */
      avc->delay = avc->internal->skip_samples = opus->pre_skip;
- 
+
 +    opus->expected_next_pts = AV_NOPTS_VALUE;
 +
      return 0;
  }
- 
+
 @@ -161,27 +165,82 @@ static int libopus_decode(AVCodecContext *avc, AVFrame *frame,
                            int *got_frame_ptr, AVPacket *pkt)
  {
@@ -37,12 +37,12 @@ index 9b9a610343..8ec5bfc1ad 100644
 +        nb_lost_samples = pkt->pts - opus->expected_next_pts;
 +        nb_lost_samples = FFMIN(nb_lost_samples, MAX_FRAME_SIZE);
 +    }
- 
+
 -    frame->nb_samples = MAX_FRAME_SIZE;
 +    frame->nb_samples = MAX_FRAME_SIZE + nb_lost_samples;
      if ((ret = ff_get_buffer(avc, frame, 0)) < 0)
          return ret;
- 
+
 +    outptr = frame->data[0];
 +    nb_samples_left = frame->nb_samples;
 +
@@ -90,7 +90,7 @@ index 9b9a610343..8ec5bfc1ad 100644
 +        ret = opus_multistream_decode_float(opus->dec, pkt->data, pkt->size,
 +                                            (float *)outptr,
 +                                            nb_samples_left, 0);
- 
+
 -    if (nb_samples < 0) {
 +    if (ret < 0) {
          av_log(avc, AV_LOG_ERROR, "Decoding error: %s\n",
@@ -99,7 +99,7 @@ index 9b9a610343..8ec5bfc1ad 100644
 +               opus_strerror(ret));
 +        return ff_opus_error_to_averror(ret);
      }
- 
+
 +    nb_samples += ret;
 +
 +    if (opus->decode_fec)
@@ -121,7 +121,7 @@ index 9b9a610343..8ec5bfc1ad 100644
 +    { "decode_fec", "Decode FEC data or use PLC", OFFSET(decode_fec), AV_OPT_TYPE_BOOL, { .i64 = 0 }, 0, 1, FLAGS },
      { NULL },
  };
- 
--- 
+
+--
 2.34.1
 

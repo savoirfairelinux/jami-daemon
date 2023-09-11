@@ -1,5 +1,5 @@
-FFMPEG_HASH := n6.0
-FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
+FFMPEG_HASH := 2c61f33556531d9ad8c0d711caa756264f6309a6
+FFMPEG_URL := https://g1.sfl.team/plugins/gitiles/sfl/ffmpeg/+archive/$(FFMPEG_HASH).tar.gz # TODO auth
 
 PKGS+=ffmpeg
 
@@ -17,13 +17,11 @@ FFMPEGCONF = \
 
 #disable everything
 FFMPEGCONF += \
-	--disable-everything \
 	--enable-zlib \
 	--enable-gpl \
 	--enable-swscale \
 	--enable-bsfs \
 	--disable-filters \
-	--disable-programs \
 	--disable-postproc
 
 FFMPEGCONF += \
@@ -232,6 +230,7 @@ FFMPEGCONF += \
 	--enable-hwaccel=h264_vdpau \
 	--enable-hwaccel=mpeg4_vdpau \
 	--enable-vaapi \
+	--enable-libpipewire \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi \
@@ -354,6 +353,8 @@ $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.gz:
 	$(call download,$(FFMPEG_URL))
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
+	$(warning $@ not implemented)
+	touch $@
 
 ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	rm -Rf $@ $@-$(FFMPEG_HASH)
@@ -366,11 +367,12 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
-	$(APPLY) $(SRC)/ffmpeg/nvenc-fix-reorderqueueflush-crash.patch
+	# TODO REBASE $(APPLY) $(SRC)/ffmpeg/nvenc-fix-reorderqueueflush-crash.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 .ffmpeg: ffmpeg .sum-ffmpeg
+	# TODO fix configure
 	cd $< && $(HOSTVARS) ./configure \
 		--extra-cflags="$(CFLAGS)" \
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
