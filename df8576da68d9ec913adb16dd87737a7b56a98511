@@ -177,6 +177,30 @@
       },
       "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ecec122c_5b1d872f",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-11T20:01:34Z",
+      "side": 1,
+      "message": "+ daedlock in pipewire_read_header",
+      "parentUuid": "5b96be41_b65ada30",
+      "range": {
+        "startLine": 584,
+        "startChar": 30,
+        "endLine": 584,
+        "endChar": 31
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
