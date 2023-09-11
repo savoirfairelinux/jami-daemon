@@ -343,7 +343,7 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
-    if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
+    if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab" || inputParams_.format == "pipewiregrab") {
         auto ret = inputCtx_->iformat->read_header(inputCtx_);
         if (ret == AVERROR_EXTERNAL) {
             JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
