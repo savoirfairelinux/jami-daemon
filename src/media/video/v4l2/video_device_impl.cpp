@@ -574,7 +574,7 @@ VideoDeviceImpl::getDeviceParams() const
     params.unique_id = unique_id;
     params.input = path;
     if (unique_id == DEVICE_DESKTOP) {
-        params.format = "x11grab";
+        params.format = "pipewiregrab";
         params.framerate = rate_.frame_rate;
         return params;
     }
