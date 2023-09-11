@@ -291,7 +291,7 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
-    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab") && !decOpts_.is_area) {
+    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab") && !decOpts_.is_area) {
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
