@@ -118,6 +118,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f019352c_aacc72bd",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-09-12T10:39:05Z",
+      "side": 1,
+      "message": "imho we could check wayland vs x11 and disable/enable the buttons in the client",
+      "parentUuid": "faafb46b_8b7ebdae",
+      "range": {
+        "startLine": 369,
+        "startChar": 24,
+        "endLine": 369,
+        "endChar": 45
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "91656ee6_3f424b56",
         "filename": "contrib/src/ffmpeg/rules.mak",
         "patchSetId": 3
@@ -152,6 +176,24 @@
       "writtenOn": "2023-09-11T19:47:39Z",
       "side": 1,
       "message": "TODO pass x11grab or pipewiregrab depending the platform. How to inject?",
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b52ed78_d316878d",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-09-12T10:39:05Z",
+      "side": 1,
+      "message": "probably need to execute system commands",
+      "parentUuid": "de925078_175fd96d",
       "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -193,6 +235,30 @@
       "side": 1,
       "message": "+ daedlock in pipewire_read_header",
       "parentUuid": "5b96be41_b65ada30",
+      "range": {
+        "startLine": 584,
+        "startChar": 30,
+        "endLine": 584,
+        "endChar": 31
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26a1dc53_f67f95da",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-09-12T10:39:05Z",
+      "side": 1,
+      "message": "you mean v4l2 is unable to catch screen or device resolution?\n\nalso, the deadlock is for any video, or only when sharing?",
+      "parentUuid": "ecec122c_5b1d872f",
       "range": {
         "startLine": 584,
         "startChar": 30,

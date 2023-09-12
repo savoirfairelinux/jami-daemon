@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3dd33981_e85f3ea8",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 346,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-09-12T10:39:05Z",
+      "side": 1,
+      "message": "x11grab and dxgigrab are here to re-read windows that might change resolution mid-sharing, if pipewiregrab does not support it, we should remove it form here as it can both leak/lock.",
+      "range": {
+        "startLine": 346,
+        "startChar": 81,
+        "endLine": 346,
+        "endChar": 118
+      },
+      "revId": "a234ec75018c750143fccce19aa44f7e865739d0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
