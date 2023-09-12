@@ -3402,10 +3402,12 @@ ConversationTest::testCloneFromMultipleDevice()
 
     // Alice re-adds Bob
     auto oldConv = convId;
+    conversationRmAlice = false;
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // This should retrieve the conversation from Bob and don't show any error
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return errorDetected; }));
+    CPPUNIT_ASSERT(conversationRmAlice);
     CPPUNIT_ASSERT(oldConv == convId); // Check that convId didn't change and conversation is ready.
 }
 

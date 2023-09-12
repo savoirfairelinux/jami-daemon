@@ -783,6 +783,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     } catch (const std::exception& e) {
         JAMI_WARN("Something went wrong when cloning conversation: %s", e.what());
     }
+    lk.lock();
     erasePending();
 }
 
