@@ -534,8 +534,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             return;
         }
 
-        conf->addParticipant(callId);
-        conf->bindParticipant(callId);
+        Manager::instance().addParticipant(*call, *conf);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
                                                            conf->getStateStr());
