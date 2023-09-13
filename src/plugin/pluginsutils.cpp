@@ -228,7 +228,7 @@ std::unique_ptr<dht::crypto::Certificate>
 readPluginCertificateFromArchive(const std::string& jplPath) {
     try {
         auto manifest = readPluginManifestFromArchive(jplPath);
-        const std::string& name = manifest["name"];
+        const std::string& name = manifest["id"];
 
         if (name.empty()) {
             return {};
