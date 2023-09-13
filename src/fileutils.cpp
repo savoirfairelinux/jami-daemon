@@ -293,13 +293,9 @@ getFileExtension(std::string_view filename)
 }
 
 bool
-isPathRelative(const std::string& path)
+isPathRelative(const std::filesystem::path& path)
 {
-#ifndef _WIN32
-    return not path.empty() and not(path[0] == '/');
-#else
-    return not path.empty() and path.find(":") == std::string::npos;
-#endif
+    return not path.empty() and path.is_relative();
 }
 
 std::string
@@ -315,33 +311,33 @@ getCleanPath(const std::string& base, const std::string& path)
 }
 
 std::filesystem::path
-getFullPath(const std::filesystem::path& base, const std::string& path)
+getFullPath(const std::filesystem::path& base, const std::filesystem::path& path)
 {
     bool isRelative {not base.empty() and isPathRelative(path)};
-    return isRelative ? base / path : std::filesystem::path(path);
+    return isRelative ? base / path : path;
 }
 
 std::vector<uint8_t>
-loadFile(const std::string& path, const std::string& default_dir)
+loadFile(const std::filesystem::path& path, const std::filesystem::path& default_dir)
 {
     return dhtnet::fileutils::loadFile(getFullPath(default_dir, path));
 }
 
 std::string
-loadTextFile(const std::string& path, const std::string& default_dir)
+loadTextFile(const std::filesystem::path& path, const std::filesystem::path& default_dir)
 {
     std::string buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path));
+    std::ifstream file = ifstream(getFullPath(default_dir, path).string());
     if (!file)
-        throw std::runtime_error("Can't read file: " + path);
+        throw std::runtime_error("Can't read file: " + path.string());
     file.seekg(0, std::ios::end);
     auto size = file.tellg();
     if (size > std::numeric_limits<unsigned>::max())
-        throw std::runtime_error("File is too big: " + path);
+        throw std::runtime_error("File is too big: " + path.string());
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
     if (!file.read((char*) buffer.data(), size))
-        throw std::runtime_error("Can't load file: " + path);
+        throw std::runtime_error("Can't load file: " + path.string());
     return buffer;
 }
 
@@ -868,7 +864,7 @@ size(const std::string& path)
 }
 
 std::string
-sha3File(const std::string& path)
+sha3File(const std::filesystem::path& path)
 {
     sha3_512_ctx ctx;
     sha3_512_init(&ctx);
@@ -877,7 +873,7 @@ sha3File(const std::string& path)
     try {
         if (not std::filesystem::is_regular_file(path))
             return {};
-        openStream(file, path, std::ios::binary | std::ios::in);
+        openStream(file, path.string(), std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);
@@ -931,10 +927,10 @@ accessFile(const std::string& file, int mode)
 }
 
 uint64_t
-lastWriteTimeInSeconds(const std::string& filePath)
+lastWriteTimeInSeconds(const std::filesystem::path& filePath)
 {
     return std::chrono::duration_cast<std::chrono::seconds>(
-            std::filesystem::last_write_time(std::filesystem::path(filePath))
+            std::filesystem::last_write_time(filePath)
                     .time_since_epoch()).count();
 }
 

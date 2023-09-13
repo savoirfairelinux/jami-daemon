@@ -30,7 +30,7 @@ parsePath(const YAML::Node& node, const char* key, std::string& path, const std:
 {
     std::string val;
     parseValue(node, key, val);
-    path = fileutils::getFullPath(base, val);
+    path = fileutils::getFullPath(base, val).string();
 }
 
 void
@@ -38,7 +38,7 @@ parsePathOptional(const YAML::Node& node, const char* key, std::string& path, co
 {
     std::string val;
     if (parseValueOptional(node, key, val))
-        path = fileutils::getFullPath(base, val);
+        path = fileutils::getFullPath(base, val).string();
 }
 
 std::vector<std::map<std::string, std::string>>

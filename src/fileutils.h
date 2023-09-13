@@ -59,7 +59,7 @@ std::string get_cache_dir();
 LIBJAMI_PUBLIC void set_program_dir(char* program_path); // public because bin/main.cpp uses it
 std::string expand_path(const std::string& path);
 
-bool isPathRelative(const std::string& path);
+bool isPathRelative(const std::filesystem::path& path);
 /**
  * If path is contained in base, return the suffix, otherwise return the full path.
  * @param base must not finish with DIR_SEPARATOR_STR, can be empty
@@ -69,7 +69,8 @@ std::string getCleanPath(const std::string& base, const std::string& path);
 /**
  * If path is relative, it is appended to base.
  */
-std::filesystem::path getFullPath(const std::filesystem::path& base, const std::string& path);
+std::filesystem::path getFullPath(const std::filesystem::path& base,
+                                  const std::filesystem::path& path);
 
 bool createFileLink(const std::string& src, const std::string& dest, bool hard = false);
 
@@ -81,8 +82,10 @@ bool isDirectoryWritable(const std::string& directory);
  * Read the full content of a file at path.
  * If path is relative, it is appended to default_dir.
  */
-std::vector<uint8_t> loadFile(const std::string& path, const std::string& default_dir = {});
-std::string loadTextFile(const std::string& path, const std::string& default_dir = {});
+std::vector<uint8_t> loadFile(const std::filesystem::path& path,
+                              const std::filesystem::path& default_dir = {});
+std::string loadTextFile(const std::filesystem::path& path,
+                         const std::filesystem::path& default_dir = {});
 
 bool copy(const std::string& src, const std::string& dest);
 
@@ -117,7 +120,7 @@ std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = s
 
 int64_t size(const std::string& path);
 
-std::string sha3File(const std::string& path);
+std::string sha3File(const std::filesystem::path& path);
 std::string sha3sum(const std::vector<uint8_t>& buffer);
 
 /**
@@ -128,7 +131,7 @@ int accessFile(const std::string& file, int mode);
 /**
  * Return the last write time (epoch time) of a given file path (in seconds).
  */
-uint64_t lastWriteTimeInSeconds(const std::string& filePath);
+uint64_t lastWriteTimeInSeconds(const std::filesystem::path& filePath);
 
 } // namespace fileutils
 } // namespace jami

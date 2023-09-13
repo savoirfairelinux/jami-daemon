@@ -142,9 +142,11 @@ JamiAccountConfig::toMap() const
         a.emplace(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
                   archiveHasPassword ? TRUE_STR : FALSE_STR);
 
-    a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE, fileutils::getFullPath(path, tlsCaListFile));
-    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE, fileutils::getFullPath(path, tlsCertificateFile));
-    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE, fileutils::getFullPath(path, tlsPrivateKeyFile));
+    a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE, fileutils::getFullPath(path, tlsCaListFile).string());
+    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,
+              fileutils::getFullPath(path, tlsCertificateFile).string());
+    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,
+              fileutils::getFullPath(path, tlsPrivateKeyFile).string());
     a.emplace(Conf::CONFIG_TLS_PASSWORD, tlsPassword);
     a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
               allowPeersFromHistory ? TRUE_STR : FALSE_STR);

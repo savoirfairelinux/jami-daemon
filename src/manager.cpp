@@ -184,10 +184,10 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
             auto old_dest = fileutils::getFullPath(old_dir, file);
             auto new_dest = fileutils::getFullPath(new_dir, file);
             if (std::filesystem::is_directory(old_dest) and std::filesystem::is_directory(new_dest)) {
-                check_rename(old_dest, new_dest);
+                check_rename(old_dest.string(), new_dest.string());
             } else {
                 JAMI_WARN() << "Migrating " << old_dest << " to " << new_dest;
-                std::rename(old_dest.c_str(), new_dest.c_str());
+                std::rename(old_dest.string().c_str(), new_dest.string().c_str());
             }
         }
         dhtnet::fileutils::removeAll(old_dir);
@@ -2700,7 +2700,7 @@ Manager::getAccountDetails(const std::string& accountID) const
     } else {
         JAMI_ERR("Could not get account details on a non-existing accountID %s", accountID.c_str());
         // return an empty map since we can't throw an exception to D-Bus
-        return std::map<std::string, std::string>();
+        return {};
     }
 }
 

@@ -147,7 +147,7 @@ public:
 
     std::unique_ptr<AccountConfig> buildConfig() const override
     {
-        return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
+        return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_.string());
     }
 
     /**

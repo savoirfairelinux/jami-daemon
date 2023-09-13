@@ -65,7 +65,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(USERNAME_KEY, username);
     SERIALIZE_CONFIG(MAILBOX_KEY, mailbox);
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value
-        << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"sv));
+        << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
     SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
     SERIALIZE_CONFIG(ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
@@ -76,7 +76,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(DISPLAY_NAME_KEY, displayName);
     SERIALIZE_CONFIG(UPNP_ENABLED_KEY, upnpEnabled);
     out << YAML::Key << DEFAULT_MODERATORS_KEY << YAML::Value
-        << fmt::format(FMT_COMPILE("{}"), fmt::join(defaultModerators, "/"sv));
+        << fmt::format(FMT_COMPILE("{}"), fmt::join(defaultModerators, "/"));
     SERIALIZE_CONFIG(LOCAL_MODERATORS_ENABLED_KEY, localModeratorsEnabled);
     SERIALIZE_CONFIG(ALL_MODERATORS_ENABLED_KEY, allModeratorsEnabled);
     SERIALIZE_CONFIG(PROXY_PUSH_TOKEN_KEY, deviceKey);
@@ -186,7 +186,7 @@ parsePath(const std::map<std::string, std::string>& details,
 {
     auto it = details.find(key);
     if (it != details.end())
-        s = fileutils::getFullPath(base, it->second);
+        s = fileutils::getFullPath(base, it->second).string();
 }
 
 } // namespace jami

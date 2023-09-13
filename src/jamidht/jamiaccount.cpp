@@ -982,7 +982,7 @@ JamiAccount::setValidity(const std::string& pwd, const dht::InfoHash& id, int64_
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
         if (manager->setValidity(pwd, id_, id, validity)) {
-            saveIdentity(id_, idPath_, DEVICE_ID_PATH);
+            saveIdentity(id_, idPath_.string(), DEVICE_ID_PATH);
             return true;
         }
     }
@@ -1178,12 +1178,14 @@ JamiAccount::loadAccount(const std::string& archive_password,
     try {
         if (conf.managerUri.empty()) {
             accountManager_ = std::make_shared<ArchiveAccountManager>(
-                getPath(),
+                getPath().string(),
                 [this]() { return getAccountDetails(); },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
                 conf.nameServer);
         } else {
-            accountManager_ = std::make_shared<ServerAccountManager>(getPath(), conf.managerUri, conf.nameServer);
+            accountManager_ = std::make_shared<ServerAccountManager>(getPath().string(),
+                                                                     conf.managerUri,
+                                                                     conf.nameServer);
         }
 
         auto id = accountManager_->loadIdentity(getAccountID(),
@@ -1251,7 +1253,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 } else if (hasArchive) {
                     // Migrating local account
                     acreds->scheme = "local";
-                    acreds->uri = std::move(archivePath);
+                    acreds->uri = std::move(archivePath).string();
                     acreds->updateIdentity = id;
                     migrating = true;
                 }
@@ -1282,7 +1284,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     auto id = info.identity;
                     editConfig([&](JamiAccountConfig& conf) {
                         std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile)
-                            = saveIdentity(id, idPath_, DEVICE_ID_PATH);
+                            = saveIdentity(id, idPath_.string(), DEVICE_ID_PATH);
                         conf.tlsPassword = {};
                         conf.archiveHasPassword = hasPassword;
                         if (not conf.managerUri.empty()) {
@@ -1792,7 +1794,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Config config {};
         config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
-        config.dht_config.node_config.persist_path = cachePath_ / "dhtstate";
+        config.dht_config.node_config.persist_path = (cachePath_ / "dhtstate").string();
         config.dht_config.id = id_;
         config.dht_config.cert_cache_all = true;
         config.push_node_id = getAccountID();
@@ -2475,9 +2477,9 @@ JamiAccount::loadTreatedMessages()
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
     auto path = cachePath_ / "treatedMessages";
-    treatedMessages_ = loadIdList<std::string>(path);
+    treatedMessages_ = loadIdList<std::string>(path.string());
     if (treatedMessages_.empty()) {
-        auto messages = loadIdList(path);
+        auto messages = loadIdList(path.string());
         for (const auto& m : messages)
             treatedMessages_.emplace(to_hex_string(m));
     }
@@ -2491,7 +2493,7 @@ JamiAccount::saveTreatedMessages() const
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
             dhtnet::fileutils::check_dir(this_.cachePath_.c_str());
-            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ / "treatedMessages",
+            saveIdList<decltype(this_.treatedMessages_)>((this_.cachePath_ / "treatedMessages").string(),
                                                          this_.treatedMessages_);
         }
     });
@@ -2590,7 +2592,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
             cb(getDhtProxyServer(conf.proxyServer));
         } else {
             loadCachedUrl(conf.proxyListUrl,
-                          cachePath_ / "dhtproxylist",
+                          (cachePath_ / "dhtproxylist").string(),
                           std::chrono::hours(24 * 3),
                           [w = weak(), cb = std::move(cb)](const dht::http::Response& response) {
                               if (auto sthis = w.lock()) {
@@ -2640,7 +2642,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         // Cache it!
         dhtnet::fileutils::check_dir(cachePath_, 0700);
         auto proxyCachePath = cachePath_ / "dhtproxy";
-        std::ofstream file = fileutils::ofstream(proxyCachePath);
+        std::ofstream file = fileutils::ofstream(proxyCachePath.string());
         JAMI_DEBUG("Cache DHT proxy server: {}", proxyServerCached_);
         Json::Value node(Json::objectValue);
         node[getProxyConfigKey()] = proxyServerCached_;
@@ -2942,7 +2944,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     auto requestPath = cachePath_ / "requests";
     dhtnet::fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath / to;
-    std::ofstream req = fileutils::ofstream(cachedFile, std::ios::trunc | std::ios::binary);
+    std::ofstream req = fileutils::ofstream(cachedFile.string(), std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
         JAMI_ERR("Could not write data to %s", cachedFile.c_str());
         return;
@@ -3670,7 +3672,7 @@ JamiAccount::sendProfile(const std::string& convId,
     }
     // We need a new channel
     transferFile(convId,
-                 profilePath(),
+                 profilePath().string(),
                  deviceId,
                  "profile.vcf",
                  "",

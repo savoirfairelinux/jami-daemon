@@ -2902,7 +2902,7 @@ ConversationRepository::addMember(const std::string& uri)
         return {};
     }
 
-    auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    auto file = fileutils::ofstream(devicePath.string(), std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to {}", devicePath);
         return {};
@@ -3474,7 +3474,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
-    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri).string();
     auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERROR("Could not write data to {}", votePath);
@@ -3482,7 +3482,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     }
     voteFile.close();
 
-    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
+    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri).string();
     if (!pimpl_->add(toAdd.c_str()))
         return {};
 
@@ -3514,7 +3514,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
-    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri).string();
     auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERROR("Could not write data to {}", votePath);
@@ -3522,7 +3522,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
     }
     voteFile.close();
 
-    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
+    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri).string();
     if (!pimpl_->add(toAdd.c_str()))
         return {};
 
