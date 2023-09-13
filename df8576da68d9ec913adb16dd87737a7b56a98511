@@ -267,6 +267,30 @@
       },
       "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be5ebae4_c3434a8e",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-13T15:25:15Z",
+      "side": 1,
+      "message": "only for sharing. I didn\u0027t dig yet, it\u0027s a dirty POC",
+      "parentUuid": "26a1dc53_f67f95da",
+      "range": {
+        "startLine": 584,
+        "startChar": 30,
+        "endLine": 584,
+        "endChar": 31
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
