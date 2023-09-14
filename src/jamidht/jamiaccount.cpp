@@ -2491,7 +2491,7 @@ JamiAccount::saveTreatedMessages() const
         if (auto sthis = w.lock()) {
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
-            dhtnet::fileutils::check_dir(this_.cachePath_.c_str());
+            dhtnet::fileutils::check_dir(this_.cachePath_);
             saveIdList<decltype(this_.treatedMessages_)>((this_.cachePath_ / "treatedMessages").string(),
                                                          this_.treatedMessages_);
         }
@@ -3700,27 +3700,25 @@ JamiAccount::needToSendProfile(const std::string& peerUri,
                                const std::string& sha3Sum)
 {
     std::string previousSha3 {};
-    auto vCardPath = fmt::format("{}/vcard", cachePath_);
-    auto sha3Path = fmt::format("{}/sha3", vCardPath);
+    auto vCardPath = cachePath_ / "vcard";
+    auto sha3Path = vCardPath / "sha3";
     dhtnet::fileutils::check_dir(vCardPath, 0700);
     try {
         previousSha3 = fileutils::loadTextFile(sha3Path);
     } catch (...) {
-        fileutils::saveFile(sha3Path, {sha3Sum.begin(), sha3Sum.end()}, 0600);
+        fileutils::saveFile(sha3Path.string(), (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
         return true;
     }
     if (sha3Sum != previousSha3) {
         // Incorrect sha3 stored. Update it
         dhtnet::fileutils::removeAll(vCardPath, true);
-        dhtnet::fileutils::check_dir(vCardPath.c_str(), 0700);
-        dhtnet::fileutils::saveFile(sha3Path, {sha3Sum.begin(), sha3Sum.end()}, 0600);
+        dhtnet::fileutils::check_dir(vCardPath, 0700);
+        fileutils::saveFile(sha3Path.string(), (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
         return true;
     }
-    dhtnet::fileutils::recursive_mkdir(fmt::format("{}/{}/", vCardPath, peerUri));
-
-    auto path = fmt::format("{}/{}/{}", vCardPath, peerUri, deviceId);
-    auto res = not std::filesystem::is_regular_file(path);
-    return res;
+    auto peerPath = vCardPath / peerUri;
+    dhtnet::fileutils::recursive_mkdir(peerPath);
+    return not std::filesystem::is_regular_file(peerPath / deviceId);
 }
 
 bool
