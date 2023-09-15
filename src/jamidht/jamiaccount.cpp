@@ -1206,17 +1206,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
             convModule()->loadConversations();
-            if (!conf.managerUri.empty()) {
-                if (accountManager_ == nullptr) {
-                    return;
-                }
-                dynamic_cast<ServerAccountManager*>(accountManager_.get())
-                    ->syncBlueprintConfig([this](const std::map<std::string, std::string>& config) {
-                        editConfig([&](JamiAccountConfig& conf) { conf.fromMap(config); });
-                        emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
-                                                                getAccountDetails());
-                    });
-            }
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
@@ -2090,6 +2079,15 @@ JamiAccount::doRegister_()
                                 });
             return true;
         });
+
+        if (!conf.managerUri.empty() && accountManager_) {
+            dynamic_cast<ServerAccountManager*>(accountManager_.get())
+                ->syncBlueprintConfig([this](const std::map<std::string, std::string>& config) {
+                    editConfig([&](JamiAccountConfig& conf) { conf.fromMap(config); });
+                    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
+                                                            getAccountDetails());
+                });
+        }
 
         std::lock_guard<std::mutex> lock(buddyInfoMtx);
         for (auto& buddy : trackedBuddies_) {
