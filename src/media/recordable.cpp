@@ -60,7 +60,7 @@ Recordable::toggleRecording()
         std::stringstream ss;
         auto dir = Manager::instance().audioPreference.getRecordPath();
         if (dir.empty())
-            dir = fileutils::get_home_dir();
+            dir = fileutils::get_home_dir().string();
         // Check if dir exists, create if if it does not
         dhtnet::fileutils::check_dir(dir.c_str());
         ss << dir;

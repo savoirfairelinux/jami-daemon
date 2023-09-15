@@ -593,7 +593,7 @@ std::string
 Manager::ManagerPimpl::retrieveConfigPath() const
 {
     // TODO: Migrate config file name from dring.yml to jami.yml.
-    return fileutils::get_config_dir() + DIR_SEPARATOR_STR + "dring.yml";
+    return (fileutils::get_config_dir() / "dring.yml").string();
 }
 
 void
@@ -806,9 +806,11 @@ Manager::init(const std::string& config_file, libjami::InitFlag flags)
     // So only create the SipLink once
     pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
-    check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
-    check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
-    check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
+    check_rename(fileutils::get_cache_dir(PACKAGE_OLD).string(),
+                 fileutils::get_cache_dir().string());
+    check_rename(fileutils::get_data_dir(PACKAGE_OLD).string(), fileutils::get_data_dir().string());
+    check_rename(fileutils::get_config_dir(PACKAGE_OLD).string(),
+                 fileutils::get_config_dir().string());
 
     pimpl_->ice_tf_.reset(new dhtnet::IceTransportFactory(Logger::dhtLogger()));
 
@@ -2883,11 +2885,10 @@ Manager::loadAccountMap(const YAML::Node& node)
                                             &cv,
                                             &remaining,
                                             &lock,
-                                            configFile = accountBaseDir + DIR_SEPARATOR_STR + dir
-                                                         + DIR_SEPARATOR_STR + "config.yml"] {
+                                            configFile = accountBaseDir / dir / "config.yml"] {
             if (std::filesystem::is_regular_file(configFile)) {
                 try {
-                    auto configNode = YAML::LoadFile(configFile);
+                    auto configNode = YAML::LoadFile(configFile.string());
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
                         auto config = a->buildConfig();
                         config->unserialize(configNode);

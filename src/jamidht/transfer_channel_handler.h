@@ -66,7 +66,7 @@ private:
     std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
 
-    std::string idPath_;
+    std::filesystem::path idPath_;
 };
 
 } // namespace jami

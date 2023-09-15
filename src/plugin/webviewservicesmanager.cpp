@@ -113,7 +113,7 @@ WebViewServicesManager::registerWebViewService(PluginManager& pluginManager)
         auto* message = static_cast<WebViewMessage*>(data);
 
         // get datapath for the plugin
-        const std::string& dataPath = PluginUtils::dataPath(plugin->getPath());
+        std::string dataPath = PluginUtils::dataPath(plugin->getPath()).string();
 
         emitSignal<libjami::PluginSignal::WebViewMessageReceived>(dataPath,
                                                                 message->webViewId,

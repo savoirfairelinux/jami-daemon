@@ -1136,26 +1136,25 @@ ConversationModule::saveConvRequests(
     const std::string& accountId,
     const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
-    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
+    auto path = fileutils::get_data_dir() / accountId;
     saveConvRequestsToPath(path, conversationsRequests);
 }
 
 void
 ConversationModule::saveConvRequestsToPath(
-    const std::string& path, const std::map<std::string, ConversationRequest>& conversationsRequests)
+    const std::filesystem::path& path, const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
-    std::lock_guard<std::mutex> lock(
-        dhtnet::fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
-    std::ofstream file(path + DIR_SEPARATOR_STR + "convRequests",
-                       std::ios::trunc | std::ios::binary);
+    auto p = path / "convRequests";
+    std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(p));
+    std::ofstream file(p, std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests);
 }
 
 void
 ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMap& conversations)
 {
-    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
-    saveConvInfosToPath(path, conversations);
+    auto path = fileutils::get_data_dir() / accountId;
+    saveConvInfosToPath(path.string(), conversations);
 }
 
 void
@@ -1207,8 +1206,7 @@ ConversationModule::loadConversations()
     auto uri = acc->getUsername();
     JAMI_LOG("[Account {}] Start loading conversations…", pimpl_->accountId_);
     auto conversationsRepositories = dhtnet::fileutils::readDirectory(
-        fileutils::get_data_dir() + DIR_SEPARATOR_STR + pimpl_->accountId_ + DIR_SEPARATOR_STR
-        + "conversations");
+        fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     std::unique_lock<std::mutex> ilk(pimpl_->convInfosMtx_);
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
@@ -2710,8 +2708,8 @@ ConversationModule::hostConference(const std::string& conversationId,
 std::map<std::string, ConvInfo>
 ConversationModule::convInfos(const std::string& accountId)
 {
-    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
-    return convInfosFromPath(path);
+    auto path = fileutils::get_data_dir() / accountId;
+    return convInfosFromPath(path.string());
 }
 
 std::map<std::string, ConvInfo>
@@ -2735,8 +2733,8 @@ ConversationModule::convInfosFromPath(const std::string& path)
 std::map<std::string, ConversationRequest>
 ConversationModule::convRequests(const std::string& accountId)
 {
-    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
-    return convRequestsFromPath(path);
+    auto path = fileutils::get_data_dir() / accountId;
+    return convRequestsFromPath(path.string());
 }
 
 std::map<std::string, ConversationRequest>

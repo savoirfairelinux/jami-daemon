@@ -61,9 +61,7 @@ namespace jami {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID)
-    , messageEngine_(*this,
-                     fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
-                         + DIR_SEPARATOR_STR "messages")
+    , messageEngine_(*this, (fileutils::get_cache_dir() / getAccountID() / "messages").string())
     , link_(Manager::instance().sipVoIPLink())
 {}
 
@@ -130,8 +128,7 @@ SIPAccountBase::flush()
 {
     // Class base method
     Account::flush();
-    dhtnet::fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
-                      + DIR_SEPARATOR_STR "messages");
+    dhtnet::fileutils::remove(fileutils::get_cache_dir() / getAccountID() / "messages");
 }
 
 void
@@ -148,13 +145,13 @@ SIPAccountBase::loadConfig()
     turnParams.password = conf.turnServerPwd;
     turnParams.realm = conf.turnServerRealm;
     if (!turnCache_) {
-        auto cachePath = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID();
+        auto cachePath = fileutils::get_cache_dir() / getAccountID();
         turnCache_ = std::make_shared<dhtnet::TurnCache>(getAccountID(),
-                                                 cachePath,
-                                                 Manager::instance().ioContext(),
-                                                 Logger::dhtLogger(),
-                                                 turnParams,
-                                                 conf.turnEnabled);
+                                                         cachePath.string(),
+                                                         Manager::instance().ioContext(),
+                                                         Logger::dhtLogger(),
+                                                         turnParams,
+                                                         conf.turnEnabled);
     }
     turnCache_->reconfigure(turnParams, conf.turnEnabled);
 }

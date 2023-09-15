@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "jami/def.h"
 
 #include <string>
 #include <vector>
@@ -22,8 +23,8 @@
 #include <mutex>
 #include <cstdio>
 #include <ios>
+#include <filesystem>
 
-#include "jami/def.h"
 #include <dhtnet/fileutils.h>
 
 #ifndef _WIN32
@@ -41,14 +42,14 @@
 namespace jami {
 namespace fileutils {
 
-std::string get_home_dir();
-std::string get_config_dir(const char* pkg);
-std::string get_data_dir(const char* pkg);
-std::string get_cache_dir(const char* pkg);
+std::filesystem::path get_home_dir();
+std::filesystem::path get_config_dir(const char* pkg);
+std::filesystem::path get_data_dir(const char* pkg);
+std::filesystem::path get_cache_dir(const char* pkg);
 
-std::string get_config_dir();
-std::string get_data_dir();
-std::string get_cache_dir();
+std::filesystem::path get_config_dir();
+std::filesystem::path get_data_dir();
+std::filesystem::path get_cache_dir();
 
 /**
  * Check directory existence and create it with given mode if it doesn't.
@@ -72,7 +73,7 @@ std::string getCleanPath(const std::string& base, const std::string& path);
 std::filesystem::path getFullPath(const std::filesystem::path& base,
                                   const std::filesystem::path& path);
 
-bool createFileLink(const std::string& src, const std::string& dest, bool hard = false);
+bool createFileLink(const std::filesystem::path& src, const std::filesystem::path& dest, bool hard = false);
 
 std::string_view getFileExtension(std::string_view filename);
 
@@ -89,9 +90,9 @@ std::string loadTextFile(const std::filesystem::path& path,
 
 bool copy(const std::string& src, const std::string& dest);
 
-void saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t mode = 0644);
+void saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t mode = 0644);
 inline void
-saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode = 0644)
+saveFile(const std::filesystem::path& path, const std::vector<uint8_t>& data, mode_t mode = 0644)
 {
     saveFile(path, data.data(), data.size(), mode);
 }

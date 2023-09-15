@@ -584,7 +584,8 @@ AccountManager::findCertificate(
     if (auto cert = certStore().getCertificate(id.toString())) {
         if (cb)
             cb(cert);
-    } else if (auto cert = certStore().getCertificateLegacy(fileutils::get_data_dir(), id.toString())) {
+    } else if (auto cert = certStore().getCertificateLegacy(fileutils::get_data_dir().string(),
+                                                            id.toString())) {
         if (cb)
             cb(cert);
     } else if (cb)
