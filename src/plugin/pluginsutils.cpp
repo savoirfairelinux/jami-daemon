@@ -69,30 +69,30 @@ const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
 const std::regex SO_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
                           "([a-zA-Z0-9_-]+\\.(dylib|so|dll|lib).*)");
 
-std::string
-manifestPath(const std::string& rootPath)
+std::filesystem::path
+manifestPath(const std::filesystem::path& rootPath)
 {
-    return rootPath + DIR_SEPARATOR_CH + "manifest.json";
+    return rootPath / "manifest.json";
 }
 
 std::map<std::string, std::string>
 getPlatformInfo()
 {
-    std::map<std::string, std::string> platformInfo = {};
-    platformInfo["os"] = ABI;
-    return platformInfo;
+    return {
+        {"os", ABI}
+    };
 }
 
-std::string
-getRootPathFromSoPath(const std::string& soPath)
+std::filesystem::path
+getRootPathFromSoPath(const std::filesystem::path& soPath)
 {
-    return soPath.substr(0, soPath.find_last_of(DIR_SEPARATOR_CH));
+    return soPath.parent_path();
 }
 
-std::string
-dataPath(const std::string& pluginSoPath)
+std::filesystem::path
+dataPath(const std::filesystem::path& pluginSoPath)
 {
-    return getRootPathFromSoPath(pluginSoPath) + DIR_SEPARATOR_CH + "data";
+    return getRootPathFromSoPath(pluginSoPath) / "data";
 }
 
 std::map<std::string, std::string>
@@ -153,7 +153,7 @@ checkManifestValidity(const std::vector<uint8_t>& vec)
 }
 
 std::map<std::string, std::string>
-parseManifestFile(const std::string& manifestFilePath, const std::string& rootPath)
+parseManifestFile(const std::filesystem::path& manifestFilePath, const std::string& rootPath)
 {
     std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(manifestFilePath));
     std::ifstream file(manifestFilePath);
@@ -195,9 +195,9 @@ parseManifestTranslation(const std::string& rootPath, std::ifstream& manifestFil
 }
 
 bool
-checkPluginValidity(const std::string& rootPath)
+checkPluginValidity(const std::filesystem::path& rootPath)
 {
-    return !parseManifestFile(manifestPath(rootPath), rootPath).empty();
+    return !parseManifestFile(manifestPath(rootPath), rootPath.string()).empty();
 }
 
 std::map<std::string, std::string>

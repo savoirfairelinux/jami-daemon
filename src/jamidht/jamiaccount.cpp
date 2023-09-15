@@ -270,8 +270,8 @@ dhtStatusStr(dht::NodeStatus status)
 
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
-    , idPath_(fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId)
-    , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + accountId)
+    , idPath_(fileutils::get_data_dir() / accountId)
+    , cachePath_(fileutils::get_cache_dir() / accountId)
     , dataPath_(cachePath_ / "values")
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
@@ -2459,9 +2459,9 @@ loadIdList(const std::string& path)
 
 template<typename List = std::set<dht::Value::Id>>
 void
-saveIdList(const std::string& path, const List& ids)
+saveIdList(const std::filesystem::path& path, const List& ids)
 {
-    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
+    std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not save to %s", path.c_str());
         return;
@@ -2491,7 +2491,7 @@ JamiAccount::saveTreatedMessages() const
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
             dhtnet::fileutils::check_dir(this_.cachePath_);
-            saveIdList<decltype(this_.treatedMessages_)>((this_.cachePath_ / TREATED_PATH).string(),
+            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ / TREATED_PATH,
                                                          this_.treatedMessages_);
         }
     });
@@ -3680,11 +3680,8 @@ JamiAccount::sendProfile(const std::string& convId,
                  fileutils::lastWriteTimeInSeconds(profilePath()),
                  [accId = getAccountID(), peerUri, deviceId]() {
                      // Mark the VCard as sent
-                     auto sendDir = fmt::format("{}/{}/vcard/{}",
-                                                fileutils::get_cache_dir(),
-                                                accId,
-                                                peerUri);
-                     auto path = fmt::format("{}/{}", sendDir, deviceId);
+                     auto sendDir = fileutils::get_cache_dir() / accId / "vcard" / peerUri;
+                     auto path = sendDir / deviceId;
                      dhtnet::fileutils::recursive_mkdir(sendDir);
                      std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(path));
                      if (std::filesystem::is_regular_file(path))
@@ -3813,7 +3810,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 void
 JamiAccount::clearProfileCache(const std::string& peerUri)
 {
-    dhtnet::fileutils::removeAll(fmt::format("{}/vcard/{}", cachePath_, peerUri));
+    dhtnet::fileutils::removeAll(cachePath_ / "vcard" / peerUri);
 }
 
 std::filesystem::path
@@ -4008,10 +4005,9 @@ JamiAccount::sendFile(const std::string& conversationId,
                 [accId = shared->getAccountID(), conversationId, tid, path](
                     const std::string& commitId) {
                     // Create a symlink to answer to re-ask
-                    auto filelinkPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accId
-                                        + DIR_SEPARATOR_STR + "conversation_data"
-                                        + DIR_SEPARATOR_STR + conversationId + DIR_SEPARATOR_STR
-                                        + commitId + "_" + std::to_string(tid);
+                    auto filelinkPath = fileutils::get_data_dir() / accId
+                                        / "conversation_data"
+                                        / conversationId / (commitId + "_" + std::to_string(tid));
                     auto extension = fileutils::getFileExtension(path);
                     if (!extension.empty())
                         filelinkPath += "." + extension;
