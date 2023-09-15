@@ -276,7 +276,7 @@ PluginsTest::setUp()
     dht::crypto::TrustList trust;
     trust.add(*cert_);
     jplPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + name_ + ".jpl";
-    installationPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + name_;
+    installationPath_ = fileutils::get_data_dir() / "plugins" / name_;
     mediaHandlers_ = node["mediaHandlers"].as<std::vector<std::string>>();
     chatHandlers_ = node["chatHandlers"].as<std::vector<std::string>>();
     pluginNotFoundPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + "fakePlugin.jpl";
@@ -720,8 +720,8 @@ PluginsTest::testMessage()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobData.accountId_
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / bobData.accountId_
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; });

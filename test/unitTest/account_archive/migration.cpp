@@ -104,12 +104,8 @@ MigrationTest::testLoadExpiredAccount()
     auto aliceDevice = std::string(aliceAccount->currentDeviceId());
 
     // Get alice's expiration
-    auto archivePath = fmt::format("{}/{}/archive.gz",
-                                   fileutils::get_data_dir(),
-                                   aliceAccount->getAccountID());
-    auto devicePath = fmt::format("{}/{}/ring_device.crt",
-                                  fileutils::get_data_dir(),
-                                  aliceAccount->getAccountID());
+    auto archivePath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "archive.gz";
+    auto devicePath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "ring_device.crt";
     auto archive = AccountArchive(archivePath, "");
     auto deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     auto deviceExpiration = deviceCert.getExpiration();
@@ -328,8 +324,8 @@ MigrationTest::testExpiredDeviceInSwarm()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + bobAccount->getAccountID()
-                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + convId;
+    auto repoPath = fileutils::get_data_dir() / bobAccount->getAccountID()
+                    / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; });
@@ -347,7 +343,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     CPPUNIT_ASSERT(aliceAccount->currentDeviceId() == aliceDevice);
 
     // check that certificate in conversation is expired
-    auto devicePath = fmt::format("{}/devices/{}.crt", repoPath, aliceAccount->currentDeviceId());
+    auto devicePath = repoPath / "devices" / fmt::format("{}.crt", aliceAccount->currentDeviceId());
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(devicePath));
     auto cert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     now = std::chrono::system_clock::now();

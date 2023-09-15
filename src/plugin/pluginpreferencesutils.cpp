@@ -32,33 +32,31 @@
 
 namespace jami {
 
-std::string
-PluginPreferencesUtils::getPreferencesConfigFilePath(const std::string& rootPath,
+std::filesystem::path
+PluginPreferencesUtils::getPreferencesConfigFilePath(const std::filesystem::path& rootPath,
                                                      const std::string& accountId)
 {
     if (accountId.empty())
-        return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
+        return rootPath / "data" / "preferences.json";
     else
-        return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "accountpreferences.json";
+        return rootPath / "data" / "accountpreferences.json";
 }
 
-std::string
-PluginPreferencesUtils::valuesFilePath(const std::string& rootPath, const std::string& accountId)
+std::filesystem::path
+PluginPreferencesUtils::valuesFilePath(const std::filesystem::path& rootPath, const std::string& accountId)
 {
     if (accountId.empty() || accountId == "default")
-        return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
-    auto pluginName = rootPath.substr(rootPath.find_last_of(DIR_SEPARATOR_CH) + 1);
-    auto dir = fileutils::get_data_dir() + DIR_SEPARATOR_CH + accountId + DIR_SEPARATOR_CH
-               + "plugins" + DIR_SEPARATOR_CH + pluginName;
-    dhtnet::fileutils::check_dir(dir.c_str());
-    return dir + DIR_SEPARATOR_CH + "preferences.msgpack";
+        return rootPath / "preferences.msgpack";
+    auto pluginName = rootPath.filename();
+    auto dir = fileutils::get_data_dir() / accountId / "plugins" / pluginName;
+    dhtnet::fileutils::check_dir(dir);
+    return dir / "preferences.msgpack";
 }
 
 std::string
 PluginPreferencesUtils::getAllowDenyListsPath()
 {
-    return fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH
-           + "allowdeny.msgpack";
+    return fileutils::get_data_dir() / "plugins" / "allowdeny.msgpack";
 }
 
 std::string
@@ -102,7 +100,7 @@ PluginPreferencesUtils::parsePreferenceConfig(const Json::Value& jsonPreference)
 }
 
 std::vector<std::map<std::string, std::string>>
-PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::string& accountId)
+PluginPreferencesUtils::getPreferences(const std::filesystem::path& rootPath, const std::string& accountId)
 {
     std::string preferenceFilePath = getPreferencesConfigFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferenceFilePath));
@@ -138,8 +136,7 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
                             // defaultValue in a Path preference is an incomplete path
                             // starting from the installation path of the plugin.
                             // Here we complete the path value.
-                            defaultValue->second = rootPath + DIR_SEPARATOR_STR
-                                                   + defaultValue->second;
+                            defaultValue->second = rootPath / defaultValue->second;
                         }
 
                         if (!preferenceAttributes.empty()) {
@@ -166,10 +163,10 @@ PluginPreferencesUtils::getPreferences(const std::string& rootPath, const std::s
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath,
+PluginPreferencesUtils::getUserPreferencesValuesMap(const std::filesystem::path& rootPath,
                                                     const std::string& accountId)
 {
-    const std::string preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
+    auto preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
@@ -202,7 +199,7 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::string& rootPath,
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getPreferencesValuesMap(const std::string& rootPath,
+PluginPreferencesUtils::getPreferencesValuesMap(const std::filesystem::path& rootPath,
                                                 const std::string& accountId)
 {
     std::map<std::string, std::string> rmap;
