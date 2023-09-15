@@ -112,6 +112,7 @@ static constexpr const char VCARD_URI[] {"vcard://"};
 static constexpr const char DATA_TRANSFER_URI[] {"data-transfer://"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
+static constexpr auto TREATED_PATH = "treatedImMessages";
 
 struct PendingConfirmation
 {
@@ -2473,7 +2474,7 @@ void
 JamiAccount::loadTreatedMessages()
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
-    auto path = cachePath_ / "treatedMessages";
+    auto path = cachePath_ / TREATED_PATH;
     treatedMessages_ = loadIdList<std::string>(path.string());
     if (treatedMessages_.empty()) {
         auto messages = loadIdList(path.string());
@@ -2490,7 +2491,7 @@ JamiAccount::saveTreatedMessages() const
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
             dhtnet::fileutils::check_dir(this_.cachePath_);
-            saveIdList<decltype(this_.treatedMessages_)>((this_.cachePath_ / "treatedMessages").string(),
+            saveIdList<decltype(this_.treatedMessages_)>((this_.cachePath_ / TREATED_PATH).string(),
                                                          this_.treatedMessages_);
         }
     });
