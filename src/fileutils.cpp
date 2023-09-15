@@ -72,7 +72,6 @@
 
 #include <sstream>
 #include <fstream>
-#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <limits>
@@ -166,47 +165,6 @@ expand_path(const std::string& path)
 #endif
 }
 
-std::mutex&
-getFileLock(const std::string& path)
-{
-    static std::mutex fileLockLock {};
-    static std::map<std::string, std::mutex> fileLocks {};
-
-    std::lock_guard<std::mutex> l(fileLockLock);
-    return fileLocks[path];
-}
-
-bool
-isFile(const std::string& path, bool resolveSymlink)
-{
-    if (path.empty())
-        return false;
-#ifdef _WIN32
-    if (resolveSymlink) {
-        struct _stat64i32 s;
-        if (_wstat(jami::to_wstring(path).c_str(), &s) == 0)
-            return S_ISREG(s.st_mode);
-    } else {
-        DWORD attr = GetFileAttributes(jami::to_wstring(path).c_str());
-        if ((attr != INVALID_FILE_ATTRIBUTES) && !(attr & FILE_ATTRIBUTE_DIRECTORY)
-            && !(attr & FILE_ATTRIBUTE_REPARSE_POINT))
-            return true;
-    }
-#else
-    if (resolveSymlink) {
-        struct stat s;
-        if (stat(path.c_str(), &s) == 0)
-            return S_ISREG(s.st_mode);
-    } else {
-        struct stat s;
-        if (lstat(path.c_str(), &s) == 0)
-            return S_ISREG(s.st_mode);
-    }
-#endif
-
-    return false;
-}
-
 bool
 isDirectory(const std::string& path)
 {
@@ -223,33 +181,7 @@ isDirectoryWritable(const std::string& directory)
 }
 
 bool
-hasHardLink(const std::string& path)
-{
-#ifndef _WIN32
-    struct stat s;
-    if (lstat(path.c_str(), &s) == 0)
-        return s.st_nlink > 1;
-#endif
-    return false;
-}
-
-bool
-isSymLink(const std::string& path)
-{
-#ifndef _WIN32
-    struct stat s;
-    if (lstat(path.c_str(), &s) == 0)
-        return S_ISLNK(s.st_mode);
-#elif !defined(_MSC_VER)
-    DWORD attr = GetFileAttributes(jami::to_wstring(path).c_str());
-    if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
-        return true;
-#endif
-    return false;
-}
-
-bool
-createSymlink(const std::string& linkFile, const std::string& target)
+createSymlink(const std::filesystem::path& linkFile, const std::filesystem::path& target)
 {
     try {
         std::filesystem::create_symlink(target, linkFile);
@@ -261,7 +193,7 @@ createSymlink(const std::string& linkFile, const std::string& target)
 }
 
 bool
-createHardlink(const std::string& linkFile, const std::string& target)
+createHardlink(const std::filesystem::path& linkFile, const std::filesystem::path& target)
 {
     try {
         std::filesystem::create_hard_link(target, linkFile);
@@ -273,7 +205,7 @@ createHardlink(const std::string& linkFile, const std::string& target)
 }
 
 bool
-createFileLink(const std::string& linkFile, const std::string& target, bool hard)
+createFileLink(const std::filesystem::path& linkFile, const std::filesystem::path& target, bool hard)
 {
     if (not hard or not createHardlink(linkFile, target))
         return createSymlink(linkFile, target);
@@ -348,19 +280,18 @@ copy(const std::string& src, const std::string& dest)
 }
 
 void
-saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
+saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
 {
     std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERR("Could not write data to %s", path.c_str());
+        JAMI_ERROR("Could not write data to {}", path);
         return;
     }
     file.write((char*) data, data_size);
 #ifndef _WIN32
     if (chmod(path.c_str(), mode) < 0)
-        JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s",
-                  path.c_str(),
-                  strerror(errno));
+        JAMI_WARNING("fileutils::saveFile(): chmod() failed on {}, {}",
+                  path, strerror(errno));
 #endif
 }
 
@@ -479,7 +410,7 @@ set_program_dir(char* program_path)
 }
 #endif
 
-std::string
+std::filesystem::path
 get_cache_dir(const char* pkg)
 {
 #ifdef RING_UWP
@@ -504,8 +435,7 @@ get_cache_dir(const char* pkg)
         return paths[0];
     return {};
 #elif defined(__APPLE__)
-    return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR + "Caches"
-           + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() / "Library" / "Caches" / pkg;
 #else
 #ifdef _WIN32
     const std::wstring cache_home(JAMI_CACHE_HOME);
@@ -516,17 +446,17 @@ get_cache_dir(const char* pkg)
     if (not cache_home.empty())
         return cache_home;
 #endif
-    return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() / ".cache" / pkg;
 #endif
 }
 
-std::string
+std::filesystem::path
 get_cache_dir()
 {
     return get_cache_dir(PACKAGE);
 }
 
-std::string
+std::filesystem::path
 get_home_dir()
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -565,11 +495,11 @@ get_home_dir()
             return pw->pw_dir;
     }
 
-    return "";
+    return {};
 #endif
 }
 
-std::string
+std::filesystem::path
 get_data_dir(const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -580,26 +510,23 @@ get_data_dir(const char* pkg)
         return paths[0];
     return {};
 #elif defined(__APPLE__)
-    return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
-           + "Application Support" + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() / "Library" / "Application Support" / pkg;
 #elif defined(_WIN32)
-    const std::wstring data_home(JAMI_DATA_HOME);
+    std::wstring data_home(JAMI_DATA_HOME);
     if (not data_home.empty())
-        return jami::to_string(data_home) + DIR_SEPARATOR_STR + pkg;
+        return std::filesystem::path(data_home) / DIR_SEPARATOR_STR / pkg;
 
     if (!strcmp(pkg, "ring")) {
-        return get_home_dir() + DIR_SEPARATOR_STR + ".local" + DIR_SEPARATOR_STR
-               + "share" DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() / ".local" / "share" / pkg;
     } else {
-        return get_home_dir() + DIR_SEPARATOR_STR + "AppData" + DIR_SEPARATOR_STR + "Local"
-               + DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() / "AppData" / "Local" / pkg;
     }
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
     paths.reserve(1);
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty()) {
-        auto files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
+        auto files_path = std::filesystem::path(paths[0]) / DIR_SEPARATOR_STR / ".data";
         if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
             // If directory creation failed
             if (errno != EEXIST)
@@ -609,59 +536,54 @@ get_data_dir(const char* pkg)
     }
     return {};
 #else
-    const std::string data_home(XDG_DATA_HOME);
+    std::string_view data_home(XDG_DATA_HOME);
     if (not data_home.empty())
-        return data_home + DIR_SEPARATOR_STR + pkg;
+        return std::filesystem::path(data_home) / pkg;
     // "If $XDG_DATA_HOME is either not set or empty, a default equal to
     // $HOME/.local/share should be used."
-    return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR "share" DIR_SEPARATOR_STR
-           + pkg;
+    return get_home_dir() / ".local" / "share" / pkg;
 #endif
 }
 
-std::string
+std::filesystem::path
 get_data_dir()
 {
     return get_data_dir(PACKAGE);
 }
 
-std::string
+std::filesystem::path
 get_config_dir(const char* pkg)
 {
-    std::string configdir;
+    std::filesystem::path configdir;
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("config", &paths);
     if (not paths.empty())
-        configdir = std::move(paths[0]);
+        configdir = std::filesystem::path(paths[0]);
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
-        configdir = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
+        configdir = std::filesystem::path(paths[0]) / ".config";
 #elif defined(__APPLE__)
-    configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
-                + "Application Support" + DIR_SEPARATOR_STR + pkg;
+    configdir = fileutils::get_home_dir() / "Library" / "Application Support" / pkg;
 #elif defined(_WIN32)
-    const std::wstring xdg_env(JAMI_CONFIG_HOME);
+    std::wstring xdg_env(JAMI_CONFIG_HOME);
     if (not xdg_env.empty()) {
-        configdir = jami::to_string(xdg_env) + DIR_SEPARATOR_STR + pkg;
+        configdir = std::filesystem::path(xdg_env) / pkg;
     } else if (!strcmp(pkg, "ring")) {
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR
-                    + pkg;
+        configdir = fileutils::get_home_dir() / ".config" / pkg;
     } else {
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "AppData" + DIR_SEPARATOR_STR
-                    + "Local" + DIR_SEPARATOR_STR + pkg;
+        configdir = fileutils::get_home_dir() / "AppData" / "Local" / pkg;
     }
 #else
-    const std::string xdg_env(XDG_CONFIG_HOME);
+    std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
-        configdir = xdg_env + DIR_SEPARATOR_STR + pkg;
+        configdir = std::filesystem::path(xdg_env) / pkg;
     else
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR
-                    + pkg;
+        configdir = fileutils::get_home_dir() / ".config" / pkg;
 #endif
-    if (dhtnet::fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
+    if (dhtnet::fileutils::recursive_mkdir(configdir, 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
             JAMI_DBG("Cannot create directory: %s!", configdir.c_str());
@@ -669,7 +591,7 @@ get_config_dir(const char* pkg)
     return configdir;
 }
 
-std::string
+std::filesystem::path
 get_config_dir()
 {
     return get_config_dir(PACKAGE);
@@ -794,9 +716,9 @@ eraseFile(const std::string& path, bool dosync)
 }
 
 int
-remove(const std::string& path, bool erase)
+remove(const std::filesystem::path& path, bool erase)
 {
-    if (erase and isFile(path, false) and !hasHardLink(path))
+    if (erase and dhtnet::fileutils::isFile(path, false) and !dhtnet::fileutils::hasHardLink(path))
         eraseFile(path, true);
 
 #ifdef _WIN32
@@ -899,21 +821,14 @@ sha3File(const std::filesystem::path& path)
 }
 
 std::string
-sha3sum(const std::vector<uint8_t>& buffer)
+sha3sum(const uint8_t* data, size_t size)
 {
     sha3_512_ctx ctx;
     sha3_512_init(&ctx);
-    sha3_512_update(&ctx, buffer.size(), (const uint8_t*) buffer.data());
-
+    sha3_512_update(&ctx, size, data);
     unsigned char digest[SHA3_512_DIGEST_SIZE];
     sha3_512_digest(&ctx, SHA3_512_DIGEST_SIZE, digest);
-
-    char hash[SHA3_512_DIGEST_SIZE * 2];
-
-    for (int i = 0; i < SHA3_512_DIGEST_SIZE; ++i)
-        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
-
-    return {hash, SHA3_512_DIGEST_SIZE * 2};
+    return dht::toHex(digest, SHA3_512_DIGEST_SIZE);
 }
 
 int

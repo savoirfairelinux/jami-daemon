@@ -80,7 +80,7 @@ public:
         auto shared = account_.lock();
         if (!shared)
             return {nullptr, git_repository_free};
-        auto path = fileutils::get_data_dir() + "/" + shared->getAccountID() + "/" + "conversations"
+        auto path = fileutils::get_data_dir().string() + "/" + shared->getAccountID() + "/" + "conversations"
                     + "/" + id_;
         git_repository* repo = nullptr;
         auto err = git_repository_open(&repo, path.c_str());
@@ -2552,10 +2552,9 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     // Create temporary directory because we can't know the first hash for now
     std::uniform_int_distribution<uint64_t> dist {0, std::numeric_limits<uint64_t>::max()};
     random_device rdev;
-    auto conversationsPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + account->getAccountID()
-                             + DIR_SEPARATOR_STR + "conversations";
-    dhtnet::fileutils::check_dir(conversationsPath.c_str());
-    auto tmpPath = conversationsPath + DIR_SEPARATOR_STR + std::to_string(dist(rdev));
+    auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
+    dhtnet::fileutils::check_dir(conversationsPath);
+    auto tmpPath = conversationsPath / std::to_string(dist(rdev));
     if (std::filesystem::is_directory(tmpPath)) {
         JAMI_ERROR("{} already exists. Abort create conversations", tmpPath);
         return {};
@@ -2585,7 +2584,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     }
 
     // Move to wanted directory
-    auto newPath = conversationsPath + "/" + id;
+    auto newPath = conversationsPath / id;
     if (std::rename(tmpPath.c_str(), newPath.c_str())) {
         JAMI_ERROR("Couldn't move {} in {}", tmpPath, newPath);
         dhtnet::fileutils::removeAll(tmpPath, true);
@@ -2602,10 +2601,9 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
                                           const std::string& deviceId,
                                           const std::string& conversationId)
 {
-    auto conversationsPath = fileutils::get_data_dir() + "/" + account->getAccountID() + "/"
-                             + "conversations";
-    dhtnet::fileutils::check_dir(conversationsPath.c_str());
-    auto path = conversationsPath + "/" + conversationId;
+    auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
+    dhtnet::fileutils::check_dir(conversationsPath);
+    auto path = conversationsPath / conversationId;
     auto url = fmt::format("git://{}/{}", deviceId, conversationId);
 
     git_clone_options clone_options;
@@ -2635,11 +2633,11 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
             return nullptr;
     }
 
-    JAMI_DEBUG("Start clone of {:s} to {:s}", url, path);
+    JAMI_DEBUG("Start clone of {:s} to {}", url, path);
     git_repository* rep = nullptr;
     if (auto err = git_clone(&rep, url.c_str(), path.c_str(), nullptr)) {
         if (const git_error* gerr = giterr_last())
-            JAMI_ERROR("Error when retrieving remote conversation: {:s} {:s}", gerr->message, path);
+            JAMI_ERROR("Error when retrieving remote conversation: {:s} {}", gerr->message, path);
         else
             JAMI_ERROR("Unknown error {:d} when retrieving remote conversation", err);
         return nullptr;
@@ -3642,7 +3640,7 @@ ConversationRepository::resolveVote(const std::string& uri,
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
+    std::string_view repoPath = git_repository_workdir(repo.get());
     std::string adminsPath = repoPath + "admins";
     auto votePath = fmt::format("{}/{}", voteType, type);
 

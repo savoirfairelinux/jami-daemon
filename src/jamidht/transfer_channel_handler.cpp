@@ -33,7 +33,7 @@ TransferChannelHandler::TransferChannelHandler(const std::shared_ptr<JamiAccount
     , connectionManager_(cm)
 {
     auto acc = account_.lock();
-    idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + acc->getAccountID();
+    idPath_ = fileutils::get_data_dir() / acc->getAccountID();
 }
 
 TransferChannelHandler::~TransferChannelHandler() {}
@@ -135,7 +135,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 channel->shutdown();
         } else {
             // If it's a profile from sync
-            std::string path = fmt::format("{}/profile.vcf", idPath_);
+            auto path = idPath_ / "profile.vcf";
             acc->dataTransfer()->transferFile(channel, idstr, "", path);
         }
         return;
@@ -158,7 +158,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     // Profile for a member in the conversation
     if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
-        std::string path = fmt::format("{}/profile.vcf", idPath_);
+        auto path = idPath_ / "profile.vcf";
         acc->dataTransfer()->transferFile(channel, fileId, "", path);
         return;
     } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
