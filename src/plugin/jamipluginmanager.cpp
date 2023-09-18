@@ -86,7 +86,7 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath, bool reset)
         itImage->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
 
         details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["id"] + LIB_TYPE;
-        details["author"] = getPluginAuthor(rootPath, details["name"]);
+        details["author"] = getPluginAuthor(rootPath, details["id"]);
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
     }
@@ -136,6 +136,7 @@ JamiPluginManager::getPlatformInfo()
 bool
 JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 {
+    JAMI_WARN() << "checkPluginSignatureFile";
     // check if the file exists
     if (!std::filesystem::is_regular_file(jplPath)){
         return false;
@@ -143,7 +144,7 @@ JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
     try {
         auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
         auto manifest = PluginUtils::readPluginManifestFromArchive(jplPath);
-        const std::string& name = manifest["name"];
+        const std::string& name = manifest["id"];
         auto filesPath = archiver::listFilesFromArchive(jplPath);
         for (const auto& file : filesPath) {
             // we skip the signatures and signatures.sig file
@@ -224,8 +225,9 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
     int r {SUCCESS};
     if (std::filesystem::is_regular_file(jplPath)) {
         try {
+            JAMI_WARN() << jplPath;
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
-            const std::string& name = manifestMap["name"];
+            const std::string& name = manifestMap["id"];
             if (name.empty())
                 return INVALID_PLUGIN;
             auto cert = checkPluginCertificate(jplPath, force);
@@ -294,7 +296,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
             for (const auto& accId : jami::Manager::instance().getAccountList())
                 dhtnet::fileutils::removeAll(fileutils::get_data_dir() + DIR_SEPARATOR_CH + accId
                                      + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH
-                                     + detailsIt->second.at("name"));
+                                     + detailsIt->second.at("id"));
             pluginDetailsMap_.erase(detailsIt);
         }
         return dhtnet::fileutils::removeAll(rootPath);

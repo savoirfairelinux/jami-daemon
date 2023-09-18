@@ -70,7 +70,7 @@ public:
      * @param reset If true, overrides previous details values
      *              Reset is only used in the UT for now, but it can be useful
      *              if we want to reset plugins language without restarting the application
-     * @return Map where the keyset is {"id", "name", "description", "version", "iconPath", "imagePath","soPath"}
+     * @return Map where the keyset is {"id", "name", "description", "version", "iconPath", "backgroundPath","soPath"}
      */
     std::map<std::string, std::string> getPluginDetails(const std::string& rootPath, bool reset = false);
 
