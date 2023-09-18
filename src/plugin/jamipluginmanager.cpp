@@ -55,6 +55,15 @@
 
 namespace jami {
 
+JamiPluginManager::JamiPluginManager()
+    : callsm_ {pm_}
+    , chatsm_ {pm_}
+    , webviewsm_ {pm_}
+    , preferencesm_ {pm_}
+{
+    registerServices();
+}
+
 std::string
 JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::string& pluginId)
 {

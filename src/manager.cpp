@@ -735,8 +735,12 @@ Manager::Manager()
 #endif
     , callFactory(rand_)
     , accountFactory()
-    , pimpl_(new ManagerPimpl(*this))
-{}
+{
+#if defined _MSC_VER
+    gnutls_global_init();
+#endif
+    pimpl_ = std::make_unique<ManagerPimpl>(*this);
+}
 
 Manager::~Manager() {}
 
@@ -758,10 +762,6 @@ Manager::init(const std::string& config_file, libjami::InitFlag flags)
         const git_error* error = giterr_last();
         JAMI_ERR("Unable to initialize git transport %s", error ? error->message : "(unknown)");
     }
-
-#if defined _MSC_VER
-    gnutls_global_init();
-#endif
 
 #ifndef WIN32
     // Set the max number of open files.

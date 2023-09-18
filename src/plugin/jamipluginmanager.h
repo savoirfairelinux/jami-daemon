@@ -46,14 +46,7 @@ using PreferencesMap = std::map<std::string, std::map<std::string, std::string>>
 class JamiPluginManager
 {
 public:
-    JamiPluginManager()
-        : callsm_ {pm_}
-        , chatsm_ {pm_}
-        , webviewsm_ {pm_}
-        , preferencesm_ {pm_}
-    {
-        registerServices();
-    }
+    JamiPluginManager();
 
     /**
      * @brief get the plugin's author
