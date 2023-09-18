@@ -46,14 +46,7 @@ using PreferencesMap = std::map<std::string, std::map<std::string, std::string>>
 class JamiPluginManager
 {
 public:
-    JamiPluginManager()
-        : callsm_ {pm_}
-        , chatsm_ {pm_}
-        , webviewsm_ {pm_}
-        , preferencesm_ {pm_}
-    {
-        registerServices();
-    }
+    JamiPluginManager();
 
     /**
      * @brief get the plugin's author
@@ -222,6 +215,7 @@ private:
     // PluginManager instance
     PluginManager pm_;
     dht::crypto::TrustList trust_;
+    std::atomic_bool trustListInitialized_ {false};
     // Map between plugins installation path and manifest infos.
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
 

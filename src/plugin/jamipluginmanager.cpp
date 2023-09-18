@@ -55,6 +55,15 @@
 
 namespace jami {
 
+JamiPluginManager::JamiPluginManager()
+    : callsm_ {pm_}
+    , chatsm_ {pm_}
+    , webviewsm_ {pm_}
+    , preferencesm_ {pm_}
+{
+    registerServices();
+}
+
 std::string
 JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::string& pluginId)
 {
@@ -120,6 +129,12 @@ JamiPluginManager::getInstalledPlugins()
 bool
 JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
 {
+    if (!trustListInitialized_) {
+        // It seems on windows trust_ is not properly initialized on either the header nor in the class creation
+        // so we need to force init it here, before use, else it will throw trust_.trust nullptr.
+        trust_ = dht::crypto::TrustList();
+        trustListInitialized_ = true;
+    }
     trust_.add(crypto::Certificate(store_ca_crt, sizeof(store_ca_crt)));
     return cert && *cert && trust_.verify(*cert);
 }
@@ -489,6 +504,10 @@ JamiPluginManager::registerServices()
 void
 JamiPluginManager::addPluginAuthority(const dht::crypto::Certificate& cert)
 {
+    if (!trustListInitialized_) {
+        trustListInitialized_ = true;
+        trust_ = dht::crypto::TrustList();
+    }
     trust_.add(cert);
 }
 } // namespace jami
