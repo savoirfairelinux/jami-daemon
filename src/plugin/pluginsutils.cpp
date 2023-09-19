@@ -32,7 +32,11 @@
     #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         #define ABI "iphone"
     #else
-        #define ABI "x86_64-apple-Darwin"
+        #if defined(__x86_64__)
+            #define ABI "x86_64-apple-Darwin"
+        #else
+            #define ABI "arm64-apple-Darwin"
+        #endif
     #endif
 #elif defined(__arm__)
     #if defined(__ARM_ARCH_7A__)
