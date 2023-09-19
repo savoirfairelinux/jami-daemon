@@ -22,6 +22,30 @@
       },
       "revId": "4f3dc3be66d9b94123fe0cb85e70e640f8d22842",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ae83c63d_3114697a",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-19T19:59:08Z",
+      "side": 1,
+      "message": "nvm \"([a-zA-Z0-9]+(?:[_-][a-zA-Z0-9]+)*)\" is better probably",
+      "parentUuid": "bea54bed_6f919011",
+      "range": {
+        "startLine": 69,
+        "startChar": 27,
+        "endLine": 69,
+        "endChar": 63
+      },
+      "revId": "4f3dc3be66d9b94123fe0cb85e70e640f8d22842",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
