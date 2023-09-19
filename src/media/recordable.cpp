@@ -55,19 +55,11 @@ Recordable::toggleRecording()
     }
 
     if (!recording_) {
-        std::time_t t = std::time(nullptr);
-        auto startTime = *std::localtime(&t);
-        std::stringstream ss;
-        auto dir = Manager::instance().audioPreference.getRecordPath();
-        if (dir.empty())
-            dir = fileutils::get_home_dir().string();
-        // Check if dir exists, create if if it does not
-        dhtnet::fileutils::check_dir(dir.c_str());
-        ss << dir;
-        if (dir.back() != DIR_SEPARATOR_CH)
-            ss << DIR_SEPARATOR_CH;
-        ss << std::put_time(&startTime, "%Y%m%d-%H%M%S");
-        startRecording(ss.str());
+        const auto& audioPath = Manager::instance().audioPreference.getRecordPath();
+        auto dir = audioPath.empty() ? fileutils::get_home_dir() : std::filesystem::path(audioPath);
+        dhtnet::fileutils::check_dir(dir);
+        auto timeStamp = fmt::format("{:%Y%m%d-%H%M%S}", std::chrono::system_clock::now());
+        startRecording(dir / timeStamp);
     } else {
         stopRecording();
     }

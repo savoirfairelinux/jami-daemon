@@ -27,19 +27,18 @@
 
 #include <opendht/thread_pool.h>
 #include <json/json.h>
+#include <fmt/std.h>
 
 #include <fstream>
 
 namespace jami {
 namespace im {
 
-MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path)
+MessageEngine::MessageEngine(SIPAccountBase& acc, const std::filesystem::path& path)
     : account_(acc)
     , savePath_(path)
 {
-    auto found = savePath_.find_last_of(DIR_SEPARATOR_CH);
-    auto dir = savePath_.substr(0, found);
-    dhtnet::fileutils::check_dir(dir.c_str());
+    dhtnet::fileutils::check_dir(savePath_.parent_path());
 }
 
 MessageToken
@@ -243,7 +242,7 @@ MessageEngine::load()
             std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(savePath_));
             std::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            fileutils::openStream(file, savePath_);
+            file.open(savePath_);
             if (file.is_open())
                 file >> root;
         }
@@ -334,16 +333,16 @@ MessageEngine::save_() const
                 std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
                 std::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-                fileutils::openStream(file, path, std::ios::trunc);
+                file.open(path, std::ios::trunc);
                 if (file.is_open())
                     writer->write(root, &file);
             } catch (const std::exception& e) {
                 JAMI_ERROR("[Account {:s}] Couldn't save messages to {:s}: {:s}",
                            accountID,
-                           path,
+                           path.string(),
                            e.what());
             }
-            JAMI_DEBUG("[Account {:s}] saved {:d} messages to {:s}", accountID, root.size(), path);
+            JAMI_DEBUG("[Account {:s}] saved {:d} messages to {:s}", accountID, root.size(), path.string());
         });
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] couldn't save messages to %s: %s",

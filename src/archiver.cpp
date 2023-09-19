@@ -105,10 +105,7 @@ accountToJsonValue(const std::map<std::string, std::string>& details)
                    || i.first == libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE
                    || i.first == libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
             // replace paths by the files content
-            std::ifstream ifs = fileutils::ifstream(i.second);
-            std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                                    std::istreambuf_iterator<char>());
-            root[i.first] = fileContent;
+            root[i.first] = fileutils::loadTextFile(std::filesystem::path(i.second));
         } else
             root[i.first] = i.second;
     }

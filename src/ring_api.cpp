@@ -83,7 +83,7 @@ init(enum InitFlag flags) noexcept
 }
 
 bool
-start(const std::string& config_file) noexcept
+start(const std::filesystem::path& config_file) noexcept
 {
     try {
         jami::Manager::instance().init(config_file, initFlags);

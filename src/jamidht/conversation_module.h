@@ -435,7 +435,7 @@ public:
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
                               const std::map<std::string, ConvInfo>& conversations);
-    static void saveConvInfosToPath(const std::string& path,
+    static void saveConvInfosToPath(const std::filesystem::path& path,
                                     const std::map<std::string, ConvInfo>& conversations);
     static void saveConvRequests(
         const std::string& accountId,
@@ -445,9 +445,9 @@ public:
         const std::map<std::string, ConversationRequest>& conversationsRequests);
 
     static std::map<std::string, ConvInfo> convInfos(const std::string& accountId);
-    static std::map<std::string, ConvInfo> convInfosFromPath(const std::string& path);
+    static std::map<std::string, ConvInfo> convInfosFromPath(const std::filesystem::path& path);
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
-    static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::string& path);
+    static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::filesystem::path& path);
     void addConvInfo(const ConvInfo& info);
 
     /**

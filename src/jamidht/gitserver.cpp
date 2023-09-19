@@ -465,8 +465,7 @@ GitServer::GitServer(const std::string& accountId,
                      const std::string& conversationId,
                      const std::shared_ptr<dhtnet::ChannelSocket>& client)
 {
-    auto path = fileutils::get_data_dir().string() + DIR_SEPARATOR_STR + accountId + DIR_SEPARATOR_STR
-                + "conversations" + DIR_SEPARATOR_STR + conversationId;
+    auto path = (fileutils::get_data_dir() / accountId / "conversations" / conversationId).string();
     pimpl_ = std::make_unique<GitServer::Impl>(conversationId, path, client);
 }
 

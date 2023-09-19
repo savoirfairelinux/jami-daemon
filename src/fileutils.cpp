@@ -250,7 +250,7 @@ std::string
 loadTextFile(const std::filesystem::path& path, const std::filesystem::path& default_dir)
 {
     std::string buffer;
-    std::ifstream file = ifstream(getFullPath(default_dir, path).string());
+    std::ifstream file(getFullPath(default_dir, path));
     if (!file)
         throw std::runtime_error("Can't read file: " + path.string());
     file.seekg(0, std::ios::end);
@@ -506,7 +506,7 @@ get_data_dir(const char* pkg)
 #elif defined(_WIN32)
     std::wstring data_home(JAMI_DATA_HOME);
     if (not data_home.empty())
-        return std::filesystem::path(data_home) / DIR_SEPARATOR_STR / pkg;
+        return std::filesystem::path(data_home) / pkg;
 
     if (!strcmp(pkg, "ring")) {
         return get_home_dir() / ".local" / "share" / pkg;
@@ -518,7 +518,7 @@ get_data_dir(const char* pkg)
     paths.reserve(1);
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty()) {
-        auto files_path = std::filesystem::path(paths[0]) / DIR_SEPARATOR_STR / ".data";
+        auto files_path = std::filesystem::path(paths[0]) / ".data";
         if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
             // If directory creation failed
             if (errno != EEXIST)
@@ -716,50 +716,10 @@ remove(const std::filesystem::path& path, bool erase)
 #ifdef _WIN32
     // use Win32 api since std::remove will not unlink directory in use
     if (std::filesystem::is_directory(path))
-        return !RemoveDirectory(jami::to_wstring(path.string()).c_str());
+        return !RemoveDirectory(path.c_str());
 #endif
 
     return std::remove(path.string().c_str());
-}
-
-void
-openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    file.open(jami::to_wstring(path), mode);
-#else
-    file.open(path, mode);
-#endif
-}
-
-void
-openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    file.open(jami::to_wstring(path), mode);
-#else
-    file.open(path, mode);
-#endif
-}
-
-std::ifstream
-ifstream(const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    return std::ifstream(jami::to_wstring(path), mode);
-#else
-    return std::ifstream(path, mode);
-#endif
-}
-
-std::ofstream
-ofstream(const std::string& path, std::ios_base::openmode mode)
-{
-#ifdef _WIN32
-    return std::ofstream(jami::to_wstring(path), mode);
-#else
-    return std::ofstream(path, mode);
-#endif
 }
 
 int64_t
@@ -767,8 +727,7 @@ size(const std::string& path)
 {
     int64_t size = 0;
     try {
-        std::ifstream file;
-        openStream(file, path, std::ios::binary | std::ios::in);
+        std::ifstream file(path, std::ios::binary | std::ios::in);
         file.seekg(0, std::ios_base::end);
         size = file.tellg();
         file.close();
@@ -783,11 +742,10 @@ sha3File(const std::filesystem::path& path)
     sha3_512_ctx ctx;
     sha3_512_init(&ctx);
 
-    std::ifstream file;
     try {
         if (not std::filesystem::is_regular_file(path))
             return {};
-        openStream(file, path.string(), std::ios::binary | std::ios::in);
+        std::ifstream file(path, std::ios::binary | std::ios::in);
         if (!file)
             return {};
         std::vector<char> buffer(8192, 0);
@@ -796,7 +754,6 @@ sha3File(const std::filesystem::path& path)
             std::streamsize readSize = file.gcount();
             sha3_512_update(&ctx, readSize, (const uint8_t*) buffer.data());
         }
-        file.close();
     } catch (...) {
         return {};
     }

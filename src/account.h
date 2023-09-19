@@ -476,7 +476,7 @@ protected:
     /**
      * Ringtone .au file used for this account
      */
-    std::string ringtonePath_;
+    std::filesystem::path ringtonePath_;
 
     /**
      * UPnP IGD controller and the mutex to access it

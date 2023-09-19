@@ -159,13 +159,13 @@ void
 Account::loadConfig() {
     setActiveCodecs(config_->activeCodecs);
     auto ringtoneDir = fmt::format("{}/{}", JAMI_DATADIR, RINGDIR);
-    ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath).string();
+    ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
     // If the user defined a custom ringtone, the file may not exists
     // In this case, fallback on the default ringtone path
     if (not std::filesystem::is_regular_file(ringtonePath_)) {
         JAMI_WARNING("Ringtone {} is not a valid file", ringtonePath_);
         config_->ringtonePath = DEFAULT_RINGTONE_PATH;
-        ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath).string();
+        ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
     }
     updateUpnpController();
 }
