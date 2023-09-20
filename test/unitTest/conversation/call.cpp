@@ -365,18 +365,15 @@ ConversationCallTest::testActiveCalls3Peers()
 
     aliceData_.conferenceChanged = false;
     libjami::placeCallWithMedia(bobId, destination, {});
-    cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT";
-    });
+    }));
     aliceData_.conferenceChanged = false;
-    libjami::placeCallWithMedia(carlaId, destination, {});
-    cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT";
-    });
-
     // get 3 participants
-    auto callList = libjami::getParticipantList(aliceId, confId);
-    CPPUNIT_ASSERT(callList.size() == 3);
+    libjami::placeCallWithMedia(carlaId, destination, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT" && libjami::getParticipantList(aliceId, confId).size() == 3;
+    }));
 
     // get active calls = 1
     CPPUNIT_ASSERT(libjami::getActiveCalls(bobId, bobData_.id).size() == 1);
