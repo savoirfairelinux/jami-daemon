@@ -1,5 +1,5 @@
 # FMT
-FMT_VERSION := 10.0.0
+FMT_VERSION := 10.1.0
 FMT_URL := https://github.com/fmtlib/fmt/archive/$(FMT_VERSION).tar.gz
 
 PKGS += fmt
