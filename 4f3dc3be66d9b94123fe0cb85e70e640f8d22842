@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a818867_7830abba",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-20T13:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ae83c63d_3114697a",
+      "range": {
+        "startLine": 69,
+        "startChar": 27,
+        "endLine": 69,
+        "endChar": 63
+      },
+      "revId": "4f3dc3be66d9b94123fe0cb85e70e640f8d22842",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a6ede539_7939b6f5",
@@ -61,6 +85,30 @@
       "writtenOn": "2023-09-19T20:01:01Z",
       "side": 1,
       "message": "would be a workaround. A small regex must not explode in memory.",
+      "range": {
+        "startLine": 272,
+        "startChar": 9,
+        "endLine": 272,
+        "endChar": 18
+      },
+      "revId": "4f3dc3be66d9b94123fe0cb85e70e640f8d22842",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e80a881a_ab3303f5",
+        "filename": "src/plugin/pluginsutils.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-20T13:25:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a6ede539_7939b6f5",
       "range": {
         "startLine": 272,
         "startChar": 9,
