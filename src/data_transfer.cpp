@@ -84,11 +84,12 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
     , start_(start)
     , end_(end)
 {
-    if (!std::filesystem::is_regular_file(info_.path)) {
+    std::filesystem::path fpath(info_.path);
+    if (!std::filesystem::is_regular_file(fpath)) {
         channel_->shutdown();
         return;
     }
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::in);
+    stream_.open(fpath, std::ios::binary | std::ios::in);
     if (!stream_ || !stream_.is_open()) {
         channel_->shutdown();
         return;
@@ -161,7 +162,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    fileutils::openStream(stream_, info_.path, std::ios::binary | std::ios::out | std::ios::app);
+    stream_.open(std::filesystem::path(info_.path), std::ios::binary | std::ios::out | std::ios::app);
     if (!stream_)
         return;
 

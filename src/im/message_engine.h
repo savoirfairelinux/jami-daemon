@@ -25,6 +25,7 @@
 #include <chrono>
 #include <mutex>
 #include <cstdint>
+#include <filesystem>
 
 namespace jami {
 
@@ -39,7 +40,7 @@ enum class MessageStatus { UNKNOWN = 0, IDLE, SENDING, SENT, DISPLAYED, FAILURE,
 class MessageEngine
 {
 public:
-    MessageEngine(SIPAccountBase&, const std::string& path);
+    MessageEngine(SIPAccountBase&, const std::filesystem::path& path);
 
     /**
      * Add a message to the engine and try to send it
@@ -105,7 +106,7 @@ private:
     };
 
     SIPAccountBase& account_;
-    const std::string savePath_;
+    const std::filesystem::path savePath_;
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
     std::map<std::string, std::map<MessageToken, Message>> messagesDevices_;

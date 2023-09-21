@@ -863,9 +863,9 @@ JamiAccount::saveConfig() const
     try {
         YAML::Emitter accountOut;
         config().serialize(accountOut);
-        auto accountConfig = config().path + DIR_SEPARATOR_STR + "config.yml";
+        auto accountConfig = config().path / "config.yml";
         std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(accountConfig));
-        std::ofstream fout = fileutils::ofstream(accountConfig);
+        std::ofstream fout(accountConfig);
         fout.write(accountOut.c_str(), accountOut.size());
         JAMI_DBG("Saved account config to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
@@ -982,7 +982,7 @@ JamiAccount::setValidity(const std::string& pwd, const dht::InfoHash& id, int64_
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
         if (manager->setValidity(pwd, id_, id, validity)) {
-            saveIdentity(id_, idPath_.string(), DEVICE_ID_PATH);
+            saveIdentity(id_, idPath_, DEVICE_ID_PATH);
             return true;
         }
     }
@@ -1048,14 +1048,14 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
 
 std::pair<std::string, std::string>
 JamiAccount::saveIdentity(const dht::crypto::Identity id,
-                          const std::string& path,
+                          const std::filesystem::path& path,
                           const std::string& name)
 {
     auto names = std::make_pair(name + ".key", name + ".crt");
     if (id.first)
-        fileutils::saveFile(path + DIR_SEPARATOR_STR + names.first, id.first->serialize(), 0600);
+        fileutils::saveFile(path / names.first, id.first->serialize(), 0600);
     if (id.second)
-        fileutils::saveFile(path + DIR_SEPARATOR_STR + names.second, id.second->getPacked(), 0600);
+        fileutils::saveFile(path / names.second, id.second->getPacked(), 0600);
     return names;
 }
 
@@ -1273,7 +1273,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     auto id = info.identity;
                     editConfig([&](JamiAccountConfig& conf) {
                         std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile)
-                            = saveIdentity(id, idPath_.string(), DEVICE_ID_PATH);
+                            = saveIdentity(id, idPath_, DEVICE_ID_PATH);
                         conf.tlsPassword = {};
                         conf.archiveHasPassword = hasPassword;
                         if (not conf.managerUri.empty()) {
@@ -2434,10 +2434,10 @@ JamiAccount::getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus s
 
 template<typename ID = dht::Value::Id>
 std::set<ID, std::less<>>
-loadIdList(const std::string& path)
+loadIdList(const std::filesystem::path& path)
 {
     std::set<ID, std::less<>> ids;
-    std::ifstream file = fileutils::ifstream(path);
+    std::ifstream file(path);
     if (!file.is_open()) {
         JAMI_DBG("Could not load %s", path.c_str());
         return ids;
@@ -2640,7 +2640,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         // Cache it!
         dhtnet::fileutils::check_dir(cachePath_, 0700);
         auto proxyCachePath = cachePath_ / "dhtproxy";
-        std::ofstream file = fileutils::ofstream(proxyCachePath.string());
+        std::ofstream file(proxyCachePath);
         JAMI_DEBUG("Cache DHT proxy server: {}", proxyServerCached_);
         Json::Value node(Json::objectValue);
         node[getProxyConfigKey()] = proxyServerCached_;
@@ -2942,7 +2942,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     auto requestPath = cachePath_ / "requests";
     dhtnet::fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath / to;
-    std::ofstream req = fileutils::ofstream(cachedFile.string(), std::ios::trunc | std::ios::binary);
+    std::ofstream req(cachedFile, std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
         JAMI_ERR("Could not write data to %s", cachedFile.c_str());
         return;
@@ -3686,7 +3686,7 @@ JamiAccount::sendProfile(const std::string& convId,
                      std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(path));
                      if (std::filesystem::is_regular_file(path))
                          return;
-                     fileutils::ofstream(path.string());
+                     std::ofstream p(path);
                  });
 }
 

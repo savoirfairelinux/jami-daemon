@@ -264,7 +264,7 @@ PluginsTest::setUp()
         }));
 
     libjami::registerSignalHandlers(signalHandlers);
-    std::ifstream file = jami::fileutils::ifstream("plugins/plugin.yml");
+    std::ifstream file("plugins/plugin.yml");
     assert(file.is_open());
     YAML::Node node = YAML::Load(file);
 

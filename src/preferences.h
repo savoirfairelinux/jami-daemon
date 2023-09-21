@@ -257,7 +257,7 @@ private:
     std::string portaudioDeviceRingtone_;
 
     // general preference
-    std::string recordpath_; //: /home/msavard/Bureau
+    std::string recordpath_;
     bool alwaysRecording_;
     double volumemic_;
     double volumespkr_;

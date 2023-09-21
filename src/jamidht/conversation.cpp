@@ -228,7 +228,7 @@ public:
      */
     std::vector<std::string> commitsEndedCalls();
     bool isAdmin() const;
-    std::string repoPath() const;
+    std::filesystem::path repoPath() const;
 
     void announce(const std::string& commitId) const
     {
@@ -550,16 +550,17 @@ public:
 
     std::string_view bannedType(const std::string& uri) const
     {
-        auto bannedMember = fmt::format("{}/banned/members/{}.crt", repoPath(), uri);
+        auto crt = fmt::format("{}.crt", uri);
+        auto bannedMember = repoPath() / "banned" / "members" / crt;
         if (std::filesystem::is_regular_file(bannedMember))
             return "members"sv;
-        auto bannedAdmin = fmt::format("{}/banned/admins/{}.crt", repoPath(), uri);
+        auto bannedAdmin = repoPath() / "banned" / "admins" / crt;
         if (std::filesystem::is_regular_file(bannedAdmin))
             return "admins"sv;
-        auto bannedInvited = fmt::format("{}/banned/invited/{}", repoPath(), uri);
+        auto bannedInvited = repoPath() / "banned" / "invited" / uri;
         if (std::filesystem::is_regular_file(bannedInvited))
             return "invited"sv;
-        auto bannedDevice = fmt::format("{}/banned/devices/{}.crt", repoPath(), uri);
+        auto bannedDevice = repoPath() / "banned" / "devices" / crt;
         if (std::filesystem::is_regular_file(bannedDevice))
             return "devices"sv;
         return {};
@@ -646,7 +647,7 @@ Conversation::Impl::isAdmin() const
     if (!shared)
         return false;
 
-    auto adminsPath = repoPath() + DIR_SEPARATOR_STR + "admins";
+    auto adminsPath = repoPath() / "admins";
     auto cert = shared->identity().second;
     if (!cert->issuer)
         return false;
@@ -722,10 +723,10 @@ Conversation::Impl::commitsEndedCalls()
     return commits;
 }
 
-std::string
+std::filesystem::path
 Conversation::Impl::repoPath() const
 {
-    return (fileutils::get_data_dir() / accountId_ / "conversations" / repository_->id()).string();
+    return fileutils::get_data_dir() / accountId_ / "conversations" / repository_->id();
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1049,10 +1050,10 @@ bool
 Conversation::isMember(const std::string& uri, bool includeInvited) const
 {
     auto repoPath = pimpl_->repoPath();
-    auto invitedPath = repoPath + DIR_SEPARATOR_STR "invited";
-    auto adminsPath = repoPath + DIR_SEPARATOR_STR "admins";
-    auto membersPath = repoPath + DIR_SEPARATOR_STR "members";
-    std::vector<std::string> pathsToCheck = {adminsPath, membersPath};
+    auto invitedPath = repoPath / "invited";
+    auto adminsPath = repoPath / "admins";
+    auto membersPath = repoPath / "members";
+    std::vector<std::filesystem::path> pathsToCheck = {adminsPath, membersPath};
     if (includeInvited)
         pathsToCheck.emplace_back(invitedPath);
     for (const auto& path : pathsToCheck) {
@@ -1505,7 +1506,7 @@ std::vector<uint8_t>
 Conversation::vCard() const
 {
     try {
-        return fileutils::loadFile(pimpl_->repoPath() + DIR_SEPARATOR_STR + "profile.vcf");
+        return fileutils::loadFile(pimpl_->repoPath() / "profile.vcf");
     } catch (...) {
     }
     return {};

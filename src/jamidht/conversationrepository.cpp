@@ -435,14 +435,14 @@ add_initial_files(GitRepository& repo,
                   const std::string& otherMember = "")
 {
     auto deviceId = account->currentDeviceId();
-    std::string repoPath = git_repository_workdir(repo.get());
-    std::string adminsPath = repoPath + "admins";
-    std::string devicesPath = repoPath + "devices";
-    std::string invitedPath = repoPath + "invited";
-    std::string crlsPath = repoPath + "CRLs" + DIR_SEPARATOR_STR + deviceId;
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto adminsPath = repoPath / "admins";
+    auto devicesPath = repoPath / "devices";
+    auto invitedPath = repoPath / "invited";
+    auto crlsPath = repoPath / "CRLs" / deviceId;
 
     if (!dhtnet::fileutils::recursive_mkdir(adminsPath, 0700)) {
-        JAMI_ERROR("Error when creating %s. Abort create conversations", adminsPath.c_str());
+        JAMI_ERROR("Error when creating {}. Abort create conversations", adminsPath);
         return false;
     }
 
@@ -455,8 +455,8 @@ add_initial_files(GitRepository& repo,
     }
 
     // /admins
-    std::string adminPath = adminsPath + "/" + parentCert->getId().toString() + ".crt";
-    auto file = fileutils::ofstream(adminPath, std::ios::trunc | std::ios::binary);
+    auto adminPath = adminsPath / fmt::format("{}.crt", parentCert->getId().toString());
+    std::ofstream file(adminPath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to {}", adminPath);
         return false;
@@ -470,8 +470,8 @@ add_initial_files(GitRepository& repo,
     }
 
     // /devices
-    std::string devicePath = devicesPath + "/" + deviceId + ".crt";
-    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    auto devicePath = devicesPath / fmt::format("{}.crt", deviceId);
+    file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to {}", devicePath);
         return false;
@@ -488,9 +488,8 @@ add_initial_files(GitRepository& repo,
     for (const auto& crl : account->identity().second->getRevocationLists()) {
         if (!crl)
             continue;
-        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR
-                              + dht::toHex(crl->getNumber()) + ".crl";
-        file = fileutils::ofstream(crlPath, std::ios::trunc | std::ios::binary);
+        auto crlPath = crlsPath / deviceId / (dht::toHex(crl->getNumber()) + ".crl");
+        std::ofstream file(crlPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERROR("Could not write data to {}", crlPath);
             return false;
@@ -505,13 +504,13 @@ add_initial_files(GitRepository& repo,
             JAMI_ERROR("Error when creating {}.", invitedPath);
             return false;
         }
-        std::string invitedMemberPath = invitedPath + "/" + otherMember;
+        auto invitedMemberPath = invitedPath / otherMember;
         if (std::filesystem::is_regular_file(invitedMemberPath)) {
             JAMI_WARNING("Member {} already present!", otherMember);
             return false;
         }
 
-        auto file = fileutils::ofstream(invitedMemberPath, std::ios::trunc | std::ios::binary);
+        std::ofstream file(invitedMemberPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERROR("Could not write data to {}", invitedMemberPath);
             return false;
@@ -1121,7 +1120,7 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     if (not repo)
         return false;
 
-    std::string repoPath = git_repository_workdir(repo.get());
+    //std::string repoPath = git_repository_workdir(repo.get());
     if (mode() == ConversationMode::ONE_TO_ONE) {
         auto initialMembers = getInitialMembers();
         auto it = std::find(initialMembers.begin(), initialMembers.end(), uriMember);
@@ -1154,11 +1153,11 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
     std::string deviceFile = "";
     std::string invitedFile = "";
-    std::string crlFile = std::string("CRLs") + "/" + userUri;
+    std::string crlFile = std::string("CRLs/") +  userUri;
     for (const auto& changedFile : changedFiles) {
-        if (changedFile == std::string("devices") + "/" + userDevice + ".crt") {
+        if (changedFile == std::string("devices/") + userDevice + ".crt") {
             deviceFile = changedFile;
-        } else if (changedFile == std::string("invited") + "/" + uriMember) {
+        } else if (changedFile == std::string("invited/") + uriMember) {
             invitedFile = changedFile;
         } else if (changedFile == crlFile) {
             // Nothing to do
@@ -1672,7 +1671,8 @@ ConversationRepository::Impl::validateDevice()
         return false;
     }
     auto path = fmt::format("devices/{}.crt", account->currentDeviceId());
-    std::string devicePath = git_repository_workdir(repo.get()) + path;
+    std::filesystem::path devicePath = git_repository_workdir(repo.get());
+    devicePath /= path;
     if (!std::filesystem::is_regular_file(devicePath)) {
         JAMI_WARNING("Couldn't find file {}", devicePath);
         return false;
@@ -1694,7 +1694,7 @@ ConversationRepository::Impl::validateDevice()
             JAMI_ERROR("Current device's certificate is invalid. A migration is needed");
             return false;
         }
-        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERROR("Could not write data to {}", devicePath);
             return false;
@@ -1710,13 +1710,13 @@ ConversationRepository::Impl::validateDevice()
     // Check account cert (a new device can be added but account certifcate can be the old one!)
     auto adminPath = fmt::format("admins/{}.crt", account->getUsername());
     auto memberPath = fmt::format("members/{}.crt", account->getUsername());
-    std::string parentPath = git_repository_workdir(repo.get());
-    std::string relativeParentPath;
-    if (std::filesystem::is_regular_file(parentPath + adminPath))
+    std::filesystem::path parentPath = git_repository_workdir(repo.get());
+    std::filesystem::path relativeParentPath;
+    if (std::filesystem::is_regular_file(parentPath / adminPath))
         relativeParentPath = adminPath;
-    else if (std::filesystem::is_regular_file(parentPath + memberPath))
+    else if (std::filesystem::is_regular_file(parentPath / memberPath))
         relativeParentPath = memberPath;
-    parentPath += relativeParentPath;
+    parentPath /= relativeParentPath;
     if (relativeParentPath.empty()) {
         JAMI_ERROR("Invalid parent path (not in members or admins");
         return false;
@@ -1734,14 +1734,14 @@ ConversationRepository::Impl::validateDevice()
         auto cert = account->identity().second;
         auto newCert = cert->issuer;
         if (newCert && std::filesystem::is_regular_file(parentPath)) {
-            auto file = fileutils::ofstream(parentPath, std::ios::trunc | std::ios::binary);
+            std::ofstream file(parentPath, std::ios::trunc | std::ios::binary);
             if (!file.is_open()) {
                 JAMI_ERROR("Could not write data to {}", path);
                 return false;
             }
             file << newCert->toString(true);
             file.close();
-            if (!add(relativeParentPath)) {
+            if (!add(relativeParentPath.string())) {
                 JAMI_WARNING("Couldn't add file {}", path);
                 return false;
             }
@@ -2431,12 +2431,12 @@ ConversationRepository::Impl::initMembers()
     std::vector<std::string> uris;
     std::lock_guard<std::mutex> lk(membersMtx_);
     members_.clear();
-    std::string repoPath = git_repository_workdir(repo.get());
-    std::vector<std::string> paths = {repoPath + "/" + "admins",
-                                      repoPath + "/" + "members",
-                                      repoPath + "/" + "invited",
-                                      repoPath + "/" + "banned" + "/" + "members",
-                                      repoPath + "/" + "banned" + "/" + "invited"};
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    std::vector<std::filesystem::path> paths = {repoPath / "admins",
+                                                repoPath / "members",
+                                                repoPath / "invited",
+                                                repoPath / "banned" / "members",
+                                                repoPath / "banned" / "invited"};
     std::vector<MemberRole> roles = {
         MemberRole::ADMIN,
         MemberRole::MEMBER,
@@ -2907,7 +2907,7 @@ ConversationRepository::addMember(const std::string& uri)
         return {};
     }
 
-    auto file = fileutils::ofstream(devicePath.string(), std::ios::trunc | std::ios::binary);
+    std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to {}", devicePath);
         return {};
@@ -3088,9 +3088,9 @@ ConversationRepository::Impl::addUserDevice()
         return;
     // NOTE: libgit2 uses / for files
     std::string path = fmt::format("devices/{}.crt", account->currentDeviceId());
-    std::string devicePath = git_repository_workdir(repo.get()) + path;
+    std::filesystem::path devicePath = git_repository_workdir(repo.get()) + path;
     if (!std::filesystem::is_regular_file(devicePath)) {
-        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERROR("Could not write data to {}", devicePath);
             return;
@@ -3298,7 +3298,7 @@ ConversationRepository::join()
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string_view repoPath = git_repository_workdir(repo.get());
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto account = pimpl_->account_.lock();
     if (!account)
         return {};
@@ -3309,22 +3309,22 @@ ConversationRepository::join()
         return {};
     }
     auto uri = parentCert->getId().toString();
-    std::string membersPath = repoPath + "members" + DIR_SEPARATOR_STR;
-    std::string memberFile = membersPath + DIR_SEPARATOR_STR + uri + ".crt";
-    std::string adminsPath = repoPath + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
+    auto membersPath = repoPath / "members";
+    auto memberFile = membersPath / (uri + ".crt");
+    auto adminsPath = repoPath / "admins" / (uri + ".crt");
     if (std::filesystem::is_regular_file(memberFile) or std::filesystem::is_regular_file(adminsPath)) {
         // Already member, nothing to commit
         return {};
     }
     // Remove invited/uri.crt
-    std::string invitedPath = repoPath + "invited";
+    auto invitedPath = repoPath / "invited";
     dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, uri));
     // Add members/uri.crt
     if (!dhtnet::fileutils::recursive_mkdir(membersPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort create conversations", membersPath);
         return {};
     }
-    auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
+    std::ofstream file(memberFile, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to {}", memberFile);
         return {};
@@ -3380,10 +3380,11 @@ ConversationRepository::leave()
         name = deviceId;
 
     // Remove related files
-    std::string_view repoPath = git_repository_workdir(repo.get());
-    std::string adminFile = fmt::format("{}admins/{}.crt", repoPath, uri);
-    std::string memberFile = fmt::format("{}members/{}.crt", repoPath, uri);
-    std::string crlsPath = fmt::format("{}CRLs", repoPath);
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto crt = fmt::format("{}.crt", uri);
+    auto adminFile = repoPath / "admin" / crt;
+    auto memberFile = repoPath / "members" / crt;
+    auto crlsPath = repoPath / "CRLs";
 
     if (std::filesystem::is_regular_file(adminFile)) {
         dhtnet::fileutils::removeAll(adminFile, true);
@@ -3397,7 +3398,7 @@ ConversationRepository::leave()
     for (const auto& crl : account->identity().second->getRevocationLists()) {
         if (!crl)
             continue;
-        std::string crlPath = fmt::format("{}/{}/{}.crl", crlsPath, deviceId, dht::toHex(crl->getNumber()));
+        auto crlPath = crlsPath / deviceId / fmt::format("{}.crl", dht::toHex(crl->getNumber()));
         if (std::filesystem::is_regular_file(crlPath)) {
             dhtnet::fileutils::removeAll(crlPath, true);
         }
@@ -3405,7 +3406,7 @@ ConversationRepository::leave()
 
     // Devices
     for (const auto& d : account->getKnownDevices()) {
-        std::string deviceFile = fmt::format("{}devices/{}.crt", repoPath, d.first);
+        auto deviceFile = repoPath / "devices" / fmt::format("{}.crt", d.first);
         if (std::filesystem::is_regular_file(deviceFile)) {
             dhtnet::fileutils::removeAll(deviceFile, true);
         }
@@ -3479,16 +3480,16 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
-    auto votePath = fileutils::getFullPath(voteDirectory, adminUri).string();
-    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERROR("Could not write data to {}", votePath);
         return {};
     }
     voteFile.close();
 
-    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri).string();
-    if (!pimpl_->add(toAdd.c_str()))
+    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
+    if (!pimpl_->add(toAdd.string()))
         return {};
 
     Json::Value json;
@@ -3507,20 +3508,20 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto cert = account->identity().second;
     if (!cert || !cert->issuer)
         return {};
     auto adminUri = cert->issuer->getId().toString();
 
     auto relativeVotePath = fmt::format("votes/unban/{}/{}", type, uri);
-    auto voteDirectory = repoPath + DIR_SEPARATOR_STR + relativeVotePath;
+    auto voteDirectory = repoPath / relativeVotePath;
     if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
-    auto votePath = fileutils::getFullPath(voteDirectory, adminUri).string();
-    auto voteFile = fileutils::ofstream(votePath, std::ios::trunc | std::ios::binary);
+    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERROR("Could not write data to {}", votePath);
         return {};
@@ -3544,21 +3545,23 @@ bool
 ConversationRepository::Impl::resolveBan(const std::string_view type, const std::string& uri)
 {
     auto repo = repository();
-    std::string repoPath = git_repository_workdir(repo.get());
-    std::string bannedPath = repoPath + "banned";
-    std::string devicesPath = repoPath + "devices";
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto bannedPath = repoPath / "banned";
+    auto devicesPath = repoPath / "devices";
     // Move from device or members file into banned
     auto crtStr = (type != "invited" ? ".crt" : "");
-    std::string originFilePath = fmt::format("{}/{}/{}{}", repoPath, type, uri, crtStr);
+    auto originFilePath = repoPath / type / uri / crtStr;
 
-    auto destPath = bannedPath + DIR_SEPARATOR_STR + type;
-    auto destFilePath = fmt::format("{}/{}{}", destPath, uri, crtStr);
+    auto destPath = bannedPath / type;
+    auto destFilePath = destPath / uri / crtStr;
     if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort resolving vote", destPath);
         return false;
     }
 
-    if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+    std::error_code ec;
+    std::filesystem::rename(originFilePath, destFilePath, ec);
+    if (ec) {
         JAMI_ERROR("Error when moving {} to {}. Abort resolving vote",
                  originFilePath,
                  destFilePath);
@@ -3598,17 +3601,19 @@ bool
 ConversationRepository::Impl::resolveUnban(const std::string_view type, const std::string& uri)
 {
     auto repo = repository();
-    std::string repoPath = git_repository_workdir(repo.get());
-    std::string bannedPath = repoPath + "banned";
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto bannedPath = repoPath / "banned";
     auto crtStr = (type != "invited" ? ".crt" : "");
-    auto originFilePath = fmt::format("{}/{}/{}{}", bannedPath, type, uri, crtStr);
-    auto destPath = repoPath + DIR_SEPARATOR_STR + type;
-    auto destFilePath = fmt::format("{}/{}{}", destPath, uri, crtStr);
+    auto originFilePath = bannedPath / type / uri / crtStr;
+    auto destPath = repoPath / type;
+    auto destFilePath = destPath / uri / crtStr;
     if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort resolving vote", destPath);
         return false;
     }
-    if (std::rename(originFilePath.c_str(), destFilePath.c_str())) {
+    std::error_code ec;
+    std::filesystem::rename(originFilePath, destFilePath, ec);
+    if (ec) {
         JAMI_ERROR("Error when moving {} to {}. Abort resolving vote",
                  originFilePath,
                  destFilePath);
@@ -3647,11 +3652,9 @@ ConversationRepository::resolveVote(const std::string& uri,
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string_view repoPath = git_repository_workdir(repo.get());
-    std::string adminsPath = repoPath + "admins";
-    auto votePath = fmt::format("{}/{}", voteType, type);
-
-    auto voteDirectory = fmt::format("{}/votes/{}/{}", repoPath, votePath, uri);
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto adminsPath = repoPath / "admins";
+    auto voteDirectory = repoPath / "votes" / voteType / type / uri;
     for (const auto& certificate : dhtnet::fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
             JAMI_WARNING("Incorrect file found: {}/{}", adminsPath, certificate);
@@ -3828,9 +3831,9 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
-    std::string repoPath = git_repository_workdir(repo.get());
-    auto profilePath = repoPath + "profile.vcf";
-    auto file = fileutils::ofstream(profilePath, std::ios::trunc | std::ios::binary);
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    auto profilePath = repoPath / "profile.vcf";
+    std::ofstream file(profilePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to {}", profilePath);
         return {};
@@ -3886,8 +3889,8 @@ ConversationRepository::infos() const
 {
     if (auto repo = pimpl_->repository()) {
         try {
-            std::string repoPath = git_repository_workdir(repo.get());
-            auto profilePath = repoPath + "profile.vcf";
+            std::filesystem::path repoPath = git_repository_workdir(repo.get());
+            auto profilePath = repoPath / "profile.vcf";
             std::map<std::string, std::string> result;
             if (std::filesystem::is_regular_file(profilePath)) {
                 auto content = fileutils::loadFile(profilePath);

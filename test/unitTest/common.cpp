@@ -145,12 +145,12 @@ wait_for_removal_of(const std::string& account,
 }
 
 std::map<std::string, std::string>
-load_actors(const std::string& from_yaml)
+load_actors(const std::filesystem::path& from_yaml)
 {
     std::map<std::string, std::string> actors {};
     std::map<std::string, std::string> default_details = libjami::getAccountTemplate("RING");
 
-    std::ifstream file = jami::fileutils::ifstream(from_yaml);
+    std::ifstream file(from_yaml);
 
     CPPUNIT_ASSERT(file.is_open());
 

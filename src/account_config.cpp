@@ -182,7 +182,7 @@ void
 parsePath(const std::map<std::string, std::string>& details,
           const char* key,
           std::string& s,
-          const std::string& base)
+          const std::filesystem::path& base)
 {
     auto it = details.find(key);
     if (it != details.end())

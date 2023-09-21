@@ -61,6 +61,7 @@ LIBJAMI_PUBLIC void set_program_dir(char* program_path); // public because bin/m
 std::string expand_path(const std::string& path);
 
 bool isPathRelative(const std::filesystem::path& path);
+
 /**
  * If path is contained in base, return the suffix, otherwise return the full path.
  * @param base must not finish with DIR_SEPARATOR_STR, can be empty
@@ -105,19 +106,6 @@ std::vector<uint8_t> readArchive(const std::string& path, const std::string& pas
 void writeArchive(const std::string& data,
                   const std::string& path,
                   const std::string& password = {});
-
-/**
- * Wrappers for fstream opening that will convert paths to wstring
- * on windows
- */
-void openStream(std::ifstream& file,
-                const std::string& path,
-                std::ios_base::openmode mode = std::ios_base::in);
-void openStream(std::ofstream& file,
-                const std::string& path,
-                std::ios_base::openmode mode = std::ios_base::out);
-std::ifstream ifstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
-std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
 
 int64_t size(const std::string& path);
 

@@ -1154,13 +1154,13 @@ void
 ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMap& conversations)
 {
     auto path = fileutils::get_data_dir() / accountId;
-    saveConvInfosToPath(path.string(), conversations);
+    saveConvInfosToPath(path, conversations);
 }
 
 void
-ConversationModule::saveConvInfosToPath(const std::string& path, const ConvInfoMap& conversations)
+ConversationModule::saveConvInfosToPath(const std::filesystem::path& path, const ConvInfoMap& conversations)
 {
-    std::ofstream file(path + DIR_SEPARATOR_STR + "convInfo", std::ios::trunc | std::ios::binary);
+    std::ofstream file(path / "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
 }
 
@@ -2709,17 +2709,17 @@ std::map<std::string, ConvInfo>
 ConversationModule::convInfos(const std::string& accountId)
 {
     auto path = fileutils::get_data_dir() / accountId;
-    return convInfosFromPath(path.string());
+    return convInfosFromPath(path);
 }
 
 std::map<std::string, ConvInfo>
-ConversationModule::convInfosFromPath(const std::string& path)
+ConversationModule::convInfosFromPath(const std::filesystem::path& path)
 {
     std::map<std::string, ConvInfo> convInfos;
     try {
         // read file
         std::lock_guard<std::mutex> lock(
-            dhtnet::fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convInfo"));
+            dhtnet::fileutils::getFileLock(path / "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
@@ -2738,13 +2738,13 @@ ConversationModule::convRequests(const std::string& accountId)
 }
 
 std::map<std::string, ConversationRequest>
-ConversationModule::convRequestsFromPath(const std::string& path)
+ConversationModule::convRequestsFromPath(const std::filesystem::path& path)
 {
     std::map<std::string, ConversationRequest> convRequests;
     try {
         // read file
         std::lock_guard<std::mutex> lock(
-            dhtnet::fileutils::getFileLock(path + DIR_SEPARATOR_STR + "convRequests"));
+            dhtnet::fileutils::getFileLock(path / "convRequests"));
         auto file = fileutils::loadFile("convRequests", path);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
