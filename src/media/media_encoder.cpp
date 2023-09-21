@@ -1143,7 +1143,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
         JAMI_WARN("encoder.json file found, default settings will be erased");
         try {
             Json::Value root;
-            std::ifstream file = fileutils::ifstream(path.string());
+            std::ifstream file(path);
             file >> root;
             if (!root.isObject()) {
                 JAMI_ERR() << "Invalid encoder configuration: root is not an object";

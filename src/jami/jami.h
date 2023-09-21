@@ -29,6 +29,7 @@
 #include <map>
 #include <memory>
 #include <type_traits>
+#include <filesystem>
 
 #include "trace-tools.h"
 
@@ -68,7 +69,7 @@ LIBJAMI_PUBLIC bool init(enum InitFlag flags) noexcept;
  * Start asynchronously daemon created by init().
  * @returns true if daemon started successfully
  */
-LIBJAMI_PUBLIC bool start(const std::string& config_file = {}) noexcept;
+LIBJAMI_PUBLIC bool start(const std::filesystem::path& config_file = {}) noexcept;
 
 /**
  * Stop and freeing any resource allocated by daemon

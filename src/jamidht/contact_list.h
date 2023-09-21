@@ -58,7 +58,7 @@ public:
 
     ContactList(const std::string& accountId,
                 const std::shared_ptr<crypto::Certificate>& cert,
-                const std::string& path,
+                const std::filesystem::path& path,
                 OnChangeCallback cb);
     ~ContactList();
 
@@ -110,7 +110,7 @@ public:
     /** Should be called only after updateContact */
     void saveContacts() const;
 
-    std::string path() const { return path_; }
+    const std::filesystem::path& path() const { return path_; }
 
     /* Contact requests */
 
@@ -158,7 +158,7 @@ private:
     dht::crypto::TrustList accountTrust_;
     // Trust store for to match peer certificates
     std::unique_ptr<dhtnet::tls::TrustStore> trust_;
-    std::string path_;
+    std::filesystem::path path_;
     std::string accountUri_;
 
     OnChangeCallback callbacks_;

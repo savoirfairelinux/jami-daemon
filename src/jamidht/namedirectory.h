@@ -29,6 +29,7 @@
 #include <mutex>
 #include <memory>
 #include <thread>
+#include <filesystem>
 
 namespace dht {
 class Executor;
@@ -102,7 +103,7 @@ private:
 
     std::string serverUrl_;
     std::string serverToken_;
-    std::string cachePath_;
+    std::filesystem::path cachePath_;
 
     std::mutex cacheLock_ {};
     std::shared_ptr<dht::Logger> logger_;

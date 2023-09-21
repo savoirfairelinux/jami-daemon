@@ -128,7 +128,7 @@ public:
      * Initialisation of thread (sound) and map.
      * Init a new VoIPLink, audio codec and audio driver
      */
-    void init(const std::string& config_file, libjami::InitFlag flags);
+    void init(const std::filesystem::path& config_file, libjami::InitFlag flags);
 
     /*
      * Terminate all threads and exit DBus loop

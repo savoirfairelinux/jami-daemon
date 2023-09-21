@@ -145,10 +145,10 @@ bool Manager::isIOSExtension = {false};
 bool Manager::syncOnRegister = {true};
 
 static void
-copy_over(const std::string& srcPath, const std::string& destPath)
+copy_over(const std::filesystem::path& srcPath, const std::filesystem::path& destPath)
 {
-    std::ifstream src = fileutils::ifstream(srcPath.c_str());
-    std::ofstream dest = fileutils::ofstream(destPath.c_str());
+    std::ifstream src(srcPath);
+    std::ofstream dest(destPath);
     dest << src.rdbuf();
     src.close();
     dest.close();
@@ -156,38 +156,40 @@ copy_over(const std::string& srcPath, const std::string& destPath)
 
 // Creates a backup of the file at "path" with a .bak suffix appended
 static void
-make_backup(const std::string& path)
+make_backup(const std::filesystem::path& path)
 {
-    const std::string backup_path(path + ".bak");
+    auto backup_path = path;
+    backup_path.replace_extension(".bak");
     copy_over(path, backup_path);
 }
 
 // Restore last backup of the configuration file
 static void
-restore_backup(const std::string& path)
+restore_backup(const std::filesystem::path& path)
 {
-    const std::string backup_path(path + ".bak");
+    auto backup_path = path;
+    backup_path.replace_extension(".bak");
     copy_over(backup_path, path);
 }
 
 void
-check_rename(const std::string& old_dir, const std::string& new_dir)
+check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& new_dir)
 {
     if (old_dir == new_dir or not std::filesystem::is_directory(old_dir))
         return;
 
     if (not std::filesystem::is_directory(new_dir)) {
-        JAMI_WARN() << "Migrating " << old_dir << " to " << new_dir;
-        std::rename(old_dir.c_str(), new_dir.c_str());
+        JAMI_WARNING("Migrating {} to {}", old_dir, new_dir);
+        std::filesystem::rename(old_dir, new_dir);
     } else {
         for (const auto& file : dhtnet::fileutils::readDirectory(old_dir)) {
             auto old_dest = fileutils::getFullPath(old_dir, file);
             auto new_dest = fileutils::getFullPath(new_dir, file);
             if (std::filesystem::is_directory(old_dest) and std::filesystem::is_directory(new_dest)) {
-                check_rename(old_dest.string(), new_dest.string());
+                check_rename(old_dest, new_dest);
             } else {
-                JAMI_WARN() << "Migrating " << old_dest << " to " << new_dest;
-                std::rename(old_dest.string().c_str(), new_dest.string().c_str());
+                JAMI_WARNING("Migrating {} to {}", old_dir, new_dest);
+                std::filesystem::rename(old_dest, new_dest);
             }
         }
         dhtnet::fileutils::removeAll(old_dir);
@@ -321,7 +323,7 @@ struct Manager::ManagerPimpl
     /**
      * Create config directory in home user and return configuration file path
      */
-    std::string retrieveConfigPath() const;
+    std::filesystem::path retrieveConfigPath() const;
 
     void unsetCurrentCall();
 
@@ -417,7 +419,7 @@ struct Manager::ManagerPimpl
     /**
      * Path of the ConfigFile
      */
-    std::string path_;
+    std::filesystem::path path_;
 
     /**
      * Instance of the RingBufferPool for the whole application
@@ -478,7 +480,7 @@ Manager::ManagerPimpl::parseConfiguration()
     bool result = true;
 
     try {
-        std::ifstream file = fileutils::ifstream(path_);
+        std::ifstream file(path_);
         YAML::Node parsedFile = YAML::Load(file);
         file.close();
         const int error_count = base_.loadAccountMap(parsedFile);
@@ -589,11 +591,11 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 /**
  * Initialization: Main Thread
  */
-std::string
+std::filesystem::path
 Manager::ManagerPimpl::retrieveConfigPath() const
 {
     // TODO: Migrate config file name from dring.yml to jami.yml.
-    return (fileutils::get_config_dir() / "dring.yml").string();
+    return fileutils::get_config_dir() / "dring.yml";
 }
 
 void
@@ -751,7 +753,7 @@ Manager::setAutoAnswer(bool enable)
 }
 
 void
-Manager::init(const std::string& config_file, libjami::InitFlag flags)
+Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 {
     // FIXME: this is no good
     initialized = true;
@@ -1805,7 +1807,7 @@ Manager::saveConfig()
 #endif
 
         std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(pimpl_->path_));
-        std::ofstream fout = fileutils::ofstream(pimpl_->path_);
+        std::ofstream fout(pimpl_->path_);
         fout.write(out.c_str(), out.size());
     } catch (const YAML::Exception& e) {
         JAMI_ERR("%s", e.what());
@@ -2156,7 +2158,7 @@ Manager::playRingtone(const std::string& accountID)
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
-    if (not pimpl_->toneCtrl_.setAudioFile(account->getRingtonePath()))
+    if (not pimpl_->toneCtrl_.setAudioFile(account->getRingtonePath().string()))
         ringback();
 }
 

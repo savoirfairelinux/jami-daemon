@@ -23,6 +23,7 @@
 #include <string_view>
 #include <utility>
 #include <map>
+#include <filesystem>
 
 using namespace std::literals;
 
@@ -31,7 +32,7 @@ constexpr const char* const DEFAULT_RINGTONE_PATH = "default.opus";
 
 struct AccountConfig : public Serializable
 {
-    AccountConfig(const std::string& type_, const std::string& id_, const std::string& path_ = {})
+    AccountConfig(const std::string& type_, const std::string& id_, const std::filesystem::path& path_ = {})
         : type(type_)
         , id(id_)
         , path(path_)
@@ -54,7 +55,7 @@ struct AccountConfig : public Serializable
     /** Path where the configuration file is stored.
      * Part of the context but not stored in the configuration
      * Used to compute relative paths for configuraton fields */
-    const std::string path;
+    const std::filesystem::path path;
 
     /** A user-defined name for this account */
     std::string alias {};
@@ -174,6 +175,6 @@ parseInt(const std::map<std::string, std::string>& details, const char* key, T& 
 void parsePath(const std::map<std::string, std::string>& details,
                const char* key,
                std::string& s,
-               const std::string& base);
+               const std::filesystem::path& base);
 
 } // namespace jami

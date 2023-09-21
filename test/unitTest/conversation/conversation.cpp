@@ -1474,8 +1474,8 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     }
 
     // /admins
-    std::string adminPath = adminsPath / (parentCert->getId().toString() + ".crt");
-    auto file = fileutils::ofstream(adminPath, std::ios::trunc | std::ios::binary);
+    auto adminPath = adminsPath / fmt::format("{}.crt", parentCert->getId());
+    std::ofstream file(adminPath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERROR("Could not write data to %s", adminPath.c_str());
     }
@@ -1488,7 +1488,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
 
     // /devices
     auto devicePath = devicesPath / fmt::format("{}.crt", cert->getLongId());
-    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", devicePath.c_str());
     }
@@ -1501,8 +1501,8 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
 
     if (fakeCert.empty()) {
         // Add a unwanted file
-        std::string badFile = repoPath / "BAD";
-        file = fileutils::ofstream(badFile, std::ios::trunc | std::ios::binary);
+        auto badFile = repoPath / "BAD";
+        file = std::ofstream(badFile, std::ios::trunc | std::ios::binary);
     }
 
     addAll(account, "tmp");

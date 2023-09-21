@@ -104,7 +104,7 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
     if (!serverUrl_.empty() && serverUrl_.back() == '/')
         serverUrl_.pop_back();
     resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
-    cachePath_ = (fileutils::get_cache_dir() / CACHE_DIRECTORY / resolver_->get_url().host).string();
+    cachePath_ = fileutils::get_cache_dir() / CACHE_DIRECTORY / resolver_->get_url().host;
 }
 
 NameDirectory::~NameDirectory()
@@ -450,7 +450,7 @@ NameDirectory::saveCache()
 {
     dhtnet::fileutils::recursive_mkdir(fileutils::get_cache_dir() / CACHE_DIRECTORY);
     std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(cachePath_));
-    std::ofstream file = fileutils::ofstream(cachePath_, std::ios::trunc | std::ios::binary);
+    std::ofstream file(cachePath_, std::ios::trunc | std::ios::binary);
     {
         std::lock_guard<std::mutex> l(cacheLock_);
         msgpack::pack(file, nameCache_);
@@ -468,7 +468,7 @@ NameDirectory::loadCache()
     // read file
     {
         std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(cachePath_));
-        std::ifstream file = fileutils::ifstream(cachePath_);
+        std::ifstream file(cachePath_);
         if (!file.is_open()) {
             JAMI_DBG("Could not load %s", cachePath_.c_str());
             return;

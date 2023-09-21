@@ -1546,13 +1546,13 @@ ConversationMembersEventTest::testMemberJoinsNoBadFile()
     // Add members/uri.crt
     dhtnet::fileutils::recursive_mkdir(membersPath, 0700);
     dhtnet::fileutils::recursive_mkdir(devicesPath, 0700);
-    auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
+    std::ofstream file(memberFile, std::ios::trunc | std::ios::binary);
     file << parentCert->toString(true);
     file.close();
     auto invitedPath = repoPathCarla / convId / "invited" / carlaUri;
     dhtnet::fileutils::remove(invitedPath);
     auto devicePath = devicesPath / fmt::format("{}.crt", carlaAccount->currentDeviceId());
-    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     file << cert->toString(false);
     addAll(carlaAccount, convId);
     ConversationRepository repo(carlaAccount, convId);
@@ -1733,11 +1733,11 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     // Add members/uri.crt
     dhtnet::fileutils::recursive_mkdir(membersPath, 0700);
     dhtnet::fileutils::recursive_mkdir(devicesPath, 0700);
-    auto file = fileutils::ofstream(memberFile, std::ios::trunc | std::ios::binary);
+    std::ofstream file(memberFile, std::ios::trunc | std::ios::binary);
     file << parentCert->toString(true);
     file.close();
     auto devicePath = devicesPath / fmt::format("{}.crt", carlaAccount->currentDeviceId());
-    file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     file << cert->toString(false);
     addAll(carlaAccount, convId);
     Json::Value json;

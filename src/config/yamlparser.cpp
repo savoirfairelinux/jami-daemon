@@ -26,7 +26,7 @@ namespace jami {
 namespace yaml_utils {
 
 void
-parsePath(const YAML::Node& node, const char* key, std::string& path, const std::string& base)
+parsePath(const YAML::Node& node, const char* key, std::string& path, const std::filesystem::path& base)
 {
     std::string val;
     parseValue(node, key, val);
@@ -34,7 +34,7 @@ parsePath(const YAML::Node& node, const char* key, std::string& path, const std:
 }
 
 void
-parsePathOptional(const YAML::Node& node, const char* key, std::string& path, const std::string& base)
+parsePathOptional(const YAML::Node& node, const char* key, std::string& path, const std::filesystem::path& base)
 {
     std::string val;
     if (parseValueOptional(node, key, val))

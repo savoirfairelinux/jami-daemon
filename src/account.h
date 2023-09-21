@@ -302,7 +302,7 @@ public:
         MediaType mediaType) const;
     std::shared_ptr<SystemCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
-    std::string getRingtonePath() const { return ringtonePath_; }
+    std::filesystem::path getRingtonePath() const { return ringtonePath_; }
     bool getRingtoneEnabled() const { return config().ringtoneEnabled; }
     std::string getDisplayName() const { return config().displayName; }
     std::string getMailBox() const { return config().mailbox; }
@@ -476,7 +476,7 @@ protected:
     /**
      * Ringtone .au file used for this account
      */
-    std::string ringtonePath_;
+    std::filesystem::path ringtonePath_;
 
     /**
      * UPnP IGD controller and the mutex to access it

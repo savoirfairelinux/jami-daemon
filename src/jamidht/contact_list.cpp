@@ -34,7 +34,7 @@ namespace jami {
 
 ContactList::ContactList(const std::string& accountId,
                          const std::shared_ptr<crypto::Certificate>& cert,
-                         const std::string& path,
+                         const std::filesystem::path& path,
                          OnChangeCallback cb)
     : path_(path)
     , callbacks_(std::move(cb))
@@ -134,14 +134,11 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
         saveTrustRequests();
     saveContacts();
 #ifdef ENABLE_PLUGIN
-    std::size_t found = path_.find_last_of(DIR_SEPARATOR_CH);
-    if (found != std::string::npos) {
-        auto filename = path_.substr(found + 1);
-        jami::Manager::instance()
-            .getJamiPluginManager()
-            .getChatServicesManager()
-            .cleanChatSubjects(filename, uri);
-    }
+    auto filename = path_.filename().string();
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getChatServicesManager()
+        .cleanChatSubjects(filename, uri);
 #endif
     callbacks_.contactRemoved(uri, ban);
     return true;
@@ -245,14 +242,14 @@ ContactList::loadContacts()
 void
 ContactList::saveContacts() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
+    std::ofstream file(path_ / "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
 }
 
 void
 ContactList::saveTrustRequests() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "incomingTrustRequests",
+    std::ofstream file(path_ / "incomingTrustRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
 }
@@ -454,7 +451,7 @@ ContactList::loadKnownDevices()
 void
 ContactList::saveKnownDevices() const
 {
-    std::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevices", std::ios::trunc | std::ios::binary);
+    std::ofstream file(path_ / "knownDevices", std::ios::trunc | std::ios::binary);
 
     std::map<dht::PkId, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)

@@ -669,7 +669,7 @@ private:
     std::vector<std::string> loadBootstrap() const;
 
     static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id,
-                                                            const std::string& path,
+                                                            const std::filesystem::path& path,
                                                             const std::string& name);
 
     void loadTreatedMessages();
