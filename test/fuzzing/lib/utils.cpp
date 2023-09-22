@@ -182,7 +182,7 @@ load_actors(const std::filesystem::path& from_yaml)
 std::map<std::string, std::string>
 load_actors_and_wait_for_announcement(const std::string& from_yaml)
 {
-    auto actors = load_actors(from_yaml);
+    auto actors = load_actors(std::filesystem::path(from_yaml));
 
     std::vector<std::string> wait_for;
 

@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <filesystem>
 
 constexpr size_t WAIT_FOR_ANNOUNCEMENT_TIMEOUT = 30;
 constexpr size_t WAIT_FOR_REMOVAL_TIMEOUT = 30;
@@ -45,7 +46,7 @@ wait_for_removal_of(const std::string& account,
                     std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_REMOVAL_TIMEOUT));
 
 extern std::map<std::string, std::string>
-load_actors(const std::string& from_yaml);
+load_actors(const std::filesystem::path& from_yaml);
 
 extern std::map<std::string, std::string>
 load_actors_and_wait_for_announcement(const std::string& from_yaml);

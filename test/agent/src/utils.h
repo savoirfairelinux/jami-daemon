@@ -21,6 +21,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 
 #include "logger.h"
 
@@ -209,6 +210,15 @@ struct from_guile
         free(str_raw);
 
         return ret;
+    }
+
+    operator std::filesystem::path()
+    {
+        char* str_raw = scm_to_locale_string(value);
+        std::string ret(str_raw);
+        free(str_raw);
+
+        return std::filesystem::path(ret);
     }
 
     template<typename T>
