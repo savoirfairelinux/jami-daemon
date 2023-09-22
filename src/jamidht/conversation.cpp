@@ -1574,19 +1574,30 @@ Conversation::downloadFile(const std::string& interactionId,
                            std::size_t end)
 {
     auto commit = getCommit(interactionId);
-    if (commit == std::nullopt || commit->find("type") == commit->end()
-        || commit->find("sha3sum") == commit->end() || commit->find("tid") == commit->end()
-        || commit->at("type") != "application/data-transfer+json") {
-        JAMI_ERR() << "Cannot download file without linked interaction " << fileId;
+    if (commit == std::nullopt || commit->at("type") != "application/data-transfer+json") {
+        JAMI_ERROR("Commit doesn't exists or is not a file transfer");
         return false;
     }
-    auto sha3sum = commit->at("sha3sum");
-    auto size_str = commit->at("totalSize");
-    auto totalSize = to_int<size_t>(size_str);
+    auto tid = commit->find("tid");
+    auto sha3sum = commit->find("sha3sum");
+    auto size_str = commit->find("totalSize");
+
+    if (tid == commit->end() || sha3sum == commit->end() || size_str == commit->end()) {
+        JAMI_ERROR("Invalid file transfer commit (missing tid, size or sha3)");
+        return false;
+    }
+
+    auto totalSize = to_int<ssize_t>(size_str->second, (ssize_t)-1);
+    if (totalSize < 0) {
+        JAMI_ERROR("Invalid file size {}", totalSize);
+        return false;
+    }
 
     // Be sure to not lock conversation
     dht::ThreadPool().io().run(
-        [w = weak(), deviceId, fileId, interactionId, sha3sum, path, totalSize, start, end] {
+        [w = weak(),
+         deviceId,
+         fileId, interactionId, sha3sum=sha3sum->second, path, totalSize, start, end] {
             if (auto shared = w.lock()) {
                 auto acc = shared->pimpl_->account_.lock();
                 if (!acc)
