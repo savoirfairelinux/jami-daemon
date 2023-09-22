@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0d662bac_75d155bf",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 968
+      },
+      "writtenOn": "2023-09-22T21:02:18Z",
+      "side": 1,
+      "message": "this gerrit instance is going to be unavailable if not in the SFL network, meaning a authentification system will break soon.\n\nI wouldn\u0027t have shared the SFL gerrit link either and shouldn\u0027t be use in any circumstances.",
+      "parentUuid": "8b05b5a9_eeb41b2f",
+      "range": {
+        "startLine": 2,
+        "startChar": 28,
+        "endLine": 2,
+        "endChar": 29
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b270866f_5e9ddbdf",
         "filename": "contrib/src/ffmpeg/rules.mak",
         "patchSetId": 3
