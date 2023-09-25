@@ -140,9 +140,9 @@ IceTest::testRawIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
+    ice_config.factory = Manager::instance().getIceTransportFactory();
 
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master = Manager::instance().getIceTransportFactory()->createTransport("master ICE");
     ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -176,9 +176,9 @@ IceTest::testRawIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
+    ice_config.factory = Manager::instance().getIceTransportFactory();
 
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave = Manager::instance().getIceTransportFactory()->createTransport("slave ICE");
     ice_slave->initIceInstance(ice_config);
 
     cv_create.notify_all();
@@ -252,8 +252,8 @@ IceTest::testTurnMasterIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_config.factory = Manager::instance().getIceTransportFactory();
+    ice_master = Manager::instance().getIceTransportFactory()->createTransport("master ICE");
     ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.turnServers = {};
@@ -297,8 +297,8 @@ IceTest::testTurnMasterIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_config.factory = Manager::instance().getIceTransportFactory();
+    ice_slave = Manager::instance().getIceTransportFactory()->createTransport("slave ICE");
     ice_slave->initIceInstance(ice_config);
 
     cv_create.notify_all();
@@ -367,8 +367,8 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_config.factory = Manager::instance().getIceTransportFactory();
+    ice_master = Manager::instance().getIceTransportFactory()->createTransport("master ICE");
     ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -416,8 +416,8 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_config.factory = Manager::instance().getIceTransportFactory();
+    ice_slave = Manager::instance().getIceTransportFactory()->createTransport("slave ICE");
     ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
@@ -481,9 +481,9 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
+    ice_config.factory = Manager::instance().getIceTransportFactory();
 
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_master = Manager::instance().getIceTransportFactory()->createTransport("master ICE");
     ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -525,9 +525,9 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
+    ice_config.factory = Manager::instance().getIceTransportFactory();
 
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_slave = Manager::instance().getIceTransportFactory()->createTransport("slave ICE");
     ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     CPPUNIT_ASSERT(
@@ -594,8 +594,8 @@ IceTest::testCompleteOnFailure()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
-    ice_master = Manager::instance().getIceTransportFactory().createTransport("master ICE");
+    ice_config.factory = Manager::instance().getIceTransportFactory();
+    ice_master = Manager::instance().getIceTransportFactory()->createTransport("master ICE");
     ice_master->initIceInstance(ice_config);
     cv_create.notify_all();
     ice_config.onInitDone = [&](bool ok) {
@@ -643,8 +643,8 @@ IceTest::testCompleteOnFailure()
     ice_config.streamsCount = 1;
     ice_config.compCountPerStream = 1;
     ice_config.upnpContext = Manager::instance().upnpContext();
-    ice_config.factory = &Manager::instance().getIceTransportFactory();
-    ice_slave = Manager::instance().getIceTransportFactory().createTransport("slave ICE");
+    ice_config.factory = Manager::instance().getIceTransportFactory();
+    ice_slave = Manager::instance().getIceTransportFactory()->createTransport("slave ICE");
     ice_slave->initIceInstance(ice_config);
     cv_create.notify_all();
     // Check that nego failed and callback called

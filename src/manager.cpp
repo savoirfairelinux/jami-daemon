@@ -434,7 +434,7 @@ struct Manager::ManagerPimpl
     std::atomic_bool finished_ {false};
 
     /* ICE support */
-    std::unique_ptr<dhtnet::IceTransportFactory> ice_tf_;
+    std::shared_ptr<dhtnet::IceTransportFactory> ice_tf_;
 
     /* Sink ID mapping */
     std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
@@ -814,7 +814,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     check_rename(fileutils::get_config_dir(PACKAGE_OLD).string(),
                  fileutils::get_config_dir().string());
 
-    pimpl_->ice_tf_.reset(new dhtnet::IceTransportFactory(Logger::dhtLogger()));
+    pimpl_->ice_tf_ = std::make_shared<dhtnet::IceTransportFactory>(Logger::dhtLogger());
 
     pimpl_->path_ = config_file.empty() ? pimpl_->retrieveConfigPath() : config_file;
     JAMI_DBG("Configuration file path: %s", pimpl_->path_.c_str());
@@ -3187,10 +3187,10 @@ Manager::hasAccount(const std::string& accountID)
     return accountFactory.hasAccount(accountID);
 }
 
-dhtnet::IceTransportFactory&
+const std::shared_ptr<dhtnet::IceTransportFactory>&
 Manager::getIceTransportFactory()
 {
-    return *pimpl_->ice_tf_;
+    return pimpl_->ice_tf_;
 }
 
 VideoManager&

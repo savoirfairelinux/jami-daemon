@@ -707,7 +707,7 @@ private:
     std::string registeredName_;
 #endif
     std::shared_ptr<dht::Logger> logger_;
-    std::unique_ptr<dhtnet::tls::CertificateStore> certStore_;
+    std::shared_ptr<dhtnet::tls::CertificateStore> certStore_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::shared_ptr<AccountManager> accountManager_;

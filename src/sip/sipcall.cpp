@@ -3318,9 +3318,7 @@ SIPCall::InvSessionDeleter::operator()(pjsip_inv_session* inv) const noexcept
 bool
 SIPCall::createIceMediaTransport(bool isReinvite)
 {
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-
-    auto mediaTransport = iceTransportFactory.createTransport(getCallId());
+    auto mediaTransport = Manager::instance().getIceTransportFactory()->createTransport(getCallId());
     if (mediaTransport) {
         JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
                  getCallId().c_str(),

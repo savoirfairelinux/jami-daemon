@@ -789,7 +789,7 @@ public:
 
     CallFactory callFactory;
 
-    dhtnet::IceTransportFactory& getIceTransportFactory();
+    const std::shared_ptr<dhtnet::IceTransportFactory>& getIceTransportFactory();
 
     std::shared_ptr<asio::io_context> ioContext() const;
     std::shared_ptr<dhtnet::upnp::UPnPContext> upnpContext() const;

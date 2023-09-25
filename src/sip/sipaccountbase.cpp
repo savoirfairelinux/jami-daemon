@@ -249,7 +249,7 @@ SIPAccountBase::getIceOptions() const noexcept
 {
     dhtnet::IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
-    opts.factory = (dhtnet::IceTransportFactory*)&Manager::instance().getIceTransportFactory();
+    opts.factory = Manager::instance().getIceTransportFactory();
 
     if (config().turnEnabled && turnCache_) {
         auto turnAddr = turnCache_->getResolvedTurn();

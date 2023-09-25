@@ -4192,7 +4192,7 @@ JamiAccount::initConnectionManager()
         auto connectionManagerConfig = std::make_shared<dhtnet::ConnectionManager::Config>();
         connectionManagerConfig->ioContext = Manager::instance().ioContext();
         connectionManagerConfig->dht = dht();
-        connectionManagerConfig->certStore = certStore_.get();
+        connectionManagerConfig->certStore = certStore_;
         connectionManagerConfig->id = identity();
         connectionManagerConfig->upnpCtrl = upnpCtrl_;
         connectionManagerConfig->turnServer = config().turnServer;
@@ -4203,7 +4203,7 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->turnEnabled = config().turnEnabled;
         connectionManagerConfig->cachePath = cachePath_;
         connectionManagerConfig->logger = Logger::dhtLogger();
-        connectionManagerConfig->factory = &Manager::instance().getIceTransportFactory();
+        connectionManagerConfig->factory = Manager::instance().getIceTransportFactory();
         connectionManagerConfig->turnCache = turnCache_;
         connectionManager_ = std::make_unique<dhtnet::ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::SWARM]
