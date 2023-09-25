@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "859abde7_9d207c8a",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-25T13:01:09Z",
+      "side": 1,
+      "message": "Seems to set this too early and locks up the video on the local.",
+      "range": {
+        "startLine": 213,
+        "startChar": 0,
+        "endLine": 215,
+        "endChar": 51
+      },
+      "revId": "3beda98a94e627cfb392cf988de2d4eea9086736",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

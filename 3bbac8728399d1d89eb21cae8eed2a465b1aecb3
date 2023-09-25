@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "088f5290_e0423f02",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-25T13:01:09Z",
+      "side": 0,
+      "message": "Causes the receiver\u0027s video of the sender\u0027s stream to freeze when they stop their camera instead of blacking out.",
+      "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d22cf83_3db8fec5",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-25T13:01:09Z",
+      "side": 0,
+      "message": "Causes calls to not be properly ended sometimes.",
+      "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
