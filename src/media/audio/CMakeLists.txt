@@ -15,8 +15,6 @@ list (APPEND Source_Files__media__audio
       "${CMAKE_CURRENT_SOURCE_DIR}/audio_rtp_session.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/audio_sender.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/audio_sender.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/audiobuffer.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/audiobuffer.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/audiolayer.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/audiolayer.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/audioloop.cpp"
@@ -30,13 +28,6 @@ list (APPEND Source_Files__media__audio
       "${CMAKE_CURRENT_SOURCE_DIR}/tonecontrol.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/tonecontrol.h"
 )
-
-if(NOT MSVC)
-   list (APPEND Source_Files__media__audio
-         "${CMAKE_CURRENT_SOURCE_DIR}/dsp.cpp"
-         "${CMAKE_CURRENT_SOURCE_DIR}/dsp.h"
-   )
-endif()
 
 set (Source_Files__media__audio ${Source_Files__media__audio} PARENT_SCOPE)
 

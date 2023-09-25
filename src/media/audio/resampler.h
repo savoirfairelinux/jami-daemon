@@ -56,11 +56,6 @@ public:
     /**
      * @brief Wrapper around resample(AVFrame*, AVFrame*) for convenience.
      */
-    void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
-
-    /**
-     * @brief Wrapper around resample(AVFrame*, AVFrame*) for convenience.
-     */
     std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& out);
 
     /**
