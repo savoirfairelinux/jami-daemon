@@ -115,7 +115,7 @@ public:
      * Copy data in the urgent buffer.
      * @param buffer The buffer containing the data to be played ( ringtones )
      */
-    void putUrgent(AudioBuffer& buffer);
+    void putUrgent(std::shared_ptr<AudioFrame> buffer);
 
     /**
      * Start/Stop playing the incoming call notification sound (beep)

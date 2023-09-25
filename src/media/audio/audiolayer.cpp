@@ -57,12 +57,12 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 
-    JAMI_INFO("[audiolayer] AGC: %d, noiseReduce: %s, VAD: %d, echoCancel: %s, audioProcessor: %s",
+    JAMI_LOG("[audiolayer] AGC: {:d}, noiseReduce: {:s}, VAD: {:d}, echoCancel: {:s}, audioProcessor: {:s}",
               pref_.isAGCEnabled(),
-              pref.getNoiseReduce().c_str(),
+              pref.getNoiseReduce(),
               pref.getVadEnabled(),
-              pref.getEchoCanceller().c_str(),
-              pref.getAudioProcessor().c_str());
+              pref.getEchoCanceller(),
+              pref.getAudioProcessor());
 }
 
 AudioLayer::~AudioLayer() {}
@@ -70,7 +70,7 @@ AudioLayer::~AudioLayer() {}
 void
 AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 {
-    JAMI_DBG("Hardware audio format available : %s %zu", playback.toString().c_str(), bufSize);
+    JAMI_LOG("Hardware audio format available : {:s} {}", playback.toString(), bufSize);
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     audioInputFormat_.sampleFormat = audioFormat_.sampleFormat;
     urgentRingBuffer_.setFormat(audioFormat_);
@@ -80,7 +80,7 @@ AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 void
 AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
-    JAMI_DBG("Hardware input audio format available : %s", capture.toString().c_str());
+    JAMI_LOG("Hardware input audio format available : {:s}", capture.toString());
 }
 
 void
@@ -251,9 +251,9 @@ AudioLayer::destroyAudioProcessor()
 }
 
 void
-AudioLayer::putUrgent(AudioBuffer& buffer)
+AudioLayer::putUrgent(std::shared_ptr<AudioFrame> buffer)
 {
-    urgentRingBuffer_.put(buffer.toAVFrame());
+    urgentRingBuffer_.put(std::move(buffer));
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
@@ -271,12 +271,12 @@ AudioLayer::notifyIncomingCall()
 
     lastNotificationTime_ = now;
 
-    Tone tone("440/160", getSampleRate());
+    Tone tone("440/160", getSampleRate(), audioFormat_.sampleFormat);
     size_t nbSample = tone.getSize();
 
     /* Put the data in the urgent ring buffer */
     urgentRingBuffer_.flushAll();
-    urgentRingBuffer_.put(tone.getNext(nbSample, 1.0));
+    urgentRingBuffer_.put(tone.getNext(nbSample));
 }
 
 std::shared_ptr<AudioFrame>
@@ -291,7 +291,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
                                                 .real<size_t>()
                                           : writableSamples;
 
-        return resampler_->resample(fileToPlay->getNext(readableSamples, isRingtoneMuted_ ? 0. : 1.), format);
+        return resampler_->resample(fileToPlay->getNext(readableSamples, isRingtoneMuted_), format);
     }
     return {};
 }

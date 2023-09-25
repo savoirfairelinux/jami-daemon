@@ -25,6 +25,7 @@
 #include "tone.h"
 #include "logger.h"
 #include "ring_types.h"
+#include "string_utils.h"
 
 #include <vector>
 #include <cmath>
@@ -32,99 +33,108 @@
 
 namespace jami {
 
-Tone::Tone(const std::string& definition, unsigned int sampleRate)
-    : AudioLoop(sampleRate)
+Tone::Tone(std::string_view definition, unsigned int sampleRate, AVSampleFormat sampleFormat)
+    : AudioLoop(AudioFormat(sampleRate, 1, sampleFormat))
 {
     genBuffer(definition); // allocate memory with definition parameter
 }
 
+struct ParsedDefinition {
+    unsigned total_samples;
+    std::vector<std::tuple<unsigned, unsigned, unsigned>> frequencies;
+};
+
+ParsedDefinition
+parseDefinition(std::string_view definition, unsigned sampleRate)
+{
+    ParsedDefinition parsed;
+    parsed.total_samples = 0;
+
+    std::string_view s; // portion of frequencyq
+    while (getline_full(definition, s, ',')) {
+        // Sample string: "350+440" or "350+440/2000,244+655/2000"
+        unsigned low, high, time;
+        size_t count;  // number of int for one sequence
+
+        // The 1st frequency is before the first + or the /
+        size_t pos_plus = s.find('+');
+        size_t pos_slash = s.find('/');
+        size_t len = s.length();
+        size_t endfrequency = 0;
+
+        if (pos_slash == std::string::npos) {
+            time = 0;
+            endfrequency = len;
+        } else {
+            time = to_int<unsigned>(s.substr(pos_slash + 1, len - pos_slash - 1), 0);
+            endfrequency = pos_slash;
+        }
+
+        // without a plus = 1 frequency
+        if (pos_plus == std::string::npos) {
+            low = to_int<unsigned>(s.substr(0, endfrequency), 0);
+            high = 0;
+        } else {
+            low = to_int<unsigned>(s.substr(0, pos_plus), 0);
+            high = to_int<unsigned>(s.substr(pos_plus + 1, endfrequency - pos_plus - 1), 0);
+        }
+
+        // If there is time or if it's unlimited
+        if (time == 0)
+            count = sampleRate;
+        else
+            count = (sampleRate * time) / 1000;
+
+        parsed.frequencies.emplace_back(low, high, count);
+        parsed.total_samples += count;
+    }
+    return parsed;
+}
+
 void
-Tone::genBuffer(const std::string& definition)
+Tone::genBuffer(std::string_view definition)
 {
     if (definition.empty())
         return;
 
-    size_t size = 0;
-    const int sampleRate = buffer_->getSampleRate();
+    auto [total_samples, frequencies] = parseDefinition(definition, buffer_->sample_rate);
 
-    std::vector<AudioSample> buffer(SIZEBUF);
-    size_t bufferPos(0);
+    buffer_->nb_samples = total_samples;
+    buffer_->format = format_.sampleFormat;
+    buffer_->sample_rate = format_.sample_rate;
+    av_channel_layout_default(&buffer_->ch_layout, format_.nb_channels);
+    av_frame_get_buffer(buffer_.get(), 0);
 
-    // Number of format sections
-    std::string::size_type posStart = 0; // position of precedent comma
-    std::string::size_type posEnd = 0;   // position of the next comma
-
-    std::string s; // portion of frequency
-    size_t count;  // number of int for one sequence
-
-    std::string::size_type deflen = definition.length();
-
-    do {
-        posEnd = definition.find(',', posStart);
-
-        if (posEnd == std::string::npos)
-            posEnd = deflen;
-
-        /* begin scope */
-        {
-            // Sample string: "350+440" or "350+440/2000,244+655/2000"
-            int low, high, time;
-            s = definition.substr(posStart, posEnd - posStart);
-
-            // The 1st frequency is before the first + or the /
-            size_t pos_plus = s.find('+');
-            size_t pos_slash = s.find('/');
-            size_t len = s.length();
-            size_t endfrequency = 0;
-
-            if (pos_slash == std::string::npos) {
-                time = 0;
-                endfrequency = len;
-            } else {
-                time = atoi(s.substr(pos_slash + 1, len - pos_slash - 1).c_str());
-                endfrequency = pos_slash;
-            }
-
-            // without a plus = 1 frequency
-            if (pos_plus == std::string::npos) {
-                low = atoi(s.substr(0, endfrequency).c_str());
-                high = 0;
-            } else {
-                low = atoi(s.substr(0, pos_plus).c_str());
-                high = atoi(s.substr(pos_plus + 1, endfrequency - pos_plus - 1).c_str());
-            }
-
-            // If there is time or if it's unlimited
-            if (time == 0)
-                count = sampleRate;
-            else
-                count = (sampleRate * time) / 1000;
-
-            // Generate SAMPLING_RATE samples of sinus, buffer is the result
-            buffer.resize(size + count);
-            genSin(&(*(buffer.begin() + bufferPos)), low, high, count);
-
-            // To concatenate the different buffers for each section.
-            size += count;
-            bufferPos += count;
-        } /* end scope */
-
-        posStart = posEnd + 1;
-    } while (posStart < deflen);
-
-    buffer_->copy(buffer.data(), size); // fill the buffer
+    size_t outPos = 0;
+    for (auto& [low, high, count] : frequencies) {
+        genSin(buffer_.get(), outPos, low, high);
+        outPos += count;
+    }
 }
 
 void
-Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, size_t nb)
+Tone::genSin(AVFrame* buffer, unsigned outPos, unsigned lowFrequency, unsigned highFrequency)
 {
-    static constexpr auto PI = 3.141592653589793238462643383279502884L;
-    const double sr = (double) buffer_->getSampleRate();
-    const double dx_h = sr ? 2.0 * PI * lowFrequency / sr : 0.0;
-    const double dx_l = sr ? 2.0 * PI * highFrequency / sr : 0.0;
-    static constexpr double DATA_AMPLITUDE = 2048;
-    for (size_t t = 0; t < nb; t++) {
-        buffer[t] = DATA_AMPLITUDE * (sin(t * dx_h) + sin(t * dx_l));
+    static constexpr auto PI_2 = 3.141592653589793238462643383279502884L * 2.0L;
+    const double sr = (double) buffer->sample_rate;
+    const double dx_h = sr ? PI_2 * lowFrequency / sr : 0.0;
+    const double dx_l = sr ? PI_2 * highFrequency / sr : 0.0;
+    static constexpr double DATA_AMPLITUDE_S16 = 2048;
+    static constexpr double DATA_AMPLITUDE_FLT = 0.0625;
+    size_t nb = buffer->nb_samples;
+
+    if (buffer->format == AV_SAMPLE_FMT_S16 || buffer->format == AV_SAMPLE_FMT_S16P) {
+        int16_t* ptr = ((int16_t*) buffer->data[0]) + outPos;
+        for (size_t t = 0; t < nb; t++) {
+            ptr[t] = DATA_AMPLITUDE_S16 * (sin(t * dx_h) + sin(t * dx_l));
+        }
+    } else if (buffer->format == AV_SAMPLE_FMT_FLT || buffer->format == AV_SAMPLE_FMT_FLTP) {
+        float* ptr = ((float*) buffer->data[0]) + outPos;
+        for (size_t t = 0; t < nb; t++) {
+            ptr[t] = (sin(t * dx_h) + sin(t * dx_l)) * DATA_AMPLITUDE_FLT;
+        }
+    } else {
+        JAMI_ERROR("Unsupported sample format: {}", av_get_sample_fmt_name((AVSampleFormat)buffer->format));
     }
 }
 
