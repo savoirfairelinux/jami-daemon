@@ -36,6 +36,35 @@ dispatch_queue_t audioConfigurationQueueIOS() {
     return queue;
 }
 
+enum AVSampleFormat
+getFormatFromStreamDescription(const AudioStreamBasicDescription& descr) {
+    if(descr.mFormatID == kAudioFormatLinearPCM) {
+        BOOL isPlanar = descr.mFormatFlags & kAudioFormatFlagIsNonInterleaved;
+        if(descr.mBitsPerChannel == 16) {
+            if(descr.mFormatFlags & kAudioFormatFlagIsSignedInteger) {
+                return isPlanar ? AV_SAMPLE_FMT_S16P : AV_SAMPLE_FMT_S16;
+            }
+        }
+        else if(descr.mBitsPerChannel == 32) {
+            if(descr.mFormatFlags & kAudioFormatFlagIsFloat) {
+                return isPlanar ? AV_SAMPLE_FMT_FLTP : AV_SAMPLE_FMT_FLT;
+            }
+            else if(descr.mFormatFlags & kAudioFormatFlagIsSignedInteger) {
+                return isPlanar ? AV_SAMPLE_FMT_S32P : AV_SAMPLE_FMT_S32;
+            }
+        }
+    }
+    NSLog(@"Unsupported core audio format");
+    return AV_SAMPLE_FMT_NONE;
+}
+
+AudioFormat
+audioFormatFromDescription(const AudioStreamBasicDescription& descr) {
+    return AudioFormat {static_cast<unsigned int>(descr.mSampleRate),
+                        static_cast<unsigned int>(descr.mChannelsPerFrame),
+                        getFormatFromStreamDescription(descr)};
+}
+
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference &pref)
     : AudioLayer(pref)
@@ -195,7 +224,8 @@ CoreLayer::setupOutputBus() {
                                   size));
 
     hardwareFormatAvailable({static_cast<unsigned int>(outputASBD.mSampleRate),
-                            static_cast<unsigned int>(outputASBD.mChannelsPerFrame)});
+                             static_cast<unsigned int>(outputASBD.mChannelsPerFrame),
+                             getFormatFromStreamDescription(outputASBD)});
 }
 
 void
@@ -244,7 +274,8 @@ CoreLayer::setupInputBus() {
                                   &size));
     inputASBD.mSampleRate = inSampleRate;
     audioInputFormat_ = {static_cast<unsigned int>(inputASBD.mSampleRate),
-                         static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
+                         static_cast<unsigned int>(inputASBD.mChannelsPerFrame),
+                         getFormatFromStreamDescription(inputASBD)};
     hardwareInputFormatAvailable(audioInputFormat_);
 
     // Keep some values to not ask them every time the read callback is fired up

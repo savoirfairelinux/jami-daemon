@@ -33,6 +33,35 @@ dispatch_queue_t audioConfigurationQueueMacOS() {
     return queue;
 }
 
+enum AVSampleFormat
+getFormatFromStreamDescription(const AudioStreamBasicDescription& descr) {
+    if(descr.mFormatID == kAudioFormatLinearPCM) {
+        BOOL isPlanar = descr.mFormatFlags & kAudioFormatFlagIsNonInterleaved;
+        if(descr.mBitsPerChannel == 16) {
+            if(descr.mFormatFlags & kAudioFormatFlagIsSignedInteger) {
+                return isPlanar ? AV_SAMPLE_FMT_S16P : AV_SAMPLE_FMT_S16;
+            }
+        }
+        else if(descr.mBitsPerChannel == 32) {
+            if(descr.mFormatFlags & kAudioFormatFlagIsFloat) {
+                return isPlanar ? AV_SAMPLE_FMT_FLTP : AV_SAMPLE_FMT_FLT;
+            }
+            else if(descr.mFormatFlags & kAudioFormatFlagIsSignedInteger) {
+                return isPlanar ? AV_SAMPLE_FMT_S32P : AV_SAMPLE_FMT_S32;
+            }
+        }
+    }
+    NSLog(@"Unsupported core audio format");
+    return AV_SAMPLE_FMT_NONE;
+}
+
+AudioFormat
+audioFormatFromDescription(const AudioStreamBasicDescription& descr) {
+    return AudioFormat {static_cast<unsigned int>(descr.mSampleRate),
+                        static_cast<unsigned int>(descr.mChannelsPerFrame),
+                        getFormatFromStreamDescription(descr)};
+}
+
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference& pref)
     : AudioLayer(pref)
@@ -226,7 +255,8 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                   &size));
 
     audioFormat_ = {static_cast<unsigned int>(outSampleRate_),
-                    static_cast<unsigned int>(info.mChannelsPerFrame)};
+                    static_cast<unsigned int>(info.mChannelsPerFrame),
+                    getFormatFromStreamDescription(info)};
 
     outChannelsPerFrame_ = info.mChannelsPerFrame;
 
@@ -261,7 +291,8 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
                                   &size));
 
     audioInputFormat_ = {static_cast<unsigned int>(inSampleRate_),
-                         static_cast<unsigned int>(info.mChannelsPerFrame)};
+                         static_cast<unsigned int>(info.mChannelsPerFrame),
+                         getFormatFromStreamDescription(info)};
     hardwareInputFormatAvailable(audioInputFormat_);
     // Keep everything else and change only sample rate (or else SPLOSION!!!)
     info.mSampleRate = audioInputFormat_.sample_rate;
