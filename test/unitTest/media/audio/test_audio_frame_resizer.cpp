@@ -23,7 +23,6 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "media/audio/audio_frame_resizer.h"
-#include "media/audio/audiobuffer.h"
 #include "jami.h"
 #include "media/libav_deps.h"
 #include "media/media_buffer.h"

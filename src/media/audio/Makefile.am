@@ -1,13 +1,7 @@
 noinst_LTLIBRARIES += libaudio.la
 libaudio_la_LIBADD=
 
-if BUILD_SPEEXDSP
-RING_SPEEXDSP_SRC=./media/audio/dsp.cpp
-RING_SPEEXDSP_HEAD=./media/audio/dsp.h
-endif
-
 libaudio_la_SOURCES = $(RING_SPEEXDSP_SRC) \
-		./media/audio/audiobuffer.cpp \
 		./media/audio/audio_input.cpp \
 		./media/audio/audio_frame_resizer.cpp \
 		./media/audio/audioloop.cpp \
@@ -36,7 +30,6 @@ libaudio_la_CXXFLAGS += @WEBRTC_CFLAGS@
 endif
 
 noinst_HEADERS += $(RING_SPEEXDSP_HEAD) \
-		./media/audio/audiobuffer.h \
 		./media/audio/audio_input.h \
 		./media/audio/audio_frame_resizer.h \
 		./media/audio/audioloop.h \
