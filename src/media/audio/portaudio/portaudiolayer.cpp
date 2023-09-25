@@ -68,22 +68,22 @@ struct PortAudioLayer::PortAudioLayerImpl
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
 
     int paOutputCallback(PortAudioLayer& parent,
-                         const AudioSample* inputBuffer,
-                         AudioSample* outputBuffer,
+                         const int16_t* inputBuffer,
+                         int16_t* outputBuffer,
                          unsigned long framesPerBuffer,
                          const PaStreamCallbackTimeInfo* timeInfo,
                          PaStreamCallbackFlags statusFlags);
 
     int paInputCallback(PortAudioLayer& parent,
-                        const AudioSample* inputBuffer,
-                        AudioSample* outputBuffer,
+                        const int16_t* inputBuffer,
+                        int16_t* outputBuffer,
                         unsigned long framesPerBuffer,
                         const PaStreamCallbackTimeInfo* timeInfo,
                         PaStreamCallbackFlags statusFlags);
 
     int paIOCallback(PortAudioLayer& parent,
-                     const AudioSample* inputBuffer,
-                     AudioSample* outputBuffer,
+                     const int16_t* inputBuffer,
+                     int16_t* outputBuffer,
                      unsigned long framesPerBuffer,
                      const PaStreamCallbackTimeInfo* timeInfo,
                      PaStreamCallbackFlags statusFlags);
@@ -606,8 +606,8 @@ PortAudioLayer::PortAudioLayerImpl::initInputStream(PortAudioLayer& parent)
                void* userData) -> int {
                 auto layer = static_cast<PortAudioLayer*>(userData);
                 return layer->pimpl_->paInputCallback(*layer,
-                                                      static_cast<const AudioSample*>(inputBuffer),
-                                                      static_cast<AudioSample*>(outputBuffer),
+                                                      static_cast<const int16_t*>(inputBuffer),
+                                                      static_cast<int16_t*>(outputBuffer),
                                                       framesPerBuffer,
                                                       timeInfo,
                                                       statusFlags);
@@ -648,8 +648,8 @@ PortAudioLayer::PortAudioLayerImpl::initOutputStream(PortAudioLayer& parent)
                void* userData) -> int {
                 auto layer = static_cast<PortAudioLayer*>(userData);
                 return layer->pimpl_->paOutputCallback(*layer,
-                                                       static_cast<const AudioSample*>(inputBuffer),
-                                                       static_cast<AudioSample*>(outputBuffer),
+                                                       static_cast<const int16_t*>(inputBuffer),
+                                                       static_cast<int16_t*>(outputBuffer),
                                                        framesPerBuffer,
                                                        timeInfo,
                                                        statusFlags);
@@ -695,8 +695,8 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
            void* userData) -> int {
             auto layer = static_cast<PortAudioLayer*>(userData);
             return layer->pimpl_->paIOCallback(*layer,
-                                               static_cast<const AudioSample*>(inputBuffer),
-                                               static_cast<AudioSample*>(outputBuffer),
+                                               static_cast<const int16_t*>(inputBuffer),
+                                               static_cast<int16_t*>(outputBuffer),
                                                framesPerBuffer,
                                                timeInfo,
                                                statusFlags);
@@ -717,8 +717,8 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
 
 int
 PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
-                                                     const AudioSample* inputBuffer,
-                                                     AudioSample* outputBuffer,
+                                                     const int16_t* inputBuffer,
+                                                     int16_t* outputBuffer,
                                                      unsigned long framesPerBuffer,
                                                      const PaStreamCallbackTimeInfo* timeInfo,
                                                      PaStreamCallbackFlags statusFlags)
@@ -735,14 +735,14 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     }
 
     auto nFrames = toPlay->pointer()->nb_samples * toPlay->pointer()->ch_layout.nb_channels;
-    std::copy_n((AudioSample*) toPlay->pointer()->extended_data[0], nFrames, outputBuffer);
+    std::copy_n((int16_t*) toPlay->pointer()->extended_data[0], nFrames, outputBuffer);
     return paContinue;
 }
 
 int
 PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
-                                                    const AudioSample* inputBuffer,
-                                                    AudioSample* outputBuffer,
+                                                    const int16_t* inputBuffer,
+                                                    int16_t* outputBuffer,
                                                     unsigned long framesPerBuffer,
                                                     const PaStreamCallbackTimeInfo* timeInfo,
                                                     PaStreamCallbackFlags statusFlags)
@@ -762,15 +762,15 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
     if (parent.isCaptureMuted_)
         libav_utils::fillWithSilence(inBuff->pointer());
     else
-        std::copy_n(inputBuffer, nFrames, (AudioSample*) inBuff->pointer()->extended_data[0]);
+        std::copy_n(inputBuffer, nFrames, (int16_t*) inBuff->pointer()->extended_data[0]);
     parent.putRecorded(std::move(inBuff));
     return paContinue;
 }
 
 int
 PortAudioLayer::PortAudioLayerImpl::paIOCallback(PortAudioLayer& parent,
-                                                 const AudioSample* inputBuffer,
-                                                 AudioSample* outputBuffer,
+                                                 const int16_t* inputBuffer,
+                                                 int16_t* outputBuffer,
                                                  unsigned long framesPerBuffer,
                                                  const PaStreamCallbackTimeInfo* timeInfo,
                                                  PaStreamCallbackFlags statusFlags)
