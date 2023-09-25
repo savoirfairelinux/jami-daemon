@@ -50,6 +50,24 @@
       "message": "Muting the camera on both ends of a call will cause the last client to do so to completely lock up.",
       "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2eb9c656_b32af52d",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-25T14:55:47Z",
+      "side": 0,
+      "message": "Caused by a failure to retrieve the callMutex_ in getMediaAttributeList at sipcall.cpp:2596 from the muteMedia call.",
+      "parentUuid": "f6790fdf_86d4cb14",
+      "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
