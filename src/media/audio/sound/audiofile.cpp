@@ -40,33 +40,35 @@ namespace jami {
 void
 AudioFile::onBufferFinish()
 {
-    // We want to send values in milisecond
-    const int divisor = buffer_->getSampleRate() / 1000;
-
-    if (divisor == 0) {
+    if (buffer_->sample_rate == 0) {
         JAMI_ERR("Error cannot update playback slider, sampling rate is 0");
         return;
     }
 
+    // We want to send values in milisecond
     if ((updatePlaybackScale_ % 5) == 0)
         emitSignal<libjami::CallSignal::UpdatePlaybackScale>(filepath_,
-                                                           (unsigned) (pos_ / divisor),
-                                                           (unsigned) (buffer_->frames() / divisor));
+                                                           (unsigned) (1000lu * pos_ / buffer_->sample_rate),
+                                                           (unsigned) (1000lu * buffer_->nb_samples / buffer_->sample_rate));
 
     updatePlaybackScale_++;
 }
 
-AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate)
-    : AudioLoop(sampleRate)
+AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate, AVSampleFormat sampleFormat)
+    : AudioLoop(AudioFormat(sampleRate, 1, sampleFormat))
     , filepath_(fileName)
     , updatePlaybackScale_(0)
 {
-    const auto& format = getFormat();
-    auto buf = std::make_unique<AudioBuffer>(0, format);
+    std::list<std::shared_ptr<AudioFrame>> buf;
+    size_t total_samples = 0;
+
+    auto start = std::chrono::steady_clock::now();
     Resampler r {};
     auto decoder = std::make_unique<MediaDecoder>(
-        [&r, &format, &buf](const std::shared_ptr<MediaFrame>& frame) mutable {
-            buf->append(*r.resample(std::static_pointer_cast<AudioFrame>(frame), format));
+        [&r, this, &buf, &total_samples](const std::shared_ptr<MediaFrame>& frame) mutable {
+            auto autoFrame = std::static_pointer_cast<AudioFrame>(frame);
+            total_samples += autoFrame->getFrameSize();
+            buf.emplace_back(r.resample(std::move(autoFrame), format_));
         });
     DeviceParams dev;
     dev.input = fileName;
@@ -77,12 +79,25 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate)
 
     if (decoder->setupAudio() < 0)
         throw AudioFileException("Decoder setup failed: " + fileName);
-
+    
     while (decoder->decode() != MediaDemuxer::Status::EndOfFile)
         ;
+    
+    buffer_->nb_samples = total_samples;
+    buffer_->format = format_.sampleFormat;
+    buffer_->sample_rate = format_.sample_rate;
+    av_channel_layout_default(&buffer_->ch_layout, format_.nb_channels);
+    av_frame_get_buffer(buffer_.get(), 0);
 
-    delete buffer_;
-    buffer_ = buf.release();
+    size_t outPos = 0;
+    for (auto& frame : buf) {
+        av_samples_copy(buffer_->data, frame->pointer()->data, outPos, 0, frame->getFrameSize(), format_.nb_channels, format_.sampleFormat);
+        outPos += frame->getFrameSize();
+    }
+    auto end = std::chrono::steady_clock::now();
+    auto audioDuration = std::chrono::duration<double>(total_samples/(double)format_.sample_rate);
+    JAMI_LOG("AudioFile: loaded {} samples ({}) as {} in {} from {:s}",
+        total_samples, audioDuration, format_.toString(), dht::print_duration(end-start), fileName);
 }
 
 } // namespace jami

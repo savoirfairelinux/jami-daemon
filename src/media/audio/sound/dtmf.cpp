@@ -23,10 +23,10 @@
 
 namespace jami {
 
-DTMF::DTMF(unsigned int sampleRate)
+DTMF::DTMF(unsigned int sampleRate, AVSampleFormat sampleFormat)
     : currentTone_(0)
     , newTone_(0)
-    , dtmfgenerator_(sampleRate)
+    , dtmfgenerator_(sampleRate, sampleFormat)
 {}
 
 void
@@ -36,7 +36,7 @@ DTMF::startTone(char code)
 }
 
 bool
-DTMF::generateDTMF(std::vector<AudioSample>& buffer)
+DTMF::generateDTMF(AVFrame* buffer)
 {
     try {
         if (currentTone_ != 0) {

@@ -36,16 +36,12 @@ namespace jami {
 class Tone : public AudioLoop
 {
 public:
-    Tone()
-        : AudioLoop()
-    {}
-
     /**
      * Constructor
      * @param definition String that contain frequency/time of the tone
      * @param sampleRate SampleRating of audio tone
      */
-    Tone(const std::string& definition, unsigned int sampleRate);
+    Tone(std::string_view definition, unsigned int sampleRate, AVSampleFormat sampleFormat);
 
     /** The different kind of tones */
     enum class ToneId { DIALTONE = 0, BUSY, RINGTONE, CONGESTION, TONE_NULL };
@@ -57,14 +53,14 @@ public:
      * @param frequency2	The second frequency
      * @param nb the number of samples to generate
      */
-    void genSin(AudioSample* buffer, int frequency1, int frequency2, size_t nb);
+    static void genSin(AVFrame* buffer, unsigned outPos, unsigned frequency1, unsigned frequency2);
 
 private:
     /**
      * allocate the memory with the definition
      * @param definition String that contain frequency/time of the tone.
      */
-    void genBuffer(const std::string& definition);
+    void genBuffer(std::string_view definition);
 };
 
 } // namespace jami

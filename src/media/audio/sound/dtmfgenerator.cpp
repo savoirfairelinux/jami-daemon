@@ -18,12 +18,12 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+#include "dtmfgenerator.h"
+#include "libav_deps.h"
 
 #include <cmath>
 #include <cassert>
 #include <ciso646> // fix windows compiler bug
-
-#include "dtmfgenerator.h"
 
 namespace jami {
 
@@ -50,10 +50,10 @@ const DTMFGenerator::DTMFTone DTMFGenerator::tones_[] = {{'0', 941, 1336},
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator(unsigned int sampleRate)
+DTMFGenerator::DTMFGenerator(unsigned int sampleRate, AVSampleFormat sampleFormat)
     : state()
     , sampleRate_(sampleRate)
-    , tone_("", sampleRate)
+    , tone_("", sampleRate, sampleFormat)
 {
     state.offset = 0;
     state.sample = 0;
@@ -63,33 +63,25 @@ DTMFGenerator::DTMFGenerator(unsigned int sampleRate)
 }
 
 DTMFGenerator::~DTMFGenerator()
-{
-    for (int i = 0; i < NUM_TONES; i++)
-        delete[] toneBuffers_[i];
-}
+{}
 
 using std::vector;
 
-/*
- * Get n samples of the signal of code code
- */
-void
-DTMFGenerator::getSamples(vector<AudioSample>& buffer, unsigned char code)
-{
+void DTMFGenerator::getSamples(AVFrame* frame, unsigned char code) {
     code = toupper(code);
 
     if (code >= '0' and code <= '9')
-        state.sample = toneBuffers_[code - '0'];
+        state.sample = toneBuffers_[code - '0'].get();
     else if (code >= 'A' and code <= 'D')
-        state.sample = toneBuffers_[code - 'A' + 10];
+        state.sample = toneBuffers_[code - 'A' + 10].get();
     else {
         switch (code) {
         case '*':
-            state.sample = toneBuffers_[NUM_TONES - 2];
+            state.sample = toneBuffers_[NUM_TONES - 2].get();
             break;
 
         case '#':
-            state.sample = toneBuffers_[NUM_TONES - 1];
+            state.sample = toneBuffers_[NUM_TONES - 1].get();
             break;
 
         default:
@@ -98,40 +90,35 @@ DTMFGenerator::getSamples(vector<AudioSample>& buffer, unsigned char code)
         }
     }
 
-    size_t i;
-    const size_t n = buffer.size();
-
-    for (i = 0; i < n; ++i)
-        buffer[i] = state.sample[i % sampleRate_];
-
-    state.offset = i % sampleRate_;
+    av_samples_copy(frame->data, state.sample->data, 0, state.offset, frame->nb_samples, frame->ch_layout.nb_channels, (AVSampleFormat)frame->format);
+    state.offset = frame->nb_samples % sampleRate_;
 }
 
 /*
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void
-DTMFGenerator::getNextSamples(vector<AudioSample>& buffer)
-{
+void DTMFGenerator::getNextSamples(AVFrame* frame) {
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
-    size_t i;
-    const size_t n = buffer.size();
-
-    for (i = 0; i < n; i++)
-        buffer[i] = state.sample[(state.offset + i) % sampleRate_];
-
-    state.offset = (state.offset + i) % sampleRate_;
+    av_samples_copy(frame->data, state.sample->data, 0, state.offset, frame->nb_samples, frame->ch_layout.nb_channels, (AVSampleFormat)frame->format);
+    state.offset = (state.offset + frame->nb_samples) % sampleRate_;
 }
 
-AudioSample*
+
+libjami::FrameBuffer
 DTMFGenerator::fillToneBuffer(int index)
 {
     assert(index >= 0 and index < NUM_TONES);
-    AudioSample* ptr = new AudioSample[sampleRate_];
-    tone_.genSin(ptr, tones_[index].higher, tones_[index].lower, sampleRate_);
+    libjami::FrameBuffer ptr(av_frame_alloc());
+    ptr->nb_samples = sampleRate_;
+    ptr->format = tone_.getFormat().sampleFormat;
+    ptr->sample_rate = sampleRate_;
+    ptr->channel_layout = AV_CH_LAYOUT_MONO;
+    ptr->ch_layout = AV_CHANNEL_LAYOUT_MONO;
+    av_frame_get_buffer(ptr.get(), 0);
+    tone_.genSin(ptr.get(), 0, tones_[index].higher, tones_[index].lower);
     return ptr;
 }
 

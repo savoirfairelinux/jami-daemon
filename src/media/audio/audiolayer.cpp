@@ -251,9 +251,9 @@ AudioLayer::destroyAudioProcessor()
 }
 
 void
-AudioLayer::putUrgent(AudioBuffer& buffer)
+AudioLayer::putUrgent(std::shared_ptr<AudioFrame> buffer)
 {
-    urgentRingBuffer_.put(buffer.toAVFrame());
+    urgentRingBuffer_.put(std::move(buffer));
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
@@ -271,12 +271,12 @@ AudioLayer::notifyIncomingCall()
 
     lastNotificationTime_ = now;
 
-    Tone tone("440/160", getSampleRate());
+    Tone tone("440/160", getSampleRate(), audioFormat_.sampleFormat);
     size_t nbSample = tone.getSize();
 
     /* Put the data in the urgent ring buffer */
     urgentRingBuffer_.flushAll();
-    urgentRingBuffer_.put(tone.getNext(nbSample, 1.0));
+    urgentRingBuffer_.put(tone.getNext(nbSample));
 }
 
 std::shared_ptr<AudioFrame>
@@ -291,7 +291,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
                                                 .real<size_t>()
                                           : writableSamples;
 
-        return resampler_->resample(fileToPlay->getNext(readableSamples, isRingtoneMuted_ ? 0. : 1.), format);
+        return resampler_->resample(fileToPlay->getNext(readableSamples, isRingtoneMuted_), format);
     }
     return {};
 }
