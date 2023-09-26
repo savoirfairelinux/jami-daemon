@@ -3864,9 +3864,13 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                  deviceId.to_c_str());
     lk.unlock();
 
-    convModule()->syncConversations(peerId, deviceId.toString());
+    dht::ThreadPool::io().run([w = weak(), peerId, deviceId] {
+        if (auto shared = w.lock()) {
+            shared->convModule()->syncConversations(peerId, deviceId.toString());
+        }
+    });
+    
     // Retry messages
-
     messageEngine_.onPeerOnline(peerId);
     messageEngine_.onPeerOnline(peerId, true, deviceId.toString());
 
