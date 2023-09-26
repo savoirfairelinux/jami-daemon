@@ -1356,18 +1356,21 @@ Conversation::sync(const std::string& member,
 {
     JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pull(deviceId, std::move(cb), commitId);
-    if (auto account = pimpl_->account_.lock()) {
-        // For waiting request, downloadFile
-        for (const auto& wr : dataTransfer()->waitingRequests()) {
-            auto path = fileutils::get_data_dir() / account->getAccountID()
-                        / "conversation_data" / id() / wr.fileId;
-            auto start = fileutils::size(path.string());
-            if (start < 0)
-                start = 0;
-            downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
+    dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w=weak_from_this()]{
+        auto sthis = w.lock();
+        if (auto account = a.lock()) {
+            // For waiting request, downloadFile
+            for (const auto& wr : sthis->dataTransfer()->waitingRequests()) {
+                auto path = fileutils::get_data_dir() / account->getAccountID()
+                            / "conversation_data" / sthis->id() / wr.fileId;
+                auto start = fileutils::size(path.string());
+                if (start < 0)
+                    start = 0;
+                sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
+            }
+            account->sendProfile(sthis->id(), member, deviceId);
         }
-        account->sendProfile(id(), member, deviceId);
-    }
+    });
 }
 
 std::map<std::string, std::string>

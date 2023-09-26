@@ -20,6 +20,8 @@
 
 #include "jamidht/sync_channel_handler.h"
 
+#include <opendht/thread_pool.h>
+
 static constexpr const char SYNC_URI[] {"sync://"};
 
 namespace jami {
@@ -64,11 +66,14 @@ SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cer
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return;
-    acc->sendProfile("", acc->getUsername(), channel->deviceId().toString());
     if (auto sm = acc->syncModule())
         sm->cacheSyncConnection(std::move(channel),
                                 cert->issuer->getId().toString(),
                                 cert->getLongId());
+    dht::ThreadPool::io().run([account=account_, channel]() {
+        if (auto acc = account.lock())
+            acc->sendProfile("", acc->getUsername(), channel->deviceId().toString());
+    });
 }
 
 } // namespace jami
