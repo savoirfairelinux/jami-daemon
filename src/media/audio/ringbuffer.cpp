@@ -61,9 +61,9 @@ RingBuffer::~RingBuffer()
 }
 
 void
-RingBuffer::flush(const std::string& call_id)
+RingBuffer::flush(const std::string& ringbufferId)
 {
-    storeReadOffset(endPos_, call_id);
+    storeReadOffset(endPos_, ringbufferId);
 }
 
 void
@@ -84,12 +84,12 @@ RingBuffer::putLength() const
 }
 
 size_t
-RingBuffer::getLength(const std::string& call_id) const
+RingBuffer::getLength(const std::string& ringbufferId) const
 {
     const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return 0;
-    return (endPos_ + buffer_size - getReadOffset(call_id)) % buffer_size;
+    return (endPos_ + buffer_size - getReadOffset(ringbufferId)) % buffer_size;
 }
 
 void
@@ -99,9 +99,9 @@ RingBuffer::debug()
 }
 
 size_t
-RingBuffer::getReadOffset(const std::string& call_id) const
+RingBuffer::getReadOffset(const std::string& ringbufferId) const
 {
-    auto iter = readoffsets_.find(call_id);
+    auto iter = readoffsets_.find(ringbufferId);
     return (iter != readoffsets_.end()) ? iter->second.offset : 0;
 }
 
@@ -117,37 +117,37 @@ RingBuffer::getSmallestReadOffset() const
 }
 
 void
-RingBuffer::storeReadOffset(size_t offset, const std::string& call_id)
+RingBuffer::storeReadOffset(size_t offset, const std::string& ringbufferId)
 {
-    ReadOffsetMap::iterator iter = readoffsets_.find(call_id);
+    ReadOffsetMap::iterator iter = readoffsets_.find(ringbufferId);
 
     if (iter != readoffsets_.end())
         iter->second.offset = offset;
     else
-        JAMI_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
+        JAMI_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", ringbufferId.c_str());
 }
 
 void
-RingBuffer::createReadOffset(const std::string& call_id)
+RingBuffer::createReadOffset(const std::string& ringbufferId)
 {
     std::lock_guard<std::mutex> l(lock_);
-    if (!hasThisReadOffset(call_id))
-        readoffsets_.emplace(call_id, ReadOffset {endPos_, {}});
+    if (!hasThisReadOffset(ringbufferId))
+        readoffsets_.emplace(ringbufferId, ReadOffset {endPos_, {}});
 }
 
 void
-RingBuffer::removeReadOffset(const std::string& call_id)
+RingBuffer::removeReadOffset(const std::string& ringbufferId)
 {
     std::lock_guard<std::mutex> l(lock_);
-    auto iter = readoffsets_.find(call_id);
+    auto iter = readoffsets_.find(ringbufferId);
     if (iter != readoffsets_.end())
         readoffsets_.erase(iter);
 }
 
 bool
-RingBuffer::hasThisReadOffset(const std::string& call_id) const
+RingBuffer::hasThisReadOffset(const std::string& ringbufferId) const
 {
-    return readoffsets_.find(call_id) != readoffsets_.end();
+    return readoffsets_.find(ringbufferId) != readoffsets_.end();
 }
 
 bool
@@ -211,18 +211,18 @@ RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 //
 
 size_t
-RingBuffer::availableForGet(const std::string& call_id) const
+RingBuffer::availableForGet(const std::string& ringbufferId) const
 {
     // Used space
-    return getLength(call_id);
+    return getLength(ringbufferId);
 }
 
 std::shared_ptr<AudioFrame>
-RingBuffer::get(const std::string& call_id)
+RingBuffer::get(const std::string& ringbufferId)
 {
     std::lock_guard<std::mutex> l(lock_);
 
-    auto offset = readoffsets_.find(call_id);
+    auto offset = readoffsets_.find(ringbufferId);
     if (offset == readoffsets_.end())
         return {};
 
@@ -241,20 +241,20 @@ RingBuffer::get(const std::string& call_id)
 }
 
 size_t
-RingBuffer::waitForDataAvailable(const std::string& call_id, const time_point& deadline) const
+RingBuffer::waitForDataAvailable(const std::string& ringbufferId, const time_point& deadline) const
 {
     std::unique_lock<std::mutex> l(lock_);
 
     if (buffer_.empty())
         return 0;
-    if (readoffsets_.find(call_id) == readoffsets_.end())
+    if (readoffsets_.find(ringbufferId) == readoffsets_.end())
         return 0;
 
     size_t getl = 0;
     auto check = [=, &getl] {
         // Re-find read_ptr: it may be destroyed during the wait
         const size_t buffer_size = buffer_.size();
-        const auto read_ptr = readoffsets_.find(call_id);
+        const auto read_ptr = readoffsets_.find(ringbufferId);
         if (buffer_size == 0 || read_ptr == readoffsets_.end())
             return true;
         getl = (endPos_ + buffer_size - read_ptr->second.offset) % buffer_size;
@@ -272,7 +272,7 @@ RingBuffer::waitForDataAvailable(const std::string& call_id, const time_point& d
 }
 
 size_t
-RingBuffer::discard(size_t toDiscard, const std::string& call_id)
+RingBuffer::discard(size_t toDiscard, const std::string& ringbufferId)
 {
     std::lock_guard<std::mutex> l(lock_);
 
@@ -280,7 +280,7 @@ RingBuffer::discard(size_t toDiscard, const std::string& call_id)
     if (buffer_size == 0)
         return 0;
 
-    auto offset = readoffsets_.find(call_id);
+    auto offset = readoffsets_.find(ringbufferId);
     if (offset == readoffsets_.end())
         return 0;
 

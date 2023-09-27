@@ -133,7 +133,6 @@ RecorderTest::tearDown()
 {
     libjami::setIsAlwaysRecording(false);
     dhtnet::fileutils::removeAll(recordDir);
-    player.reset();
 
     wait_for_removal_of({aliceId, bobId});
 }

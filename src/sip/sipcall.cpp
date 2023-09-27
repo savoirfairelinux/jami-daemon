@@ -105,6 +105,9 @@ static const std::vector<unsigned> NEW_CONFPROTOCOL_VERSION
 static constexpr auto REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR = "11.0.2"sv;
 static const std::vector<unsigned> REUSE_ICE_IN_REINVITE_REQUIRED_VERSION
     = split_string_to_unsigned(REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR, '.');
+static constexpr auto MULTIAUDIO_REQUIRED_VERSION_STR = "13.11.0"sv;
+static const std::vector<unsigned> MULTIAUDIO_REQUIRED_VERSION
+    = split_string_to_unsigned(MULTIAUDIO_REQUIRED_VERSION_STR, '.');
 
 SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
                  const std::string& callId,
@@ -1771,6 +1774,19 @@ SIPCall::setPeerUaVersion(std::string_view ua)
             (int) MULTISTREAM_REQUIRED_VERSION_STR.size(),
             MULTISTREAM_REQUIRED_VERSION_STR.data());
     }
+
+    // Check if peer's version is at least 13.11.0 to enable multi-audio-stream.
+    peerSupportMultiAudioStream_ = Account::meetMinimumRequiredVersion(peerVersion,
+                                                                       MULTIAUDIO_REQUIRED_VERSION);
+    if (not peerSupportMultiStream_) {
+        JAMI_DBG(
+            "Peer's version [%.*s] does not support multi-audio-stream. Min required version: [%.*s]",
+            (int) version.size(),
+            version.data(),
+            (int) MULTIAUDIO_REQUIRED_VERSION_STR.size(),
+            MULTIAUDIO_REQUIRED_VERSION_STR.data());
+    }
+
     // Check if peer's version is at least 13.3.0 to enable multi-ICE.
     peerSupportMultiIce_ = Account::meetMinimumRequiredVersion(peerVersion,
                                                                MULTIICE_REQUIRED_VERSION);
@@ -2558,6 +2574,20 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         return false;
     }
 
+    // If the peer does not support multi-audio-stream and the new
+    // media list has more than one audio. Ignore the one that comes from a file.
+    if (not peerSupportMultiAudioStream_ and rtpStreams_.size() != mediaAttrList.size() and hasFileSharing) {
+        JAMI_WARN("[call:%s] Peer does not support multi-audio-stream. New Audio will be ignored",
+                  getCallId().c_str());
+        for (auto it = mediaAttrList.begin(); it != mediaAttrList.end();) {
+            if (it->type_ == MediaType::MEDIA_AUDIO and !it->sourceUri_.empty() and mediaPlayerId_ == it->sourceUri_) {
+                it = mediaAttrList.erase(it);
+                continue;
+            }
+            ++it;
+        }
+    }
+
     // If peer doesn't support multiple ice, keep only the last audio/video
     // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
     if (!peerSupportMultiIce_) {
@@ -2631,6 +2661,20 @@ SIPCall::getMediaAttributeList() const
     for (auto const& stream : rtpStreams_)
         mediaList.emplace_back(*stream.mediaAttribute_);
     return mediaList;
+}
+
+std::map<std::string, bool>
+SIPCall::getAudioStreams() const
+{
+    std::map<std::string, bool> audioMedias {};
+    auto medias = getMediaAttributeList();
+    for (const auto& media : medias) {
+        if (media.type_ == MEDIA_AUDIO) {
+            auto label = fmt::format("{}_{}", getCallId(), media.label_);
+            audioMedias.emplace(label, media.muted_);
+        }
+    }
+    return audioMedias;
 }
 
 void
@@ -3120,6 +3164,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
             std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->enterConference(*conference);
 #endif
+    conference->bindParticipant(getCallId());
 
 #ifdef ENABLE_PLUGIN
     clearCallAVStreams();
@@ -3133,9 +3178,14 @@ SIPCall::exitConference()
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
-    if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
+    if (hasAudio) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
+        auto medias = getAudioStreams();
+        for (const auto& media : medias) {
+            if (!media.second) {
+                rbPool.bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
+            }
+        }
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO

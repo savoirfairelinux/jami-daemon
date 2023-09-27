@@ -371,6 +371,8 @@ public:
 
     virtual std::vector<MediaAttribute> getMediaAttributeList() const = 0;
 
+    virtual std::map<std::string, bool> getAudioStreams() const = 0;
+
 #ifdef ENABLE_VIDEO
     virtual void createSinks(ConfInfo& infos) = 0;
 #endif

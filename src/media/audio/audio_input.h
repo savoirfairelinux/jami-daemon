@@ -73,6 +73,8 @@ public:
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 
+    const std::string getId() { return id_; };
+
 private:
     void readFromDevice();
     void readFromFile();
@@ -83,6 +85,7 @@ private:
     void frameResized(std::shared_ptr<AudioFrame>&& ptr);
 
     std::string id_;
+    std::shared_ptr<RingBuffer> ringBuf_;
     bool muteState_ {false};
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
