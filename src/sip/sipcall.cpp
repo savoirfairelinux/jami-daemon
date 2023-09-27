@@ -3114,10 +3114,16 @@ SIPCall::exitConference()
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
+    // SHOULD LOOP AUDIO STREAMS DONE
+    auto medias = getMediaAttributeList();
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
-    if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
+    if (hasAudio) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
+        for (const auto& media : medias) {
+            if (media.type_ == MEDIA_AUDIO && !media.muted_) {
+                rbPool.bindCallID(getCallId()+"_"+media.label_, RingBufferPool::DEFAULT_ID);
+            }
+        }
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO

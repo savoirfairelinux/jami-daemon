@@ -314,11 +314,11 @@ MediaDemuxer::validateMediaTypes(const std::vector<MediaAttribute>& medias)
             }
             if (media.type_ == MEDIA_AUDIO) {
                 // Find the first audio stream
-                //if (av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0)
-                //    >= 0) {
-                //    newMedias.first.emplace_back(media);
-                //    newMedias.second = resource;
-                //}
+                if (av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0)
+                    >= 0) {
+                    newMedias.first.emplace_back(media);
+                    newMedias.second = resource;
+                }
             }
             avformat_close_input(&decFormatCtx);
             avformat_free_context(decFormatCtx);
