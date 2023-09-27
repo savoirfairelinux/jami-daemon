@@ -3970,12 +3970,12 @@ JamiAccount::getChannelList(const std::string& connectionId)
 
 void
 JamiAccount::sendFile(const std::string& conversationId,
-                      const std::string& path,
+                      const std::filesystem::path& path,
                       const std::string& name,
                       const std::string& replyTo)
 {
     if (!std::filesystem::is_regular_file(path)) {
-        JAMI_ERR() << "invalid filename '" << path << "'";
+        JAMI_ERROR("Invalid filename '{}'", path);
         return;
     }
     // NOTE: this sendMessage is in a computation thread because
@@ -3986,8 +3986,7 @@ JamiAccount::sendFile(const std::string& conversationId,
             Json::Value value;
             auto tid = jami::generateUID();
             value["tid"] = std::to_string(tid);
-            std::size_t found = path.find_last_of(DIR_SEPARATOR_CH);
-            value["displayName"] = name.empty() ? path.substr(found + 1) : name;
+            value["displayName"] = name.empty() ? path.filename().string() : name;
             value["totalSize"] = std::to_string(fileutils::size(path));
             value["sha3sum"] = fileutils::sha3File(path);
             value["type"] = "application/data-transfer+json";
@@ -4003,16 +4002,14 @@ JamiAccount::sendFile(const std::string& conversationId,
                     auto filelinkPath = fileutils::get_data_dir() / accId
                                         / "conversation_data"
                                         / conversationId / (commitId + "_" + std::to_string(tid));
-                    auto extension = fileutils::getFileExtension(path);
-                    if (!extension.empty())
-                        filelinkPath += "." + extension;
+                    filelinkPath += path.extension();
                     if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
                         if (!fileutils::createFileLink(filelinkPath, path, true)) {
                             JAMI_WARNING(
                                 "Cannot create symlink for file transfer {} - {}. Copy file",
                                 filelinkPath,
                                 path);
-                            if (!fileutils::copy(path, filelinkPath.string())) {
+                            if (!std::filesystem::copy_file(path, filelinkPath)) {
                                 JAMI_ERROR("Cannot copy file for file transfer {} - {}",
                                            filelinkPath,
                                            path);
