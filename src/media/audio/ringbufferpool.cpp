@@ -47,7 +47,7 @@ RingBufferPool::~RingBufferPool()
     for (const auto& item : ringBufferMap_) {
         const auto& weak = item.second;
         if (not weak.expired())
-            JAMI_WARN("Leaking RingBuffer '%s'", item.first.c_str());
+            JAMI_WARNING("Leaking RingBuffer '{}'", item.first);
     }
 }
 
@@ -110,7 +110,7 @@ RingBufferPool::createRingBuffer(const std::string& id)
 
     auto rbuf = getRingBuffer(id);
     if (rbuf) {
-        JAMI_DBG("Ringbuffer already exists for id '%s'", id.c_str());
+        JAMI_DEBUG("Ringbuffer already exists for id '{}'", id);
         return rbuf;
     }
 
@@ -120,183 +120,183 @@ RingBufferPool::createRingBuffer(const std::string& id)
 }
 
 const RingBufferPool::ReadBindings*
-RingBufferPool::getReadBindings(const std::string& call_id) const
+RingBufferPool::getReadBindings(const std::string& ringbufferId) const
 {
-    const auto& iter = readBindingsMap_.find(call_id);
+    const auto& iter = readBindingsMap_.find(ringbufferId);
     return iter != readBindingsMap_.cend() ? &iter->second : nullptr;
 }
 
 RingBufferPool::ReadBindings*
-RingBufferPool::getReadBindings(const std::string& call_id)
+RingBufferPool::getReadBindings(const std::string& ringbufferId)
 {
-    const auto& iter = readBindingsMap_.find(call_id);
+    const auto& iter = readBindingsMap_.find(ringbufferId);
     return iter != readBindingsMap_.cend() ? &iter->second : nullptr;
 }
 
 void
-RingBufferPool::removeReadBindings(const std::string& call_id)
+RingBufferPool::removeReadBindings(const std::string& ringbufferId)
 {
-    if (not readBindingsMap_.erase(call_id))
-        JAMI_ERR("CallID set %s does not exist!", call_id.c_str());
+    if (not readBindingsMap_.erase(ringbufferId))
+        JAMI_ERROR("Ringbuffer {} does not exist!", ringbufferId);
 }
 
 /**
- * Make given call ID a reader of given ring buffer
+ * Make given ringbuffer a reader of given ring buffer
  */
 void
 RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                      const std::string& call_id)
+                                      const std::string& ringbufferId)
 {
-    if (call_id != DEFAULT_ID and rbuf->getId() == call_id)
-        JAMI_WARN("RingBuffer has a readoffset on itself");
+    if (ringbufferId != DEFAULT_ID and rbuf->getId() == ringbufferId)
+        JAMI_WARNING("RingBuffer has a readoffset on itself");
 
-    rbuf->createReadOffset(call_id);
-    readBindingsMap_[call_id].insert(rbuf); // bindings list created if not existing
-    JAMI_DBG("Bind rbuf '%s' to callid '%s'", rbuf->getId().c_str(), call_id.c_str());
+    rbuf->createReadOffset(ringbufferId);
+    readBindingsMap_[ringbufferId].insert(rbuf); // bindings list created if not existing
+    JAMI_DEBUG("Bind rbuf '{}' to ringbuffer '{}'", rbuf->getId(), ringbufferId);
 }
 
 void
 RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                           const std::string& call_id)
+                                           const std::string& ringbufferId)
 {
-    if (auto bindings = getReadBindings(call_id)) {
+    if (auto bindings = getReadBindings(ringbufferId)) {
         bindings->erase(rbuf);
         if (bindings->empty())
-            removeReadBindings(call_id);
+            removeReadBindings(ringbufferId);
     }
 
-    rbuf->removeReadOffset(call_id);
+    rbuf->removeReadOffset(ringbufferId);
 }
 
 void
-RingBufferPool::bindCallID(const std::string& call_id1, const std::string& call_id2)
+RingBufferPool::bindRingbuffers(const std::string& ringbufferId1, const std::string& ringbufferId2)
 {
-    JAMI_INFO("Bind call %s to call %s", call_id1.c_str(), call_id2.c_str());
+    JAMI_LOG("Bind ringbuffer {} to ringbuffer {}", ringbufferId1, ringbufferId2);
 
-    const auto& rb_call1 = getRingBuffer(call_id1);
-    if (not rb_call1) {
-        JAMI_ERR("No ringbuffer associated with call '%s'", call_id1.c_str());
+    const auto& rb1 = getRingBuffer(ringbufferId1);
+    if (not rb1) {
+        JAMI_ERROR("No ringbuffer associated with id '{}'", ringbufferId1);
         return;
     }
 
-    const auto& rb_call2 = getRingBuffer(call_id2);
-    if (not rb_call2) {
-        JAMI_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
+    const auto& rb2 = getRingBuffer(ringbufferId2);
+    if (not rb2) {
+        JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId2);
         return;
     }
 
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    addReaderToRingBuffer(rb_call1, call_id2);
-    addReaderToRingBuffer(rb_call2, call_id1);
+    addReaderToRingBuffer(rb1, ringbufferId2);
+    addReaderToRingBuffer(rb2, ringbufferId1);
 }
 
 void
-RingBufferPool::bindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
+RingBufferPool::bindHalfDuplexOut(const std::string& processId, const std::string& ringbufferId)
 {
-    /* This method is used only for active calls, if this call does not exist,
+    /* This method is used only for active ringbuffers, if this ringbuffer does not exist,
      * do nothing */
-    if (const auto& rb = getRingBuffer(call_id)) {
+    if (const auto& rb = getRingBuffer(ringbufferId)) {
         std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-        addReaderToRingBuffer(rb, process_id);
+        addReaderToRingBuffer(rb, processId);
     }
 }
 
 void
-RingBufferPool::unBindCallID(const std::string& call_id1, const std::string& call_id2)
+RingBufferPool::unbindRingbuffers(const std::string& ringbufferId1, const std::string& ringbufferId2)
 {
-    JAMI_INFO("Unbind calls %s and %s", call_id1.c_str(), call_id2.c_str());
+    JAMI_LOG("Unbind ringbuffers {} and {}", ringbufferId1, ringbufferId2);
 
-    const auto& rb_call1 = getRingBuffer(call_id1);
-    if (not rb_call1) {
-        JAMI_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
+    const auto& rb1 = getRingBuffer(ringbufferId1);
+    if (not rb1) {
+        JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId1);
         return;
     }
 
-    const auto& rb_call2 = getRingBuffer(call_id2);
-    if (not rb_call2) {
-        JAMI_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
+    const auto& rb2 = getRingBuffer(ringbufferId2);
+    if (not rb2) {
+        JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId2);
         return;
     }
 
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    removeReaderFromRingBuffer(rb_call1, call_id2);
-    removeReaderFromRingBuffer(rb_call2, call_id1);
+    removeReaderFromRingBuffer(rb1, ringbufferId2);
+    removeReaderFromRingBuffer(rb2, ringbufferId1);
 }
 
 void
-RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
+RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::string& ringbufferId)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    if (const auto& rb = getRingBuffer(call_id))
+    if (const auto& rb = getRingBuffer(ringbufferId))
         removeReaderFromRingBuffer(rb, process_id);
 }
 
 void
-RingBufferPool::unBindAllHalfDuplexOut(const std::string& call_id)
+RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
 {
-    const auto& rb_call = getRingBuffer(call_id);
-    if (not rb_call) {
-        JAMI_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
+    const auto& rb = getRingBuffer(ringbufferId);
+    if (not rb) {
+        JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
     }
 
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    auto bindings = getReadBindings(call_id);
+    auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
 
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
-        removeReaderFromRingBuffer(rb_call, rbuf->getId());
+        removeReaderFromRingBuffer(rb, rbuf->getId());
     }
 }
 
 void
-RingBufferPool::unBindAll(const std::string& call_id)
+RingBufferPool::unBindAll(const std::string& ringbufferId)
 {
-    JAMI_INFO("Unbind call %s from all bound calls", call_id.c_str());
+    JAMI_LOG("Unbind ringbuffer {} from all bound ringbuffers", ringbufferId);
 
-    const auto& rb_call = getRingBuffer(call_id);
-    if (not rb_call) {
-        JAMI_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
+    const auto& rb = getRingBuffer(ringbufferId);
+    if (not rb) {
+        JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
     }
 
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    auto bindings = getReadBindings(call_id);
+    auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
 
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
-        removeReaderFromRingBuffer(rbuf, call_id);
-        removeReaderFromRingBuffer(rb_call, rbuf->getId());
+        removeReaderFromRingBuffer(rbuf, ringbufferId);
+        removeReaderFromRingBuffer(rb, rbuf->getId());
     }
 }
 
 std::shared_ptr<AudioFrame>
-RingBufferPool::getData(const std::string& call_id)
+RingBufferPool::getData(const std::string& ringbufferId)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    const auto bindings = getReadBindings(call_id);
+    const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return {};
 
     // No mixing
     if (bindings->size() == 1)
-        return (*bindings->cbegin())->get(call_id);
+        return (*bindings->cbegin())->get(ringbufferId);
 
     auto mixBuffer = std::make_shared<AudioFrame>(internalAudioFormat_);
     auto mixed = false;
     for (const auto& rbuf : *bindings) {
-        if (auto b = rbuf->get(call_id)) {
+        if (auto b = rbuf->get(ringbufferId)) {
             mixed = true;
             mixBuffer->mix(*b);
 
@@ -309,7 +309,7 @@ RingBufferPool::getData(const std::string& call_id)
 }
 
 bool
-RingBufferPool::waitForDataAvailable(const std::string& call_id,
+RingBufferPool::waitForDataAvailable(const std::string& ringbufferId,
                                      const std::chrono::microseconds& max_wait) const
 {
     std::unique_lock<std::recursive_mutex> lk(stateLock_);
@@ -317,14 +317,14 @@ RingBufferPool::waitForDataAvailable(const std::string& call_id,
     // convert to absolute time
     const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
 
-    auto bindings = getReadBindings(call_id);
+    auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return 0;
 
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
         lk.unlock();
-        if (rbuf->waitForDataAvailable(call_id, deadline) == 0)
+        if (rbuf->waitForDataAvailable(ringbufferId, deadline) == 0)
             return false;
         lk.lock();
     }
@@ -332,30 +332,30 @@ RingBufferPool::waitForDataAvailable(const std::string& call_id,
 }
 
 std::shared_ptr<AudioFrame>
-RingBufferPool::getAvailableData(const std::string& call_id)
+RingBufferPool::getAvailableData(const std::string& ringbufferId)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    auto bindings = getReadBindings(call_id);
+    auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return 0;
 
     // No mixing
     if (bindings->size() == 1) {
-        return (*bindings->cbegin())->get(call_id);
+        return (*bindings->cbegin())->get(ringbufferId);
     }
 
     size_t availableFrames = 0;
 
     for (const auto& rbuf : *bindings)
-        availableFrames = std::min(availableFrames, rbuf->availableForGet(call_id));
+        availableFrames = std::min(availableFrames, rbuf->availableForGet(ringbufferId));
 
     if (availableFrames == 0)
         return {};
 
     auto buf = std::make_shared<AudioFrame>(internalAudioFormat_);
     for (const auto& rbuf : *bindings) {
-        if (auto b = rbuf->get(call_id)) {
+        if (auto b = rbuf->get(ringbufferId)) {
             buf->mix(*b);
 
             // voice is true if any of mixed frames has voice
@@ -367,23 +367,23 @@ RingBufferPool::getAvailableData(const std::string& call_id)
 }
 
 size_t
-RingBufferPool::availableForGet(const std::string& call_id) const
+RingBufferPool::availableForGet(const std::string& ringbufferId) const
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    const auto bindings = getReadBindings(call_id);
+    const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return 0;
 
     // No mixing
     if (bindings->size() == 1) {
-        return (*bindings->begin())->availableForGet(call_id);
+        return (*bindings->begin())->availableForGet(ringbufferId);
     }
 
     size_t availableSamples = std::numeric_limits<size_t>::max();
 
     for (const auto& rbuf : *bindings) {
-        const size_t nbSamples = rbuf->availableForGet(call_id);
+        const size_t nbSamples = rbuf->availableForGet(ringbufferId);
         if (nbSamples != 0)
             availableSamples = std::min(availableSamples, nbSamples);
     }
@@ -392,31 +392,31 @@ RingBufferPool::availableForGet(const std::string& call_id) const
 }
 
 size_t
-RingBufferPool::discard(size_t toDiscard, const std::string& call_id)
+RingBufferPool::discard(size_t toDiscard, const std::string& ringbufferId)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    const auto bindings = getReadBindings(call_id);
+    const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return 0;
 
     for (const auto& rbuf : *bindings)
-        rbuf->discard(toDiscard, call_id);
+        rbuf->discard(toDiscard, ringbufferId);
 
     return toDiscard;
 }
 
 void
-RingBufferPool::flush(const std::string& call_id)
+RingBufferPool::flush(const std::string& ringbufferId)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    const auto bindings = getReadBindings(call_id);
+    const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
 
     for (const auto& rbuf : *bindings)
-        rbuf->flush(call_id);
+        rbuf->flush(ringbufferId);
 }
 
 void

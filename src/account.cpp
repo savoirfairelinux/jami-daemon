@@ -443,7 +443,7 @@ Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
     for (size_t i = 0; i < minRequiredVersion.size(); i++) {
         if (i == version.size() or version[i] < minRequiredVersion[i])
             return false;
-        if (version[i] > minRequiredVersion[i])
+        if (version[i] >= minRequiredVersion[i])
             return true;
     }
     return true;
