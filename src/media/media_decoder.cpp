@@ -24,6 +24,7 @@
 #include "media_decoder.h"
 #include "media_device.h"
 #include "media_buffer.h"
+#include "media_const.h"
 #include "media_io_handle.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
