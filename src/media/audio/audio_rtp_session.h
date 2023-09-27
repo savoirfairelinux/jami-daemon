@@ -80,7 +80,7 @@ private:
     std::unique_ptr<AudioSender> sender_;
     std::unique_ptr<AudioReceiveThread> receiveThread_;
     std::shared_ptr<AudioInput> audioInput_;
-    std::shared_ptr<RingBuffer> ringbuffer_;
+    std::shared_ptr<RingBuffer> ringbuffer_, mpRingbuffer_;
     uint16_t initSeqVal_ {0};
     bool muteState_ {false};
     unsigned packetLoss_ {10};

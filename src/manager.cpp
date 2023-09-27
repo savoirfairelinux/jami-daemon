@@ -534,8 +534,15 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
-        for (const auto& p : participants)
-            base_.getRingBufferPool().flush(p);
+        for (const auto& p : participants) {
+            if (auto call = base_.getCallFromCallID(p)) {
+                auto medias = call->getAudioStreams();
+                for (const auto& media : medias) {
+                    JAMI_DEBUG("[call:{}] Remove local audio {}", p, media.first);
+                    base_.getRingBufferPool().flush(media.first);
+                }
+            }
+        }
 
         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
     } else if (n == 1) {
@@ -678,7 +685,11 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 
     JAMI_DEBUG("[call:{}] bind to conference {} (callState={})", callId, confId, state);
 
-    base_.getRingBufferPool().unBindAll(callId);
+    auto medias = call.getAudioStreams();
+    for (const auto& media : medias) {
+        JAMI_DEBUG("[call:{}] Remove local audio {}", callId, media.first);
+        base_.getRingBufferPool().unBindAll(media.first);
+    }
 
     conf.addParticipant(callId);
 
@@ -1675,10 +1686,10 @@ void
 Manager::addAudio(Call& call)
 {
     const auto& callId = call.getCallId();
-    JAMI_INFO("Add audio to call %s", callId.c_str());
+    JAMI_LOG("Add audio to call {}", callId);
 
     if (call.isConferenceParticipant()) {
-        JAMI_DBG("[conf:%s] Attach local audio", callId.c_str());
+        JAMI_DEBUG("[conf:{}] Attach local audio", callId);
 
         // bind to conference participant
         /*auto iter = pimpl_->conferenceMap_.find(callId);
@@ -1686,16 +1697,21 @@ Manager::addAudio(Call& call)
             iter->second->bindParticipant(callId);
         }*/
     } else {
-        JAMI_DBG("[call:%s] Attach audio", callId.c_str());
+        JAMI_DEBUG("[call:{}] Attach audio", callId);
 
         // bind to main
-        getRingBufferPool().bindCallID(callId, RingBufferPool::DEFAULT_ID);
+        auto medias = call.getAudioStreams();
+        for (const auto& media : medias) {
+            JAMI_DEBUG("[call:{}] Attach audio", media.first);
+            getRingBufferPool().bindRingbuffers(media.first,
+                                            RingBufferPool::DEFAULT_ID);
+        }
         auto oldGuard = std::move(call.audioGuard);
         call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
 
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (!pimpl_->audiodriver_) {
-            JAMI_ERR("Audio driver not initialized");
+            JAMI_ERROR("Audio driver not initialized");
             return;
         }
         pimpl_->audiodriver_->flushUrgent();
@@ -1707,9 +1723,11 @@ void
 Manager::removeAudio(Call& call)
 {
     const auto& callId = call.getCallId();
-    JAMI_DBG("[call:%s] Remove local audio", callId.c_str());
-    getRingBufferPool().unBindAll(callId);
-    call.audioGuard.reset();
+    auto medias = call.getAudioStreams();
+    for (const auto& media : medias) {
+        JAMI_DEBUG("[call:{}] Remove local audio {}", callId, media.first);
+        getRingBufferPool().unBindAll(media.first);
+    }
 }
 
 ScheduledExecutor&
