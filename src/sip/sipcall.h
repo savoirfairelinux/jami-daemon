@@ -142,6 +142,7 @@ public:
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
+    std::map<std::string, bool> getAudioStreams() const override;
     void restartMediaSender() override;
     std::shared_ptr<SystemCodecInfo> getAudioCodec() const override;
     std::shared_ptr<SystemCodecInfo> getVideoCodec() const override;
@@ -457,6 +458,8 @@ private:
     std::string peerUserAgent_ {};
     // Flag to indicate if the peer's Daemon version supports multi-stream.
     bool peerSupportMultiStream_ {false};
+    // Flag to indicate if the peer's Daemon version supports multi-stream.
+    bool peerSupportMultiAudioStream_ {false};
     // Flag to indicate if the peer's Daemon version can negotiate more than 2 ICE medias
     bool peerSupportMultiIce_ {false};
 

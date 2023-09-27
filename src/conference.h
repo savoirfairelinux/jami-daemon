@@ -441,6 +441,7 @@ private:
     State confState_ {State::ACTIVE_ATTACHED};
     mutable std::mutex participantsMtx_ {};
     ParticipantSet participants_;
+    std::string mediaPlayerId_ {};
 
     mutable std::mutex confInfoMutex_ {};
     ConfInfo confInfo_ {};

@@ -33,11 +33,11 @@
 
 namespace jami {
 
-AudioReceiveThread::AudioReceiveThread(const std::string& id,
+AudioReceiveThread::AudioReceiveThread(const std::string& streamId,
                                        const AudioFormat& format,
                                        const std::string& sdp,
                                        const uint16_t mtu)
-    : id_(id)
+    : streamId_(streamId)
     , format_(format)
     , stream_(sdp)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
@@ -90,7 +90,8 @@ AudioReceiveThread::setup()
         return false;
     }
 
-    ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
+    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_AUDIO, 1);
