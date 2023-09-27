@@ -56,9 +56,9 @@ private:
 
     std::string playerId1_ {};
     std::string playerId2_ {};
-    std::string duration_ {};
-    std::string audio_stream_ {};
-    std::string video_stream_ {};
+    int64_t duration_ {};
+    int audio_stream_ {};
+    int video_stream_ {};
     std::shared_ptr<MediaPlayer> mediaPlayer {};
 
     std::mutex mtx;
@@ -79,45 +79,53 @@ MediaPlayerTest::setUp()
     handler.insert(libjami::exportable_callback<libjami::MediaPlayerSignal::FileOpened>(
         [=](const std::string& playerId,
             const std::map<std::string, std::string>& info) {
-            duration_ = info.at("duration");
-            audio_stream_ = info.at("audio_stream");
-            video_stream_ = info.at("video_stream");
+            duration_ = std::stol(info.at("duration"));
+            audio_stream_ = std::stoi(info.at("audio_stream"));
+            video_stream_ = std::stoi(info.at("video_stream"));
             playerId2_ = playerId;
             cv.notify_all();
         }));
 
     libjami::registerSignalHandlers(handler);
 
-    playerId1_ = libjami::createMediaPlayer(filePath);
-    mediaPlayer = Manager::instance().getVideoManager().mediaPlayers[playerId1_];
+    playerId1_ = jami::createMediaPlayer(filePath);
+    mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
 }
 
 void
 MediaPlayerTest::tearDown()
 {
+    jami::closeMediaPlayer(playerId1_);
+    mediaPlayer.reset();
+    playerId1_ = {};
+    playerId2_ = {};
     libjami::fini();
 }
 
 void
 MediaPlayerTest::testCreate()
 {
+    JAMI_INFO() << "Start testCreate";
     CPPUNIT_ASSERT(playerId1_ == playerId2_);
     CPPUNIT_ASSERT(mediaPlayer->getId() == playerId1_);
     CPPUNIT_ASSERT(mediaPlayer->isInputValid());
-    CPPUNIT_ASSERT(audio_stream_ != "-1");
-    CPPUNIT_ASSERT(video_stream_ != "-1");
+    CPPUNIT_ASSERT(audio_stream_ != -1);
+    CPPUNIT_ASSERT(video_stream_ != -1);
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
+    JAMI_INFO() << "End testCreate";
 }
 
 void
 MediaPlayerTest::testPause()
 {
-    mediaPlayer->pause(true);
+    JAMI_INFO() << "Start testPause";
+    // should start paused
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     mediaPlayer->pause(false);
     CPPUNIT_ASSERT(!mediaPlayer->isPaused());
+    JAMI_INFO() << "End testPause";
 }
 
 bool
@@ -129,10 +137,9 @@ MediaPlayerTest::isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t mar
 void
 MediaPlayerTest::testSeekWhilePaused()
 {
-    mediaPlayer->pause(true);
+    JAMI_INFO() << "Start testSeekWhilePaused";
 
     int64_t startTime = mediaPlayer->getPlayerPosition();
-    int64_t duration = std::stoi(duration_);
 
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime+100));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime+100, 1));
@@ -143,18 +150,20 @@ MediaPlayerTest::testSeekWhilePaused()
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime+500));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime+500, 1));
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(duration-1));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), duration-1, 1));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(duration_-1));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), duration_-1, 1));
 
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 1));
 
-    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration+1)));
+    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_+1)));
+    JAMI_INFO() << "End testSeekWhilePaused";
 }
 
 void
 MediaPlayerTest::testSeekWhilePlaying()
 {
+    JAMI_INFO() << "Start testSeekWhilePlaying";
     mediaPlayer->pause(false);
 
     int64_t startTime = mediaPlayer->getPlayerPosition();
@@ -172,7 +181,8 @@ MediaPlayerTest::testSeekWhilePlaying()
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 50));
 
-    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(std::stoi(duration_)+1)));
+    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_+1)));
+    JAMI_INFO() << "End testSeekWhilePlaying";
 }
 
 }} // namespace jami::test

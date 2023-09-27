@@ -55,7 +55,7 @@ namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
+VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_, const std::string& sink)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
@@ -69,7 +69,7 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
         inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
     }
-    sink_ = Manager::instance().createSinkClient(id_);
+    sink_ = Manager::instance().createSinkClient(sink.empty() ? id_ : sink);
     switchInput(id_);
 }
 
@@ -233,7 +233,7 @@ VideoInput::configureFilePlayback(const std::string&,
                                   std::shared_ptr<MediaDemuxer>& demuxer,
                                   int index)
 {
-    deleteDecoder();
+        deleteDecoder();
     clearOptions();
 
     auto decoder = std::make_unique<MediaDecoder>(demuxer,
@@ -253,6 +253,21 @@ VideoInput::configureFilePlayback(const std::string&,
 
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+    decOpts_.width = ((decoder_->getWidth() >> 3) << 3);
+    decOpts_.height = ((decoder_->getHeight() >> 3) << 3);
+    decOpts_.framerate = decoder_->getFps();
+    AVPixelFormat fmt = decoder_->getPixelFormat();
+    if (fmt != AV_PIX_FMT_NONE) {
+        decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
+    } else {
+        JAMI_WARN("Could not determine pixel format, using default");
+        decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
+    }
+
+    if (onSuccessfulSetup_)
+        onSuccessfulSetup_(MEDIA_VIDEO, 0);
+    foundDecOpts(decOpts_);
+    futureDecOpts_ = foundDecOpts_.get_future().share();
 }
 
 void
@@ -539,7 +554,7 @@ VideoInput::initWindowsGrab(const std::string& display)
 bool
 VideoInput::initFile(std::string path)
 {
-    size_t dot = path.find_last_of('.');
+        size_t dot = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
 
     /* File exists? */

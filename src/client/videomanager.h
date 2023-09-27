@@ -71,7 +71,9 @@ public:
 #ifdef ENABLE_VIDEO
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<video::VideoInput> getVideoInput(
-    const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+    const std::string& id,
+    video::VideoInputMode inputMode = video::VideoInputMode::Undefined,
+    const std::string& sink = "");
 #endif
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 std::string createMediaPlayer(const std::string& path);
@@ -81,5 +83,6 @@ bool closeMediaPlayer(const std::string& id);
 bool mutePlayerAudio(const std::string& id, bool mute);
 bool playerSeekToTime(const std::string& id, int time);
 int64_t getPlayerPosition(const std::string& id);
+int64_t getPlayerDuration(const std::string& id);
 
 } // namespace jami

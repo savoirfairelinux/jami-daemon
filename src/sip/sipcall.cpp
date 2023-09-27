@@ -71,6 +71,8 @@
 
 #include "tracepoint.h"
 
+#include "media/media_decoder.h"
+
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -160,6 +162,8 @@ SIPCall::~SIPCall()
 
     setSipTransport({});
     setInviteSession(); // prevents callback usage
+
+    closeMediaPlayer(mediaPlayerId_);
 }
 
 int
@@ -2497,6 +2501,34 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    bool hasFileSharing {false};
+
+    for (auto media : mediaAttrList) {
+        if (!media.enabled_ || media.sourceUri_.empty())
+            continue;
+
+        // Supported MRL schemes
+        static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+
+        const auto pos = media.sourceUri_.find(sep);
+        if (pos == std::string::npos)
+            continue;
+
+        const auto prefix = media.sourceUri_.substr(0, pos);
+        if ((pos + sep.size()) >= media.sourceUri_.size())
+            continue;
+
+        if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
+            hasFileSharing = true;
+            mediaPlayerId_ = media.sourceUri_;
+            createMediaPlayer(mediaPlayerId_);
+        }
+    }
+
+    if (!hasFileSharing) {
+        closeMediaPlayer(mediaPlayerId_);
+        mediaPlayerId_ = "";
+    }
 
     // Disable video if disabled in the account.
     auto account = getSIPAccount();
