@@ -75,17 +75,19 @@ public:
     void setUp();
     void tearDown();
 
-    std::string aliceId;
-    std::string bobId;
-    std::string recordDir;
-    std::string recordedFile;
+    std::string aliceId {};
+    std::string bobId {};
+    std::string recordDir {};
+    std::string recordedFile {};
+    std::string playerId {};
+    std::shared_ptr<MediaPlayer> player {};
     CallData bobCall {};
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
-    std::string videoPath = std::filesystem::absolute("media/test_video_file.mp4").string();
+    std::string videoPath = "file://" + std::filesystem::absolute("media/test_video_file.mp4").string();
 
 private:
     void registerSignalHandlers();
@@ -118,6 +120,10 @@ RecorderTest::setUp()
     aliceId = actors["alice"];
     bobId = actors["bob"];
     bobCall.reset();
+    playerId = jami::createMediaPlayer(videoPath);
+    player = jami::getMediaPlayer(playerId);
+    player->setAutoRestart(true);
+    player->pause(false);
 
     libjami::setRecordPath(recordDir);
 }
@@ -127,6 +133,7 @@ RecorderTest::tearDown()
 {
     libjami::setIsAlwaysRecording(false);
     dhtnet::fileutils::removeAll(recordDir);
+    player.reset();
 
     wait_for_removal_of({aliceId, bobId});
 }
@@ -210,7 +217,7 @@ RecorderTest::testRecordCall()
         {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
         {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
         {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
-        {libjami::Media::MediaAttributeKey::SOURCE, "file://" + videoPath}};
+        {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
     mediaList.emplace_back(mediaAttributeA);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -406,7 +413,7 @@ RecorderTest::testStopCallWhileRecording()
         {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
         {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
         {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
-        {libjami::Media::MediaAttributeKey::SOURCE, "file://" + videoPath}};
+        {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
@@ -458,7 +465,7 @@ RecorderTest::testDaemonPreference()
         {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
         {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
         {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
-        {libjami::Media::MediaAttributeKey::SOURCE, "file://" + videoPath}};
+        {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
