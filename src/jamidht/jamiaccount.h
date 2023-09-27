@@ -459,13 +459,9 @@ public:
 
     // File transfer
     void sendFile(const std::string& conversationId,
-                  const std::string& path,
+                  const std::filesystem::path& path,
                   const std::string& name,
                   const std::string& replyTo);
-    // non-swarm version
-    libjami::DataTransferId sendFile(const std::string& peer,
-                                     const std::string& path,
-                                     const InternalCompletionCb& icb = {});
 
     void transferFile(const std::string& conversationId,
                       const std::string& path,
