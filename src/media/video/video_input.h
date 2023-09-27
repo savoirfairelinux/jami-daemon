@@ -62,7 +62,7 @@ public:
     ~VideoInput();
 
     // as VideoGenerator
-    const std::string& getName() const { return currentResource_; }
+    const std::string& getName() const { return resource_; }
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;

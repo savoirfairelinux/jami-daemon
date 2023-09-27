@@ -329,6 +329,8 @@ Conference::~Conference()
 #endif // ENABLE_PLUGIN
     if (shutdownCb_)
         shutdownCb_(getDuration().count());
+    // do not propagate sharing from conf host to calls
+    closeMediaPlayer(mediaPlayerId_);
     jami_tracepoint(conference_end, id_.c_str());
 }
 
@@ -576,14 +578,41 @@ bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     if (getState() != State::ACTIVE_ATTACHED) {
-        JAMI_ERR("[conf %s] Request media change can be performed only in attached mode",
-                 getConfId().c_str());
+        JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode",
+                   getConfId());
         return false;
     }
 
     JAMI_DEBUG("[conf {:s}] Request media change", getConfId());
 
-    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);bool hasFileSharing {false};
+
+    for (const auto& media : mediaAttrList) {
+        if (!media.enabled_ || media.sourceUri_.empty())
+            continue;
+
+        // Supported MRL schemes
+        static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+
+        const auto pos = media.sourceUri_.find(sep);
+        if (pos == std::string::npos)
+            continue;
+
+        const auto prefix = media.sourceUri_.substr(0, pos);
+        if ((pos + sep.size()) >= media.sourceUri_.size())
+            continue;
+
+        if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
+            hasFileSharing = true;
+            mediaPlayerId_ = media.sourceUri_;
+            createMediaPlayer(mediaPlayerId_);
+        }
+    }
+
+    if (!hasFileSharing) {
+        closeMediaPlayer(mediaPlayerId_);
+        mediaPlayerId_ = "";
+    }
 
     for (auto const& mediaAttr : mediaAttrList) {
         JAMI_DEBUG("[conf {:s}] New requested media: {:s}", getConfId(), mediaAttr.toString(true));
@@ -617,6 +646,9 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         videoMixer_->switchInputs(newVideoInputs);
 #endif
     hostSources_ = mediaAttrList; // New medias
+    auto isHostMuted = isMuted("host"sv);
+    if (!isHostMuted)
+        bindHost();
 
     // It's host medias, so no need to negotiate anything, but inform the client.
     reportMediaNegotiationStatus();
@@ -911,20 +943,7 @@ Conference::attachLocalParticipant()
         setState(State::ACTIVE_ATTACHED);
         setLocalHostDefaultMediaSource();
 
-        auto& rbPool = Manager::instance().getRingBufferPool();
-        for (const auto& participant : getParticipantList()) {
-            if (auto call = Manager::instance().getCallFromCallID(participant)) {
-                if (isMuted(call->getCallId()))
-                    rbPool.bindHalfDuplexOut(participant, RingBufferPool::DEFAULT_ID);
-                else
-                    rbPool.bindCallID(participant, RingBufferPool::DEFAULT_ID);
-                rbPool.flush(participant);
-            }
-
-            // Reset ringbuffer's readpointers
-            rbPool.flush(participant);
-        }
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
+        bindHost();
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
@@ -948,12 +967,8 @@ void
 Conference::detachLocalParticipant()
 {
     JAMI_INFO("Detach local participant from conference %s", id_.c_str());
-
     if (getState() == State::ACTIVE_ATTACHED) {
-        foreachCall([&](auto call) {
-            Manager::instance().getRingBufferPool().unBindCallID(call->getCallId(),
-                                                                 RingBufferPool::DEFAULT_ID);
-        });
+        unbindHost();
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_)
@@ -974,31 +989,39 @@ Conference::detachLocalParticipant()
 void
 Conference::bindParticipant(const std::string& participant_id)
 {
-    JAMI_INFO("Bind participant %s to conference %s", participant_id.c_str(), id_.c_str());
+    JAMI_LOG("Bind participant {} to conference {}", participant_id, id_);
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    for (const auto& item : getParticipantList()) {
-        if (participant_id != item) {
-            // Do not attach muted participants
-            if (auto call = Manager::instance().getCallFromCallID(item)) {
-                if (isMuted(call->getCallId()))
-                    rbPool.bindHalfDuplexOut(item, participant_id);
+    // Bind each of the new participant's audio streams to each of the other participants audio streams
+    if (auto participantCall = getCall(participant_id)) {
+        auto participantStreams = participantCall->getAudioStreams();
+        for (auto stream : participantStreams) {
+            for (const auto& other : getParticipantList()) {
+                auto otherCall = other != participant_id ? getCall(other) : nullptr;
+                if (otherCall) {
+                    auto otherStreams = otherCall->getAudioStreams();
+                    for (auto otherStream : otherStreams) {
+                        if (isMuted(other))
+                            rbPool.bindHalfDuplexOut(otherStream.first, stream.first);
+                        else
+                            rbPool.bindRingbuffers(stream.first, otherStream.first);
+
+                        rbPool.flush(otherStream.first);
+                    }
+                }
+            }
+
+            // Bind local participant to other participants only if the
+            // local is attached to the conference.
+            if (getState() == State::ACTIVE_ATTACHED) {
+                if (isMediaSourceMuted(MediaType::MEDIA_AUDIO))
+                    rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
                 else
-                    rbPool.bindCallID(participant_id, item);
+                    rbPool.bindRingbuffers(stream.first, RingBufferPool::DEFAULT_ID);
+                rbPool.flush(RingBufferPool::DEFAULT_ID);
             }
         }
-        rbPool.flush(item);
-    }
-
-    // Bind local participant to other participants only if the
-    // local is attached to the conference.
-    if (getState() == State::ACTIVE_ATTACHED) {
-        if (isMediaSourceMuted(MediaType::MEDIA_AUDIO))
-            rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, participant_id);
-        else
-            rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
-        rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 }
 
@@ -1006,7 +1029,13 @@ void
 Conference::unbindParticipant(const std::string& participant_id)
 {
     JAMI_INFO("Unbind participant %s from conference %s", participant_id.c_str(), id_.c_str());
-    Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(participant_id);
+    if (auto call = getCall(participant_id)) {
+        auto medias = call->getAudioStreams();
+        auto& rbPool = Manager::instance().getRingBufferPool();
+        for (const auto& [id, muted] : medias) {
+            rbPool.unBindAllHalfDuplexOut(id);
+        }
+    }
 }
 
 void
@@ -1017,20 +1046,59 @@ Conference::bindHost()
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     for (const auto& item : getParticipantList()) {
-        if (auto call = Manager::instance().getCallFromCallID(item)) {
-            if (isMuted(call->getCallId()))
-                continue;
-            rbPool.bindCallID(item, RingBufferPool::DEFAULT_ID);
-            rbPool.flush(RingBufferPool::DEFAULT_ID);
+        if (auto call = getCall(item)) {
+            auto medias = call->getAudioStreams();
+            for (const auto& [id, muted] : medias) {
+                for (const auto& source : hostSources_) {
+                    if (source.type_ == MediaType::MEDIA_AUDIO) {
+                        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
+                            if (muted)
+                                rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
+                            else
+                                rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
+                        } else {
+                            auto buffer = source.sourceUri_;
+                            static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+                            const auto pos = source.sourceUri_.find(sep);
+                            if (pos != std::string::npos) {
+                                buffer = source.sourceUri_.substr(pos + sep.size());
+                            }
+                            JAMI_WARNING("BIND CONFERENCE HOST SOURCE: {} {} {}", source.label_, source.sourceUri_, buffer);
+                            if (muted)
+                                rbPool.bindHalfDuplexOut(id, buffer);
+                            else
+                                rbPool.bindRingbuffers(id, buffer);
+                        }
+                    }
+                }
+                rbPool.flush(id);
+            }
         }
     }
+    rbPool.flush(RingBufferPool::DEFAULT_ID);
 }
+
 
 void
 Conference::unbindHost()
 {
     JAMI_INFO("Unbind host from conference %s", id_.c_str());
-    Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
+    for (const auto& source : hostSources_) {
+        if (source.type_ == MediaType::MEDIA_AUDIO) {
+            if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
+                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
+            } else {
+                auto buffer = source.sourceUri_;
+                static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+                const auto pos = source.sourceUri_.find(sep);
+                if (pos != std::string::npos) {
+                    buffer = source.sourceUri_.substr(pos + sep.size());
+                }
+                JAMI_WARNING("UNBIND CONFERENCE HOST SOURCE: {} {} {}", source.label_, source.sourceUri_, buffer);
+                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(buffer);
+            }
+        }
+    }
 }
 
 ParticipantSet
