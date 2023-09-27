@@ -107,7 +107,7 @@ void writeArchive(const std::string& data,
                   const std::string& path,
                   const std::string& password = {});
 
-int64_t size(const std::string& path);
+int64_t size(const std::filesystem::path& path);
 
 std::string sha3File(const std::filesystem::path& path);
 std::string sha3sum(const std::vector<uint8_t>& buffer);
