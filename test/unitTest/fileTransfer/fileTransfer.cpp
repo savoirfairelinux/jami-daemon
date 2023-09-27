@@ -65,9 +65,9 @@ public:
     std::string bobId;
     std::string carlaId;
 
-    std::string sendPath {std::filesystem::current_path() / "SEND"};
-    std::string recvPath {std::filesystem::current_path() / "RECV"};
-    std::string recv2Path {std::filesystem::current_path() / "RECV2"};
+    std::filesystem::path sendPath {std::filesystem::current_path() / "SEND"};
+    std::filesystem::path recvPath {std::filesystem::current_path() / "RECV"};
+    std::filesystem::path recv2Path {std::filesystem::current_path() / "RECV2"};
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -131,9 +131,9 @@ FileTransferTest::setUp()
 void
 FileTransferTest::tearDown()
 {
-    std::remove(sendPath.c_str());
-    std::remove(recvPath.c_str());
-    std::remove(recv2Path.c_str());
+    std::filesystem::remove(sendPath);
+    std::filesystem::remove(recvPath);
+    std::filesystem::remove(recv2Path);
     wait_for_removal_of({aliceId, bobId, carlaId});
 }
 
@@ -627,7 +627,7 @@ FileTransferTest::testBadSha3sumIn()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return transferAFinished; }));
     CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return transferBFinished; }));
 
-    std::remove(sendPath.c_str());
+    std::filesystem::remove(sendPath);
     libjami::unregisterSignalHandlers();
 }
 
