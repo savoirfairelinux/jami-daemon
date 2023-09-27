@@ -57,7 +57,8 @@ class VideoInput : public VideoGenerator
 {
 public:
     VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined,
-               const std::string& id_ = "local");
+               const std::string& id_ = "local",
+               const std::string& sink = "");
     ~VideoInput();
 
     // as VideoGenerator
