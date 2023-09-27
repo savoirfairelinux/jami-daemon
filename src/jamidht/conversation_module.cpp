@@ -2816,8 +2816,16 @@ ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view 
 void
 ConversationModule::shutdownConnections()
 {
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    for (auto& [k, c] : pimpl_->conversations_) {
+    std::vector<std::shared_ptr<SyncedConversation>> conversations;
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        conversations.reserve(pimpl_->conversations_.size());
+        for (auto& [k, c]: pimpl_->conversations_) {
+            conversations.emplace_back(c);
+        }
+    }
+    for (const auto& c: conversations) {
+        std::lock_guard<std::mutex> lkc(c->mtx);
         if (c->conversation)
             c->conversation->shutdownConnections();
         if (c->pending)
@@ -2835,10 +2843,17 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
 void
 ConversationModule::connectivityChanged()
 {
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-    for (auto& [k, c] : pimpl_->conversations_) {
-        if (c->conversation)
-            c->conversation->connectivityChanged();
+    std::vector<std::shared_ptr<Conversation>> conversations;
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        conversations.reserve(pimpl_->conversations_.size());
+        for (const auto& [k, c]: pimpl_->conversations_) {
+            std::lock_guard<std::mutex> lkc(c->mtx);
+            if (c->conversation)
+                conversations.emplace_back(c->conversation);
+        }
     }
+    for (const auto& conv: conversations)
+        conv->connectivityChanged();
 }
 } // namespace jami

@@ -1923,12 +1923,8 @@ JamiAccount::doRegister_()
                     auto res = accountManager_->onPeerCertificate(cert,
                                                                   dhtPublicInCalls_,
                                                                   peer_account_id);
-                    if (res)
-                        JAMI_INFO("Accepting ICE request from account %s",
-                                  peer_account_id.toString().c_str());
-                    else
-                        JAMI_INFO("Discarding ICE request from account %s",
-                                  peer_account_id.toString().c_str());
+                    JAMI_LOG("{} ICE request from {}",
+                        res ? "Accepting" : "Discarding", peer_account_id);
                     accept.set_value(res);
                 });
             fut.wait();
@@ -2139,8 +2135,9 @@ JamiAccount::convModule()
                             cb({});
                         return;
                     }
-                    std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
+                    std::unique_lock<std::mutex> lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_) {
+                        lkCM.unlock();
                         cb({});
                         return;
                     }
@@ -3625,14 +3622,10 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
     // however, this will still ask for multiple channels, so only ask
     // if there is no pending request
     if (!forceNewConnection && connectionManager_->isConnecting(deviceId, "sip")) {
-        JAMI_INFO("[Account %s] Already connecting to %s",
-                  getAccountID().c_str(),
-                  deviceId.to_c_str());
+        JAMI_LOG("[Account {}] Already connecting to {}", getAccountID(), deviceId);
         return;
     }
-    JAMI_INFO("[Account %s] Ask %s for a new SIP channel",
-              getAccountID().c_str(),
-              deviceId.to_c_str());
+    JAMI_LOG("[Account {}] Ask {} for a new SIP channel", getAccountID(), deviceId);
     connectionManager_->connectDevice(
         deviceId,
         "sip",
@@ -3832,8 +3825,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         return v.channel == socket;
     });
     if (conn != connections.end()) {
-        JAMI_WARN("[Account %s] Channel socket already cached with this peer",
-                  getAccountID().c_str());
+        JAMI_WARNING("[Account {}] Channel socket already cached with this peer", getAccountID());
         return;
     }
 
@@ -3860,8 +3852,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
     JAMI_WARNING("[Account {:s}] New SIP channel opened with {:s}",
-                 getAccountID(),
-                 deviceId.to_c_str());
+                 getAccountID(), deviceId);
     lk.unlock();
 
     dht::ThreadPool::io().run([w = weak(), peerId, deviceId] {
@@ -4045,14 +4036,12 @@ JamiAccount::transferFile(const std::string& conversationId,
                           uint64_t lastWriteTime,
                           std::function<void()> onFinished)
 {
-    auto fid = fileId;
     std::string modified;
     if (lastWriteTime != 0) {
         modified = fmt::format("&modified={}", lastWriteTime);
     }
-    if (fid == "profile.vcf") {
-        fid = fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified);
-    }
+    auto fid = fileId == "profile.vcf" ?
+        fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified) : fileId;
     auto channelName
         = conversationId.empty()
               ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_URI, sha3Sum, modified)
