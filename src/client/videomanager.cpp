@@ -690,9 +690,9 @@ getVideoDeviceMonitor()
 }
 
 std::shared_ptr<video::VideoInput>
-getVideoInput(const std::string& id, video::VideoInputMode inputMode, const std::string& sink)
+getVideoInput(const std::string& resource, video::VideoInputMode inputMode, const std::string& sink)
 {
-    auto sinkId = sink.empty() ? id : sink;
+    auto sinkId = sink.empty() ? resource : sink;
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.videoMutex);
     auto it = vmgr.videoInputs.find(sinkId);
@@ -702,7 +702,7 @@ getVideoInput(const std::string& id, video::VideoInputMode inputMode, const std:
         }
     }
 
-    auto input = std::make_shared<video::VideoInput>(inputMode, id, sinkId);
+    auto input = std::make_shared<video::VideoInput>(inputMode, resource, sinkId);
     vmgr.videoInputs[sinkId] = input;
     return input;
 }
@@ -715,7 +715,7 @@ VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 #endif
 
 std::shared_ptr<AudioInput>
-getAudioInput(const std::string& id)
+getAudioInput(const std::string& device)
 {
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.audioMutex);
@@ -728,15 +728,15 @@ getAudioInput(const std::string& id)
             ++it;
     }
 
-    auto it = vmgr.audioInputs.find(id);
+    auto it = vmgr.audioInputs.find(device);
     if (it != vmgr.audioInputs.end()) {
         if (auto input = it->second.lock()) {
             return input;
         }
     }
 
-    auto input = std::make_shared<AudioInput>(id);
-    vmgr.audioInputs[id] = input;
+    auto input = std::make_shared<AudioInput>(device);
+    vmgr.audioInputs[device] = input;
     return input;
 }
 
