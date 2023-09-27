@@ -197,10 +197,11 @@ LIBJAMI_PUBLIC bool closeVideoInput(const std::string& id);
 
 LIBJAMI_PUBLIC std::string createMediaPlayer(const std::string& path);
 LIBJAMI_PUBLIC bool closeMediaPlayer(const std::string& id);
-LIBJAMI_PUBLIC bool pausePlayer(const std::string& id, bool pause);
-LIBJAMI_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
-LIBJAMI_PUBLIC bool playerSeekToTime(const std::string& id, int time);
-int64_t getPlayerPosition(const std::string& id);
+LIBJAMI_PUBLIC bool pausePlayer(const std::string& id, const bool& pause);
+LIBJAMI_PUBLIC bool mutePlayerAudio(const std::string& id, const bool& mute);
+LIBJAMI_PUBLIC bool playerSeekToTime(const std::string& id, const int& time);
+LIBJAMI_PUBLIC int64_t getPlayerPosition(const std::string& id);
+LIBJAMI_PUBLIC int64_t getPlayerDuration(const std::string& id);
 
 LIBJAMI_PUBLIC bool registerSinkTarget(const std::string& sinkId, SinkTarget target);
 #ifdef ENABLE_SHM

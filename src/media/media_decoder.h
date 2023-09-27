@@ -41,6 +41,7 @@
 #include "media_device.h"
 #include "media_stream.h"
 #include "media_buffer.h"
+#include "media_attribute.h"
 #include "noncopyable.h"
 
 #include <map>
