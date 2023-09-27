@@ -28,26 +28,29 @@ namespace jami {
 
 static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
-MediaPlayer::MediaPlayer(const std::string& path)
+MediaPlayer::MediaPlayer(const std::string& resource)
     : loop_(std::bind(&MediaPlayer::configureMediaInputs, this),
             std::bind(&MediaPlayer::process, this),
             [] {})
 {
+    auto suffix = resource;
     static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-    const auto pos = path.find(sep);
-    const auto suffix = path.substr(pos + sep.size());
+    const auto pos = resource.find(sep);
+    if (pos != std::string::npos) {
+        suffix = resource.substr(pos + sep.size());
+    }
+
+    path_ = suffix;
 
     if (access(suffix.c_str(), R_OK) != 0) {
-        JAMI_ERR() << "File '" << path << "' not available";
+        JAMI_ERR() << "File '" << path_ << "' not available";
         return;
     }
 
-    path_ = path;
-    id_ = std::to_string(rand());
-    audioInput_ = jami::getAudioInput(id_);
+    audioInput_ = jami::getAudioInput(path_);
     audioInput_->setPaused(paused_);
 #ifdef ENABLE_VIDEO
-    videoInput_ = jami::getVideoInput(id_, video::VideoInputMode::ManagedByDaemon);
+    videoInput_ = jami::getVideoInput(path_, video::VideoInputMode::ManagedByDaemon, resource);
     videoInput_->setPaused(paused_);
 #endif
 
@@ -57,7 +60,10 @@ MediaPlayer::MediaPlayer(const std::string& path)
 
 MediaPlayer::~MediaPlayer()
 {
+    pause(true);
     loop_.join();
+    audioInput_.reset();
+    videoInput_.reset();
 }
 
 bool
@@ -92,10 +98,8 @@ MediaPlayer::configureMediaInputs()
     try {
         videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
         if (hasVideo()) {
-            videoInput_->setSink(id_);
             videoInput_->configureFilePlayback(path_, demuxer_, videoStream_);
             videoInput_->updateStartTime(startTime_);
-            muteAudio(true);
         }
     } catch (const std::exception& e) {
         videoInput_ = nullptr;
@@ -165,13 +169,13 @@ MediaPlayer::emitInfo()
     std::map<std::string, std::string> info {{"duration", std::to_string(fileDuration_)},
                                              {"audio_stream", std::to_string(audioStream_)},
                                              {"video_stream", std::to_string(videoStream_)}};
-    emitSignal<libjami::MediaPlayerSignal::FileOpened>(id_, info);
+    emitSignal<libjami::MediaPlayerSignal::FileOpened>(path_, info);
 }
 
 bool
 MediaPlayer::isInputValid()
 {
-    return !id_.empty();
+    return !path_.empty();
 }
 
 void
@@ -262,6 +266,8 @@ MediaPlayer::playFileFromBeginning()
         videoInput_->updateStartTime(startTime_);
     }
 #endif
+    if (autoRestart_)
+        pause(false);
 }
 
 void
@@ -281,7 +287,7 @@ MediaPlayer::flushMediaBuffers()
 const std::string&
 MediaPlayer::getId() const
 {
-    return id_;
+    return path_;
 }
 
 int64_t
@@ -291,6 +297,12 @@ MediaPlayer::getPlayerPosition() const
         return lastPausedTime_ - startTime_ - pauseInterval_;
     }
     return av_gettime() - startTime_ - pauseInterval_;
+}
+
+int64_t
+MediaPlayer::getPlayerDuration() const
+{
+    return fileDuration_;
 }
 
 bool

@@ -57,11 +57,12 @@ class VideoInput : public VideoGenerator
 {
 public:
     VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined,
-               const std::string& id_ = "local");
+               const std::string& resource = "local",
+               const std::string& sink = "");
     ~VideoInput();
 
     // as VideoGenerator
-    const std::string& getName() const { return currentResource_; }
+    const std::string& getName() const { return resource_; }
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
@@ -83,8 +84,7 @@ public:
     void flushBuffers();
     void setPaused(bool paused) { paused_ = paused; }
     void setSeekTime(int64_t time);
-    void setFrameSize(const int width, const int height);
-    void setupSink();
+    void setupSink(const int width, const int height);
     void stopSink();
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
@@ -117,8 +117,7 @@ private:
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 
-    std::string id_;
-    std::string currentResource_;
+    std::string resource_;
     std::atomic<bool> switchPending_ = {false};
     std::atomic_bool isStopped_ = {false};
 
