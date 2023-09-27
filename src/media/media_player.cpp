@@ -46,7 +46,7 @@ MediaPlayer::MediaPlayer(const std::string& path)
     }
 
     path_ = suffix;
-    audioInput_ = jami::getAudioInput(path_);
+    audioInput_ = jami::getAudioInput(path_, path);
     audioInput_->setPaused(paused_);
 #ifdef ENABLE_VIDEO
     videoInput_ = jami::getVideoInput(path_, video::VideoInputMode::ManagedByDaemon, path);

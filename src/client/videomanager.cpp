@@ -713,8 +713,9 @@ VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 #endif
 
 std::shared_ptr<AudioInput>
-getAudioInput(const std::string& id)
+getAudioInput(const std::string& device, const std::string id)
 {
+    auto audioId = id.empty() ? device : id;
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.audioMutex);
 
@@ -726,15 +727,15 @@ getAudioInput(const std::string& id)
             ++it;
     }
 
-    auto it = vmgr.audioInputs.find(id);
+    auto it = vmgr.audioInputs.find(audioId);
     if (it != vmgr.audioInputs.end()) {
         if (auto input = it->second.lock()) {
             return input;
         }
     }
 
-    auto input = std::make_shared<AudioInput>(id);
-    vmgr.audioInputs[id] = input;
+    auto input = std::make_shared<AudioInput>(device);
+    vmgr.audioInputs[audioId] = input;
     return input;
 }
 
