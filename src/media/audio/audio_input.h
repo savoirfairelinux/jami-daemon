@@ -83,7 +83,7 @@ private:
     void frameResized(std::shared_ptr<AudioFrame>&& ptr);
 
     std::string id_;
-    bool muteState_ = false;
+    bool muteState_ {false};
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;

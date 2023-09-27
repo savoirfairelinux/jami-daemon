@@ -55,7 +55,7 @@ namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
+VideoInput::VideoInput(VideoInputMode inputMode, const std::string& resource, const std::string& sink)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
@@ -69,8 +69,8 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
         inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
     }
-    sink_ = Manager::instance().createSinkClient(id_);
-    switchInput(id_);
+    sink_ = Manager::instance().createSinkClient(sink.empty() ? resource : sink);
+    switchInput(resource);
 }
 
 VideoInput::~VideoInput()
@@ -249,10 +249,29 @@ VideoInput::configureFilePlayback(const std::string&,
 
     decoder_ = std::move(decoder);
     playingFile_ = true;
-    loop_.start();
 
+    // For DBUS it is imperative that we start the sink before setting the frame size
+    sink_->start();
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+
+    loop_.start();
+
+    decOpts_.width = ((decoder_->getWidth() >> 3) << 3);
+    decOpts_.height = ((decoder_->getHeight() >> 3) << 3);
+    decOpts_.framerate = decoder_->getFps();
+    AVPixelFormat fmt = decoder_->getPixelFormat();
+    if (fmt != AV_PIX_FMT_NONE) {
+        decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
+    } else {
+        JAMI_WARN("Could not determine pixel format, using default");
+        decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
+    }
+
+    if (onSuccessfulSetup_)
+        onSuccessfulSetup_(MEDIA_VIDEO, 0);
+    foundDecOpts(decOpts_);
+    futureDecOpts_ = foundDecOpts_.get_future().share();
 }
 
 void
@@ -579,7 +598,7 @@ void
 VideoInput::restart()
 {
     if (loop_.isStopping())
-        switchInput(currentResource_);
+        switchInput(resource_);
 }
 
 std::shared_future<DeviceParams>
@@ -592,14 +611,14 @@ VideoInput::switchInput(const std::string& resource)
         return {};
     }
 
-    currentResource_ = resource;
+    resource_ = resource;
     decOptsFound_ = false;
 
     std::promise<DeviceParams> p;
     foundDecOpts_.swap(p);
 
     // Switch off video input?
-    if (resource.empty()) {
+    if (resource_.empty()) {
         clearOptions();
         futureDecOpts_ = foundDecOpts_.get_future();
         startLoop();
@@ -609,15 +628,15 @@ VideoInput::switchInput(const std::string& resource)
     // Supported MRL schemes
     static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
 
-    const auto pos = resource.find(sep);
+    const auto pos = resource_.find(sep);
     if (pos == std::string::npos)
         return {};
 
-    const auto prefix = resource.substr(0, pos);
-    if ((pos + sep.size()) >= resource.size())
+    const auto prefix = resource_.substr(0, pos);
+    if ((pos + sep.size()) >= resource_.size())
         return {};
 
-    const auto suffix = resource.substr(pos + sep.size());
+    const auto suffix = resource_.substr(pos + sep.size());
 
     bool ready = false;
 
@@ -680,16 +699,11 @@ VideoInput::setSink(const std::string& sinkId)
 }
 
 void
-VideoInput::setFrameSize(const int width, const int height)
-{
-    /* Signal the client about readable sink */
-    sink_->setFrameSize(width, height);
-}
-
-void
-VideoInput::setupSink()
+VideoInput::setupSink(const int width, const int height)
 {
     setup();
+    /* Signal the client about readable sink */
+    sink_->setFrameSize(width, height);
 }
 
 void
