@@ -151,6 +151,48 @@ public:
         libjami::stopLocalRecorder(filepath);
     }
 
+    std::string
+    createMediaPlayer(const std::string& path)
+    {
+        return libjami::createMediaPlayer(path);
+    }
+
+    bool
+    pausePlayer(const std::string& id, const bool& pause)
+    {
+        return libjami::pausePlayer(id, pause);
+    }
+
+    bool
+    closeMediaPlayer(const std::string& id)
+    {
+        return libjami::closeMediaPlayer(id);
+    }
+
+    bool
+    mutePlayerAudio(const std::string& id, const bool& mute)
+    {
+        return libjami::mutePlayerAudio(id, mute);
+    }
+
+    bool
+    playerSeekToTime(const std::string& id, const int& time)
+    {
+        return libjami::playerSeekToTime(id, time);
+    }
+
+    int64_t
+    getPlayerPosition(const std::string& id)
+    {
+        return libjami::getPlayerPosition(id);
+    }
+
+    int64_t
+    getPlayerDuration(const std::string& id)
+    {
+        return libjami::getPlayerDuration(id);
+    }
+
 private:
 
     void
@@ -160,6 +202,7 @@ private:
 
         using libjami::exportable_serialized_callback;
         using libjami::VideoSignal;
+        using libjami::MediaPlayerSignal;
         using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
 
         const std::map<std::string, SharedCallback> videoEvHandlers = {
@@ -169,6 +212,8 @@ private:
                 std::bind(&DBusVideoManager::emitDecodingStarted, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<VideoSignal::DecodingStopped>(
                 std::bind(&DBusVideoManager::emitDecodingStopped, this, _1, _2, _3)),
+            exportable_serialized_callback<MediaPlayerSignal::FileOpened>(
+                std::bind(&DBusVideoManager::emitFileOpened, this, _1, _2)),
         };
 
         libjami::registerSignalHandlers(videoEvHandlers);

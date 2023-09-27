@@ -71,6 +71,8 @@
 
 #include "tracepoint.h"
 
+#include "media/media_decoder.h"
+
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -160,6 +162,8 @@ SIPCall::~SIPCall()
 
     setSipTransport({});
     setInviteSession(); // prevents callback usage
+
+    closeMediaPlayer(mediaPlayerId_);
 }
 
 int
@@ -2497,6 +2501,16 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    auto validMedias = MediaDemuxer::validateMediaTypes(mediaAttrList);
+    mediaAttrList = validMedias.first;
+
+    if (!validMedias.second.empty()) {
+        mediaPlayerId_ = validMedias.second;
+        createMediaPlayer(mediaPlayerId_);
+    } else {
+        closeMediaPlayer(mediaPlayerId_);
+        mediaPlayerId_ = "";
+    }
 
     // Disable video if disabled in the account.
     auto account = getSIPAccount();

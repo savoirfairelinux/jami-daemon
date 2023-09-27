@@ -150,6 +150,16 @@ struct MediaStream
                 frameSize = f->nb_samples;
         }
     }
+
+    friend bool operator==(const MediaStream& ms1, const MediaStream& ms2)
+    {
+        return ms1.bitrate == ms2.bitrate and ms1.firstTimestamp == ms2.firstTimestamp
+               and ms1.format == ms2.format and ms1.frameRate == ms2.frameRate
+               and ms1.frameSize == ms2.frameSize and ms1.height == ms2.height
+               and ms1.isVideo == ms2.isVideo and ms1.name == ms2.name
+               and ms1.nbChannels == ms2.nbChannels and ms1.sampleRate == ms2.sampleRate
+               and ms1.timeBase == ms2.timeBase and ms1.width == ms2.width;
+    }
 };
 
 inline std::ostream&

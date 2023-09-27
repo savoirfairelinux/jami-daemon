@@ -569,25 +569,25 @@ createMediaPlayer(const std::string& path)
 }
 
 bool
-pausePlayer(const std::string& id, bool pause)
-{
-    return jami::pausePlayer(id, pause);
-}
-
-bool
 closeMediaPlayer(const std::string& id)
 {
     return jami::closeMediaPlayer(id);
 }
 
 bool
-mutePlayerAudio(const std::string& id, bool mute)
+pausePlayer(const std::string& id, const bool& pause)
+{
+    return jami::pausePlayer(id, pause);
+}
+
+bool
+mutePlayerAudio(const std::string& id, const bool& mute)
 {
     return jami::mutePlayerAudio(id, mute);
 }
 
 bool
-playerSeekToTime(const std::string& id, int time)
+playerSeekToTime(const std::string& id, const int& time)
 {
     return jami::playerSeekToTime(id, time);
 }
@@ -596,6 +596,12 @@ int64_t
 getPlayerPosition(const std::string& id)
 {
     return jami::getPlayerPosition(id);
+}
+
+int64_t
+getPlayerDuration(const std::string& id)
+{
+    return jami::getPlayerDuration(id);
 }
 
 bool
@@ -676,7 +682,7 @@ getVideoDeviceMonitor()
 }
 
 std::shared_ptr<video::VideoInput>
-getVideoInput(const std::string& id, video::VideoInputMode inputMode)
+getVideoInput(const std::string& id, video::VideoInputMode inputMode, const std::string& sink)
 {
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.videoMutex);
@@ -687,7 +693,7 @@ getVideoInput(const std::string& id, video::VideoInputMode inputMode)
         }
     }
 
-    auto input = std::make_shared<video::VideoInput>(inputMode, id);
+    auto input = std::make_shared<video::VideoInput>(inputMode, id, sink);
     vmgr.videoInputs[id] = input;
     return input;
 }
@@ -746,13 +752,14 @@ getMediaPlayer(const std::string& id)
 std::string
 createMediaPlayer(const std::string& path)
 {
-    auto player = std::make_shared<MediaPlayer>(path);
-    if (!player->isInputValid()) {
-        return "";
+    auto player = getMediaPlayer(path);
+    if (!player) {
+        player = std::make_shared<MediaPlayer>(path);
+    } else {
+        return path;
     }
-    auto playerId = player.get()->getId();
-    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
-    return playerId;
+    Manager::instance().getVideoManager().mediaPlayers[path] = player;
+    return path;
 }
 
 bool
@@ -794,6 +801,14 @@ getPlayerPosition(const std::string& id)
 {
     if (auto player = getMediaPlayer(id))
         return player->getPlayerPosition();
+    return -1;
+}
+
+int64_t
+getPlayerDuration(const std::string& id)
+{
+    if (auto player = getMediaPlayer(id))
+        return player->getPlayerDuration();
     return -1;
 }
 

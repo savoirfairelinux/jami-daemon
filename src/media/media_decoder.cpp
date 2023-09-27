@@ -24,6 +24,7 @@
 #include "media_decoder.h"
 #include "media_device.h"
 #include "media_buffer.h"
+#include "media_const.h"
 #include "media_io_handle.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
@@ -258,6 +259,73 @@ MediaDemuxer::emitFrame(bool isAudio)
     } else {
         pushFrameFrom(videoBuffer_, isAudio, videoBufferMutex_);
     }
+}
+
+std::pair<std::vector<MediaAttribute>, std::string>
+MediaDemuxer::validateMediaTypes(const std::vector<MediaAttribute>& medias)
+{
+    std::pair<std::vector<MediaAttribute>, std::string> newMedias {{}, {}};
+    for (size_t i = 0; i < medias.size(); i++) {
+        auto media = medias.at(i);
+        if (!media.enabled_)
+            continue;
+        auto resource = media.sourceUri_;
+        if (resource.empty()) {
+            newMedias.first.emplace_back(media);
+            continue;
+        }
+
+        // Supported MRL schemes
+        static const std::string sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+
+        const auto pos = resource.find(sep);
+        if (pos == std::string::npos)
+            continue;
+
+        const auto prefix = resource.substr(0, pos);
+        if ((pos + sep.size()) >= resource.size())
+            continue;
+
+        const auto suffix = resource.substr(pos + sep.size());
+
+        if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
+            AVFormatContext* decFormatCtx = avformat_alloc_context();
+
+            // Open
+            if (avformat_open_input(&decFormatCtx, suffix.c_str(), NULL, NULL) != 0) {
+                avformat_close_input(&decFormatCtx);
+                avformat_free_context(decFormatCtx);
+                continue;
+            }
+            // Retrieve stream information
+            if (avformat_find_stream_info(decFormatCtx, NULL) < 0) {
+                avformat_close_input(&decFormatCtx);
+                avformat_free_context(decFormatCtx);
+                continue;
+            }
+
+            if (media.type_ == MEDIA_VIDEO) {
+                // Find the first video stream
+                if (av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0)
+                    >= 0) {
+                    newMedias.first.emplace_back(media);
+                    newMedias.second = resource;
+                }
+            }
+            if (media.type_ == MEDIA_AUDIO) {
+                // Find the first audio stream
+                //if (av_find_best_stream(decFormatCtx, AVMediaType::AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0)
+                //    >= 0) {
+                //    newMedias.first.emplace_back(media);
+                //    newMedias.second = resource;
+                //}
+            }
+            avformat_close_input(&decFormatCtx);
+            avformat_free_context(decFormatCtx);
+        } else
+            newMedias.first.emplace_back(media);
+    }
+    return newMedias;
 }
 
 void

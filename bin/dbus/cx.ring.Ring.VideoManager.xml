@@ -160,6 +160,92 @@
             </arg>
         </method>
 
+        <method name="createMediaPlayer" TP:name-for-bindings="createMediaPlayer">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Create a media player</tp:docstring>
+            <arg type="s" name="path" direction="in">
+                <tp:docstring>File path</tp:docstring>
+            </arg>
+            <arg type="s" name="id" direction="out">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="closeMediaPlayer" tp:name-for-bindings="closeMediaPlayer">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Close media player</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <arg type="b" name="state" direction="out">
+                <tp:docstring>true if successfully closed</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="pausePlayer" tp:name-for-bindings="pausePlayer">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Pause media player</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <arg type="b" name="pause" direction="in">
+                <tp:docstring>true if wishes to pause player</tp:docstring>
+            </arg>
+            <arg type="b" name="state" direction="out">
+                <tp:docstring>true if successfully paused</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="mutePlayerAudio" tp:name-for-bindings="mutePlayerAudio">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Mute  media player audio</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <arg type="b" name="mute" direction="in">
+                <tp:docstring>true if wishes to pause player</tp:docstring>
+            </arg>
+            <arg type="b" name="state" direction="out">
+                <tp:docstring>true if successfully muted</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="playerSeekToTime" tp:name-for-bindings="playerSeekToTime">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Seek media player position</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <arg type="i" name="time" direction="in">
+                <tp:docstring>timestamp</tp:docstring>
+            </arg>
+            <arg type="b" name="state" direction="out">
+                <tp:docstring>true if successfully seeked</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getPlayerPosition" tp:name-for-bindings="getPlayerPosition">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Get media player position</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <arg type="x" name="position" direction="out">
+                <tp:docstring>position in timestamp</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getPlayerDuration" tp:name-for-bindings="getPlayerDuration">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Get media player position</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <arg type="x" name="duration" direction="out">
+                <tp:docstring>duration in timestamp</tp:docstring>
+            </arg>
+        </method>
+
         <signal name="deviceEvent" tp:name-for-bindings="deviceEvent">
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>
@@ -193,6 +279,18 @@
             </arg>
             <arg type="b" name="isMixer">
               <tp:docstring>Whether or not this texture belongs to a video mixer or is a single texture</tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="fileOpened" tp:name-for-bindings="fileOpened">
+            <tp:added version="13.10.0"/>
+            <tp:docstring>Notify clients of a new media player infos</tp:docstring>
+            <arg type="s" name="playerId">
+                <tp:docstring>Media player id</tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
+            <arg type="a{ss}" name="info">
+                <tp:docstring>Info from the media player</tp:docstring>
             </arg>
         </signal>
     </interface>
