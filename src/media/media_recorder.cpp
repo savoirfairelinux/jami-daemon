@@ -276,7 +276,16 @@ MediaRecorder::addStream(const MediaStream& ms)
         it = streams_.insert(std::make_pair(ms.name, std::move(streamPtr))).first;
         JAMI_LOG("[Recorder: {:p}] Recorder input #{}: {:s}", fmt::ptr(this), streams_.size(), ms.name);
     } else {
-        JAMI_LOG("[Recorder: {:p}] Recorder already has '{:s}' as input", fmt::ptr(this), ms.name);
+        if (ms == it->second->info)
+            JAMI_LOG("[Recorder: {:p}] Recorder already has '{:s}' as input", fmt::ptr(this), ms.name);
+        else {
+            it->second
+                = std::make_unique<StreamObserver>(ms,
+                                                   [this,
+                                                    ms](const std::shared_ptr<MediaFrame>& frame) {
+                                                       onFrame(ms.name, frame);
+                                                   });
+        }
     }
 
     if (ms.isVideo)
@@ -354,15 +363,17 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
                                              ms.timeBase,
                                              static_cast<AVRounding>(AV_ROUND_NEAR_INF
                                                                      | AV_ROUND_PASS_MINMAX));
-    std::unique_ptr<MediaFrame> filteredFrame;
+    std::vector<std::unique_ptr<MediaFrame>> filteredFrames;
 #ifdef ENABLE_VIDEO
     if (ms.isVideo && videoFilter_ && outputVideoFilter_) {
         std::lock_guard<std::mutex> lk(mutexFilterVideo_);
-        videoFilter_->feedInput(clone->pointer(), name);
+                videoFilter_->feedInput(clone->pointer(), name);
         auto videoFilterOutput = videoFilter_->readOutput();
         if (videoFilterOutput) {
             outputVideoFilter_->feedInput(videoFilterOutput->pointer(), "input");
-            filteredFrame = outputVideoFilter_->readOutput();
+            while (auto fFrame = outputVideoFilter_->readOutput()) {
+                filteredFrames.emplace_back(std::move(fFrame));
+            }
         }
     } else if (audioFilter_ && outputAudioFilter_) {
 #endif // ENABLE_VIDEO
@@ -371,15 +382,15 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         auto audioFilterOutput = audioFilter_->readOutput();
         if (audioFilterOutput) {
             outputAudioFilter_->feedInput(audioFilterOutput->pointer(), "input");
-            filteredFrame = outputAudioFilter_->readOutput();
+            filteredFrames.emplace_back(outputAudioFilter_->readOutput());
         }
 #ifdef ENABLE_VIDEO
     }
 #endif // ENABLE_VIDEO
 
-    if (filteredFrame) {
+    for (auto& fFrame : filteredFrames) {
         std::lock_guard<std::mutex> lk(mutexFrameBuff_);
-        frameBuff_.emplace_back(std::move(filteredFrame));
+        frameBuff_.emplace_back(std::move(fFrame));
         cv_.notify_one();
     }
 }
@@ -543,9 +554,11 @@ MediaRecorder::setupVideoOutput()
     if (scaledHeight > 720)
         scaleFilter += ",scale=-2:720";
 
-    ret = outputVideoFilter_->initialize(
-        "[input]" + scaleFilter + ",pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=pix_fmts=yuv420p,fps=30",
-        {secondaryFilter});
+    std::ostringstream f;
+    f << "[input]" << scaleFilter
+      << ",pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=pix_fmts=yuv420p,fps=30";
+
+    ret = outputVideoFilter_->initialize(f.str(), {secondaryFilter});
 
     if (ret < 0) {
         JAMI_ERR() << "Failed to initialize output video filter";
@@ -569,17 +582,17 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
     case 1: {
         auto p = peers[0];
         const constexpr int minHeight = 720;
-        const auto newFps = std::max(p.frameRate, local.frameRate);
         const bool needScale = (p.height < minHeight);
         const int newHeight = (needScale ? minHeight : p.height);
 
         // NOTE -2 means preserve aspect ratio and have the new number be even
         if (needScale)
-            v << "[" << p.name << "] fps=" << newFps << ", scale=-2:" << newHeight << " [v:m]; ";
+            v << "[" << p.name << "] fps=30, scale=-2:" << newHeight
+              << " [v:m]; ";
         else
-            v << "[" << p.name << "] fps=" << newFps << " [v:m]; ";
+            v << "[" << p.name << "] fps=30 [v:m]; ";
 
-        v << "[" << local.name << "] fps=" << newFps << ", scale=-2:" << newHeight / 5
+        v << "[" << local.name << "] fps=30, scale=-2:" << newHeight / 5
           << " [v:o]; ";
 
         v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h"
