@@ -723,7 +723,7 @@ remove(const std::filesystem::path& path, bool erase)
 }
 
 int64_t
-size(const std::string& path)
+size(const std::filesystem::path& path)
 {
     int64_t size = 0;
     try {
