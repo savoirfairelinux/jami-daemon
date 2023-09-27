@@ -41,10 +41,11 @@ public:
     bool seekToTime(int64_t time);
     int64_t getPlayerPosition() const;
     bool isPaused() const;
+    void setAutoRestart(bool state) { autoRestart_ = state; }
 
 private:
     std::string path_;
-    std::string id_;
+    bool autoRestart_ {false};
 
     // media inputs
 #ifdef ENABLE_VIDEO

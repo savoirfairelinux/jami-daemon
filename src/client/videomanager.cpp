@@ -676,7 +676,7 @@ getVideoDeviceMonitor()
 }
 
 std::shared_ptr<video::VideoInput>
-getVideoInput(const std::string& id, video::VideoInputMode inputMode)
+getVideoInput(const std::string& id, video::VideoInputMode inputMode, const std::string& sink)
 {
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.videoMutex);
@@ -687,7 +687,7 @@ getVideoInput(const std::string& id, video::VideoInputMode inputMode)
         }
     }
 
-    auto input = std::make_shared<video::VideoInput>(inputMode, id);
+    auto input = std::make_shared<video::VideoInput>(inputMode, id, sink);
     vmgr.videoInputs[id] = input;
     return input;
 }
@@ -746,13 +746,14 @@ getMediaPlayer(const std::string& id)
 std::string
 createMediaPlayer(const std::string& path)
 {
-    auto player = std::make_shared<MediaPlayer>(path);
-    if (!player->isInputValid()) {
-        return "";
+    auto player = getMediaPlayer(path);
+    if (!player) {
+        player = std::make_shared<MediaPlayer>(path);
+    } else {
+        return path;
     }
-    auto playerId = player.get()->getId();
-    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
-    return playerId;
+    Manager::instance().getVideoManager().mediaPlayers[path] = player;
+    return path;
 }
 
 bool
