@@ -75,7 +75,7 @@ std::shared_ptr<video::VideoInput> getVideoInput(
     video::VideoInputMode inputMode = video::VideoInputMode::Undefined,
     const std::string& sink = "");
 #endif
-std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
+std::shared_ptr<AudioInput> getAudioInput(const std::string& device, const std::string id = {});
 std::string createMediaPlayer(const std::string& path);
 std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
 bool pausePlayer(const std::string& id, bool pause);

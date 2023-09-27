@@ -34,7 +34,6 @@ namespace jami {
 class CongestionControl;
 class Conference;
 class MediaRecorder;
-class MediaPlayer;
 } // namespace jami
 
 namespace jami {

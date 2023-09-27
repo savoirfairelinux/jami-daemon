@@ -2633,6 +2633,20 @@ SIPCall::getMediaAttributeList() const
     return mediaList;
 }
 
+std::map<std::string, bool>
+SIPCall::getAudioStreams() const
+{
+    std::map<std::string, bool> audioMedias {};
+    auto medias = getMediaAttributeList();
+    for (const auto& media : medias) {
+        if (media.type_ == MEDIA_AUDIO) {
+            auto label = fmt::format("{}_{}", getCallId(), media.label_);
+            audioMedias.emplace(label, media.muted_);
+        }
+    }
+    return audioMedias;
+}
+
 void
 SIPCall::onMediaNegotiationComplete()
 {
@@ -3133,9 +3147,14 @@ SIPCall::exitConference()
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
-    if (hasAudio && !isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)) {
+    if (hasAudio) {
         auto& rbPool = Manager::instance().getRingBufferPool();
-        rbPool.bindCallID(getCallId(), RingBufferPool::DEFAULT_ID);
+        auto medias = getAudioStreams();
+        for (const auto& media : medias) {
+            if (!media.second) {
+                rbPool.bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
+            }
+        }
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
 #ifdef ENABLE_VIDEO
