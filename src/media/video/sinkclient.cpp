@@ -282,6 +282,13 @@ SinkClient::start() noexcept
                 return true;
             shm_ = std::make_shared<ShmHolder>();
             JAMI_DBG("[Sink:%p] Shared memory [%s] created", this, openedName().c_str());
+            if (width_ > 0 && height_ > 0) {
+                emitSignal<libjami::VideoSignal::DecodingStarted>(getId(),
+                                                                openedName(),
+                                                                width_,
+                                                                height_,
+                                                                mixer_);
+            }
         } catch (const std::runtime_error& e) {
             JAMI_ERR("[Sink:%p] Failed to create shared memory: %s", this, e.what());
         }
