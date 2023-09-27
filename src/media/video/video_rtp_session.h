@@ -34,6 +34,7 @@ namespace jami {
 class CongestionControl;
 class Conference;
 class MediaRecorder;
+class MediaPlayer;
 } // namespace jami
 
 namespace jami {
@@ -130,6 +131,7 @@ private:
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoInput> videoLocal_;
+    std::shared_ptr<MediaPlayer> mediaPlayer_;
     uint16_t initSeqVal_ = 0;
 
     std::function<void(void)> requestKeyFrameCallback_;

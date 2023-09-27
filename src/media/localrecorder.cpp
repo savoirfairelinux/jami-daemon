@@ -85,7 +85,7 @@ LocalRecorder::startRecording()
 #ifdef ENABLE_VIDEO
     // video recording
     if (!isAudioOnly_) {
-        videoInput_ = std::static_pointer_cast<video::VideoInput>(getVideoInput(inputUri_));
+                videoInput_ = std::static_pointer_cast<video::VideoInput>(getVideoInput(inputUri_));
         if (videoInput_) {
             videoInput_->attach(recorder_->addStream(videoInput_->getInfo()));
         } else {
