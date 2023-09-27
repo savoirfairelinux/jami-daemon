@@ -526,6 +526,8 @@ private:
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
+
+    std::string mediaPlayerId_ {};
 };
 
 // Helpers
