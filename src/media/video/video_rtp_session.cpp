@@ -28,6 +28,7 @@
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"
+#include "media_const.h"
 #ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"
 #include "plugin/jamipluginmanager.h"
@@ -136,14 +137,13 @@ VideoRtpSession::startSender()
         }
 
         if (not conference_) {
-            auto input = getVideoInput(input_);
-            videoLocal_ = input;
-            if (input) {
+            videoLocal_ = getVideoInput(input_);
+            if (videoLocal_) {
                 videoLocal_->setRecorderCallback(
                     [this](const MediaStream& ms) {
                         attachLocalRecorder(ms);
                     });
-                auto newParams = input->getParams();
+                auto newParams = videoLocal_->getParams();
                 try {
                     if (newParams.valid()
                         && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
@@ -162,9 +162,9 @@ VideoRtpSession::startSender()
             }
 
 #if (defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
-            if (auto input1 = std::static_pointer_cast<VideoInput>(videoLocal_)) {
-                input1->setupSink();
-                input1->setFrameSize(localVideoParams_.width, localVideoParams_.height);
+            if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
+                input->setupSink();
+                input->setFrameSize(localVideoParams_.width, localVideoParams_.height);
             }
 #endif
         }
