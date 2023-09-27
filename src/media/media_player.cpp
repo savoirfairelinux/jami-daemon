@@ -42,11 +42,6 @@ MediaPlayer::MediaPlayer(const std::string& resource)
 
     path_ = suffix;
 
-    if (access(suffix.c_str(), R_OK) != 0) {
-        JAMI_ERR() << "File '" << path_ << "' not available";
-        return;
-    }
-
     audioInput_ = jami::getAudioInput(path_);
     audioInput_->setPaused(paused_);
 #ifdef ENABLE_VIDEO

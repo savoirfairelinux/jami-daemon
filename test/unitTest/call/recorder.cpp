@@ -80,7 +80,6 @@ public:
     std::string recordDir {};
     std::string recordedFile {};
     std::string playerId {};
-    std::shared_ptr<MediaPlayer> player {};
     CallData bobCall {};
 
     std::mutex mtx;
@@ -121,7 +120,7 @@ RecorderTest::setUp()
     bobId = actors["bob"];
     bobCall.reset();
     playerId = jami::createMediaPlayer(videoPath);
-    player = jami::getMediaPlayer(playerId);
+    auto player = jami::getMediaPlayer(playerId);
     player->setAutoRestart(true);
     player->pause(false);
 
@@ -133,7 +132,6 @@ RecorderTest::tearDown()
 {
     libjami::setIsAlwaysRecording(false);
     dhtnet::fileutils::removeAll(recordDir);
-    player.reset();
 
     wait_for_removal_of({aliceId, bobId});
 }
