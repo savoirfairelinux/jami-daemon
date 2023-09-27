@@ -131,9 +131,10 @@ RecorderTest::setUp()
 void
 RecorderTest::tearDown()
 {
+    player.reset();
+    jami::closeMediaPlayer(playerId);
     libjami::setIsAlwaysRecording(false);
     dhtnet::fileutils::removeAll(recordDir);
-    player.reset();
 
     wait_for_removal_of({aliceId, bobId});
 }
