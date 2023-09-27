@@ -142,6 +142,7 @@ public:
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
+    std::map<std::string, bool> getAudioStreams() const override;
     void restartMediaSender() override;
     std::shared_ptr<SystemCodecInfo> getAudioCodec() const override;
     std::shared_ptr<SystemCodecInfo> getVideoCodec() const override;

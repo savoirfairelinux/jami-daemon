@@ -545,8 +545,15 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
-        for (const auto& p : participants)
-            base_.getRingBufferPool().flush(p);
+        for (const auto& p : participants) {
+            if (auto call = base_.getCallFromCallID(p)) {
+                auto medias = call->getAudioStreams();
+                for (const auto& media : medias) {
+                    JAMI_DBG("[call:%s] Remove local audio", (media.first).c_str());
+                    base_.getRingBufferPool().flush(media.first);
+                }
+            }
+        }
 
         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
     } else if (n == 1) {
@@ -689,7 +696,11 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 
     JAMI_DEBUG("[call:{}] bind to conference {} (callState={})", callId, confId, state);
 
-    base_.getRingBufferPool().unBindAll(callId);
+    auto medias = call.getAudioStreams();
+    for (const auto& media : medias) {
+        JAMI_DBG("[call:%s] Remove local audio", (media.first).c_str());
+        base_.getRingBufferPool().unBindAll(media.first);
+    }
 
     conf.addParticipant(callId);
 
@@ -1696,7 +1707,12 @@ Manager::addAudio(Call& call)
         JAMI_DBG("[call:%s] Attach audio", callId.c_str());
 
         // bind to main
-        getRingBufferPool().bindCallID(callId, RingBufferPool::DEFAULT_ID);
+        auto medias = call.getAudioStreams();
+        for (const auto& media : medias) {
+            JAMI_DBG("[call:%s] Attach audio", (media.first).c_str());
+            getRingBufferPool().bindRingbuffers(media.first,
+                                            RingBufferPool::DEFAULT_ID);
+        }
         auto oldGuard = std::move(call.audioGuard);
         call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
 
@@ -1715,8 +1731,12 @@ Manager::removeAudio(Call& call)
 {
     const auto& callId = call.getCallId();
     JAMI_DBG("[call:%s] Remove local audio", callId.c_str());
-    getRingBufferPool().unBindAll(callId);
-    call.audioGuard.reset();
+
+    auto medias = call.getAudioStreams();
+    for (const auto& media : medias) {
+        JAMI_DBG("[call:%s] Remove local audio", (media.first).c_str());
+        getRingBufferPool().unBindAll(media.first);
+    }
 }
 
 ScheduledExecutor&

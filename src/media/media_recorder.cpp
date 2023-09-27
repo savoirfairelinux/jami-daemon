@@ -609,59 +609,24 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
 void
 MediaRecorder::setupAudioOutput()
 {
-    MediaStream encoderStream, peer, local, mixer;
-    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
-        return !pair.second->info.isVideo
-               && pair.second->info.name.find("remote") != std::string::npos;
-    });
-    if (it != streams_.end())
-        peer = it->second->info;
-
-    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
-        return !pair.second->info.isVideo
-               && pair.second->info.name.find("local") != std::string::npos;
-    });
-    if (it != streams_.end())
-        local = it->second->info;
-
-    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
-        return !pair.second->info.isVideo
-               && pair.second->info.name.find("mixer") != std::string::npos;
-    });
-    if (it != streams_.end())
-        local = it->second->info;
+    MediaStream encoderStream;
 
     // resample to common audio format, so any player can play the file
     audioFilter_.reset(new MediaFilter);
     int ret = -1;
-    int streams = peer.isValid() + local.isValid() + mixer.isValid();
-    switch (streams) {
-    case 0: {
+
+    if (streams_.empty()) {
         JAMI_WARN() << "Trying to record a audio stream but none is valid";
         return;
     }
-    case 1: {
-        MediaStream inputStream;
-        if (peer.isValid())
-            inputStream = peer;
-        else if (local.isValid())
-            inputStream = local;
-        else if (mixer.isValid())
-            inputStream = mixer;
-        else {
-            JAMI_ERR("Trying to record a stream but none is valid");
-            break;
-        }
-        ret = audioFilter_->initialize(buildAudioFilter({}, inputStream), {inputStream});
-        break;
+
+    std::vector<MediaStream> peers {};
+    for (const auto& media : streams_) {
+        if (!media.second->info.isVideo && media.second->info.isValid())
+            peers.emplace_back(media.second->info);
     }
-    case 2: // mix both audio streams
-        ret = audioFilter_->initialize(buildAudioFilter({peer}, local), {peer, local});
-        break;
-    default:
-        JAMI_ERR() << "Recording more than 2 audio streams is not supported";
-        break;
-    }
+
+    ret = audioFilter_->initialize(buildAudioFilter(peers), peers);
 
     if (ret < 0) {
         JAMI_ERR() << "Failed to initialize audio filter";
@@ -679,9 +644,9 @@ MediaRecorder::setupAudioOutput()
     }
 
     outputAudioFilter_.reset(new MediaFilter);
-    ret = outputAudioFilter_
-            ->initialize("[input]aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo",
-                                       {secondaryFilter});
+    ret = outputAudioFilter_->initialize(
+        "[input]aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo",
+        {secondaryFilter});
 
     if (ret < 0) {
         JAMI_ERR() << "Failed to initialize output audio filter";
@@ -691,24 +656,14 @@ MediaRecorder::setupAudioOutput()
 }
 
 std::string
-MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers,
-                                const MediaStream& local) const
+MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers) const
 {
     std::string baseFilter = "aresample=osr=48000:ochl=stereo:osf=s16";
     std::ostringstream a;
 
-    switch (peers.size()) {
-    case 0:
-        a << "[" << local.name << "] " << baseFilter;
-        break;
-    default:
-        a << "[" << local.name << "] ";
-        for (const auto& ms : peers)
-            a << "[" << ms.name << "] ";
-        a << " amix=inputs=" << peers.size() + (local.isValid() ? 1 : 0) << ", " << baseFilter;
-        break;
-    }
-
+    for (const auto& ms : peers)
+        a << "[" << ms.name << "] ";
+    a << " amix=inputs=" << peers.size() << ", " << baseFilter;
     return a.str();
 }
 
