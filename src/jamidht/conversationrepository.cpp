@@ -3549,11 +3549,11 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
     auto bannedPath = repoPath / "banned";
     auto devicesPath = repoPath / "devices";
     // Move from device or members file into banned
-    auto crtStr = (type != "invited" ? ".crt" : "");
-    auto originFilePath = repoPath / type / uri / crtStr;
+    auto crtStr = uri + (type != "invited" ? ".crt" : "");
+    auto originFilePath = repoPath / type / crtStr;
 
     auto destPath = bannedPath / type;
-    auto destFilePath = destPath / uri / crtStr;
+    auto destFilePath = destPath / crtStr;
     if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort resolving vote", destPath);
         return false;
@@ -3603,10 +3603,10 @@ ConversationRepository::Impl::resolveUnban(const std::string_view type, const st
     auto repo = repository();
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto bannedPath = repoPath / "banned";
-    auto crtStr = (type != "invited" ? ".crt" : "");
-    auto originFilePath = bannedPath / type / uri / crtStr;
+    auto crtStr = uri + (type != "invited" ? ".crt" : "");
+    auto originFilePath = bannedPath / type / crtStr;
     auto destPath = repoPath / type;
-    auto destFilePath = destPath / uri / crtStr;
+    auto destFilePath = destPath / crtStr;
     if (!dhtnet::fileutils::recursive_mkdir(destPath, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort resolving vote", destPath);
         return false;
