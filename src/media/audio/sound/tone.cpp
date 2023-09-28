@@ -97,8 +97,7 @@ Tone::genBuffer(std::string_view definition)
     if (definition.empty())
         return;
 
-    auto [total_samples, frequencies] = parseDefinition(definition, buffer_->sample_rate);
-
+    auto [total_samples, frequencies] = parseDefinition(definition, format_.sample_rate);
     buffer_->nb_samples = total_samples;
     buffer_->format = format_.sampleFormat;
     buffer_->sample_rate = format_.sample_rate;
@@ -107,13 +106,13 @@ Tone::genBuffer(std::string_view definition)
 
     size_t outPos = 0;
     for (auto& [low, high, count] : frequencies) {
-        genSin(buffer_.get(), outPos, low, high);
+        genSin(buffer_.get(), outPos, count, low, high);
         outPos += count;
     }
 }
 
 void
-Tone::genSin(AVFrame* buffer, unsigned outPos, unsigned lowFrequency, unsigned highFrequency)
+Tone::genSin(AVFrame* buffer, size_t outPos, unsigned nb_samples, unsigned lowFrequency, unsigned highFrequency)
 {
     static constexpr auto PI_2 = 3.141592653589793238462643383279502884L * 2.0L;
     const double sr = (double) buffer->sample_rate;
@@ -121,16 +120,15 @@ Tone::genSin(AVFrame* buffer, unsigned outPos, unsigned lowFrequency, unsigned h
     const double dx_l = sr ? PI_2 * highFrequency / sr : 0.0;
     static constexpr double DATA_AMPLITUDE_S16 = 2048;
     static constexpr double DATA_AMPLITUDE_FLT = 0.0625;
-    size_t nb = buffer->nb_samples;
 
     if (buffer->format == AV_SAMPLE_FMT_S16 || buffer->format == AV_SAMPLE_FMT_S16P) {
         int16_t* ptr = ((int16_t*) buffer->data[0]) + outPos;
-        for (size_t t = 0; t < nb; t++) {
+        for (size_t t = 0; t < nb_samples; t++) {
             ptr[t] = DATA_AMPLITUDE_S16 * (sin(t * dx_h) + sin(t * dx_l));
         }
     } else if (buffer->format == AV_SAMPLE_FMT_FLT || buffer->format == AV_SAMPLE_FMT_FLTP) {
         float* ptr = ((float*) buffer->data[0]) + outPos;
-        for (size_t t = 0; t < nb; t++) {
+        for (size_t t = 0; t < nb_samples; t++) {
             ptr[t] = (sin(t * dx_h) + sin(t * dx_l)) * DATA_AMPLITUDE_FLT;
         }
     } else {
