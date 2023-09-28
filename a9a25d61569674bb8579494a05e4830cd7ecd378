@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "73857888_5b58c1ca",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-09-28T15:12:45Z",
+      "side": 1,
+      "message": "Not sure what this function does. MediaDemuxer already has logic to enumerate streams in a file (selectStream etc) without needing to open the file a second time.",
+      "range": {
+        "startLine": 265,
+        "startChar": 14,
+        "endLine": 265,
+        "endChar": 32
+      },
+      "revId": "a9a25d61569674bb8579494a05e4830cd7ecd378",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a69c8c85_11f38846",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 1
