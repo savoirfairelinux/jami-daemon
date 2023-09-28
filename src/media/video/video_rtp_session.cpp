@@ -94,6 +94,13 @@ void
 VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescription& receive)
 {
     BaseType::updateMedia(send, receive);
+    // adjust send->codec bitrate info for higher video resolutions
+    auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
+    if (codecVideo) {
+        auto const pixels = localVideoParams_.height * localVideoParams_.width;
+        codecVideo->bitrate = std::max((unsigned int)(pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+        codecVideo->maxBitrate = std::max((unsigned int)(pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+    }
     setupVideoBitrateInfo();
 }
 
