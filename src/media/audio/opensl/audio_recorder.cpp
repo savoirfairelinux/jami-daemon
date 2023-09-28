@@ -202,7 +202,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
 
     silentBuf_ = {(format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize};
     silentBuf_.size_ = silentBuf_.cap_;
-    memset(silentBuf_.buf_, 0, silentBuf_.cap_);
+    av_samples_set_silence(&silentBuf_.buf_, 0, (int)bufSize, (int)sampleInfo_.nb_channels, sampleInfo_.sampleFormat);
 }
 
 bool

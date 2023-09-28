@@ -65,6 +65,7 @@ AudioLoop::getNext(AVFrame* output, bool mute)
 
     if (buf_samples == 0) {
         JAMI_ERR("Audio loop size is 0");
+        av_samples_set_silence(output->data, 0, output->nb_samples, format_.nb_channels, format_.sampleFormat);
         return;
     } else if (pos >= buf_samples) {
         JAMI_ERR("Invalid loop position %zu", pos);
