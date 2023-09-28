@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "59e52d2d_31cd2dfb",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 726,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-09-28T10:12:56Z",
+      "side": 1,
+      "message": "break CI",
+      "range": {
+        "startLine": 726,
+        "startChar": 5,
+        "endLine": 726,
+        "endChar": 17
+      },
+      "revId": "b059518da775007ecac1514ba3f2f344f99a54c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
