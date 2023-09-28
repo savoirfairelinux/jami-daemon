@@ -89,8 +89,6 @@ std::vector<uint8_t> loadFile(const std::filesystem::path& path,
 std::string loadTextFile(const std::filesystem::path& path,
                          const std::filesystem::path& default_dir = {});
 
-bool copy(const std::string& src, const std::string& dest);
-
 void saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t mode = 0644);
 inline void
 saveFile(const std::filesystem::path& path, const std::vector<uint8_t>& data, mode_t mode = 0644)
