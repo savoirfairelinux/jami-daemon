@@ -53,7 +53,7 @@ public:
      * @param frequency2	The second frequency
      * @param nb the number of samples to generate
      */
-    static void genSin(AVFrame* buffer, unsigned outPos, unsigned frequency1, unsigned frequency2);
+    static void genSin(AVFrame* buffer, size_t outPos, unsigned nb_samples, unsigned frequency1, unsigned frequency2);
 
 private:
     /**

@@ -116,9 +116,9 @@ DTMFGenerator::fillToneBuffer(int index)
     ptr->format = tone_.getFormat().sampleFormat;
     ptr->sample_rate = sampleRate_;
     ptr->channel_layout = AV_CH_LAYOUT_MONO;
-    av_channel_layout_from_mask(&ptr->ch_layout, AV_CH_LAYOUT_MONO); 
+    av_channel_layout_from_mask(&ptr->ch_layout, AV_CH_LAYOUT_MONO);
     av_frame_get_buffer(ptr.get(), 0);
-    tone_.genSin(ptr.get(), 0, tones_[index].higher, tones_[index].lower);
+    tone_.genSin(ptr.get(), 0, ptr->nb_samples, tones_[index].higher, tones_[index].lower);
     return ptr;
 }
 
