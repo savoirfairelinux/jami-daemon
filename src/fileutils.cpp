@@ -264,12 +264,6 @@ loadTextFile(const std::filesystem::path& path, const std::filesystem::path& def
     return buffer;
 }
 
-bool
-copy(const std::string& src, const std::string& dest)
-{
-    return std::filesystem::copy_file(src, dest);
-}
-
 void
 saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
 {
