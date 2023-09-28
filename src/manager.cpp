@@ -2076,7 +2076,7 @@ Manager::callFailure(Call& call)
     }
 
     pimpl_->removeWaitingCall(call.getCallId());
-    if (not incomingCallsWaiting())
+    if (not call.isSubcall() && not incomingCallsWaiting())
         stopTone();
     removeAudio(call);
 }
