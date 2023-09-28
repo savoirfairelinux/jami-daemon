@@ -35,6 +35,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1d16645_56753a6f",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-28T21:54:43Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "2d22cf83_3db8fec5",
+      "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "31b4b434_f5866fb9",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-28T21:54:43Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "088f5290_e0423f02",
+      "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f6790fdf_86d4cb14",
@@ -66,6 +102,24 @@
       "side": 0,
       "message": "Caused by a failure to retrieve the callMutex_ in getMediaAttributeList at sipcall.cpp:2596 from the muteMedia call.",
       "parentUuid": "f6790fdf_86d4cb14",
+      "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "32e2dc02_731e54e1",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 930
+      },
+      "writtenOn": "2023-09-28T21:54:43Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "2eb9c656_b32af52d",
       "revId": "3bbac8728399d1d89eb21cae8eed2a465b1aecb3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
