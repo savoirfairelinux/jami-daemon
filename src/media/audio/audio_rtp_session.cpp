@@ -43,6 +43,7 @@
 #include "manager.h"
 #include "observer.h"
 #include <sstream>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 
@@ -173,7 +174,12 @@ AudioRtpSession::startReceiver()
                                                 receive_.receiving_sdp,
                                                 mtu_));
 
-    receiveThread_->setRecorderCallback([this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+    receiveThread_->setRecorderCallback([w=weak()](const MediaStream& ms) {
+        dht::ThreadPool::io().run([w=std::move(w), ms]() {
+            if (auto shared = w.lock())
+                shared->attachRemoteRecorder(ms);
+        });
+    });
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
@@ -255,8 +261,10 @@ AudioRtpSession::setMuted(bool muted, Direction dir)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (dir == Direction::SEND) {
         muteState_ = muted;
-        if (audioInput_)
+        if (audioInput_) {
+
             audioInput_->setMuted(muted);
+        }
     } else {
         if (receiveThread_) {
             auto ms = receiveThread_->getInfo();
@@ -366,6 +374,7 @@ AudioRtpSession::processRtcpChecker()
 void
 AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -376,6 +385,7 @@ AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !audioInput_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -390,10 +400,20 @@ AudioRtpSession::initRecorder()
         return;
     if (receiveThread_)
         receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+            [w=weak()](const MediaStream& ms) {
+                dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachRemoteRecorder(ms);
+                });
+        });
     if (audioInput_)
         audioInput_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+            [w=weak()](const MediaStream& ms) {
+                dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachLocalRecorder(ms);
+                });
+        });
 }
 
 void

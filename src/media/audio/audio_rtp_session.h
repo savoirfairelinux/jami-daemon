@@ -47,7 +47,7 @@ struct RTCPInfo
     float latency;
 };
 
-class AudioRtpSession : public RtpSession
+class AudioRtpSession : public RtpSession, public std::enable_shared_from_this<AudioRtpSession>
 {
 public:
     AudioRtpSession(const std::string& callId,
@@ -96,6 +96,7 @@ private:
 
     void attachRemoteRecorder(const MediaStream& ms);
     void attachLocalRecorder(const MediaStream& ms);
+    std::weak_ptr<AudioRtpSession> weak() { return std::static_pointer_cast<AudioRtpSession>(shared_from_this()); }
 };
 
 } // namespace jami
