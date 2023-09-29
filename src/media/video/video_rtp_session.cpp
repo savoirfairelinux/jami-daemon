@@ -221,6 +221,9 @@ VideoRtpSession::startSender()
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
+        // Block reads to received feedback packets
+        if(socketPair_)
+            socketPair_->setReadBlockingMode(true);
     }
 }
 
@@ -242,7 +245,7 @@ VideoRtpSession::restartSender()
 }
 
 void
-VideoRtpSession::stopSender()
+VideoRtpSession::stopSender(bool forceStopSocket)
 {
     // Concurrency protection must be done by caller.
 
@@ -259,8 +262,13 @@ VideoRtpSession::stopSender()
         sender_.reset();
     }
 
-    if (socketPair_)
-        socketPair_->stopSendOp();
+    if (socketPair_) {
+        bool const isReceivingVideo = receive_.enabled && !receive_.onHold;
+        if(forceStopSocket || !isReceivingVideo) {
+            socketPair_->stopSendOp();
+            socketPair_->setReadBlockingMode(false);
+        }
+    }
 }
 
 void
@@ -319,7 +327,7 @@ VideoRtpSession::startReceiver()
 }
 
 void
-VideoRtpSession::stopReceiver()
+VideoRtpSession::stopReceiver(bool forceStopSocket)
 {
     // Concurrency protection must be done by caller.
 
@@ -341,8 +349,13 @@ VideoRtpSession::stopReceiver()
     // We need to disable the read operation, otherwise the
     // receiver thread will block since the peer stopped sending
     // RTP packets.
-    if (socketPair_)
-        socketPair_->setReadBlockingMode(false);
+    bool const isSendingVideo = send_.enabled && !send_.onHold;
+    if (socketPair_) {
+        if (forceStopSocket || !isSendingVideo) {
+            socketPair_->setReadBlockingMode(false);
+            socketPair_->stopSendOp();
+        }
+    }
 
     auto ms = receiveThread_->getInfo();
     if (auto ob = recorder_->getStream(ms.name)) {
@@ -350,7 +363,8 @@ VideoRtpSession::stopReceiver()
         recorder_->removeStream(ms);
     }
 
-    receiveThread_->stopLoop();
+    if(forceStopSocket || !isSendingVideo)
+        receiveThread_->stopLoop();
     receiveThread_->stopSink();
 }
 
@@ -416,8 +430,8 @@ VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    stopSender();
-    stopReceiver();
+    stopSender(true);
+    stopReceiver(true);
 
     if (socketPair_)
         socketPair_->interrupt();
