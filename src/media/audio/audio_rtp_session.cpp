@@ -43,6 +43,7 @@
 #include "manager.h"
 #include "observer.h"
 #include <sstream>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 
@@ -53,6 +54,7 @@ AudioRtpSession::AudioRtpSession(const std::string& callId,
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 
 {
+    JAMI_ERROR("@@@ CREATE {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
     recorder_ = rec;
     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
 
@@ -93,6 +95,7 @@ AudioRtpSession::startSender()
         audioInput_->detach(sender_.get());
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
+    JAMI_ERROR("@@@ START {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
     audioInput_ = jami::getAudioInput(callId_);
     audioInput_->setRecorderCallback([this](const MediaStream& ms) { attachLocalRecorder(ms); });
     audioInput_->setMuted(muteState_);
@@ -173,7 +176,12 @@ AudioRtpSession::startReceiver()
                                                 receive_.receiving_sdp,
                                                 mtu_));
 
-    receiveThread_->setRecorderCallback([this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+    receiveThread_->setRecorderCallback([w=weak()](const MediaStream& ms) {
+        dht::ThreadPool::io().run([w=std::move(w), ms]() {
+            if (auto shared = w.lock())
+                shared->attachRemoteRecorder(ms);
+        });
+    });
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
@@ -233,6 +241,7 @@ AudioRtpSession::stop()
     if (socketPair_)
         socketPair_->setReadBlockingMode(false);
 
+    JAMI_ERROR("@@@ STOP {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
     receiveThread_->stopReceiver();
 
     if (audioInput_)
@@ -247,18 +256,24 @@ AudioRtpSession::stop()
     sender_.reset();
     socketPair_.reset();
     audioInput_.reset();
+    JAMI_ERROR("@@@ STOP END {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
 }
 
 void
 AudioRtpSession::setMuted(bool muted, Direction dir)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    JAMI_ERROR("@@@ RECURSIVE {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
     if (dir == Direction::SEND) {
         muteState_ = muted;
-        if (audioInput_)
+        if (audioInput_) {
+    JAMI_ERROR("@@@ RECURSIVE 2 {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
+
             audioInput_->setMuted(muted);
+        }
     } else {
         if (receiveThread_) {
+    JAMI_ERROR("@@@ RECURSIVE 3 {:p}", fmt::ptr(this), fmt::ptr(&mutex_), fmt::ptr(receiveThread_.get()), fmt::ptr(audioInput_.get()));
             auto ms = receiveThread_->getInfo();
             if (muted) {
                 if (auto ob = recorder_->getStream(ms.name)) {
@@ -366,6 +381,7 @@ AudioRtpSession::processRtcpChecker()
 void
 AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -376,6 +392,7 @@ AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !audioInput_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -390,10 +407,20 @@ AudioRtpSession::initRecorder()
         return;
     if (receiveThread_)
         receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+            [w=weak()](const MediaStream& ms) {
+                dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachRemoteRecorder(ms);
+                });
+        });
     if (audioInput_)
         audioInput_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+            [w=weak()](const MediaStream& ms) {
+                dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachLocalRecorder(ms);
+                });
+        });
 }
 
 void
