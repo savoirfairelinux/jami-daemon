@@ -47,6 +47,7 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 namespace video {
@@ -140,8 +141,11 @@ VideoRtpSession::startSender()
             videoLocal_ = input;
             if (input) {
                 videoLocal_->setRecorderCallback(
-                    [this](const MediaStream& ms) {
-                        attachLocalRecorder(ms);
+                    [w=weak()](const MediaStream& ms) {
+                        dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                            if (auto shared = w.lock())
+                                shared->attachLocalRecorder(ms);
+                        });
                     });
                 auto newParams = input->getParams();
                 try {
@@ -291,9 +295,12 @@ VideoRtpSession::startReceiver()
             if (activeStream)
                 videoMixer_->setActiveStream(streamId_);
         }
-        receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
-
+        receiveThread_->setRecorderCallback([w=weak()](const MediaStream& ms) {
+            dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachRemoteRecorder(ms);
+            });
+        });
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
         if (receiveThread_ and videoMixer_ and conference_) {
@@ -777,6 +784,7 @@ VideoRtpSession::processRtcpChecker()
 void
 VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -787,6 +795,7 @@ VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !videoLocal_ || !Manager::instance().videoPreferences.getRecordPreview())
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -800,12 +809,20 @@ VideoRtpSession::initRecorder()
 	if (!recorder_)
 		return;
     if (receiveThread_) {
-        receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+        receiveThread_->setRecorderCallback([w=weak()](const MediaStream& ms) {
+            dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachRemoteRecorder(ms);
+            });
+        });
     }
     if (videoLocal_ && !send_.onHold) {
-        videoLocal_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+        videoLocal_->setRecorderCallback([w=weak()](const MediaStream& ms) {
+            dht::ThreadPool::io().run([w=std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachLocalRecorder(ms);
+            });
+        });
     }
 }
 
