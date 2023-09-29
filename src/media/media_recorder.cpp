@@ -725,11 +725,17 @@ MediaRecorder::reset()
         frameBuff_.clear();
     }
     videoIdx_ = audioIdx_ = -1;
-    videoFilter_.reset();
-    audioFilter_.reset();
-    outputAudioFilter_.reset();
-    outputVideoFilter_.reset();
-    encoder_.reset();
+    {
+        std::lock_guard<std::mutex> lk(mutexStreamSetup_);
+        videoFilter_.reset();
+        audioFilter_.reset();
+        outputAudioFilter_.reset();
+        outputVideoFilter_.reset();
+    }
+    {
+        std::lock_guard<std::mutex> lk(encoderMtx_);
+        encoder_.reset();
+    }
 }
 
 } // namespace jami
