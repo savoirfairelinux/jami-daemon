@@ -832,6 +832,10 @@ MediaDecoder::correctPixFmt(int input_pix_fmt)
 MediaStream
 MediaDecoder::getStream(std::string name) const
 {
+    if (!decoderCtx_) {
+        JAMI_WARN("No decoder context");
+        return {};
+    }
     auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);
 #ifdef RING_ACCEL
     // accel_ is null if not using accelerated codecs
