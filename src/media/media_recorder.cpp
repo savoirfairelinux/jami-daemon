@@ -725,10 +725,19 @@ MediaRecorder::reset()
         frameBuff_.clear();
     }
     videoIdx_ = audioIdx_ = -1;
-    videoFilter_.reset();
-    audioFilter_.reset();
-    outputAudioFilter_.reset();
-    outputVideoFilter_.reset();
+    {
+        std::lock_guard<std::mutex> lk(mutexStreamSetup_);
+        {
+            std::lock_guard<std::mutex> lk2(mutexFilterVideo_);
+            videoFilter_.reset();
+            outputVideoFilter_.reset();
+        }
+        {
+            std::lock_guard<std::mutex> lk2(mutexFilterAudio_);
+            audioFilter_.reset();
+            outputAudioFilter_.reset();
+        }
+    }
     encoder_.reset();
 }
 
