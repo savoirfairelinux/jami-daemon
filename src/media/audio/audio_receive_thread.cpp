@@ -55,6 +55,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame>&& frame) mutable {
         notify(frame);
         ringbuffer_->put(std::static_pointer_cast<AudioFrame>(frame));
@@ -106,6 +107,7 @@ AudioReceiveThread::process()
 void
 AudioReceiveThread::cleanup()
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     audioDecoder_.reset();
     demuxContext_.reset();
 }
@@ -149,6 +151,8 @@ AudioReceiveThread::setRecorderCallback(
 MediaStream
 AudioReceiveThread::getInfo() const
 {
+    if (!audioDecoder_)
+        return {};
     return audioDecoder_->getStream("a:remote");
 }
 

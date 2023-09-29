@@ -65,7 +65,7 @@ struct VideoBitrateInfo
     float packetLostThreshold;
 };
 
-class VideoRtpSession : public RtpSession
+class VideoRtpSession : public RtpSession, public std::enable_shared_from_this<VideoRtpSession>
 {
 public:
     using BaseType = RtpSession;
