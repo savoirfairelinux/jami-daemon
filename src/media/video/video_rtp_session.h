@@ -65,7 +65,7 @@ struct VideoBitrateInfo
     float packetLostThreshold;
 };
 
-class VideoRtpSession : public RtpSession
+class VideoRtpSession : public RtpSession, public std::enable_shared_from_this<VideoRtpSession>
 {
 public:
     using BaseType = RtpSession;
@@ -181,6 +181,7 @@ private:
 
     void attachRemoteRecorder(const MediaStream& ms);
     void attachLocalRecorder(const MediaStream& ms);
+    std::weak_ptr<VideoRtpSession> weak() { return std::static_pointer_cast<VideoRtpSession>(shared_from_this()); }
 };
 
 } // namespace video
