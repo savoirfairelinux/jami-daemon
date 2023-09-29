@@ -117,9 +117,9 @@ private:
     void setupConferenceVideoPipeline(Conference& conference, Direction dir);
     void setupVideoPipeline();
     void startSender();
-    void stopSender();
+    void stopSender(bool forceStopSocket = false);
     void startReceiver();
-    void stopReceiver();
+    void stopReceiver(bool forceStopSocket = false);
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
