@@ -53,6 +53,7 @@ AudioRtpSession::AudioRtpSession(const std::string& callId,
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
 
 {
+    JAMI_ERROR("@@@ CREATE {:p}", fmt::ptr(&mutex_));
     recorder_ = rec;
     JAMI_DBG("Created Audio RTP session: %p - call Id %s", this, callId_.c_str());
 
@@ -93,6 +94,7 @@ AudioRtpSession::startSender()
         audioInput_->detach(sender_.get());
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
+    JAMI_ERROR("@@@ START {:p}", fmt::ptr(&mutex_));
     audioInput_ = jami::getAudioInput(callId_);
     audioInput_->setRecorderCallback([this](const MediaStream& ms) { attachLocalRecorder(ms); });
     audioInput_->setMuted(muteState_);
@@ -233,6 +235,7 @@ AudioRtpSession::stop()
     if (socketPair_)
         socketPair_->setReadBlockingMode(false);
 
+    JAMI_ERROR("@@@ STOP {:p}", fmt::ptr(&mutex_));
     receiveThread_->stopReceiver();
 
     if (audioInput_)
@@ -247,12 +250,14 @@ AudioRtpSession::stop()
     sender_.reset();
     socketPair_.reset();
     audioInput_.reset();
+    JAMI_ERROR("@@@ STOP END {:p}", fmt::ptr(&mutex_));
 }
 
 void
 AudioRtpSession::setMuted(bool muted, Direction dir)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    JAMI_ERROR("@@@ RECURSIVE {:p}", fmt::ptr(&mutex_));
     if (dir == Direction::SEND) {
         muteState_ = muted;
         if (audioInput_)
