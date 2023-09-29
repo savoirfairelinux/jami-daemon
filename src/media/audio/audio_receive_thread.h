@@ -78,6 +78,7 @@ private:
     DeviceParams args_;
 
     std::istringstream stream_;
+    mutable std::mutex mutex_;
     std::unique_ptr<MediaDecoder> audioDecoder_;
     std::unique_ptr<MediaIOHandle> sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;

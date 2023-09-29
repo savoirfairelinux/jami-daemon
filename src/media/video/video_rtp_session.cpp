@@ -42,6 +42,7 @@
 
 #include <dhtnet/ice_socket.h>
 
+#include <asio/io_context.hpp>
 #include <sstream>
 #include <map>
 #include <string>
@@ -140,8 +141,11 @@ VideoRtpSession::startSender()
             videoLocal_ = input;
             if (input) {
                 videoLocal_->setRecorderCallback(
-                    [this](const MediaStream& ms) {
-                        attachLocalRecorder(ms);
+                    [w=weak_from_this()](const MediaStream& ms) {
+                        Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                            if (auto shared = w.lock())
+                                shared->attachLocalRecorder(ms);
+                        });
                     });
                 auto newParams = input->getParams();
                 try {
@@ -291,9 +295,12 @@ VideoRtpSession::startReceiver()
             if (activeStream)
                 videoMixer_->setActiveStream(streamId_);
         }
-        receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
-
+        receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
+            Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachRemoteRecorder(ms);
+            });
+        });
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
         if (receiveThread_ and videoMixer_ and conference_) {
@@ -777,6 +784,7 @@ VideoRtpSession::processRtcpChecker()
 void
 VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -787,6 +795,7 @@ VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !videoLocal_ || !Manager::instance().videoPreferences.getRecordPreview())
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -797,23 +806,31 @@ VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
 void
 VideoRtpSession::initRecorder()
 {
-	if (!recorder_)
-		return;
+    if (!recorder_)
+        return;
     if (receiveThread_) {
-        receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+        receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
+            Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachRemoteRecorder(ms);
+            });
+        });
     }
     if (videoLocal_ && !send_.onHold) {
-        videoLocal_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+        videoLocal_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
+            Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachLocalRecorder(ms);
+            });
+        });
     }
 }
 
 void
 VideoRtpSession::deinitRecorder()
 {
-	if (!recorder_)
-		return;
+    if (!recorder_)
+        return;
     if (receiveThread_) {
         auto ms = receiveThread_->getInfo();
         if (auto ob = recorder_->getStream(ms.name)) {

@@ -253,13 +253,13 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         assert(videoRtp && mediaAttr);
         auto streamIdx = findRtpStreamIndex(mediaAttr->label_);
         videoRtp->setRequestKeyFrameCallback([w = weak(), streamIdx] {
-            runOnMainThread([w = std::move(w), streamIdx] {
+            dht::ThreadPool::io().run([w = std::move(w), streamIdx] {
                 if (auto thisPtr = w.lock())
                     thisPtr->requestKeyframe(streamIdx);
             });
         });
         videoRtp->setChangeOrientationCallback([w = weak(), streamIdx](int angle) {
-            runOnMainThread([w, angle, streamIdx] {
+            dht::ThreadPool::io().run([w, angle, streamIdx] {
                 if (auto thisPtr = w.lock())
                     thisPtr->setVideoOrientation(streamIdx, angle);
             });

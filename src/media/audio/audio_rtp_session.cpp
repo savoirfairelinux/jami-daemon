@@ -42,6 +42,8 @@
 #include "client/videomanager.h"
 #include "manager.h"
 #include "observer.h"
+
+#include <asio/io_context.hpp>
 #include <sstream>
 
 namespace jami {
@@ -94,7 +96,13 @@ AudioRtpSession::startSender()
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(callId_);
-    audioInput_->setRecorderCallback([this](const MediaStream& ms) { attachLocalRecorder(ms); });
+    audioInput_->setRecorderCallback(
+            [w=weak_from_this()](const MediaStream& ms) {
+                Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachLocalRecorder(ms);
+                });
+            });
     audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     auto newParams = audioInput_->switchInput(input_);
@@ -173,7 +181,12 @@ AudioRtpSession::startReceiver()
                                                 receive_.receiving_sdp,
                                                 mtu_));
 
-    receiveThread_->setRecorderCallback([this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+    receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
+        Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+            if (auto shared = w.lock())
+                shared->attachRemoteRecorder(ms);
+        });
+    });
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
@@ -252,26 +265,31 @@ AudioRtpSession::stop()
 void
 AudioRtpSession::setMuted(bool muted, Direction dir)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (dir == Direction::SEND) {
-        muteState_ = muted;
-        if (audioInput_)
-            audioInput_->setMuted(muted);
-    } else {
-        if (receiveThread_) {
-            auto ms = receiveThread_->getInfo();
-            if (muted) {
-                if (auto ob = recorder_->getStream(ms.name)) {
-                    receiveThread_->detach(ob);
-                    recorder_->removeStream(ms);
+    Manager::instance().ioContext()->post([w=weak_from_this(), muted, dir]() {
+        if (auto shared = w.lock()) {
+            std::lock_guard<std::recursive_mutex> lock(shared->mutex_);
+            if (dir == Direction::SEND) {
+                shared->muteState_ = muted;
+                if (shared->audioInput_) {
+                    shared->audioInput_->setMuted(muted);
                 }
             } else {
-                if (auto ob = recorder_->addStream(ms)) {
-                    receiveThread_->attach(ob);
+                if (shared->receiveThread_) {
+                    auto ms = shared->receiveThread_->getInfo();
+                    if (muted) {
+                        if (auto ob = shared->recorder_->getStream(ms.name)) {
+                            shared->receiveThread_->detach(ob);
+                            shared->recorder_->removeStream(ms);
+                        }
+                    } else {
+                        if (auto ob = shared->recorder_->addStream(ms)) {
+                            shared->receiveThread_->attach(ob);
+                        }
+                    }
                 }
             }
         }
-    }
+    });
 }
 
 void
@@ -366,6 +384,7 @@ AudioRtpSession::processRtcpChecker()
 void
 AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -376,6 +395,7 @@ AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!recorder_ || !audioInput_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -390,10 +410,20 @@ AudioRtpSession::initRecorder()
         return;
     if (receiveThread_)
         receiveThread_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachRemoteRecorder(ms); });
+            [w=weak_from_this()](const MediaStream& ms) {
+                Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachRemoteRecorder(ms);
+                });
+        });
     if (audioInput_)
         audioInput_->setRecorderCallback(
-            [this](const MediaStream& ms) { attachLocalRecorder(ms); });
+            [w=weak_from_this()](const MediaStream& ms) {
+                Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                    if (auto shared = w.lock())
+                        shared->attachLocalRecorder(ms);
+                });
+        });
 }
 
 void

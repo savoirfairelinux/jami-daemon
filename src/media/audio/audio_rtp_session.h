@@ -47,7 +47,7 @@ struct RTCPInfo
     float latency;
 };
 
-class AudioRtpSession : public RtpSession
+class AudioRtpSession : public RtpSession, public std::enable_shared_from_this<AudioRtpSession>
 {
 public:
     AudioRtpSession(const std::string& callId,
