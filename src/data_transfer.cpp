@@ -519,9 +519,9 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
 
-    auto recvDir = fmt::format("{:s}/{:s}/vcard/", fileutils::get_cache_dir(), pimpl_->accountId_);
+    auto recvDir = fileutils::get_cache_dir() / pimpl_->accountId_ / "vcard";
     dhtnet::fileutils::recursive_mkdir(recvDir);
-    info.path =  fmt::format("{:s}{:s}_{:s}_{}", recvDir, deviceId, uri, tid);
+    info.path =  recvDir / fmt::format("{:s}_{:s}_{}", deviceId, uri, tid);
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "", sha3Sum);
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
