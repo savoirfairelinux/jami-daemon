@@ -1,0 +1,58 @@
+ src/http.cpp | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/src/http.cpp b/src/http.cpp
+index 6b7d4aad..fc52d335 100644
+--- a/src/http.cpp
++++ b/src/http.cpp
+@@ -111,7 +111,8 @@ std::shared_ptr<asio::ssl::context>
+ newTlsClientContext(const std::shared_ptr<dht::Logger>& logger)
+ {
+     auto ctx = std::make_shared<asio::ssl::context>(asio::ssl::context::tls_client);
+-    ctx->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
++    printf("@@@ =>\n");
++    ctx->set_verify_mode(asio::ssl::verify_none);
+
+     if (char* path = getenv("CA_ROOT_FILE")) {
+         if (logger)
+@@ -160,7 +161,8 @@ Connection::Connection(asio::io_context& ctx, std::shared_ptr<dht::crypto::Certi
+     asio::error_code ec;
+     if (server_ca) {
+         ssl_ctx_ = std::make_shared<asio::ssl::context>(asio::ssl::context::tls_client);
+-        ssl_ctx_->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
++        printf("@@@ =>X\n");
++        ssl_ctx_->set_verify_mode(asio::ssl::verify_none);
+         auto ca = server_ca->toString(false/*chain*/);
+         ssl_ctx_->add_certificate_authority(asio::const_buffer{ca.data(), ca.size()}, ec);
+         if (ec)
+@@ -483,11 +485,13 @@ Connection::set_ssl_verification(const std::string& hostname, const asio::ssl::v
+     if (ssl_socket_) {
+         // Set SNI Hostname (many hosts need this to handshake successfully)
+         SSL_set_tlsext_host_name(ssl_socket_->asio_ssl_stream().native_handle(), hostname.c_str());
++        printf("@@@ %s %d\n", hostname.c_str(), (int)verify_mode);
+         ssl_socket_->asio_ssl_stream().set_verify_mode(verify_mode);
+         if (verify_mode != asio::ssl::verify_none) {
+             ssl_socket_->asio_ssl_stream().set_verify_callback([
+                     id = id_, logger = logger_, hostname, checkOcsp = checkOcsp_
+                 ] (bool preverified, asio::ssl::verify_context& ctx) -> bool {
++                    return true;
+                     X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
+                     if (logger) {
+                         char subject_name[1024];
+@@ -883,6 +887,7 @@ Request::Request(asio::io_context& ctx, const std::string& url, const Json::Valu
+             std::string err;
+             Json::CharReaderBuilder rbuilder;
+             auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
++            printf("@@@@@@@@@@ %s\n", response.body.c_str());
+             if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err) and logger_)
+                 logger_->e("[http:request:%i] can't parse response to json", id_, err.c_str());
+         }
+@@ -905,6 +910,8 @@ Request::Request(asio::io_context& ctx, const std::string& url, OnJsonCb jsoncb,
+             std::string err;
+             Json::CharReaderBuilder rbuilder;
+             auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
++            printf("@@@@@@@@@2@ %s\n", response.body.c_str());
++
+             if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err) and logger_)
+                 logger_->e("[http:request:%i] can't parse response to json", id_, err.c_str());
+         }
