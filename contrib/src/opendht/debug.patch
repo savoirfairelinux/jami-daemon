@@ -1,0 +1,16 @@
+ src/http.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/http.cpp b/src/http.cpp
+index 6b7d4aad..6fca5315 100644
+--- a/src/http.cpp
++++ b/src/http.cpp
+@@ -111,7 +111,7 @@ std::shared_ptr<asio::ssl::context>
+ newTlsClientContext(const std::shared_ptr<dht::Logger>& logger)
+ {
+     auto ctx = std::make_shared<asio::ssl::context>(asio::ssl::context::tls_client);
+-    ctx->set_verify_mode(asio::ssl::verify_peer | asio::ssl::verify_fail_if_no_peer_cert);
++    ctx->set_verify_mode(asio::ssl::verify_peer);
+ 
+     if (char* path = getenv("CA_ROOT_FILE")) {
+         if (logger)
