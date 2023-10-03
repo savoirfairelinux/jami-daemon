@@ -1,0 +1,19 @@
+ CMakeLists.txt | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6086fb4..cd4e5d3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -22,6 +22,11 @@ option(BUILD_BENCHMARKS "Build benchamrks" ON)
+ option(BUILD_DEPENDENCIES "Build dependencies" ON)
+
+ if (NOT MSVC)
++    OPTION(LIBJAMI_TESTABLE "Enable API for tests" ON)
++
++    IF(LIBJAMI_TESTABLE)
++        ADD_DEFINITIONS(-DLIBJAMI_TESTABLE)
++    ENDIF(LIBJAMI_TESTABLE)
+
+     if (BUILD_DEPENDENCIES)
+         set(DEPENDENCIES_PATH ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/install/${TARGET})
