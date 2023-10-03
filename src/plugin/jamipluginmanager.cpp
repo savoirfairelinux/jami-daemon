@@ -143,7 +143,7 @@ JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
     try {
         auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
         auto manifest = PluginUtils::readPluginManifestFromArchive(jplPath);
-        const std::string& name = manifest["name"];
+        const std::string& name = manifest["id"];
         auto filesPath = archiver::listFilesFromArchive(jplPath);
         for (const auto& file : filesPath) {
             // we skip the signatures and signatures.sig file
@@ -225,7 +225,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
     if (std::filesystem::is_regular_file(jplPath)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
-            const std::string& name = manifestMap["name"];
+            const std::string& name = manifestMap["id"];
             if (name.empty())
                 return INVALID_PLUGIN;
             auto cert = checkPluginCertificate(jplPath, force);
