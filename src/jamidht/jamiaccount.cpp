@@ -521,7 +521,18 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         Manager::instance().hangupCall(getAccountID(), callId);
         return;
     }
-    Manager::instance().answerCall(*call);
+
+    std::shared_ptr<Conference> conf;
+    std::vector<libjami::MediaMap> currentMediaList;
+    if (!isNotHosting) {
+        conf = getConference(confId);
+        if (!conf) {
+            JAMI_ERR("Conference %s not found", confId.c_str());
+            return;
+        }
+        currentMediaList = conf->currentMediaList();
+    }
+    Manager::instance().answerCall(*call, currentMediaList);
 
     if (isNotHosting) {
         // Create conference and host it.
@@ -529,12 +540,6 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         if (auto conf = getConference(confId))
             conf->detachLocalParticipant();
     } else {
-        auto conf = getConference(confId);
-        if (!conf) {
-            JAMI_ERR("Conference %s not found", confId.c_str());
-            return;
-        }
-
         Manager::instance().addParticipant(*call, *conf);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
@@ -3860,7 +3865,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
             shared->convModule()->syncConversations(peerId, deviceId.toString());
         }
     });
-    
+
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
     messageEngine_.onPeerOnline(peerId, true, deviceId.toString());
