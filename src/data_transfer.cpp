@@ -521,7 +521,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
 
     auto recvDir = fileutils::get_cache_dir() / pimpl_->accountId_ / "vcard";
     dhtnet::fileutils::recursive_mkdir(recvDir);
-    info.path =  recvDir / fmt::format("{:s}_{:s}_{}", deviceId, uri, tid);
+    info.path = (recvDir / fmt::format("{:s}_{:s}_{}", deviceId, uri, tid)).string();
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel), info, "profile.vcf", "", sha3Sum);
     auto res = pimpl_->vcards_.emplace(idx, std::move(ifile));
