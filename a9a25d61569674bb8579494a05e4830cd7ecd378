@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fab0f072_113ce61b",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-04T18:45:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "73857888_5b58c1ca",
+      "range": {
+        "startLine": 265,
+        "startChar": 14,
+        "endLine": 265,
+        "endChar": 32
+      },
+      "revId": "a9a25d61569674bb8579494a05e4830cd7ecd378",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a69c8c85_11f38846",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb2273c3_d62b7f2b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-04T18:45:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a69c8c85_11f38846",
+      "range": {
+        "startLine": 134,
+        "startChar": 12,
+        "endLine": 151,
+        "endChar": 13
+      },
+      "revId": "a9a25d61569674bb8579494a05e4830cd7ecd378",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9981bb2b_00209812",
@@ -60,6 +108,30 @@
       "writtenOn": "2023-09-28T15:05:13Z",
       "side": 1,
       "message": "media player state should be independent from the rtp session",
+      "range": {
+        "startLine": 181,
+        "startChar": 12,
+        "endLine": 184,
+        "endChar": 13
+      },
+      "revId": "a9a25d61569674bb8579494a05e4830cd7ecd378",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "19456e57_4652e478",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-04T18:45:31Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9981bb2b_00209812",
       "range": {
         "startLine": 181,
         "startChar": 12,
