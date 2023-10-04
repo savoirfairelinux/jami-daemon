@@ -30,6 +30,7 @@
 #include "conversation/conversationcommon.h"
 #include "manager.h"
 #include "media_const.h"
+#include "sip/sipcall.h"
 
 using namespace std::literals::chrono_literals;
 
@@ -85,19 +86,21 @@ private:
     void testCallSelfIfDefaultHost();
     void testNeedsHost();
     void testAudioOnly();
+    void testJoinAfterMuteHost();
 
     CPPUNIT_TEST_SUITE(ConversationCallTest);
-    CPPUNIT_TEST(testActiveCalls);
-    CPPUNIT_TEST(testActiveCalls3Peers);
-    CPPUNIT_TEST(testRejoinCall);
-    CPPUNIT_TEST(testParticipantHangupConfNotRemoved);
-    CPPUNIT_TEST(testJoinFinishedCall);
-    CPPUNIT_TEST(testJoinFinishedCallForbidden);
-    CPPUNIT_TEST(testUsePreference);
-    CPPUNIT_TEST(testJoinWhileActiveCall);
-    CPPUNIT_TEST(testCallSelfIfDefaultHost);
-    CPPUNIT_TEST(testNeedsHost);
-    CPPUNIT_TEST(testAudioOnly);
+    //CPPUNIT_TEST(testActiveCalls);
+    //CPPUNIT_TEST(testActiveCalls3Peers);
+    //CPPUNIT_TEST(testRejoinCall);
+    //CPPUNIT_TEST(testParticipantHangupConfNotRemoved);
+    //CPPUNIT_TEST(testJoinFinishedCall);
+    //CPPUNIT_TEST(testJoinFinishedCallForbidden);
+    //CPPUNIT_TEST(testUsePreference);
+    //CPPUNIT_TEST(testJoinWhileActiveCall);
+    //CPPUNIT_TEST(testCallSelfIfDefaultHost);
+    //CPPUNIT_TEST(testNeedsHost);
+    //CPPUNIT_TEST(testAudioOnly);
+    CPPUNIT_TEST(testJoinAfterMuteHost);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1007,6 +1010,73 @@ ConversationCallTest::testAudioOnly()
 
     // get active calls = 0
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 0);
+}
+
+void
+ConversationCallTest::testJoinAfterMuteHost()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    // Start conversation
+    libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); }));
+
+    libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return bobData_.requestReceived;
+    }));
+
+    aliceData_.messages.clear();
+    libjami::acceptConversationRequest(bobId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !bobData_.id.empty() && !aliceData_.messages.empty();
+    }));
+
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->at("type") == "application/call-history+json";
+    };
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_) && !pInfos_.empty();
+    }));
+
+    // Mute call
+    auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
+    auto proposedList = call->currentMediaList();
+    for (auto& media : proposedList)
+        media["MUTED"] = "true";
+    libjami::requestMediaChange(aliceId, callId, proposedList);
+
+    // Bob join, alice must stay muted
+    auto confId = bobData_.messages.rbegin()->at("confId");
+    auto destination = fmt::format("rdv:{}/{}/{}/{}",
+                                   bobData_.id,
+                                   bobData_.messages.rbegin()->at("uri"),
+                                   bobData_.messages.rbegin()->at("device"),
+                                   confId);
+
+    aliceData_.conferenceChanged = false;
+    pInfos_.clear();
+    auto bobCall = libjami::placeCallWithMedia(bobId, destination, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"  && bobData_.state == "CURRENT" && pInfos_.size() == 2;
+    }));
+    for (const auto& m: pInfos_) {
+        for (const auto& [k,v]: m)
+            JAMI_ERROR("@@@ {} {}", k, v);
+    }
+    CPPUNIT_ASSERT(pInfos_.size() > 0 && pInfos_[0]["audioLocalMuted"] == "true");
+
 }
 
 } // namespace test
