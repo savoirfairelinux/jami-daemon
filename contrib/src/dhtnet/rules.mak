@@ -1,5 +1,5 @@
 # DHTNET
-DHTNET_VERSION := 401c52e8b7b3d8dcfede38177f0cc3a1efae044f
+DHTNET_VERSION := 62aefa69fc00a2f6871993caccf7dacf83b283d7
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
@@ -19,7 +19,8 @@ endif
 DHTNET_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_BENCHMARKS=Off \
 	-DBUILD_TOOLS=Off \
-	-DBUILD_TESTING=Off
+	-DBUILD_TESTING=Off \
+	-DBUILD_DEPENDENCIES=Off
 
 $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 	$(call download,$(DHTNET_URL))
