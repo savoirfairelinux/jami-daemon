@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dd51b8b4_b8f72e75",
+        "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "adrien \u0026 kat should review this part I guess",
+      "range": {
+        "startLine": 163,
+        "startChar": 22,
+        "endLine": 163,
+        "endChar": 39
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8951c562_4576fee5",
+        "filename": "src/media/localrecorder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 88,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "oops",
+      "range": {
+        "startLine": 88,
+        "startChar": 0,
+        "endLine": 88,
+        "endChar": 27
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6d32a70_254ad5b9",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "indent changed",
+      "range": {
+        "startLine": 226,
+        "startChar": 0,
+        "endLine": 226,
+        "endChar": 51
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e15f2214_3cfa9cf5",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "oops",
+      "range": {
+        "startLine": 252,
+        "startChar": 0,
+        "endLine": 252,
+        "endChar": 26
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "504af66d_48798d65",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "fixed now?",
+      "range": {
+        "startLine": 590,
+        "startChar": 41,
+        "endLine": 590,
+        "endChar": 43
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "224ffb20_8b3dd3ff",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "oops",
+      "range": {
+        "startLine": 236,
+        "startChar": 0,
+        "endLine": 236,
+        "endChar": 21
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73ce2a99_d2a1962b",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 557,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "oops",
+      "range": {
+        "startLine": 557,
+        "startChar": 0,
+        "endLine": 557,
+        "endChar": 14
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ad47f70_75312198",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 2506,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-06T13:50:07Z",
+      "side": 1,
+      "message": "const auto\u0026",
+      "range": {
+        "startLine": 2506,
+        "startChar": 9,
+        "endLine": 2506,
+        "endChar": 13
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
