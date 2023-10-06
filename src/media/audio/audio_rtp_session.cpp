@@ -240,13 +240,11 @@ AudioRtpSession::stop()
 
     JAMI_DBG("[%p] Stopping receiver", this);
 
-    if (not receiveThread_)
-        return;
+    if (receiveThread_)
+        receiveThread_->stopReceiver();
 
     if (socketPair_)
         socketPair_->setReadBlockingMode(false);
-
-    receiveThread_->stopReceiver();
 
     if (audioInput_)
         audioInput_->detach(sender_.get());
@@ -256,10 +254,10 @@ AudioRtpSession::stop()
 
     rtcpCheckerThread_.join();
 
-    receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
     audioInput_.reset();
+    receiveThread_.reset();
 }
 
 void
