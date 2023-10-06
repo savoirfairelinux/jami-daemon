@@ -108,6 +108,7 @@ void
 AudioReceiveThread::cleanup()
 {
     std::lock_guard<std::mutex> lk(mutex_);
+    onSuccessfulSetup_ = nullptr;
     audioDecoder_.reset();
     demuxContext_.reset();
 }
