@@ -42,7 +42,7 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
     , stream_(sdp)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , mtu_(mtu)
-    , loop_(std::bind(&AudioReceiveThread::setup, this),
+    , loop_([] { return true; },
             std::bind(&AudioReceiveThread::process, this),
             std::bind(&AudioReceiveThread::cleanup, this))
 {}
@@ -55,6 +55,11 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
+    assert(!isConfigured_);
+
+    if (!loop_.isRunning())
+        return false;
+
     std::lock_guard<std::mutex> lk(mutex_);
     audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame>&& frame) mutable {
         notify(frame);
@@ -95,12 +100,23 @@ AudioReceiveThread::setup()
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_AUDIO, 1);
 
-    return true;
+    return isConfigured_ = true;
 }
 
 void
 AudioReceiveThread::process()
 {
+    if (not loop_.isRunning())
+        return;
+
+    if (not isConfigured_) {
+        if (!setup()) {
+            JAMI_ERR("[%p] Failed to configure audio output", this);
+            return;
+        } else {
+            JAMI_DBG("[%p] Audio Decoder configured, starting decoding", this);
+        }
+    }
     audioDecoder_->decode();
 }
 

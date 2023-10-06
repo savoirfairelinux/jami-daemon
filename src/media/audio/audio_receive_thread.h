@@ -88,6 +88,7 @@ private:
     uint16_t mtu_;
 
     ThreadLoop loop_;
+    bool isConfigured_ {false};
     bool setup();
     void process();
     void cleanup();
