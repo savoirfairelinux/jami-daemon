@@ -1,0 +1,22 @@
+ pjnath/src/pjnath/ice_strans.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index bfdf7fb74..ce427e558 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2104,10 +2104,11 @@ static pj_status_t send_data(pj_ice_strans *ice_st,
+      */
+     if (ice_st->ice && ice_st->state <= PJ_ICE_STRANS_STATE_RUNNING) {
+         status = pj_ice_sess_send_data(ice_st->ice, comp_id, buf, data_len);
+-        if (status == PJ_SUCCESS || status == PJ_EPENDING) {
+-            pj_grp_lock_release(ice_st->grp_lock);
+-            goto on_return;
++        if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++            printf("@@@ STATUS %d\n", status);
+         }
++        pj_grp_lock_release(ice_st->grp_lock);
++        goto on_return;
+     }
+
+     pj_grp_lock_release(ice_st->grp_lock);
