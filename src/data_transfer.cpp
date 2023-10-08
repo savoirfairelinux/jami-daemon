@@ -40,6 +40,115 @@
 
 namespace jami {
 
+static constexpr size_t BUFFER_SIZE = 512 * 1024;
+using Buffer = std::pair<std::array<uint8_t, BUFFER_SIZE>, size_t>;
+using BufferList = std::list<Buffer>;
+
+/** Buffer input stream for file transfer */
+class FileBufferInputStream {
+public:
+    FileBufferInputStream(std::filesystem::path path, size_t start = 0, size_t end = 0)
+    {
+        dht::ThreadPool::io().run([path = std::move(path), start, end, this] {
+            bool error = false;
+            // Open file
+            std::ifstream stream_(path, std::ios::binary);
+            if (!stream_ || !stream_.is_open()) {
+                error = true;
+            } else if (start != 0)
+                stream_.seekg(start, std::ios::beg);
+
+            auto pos = start;
+            BufferList bufferList;
+            while (not error) {
+                {
+                    std::unique_lock<std::mutex> lk(mutex_);
+                    // Push any read data to input buffer
+                    if (not bufferList.empty()) {
+                        if (bufferList.back().second == 0) {
+                            completed_ = true;
+                            break;
+                        }
+                        input_.splice(input_.end(), std::move(bufferList));
+                        bufferList.clear();
+                        cv_.notify_one();
+                    }
+                    // Wait for input buffer to be consumed
+                    cv_.wait(lk, [&] { return input_.size() < BUFFER_COUNT or canceled_; });
+                    if (canceled_)
+                        break;
+                    if (not free_.empty())
+                        bufferList.splice(bufferList.end(), free_, free_.begin());
+                }
+                // Allocate new buffer if needed
+                if (bufferList.empty())
+                    bufferList.emplace_back();
+                // Read data from file
+                auto& buffer = bufferList.back();
+                auto readSize = end > start ? std::min(end - pos, buffer.first.size()) : buffer.first.size();
+                stream_.read(reinterpret_cast<char*>(buffer.first.data()), readSize);
+                if (stream_.good() || stream_.eof()) {
+                    buffer.second = stream_.gcount();
+                    pos += buffer.second;
+                } else
+                    error = true;
+            }
+            std::lock_guard<std::mutex> lk(mutex_);
+            ended_ = true;
+            error_ = error;
+            cv_.notify_one();
+        });
+    }
+
+    ~FileBufferInputStream() {
+        cancel();
+        std::unique_lock<std::mutex> lk(mutex_);
+        cv_.wait(lk, [&] { return ended_; });
+    }
+
+    BufferList read(bool& error, BufferList recycled = {}) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        if (not recycled.empty())
+            free_.splice(free_.end(), std::move(recycled));
+        cv_.wait(lk, [&] { return not input_.empty() or completed_ or canceled_ or error_; });
+        BufferList bufferList;
+        if (not input_.empty() and not canceled_)
+            bufferList.splice(bufferList.end(), input_, input_.begin());
+        error = error_;
+        cv_.notify_one();
+        return bufferList;
+    }
+
+    bool eof() const {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return completed();
+    }
+
+    void cancel() {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (not completed())
+            canceled_ = true;
+        input_.clear();
+        cv_.notify_one();
+    }
+
+private:
+
+    /** The file was fully read and the buffer was consumed */
+    bool completed() const { return input_.empty() && completed_; }
+    static constexpr size_t BUFFER_COUNT = 4;
+
+    mutable std::mutex mutex_;
+    std::condition_variable cv_;
+    BufferList input_;
+    BufferList free_;
+    bool canceled_ = false; // Canceled by user during transfer
+    bool error_ = false; // IO Error during transfer
+    bool completed_ = false; // End of file reached
+    bool ended_ = false; // Thread ended
+};
+
+
 libjami::DataTransferId
 generateUID()
 {
@@ -81,25 +190,14 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
                            size_t start,
                            size_t end)
     : FileInfo(channel, fileId, interactionId, info)
-    , start_(start)
-    , end_(end)
+    , stream_(std::make_unique<FileBufferInputStream>(info.path, start, end))
 {
-    std::filesystem::path fpath(info_.path);
-    if (!std::filesystem::is_regular_file(fpath)) {
-        channel_->shutdown();
-        return;
-    }
-    stream_.open(fpath, std::ios::binary | std::ios::in);
-    if (!stream_ || !stream_.is_open()) {
-        channel_->shutdown();
-        return;
-    }
 }
 
 OutgoingFile::~OutgoingFile()
 {
-    if (stream_ && stream_.is_open())
-        stream_.close();
+    if (stream_)
+        stream_->cancel();
     if (channel_)
         channel_->shutdown();
 }
@@ -107,37 +205,38 @@ OutgoingFile::~OutgoingFile()
 void
 OutgoingFile::process()
 {
-    if (!channel_ or !stream_ or !stream_.is_open())
+    if (!channel_ or !stream_)
         return;
-    auto correct = false;
-    stream_.seekg(start_, std::ios::beg);
-    try {
-        std::vector<char> buffer(UINT16_MAX, 0);
+
+    bool error = false;
+    BufferList recycle {};
+
+    while (!isUserCancelled_ && !error) {
+        auto input = stream_->read(error, std::move(recycle));
+        if (input.empty() or isUserCancelled_)
+            break;
+
         std::error_code ec;
-        auto pos = start_;
-        while (!stream_.eof()) {
-            stream_.read(buffer.data(),
-                         end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
-            auto gcount = stream_.gcount();
-            pos += gcount;
-            channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
-            if (ec)
+        for (auto& buffer : input) {
+            channel_->write(buffer.first.data(), buffer.second, ec);
+            if (ec) {
+                error = true;
                 break;
+            }
         }
-        if (!ec)
-            correct = true;
-        stream_.close();
-    } catch (...) {
+        
+        recycle = std::move(input);
     }
+
     if (!isUserCancelled_) {
         // NOTE: emit(code) MUST be changed to improve handling of multiple destinations
         // But for now, we can just avoid to emit errors to the client, because for outgoing
         // transfer in a swarm, for outgoingFiles, we know that the file is ok. And the peer
         // will retry the transfer if they need, so we don't need to show errors.
-        if (!interactionId_.empty() && !correct)
+        if (!interactionId_.empty() && error)
             return;
-        auto code = correct ? libjami::DataTransferEventCode::finished
-                            : libjami::DataTransferEventCode::closed_by_peer;
+        auto code = error ? libjami::DataTransferEventCode::closed_by_peer
+                            : libjami::DataTransferEventCode::finished;
         emit(code);
     }
 }
@@ -146,11 +245,12 @@ void
 OutgoingFile::cancel()
 {
     // Remove link, not original file
+    isUserCancelled_ = true;
+    stream_->cancel();
     auto path = fileutils::get_data_dir() / "conversation_data"
                 / info_.accountId / info_.conversationId / fileId_;
     if (std::filesystem::is_symlink(path))
         dhtnet::fileutils::remove(path);
-    isUserCancelled_ = true;
     emit(libjami::DataTransferEventCode::closed_by_host);
 }
 
