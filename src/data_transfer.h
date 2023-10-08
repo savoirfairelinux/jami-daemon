@@ -101,6 +101,7 @@ private:
     std::string sha3Sum_ {};
 };
 
+class FileBufferInputStream;
 class OutgoingFile : public FileInfo
 {
 public:
@@ -115,9 +116,7 @@ public:
     void cancel() override;
 
 private:
-    std::ifstream stream_;
-    size_t start_ {0};
-    size_t end_ {0};
+    std::unique_ptr<FileBufferInputStream> stream_;
 };
 
 class TransferManager : public std::enable_shared_from_this<TransferManager>
