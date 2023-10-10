@@ -56,6 +56,34 @@ av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, A
 namespace jami {
 namespace libav_utils {
 
+AVSampleFormat
+choose_sample_fmt(const AVCodec *codec, const AVSampleFormat *preferred_formats, int preferred_formats_count) {
+    for (int i = 0; i < preferred_formats_count; ++i) {
+        for (auto it = codec->sample_fmts; *it != -1; ++it) {
+            if (*it == preferred_formats[i])
+                return preferred_formats[i];
+        }
+    }
+    return AV_SAMPLE_FMT_NONE;
+}
+
+AVSampleFormat
+choose_sample_fmt_default(const AVCodec* codec, AVSampleFormat defaultFormat) {
+    // List of supported formats, current default first
+    const AVSampleFormat preferred_formats[] = {
+        defaultFormat,
+        AV_SAMPLE_FMT_FLTP,
+        AV_SAMPLE_FMT_FLT,
+        AV_SAMPLE_FMT_S16P,
+        AV_SAMPLE_FMT_S16,
+        AV_SAMPLE_FMT_DBLP,
+        AV_SAMPLE_FMT_DBL,
+        AV_SAMPLE_FMT_S32P,
+        AV_SAMPLE_FMT_S32
+    };
+    return choose_sample_fmt(codec, preferred_formats, sizeof(preferred_formats) / sizeof(preferred_formats[0]));
+}
+
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 // protect libav/ffmpeg access
 static int
