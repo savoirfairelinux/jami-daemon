@@ -22,6 +22,30 @@
       },
       "revId": "a19982ded5850fb02e982e70624ffa6a4caa3da8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "90b27057_ed6984fa",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-10-10T20:41:27Z",
+      "side": 1,
+      "message": "The log comes from a time or place where the code was only handling devices, so I updates the log to reflect the new semantic.",
+      "parentUuid": "8c5c5521_d82f17ca",
+      "range": {
+        "startLine": 151,
+        "startChar": 29,
+        "endLine": 151,
+        "endChar": 34
+      },
+      "revId": "a19982ded5850fb02e982e70624ffa6a4caa3da8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
