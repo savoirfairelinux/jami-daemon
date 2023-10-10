@@ -66,9 +66,9 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate, AVSam
     Resampler r {};
     auto decoder = std::make_unique<MediaDecoder>(
         [&r, this, &buf, &total_samples](const std::shared_ptr<MediaFrame>& frame) mutable {
-            auto autoFrame = std::static_pointer_cast<AudioFrame>(frame);
-            total_samples += autoFrame->getFrameSize();
-            buf.emplace_back(r.resample(std::move(autoFrame), format_));
+            auto resampled = r.resample(std::move(std::static_pointer_cast<AudioFrame>(frame)), format_);
+            total_samples += resampled->getFrameSize();
+            buf.emplace_back(std::move(resampled));
         });
     DeviceParams dev;
     dev.input = fileName;
@@ -79,10 +79,10 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate, AVSam
 
     if (decoder->setupAudio() < 0)
         throw AudioFileException("Decoder setup failed: " + fileName);
-    
+
     while (decoder->decode() != MediaDemuxer::Status::EndOfFile)
         ;
-    
+
     buffer_->nb_samples = total_samples;
     buffer_->format = format_.sampleFormat;
     buffer_->sample_rate = format_.sample_rate;
