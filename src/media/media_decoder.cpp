@@ -27,6 +27,7 @@
 #include "media_io_handle.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
+#include "audio/ringbufferpool.h"
 #include "decoder_finder.h"
 #include "manager.h"
 
@@ -147,10 +148,10 @@ MediaDemuxer::openInput(const DeviceParams& params)
     std::string input = params.input;
 #endif
 
-    JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf",
-             input.c_str(),
-             params.format.c_str(),
-             params.pixel_format.c_str(),
+    JAMI_LOG("Trying to open input {} with format {}, pixel format {}, size {}x{}, rate {}",
+             input,
+             params.format,
+             params.pixel_format,
              params.width,
              params.height,
              params.framerate.real());
@@ -574,13 +575,13 @@ MediaDecoder::prepareDecoderContext()
 {
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
-        JAMI_ERR() << "Unsupported codec";
+        JAMI_ERROR("Unsupported codec");
         return -1;
     }
 
     decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
     if (!decoderCtx_) {
-        JAMI_ERR() << "Failed to create decoder context";
+        JAMI_ERROR("Failed to create decoder context");
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
@@ -597,6 +598,9 @@ MediaDecoder::prepareDecoderContext()
         if (decoderCtx_->codec_id == AV_CODEC_ID_OPUS) {
             av_opt_set_int(decoderCtx_, "decode_fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
         }
+        auto format = libav_utils::choose_sample_fmt_default(inputDecoder_, Manager::instance().getRingBufferPool().getInternalAudioFormat().sampleFormat);
+        decoderCtx_->sample_fmt = format;
+        decoderCtx_->request_sample_fmt = format;
     }
     return 0;
 }
