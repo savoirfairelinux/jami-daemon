@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <libavutil/samplefmt.h>
+
 #include <vector>
 #include <map>
 #include <string>
@@ -31,6 +33,7 @@ struct AVDictionary;
 struct AVFrame;
 struct AVPixFmtDescriptor;
 struct AVBufferRef;
+struct AVCodec;
 void av_buffer_unref(AVBufferRef **buf);
 }
 
@@ -41,6 +44,9 @@ void av_init();
 
 const char* const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
 const char* const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
+
+enum AVSampleFormat choose_sample_fmt(const AVCodec* codec, const enum AVSampleFormat* preferred_formats, int preferred_formats_count);
+enum AVSampleFormat choose_sample_fmt_default(const AVCodec* codec, enum AVSampleFormat current_dformat);
 
 bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 
