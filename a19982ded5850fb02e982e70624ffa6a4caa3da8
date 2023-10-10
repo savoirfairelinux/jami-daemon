@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c5c5521_d82f17ca",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1008
+      },
+      "writtenOn": "2023-10-10T20:21:12Z",
+      "side": 1,
+      "message": "Why did you decide to call this input instead of device? I think I agree but wanted to know your reasoning.",
+      "range": {
+        "startLine": 151,
+        "startChar": 29,
+        "endLine": 151,
+        "endChar": 34
+      },
+      "revId": "a19982ded5850fb02e982e70624ffa6a4caa3da8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
