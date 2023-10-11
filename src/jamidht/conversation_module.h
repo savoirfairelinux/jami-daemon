@@ -83,8 +83,10 @@ public:
 
     /**
      * Bootstrap swarm managers to other peers
+     * @param convId        If specified, only bootstrap this conversation
+     * @param peerUri       If specified and convId not yet cloned, try to clone from this peer
      */
-    void bootstrap(const std::string& convId = "");
+    void bootstrap(const std::string& convId = "", const std::string& peerUri = "");
 
     /**
      * Clear not removed fetch

@@ -1373,7 +1373,7 @@ ConversationModule::loadConversations()
 }
 
 void
-ConversationModule::bootstrap(const std::string& convId)
+ConversationModule::bootstrap(const std::string& convId, const std::string& peerUri)
 {
     std::vector<DeviceId> kd;
     if (auto acc = pimpl_->account_.lock())
@@ -1410,6 +1410,13 @@ ConversationModule::bootstrap(const std::string& convId)
         std::lock_guard<std::mutex> lk(conv->mtx);
         if (conv->conversation)
             bootstrap(conv->conversation);
+        else if (!conv->info.removed)
+            toClone.emplace_back(convId);
+    } else {
+        // If the conversation here is not detected, we can add it
+        // It will come from ContactAdded and there is no
+        // conv info yet, so create it
+        cloneConversationFrom(convId, peerUri);
     }
 
     for (const auto& cid : toClone) {

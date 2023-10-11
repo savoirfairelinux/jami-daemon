@@ -1084,7 +1084,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         if (auto cm = shared->convModule()) {
                             auto activeConv = cm->getOneToOneConversation(uri);
                             if (!activeConv.empty())
-                                cm->bootstrap(activeConv);
+                                cm->bootstrap(activeConv, uri);
                         }
                         emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(),
                                                                                uri,
