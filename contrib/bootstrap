@@ -26,8 +26,9 @@ usage()
 	echo "  --prefix=PREFIX     install files in PREFIX"
 	echo "  --no-checksums      don't verify checksums (allows to replace tarballs)"
 	echo "  --disable-downloads don't download packages from the internet"
-        echo '  --cache-dir=DIR     the directory where contrib tarballs are cached'
+    echo "  --cache-dir=DIR     the directory where contrib tarballs are cached"
 	echo "  --enable-debug      build with debug symbol and extra checks (disabled by default)"
+	echo "  --enable-asan       build with address sanitizer (disabled by default)"
 	echo "  --disable-FOO       configure to not build package FOO"
 	echo "  --enable-FOO        configure to build package FOO"
 }
@@ -39,6 +40,7 @@ PKGS_ENABLE=
 PKGS_DISABLE=
 CACHE_BUILD=
 CONF_TARBALLS=
+ENABLE_ASAN=
 
 if test ! -f "../src/main.mak"
 then
@@ -71,6 +73,9 @@ do
 			;;
 		--enable-debug)
 			ENABLE_DEBUG=1
+			;;
+		--enable-asan)
+			ENABLE_ASAN=1
 			;;
 		--host=*)
 			HOST="${1#--host=}"
@@ -136,6 +141,7 @@ CONF_TARBALLS := $CONF_TARBALLS
 CACHE_DIR := $CACHE_DIR
 CACHE_BUILD := $CACHE_BUILD
 ENABLE_DEBUG := $ENABLE_DEBUG
+ENABLE_ASAN := $ENABLE_ASAN
 EOF
 
 add_make()
