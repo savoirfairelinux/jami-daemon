@@ -40,6 +40,16 @@ AS_IF([test "x$enable_debug" = "xyes"],
   [DAEMONCFLAGS+=" -DNDEBUG=1 -O3"
    DAEMONCXXFLAGS+=" -DNDEBUG=1 -O3 -Wno-deprecated"])
 
+dnl Build using address sanitizer
+AC_ARG_ENABLE([asan],
+  AS_HELP_STRING([--enable-asan],
+    [Enable address sanitization]))
+
+AS_IF([test "x$enable_asan" = "xyes"],
+  [DAEMONCXXFLAGS+=" -fsanitize=address -fno-omit-frame-pointer"
+   DAEMONLDFLAGS+=" -fsanitize=address"
+   AC_MSG_NOTICE([WARNING: Address sanitization enabled for libjami])], [])
+
 AC_ARG_ENABLE([fuzzing],
   AS_HELP_STRING([--enable-fuzzing],
     [Build fuzzing tools]))

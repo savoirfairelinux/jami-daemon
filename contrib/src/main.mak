@@ -190,6 +190,12 @@ EXTRA_COMMON += -m32
 endif
 endif
 
+ifdef ENABLE_ASAN
+$(info Address sanitization enabled for contrib builds)
+EXTRA_COMMON += -fsanitize=address
+EXTRA_LDFLAGS += -fsanitize=address
+endif
+
 ifdef ENABLE_DEBUG
 EXTRA_COMMON += -g -fno-omit-frame-pointer
 else
