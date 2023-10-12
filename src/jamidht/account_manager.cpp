@@ -522,6 +522,28 @@ AccountManager::removeContactConversation(const std::string& uri)
         syncDevices();
 }
 
+void
+AccountManager::updateContactConversation(const std::string& uri, const std::string& convId)
+{
+    dht::InfoHash h(uri);
+    if (not h) {
+        JAMI_ERR("removeContact: invalid contact URI");
+        return;
+    }
+    if (not info_) {
+        JAMI_ERR("addContact(): account not loaded");
+        return;
+    }
+    info_->contacts->updateConversation(h, convId);
+    // Also decline trust request if there is one
+    auto req = info_->contacts->getTrustRequest(h);
+    if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
+        && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == convId) {
+        discardTrustRequest(uri);
+    }
+    syncDevices();
+}
+
 std::vector<std::map<std::string, std::string>>
 AccountManager::getContacts() const
 {
