@@ -220,6 +220,7 @@ public:
                     const std::string& conversationId = "");
     void removeContact(const std::string& uri, bool banned = true);
     void removeContactConversation(const std::string& uri); // for non swarm contacts
+    void updateContactConversation(const std::string& uri, const std::string& convId);
     std::vector<std::map<std::string, std::string>> getContacts() const;
 
     /** Obtain details about one account contact in serializable form. */

@@ -2826,19 +2826,13 @@ JamiAccount::updateConvForContact(const std::string& uri,
     if (newConv != oldConv) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (auto info = accountManager_->getInfo()) {
-            auto urih = dht::InfoHash(uri);
             auto details = getContactDetails(uri);
             auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
             if (itDetails != details.end() && itDetails->second != oldConv) {
                 JAMI_DEBUG("Old conversation is not found in details {} - found: {}", oldConv, itDetails->second);
                 return false;
             }
-            info->contacts->updateConversation(urih, newConv);
-            // Also decline trust request if there is one
-            auto req = info->contacts->getTrustRequest(urih);
-            if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
-                && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == oldConv)
-                accountManager_->discardTrustRequest(uri);
+            accountManager_->updateContactConversation(uri, newConv);
         }
         return true;
     }
