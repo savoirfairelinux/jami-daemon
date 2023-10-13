@@ -1096,7 +1096,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
         [this](const std::string& uri, bool banned) {
             if (!id_.first)
                 return;
-
             dht::ThreadPool::io().run([w = weak(), uri, banned] {
                 if (auto shared = w.lock()) {
                     // Erase linked conversation's requests

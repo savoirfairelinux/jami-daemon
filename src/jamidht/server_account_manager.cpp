@@ -395,7 +395,7 @@ ServerAccountManager::syncDevices()
                 JAMI_DBG("[Auth] Got contact sync request callback with status code=%u",
                          response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return; 
+            if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
@@ -427,7 +427,7 @@ ServerAccountManager::syncDevices()
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return; 
+            if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
@@ -467,7 +467,7 @@ ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
         [syncBlueprintCallback, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DEBUG("[Auth] Got sync request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return; 
+            if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     std::map<std::string, std::string> config;
@@ -504,7 +504,7 @@ ServerAccountManager::revokeDevice(const std::string& password,
         [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return; 
+            if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARN("[Revoke] Got server response");
@@ -543,7 +543,7 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
         [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DBG("[Search] Got request callback with status code=%u", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return; 
+            if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     const auto& profiles = json["profiles"];

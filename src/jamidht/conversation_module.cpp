@@ -2404,6 +2404,19 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
             pimpl_->updateConvReqCb_(convId, uri, false);
         emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
     };
+    auto removeConvInfo = [&](const auto& conv, const auto& members) {
+        if ((isSelf && members.size() == 1)
+            || (!isSelf
+                && std::find(members.begin(), members.end(), uri)
+                        != members.end())) {
+            // Mark as removed
+            conv->info.removed = std::time(nullptr);
+            updateClient(conv->info.id);
+            pimpl_->addConvInfo(conv->info);
+            return true;
+        }
+        return false;
+    };
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
         for (auto& [convId, conv] : pimpl_->conversations_) {
@@ -2414,26 +2427,14 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
                     // removing self can remove all conversations
                     if (conv->conversation->mode() == ConversationMode::ONE_TO_ONE) {
                         auto initMembers = conv->conversation->getInitialMembers();
-                        if ((isSelf && initMembers.size() == 1)
-                            || (!isSelf
-                                && std::find(initMembers.begin(), initMembers.end(), uri)
-                                       != initMembers.end())) {
-                            // Mark as removed
-                            conv->info.removed = std::time(nullptr);
+                        if (removeConvInfo(conv, initMembers))
                             toRm.emplace_back(convId);
-                            updateClient(convId);
-                            pimpl_->addConvInfo(conv->info);
-                        }
                     }
                 } catch (const std::exception& e) {
                     JAMI_WARN("%s", e.what());
                 }
-            } else if (std::find(conv->info.members.begin(), conv->info.members.end(), uri)
-                       != conv->info.members.end()) {
-                // It's syncing with uri, mark as removed!
-                conv->info.removed = std::time(nullptr);
-                updateClient(convId);
-                pimpl_->addConvInfo(conv->info);
+            } else {
+                removeConvInfo(conv, conv->info.members);
             }
         }
     }
