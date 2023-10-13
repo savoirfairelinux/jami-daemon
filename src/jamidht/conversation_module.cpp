@@ -1236,11 +1236,18 @@ ConversationModule::loadConversations()
                 auto convFromDetails = getOneToOneConversation(otherUri);
                 if (convFromDetails != repository) {
                     if (convFromDetails.empty()) {
-                        JAMI_ERROR("No conversation detected for {} but one exists ({}). "
-                                   "Update details",
-                                   otherUri,
-                                   repository);
-                        acc->updateConvForContact(otherUri, convFromDetails, repository);
+                        auto details = acc->getContactDetails(otherUri);
+                        if (details.empty()) {
+                            // If details is empty, contact is removed and not banned.
+                            JAMI_ERROR("Conversation {} detected for {} and should be removed", repository, otherUri);
+                            toRm.insert(repository);
+                        } else {
+                            JAMI_ERROR("No conversation detected for {} but one exists ({}). "
+                                    "Update details",
+                                    otherUri,
+                                    repository);
+                            acc->updateConvForContact(otherUri, convFromDetails, repository);
+                        }
                     } else {
                         JAMI_ERROR("Multiple conversation detected for {} but ({} & {})",
                                    otherUri,

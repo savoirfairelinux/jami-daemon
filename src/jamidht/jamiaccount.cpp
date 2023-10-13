@@ -2824,15 +2824,13 @@ JamiAccount::updateConvForContact(const std::string& uri,
 {
     if (newConv != oldConv) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-        if (auto info = accountManager_->getInfo()) {
-            auto details = getContactDetails(uri);
-            auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
-            if (itDetails != details.end() && itDetails->second != oldConv) {
-                JAMI_DEBUG("Old conversation is not found in details {} - found: {}", oldConv, itDetails->second);
-                return false;
-            }
-            accountManager_->updateContactConversation(uri, newConv);
+        auto details = getContactDetails(uri);
+        auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
+        if (itDetails != details.end() && itDetails->second != oldConv) {
+            JAMI_DEBUG("Old conversation is not found in details {} - found: {}", oldConv, itDetails->second);
+            return false;
         }
+        accountManager_->updateContactConversation(uri, newConv);
         return true;
     }
     return false;
@@ -2842,7 +2840,7 @@ std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
-    return (accountManager_ and accountManager_->getInfo())
+    return accountManager_
                ? accountManager_->getContactDetails(uri)
                : std::map<std::string, std::string> {};
 }
