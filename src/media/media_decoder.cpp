@@ -594,7 +594,7 @@ MediaDecoder::prepareDecoderContext()
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
     }
-    if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+    else if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
         if (decoderCtx_->codec_id == AV_CODEC_ID_OPUS) {
             av_opt_set_int(decoderCtx_, "decode_fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
         }
