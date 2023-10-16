@@ -2730,8 +2730,13 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
             dhtnet::fileutils::getFileLock(path / "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-        oh.get().convert(convInfos);
+        msgpack::unpacker unpacker;
+        unpacker.reserve_buffer(file.size());
+        memcpy(unpacker.buffer(), file.data(), file.size());
+        unpacker.buffer_consumed(file.size());
+        msgpack::object_handle oh;
+        if (unpacker.next(oh))
+            oh.get().convert(convInfos);
     } catch (const std::exception& e) {
         JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
     }

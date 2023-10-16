@@ -180,9 +180,13 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
         SyncMsg msg;
         try {
-            msgpack::unpacked result;
-            msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(buf), len);
-            oh.get().convert(msg);
+            msgpack::unpacker unpacker;
+            unpacker.reserve_buffer(len);
+            memcpy(unpacker.buffer(), reinterpret_cast<const char*>(buf), len);
+            unpacker.buffer_consumed(len);
+            msgpack::object_handle oh;
+            if (unpacker.next(oh))
+                oh.get().convert(msg);
         } catch (const std::exception& e) {
             JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
             return len;
