@@ -30,9 +30,6 @@ PKGS_FOUND += pjproject
 endif
 
 DEPS_pjproject += gnutls
-ifndef HAVE_MACOSX
-DEPS_pjproject += uuid
-endif
 
 ifdef HAVE_LINUX
 PJPROJECT_OPTIONS += --enable-epoll
