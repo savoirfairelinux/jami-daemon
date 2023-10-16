@@ -173,26 +173,40 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         }
     });
 
-    socket->setOnRecv([acc = pimpl_->account_.lock(), device, peerId](const uint8_t* buf,
-                                                                      size_t len) {
+
+    struct DecodingContext
+    {
+        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
+                               nullptr,
+                               512};
+    };
+
+    socket->setOnRecv([acc = pimpl_->account_.lock(), device, peerId,
+                       ctx = std::make_shared<DecodingContext>()
+    ](const uint8_t* buf, size_t len) {
         if (!buf || !acc)
             return len;
 
+        ctx->pac.reserve_buffer(len);
+        std::copy_n(buf, len, ctx->pac.buffer());
+        ctx->pac.buffer_consumed(len);
+
+        msgpack::object_handle oh;
         SyncMsg msg;
+
         try {
-            msgpack::unpacked result;
-            msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(buf), len);
-            oh.get().convert(msg);
+            while (ctx->pac.next(oh)) {
+                oh.get().convert(msg);
+                if (auto manager = acc->accountManager())
+                    manager->onSyncData(std::move(msg.ds), false);
+
+                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())
+                    acc->convModule()->onSyncData(msg, peerId, device.toString());
+            }
         } catch (const std::exception& e) {
             JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
-            return len;
         }
 
-        if (auto manager = acc->accountManager())
-            manager->onSyncData(std::move(msg.ds), false);
-
-        if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())
-            acc->convModule()->onSyncData(msg, peerId, device.toString());
         return len;
     });
 }
