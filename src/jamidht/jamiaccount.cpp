@@ -3917,14 +3917,18 @@ JamiAccount::dataTransfer(const std::string& id)
 void
 JamiAccount::monitor()
 {
-    JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
-    JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
+    JAMI_DEBUG("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    JAMI_DEBUG("[Account {:s}] Monitor connections for {:s}", getAccountID(), config().displayName);
+    JAMI_DEBUG("[Account {:s}] Using proxy: {:s} with key {:s}", getAccountID(), proxyServerCached_, config().deviceKey);
+    auto h = dht::InfoHash::get("peer:" + accountManager_->getInfo()->devicePk->getId().toString());
+    JAMI_DEBUG("[Account {:s}] Listening hash {:s}", getAccountID(), h.toString());
+    JAMI_DEBUG("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 
-    if (auto cm = convModule())
-        cm->monitor();
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-    if (connectionManager_)
-        connectionManager_->monitor();
+    //if (auto cm = convModule())
+    //    cm->monitor();
+    //std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    //if (connectionManager_)
+    //    connectionManager_->monitor();
 }
 
 std::vector<std::map<std::string, std::string>>
