@@ -1102,7 +1102,9 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     if (auto convModule = shared->convModule())
                         convModule->removeContact(uri, banned);
                     // Remove current connections with contact
-                    if (shared->connectionManager_) {
+                    // Note: if contact is ourself, we don't close the connection
+                    // because it's used for syncing other conversations.
+                    if (shared->connectionManager_ && uri != shared->getUsername()) {
                         shared->connectionManager_->closeConnectionsWith(uri);
                     }
                     // Update client.
