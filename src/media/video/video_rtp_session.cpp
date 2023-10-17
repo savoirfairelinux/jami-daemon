@@ -705,9 +705,13 @@ VideoRtpSession::delayProcessing(int br)
     int newBitrate = videoBitrateInfo_.videoBitrateCurrent;
     if (br == 0x6803)
         newBitrate *= 0.85f;
-    else if (br == 0x7378)
-        newBitrate *= 1.05f;
-    else
+    else if (br == 0x7378) {
+        auto now = clock::now();
+        auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - lastBitrateDecrease);
+        auto increaseCoefficient = std::min(msSinceLastDecrease.count() / 600000.0f + 1.0f, 1.05f);
+        newBitrate *= increaseCoefficient;
+    } else
         return;
 
     setNewBitrate(newBitrate);
@@ -718,6 +722,9 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
 {
     newBR = std::max(newBR, videoBitrateInfo_.videoBitrateMin);
     newBR = std::min(newBR, videoBitrateInfo_.videoBitrateMax);
+
+    if (newBR < videoBitrateInfo_.videoBitrateCurrent)
+        lastBitrateDecrease = clock::now();
 
     if (videoBitrateInfo_.videoBitrateCurrent != newBR) {
         videoBitrateInfo_.videoBitrateCurrent = newBR;

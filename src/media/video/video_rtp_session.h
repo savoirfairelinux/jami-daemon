@@ -170,6 +170,7 @@ private:
     time_point lastMediaRestart_ {time_point::min()};
     time_point last_REMB_inc_ {time_point::min()};
     time_point last_REMB_dec_ {time_point::min()};
+    time_point lastBitrateDecrease {time_point::min()};
 
     unsigned remb_dec_cnt_ {0};
 
