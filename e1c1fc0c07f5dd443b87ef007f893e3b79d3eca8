@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fd6eeda5_d11f81d3",
+        "filename": "bin/jni/conversation.i",
+        "patchSetId": 1
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-18T11:31:35Z",
+      "side": 1,
+      "message": "can you squash with previous commit? I don\u0027t change anything as I wait other to review",
+      "range": {
+        "startLine": 48,
+        "startChar": 40,
+        "endLine": 48,
+        "endChar": 47
+      },
+      "revId": "e1c1fc0c07f5dd443b87ef007f893e3b79d3eca8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
