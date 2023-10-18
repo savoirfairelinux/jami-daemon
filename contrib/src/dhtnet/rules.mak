@@ -32,6 +32,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	mkdir -p $(UNPACK_DIR)
 	$(UNPACK) -C $(UNPACK_DIR)
+	$(APPLY) $(SRC)/dhtnet/debug.patch
 	$(MOVE)
 
 .dhtnet: dhtnet toolchain.cmake .sum-dhtnet

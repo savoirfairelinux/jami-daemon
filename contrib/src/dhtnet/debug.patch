@@ -1,0 +1,51 @@
+ CMakeLists.txt        | 4 +++-
+ src/ice_transport.cpp | 4 ++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 8bc7e97..740b3d9 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -22,6 +22,8 @@ option(BUILD_TOOLS "Build tools" ON)
+ option(BUILD_BENCHMARKS "Build benchamrks" ON)
+ option(BUILD_DEPENDENCIES "Build dependencies" ON)
+
++set(CMAKE_BUILD_TYPE Debug)
++
+ if (NOT MSVC)
+     if (BUILD_DEPENDENCIES)
+         find_package(Python3 COMPONENTS Interpreter)
+@@ -76,7 +78,7 @@ else()
+ endif()
+
+ if (NOT MSVC)
+-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
++    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -ggdb \
+         -DMSGPACK_NO_BOOST \
+         -DMSGPACK_DISABLE_LEGACY_NIL \
+         -DMSGPACK_DISABLE_LEGACY_CONVERT")
+diff --git a/src/ice_transport.cpp b/src/ice_transport.cpp
+index 302afb1..0c5c656 100644
+--- a/src/ice_transport.cpp
++++ b/src/ice_transport.cpp
+@@ -235,6 +235,8 @@ public:
+             c.stop();
+         std::lock_guard<std::mutex> lk(sendDataMutex_);
+         destroying_ = true;
++        if (logger_) logger_->error("@@@@ DESTROY {:p}", fmt::ptr(this));
++
+         waitDataCv_.notify_all();
+     }
+ };
+@@ -1701,9 +1703,11 @@ IceTransport::send(unsigned compId, const unsigned char* buf, size_t len)
+     if (status == PJ_EPENDING && isTCPEnabled()) {
+         // NOTE; because we are in TCP, the sent size will count the header (2
+         // bytes length).
++        if (pimpl_->logger_) pimpl_->logger_->error("@@@@ WAIT {:p}", fmt::ptr(pimpl_.get()));
+         pimpl_->waitDataCv_.wait(dlk, [&] {
+             return pimpl_->lastSentLen_ >= static_cast<pj_size_t>(len) or pimpl_->destroying_;
+         });
++        if (pimpl_->logger_) pimpl_->logger_->error("@@@@ END {:p}", fmt::ptr(pimpl_.get()));
+         pimpl_->lastSentLen_ = 0;
+     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+         if (status == PJ_EBUSY) {

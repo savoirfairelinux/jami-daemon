@@ -367,6 +367,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
 	$(APPLY) $(SRC)/ffmpeg/nvenc-fix-reorderqueueflush-crash.patch
+	$(APPLY) $(SRC)/ffmpeg/binutil-support.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
