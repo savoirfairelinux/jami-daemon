@@ -542,7 +542,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             if (participants_.size() == 1) {
                 setLocalHostMuteState(iter->type_, iter->muted_);
             } else {
-                setLocalHostMuteState(iter->type_, iter->muted_ and isMediaSourceMuted(iter->type_));
+                setLocalHostMuteState(iter->type_, iter->muted_ or isMediaSourceMuted(iter->type_));
             }
         }
 
