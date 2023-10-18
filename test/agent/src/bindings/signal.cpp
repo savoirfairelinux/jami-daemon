@@ -241,8 +241,8 @@ install_signal_primitives(void*)
     add_handler<libjami::CallSignal::SmartInfo,
                 const std::map<std::string, std::string>&>(handlers, "smart-info");
 
-    add_handler<libjami::CallSignal::ConnectionUpdate, const std::string&, int>(handlers,
-                                                                              "connection-update");
+    add_handler<libjami::CallSignal::ConnectionUpdate, const std::string&, int>(
+        handlers, "connection-update");
 
     add_handler<libjami::CallSignal::OnConferenceInfosUpdated,
                 const std::string&,
@@ -388,7 +388,7 @@ install_signal_primitives(void*)
     add_handler<libjami::ConfigurationSignal::GetHardwareAudioFormat,
                 std::vector<int32_t>*>(handlers, "get-hardware-audio-format");
 #endif
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     add_handler<libjami::ConfigurationSignal::GetAppDataPath,
                 const std::string&,
                 std::vector<std::string>*>(handlers, "get-app-data-path");
@@ -403,7 +403,7 @@ install_signal_primitives(void*)
                 bool>(handlers, "hardware-encoding-changed");
 
     add_handler<libjami::ConfigurationSignal::MessageSend, const std::string&>(handlers,
-                                                                             "message-send");
+                                                                               "message-send");
 
     /* Presence */
     add_handler<libjami::PresenceSignal::NewServerSubscriptionRequest,
@@ -434,7 +434,8 @@ install_signal_primitives(void*)
     /* Audio */
     add_handler<libjami::AudioSignal::DeviceEvent>(handlers, "audio-device-event");
 
-    add_handler<libjami::AudioSignal::AudioMeter, const std::string&, float>(handlers, "audio-meter");
+    add_handler<libjami::AudioSignal::AudioMeter, const std::string&, float>(handlers,
+                                                                             "audio-meter");
 
     /* DataTransfer */
     add_handler<libjami::DataTransferSignal::DataTransferEvent,
@@ -479,16 +480,17 @@ install_signal_primitives(void*)
 
     add_handler<libjami::VideoSignal::RequestKeyFrame>(handlers, "video-request-key-frame");
 
-    add_handler<libjami::VideoSignal::SetBitrate, const std::string&, const int>(handlers,
-                                                                               "video-set-bitrate");
+    add_handler<libjami::VideoSignal::SetBitrate, const std::string&, const int>(
+        handlers, "video-set-bitrate");
 
 #endif
     add_handler<libjami::VideoSignal::StartCapture, const std::string&>(handlers,
-                                                                      "video-start-capture");
+                                                                        "video-start-capture");
 
     add_handler<libjami::VideoSignal::StopCapture>(handlers, "video-stop-capture");
 
-    add_handler<libjami::VideoSignal::DeviceAdded, const std::string&>(handlers, "video-device-added");
+    add_handler<libjami::VideoSignal::DeviceAdded, const std::string&>(handlers,
+                                                                       "video-device-added");
 
     add_handler<libjami::VideoSignal::ParametersChanged,
                 const std::string&>(handlers, "video-parameters-changed");
@@ -521,8 +523,9 @@ install_signal_primitives(void*)
                 const std::string&,
                 const std::string&>(handlers, "conversation-request-declined");
 
-    add_handler<libjami::ConversationSignal::ConversationReady, const std::string&, const std::string&>(
-        handlers, "conversation-ready");
+    add_handler<libjami::ConversationSignal::ConversationReady,
+                const std::string&,
+                const std::string&>(handlers, "conversation-ready");
 
     add_handler<libjami::ConversationSignal::ConversationRemoved,
                 const std::string&,

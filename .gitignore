@@ -111,7 +111,7 @@ build-macos*
 /extras/tools/check_sed
 /extras/tools/libtool-*.tar.xz
 
-# UWP
+# Windows native build
 /contrib/build/
 /contrib/msvc/
 

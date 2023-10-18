@@ -24,11 +24,6 @@
 #include "compiler_intrinsics.h"
 #include <opendht/crypto.h>
 
-#ifdef RING_UWP
-#include <io.h> // for access and close
-#include "ring_signal.h"
-#endif
-
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -265,7 +260,10 @@ loadTextFile(const std::filesystem::path& path, const std::filesystem::path& def
 }
 
 void
-saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
+saveFile(const std::filesystem::path& path,
+         const uint8_t* data,
+         size_t data_size,
+         mode_t UNUSED mode)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
@@ -276,8 +274,7 @@ saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_siz
 #ifndef _WIN32
     file.close();
     if (chmod(path.c_str(), mode) < 0)
-        JAMI_WARNING("fileutils::saveFile(): chmod() failed on {}, {}",
-                  path, strerror(errno));
+        JAMI_WARNING("fileutils::saveFile(): chmod() failed on {}, {}", path, strerror(errno));
 #endif
 }
 
@@ -382,7 +379,7 @@ writeArchive(const std::string& archive_str, const std::string& path, const std:
     }
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 #else
 static char* program_dir = NULL;
 void
@@ -399,21 +396,7 @@ set_program_dir(char* program_path)
 std::filesystem::path
 get_cache_dir(const char* pkg)
 {
-#ifdef RING_UWP
-    std::string cache_path;
-    std::vector<std::string> paths;
-    paths.reserve(1);
-    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty()) {
-        cache_path = paths[0] + DIR_SEPARATOR_STR + std::string(".cache");
-        if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
-            // If directory creation failed
-            if (errno != EEXIST)
-                JAMI_DBG("Cannot create directory: %s!", cache_path.c_str());
-        }
-    }
-    return cache_path;
-#elif defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     paths.reserve(1);
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("cache", &paths);
@@ -449,13 +432,6 @@ get_home_dir()
     std::vector<std::string> paths;
     paths.reserve(1);
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("files", &paths);
-    if (not paths.empty())
-        return paths[0];
-    return {};
-#elif defined RING_UWP
-    std::vector<std::string> paths;
-    paths.reserve(1);
-    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         return paths[0];
     return {};
@@ -507,20 +483,6 @@ get_data_dir(const char* pkg)
     } else {
         return get_home_dir() / "AppData" / "Local" / pkg;
     }
-#elif defined(RING_UWP)
-    std::vector<std::string> paths;
-    paths.reserve(1);
-    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty()) {
-        auto files_path = std::filesystem::path(paths[0]) / ".data";
-        if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
-            // If directory creation failed
-            if (errno != EEXIST)
-                JAMI_DBG("Cannot create directory: %s!", files_path.c_str());
-        }
-        return files_path;
-    }
-    return {};
 #else
     std::string_view data_home(XDG_DATA_HOME);
     if (not data_home.empty())
@@ -546,11 +508,6 @@ get_config_dir(const char* pkg)
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("config", &paths);
     if (not paths.empty())
         configdir = std::filesystem::path(paths[0]);
-#elif defined(RING_UWP)
-    std::vector<std::string> paths;
-    emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty())
-        configdir = std::filesystem::path(paths[0]) / ".config";
 #elif defined(__APPLE__)
     configdir = fileutils::get_home_dir() / "Library" / "Application Support" / pkg;
 #elif defined(_WIN32)
@@ -587,8 +544,9 @@ get_config_dir()
 bool
 eraseFile_win32(const std::string& path, bool dosync)
 {
-    // Note: from https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-deletefilea#remarks
-    // To delete a read-only file, first you must remove the read-only attribute.
+    // Note: from
+    // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-deletefilea#remarks To
+    // delete a read-only file, first you must remove the read-only attribute.
     SetFileAttributesA(path.c_str(), GetFileAttributesA(path.c_str()) & ~FILE_ATTRIBUTE_READONLY);
     HANDLE h
         = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
@@ -656,7 +614,7 @@ eraseFile_posix(const std::string& path, bool dosync)
         return false;
     }
     // Remove read-only flag if possible
-    chmod(path.c_str(), st.st_mode | (S_IWGRP+S_IWUSR) );
+    chmod(path.c_str(), st.st_mode | (S_IWGRP + S_IWUSR));
 
     int fd = open(path.c_str(), O_WRONLY);
     if (fd == -1) {
@@ -693,7 +651,7 @@ eraseFile_posix(const std::string& path, bool dosync)
 
 bool
 eraseFile(const std::string& path, bool dosync)
-{    
+{
 #ifdef _WIN32
     return eraseFile_win32(path, dosync);
 #else
@@ -788,8 +746,8 @@ uint64_t
 lastWriteTimeInSeconds(const std::filesystem::path& filePath)
 {
     return std::chrono::duration_cast<std::chrono::seconds>(
-            std::filesystem::last_write_time(filePath)
-                    .time_since_epoch()).count();
+               std::filesystem::last_write_time(filePath).time_since_epoch())
+        .count();
 }
 
 } // namespace fileutils

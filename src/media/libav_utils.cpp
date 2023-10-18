@@ -57,7 +57,10 @@ namespace jami {
 namespace libav_utils {
 
 AVSampleFormat
-choose_sample_fmt(const AVCodec *codec, const AVSampleFormat *preferred_formats, int preferred_formats_count) {
+choose_sample_fmt(const AVCodec* codec,
+                  const AVSampleFormat* preferred_formats,
+                  int preferred_formats_count)
+{
     for (int i = 0; i < preferred_formats_count; ++i) {
         for (auto it = codec->sample_fmts; *it != -1; ++it) {
             if (*it == preferred_formats[i])
@@ -68,20 +71,21 @@ choose_sample_fmt(const AVCodec *codec, const AVSampleFormat *preferred_formats,
 }
 
 AVSampleFormat
-choose_sample_fmt_default(const AVCodec* codec, AVSampleFormat defaultFormat) {
+choose_sample_fmt_default(const AVCodec* codec, AVSampleFormat defaultFormat)
+{
     // List of supported formats, current default first
-    const AVSampleFormat preferred_formats[] = {
-        defaultFormat,
-        AV_SAMPLE_FMT_FLTP,
-        AV_SAMPLE_FMT_FLT,
-        AV_SAMPLE_FMT_S16P,
-        AV_SAMPLE_FMT_S16,
-        AV_SAMPLE_FMT_DBLP,
-        AV_SAMPLE_FMT_DBL,
-        AV_SAMPLE_FMT_S32P,
-        AV_SAMPLE_FMT_S32
-    };
-    return choose_sample_fmt(codec, preferred_formats, sizeof(preferred_formats) / sizeof(preferred_formats[0]));
+    const AVSampleFormat preferred_formats[] = {defaultFormat,
+                                                AV_SAMPLE_FMT_FLTP,
+                                                AV_SAMPLE_FMT_FLT,
+                                                AV_SAMPLE_FMT_S16P,
+                                                AV_SAMPLE_FMT_S16,
+                                                AV_SAMPLE_FMT_DBLP,
+                                                AV_SAMPLE_FMT_DBL,
+                                                AV_SAMPLE_FMT_S32P,
+                                                AV_SAMPLE_FMT_S32};
+    return choose_sample_fmt(codec,
+                             preferred_formats,
+                             sizeof(preferred_formats) / sizeof(preferred_formats[0]));
 }
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
@@ -125,7 +129,6 @@ static constexpr const char* AVLOGLEVEL = "AVLOGLEVEL";
 static void
 setAvLogLevel()
 {
-#ifndef RING_UWP
     char* envvar = getenv(AVLOGLEVEL);
     signed level = AV_LOG_WARNING;
 
@@ -134,9 +137,6 @@ setAvLogLevel()
         level = std::max(AV_LOG_QUIET, std::min(level, AV_LOG_DEBUG));
     }
     av_log_set_level(level);
-#else
-    av_log_set_level(0);
-#endif
 }
 
 #ifdef __ANDROID__

@@ -85,7 +85,7 @@ getSignalHandlers()
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         exported_callback<libjami::ConfigurationSignal::GetHardwareAudioFormat>(),
 #endif
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         exported_callback<libjami::ConfigurationSignal::GetAppDataPath>(),
         exported_callback<libjami::ConfigurationSignal::GetDeviceName>(),
 #endif

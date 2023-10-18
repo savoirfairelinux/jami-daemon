@@ -185,7 +185,8 @@ check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& 
         for (const auto& file : dhtnet::fileutils::readDirectory(old_dir)) {
             auto old_dest = fileutils::getFullPath(old_dir, file);
             auto new_dest = fileutils::getFullPath(new_dir, file);
-            if (std::filesystem::is_directory(old_dest) and std::filesystem::is_directory(new_dest)) {
+            if (std::filesystem::is_directory(old_dest)
+                and std::filesystem::is_directory(new_dest)) {
                 check_rename(old_dest, new_dest);
             } else {
                 JAMI_WARNING("Migrating {} to {}", old_dir, new_dest);
@@ -210,7 +211,6 @@ static constexpr const char* DHTLOGLEVEL = "DHTLOGLEVEL";
 static void
 setDhtLogLevel()
 {
-#ifndef RING_UWP
     int level = 0;
     if (auto envvar = getenv(DHTLOGLEVEL)) {
         level = to_int<int>(envvar, 0);
@@ -218,9 +218,6 @@ setDhtLogLevel()
         JAMI_DBG("DHTLOGLEVEL=%u", level);
     }
     Manager::instance().dhtLogLevel = level;
-#else
-    Manager::instance().dhtLogLevel = 0;
-#endif
 }
 
 /**
@@ -235,7 +232,6 @@ static constexpr const char* SIPLOGLEVEL = "SIPLOGLEVEL";
 static void
 setSipLogLevel()
 {
-#ifndef RING_UWP
     char* envvar = getenv(SIPLOGLEVEL);
 
     int level = 0;
@@ -246,9 +242,6 @@ setSipLogLevel()
         // From 0 (min) to 6 (max)
         level = std::max(0, std::min(level, 6));
     }
-#else
-    int level = 0;
-#endif
 
     pj_log_set_level(level);
     pj_log_set_log_func([](int level, const char* data, int /*len*/) {
@@ -278,7 +271,6 @@ tls_print_logs(int level, const char* msg)
 static void
 setGnuTlsLogLevel()
 {
-#ifndef RING_UWP
     char* envvar = getenv("RING_TLS_LOGLEVEL");
     int level = RING_TLS_LOGLEVEL;
 
@@ -290,9 +282,6 @@ setGnuTlsLogLevel()
     }
 
     gnutls_global_set_log_level(level);
-#else
-    gnutls_global_set_log_level(RING_TLS_LOGLEVEL);
-#endif
     gnutls_global_set_log_function(tls_print_logs);
 }
 
@@ -855,7 +844,9 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         if (pimpl_->audiodriver_) {
             auto format = pimpl_->audiodriver_->getFormat();
             pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
-            pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate(), getRingBufferPool().getInternalAudioFormat().sampleFormat));
+            pimpl_->dtmfKey_.reset(
+                new DTMF(getRingBufferPool().getInternalSamplingRate(),
+                         getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
     }
     registerAccounts();
@@ -949,7 +940,8 @@ Manager::monitor(bool continuous)
 #ifdef __linux__
 #if defined(__ANDROID__)
 #else
-    auto opened_files = dhtnet::fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
+    auto opened_files
+        = dhtnet::fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
     JAMI_DBG("Opened files: %lu", opened_files);
 #endif
 #endif
@@ -1013,9 +1005,10 @@ Manager::getChannelList(const std::string& accountId, const std::string& connect
         auto account = getAccount(accountId);
         if (account) {
             if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
-                if (acc->getRegistrationState() != RegistrationState::INITIALIZING){
+                if (acc->getRegistrationState() != RegistrationState::INITIALIZING) {
                     const auto& cnl = acc->getChannelList(connectionId);
-                    channelsList.insert(channelsList.end(), cnl.begin(), cnl.end());}
+                    channelsList.insert(channelsList.end(), cnl.begin(), cnl.end());
+                }
             }
         }
     }
@@ -2567,7 +2560,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
-#if !defined(RING_UWP) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         if (not account->isRendezVous())
             base_.playRingtone(accountId);
 #endif
@@ -2661,9 +2654,7 @@ Manager::audioFormatUsed(AudioFormat format)
     if (currentFormat == format)
         return format;
 
-    JAMI_DEBUG("Audio format changed: {} -> {}",
-             currentFormat.toString(),
-             format.toString());
+    JAMI_DEBUG("Audio format changed: {} -> {}", currentFormat.toString(), format.toString());
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
     pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
@@ -2886,28 +2877,24 @@ Manager::loadAccountMap(const YAML::Node& node)
             continue;
         }
         remaining++;
-        dht::ThreadPool::computation().run([this,
-                                            dir,
-                                            &cv,
-                                            &remaining,
-                                            &lock,
-                                            configFile = accountBaseDir / dir / "config.yml"] {
-            if (std::filesystem::is_regular_file(configFile)) {
-                try {
-                    auto configNode = YAML::LoadFile(configFile.string());
-                    if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        auto config = a->buildConfig();
-                        config->unserialize(configNode);
-                        a->setConfig(std::move(config));
+        dht::ThreadPool::computation().run(
+            [this, dir, &cv, &remaining, &lock, configFile = accountBaseDir / dir / "config.yml"] {
+                if (std::filesystem::is_regular_file(configFile)) {
+                    try {
+                        auto configNode = YAML::LoadFile(configFile.string());
+                        if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
+                            auto config = a->buildConfig();
+                            config->unserialize(configNode);
+                            a->setConfig(std::move(config));
+                        }
+                    } catch (const std::exception& e) {
+                        JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
                     }
-                } catch (const std::exception& e) {
-                    JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
                 }
-            }
-            std::lock_guard<std::mutex> l(lock);
-            remaining--;
-            cv.notify_one();
-        });
+                std::lock_guard<std::mutex> l(lock);
+                remaining--;
+                cv.notify_one();
+            });
     }
     cv.wait(l, [&remaining] { return remaining == 0; });
 

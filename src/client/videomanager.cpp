@@ -142,7 +142,8 @@ AudioFrame::mix(const AudioFrame& frame)
 {
     auto& f = *pointer();
     auto& fIn = *frame.pointer();
-    if (f.ch_layout.nb_channels != fIn.ch_layout.nb_channels || f.format != fIn.format || f.sample_rate != fIn.sample_rate) {
+    if (f.ch_layout.nb_channels != fIn.ch_layout.nb_channels || f.format != fIn.format
+        || f.sample_rate != fIn.sample_rate) {
         throw std::invalid_argument("Can't mix frames with different formats");
     }
     if (f.nb_samples == 0) {
@@ -185,7 +186,8 @@ AudioFrame::calcRMS() const
     double rms = 0.0;
     auto fmt = static_cast<AVSampleFormat>(frame_->format);
     bool planar = av_sample_fmt_is_planar(fmt);
-    int perChannel = planar ? frame_->nb_samples : frame_->nb_samples * frame_->ch_layout.nb_channels;
+    int perChannel = planar ? frame_->nb_samples
+                            : frame_->nb_samples * frame_->ch_layout.nb_channels;
     int channels = planar ? frame_->ch_layout.nb_channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (int c = 0; c < channels; ++c) {
@@ -649,7 +651,7 @@ setEncodingAccelerated(bool state)
     }
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void
 addVideoDevice(const std::string& node,
                const std::vector<std::map<std::string, std::string>>& devInfo)

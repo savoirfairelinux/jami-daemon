@@ -20,7 +20,7 @@
 
 #include "ip_utils.h"
 
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 #define JAMI_DEVICE_SIGNAL 1
 #endif
 

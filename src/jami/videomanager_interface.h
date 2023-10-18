@@ -57,13 +57,15 @@ namespace libjami {
 [[deprecated("Replaced by registerSignalHandlers")]] LIBJAMI_PUBLIC void registerVideoHandlers(
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
-struct LIBJAMI_PUBLIC AVFrame_deleter {
+struct LIBJAMI_PUBLIC AVFrame_deleter
+{
     void operator()(AVFrame* frame) const { av_frame_free(&frame); }
 };
 
 typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
 
-struct LIBJAMI_PUBLIC AVPacket_deleter {
+struct LIBJAMI_PUBLIC AVPacket_deleter
+{
     void operator()(AVPacket* pkt) const { av_packet_free(&pkt); }
 };
 
@@ -184,7 +186,7 @@ LIBJAMI_PUBLIC std::vector<std::string> getDeviceList();
 LIBJAMI_PUBLIC VideoCapabilities getCapabilities(const std::string& deviceId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getSettings(const std::string& deviceId);
 LIBJAMI_PUBLIC void applySettings(const std::string& deviceId,
-                                const std::map<std::string, std::string>& settings);
+                                  const std::map<std::string, std::string>& settings);
 LIBJAMI_PUBLIC void setDefaultDevice(const std::string& deviceId);
 LIBJAMI_PUBLIC void setDeviceOrientation(const std::string& deviceId, int angle);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& deviceId);
@@ -209,10 +211,10 @@ LIBJAMI_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 LIBJAMI_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
-                                                 const std::string& filepath);
+                                                   const std::string& filepath);
 LIBJAMI_PUBLIC void stopLocalRecorder(const std::string& filepath);
 
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 LIBJAMI_PUBLIC void addVideoDevice(
     const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo = {});
 LIBJAMI_PUBLIC void removeVideoDevice(const std::string& node);

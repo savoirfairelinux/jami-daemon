@@ -136,9 +136,7 @@ void *dlopen( const char *file, int mode )
 	UINT uMode;
 	current_error = NULL;
 /* Do not let Windows display the critical-error-handler message box */
-#ifndef RING_UWP
 	uMode = SetErrorMode( SEM_FAILCRITICALERRORS );
-#endif
 	if( file == 0 )
 	{
 /* POSIX says that if the value of file is 0, a handle on a global
@@ -149,9 +147,7 @@ void *dlopen( const char *file, int mode )
 * symbols only from the original program file. For objects loaded with
 * the RTLD_GLOBAL flag, we create our own list later on.
 */
-#ifndef RING_UWP
 hModule = GetModuleHandle( NULL );
-#endif
 if( !hModule )
 	save_err_ptr_str( file );
 }
@@ -175,10 +171,8 @@ else
 * to UNIX's search paths (start with system folders instead of current
 * folder).
 */
-#ifndef RING_UWP
 hModule = LoadLibraryEx( (LPSTR) lpFileName, NULL,
 	LOAD_WITH_ALTERED_SEARCH_PATH );
-#endif
 /* If the object was loaded with RTLD_GLOBAL, add it to list of global
 * objects, so that its symbols may be retrieved even if the handle for
 * the original program file is passed. POSIX says that if the same
@@ -192,9 +186,7 @@ else if( (mode & RTLD_GLOBAL) )
 	global_add( hModule );
 }
 /* Return to previous state of the error-mode bit flags. */
-#ifndef RING_UWP
 SetErrorMode( uMode );
-#endif
 return (void *) hModule;
 }
 int dlclose( void *handle )
@@ -225,9 +217,7 @@ void *dlsym( void *handle, const char *name )
 /* If the handle for the original program file is passed, also search
 * in all globally loaded objects.
 */
-#ifndef RING_UWP
 hModule = GetModuleHandle( NULL );
-#endif
 if( hModule == handle )
 {
 	global_object *pobject;

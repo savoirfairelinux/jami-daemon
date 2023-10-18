@@ -63,7 +63,7 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
 {
     inputMode_ = inputMode;
     if (inputMode_ == VideoInputMode::Undefined) {
-#if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
+#if (defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
         inputMode_ = VideoInputMode::ManagedByClient;
 #else
         inputMode_ = VideoInputMode::ManagedByDaemon;
@@ -256,8 +256,7 @@ VideoInput::configureFilePlayback(const std::string&,
 }
 
 void
-VideoInput::setRecorderCallback(
-    const std::function<void(const MediaStream& ms)>& cb)
+VideoInput::setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb)
 {
     recorderCallback_ = cb;
     if (decoder_)
@@ -495,7 +494,7 @@ VideoInput::initWindowsGrab(const std::string& display)
     DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
     if (winHandlePos != std::string::npos) {
         p.input = display.substr(winHandlePos + windowIdStr.size()); // "HANDLE";
-        p.name  = display.substr(winHandlePos + windowIdStr.size()); // "HANDLE";
+        p.name = display.substr(winHandlePos + windowIdStr.size());  // "HANDLE";
         p.is_area = 0;
     } else {
         p.input = display.substr(1);

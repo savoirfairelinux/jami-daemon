@@ -55,7 +55,6 @@
 
 #include "system_codec_container.h"
 
-
 #include "string_utils.h"
 
 #include "im/instant_messaging.h"
@@ -193,7 +192,8 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         std::shared_ptr<SipTransport> t
             = isTlsEnabled()
                   ? link_.sipTransportBroker->getTlsTransport(tlsListener_,
-                                                              dhtnet::IpAddr(sip_utils::getHostFromUri(to)))
+                                                              dhtnet::IpAddr(
+                                                                  sip_utils::getHostFromUri(to)))
                   : transport_;
         setTransport(t);
         call->setSipTransport(t, getContactHeader());
@@ -479,7 +479,9 @@ SIPAccount::getVolatileAccountDetails() const
 bool
 SIPAccount::mapPortUPnP()
 {
-    dhtnet::upnp::Mapping map(dhtnet::upnp::PortType::UDP, config().publishedPort, config().localPort);
+    dhtnet::upnp::Mapping map(dhtnet::upnp::PortType::UDP,
+                              config().publishedPort,
+                              config().localPort);
     map.setNotifyCallback([w = weak()](dhtnet::upnp::Mapping::sharedPtr_t mapRes) {
         if (auto accPtr = w.lock()) {
             auto oldPort = static_cast<in_port_t>(accPtr->publishedPortUsed_);
@@ -1119,8 +1121,6 @@ SIPAccount::getLoginName()
 #ifndef _WIN32
     struct passwd* user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
-#elif defined(RING_UWP)
-    return "Unknown";
 #else
     DWORD size = UNLEN + 1;
     TCHAR username[UNLEN + 1];
@@ -1972,11 +1972,12 @@ SIPAccount::createBindingAddress()
     auto family = hostIp_ ? hostIp_.getFamily() : PJ_AF_INET;
     const auto& conf = config();
 
-    dhtnet::IpAddr ret = conf.bindAddress.empty()
-                     ? (conf.interface == dhtnet::ip_utils::DEFAULT_INTERFACE || conf.interface.empty()
-                            ? dhtnet::ip_utils::getAnyHostAddr(family)
-                            : dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), family))
-                     : dhtnet::IpAddr(conf.bindAddress, family);
+    dhtnet::IpAddr ret = conf.bindAddress.empty() ? (
+                             conf.interface == dhtnet::ip_utils::DEFAULT_INTERFACE
+                                     || conf.interface.empty()
+                                 ? dhtnet::ip_utils::getAnyHostAddr(family)
+                                 : dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), family))
+                                                  : dhtnet::IpAddr(conf.bindAddress, family);
 
     if (ret.getPort() == 0) {
         ret.setPort(conf.tlsEnable ? conf.tlsListenerPort : conf.localPort);

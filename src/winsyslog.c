@@ -65,9 +65,7 @@ getLastErrorText(                   // converts "Lasr Error" code into text
 
 void closelog(void)
 {
-#ifndef RING_UWP
     DeregisterEventSource(loghdl);
-#endif
     free(loghdr);
 }
 
@@ -89,7 +87,6 @@ void syslog(int level, const char* format, ...)
 
     vsnprintf(tmp, 1024, format, arglist);
 
-#ifndef RING_UWP
     arr[0] = tmp;
     BOOL err = ReportEvent(loghdl, (unsigned short) level, (unsigned short)level,
         level, NULL, 1, 0, arr, NULL);
@@ -99,7 +96,6 @@ void syslog(int level, const char* format, ...)
         CHAR errText[1024];
         puts(getLastErrorText(errText, 1024));
     }
-#endif
 
     va_end(arglist);
 }
@@ -116,9 +112,7 @@ void syslog(int level, const char* format, ...)
     if (loghdl) {
         closelog();
     }
-#ifndef RING_UWP
     loghdl = RegisterEventSource(NULL, ident);
-#endif
     sprintf(tmp, (logopt & WINLOG_PID) ? "%s[%d]" : "%s", ident, getpid());
     loghdr = _strdup(tmp);  /* save header for later */
 }

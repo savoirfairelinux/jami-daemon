@@ -34,11 +34,6 @@ list (APPEND Source_Files__media__video
 set (Source_Files__media__video ${Source_Files__media__video} PARENT_SCOPE)
 
 if(MSVC)
-   if(WINDOWS_STORE)
-      add_subdirectory(uwpvideo)
-      set (Source_Files__media__video__uwpvideo ${Source_Files__media__video__uwpvideo} PARENT_SCOPE)
-   endif()
-   
    add_subdirectory(winvideo)
    set (Source_Files__media__video__winvideo ${Source_Files__media__video__winvideo} PARENT_SCOPE)
 endif()
