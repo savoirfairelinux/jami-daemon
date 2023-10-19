@@ -214,6 +214,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "b9dbf4d8_21e4e728",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "I guess a ticket should exists",
+      "parentUuid": "b8f3c34d_af5a5a65",
+      "range": {
+        "startLine": 590,
+        "startChar": 41,
+        "endLine": 590,
+        "endChar": 43
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "224ffb20_8b3dd3ff",
         "filename": "src/media/video/video_input.cpp",
         "patchSetId": 11

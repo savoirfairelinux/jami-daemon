@@ -1,0 +1,159 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ca0982a4_45ab063a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 15
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "missing ticket",
+      "range": {
+        "startLine": 7,
+        "startChar": 17,
+        "endLine": 7,
+        "endChar": 28
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bf57dd15_4a0857a8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "cf deadlock I sent on removeAudio (not sure how much it\u0027s related)",
+      "range": {
+        "startLine": 9,
+        "startChar": 11,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3a61b348_9fcd095f",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "sharing a webm, then mp3. The mp3 can\u0027t be stopped for sender side, even if call is ended",
+      "range": {
+        "startLine": 9,
+        "startChar": 11,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98d9b82c_151c0d25",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "what\u0027s the difference between path and path_ I think it should be clarified for readability",
+      "range": {
+        "startLine": 52,
+        "startChar": 34,
+        "endLine": 52,
+        "endChar": 90
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b84bbe8_3e0a9851",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "I guess it\u0027s not related, but it\u0027s weird to have a setFrameSize() emitting decodingStarted and modifying started to true (and not in start)",
+      "range": {
+        "startLine": 286,
+        "startChar": 49,
+        "endLine": 286,
+        "endChar": 64
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98ccd221_b79cfdd5",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "I think the usage of id+sink is a bi faulty/misleading/unclear in some methods. id_ can be a sinkId sometimes and sometimes not.",
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0a1e46a0_67a843c6",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-19T13:43:54Z",
+      "side": 1,
+      "message": "unused in .h?",
+      "range": {
+        "startLine": 37,
+        "startChar": 6,
+        "endLine": 37,
+        "endChar": 17
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
