@@ -90,6 +90,7 @@ private:
     void testModeratorMuteUpdateParticipantsInfos();
     void testUnauthorizedMute();
     void testAudioVideoMutedStates();
+    void testMuteStatusAfterAdd();
     void testCreateParticipantsSinks();
     void testMuteStatusAfterRemove();
     void testActiveStatusAfterRemove();
@@ -113,6 +114,7 @@ private:
     CPPUNIT_TEST(testModeratorMuteUpdateParticipantsInfos);
     CPPUNIT_TEST(testUnauthorizedMute);
     CPPUNIT_TEST(testAudioVideoMutedStates);
+    CPPUNIT_TEST(testMuteStatusAfterAdd);
     CPPUNIT_TEST(testCreateParticipantsSinks);
     CPPUNIT_TEST(testMuteStatusAfterRemove);
     CPPUNIT_TEST(testActiveStatusAfterRemove);
@@ -453,6 +455,63 @@ ConferenceTest::testAudioVideoMutedStates()
     }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
         return conf->isMediaSourceMuted(jami::MediaType::MEDIA_VIDEO);
+    }));
+
+    hangupConference();
+
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testMuteStatusAfterAdd()
+{
+    registerSignalHandlers();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+    auto daviUri = daviAccount->getUsername();
+
+    std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttribute
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+            libjami::Media::MediaAttributeValue::AUDIO},
+           {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
+           {libjami::Media::MediaAttributeKey::SOURCE, ""},
+           {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    mediaList.emplace_back(mediaAttribute);
+
+    JAMI_INFO("Start call between Alice and Bob");
+    auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    Manager::instance().answerCall(bobId, bobCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+
+    JAMI_INFO("Start call between Alice and Carla");
+    auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    Manager::instance().answerCall(carlaId, carlaCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+
+    JAMI_INFO("Start conference");
+    Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
+
+    JAMI_INFO("Add Davi");
+    auto call3 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    Manager::instance().answerCall(daviId, daviCall.callId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    Manager::instance().addParticipant(aliceId, call3, aliceId, confId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+
+    auto aliceConf = aliceAccount->getConference(confId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] {
+        return aliceConf->isMediaSourceMuted(jami::MediaType::MEDIA_AUDIO);
     }));
 
     hangupConference();
@@ -871,8 +930,7 @@ ConferenceTest::testAudioConferenceConfInfo()
         std::lock_guard<std::mutex> lock(pInfosMtx_);
         for (auto i = 0u; i < pInfos_.size(); ++i) {
             if (pInfos_[i]["uri"].find(aliceUri) != std::string::npos
-                && pInfos_[i]["videoMuted"] == "true"
-                && pInfos_[i]["sinkId"] == "host_video_0")
+                && pInfos_[i]["videoMuted"] == "true" && pInfos_[i]["sinkId"] == "host_video_0")
                 result += 1;
         }
         return result;
