@@ -457,10 +457,10 @@ SIPAccount::getVolatileAccountDetails() const
 
     if (transport_ and transport_->isSecure() and transport_->isConnected()) {
         const auto& tlsInfos = transport_->getTlsInfos();
-        auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
+        /*auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
         if (tlsInfos.cipher and not cipher)
             JAMI_WARN("Unknown cipher: %d", tlsInfos.cipher);
-        a.emplace(libjami::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
+        a.emplace(libjami::TlsTransport::TLS_CIPHER, cipher ? cipher : "");*/
         a.emplace(libjami::TlsTransport::TLS_PEER_CERT, tlsInfos.peerCert->toString());
         auto ca = tlsInfos.peerCert->issuer;
         unsigned n = 0;
@@ -984,12 +984,12 @@ SIPAccount::trimCiphers()
     size_t sum = 0;
     unsigned count = 0;
     static const size_t MAX_CIPHERS_STRLEN = 1000;
-    for (const auto& item : ciphers_) {
+    /*for (const auto& item : ciphers_) {
         sum += strlen(pj_ssl_cipher_name(item));
         if (sum > MAX_CIPHERS_STRLEN)
             break;
         ++count;
-    }
+    }*/
     ciphers_.resize(count);
 }
 
@@ -1002,14 +1002,14 @@ SIPAccount::initTlsConfiguration()
 
     // Determine the cipher list supported on this machine
     CipherArray avail_ciphers(256);
-    unsigned cipherNum = avail_ciphers.size();
-    if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-        JAMI_ERR("Could not determine cipher list on this system");
+    unsigned cipherNum = 0;//avail_ciphers.size();
+    /*if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
+        JAMI_ERR("Could not determine cipher list on this system");*/
     avail_ciphers.resize(cipherNum);
 
     ciphers_.clear();
     std::string_view stream(conf.tlsCiphers), item;
-    while (jami::getline(stream, item, ' ')) {
+    /*while (jami::getline(stream, item, ' ')) {
         std::string cipher(item);
         auto item_cid = pj_ssl_cipher_id(cipher.c_str());
         if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
@@ -1017,7 +1017,7 @@ SIPAccount::initTlsConfiguration()
             ciphers_.push_back(item_cid);
         } else
             JAMI_ERR("Invalid cipher: %s", cipher.c_str());
-    }
+    }*/
 
     ciphers_.erase(std::remove_if(ciphers_.begin(),
                                   ciphers_.end(),
@@ -1396,14 +1396,14 @@ SIPAccount::getSupportedTlsCiphers()
     if (availCiphers.empty()) {
         unsigned cipherNum = 256;
         CipherArray avail_ciphers(cipherNum);
-        if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-            JAMI_ERR("Could not determine cipher list on this system");
+        /*if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
+            JAMI_ERR("Could not determine cipher list on this system");*/
         avail_ciphers.resize(cipherNum);
         availCiphers.reserve(cipherNum);
-        for (const auto& item : avail_ciphers) {
+       /*for (const auto& item : avail_ciphers) {
             if (item > 0) // 0 doesn't have a name
                 availCiphers.push_back(pj_ssl_cipher_name(item));
-        }
+        }*/
     }
     return availCiphers;
 }

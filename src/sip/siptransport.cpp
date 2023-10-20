@@ -348,12 +348,12 @@ SipTransportBroker::getTlsListener(const dhtnet::IpAddr& ipAddress, const pjsip_
 #endif
 
     pjsip_tpfactory* listener = nullptr;
-    const pj_status_t status
+    /*const pj_status_t status
         = pjsip_tls_transport_start2(endpt_, settings, ipAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
         JAMI_ERR("TLS listener did not start: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
-    }
+    }*/
     return std::make_shared<TlsListener>(listener);
 }
 
