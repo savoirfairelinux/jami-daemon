@@ -50,6 +50,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "62ddd0fa_0b4d7bbb",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-10-20T14:00:44Z",
+      "side": 1,
+      "message": "In the final version we don\u0027t care. The patch should be upstreamed and we bump ffmpeg",
+      "parentUuid": "0d662bac_75d155bf",
+      "range": {
+        "startLine": 2,
+        "startChar": 28,
+        "endLine": 2,
+        "endChar": 29
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "b270866f_5e9ddbdf",
         "filename": "contrib/src/ffmpeg/rules.mak",
         "patchSetId": 3
