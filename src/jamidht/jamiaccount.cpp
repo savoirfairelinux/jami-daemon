@@ -958,16 +958,24 @@ JamiAccount::addDevice(const std::string& password)
         return;
     }
     accountManager_
-        ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
+        ->addDevice(password, [this](AccountManager::AddDeviceResult result) {
             switch (result) {
-            case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
+            // case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
+            // if success: 1.:.0, "show_complete" else: 2 || 3, "show_issue"
+            case AccountManager::AddDeviceResult::SUCCESS_SCAN_QR:
+                // emitSignalibjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
+                // emit signal for showing QR code scanner page with callback to start searching for the tmp account
+                // nvm need to compartmentalize this to just how it was before instead of dumping the whole implementation into one function
+                // emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(1, "show_qr_scanner");
+                emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(0, "show_complete");
                 break;
             case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
+                // emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
+                emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(2, ""); // TODO change the error state to a short maybe??? for perf
                 break;
             case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+                // emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+                emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(3, "");
                 break;
             }
         });
@@ -1051,6 +1059,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
     return true;
 }
 
+// TODO KESS look at this to msgpack account archive
 std::pair<std::string, std::string>
 JamiAccount::saveIdentity(const dht::crypto::Identity id,
                           const std::filesystem::path& path,
@@ -1239,6 +1248,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     // Importing external archive
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
+                // KESS this is where the loading from dht happens and needs to be changed to load from dht address
                 } else if (not archive_pin.empty()) {
                     // Importing from DHT
                     acreds->scheme = "dht";
@@ -1261,6 +1271,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             creds->password = archive_password;
             bool hasPassword = !archive_password.empty();
 
+            // KESS what is this
             accountManager_->initAuthentication(
                 getAccountID(),
                 fDeviceKey,
@@ -1972,6 +1983,13 @@ JamiAccount::doRegister_()
                 auto peerId = cert->issuer->getId().toString();
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
+                else if (name == "auth") {
+                    // KESS
+                    // TODO handle auth channel and add a way to connect this with sending account archives???
+                    // make an auth server? or use something in existence?
+                    //
+                    // accept conection if DeviceAuthState is set to enabled
+                    // maybe this should be done within archive_account_manager to keep things cleaner for accessing other functions without scrolling through lots of nested code
                 } else if (name.find("git://") == 0) {
                     auto sep = name.find_last_of('/');
                     auto conversationId = name.substr(sep + 1);
@@ -2039,6 +2057,7 @@ JamiAccount::doRegister_()
                         });
                     });
                 } else {
+                    // TODO add channel type for AUTH here and use it to hook into addDevice with a connectionManager_ for managing connections both sending and receiving (done above)
                     // TODO move git://
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
@@ -2047,6 +2066,9 @@ JamiAccount::doRegister_()
                 }
             }
         });
+        // TODO something here
+          //accountManager_->setConnectionManager(connectionManager_); // KESS added this to pass connectionmanager context to addDevice for NewLinkDevImpl old_dev
+          // cant do this because of unique_ptr
         lkCM.unlock();
 
         // Note: this code should be unused unless for DHT text messages
@@ -4195,6 +4217,9 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+	// KESS TODO ask Adrien about making another channelHandler
+        channelHandlers_[Uri::Scheme::AUTH]
+            = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {

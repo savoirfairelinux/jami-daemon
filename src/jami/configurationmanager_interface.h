@@ -71,6 +71,8 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelList(
     const std::string& accountId, const std::string& connectionId);
 
 LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
+// TODO KESS maybe this is needed to do P2P instead of loadFromDHT ???
+LIBJAMI_PUBLIC bool exportToPeer(const std::string& accountID);
 LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
                                  const std::string& password = {});
@@ -355,6 +357,20 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         using cb_type = void(int /*alert*/);
     };
 
+    // TODO: KESS
+    struct LIBJAMI_PUBLIC AddDeviceStateChanged
+    {
+        constexpr static const char* name = "ImportAccountAddDeviceStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             int state, const std::string& detail);
+    };
+    // TODO: KESS
+    struct LIBJAMI_PUBLIC DeviceAuthStateChanged
+    {
+        constexpr static const char* name = "ImportAccountDeviceAuthStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             int state, const std::string& detail);
+    };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged
     {
@@ -449,6 +465,7 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*uri*/,
                              bool banned);
     };
+    // KESS TODO maybe remove this since no longer used for linking accounts ask Adrien
     struct LIBJAMI_PUBLIC ExportOnRingEnded
     {
         constexpr static const char* name = "ExportOnRingEnded";
@@ -521,6 +538,7 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*device*/,
                              int /*status*/);
     };
+    // KESS this could be used for NewLinkDevImpl maybe???
     struct LIBJAMI_PUBLIC AccountProfileReceived
     {
         constexpr static const char* name = "AccountProfileReceived";
