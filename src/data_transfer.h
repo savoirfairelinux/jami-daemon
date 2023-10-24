@@ -97,6 +97,8 @@ private:
     {
         return std::static_pointer_cast<IncomingFile>(shared_from_this());
     }
+
+    std::unique_lock<std::mutex> lock_;
     std::ofstream stream_;
     std::string sha3Sum_ {};
 };
