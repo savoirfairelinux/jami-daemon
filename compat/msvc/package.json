@@ -1,21 +1,4 @@
 {
     "name": "daemon",
-    "deps": [
-        "asio",
-        "ffmpeg",
-        "natpmp",
-        "opendht",
-        "pjproject",
-        "portaudio",
-        "secp256k1",
-        "speexdsp",
-        "upnp",
-        "yaml-cpp",
-        "libarchive",
-        "webrtc-audio-processing",
-        "libgit2",
-        "dhtnet"
-    ],
-    "configuration": "ReleaseLib_win32",
     "use_cmake": true
 }

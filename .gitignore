@@ -99,9 +99,6 @@ tools/.vscode/
 *_wrap.h
 *_loader.c
 
-# Windows
-*.exe
-
 # Mac
 .DS_Store
 build-macos*
@@ -112,8 +109,9 @@ build-macos*
 /extras/tools/libtool-*.tar.xz
 
 # Windows native build
-/contrib/build/
-/contrib/msvc/
+x64/
+Release/
+Debug/
 
 # iOS
 /build-ios*
