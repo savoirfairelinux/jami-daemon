@@ -1,0 +1,3 @@
+[submodule "extras/scripts/pywinmake"]
+	path = extras/scripts/pywinmake
+	url = https://review.jami.net/pywinmake
