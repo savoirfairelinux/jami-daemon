@@ -134,6 +134,7 @@ constexpr static const char ALLOW_CERT_FROM_TRUSTED[] = "Account.allowCertFromTr
 constexpr static const char ARCHIVE_PASSWORD[] = "Account.archivePassword";
 constexpr static const char ARCHIVE_HAS_PASSWORD[] = "Account.archiveHasPassword";
 constexpr static const char ARCHIVE_PATH[] = "Account.archivePath";
+constexpr static const char ARCHIVE_URL[] = "Account.archiveURL";
 constexpr static const char ARCHIVE_PIN[] = "Account.archivePIN";
 constexpr static const char DEVICE_ID[] = "Account.deviceID";
 constexpr static const char DEVICE_NAME[] = "Account.deviceName";

@@ -337,6 +337,7 @@ public:
 
     /* Devices */
     void addDevice(const std::string& password);
+    void addDevice(std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Export the archive to a file
      * @param destinationPath
@@ -658,6 +659,8 @@ private:
 
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
+
+
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
     void loadAccount(const std::string& archive_password = {},
                      const std::string& archive_pin = {},

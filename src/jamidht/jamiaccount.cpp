@@ -959,6 +959,7 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
         }
         return false;
     }
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(getAccountID(), 1, "account_manager_unavailable");
     if (password_old != password_new)
         emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                         getAccountDetails());
@@ -972,26 +973,23 @@ JamiAccount::isPasswordValid(const std::string& password)
 }
 
 void
-JamiAccount::addDevice(const std::string& password)
+JamiAccount::addDevice(const std::string& peerTempAcc)
 {
     if (not accountManager_) {
-        emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(getAccountID(), 1, "invalid_state");
         return;
     }
-    accountManager_
-        ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
-            switch (result) {
-            case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
-                break;
-            case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
-                break;
-            case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-                break;
-            }
-        });
+
+    channelHandlers_[Uri::Scheme::AUTH]->connect(
+        DeviceId(peerTempAcc),
+        "",
+        [this] (std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& deviceId) {
+            if (!socket) { return; }
+            accountManager_->addDevice(socket);
+        }
+    );
+
+
 }
 
 bool
@@ -1260,6 +1258,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
                     // Importing external archive
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
+                } else if (conf.archive_url.empty()) {
+                    // Importing over a Peer2Peer TLS connection with DHT as DNS
+                    acreds->scheme = "p2p";
+                    acreds->uri = conf.archive_url;
                 } else if (not archive_pin.empty()) {
                     // Importing from DHT
                     acreds->scheme = "dht";
@@ -1269,7 +1271,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 } else if (hasArchive) {
                     // Migrating local account
                     acreds->scheme = "local";
-                    acreds->uri = std::move(archivePath).string();
+                    acreds->uri = archivePath.string();
                     acreds->updateIdentity = id;
                     migrating = true;
                 }
@@ -4224,6 +4226,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::AUTH]
+            = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {

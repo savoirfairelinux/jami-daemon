@@ -824,6 +824,11 @@ else()
         add_executable(ut_test_media_player test/unitTest/media/test_media_player.cpp)
         target_link_libraries(ut_test_media_player ut_library)
         add_test(NAME test_media_player COMMAND ut_test_media_player)
+	
+	# ut_linkdevice
+        add_executable(ut_test_linkdevice test/unitTest/linkdevice/linkdevice.cpp)
+        target_link_libraries(ut_test_linkdevice ut_library)
+        add_test(NAME test_linkdevice COMMAND ut_test_linkdevice)
 
         if (JAMI_PLUGIN)
             add_executable(ut_plugins test/unitTest/plugins/plugins.cpp)

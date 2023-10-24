@@ -71,6 +71,8 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelList(
     const std::string& accountId, const std::string& connectionId);
 
 LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
+LIBJAMI_PUBLIC uint64_t exportToPeer(const std::string& accountId, const std::string& uri);
+
 LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
                                  const std::string& password = {});
@@ -355,6 +357,20 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         using cb_type = void(int /*alert*/);
     };
 
+    struct LIBJAMI_PUBLIC AddDeviceStateChanged
+    {
+        constexpr static const char* name = "AddDeviceStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             int /*state*/,
+                             const std::string& /*detail*/);
+    };
+    struct LIBJAMI_PUBLIC DeviceAuthStateChanged
+    {
+        constexpr static const char* name = "DeviceAuthStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             int /*state*/,
+                             const std::string& /*detail*/);
+    };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged
     {

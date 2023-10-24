@@ -332,6 +332,25 @@ exportOnRing(const std::string& accountId, const std::string& password)
     return false;
 }
 
+// TODO make this function and JamiAccount::addDevice unified in return type either void or uint64_t... and also add the appropriate callback listeners to unitTest/linkdevice
+uint64_t
+exportToPeer(const std::string& accountId, const std::string& uri)
+{
+
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        std::string prefix = "jami-auth://";
+        if (uri.compare(0, prefix.length(), prefix) == 0) {
+          // Remove the prefix from the URI
+          std::string accountUsername = uri.substr(prefix.length());
+          account->addDevice(accountUsername);
+          return 0;
+        } else {
+          JAMI_WARN("[LinkDevice] Invalid URI format");
+        }
+    }
+    return 3;
+}
+
 bool
 exportToFile(const std::string& accountId,
              const std::string& destinationPath,
