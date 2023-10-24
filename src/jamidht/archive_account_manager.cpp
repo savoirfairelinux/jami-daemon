@@ -64,6 +64,9 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
     if (ctx->credentials->scheme == "dht") {
         loadFromDHT(ctx);
         return;
+    } else if (ctx->credentials->scheme == "p2p") {
+        startLoadFromPeer(ctx);
+        return;
     }
 
     dht::ThreadPool::computation().run([ctx = std::move(ctx), w = weak_from_this()] {
@@ -73,6 +76,10 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
             if (ctx->credentials->scheme == "file") {
                 // Import from external archive
                 this_->loadFromFile(*ctx);
+            } else if (ctx->credentials->scheme == "p2p") {
+
+
+                
             } else {
                 // Create/migrate local account
                 bool hasArchive = not ctx->credentials->uri.empty()
@@ -258,6 +265,41 @@ struct ArchiveAccountManager::DhtLoadContext
     std::pair<bool, bool> stateNew {false, true};
     bool found {false};
 };
+
+struct ArchiveAccountManager::PeerLoadContext
+{
+    dht::crypto::Identity tmpId;
+    dhtnet::ConnectionManager connectionManager;
+    PeerLoadContext(dht::crypto::Identity id) : tmpId(std::move(id)), connectionManager(tmpId) {}
+};
+
+void
+ArchiveAccountManager::startLoadFromPeer(const std::shared_ptr<AuthContext>& ctx)
+{
+    auto ca = dht::crypto::generateEcIdentity("Jami Temporary CA");
+    ctx->peerContext = std::make_unique<PeerLoadContext>(dht::crypto::generateIdentity("Jami", ca));
+
+    // TODO emit signal
+    // emitSignal<>(ctx->peerContext->tmpId);
+
+    ctx->peerContext->connectionManager.onICERequest([this](const DeviceId& deviceId) {
+        return true;
+    });
+
+    ctx->peerContext->connectionManager->onChannelRequest(
+            [this](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
+        return name == "jami-auth";
+    });
+
+    ctx->peerContext->connectionManager->onConnectionReady([this](const DeviceId& deviceId,
+                                                     const std::string& name,
+                                                     std::shared_ptr<dhtnet::ChannelSocket> channel) {
+        channel->setOnRecv([](ssize_t(const uint8_t* buf, std::size_t len)){
+            // TODO msgpack
+            return len;
+        });
+    });
+}
 
 void
 ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)

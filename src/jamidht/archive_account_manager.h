@@ -81,6 +81,7 @@ public:
 
 private:
     struct DhtLoadContext;
+    struct PeerLoadContext;
     struct AuthContext
     {
         std::string accountId;
@@ -89,6 +90,7 @@ private:
         std::string deviceName;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
         std::unique_ptr<DhtLoadContext> dhtContext;
+        std::unique_ptr<PeerLoadContext> peerContext;
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
     };
