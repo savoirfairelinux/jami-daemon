@@ -322,6 +322,7 @@ setMessageDisplayed(const std::string& accountId,
     return false;
 }
 
+// KESS remove this
 bool
 exportOnRing(const std::string& accountId, const std::string& password)
 {

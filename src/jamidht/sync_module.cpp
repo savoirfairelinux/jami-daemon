@@ -63,6 +63,8 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
     std::error_code ec;
     if (!syncMsg) {
         // Send contacts infos
+	// KESS: look into removing this later
+    // KESS write example
         // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
         // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
         if (auto info = acc->accountManager()->getInfo()) {
@@ -194,6 +196,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         msgpack::object_handle oh;
         SyncMsg msg;
 
+        // KESS consume buffer loop example
         try {
             while (ctx->pac.next(oh)) {
                 oh.get().convert(msg);

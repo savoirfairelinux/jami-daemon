@@ -36,6 +36,7 @@ static constexpr const char MIME_TYPE_GIT[] {"application/im-gitmessage-id"};
 
 class SIPCall;
 
+// KESS write example
 struct SyncMsg
 {
     DeviceSync ds;

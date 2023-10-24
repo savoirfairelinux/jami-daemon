@@ -34,6 +34,8 @@
 #include <string>
 #include <filesystem>
 
+#include <dhtnet/multiplexed_socket.h>
+
 namespace dht {
 class DhtRunner;
 }
@@ -42,6 +44,13 @@ namespace jami {
 
 using DeviceId = dht::PkId;
 struct AccountArchive;
+// // TODO KESS see if this is needed or can use a struct that contains an account
+// struct AccountArchive {
+//     template<class T>
+//     void msgpack(T &pack) {
+//         pack(name, age, aliases);
+//     }
+// }
 
 struct AccountInfo
 {
@@ -146,12 +155,14 @@ public:
 
     // Device management
 
+    // KESS hooks for client adding device
     enum class AddDeviceResult {
-        SUCCESS_SHOW_PIN = 0,
+        SUCCESS_SHOW_URI= 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
-    using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
+    // using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
+    using AddDeviceCallback = std::function<void(AddDeviceResult)>;
 
     enum class RevokeDeviceResult {
         SUCCESS = 0,
@@ -160,7 +171,9 @@ public:
     };
     using RevokeDeviceCallback = std::function<void(RevokeDeviceResult)>;
 
-    virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
+    // KESS don't forget to update this as well
+    virtual void addDevice(std::shared_ptr<dhtnet::ChannelSocket>&) {};
+    // virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
     virtual bool revokeDevice(const std::string& /*password*/,
                               const std::string& /*device*/,
                               RevokeDeviceCallback)
