@@ -26,17 +26,17 @@ static constexpr const char SYNC_URI[] {"sync://"};
 
 namespace jami {
 
-SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc,
+AuthChannelHandler::AuthChannelHandler(const std::shared_ptr<JamiAccount>& acc,
                                        dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
 {}
 
-SyncChannelHandler::~SyncChannelHandler() {}
+AuthChannelHandler::~AuthChannelHandler() {}
 
 void
-SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
+AuthChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
 {
     auto channelName = SYNC_URI + deviceId.toString();
     if (connectionManager_.isConnecting(deviceId, channelName)) {
@@ -49,30 +49,23 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
 }
 
 bool
-SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                              const std::string& /* name */)
+AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                              const std::string& name)
 {
-    auto acc = account_.lock();
-    if (!cert || !cert->issuer || !acc)
-        return false;
-    return cert->issuer->getId().toString() == acc->getUsername();
+    return false;
 }
 
 void
-SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
+AuthChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
                             const std::string&,
                             std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return;
-    if (auto sm = acc->syncModule())
-        sm->cacheSyncConnection(std::move(channel),
-                                cert->issuer->getId().toString(),
-                                cert->getLongId());
-    dht::ThreadPool::io().run([account=account_, channel]() {
-        if (auto acc = account.lock())
-            acc->sendProfile("", acc->getUsername(), channel->deviceId().toString());
+    
+    channel->setOnRecv([](const uint8_t* buf, size_t len){
+        // TODO
     });
 }
 

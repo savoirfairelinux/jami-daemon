@@ -42,6 +42,13 @@ namespace jami {
 
 using DeviceId = dht::PkId;
 struct AccountArchive;
+// // TODO KESS see if this is needed or can use a struct that contains an account
+// struct AccountArchive {
+//     template<class T>
+//     void msgpack(T &pack) {
+//         pack(name, age, aliases);
+//     }
+// }
 
 struct AccountInfo
 {
@@ -146,13 +153,16 @@ public:
 
     // Device management
 
+    // KESS hooks for client adding device
     enum class AddDeviceResult {
-        SUCCESS_SHOW_PIN = 0,
+        SUCCESS_SHOW_QR= 0,
+        // SUCCESS_SHOW_PIN = 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
-    using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
-
+    // using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
+    using AddDeviceCallback = std::function<void(AddDeviceResult)>;
+    
     enum class RevokeDeviceResult {
         SUCCESS = 0,
         ERROR_CREDENTIALS,
