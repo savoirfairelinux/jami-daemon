@@ -160,6 +160,7 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
                            const std::string& interactionId,
                            const std::string& sha3Sum)
     : FileInfo(channel, fileId, interactionId, info)
+    , lock_(dhtnet::fileutils::getFileLock(info.path))
     , sha3Sum_(sha3Sum)
 {
     stream_.open(std::filesystem::path(info_.path), std::ios::binary | std::ios::out | std::ios::app);
@@ -175,6 +176,7 @@ IncomingFile::~IncomingFile()
         channel_->setOnRecv({});
     if (stream_ && stream_.is_open())
         stream_.close();
+    lock_.unlock();
     if (channel_)
         channel_->shutdown();
 }
