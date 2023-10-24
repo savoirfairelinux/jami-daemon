@@ -95,11 +95,11 @@ struct SyncedConversation
             pending.reset();
     }
 
-    std::vector<std::map<std::string, std::string>> getMembers(bool includeBanned = false) const
+    std::vector<std::map<std::string, std::string>> getMembers(bool includeLeft, bool includeBanned) const
     {
         // conversation mtx must be locked
         if (conversation)
-            return conversation->getMembers(true, true, includeBanned);
+            return conversation->getMembers(true, includeLeft, includeBanned);
         // If we're cloning, we can return the initial members
         std::vector<std::map<std::string, std::string>> result;
         result.reserve(info.members.size());
@@ -830,7 +830,7 @@ ConversationModule::Impl::getConversationMembers(const std::string& conversation
                                                  bool includeBanned) const
 {
     return withConv(conversationId,
-                    [&](const auto& conv) { return conv.getMembers(includeBanned); });
+                    [&](const auto& conv) { return conv.getMembers(true, includeBanned); });
 }
 
 void
@@ -885,9 +885,13 @@ ConversationModule::Impl::removeConversation(const std::string& conversationId)
 bool
 ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv)
 {
-    auto members = conv.getMembers();
+    auto members = conv.getMembers(false, false);
     auto isSyncing = !conv.conversation;
-    auto hasMembers = !isSyncing && !(members.size() == 1 && username_ == members[0]["uri"]);
+    auto hasMembers = !isSyncing // If syncing there is no member to inform
+        && std::find_if(members.begin(), members.end(), [&](const auto& member) {
+            return member.at("uri") == username_;
+        }) != members.end()      // We must be still a member
+        && members.size() != 1;  // If there is only ourself
     conv.info.removed = std::time(nullptr);
     if (isSyncing)
         conv.info.erased = std::time(nullptr);

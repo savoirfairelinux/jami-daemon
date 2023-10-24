@@ -176,7 +176,7 @@ public:
             accountId_ = shared->getAccountID();
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
                                                                  repository_->id());
-            conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID() 
+            conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID()
                                         / "conversation_data" / repository_->id();
             fetchedPath_ = conversationDataPath_ / "fetched";
             sendingPath_ = conversationDataPath_ / "sending";

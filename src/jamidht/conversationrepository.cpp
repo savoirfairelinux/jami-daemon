@@ -3382,7 +3382,7 @@ ConversationRepository::leave()
     // Remove related files
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto crt = fmt::format("{}.crt", uri);
-    auto adminFile = repoPath / "admin" / crt;
+    auto adminFile = repoPath / "admins" / crt;
     auto memberFile = repoPath / "members" / crt;
     auto crlsPath = repoPath / "CRLs";
 
