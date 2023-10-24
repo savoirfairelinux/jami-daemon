@@ -249,6 +249,7 @@ SIPAccountBase::getIceOptions() const noexcept
 {
     dhtnet::IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
+    opts.upnpContext = upnpCtrl_ ? upnpCtrl_->upnpContext() : nullptr;
     opts.factory = Manager::instance().getIceTransportFactory();
 
     if (config().turnEnabled && turnCache_) {
