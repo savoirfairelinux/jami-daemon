@@ -304,7 +304,7 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           TARGET_NAME_RELEASELIB_WIN32 "jami"
+           TARGET_NAME_RELEASE "jami"
        )
    endif()
    ################################################################################
@@ -312,12 +312,12 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           OUTPUT_DIRECTORY_RELEASELIB_WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_VS_PLATFORM_NAME}/$<CONFIG>/bin/"
+           OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/build/${CMAKE_VS_PLATFORM_NAME}/$<CONFIG>/bin/"
        )
    endif()
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           INTERPROCEDURAL_OPTIMIZATION_RELEASELIB_WIN32 "FALSE"
+           INTERPROCEDURAL_OPTIMIZATION_RELEASE "FALSE"
        )
    endif()
    ################################################################################
