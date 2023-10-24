@@ -323,16 +323,6 @@ setMessageDisplayed(const std::string& accountId,
 }
 
 bool
-exportOnRing(const std::string& accountId, const std::string& password)
-{
-    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        account->addDevice(password);
-        return true;
-    }
-    return false;
-}
-
-bool
 exportToFile(const std::string& accountId,
              const std::string& destinationPath,
              const std::string& password)
