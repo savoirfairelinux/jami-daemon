@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "906dc2fb_c0e03416",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 15
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ca0982a4_45ab063a",
+      "range": {
+        "startLine": 7,
+        "startChar": 17,
+        "endLine": 7,
+        "endChar": 28
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bf57dd15_4a0857a8",
@@ -70,6 +94,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "012289ee_1ac3c1e1",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "Fix on the client side",
+      "parentUuid": "3a61b348_9fcd095f",
+      "range": {
+        "startLine": 9,
+        "startChar": 11,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5836dbe7_03fc40d4",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 15
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "related to the next patch",
+      "parentUuid": "bf57dd15_4a0857a8",
+      "range": {
+        "startLine": 9,
+        "startChar": 11,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "98d9b82c_151c0d25",
@@ -83,6 +155,30 @@
       "writtenOn": "2023-10-19T13:43:54Z",
       "side": 1,
       "message": "what\u0027s the difference between path and path_ I think it should be clarified for readability",
+      "range": {
+        "startLine": 52,
+        "startChar": 34,
+        "endLine": 52,
+        "endChar": 90
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9e76b36_93e9e15e",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "path might be \"file:///home/file.mp4\" while path_ is \"/home/file.mp4\".\nRenamed `path` to `resource`, same naming used in the client.",
+      "parentUuid": "98d9b82c_151c0d25",
       "range": {
         "startLine": 52,
         "startChar": 34,
@@ -116,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "faf103de_db1a8678",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 286,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "For dbus it is imperative that we start the sink before calling setframesize. The same is not valid for directrenderer.\nsetframesize will signal the client to create the renderer, but start will, for dbus, create shm_. Which must exist prior the client renderer creation, else the renderer creation fails with `could not open shm area \"\" , shm_open failed: Argument invalide`. This is only fixed after the sink emits the decodingstarted signal after it is started.\n\nfix is moved to inside video_input.\n\nNote: if it is desired to merge start into setframesize, it is better done in another ticket.",
+      "parentUuid": "3b84bbe8_3e0a9851",
+      "range": {
+        "startLine": 286,
+        "startChar": 49,
+        "endLine": 286,
+        "endChar": 64
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "98ccd221_b79cfdd5",
@@ -133,6 +253,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "72ac1676_2401cfc7",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "98ccd221_b79cfdd5",
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0a1e46a0_67a843c6",
@@ -146,6 +284,30 @@
       "writtenOn": "2023-10-19T13:43:54Z",
       "side": 1,
       "message": "unused in .h?",
+      "range": {
+        "startLine": 37,
+        "startChar": 6,
+        "endLine": 37,
+        "endChar": 17
+      },
+      "revId": "beb8401ecb2d7a5e9954f305596bcabb3ae64e95",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "07741f24_a9dba3ad",
+        "filename": "src/media/video/video_rtp_session.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0a1e46a0_67a843c6",
       "range": {
         "startLine": 37,
         "startChar": 6,

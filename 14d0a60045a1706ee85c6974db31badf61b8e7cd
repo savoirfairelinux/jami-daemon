@@ -236,6 +236,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "eeb2fbbc_21c9122f",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 590,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2023-10-24T19:39:43Z",
+      "side": 1,
+      "message": "https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/909",
+      "parentUuid": "b9dbf4d8_21e4e728",
+      "range": {
+        "startLine": 590,
+        "startChar": 41,
+        "endLine": 590,
+        "endChar": 43
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "224ffb20_8b3dd3ff",
