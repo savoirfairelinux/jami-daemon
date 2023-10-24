@@ -959,6 +959,7 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
         }
         return false;
     }
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(getAccountID(), 1, "account_manager_unavailable");
     if (password_old != password_new)
         emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                         getAccountDetails());
@@ -972,26 +973,24 @@ JamiAccount::isPasswordValid(const std::string& password)
 }
 
 void
-JamiAccount::addDevice(const std::string& password)
+JamiAccount::addDevice(const std::string& peerTempAcc)
 {
     if (not accountManager_) {
-        emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(getAccountID(), 1, "invalid_state");
         return;
     }
-    accountManager_
-        ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
-            switch (result) {
-            case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
-                break;
-            case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
-                break;
-            case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-                break;
-            }
-        });
+
+    channelHandlers_[Uri::Scheme::AUTH]->connect(
+        DeviceId(peerTempAcc),
+        "",
+        [this] (std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& deviceId) {
+            if (!socket) { return; }
+            accountManager_->addDevice(socket);
+        }
+    );
+
+    // KESS this is where old device finds the new device, initiates the connection, and enters the establised state of the auth protocol defined in archive_account_manager
+
 }
 
 bool
@@ -1072,6 +1071,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
     return true;
 }
 
+// TODO KESS look at this to msgpack account archive
 std::pair<std::string, std::string>
 JamiAccount::saveIdentity(const dht::crypto::Identity id,
                           const std::filesystem::path& path,
@@ -2060,6 +2060,7 @@ JamiAccount::doRegister_()
                         });
                     });
                 } else {
+                    // TODO add channel type for AUTH here and use it to hook into addDevice with a connectionManager_ for managing connections both sending and receiving (done above)
                     // TODO move git://
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
@@ -4224,6 +4225,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::AUTH]
+            = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
