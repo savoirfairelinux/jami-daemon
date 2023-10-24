@@ -18,61 +18,72 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "jamidht/sync_channel_handler.h"
+#include "jamidht/auth_channel_handler.h"
 
 #include <opendht/thread_pool.h>
 
-static constexpr const char SYNC_URI[] {"sync://"};
+static constexpr const char AUTH_URI[] {"auth://"};
+
+static const uint8_t MAX_OPEN_CHANNELS {1}; // TODO enforce this in ::connect
 
 namespace jami {
 
-SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc,
+AuthChannelHandler::AuthChannelHandler(const std::shared_ptr<JamiAccount>& acc,
                                        dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
 {}
 
-SyncChannelHandler::~SyncChannelHandler() {}
+AuthChannelHandler::~AuthChannelHandler() {}
 
 void
-SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
+AuthChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
 {
-    auto channelName = SYNC_URI + deviceId.toString();
+    auto channelName = AUTH_URI + deviceId.toString();
     if (connectionManager_.isConnecting(deviceId, channelName)) {
         JAMI_INFO("Already connecting to %s", deviceId.to_c_str());
         return;
     }
+
+    // create an archive auth context to track the state
+
     connectionManager_.connectDevice(deviceId,
                                      channelName,
                                      std::move(cb));
 }
 
 bool
-SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                              const std::string& /* name */)
+AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                              const std::string& name)
 {
-    auto acc = account_.lock();
-    if (!cert || !cert->issuer || !acc)
-        return false;
-    return cert->issuer->getId().toString() == acc->getUsername();
+    return false;
 }
 
+// TODO standardize here, remove from acm
+struct AuthDecodingCtx
+{
+    msgpack::unpacker pac {
+        [](msgpack::type::object_type, std::size_t, void*) { return true; },
+        nullptr,
+        64
+    };
+};
+
 void
-SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                            const std::string&,
+AuthChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                            const std::string& deviceId,
                             std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
         return;
-    if (auto sm = acc->syncModule())
-        sm->cacheSyncConnection(std::move(channel),
-                                cert->issuer->getId().toString(),
-                                cert->getLongId());
-    dht::ThreadPool::io().run([account=account_, channel]() {
-        if (auto acc = account.lock())
-            acc->sendProfile("", acc->getUsername(), channel->deviceId().toString());
+
+    auto ldc = std::make_shared<ArhiveAccountManager::LinkDeviceContext>();
+    ldc->maxOpenChannels = MAX_OPEN_CHANNELS;
+
+    channel->setOnRecv([ldc](const uint8_t* buf, size_t len) {
+        ArchiveAccountManager::onAuthRecv(ldc, buf, len);
     });
 }
 

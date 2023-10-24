@@ -81,6 +81,8 @@ public:
 
 private:
     struct DhtLoadContext;
+    struct PeerLoadContext;
+    struct LinkDeviceContext;
     struct AuthContext
     {
         std::string accountId;
@@ -89,6 +91,7 @@ private:
         std::string deviceName;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
         std::unique_ptr<DhtLoadContext> dhtContext;
+        std::unique_ptr<LinkDeviceContext> linkDevCtx;
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
     };
@@ -110,6 +113,7 @@ private:
     static bool needsMigration(const dht::crypto::Identity& id);
 
     void loadFromFile(AuthContext& ctx);
+    void startLoadFromPeer(AuthContext& ctx);
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
     void onArchiveLoaded(AuthContext& ctx,
                          AccountArchive&& a);

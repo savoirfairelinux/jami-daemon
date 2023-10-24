@@ -87,6 +87,8 @@ Uri::schemeToString() const
         return "git";
     case Uri::Scheme::SYNC:
         return "sync";
+    case Uri::Scheme::AUTH:
+        return "auth";
     case Uri::Scheme::JAMI:
     case Uri::Scheme::UNRECOGNIZED:
     default:

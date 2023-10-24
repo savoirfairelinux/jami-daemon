@@ -658,6 +658,10 @@ private:
 
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
+
+
+    // struct AccountFetcher { Some: {string username, jami::Password-Type/Scheme, string password}, Any: {} }; // need to make this struct in order to generalize the loading of accounts from the dht over tls channels
+    void loadAccountFromDhtPeer(const std::string& archive_name, const std::string& archive_password, const std::string& sender_jami_address); // KESS address is a way to identify a temporary account on the Dht for now but this method could be used to load any archive
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
     void loadAccount(const std::string& archive_password = {},
                      const std::string& archive_pin = {},
