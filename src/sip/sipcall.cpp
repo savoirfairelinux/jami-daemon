@@ -238,9 +238,12 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         rtpSession->setMediaSource(mediaAttr->sourceUri_);
     }
 
-    rtpSession->setSuccessfulSetupCb([w = weak()](MediaType type, bool isRemote) {
-        if (auto thisPtr = w.lock())
-            thisPtr->rtpSetupSuccess();
+    rtpSession->setSuccessfulSetupCb([w = weak()](MediaType, bool) {
+        // This sends SIP messages on socket, so move to io
+        dht::ThreadPool::io().run([w = std::move(w)] {
+            if (auto thisPtr = w.lock())
+                thisPtr->rtpSetupSuccess();
+        });
     });
 
     if (localMedia.type == MediaType::MEDIA_AUDIO) {
@@ -253,12 +256,14 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         assert(videoRtp && mediaAttr);
         auto streamIdx = findRtpStreamIndex(mediaAttr->label_);
         videoRtp->setRequestKeyFrameCallback([w = weak(), streamIdx] {
+            // This sends SIP messages on socket, so move to io
             dht::ThreadPool::io().run([w = std::move(w), streamIdx] {
                 if (auto thisPtr = w.lock())
                     thisPtr->requestKeyframe(streamIdx);
             });
         });
         videoRtp->setChangeOrientationCallback([w = weak(), streamIdx](int angle) {
+            // This sends SIP messages on socket, so move to io
             dht::ThreadPool::io().run([w, angle, streamIdx] {
                 if (auto thisPtr = w.lock())
                     thisPtr->setVideoOrientation(streamIdx, angle);
