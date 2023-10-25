@@ -26,7 +26,7 @@ class ArchiveAccountManager : public AccountManager
 public:
     using OnExportConfig = std::function<std::map<std::string, std::string>()>;
 
-    ArchiveAccountManager(const std::string& path,
+    ArchiveAccountManager(const std::filesystem::path& path,
                           OnExportConfig&& onExportConfig,
                           std::string archivePath,
                           const std::string& nameServer)

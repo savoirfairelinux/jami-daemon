@@ -32,6 +32,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <filesystem>
 
 namespace dht {
 class DhtRunner;
@@ -76,7 +77,7 @@ public:
     using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
     using OnDeviceAnnouncedCb = std::function<void()>;
 
-    AccountManager(const std::string& path, const std::string& nameServer)
+    AccountManager(const std::filesystem::path& path, const std::string& nameServer)
         : path_(path)
         , nameDir_(NameDirectory::instance(nameServer)) {};
 
@@ -266,7 +267,7 @@ public:
     dhtnet::tls::CertificateStore& certStore() const;
 
 protected:
-    std::string path_;
+    std::filesystem::path path_;
     OnChangeCallback onChange_;
     std::unique_ptr<AccountInfo> info_;
     std::shared_ptr<dht::DhtRunner> dht_;
