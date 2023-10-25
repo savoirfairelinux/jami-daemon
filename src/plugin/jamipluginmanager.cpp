@@ -297,11 +297,11 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                 }
             }
             for (const auto& accId : jami::Manager::instance().getAccountList())
-                dhtnet::fileutils::removeAll(fileutils::get_data_dir() / accId
+                std::filesystem::remove_all(fileutils::get_data_dir() / accId
                                      / "plugins" / detailsIt->second.at("id"));
             pluginDetailsMap_.erase(detailsIt);
         }
-        return dhtnet::fileutils::removeAll(rootPath);
+        return std::filesystem::remove_all(rootPath);
     } else {
         JAMI_INFO() << "PLUGIN: not installed.";
         return -1;
