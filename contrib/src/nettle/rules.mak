@@ -1,6 +1,6 @@
 # Nettle
 
-NETTLE_VERSION := nettle_3.8_release_20220602
+NETTLE_VERSION := nettle_3.9.1_release_20230601
 NETTLE_URL := https://git.lysator.liu.se/nettle/nettle/-/archive/$(NETTLE_VERSION)/nettle-$(NETTLE_VERSION).tar.gz
 PKGS += nettle
 
