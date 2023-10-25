@@ -373,7 +373,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
                                        AccountArchive&& a)
 {
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
-    dhtnet::fileutils::check_dir(path_.c_str(), 0700);
+    dhtnet::fileutils::check_dir(path_, 0700);
 
     auto path = fileutils::getFullPath(path_, archivePath_);
     a.save(path.string(), ctx.credentials ? ctx.credentials->password : "");
@@ -409,8 +409,8 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
         }
         deviceCertificate = std::make_shared<dht::crypto::Certificate>(
             dht::crypto::Certificate::generate(*request, a.id));
-        JAMI_WARN("[Auth] created new device: %s",
-                  deviceCertificate->getLongId().toString().c_str());
+        JAMI_WARNING("[Auth] created new device: {}",
+                  deviceCertificate->getLongId());
     }
 
     auto receipt = makeReceipt(a.id, *deviceCertificate, ethAccount);

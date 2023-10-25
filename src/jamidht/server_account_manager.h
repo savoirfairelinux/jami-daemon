@@ -29,7 +29,7 @@ namespace jami {
 class ServerAccountManager : public AccountManager
 {
 public:
-    ServerAccountManager(const std::string& path,
+    ServerAccountManager(const std::filesystem::path& path,
                          const std::string& managerHostname,
                          const std::string& nameServer);
 
