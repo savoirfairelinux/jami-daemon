@@ -1184,12 +1184,12 @@ JamiAccount::loadAccount(const std::string& archive_password,
     try {
         if (conf.managerUri.empty()) {
             accountManager_ = std::make_shared<ArchiveAccountManager>(
-                getPath().string(),
+                getPath(),
                 [this]() { return getAccountDetails(); },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
                 conf.nameServer);
         } else {
-            accountManager_ = std::make_shared<ServerAccountManager>(getPath().string(),
+            accountManager_ = std::make_shared<ServerAccountManager>(getPath(),
                                                                      conf.managerUri,
                                                                      conf.nameServer);
         }
@@ -3692,14 +3692,14 @@ JamiAccount::needToSendProfile(const std::string& peerUri,
     try {
         previousSha3 = fileutils::loadTextFile(sha3Path);
     } catch (...) {
-        fileutils::saveFile(sha3Path.string(), (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
+        fileutils::saveFile(sha3Path, (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
         return true;
     }
     if (sha3Sum != previousSha3) {
         // Incorrect sha3 stored. Update it
         dhtnet::fileutils::removeAll(vCardPath, true);
         dhtnet::fileutils::check_dir(vCardPath, 0700);
-        fileutils::saveFile(sha3Path.string(), (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
+        fileutils::saveFile(sha3Path, (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
         return true;
     }
     auto peerPath = vCardPath / peerUri;
@@ -3800,7 +3800,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 void
 JamiAccount::clearProfileCache(const std::string& peerUri)
 {
-    dhtnet::fileutils::removeAll(cachePath_ / "vcard" / peerUri);
+    std::filesystem::remove_all(cachePath_ / "vcard" / peerUri);
 }
 
 std::filesystem::path
