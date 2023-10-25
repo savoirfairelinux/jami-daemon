@@ -1052,12 +1052,14 @@ SyncHistoryTest::testLastInteractionAfterClone()
     auto messageReceived = false;
     std::string msgId = "";
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& /* accountId */,
+        [&](const std::string&  accountId ,
             const std::string& /* conversationId */,
             std::map<std::string, std::string> message) {
-            messageReceived = true;
-            msgId = message["id"];
-            cv.notify_one();
+            if (accountId == bobId) {
+                messageReceived = true;
+                msgId = message["id"];
+                cv.notify_one();
+            }
         }));
     auto conversationReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
@@ -1081,12 +1083,12 @@ SyncHistoryTest::testLastInteractionAfterClone()
     auto messageDisplayed = false;
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-            [&](const std::string& /* accountId */,
+            [&](const std::string& accountId,
                 const std::string& /* conversationId */,
                 const std::string& /* username */,
                 const std::string& /* msgId */,
                 int status) {
-                if (status == 3)
+                if (bobId == accountId && status == 3)
                     messageDisplayed = true;
                 cv.notify_one();
             }));
