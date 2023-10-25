@@ -43,7 +43,7 @@ constexpr std::string_view PATH_SEARCH = JAMI_PATH_AUTH "/directory/search";
 constexpr std::string_view PATH_CONTACTS = JAMI_PATH_AUTH "/contacts";
 constexpr std::string_view PATH_BLUEPRINT = JAMI_PATH_AUTH "/policyData";
 
-ServerAccountManager::ServerAccountManager(const std::string& path,
+ServerAccountManager::ServerAccountManager(const std::filesystem::path& path,
                                            const std::string& managerHostname,
                                            const std::string& nameServer)
     : AccountManager(path, nameServer)
