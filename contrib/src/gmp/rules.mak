@@ -1,18 +1,8 @@
 # GNU Multiple Precision Arithmetic
 
 
-ifdef HAVE_MACOSX
-ifeq ($(ARCH),arm64)
-GMP_VERSION := 6.2.99-20221117121717
-GMP_URL := https://gmplib.org/download/snapshot/gmp-next/gmp-$(GMP_VERSION).tar.zst
-else
-GMP_VERSION := 6.2.1
+GMP_VERSION := 6.3.0
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
-endif
-else
-GMP_VERSION := 6.2.1
-GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
-endif
 
 $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
 	$(call download,$(GMP_URL))
