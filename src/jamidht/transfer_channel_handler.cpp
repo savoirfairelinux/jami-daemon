@@ -53,7 +53,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
         return false;
     auto uri = cert->issuer->getId().toString();
     // Else, check if it's a profile or file in a conversation.
-    auto idstr = name.substr(16);
+    auto idstr = std::string_view(name).substr(16);
     // Remove arguments for now
     auto sep = idstr.find_last_of('?');
     idstr = idstr.substr(0, sep);
@@ -63,7 +63,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     }
     sep = idstr.find('/');
     auto lastSep = idstr.find_last_of('/');
-    auto conversationId = idstr.substr(0, sep);
+    auto conversationId = std::string(idstr.substr(0, sep));
     auto fileHost = idstr.substr(sep + 1, lastSep - sep - 1);
     auto fileId = idstr.substr(lastSep + 1);
     if (fileHost == acc->currentDeviceId())
@@ -82,7 +82,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
 
     return acc->convModule()->onFileChannelRequest(conversationId,
                                                    uri,
-                                                   fileId,
+                                                   std::string(fileId),
                                                    acc->sha3SumVerify());
 }
 
