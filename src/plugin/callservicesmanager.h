@@ -160,10 +160,11 @@ private:
     /**
      * @brief Checks if the MediaHandler was properly attached to a AV stream.
      * It's used to avoid saving wrong MediaHandler status.
+     * @param callId
      * @param mediaHandler
      * @return True if a MediaHandler is attached to a AV stream.
      */
-    bool isAttached(const CallMediaHandlerPtr& mediaHandler);
+    bool isAttached(const std::string& callId, const CallMediaHandlerPtr& mediaHandler);
 
     // Components that a plugin can register through registerMediaHandler service.
     // These objects can then be activated with toggleCallMediaHandler.
