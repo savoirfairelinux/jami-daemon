@@ -667,12 +667,12 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     if (restartTimer < DELAY_AFTER_RESTART) {
         return;
     }
-
+#ifndef __ANDROID__
     // Do nothing if jitter is more than 1 second
     if (rtcpi->jitter > 1000) {
         return;
     }
-
+#endif
     auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
     int newBitrate = oldBitrate;
