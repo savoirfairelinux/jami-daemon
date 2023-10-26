@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bb205d60_48f94277",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-10-26T23:11:43Z",
+      "side": 1,
+      "message": "it was never a file, it used to be just the filename, now it\u0027s the full file path",
+      "parentUuid": "9bad6f8c_e70405d1",
+      "range": {
+        "startLine": 188,
+        "startChar": 25,
+        "endLine": 188,
+        "endChar": 29
+      },
+      "revId": "c6bcaec271930138b0786ab8920475da75edc547",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "713628c0_cae901c2",
         "filename": "src/manager.cpp",
         "patchSetId": 2
@@ -37,6 +61,30 @@
       "writtenOn": "2023-10-26T17:39:49Z",
       "side": 1,
       "message": "filepath.filename() would be more explicit",
+      "range": {
+        "startLine": 190,
+        "startChar": 38,
+        "endLine": 190,
+        "endChar": 46
+      },
+      "revId": "c6bcaec271930138b0786ab8920475da75edc547",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c41db70_0411c056",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 190,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-10-26T23:11:43Z",
+      "side": 1,
+      "message": "it would be filepath.path().filename() which would create a second temporary copy of the path.",
+      "parentUuid": "713628c0_cae901c2",
       "range": {
         "startLine": 190,
         "startChar": 38,
