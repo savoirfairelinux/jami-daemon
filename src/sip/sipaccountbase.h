@@ -145,7 +145,7 @@ public:
      */
     std::string getPublishedAddress() const { return config().publishedIp; }
 
-    dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
+    virtual dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const;
 
     void setPublishedAddress(const dhtnet::IpAddr& ip_addr);
 

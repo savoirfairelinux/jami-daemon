@@ -3288,6 +3288,12 @@ JamiAccount::getIceOptions() const noexcept
     return connectionManager_->getIceOptions();
 }
 
+dhtnet::IpAddr
+JamiAccount::getPublishedIpAddress(uint16_t family) const
+{
+    return connectionManager_->getPublishedIpAddress(family);
+}
+
 bool
 JamiAccount::setPushNotificationToken(const std::string& token)
 {

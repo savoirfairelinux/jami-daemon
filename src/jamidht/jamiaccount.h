@@ -333,6 +333,7 @@ public:
      * Create and return ICE options.
      */
     dhtnet::IceTransportOptions getIceOptions() const noexcept override;
+    dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices */
     void addDevice(const std::string& password);
