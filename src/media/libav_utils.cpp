@@ -61,12 +61,13 @@ choose_sample_fmt(const AVCodec* codec,
                   const AVSampleFormat* preferred_formats,
                   int preferred_formats_count)
 {
-    for (int i = 0; i < preferred_formats_count; ++i) {
-        for (auto it = codec->sample_fmts; *it != -1; ++it) {
-            if (*it == preferred_formats[i])
-                return preferred_formats[i];
+    if (codec->sample_fmts)
+        for (int i = 0; i < preferred_formats_count; ++i) {
+            for (auto it = codec->sample_fmts; *it != -1; ++it) {
+                if (*it == preferred_formats[i])
+                    return preferred_formats[i];
+            }
         }
-    }
     return AV_SAMPLE_FMT_NONE;
 }
 
