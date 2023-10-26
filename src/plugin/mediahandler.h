@@ -79,7 +79,7 @@ public:
     /**
      * @brief Should return a map with handler's name, iconPath, pluginId, attached, and dataType.
      * Daemon expects:
-     *      "attached" -> 1 if handler is attached;
+     *      "attached" -> 1 if handler is attached or a list of attached calls;
      *      "dataType" -> 1 if data processed is video;
      *      "dataType" -> 0 if data processed is audio;
      * @return Map with CallMediaHandler details.
@@ -89,7 +89,7 @@ public:
     /**
      * @brief Should detach the plugin data process (Observer).
      */
-    virtual void detach() = 0;
+    virtual void detach(avSubjectPtr subject = nullptr) = 0;
 
     /**
      * @brief If a preference can be changed without the need to reload the plugin, it

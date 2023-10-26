@@ -195,14 +195,21 @@ CallServicesManager::isVideoType(const CallMediaHandlerPtr& mediaHandler)
 }
 
 bool
-CallServicesManager::isAttached(const CallMediaHandlerPtr& mediaHandler)
+CallServicesManager::isAttached(const std::string& callId, const CallMediaHandlerPtr& mediaHandler)
 {
     // "attached" is known from the MediaHandler implementation.
     const auto& details = mediaHandler->getCallMediaHandlerDetails();
     const auto& it = details.find("attached");
     if (it != details.end()) {
-        bool status;
-        std::istringstream(it->second) >> status;
+        std::string data {};
+        std::istringstream(it->second) >> data;
+        // TODO: update plugins and keep only the else bellow
+        JAMI_LOG("@@@ PLUGIN ATTACHED DATA: {}", data);
+        bool status {false};
+        if (data.find("0") != std::string::npos || data.find("1") != std::string::npos)
+            status = data == "1";
+        else
+            status = data.find(callId) != std::string::npos;
         return status;
     }
     return true;
@@ -244,15 +251,6 @@ CallServicesManager::clearCallHandlerMaps(const std::string& callId)
 }
 
 void
-CallServicesManager::notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
-                                     const StreamData& data,
-                                     AVSubjectSPtr& subject)
-{
-    if (auto soSubject = subject.lock())
-        callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
-}
-
-void
 CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
                                             const std::string& callId,
                                             const bool toggle)
@@ -268,16 +266,15 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
                                       });
 
         if (handlerIt != callMediaHandlers_.end()) {
-            if (toggle) {
-                notifyAVSubject((*handlerIt), subject.first, subject.second);
-                if (isAttached((*handlerIt)))
-                    handlers[mediaHandlerId] = true;
-            } else {
-                (*handlerIt)->detach();
-                handlers[mediaHandlerId] = false;
+            if (auto s = subject.second.lock()) {
+                if (toggle)
+                    (*handlerIt)->notifyAVFrameSubject(subject.first, s);
+                else
+                    (*handlerIt)->detach(s);
+                handlers[mediaHandlerId] = isAttached(callId, (*handlerIt));
+                if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
+                    applyRestart = true;
             }
-            if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
-                applyRestart = true;
         }
     }
 #ifndef __ANDROID__
