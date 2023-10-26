@@ -284,6 +284,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 int
 JamiPluginManager::uninstallPlugin(const std::string& rootPath)
 {
+    std::error_code ec;
     if (PluginUtils::checkPluginValidity(rootPath)) {
         auto detailsIt = pluginDetailsMap_.find(rootPath);
         if (detailsIt != pluginDetailsMap_.end()) {
@@ -297,11 +298,11 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                 }
             }
             for (const auto& accId : jami::Manager::instance().getAccountList())
-                dhtnet::fileutils::removeAll(fileutils::get_data_dir() / accId
-                                     / "plugins" / detailsIt->second.at("id"));
+                std::filesystem::remove_all(fileutils::get_data_dir() / accId
+                                     / "plugins" / detailsIt->second.at("id"), ec);
             pluginDetailsMap_.erase(detailsIt);
         }
-        return dhtnet::fileutils::removeAll(rootPath);
+        return std::filesystem::remove_all(rootPath, ec);
     } else {
         JAMI_INFO() << "PLUGIN: not installed.";
         return -1;
