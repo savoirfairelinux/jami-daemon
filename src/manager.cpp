@@ -178,22 +178,27 @@ check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& 
     if (old_dir == new_dir or not std::filesystem::is_directory(old_dir))
         return;
 
+    std::error_code ec;
     if (not std::filesystem::is_directory(new_dir)) {
         JAMI_WARNING("Migrating {} to {}", old_dir, new_dir);
-        std::filesystem::rename(old_dir, new_dir);
+        std::filesystem::rename(old_dir, new_dir, ec);
+        if (ec)
+            JAMI_ERROR("Failed to rename {} to {}: {}", old_dir, new_dir, ec.message());
     } else {
-        for (const auto& file : dhtnet::fileutils::readDirectory(old_dir)) {
-            auto old_dest = fileutils::getFullPath(old_dir, file);
-            auto new_dest = fileutils::getFullPath(new_dir, file);
-            if (std::filesystem::is_directory(old_dest)
-                and std::filesystem::is_directory(new_dest)) {
-                check_rename(old_dest, new_dest);
+        for (const auto& file_iterator : std::filesystem::directory_iterator(old_dir, ec)) {
+            const auto& file_path = file_iterator.path();
+            auto new_path = new_dir / file_path.filename();
+            if (file_iterator.is_directory()
+                and std::filesystem::is_directory(new_path)) {
+                check_rename(file_path, new_path);
             } else {
-                JAMI_WARNING("Migrating {} to {}", old_dir, new_dest);
-                std::filesystem::rename(old_dest, new_dest);
+                JAMI_WARNING("Migrating {} to {}", old_dir, new_path);
+                std::filesystem::rename(file_path, new_path, ec);
+                if (ec)
+                    JAMI_ERROR("Failed to rename {} to {}: {}", file_path, new_path, ec.message());
             }
         }
-        dhtnet::fileutils::removeAll(old_dir);
+        std::filesystem::remove_all(old_dir, ec);
     }
 }
 
