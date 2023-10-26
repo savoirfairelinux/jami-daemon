@@ -89,7 +89,7 @@ public:
     /**
      * @brief Should detach the plugin data process (Observer).
      */
-    virtual void detach() = 0;
+    virtual void detach(avSubjectPtr subject = nullptr) = 0;
 
     /**
      * @brief If a preference can be changed without the need to reload the plugin, it

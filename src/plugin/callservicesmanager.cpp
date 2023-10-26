@@ -195,7 +195,7 @@ CallServicesManager::isVideoType(const CallMediaHandlerPtr& mediaHandler)
 }
 
 bool
-CallServicesManager::isAttached(const CallMediaHandlerPtr& mediaHandler)
+CallServicesManager::isAttached(const std::string& callId, const CallMediaHandlerPtr& mediaHandler)
 {
     // "attached" is known from the MediaHandler implementation.
     const auto& details = mediaHandler->getCallMediaHandlerDetails();
@@ -268,14 +268,11 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
                                       });
 
         if (handlerIt != callMediaHandlers_.end()) {
-            if (toggle) {
+            if (toggle)
                 notifyAVSubject((*handlerIt), subject.first, subject.second);
-                if (isAttached((*handlerIt)))
-                    handlers[mediaHandlerId] = true;
-            } else {
-                (*handlerIt)->detach();
-                handlers[mediaHandlerId] = false;
-            }
+            else
+                (*handlerIt)->detach(subject.second);
+            handlers[mediaHandlerId] = isAttached(callId, (*handlerIt));
             if (subject.first.type == StreamType::video && isVideoType((*handlerIt)))
                 applyRestart = true;
         }

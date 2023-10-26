@@ -38,8 +38,8 @@
 #define JAMI_PLUGIN_ABI_VERSION 1 // 0 doesn't exist, considered as error
 
 // JAMI_PLUGIN_API_VERSION reflects changes in Services Managers
-// (CallServicesManager, ChatServicesMansge, and PreferenceServicesManagers) and in JAMI_PluginAPI.
-#define JAMI_PLUGIN_API_VERSION 2 // 0 doesn't exist, considered as error
+// (CallServicesManager, ChatServicesManager, and PreferenceServicesManagers) and in JAMI_PluginAPI.
+#define JAMI_PLUGIN_API_VERSION 3 // 0 doesn't exist, considered as error
 
 C_INTERFACE_START;
 
@@ -49,7 +49,7 @@ C_INTERFACE_START;
  */
 typedef struct JAMI_PluginVersion
 {
-    // Plugin is not loadable if this number differs from th one
+    // Plugin is not loadable if this number differs from the one
     // stored in the plugin loader
     uint32_t abi;
 
