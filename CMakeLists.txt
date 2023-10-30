@@ -82,7 +82,10 @@ if(NOT MSVC)
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin/jni
         )
     endif()
-    if (BUILD_CONTRIB)
+endif()
+
+if (BUILD_CONTRIB)
+    if (NOT MSVC)
         set(CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/native-${TARGET})
         file(MAKE_DIRECTORY ${CONTRIB_BUILD_PATH})
         file(MAKE_DIRECTORY ${CONTRIB_PATH})
@@ -111,6 +114,12 @@ if(NOT MSVC)
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
         execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+    else()
+        set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
+        execute_process(COMMAND python -m pip install ${SCRIPTS_DIR}/pywinmake)
+        execute_process(
+            COMMAND python ${SCRIPTS_DIR}/winmake.py
+            WORKING_DIRECTORY ${SCRIPTS_DIR})
     endif()
 endif()
 
