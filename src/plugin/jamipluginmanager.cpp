@@ -32,6 +32,7 @@
 #include <stdexcept>
 #include <msgpack.hpp>
 
+#define FAILURE                        -1
 #define SUCCESS                         0
 #define PLUGIN_ALREADY_INSTALLED        100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION              200 /* Plugin already installed with a newer version */
@@ -294,7 +295,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                 bool status = libjami::unloadPlugin(rootPath);
                 if (!status) {
                     JAMI_INFO() << "PLUGIN: could not unload, not performing uninstall.";
-                    return -1;
+                    return FAILURE;
                 }
             }
             for (const auto& accId : jami::Manager::instance().getAccountList())
@@ -302,10 +303,10 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                                      / "plugins" / detailsIt->second.at("id"), ec);
             pluginDetailsMap_.erase(detailsIt);
         }
-        return std::filesystem::remove_all(rootPath, ec);
+        return std::filesystem::remove_all(rootPath, ec) ? SUCCESS : FAILURE;
     } else {
         JAMI_INFO() << "PLUGIN: not installed.";
-        return -1;
+        return FAILURE;
     }
 }
 
@@ -467,14 +468,14 @@ JamiPluginManager::registerServices()
         auto ppp = static_cast<std::map<std::string, std::string>*>(data);
         *ppp = PluginPreferencesUtils::getPreferencesValuesMap(
             PluginUtils::getRootPathFromSoPath(plugin->getPath()));
-        return 0;
+        return SUCCESS;
     });
 
     // Register getPluginDataPath so that plugin's can receive the path to it's data folder
     pm_.registerService("getPluginDataPath", [](const DLPlugin* plugin, void* data) {
         auto dataPath = static_cast<std::string*>(data);
         dataPath->assign(PluginUtils::dataPath(plugin->getPath()).string());
-        return 0;
+        return SUCCESS;
     });
 
     // getPluginAccPreferences is a service that allows plugins to load saved per account preferences.
@@ -482,7 +483,7 @@ JamiPluginManager::registerServices()
         const auto path = PluginUtils::getRootPathFromSoPath(plugin->getPath());
         auto preferencesPtr {(static_cast<PreferencesMap*>(data))};
         if (!preferencesPtr)
-            return -1;
+            return FAILURE;
 
         preferencesPtr->emplace("default",
                                 PluginPreferencesUtils::getPreferencesValuesMap(path, "default"));
@@ -490,7 +491,7 @@ JamiPluginManager::registerServices()
         for (const auto& accId : jami::Manager::instance().getAccountList())
             preferencesPtr->emplace(accId,
                                     PluginPreferencesUtils::getPreferencesValuesMap(path, accId));
-        return 0;
+        return SUCCESS;
     };
 
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
