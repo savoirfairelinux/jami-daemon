@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(jami
+project(jami-core
     VERSION 13.11.0
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
@@ -230,12 +230,6 @@ endif()
 
 add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
 
-# Add the lib prefix to the output name for MSVC.
-if (MSVC)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-    set(CMAKE_STATIC_LIBRARY_PREFIX "lib")
-endif()
-
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE_NAME="${PACKAGE_NAME}"
@@ -299,14 +293,6 @@ if(MSVC)
    set(CMAKE_SUPPRESS_REGENERATION true)
    set(ROOT_NAMESPACE ringdaemon)
 
-   ################################################################################
-   # Target name
-   ################################################################################
-   if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
-       set_target_properties(${PROJECT_NAME} PROPERTIES
-           TARGET_NAME_RELEASE "jami"
-       )
-   endif()
    ################################################################################
    # Output directory
    ################################################################################
