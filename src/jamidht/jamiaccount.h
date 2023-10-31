@@ -349,6 +349,7 @@ public:
     std::map<std::string, std::string> getKnownDevices() const;
 
     bool isPasswordValid(const std::string& password);
+    std::vector<uint8_t> getPasswordKey(const std::string& password);
 
     bool changeArchivePassword(const std::string& password_old, const std::string& password_new);
 

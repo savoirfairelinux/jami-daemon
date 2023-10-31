@@ -52,6 +52,7 @@ public:
     void startSync(const OnNewDeviceCb&, const OnDeviceAnnouncedCb& dcb = {}) override;
 
     bool changePassword(const std::string& password_old, const std::string& password_new) override;
+    virtual std::vector<uint8_t> getPasswordKey(const std::string& /*password*/) override;
 
     void syncDevices() override;
 

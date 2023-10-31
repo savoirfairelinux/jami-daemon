@@ -2976,15 +2976,6 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         acc->doUnregister();
 }
 
-bool
-Manager::isPasswordValid(const std::string& accountID, const std::string& password)
-{
-    const auto acc = getAccount<JamiAccount>(accountID);
-    if (!acc)
-        return false;
-    return acc->isPasswordValid(password);
-}
-
 uint64_t
 Manager::sendTextMessage(const std::string& accountID,
                          const std::string& to,
