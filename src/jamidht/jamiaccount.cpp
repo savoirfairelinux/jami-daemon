@@ -3940,7 +3940,7 @@ std::vector<std::map<std::string, std::string>>
 JamiAccount::getConnectionList(const std::string& conversationId)
 {
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-    if (conversationId.empty()) {
+    if (connectionManager_ && conversationId.empty()) {
         return connectionManager_->getConnectionList();
     } else if (connectionManager_ && convModule_) {
         std::vector<std::map<std::string, std::string>> connectionList;
