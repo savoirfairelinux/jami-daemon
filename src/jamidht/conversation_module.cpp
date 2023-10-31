@@ -323,13 +323,25 @@ public:
     /**
      * @note convInfosMtx_ should be locked
      */
-    void saveConvInfos() const { ConversationModule::saveConvInfos(accountId_, convInfos_); }
+    void saveConvInfos() const {
+        ConversationModule::saveConvInfos(accountId_, convInfos_);
+        if (auto acc = account_.lock()) {
+            if (auto am = acc->accountManager()) {
+                am->syncDevices();
+            }
+        }
+    }
     /**
      * @note conversationsRequestsMtx_ should be locked
      */
     void saveConvRequests() const
     {
         ConversationModule::saveConvRequests(accountId_, conversationsRequests_);
+        if (auto acc = account_.lock()) {
+            if (auto am = acc->accountManager()) {
+                am->syncDevices();
+            }
+        }
     }
     void declineOtherConversationWith(const std::string& uri) noexcept;
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
@@ -403,6 +415,10 @@ public:
     void fixStructures(std::shared_ptr<JamiAccount> account, const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv, const std::set<std::string>& toRm);
 
     void cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv, const std::string& deviceId, const std::string& oldConvId = "");
+    void bootstrap(const std::string& convId);
+    void cloneConversationFrom(const std::string& conversationId,
+                            const std::string& uri,
+                            const std::string& oldConvId = "");
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -1225,6 +1241,85 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
         MIME_TYPE_GIT);
 }
 
+void
+ConversationModule::Impl::bootstrap(const std::string& convId)
+{
+    std::vector<DeviceId> kd;
+    if (auto acc = account_.lock())
+        for (const auto& [id, _] : acc->getKnownDevices())
+            kd.emplace_back(id);
+    auto bootstrap = [&](auto& conv) {
+        if (conv) {
+#ifdef LIBJAMI_TESTABLE
+            conv->onBootstrapStatus(bootstrapCbTest_);
+#endif // LIBJAMI_TESTABLE
+            conv->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
+                                      this,
+                                      conv->id()),
+                            kd);
+        }
+    };
+    std::vector<std::string> toClone;
+    if (convId.empty()) {
+        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        for (const auto& [conversationId, convInfo] : convInfos_) {
+            auto conv = getConversation(conversationId);
+            if (!conv)
+                return;
+            if ((!conv->conversation && !conv->info.removed)) {
+                // Because we're not tracking contact presence in order to sync now,
+                // we need to ask to clone requests when bootstraping all conversations
+                // else it can stay syncing
+                toClone.emplace_back(conversationId);
+            } else if (conv->conversation) {
+                bootstrap(conv->conversation);
+            }
+        }
+    } else if (auto conv = getConversation(convId)) {
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        if (conv->conversation)
+            bootstrap(conv->conversation);
+    }
+
+    for (const auto& cid : toClone) {
+        auto members = getConversationMembers(cid);
+        for (const auto& member : members) {
+            if (member.at("uri") != username_)
+                cloneConversationFrom(cid, member.at("uri"));
+        }
+    }
+}
+
+void
+ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId, const std::string& uri, const std::string& oldConvId)
+{
+    auto acc = account_.lock();
+    auto memberHash = dht::InfoHash(uri);
+    if (!acc || !memberHash) {
+        JAMI_WARNING("Invalid member detected: {}", uri);
+        return;
+    }
+    auto conv = startConversation(conversationId);
+    conv->info = {};
+    conv->info.id = conversationId;
+    conv->info.created = std::time(nullptr);
+    conv->info.members.emplace_back(username_);
+    conv->info.members.emplace_back(uri);
+
+    std::lock_guard<std::mutex> lk(conv->mtx);
+
+    acc->forEachDevice(
+        memberHash,
+        [w = weak(), conv, conversationId, oldConvId](
+            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+            auto sthis = w.lock();
+            auto deviceId = pk->getLongId().toString();
+            if (!sthis or deviceId == sthis->deviceId_)
+                return;
+            sthis->cloneConversationFrom(conv, deviceId);
+        });
+    addConvInfo(conv->info);
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -1449,51 +1544,9 @@ ConversationModule::loadConversations()
 void
 ConversationModule::bootstrap(const std::string& convId)
 {
-    std::vector<DeviceId> kd;
-    if (auto acc = pimpl_->account_.lock())
-        for (const auto& [id, _] : acc->getKnownDevices())
-            kd.emplace_back(id);
-    auto bootstrap = [&](auto& conv) {
-        if (conv) {
-#ifdef LIBJAMI_TESTABLE
-            conv->onBootstrapStatus(pimpl_->bootstrapCbTest_);
-#endif // LIBJAMI_TESTABLE
-            conv->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
-                                      pimpl_.get(),
-                                      conv->id()),
-                            kd);
-        }
-    };
-    std::vector<std::string> toClone;
-    if (convId.empty()) {
-        std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
-        for (const auto& [conversationId, convInfo] : pimpl_->convInfos_) {
-            auto conv = pimpl_->getConversation(conversationId);
-            if (!conv)
-                return;
-            if ((!conv->conversation && !conv->info.removed)) {
-                // Because we're not tracking contact presence in order to sync now,
-                // we need to ask to clone requests when bootstraping all conversations
-                // else it can stay syncing
-                toClone.emplace_back(conversationId);
-            } else if (conv->conversation) {
-                bootstrap(conv->conversation);
-            }
-        }
-    } else if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
-        if (conv->conversation)
-            bootstrap(conv->conversation);
-    }
-
-    for (const auto& cid : toClone) {
-        auto members = getConversationMembers(cid);
-        for (const auto& member : members) {
-            if (member.at("uri") != pimpl_->username_)
-                cloneConversationFrom(cid, member.at("uri"));
-        }
-    }
+    pimpl_->bootstrap(convId);
 }
+
 void
 ConversationModule::monitor()
 {
@@ -1775,32 +1828,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                           const std::string& uri,
                                           const std::string& oldConvId)
 {
-    auto acc = pimpl_->account_.lock();
-    auto memberHash = dht::InfoHash(uri);
-    if (!acc || !memberHash) {
-        JAMI_WARNING("Invalid member detected: {}", uri);
-        return;
-    }
-    auto conv = pimpl_->startConversation(conversationId);
-    conv->info = {};
-    conv->info.id = conversationId;
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(pimpl_->username_);
-    conv->info.members.emplace_back(uri);
-
-    std::lock_guard<std::mutex> lk(conv->mtx);
-
-    acc->forEachDevice(
-        memberHash,
-        [w = pimpl_->weak(), conv, conversationId, oldConvId](
-            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
-            auto sthis = w.lock();
-            auto deviceId = pk->getLongId().toString();
-            if (!sthis or deviceId == sthis->deviceId_)
-                return;
-            sthis->cloneConversationFrom(conv, deviceId);
-        });
-    addConvInfo(conv->info);
+    pimpl_->cloneConversationFrom(conversationId, uri, oldConvId);
 }
 
 // Message send/load
@@ -2062,8 +2090,13 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
             conv->info = convInfo;
-            if (!conv->conversation)
-                pimpl_->cloneConversation(deviceId, peerId, conv, convInfo.lastDisplayed);
+            if (!conv->conversation) {
+                if (deviceId != "") {
+                    pimpl_->cloneConversation(deviceId, peerId, conv, convInfo.lastDisplayed);
+                } else {
+                    pimpl_->bootstrap(convId);
+                }
+            }
         } else {
             if (conv->conversation && !conv->conversation->isRemoving()) {
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,

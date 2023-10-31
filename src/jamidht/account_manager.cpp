@@ -181,6 +181,7 @@ AccountManager::useIdentity(const std::string& accountId,
                             const std::string& username,
                             const OnChangeCallback& onChange)
 {
+    accountId_ = accountId;
     if (receipt.empty() or receiptSignature.empty())
         return nullptr;
 
