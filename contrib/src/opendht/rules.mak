@@ -25,6 +25,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/opendht/debug.patch
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
