@@ -82,6 +82,7 @@ LIBJAMI_PUBLIC bool changeAccountPassword(const std::string& accountID,
                                           const std::string& password_old,
                                           const std::string& password_new);
 LIBJAMI_PUBLIC bool isPasswordValid(const std::string& accountID, const std::string& password);
+LIBJAMI_PUBLIC std::vector<uint8_t> getPasswordKey(const std::string& accountID, const std::string& password);
 
 LIBJAMI_PUBLIC bool lookupName(const std::string& account,
                                const std::string& nameserver,
