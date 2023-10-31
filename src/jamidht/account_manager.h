@@ -270,6 +270,7 @@ protected:
     std::filesystem::path path_;
     OnChangeCallback onChange_;
     std::unique_ptr<AccountInfo> info_;
+    std::string accountId_;
     std::shared_ptr<dht::DhtRunner> dht_;
     std::reference_wrapper<NameDirectory> nameDir_;
 };
