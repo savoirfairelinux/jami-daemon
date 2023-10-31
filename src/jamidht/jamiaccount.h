@@ -875,6 +875,8 @@ private:
     std::mutex moduleMtx_;
     std::unique_ptr<SyncModule> syncModule_;
 
+    std::mutex rdvMtx_;
+
     void initConnectionManager();
 };
 

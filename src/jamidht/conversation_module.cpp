@@ -2589,7 +2589,7 @@ ConversationModule::call(const std::string& url,
         sendCallRequest = true;
         uri = itRdvAccount->second;
         deviceId = itRdvDevice->second;
-        confId = call->getCallId();
+        confId = "0";
         JAMI_DEBUG("Remote host detected. Calling {:s} on device {:s}", uri, deviceId);
     }
 

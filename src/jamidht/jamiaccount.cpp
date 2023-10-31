@@ -498,7 +498,16 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     if (getUsername() != accountUri || currentDeviceId() != deviceId)
         return;
 
+    // Avoid concurrent checks in this part
+    std::lock_guard<std::mutex> lk(rdvMtx_);
     auto isNotHosting = !convModule()->isHosting(conversationId, confId);
+    if (confId == "0") {
+        auto currentCalls = convModule()->getActiveCalls(conversationId);
+        if (!currentCalls.empty()) {
+            confId = currentCalls[0]["id"];
+            isNotHosting = false;
+        }
+    }
     auto preferences = convModule()->getConversationPreferences(conversationId);
     auto canHost = true;
 #if defined(__ANDROID__) || defined(__APPLE__)
