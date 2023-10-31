@@ -24,6 +24,8 @@
 #include <opendht/log.h>
 #include <opendht/thread_pool.h>
 
+#include "conversation_module.h"
+#include "jamiaccount.h"
 #include "manager.h"
 
 #include <algorithm>
@@ -41,6 +43,7 @@ constexpr std::string_view PATH_DEVICE = JAMI_PATH_AUTH "/device";
 constexpr std::string_view PATH_DEVICES = JAMI_PATH_AUTH "/devices";
 constexpr std::string_view PATH_SEARCH = JAMI_PATH_AUTH "/directory/search";
 constexpr std::string_view PATH_CONTACTS = JAMI_PATH_AUTH "/contacts";
+constexpr std::string_view PATH_CONVERSATIONS = JAMI_PATH_AUTH "/conversations";
 constexpr std::string_view PATH_BLUEPRINT = JAMI_PATH_AUTH "/policyData";
 
 ServerAccountManager::ServerAccountManager(const std::filesystem::path& path,
@@ -379,8 +382,9 @@ ServerAccountManager::syncDevices()
 {
     const std::string urlDevices = managerHostname_ + PATH_DEVICES;
     const std::string urlContacts = managerHostname_ + PATH_CONTACTS;
+    const std::string urlConversations = managerHostname_ + PATH_CONVERSATIONS;
 
-    JAMI_WARN("[Auth] syncContacts %s", urlContacts.c_str());
+    JAMI_WARNING("[Auth] syncContacts {}", urlContacts);
     Json::Value jsonContacts(Json::arrayValue);
     for (const auto& contact : info_->contacts->getContacts()) {
         auto jsonContact = contact.second.toJson();
@@ -392,15 +396,15 @@ ServerAccountManager::syncDevices()
         urlContacts,
         jsonContacts,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-                JAMI_DBG("[Auth] Got contact sync request callback with status code=%u",
+                JAMI_DEBUG("[Auth] Got contact sync request callback with status code={}",
                          response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
@@ -411,7 +415,7 @@ ServerAccountManager::syncDevices()
                         this_->info_->contacts->saveContacts();
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Error when iterating contact list: %s", e.what());
+                    JAMI_ERROR("Error when iterating contact list: {}", e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);
@@ -420,19 +424,19 @@ ServerAccountManager::syncDevices()
         },
         logger_));
 
-    JAMI_WARN("[Auth] syncDevices %s", urlDevices.c_str());
+    JAMI_WARNING("[Auth] syncDevices {}", urlDevices);
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlDevices,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-            JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
+            JAMI_DEBUG("[Auth] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
@@ -445,7 +449,51 @@ ServerAccountManager::syncDevices()
                         }
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Error when iterating device list: %s", e.what());
+                    JAMI_ERROR("Error when iterating device list: {}", e.what());
+                }
+            } else if (response.status_code == 401)
+                this_->authError(TokenScope::Device);
+
+            this_->clearRequest(response.request);
+        },
+        logger_));
+
+    JAMI_WARNING("[Auth] sync conversations {}", urlConversations);
+    Json::Value jsonConversations(Json::arrayValue);
+    for (const auto& [key, convInfo] : ConversationModule::convInfos(info_->accountId)) {
+        auto jsonConversation = convInfo.toJson();
+        jsonConversations.append(std::move(jsonConversation));
+    }
+    sendDeviceRequest(std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        urlConversations,
+        jsonConversations,
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+                JAMI_DEBUG("[Auth] Got contact sync request callback with status code={}",
+                         response.status_code);
+            auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return;
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    if (not json.isArray()) {
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                    } else {
+                        SyncMsg convs;
+                        for (unsigned i = 0, n = json.size(); i < n; i++) {
+                            const auto& e = json[i];
+                            auto ci = ConvInfo(e);
+                            convs.c[ci.id] = std::move(ci);
+                            if (auto acc = Manager::instance().getAccount<JamiAccount>(this_->info_->accountId)) {
+                                acc->convModule()->onSyncData(convs, "", "");
+                            }
+                        }
+
+
+                        this_->info_->contacts->saveContacts();
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_ERROR("Error when iterating contact list: {}", e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);

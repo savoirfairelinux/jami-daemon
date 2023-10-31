@@ -401,6 +401,10 @@ public:
 #endif
 
     void fixStructures(std::shared_ptr<JamiAccount> account, const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv, const std::set<std::string>& toRm);
+    void bootstrap(const std::string& convId);
+    void cloneConversationFrom(const std::string& conversationId,
+                                const std::string& uri,
+                                const std::string& oldConvId = "");
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -1182,6 +1186,122 @@ ConversationModule::Impl::fixStructures(std::shared_ptr<JamiAccount> acc, const 
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
 }
 
+void
+ConversationModule::Impl::bootstrap(const std::string& convId)
+{
+    std::vector<DeviceId> kd;
+    if (auto acc = account_.lock())
+        for (const auto& [id, _] : acc->getKnownDevices())
+            kd.emplace_back(id);
+    auto bootstrap = [&](auto& conv) {
+        if (conv) {
+#ifdef LIBJAMI_TESTABLE
+            conv->onBootstrapStatus(bootstrapCbTest_);
+#endif // LIBJAMI_TESTABLE
+            conv->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
+                                      this,
+                                      conv->id()),
+                            kd);
+        }
+    };
+    std::vector<std::string> toClone;
+    if (convId.empty()) {
+        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        for (const auto& [conversationId, convInfo] : convInfos_) {
+            auto conv = getConversation(conversationId);
+            if (!conv)
+                return;
+            if ((!conv->conversation && !conv->info.removed)) {
+                // Because we're not tracking contact presence in order to sync now,
+                // we need to ask to clone requests when bootstraping all conversations
+                // else it can stay syncing
+                toClone.emplace_back(conversationId);
+            } else if (conv->conversation) {
+                bootstrap(conv->conversation);
+            }
+        }
+    } else if (auto conv = getConversation(convId)) {
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        if (conv->conversation)
+            bootstrap(conv->conversation);
+    }
+
+    for (const auto& cid : toClone) {
+        auto members = getConversationMembers(cid);
+        for (const auto& member : members) {
+            if (member.at("uri") != username_)
+                cloneConversationFrom(cid, member.at("uri"));
+        }
+    }
+}
+
+void
+ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId, const std::string& uri, const std::string& oldConvId)
+{
+    auto acc = account_.lock();
+    auto memberHash = dht::InfoHash(uri);
+    if (!acc || !memberHash) {
+        JAMI_WARNING("Invalid member detected: {}", uri);
+        return;
+    }
+    auto conv = startConversation(conversationId);
+    conv->info = {};
+    conv->info.id = conversationId;
+    conv->info.created = std::time(nullptr);
+    conv->info.members.emplace_back(username_);
+    conv->info.members.emplace_back(uri);
+
+    std::lock_guard<std::mutex> lk(conv->mtx);
+
+    acc->forEachDevice(
+        memberHash,
+        [w = weak(), conv, conversationId, oldConvId](
+            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
+            auto sthis = w.lock();
+            auto deviceId = pk->getLongId().toString();
+            if (!sthis or deviceId == sthis->deviceId_)
+                return;
+
+            std::lock_guard<std::mutex> lk(conv->mtx);
+            if (!conv->startFetch(deviceId, true)) {
+                JAMI_WARNING("[Account {}] Already fetching {}", sthis->accountId_, conversationId);
+                return;
+            }
+
+            // We need a onNeedSocket_ with old logic.
+            sthis->onNeedSocket_(
+                conversationId,
+                pk->getLongId().toString(),
+                [sthis, conv, conversationId, oldConvId, deviceId](const auto& channel) {
+                    auto acc = sthis->account_.lock();
+                    std::lock_guard<std::mutex> lk(conv->mtx);
+                    if (conv->pending && !conv->pending->ready) {
+                        conv->pending->removeId = oldConvId;
+                        if (channel) {
+                            conv->pending->ready = true;
+                            conv->pending->deviceId = channel->deviceId().toString();
+                            conv->pending->socket = channel;
+                            if (!conv->pending->cloning) {
+                                conv->pending->cloning = true;
+                                dht::ThreadPool::io().run([w = sthis->weak(),
+                                                           conversationId,
+                                                           deviceId = conv->pending->deviceId]() {
+                                    if (auto sthis = w.lock())
+                                        sthis->handlePendingConversation(conversationId, deviceId);
+                                });
+                            }
+                            return true;
+                        } else {
+                            conv->stopFetch(deviceId);
+                        }
+                    }
+                    return false;
+                },
+                MIME_TYPE_GIT);
+        });
+    addConvInfo(conv->info);
+}
+
 ////////////////////////////////////////////////////////////////
 
 void
@@ -1405,51 +1525,9 @@ ConversationModule::loadConversations()
 void
 ConversationModule::bootstrap(const std::string& convId)
 {
-    std::vector<DeviceId> kd;
-    if (auto acc = pimpl_->account_.lock())
-        for (const auto& [id, _] : acc->getKnownDevices())
-            kd.emplace_back(id);
-    auto bootstrap = [&](auto& conv) {
-        if (conv) {
-#ifdef LIBJAMI_TESTABLE
-            conv->onBootstrapStatus(pimpl_->bootstrapCbTest_);
-#endif // LIBJAMI_TESTABLE
-            conv->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
-                                      pimpl_.get(),
-                                      conv->id()),
-                            kd);
-        }
-    };
-    std::vector<std::string> toClone;
-    if (convId.empty()) {
-        std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
-        for (const auto& [conversationId, convInfo] : pimpl_->convInfos_) {
-            auto conv = pimpl_->getConversation(conversationId);
-            if (!conv)
-                return;
-            if ((!conv->conversation && !conv->info.removed)) {
-                // Because we're not tracking contact presence in order to sync now,
-                // we need to ask to clone requests when bootstraping all conversations
-                // else it can stay syncing
-                toClone.emplace_back(conversationId);
-            } else if (conv->conversation) {
-                bootstrap(conv->conversation);
-            }
-        }
-    } else if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
-        if (conv->conversation)
-            bootstrap(conv->conversation);
-    }
-
-    for (const auto& cid : toClone) {
-        auto members = getConversationMembers(cid);
-        for (const auto& member : members) {
-            if (member.at("uri") != pimpl_->username_)
-                cloneConversationFrom(cid, member.at("uri"));
-        }
-    }
+    pimpl_->bootstrap(convId);
 }
+
 void
 ConversationModule::monitor()
 {
@@ -1708,68 +1786,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                           const std::string& uri,
                                           const std::string& oldConvId)
 {
-    auto acc = pimpl_->account_.lock();
-    auto memberHash = dht::InfoHash(uri);
-    if (!acc || !memberHash) {
-        JAMI_WARNING("Invalid member detected: {}", uri);
-        return;
-    }
-    auto conv = pimpl_->startConversation(conversationId);
-    conv->info = {};
-    conv->info.id = conversationId;
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(pimpl_->username_);
-    conv->info.members.emplace_back(uri);
-
-    std::lock_guard<std::mutex> lk(conv->mtx);
-
-    acc->forEachDevice(
-        memberHash,
-        [w = pimpl_->weak(), conv, conversationId, oldConvId](
-            const std::shared_ptr<dht::crypto::PublicKey>& pk) {
-            auto sthis = w.lock();
-            auto deviceId = pk->getLongId().toString();
-            if (!sthis or deviceId == sthis->deviceId_)
-                return;
-
-            std::lock_guard<std::mutex> lk(conv->mtx);
-            if (!conv->startFetch(deviceId, true)) {
-                JAMI_WARNING("[Account {}] Already fetching {}", sthis->accountId_, conversationId);
-                return;
-            }
-
-            // We need a onNeedSocket_ with old logic.
-            sthis->onNeedSocket_(
-                conversationId,
-                pk->getLongId().toString(),
-                [sthis, conv, conversationId, oldConvId, deviceId](const auto& channel) {
-                    auto acc = sthis->account_.lock();
-                    std::lock_guard<std::mutex> lk(conv->mtx);
-                    if (conv->pending && !conv->pending->ready) {
-                        conv->pending->removeId = oldConvId;
-                        if (channel) {
-                            conv->pending->ready = true;
-                            conv->pending->deviceId = channel->deviceId().toString();
-                            conv->pending->socket = channel;
-                            if (!conv->pending->cloning) {
-                                conv->pending->cloning = true;
-                                dht::ThreadPool::io().run([w = sthis->weak(),
-                                                           conversationId,
-                                                           deviceId = conv->pending->deviceId]() {
-                                    if (auto sthis = w.lock())
-                                        sthis->handlePendingConversation(conversationId, deviceId);
-                                });
-                            }
-                            return true;
-                        } else {
-                            conv->stopFetch(deviceId);
-                        }
-                    }
-                    return false;
-                },
-                MIME_TYPE_GIT);
-        });
-    addConvInfo(conv->info);
+    pimpl_->cloneConversation(conversationId, uri, oldConvId);
 }
 
 // Message send/load
@@ -2031,8 +2048,13 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
             }
             conv->info = convInfo;
-            if (!conv->conversation)
-                pimpl_->cloneConversation(deviceId, peerId, conv, convInfo.lastDisplayed);
+            if (!conv->conversation) {
+                if (deviceId != "") {
+                    pimpl_->cloneConversation(deviceId, peerId, conv, convInfo.lastDisplayed);
+                } else {
+                    pimpl_->bootstrap(convId);
+                }
+            }
         } else {
             if (conv->conversation && !conv->conversation->isRemoving()) {
                 emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,
