@@ -24,6 +24,8 @@
 #include <opendht/log.h>
 #include <opendht/thread_pool.h>
 
+#include "conversation_module.h"
+#include "jamiaccount.h"
 #include "manager.h"
 
 #include <algorithm>
@@ -41,6 +43,8 @@ constexpr std::string_view PATH_DEVICE = JAMI_PATH_AUTH "/device";
 constexpr std::string_view PATH_DEVICES = JAMI_PATH_AUTH "/devices";
 constexpr std::string_view PATH_SEARCH = JAMI_PATH_AUTH "/directory/search";
 constexpr std::string_view PATH_CONTACTS = JAMI_PATH_AUTH "/contacts";
+constexpr std::string_view PATH_CONVERSATIONS = JAMI_PATH_AUTH "/conversations";
+constexpr std::string_view PATH_CONVERSATIONS_REQUESTS = JAMI_PATH_AUTH "/conversationRequests";
 constexpr std::string_view PATH_BLUEPRINT = JAMI_PATH_AUTH "/policyData";
 
 ServerAccountManager::ServerAccountManager(const std::filesystem::path& path,
@@ -379,8 +383,95 @@ ServerAccountManager::syncDevices()
 {
     const std::string urlDevices = managerHostname_ + PATH_DEVICES;
     const std::string urlContacts = managerHostname_ + PATH_CONTACTS;
+    const std::string urlConversations = managerHostname_ + PATH_CONVERSATIONS;
+    const std::string urlConversationsRequests = managerHostname_ + PATH_CONVERSATIONS_REQUESTS;
 
-    JAMI_WARN("[Auth] syncContacts %s", urlContacts.c_str());
+    JAMI_WARNING("[Auth] sync conversations {}", urlConversations);
+    Json::Value jsonConversations(Json::arrayValue);
+    for (const auto& [key, convInfo] : ConversationModule::convInfos(accountId_)) {
+        jsonConversations.append(convInfo.toJson());
+    }
+    sendDeviceRequest(std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        urlConversations,
+        jsonConversations,
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+                JAMI_DEBUG("[Auth] Got conversation sync request callback with status code={}",
+                         response.status_code);
+            auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return;
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    if (not json.isArray()) {
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                    } else {
+                        SyncMsg convs;
+                        for (unsigned i = 0, n = json.size(); i < n; i++) {
+                            const auto& e = json[i];
+                            auto ci = ConvInfo(e);
+                            convs.c[ci.id] = std::move(ci);
+                        }
+                        dht::ThreadPool::io().run([accountId=this_->accountId_, convs] {
+                            if (auto acc = Manager::instance().getAccount<JamiAccount>(accountId)) {
+                                acc->convModule()->onSyncData(convs, "", "");
+                            }
+                        });
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_ERROR("Error when iterating conversation list: {}", e.what());
+                }
+            } else if (response.status_code == 401)
+                this_->authError(TokenScope::Device);
+
+            this_->clearRequest(response.request);
+        },
+        logger_));
+
+    JAMI_WARNING("[Auth] sync conversations requests {}", urlConversationsRequests);
+    Json::Value jsonConversationsRequests(Json::arrayValue);
+    for (const auto& [key, convRequest] : ConversationModule::convRequests(accountId_)) {
+        auto jsonConversation = convRequest.toJson();
+        jsonConversationsRequests.append(std::move(jsonConversation));
+    }
+    sendDeviceRequest(std::make_shared<Request>(
+        *Manager::instance().ioContext(),
+        urlConversationsRequests,
+        jsonConversationsRequests,
+        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+                JAMI_DEBUG("[Auth] Got conversations requests sync request callback with status code={}",
+                         response.status_code);
+            auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return;
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    if (not json.isArray()) {
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                    } else {
+                        SyncMsg convReqs;
+                        for (unsigned i = 0, n = json.size(); i < n; i++) {
+                            const auto& e = json[i];
+                            auto cr = ConversationRequest(e);
+                            convReqs.cr[cr.conversationId] = std::move(cr);
+                        }
+                        dht::ThreadPool::io().run([accountId=this_->accountId_, convReqs] {
+                            if (auto acc = Manager::instance().getAccount<JamiAccount>(accountId)) {
+                                acc->convModule()->onSyncData(convReqs, "", "");
+                            }
+                        });
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_ERROR("Error when iterating conversations requests list: {}", e.what());
+                }
+            } else if (response.status_code == 401)
+                this_->authError(TokenScope::Device);
+
+            this_->clearRequest(response.request);
+        },
+        logger_));
+
+    JAMI_WARNING("[Auth] syncContacts {}", urlContacts);
     Json::Value jsonContacts(Json::arrayValue);
     for (const auto& contact : info_->contacts->getContacts()) {
         auto jsonContact = contact.second.toJson();
@@ -392,15 +483,15 @@ ServerAccountManager::syncDevices()
         urlContacts,
         jsonContacts,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-                JAMI_DBG("[Auth] Got contact sync request callback with status code=%u",
+                JAMI_DEBUG("[Auth] Got contact sync request callback with status code={}",
                          response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
@@ -411,7 +502,7 @@ ServerAccountManager::syncDevices()
                         this_->info_->contacts->saveContacts();
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Error when iterating contact list: %s", e.what());
+                    JAMI_ERROR("Error when iterating contact list: {}", e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);
@@ -420,19 +511,19 @@ ServerAccountManager::syncDevices()
         },
         logger_));
 
-    JAMI_WARN("[Auth] syncDevices %s", urlDevices.c_str());
+    JAMI_WARNING("[Auth] syncDevices {}", urlDevices);
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlDevices,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-            JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
+            JAMI_DEBUG("[Auth] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
@@ -445,7 +536,7 @@ ServerAccountManager::syncDevices()
                         }
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Error when iterating device list: %s", e.what());
+                    JAMI_ERROR("Error when iterating device list: {}", e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);
@@ -497,24 +588,24 @@ ServerAccountManager::revokeDevice(const std::string& password,
         return false;
     }
     const std::string url = managerHostname_ + PATH_DEVICE + "/" + device;
-    JAMI_WARN("[Revoke] Revoking device of %s at %s", info_->username.c_str(), url.c_str());
+    JAMI_WARNING("[Revoke] Revoking device of {} at {}", info_->username, url);
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
         [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-            JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
+            JAMI_DEBUG("[Revoke] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARN("[Revoke] Got server response");
+                    JAMI_WARNING("[Revoke] Got server response");
                     if (json["errorDetails"].empty()) {
                         if (cb)
                             cb(RevokeDeviceResult::SUCCESS);
                         this_->syncDevices();
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Error when loading device list: %s", e.what());
+                    JAMI_ERROR("Error when loading device list: {}", e.what());
                 }
             } else if (cb)
                 cb(RevokeDeviceResult::ERROR_NETWORK);
@@ -536,7 +627,7 @@ bool
 ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
 {
     const std::string url = managerHostname_ + PATH_SEARCH + "?queryString=" + query;
-    JAMI_WARN("[Search] Searching user %s at %s", query.c_str(), url.c_str());
+    JAMI_WARNING("[Search] Searching user {} at {}", query, url);
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
@@ -550,7 +641,7 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
                     Json::Value::ArrayIndex rcount = profiles.size();
                     std::vector<std::map<std::string, std::string>> results;
                     results.reserve(rcount);
-                    JAMI_WARN("[Search] Got server response: %s", response.body.c_str());
+                    JAMI_WARNING("[Search] Got server response: {}", response.body);
                     for (Json::Value::ArrayIndex i = 0; i < rcount; i++) {
                         const auto& ruser = profiles[i];
                         std::map<std::string, std::string> user;
@@ -564,7 +655,7 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
                     if (cb)
                         cb(results, SearchResponse::found);
                 } catch (const std::exception& e) {
-                    JAMI_ERR("[Search] Error during search: %s", e.what());
+                    JAMI_ERROR("[Search] Error during search: {}", e.what());
                 }
             } else {
                 if (response.status_code == 401)
