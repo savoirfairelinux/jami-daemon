@@ -2138,9 +2138,14 @@ JamiAccount::convModule()
             weak(),
             [this](auto&& syncMsg) {
                 dht::ThreadPool::io().run([w = weak(), syncMsg] {
-                    if (auto shared = w.lock())
+                    if (auto shared = w.lock()) {
+                        auto& config = shared->config();
+                        if (!config.managerUri.empty()) // JAMS
+                            if (auto am = shared->accountManager())
+                                am->syncDevices();
                         if (auto sm = shared->syncModule())
                             sm->syncWithConnected(syncMsg);
+                    }
                 });
             },
             [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
