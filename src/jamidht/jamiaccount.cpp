@@ -2144,6 +2144,12 @@ JamiAccount::convModule()
                 });
             },
             [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
+                dht::ThreadPool::io().run([w = weak()] {
+                    auto shared = w.lock();
+                    if (shared)
+                        if (auto am = shared->accountManager())
+                            am->syncDevices();
+                });
                 // No need to retrigger, sendTextMessage will call
                 // messageEngine_.sendMessage, already retriggering on
                 // main thread.
