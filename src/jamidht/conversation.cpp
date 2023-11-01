@@ -158,7 +158,14 @@ public:
             throw std::logic_error("Couldn't clone repository");
         }
         init();
-        // To get current active calls from previous commit, we need to read the history
+
+        // Calls are managed by main application; updates from extension may consume limited memory.
+        if (!jami::Manager::instance().isIOSExtension) {
+            setUpCalls();
+        }
+    }
+
+    void setUpCalls() {
         auto convCommits = loadMessages({});
         std::reverse(std::begin(convCommits), std::end(convCommits));
         for (const auto& c : convCommits) {

@@ -1217,67 +1217,51 @@ ConversationModule::loadConversations()
     pimpl_->conversations_.clear();
     std::set<std::string> toRm;
     for (const auto& repository : conversationsRepositories) {
-        try {
-            auto sconv = std::make_shared<SyncedConversation>(repository);
+        loadEachConversation(repository, uri, toRm);
+    }
+    pruneInvalidConversations();
+    ilk.unlock();
+    lk.unlock();
+    if (!jami::Manager::instance().isIOSExtension) {
+        syncTrustWithConversationRequests();
+        removeConversations(toRm);
+    }
+}
 
-            auto conv = std::make_shared<Conversation>(acc, repository);
-            conv->onLastDisplayedUpdated([w = pimpl_->weak_from_this()](auto convId, auto lastId) {
-                if (auto p = w.lock())
-                    p->onLastDisplayedUpdated(convId, lastId);
-            });
-            conv->onMembersChanged([w = pimpl_->weak_from_this(), repository](const auto& members) {
-                if (auto p = w.lock())
-                    p->setConversationMembers(repository, members);
-            });
-            conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
-            auto members = conv->memberUris(uri, {});
-            // NOTE: The following if is here to protect against any incorrect state
-            // that can be introduced
-            if (conv->mode() == ConversationMode::ONE_TO_ONE && members.size() == 1) {
-                // If we got a 1:1 conversation, but not in the contact details, it's rather a
-                // duplicate or a weird state
-                auto& otherUri = members[0];
-                auto convFromDetails = getOneToOneConversation(otherUri);
-                if (convFromDetails != repository) {
-                    if (convFromDetails.empty()) {
-                        auto details = acc->getContactDetails(otherUri);
-                        if (details.empty()) {
-                            // If details is empty, contact is removed and not banned.
-                            JAMI_ERROR("Conversation {} detected for {} and should be removed", repository, otherUri);
-                            toRm.insert(repository);
-                        } else {
-                            JAMI_ERROR("No conversation detected for {} but one exists ({}). "
-                                    "Update details",
-                                    otherUri,
-                                    repository);
-                            acc->updateConvForContact(otherUri, convFromDetails, repository);
-                        }
-                    } else {
-                        JAMI_ERROR("Multiple conversation detected for {} but ({} & {})",
-                                   otherUri,
-                                   repository,
-                                   convFromDetails);
-                        toRm.insert(repository);
-                    }
-                }
+void
+ConversationModule::loadEachConversation(const std::string& repository, const std::string& uri, std::set<std::string>& toRm)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
+    try {
+        auto sconv = std::make_shared<SyncedConversation>(repository);
+        auto conv = std::make_shared<Conversation>(acc, repository);
+        setupConversationCallbacks(conv, repository);
+        auto members = conv->memberUris(uri, {});
+        if (!jami::Manager::instance().isIOSExtension) {
+            handleOneToOneConversation(conv, repository, toRm);
+        }
+        auto convInfo = pimpl_->convInfos_.find(repository);
+        if (convInfo == pimpl_->convInfos_.end()) {
+            JAMI_ERROR("Missing conv info for {}. This is a bug!", repository);
+            sconv->info.created = std::time(nullptr);
+            sconv->info.members = std::move(members);
+            sconv->info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
+            // convInfosMtx_ is already locked
+            pimpl_->convInfos_[repository] = sconv->info;
+            pimpl_->saveConvInfos();
+        } else {
+            sconv->info = convInfo->second;
+            if (convInfo->second.removed) {
+                // A conversation was removed, but repository still exists
+                conv->setRemovingFlag();
+                toRm.insert(repository);
             }
-            auto convInfo = pimpl_->convInfos_.find(repository);
-            if (convInfo == pimpl_->convInfos_.end()) {
-                JAMI_ERROR("Missing conv info for {}. This is a bug!", repository);
-                sconv->info.created = std::time(nullptr);
-                sconv->info.members = std::move(members);
-                sconv->info.lastDisplayed = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
-                // convInfosMtx_ is already locked
-                pimpl_->convInfos_[repository] = sconv->info;
-                pimpl_->saveConvInfos();
-            } else {
-                sconv->info = convInfo->second;
-                if (convInfo->second.removed) {
-                    // A conversation was removed, but repository still exists
-                    conv->setRemovingFlag();
-                    toRm.insert(repository);
-                }
-            }
+        }
+
+        //remove below from extension
+        if (!jami::Manager::instance().isIOSExtension) {
             auto commits = conv->commitsEndedCalls();
             if (!commits.empty()) {
                 // Note: here, this means that some calls were actives while the
@@ -1285,19 +1269,76 @@ ConversationModule::loadConversations()
                 // Notify other in the conversation that the call is finished
                 pimpl_->sendMessageNotification(*conv, true, *commits.rbegin());
             }
-            sconv->conversation = conv;
-            pimpl_->conversations_.emplace(repository, std::move(sconv));
-        } catch (const std::logic_error& e) {
-            JAMI_WARN("[Account %s] Conversations not loaded : %s",
-                      pimpl_->accountId_.c_str(),
-                      e.what());
+        }
+        sconv->conversation = conv;
+        pimpl_->conversations_.emplace(repository, std::move(sconv));
+
+    } catch (const std::logic_error& e) {
+        JAMI_WARN("[Account %s] Conversations not loaded : %s",
+                  pimpl_->accountId_.c_str(),
+                  e.what());
+    }
+}
+
+void
+ConversationModule::setupConversationCallbacks(const std::shared_ptr<Conversation>& conv, const std::string& repository)
+{
+    conv->onLastDisplayedUpdated([w = pimpl_->weak_from_this()](auto convId, auto lastId) {
+        if (auto p = w.lock())
+            p->onLastDisplayedUpdated(convId, lastId);
+    });
+
+    conv->onMembersChanged([w = pimpl_->weak_from_this(), repository](const auto& members) {
+        if (auto p = w.lock())
+            p->setConversationMembers(repository, members);
+    });
+
+    conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
+}
+
+void
+ConversationModule::handleOneToOneConversation(const std::shared_ptr<Conversation>& conv, const std::string& repository, std::set<std::string>& toRm)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
+    auto uri = acc->getUsername();
+    auto members = conv->memberUris(uri, {});
+
+    if (conv->mode() == ConversationMode::ONE_TO_ONE && members.size() == 1) {
+        // If we got a 1:1 conversation, but not in the contact details, it's rather a
+        // duplicate or a weird state
+        auto& otherUri = members[0];
+        auto convFromDetails = getOneToOneConversation(otherUri);
+        if (convFromDetails != repository) {
+            if (convFromDetails.empty()) {
+                auto details = acc->getContactDetails(otherUri);
+                if (details.empty()) {
+                    // If details is empty, contact is removed and not banned.
+                    JAMI_ERROR("Conversation {} detected for {} and should be removed", repository, otherUri);
+                    toRm.insert(repository);
+                } else {
+                    JAMI_ERROR("No conversation detected for {} but one exists ({}). Update details", otherUri, repository);
+                    acc->updateConvForContact(otherUri, convFromDetails, repository);
+                }
+            } else {
+                JAMI_ERROR("Multiple conversation detected for {} but ({} & {})", otherUri, repository, convFromDetails);
+                toRm.insert(repository);
+            }
         }
     }
+}
 
-    // Prune any invalid conversations without members and
-    // set the removed flag if needed
+void
+ConversationModule::pruneInvalidConversations()
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
     size_t oldConvInfosSize = pimpl_->convInfos_.size();
     std::set<std::string> removed;
+    auto uri = acc->getUsername();
+
     for (auto itInfo = pimpl_->convInfos_.begin(); itInfo != pimpl_->convInfos_.end();) {
         const auto& info = itInfo->second;
         if (info.members.empty()) {
@@ -1308,42 +1349,41 @@ ConversationModule::loadConversations()
             removed.insert(info.id);
         auto itConv = pimpl_->conversations_.find(info.id);
         if (itConv == pimpl_->conversations_.end()) {
-            // convInfos_ can contain a conversation that is not yet cloned
-            // so we need to add it there.
             itConv = pimpl_->conversations_
-                         .emplace(info.id, std::make_shared<SyncedConversation>(info))
-                         .first;
+                .emplace(info.id, std::make_shared<SyncedConversation>(info))
+                .first;
         }
-        if (itConv != pimpl_->conversations_.end() && itConv->second && itConv->second->conversation
-            && info.removed)
+        if (itConv != pimpl_->conversations_.end() && itConv->second && itConv->second->conversation && info.removed)
             itConv->second->conversation->setRemovingFlag();
         if (!info.removed && itConv == pimpl_->conversations_.end()) {
-            // In this case, the conversation is not synced and we only know ourself
             if (info.members.size() == 1 && info.members.at(0) == uri) {
                 JAMI_WARNING("[Account {:s}] Conversation {:s} seems not present/synced.",
                              pimpl_->accountId_,
                              info.id);
-                emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_,
-                                                                             info.id);
+                emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, info.id);
                 itInfo = pimpl_->convInfos_.erase(itInfo);
                 continue;
             }
         }
         ++itInfo;
     }
-    // On oldest version, removeConversation didn't update "appdata/contacts"
-    // causing a potential incorrect state between "appdata/contacts" and "appdata/convInfos"
-    if (!removed.empty())
-        acc->unlinkConversations(removed);
-    // Save if we've removed some invalid entries
-    if (oldConvInfosSize != pimpl_->convInfos_.size())
-        pimpl_->saveConvInfos();
 
-    ilk.unlock();
-    lk.unlock();
+    if (!jami::Manager::instance().isIOSExtension) {
 
-    ////////////////////////////////////////////////////////////////
-    // Note: This is only to homogeneize trust and convRequests
+        if (!removed.empty())
+            acc->unlinkConversations(removed);
+
+        if (oldConvInfosSize != pimpl_->convInfos_.size())
+            pimpl_->saveConvInfos();
+    }
+}
+
+void
+ConversationModule::syncTrustWithConversationRequests()
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
     std::vector<std::string> invalidPendingRequests;
     {
         auto requests = acc->getTrustRequests();
@@ -1352,10 +1392,8 @@ ConversationModule::loadConversations()
             auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
             auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
             if (itConvId != request.end() && itConvFrom != request.end()) {
-                // Check if requests exists or is declined.
                 auto itReq = pimpl_->conversationsRequests_.find(itConvId->second);
-                auto declined = itReq == pimpl_->conversationsRequests_.end()
-                                || itReq->second.declined;
+                auto declined = itReq == pimpl_->conversationsRequests_.end() || itReq->second.declined;
                 if (declined) {
                     JAMI_WARNING("Invalid trust request found: {:s}", itConvId->second);
                     invalidPendingRequests.emplace_back(itConvFrom->second);
@@ -1364,19 +1402,21 @@ ConversationModule::loadConversations()
         }
     }
     dht::ThreadPool::io().run(
-        [w = pimpl_->weak(), invalidPendingRequests = std::move(invalidPendingRequests)]() {
-            // Will lock account manager
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            if (auto acc = shared->account_.lock()) {
-                for (const auto& invalidPendingRequest : invalidPendingRequests)
-                    acc->discardTrustRequest(invalidPendingRequest);
-            }
-        });
+                              [w = pimpl_->weak(), invalidPendingRequests = std::move(invalidPendingRequests)]() {
+                                  auto shared = w.lock();
+                                  if (!shared)
+                                      return;
+                                  if (auto acc = shared->account_.lock()) {
+                                      for (const auto& invalidPendingRequest : invalidPendingRequests)
+                                          acc->discardTrustRequest(invalidPendingRequest);
+                                  }
+                              });
+}
 
-    ////////////////////////////////////////////////////////////////
-    for (const auto& conv : toRm) {
+void
+ConversationModule::removeConversations(const std::set<std::string>& toRemove)
+{
+    for (const auto& conv : toRemove) {
         JAMI_ERROR("Remove conversation ({})", conv);
         removeConversation(conv);
     }

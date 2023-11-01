@@ -86,6 +86,16 @@ public:
      */
     void bootstrap(const std::string& convId = "");
 
+    void handleOneToOneConversation(const std::shared_ptr<Conversation>& conv, const std::string& repository, std::set<std::string>& toRemove);
+
+    void pruneInvalidConversations();
+
+    void syncTrustWithConversationRequests();
+
+    void removeConversations(const std::set<std::string>& toRemove);
+    void setupConversationCallbacks(const std::shared_ptr<Conversation>& conv, const std::string& repository);
+    void loadEachConversation(const std::string& repository, const std::string& uri, std::set<std::string>& toRemove);
+
     /**
      * Clear not removed fetch
      */
