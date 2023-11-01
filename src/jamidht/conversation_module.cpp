@@ -399,6 +399,8 @@ public:
 #ifdef LIBJAMI_TESTABLE
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
+
+    void fixStructures(std::shared_ptr<JamiAccount> account, const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv, const std::set<std::string>& toRm);
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -1133,6 +1135,53 @@ ConversationModule::Impl::bootstrapCb(const std::string& convId)
     });
 }
 
+void
+ConversationModule::Impl::fixStructures(std::shared_ptr<JamiAccount> acc, const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv, const std::set<std::string>& toRm)
+{
+    for (const auto& [uri, oldConv, newConv]: updateContactConv) {
+        acc->updateConvForContact(uri, oldConv, newConv);
+    }
+    ////////////////////////////////////////////////////////////////
+    // Note: This is only to homogeneize trust and convRequests
+    std::vector<std::string> invalidPendingRequests;
+    {
+        auto requests = acc->getTrustRequests();
+        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        for (const auto& request : requests) {
+            auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
+            auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
+            if (itConvId != request.end() && itConvFrom != request.end()) {
+                // Check if requests exists or is declined.
+                auto itReq = conversationsRequests_.find(itConvId->second);
+                auto declined = itReq == conversationsRequests_.end()
+                                || itReq->second.declined;
+                if (declined) {
+                    JAMI_WARNING("Invalid trust request found: {:s}", itConvId->second);
+                    invalidPendingRequests.emplace_back(itConvFrom->second);
+                }
+            }
+        }
+    }
+    dht::ThreadPool::io().run(
+        [w = weak(), invalidPendingRequests = std::move(invalidPendingRequests)]() {
+            // Will lock account manager
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            if (auto acc = shared->account_.lock()) {
+                for (const auto& invalidPendingRequest : invalidPendingRequests)
+                    acc->discardTrustRequest(invalidPendingRequest);
+            }
+        });
+
+    ////////////////////////////////////////////////////////////////
+    for (const auto& conv : toRm) {
+        JAMI_ERROR("Remove conversation ({})", conv);
+        removeConversation(conv);
+    }
+    JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
+}
+
 ////////////////////////////////////////////////////////////////
 
 void
@@ -1211,6 +1260,9 @@ ConversationModule::loadConversations()
     JAMI_LOG("[Account {}] Start loading conversations…", pimpl_->accountId_);
     auto conversationsRepositories = dhtnet::fileutils::readDirectory(
         fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
+
+    auto contacts = acc->getContacts(); // Avoid to lock configurationMtx while conv Mtx is locked
+    std::vector<std::tuple<std::string, std::string, std::string>> updateContactConv;
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     std::unique_lock<std::mutex> ilk(pimpl_->convInfosMtx_);
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
@@ -1237,11 +1289,16 @@ ConversationModule::loadConversations()
                 // If we got a 1:1 conversation, but not in the contact details, it's rather a
                 // duplicate or a weird state
                 auto& otherUri = members[0];
-                auto convFromDetails = getOneToOneConversation(otherUri);
+                std::string convFromDetails;
+                auto itContact = std::find_if(contacts.cbegin(), contacts.cend(), [&](const auto& c) {
+                    return c.at("id") == otherUri;
+                });
+                auto isRemoved = itContact == contacts.end();
+                if (!isRemoved)
+                    convFromDetails = itContact->at("conversationId");
                 if (convFromDetails != repository) {
                     if (convFromDetails.empty()) {
-                        auto details = acc->getContactDetails(otherUri);
-                        if (details.empty()) {
+                        if (isRemoved) {
                             // If details is empty, contact is removed and not banned.
                             JAMI_ERROR("Conversation {} detected for {} and should be removed", repository, otherUri);
                             toRm.insert(repository);
@@ -1250,7 +1307,7 @@ ConversationModule::loadConversations()
                                     "Update details",
                                     otherUri,
                                     repository);
-                            acc->updateConvForContact(otherUri, convFromDetails, repository);
+                            updateContactConv.emplace_back(std::make_tuple(otherUri, convFromDetails, repository));
                         }
                     } else {
                         JAMI_ERROR("Multiple conversation detected for {} but ({} & {})",
@@ -1288,8 +1345,8 @@ ConversationModule::loadConversations()
             sconv->conversation = conv;
             pimpl_->conversations_.emplace(repository, std::move(sconv));
         } catch (const std::logic_error& e) {
-            JAMI_WARN("[Account %s] Conversations not loaded : %s",
-                      pimpl_->accountId_.c_str(),
+            JAMI_WARNING("[Account {}] Conversations not loaded: {}",
+                      pimpl_->accountId_,
                       e.what());
         }
     }
@@ -1342,45 +1399,7 @@ ConversationModule::loadConversations()
     ilk.unlock();
     lk.unlock();
 
-    ////////////////////////////////////////////////////////////////
-    // Note: This is only to homogeneize trust and convRequests
-    std::vector<std::string> invalidPendingRequests;
-    {
-        auto requests = acc->getTrustRequests();
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
-        for (const auto& request : requests) {
-            auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
-            auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
-            if (itConvId != request.end() && itConvFrom != request.end()) {
-                // Check if requests exists or is declined.
-                auto itReq = pimpl_->conversationsRequests_.find(itConvId->second);
-                auto declined = itReq == pimpl_->conversationsRequests_.end()
-                                || itReq->second.declined;
-                if (declined) {
-                    JAMI_WARNING("Invalid trust request found: {:s}", itConvId->second);
-                    invalidPendingRequests.emplace_back(itConvFrom->second);
-                }
-            }
-        }
-    }
-    dht::ThreadPool::io().run(
-        [w = pimpl_->weak(), invalidPendingRequests = std::move(invalidPendingRequests)]() {
-            // Will lock account manager
-            auto shared = w.lock();
-            if (!shared)
-                return;
-            if (auto acc = shared->account_.lock()) {
-                for (const auto& invalidPendingRequest : invalidPendingRequests)
-                    acc->discardTrustRequest(invalidPendingRequest);
-            }
-        });
-
-    ////////////////////////////////////////////////////////////////
-    for (const auto& conv : toRm) {
-        JAMI_ERROR("Remove conversation ({})", conv);
-        removeConversation(conv);
-    }
-    JAMI_INFO("[Account %s] Conversations loaded!", pimpl_->accountId_.c_str());
+    pimpl_->fixStructures(acc, updateContactConv, toRm);
 }
 
 void
