@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "e59ff6d0_fb6bb5c4",
+        "filename": "bin/dbus/cx.ring.Ring.VideoManager.xml",
+        "patchSetId": 11
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-11-01T17:32:36Z",
+      "side": 1,
+      "message": "good for me",
+      "parentUuid": "dd51b8b4_b8f72e75",
+      "range": {
+        "startLine": 163,
+        "startChar": 22,
+        "endLine": 163,
+        "endChar": 39
+      },
+      "revId": "14d0a60045a1706ee85c6974db31badf61b8e7cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8951c562_4576fee5",
         "filename": "src/media/localrecorder.cpp",
         "patchSetId": 11
