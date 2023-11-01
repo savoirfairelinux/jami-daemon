@@ -357,7 +357,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         else if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");
 
-        scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
+        scaledFrameBuffer_.resize(scaledFrameBufferSize_);
         scaledFrame_ = std::make_shared<VideoFrame>();
         scaledFrame_->setFromMemory(scaledFrameBuffer_.data(), format, width, height);
     }
