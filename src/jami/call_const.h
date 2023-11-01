@@ -52,6 +52,7 @@ constexpr static char DISPLAY_NAME[] = "DISPLAY_NAME";
 constexpr static char CALL_STATE[] = "CALL_STATE";
 constexpr static char CONF_ID[] = "CONF_ID";
 constexpr static char TIMESTAMP_START[] = "TIMESTAMP_START";
+constexpr static char TO_USERNAME[] = "TO_USERNAME";
 constexpr static char ACCOUNTID[] = "ACCOUNTID";
 constexpr static char PEER_HOLDING[] = "PEER_HOLDING";
 constexpr static char AUDIO_MUTED[] = "AUDIO_MUTED";

@@ -377,6 +377,7 @@ Call::getDetails() const
         {libjami::Call::Details::CONF_ID, conference ? conference->getConfId() : ""},
         {libjami::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
         {libjami::Call::Details::ACCOUNTID, getAccountId()},
+        {libjami::Call::Details::TO_USERNAME, toUsername()},
         {libjami::Call::Details::AUDIO_MUTED,
          std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
         {libjami::Call::Details::VIDEO_MUTED,
