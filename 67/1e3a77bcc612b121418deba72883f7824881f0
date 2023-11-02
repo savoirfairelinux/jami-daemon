@@ -1,0 +1,8 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Verified+1: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Submitted-by: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Submitted-at: Thu, 02 Nov 2023 12:44:25 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/26388
+Project: jami-daemon
+Branch: refs/heads/master
