@@ -1,0 +1,45 @@
+ pjnath/src/pjnath/turn_session.c | 7 +++++++
+ pjnath/src/pjnath/turn_sock.c    | 2 ++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 0589f382f..6cb0ee6fa 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -1600,13 +1600,20 @@ static void stun_on_request_complete(pj_stun_session *stun,
+                                      unsigned src_addr_len)
+ {
+     pj_turn_session *sess;
++    printf("@@@ stun_on_request_complete get method\n");
+     enum pj_stun_method_e method = (enum pj_stun_method_e)
+                                    PJ_STUN_GET_METHOD(tdata->msg->hdr.type);
+
+     PJ_UNUSED_ARG(src_addr);
+     PJ_UNUSED_ARG(src_addr_len);
+
++    printf("@@@ stun_on_request_complete get user data - method %u - status %u\n", method, status);
+     sess = (pj_turn_session*)pj_stun_session_get_user_data(stun);
++    if (!sess) {
++        printf("@@@ stun_on_request_complete sess null\n");
++    } else {
++        printf("@@@ sess: %p\n", sess);
++    }
+
+     if (method == PJ_STUN_ALLOCATE_METHOD) {
+
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index b3538d3d7..ec55b783c 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1584,9 +1584,11 @@ static pj_bool_t dataconn_on_data_read(pj_activesock_t *asock,
+     pj_turn_sock *turn_sock = conn->turn_sock;
+
+     pj_grp_lock_acquire(turn_sock->grp_lock);
++    printf("@@@ dataconn_on_data_read - sess: %p\n", turn_sock->sess);
+
+     if (size == 0 && status != PJ_SUCCESS) {
+         /* Connection gone, release data connection */
++        printf("@@@ dataconn_on_data_read - cleanup with status: %u\n", status);
+         dataconn_cleanup(conn);
+         --turn_sock->data_conn_cnt;
+         pj_grp_lock_release(turn_sock->grp_lock);
