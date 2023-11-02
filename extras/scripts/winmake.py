@@ -76,7 +76,7 @@ def build_from_dir(path, out_dir=None):
     builder = MetaBuilder(base_dir=path)
     # Build the package at the given path.
     out_dir = os.path.join(path, "build") if out_dir is None else out_dir
-    pkg = Package(src_dir=path, build_dir=out_dir)
+    pkg = Package(src_dir=path, buildsrc_dir=out_dir)
     builder.build(pkg)
 
 def main():
