@@ -1,20 +1,12 @@
 {
     "name": "pthreads",
-    "version": "pthreads4w-code-v2.10.0-rc",
-    "url": "https://sourceforge.net/projects/pthreads4w/files/__VERSION__.zip",
-    "deps": [],
-    "patches": [],
+    "version": "v-2-10-0-rc",
+    "url": " https://github.com/jwinarske/pthreads4w/archive/refs/tags/__VERSION__.tar.gz",
     "win_patches": [
         "pthreads-windows.patch",
         "pthreads-vs2017.patch"
     ],
     "project_paths": [
         "MSVC/pthreads.vcxproj"
-    ],
-    "with_env" : "",
-    "custom_scripts": {
-        "pre_build": [],
-        "build": [],
-        "post_build": []
-    }
+    ]
 }
