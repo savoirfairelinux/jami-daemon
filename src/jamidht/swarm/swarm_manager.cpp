@@ -90,11 +90,10 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
 void
 SwarmManager::removeNode(const NodeId& nodeId)
 {
+    std::unique_lock<std::mutex> lk(mutex);
     if (isConnectedWith(nodeId)) {
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            removeNodeInternal(nodeId);
-        }
+        removeNodeInternal(nodeId);
+        lk.unlock();
         maintainBuckets();
     }
 }
