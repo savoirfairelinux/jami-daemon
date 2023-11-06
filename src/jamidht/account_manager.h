@@ -140,7 +140,7 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb);
+    virtual void startSync(const std::filesystem::path& cachePath, const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb);
 
     const AccountInfo* getInfo() const { return info_.get(); }
 

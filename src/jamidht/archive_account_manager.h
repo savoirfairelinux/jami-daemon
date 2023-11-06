@@ -49,7 +49,7 @@ public:
                             AuthFailureCallback onFailure,
                             const OnChangeCallback& onChange) override;
 
-    void startSync(const OnNewDeviceCb&, const OnDeviceAnnouncedCb& dcb = {}) override;
+    void startSync(const std::filesystem::path& cachePath, const OnNewDeviceCb&, const OnDeviceAnnouncedCb& dcb = {}) override;
 
     bool changePassword(const std::string& password_old, const std::string& password_new) override;
 
