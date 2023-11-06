@@ -1888,7 +1888,7 @@ JamiAccount::doRegister_()
         context.identityAnnouncedCb = [this](bool ok) {
             if (!ok)
                 return;
-            accountManager_->startSync(
+            accountManager_->startSync(cachePath_,
                 [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                     if (jami::Manager::instance().syncOnRegister) {
                         if (!crt)
@@ -3950,11 +3950,17 @@ JamiAccount::monitor()
     JAMI_DEBUG("[Account {:s}] Monitor connections", getAccountID());
     JAMI_DEBUG("[Account {:s}] Using proxy: {:s}", getAccountID(), proxyServerCached_);
 
-    if (auto cm = convModule())
-        cm->monitor();
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
-    if (connectionManager_)
-        connectionManager_->monitor();
+    try {
+        auto f = fileutils::loadTextFile(cachePath_ / "debugPut");
+        JAMI_DEBUG("[Account {:s}] - PUT: {:s} - cachePath_: {} ", getAccountID(), f, cachePath_.string());
+        f = fileutils::loadTextFile(fileutils::get_cache_dir() / "debugPut");
+        JAMI_DEBUG("[Account {:s}] - PUT FROM CLIENT: {:s} - path: ", getAccountID(), f, fileutils::get_cache_dir().string());
+    } catch (...) {}
+    //if (auto cm = convModule())
+    //    cm->monitor();
+    //std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    //if (connectionManager_)
+    //    connectionManager_->monitor();
 }
 
 std::vector<std::map<std::string, std::string>>

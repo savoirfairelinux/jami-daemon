@@ -272,16 +272,26 @@ AccountManager::announceFromReceipt(const std::string& receipt)
 }
 
 void
-AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
+AccountManager::startSync(const std::filesystem::path& cachePath, const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
 {
     // Put device announcement
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         if (publishPresence) {
+            auto p = cachePath / "debugPut";
+            std::ofstream f(p.string(), std::ofstream::out | std::ofstream::app);
+            auto str = fmt::format("{}: {} - start put\n", std::time(nullptr), h.toString());
+            f << str;
+            f.close();
             dht_->put(
                 h,
                 info_->announce,
-                [dcb = std::move(dcb), h](bool ok) {
+                [cachePath, dcb = std::move(dcb), h](bool ok) {
+                    auto p = cachePath / "debugPut";
+                    std::ofstream f(p.string(), std::ofstream::out | std::ofstream::app);
+                    auto str = fmt::format("{}: {} - put - result: {}\n", std::time(nullptr), h.toString(), ok);
+                    f << str;
+                    f.close();
                     if (ok)
                         JAMI_DEBUG("device announced at {}", h.toString());
                     // We do not care about the status, it's a permanent put, if this fail,
