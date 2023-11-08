@@ -506,6 +506,9 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         if (!currentCalls.empty()) {
             confId = currentCalls[0]["id"];
             isNotHosting = false;
+        } else {
+            confId = callId;
+            JAMI_DEBUG("No active call to join, create conference");
         }
     }
     auto preferences = convModule()->getConversationPreferences(conversationId);
@@ -521,12 +524,12 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
 
     auto call = getCall(callId);
     if (!call) {
-        JAMI_ERR("Call %s not found", callId.c_str());
+        JAMI_ERROR("Call {} not found", callId);
         return;
     }
 
     if (isNotHosting && !canHost) {
-        JAMI_DBG("Request for hosting a conference declined");
+        JAMI_DEBUG("Request for hosting a conference declined");
         Manager::instance().hangupCall(getAccountID(), callId);
         return;
     }
@@ -536,7 +539,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     if (!isNotHosting) {
         conf = getConference(confId);
         if (!conf) {
-            JAMI_ERR("Conference %s not found", confId.c_str());
+            JAMI_ERROR("Conference {} not found", confId);
             return;
         }
         currentMediaList = conf->currentMediaList();

@@ -2622,6 +2622,8 @@ ConversationModule::call(const std::string& url,
             // the client.
             call->reportMediaNegotiationStatus();
             lk.unlock();
+            if (confId == "0")
+                confId = call->getCallId();
             hostConference(conversationId, confId, call->getCallId());
             return;
         }
