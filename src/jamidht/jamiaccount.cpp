@@ -3812,7 +3812,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
             return;
         auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx, cb);
         if (status != PJ_SUCCESS)
-            JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+            JAMI_ERR("Unable to send request: {}", sip_utils::sip_strerror(status));
     });
     return true;
 }
