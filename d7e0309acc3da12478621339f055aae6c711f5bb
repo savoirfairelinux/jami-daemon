@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9c6a47c8_047cc3b7",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-08T16:14:37Z",
+      "side": 1,
+      "message": "GitLab ticket?",
+      "range": {
+        "startLine": 15,
+        "startChar": 9,
+        "endLine": 15,
+        "endChar": 52
+      },
+      "revId": "d7e0309acc3da12478621339f055aae6c711f5bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
