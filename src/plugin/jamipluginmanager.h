@@ -139,6 +139,11 @@ public:
 
     /**
      * @brief Returns True if success
+    */
+    bool loadPlugins();
+
+    /**
+     * @brief Returns True if success
      * @param rootPath of the plugin folder
      */
     bool unloadPlugin(const std::string& rootPath);
