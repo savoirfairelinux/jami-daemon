@@ -131,6 +131,7 @@ private:
     void testEnable();
     void testCertificateVerification();
     void testSignatureVerification();
+    void testLoad();
     void testInstallAndLoad();
     void testHandlers();
     void testDetailsAndPreferences();
@@ -142,6 +143,7 @@ private:
     CPPUNIT_TEST(testEnable);
     CPPUNIT_TEST(testCertificateVerification);
     CPPUNIT_TEST(testSignatureVerification);
+    CPPUNIT_TEST(testLoad);
     CPPUNIT_TEST(testInstallAndLoad);
     CPPUNIT_TEST(testHandlers);
     CPPUNIT_TEST(testDetailsAndPreferences);
@@ -347,6 +349,18 @@ PluginsTest::testCertificateVerification()
     // Test with a plugin that does not have a certificate
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginCertNotFound_, false));
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotSignByIssuer_, false));
+}
+
+void
+PluginsTest::testLoad()
+{
+    Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    auto loadedPlugins = Manager::instance().getJamiPluginManager().getLoadedPlugins();
+    CPPUNIT_ASSERT(loadedPlugins.empty());
+    Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true);
+    Manager::instance().getJamiPluginManager().loadPlugins();
+    loadedPlugins = Manager::instance().getJamiPluginManager().getLoadedPlugins();
+    CPPUNIT_ASSERT(!loadedPlugins.empty());
 }
 
 void

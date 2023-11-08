@@ -2924,10 +2924,7 @@ Manager::loadAccountMap(const YAML::Node& node)
 
 #ifdef ENABLE_PLUGIN
     if (pluginPreferences.getPluginsEnabled()) {
-        std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
-        for (const std::string& plugin : loadedPlugins) {
-            jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
-        }
+        jami::Manager::instance().getJamiPluginManager().loadPlugins();
     }
 #endif
 
