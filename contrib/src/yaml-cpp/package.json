@@ -1,6 +1,6 @@
 {
     "name": "yaml-cpp",
-    "version": "24fa1b33805c9a91df0f32c46c28e314dd7ad96f",
+    "version": "0.8.0",
     "url": "https://github.com/jbeder/yaml-cpp/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],

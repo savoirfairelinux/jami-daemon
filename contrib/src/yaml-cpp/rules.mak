@@ -1,5 +1,5 @@
 # YAML
-YAML_CPP_VERSION := yaml-cpp-0.6.3
+YAML_CPP_VERSION := 0.8.0
 YAML_CPP_URL := https://github.com/jbeder/yaml-cpp/archive/$(YAML_CPP_VERSION).tar.gz
 
 PKGS += yaml-cpp

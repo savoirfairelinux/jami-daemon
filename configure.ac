@@ -320,9 +320,6 @@ AM_COND_IF([ENABLE_AGENT],
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],,
   AC_MSG_ERROR([yaml-cpp not found]))
 
-PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],,
-  AC_MSG_ERROR([yaml-cpp not found]))
-
 PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 1.6.5],
   [DAEMONCPPFLAGS+=" ${JSONCPP_CFLAGS}"
    DAEMONLDFLAGS+=" ${JSONCPP_LIBS}"],
