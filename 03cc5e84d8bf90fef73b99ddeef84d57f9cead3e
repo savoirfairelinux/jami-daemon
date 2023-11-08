@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ef7dcd86_bf70f2a4",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-08T20:21:28Z",
+      "side": 1,
+      "message": "does it really change the perf if we need to re-add two std::string later?",
+      "range": {
+        "startLine": 56,
+        "startChar": 22,
+        "endLine": 56,
+        "endChar": 33
+      },
+      "revId": "03cc5e84d8bf90fef73b99ddeef84d57f9cead3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
