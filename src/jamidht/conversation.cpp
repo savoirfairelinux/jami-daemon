@@ -175,9 +175,9 @@ public:
             fetchedPath_ = conversationDataPath_ / "fetched";
             sendingPath_ = conversationDataPath_ / "sending";
             lastDisplayedPath_ = conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
-            preferencesPath_ = (conversationDataPath_ / ConversationMapKeys::PREFERENCES).string();
-            activeCallsPath_ = (conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS).string();
-            hostedCallsPath_ = (conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS).string();
+            preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
+            activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
+            hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
             loadFetched();
             loadSending();
             loadLastDisplayed();
@@ -619,10 +619,10 @@ public:
     OnMembersChanged onMembersChanged_ {};
 
     // Manage hosted calls on this device
-    std::string hostedCallsPath_ {};
+    std::filesystem::path hostedCallsPath_ {};
     mutable std::map<std::string, uint64_t /* start time */> hostedCalls_ {};
     // Manage active calls for this conversation (can be hosted by other devices)
-    std::string activeCallsPath_ {};
+    std::filesystem::path activeCallsPath_ {};
     mutable std::mutex activeCallsMtx_ {};
     mutable std::vector<std::map<std::string, std::string>> activeCalls_ {};
 
