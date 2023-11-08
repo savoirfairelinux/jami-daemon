@@ -24,7 +24,6 @@
 #include "archiver.h"
 #include "logger.h"
 #include "manager.h"
-#include "preferences.h"
 #include "jami/plugin_manager_interface.h"
 #include "store_ca_crt.cpp"
 
@@ -274,6 +273,12 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                             destinationDir,
                                             PluginUtils::uncompressJplFunction);
             }
+            if (!libjami::getPluginsEnabled()) {
+                libjami::setPluginsEnabled(true);
+                Manager::instance().saveConfig();
+                loadPlugins();
+                return r;
+            }
             libjami::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
@@ -324,6 +329,20 @@ JamiPluginManager::loadPlugin(const std::string& rootPath)
         JAMI_ERR() << e.what();
         return false;
     }
+#endif
+    return false;
+}
+
+bool
+JamiPluginManager::loadPlugins()
+{
+#ifdef ENABLE_PLUGIN
+    bool status = true;
+    auto loadedPlugins = getLoadedPlugins();
+    for (const auto& pluginPath : loadedPlugins) {
+        status &= loadPlugin(pluginPath);
+    }
+    return status;
 #endif
     return false;
 }
