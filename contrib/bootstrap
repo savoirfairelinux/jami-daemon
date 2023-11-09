@@ -279,6 +279,17 @@ case "${OS}" in
 		;;
 esac
 
+# If the DISABLE_PIPEWIRE variable is set, then we build FFmpeg
+# without pipewiregrab (see contrib/src/ffmpeg/rules.mak)
+# This is currently needed because some of the Linux distributions
+# we support don't have a recent enough version of PipeWire:
+# - Debian 11
+# - Ubuntu 20.04
+# - openSUSE Leap 15.4
+# However, we should be able to get rid of this in the future once
+# we stop supporting the above platforms.
+test "$DISABLE_PIPEWIRE" && add_make_enabled "DISABLE_PIPEWIRE"
+
 #
 # Results output
 #
