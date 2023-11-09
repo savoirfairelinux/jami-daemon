@@ -309,7 +309,7 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
-    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab") && !decOpts_.is_area) {
+    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab") && !decOpts_.is_area) {
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
@@ -428,7 +428,7 @@ round2pow(unsigned i, unsigned n)
 }
 
 bool
-VideoInput::initX11(const std::string& display)
+VideoInput::initLinuxGrab(const std::string& display)
 {
     // Patterns
     // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
@@ -461,7 +461,13 @@ VideoInput::initX11(const std::string& display)
     }
 
     auto dec = std::make_unique<MediaDecoder>();
-    if (dec->openInput(p) < 0 || dec->setupVideo() < 0)
+
+    const auto* env = std::getenv("WAYLAND_DISPLAY");
+    auto isX11 = !env || strlen(env) == 0;
+    // TODO maybe here it's ok, but openInput can lock while pipewire_gdbus_init_pthread is called
+    // TODO see with Abhishek
+
+    if (isX11 && (dec->openInput(p) < 0 || dec->setupVideo() < 0))
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
 
     clearOptions();
@@ -650,7 +656,7 @@ VideoInput::switchInput(const std::string& resource)
 #elif defined(WIN32)
         ready = initWindowsGrab(suffix);
 #else
-        ready = initX11(suffix);
+        ready = initLinuxGrab(suffix);
 #endif
     } else if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */

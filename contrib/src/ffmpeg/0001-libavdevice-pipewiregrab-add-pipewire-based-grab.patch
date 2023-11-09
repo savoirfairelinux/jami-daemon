@@ -1,0 +1,1941 @@
+This is an proof of concept for pipewire grab to enable screen capture
+on wayland. Add a new Linux capture based on [1] PipeWire and the
+[2] Desktop portal.
+This new capture starts by asking the Desktop portal for a screencapture
+session.There are quite a few D-Bus calls involved in this, but the key
+points are:
+
+1. A connection to org.freedesktop.portal.ScreenCast is estabilished,
+   and the available cursor modes are updated. Currently only embedded
+   and hidden currsor mode enabled.
+
+2. Call CreateSession via dbus call. This is the first step of the
+   communication. Response callback return the status of created
+   session.
+
+3. Call SelectSources . This is when a system dialog pops up asking
+   the user to either select a monitor (desktop capture).Only monitor
+   capture is enabled in current implementation.
+
+4. Call Start . This signals the compositor that it can setup a PipeWire
+   stream, and start sending buffers.
+
+Above flow is implemented as per the [2] xdg-desktop-portal. Once flow
+is completed, pipewire fd is received and using this pipewire stream is
+created and receive buffer from the created stream.
+
+For cursor implementation, embedded cursor mode is enabled that means
+cursor metadata is not handled in current implementation and has no
+control over the cursor bitmap.
+
+gdbus/pipewire logic, this is based on obs-xdg, gstpipewire and
+pipewire examples, and initial pipewire grab logic, this is based on
+libavdevice/xcbgrab and libavdevice/v4l2
+
+This implementation shows the skeleton implementation and enables basic
+functionality. I'd like to hear opinions and suggestions to improve and
+properly use this.
+
+[1] https://pipewire.org/
+[2] https://github.com/flatpak/xdg-desktop-portal/
+
+Below are the arguments for pipewiregrab.
+ffplay -f pipewiregrab -draw_mouse 1 -i :0.0
+
+Signed-off-by: Abhishek Ojha <abhishek.ojha at savoirfairelinux.com>
+---
+ configure                  |    9 +
+ libavdevice/Makefile       |    1 +
+ libavdevice/alldevices.c   |    1 +
+ libavdevice/pipewiregrab.c | 1815 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 1826 insertions(+)
+ create mode 100644 libavdevice/pipewiregrab.c
+
+diff --git a/configure b/configure
+index cd66e42850..375327d5fa 100755
+--- a/configure
++++ b/configure
+@@ -297,6 +297,7 @@ External library support:
+   --enable-libxcb-shm      enable X11 grabbing shm communication [autodetect]
+   --enable-libxcb-xfixes   enable X11 grabbing mouse rendering [autodetect]
+   --enable-libxcb-shape    enable X11 grabbing shape rendering [autodetect]
++  --enable-libpipewire     enable screen grabbing using pipewire [autodetect]
+   --enable-libxvid         enable Xvid encoding via xvidcore,
+                            native MPEG-4/Xvid encoder exists [no]
+   --enable-libxml2         enable XML parsing using the C library libxml2, needed
+@@ -1788,6 +1789,8 @@ EXTERNAL_AUTODETECT_LIBRARY_LIST="
+     libxcb_shm
+     libxcb_shape
+     libxcb_xfixes
++    libpipewire
++    libgio_unix
+     lzma
+     mediafoundation
+     metal
+@@ -3639,6 +3642,7 @@ v4l2_outdev_suggest="libv4l2"
+ vfwcap_indev_deps="vfw32 vfwcap_defines"
+ xcbgrab_indev_deps="libxcb"
+ xcbgrab_indev_suggest="libxcb_shm libxcb_shape libxcb_xfixes"
++pipewiregrab_indev_deps="libpipewire libgio_unix pthreads"
+ xv_outdev_deps="xlib_xv xlib_x11 xlib_xext"
+
+ # protocols
+@@ -7102,6 +7106,11 @@ if enabled libxcb; then
+     enabled libxcb_xfixes && check_pkg_config libxcb_xfixes xcb-xfixes xcb/xfixes.h xcb_xfixes_get_cursor_image
+ fi
+
++enabled libpipewire && check_pkg_config libpipewire "libpipewire-0.3 >= 0.3.40" pipewire/pipewire.h pw_init
++if enabled libpipewire; then
++    enabled libgio_unix && check_pkg_config libgio_unix gio-unix-2.0 gio/gio.h g_main_loop_new
++fi
++
+ check_func_headers "windows.h" CreateDIBSection "$gdigrab_indev_extralibs"
+
+ # check if building for desktop or uwp
+diff --git a/libavdevice/Makefile b/libavdevice/Makefile
+index c30449201d..f02960782d 100644
+--- a/libavdevice/Makefile
++++ b/libavdevice/Makefile
+@@ -49,6 +49,7 @@ OBJS-$(CONFIG_V4L2_INDEV)                += v4l2.o v4l2-common.o timefilter.o
+ OBJS-$(CONFIG_V4L2_OUTDEV)               += v4l2enc.o v4l2-common.o
+ OBJS-$(CONFIG_VFWCAP_INDEV)              += vfwcap.o
+ OBJS-$(CONFIG_XCBGRAB_INDEV)             += xcbgrab.o
++OBJS-$(CONFIG_PIPEWIREGRAB_INDEV)        += pipewiregrab.o
+ OBJS-$(CONFIG_XV_OUTDEV)                 += xv.o
+
+ # external libraries
+diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
+index 8a90fcb5d7..1fa8563df4 100644
+--- a/libavdevice/alldevices.c
++++ b/libavdevice/alldevices.c
+@@ -53,6 +53,7 @@ extern const AVInputFormat  ff_v4l2_demuxer;
+ extern const FFOutputFormat ff_v4l2_muxer;
+ extern const AVInputFormat  ff_vfwcap_demuxer;
+ extern const AVInputFormat  ff_xcbgrab_demuxer;
++extern const AVInputFormat  ff_pipewiregrab_demuxer;
+ extern const FFOutputFormat ff_xv_muxer;
+
+ /* external libraries */
+diff --git a/libavdevice/pipewiregrab.c b/libavdevice/pipewiregrab.c
+new file mode 100644
+index 0000000000..67b8a1d97c
+--- /dev/null
++++ b/libavdevice/pipewiregrab.c
+@@ -0,0 +1,1815 @@
++/*
++ * PipeWire input grabber (ScreenCast)
++ * Copyright (C) 2023 Savoir-faire Linux, Inc.
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++/**
++ * @file
++ * Pipewire Grab demuxer
++ * @author Firas Ashkar <firas.ashkar at savoirfairelinux.com>
++ * @author Abhishek Ojha <abhishek.ojha at savoirfairelinux.com>
++ */
++
++#include "config.h"
++
++#include <fcntl.h>
++#include <linux/dma-buf.h>
++#include <math.h>
++#include <pthread.h>
++#include <stdatomic.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/mman.h>
++#include <sys/queue.h>
++
++#include "libavutil/internal.h"
++#include "libavutil/mathematics.h"
++#include "libavutil/opt.h"
++#include "libavutil/parseutils.h"
++#include "libavutil/time.h"
++#include "libavutil/avstring.h"
++#include "libavformat/avformat.h"
++#include "libavformat/internal.h"
++#include "libavutil/avassert.h"
++
++#include <pipewire/pipewire.h>
++#include <pipewire/thread-loop.h>
++#include <spa/debug/types.h>
++#include <spa/param/video/format-utils.h>
++#include <spa/param/video/type-info.h>
++
++#include <gio/gio.h>
++#include <gio/gunixfdlist.h>
++
++#ifndef __USE_XOPEN2K8
++#define F_DUPFD_CLOEXEC                                                        \
++    1030 /* Duplicate file descriptor with close-on-exit set.  */
++#endif
++
++#define BYTES_PER_PIXEL 4 /* currently all formats assume 4 bytes per pixel */
++#define REQUEST_PATH "/org/freedesktop/portal/desktop/request/%s/obs%u"
++#define SESSION_PATH "/org/freedesktop/portal/desktop/session/%s/obs%u"
++#define MAX_SPA_PARAM 4 /* max number of params for spa pod */
++
++#define CURSOR_META_SIZE(width, height)                                        \
++    (sizeof(struct spa_meta_cursor) + sizeof(struct spa_meta_bitmap) +         \
++     width * height * 4)
++
++/**
++ * Pipewire capture types
++ */
++typedef enum {
++    DESKTOP_CAPTURE = 1,
++    WINDOW_CAPTURE = 2,
++} pw_capture_type;
++
++/**
++ * Pipewire version structure
++ */
++struct FFmpegPwVersion {
++    int major;
++    int minor;
++    int micro;
++};
++
++/**
++ * Pipewire structure for frame processing
++ */
++struct PwStreamAndBuffer {
++    AVFormatContext *ctx;
++    struct pw_stream *pw_stream;
++    struct pw_buffer *pw_buf;
++};
++
++/**
++ * Pipewire supported cursor modes
++ */
++enum PortalCursorMode {
++    PORTAL_CURSOR_MODE_HIDDEN = 1 << 0,
++    PORTAL_CURSOR_MODE_EMBEDDED = 1 << 1,
++    PORTAL_CURSOR_MODE_METADATA = 1 << 2,
++};
++
++/**
++ * PipeWire Grab main structure
++ * Contains all necessary data that hold current state
++ * Initial state of this struct is allocated by libavdevice
++ * logic when declaring the AVInputFormat ff_pipewiregrab_demuxer.
++ * This structure is priv_data of AVFormatContext instance.
++ */
++typedef struct PipewireGrabContext {
++    /** thread used to intialize/start pipewire logic */
++    pthread_t pipewire_pthread;
++
++    /** conditional synchronization logic elecments between pipewire
++     * thread and libavdevice thread.
++     */
++    pthread_cond_t avstream_codec_cond_var;
++    pthread_mutex_t avstream_codec_mutex;
++    atomic_int avstream_codec_flag;
++
++    pthread_mutex_t current_pkt_mutex;
++    AVPacket* current_pkt;
++
++    GDBusConnection *connection;
++    GDBusProxy *proxy;
++    GCancellable *cancellable;
++
++    char *sender_name;
++    char *session_handle;
++
++    uint32_t pipewire_node;
++    int pipewire_fd;
++
++    uint32_t available_cursor_modes;
++
++    GMainLoop *glib_main_loop;
++    struct pw_thread_loop *thread_loop;
++    struct pw_context *context;
++
++    struct pw_core *core;
++    struct spa_hook core_listener;
++
++    struct pw_stream *stream;
++    struct spa_hook stream_listener;
++    struct spa_video_info format;
++
++    pw_capture_type capture_type;
++    bool negotiated;
++
++    /**< draw_mouse is to control the enable/disable mouse cursor */
++    int draw_mouse;
++
++    /** cursor metadata */
++    struct {
++        int visible;
++        int x, y;
++        int hotspot_x, hotspot_y;
++        int width, height;
++    } cursor;
++
++    /**< Width and height of the grab frame (private option) */
++    uint32_t width, height;
++
++    /**< Size in bytes of the frame pixel data */
++    size_t frame_size;
++    uint8_t Bpp;
++    enum AVPixelFormat av_pxl_format;
++
++    int64_t time_frame;
++    int64_t frame_duration;
++
++    const AVClass *class;
++
++    AVRational framerate;
++    struct FFmpegPwVersion server_version;
++    int server_version_sync;
++
++    //dbus token
++    uint32_t request_token_count;
++    uint32_t session_token_count;
++} PipewireGrabContext;
++
++/**
++ * dbus's method/event marshalling structure
++ */
++struct DbusCallData {
++    AVFormatContext *ctx;
++    char *request_path;
++    guint signal_id;
++    gulong cancelled_id;
++};
++
++
++#define OFFSET(x) offsetof(PipewireGrabContext, x)
++#define D AV_OPT_FLAG_DECODING_PARAM
++static const AVOption options[] = {
++    { "framerate",
++      "",
++      OFFSET(framerate),
++      AV_OPT_TYPE_VIDEO_RATE,
++      { .str = "ntsc" },
++      0,
++      INT_MAX,
++      D },
++    { "draw_mouse",
++      "Draw the mouse pointer.",
++      OFFSET(draw_mouse),
++      AV_OPT_TYPE_INT,
++      { .i64 = 0 },
++      0,
++      1,
++      D },
++    { NULL },
++};
++
++/**
++ * Function parse the pipewire version
++ * @param dst FmpegPwVersion that contains PipeWire version info
++ * @param version pipewire version
++ */
++static int parse_pw_version(struct FFmpegPwVersion *dst, const char *version)
++{
++    int n_matches = sscanf(version, "%d.%d.%d", &dst->major, &dst->minor,
++                   &dst->micro);
++    return (n_matches == 3) ? 0 : -1;
++}
++
++/**
++ * Function update the pipewire version in private data
++ * params, then signal the blocked @ref pipewiregrab_read_header
++ *
++ * @param ctx AVFormatContext that contains PipeWire Grab main structure
++ * @param version pipewire version
++ */
++static void update_pw_versions(AVFormatContext *ctx, const char *version)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    av_log(ctx, AV_LOG_DEBUG, "Server version: %s\n", version);
++    av_log(ctx, AV_LOG_INFO, "Library version: %s\n",
++        pw_get_library_version());
++    av_log(ctx, AV_LOG_DEBUG, "Header version: %s\n",
++        pw_get_headers_version());
++
++    if (parse_pw_version(&pw_ctx->server_version, version) < 0)
++        av_log(ctx, AV_LOG_WARNING,
++               "failed to parse server version");
++}
++
++/**
++ * AVStream creator
++ * This function creates a valid AVStream based on pipewire's negotiated
++ * params, then signal the blocked @ref pipewiregrab_read_header
++ *
++ * @param ctx AVFormatContext that contains PipeWire Grab main structure
++ * @return 0 on success, AVERROR on failure
++ */
++static int create_ffmpeg_stream(AVFormatContext *ctx)
++{
++    int64_t frame_size_bits;
++    AVStream *avstream;
++    AVRational time_base;
++
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return AVERROR(EINVAL);
++    }
++
++    avstream = avformat_new_stream(ctx, NULL);
++    if (!avstream) {
++        av_log(ctx, AV_LOG_ERROR,
++               "avformat_new_stream failed!\n");
++        return AVERROR(ENOMEM);
++    }
++
++    avstream->avg_frame_rate = pw_ctx->framerate;
++
++    /* 64 bits pts in microseconds */
++    avpriv_set_pts_info(avstream, 64, 1, 1000000);
++
++    time_base = av_make_q(avstream->avg_frame_rate.den,
++                                  avstream->avg_frame_rate.num);
++    pw_ctx->frame_duration = av_rescale_q(1, time_base, AV_TIME_BASE_Q);
++    pw_ctx->time_frame = av_gettime_relative();
++
++    frame_size_bits = (int64_t)pw_ctx->width * pw_ctx->height * pw_ctx->Bpp * 8;
++    avstream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
++    avstream->codecpar->codec_id = AV_CODEC_ID_RAWVIDEO;
++    avstream->codecpar->width = pw_ctx->width;
++    avstream->codecpar->height = pw_ctx->height;
++    avstream->codecpar->bit_rate =
++        av_rescale(frame_size_bits, avstream->avg_frame_rate.num,
++                   avstream->avg_frame_rate.den);
++    avstream->codecpar->format = pw_ctx->av_pxl_format;
++
++    atomic_store(&pw_ctx->avstream_codec_flag, 1);
++    pthread_cond_signal(&pw_ctx->avstream_codec_cond_var);
++
++    return 0;
++}
++
++/**
++ * Pipewire manual abort
++ *
++ * @param user_data AVFormatContext that contains PipeWire Grab main structure
++ * @param message abort message
++ */
++static void pipewiregrab_abort(void *user_data, const char *message)
++{
++    AVFormatContext *ctx = user_data;
++    PipewireGrabContext *pw_ctx;
++
++    if (!ctx || !ctx->priv_data)
++        return;
++
++    pw_ctx = ctx->priv_data;
++
++    atomic_store(&pw_ctx->avstream_codec_flag, 1);
++    pthread_cond_signal(&pw_ctx->avstream_codec_cond_var);
++
++    av_log(ctx, AV_LOG_ERROR, "Aborting: %s\n", message);
++
++    if (!pw_ctx->thread_loop)
++        pw_thread_loop_signal(pw_ctx->thread_loop, false);
++
++    if (!pw_ctx->glib_main_loop &&
++        g_main_loop_is_running(pw_ctx->glib_main_loop)) {
++        g_main_loop_quit(pw_ctx->glib_main_loop);
++    }
++}
++
++/**
++ * Pipewire core info event
++ *
++ * @param user_data AVFormatContext that contains PipeWire Grab main structure
++ * @param info pw_core_info
++ */
++static void on_core_info_cb(void *user_data, const struct pw_core_info *info)
++{
++    AVFormatContext *ctx = user_data;
++    update_pw_versions(ctx, info->version);
++}
++
++/**
++ * Pipewire core completion event
++ *
++ * @param user_data AVFormatContext that contains PipeWire Grab main structure
++ * @param id pipewire object id of calling
++ * @param seq pipewire object sequence
++ */
++static void on_core_done_callback(void *user_data, uint32_t id, int seq)
++{
++    AVFormatContext *ctx = user_data;
++    PipewireGrabContext *pw_ctx;
++
++    if (!ctx || !ctx->priv_data)
++        return;
++
++    pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++     pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    if (id == PW_ID_CORE) {
++        pw_thread_loop_signal(pw_ctx->thread_loop, false);
++        g_main_loop_quit(pw_ctx->glib_main_loop);
++    }
++}
++
++/**
++ * Pipewire core error event
++ *
++ * @param user_data AVFormatContext that contains PipeWire Grab main structure
++ * @param id pipewire object id of calling
++ * @param seq pipewire object sequence
++ * @param res error number
++ * @param message error message
++ */
++static void on_core_error_callback(void *user_data, uint32_t id, int seq,
++                                   int res, const char *message)
++{
++    AVFormatContext *ctx = user_data;
++    PipewireGrabContext *pw_ctx;
++
++    if (!ctx || !ctx->priv_data)
++        return;
++
++    pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    av_log(ctx, AV_LOG_ERROR,
++           "Error id:%u seq:%d res:%d (%s): %s\n", id, seq, res,
++           g_strerror(res), message);
++
++    pw_thread_loop_signal(pw_ctx->thread_loop, false);
++    g_main_loop_quit(pw_ctx->glib_main_loop);
++}
++
++/**
++ * Register pipewire core event callbacks here
++ */
++static const struct pw_core_events core_events = {
++    PW_VERSION_CORE_EVENTS,
++    .info = on_core_info_cb,
++    .done = on_core_done_callback,
++    .error = on_core_error_callback,
++};
++
++/**
++ * helper function: create a new path to dbus desktop object request method
++ *
++ * @param ctx AVFormatContext that contains PipeWire Grab main structure
++ * @param out_path dbus token count
++ * @param out_token final object/interface path for request method
++ * @param token_count value of token count maintained in private Grab structure
++ * @param path_format path for dbus REQUEST/SESSION
++ */
++static void new_path(AVFormatContext *ctx, char **out_path,
++                             char **out_token, uint32_t *token_count,
++                             const char *path_format)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    (*token_count)++;
++
++    if (out_token)
++        *out_token = g_strdup_printf("obs%u", *token_count);
++
++    if (out_path)
++        *out_path = g_strdup_printf(path_format, pw_ctx->sender_name,
++                                    *token_count);
++}
++
++/**
++ * helper function: convert spa pixel format to av pixel format
++ *
++ * @param spa_format conatins spa format value
++ * @return AVPixelFormat
++ */
++static enum AVPixelFormat
++spa_pixel_format_to_av_pixel_format(uint32_t spa_format)
++{
++    switch (spa_format) {
++    case SPA_VIDEO_FORMAT_RGBA:
++    case SPA_VIDEO_FORMAT_RGBx:
++        return AV_PIX_FMT_RGBA;
++
++    case SPA_VIDEO_FORMAT_BGRA:
++    case SPA_VIDEO_FORMAT_BGRx:
++        return AV_PIX_FMT_BGRA;
++
++    default:
++        return AV_PIX_FMT_NONE;
++    }
++}
++
++/**
++ * helper function: gracefully stop/destroy of pipewire objects
++ *
++ * @param ctx AVFormatContext that contains PipeWire Grab main structure
++ */
++static void teardown_pipewire(AVFormatContext *ctx)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    if (pw_ctx->thread_loop) {
++        pw_thread_loop_unlock(pw_ctx->thread_loop);
++        pw_thread_loop_stop(pw_ctx->thread_loop);
++    }
++
++    if (pw_ctx->stream) {
++        pw_stream_disconnect(pw_ctx->stream);
++        g_clear_pointer(&pw_ctx->stream, pw_stream_destroy);
++        pw_ctx->stream = NULL;
++    }
++
++    if (pw_ctx->core){
++        pw_core_disconnect(pw_ctx->core);
++        pw_ctx->core = NULL;
++    }
++
++    if (pw_ctx->context) {
++        pw_context_destroy(pw_ctx->context);
++        pw_ctx->context = NULL;
++    }
++
++    if (pw_ctx->thread_loop) {
++        pw_thread_loop_destroy(pw_ctx->thread_loop);
++        pw_ctx->thread_loop = NULL;
++    }
++
++    pw_ctx->negotiated = false;
++}
++
++/**
++ * helper function: gracefully stop/destroy of dbus session
++ *
++ * @param ctx AVFormatContext that contains PipeWire Grab main structure
++ */
++static void destroy_session(AVFormatContext *ctx)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    if (pw_ctx->session_handle) {
++        g_dbus_connection_call(
++            pw_ctx->connection, "org.freedesktop.portal.Desktop",
++            pw_ctx->session_handle, "org.freedesktop.portal.Session", "Close",
++            NULL, NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL, NULL);
++
++        g_clear_pointer(&pw_ctx->session_handle, g_free);
++    }
++
++    g_cancellable_cancel(pw_ctx->cancellable);
++    g_clear_object(&pw_ctx->cancellable);
++    g_clear_object(&pw_ctx->connection);
++    g_clear_object(&pw_ctx->proxy);
++    g_clear_pointer(&pw_ctx->sender_name, g_free);
++}
++
++/**
++ * helper function: gracefully stop/destroy of pipewire/dbus session
++ *
++ * @param ctx AVFormatContext that contains PipeWire Grab main structure
++ */
++static void pipewire_destroy(AVFormatContext *ctx)
++{
++    teardown_pipewire(ctx);
++    destroy_session(ctx);
++}
++
++/**
++ * callback to stop/disconnect current dbus session
++ *
++ * @param ptr_dbus_call_data dbus marshalling structure
++ */
++static void dbus_call_data_free(struct DbusCallData *ptr_dbus_call_data)
++{
++    AVFormatContext *ctx;
++    PipewireGrabContext *pw_ctx;
++
++    if (!ptr_dbus_call_data)
++        return;
++
++    ctx = ptr_dbus_call_data->ctx;
++    if (!ctx)
++        return;
++
++    pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    if (ptr_dbus_call_data->signal_id)
++        g_dbus_connection_signal_unsubscribe(pw_ctx->connection,
++                                             ptr_dbus_call_data->signal_id);
++
++    if (ptr_dbus_call_data->cancelled_id > 0)
++        g_signal_handler_disconnect(pw_ctx->cancellable,
++                                    ptr_dbus_call_data->cancelled_id);
++
++    g_clear_pointer(&ptr_dbus_call_data->request_path, g_free);
++    av_free(ptr_dbus_call_data);
++}
++
++/**
++ * dbus callback of cancelled events
++ *
++ * @param cancellable not used
++ * @param user_data dbus marshalling structure
++ */
++static void on_cancelled_callback(GCancellable *cancellable, gpointer user_data)
++{
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    av_log(ctx, AV_LOG_INFO, "Screencast session cancelled!\n");
++
++    g_dbus_connection_call(pw_ctx->connection, "org.freedesktop.portal.Desktop",
++                           ptr_dbus_call_data->request_path,
++                           "org.freedesktop.portal.Request", "Close", NULL,
++                           NULL, G_DBUS_CALL_FLAGS_NONE, -1, NULL, NULL, NULL);
++}
++
++/**
++ * pipewire callback of parameters changed events
++ *
++ * @param user_data dbus marshalling structure
++ * @param id contains chan param type
++ * @param param pointer to changed param structure
++ */
++static void on_stream_param_changed_callback(void *user_data, uint32_t id,
++                                             const struct spa_pod *param)
++{
++    struct spa_pod_builder pod_builder;
++    const struct spa_pod *params[MAX_SPA_PARAM];
++    uint32_t n_params = 0;
++    uint8_t params_buffer[4096];
++    int result;
++    PipewireGrabContext *pw_ctx;
++    AVFormatContext *ctx = user_data;
++
++    if (!ctx || !ctx->priv_data)
++        return;
++
++    pw_ctx = ctx->priv_data;
++
++    if (!param || id != SPA_PARAM_Format) {
++        av_log(ctx, AV_LOG_WARNING,
++               "Ignoring none stream param format change!\n");
++        return;
++    }
++
++    result = spa_format_parse(param, &pw_ctx->format.media_type,
++                              &pw_ctx->format.media_subtype);
++    if (result < 0)
++        return;
++
++    if (pw_ctx->format.media_type != SPA_MEDIA_TYPE_video ||
++        pw_ctx->format.media_subtype != SPA_MEDIA_SUBTYPE_raw)
++        return;
++
++    spa_format_video_raw_parse(param, &pw_ctx->format.info.raw);
++
++    av_log(ctx, AV_LOG_INFO, "Negotiated format:\n");
++
++    av_log(ctx, AV_LOG_INFO, "Format: %d (%s)\n",
++           pw_ctx->format.info.raw.format,
++           spa_debug_type_find_name(spa_type_video_format,
++                                    pw_ctx->format.info.raw.format));
++    av_log(ctx, AV_LOG_INFO, "Size: %dx%d\n",
++           pw_ctx->format.info.raw.size.width,
++           pw_ctx->format.info.raw.size.height);
++    av_log(ctx, AV_LOG_INFO, "Framerate: %d/%d\n",
++           pw_ctx->format.info.raw.framerate.num,
++           pw_ctx->format.info.raw.framerate.denom);
++
++    pw_ctx->width = pw_ctx->format.info.raw.size.width;
++    pw_ctx->height = pw_ctx->format.info.raw.size.height;
++    pw_ctx->Bpp = BYTES_PER_PIXEL;
++    pw_ctx->frame_size = pw_ctx->width * pw_ctx->height * pw_ctx->Bpp;
++    if (pw_ctx->frame_size + AV_INPUT_BUFFER_PADDING_SIZE > INT_MAX) {
++        av_log(ctx, AV_LOG_ERROR, "Captured area is too large\n");
++        return ;
++    }
++
++    pw_ctx->av_pxl_format =
++        spa_pixel_format_to_av_pixel_format(pw_ctx->format.info.raw.format);
++
++    /* Video crop */
++    pod_builder = SPA_POD_BUILDER_INIT(params_buffer, sizeof(params_buffer));
++    params[n_params++] = spa_pod_builder_add_object(
++        &pod_builder, SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
++        SPA_PARAM_META_type, SPA_POD_Id(SPA_META_VideoCrop),
++        SPA_PARAM_META_size, SPA_POD_Int(sizeof(struct spa_meta_region)));
++
++    /* Cursor */
++    params[n_params++] = spa_pod_builder_add_object(
++        &pod_builder, SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
++        SPA_PARAM_META_type, SPA_POD_Id(SPA_META_Cursor), SPA_PARAM_META_size,
++        SPA_POD_CHOICE_RANGE_Int(CURSOR_META_SIZE(64, 64),
++                                 CURSOR_META_SIZE(1, 1),
++                                 CURSOR_META_SIZE(1024, 1024)));
++
++    /* Buffer options */
++    params[n_params++] = spa_pod_builder_add_object(
++        &pod_builder, SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
++        SPA_PARAM_BUFFERS_dataType,
++        SPA_POD_Int((1 << SPA_DATA_MemPtr) | (1 << SPA_DATA_MemFd)));
++
++    /* Meta header */
++    params[n_params++] = spa_pod_builder_add_object(
++        &pod_builder, SPA_TYPE_OBJECT_ParamMeta, SPA_PARAM_Meta,
++        SPA_PARAM_META_type, SPA_POD_Id(SPA_META_Header),
++        SPA_PARAM_META_size,
++        SPA_POD_Int(sizeof(struct spa_meta_header)));
++
++    pw_stream_update_params(pw_ctx->stream, params, n_params);
++
++    pw_ctx->negotiated = true;
++
++    if (create_ffmpeg_stream(ctx) < 0)
++        av_log(ctx, AV_LOG_ERROR, "Failed to create ffmpeg stream\n");
++}
++
++/**
++ * pipewire callback of state changed events
++ *
++ * @param user_data dbus marshalling structure
++ * @param old pipewire stream old state
++ * @param state pipewire stream current state
++ * @param error received error information
++ */
++static void on_stream_state_changed_callback(void *user_data,
++                                             enum pw_stream_state old,
++                                             enum pw_stream_state state,
++                                             const char *error)
++{
++    AVFormatContext *ctx = user_data;
++
++    if (!ctx)
++        return;
++
++    av_log(ctx, AV_LOG_INFO, "stream state: \"%s\"\n",
++           pw_stream_state_as_string(state));
++}
++
++/**
++ * pipewire recycle buffer to put buffer back to queue and free
++ * allocated space after processing of frame
++ *
++ * @param opaque reference to PwStreamAndBuffer
++ * @param data spa_data for handling memeory mapping
++ */
++static void pw_recycle(void *opaque, uint8_t *data)
++{
++    enum pw_stream_state state;
++    struct PwStreamAndBuffer *buffer = (struct PwStreamAndBuffer *)opaque;
++    struct spa_buffer *spa_buf = buffer->pw_buf->buffer;
++    struct spa_data *d = &spa_buf->datas[0];
++
++    if (d->type == SPA_DATA_MemFd) {
++        munmap(buffer->pw_buf->user_data, d->maxsize + d->mapoffset);
++    }
++
++    /* only put buffer in queue when stream state is streaming */
++    state = pw_stream_get_state (buffer->pw_stream, NULL);
++    if (state == PW_STREAM_STATE_STREAMING)
++        pw_stream_queue_buffer(buffer->pw_stream, buffer->pw_buf);
++    av_free(buffer);
++}
++
++/**
++ * find most recent buffer received form pipewire
++ *
++ * @param pw_ctx PipewireGrabContext private data
++ * @return pw_buf most recent buffer
++ */
++static struct pw_buffer* find_most_recent_buffer_and_recycle_olders(PipewireGrabContext *pw_ctx)
++{
++    struct pw_buffer *pw_buf = NULL;
++    while (1) {
++        struct pw_buffer *aux = pw_stream_dequeue_buffer(pw_ctx->stream);
++        if (!aux) {
++            break;
++        }
++        if (pw_buf) {
++            pw_stream_queue_buffer(pw_ctx->stream, pw_buf);
++        }
++        pw_buf = aux;
++    }
++    return pw_buf;
++}
++
++/**
++ * our data processing function
++ *
++ * @param user_data dbus marshalling structure
++ */
++static void on_stream_process_callback(void *user_data)
++{
++    struct spa_buffer *spa_buf = NULL;
++    struct pw_buffer *pw_buf = NULL;
++    uint8_t *map = NULL;
++    void *sdata = NULL;
++    struct spa_meta_header *header = NULL;
++    AVFormatContext *ctx = user_data;
++    PipewireGrabContext *pw_ctx = NULL;
++    AVPacket *pkt = NULL;
++    struct PwStreamAndBuffer* buffer = NULL;
++
++    ctx = user_data;
++    if (!ctx || !ctx->priv_data)
++        return;
++
++    pw_ctx = ctx->priv_data;
++
++    //Data recieved in buffer from pipewire. Get the buffer and pass it to ffmpeg.
++    pw_buf = find_most_recent_buffer_and_recycle_olders(pw_ctx);
++    if (!pw_buf) {
++        av_log(ctx, AV_LOG_ERROR, "Out of buffers!\n");
++        return;
++    }
++
++    spa_buf = pw_buf->buffer;
++    header = spa_buffer_find_meta_data(spa_buf,
++                                      SPA_META_Header, sizeof(*header));
++    if (header && (header->flags & SPA_META_HEADER_FLAG_CORRUPTED)) {
++        av_log(ctx, AV_LOG_ERROR, "buffer is corrupt");
++        pw_stream_queue_buffer(pw_ctx->stream, pw_buf);
++        return;
++    }
++
++    if (pw_ctx->av_pxl_format == AV_PIX_FMT_NONE) {
++        av_log(ctx, AV_LOG_WARNING,
++               "unsupported buffer format: %d\n",
++               pw_ctx->format.info.raw.format);
++       return;
++    }
++
++    if (spa_buf->datas[0].type == SPA_DATA_MemFd ) {
++        map =
++            mmap(NULL, spa_buf->datas[0].maxsize + spa_buf->datas[0].mapoffset,
++                 PROT_READ, MAP_PRIVATE, spa_buf->datas[0].fd, 0);
++        if (map == MAP_FAILED) {
++            av_log(ctx, AV_LOG_ERROR, "mmap failed! error %s\n",
++                   g_strerror(errno));
++       return;
++        }
++        pw_buf->user_data = map;
++        sdata = SPA_PTROFF(map, spa_buf->datas[0].mapoffset, uint8_t);
++    } else if (spa_buf->datas[0].type == SPA_DATA_MemPtr) {
++        if (spa_buf->datas[0].data == NULL) {
++            av_log(ctx, AV_LOG_ERROR, "no data!\n");
++            return;
++        }
++        map = NULL;
++        sdata = spa_buf->datas[0].data;
++    } else {
++        av_log(ctx, AV_LOG_ERROR, "Buffer is not valid!\n");
++        return;
++    }
++
++    /* Create a new AVPacket on top of the pw buffer */
++    pkt = av_packet_alloc();
++    if (pkt == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++                "Failed to allocate new av packet\n");
++        return;
++    }
++
++    buffer = (struct PwStreamAndBuffer*)av_malloc(sizeof(struct PwStreamAndBuffer));
++    if (!buffer) {
++        av_log(ctx, AV_LOG_ERROR,
++                "Failed to allocate PwStreamAndBuffer entry\n");
++        goto end;
++    }
++    buffer->ctx = ctx;
++    buffer->pw_stream = pw_ctx->stream;
++    buffer->pw_buf = pw_buf;
++
++    pkt->buf = av_buffer_create(sdata, pw_ctx->frame_size, pw_recycle, buffer, 0);
++    if (!pkt->buf) {
++        av_log(ctx, AV_LOG_ERROR, "Failed creating av buffer\n");
++        goto fail;
++    }
++    pkt->data = sdata;
++    pkt->size = pw_ctx->frame_size;
++
++    /* Free the last current_pkt and make the new frame available */
++    pthread_mutex_lock(&pw_ctx->current_pkt_mutex);
++    av_packet_unref(pw_ctx->current_pkt);
++    if (av_packet_ref(pw_ctx->current_pkt, pkt) < 0) {
++        av_log(ctx, AV_LOG_ERROR, "Failed creating av buffer\n");
++    }
++    pthread_mutex_unlock(&pw_ctx->current_pkt_mutex);
++    goto end;
++
++fail:
++    av_free(buffer);
++end:
++    av_packet_free(&pkt);
++    return;
++}
++
++static const struct pw_stream_events stream_events = {
++    PW_VERSION_STREAM_EVENTS,
++    .state_changed = on_stream_state_changed_callback,
++    .param_changed = on_stream_param_changed_callback,
++    .process = on_stream_process_callback,
++};
++
++static struct DbusCallData *subscribe_to_signal(AVFormatContext *ctx,
++                                                  const char *path,
++                                                  GDBusSignalCallback callback)
++{
++    struct DbusCallData *ptr_dbus_call_data;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return NULL;
++    }
++
++    ptr_dbus_call_data = (struct DbusCallData *)av_mallocz(sizeof(struct DbusCallData));
++    ptr_dbus_call_data->ctx = ctx;
++    ptr_dbus_call_data->request_path = g_strdup(path);
++    ptr_dbus_call_data->cancelled_id =
++        g_signal_connect(pw_ctx->cancellable, "cancelled",
++                         G_CALLBACK(on_cancelled_callback),
++                         ptr_dbus_call_data /* user_data */);
++    ptr_dbus_call_data->signal_id = g_dbus_connection_signal_subscribe(
++        pw_ctx->connection, "org.freedesktop.portal.Desktop" /*sender*/,
++        "org.freedesktop.portal.Request" /*interface_name*/,
++        "Response" /*member: dbus signal name*/,
++        ptr_dbus_call_data->request_path /*object_path*/, NULL,
++        G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE, callback, ptr_dbus_call_data, NULL);
++
++    return ptr_dbus_call_data;
++}
++
++static int play_pipewire_stream(AVFormatContext *ctx)
++{
++    int ret = 0;
++    const struct spa_pod *ptr_spa_pod;
++    uint8_t buffer[4096];
++    struct spa_pod_builder spa_pod_bldr = {
++        0,
++    };
++
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return ret;
++    }
++
++    pw_ctx->thread_loop =
++        pw_thread_loop_new("thread loop", NULL);
++    if (!pw_ctx->thread_loop) {
++        av_log(ctx, AV_LOG_ERROR,
++               "pw_thread_loop_new failed!\n");
++        ret = AVERROR(ENOMEM);
++        return ret;
++    }
++
++    pw_ctx->context =
++        pw_context_new(pw_thread_loop_get_loop(pw_ctx->thread_loop), NULL, 0);
++    if (!pw_ctx->context) {
++        av_log(ctx, AV_LOG_ERROR, "pw_context_new failed!\n");
++        ret = AVERROR(ENOMEM);
++        goto cleanup;
++    }
++
++    if (pw_thread_loop_start(pw_ctx->thread_loop) < 0) {
++        av_log(ctx, AV_LOG_ERROR,
++               "pw_thread_loop_start failed!\n");
++        ret = AVERROR(EFAULT);
++        goto cleanup;
++    }
++
++    pw_thread_loop_lock(pw_ctx->thread_loop);
++
++    /* Core */
++    pw_ctx->core =
++        pw_context_connect_fd(pw_ctx->context,
++                              fcntl(pw_ctx->pipewire_fd, F_DUPFD_CLOEXEC, 3),
++                              NULL, 0);
++    if (pw_ctx->core == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++               "pw_context_connect_fd failed!\n");
++        ret = AVERROR(EFAULT);
++        pw_thread_loop_unlock(pw_ctx->thread_loop);
++        goto cleanup;
++    }
++
++    pw_core_add_listener(pw_ctx->core, &pw_ctx->core_listener, &core_events,
++                         ctx /* user_data */);
++
++    /* Stream */
++    pw_ctx->stream = pw_stream_new(
++        pw_ctx->core, "wayland grab",
++        pw_properties_new(PW_KEY_MEDIA_TYPE, "Video", PW_KEY_MEDIA_CATEGORY,
++                          "Capture", PW_KEY_MEDIA_ROLE, "Screen", NULL));
++
++    if (pw_ctx->stream == NULL) {
++        av_log(ctx, AV_LOG_ERROR, "pw_stream_new failed!\n");
++        ret = AVERROR(ENOMEM);
++        pw_thread_loop_unlock(pw_ctx->thread_loop);
++        goto cleanup;
++    }
++
++    pw_stream_add_listener(pw_ctx->stream, &pw_ctx->stream_listener,
++                           &stream_events, ctx /* user_data */);
++
++    /* Stream parameters */
++    spa_pod_bldr = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
++    ptr_spa_pod = spa_pod_builder_add_object(
++        &spa_pod_bldr, SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat,
++        SPA_FORMAT_mediaType, SPA_POD_Id(SPA_MEDIA_TYPE_video),
++        SPA_FORMAT_mediaSubtype, SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw),
++        SPA_FORMAT_VIDEO_format,
++        SPA_POD_CHOICE_ENUM_Id(4, SPA_VIDEO_FORMAT_RGBA, SPA_VIDEO_FORMAT_RGBx,
++                               SPA_VIDEO_FORMAT_BGRx, SPA_VIDEO_FORMAT_BGRA),
++        SPA_FORMAT_VIDEO_size,
++        SPA_POD_CHOICE_RANGE_Rectangle(&SPA_RECTANGLE(320, 240),
++                                       &SPA_RECTANGLE(1, 1),
++                                       &SPA_RECTANGLE(4096, 4096)),
++        SPA_FORMAT_VIDEO_framerate,
++        SPA_POD_CHOICE_RANGE_Fraction(
++            &SPA_FRACTION(pw_ctx->framerate.num,
++                          pw_ctx->framerate.den),
++            &SPA_FRACTION(0, 1), &SPA_FRACTION(144, 1)));
++
++    ret = pw_stream_connect(
++        pw_ctx->stream, PW_DIRECTION_INPUT, pw_ctx->pipewire_node,
++        PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS, &ptr_spa_pod,
++        1);
++
++    av_log(ctx, AV_LOG_INFO, "Starting screen capture ...\n");
++
++    pw_thread_loop_unlock(pw_ctx->thread_loop);
++
++    return ret;
++
++/*
++ * disconnect from the server/daemon
++ * destroy the core proxy object and will remove the proxies
++ * that might have been created on this connection
++ */
++cleanup:
++    if (pw_ctx->core)
++        pw_core_disconnect(pw_ctx->core);
++
++    if (pw_ctx->context)
++        pw_context_destroy(pw_ctx->context);
++
++    if(pw_ctx->thread_loop)
++        pw_thread_loop_destroy(pw_ctx->thread_loop);
++
++    return ret;
++}
++
++static void on_pipewire_remote_opened_callback(GObject *source,
++                                               GAsyncResult *res,
++                                               gpointer user_data)
++{
++    GUnixFDList* fd_list = NULL;
++    GVariant* result = NULL;
++    GError* error = NULL;
++    int fd_index;
++
++    AVFormatContext *ctx = user_data;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    /* Take ownership of the data, and responsible for freeing it. */
++    result = g_dbus_proxy_call_with_unix_fd_list_finish(G_DBUS_PROXY(source),
++                                                        &fd_list, res, &error);
++    if (!result) {
++        if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++            av_log(ctx, AV_LOG_ERROR,
++                   "Error retrieving pipewire fd: %s\n",
++                   error->message);
++        g_error_free(error);
++        return;
++    }
++
++    g_variant_get(result, "(h)", &fd_index, &error);
++
++    pw_ctx->pipewire_fd = g_unix_fd_list_get(fd_list, fd_index, &error);
++    if (error) {
++        if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++            av_log(ctx, AV_LOG_ERROR,
++                   "Error retrieving pipewire fd: %s\n",
++                   error->message);
++        g_error_free(error);
++        g_variant_unref(result);
++        return;
++    }
++
++    g_variant_unref(result);
++    g_object_unref(fd_list);
++
++    play_pipewire_stream(ctx);
++}
++
++static void open_pipewire_remote(AVFormatContext *ctx)
++{
++    GVariantBuilder builder;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
++
++    g_dbus_proxy_call_with_unix_fd_list(
++        pw_ctx->proxy, "OpenPipeWireRemote",
++        g_variant_new("(oa{sv})", pw_ctx->session_handle, &builder),
++        G_DBUS_CALL_FLAGS_NONE, -1, NULL, pw_ctx->cancellable,
++        on_pipewire_remote_opened_callback, ctx /* user_data */);
++}
++
++static void on_start_response_received_callback(
++    GDBusConnection *connection, const char *sender_name,
++    const char *object_path, const char *interface_name,
++    const char *signal_name, GVariant *parameters, gpointer user_data)
++{
++    GVariant* stream_properties = NULL;
++    GVariant* streams = NULL;
++    GVariant* result = NULL;
++    GVariantIter iter;
++    uint32_t response;
++
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    g_clear_pointer(&ptr_dbus_call_data, dbus_call_data_free);
++
++    g_variant_get(parameters, "(u@a{sv})", &response, &result);
++
++    if (response) {
++        av_log(
++            ctx, AV_LOG_ERROR,
++            "Failed to start screencast, denied or cancelled by user!\n");
++        pipewiregrab_abort(
++            ctx, "Failed to start screencast, denied or cancelled by user!");
++        g_variant_unref(result);
++        return;
++    }
++
++    streams = g_variant_lookup_value(result, "streams", G_VARIANT_TYPE_ARRAY);
++
++    g_variant_iter_init(&iter, streams);
++    av_assert0(g_variant_iter_n_children(&iter) == 1);
++
++    g_variant_iter_loop(&iter, "(u@a{sv})", &pw_ctx->pipewire_node,
++                        &stream_properties);
++
++    av_log(ctx, AV_LOG_INFO,
++           "Monitor selected, setting up screencast\n\n");
++
++    g_variant_unref(result);
++    g_variant_unref(streams);
++    g_variant_unref(stream_properties);
++
++    open_pipewire_remote(ctx);
++
++}
++
++static void on_started_callback(GObject *source, GAsyncResult *res,
++                                gpointer user_data)
++{
++    GVariant* result = NULL;
++    GError* error = NULL;
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++
++    result = g_dbus_proxy_call_finish(G_DBUS_PROXY(source), res, &error);
++    if (!result) {
++        if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++            av_log(ctx, AV_LOG_ERROR,
++                   "Error selecting screencast source: %s\n",
++                   error->message);
++        g_error_free(error);
++        return;
++    }
++    g_variant_unref(result);
++
++}
++
++static int start(AVFormatContext *ctx)
++{
++    g_autofree char *request_token = NULL;
++    g_autofree char *request_path = NULL;
++    GVariantBuilder builder;
++    struct DbusCallData *ptr_dbus_call_data;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return AVERROR(EINVAL);
++    }
++
++    new_path(ctx, &request_path, &request_token, &(pw_ctx->request_token_count), REQUEST_PATH);
++
++    av_log(ctx, AV_LOG_WARNING, "Asking for monitor…\n");
++
++    ptr_dbus_call_data = subscribe_to_signal(
++        ctx /* user_data */, request_path, on_start_response_received_callback);
++    if (!ptr_dbus_call_data) {
++        av_log(ctx, AV_LOG_ERROR,
++               "subscribe_to_signal failed!\n");
++        return AVERROR(ENOMEM);
++    }
++
++    g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
++    g_variant_builder_add(&builder, "{sv}", "handle_token",
++                          g_variant_new_string(request_token));
++
++    g_dbus_proxy_call(pw_ctx->proxy, "Start",
++                      g_variant_new("(osa{sv})", pw_ctx->session_handle, "",
++                                    &builder),
++                      G_DBUS_CALL_FLAGS_NONE, -1, pw_ctx->cancellable,
++                      on_started_callback, ptr_dbus_call_data /* user_data */);
++    return 0;
++}
++
++static void on_select_source_response_received_callback(
++    GDBusConnection *connection, const char *sender_name,
++    const char *object_path, const char *interface_name,
++    const char *signal_name, GVariant *parameters, gpointer user_data)
++{
++    GVariant* ret = NULL;
++    uint32_t response;
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++
++    av_log(ctx, AV_LOG_INFO,
++           "Response to select source received\n");
++
++    g_clear_pointer(&ptr_dbus_call_data, dbus_call_data_free);
++
++    g_variant_get(parameters, "(u@a{sv})", &response, &ret);
++    g_variant_unref(ret);
++    if (response) {
++        av_log(
++            ctx, AV_LOG_ERROR,
++            "Failed to select source, denied or cancelled by user!\n");
++        pipewiregrab_abort(
++            ctx, "Failed to select source, denied or cancelled by user!");
++        return;
++    }
++
++    if (start(ctx) < 0)
++        av_log(ctx, AV_LOG_INFO,
++           "Start source received\n");
++}
++
++static void on_source_selected_callback(GObject *source, GAsyncResult *res,
++                                        gpointer user_data)
++{
++    GVariant* result = NULL;
++    GError* error = NULL;
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++
++    result = g_dbus_proxy_call_finish(G_DBUS_PROXY(source), res, &error);
++    if (!result) {
++        if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++            av_log(ctx, AV_LOG_ERROR,
++                   "Error selecting screencast source: %s\n",
++                   error->message);
++        g_error_free(error);
++        return;
++    }
++    g_variant_unref(result);
++}
++
++static void select_source(AVFormatContext *ctx)
++{
++    g_autofree char *request_token = NULL;
++    g_autofree char *request_path = NULL;
++    GVariantBuilder builder;
++    struct DbusCallData *ptr_dbus_call_data;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    new_path(ctx, &request_path, &request_token, &(pw_ctx->request_token_count), REQUEST_PATH);
++
++    ptr_dbus_call_data =
++        subscribe_to_signal(ctx /* user_data */, request_path,
++                            on_select_source_response_received_callback);
++    if (ptr_dbus_call_data == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++               "subscribe_to_signal failed!\n");
++        return;
++    }
++
++    g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
++    g_variant_builder_add(&builder, "{sv}", "types",
++                          g_variant_new_uint32(pw_ctx->capture_type));
++    g_variant_builder_add(&builder, "{sv}", "multiple",
++                          g_variant_new_boolean(FALSE));
++    g_variant_builder_add(&builder, "{sv}", "handle_token",
++                          g_variant_new_string(request_token));
++
++    if (pw_ctx->available_cursor_modes & PORTAL_CURSOR_MODE_METADATA)
++        g_variant_builder_add(&builder, "{sv}", "cursor_mode",
++                              g_variant_new_uint32(PORTAL_CURSOR_MODE_METADATA));
++    else if ((pw_ctx->available_cursor_modes & PORTAL_CURSOR_MODE_EMBEDDED)
++            && pw_ctx->cursor.visible)
++        g_variant_builder_add(&builder, "{sv}", "cursor_mode",
++                              g_variant_new_uint32(PORTAL_CURSOR_MODE_EMBEDDED));
++    else
++        g_variant_builder_add(&builder, "{sv}", "cursor_mode",
++                              g_variant_new_uint32(PORTAL_CURSOR_MODE_HIDDEN));
++
++    g_dbus_proxy_call(pw_ctx->proxy, "SelectSources",
++                      g_variant_new("(oa{sv})", pw_ctx->session_handle,
++                                    &builder),
++                      G_DBUS_CALL_FLAGS_NONE, -1, pw_ctx->cancellable,
++                      (GAsyncReadyCallback)on_source_selected_callback,
++                      ptr_dbus_call_data /* user_data */);
++}
++
++static void on_create_session_response_received_callback(
++    GDBusConnection *connection, const char *sender_name,
++    const char *object_path, const char *interface_name,
++    const char *signal_name, GVariant *parameters, gpointer user_data)
++{
++    uint32_t response;
++    GVariant* result = NULL;
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    g_clear_pointer(&ptr_dbus_call_data, dbus_call_data_free);
++
++    g_variant_get(parameters, "(u@a{sv})", &response, &result);
++
++    if (response != 0) {
++        av_log(
++            ctx, AV_LOG_ERROR,
++            "Pipewire failed to create session, denied or cancelled by user!\n");
++        return;
++    }
++
++    av_log(ctx, AV_LOG_DEBUG, "Screencast session created\n");
++
++    g_variant_lookup(result, "session_handle", "s", &pw_ctx->session_handle);
++    //g_variant_unref(result);
++    /* enable/disable mouse cursor */
++    pw_ctx->cursor.visible = pw_ctx->draw_mouse;
++    select_source(ctx);
++}
++
++static void on_session_created_callback(GObject *source, GAsyncResult *res,
++                                        gpointer user_data)
++{
++    GVariant* result = NULL;
++    GError* error = NULL;
++    struct DbusCallData *ptr_dbus_call_data = user_data;
++    AVFormatContext *ctx = ptr_dbus_call_data->ctx;
++
++    result = g_dbus_proxy_call_finish(G_DBUS_PROXY(source), res, &error);
++    if (!result) {
++        if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++            av_log(ctx, AV_LOG_ERROR,
++                   "Error creating screencast session: %s\n",
++                   error->message);
++        g_error_free(error);
++        return;
++    }
++    g_variant_unref(result);
++}
++
++/**
++ * function to start the negotation
++ *
++ * @param ctx ctx AVFormatContext avformat context
++ */
++static void create_session(AVFormatContext *ctx)
++{
++    GVariantBuilder builder;
++    g_autofree char *request_token = NULL;
++    g_autofree char *request_path = NULL;
++    g_autofree char *session_token = NULL;
++    struct DbusCallData *ptr_dbus_call_data;
++
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    new_path(ctx, &request_path, &request_token, &(pw_ctx->request_token_count), REQUEST_PATH);
++    new_path(ctx, NULL, &session_token, &(pw_ctx->session_token_count), SESSION_PATH);
++
++    ptr_dbus_call_data =
++        subscribe_to_signal(ctx /* user_data */, request_path,
++                            on_create_session_response_received_callback);
++    if (ptr_dbus_call_data == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++               "subscribe_to_signal failed!\n");
++        return;
++    }
++
++    g_variant_builder_init(&builder, G_VARIANT_TYPE_VARDICT);
++    g_variant_builder_add(&builder, "{sv}", "handle_token",
++                          g_variant_new_string(request_token));
++    g_variant_builder_add(&builder, "{sv}", "session_handle_token",
++                          g_variant_new_string(session_token));
++
++    g_dbus_proxy_call(pw_ctx->proxy, "CreateSession",
++                      g_variant_new("(a{sv})", &builder),
++                      G_DBUS_CALL_FLAGS_NONE, -1, pw_ctx->cancellable,
++                      on_session_created_callback,
++                      ptr_dbus_call_data /* user_data */);
++}
++
++/**
++ * helper function: get available cursor mode and update
++ *
++ * @param ctx ctx AVFormatContext avformat context
++ */
++static void update_available_cursor_modes(AVFormatContext *ctx)
++{
++    GVariant* cached_cursor_modes = NULL;
++    uint32_t available_cursor_modes;
++
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    //returned reference must be freed with g_variant_unref().
++    cached_cursor_modes =
++        g_dbus_proxy_get_cached_property(pw_ctx->proxy, "AvailableCursorModes");
++    available_cursor_modes =
++        cached_cursor_modes ? g_variant_get_uint32(cached_cursor_modes) : 0;
++
++    /* Use embedded or hidden mode for now*/
++    available_cursor_modes = available_cursor_modes &
++                             (PORTAL_CURSOR_MODE_EMBEDDED |
++                              PORTAL_CURSOR_MODE_HIDDEN);
++    pw_ctx->available_cursor_modes = available_cursor_modes;
++
++    g_variant_unref(cached_cursor_modes);
++}
++
++/**
++ * callback function of created proxy
++ *
++ * @param source GObject
++ * @param res GAsyncResult
++ * @param user_data ctx AVFormatContext avformat context
++ */
++static void on_pipewire_proxy_created_callback(GObject *source,
++                                               GAsyncResult *res,
++                                               gpointer user_data)
++{
++    GError* error = NULL;
++    AVFormatContext *ctx = user_data;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    pw_ctx->proxy = g_dbus_proxy_new_finish(res, &error);
++
++    if (error) {
++        if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
++            av_log(ctx, AV_LOG_ERROR,
++                   "Error creating proxy: %s\n", error->message);
++        g_error_free(error);
++        return;
++    }
++
++    update_available_cursor_modes(ctx);
++    create_session(ctx);
++}
++
++/**
++ * Get the proxy from desktop-portal
++ *
++ * @param ctx AVFormatContext avformat context
++ */
++static void create_pipewire_proxy(AVFormatContext *ctx)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return;
++    }
++
++    g_dbus_proxy_new(pw_ctx->connection, G_DBUS_PROXY_FLAGS_NONE, NULL,
++                     "org.freedesktop.portal.Desktop",
++                     "/org/freedesktop/portal/desktop",
++                     "org.freedesktop.portal.ScreenCast", pw_ctx->cancellable,
++                     (GAsyncReadyCallback)on_pipewire_proxy_created_callback,
++                     ctx /* user_data */);
++}
++
++/**
++ * Initiate the pipewiregrab
++ *
++ * @param ctx AVFormatContext avformat context
++ */
++static int init_pipewiregrab(AVFormatContext *ctx)
++{
++    char *aux;
++    GError* error = NULL;
++    int ret = 0;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return AVERROR(EINVAL);
++    }
++
++    pw_ctx->capture_type = DESKTOP_CAPTURE;
++    pw_ctx->cancellable = g_cancellable_new();
++
++    pw_ctx->connection = g_bus_get_sync(G_BUS_TYPE_SESSION, NULL, &error);
++    if (error) {
++        ret = error->code;
++        av_log(ctx, AV_LOG_ERROR,
++               "Error getting session bus: %s\n",
++               error->message);
++         g_error_free(error);
++        return ret;
++    }
++
++    pw_ctx->sender_name =
++        g_strdup(g_dbus_connection_get_unique_name(pw_ctx->connection) + 1);
++
++    /* Replace dots by underscores */
++    aux = av_strireplace(pw_ctx->sender_name, ".", "_");
++
++    //Update sender name with modified string
++    pw_ctx->sender_name = aux;
++    av_log(ctx, AV_LOG_DEBUG, "Initialized (sender name: %s)\n",
++           pw_ctx->sender_name);
++
++    create_pipewire_proxy(ctx);
++
++    return ret;
++}
++
++/**
++ * helper function: calculate the wait time based
++ * on the frame duration
++ *
++ * @param s AVFormatContext avformat context
++ * @return current time
++ */
++static int64_t wait_frame(AVFormatContext *s)
++{
++    PipewireGrabContext *c = s->priv_data;
++    int64_t curtime, delay;
++
++    /* Calculate the time of the next frame */
++    c->time_frame += c->frame_duration;
++
++    /* wait based on the frame rate */
++    while(1) {
++        curtime = av_gettime_relative();
++        delay   = c->time_frame - curtime;
++        if (delay <= 0)
++            break;
++        av_usleep(delay);
++    }
++
++    return curtime;
++}
++
++/**
++ * helper function: Grabs a frame from pipewire
++ *
++ * @param ctx AVFormatContext avformat context
++ * @param pkt Packet holding the grabbed frame
++ */
++static int grab_frame(AVFormatContext *ctx, AVPacket *pkt)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    int ret = 0;
++
++    pthread_mutex_lock(&pw_ctx->current_pkt_mutex);
++    if ((ret = av_packet_ref(pkt, pw_ctx->current_pkt)) < 0) {
++        pthread_mutex_unlock(&pw_ctx->current_pkt_mutex);
++        av_log(ctx, AV_LOG_ERROR, "av_packet_ref() failed in grab_frame()\n");
++        return ret;
++    }
++
++    pthread_mutex_unlock(&pw_ctx->current_pkt_mutex);
++    return ret;
++}
++
++/**
++ * read the frame from pipewire
++ *
++ * @param ctx Context from avformat core
++ * @param pkt Packet holding the grabbed frame
++ * @return frame size in bytes
++ */
++static int pipewiregrab_read_packet(AVFormatContext *ctx, AVPacket *pkt)
++{
++    int64_t pts;
++    int ret = 0;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return AVERROR(EINVAL);
++    }
++    do {
++        wait_frame(ctx);
++        pts = av_gettime();
++        if((ret = grab_frame(ctx, pkt)) < 0)
++            return ret;
++        pkt->dts = pkt->pts = pts;
++        pkt->duration = pw_ctx->frame_duration;
++   } while(!pkt->data);
++
++    return pkt->size;
++}
++
++/**
++ * Closes pipewire frame grabber.
++ *
++ * @param ctx Context from avformat core
++ * @return 0 success, !0 failure
++ */
++static int pipewiregrab_read_close(AVFormatContext *ctx)
++{
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return AVERROR(EINVAL);
++    }
++
++    if (pw_ctx->thread_loop)
++        pw_thread_loop_signal(pw_ctx->thread_loop, false);
++
++    if (pw_ctx->glib_main_loop &&
++        g_main_loop_is_running(pw_ctx->glib_main_loop)) {
++        g_main_loop_quit(pw_ctx->glib_main_loop);
++    }
++
++    pthread_join(pw_ctx->pipewire_pthread, NULL);
++    av_packet_free(&pw_ctx->current_pkt);
++
++    return 0;
++}
++
++/**
++ * Thread to initialize the Pipewire library and
++ * initiate the connetion flow
++ *
++ * @param argo thread argument ctx
++ */
++static void *pipewire_gdbus_init_pthread(void *argo)
++{
++    intptr_t ret = 0;
++    AVFormatContext *ctx = (AVFormatContext *)argo;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return (void *)AVERROR(EINVAL);
++    }
++
++    /* initialize the PipeWire library */
++    pw_init(NULL, NULL);
++
++    pw_ctx->glib_main_loop = g_main_loop_new(NULL, FALSE);
++    if (pw_ctx->glib_main_loop == NULL) {
++        av_log(ctx, AV_LOG_ERROR, "g_main_loop_new failed!\n");
++        ret = AVERROR(ENOMEM);
++        goto exit_pw_deinit;
++    }
++
++    if (init_pipewiregrab(ctx) != 0) {
++        av_log(ctx, AV_LOG_ERROR, "init_pipewiregrab failed!\n");
++        ret = AVERROR(EPERM);
++        goto exit_glib_loop;
++    }
++
++    av_log(ctx, AV_LOG_INFO, "starting glib main loop!\n");
++    g_main_loop_run(pw_ctx->glib_main_loop);
++
++    /* g_main_loop quited, destroy pipewire*/
++    pipewire_destroy(ctx);
++
++exit_glib_loop:
++    g_main_loop_unref(pw_ctx->glib_main_loop);
++    pw_ctx->glib_main_loop = NULL;
++exit_pw_deinit:
++    pw_deinit();
++
++    return (void *)ret;
++}
++
++/**
++ * Initializes the pipewire grab device demuxer
++ *
++ * @param ctx Context from avformat core
++ * @return AVERROR_IO error, 0 success
++ */
++static int pipewiregrab_read_header(AVFormatContext *ctx)
++{
++    int ret = 0;
++    PipewireGrabContext *pw_ctx = ctx->priv_data;
++
++    if (!pw_ctx) {
++        av_log(ctx, AV_LOG_ERROR,
++               "Invalid private context data!\n");
++        return AVERROR(EINVAL);
++    }
++
++    // Initialize token count
++    pw_ctx->request_token_count = 0;
++    pw_ctx->session_token_count = 0;
++
++    atomic_init(&pw_ctx->avstream_codec_flag, 0);
++
++    pthread_cond_init(&pw_ctx->avstream_codec_cond_var, NULL);
++    pthread_mutex_init(&pw_ctx->avstream_codec_mutex, NULL);
++    pthread_mutex_init(&pw_ctx->current_pkt_mutex, NULL);
++
++    pw_ctx->current_pkt = av_packet_alloc();
++    if (pw_ctx->current_pkt == NULL) {
++        av_log(ctx, AV_LOG_ERROR,
++                "Failed to allocate new av packet\n");
++        return AVERROR(ENOMEM);
++    }
++
++    ret = pthread_create(&pw_ctx->pipewire_pthread, NULL,
++                         &pipewire_gdbus_init_pthread, ctx);
++    if(ret) {
++        ret = AVERROR(ret);
++        av_log(ctx, AV_LOG_ERROR, "pthread_create() failed: %s\n",
++               av_err2str(ret));
++        goto fail;
++    }
++
++    pthread_mutex_lock(&pw_ctx->avstream_codec_mutex);
++    while (!atomic_load(&pw_ctx->avstream_codec_flag)) {
++        pthread_cond_wait(&pw_ctx->avstream_codec_cond_var,
++                          &pw_ctx->avstream_codec_mutex);
++    }
++    /* wait until signaled */
++    pthread_mutex_unlock(&pw_ctx->avstream_codec_mutex);
++
++    return ret;
++
++fail:
++    av_packet_free(&pw_ctx->current_pkt);
++    return ret;
++}
++
++static const AVClass pipewiregrab = {
++    .class_name = "pipewiregrab indev",
++    .item_name = av_default_item_name,
++    .option = options,
++    .version = LIBAVUTIL_VERSION_INT,
++    .category = AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT,
++};
++
++/** pipewire grabber device demuxer declaration */
++const AVInputFormat ff_pipewiregrab_demuxer = {
++    .name = "pipewiregrab",
++    .long_name = NULL_IF_CONFIG_SMALL("screen capture, using pipewire"),
++    .priv_data_size = sizeof(struct PipewireGrabContext),
++    .read_header = pipewiregrab_read_header,
++    .read_packet = pipewiregrab_read_packet,
++    .read_close = pipewiregrab_read_close,
++    .flags = AVFMT_NOFILE,
++    .priv_class = &pipewiregrab,
++};
+--
+2.34.1
