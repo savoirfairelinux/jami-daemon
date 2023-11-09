@@ -26,6 +26,11 @@ FFMPEGCONF += \
 	--disable-programs \
 	--disable-postproc
 
+ifdef HAVE_LINUX
+FFMPEGCONF += --enable-libpipewire \
+              --enable-indev=pipewiregrab
+endif
+
 FFMPEGCONF += \
 	--disable-protocols \
 	--enable-protocol=crypto \
@@ -422,6 +427,8 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
+	$(APPLY) $(SRC)/ffmpeg/0001-libavdevice-pipewiregrab-add-pipewire-based-grab.patch
+	$(APPLY) $(SRC)/ffmpeg/0002-configure-disable-locale-use-in-spa-plugin.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

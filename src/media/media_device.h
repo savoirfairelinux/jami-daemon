@@ -52,6 +52,7 @@ struct DeviceParams
     int offset_y {};
     int orientation {};
     std::string window_id {};
+    int capture_type {}; // capture type for pipewiregrab (1 for screen, 2 for window)
     int is_area {};
 };
 
