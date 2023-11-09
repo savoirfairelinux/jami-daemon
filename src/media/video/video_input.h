@@ -133,11 +133,14 @@ private:
 
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);
-    bool initX11(const std::string& display);
-    bool initAVFoundation(const std::string& display);
     bool initFile(std::string path);
-#ifdef WIN32
+
+#ifdef __APPLE__
+    bool initAVFoundation(const std::string& display);
+#elif defined(WIN32)
     bool initWindowsGrab(const std::string& display);
+#else
+    bool initLinuxGrab(const std::string& display);
 #endif
 
     bool isCapturing() const noexcept;
