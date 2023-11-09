@@ -574,7 +574,14 @@ VideoDeviceImpl::getDeviceParams() const
     params.unique_id = unique_id;
     params.input = path;
     if (unique_id == DEVICE_DESKTOP) {
-        params.format = "x11grab";
+        const auto* env = std::getenv("WAYLAND_DISPLAY");
+        params.format = !env || strlen(env) == 0? "x11grab" : "pipewiregrab";
+        if (!env || strlen(env) == 0) {
+            params.format = "x11grab";
+        } else {
+            params.format = "lavfi";
+            params.input = "pipewiregrab";
+        }
         params.framerate = rate_.frame_rate;
         return params;
     }

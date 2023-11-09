@@ -97,66 +97,89 @@ MediaDemuxer::openInput(const DeviceParams& params)
     if (!iformat && !params.format.empty())
         JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
 
-    if (params.width and params.height) {
-        auto sizeStr = fmt::format("{}x{}", params.width, params.height);
-        av_dict_set(&options_, "video_size", sizeStr.c_str(), 0);
-    }
+    std::string input;
 
-    if (params.framerate) {
+    if (params.input == "pipewiregrab") {
+        //
+        // We rely on pipewiregrab for screen/window sharing on Wayland.
+        // Because pipewiregrab is a "video source filter" (part of FFmpeg's libavfilter
+        // library), its options must all be passed as part of the `input` string.
+        //
+        input = fmt::format("pipewiregrab=draw_mouse=1:fd={}:node={}", params.fd, params.node);
+        JAMI_LOG("Trying to open input {}", input);
+        //
+        // In all other cases, we use the `options_` AVDictionary to pass options to FFmpeg.
+        //
+        // NOTE: We rely on the "lavfi" virtual input device to read pipewiregrab's output
+        // and create a corresponding stream (cf. the getDeviceParams function in
+        // daemon/src/media/video/v4l2/video_device_impl.cpp). The `options_` dictionary
+        // could be used to set lavfi's parameters if that was ever needed, but it isn't at
+        // the moment. (Doc: https://ffmpeg.org/ffmpeg-devices.html#lavfi)
+        //
+    } else {
+        if (params.width and params.height) {
+            auto sizeStr = fmt::format("{}x{}", params.width, params.height);
+            av_dict_set(&options_, "video_size", sizeStr.c_str(), 0);
+        }
+
+        if (params.framerate) {
 #ifdef _WIN32
-        // On windows, framerate settings don't reduce to avrational values
-        // that correspond to valid video device formats.
-        // e.g. A the rational<double>(10000000, 333333) or 30.000030000
-        //      will be reduced by av_reduce to 999991/33333 or 30.00003000003
-        //      which cause the device opening routine to fail.
-        // So we treat this imprecise reduction and adjust the value,
-        // or let dshow choose the framerate, which is, unfortunately,
-        // NOT the highest according to our experimentations.
-        auto framerate {params.framerate.real()};
-        framerate = params.framerate.numerator() / (params.framerate.denominator() + 0.5);
-        if (params.framerate.denominator() != 4999998)
-            av_dict_set(&options_, "framerate", jami::to_string(framerate).c_str(), 0);
+            // On windows, framerate settings don't reduce to avrational values
+            // that correspond to valid video device formats.
+            // e.g. A the rational<double>(10000000, 333333) or 30.000030000
+            //      will be reduced by av_reduce to 999991/33333 or 30.00003000003
+            //      which cause the device opening routine to fail.
+            // So we treat this imprecise reduction and adjust the value,
+            // or let dshow choose the framerate, which is, unfortunately,
+            // NOT the highest according to our experimentations.
+            auto framerate {params.framerate.real()};
+            framerate = params.framerate.numerator() / (params.framerate.denominator() + 0.5);
+            if (params.framerate.denominator() != 4999998)
+                av_dict_set(&options_, "framerate", jami::to_string(framerate).c_str(), 0);
 #else
-        av_dict_set(&options_, "framerate", jami::to_string(params.framerate.real()).c_str(), 0);
+            av_dict_set(&options_, "framerate", jami::to_string(params.framerate.real()).c_str(), 0);
 #endif
-    }
+        }
 
-    if (params.offset_x || params.offset_y) {
-        av_dict_set(&options_, "offset_x", std::to_string(params.offset_x).c_str(), 0);
-        av_dict_set(&options_, "offset_y", std::to_string(params.offset_y).c_str(), 0);
-    }
-    if (params.channel)
-        av_dict_set(&options_, "channel", std::to_string(params.channel).c_str(), 0);
-    av_dict_set(&options_, "loop", params.loop.c_str(), 0);
-    av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
+        if (params.offset_x || params.offset_y) {
+            av_dict_set(&options_, "offset_x", std::to_string(params.offset_x).c_str(), 0);
+            av_dict_set(&options_, "offset_y", std::to_string(params.offset_y).c_str(), 0);
+        }
+        if (params.channel)
+            av_dict_set(&options_, "channel", std::to_string(params.channel).c_str(), 0);
+        av_dict_set(&options_, "loop", params.loop.c_str(), 0);
+        av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
-    // Set jitter buffer options
-    av_dict_set(&options_, "reorder_queue_size", std::to_string(jitterBufferMaxSize_).c_str(), 0);
-    auto us = std::chrono::duration_cast<std::chrono::microseconds>(jitterBufferMaxDelay_).count();
-    av_dict_set(&options_, "max_delay", std::to_string(us).c_str(), 0);
+        // Set jitter buffer options
+        av_dict_set(&options_, "reorder_queue_size", std::to_string(jitterBufferMaxSize_).c_str(), 0);
+        auto us = std::chrono::duration_cast<std::chrono::microseconds>(jitterBufferMaxDelay_).count();
+        av_dict_set(&options_, "max_delay", std::to_string(us).c_str(), 0);
 
-    if (!params.pixel_format.empty()) {
-        av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
-    }
-    if (!params.window_id.empty()) {
-        av_dict_set(&options_, "window_id", params.window_id.c_str(), 0);
-    }
-    av_dict_set(&options_, "is_area", std::to_string(params.is_area).c_str(), 0);
+        if (!params.pixel_format.empty()) {
+            av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
+        }
+        if (!params.window_id.empty()) {
+            av_dict_set(&options_, "window_id", params.window_id.c_str(), 0);
+        }
+        av_dict_set(&options_, "draw_mouse", "1", 0);
+        av_dict_set(&options_, "is_area", std::to_string(params.is_area).c_str(), 0);
 
 #if defined(__APPLE__) && TARGET_OS_MAC
-    std::string input = params.name;
+        input = params.name;
 #else
-    std::string input = params.input;
+        input = params.input;
 #endif
 
-    JAMI_LOG("Trying to open input {} with format {}, pixel format {}, size {}x{}, rate {}",
-             input,
-             params.format,
-             params.pixel_format,
-             params.width,
-             params.height,
-             params.framerate.real());
+        JAMI_LOG("Trying to open input {} with format {}, pixel format {}, size {}x{}, rate {}",
+                 input,
+                 params.format,
+                 params.pixel_format,
+                 params.width,
+                 params.height,
+                 params.framerate.real());
+    }
 
+    // Ask FFmpeg to open the input using the options set above
     av_opt_set_int(
         inputCtx_,
         "fpsprobesize",
@@ -166,7 +189,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
 
     if (ret) {
         JAMI_ERROR("avformat_open_input failed: {}", libav_utils::getError(ret));
-    } else {
+    } else if (inputCtx_->nb_streams > 0 && inputCtx_->streams[0]->codecpar) {
         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
         JAMI_LOG("Opened input Using format {:s} and resolution {:d}x{:d}",
