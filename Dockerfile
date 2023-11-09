@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     libmsgpack-dev \
     libnatpmp-dev \
     libopus-dev \
+    libpipewire-0.3-dev \
     libpulse-dev \
     libspeex-dev \
     libspeexdsp-dev \
