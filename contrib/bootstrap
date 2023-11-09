@@ -279,6 +279,8 @@ case "${OS}" in
 		;;
 esac
 
+test "$DISABLE_PIPEWIRE" && add_make_enabled "DISABLE_PIPEWIRE"
+
 #
 # Results output
 #
