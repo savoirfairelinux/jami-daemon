@@ -52,6 +52,7 @@ struct DeviceParams
     int offset_y {};
     int orientation {};
     std::string window_id {};
+    std::string fd {}; // file descriptor for PipeWire (only relevant on Wayland)
     int is_area {};
 };
 

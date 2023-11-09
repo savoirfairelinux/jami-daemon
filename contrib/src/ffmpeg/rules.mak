@@ -26,6 +26,17 @@ FFMPEGCONF += \
 	--disable-programs \
 	--disable-postproc
 
+ifdef HAVE_LINUX
+ifndef HAVE_ANDROID
+ifndef DISABLE_PIPEWIRE
+FFMPEGCONF += --enable-libpipewire \
+              --enable-filter=pipewiregrab \
+              --enable-indev=lavfi \
+              --enable-decoder=wrapped_avframe
+endif
+endif
+endif
+
 FFMPEGCONF += \
 	--disable-protocols \
 	--enable-protocol=crypto \
@@ -422,6 +433,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
+	$(APPLY) $(SRC)/ffmpeg/pipewiregrab-source-filter.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
