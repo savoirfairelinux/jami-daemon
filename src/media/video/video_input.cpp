@@ -43,6 +43,7 @@
 #ifdef _MSC_VER
 #include <io.h> // for access
 #else
+#include <sys/syscall.h>
 #include <unistd.h>
 #endif
 extern "C" {
@@ -309,13 +310,13 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
-    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab") && !decOpts_.is_area) {
+    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab") && !decOpts_.is_area) {
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
-        auto ret = decoder->openInput(decOpts_);
+        int ret = decoder->openInput(decOpts_);
         ready = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
             JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
@@ -428,12 +429,15 @@ round2pow(unsigned i, unsigned n)
 }
 
 bool
-VideoInput::initX11(const std::string& display)
+VideoInput::initLinuxGrab(const std::string& display)
 {
-    // Patterns
-    // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
-    // area sharing : :1+882,211 1532x779 - SCREEN 1, POSITION 882x211, RESOLUTION 1532x779
-    // window sharing : :+1,0 0x0 window-id:0x0340021e - POSITION 0X0
+    // Patterns (all platforms except Linux with Wayland)
+    // full screen sharing:            :1+0,0 2560x1440                (SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440)
+    // area sharing:                   :1+882,211 1532x779             (SCREEN 1, POSITION 882x211, RESOLUTION 1532x779)
+    // window sharing:                 :+1,0 0x0 window-id:0x0340021e  (POSITION 0X0)
+    //
+    // Pattern (Linux with Wayland)
+    // full screen or window sharing:  pipewire pid:2861 fd:23 node:68
     size_t space = display.find(' ');
     std::string windowIdStr = "window-id:";
     size_t winIdPos = display.find(windowIdStr);
@@ -443,7 +447,36 @@ VideoInput::initX11(const std::string& display)
         p.window_id = display.substr(winIdPos + windowIdStr.size()); // "0x0340021e";
         p.is_area = 0;
     }
-    if (space != std::string::npos) {
+    if (display.find("pipewire") != std::string::npos) {
+        std::string pidStr = "pid:";
+        std::string fdStr = "fd:";
+        std::string nodeStr = "node:";
+
+        size_t pidPos = display.find(pidStr) + pidStr.size();
+        size_t fdPos = display.find(fdStr) + fdStr.size();
+        size_t nodePos = display.find(nodeStr) + nodeStr.size();
+
+        pid_t pid = std::stol(display.substr(pidPos));
+        int fd = std::stoi(display.substr(fdPos));
+        if (pid != getpid()) {
+            // We can't directly use a file descriptor that was opened in a different
+            // process, so we try to duplicate it in the current process.
+            int pidfd = syscall(SYS_pidfd_open, pid, 0);
+            if (pidfd < 0) {
+                int err = errno;
+                JAMI_ERR("Can't duplicate PipeWire fd: call to pidfd_open failed (errno = %d)", err);
+                return false;
+            }
+            fd = syscall(SYS_pidfd_getfd, pidfd, fd, 0);
+            if (fd < 0) {
+                int err = errno;
+                JAMI_ERR("Can't duplicate PipeWire fd: call to pidfd_getfd failed (errno = %d)", err);
+                return false;
+            }
+        }
+        p.fd = fd;
+        p.node = display.substr(nodePos);
+    } else if (space != std::string::npos) {
         p.input = display.substr(1, space);
         if (p.window_id.empty()) {
             p.input = display.substr(0, space);
@@ -460,14 +493,8 @@ VideoInput::initX11(const std::string& display)
         p.is_area = 1;
     }
 
-    auto dec = std::make_unique<MediaDecoder>();
-    if (dec->openInput(p) < 0 || dec->setupVideo() < 0)
-        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
-
-    clearOptions();
     decOpts_ = p;
-    decOpts_.width = round2pow(dec->getStream().width, 3);
-    decOpts_.height = round2pow(dec->getStream().height, 3);
+    emulateRate_ = false;
 
     return true;
 }
@@ -650,7 +677,7 @@ VideoInput::switchInput(const std::string& resource)
 #elif defined(WIN32)
         ready = initWindowsGrab(suffix);
 #else
-        ready = initX11(suffix);
+        ready = initLinuxGrab(suffix);
 #endif
     } else if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
