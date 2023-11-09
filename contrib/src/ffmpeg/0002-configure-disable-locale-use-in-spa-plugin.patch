@@ -1,0 +1,36 @@
+From d7bf3b01620433ba3b6a9d54c1f8ac0000c234d7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?S=C3=A9bastien=20Blin?=
+ <sebastien.blin@savoirfairelinux.com>
+Date: Thu, 9 Nov 2023 08:12:48 -0500
+Subject: [PATCH 2/2] configure: disable locale use in spa plugin
+
+This commit requires to resolve the compilation error of pipewiregrab
+because Pipewire's spa plugin is requesting locale_t extension to
+compile.
+Which was added in POSIX 2008 but ffmpeg is using POSIX 2001 due to
+which spa plugin complains. __LOCALE_C_ONLY flag is set to disable
+the locale usage in spa plugin. Adding it in configure file fix both
+the library test and source compilation issue.
+Not sure if this is the right approach to fix the issue.
+Feedback/Suggestions will be highly appreciated.
+
+Signed-off-by: Abhishek Ojha <abhishek.ojha@savoirfairelinux.com>
+---
+ configure | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/configure b/configure
+index 3f8ba6e9ae..f6dba10fce 100755
+--- a/configure
++++ b/configure
+@@ -6932,6 +6932,8 @@ if enabled libxcb; then
+     enabled libxcb_xfixes && check_pkg_config libxcb_xfixes xcb-xfixes xcb/xfixes.h xcb_xfixes_get_cursor_image
+ fi
+
++# _POSIX_C_SOURCE=200112 doesn't support locale
++add_cppflags -D__LOCALE_C_ONLY
+ enabled libpipewire && check_pkg_config libpipewire "libpipewire-0.3 >= 0.3.40" pipewire/pipewire.h pw_init
+ if enabled libpipewire; then
+     enabled libgio_unix && check_pkg_config libgio_unix gio-unix-2.0 gio/gio.h g_main_loop_new
+--
+2.34.1

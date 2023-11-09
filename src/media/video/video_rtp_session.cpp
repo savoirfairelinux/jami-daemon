@@ -182,7 +182,7 @@ VideoRtpSession::startSender()
         // Current implementation does not handle resolution change
         // (needed by window sharing feature) with HW codecs, so HW
         // codecs will be disabled for now.
-        bool allowHwAccel = (localVideoParams_.format != "x11grab" && localVideoParams_.format != "dxgigrab");
+        bool allowHwAccel = (localVideoParams_.format != "x11grab" && localVideoParams_.format != "dxgigrab" && localVideoParams_.format != "pipewiregrab");
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();
@@ -195,8 +195,8 @@ VideoRtpSession::startSender()
                       ? MediaStream("video sender",
                                     AV_PIX_FMT_YUV420P,
                                     1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                                    localVideoParams_.width,
-                                    localVideoParams_.height,
+                                    localVideoParams_.width == 0 ? 1080u : localVideoParams_.width,
+                                    localVideoParams_.height == 0 ? 720u : localVideoParams_.height,
                                     send_.bitrate,
                                     static_cast<rational<int>>(localVideoParams_.framerate))
                       : videoMixer_->getStream("Video Sender");
