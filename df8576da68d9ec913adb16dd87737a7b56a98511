@@ -72,6 +72,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4e3305de_55baf419",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "62ddd0fa_0b4d7bbb",
+      "range": {
+        "startLine": 2,
+        "startChar": 28,
+        "endLine": 2,
+        "endChar": 29
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b270866f_5e9ddbdf",
@@ -85,6 +109,30 @@
       "writtenOn": "2023-09-11T19:47:39Z",
       "side": 1,
       "message": "what do we want if libpipewire not available ? (aka only X11)",
+      "range": {
+        "startLine": 233,
+        "startChar": 3,
+        "endLine": 233,
+        "endChar": 21
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab0f6c06_da4b99e0",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b270866f_5e9ddbdf",
       "range": {
         "startLine": 233,
         "startChar": 3,
@@ -118,6 +166,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4bcc7972_be3da242",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 357,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2ce0958a_31d11f71",
+      "range": {
+        "startLine": 356,
+        "startChar": 10,
+        "endLine": 357,
+        "endChar": 9
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "83920060_eabde71b",
@@ -131,6 +203,30 @@
       "writtenOn": "2023-09-11T19:47:39Z",
       "side": 1,
       "message": "probably remove this hack",
+      "range": {
+        "startLine": 362,
+        "startChar": 1,
+        "endLine": 362,
+        "endChar": 62
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2ffa5558_5f59b6eb",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 362,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "83920060_eabde71b",
       "range": {
         "startLine": 362,
         "startChar": 1,
@@ -188,6 +284,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "64009406_cf422a22",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 369,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f019352c_aacc72bd",
+      "range": {
+        "startLine": 369,
+        "startChar": 24,
+        "endLine": 369,
+        "endChar": 45
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "91656ee6_3f424b56",
@@ -201,6 +321,30 @@
       "writtenOn": "2023-09-11T19:47:39Z",
       "side": 1,
       "message": "remove it\u0027s ok now, it was the strip",
+      "range": {
+        "startLine": 375,
+        "startChar": 1,
+        "endLine": 375,
+        "endChar": 19
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3f8731cb_15d01311",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "91656ee6_3f424b56",
       "range": {
         "startLine": 375,
         "startChar": 1,
@@ -242,6 +386,24 @@
       "side": 1,
       "message": "probably need to execute system commands",
       "parentUuid": "de925078_175fd96d",
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac4d0e80_61a6b01a",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 577,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b52ed78_d316878d",
       "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -331,6 +493,30 @@
       "side": 1,
       "message": "only for sharing. I didn\u0027t dig yet, it\u0027s a dirty POC",
       "parentUuid": "26a1dc53_f67f95da",
+      "range": {
+        "startLine": 584,
+        "startChar": 30,
+        "endLine": 584,
+        "endChar": 31
+      },
+      "revId": "df8576da68d9ec913adb16dd87737a7b56a98511",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e3c81d7a_0fce702b",
+        "filename": "src/media/video/v4l2/video_device_impl.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 584,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-09T20:00:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "be5ebae4_c3434a8e",
       "range": {
         "startLine": 584,
         "startChar": 30,
