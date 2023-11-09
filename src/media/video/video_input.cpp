@@ -309,13 +309,13 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
-    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab") && !decOpts_.is_area) {
+    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab") && !decOpts_.is_area) {
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
-        auto ret = decoder->openInput(decOpts_);
+        int ret = decoder->openInput(decOpts_);
         ready = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
             JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
@@ -428,12 +428,16 @@ round2pow(unsigned i, unsigned n)
 }
 
 bool
-VideoInput::initX11(const std::string& display)
+VideoInput::initLinuxGrab(const std::string& display)
 {
-    // Patterns
-    // full screen sharing : :1+0,0 2560x1440 - SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440
-    // area sharing : :1+882,211 1532x779 - SCREEN 1, POSITION 882x211, RESOLUTION 1532x779
-    // window sharing : :+1,0 0x0 window-id:0x0340021e - POSITION 0X0
+    // Patterns (all platforms except Linux with Wayland)
+    // full screen sharing:  :1+0,0 2560x1440                (SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440)
+    // area sharing:         :1+882,211 1532x779             (SCREEN 1, POSITION 882x211, RESOLUTION 1532x779)
+    // window sharing:       :+1,0 0x0 window-id:0x0340021e  (POSITION 0X0)
+    //
+    // Patterns (Linux with Wayland)
+    // full screen sharing:  pipewire capture-type:1
+    // window sharing:       pipewire capture-type:2
     size_t space = display.find(' ');
     std::string windowIdStr = "window-id:";
     size_t winIdPos = display.find(windowIdStr);
@@ -443,7 +447,9 @@ VideoInput::initX11(const std::string& display)
         p.window_id = display.substr(winIdPos + windowIdStr.size()); // "0x0340021e";
         p.is_area = 0;
     }
-    if (space != std::string::npos) {
+    if (display.find("pipewire") != std::string::npos) {
+        p.capture_type = (display.back() == '2') ? 2 : 1;
+    } else if (space != std::string::npos) {
         p.input = display.substr(1, space);
         if (p.window_id.empty()) {
             p.input = display.substr(0, space);
@@ -460,14 +466,8 @@ VideoInput::initX11(const std::string& display)
         p.is_area = 1;
     }
 
-    auto dec = std::make_unique<MediaDecoder>();
-    if (dec->openInput(p) < 0 || dec->setupVideo() < 0)
-        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
-
-    clearOptions();
     decOpts_ = p;
-    decOpts_.width = round2pow(dec->getStream().width, 3);
-    decOpts_.height = round2pow(dec->getStream().height, 3);
+    emulateRate_ = false;
 
     return true;
 }
@@ -650,7 +650,7 @@ VideoInput::switchInput(const std::string& resource)
 #elif defined(WIN32)
         ready = initWindowsGrab(suffix);
 #else
-        ready = initX11(suffix);
+        ready = initLinuxGrab(suffix);
 #endif
     } else if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
