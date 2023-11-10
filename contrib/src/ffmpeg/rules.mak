@@ -1,5 +1,5 @@
-FFMPEG_HASH := n6.0
-FFMPEG_URL := https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$(FFMPEG_HASH).tar.gz
+FFMPEG_HASH := 6.0.1
+FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_HASH).tar.xz
 
 PKGS+=ffmpeg
 
@@ -350,12 +350,14 @@ FFMPEGCONF += --target-os=mingw32 \
 	--enable-encoder=hevc_nvenc
 endif
 
-$(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.gz:
+$(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
 	$(call download,$(FFMPEG_URL))
 
-.sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
+.sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
+	$(warning $@ not implemented)
+	touch $@
 
-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
+ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	rm -Rf $@ $@-$(FFMPEG_HASH)
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
@@ -366,8 +368,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
-	$(APPLY) $(SRC)/ffmpeg/nvenc-fix-reorderqueueflush-crash.patch
-	$(APPLY) $(SRC)/ffmpeg/binutil-support.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
