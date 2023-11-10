@@ -22,6 +22,30 @@
       },
       "revId": "24af6bf6af5f2361de9639fea51e370345d090dd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92a4945b_7a55fc6b",
+        "filename": "src/plugin/store_ca_crt.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2023-11-10T12:33:48Z",
+      "side": 1,
+      "message": "that the new root certificate with crl. All the system is not prepared for that",
+      "parentUuid": "09348e1a_693f16ce",
+      "range": {
+        "startLine": 5,
+        "startChar": 14,
+        "endLine": 5,
+        "endChar": 18
+      },
+      "revId": "24af6bf6af5f2361de9639fea51e370345d090dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
