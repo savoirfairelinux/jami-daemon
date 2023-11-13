@@ -77,6 +77,8 @@ VideoInput::~VideoInput()
 {
     isStopped_ = true;
     if (videoManagedByClient()) {
+        // Stop the video sink for videos that are managed by the client.
+        cleanup();
         emitSignal<libjami::VideoSignal::StopCapture>(decOpts_.input);
         capturing_ = false;
         return;
