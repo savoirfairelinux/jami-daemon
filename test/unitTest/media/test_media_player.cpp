@@ -41,6 +41,7 @@ private:
     std::string filePath = "./media/test_video_file.mp4";
 
     void testCreate();
+    void testJPG();
     void testPause();
     void testSeekWhilePaused();
     void testSeekWhilePlaying();
@@ -49,6 +50,7 @@ private:
 
     CPPUNIT_TEST_SUITE(MediaPlayerTest);
     CPPUNIT_TEST(testCreate);
+    CPPUNIT_TEST(testJPG);
     CPPUNIT_TEST(testPause);
     CPPUNIT_TEST(testSeekWhilePaused);
     CPPUNIT_TEST(testSeekWhilePlaying);
@@ -115,6 +117,23 @@ MediaPlayerTest::testCreate()
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
     JAMI_INFO() << "End testCreate";
+}
+
+void
+MediaPlayerTest::testJPG()
+{
+    JAMI_INFO() << "Start testJpg";
+    std::string filePathJpg = "./media/jami.jpg";
+    auto pid = jami::createMediaPlayer(filePathJpg);
+
+    CPPUNIT_ASSERT(pid == playerId2_);
+    CPPUNIT_ASSERT(mediaPlayer->getId() == pid);
+    CPPUNIT_ASSERT(mediaPlayer->isInputValid());
+    CPPUNIT_ASSERT(audio_stream_ != -1);
+    CPPUNIT_ASSERT(video_stream_ != -1);
+    CPPUNIT_ASSERT(mediaPlayer->isPaused());
+    CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
+    JAMI_INFO() << "End testJpg";
 }
 
 void

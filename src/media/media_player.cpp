@@ -69,6 +69,18 @@ MediaPlayer::configureMediaInputs()
     devOpts.name = path_;
     devOpts.loop = "1";
 
+    size_t dot = path_.find_last_of('.');
+    std::string ext = dot == std::string::npos ? "" : path_.substr(dot + 1);
+    bool decodeImg = (ext == "jpeg" || ext == "jpg" || ext == "png" || ext == "pdf");
+
+    // Force 1fps for static image
+    if (decodeImg) {
+        devOpts.format = "image2";
+        devOpts.framerate = 1;
+    } else {
+        JAMI_WARNING("Guessing file type for {}", path_);
+    }
+
     if (demuxer_->openInput(devOpts) < 0) {
         emitInfo();
         return false;
@@ -112,11 +124,16 @@ MediaPlayer::configureMediaInputs()
         }
     });
 
-    fileDuration_ = demuxer_->getDuration();
-    if (fileDuration_ <= 0) {
-        emitInfo();
-        return false;
+    if (decodeImg) {
+        fileDuration_ = 0;
+    } else {
+        fileDuration_ = demuxer_->getDuration();
+        if (fileDuration_ <= 0) {
+            emitInfo();
+            return false;
+        }
     }
+
     emitInfo();
     demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Demuxing);
     return true;
@@ -127,7 +144,7 @@ MediaPlayer::process()
 {
     if (!demuxer_)
         return;
-    if (streamsFinished()) {
+    if (fileDuration_ > 0 && streamsFinished()) {
         audioStreamEnded_ = false;
         videoStreamEnded_ = false;
         playFileFromBeginning();
