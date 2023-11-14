@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2004-2023 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -2946,14 +2946,19 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
         return res;
     }
 
-    // Report the change request.
-    auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+    std::weak_ptr<Call> callWkPtr = shared_from_this();
+    dht::ThreadPool::io().run([callWkPtr, mediaAttrList] {
+        if (auto call = callWkPtr.lock()) {
+            // Report the change request.
+            auto const& remoteMediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttrList);
+            if (auto conf = call->getConference()) {
+                conf->handleMediaChangeRequest(call, remoteMediaList);
+            } else {
+                call->handleMediaChangeRequest(remoteMediaList);
+            }
+        }
+    });
 
-    if (auto conf = getConference()) {
-        conf->handleMediaChangeRequest(shared_from_this(), remoteMediaList);
-    } else {
-        handleMediaChangeRequest(remoteMediaList);
-    }
     return res;
 }
 
