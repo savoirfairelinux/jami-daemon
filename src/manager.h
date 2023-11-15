@@ -168,11 +168,14 @@ public:
      * Functions which occur with a user's action
      * Answer the call
      * @param callId
+     * @param mediaList
+     * @param attachConference      Attach call to a conference
      */
     bool answerCall(const std::string& accountId,
                     const std::string& callId,
-                    const std::vector<libjami::MediaMap>& mediaList = {});
-    bool answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList = {});
+                    const std::vector<libjami::MediaMap>& mediaList = {},
+                    bool attachConference = false);
+    bool answerCall(const std::shared_ptr<Call>& call, const std::vector<libjami::MediaMap>& mediaList = {}, bool attachConference = false);
 
     /**
      * Handle incoming call and notify user
@@ -258,7 +261,7 @@ public:
                         const std::string& callId,
                         const std::string& account2Id,
                         const std::string& confId);
-    bool addParticipant(Call& call, Conference& conference);
+    bool addParticipant(const std::shared_ptr<Call>& call, Conference& conference);
 
     /**
      * Bind the main participant to a conference (mainly called on a double click action)

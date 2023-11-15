@@ -341,7 +341,7 @@ struct Manager::ManagerPimpl
                                      const std::map<std::string, std::string>& messages,
                                      const std::string& from) const noexcept;
 
-    void bindCallToConference(Call& call, Conference& conf);
+    void bindCallToConference(const std::shared_ptr<Call>& call, Conference& conf);
 
     void addMainParticipant(Conference& conf);
 
@@ -678,19 +678,19 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
 }
 
 void
-Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
+Manager::ManagerPimpl::bindCallToConference(const std::shared_ptr<Call>& call, Conference& conf)
 {
-    const auto& callId = call.getCallId();
+    const auto& callId = call->getCallId();
     const auto& confId = conf.getConfId();
-    const auto& state = call.getStateStr();
+    const auto& state = call->getStateStr();
 
     // ensure that calls are only in one conference at a time
-    if (call.isConferenceParticipant())
+    if (call->isConferenceParticipant())
         base_.detachParticipant(callId);
 
     JAMI_DEBUG("[call:{}] bind to conference {} (callState={})", callId, confId, state);
 
-    auto medias = call.getAudioStreams();
+    auto medias = call->getAudioStreams();
     for (const auto& media : medias) {
         JAMI_DEBUG("[call:{}] Remove local audio {}", callId, media.first);
         base_.getRingBufferPool().unBindAll(media.first);
@@ -700,7 +700,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 
     if (state == "HOLD") {
         conf.bindParticipant(callId);
-        base_.offHoldCall(call.getAccountId(), callId);
+        base_.offHoldCall(call->getAccountId(), callId);
     } else if (state == "INCOMING") {
         conf.bindParticipant(callId);
         base_.answerCall(call);
@@ -1111,50 +1111,56 @@ Manager::outgoingCall(const std::string& account_id,
 bool
 Manager::answerCall(const std::string& accountId,
                     const std::string& callId,
-                    const std::vector<libjami::MediaMap>& mediaList)
+                    const std::vector<libjami::MediaMap>& mediaList,
+                    bool attachConference)
 {
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
-            return answerCall(*call, mediaList);
+            return answerCall(call, mediaList, attachConference);
         }
     }
     return false;
 }
 
 bool
-Manager::answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
+Manager::answerCall(const std::shared_ptr<Call>& call, const std::vector<libjami::MediaMap>& mediaList, bool attachConference)
 {
-    JAMI_INFO("Answer call %s", call.getCallId().c_str());
-
-    if (call.getConnectionState() != Call::ConnectionState::RINGING) {
+    JAMI_LOG("Answer call {:s}", call->getCallId());
+    if (call->getConnectionState() != Call::ConnectionState::RINGING) {
         // The call is already answered
         return true;
     }
 
     // If ringing
     stopTone();
-    pimpl_->removeWaitingCall(call.getCallId());
 
+    pimpl_->removeWaitingCall(call->getCallId());
     try {
-        call.answer(mediaList);
+        call->answer(mediaList);
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("{:s}", e.what());
         return false;
     }
 
     // if we dragged this call into a conference already
-    if (auto conf = call.getConference())
+    if (auto conf = call->getConference())
         pimpl_->switchCall(conf->getConfId());
     else
-        pimpl_->switchCall(call.getCallId());
-
-    addAudio(call);
-
+        pimpl_->switchCall(call->getCallId());
+    addAudio(*call);
+    if (auto acc = call->getAccount().lock()) {
+        if (attachConference && !call->getConference()) {
+            auto conf = std::make_shared<Conference>(acc, "", true, call->getMediaAttributeList());
+            acc->attach(conf);
+            pimpl_->bindCallToConference(std::dynamic_pointer_cast<Call>(call), *conf);
+            emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conf->getConfId());
+        }
+    }
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording()) {
-        auto recResult = call.toggleRecording();
-        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(call.getCallId(), call.getPath());
-        emitSignal<libjami::CallSignal::RecordingStateChanged>(call.getCallId(), recResult);
+        auto recResult = call->toggleRecording();
+        emitSignal<libjami::CallSignal::RecordPlaybackFilepath>(call->getCallId(), call->getPath());
+        emitSignal<libjami::CallSignal::RecordingStateChanged>(call->getCallId(), recResult);
     }
     return true;
 }
@@ -1205,7 +1211,7 @@ Manager::hangupConference(const std::string& accountId, const std::string& confI
         if (auto conference = account->getConference(confId)) {
             return pimpl_->hangupConference(*conference);
         } else {
-            JAMI_ERR("No such conference %s", confId.c_str());
+            JAMI_ERROR("No such conference {:s}", confId);
         }
     }
     return false;
@@ -1389,24 +1395,21 @@ Manager::addParticipant(const std::string& accountId,
         if (!call or !conf)
             return false;
         auto callConf = call->getConference();
-        if (callConf != conf)
-            return addParticipant(*call, *conf);
+        if (!callConf) {
+            return addParticipant(call, *conf);
+        } else {
+            return joinConference(accountId, callConf->getConfId(), account2Id, conferenceId);
+        }
     }
     return false;
 }
 
 bool
-Manager::addParticipant(Call& call, Conference& conference)
+Manager::addParticipant(const std::shared_ptr<Call>& call, Conference& conference)
 {
-    // No-op if the call is already a conference participant
-    /*if (call.getConfId() == conference.getConfId()) {
-        JAMI_WARN("Call %s already participant of conf %s", call.getCallId().c_str(),
-    conference.getConfId().c_str()); return true;
-    }*/
-
-    JAMI_DBG("Add participant %s to conference %s",
-             call.getCallId().c_str(),
-             conference.getConfId().c_str());
+    JAMI_DEBUG("Add participant {} to conference {}",
+             call->getCallId(),
+             conference.getConfId());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     pimpl_->bindCallToConference(call, conference);
@@ -1421,7 +1424,7 @@ Manager::addParticipant(Call& call, Conference& conference)
     pimpl_->unsetCurrentCall();
     pimpl_->addMainParticipant(conference);
     pimpl_->switchCall(conference.getConfId());
-    addAudio(call);
+    addAudio(*call);
 
     return true;
 }
@@ -1478,17 +1481,18 @@ Manager::joinParticipant(const std::string& accountId,
                          const std::string& callId2,
                          bool attached)
 {
-    JAMI_INFO("JoinParticipant(%s, %s, %i)", callId1.c_str(), callId2.c_str(), attached);
+    JAMI_LOG("JoinParticipant({}, {}, {})", callId1, callId2, attached);
     auto account = getAccount(accountId);
     auto account2 = getAccount(account2Id);
     if (not account or not account2) {
         return false;
     }
 
-    JAMI_INFO("Creating conference for participants %s and %s. Attach host [%s]",
-              callId1.c_str(),
-              callId2.c_str(),
-              attached ? "YES" : "NO");
+    JAMI_LOG("Creating conference for participants {} and {}. Attach host [{}]",
+            callId1,
+            callId2,
+            attached ? "YES" : "NO");
+
 
     if (callId1 == callId2) {
         JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
@@ -1509,6 +1513,10 @@ Manager::joinParticipant(const std::string& accountId,
         return false;
     }
 
+    if (call1->getConference() && call2->getConference()) {
+        return joinConference(accountId, call1->getConference()->getConfId(), account2Id, call2->getConference()->getConfId());
+    }
+
     auto mediaAttr = call1->getMediaAttributeList();
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
@@ -1517,8 +1525,8 @@ Manager::joinParticipant(const std::string& accountId,
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
 
     // Bind calls according to their state
-    pimpl_->bindCallToConference(*call1, *conf);
-    pimpl_->bindCallToConference(*call2, *conf);
+    pimpl_->bindCallToConference(call1, *conf);
+    pimpl_->bindCallToConference(call2, *conf);
 
     // Switch current call id to this conference
     if (attached) {
@@ -1682,7 +1690,7 @@ Manager::joinConference(const std::string& accountId,
     account->removeConference(confId1);
 
     for (const auto& c : calls)
-        addParticipant(*c, *conf2);
+        addParticipant(c, *conf2);
 
     return true;
 }
@@ -2593,7 +2601,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     if (account->isRendezVous()) {
         dht::ThreadPool::io().run([this, account, incomCall = incomCall.shared_from_this()] {
-            base_.answerCall(*incomCall);
+            base_.answerCall(incomCall);
 
             for (const auto& callId : account->getCallList()) {
                 if (auto call = account->getCall(callId)) {
@@ -2601,7 +2609,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                         continue;
                     if (call != incomCall) {
                         if (auto conf = call->getConference()) {
-                            base_.addParticipant(*incomCall, *conf);
+                            base_.addParticipant(incomCall, *conf);
                         } else {
                             base_.joinParticipant(account->getAccountID(),
                                                   incomCall->getCallId(),
@@ -2621,7 +2629,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                                                conf->getConfId());
 
             // Bind calls according to their state
-            bindCallToConference(*incomCall, *conf);
+            bindCallToConference(incomCall, *conf);
             conf->detachLocalParticipant();
             emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
                                                                conf->getConfId(),
@@ -2629,7 +2637,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
         dht::ThreadPool::io().run(
-            [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(*incomCall); });
+            [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
         auto peerNumber = incomCall.getPeerNumber();
@@ -2652,7 +2660,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                  currentCallID = currentCall->getCallId(),
                                  incomCall = incomCall.shared_from_this()] {
                     auto& mgr = Manager::instance();
-                    mgr.answerCall(*incomCall);
+                    mgr.answerCall(incomCall);
                     mgr.hangupCall(accountId, currentCallID);
                 });
             }

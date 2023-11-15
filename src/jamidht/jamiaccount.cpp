@@ -393,6 +393,11 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 void
 JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
 {
+    auto conf = std::make_shared<Conference>(shared_from_this(), "", true, call->getMediaAttributeList());
+    attach(conf);
+    emitSignal<libjami::CallSignal::ConferenceCreated>(getAccountID(), conf->getConfId());
+    call->setPendingConference(conf);
+
     JAMI_DBG() << this << "Calling peer " << uri.authority();
     try {
         startOutgoingCall(call, uri.authority());
@@ -544,7 +549,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         }
         currentMediaList = conf->currentMediaList();
     }
-    Manager::instance().answerCall(*call, currentMediaList);
+    Manager::instance().answerCall(call, currentMediaList);
 
     if (isNotHosting) {
         // Create conference and host it.
@@ -552,7 +557,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         if (auto conf = getConference(confId))
             conf->detachLocalParticipant();
     } else {
-        Manager::instance().addParticipant(*call, *conf);
+        Manager::instance().addParticipant(call, *conf);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
                                                            conf->getStateStr());
@@ -870,6 +875,7 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
     }
 
     call.setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
+    call.attachToConference();
 
     return true;
 }

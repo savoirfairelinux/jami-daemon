@@ -2049,6 +2049,21 @@ SIPCall::hasVideo() const
 #endif
 }
 
+void
+SIPCall::attachToConference()
+{
+    if (isSubcall()) {
+        std::dynamic_pointer_cast<SIPCall>(parent_)->attachToConference();
+        return;
+    }
+    if (auto conf = pendingConf_.lock()) {
+        conf->addParticipant(getCallId());
+        conf->bindParticipant(getCallId());
+        emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountId(), conf->getConfId(), conf->getStateStr());
+    }
+    pendingConf_.reset(); // Should be stored in conf_ now
+}
+
 bool
 SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
 {

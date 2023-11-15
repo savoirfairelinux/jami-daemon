@@ -527,10 +527,8 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
         videoMixer_ = conference.getVideoMixer();
         if (sender_) {
             // Swap sender from local video to conference video mixer
-            if (videoLocal_)
-                videoLocal_->detach(sender_.get());
             if (videoMixer_)
-                videoMixer_->attach(sender_.get());
+                videoMixer_->linkVideoLocal(sender_.get(), std::weak_ptr<video::VideoInput>(videoLocal_));
         } else {
             JAMI_WARN("[%p] no sender", this);
         }
@@ -581,8 +579,9 @@ VideoRtpSession::exitConference()
     JAMI_DBG("[%p] exitConference (conf: %s)", this, conference_->getConfId().c_str());
 
     if (videoMixer_) {
-        if (sender_)
-            videoMixer_->detach(sender_.get());
+        if (sender_) {
+            videoMixer_->unlinkVideoLocal(sender_.get());
+        }
 
         if (receiveThread_) {
             auto activeStream = videoMixer_->verifyActive(streamId_);

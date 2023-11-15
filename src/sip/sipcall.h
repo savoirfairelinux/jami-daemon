@@ -339,6 +339,8 @@ public:
      */
     void reportMediaNegotiationStatus();
 
+    void setPendingConference(const std::shared_ptr<Conference>& conf) { pendingConf_ = conf; }
+    void attachToConference();
 private:
     void generateMediaPorts();
 
@@ -531,6 +533,7 @@ private:
 #endif
 
     std::string mediaPlayerId_ {};
+    std::weak_ptr<Conference> pendingConf_ {};
 };
 
 // Helpers

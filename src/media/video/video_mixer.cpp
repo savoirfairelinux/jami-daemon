@@ -41,6 +41,9 @@
 #include "videomanager_interface.h"
 #include <opendht/thread_pool.h>
 
+#include "media/video/video_sender.h"
+#include "media/video/video_input.h"
+
 static constexpr auto MIN_LINE_ZOOM
     = 6; // Used by the ONE_BIG_WITH_SMALL layout for the small previews
 
@@ -271,6 +274,24 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 }
 
 void
+VideoMixer::linkVideoLocal(video::VideoSender* sender, std::weak_ptr<video::VideoInput> localVideo)
+{
+    localVideos_[sender] = localVideo;
+    if (sources_.size() > 2) {
+        if (auto lv = localVideo.lock())
+            lv->detach(sender);
+        attach(sender);
+    }
+}
+
+void
+VideoMixer::unlinkVideoLocal(video::VideoSender* sender)
+{
+    localVideos_.erase(sender);
+    detach(sender);
+}
+
+void
 VideoMixer::process()
 {
     nextProcess_ += std::chrono::duration_cast<std::chrono::microseconds>(FRAME_DURATION);
@@ -283,6 +304,15 @@ VideoMixer::process()
         return;
     }
 
+    if (!inputsSwitched && sources_.size() > 2) {
+        inputsSwitched = true;
+        for (const auto& [sender, localVideo]: localVideos_) {
+            if (auto lv = localVideo.lock())
+                lv->detach(sender);
+            attach(sender);
+        }
+    }
+
     VideoFrame& output = getNewFrame();
     try {
         output.reserve(format_, width_, height_);
@@ -291,6 +321,7 @@ VideoMixer::process()
         return;
     }
 
+    // TODO less computation if sources = 2
     libav_utils::fillWithBlack(output.pointer());
 
     {

@@ -36,6 +36,8 @@ namespace jami {
 namespace video {
 
 class SinkClient;
+class VideoSender;
+class VideoInput;
 
 struct StreamInfo
 {
@@ -75,6 +77,9 @@ public:
                 const std::shared_ptr<MediaFrame>& v) override;
     void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
+
+    void linkVideoLocal(video::VideoSender* sender, std::weak_ptr<video::VideoInput> localVideo);
+    void unlinkVideoLocal(video::VideoSender* sender);
 
     /**
      * Set all inputs at once
@@ -202,6 +207,9 @@ private:
 
     int64_t startTime_;
     int64_t lastTimestamp_;
+
+    std::map<video::VideoSender*, std::weak_ptr<video::VideoInput>> localVideos_;
+    bool inputsSwitched {false};
 };
 
 } // namespace video
