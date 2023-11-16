@@ -1040,7 +1040,16 @@ ConversationCallTest::testJoinAfterMuteHost()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttribute
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+            libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+            {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    mediaList.emplace_back(mediaAttribute);
+    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->at("type") == "application/call-history+json";
@@ -1068,7 +1077,7 @@ ConversationCallTest::testJoinAfterMuteHost()
 
     aliceData_.conferenceChanged = false;
     pInfos_.clear();
-    auto bobCall = libjami::placeCallWithMedia(bobId, destination, {});
+    auto bobCall = libjami::placeCallWithMedia(bobId, destination, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"  && bobData_.state == "CURRENT" && pInfos_.size() == 2;
     }));
