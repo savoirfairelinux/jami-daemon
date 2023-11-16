@@ -233,6 +233,9 @@ Conference::Conference(const std::shared_ptr<Account>& account,
         // If no video, we still want to attach outself
         videoMixer_->addAudioOnlySource("", "host_audio_0");
     }
+    if (attachHost) {
+        setState(State::ACTIVE_ATTACHED);
+    }
     auto conf_res = split_string_to_unsigned(jami::Manager::instance()
                                                  .videoPreferences.getConferenceResolution(),
                                              'x');
