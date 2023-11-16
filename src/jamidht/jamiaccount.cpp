@@ -552,7 +552,8 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         if (auto conf = getConference(confId))
             conf->detachLocalParticipant();
     } else {
-        Manager::instance().addParticipant(*call, *conf);
+        Manager::instance().bindCallToConference(*call, *conf);
+        Manager::instance().addAudio(*call);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
                                                            conf->getStateStr());

@@ -678,6 +678,12 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
 }
 
 void
+Manager::bindCallToConference(Call& call, Conference& conf)
+{
+    pimpl_->bindCallToConference(call, conf);
+}
+
+void
 Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
 {
     const auto& callId = call.getCallId();
@@ -1398,22 +1404,17 @@ Manager::addParticipant(const std::string& accountId,
 bool
 Manager::addParticipant(Call& call, Conference& conference)
 {
-    // No-op if the call is already a conference participant
-    /*if (call.getConfId() == conference.getConfId()) {
-        JAMI_WARN("Call %s already participant of conf %s", call.getCallId().c_str(),
-    conference.getConfId().c_str()); return true;
-    }*/
-
-    JAMI_DBG("Add participant %s to conference %s",
-             call.getCallId().c_str(),
-             conference.getConfId().c_str());
+    JAMI_DEBUG("Add participant {} to conference {}",
+             call.getCallId(),
+             conference.getConfId());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     pimpl_->bindCallToConference(call, conference);
 
     // Don't attach current user yet
-    if (conference.getState() == Conference::State::ACTIVE_DETACHED)
+    if (conference.getState() == Conference::State::ACTIVE_DETACHED) {
         return true;
+    }
 
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant

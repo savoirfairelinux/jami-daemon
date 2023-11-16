@@ -259,6 +259,7 @@ public:
                         const std::string& account2Id,
                         const std::string& confId);
     bool addParticipant(Call& call, Conference& conference);
+    void bindCallToConference(Call& call, Conference& conf);
 
     /**
      * Bind the main participant to a conference (mainly called on a double click action)
