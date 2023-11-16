@@ -272,14 +272,6 @@ joinConference(const std::string& accountId,
 bool
 holdConference(const std::string& accountId, const std::string& confId)
 {
-    /*
-    if (const auto account = jami::Manager::instance().getAccount(accountId))
-        if (auto conf = account->getConference(confId)) {
-            conf->detach();
-            jami::emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getConfId(),
-    conf->getStateStr()); return true;
-        }
-    return false;*/
     return jami::Manager::instance().holdConference(accountId, confId);
 }
 
