@@ -1,17 +1,11 @@
 {
     "name": "yaml-cpp",
-    "version": "0.8.0",
+    "version": "24fa1b33805c9a91df0f32c46c28e314dd7ad96f",
     "url": "https://github.com/jbeder/yaml-cpp/archive/__VERSION__.tar.gz",
-    "deps": [],
-    "patches": [],
-    "win_patches": [],
-    "project_paths": ["msvc/yaml-cpp.vcxproj"],
-    "with_env" : "",
-    "custom_scripts": {
-        "pre_build": [
-            "mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR%"
-        ],
-        "build": [],
-        "post_build": []
-    }
+    "use_cmake": true,
+    "defines": [
+        "YAML_BUILD_SHARED_LIBS=OFF",
+        "YAML_CPP_BUILD_TOOLS=OFF",
+        "YAML_CPP_BUILD_CONTRIB=OFF"
+    ]
 }
