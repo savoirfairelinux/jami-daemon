@@ -2570,7 +2570,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         incomCall.getMediaAttributeList());
 
     if (mediaList.empty())
-        JAMI_WARN("Incoming call {} has an empty media list", incomCallId);
+        JAMI_WARNING("Incoming call {} has an empty media list", incomCallId);
 
     JAMI_DEBUG("Incoming call {} on account {} with {} media",
               incomCallId,
