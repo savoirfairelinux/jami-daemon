@@ -925,13 +925,17 @@ Conference::removeParticipant(const std::string& participant_id)
         participantsMuted_.erase(call->getCallId());
         if (auto* transport = call->getTransport())
             handsRaised_.erase(std::string(transport->deviceId()));
+        if (videoMixer_) {
+            for (auto const& rtpSession : call->getRtpSessionList()) {
+                if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO)
+                    videoMixer_->removeAudioOnlySource(participant_id, rtpSession->streamId());
+                if (videoMixer_->verifyActive(rtpSession->streamId()))
+                    videoMixer_->resetActiveStream();
+            }
+        }
+
 #ifdef ENABLE_VIDEO
         auto sinkId = getConfId() + peerId;
-        // Remove if active
-        // TODO all streams
-        if (videoMixer_->verifyActive(
-                sip_utils::streamId(participant_id, sip_utils::DEFAULT_VIDEO_STREAMID)))
-            videoMixer_->resetActiveStream();
         call->exitConference();
         if (call->isPeerRecording())
             call->peerRecording(false);
