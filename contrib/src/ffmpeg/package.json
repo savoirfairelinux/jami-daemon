@@ -1,7 +1,7 @@
 {
     "name": "ffmpeg",
-    "version": "n6.0",
-    "url": "https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/__VERSION__.tar.gz",
+    "version": "6.0.1",
+    "url": "https://ffmpeg.org/releases/ffmpeg-__VERSION__.tar.xz",
     "deps": [
         "vpx",
         "x264",
