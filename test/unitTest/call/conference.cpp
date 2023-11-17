@@ -107,6 +107,7 @@ private:
     void testPropagateRecording();
     void testBrokenParticipantAudioAndVideo();
     void testBrokenParticipantAudioOnly();
+    void testAudioOnlyLeaveLayout();
     void testRemoveConferenceInOneOne();
 
     CPPUNIT_TEST_SUITE(ConferenceTest);
@@ -131,6 +132,7 @@ private:
     CPPUNIT_TEST(testPropagateRecording);
     CPPUNIT_TEST(testBrokenParticipantAudioAndVideo);
     CPPUNIT_TEST(testBrokenParticipantAudioOnly);
+    CPPUNIT_TEST(testAudioOnlyLeaveLayout);
     CPPUNIT_TEST(testRemoveConferenceInOneOne);
     CPPUNIT_TEST_SUITE_END();
 
@@ -1069,6 +1071,31 @@ ConferenceTest::testBrokenParticipantAudioOnly()
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
     auto call2Crash = std::dynamic_pointer_cast<SIPCall>(daviAccount->getCall(daviCall.callId));
     pjsip_transport_shutdown(call2Crash->getTransport()->get());
+
+    // Check participants number
+    // It should have one less participant than in the conference start
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+
+    hangupConference();
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConferenceTest::testAudioOnlyLeaveLayout()
+{
+    registerSignalHandlers();
+
+    // Start conference with four participants
+    startConference(true, true);
+    auto expectedNumberOfParticipants = 4u;
+
+    // Check participants number
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+
+    // Carla Leave
+    Manager::instance().hangupCall(carlaId, carlaCall.callId);
 
     // Check participants number
     // It should have one less participant than in the conference start

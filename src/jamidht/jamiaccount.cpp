@@ -34,6 +34,7 @@
 #include "sync_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
+#include "jami/media_const.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -542,7 +543,13 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             JAMI_ERROR("Conference {} not found", confId);
             return;
         }
-        currentMediaList = conf->currentMediaList();
+        for (const auto& m: conf->currentMediaList()) {
+            if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) == libjami::Media::MediaAttributeValue::VIDEO
+                && !call->hasVideo()) {
+                continue;
+            }
+            currentMediaList.emplace_back(m);
+        }
     }
     Manager::instance().answerCall(*call, currentMediaList);
 
