@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c80c43fa_cf919d5c",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 467,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-20T15:49:04Z",
+      "side": 1,
+      "message": "todo sync when adding a conv/removing",
+      "range": {
+        "startLine": 467,
+        "startChar": 4,
+        "endLine": 467,
+        "endChar": 21
+      },
+      "revId": "cd1be17ad47efee1b0c688049be93450b999a62c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
