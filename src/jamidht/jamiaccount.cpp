@@ -1170,12 +1170,11 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
         },
-        [this](const std::string& conversationId) {
+        [this](const std::string& conversationId, const std::string& deviceId) {
             // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
-
-            convModule()->acceptConversationRequest(conversationId);
+            convModule()->acceptConversationRequest(conversationId, deviceId);
         },
         [this](const std::string& uri, const std::string& convFromReq) {
             dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
@@ -2222,7 +2221,6 @@ JamiAccount::convModule()
 
                                     shared->requestSIPConnection(uri, deviceId, "");
                                 }
-
                                 cb(socket);
                             });
                     }

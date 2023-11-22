@@ -390,10 +390,10 @@ ContactList::acceptTrustRequest(const dht::InfoHash& from)
 }
 
 void
-ContactList::acceptConversation(const std::string& convId)
+ContactList::acceptConversation(const std::string& convId, const std::string& deviceId)
 {
     if (callbacks_.acceptConversation)
-        callbacks_.acceptConversation(convId);
+        callbacks_.acceptConversation(convId, deviceId);
 }
 
 bool

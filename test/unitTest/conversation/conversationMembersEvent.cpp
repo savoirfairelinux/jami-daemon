@@ -60,6 +60,7 @@ public:
     void testAddMember();
     void testMemberAddedNoBadFile();
     void testAddOfflineMemberThenConnects();
+    void testAddAcceptOfflineThenConnects();
     void testGetMembers();
     void testRemoveMember();
     void testRemovedMemberDoesNotReceiveMessage();
@@ -105,6 +106,7 @@ private:
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testMemberAddedNoBadFile);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+    CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
     CPPUNIT_TEST(testGetMembers);
     CPPUNIT_TEST(testRemoveMember);
     CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
@@ -468,10 +470,51 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return requestReceived; }));
 
     libjami::acceptConversationRequest(carlaId, convId);
-    cv.wait_for(lk, 30s, [&]() { return conversationReady; });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
     auto clonedPath = fileutils::get_data_dir() / carlaAccount->getAccountID()
                       / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(clonedPath));
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false, requestReceived = false;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& /*accountId*/,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                requestReceived = true;
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    libjami::acceptConversationRequest(bobId, convId);
+
+    std::this_thread::sleep_for(40s); // Wait for negotiation to timeout
+
+    Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
     libjami::unregisterSignalHandlers();
 }
 

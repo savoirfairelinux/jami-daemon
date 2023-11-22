@@ -150,8 +150,9 @@ public:
     /**
      * Accept a conversation's request
      * @param convId
+     * @param deviceId      If a trust request is accepted from a device (can help to sync)
      */
-    void acceptConversationRequest(const std::string& conversationId);
+    void acceptConversationRequest(const std::string& conversationId, const std::string& deviceId = "");
 
     /**
      * Decline a conversation's request
