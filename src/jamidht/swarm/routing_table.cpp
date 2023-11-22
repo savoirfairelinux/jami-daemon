@@ -300,12 +300,11 @@ RoutingTable::addKnownNode(const NodeId& nodeId)
         return false;
 
     auto bucket = findBucket(nodeId);
-
     if (bucket == buckets.end())
-        return 0;
+        return false;
 
     bucket->addKnownNode(nodeId);
-    return 1;
+    return true;
 }
 
 bool

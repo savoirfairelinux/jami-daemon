@@ -126,9 +126,7 @@ SwarmManager::shutdown()
 void
 SwarmManager::addKnownNodes(const NodeId& nodeId)
 {
-    if (id_ != nodeId) {
-        routing_table.addKnownNode(nodeId);
-    }
+    routing_table.addKnownNode(nodeId);
 }
 
 void

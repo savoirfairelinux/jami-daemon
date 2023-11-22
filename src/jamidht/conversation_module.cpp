@@ -401,6 +401,8 @@ public:
 #endif
 
     void fixStructures(std::shared_ptr<JamiAccount> account, const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv, const std::set<std::string>& toRm);
+
+    void cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv, const std::string& deviceId, const std::string& oldConvId = "");
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -1182,6 +1184,48 @@ ConversationModule::Impl::fixStructures(std::shared_ptr<JamiAccount> acc, const 
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
 }
 
+void
+ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv, const std::string& deviceId, const std::string& oldConvId)
+{
+    std::lock_guard<std::mutex> lk(conv->mtx);
+    const auto& conversationId = conv->info.id;
+    if (!conv->startFetch(deviceId, true)) {
+        JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conversationId);
+        return;
+    }
+
+    onNeedSocket_(
+        conversationId,
+        deviceId,
+        [sthis=shared_from_this(), conv, conversationId, oldConvId, deviceId](const auto& channel) {
+            auto acc = sthis->account_.lock();
+            std::lock_guard<std::mutex> lk(conv->mtx);
+            if (conv->pending && !conv->pending->ready) {
+                conv->pending->removeId = oldConvId;
+                if (channel) {
+                    conv->pending->ready = true;
+                    conv->pending->deviceId = channel->deviceId().toString();
+                    conv->pending->socket = channel;
+                    if (!conv->pending->cloning) {
+                        conv->pending->cloning = true;
+                        dht::ThreadPool::io().run([w = sthis->weak(),
+                                                    conversationId,
+                                                    deviceId = conv->pending->deviceId]() {
+                            if (auto sthis = w.lock())
+                                sthis->handlePendingConversation(conversationId, deviceId);
+                        });
+                    }
+                    return true;
+                } else {
+                    conv->stopFetch(deviceId);
+                }
+            }
+            return false;
+        },
+        MIME_TYPE_GIT);
+}
+
+
 ////////////////////////////////////////////////////////////////
 
 void
@@ -1625,14 +1669,19 @@ ConversationModule::onNeedConversationRequest(const std::string& from,
 }
 
 void
-ConversationModule::acceptConversationRequest(const std::string& conversationId)
+ConversationModule::acceptConversationRequest(const std::string& conversationId, const std::string& deviceId)
 {
     // For all conversation members, try to open a git channel with this conversation ID
     auto request = pimpl_->getRequest(conversationId);
     if (request == std::nullopt) {
-        JAMI_WARN("[Account %s] Request not found for conversation %s",
-                  pimpl_->accountId_.c_str(),
-                  conversationId.c_str());
+         if (auto conv = pimpl_->getConversation(conversationId)) {
+            std::unique_lock<std::mutex> lk(conv->mtx);
+            if (!conv->conversation) {
+                lk.unlock();
+                pimpl_->cloneConversationFrom(conv, deviceId);
+            }
+        }
+        JAMI_WARNING("[Account {}] Request not found for conversation {}", pimpl_->accountId_, conversationId);
         return;
     }
     pimpl_->rmConversationRequest(conversationId);
@@ -1731,43 +1780,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
             auto deviceId = pk->getLongId().toString();
             if (!sthis or deviceId == sthis->deviceId_)
                 return;
-
-            std::lock_guard<std::mutex> lk(conv->mtx);
-            if (!conv->startFetch(deviceId, true)) {
-                JAMI_WARNING("[Account {}] Already fetching {}", sthis->accountId_, conversationId);
-                return;
-            }
-
-            // We need a onNeedSocket_ with old logic.
-            sthis->onNeedSocket_(
-                conversationId,
-                pk->getLongId().toString(),
-                [sthis, conv, conversationId, oldConvId, deviceId](const auto& channel) {
-                    auto acc = sthis->account_.lock();
-                    std::lock_guard<std::mutex> lk(conv->mtx);
-                    if (conv->pending && !conv->pending->ready) {
-                        conv->pending->removeId = oldConvId;
-                        if (channel) {
-                            conv->pending->ready = true;
-                            conv->pending->deviceId = channel->deviceId().toString();
-                            conv->pending->socket = channel;
-                            if (!conv->pending->cloning) {
-                                conv->pending->cloning = true;
-                                dht::ThreadPool::io().run([w = sthis->weak(),
-                                                           conversationId,
-                                                           deviceId = conv->pending->deviceId]() {
-                                    if (auto sthis = w.lock())
-                                        sthis->handlePendingConversation(conversationId, deviceId);
-                                });
-                            }
-                            return true;
-                        } else {
-                            conv->stopFetch(deviceId);
-                        }
-                    }
-                    return false;
-                },
-                MIME_TYPE_GIT);
+            sthis->cloneConversationFrom(conv, deviceId);
         });
     addConvInfo(conv->info);
 }
