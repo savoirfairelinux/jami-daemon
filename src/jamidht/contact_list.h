@@ -42,7 +42,7 @@ public:
     using OnContactRemoved = std::function<void(const std::string&, bool)>;
     using OnIncomingTrustRequest = std::function<
         void(const std::string&, const std::string&, const std::vector<uint8_t>&, time_t)>;
-    using OnAcceptConversation = std::function<void(const std::string&)>;
+    using OnAcceptConversation = std::function<void(const std::string&, const std::string&)>;
     using OnConfirmation = std::function<void(const std::string&, const std::string&)>;
     using OnDevicesChanged = std::function<void(const std::map<dht::PkId, KnownDevice>&)>;
 
@@ -124,7 +124,7 @@ public:
                         std::vector<uint8_t>&& payload);
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
     std::map<std::string, std::string> getTrustRequest(const dht::InfoHash& from) const;
-    void acceptConversation(const std::string& convId); // ToDO this is a bit dirty imho
+    void acceptConversation(const std::string& convId, const std::string& deviceId = ""); // ToDO this is a bit dirty imho
     bool acceptTrustRequest(const dht::InfoHash& from);
     bool discardTrustRequest(const dht::InfoHash& from);
 

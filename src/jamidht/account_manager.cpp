@@ -344,8 +344,11 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                         auto details = info_->contacts->getContactDetails(peer_account);
                         auto oldConvIt = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
                         if (oldConvIt != details.end() && oldConvIt->second != "") {
-                            if (conversationId == oldConvIt->second)
+                            if (conversationId == oldConvIt->second) {
+                                // In case of syncing, try to relaunch connection
+                                info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
                                 return;
+                            }
                             conversationId = oldConvIt->second;
                             JAMI_WARNING("Accept with old convId: {}", conversationId);
                         }

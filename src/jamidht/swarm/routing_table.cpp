@@ -95,7 +95,9 @@ Bucket::hasNode(const NodeId& nodeId) const
 bool
 Bucket::addKnownNode(const NodeId& nodeId)
 {
+    JAMI_ERROR("@@@ BUCKET ADD {}?", nodeId.toString());
     if (!hasNode(nodeId)) {
+    JAMI_ERROR("@@@ BUCKET ADD {}!", nodeId.toString());
         if (known_nodes.emplace(nodeId).second) {
             return true;
         }
@@ -296,16 +298,23 @@ RoutingTable::hasNode(const NodeId& nodeId)
 bool
 RoutingTable::addKnownNode(const NodeId& nodeId)
 {
-    if (id_ == nodeId)
+    if (id_ == nodeId) {
+
+    JAMI_ERROR("@@@ ADD LKNWON RET {}", nodeId.toString());
         return false;
+    }
 
     auto bucket = findBucket(nodeId);
 
-    if (bucket == buckets.end())
-        return 0;
+    if (bucket == buckets.end()) {
+    JAMI_ERROR("@@@ ADD LKNWON RET {}", nodeId.toString());
 
+        return false;
+    }
+
+    JAMI_ERROR("@@@ ADD X RET {}", nodeId.toString());
     bucket->addKnownNode(nodeId);
-    return 1;
+    return true;
 }
 
 bool

@@ -126,6 +126,7 @@ SwarmManager::shutdown()
 void
 SwarmManager::addKnownNodes(const NodeId& nodeId)
 {
+    JAMI_ERROR("@@@ ADD LKNWON {}", nodeId.toString());
     if (id_ != nodeId) {
         routing_table.addKnownNode(nodeId);
     }
@@ -142,6 +143,7 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
 void
 SwarmManager::maintainBuckets()
 {
+    JAMI_ERROR("@@@ MAINTAIN BUCKETS()");
     std::set<NodeId> nodes;
     std::unique_lock<std::mutex> lock(mutex);
     auto& buckets = routing_table.getBuckets();
@@ -160,8 +162,11 @@ SwarmManager::maintainBuckets()
         }
     }
     lock.unlock();
-    for (auto& node : nodes)
+    JAMI_ERROR("@@@ MAINTAIN BUCKETS - {}", nodes.size());
+    for (auto& node : nodes) {
+        JAMI_ERROR("@@@ TRY CONNECT {}", node.toString());
         tryConnect(node);
+    }
 }
 
 void
@@ -314,12 +319,14 @@ SwarmManager::resetNodeExpiry(const asio::error_code& ec,
 void
 SwarmManager::tryConnect(const NodeId& nodeId)
 {
+    JAMI_ERROR("@@@ TRY CONNECT {}", nodeId.toString());
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
                       [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                           auto shared = w.lock();
                           if (!shared)
                               return true;
+                            JAMI_ERROR("@@@CONNECTED? {} {}", nodeId.toString(), fmt::ptr(socket.get()));
                           if (socket) {
                               shared->addChannel(socket);
                               return true;
@@ -327,6 +334,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           std::unique_lock<std::mutex> lk(shared->mutex);
                           auto bucket = shared->routing_table.findBucket(nodeId);
                           bucket->removeConnectingNode(nodeId);
+                          JAMI_ERROR("@@@ ADD KNOWN {}", nodeId.toString());
                           bucket->addKnownNode(nodeId);
                           bucket = shared->routing_table.findBucket(shared->getId());
                           if (bucket->getConnectingNodesSize() == 0

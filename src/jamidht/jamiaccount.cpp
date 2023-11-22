@@ -1170,12 +1170,12 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
         },
-        [this](const std::string& conversationId) {
+        [this](const std::string& conversationId, const std::string& deviceId) {
             // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
-
-            convModule()->acceptConversationRequest(conversationId);
+            JAMI_ERROR("@@@ DDD {}", deviceId);
+            convModule()->acceptConversationRequest(conversationId, deviceId);
         },
         [this](const std::string& uri, const std::string& convFromReq) {
             dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
@@ -2194,20 +2194,25 @@ JamiAccount::convModule()
                     auto shared = w.lock();
                     if (!shared)
                         return;
+                    JAMI_ERROR("@@@ SWARM SOCK WITH {}", deviceId);
                     std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
                     auto cm = shared->convModule();
                     if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
+                        JAMI_ERROR("@@@ SWARM SOCK WITH {} - CANCELLED - (cm: {})", deviceId, fmt::ptr(cm));
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
                     }
+                    JAMI_ERROR("@@@ SWARM SOCK WITH {} - CHECK CONNECTING", deviceId);
                     if (!shared->connectionManager_->isConnecting(DeviceId(deviceId),
                                                                   fmt::format("swarm://{}",
                                                                               convId))) {
+                        JAMI_ERROR("@@@ SWARM SOCK WITH {} - CONNECT...", deviceId);
                         shared->connectionManager_->connectDevice(
                             DeviceId(deviceId),
                             fmt::format("swarm://{}", convId),
                             [w, cb](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                     const DeviceId& deviceId) {
+                                JAMI_ERROR("@@@ SWARM SOCK WITH {} - RESULT {}", deviceId.toString(), fmt::ptr(socket.get()));
                                 if (socket) {
                                     auto shared = w.lock();
                                     if (!shared)
