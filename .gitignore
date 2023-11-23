@@ -17,7 +17,6 @@ Makefile
 *.libs
 *.deps
 *.spec
-*.yml
 *.yml.bak
 
 aclocal.m4
