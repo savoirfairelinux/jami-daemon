@@ -438,6 +438,10 @@ public:
     {
         noSha3sumVerification_ = newValue;
     }
+
+    void publishPresence(bool newValue) {
+        publishPresence_  = newValue;
+    }
 #endif
 
     /**
@@ -868,6 +872,7 @@ private:
     std::atomic_bool deviceAnnounced_ {false};
 
     bool noSha3sumVerification_ {false};
+    bool publishPresence_ {true};
 
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
 
