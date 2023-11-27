@@ -22,6 +22,30 @@
       },
       "revId": "03cc5e84d8bf90fef73b99ddeef84d57f9cead3e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da8f1cef_4e3f9ed5",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-11-27T20:59:54Z",
+      "side": 1,
+      "message": "It\u0027s not a huge change, but it does avoid multiple unneeded string copies:\n* one copy avoided at this line",
+      "parentUuid": "ef7dcd86_bf70f2a4",
+      "range": {
+        "startLine": 56,
+        "startChar": 22,
+        "endLine": 56,
+        "endChar": 33
+      },
+      "revId": "03cc5e84d8bf90fef73b99ddeef84d57f9cead3e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }

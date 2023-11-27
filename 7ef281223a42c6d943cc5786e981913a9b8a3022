@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c7038f16_4ae8fd74",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-11-27T20:59:54Z",
+      "side": 1,
+      "message": "* one copy avoided at this line",
+      "range": {
+        "startLine": 59,
+        "startChar": 12,
+        "endLine": 59,
+        "endChar": 33
+      },
+      "revId": "7ef281223a42c6d943cc5786e981913a9b8a3022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6de66825_6baa43a1",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-11-27T20:59:54Z",
+      "side": 1,
+      "message": "* one copy avoided at this line",
+      "range": {
+        "startLine": 67,
+        "startChar": 20,
+        "endLine": 67,
+        "endChar": 61
+      },
+      "revId": "7ef281223a42c6d943cc5786e981913a9b8a3022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e38d0cf8_b810a9a6",
+        "filename": "src/jamidht/transfer_channel_handler.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-11-27T20:59:54Z",
+      "side": 1,
+      "message": "* one copy avoided at this line",
+      "range": {
+        "startLine": 68,
+        "startChar": 18,
+        "endLine": 68,
+        "endChar": 44
+      },
+      "revId": "7ef281223a42c6d943cc5786e981913a9b8a3022",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
