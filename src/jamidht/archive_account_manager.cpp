@@ -201,8 +201,7 @@ ArchiveAccountManager::setValidity(const std::string& password,
     }
 
     if (updated) {
-        auto path = fileutils::getFullPath(path_, archivePath_);
-        archive.save(path.string(), password);
+        archive.save(fileutils::getFullPath(path_, archivePath_), password);
     }
 
     if (updated or not id or device.second->getId() == id) {
@@ -375,8 +374,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
     dhtnet::fileutils::check_dir(path_, 0700);
 
-    auto path = fileutils::getFullPath(path_, archivePath_);
-    a.save(path.string(), ctx.credentials ? ctx.credentials->password : "");
+    a.save(fileutils::getFullPath(path_, archivePath_), ctx.credentials ? ctx.credentials->password : "");
 
     if (not a.id.second->isCA()) {
         JAMI_ERR("[Auth] trying to sign a certificate with a non-CA.");
@@ -569,7 +567,7 @@ AccountArchive
 ArchiveAccountManager::readArchive(const std::string& pwd) const
 {
     JAMI_DBG("[Auth] reading account archive");
-    return AccountArchive(fileutils::getFullPath(path_, archivePath_).string(), pwd);
+    return AccountArchive(fileutils::getFullPath(path_, archivePath_), pwd);
 }
 
 void
@@ -629,7 +627,7 @@ ArchiveAccountManager::saveArchive(AccountArchive& archive, const std::string& p
         updateArchive(archive);
         if (archivePath_.empty())
             archivePath_ = "export.gz";
-        archive.save(fileutils::getFullPath(path_, archivePath_).string(), pwd);
+        archive.save(fileutils::getFullPath(path_, archivePath_), pwd);
     } catch (const std::runtime_error& ex) {
         JAMI_ERR("[Auth] Can't export archive: %s", ex.what());
         return;
@@ -641,7 +639,7 @@ ArchiveAccountManager::changePassword(const std::string& password_old,
                                       const std::string& password_new)
 {
     try {
-        auto path = fileutils::getFullPath(path_, archivePath_).string();
+        auto path = fileutils::getFullPath(path_, archivePath_);
         AccountArchive(path, password_old).save(path, password_new);
         return true;
     } catch (const std::exception&) {
@@ -769,7 +767,7 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, const s
         // Save contacts if possible before exporting
         AccountArchive archive = readArchive(password);
         updateArchive(archive);
-        archive.save(fileutils::getFullPath(path_, archivePath_).string(), password);
+        archive.save(fileutils::getFullPath(path_, archivePath_), password);
 
         // Export the file
         auto sourcePath = fileutils::getFullPath(path_, archivePath_);
