@@ -1573,20 +1573,20 @@ ConversationModule::onTrustRequest(const std::string& uri,
     if (getOneToOneConversation(uri) != "") {
         // If there is already an active one to one conversation here, it's an active
         // contact and the contact will reclone this activeConv, so ignore the request
-        JAMI_WARN("Contact is sending a request for a non active conversation. Ignore. They will "
+        JAMI_WARNING("Contact is sending a request for a non active conversation. Ignore. They will "
                   "clone the old one");
         return;
     }
     if (pimpl_->isAcceptedConversation(conversationId)) {
-        JAMI_INFO("[Account %s] Received a request for a conversation "
+        JAMI_DEBUG("[Account {}] Received a request for a conversation "
                   "already handled. Ignore",
-                  pimpl_->accountId_.c_str());
+                  pimpl_->accountId_);
         return;
     }
     if (pimpl_->getRequest(conversationId) != std::nullopt) {
-        JAMI_INFO("[Account %s] Received a request for a conversation "
+        JAMI_DEBUG("[Account {}] Received a request for a conversation "
                   "already existing. Ignore",
-                  pimpl_->accountId_.c_str());
+                  pimpl_->accountId_);
         return;
     }
     ConversationRequest req;
@@ -1612,26 +1612,44 @@ void
 ConversationModule::onConversationRequest(const std::string& from, const Json::Value& value)
 {
     ConversationRequest req(value);
-    JAMI_INFO("[Account %s] Receive a new conversation request for conversation %s from %s",
-              pimpl_->accountId_.c_str(),
-              req.conversationId.c_str(),
-              from.c_str());
+    JAMI_DEBUG("[Account {}] Receive a new conversation request for conversation {} from {}",
+              pimpl_->accountId_,
+              req.conversationId,
+              from);
     auto convId = req.conversationId;
     req.from = from;
 
     // Already accepted request, do nothing
-    if (pimpl_->isAcceptedConversation(convId)) {
+    if (pimpl_->isAcceptedConversation(convId))
         return;
-    }
     if (pimpl_->getRequest(convId) != std::nullopt) {
-        JAMI_INFO("[Account %s] Received a request for a conversation already existing. "
+        JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. "
                   "Ignore",
-                  pimpl_->accountId_.c_str());
+                  pimpl_->accountId_);
         return;
     }
     req.received = std::time(nullptr);
     auto reqMap = req.toMap();
     auto isOneToOne = req.isOneToOne();
+    std::string oldConv;
+    auto acc = pimpl_->account_.lock();
+    if (acc && isOneToOne) {
+        auto oldConv = getOneToOneConversation(from);
+        if (!oldConv.empty()) {
+            // Already a conversation with the contact.
+            if (oldConv != convId && acc->updateConvForContact(from, oldConv, convId)) {
+                initReplay(oldConv, convId);
+                cloneConversationFrom(convId, from, oldConv);
+                return;
+            }
+            // If there is already an active one to one conversation here, it's an active
+            // contact and the contact will reclone this activeConv, so ignore the request
+            JAMI_WARNING("Contact is sending a request for a non active conversation. Ignore. They will "
+                    "clone the old one");
+            return;
+        }
+    }
+
     if (pimpl_->addConversationRequest(convId, std::move(req))) {
         // Note: no need to sync here because other connected devices should receive
         // the same conversation request. Will sync when the conversation will be added

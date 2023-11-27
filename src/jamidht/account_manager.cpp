@@ -272,24 +272,26 @@ AccountManager::announceFromReceipt(const std::string& receipt)
 }
 
 void
-AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb)
+AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool noPresencePut)
 {
     // Put device announcement
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
-        dht_->put(
-            h,
-            info_->announce,
-            [dcb = std::move(dcb), h](bool ok) {
-                if (ok)
-                    JAMI_DEBUG("device announced at {}", h.toString());
-                // We do not care about the status, it's a permanent put, if this fail,
-                // this means the DHT is disconnected but the put will be retried when connected.
-                if (dcb)
-                    dcb();
-            },
-            {},
-            true);
+        if (!noPresencePut) {
+            dht_->put(
+                h,
+                info_->announce,
+                [dcb = std::move(dcb), h](bool ok) {
+                    if (ok)
+                        JAMI_DEBUG("device announced at {}", h.toString());
+                    // We do not care about the status, it's a permanent put, if this fail,
+                    // this means the DHT is disconnected but the put will be retried when connected.
+                    if (dcb)
+                        dcb();
+                },
+                {},
+                true);
+        }
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {

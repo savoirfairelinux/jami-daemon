@@ -1926,7 +1926,8 @@ JamiAccount::doRegister_()
                         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                             accountID_, getVolatileAccountDetails());
                     }
-                });
+                },
+                noPresencePut_);
         };
 
         setRegistrationState(RegistrationState::TRYING);
