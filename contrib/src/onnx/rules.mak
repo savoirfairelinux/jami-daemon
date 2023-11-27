@@ -15,6 +15,7 @@ onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 	(cd $@ && tar x --strip-components=1 -f $<)
 
 .onnx:  onnx
+# "cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/" is fucked up. Replace with cmake install
 ifdef HAVE_ANDROID
 	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --use_nnapi --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
