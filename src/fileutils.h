@@ -100,9 +100,9 @@ std::vector<uint8_t> loadCacheFile(const std::filesystem::path& path,
                                    std::chrono::system_clock::duration maxAge);
 std::string loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge);
 
-std::vector<uint8_t> readArchive(const std::string& path, const std::string& password = {});
+std::vector<uint8_t> readArchive(const std::filesystem::path& path, const std::string& password = {});
 void writeArchive(const std::string& data,
-                  const std::string& path,
+                  const std::filesystem::path& path,
                   const std::string& password = {});
 
 int64_t size(const std::filesystem::path& path);
