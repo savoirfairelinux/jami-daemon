@@ -77,6 +77,7 @@ public:
     void testCacheRequestFromClient();
     void testNeedsSyncingWithForCloning();
     void testRemoveContactRemoveTrustRequest();
+    void testAddConversationNoPresenceThenConnects();
     std::string aliceId;
     std::string bobId;
     std::string bob2Id;
@@ -107,6 +108,7 @@ private:
     CPPUNIT_TEST(testCacheRequestFromClient);
     CPPUNIT_TEST(testNeedsSyncingWithForCloning);
     CPPUNIT_TEST(testRemoveContactRemoveTrustRequest);
+    CPPUNIT_TEST(testAddConversationNoPresenceThenConnects);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1589,6 +1591,63 @@ ConversationRequestTest::testRemoveContactRemoveTrustRequest()
     std::this_thread::sleep_for(10s); // Wait a bit to ensure that everything is update (via synced)
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
     CPPUNIT_ASSERT(bob2Account->getTrustRequests().size() == 0);
+}
+
+void
+ConversationRequestTest::testAddConversationNoPresenceThenConnects()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+    carlaAccount->noPresencePut(true);
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::string convId = "";
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == aliceId) {
+                convId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    auto carlaConnected = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = carlaAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    carlaConnected = true;
+                } else if (daemonStatus == "UNREGISTERED") {
+                    carlaConnected = false;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+    aliceAccount->addContact(carlaUri);
+    cv.wait_for(lk, 5s); // Wait 5 secs for the put to happen
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaConnected; }));
+    carlaAccount->addContact(aliceUri);
+    cv.wait_for(lk, 5s); // Wait 5 secs for the put to happen
+    carlaAccount->noPresencePut(false);
+
+    Manager::instance().sendRegister(carlaId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !carlaConnected; }));
+    convId.clear();
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaConnected; }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return !convId.empty(); }));
+
+    auto carlaDetails = carlaAccount->getContactDetails(aliceUri);
+    auto aliceDetails = aliceAccount->getContactDetails(carlaUri);
+    CPPUNIT_ASSERT(carlaDetails["conversationId"] == aliceDetails["conversationId"] && carlaDetails["conversationId"] == convId);
 }
 
 } // namespace test
