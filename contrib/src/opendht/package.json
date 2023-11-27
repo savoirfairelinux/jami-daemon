@@ -1,7 +1,7 @@
 {
     "name": "opendht",
-    "version": "3.0.1",
-    "url": "https://github.com/savoirfairelinux/opendht/archive/v__VERSION__.tar.gz",
+    "version": "a7fd156d9fa34fbc4b22ccf3d81c29018eecede3",
+    "url": "https://github.com/savoirfairelinux/opendht/archive/__VERSION__.tar.gz",
     "deps": [
         "argon2",
         "asio",
