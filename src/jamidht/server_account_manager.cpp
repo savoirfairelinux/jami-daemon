@@ -19,6 +19,7 @@
 #include "server_account_manager.h"
 #include "base64.h"
 #include "jami/account_const.h"
+#include "fileutils.h"
 
 #include <opendht/http.h>
 #include <opendht/log.h>
@@ -487,11 +488,11 @@ ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
 }
 
 bool
-ServerAccountManager::revokeDevice(const std::string& password,
-                                   const std::string& device,
+ServerAccountManager::revokeDevice(const std::string& device,
+                                   std::string_view scheme, const std::string& password,
                                    RevokeDeviceCallback cb)
 {
-    if (not info_) {
+    if (not info_ || scheme != fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD) {
         if (cb)
             cb(RevokeDeviceResult::ERROR_CREDENTIALS);
         return false;
@@ -527,7 +528,7 @@ ServerAccountManager::revokeDevice(const std::string& password,
 }
 
 void
-ServerAccountManager::registerName(const std::string&, const std::string&, RegistrationCallback cb)
+ServerAccountManager::registerName(const std::string&, std::string_view scheme, const std::string&, RegistrationCallback cb)
 {
     cb(NameDirectory::RegistrationResponse::unsupported);
 }
