@@ -564,10 +564,10 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
 }
 
 AccountArchive
-ArchiveAccountManager::readArchive(const std::string& pwd) const
+ArchiveAccountManager::readArchive(const std::string& pwd, const std::vector<uint8_t>& key) const
 {
     JAMI_DBG("[Auth] reading account archive");
-    return AccountArchive(fileutils::getFullPath(path_, archivePath_), pwd);
+    return AccountArchive(fileutils::getFullPath(path_, archivePath_), pwd, key);
 }
 
 void
@@ -727,13 +727,13 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
 }
 
 bool
-ArchiveAccountManager::revokeDevice(
+ArchiveAccountManager::revokeDevice(const std::string& device,
                                     const std::string& password,
-                                    const std::string& device,
+                                    const std::vector<uint8_t>& key,
                                     RevokeDeviceCallback cb)
 {
     auto fa = dht::ThreadPool::computation().getShared<AccountArchive>(
-        [this, password] { return readArchive(password); });
+        [this, password, key] { return readArchive(password, key); });
     findCertificate(DeviceId(device),
         [fa = std::move(fa), password, device, cb, w=weak_from_this()](
             const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
@@ -773,7 +773,7 @@ ArchiveAccountManager::revokeDevice(
 }
 
 bool
-ArchiveAccountManager::exportArchive(const std::string& destinationPath, const std::string& password)
+ArchiveAccountManager::exportArchive(const std::string& destinationPath, const std::string& password, )
 {
     try {
         // Save contacts if possible before exporting
@@ -811,8 +811,9 @@ ArchiveAccountManager::isPasswordValid(const std::string& password)
 
 #if HAVE_RINGNS
 void
-ArchiveAccountManager::registerName(const std::string& password,
-                                    const std::string& name,
+ArchiveAccountManager::registerName(const std::string& name,
+                                    const std::string& password,
+                                    const std::vector<uint8_t>& key,
                                     RegistrationCallback cb)
 {
     std::string signedName;
@@ -823,7 +824,7 @@ ArchiveAccountManager::registerName(const std::string& password,
     std::string ethAccount;
 
     try {
-        auto archive = readArchive(password);
+        auto archive = readArchive(password, key);
         auto privateKey = archive.id.first;
         const auto& pk = privateKey->getPublicKey();
         publickey = pk.toString();

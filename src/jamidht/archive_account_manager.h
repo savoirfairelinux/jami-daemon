@@ -56,19 +56,20 @@ public:
 
     void syncDevices() override;
 
-    void addDevice(const std::string& password, AddDeviceCallback) override;
-    bool revokeDevice(
-                        const std::string& password,
-                      const std::string& device,
+    void addDevice(const std::string& password, const std::vector<uint8_t>& key, AddDeviceCallback) override;
+    bool revokeDevice(const std::string& device,
+                      const std::string& password,
+                      const std::vector<uint8_t>& key,
                       RevokeDeviceCallback) override;
-    bool exportArchive(const std::string& destinationPath, const std::string& password);
+    bool exportArchive(const std::string& destinationPath, const std::string& password, const std::vector<uint8_t>& key = {});
     bool isPasswordValid(const std::string& password) override;
 
 #if HAVE_RINGNS
     /*void lookupName(const std::string& name, LookupCallback cb) override;
     void lookupAddress(const std::string& address, LookupCallback cb) override;*/
-    void registerName(const std::string& password,
-                      const std::string& name,
+    void registerName(const std::string& name,
+                      const std::string& password,
+                      const std::vector<uint8_t>& key,
                       RegistrationCallback cb) override;
 #endif
 
@@ -103,7 +104,7 @@ private:
         const std::string& ethAccount);
     void updateArchive(AccountArchive& content /*, const ContactList& syncData*/) const;
     void saveArchive(AccountArchive& content, const std::string& pwd);
-    AccountArchive readArchive(const std::string& pwd) const;
+    AccountArchive readArchive(const std::string& pwd, const std::vector<uint8_t>& key) const;
     static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
                                                                       const std::string& pin,
                                                                       bool previous = false);

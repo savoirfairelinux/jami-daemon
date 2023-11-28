@@ -303,7 +303,7 @@ loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::
 }
 
 std::vector<uint8_t>
-readArchive(const std::filesystem::path& path, const std::string& pwd)
+readArchive(const std::filesystem::path& path, const std::string& pwd, const std::vector<uint8_t>& key)
 {
     JAMI_LOG("Reading archive from {}", path);
 
@@ -335,18 +335,27 @@ readArchive(const std::filesystem::path& path, const std::string& pwd)
     }
 
     if (isUnencryptedGzip(data)) {
-        if (!pwd.empty())
+        if (!pwd.empty() || !key.empty())
             JAMI_WARNING("A gunzip in a gunzip is detected. A webserver may have a bad config");
         decompress(data);
     }
 
-    if (!pwd.empty()) {
+    if (!pwd.empty() || !key.empty()) {
         // Decrypt
-        try {
-            data = dht::crypto::aesDecrypt(data, pwd);
-        } catch (const std::exception& e) {
-            JAMI_ERROR("Error decrypting archive: {}", e.what());
-            throw e;
+        if (not key.empty()) {
+            try {
+                data = dht::crypto::aesDecrypt(data, key);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error decrypting archive: {}", e.what());
+                throw e;
+            }
+        } else if (not pwd.empty()) {
+            try {
+                data = dht::crypto::aesDecrypt(data, pwd);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error decrypting archive: {}", e.what());
+                throw e;
+            }
         }
         decompress(data);
     } else if (isUnencryptedGzip(data)) {
