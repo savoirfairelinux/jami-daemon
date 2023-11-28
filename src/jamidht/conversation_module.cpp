@@ -1780,7 +1780,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
             auto deviceId = pk->getLongId().toString();
             if (!sthis or deviceId == sthis->deviceId_)
                 return;
-            sthis->cloneConversationFrom(conv, deviceId);
+            sthis->cloneConversationFrom(conv, deviceId, oldConvId);
         });
     addConvInfo(conv->info);
 }
