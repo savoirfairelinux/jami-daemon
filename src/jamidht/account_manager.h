@@ -124,6 +124,7 @@ public:
     virtual void onSyncData(DeviceSync&& device, bool checkDevice = true);
 
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
+    virtual std::vector<uint8_t> getPasswordKey(const std::string& /*password*/) { return {}; };
 
     dht::crypto::Identity loadIdentity(const std::string& accountId,
                                        const std::string& crt_path,

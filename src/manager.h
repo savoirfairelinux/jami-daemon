@@ -390,8 +390,6 @@ public:
      */
     void sendRegister(const std::string& accountId, bool enable);
 
-    bool isPasswordValid(const std::string& accountID, const std::string& password);
-
     uint64_t sendTextMessage(const std::string& accountID,
                              const std::string& to,
                              const std::map<std::string, std::string>& payloads,
