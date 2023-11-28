@@ -3748,7 +3748,6 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     // "deviceID@IP"
     auto toURI = getToUri(fmt::format("{}@{}", to, remote_address.toString(true)));
     std::string from = getFromUri();
-    pjsip_tx_data* tdata;
 
     // Build SIP message
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
@@ -3757,6 +3756,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     pj_str_t pjTo = sip_utils::CONST_PJ_STR(toURI);
 
     // Create request.
+    pjsip_tx_data* tdata = nullptr;
     pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(),
                                                     &msg_method,
                                                     &pjTo,
@@ -3768,7 +3768,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
                                                     nullptr,
                                                     &tdata);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to create request: {}", sip_utils::sip_strerror(status));
         return false;
     }
 
@@ -3800,19 +3800,19 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
     status = pjsip_tx_data_set_transport(tdata, &tp_sel);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERROR("Unable to create request: {}", sip_utils::sip_strerror(status));
         return false;
     }
     im::fillPJSIPMessageBody(*tdata, data);
 
     // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
-    dht::ThreadPool::io().run([w = weak(), tdata, ctx = std::move(ctx), cb = std::move(cb)] {
+    dht::ThreadPool::io().run([w = weak(), tdata, ctx, cb = std::move(cb)] {
         auto shared = w.lock();
         if (!shared)
             return;
         auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx, cb);
         if (status != PJ_SUCCESS)
-            JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+            JAMI_ERROR("Unable to send request: {}", sip_utils::sip_strerror(status));
     });
     return true;
 }
