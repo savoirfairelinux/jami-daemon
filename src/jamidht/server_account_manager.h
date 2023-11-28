@@ -59,13 +59,13 @@ public:
 
     void syncBlueprintConfig(SyncBlueprintCallback onSuccess);
 
-    bool revokeDevice(const std::string& password,
-                      const std::string& device,
+    bool revokeDevice(const std::string& device,
+                      std::string_view scheme, const std::string& password,
                       RevokeDeviceCallback cb) override;
 
     bool searchUser(const std::string& query, SearchCallback cb) override;
-    void registerName(const std::string& password,
-                      const std::string& name,
+    void registerName(const std::string& name,
+                      std::string_view scheme, const std::string& password,
                       RegistrationCallback cb) override;
 
 private:

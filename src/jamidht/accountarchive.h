@@ -59,7 +59,7 @@ struct AccountArchive
 
     AccountArchive() = default;
     AccountArchive(const std::vector<uint8_t>& data) { deserialize(data); }
-    AccountArchive(const std::filesystem::path& path, const std::string& password) { load(path, password); }
+    AccountArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd) { load(path, scheme, pwd); }
 
     /** Serialize structured archive data to memory. */
     std::string serialize() const;
@@ -68,9 +68,9 @@ struct AccountArchive
     void deserialize(const std::vector<uint8_t>& data);
 
     /** Load archive from file, optionally encrypted with provided password. */
-    void load(const std::filesystem::path& path, const std::string& password = {})
+    void load(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd)
     {
-        deserialize(fileutils::readArchive(path, password));
+        deserialize(fileutils::readArchive(path, scheme, pwd));
     }
 
     /** Save archive to file, optionally encrypted with provided password. */

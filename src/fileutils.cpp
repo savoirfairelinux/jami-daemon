@@ -22,6 +22,8 @@
 #include "fileutils.h"
 #include "archiver.h"
 #include "compiler_intrinsics.h"
+#include "base64.h"
+
 #include <opendht/crypto.h>
 
 #ifdef __APPLE__
@@ -303,9 +305,9 @@ loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::
 }
 
 std::vector<uint8_t>
-readArchive(const std::filesystem::path& path, const std::string& pwd)
+readArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd)
 {
-    JAMI_LOG("Reading archive from {}", path);
+    JAMI_LOG("Reading archive from {} with scheme '{}'", path, scheme);
 
     auto isUnencryptedGzip = [](const std::vector<uint8_t>& data) {
         // NOTE: some webserver modify gzip files and this can end with a gunzip in a gunzip
@@ -342,11 +344,20 @@ readArchive(const std::filesystem::path& path, const std::string& pwd)
 
     if (!pwd.empty()) {
         // Decrypt
-        try {
-            data = dht::crypto::aesDecrypt(data, pwd);
-        } catch (const std::exception& e) {
-            JAMI_ERROR("Error decrypting archive: {}", e.what());
-            throw e;
+        if (scheme == ARCHIVE_AUTH_SCHEME_KEY) {
+            try {
+                data = dht::crypto::aesDecrypt(data, base64::decode(pwd));
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error decrypting archive: {}", e.what());
+                throw e;
+            }
+        } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD) {
+            try {
+                data = dht::crypto::aesDecrypt(data, pwd);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error decrypting archive: {}", e.what());
+                throw e;
+            }
         }
         decompress(data);
     } else if (isUnencryptedGzip(data)) {

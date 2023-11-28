@@ -105,6 +105,7 @@ public:
     {
         std::string scheme;
         std::string uri;
+        std::string password_scheme;
         std::string password;
         virtual ~AccountCredentials() {};
     };
@@ -162,8 +163,9 @@ public:
     using RevokeDeviceCallback = std::function<void(RevokeDeviceResult)>;
 
     virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
-    virtual bool revokeDevice(const std::string& /*password*/,
-                              const std::string& /*device*/,
+    virtual bool revokeDevice(const std::string& /*device*/,
+                              std::string_view /*scheme*/,
+                              const std::string& /*password*/,
                               RevokeDeviceCallback)
     {
         return false;
@@ -260,8 +262,9 @@ public:
                            LookupCallback cb);
     virtual void lookupAddress(const std::string& address, LookupCallback cb);
     virtual bool searchUser(const std::string& /*query*/, SearchCallback /*cb*/) { return false; }
-    virtual void registerName(const std::string& password,
-                              const std::string& name,
+    virtual void registerName(const std::string& name,
+                              std::string_view scheme,
+                              const std::string& password,
                               RegistrationCallback cb)
         = 0;
 

@@ -345,17 +345,18 @@ exportOnRing(const std::string& accountId, const std::string& password)
 
 bool
 exportToFile(const std::string& accountId,
-             const std::string& destinationPath,
-             const std::string& password)
+            const std::string& destinationPath,
+            const std::string& scheme,
+            const std::string& password)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        return account->exportArchive(destinationPath, password);
+        return account->exportArchive(destinationPath, scheme, password);
     }
     return false;
 }
 
 bool
-revokeDevice(const std::string& accountId, const std::string& password, const std::string& deviceID)
+revokeDevice(const std::string& accountId, const std::string& deviceId, const std::string& scheme, const std::string& password)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         return account->revokeDevice(password, deviceID);
@@ -1046,11 +1047,11 @@ searchUser(const std::string& account, const std::string& query)
 }
 
 bool
-registerName(const std::string& account, const std::string& password, const std::string& name)
+registerName(const std::string& account, const std::string& name, const std::string& scheme, const std::string& password)
 {
 #if HAVE_RINGNS
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
-        acc->registerName(password, name);
+        acc->registerName(name, scheme, password);
         return true;
     }
 #endif
