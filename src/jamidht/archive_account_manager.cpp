@@ -647,6 +647,18 @@ ArchiveAccountManager::changePassword(const std::string& password_old,
     }
 }
 
+std::vector<uint8_t>
+ArchiveAccountManager::getPasswordKey(const std::string& password)
+{
+    try {
+        auto data = dhtnet::fileutils::loadFile(fileutils::getFullPath(path_, archivePath_));
+        return dht::crypto::aesGetKey(data, password);
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error loading archive: %s", e.what());
+    }
+    return {};
+}
+
 std::string
 generatePIN(size_t length = 16, size_t split = 8)
 {
