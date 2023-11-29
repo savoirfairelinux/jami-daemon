@@ -1,7 +1,7 @@
 # opus
 
-OPUS_VERSION := 757c53f775a0b651b0512a1992d67f4b2159a378
-OPUS_URL := https://github.com/xiph/opus/archive/$(OPUS_VERSION).tar.gz
+OPUS_VERSION := 1.4
+OPUS_URL := https://github.com/xiph/opus/archive/v$(OPUS_VERSION).tar.gz
 
 PKGS += opus
 ifeq ($(call need_pkg,"opus >= 0.9.14"),)
