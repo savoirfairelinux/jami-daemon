@@ -1,6 +1,6 @@
 # x264
 X264_HASH := ed0f7a634050a62c1da27c99eea710824d4c3705
-X264_GITURL := https://code.videolan.org/videolan/x264.git
+X264_URL := https://code.videolan.org/videolan/x264/-/archive/stable/x264-$(X264_HASH).tar.bz2
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
 PKGS_FOUND += x264
@@ -37,14 +37,14 @@ X264CONF += --disable-asm
 endif
 endif
 
-$(TARBALLS)/x264-$(X264_HASH).tar.xz:
-	$(call download_git,$(X264_GITURL),master,$(X264_HASH))
+$(TARBALLS)/x264-$(X264_HASH).tar.bz2:
+	$(call download,$(X264_URL),master,$(X264_HASH))
 
-.sum-x264: x264-$(X264_HASH).tar.xz
+.sum-x264: x264-$(X264_HASH).tar.bz2
 	$(warning $@ not implemented)
 	touch $@
 
-x264: x264-$(X264_HASH).tar.xz .sum-x264
+x264: x264-$(X264_HASH).tar.bz2 .sum-x264
 	rm -Rf $@-$(X264_HASH)
 	mkdir -p $@-$(X264_HASH)
 	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
