@@ -22,6 +22,30 @@
       },
       "revId": "62cdae01f01bb6fa81287179c31bf005a7a6870e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac576e12_c4aeadce",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-11-30T15:02:07Z",
+      "side": 1,
+      "message": "As described in the commit message, it skips the attached picture/\"cover art\" from the file.\n\nSkipping this stream is independent from the presence of other streams. It would only prevent an album art from being discovered and played as a video stream.",
+      "parentUuid": "355a284a_99ff8dc8",
+      "range": {
+        "startLine": 219,
+        "startChar": 13,
+        "endLine": 219,
+        "endChar": 21
+      },
+      "revId": "62cdae01f01bb6fa81287179c31bf005a7a6870e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
