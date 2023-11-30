@@ -62,6 +62,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 
 VideoReceiveThread::~VideoReceiveThread()
 {
+    loop_.join();
     JAMI_DBG("[%p] Instance destroyed", this);
 }
 
@@ -219,10 +220,14 @@ VideoReceiveThread::decodeFrame()
         }
     }
     auto status = videoDecoder_->decode();
-    if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError) {
+    if (status == MediaDemuxer::Status::EndOfFile) {
+        JAMI_DBG("[%p] End of file", this);
+        loop_.stop();
+    }
+    else if (status == MediaDemuxer::Status::ReadError) {
         JAMI_ERR("[%p] Decoding error: %s", this, MediaDemuxer::getStatusStr(status));
     }
-    if (status == MediaDemuxer::Status::FallBack) {
+    else if (status == MediaDemuxer::Status::FallBack) {
         if (keyFrameRequestCallback_)
             keyFrameRequestCallback_();
     }
