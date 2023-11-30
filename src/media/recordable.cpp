@@ -30,10 +30,8 @@
 namespace jami {
 
 Recordable::Recordable()
-{
-    recorder_.reset();
-    recorder_ = std::make_shared<MediaRecorder>();
-}
+ : recorder_(std::make_shared<MediaRecorder>())
+{}
 
 Recordable::~Recordable() {}
 
