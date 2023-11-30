@@ -201,12 +201,16 @@ MediaRecorder::startRecording()
     std::lock_guard<std::mutex> lk(encoderMtx_);
     encoder_.reset(new MediaEncoder);
 
-    JAMI_DBG() << "Start recording '" << getPath() << "'";
+    JAMI_LOG("Start recording '{}'", getPath());
     if (initRecord() >= 0) {
         isRecording_ = true;
         {
             std::lock_guard<std::mutex> lk(mutexStreamSetup_);
             for (auto& media : streams_) {
+                if (media.second->info.isVideo)
+                    setupVideoOutput();
+                else
+                    setupAudioOutput();
                 media.second->isEnabled = true;
             }
         }
@@ -303,11 +307,6 @@ MediaRecorder::addStream(const MediaStream& ms)
         }
     }
     it->second->isEnabled = isRecording_;
-
-    if (ms.isVideo)
-        setupVideoOutput();
-    else
-        setupAudioOutput();
     return it->second.get();
 }
 
