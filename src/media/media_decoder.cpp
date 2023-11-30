@@ -261,17 +261,17 @@ MediaDemuxer::clearFrames()
     }
 }
 
-void
+bool
 MediaDemuxer::emitFrame(bool isAudio)
 {
     if (isAudio) {
-        pushFrameFrom(audioBuffer_, isAudio, audioBufferMutex_);
+        return pushFrameFrom(audioBuffer_, isAudio, audioBufferMutex_);
     } else {
-        pushFrameFrom(videoBuffer_, isAudio, videoBufferMutex_);
+        return pushFrameFrom(videoBuffer_, isAudio, videoBufferMutex_);
     }
 }
 
-void
+bool
 MediaDemuxer::pushFrameFrom(
     std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
     bool isAudio,
@@ -284,23 +284,22 @@ MediaDemuxer::pushFrameFrom(
         } else {
             needFrameCb_();
         }
-        return;
+        return false;
     }
     auto packet = std::move(buffer.front());
     if (!packet) {
-        return;
+        return false;
     }
     auto streamIndex = packet->stream_index;
     if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
-        return;
+        return false;
     }
-    auto& cb = streams_[streamIndex];
-    if (!cb) {
-        return;
+    if (auto& cb = streams_[streamIndex]) {
+        buffer.pop();
+        lock.unlock();
+        cb(*packet.get());
     }
-    buffer.pop();
-    lock.unlock();
-    cb(*packet.get());
+    return true;
 }
 
 MediaDemuxer::Status
@@ -437,10 +436,10 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer,
     setupStream();
 }
 
-void
+bool
 MediaDecoder::emitFrame(bool isAudio)
 {
-    demuxer_->emitFrame(isAudio);
+    return demuxer_->emitFrame(isAudio);
 }
 
 MediaDecoder::MediaDecoder()

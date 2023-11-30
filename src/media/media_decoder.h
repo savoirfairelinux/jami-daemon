@@ -141,7 +141,7 @@ public:
     int64_t getDuration() const;
     bool seekFrame(int stream_index, int64_t timestamp);
     void setNeedFrameCb(std::function<void()> cb);
-    void emitFrame(bool isAudio);
+    bool emitFrame(bool isAudio);
 
 private:
     bool streamInfoFound_ {false};
@@ -159,7 +159,7 @@ private:
     std::function<void()> needFrameCb_;
     std::function<void(bool)> fileFinishedCb_;
     void clearFrames();
-    void pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
+    bool pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
                        bool isAudio,
                        std::mutex& mutex);
     int baseWidth_ {};
@@ -200,7 +200,7 @@ public:
 
     void updateStartTime(int64_t startTime);
 
-    void emitFrame(bool isAudio);
+    bool emitFrame(bool isAudio);
     void flushBuffers();
     void setSeekTime(int64_t time);
 #ifdef RING_ACCEL

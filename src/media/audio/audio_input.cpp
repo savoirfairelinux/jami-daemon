@@ -152,11 +152,9 @@ AudioInput::readFromQueue()
 {
     if (!decoder_)
         return;
-    if (paused_) {
+    if (paused_ || !decoder_->emitFrame(true)) {
         std::this_thread::sleep_for(MS_PER_PACKET);
-        return;
     }
-    decoder_->emitFrame(true);
 }
 
 void

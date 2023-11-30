@@ -172,11 +172,9 @@ void
 VideoInput::process()
 {
     if (playingFile_) {
-        if (paused_) {
+        if (paused_ || !decoder_->emitFrame(false)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            return;
         }
-        decoder_->emitFrame(false);
         return;
     }
     if (switchPending_)
