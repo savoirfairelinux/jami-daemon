@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "355a284a_99ff8dc8",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-30T13:55:03Z",
+      "side": 1,
+      "message": "In this case what happen? No video? Or we can find another video stream?\n\nAlso it would be good to add regression test on media_player\n\ndaemon/test/unitTest/media/test_media_player.cpp can add a test that selectStream on a file with an attached picture returns a good stream",
+      "range": {
+        "startLine": 219,
+        "startChar": 13,
+        "endLine": 219,
+        "endChar": 21
+      },
+      "revId": "62cdae01f01bb6fa81287179c31bf005a7a6870e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
