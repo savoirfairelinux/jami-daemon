@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e5dc4551_6a6342de",
+        "filename": "contrib/src/opendht/debug.patch",
+        "patchSetId": 10
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-30T20:39:22Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 16,
+        "startChar": 19,
+        "endLine": 16,
+        "endChar": 20
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a228aac4_4fbcadd4",
+        "filename": "contrib/src/opendht/rules.mak",
+        "patchSetId": 10
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-30T20:39:22Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 28,
+        "startChar": 17,
+        "endLine": 28,
+        "endChar": 24
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99a89c66_cf62657f",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-30T20:39:22Z",
+      "side": 1,
+      "message": "TODO add comment",
+      "range": {
+        "startLine": 184,
+        "startChar": 17,
+        "endLine": 184,
+        "endChar": 26
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76c82e4d_6eebba1e",
+        "filename": "src/jamidht/account_manager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-11-30T20:39:22Z",
+      "side": 1,
+      "message": "TODO syncing for not synced",
+      "range": {
+        "startLine": 272,
+        "startChar": 9,
+        "endLine": 272,
+        "endChar": 19
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
