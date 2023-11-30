@@ -62,6 +62,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 
 VideoReceiveThread::~VideoReceiveThread()
 {
+    loop_.join();
     JAMI_DBG("[%p] Instance destroyed", this);
 }
 
@@ -212,17 +213,21 @@ VideoReceiveThread::decodeFrame()
 
     if (not isVideoConfigured_) {
         if (!configureVideoOutput()) {
-            JAMI_ERR("[%p] Failed to configure video output", this);
+            JAMI_ERROR("[{:p}] Failed to configure video output", fmt::ptr(this));
             return;
         } else {
-            JAMI_DBG("[%p] Decoder configured, starting decoding", this);
+            JAMI_LOG("[{:p}] Decoder configured, starting decoding", fmt::ptr(this));
         }
     }
     auto status = videoDecoder_->decode();
-    if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError) {
-        JAMI_ERR("[%p] Decoding error: %s", this, MediaDemuxer::getStatusStr(status));
+    if (status == MediaDemuxer::Status::EndOfFile) {
+        JAMI_LOG("[{:p}] End of file", fmt::ptr(this));
+        loop_.stop();
     }
-    if (status == MediaDemuxer::Status::FallBack) {
+    else if (status == MediaDemuxer::Status::ReadError) {
+        JAMI_ERROR("[{:p}] Decoding error: %s", fmt::ptr(this), MediaDemuxer::getStatusStr(status));
+    }
+    else if (status == MediaDemuxer::Status::FallBack) {
         if (keyFrameRequestCallback_)
             keyFrameRequestCallback_();
     }
