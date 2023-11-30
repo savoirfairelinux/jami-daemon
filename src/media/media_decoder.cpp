@@ -210,7 +210,16 @@ MediaDemuxer::findStreamInfo()
 int
 MediaDemuxer::selectStream(AVMediaType type)
 {
-    return av_find_best_stream(inputCtx_, type, -1, -1, nullptr, 0);
+    auto sti = av_find_best_stream(inputCtx_, type, -1, -1, nullptr, 0);
+    if (type == AVMEDIA_TYPE_VIDEO && sti >= 0) {
+        auto st = inputCtx_->streams[sti];
+        auto disposition = st->disposition;
+        if (disposition & AV_DISPOSITION_ATTACHED_PIC) {
+            JAMI_DBG("Skipping attached picture stream");
+            sti = -1;
+        }
+    }
+    return sti;
 }
 
 void
