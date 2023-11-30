@@ -84,6 +84,8 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
     void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/,
                 const std::shared_ptr<MediaFrame>& m) override
     {
+        if (not isEnabled)
+            return;
 #ifdef ENABLE_VIDEO
         if (info.isVideo) {
             std::shared_ptr<VideoFrame> framePtr;
@@ -139,6 +141,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
             observablesFrames_.erase(it);
     }
 
+    bool isEnabled = false;
 private:
     std::function<void(const std::shared_ptr<MediaFrame>&)> cb_;
     std::unique_ptr<MediaFilter> videoRotationFilter_ {};
@@ -201,6 +204,12 @@ MediaRecorder::startRecording()
     JAMI_DBG() << "Start recording '" << getPath() << "'";
     if (initRecord() >= 0) {
         isRecording_ = true;
+        {
+            std::lock_guard<std::mutex> lk(mutexStreamSetup_);
+            for (auto& media : streams_) {
+                media.second->isEnabled = true;
+            }
+        }
         // start thread after isRecording_ is set to true
         dht::ThreadPool::computation().run([rec = shared_from_this()] {
             std::lock_guard<std::mutex> lk(rec->encoderMtx_);
@@ -249,6 +258,12 @@ MediaRecorder::stopRecording()
     if (isRecording_) {
         JAMI_DBG() << "Stop recording '" << getPath() << "'";
         isRecording_ = false;
+        {
+            std::lock_guard<std::mutex> lk(mutexStreamSetup_);
+            for (auto& media : streams_) {
+                media.second->isEnabled = false;
+            }
+        }
         emitSignal<libjami::CallSignal::RecordPlaybackStopped>(getPath());
     }
 }
@@ -287,6 +302,7 @@ MediaRecorder::addStream(const MediaStream& ms)
                                                    });
         }
     }
+    it->second->isEnabled = isRecording_;
 
     if (ms.isVideo)
         setupVideoOutput();
