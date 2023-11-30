@@ -89,8 +89,8 @@ ThreadLoop::start()
 void
 ThreadLoop::stop()
 {
-    if (state_ == ThreadState::RUNNING)
-        state_ = ThreadState::STOPPING;
+    auto expected = ThreadState::RUNNING;
+    state_.compare_exchange_strong(expected, ThreadState::STOPPING);
 }
 
 void
