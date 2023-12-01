@@ -354,8 +354,6 @@ $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
 	$(call download,$(FFMPEG_URL))
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
-	$(warning $@ not implemented)
-	touch $@
 
 ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	rm -Rf $@ $@-$(FFMPEG_HASH)
