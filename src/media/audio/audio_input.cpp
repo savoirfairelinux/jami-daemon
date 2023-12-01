@@ -252,7 +252,7 @@ bool
 AudioInput::initFile(const std::string& path)
 {
     if (access(path.c_str(), R_OK) != 0) {
-        JAMI_ERR() << "File '" << path << "' not available";
+        JAMI_ERROR("File '{}' not available", path);
         return false;
     }
 

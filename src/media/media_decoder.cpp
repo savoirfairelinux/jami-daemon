@@ -165,14 +165,12 @@ MediaDemuxer::openInput(const DeviceParams& params)
     int ret = avformat_open_input(&inputCtx_, input.c_str(), iformat, options_ ? &options_ : NULL);
 
     if (ret) {
-        JAMI_ERR("avformat_open_input failed: %s", libav_utils::getError(ret).c_str());
+        JAMI_ERROR("avformat_open_input failed: {}", libav_utils::getError(ret));
     } else {
         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
-        JAMI_DBG("Using format %s and resolution %dx%d",
-                 params.format.c_str(),
-                 baseWidth_,
-                 baseHeight_);
+        JAMI_LOG("Opened input Using format {:s} and resolution {:d}x{:d}",
+                 params.format, baseWidth_, baseHeight_);
     }
 
     return ret;
