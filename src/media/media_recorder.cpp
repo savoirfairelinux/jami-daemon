@@ -207,10 +207,13 @@ MediaRecorder::startRecording()
         {
             std::lock_guard<std::mutex> lk(mutexStreamSetup_);
             for (auto& media : streams_) {
-                if (media.second->info.isVideo)
+                if (media.second->info.isVideo) {
+                    std::lock_guard<std::mutex> lk2(mutexFilterVideo_);
                     setupVideoOutput();
-                else
+                } else {
+                    std::lock_guard<std::mutex> lk2(mutexFilterAudio_);
                     setupAudioOutput();
+                }
                 media.second->isEnabled = true;
             }
         }
@@ -685,17 +688,21 @@ MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers) const
 void
 MediaRecorder::flush()
 {
-    if (videoFilter_) {
+    {
         std::lock_guard<std::mutex> lk(mutexFilterVideo_);
-        videoFilter_->flush();
+        if (videoFilter_) {
+            videoFilter_->flush();
+        }
         if (outputVideoFilter_) {
             outputVideoFilter_->flush();
         }
     }
 
-    if (audioFilter_) {
+    {
         std::lock_guard<std::mutex> lk(mutexFilterAudio_);
-        audioFilter_->flush();
+        if (audioFilter_) {
+	        audioFilter_->flush();
+	    }
         if (outputAudioFilter_) {
             outputAudioFilter_->flush();
         }
@@ -717,16 +724,12 @@ MediaRecorder::reset()
         {
             std::lock_guard<std::mutex> lk2(mutexFilterVideo_);
             videoFilter_.reset();
-            if (outputVideoFilter_) {
-                outputVideoFilter_.reset();
-            }
+            outputVideoFilter_.reset();
         }
         {
             std::lock_guard<std::mutex> lk2(mutexFilterAudio_);
             audioFilter_.reset();
-            if (outputAudioFilter_) {
-                outputAudioFilter_.reset();
-            }
+            outputAudioFilter_.reset();
         }
     }
     encoder_.reset();
