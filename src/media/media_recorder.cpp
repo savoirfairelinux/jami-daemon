@@ -688,13 +688,17 @@ MediaRecorder::flush()
     if (videoFilter_) {
         std::lock_guard<std::mutex> lk(mutexFilterVideo_);
         videoFilter_->flush();
-        outputVideoFilter_->flush();
+        if (outputVideoFilter_) {
+            outputVideoFilter_->flush();
+        }
     }
 
     if (audioFilter_) {
         std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->flush();
-        outputAudioFilter_->flush();
+        if (outputAudioFilter_) {
+            outputAudioFilter_->flush();
+        }
     }
     if (encoder_)
         encoder_->flush();
@@ -713,12 +717,16 @@ MediaRecorder::reset()
         {
             std::lock_guard<std::mutex> lk2(mutexFilterVideo_);
             videoFilter_.reset();
-            outputVideoFilter_.reset();
+            if (outputVideoFilter_) {
+                outputVideoFilter_.reset();
+            }
         }
         {
             std::lock_guard<std::mutex> lk2(mutexFilterAudio_);
             audioFilter_.reset();
-            outputAudioFilter_.reset();
+            if (outputAudioFilter_) {
+                outputAudioFilter_.reset();
+            }
         }
     }
     encoder_.reset();
