@@ -3049,6 +3049,17 @@ Manager::getMessageStatus(const std::string& accountID, uint64_t id) const
 }
 
 void
+Manager::reloadContacts(const std::string& accountId)
+{
+    const auto acc = getAccount(accountId);
+    if (!acc)
+        return;
+    if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(acc)) {
+        jamiAcc->reloadContacts();
+    }
+}
+
+void
 Manager::setAccountActive(const std::string& accountID, bool active, bool shutdownConnections)
 {
     const auto acc = getAccount(accountID);

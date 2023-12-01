@@ -144,6 +144,8 @@ public:
 
     const AccountInfo* getInfo() const { return info_.get(); }
 
+    void reloadContacts();
+
     // Device management
 
     enum class AddDeviceResult {

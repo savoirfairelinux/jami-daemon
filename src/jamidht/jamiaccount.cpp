@@ -2365,6 +2365,11 @@ JamiAccount::setRegistrationState(RegistrationState state,
 }
 
 void
+JamiAccount::reloadContacts() {
+    accountManager_->reloadContacts();
+}
+
+void
 JamiAccount::connectivityChanged()
 {
     JAMI_WARN("connectivityChanged");

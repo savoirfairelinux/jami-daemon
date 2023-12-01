@@ -443,6 +443,7 @@ public:
                            const std::map<std::string, ::std::string>& details);
 
     void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
+    void reloadContacts(const std::string& accountId);
 
     /**
      * Return a new random accountid that is not present in the list
