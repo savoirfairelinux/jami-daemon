@@ -259,6 +259,14 @@ AccountManager::useIdentity(const std::string& accountId,
     return info_.get();
 }
 
+void
+AccountManager::reloadContacts()
+{
+    if (info_) {
+        info_->contacts->load();
+    }
+}
+
 Json::Value
 AccountManager::announceFromReceipt(const std::string& receipt)
 {

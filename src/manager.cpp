@@ -3028,7 +3028,7 @@ Manager::getMessageStatus(const std::string&, uint64_t) const
 }
 
 void
-Manager::setAccountActive(const std::string& accountID, bool active, bool shutdownConnections)
+Manager::setAccountActive(const std::string& accountID, bool active, bool shutdownConnections, bool reloadData)
 {
     const auto acc = getAccount(accountID);
     if (!acc || acc->isActive() == active)
@@ -3036,6 +3036,14 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
     acc->setActive(active);
     if (acc->isEnabled()) {
         if (active) {
+            auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(acc);
+            if (jamiAcc && reloadData) {
+                jamiAcc->reloadContacts();
+                if (auto convModule = jamiAcc->convModule()) {
+                    convModule->reloadRequests();
+                    convModule->loadConversations();
+                }
+            }
             acc->doRegister();
         } else {
             acc->doUnregister();

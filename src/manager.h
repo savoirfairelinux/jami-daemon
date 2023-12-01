@@ -442,7 +442,7 @@ public:
     void setAccountDetails(const std::string& accountID,
                            const std::map<std::string, ::std::string>& details);
 
-    void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
+    void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections, bool reloadData = false);
     void loadAccountAndConversation(const std::string& accountID, const std::string& convID);
 
     std::mt19937_64 getSeededRandomEngine();
