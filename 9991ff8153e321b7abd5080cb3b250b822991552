@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "df0786cc_ba2ba7e7",
+        "filename": "contrib/src/opendht/debug.patch",
+        "patchSetId": 10
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-01T19:50:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e5dc4551_6a6342de",
+      "range": {
+        "startLine": 16,
+        "startChar": 19,
+        "endLine": 16,
+        "endChar": 20
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a228aac4_4fbcadd4",
@@ -37,6 +61,30 @@
       "writtenOn": "2023-11-30T20:39:22Z",
       "side": 1,
       "message": "remove",
+      "range": {
+        "startLine": 28,
+        "startChar": 17,
+        "endLine": 28,
+        "endChar": 24
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "259b8d42_efe7a8b9",
+        "filename": "contrib/src/opendht/rules.mak",
+        "patchSetId": 10
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-01T19:50:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a228aac4_4fbcadd4",
       "range": {
         "startLine": 28,
         "startChar": 17,
@@ -70,6 +118,53 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "00ca0a98_6e61685a",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-01T19:50:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "99a89c66_cf62657f",
+      "range": {
+        "startLine": 184,
+        "startChar": 17,
+        "endLine": 184,
+        "endChar": 26
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c32c20e0_227175b9",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-01T19:50:14Z",
+      "side": 1,
+      "message": "@aberaud: This is needed so that in ServerAccountManager I can access to convModule...\n\nHowever I think it\u0027s a bit a ugly design\n\nNot sure how to organize this (ServerAccountManager must sync info and interact with account :/)",
+      "range": {
+        "startLine": 184,
+        "startChar": 4,
+        "endLine": 184,
+        "endChar": 14
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "76c82e4d_6eebba1e",
@@ -83,6 +178,30 @@
       "writtenOn": "2023-11-30T20:39:22Z",
       "side": 1,
       "message": "TODO syncing for not synced",
+      "range": {
+        "startLine": 272,
+        "startChar": 9,
+        "endLine": 272,
+        "endChar": 19
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d278042d_a0fcdaa2",
+        "filename": "src/jamidht/account_manager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-01T19:50:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "76c82e4d_6eebba1e",
       "range": {
         "startLine": 272,
         "startChar": 9,
