@@ -150,7 +150,7 @@ MediaPlayer::process()
         playFileFromBeginning();
     }
 
-    if (paused_ || readBufferOverflow_) {
+    if (demuxer_->getCurrentState() == MediaDemuxer::CurrentState::Finished || paused_ || readBufferOverflow_) {
         std::this_thread::sleep_for(MS_PER_PACKET);
         return;
     }
