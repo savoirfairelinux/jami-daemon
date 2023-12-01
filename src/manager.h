@@ -442,9 +442,11 @@ public:
      * @param details     The account parameters
      */
     void setAccountDetails(const std::string& accountID,
-                           const std::map<std::string, ::std::string>& details);
+                           const std::map<std::string, std::string>& details);
 
-    void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
+    void setAccountActive(const std::string& accountID,
+                          bool active,
+                          bool shutdownConnections);
     void loadAccountAndConversation(const std::string& accountId,
                                     bool loadAll,
                                     const std::string& convId);

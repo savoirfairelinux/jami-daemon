@@ -549,6 +549,8 @@ public:
      */
     void forceReloadAccount();
 
+    void reloadContacts();
+
     /**
      * Make sure appdata/contacts.yml contains correct informations
      * @param removedConv   The current removed conversations
