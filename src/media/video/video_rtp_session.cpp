@@ -70,18 +70,18 @@ VideoRtpSession::VideoRtpSession(const string& callId,
     , localVideoParams_(localVideoParams)
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; }, [this] { processRtcpChecker(); }, [] {})
+    , cc(std::make_unique<CongestionControl>())
 {
     recorder_ = rec;
     setupVideoBitrateInfo(); // reset bitrate
-    cc = std::make_unique<CongestionControl>();
-    JAMI_DBG("[%p] Video RTP session created for call %s", this, callId_.c_str());
+    JAMI_LOG("[{:p}] Video RTP session created for call {} (recorder {:p})", fmt::ptr(this), callId_, fmt::ptr(recorder_));
 }
 
 VideoRtpSession::~VideoRtpSession()
 {
     deinitRecorder();
     stop();
-    JAMI_DBG("[%p] Video RTP session destroyed", this);
+    JAMI_LOG("[{:p}] Video RTP session destroyed", fmt::ptr(this));
 }
 
 const VideoBitrateInfo&
