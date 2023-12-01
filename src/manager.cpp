@@ -3086,6 +3086,7 @@ Manager::loadAccountAndConversation(const std::string& accountId,
     }
     if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {
         jamiAcc->setActive(true);
+        jamiAcc->reloadContacts();
         if (jamiAcc->isUsable())
             jamiAcc->doRegister();
         if (auto convModule = jamiAcc->convModule()) {
