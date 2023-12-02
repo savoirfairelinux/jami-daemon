@@ -113,7 +113,7 @@ private:
     ThreadLoop loop_;
     void process();
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
+    std::chrono::time_point<std::chrono::steady_clock> wakeUp_;
 
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
     std::function<void(const MediaStream& ms)> recorderCallback_;

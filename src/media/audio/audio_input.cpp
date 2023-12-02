@@ -216,6 +216,7 @@ AudioInput::configureFilePlayback(const std::string& path,
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
 
+    wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
     playingFile_ = true;
     decoder_ = std::move(decoder);
     resource_ = path;
@@ -260,6 +261,7 @@ AudioInput::initFile(const std::string& path)
         JAMI_WARN() << "Cannot decode audio from file, switching back to default device";
         return initDevice("");
     }
+    wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
 
     // have file audio mixed into the local buffer so it gets played
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
@@ -317,7 +319,7 @@ AudioInput::switchInput(const std::string& resource)
     }
 
     futureDevOpts_ = foundDevOpts_.get_future().share();
-    wakeUp_ = std::chrono::high_resolution_clock::now() + MS_PER_PACKET;
+    wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
     lk.unlock();
     loop_.start();
     if (onSuccessfulSetup_)
