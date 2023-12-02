@@ -130,7 +130,7 @@ AudioInput::readFromDevice()
     }
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    if (bufferPool.getInternalAudioFormat() != format_)
+    if (audioFrame->getFormat() != format_)
         audioFrame = resampler_->resample(std::move(audioFrame), format_);
     resizer_->enqueue(std::move(audioFrame));
 
