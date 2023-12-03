@@ -112,7 +112,7 @@ AudioInput::readFromDevice()
             while (ringBuf_ && ringBuf_->isEmpty())
                 readFromFile();
         if (playingFile_) {
-            while (ringBuf_ && ringBuf_->isEmpty())
+            while (ringBuf_ && ringBuf_->getLength(id_) == 0)
                 readFromQueue();
         }
     }
