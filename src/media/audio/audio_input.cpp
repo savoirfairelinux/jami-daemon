@@ -64,6 +64,7 @@ AudioInput::~AudioInput()
 {
     if (playingFile_) {
         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(id_, id_);
     }
     ringBuf_.reset();
     loop_.join();
@@ -214,6 +215,9 @@ AudioInput::configureFilePlayback(const std::string& path,
 
     // have file audio mixed into the local buffer so it gets played
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    // Bind to itself to be able to read from the ringbuffer
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, id_);
+
     deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
 
     wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
