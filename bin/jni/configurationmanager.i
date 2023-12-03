@@ -105,6 +105,8 @@ bool cancelMessage(const std::string& accountID, uint64_t id);
 void setIsComposing(const std::string& accountID, const std::string& conversationUri, bool isWriting);
 bool setMessageDisplayed(const std::string& accountID, const std::string& conversationUri, const std::string& messageId, int status);
 bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);
+bool isPasswordValid(const std::string& accountId, const std::string& password);
+std::vector<uint8_t> getPasswordKey(const std::string& accountId, const std::string& password);
 
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);

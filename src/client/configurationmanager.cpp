@@ -251,8 +251,19 @@ sendRegister(const std::string& accountId, bool enable)
 bool
 isPasswordValid(const std::string& accountId, const std::string& password)
 {
-    return jami::Manager::instance().isPasswordValid(accountId, password);
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId))
+        return acc->isPasswordValid(password);
+    return false;
 }
+
+std::vector<uint8_t>
+getPasswordKey(const std::string& accountID, const std::string& password)
+{
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountID))
+        return acc->getPasswordKey(password);
+    return {};
+}
+
 
 void
 registerAllAccounts()

@@ -971,6 +971,13 @@ JamiAccount::isPasswordValid(const std::string& password)
     return accountManager_ and accountManager_->isPasswordValid(password);
 }
 
+std::vector<uint8_t>
+JamiAccount::getPasswordKey(const std::string& password)
+{
+    return accountManager_ ? accountManager_->getPasswordKey(password) : std::vector<uint8_t>();
+}
+
+
 void
 JamiAccount::addDevice(const std::string& password)
 {
