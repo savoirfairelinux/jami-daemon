@@ -521,7 +521,29 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& conversationId,
                                           const std::string& commitId)
 {
-    JAMI_LOG("[Account {}] fetch commits for peer {} on device {}", accountId_, peer, deviceId);
+    {
+        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        auto itConv = convInfos_.find(conversationId);
+        if (itConv != convInfos_.end() && itConv->second.removed) {
+            // If the conversation is removed and we receives a new commit,
+            // it means that the contact was removed but not banned.
+            // If he wants a new conversation, they must removes/re-add the contact who declined.
+            JAMI_WARNING("[Account {:s}] Received a commit for {}, but conversation is removed",
+                        accountId_,
+                        conversationId);
+            return;
+        }
+    }
+    auto oldReq = getRequest(conversationId);
+    if (oldReq != std::nullopt && oldReq->declined) {
+        JAMI_DEBUG("[Account {}] Received a request for a conversation already declined.", accountId_);
+        return;
+    }
+    JAMI_DEBUG("[Account {:s}] fetch commits from {:s}, for {:s}, commit {:s}",
+               accountId_,
+               peer,
+               conversationId,
+               commitId);
 
     auto conv = getConversation(conversationId);
     if (!conv) {
@@ -1666,10 +1688,11 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     // Already accepted request, do nothing
     if (pimpl_->isAcceptedConversation(convId))
         return;
-    if (pimpl_->getRequest(convId) != std::nullopt) {
+    auto oldReq = pimpl_->getRequest(convId);
+    if (oldReq != std::nullopt) {
         JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. "
-                  "Ignore",
-                  pimpl_->accountId_);
+                  "Ignore. Declined: {}",
+                  pimpl_->accountId_, static_cast<int>(oldReq->declined));
         return;
     }
     req.received = std::time(nullptr);
@@ -2220,32 +2243,11 @@ ConversationModule::setFetched(const std::string& conversationId,
 }
 
 void
-ConversationModule::onNewCommit(const std::string& peer,
+ConversationModule::fetchNewCommits(const std::string& peer,
                                 const std::string& deviceId,
                                 const std::string& conversationId,
                                 const std::string& commitId)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->convInfosMtx_);
-    auto itConv = pimpl_->convInfos_.find(conversationId);
-    if (itConv != pimpl_->convInfos_.end() && itConv->second.removed) {
-        // If the conversation is removed and we receives a new commit,
-        // it means that the contact was removed but not banned. So we can generate
-        // a new trust request
-        JAMI_WARNING("[Account {:s}] Could not find conversation {:s}, ask for an invite",
-                     pimpl_->accountId_,
-                     conversationId);
-        pimpl_->sendMsgCb_(peer,
-                           {},
-                           std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}},
-                           0);
-        return;
-    }
-    JAMI_DEBUG("[Account {:s}] on new commit notification from {:s}, for {:s}, commit {:s}",
-               pimpl_->accountId_,
-               peer,
-               conversationId,
-               commitId);
-    lk.unlock();
     pimpl_->fetchNewCommits(peer, deviceId, conversationId, commitId);
 }
 

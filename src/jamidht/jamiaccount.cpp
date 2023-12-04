@@ -3492,11 +3492,11 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         std::string deviceId = json["deviceId"].asString();
         std::string id = json["id"].asString();
         std::string commit = json["commit"].asString();
-        // onNewCommit will do heavy stuff like fetching, avoid to block SIP socket
+        // fetchNewCommits will do heavy stuff like fetching, avoid to block SIP socket
         dht::ThreadPool::io().run([w = weak(), from, deviceId, id, commit] {
             if (auto shared = w.lock()) {
                 if (auto cm = shared->convModule())
-                    cm->onNewCommit(from, deviceId, id, commit);
+                    cm->fetchNewCommits(from, deviceId, id, commit);
             }
         });
         return true;
