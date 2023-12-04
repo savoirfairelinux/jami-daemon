@@ -1002,10 +1002,10 @@ JamiAccount::addDevice(const std::string& password)
 }
 
 bool
-JamiAccount::exportArchive(const std::string& destinationPath, const std::string& password)
+JamiAccount::exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password)
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
-        return manager->exportArchive(destinationPath, password);
+        return manager->exportArchive(destinationPath, scheme, password);
     }
     return false;
 }
@@ -1014,7 +1014,7 @@ bool
 JamiAccount::setValidity(const std::string& pwd, const dht::InfoHash& id, int64_t validity)
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
-        if (manager->setValidity(pwd, id_, id, validity)) {
+        if (manager->setValidity(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, pwd, id_, id, validity)) {
             saveIdentity(id_, idPath_, DEVICE_ID_PATH);
             return true;
         }
@@ -1065,12 +1065,12 @@ JamiAccount::isValidAccountDevice(const dht::crypto::Certificate& cert) const
 }
 
 bool
-JamiAccount::revokeDevice(const std::string& password, const std::string& device)
+JamiAccount::revokeDevice(const std::string& device, std::string_view scheme, const std::string& password)
 {
     if (not accountManager_)
         return false;
     return accountManager_
-        ->revokeDevice(password, device, [this, device](AccountManager::RevokeDeviceResult result) {
+        ->revokeDevice(device, scheme, password, [this, device](AccountManager::RevokeDeviceResult result) {
             emitSignal<libjami::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
                                                                             device,
                                                                             static_cast<int>(
@@ -1425,13 +1425,13 @@ JamiAccount::lookupAddress(const std::string& addr)
 }
 
 void
-JamiAccount::registerName(const std::string& password, const std::string& name)
+JamiAccount::registerName(const std::string& name, const std::string& scheme, const std::string& password)
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->registerName(
-            password,
             name,
+            scheme, password,
             [acc = getAccountID(), name, w = weak()](NameDirectory::RegistrationResponse response) {
                 int res
                     = (response == NameDirectory::RegistrationResponse::success)
