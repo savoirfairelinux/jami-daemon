@@ -232,15 +232,6 @@ public:
         return c != conversations_.end() && c->second;
     }
 
-    /**
-     * @return if a convId is an accepted conversation
-     */
-    bool isAcceptedConversation(const std::string& convId) const
-    {
-        auto conv = getConversation(convId);
-        return conv && !conv->info.removed;
-    }
-
     void addConvInfo(const ConvInfo& info)
     {
         std::lock_guard<std::mutex> lk(convInfosMtx_);
@@ -1642,7 +1633,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
                   "clone the old one");
         return;
     }
-    if (pimpl_->isAcceptedConversation(conversationId)) {
+    if (pimpl_->isConversation(conversationId)) {
         JAMI_DEBUG("[Account {}] Received a request for a conversation "
                   "already handled. Ignore",
                   pimpl_->accountId_);
@@ -1686,7 +1677,7 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     req.from = from;
 
     // Already accepted request, do nothing
-    if (pimpl_->isAcceptedConversation(convId))
+    if (pimpl_->isConversation(convId))
         return;
     auto oldReq = pimpl_->getRequest(convId);
     if (oldReq != std::nullopt) {
@@ -2146,8 +2137,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     }
 
     for (const auto& [convId, req] : msg.cr) {
-        if (pimpl_->isAcceptedConversation(convId)) {
-            // Already accepted request
+        if (pimpl_->isConversation(convId)) {
+            // Already handled request
             pimpl_->rmConversationRequest(convId);
             continue;
         }
