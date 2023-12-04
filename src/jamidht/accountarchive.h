@@ -57,26 +57,28 @@ struct AccountArchive
     /** Account configuration */
     std::map<std::string, std::string> config;
 
+    /** Salt for the archive encryption password.  */
+    std::vector<uint8_t> password_salt;
+
     AccountArchive() = default;
-    AccountArchive(const std::vector<uint8_t>& data) { deserialize(data); }
-    AccountArchive(const std::filesystem::path& path, const std::string& password) { load(path, password); }
+    AccountArchive(const std::vector<uint8_t>& data, const std::vector<uint8_t>& password_salt = {}) { deserialize(data, password_salt); }
+    AccountArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd) { load(path, scheme, pwd); }
 
     /** Serialize structured archive data to memory. */
     std::string serialize() const;
 
     /** Deserialize archive from memory. */
-    void deserialize(const std::vector<uint8_t>& data);
+    void deserialize(const std::vector<uint8_t>& data, const std::vector<uint8_t>& salt);
 
     /** Load archive from file, optionally encrypted with provided password. */
-    void load(const std::filesystem::path& path, const std::string& password = {})
-    {
-        deserialize(fileutils::readArchive(path, password));
+    void load(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd) {
+        auto data = fileutils::readArchive(path, scheme, pwd);
+        deserialize(data.data, data.salt);
     }
 
     /** Save archive to file, optionally encrypted with provided password. */
-    void save(const std::filesystem::path& path, const std::string& password = {}) const
-    {
-        fileutils::writeArchive(serialize(), path, password);
+    void save(const std::filesystem::path& path, std::string_view scheme, const std::string& password) const {
+        fileutils::writeArchive(serialize(), path, scheme, password, password_salt);
     }
 };
 
