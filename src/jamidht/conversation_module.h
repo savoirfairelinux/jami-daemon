@@ -304,10 +304,10 @@ public:
      * @param conversationId    Related conversation
      * @param commitId          Commit to retrieve
      */
-    void onNewCommit(const std::string& peer,
-                     const std::string& deviceId,
-                     const std::string& conversationId,
-                     const std::string& commitId);
+    void fetchNewCommits(const std::string& peer,
+                         const std::string& deviceId,
+                         const std::string& conversationId,
+                         const std::string& commitId);
 
     // Conversation's member
     /**
