@@ -165,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "907c827d_80aa3a64",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-04T20:22:43Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c32c20e0_227175b9",
+      "range": {
+        "startLine": 184,
+        "startChar": 4,
+        "endLine": 184,
+        "endChar": 14
+      },
+      "revId": "9991ff8153e321b7abd5080cb3b250b822991552",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "76c82e4d_6eebba1e",
