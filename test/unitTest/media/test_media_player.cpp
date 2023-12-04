@@ -40,6 +40,7 @@ public:
 private:
     void testCreate();
     void testJPG();
+    void testAudioFile();
     void testPause();
     void testSeekWhilePaused();
     void testSeekWhilePlaying();
@@ -49,6 +50,7 @@ private:
     CPPUNIT_TEST_SUITE(MediaPlayerTest);
     CPPUNIT_TEST(testCreate);
     CPPUNIT_TEST(testJPG);
+    CPPUNIT_TEST(testAudioFile);
     CPPUNIT_TEST(testPause);
     CPPUNIT_TEST(testSeekWhilePaused);
     CPPUNIT_TEST(testSeekWhilePlaying);
