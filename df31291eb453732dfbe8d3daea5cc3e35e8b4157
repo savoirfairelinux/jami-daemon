@@ -296,6 +296,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "f45f66e1_94c24fee",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 576,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-12-05T20:06:02Z",
+      "side": 1,
+      "message": "ec is an output argument",
+      "range": {
+        "startLine": 576,
+        "startChar": 95,
+        "endLine": 576,
+        "endChar": 99
+      },
+      "revId": "df31291eb453732dfbe8d3daea5cc3e35e8b4157",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1b135b61_a8bb9150",
         "filename": "src/jamidht/auth_channel_handler.cpp",
         "patchSetId": 10
