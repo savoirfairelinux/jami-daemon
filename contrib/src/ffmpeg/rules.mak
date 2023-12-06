@@ -11,10 +11,6 @@ endif
 
 DEPS_ffmpeg = iconv zlib vpx opus speex x264
 
-ifdef BUILD_PLUGINS
-DEPS_ffmpeg += freetype
-endif
-
 FFMPEGCONF = \
 	--cc="$(CC)" \
 	--pkg-config="$(PKG_CONFIG)"
@@ -176,20 +172,67 @@ FFMPEGCONF += \
 	--enable-encoder=tiff \
 	--enable-decoder=tiff
 
-#filters
-FFMPEGCONF += \
-	--enable-filter=scale \
-	--enable-filter=overlay \
-	--enable-filter=amix \
-	--enable-filter=amerge \
-	--enable-filter=aresample \
-	--enable-filter=format \
-	--enable-filter=aformat \
-	--enable-filter=fps \
-	--enable-filter=transpose \
-	--enable-filter=pad
+#plugins
 
-ifdef BUILD_PLUGINS
+ifdef WaterMark
+ifdef HAVE_MACOSX
+DEPS_ffmpeg += freetype
+endif
+endif
+
+ifdef WhisperTranscript
+ifdef HAVE_MACOSX
+DEPS_ffmpeg += freetype
+endif
+ifdef __DEBUG__
+DEPS_ffmpeg += rav1e
+endif
+endif
+
+ifdef AudioFilter
+ifdef __DEBUG__
+DEPS_ffmpeg += mp3lame
+endif
+endif
+
+ifdef GreenScreen
+ifdef __DEBUG__
+DEPS_ffmpeg += rav1e
+endif
+endif
+
+# decoders for ringtones and audio streaming
+
+ifdef AudioFilter
+FFMPEGCONF += \
+	--enable-decoder=pcm_s16be \
+	--enable-decoder=pcm_s16be_planar \
+	--enable-decoder=pcm_s16le_planar \
+	--enable-decoder=pcm_s24be \
+	--enable-decoder=pcm_s24le_planar \
+	--enable-decoder=pcm_s32be \
+	--enable-decoder=pcm_s32le_planar \
+	--enable-decoder=pcm_s64be \
+	--enable-decoder=pcm_s8 \
+	--enable-decoder=pcm_s8_planar \
+	--enable-decoder=pcm_u16be
+endif
+endif
+
+#filters
+     
+ifdef AudioFilter
+FFMPEGCONF += \
+	--enable-filter=afir
+ifdef __DEBUG__
+FFMPEGCONF += \
+	--enable-libmp3lame \
+	--enable-encoder=libmp3lame \
+	--enable-muxer=mp3
+endif
+endif
+
+ifdef WaterMark
 FFMPEGCONF += \
 	--enable-filter=split \
     --enable-filter=drawbox \
@@ -199,6 +242,37 @@ FFMPEGCONF += \
     --enable-filter=loop \
     --enable-filter=setpts \
     --enable-filter=movie
+endif
+
+ifdef GreenScreen
+FFMPEGCONF += \
+	--enable-filter=rotate \
+	--enable-filter=alphamerge \
+	--enable-filter=boxblur \
+	--enable-filter=lut \
+	--enable-filter=negate \
+	--enable-filter=colorkey \
+	--enable-filter=split
+ifdef __DEBUG__
+FFMPEGCONF += \
+	--enable-libmp3lame \
+	--enable-encoder=libmp3lame \
+	--enable-muxer=mp3
+endif
+endif
+
+ifdef WhisperTranscript
+FFMPEGCONF += \
+	-enable-filter=rotate \
+	--enable-filter=drawbox \
+	--enable-filter=drawtext \
+	--enable-filter=transpose \
+	--enable-libfreetype
+ifdef __DEBUG__
+FFMPEGCONF += \
+	--enable-libmp3lame \
+	--enable-encoder=libmp3lame \
+	--enable-muxer=mp3
 endif
 
 #platform specific options
