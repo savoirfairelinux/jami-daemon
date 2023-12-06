@@ -11,8 +11,22 @@ endif
 
 DEPS_ffmpeg = iconv zlib vpx opus speex x264
 
-ifdef BUILD_PLUGINS
+ifdef WaterMark
+ifdef HAVE_MACOSX
 DEPS_ffmpeg += freetype
+endif
+endif
+
+ifdef AudioFilter
+ifdef __DEBUG__
+DEPS_ffmpeg += mp3lame
+endif
+endif
+
+ifdef GreenScreen
+ifdef __DEBUG__
+DEPS_ffmpeg += rav1e
+endif
 endif
 
 FFMPEGCONF = \
@@ -161,6 +175,28 @@ FFMPEGCONF += \
 	--enable-encoder=pcm_s32le \
 	--enable-encoder=pcm_s64le
 
+ifdef AudioFilter
+FFMPEGCONF += \
+	--enable-decoder=pcm_s16be \
+	--enable-decoder=pcm_s16be_planar \
+	--enable-decoder=pcm_s16le_planar \
+	--enable-decoder=pcm_s24be \
+	--enable-decoder=pcm_s24le_planar \
+	--enable-decoder=pcm_s32be \
+	--enable-decoder=pcm_s32le_planar \
+	--enable-decoder=pcm_s64be \
+	--enable-decoder=pcm_s8 \
+	--enable-decoder=pcm_s8_planar \
+	--enable-decoder=pcm_u16be
+ifdef __DEBUG__
+FFMPEGCONF += \
+	--enable-libmp3lame \
+	--enable-encoder=libmp3lame \
+	--enable-muxer=mp3
+endif
+endif
+
+
 #encoders/decoders for images
 FFMPEGCONF += \
 	--enable-encoder=gif \
@@ -189,7 +225,7 @@ FFMPEGCONF += \
 	--enable-filter=transpose \
 	--enable-filter=pad
 
-ifdef BUILD_PLUGINS
+ifdef WaterMark
 FFMPEGCONF += \
 	--enable-filter=split \
     --enable-filter=drawbox \
@@ -199,6 +235,17 @@ FFMPEGCONF += \
     --enable-filter=loop \
     --enable-filter=setpts \
     --enable-filter=movie
+endif
+
+ifdef GreenScreen
+FFMPEGCONF += \
+	--enable-filter=rotate \
+	--enable-filter=alphamerge \
+	--enable-filter=boxblur \
+	--enable-filter=lut \
+	--enable-filter=negate \
+	--enable-filter=colorkey \
+	--enable-filter=split
 endif
 
 #platform specific options
