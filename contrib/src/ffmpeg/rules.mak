@@ -11,10 +11,6 @@ endif
 
 DEPS_ffmpeg = iconv zlib vpx opus speex x264
 
-ifdef BUILD_PLUGINS
-DEPS_ffmpeg += freetype
-endif
-
 FFMPEGCONF = \
 	--cc="$(CC)" \
 	--pkg-config="$(PKG_CONFIG)"
@@ -189,17 +185,56 @@ FFMPEGCONF += \
 	--enable-filter=transpose \
 	--enable-filter=pad
 
-ifdef BUILD_PLUGINS
+#plugins
+
+ifdef HAVE_MACOSX
+DEPS_ffmpeg += freetype
+endif
+
+ifdef __DEBUG__
+DEPS_ffmpeg += rav1e
+DEPS_ffmpeg += mp3lame
+endif
+
+# decoders for ringtones and audio streaming
+
 FFMPEGCONF += \
-	--enable-filter=split \
+	--enable-decoder=pcm_s16be \
+	--enable-decoder=pcm_s16be_planar \
+	--enable-decoder=pcm_s16le_planar \
+	--enable-decoder=pcm_s24be \
+	--enable-decoder=pcm_s24le_planar \
+	--enable-decoder=pcm_s32be \
+	--enable-decoder=pcm_s32le_planar \
+	--enable-decoder=pcm_s64be \
+	--enable-decoder=pcm_s8 \
+	--enable-decoder=pcm_s8_planar \
+	--enable-decoder=pcm_u16be
+
+ifdef __DEBUG__
+FFMPEGCONF += \
+	--enable-libmp3lame \
+	--enable-encoder=libmp3lame \
+	--enable-muxer=mp3
+endif
+
+#filters
+FFMPEGCONF += \
+    --enable-filter=afir \
+    --enable-filter=split \
     --enable-filter=drawbox \
     --enable-filter=drawtext \
     --enable-libfreetype \
     --enable-filter=rotate \
     --enable-filter=loop \
     --enable-filter=setpts \
-    --enable-filter=movie
-endif
+    --enable-filter=movie \
+	--enable-filter=alphamerge \
+	--enable-filter=boxblur \
+	--enable-filter=lut \
+	--enable-filter=negate \
+	--enable-filter=colorkey \
+	--enable-filter=transpose
 
 #platform specific options
 
