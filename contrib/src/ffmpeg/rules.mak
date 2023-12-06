@@ -11,6 +11,10 @@ endif
 
 DEPS_ffmpeg = iconv zlib vpx opus speex x264
 
+ifdef BUILD_PLUGINS
+DEPS_ffmpeg += freetype
+endif
+
 FFMPEGCONF = \
 	--cc="$(CC)" \
 	--pkg-config="$(PKG_CONFIG)"
@@ -184,6 +188,18 @@ FFMPEGCONF += \
 	--enable-filter=fps \
 	--enable-filter=transpose \
 	--enable-filter=pad
+
+ifdef BUILD_PLUGINS
+FFMPEGCONF += \
+	--enable-filter=split \
+    --enable-filter=drawbox \
+    --enable-filter=drawtext \
+    --enable-libfreetype \
+    --enable-filter=rotate \
+    --enable-filter=loop \
+    --enable-filter=setpts \
+    --enable-filter=movie
+endif
 
 #platform specific options
 
