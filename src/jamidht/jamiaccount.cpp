@@ -3666,6 +3666,21 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         connectionType);
 }
 
+bool
+JamiAccount::hasSIPConnection(const DeviceId& deviceId) const
+{
+    if (auto cert = certStore().getCertificate(deviceId.toString())) {
+        if (!cert->issuer)
+            return false;
+        auto uri = cert->issuer->getId().toString();
+        // If a connection already exists or is in progress, no need to do this
+        std::lock_guard<std::mutex> lk(sipConnsMtx_);
+        auto id = std::make_pair(uri, deviceId);
+        return sipConns_.find(id) != sipConns_.end();
+    }
+    return false;
+}
+
 void
 JamiAccount::sendProfile(const std::string& convId,
                          const std::string& peerUri,

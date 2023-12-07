@@ -28,9 +28,10 @@ namespace jami {
 
 using namespace swarm_protocol;
 
-SwarmManager::SwarmManager(const NodeId& id)
+SwarmManager::SwarmManager(const NodeId& id, ToConnectCb&& toConnectCb)
     : id_(id)
     , rd(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
+    , toConnectCb_(toConnectCb)
 {
     routing_table.setId(id);
 }
@@ -45,12 +46,21 @@ void
 SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
 {
     isShutdown_ = false;
+    std::vector<NodeId> newNodes;
     {
         std::lock_guard<std::mutex> lock(mutex);
-        for (const auto& NodeId : known_nodes)
-            addKnownNodes(std::move(NodeId));
+        for (const auto& nodeId : known_nodes) {
+            if (addKnownNode(nodeId)) {
+                newNodes.emplace_back(nodeId);
+            }
+        }
     }
-    maintainBuckets();
+    std::set<NodeId> toConnect;
+    for (const auto& nodeId: newNodes) {
+        if (toConnectCb_ && toConnectCb_(nodeId))
+            toConnect.emplace(nodeId);
+    }
+    maintainBuckets(toConnect);
 }
 
 void
@@ -123,10 +133,10 @@ SwarmManager::shutdown()
     routing_table.shutdownAllNodes();
 }
 
-void
-SwarmManager::addKnownNodes(const NodeId& nodeId)
+bool
+SwarmManager::addKnownNode(const NodeId& nodeId)
 {
-    routing_table.addKnownNode(nodeId);
+    return routing_table.addKnownNode(nodeId);
 }
 
 void
@@ -138,9 +148,9 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
 }
 
 void
-SwarmManager::maintainBuckets()
+SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 {
-    std::set<NodeId> nodes;
+    std::set<NodeId> nodes = toConnect;
     std::unique_lock<std::mutex> lock(mutex);
     auto& buckets = routing_table.getBuckets();
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {

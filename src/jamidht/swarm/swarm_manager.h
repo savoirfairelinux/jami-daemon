@@ -34,10 +34,11 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
 {
     using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocketInterface>&)>;
     using NeedSocketCb = std::function<void(const std::string&, ChannelCb&&)>;
+    using ToConnectCb = std::function<bool(const NodeId&)>;
     using OnConnectionChanged = std::function<void(bool ok)>;
 
 public:
-    SwarmManager(const NodeId&);
+    explicit SwarmManager(const NodeId&, ToConnectCb&& toConnectCb);
     ~SwarmManager();
 
     NeedSocketCb needSocketCb_;
@@ -147,8 +148,9 @@ public:
 
     /**
      * Maintain/Update buckets
+     * @param toConnect         Nodes to connect
      */
-    void maintainBuckets();
+    void maintainBuckets(const std::set<NodeId>& toConnect = {});
 
     /**
      * Check if we're connected with a specific device
@@ -167,8 +169,9 @@ private:
     /**
      * Add node to the known_nodes list
      * @param nodeId
+     * @return if node inserted
      */
-    void addKnownNodes(const NodeId& nodeId);
+    bool addKnownNode(const NodeId& nodeId);
 
     /**
      * Add node to the mobile_Nodes list
@@ -232,6 +235,8 @@ private:
     std::atomic_bool isShutdown_ {false};
 
     OnConnectionChanged onConnectionChanged_ {};
+
+    ToConnectCb toConnectCb_;
 };
 
 } // namespace jami
