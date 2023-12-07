@@ -95,6 +95,7 @@ private:
     void testSetMessageDisplayedTwice();
     void testSetMessageDisplayedPreference();
     void testSetMessageDisplayedAfterClone();
+    void testSendMessageWithLotOfKnownDevices();
     void testVoteNonEmpty();
     void testNoBadFileInInitialCommit();
     void testNoBadCertInInitialCommit();
@@ -147,6 +148,7 @@ private:
     CPPUNIT_TEST(testSetMessageDisplayedTwice);
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
     CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
+    CPPUNIT_TEST(testSendMessageWithLotOfKnownDevices);
     CPPUNIT_TEST(testVoteNonEmpty);
     CPPUNIT_TEST(testNoBadFileInInitialCommit);
     CPPUNIT_TEST(testNoBadCertInInitialCommit);
@@ -1432,6 +1434,75 @@ ConversationTest::testSetMessageDisplayedAfterClone()
                                 })
                    != membersInfos.end());
 
+    libjami::unregisterSignalHandlers();
+}
+
+void
+ConversationTest::testSendMessageWithLotOfKnownDevices()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    // Alice creates a second device
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    std::remove(aliceArchive.c_str());
+    aliceAccount->exportArchive(aliceArchive);
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "alice2";
+    details[ConfProperties::ALIAS] = "alice2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
+    alice2Id = Manager::instance().addAccount(details);
+    auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
+
+    bool conversationAlice2Ready = false;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& conversationId) {
+            if (accountId == alice2Id) {
+                conversationAlice2Ready = true;
+            }
+            cv.notify_one();
+        }));
+    bool alice2Registered = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = alice2Account->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    alice2Registered = true;
+                    cv.notify_one();
+                }
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return alice2Registered; }));
+
+    // Add a lot of known devices
+    for (auto i = 0; i < 1000; ++i) {
+        dht::Hash<32> h = dht::Hash<32>::get(std::to_string(i));
+        aliceAccount->accountManager()->getInfo()->contacts->foundAccountDevice(h);
+        alice2Account->accountManager()->getInfo()->contacts->foundAccountDevice(h);
+    }
+
+    auto bootstraped = false;
+    alice2Account->convModule()->onBootstrapStatus(
+        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            bootstraped = status == Conversation::BootstrapStatus::SUCCESS;
+            cv.notify_one();
+        });
+
+    auto convId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationAlice2Ready; }));
+
+    // Should bootstrap successfully
+    bootstraped = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bootstraped; }));
     libjami::unregisterSignalHandlers();
 }
 

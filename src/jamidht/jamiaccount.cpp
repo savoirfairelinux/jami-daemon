@@ -3679,6 +3679,15 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         connectionType);
 }
 
+bool
+JamiAccount::isConnectedWith(const DeviceId& deviceId) const
+{
+    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    if (connectionManager_)
+        return connectionManager_->isConnected(deviceId);
+    return false;
+}
+
 void
 JamiAccount::sendProfile(const std::string& convId,
                          const std::string& peerUri,

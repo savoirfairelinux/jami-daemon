@@ -90,7 +90,7 @@ class ChanneledOutgoingTransfer;
 class SyncModule;
 struct TextMessageCtx;
 
-using SipConnectionKey = std::pair<std::string /* accountId */, DeviceId>;
+using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -593,6 +593,12 @@ public:
     {
         return *certStore_;
     }
+    /**
+     * Check if a Device is connected
+     * @param deviceId
+     * @return true if connected
+     */
+    bool isConnectedWith(const DeviceId& deviceId) const;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -783,7 +789,7 @@ private:
 
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
-    std::mutex sipConnsMtx_ {};
+    mutable std::mutex sipConnsMtx_ {};
     struct SipConnection
     {
         std::shared_ptr<SipTransport> transport;
