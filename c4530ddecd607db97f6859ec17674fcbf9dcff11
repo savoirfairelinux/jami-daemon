@@ -22,6 +22,30 @@
       },
       "revId": "c4530ddecd607db97f6859ec17674fcbf9dcff11",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1bd406e_0475c8c6",
+        "filename": "src/jami/configurationmanager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-12-07T14:18:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "39557e8b_468210e3",
+      "range": {
+        "startLine": 64,
+        "startChar": 20,
+        "endLine": 64,
+        "endChar": 34
+      },
+      "revId": "c4530ddecd607db97f6859ec17674fcbf9dcff11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
