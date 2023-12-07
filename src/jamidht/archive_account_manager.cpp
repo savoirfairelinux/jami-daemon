@@ -527,6 +527,10 @@ ArchiveAccountManager::syncDevices()
         // don't send sync data to ourself
         if (dev.first.toString() == info_->deviceId)
             continue;
+        if (!dev.second.certificate) {
+            JAMI_WARNING("Cannot find certificate for {}", dev.first);
+            continue;
+        }
         auto pk = dev.second.certificate->getSharedPublicKey();
         JAMI_DBG("sending device sync to %s %s",
                  dev.second.name.c_str(),

@@ -595,6 +595,10 @@ ContactList::getSyncData() const
     }
 
     for (const auto& dev : knownDevices_) {
+        if (!dev.second.certificate) {
+            JAMI_WARNING("No certificate found for {}", dev.first);
+            continue;
+        }
         sync_data.devices.emplace(dev.second.certificate->getLongId(),
                                   KnownDeviceSync {dev.second.name,
                                                    dev.second.certificate->getId()});
