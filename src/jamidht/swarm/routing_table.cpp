@@ -303,8 +303,7 @@ RoutingTable::addKnownNode(const NodeId& nodeId)
     if (bucket == buckets.end())
         return false;
 
-    bucket->addKnownNode(nodeId);
-    return true;
+    return bucket->addKnownNode(nodeId);
 }
 
 bool
