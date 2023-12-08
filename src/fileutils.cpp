@@ -357,7 +357,9 @@ readArchive(const std::filesystem::path& path, const std::string& pwd)
 }
 
 void
-writeArchive(const std::string& archive_str, const std::filesystem::path& path, const std::string& password)
+writeArchive(const std::string& archive_str,
+             const std::filesystem::path& path,
+             const std::string& password)
 {
     JAMI_LOG("Writing archive to {}", path);
 
@@ -371,7 +373,7 @@ writeArchive(const std::string& archive_str, const std::filesystem::path& path, 
         }
     } else {
         JAMI_WARNING("Unsecured archiving (no password)");
-        archiver::compressGzip(archive_str, path);
+        archiver::compressGzip(archive_str, path.string());
     }
 }
 
