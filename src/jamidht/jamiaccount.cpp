@@ -1239,7 +1239,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
-            convModule()->loadConversations();
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
@@ -1338,7 +1337,6 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(
                             getAccountID(), config_->displayName, info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
-                    convModule()->loadConversations();
                     doRegister();
                 },
                 [w = weak(),
