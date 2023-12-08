@@ -28,7 +28,7 @@
         "pre_build": [],
         "build": [
             "call \"%CONTRIB_SRC_DIR%\\ffmpeg\\build_ffmpeg.bat\"",
-            "cd Build/win32/x64/lib & ren *.a *.lib"
+            "cd Build/win32/x64/lib & for %f in (*.a) do if not exist \"%~nf.lib\" ren \"%f\" \"%~nf.lib\""
         ],
         "post_build": []
     }
