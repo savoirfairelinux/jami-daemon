@@ -141,9 +141,9 @@ AR=xcrun ar
 LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
-EXTRA_COMMON := -fsanitize=address -arch $(ARCH) -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
-EXTRA_CXXFLAGS += -fsanitize=address -arch $(ARCH) -stdlib=libc++
-EXTRA_LDFLAGS += -fsanitize=address -arch $(ARCH) -Wl,-syslibroot,$(MACOSX_SDK)
+EXTRA_COMMON := -fsanitize=address -g -arch $(ARCH) -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
+EXTRA_CXXFLAGS += -fsanitize=address -g -arch $(ARCH) -stdlib=libc++
+EXTRA_LDFLAGS += -fsanitize=address -g -arch $(ARCH) -Wl,-syslibroot,$(MACOSX_SDK)
 EXTRA_COMMON += -m64
 XCODE_FLAGS = -sdk macosx$(OSX_VERSION) -arch $(ARCH)
 endif
