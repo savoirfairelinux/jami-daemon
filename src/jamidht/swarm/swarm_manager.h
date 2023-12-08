@@ -38,7 +38,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using OnConnectionChanged = std::function<void(bool ok)>;
 
 public:
-    explicit SwarmManager(const NodeId&, std::mt19937_64& rand, ToConnectCb&& toConnectCb);
+    explicit SwarmManager(const NodeId&, const std::mt19937_64& rand, ToConnectCb&& toConnectCb);
     ~SwarmManager();
 
     NeedSocketCb needSocketCb_;
