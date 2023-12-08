@@ -72,7 +72,7 @@ namespace jami {
 const std::string Account::DEFAULT_USER_AGENT = Account::getDefaultUserAgent();
 
 Account::Account(const std::string& accountID)
-    : rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
+    : rand(Manager::instance().getSeededRandomEngine())
     , accountID_(accountID)
     , systemCodecContainer_(getSystemCodecContainer())
 {
