@@ -3145,13 +3145,6 @@ END:VCARD";
                     conversationRmBob2 = true;
                 cv.notify_one();
             }));
-    auto aliceProfileReceivedBob = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
-        [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
-            if (accountId == bobId && peerId == aliceUri)
-                aliceProfileReceivedBob = true;
-            cv.notify_one();
-        }));
     libjami::registerSignalHandlers(confHandlers);
 
     // Bob creates a second device
@@ -3187,19 +3180,10 @@ END:VCARD";
     // wait that connections are closed.
     std::this_thread::sleep_for(10s);
 
-    // Alice send a message
+    // Alice send a message. This will not trigger any request, because contact was removed.
     requestReceived = false, requestReceivedBob2 = false;
     libjami::sendMessage(aliceId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return requestReceived && requestReceivedBob2; }));
-
-    // Re-Add contact should accept and clone the conversation on all devices
-    conversationReadyBob = false;
-    conversationReadyBob2 = false;
-    aliceProfileReceivedBob = false;
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return conversationReadyBob && conversationReadyBob2 && aliceProfileReceivedBob;
-    }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return requestReceived || requestReceivedBob2; }));
 }
 
 void
@@ -3750,6 +3734,8 @@ ConversationTest::testFixContactDetails()
 
     aliceAccount->convModule()->loadConversations();
 
+    std::this_thread::sleep_for(5s); // Let the daemon fix the structures
+
     details = aliceAccount->getContactDetails(bobUri);
     CPPUNIT_ASSERT(details["conversationId"] == convId);
 }
@@ -4000,6 +3986,7 @@ ConversationTest::testLoadPartiallyRemovedConversation()
     // Reloading conversation should remove directory
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice));
     aliceAccount->convModule()->loadConversations();
+    std::this_thread::sleep_for(5s); // Let the daemon the time to fix structures
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPathAlice));
 }
 
