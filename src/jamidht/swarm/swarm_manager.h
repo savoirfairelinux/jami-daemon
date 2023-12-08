@@ -38,7 +38,7 @@ class SwarmManager : public std::enable_shared_from_this<SwarmManager>
     using OnConnectionChanged = std::function<void(bool ok)>;
 
 public:
-    explicit SwarmManager(const NodeId&, ToConnectCb&& toConnectCb);
+    explicit SwarmManager(const NodeId&, std::mt19937_64& rand, ToConnectCb&& toConnectCb);
     ~SwarmManager();
 
     NeedSocketCb needSocketCb_;
@@ -228,7 +228,7 @@ private:
 
     const NodeId id_;
     bool isMobile_ {false};
-    mutable std::mt19937_64 rd;
+    std::mt19937_64& rd;
     mutable std::mutex mutex;
     RoutingTable routing_table;
 

@@ -166,6 +166,7 @@ public:
             ioContext_ = Manager::instance().ioContext();
             fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
             swarmManager_ = std::make_shared<SwarmManager>(NodeId(shared->currentDeviceId()),
+            shared->rand,
             [account=account_](const DeviceId& deviceId) {
                 if (auto acc = account.lock()) {
                     return acc->isConnectedWith(deviceId);

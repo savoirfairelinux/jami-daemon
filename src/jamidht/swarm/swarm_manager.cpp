@@ -28,9 +28,9 @@ namespace jami {
 
 using namespace swarm_protocol;
 
-SwarmManager::SwarmManager(const NodeId& id, ToConnectCb&& toConnectCb)
+SwarmManager::SwarmManager(const NodeId& id, std::mt19937_64& rand, ToConnectCb&& toConnectCb)
     : id_(id)
-    , rd(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
+    , rd(rand)
     , toConnectCb_(toConnectCb)
 {
     routing_table.setId(id);
