@@ -1413,7 +1413,6 @@ ConversationModule::loadConversations()
     ctx->contacts = std::move(contacts);
 
     for (auto repository : conversationsRepositories) {
-        auto r = std::make_shared<std::string>(repository);
         dht::ThreadPool::io().run([this, ctx, repository, acc] {
             try {
                 auto sconv = std::make_shared<SyncedConversation>(repository);
