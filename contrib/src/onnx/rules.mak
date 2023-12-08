@@ -20,7 +20,7 @@ ifdef HAVE_ANDROID
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
 else
 ifdef HAVE_MACOSX
-	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --osx_arch $(ARCH)
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
 	cd $< && cp ./build/MacOS/Release/libonnxruntime.dylib $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.dylib
