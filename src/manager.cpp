@@ -2771,6 +2771,16 @@ Manager::setAccountDetails(const std::string& accountID,
     });
 }
 
+std::mt19937_64
+Manager::getSeededRandomEngine()
+{
+    std::array<std::mt19937_64::result_type, std::mt19937_64::state_size> sub_seeds;
+    for (auto& sub_seed : sub_seeds)
+        sub_seed = rand_();
+    std::seed_seq seed(sub_seeds.begin(), sub_seeds.end());
+    return std::mt19937_64(seed);
+}
+
 std::string
 Manager::getNewAccountId()
 {

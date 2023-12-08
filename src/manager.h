@@ -442,6 +442,8 @@ public:
 
     void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
 
+    std::mt19937_64 getNewSeededRandomGenerator();
+
     /**
      * Return a new random accountid that is not present in the list
      * @return A brand new accountid
