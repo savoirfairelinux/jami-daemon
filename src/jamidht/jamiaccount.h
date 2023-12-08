@@ -534,9 +534,8 @@ public:
 
     std::filesystem::path profilePath() const;
 
-    AccountManager* accountManager()
-    {
-        return accountManager_.get();
+    const std::shared_ptr<AccountManager>& accountManager() {
+        return accountManager_;
     }
 
     bool sha3SumVerify() const

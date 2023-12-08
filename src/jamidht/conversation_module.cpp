@@ -420,7 +420,7 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
     if (auto shared = account.lock()) {
         accountId_ = shared->getAccountID();
         deviceId_ = shared->currentDeviceId();
-        if (const auto* accm = shared->accountManager())
+        if (auto accm = shared->accountManager())
             if (const auto* info = accm->getInfo())
                 username_ = info->accountId;
     }
@@ -879,7 +879,8 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
                         // Note: this can happen while re-adding a contact.
                         // In this case, check that we are removing the linked conversation.
                         if (conv.info.id == getOneToOneConversation(member)) {
-                            account->accountManager()->removeContactConversation(member);
+                            if (auto am = account->accountManager())
+                                am->removeContactConversation(member);
                         }
                     }
                 }
@@ -2456,8 +2457,8 @@ ConversationModule::isBanned(const std::string& convId, const std::string& uri) 
     }
     // If 1:1 we check the certificate status
     if (auto acc = pimpl_->account_.lock()) {
-        return acc->accountManager()->getCertificateStatus(uri)
-               == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
+        if (auto am = acc->accountManager())
+            return am->getCertificateStatus(uri) == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
     }
     return true;
 }
