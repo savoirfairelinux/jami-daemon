@@ -3750,6 +3750,8 @@ ConversationTest::testFixContactDetails()
 
     aliceAccount->convModule()->loadConversations();
 
+    std::this_thread::sleep_for(5s); // Let the daemon fix the structures
+
     details = aliceAccount->getContactDetails(bobUri);
     CPPUNIT_ASSERT(details["conversationId"] == convId);
 }
