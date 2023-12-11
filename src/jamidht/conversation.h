@@ -116,6 +116,8 @@ struct ConvInfo
     ConvInfo(const std::string& id) : id(id) {};
     explicit ConvInfo(const Json::Value& json);
 
+    bool isRemoved() const { return removed > created; }
+
     ConvInfo& operator=(const ConvInfo&) = default;
     ConvInfo& operator=(ConvInfo&&) = default;
 

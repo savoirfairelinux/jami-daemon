@@ -515,7 +515,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     {
         std::lock_guard<std::mutex> lk(convInfosMtx_);
         auto itConv = convInfos_.find(conversationId);
-        if (itConv != convInfos_.end() && itConv->second.removed) {
+        if (itConv != convInfos_.end() && itConv->second.isRemoved()) {
             // If the conversation is removed and we receives a new commit,
             // it means that the contact was removed but not banned.
             // If he wants a new conversation, they must removes/re-add the contact who declined.
@@ -648,7 +648,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         if (conv->pending)
             return;
-        bool clone = !conv->info.removed;
+        bool clone = !conv->info.isRemoved();
         if (clone) {
             cloneConversation(deviceId, peer, conv);
             return;
@@ -713,7 +713,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         auto removeRepo = false;
         // Note: a removeContact while cloning. In this case, the conversation
         // must not be announced and removed.
-        if (conv->info.removed)
+        if (conv->info.isRemoved())
             removeRepo = true;
         std::string lastDisplayedInfo;
         std::map<std::string, std::string> lastDisplayed;
@@ -1270,7 +1270,7 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
             auto conv = getConversation(conversationId);
             if (!conv)
                 return;
-            if ((!conv->conversation && !conv->info.removed)) {
+            if ((!conv->conversation && !conv->info.isRemoved())) {
                 // Because we're not tracking contact presence in order to sync now,
                 // we need to ask to clone requests when bootstraping all conversations
                 // else it can stay syncing
@@ -1470,7 +1470,7 @@ ConversationModule::loadConversations()
                 pimpl_->saveConvInfos();
             } else {
                 sconv->info = convInfo->second;
-                if (convInfo->second.removed) {
+                if (convInfo->second.isRemoved()) {
                     // A conversation was removed, but repository still exists
                     conv->setRemovingFlag();
                     toRm.insert(repository);
@@ -1502,7 +1502,7 @@ ConversationModule::loadConversations()
             itInfo = pimpl_->convInfos_.erase(itInfo);
             continue;
         }
-        if (info.removed)
+        if (info.isRemoved())
             removed.insert(info.id);
         auto itConv = pimpl_->conversations_.find(info.id);
         if (itConv == pimpl_->conversations_.end()) {
@@ -1513,9 +1513,9 @@ ConversationModule::loadConversations()
                          .first;
         }
         if (itConv != pimpl_->conversations_.end() && itConv->second && itConv->second->conversation
-            && info.removed)
+            && info.isRemoved())
             itConv->second->conversation->setRemovingFlag();
-        if (!info.removed && itConv == pimpl_->conversations_.end()) {
+        if (!info.isRemoved() && itConv == pimpl_->conversations_.end()) {
             // In this case, the conversation is not synced and we only know ourself
             if (info.members.size() == 1 && info.members.at(0) == uri) {
                 JAMI_WARNING("[Account {:s}] Conversation {:s} seems not present/synced.",
@@ -1592,7 +1592,7 @@ ConversationModule::getConversations() const
     std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
     result.reserve(pimpl_->convInfos_.size());
     for (const auto& [key, conv] : pimpl_->convInfos_) {
-        if (conv.removed)
+        if (conv.isRemoved())
             continue;
         result.emplace_back(key);
     }
@@ -2053,7 +2053,7 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
                     //    }
                     // }
                 }
-            } else if (!conv->info.removed
+            } else if (!conv->info.isRemoved()
                        && std::find(conv->info.members.begin(), conv->info.members.end(), peer)
                               != conv->info.members.end()) {
                 // In this case the conversation was never cloned (can be after an import)
@@ -2084,7 +2084,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
 
         auto conv = pimpl_->startConversation(convInfo);
         std::unique_lock<std::mutex> lk(conv->mtx);
-        if (not convInfo.removed) {
+        if (not convInfo.isRemoved()) {
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
             if (conv->info.removed) {
