@@ -45,7 +45,6 @@
 #include "jamidht/jamiaccount.h"
 #include "account.h"
 #include <opendht/rng.h>
-using random_device = dht::crypto::random_device;
 
 #include "call_factory.h"
 

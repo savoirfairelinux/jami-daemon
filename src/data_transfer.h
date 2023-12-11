@@ -33,7 +33,7 @@
 
 namespace jami {
 
-libjami::DataTransferId generateUID();
+libjami::DataTransferId generateUID(std::mt19937_64& engine);
 
 class Stream;
 
@@ -123,7 +123,7 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
-    TransferManager(const std::string& accountId, const std::string& to);
+    TransferManager(const std::string& accountId, const std::string& to, const std::mt19937_64& rand);
     ~TransferManager();
 
     /**

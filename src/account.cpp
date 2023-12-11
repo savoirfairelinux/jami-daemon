@@ -38,7 +38,6 @@
 #include "manager.h"
 
 #include <opendht/rng.h>
-using random_device = dht::crypto::random_device;
 
 #include "client/ring_signal.h"
 #include "account_schema.h"

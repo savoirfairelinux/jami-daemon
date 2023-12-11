@@ -277,7 +277,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
     , connectionManager_ {}
-    , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, ""))
+    , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, "", dht::crypto::getDerivedRandomEngine(rand)))
 {}
 
 JamiAccount::~JamiAccount() noexcept
@@ -1853,6 +1853,7 @@ JamiAccount::doRegister_()
         }
         dht::DhtRunner::Context context {};
         context.peerDiscovery = peerDiscovery_;
+        context.rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
 
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
@@ -4025,7 +4026,7 @@ JamiAccount::sendFile(const std::string& conversationId,
     dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, replyTo]() {
         if (auto shared = w.lock()) {
             Json::Value value;
-            auto tid = jami::generateUID();
+            auto tid = jami::generateUID(shared->rand);
             value["tid"] = std::to_string(tid);
             value["displayName"] = name.empty() ? path.filename().string() : name;
             value["totalSize"] = std::to_string(fileutils::size(path));
@@ -4236,6 +4237,7 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->logger = Logger::dhtLogger();
         connectionManagerConfig->factory = Manager::instance().getIceTransportFactory();
         connectionManagerConfig->turnCache = turnCache_;
+        connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
         connectionManager_ = std::make_unique<dhtnet::ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::SWARM]
             = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
