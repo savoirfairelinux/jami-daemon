@@ -26,8 +26,6 @@
 #include "client/ring_signal.h"
 #include "vcard.h"
 
-using random_device = dht::crypto::random_device;
-
 #include <ctime>
 #include <fstream>
 #include <future>
@@ -2557,11 +2555,10 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
                                            const std::string& otherMember)
 {
     // Create temporary directory because we can't know the first hash for now
-    std::uniform_int_distribution<uint64_t> dist {0, std::numeric_limits<uint64_t>::max()};
-    random_device rdev;
+    std::uniform_int_distribution<uint64_t> dist;
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
-    auto tmpPath = conversationsPath / std::to_string(dist(rdev));
+    auto tmpPath = conversationsPath / std::to_string(dist(account->rand));
     if (std::filesystem::is_directory(tmpPath)) {
         JAMI_ERROR("{} already exists. Abort create conversations", tmpPath);
         return {};
@@ -2592,8 +2589,10 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
 
     // Move to wanted directory
     auto newPath = conversationsPath / id;
-    if (std::rename(tmpPath.string().c_str(), newPath.string().c_str())) {
-        JAMI_ERROR("Couldn't move {} in {}", tmpPath, newPath);
+    std::error_code ec;
+    std::filesystem::rename(tmpPath, newPath, ec);
+    if (ec) {
+        JAMI_ERROR("Couldn't move {} in {}: {}", tmpPath, newPath, ec.message());
         dhtnet::fileutils::removeAll(tmpPath, true);
         return {};
     }

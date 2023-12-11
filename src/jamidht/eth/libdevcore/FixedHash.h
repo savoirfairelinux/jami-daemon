@@ -45,8 +45,6 @@ struct StaticLog2<1>
     enum { result = 0 };
 };
 
-extern dht::crypto::random_device s_fixedHashEngine;
-
 /// Fixed-size raw-byte array container type, with an API optimised for storing hashes.
 /// Transparently converts to/from the corresponding arithmetic type; this will
 /// assume the data contained in the hash is big-endian.
@@ -246,7 +244,8 @@ public:
     static FixedHash random()
     {
         FixedHash ret;
-        ret.randomize(s_fixedHashEngine);
+        std::random_device rd;
+        ret.randomize(rd);
         return ret;
     }
 
@@ -466,7 +465,8 @@ public:
     static SecureFixedHash<T> random()
     {
         SecureFixedHash<T> ret;
-        ret.randomize(s_fixedHashEngine);
+        std::random_device rd;
+        ret.randomize(rd);
         return ret;
     }
     using FixedHash<T>::firstBitSet;

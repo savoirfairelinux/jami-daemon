@@ -41,7 +41,6 @@
 #include "compiler_intrinsics.h" // for UNUSED
 
 #include <opendht/rng.h>
-using random_device = dht::crypto::random_device;
 
 #include <algorithm>
 #include <cassert>
@@ -123,7 +122,7 @@ static void
 randomFill(std::vector<uint8_t>& dest)
 {
     std::uniform_int_distribution<int> rand_byte {0, std::numeric_limits<uint8_t>::max()};
-    random_device rdev;
+    std::random_device rdev;
     std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
 }
 

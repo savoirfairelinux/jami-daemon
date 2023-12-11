@@ -667,7 +667,7 @@ std::string
 generatePIN(size_t length = 16, size_t split = 8)
 {
     static constexpr const char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    dht::crypto::random_device rd;
+    std::random_device rd;
     std::uniform_int_distribution<size_t> dis(0, sizeof(alphabet) - 2);
     std::string ret;
     ret.reserve(length);

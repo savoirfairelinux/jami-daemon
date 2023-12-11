@@ -41,10 +41,9 @@
 namespace jami {
 
 libjami::DataTransferId
-generateUID()
+generateUID(std::mt19937_64& engine)
 {
-    thread_local dht::crypto::random_device rd;
-    return std::uniform_int_distribution<libjami::DataTransferId> {1, JAMI_ID_MAX_VAL}(rd);
+    return std::uniform_int_distribution<libjami::DataTransferId> {1, JAMI_ID_MAX_VAL}(engine);
 }
 
 FileInfo::FileInfo(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
@@ -236,9 +235,10 @@ IncomingFile::process()
 class TransferManager::Impl
 {
 public:
-    Impl(const std::string& accountId, const std::string& to)
+    Impl(const std::string& accountId, const std::string& to, const std::mt19937_64& rand)
         : accountId_(accountId)
         , to_(to)
+        , rand_(rand)
     {
         if (!to_.empty()) {
             conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / to_;
@@ -290,10 +290,12 @@ public:
     std::map<std::shared_ptr<dhtnet::ChannelSocket>, std::shared_ptr<OutgoingFile>> outgoings_ {};
     std::map<std::string, std::shared_ptr<IncomingFile>> incomings_ {};
     std::map<std::pair<std::string, std::string>, std::shared_ptr<IncomingFile>> vcards_ {};
+
+    std::mt19937_64 rand_;
 };
 
-TransferManager::TransferManager(const std::string& accountId, const std::string& to)
-    : pimpl_ {std::make_unique<Impl>(accountId, to)}
+TransferManager::TransferManager(const std::string& accountId, const std::string& to, const std::mt19937_64& rand)
+    : pimpl_ {std::make_unique<Impl>(accountId, to, rand)}
 {}
 
 TransferManager::~TransferManager() {}
@@ -514,7 +516,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
         return;
     }
 
-    auto tid = generateUID();
+    auto tid = generateUID(pimpl_->rand_);
     libjami::DataTransferInfo info;
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;

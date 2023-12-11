@@ -1,7 +1,6 @@
 noinst_LTLIBRARIES += libdevcore.la
 
 libdevcore_la_SOURCES = \
-	./jamidht/eth/libdevcore/FixedHash.cpp \
 	./jamidht/eth/libdevcore/SHA3.cpp \
 	./jamidht/eth/libdevcore/CommonData.cpp
 
