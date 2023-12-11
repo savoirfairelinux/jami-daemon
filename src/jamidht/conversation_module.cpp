@@ -1304,14 +1304,12 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
+    std::lock_guard<std::mutex> lk(conv->mtx);
     conv->info = {};
     conv->info.id = conversationId;
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace_back(username_);
     conv->info.members.emplace_back(uri);
-
-    std::lock_guard<std::mutex> lk(conv->mtx);
-
     acc->forEachDevice(
         memberHash,
         [w = weak(), conv, conversationId, oldConvId](
@@ -1816,6 +1814,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     }
     auto convId = conversation->id();
     auto conv = pimpl_->startConversation(convId);
+    std::lock_guard<std::mutex> lk(conv->mtx);
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace_back(pimpl_->username_);
     if (!otherMember.empty())
