@@ -235,6 +235,13 @@ private:
     std::atomic_bool isShutdown_ {false};
 
     OnConnectionChanged onConnectionChanged_ {};
+    enum class Status {
+        INIT,
+        FAILED,
+        SUCCEED
+    };
+    Status lastStatus_ {Status::INIT};
+    std::set<NodeId> lastTested_ {};
 
     ToConnectCb toConnectCb_;
 };

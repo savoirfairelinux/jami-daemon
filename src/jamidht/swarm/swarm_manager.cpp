@@ -92,7 +92,9 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
             }
         }
         receiveMessage(channel);
-        if (emit && onConnectionChanged_) {
+        if (emit && onConnectionChanged_ && lastStatus_ != Status::SUCCEED) {
+            lastStatus_ = Status::SUCCEED;
+            lastTested_.clear();
             // If it's the first channel we add, we're now connected!
             JAMI_DEBUG("[SwarmManager {}] Bootstrap: Connected!", fmt::ptr(this));
             onConnectionChanged_(true);
@@ -164,10 +166,13 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
             auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
                                                          rd);
-            for (auto& node : nodesToTry)
-                routing_table.addConnectingNode(node);
-
-            nodes.insert(nodesToTry.begin(), nodesToTry.end());
+            for (auto& node : nodesToTry) {
+                if (lastTested_.find(node) == lastTested_.end()) {
+                    lastTested_.emplace(node);
+                    routing_table.addConnectingNode(node);
+                    nodes.emplace(node);
+                }
+            }
         }
     }
     lock.unlock();
@@ -226,9 +231,6 @@ SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
             JAMI_ERROR("{}", ec.message());
             return;
         }
-    }
-
-    else {
     }
 }
 
@@ -343,9 +345,13 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           if (bucket->getConnectingNodesSize() == 0
                               && bucket->getNodeIds().size() == 0 && shared->onConnectionChanged_) {
                               lk.unlock();
-                              JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
-                                           fmt::ptr(shared.get()));
-                              shared->onConnectionChanged_(false);
+                              if (shared->lastStatus_ != Status::FAILED) {
+                                shared->lastStatus_ = Status::FAILED;
+                                JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
+                                            fmt::ptr(shared.get()));
+                                shared->onConnectionChanged_(false);
+                              }
+                              shared->maintainBuckets();
                           }
                           return true;
                       });
