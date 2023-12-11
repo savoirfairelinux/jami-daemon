@@ -127,6 +127,30 @@ JamiPluginManager::getInstalledPlugins()
 }
 
 bool
+JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath, const std::string& newJplPath)
+{
+    std::map<std::string, std::string> oldDetails = PluginUtils::parseManifestFile(PluginUtils::manifestPath(oldJplPath), oldJplPath);
+    if (
+        oldDetails.empty() ||
+        !std::filesystem::is_regular_file(oldJplPath + DIR_SEPARATOR_CH + oldDetails["id"] + ".crt") ||
+        !std::filesystem::is_regular_file(newJplPath)
+    )
+        return false;
+    try {
+        auto oldCert = PluginUtils::readPluginCertificate(oldJplPath, oldDetails["id"]);
+        auto newCert = PluginUtils::readPluginCertificateFromArchive(newJplPath);
+        if (!oldCert || !newCert) {
+            return false;
+        }
+        return oldCert->getPublicKey() == newCert->getPublicKey();
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+        return false;
+    }
+    return true;
+}
+
+bool
 JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
 {
     trust_.add(crypto::Certificate(store_ca_crt, sizeof(store_ca_crt)));
@@ -256,6 +280,8 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                 } else {
                     std::string installedVersion = alreadyInstalledManifestMap.at("version");
                     if (version > installedVersion) {
+                        if(!checkPluginCertificatePublicKey(destinationDir, jplPath))
+                            return CERTIFICATE_VERIFICATION_FAILED;
                         r = uninstallPlugin(destinationDir);
                         if (r == SUCCESS) {
                             archiver::uncompressArchive(jplPath,

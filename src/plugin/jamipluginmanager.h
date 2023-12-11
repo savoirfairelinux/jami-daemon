@@ -80,6 +80,13 @@ public:
     bool checkPluginCertificateValidity(dht::crypto::Certificate* cert);
 
     /**
+     * @brief check if the if the public key of the certificate is the same as the public key in the new plugin
+     * @param oldJplPath, newJplPath
+     * return true if valid
+    */
+    bool checkPluginCertificatePublicKey(const std::string& oldJplPath, const std::string& newJplPath);
+
+    /**
      * @brief check if all file are present in the signature file
      * @param jplPath
      * return true if valid
