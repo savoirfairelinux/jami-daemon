@@ -2881,12 +2881,12 @@ JamiAccount::getContactDetails(const std::string& uri) const
 }
 
 std::vector<std::map<std::string, std::string>>
-JamiAccount::getContacts() const
+JamiAccount::getContacts(bool includeRemoved) const
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (not accountManager_)
         return {};
-    return accountManager_->getContacts();
+    return accountManager_->getContacts(includeRemoved);
 }
 
 /* trust requests */
