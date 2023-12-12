@@ -308,7 +308,7 @@ public:
                      const std::string& newBody,
                      const std::string& editedId);
 
-    void bootstrapCb(const std::string& convId);
+    void bootstrapCb(std::string convId);
 
     // The following methods modify what is stored on the disk
     /**
@@ -1139,7 +1139,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
 }
 
 void
-ConversationModule::Impl::bootstrapCb(const std::string& convId)
+ConversationModule::Impl::bootstrapCb(std::string convId)
 {
     std::string commitId;
     {
@@ -1392,6 +1392,7 @@ ConversationModule::loadConversations()
     auto conversationsRepositories = dhtnet::fileutils::readDirectory(
         fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
 
+    auto contacts = acc->getContacts(true); // Avoid to lock configurationMtx while conv Mtx is locked
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     std::unique_lock<std::mutex> ilk(pimpl_->convInfosMtx_);
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
@@ -1409,7 +1410,7 @@ ConversationModule::loadConversations()
     };
     auto ctx = std::make_shared<Ctx>();
     ctx->convNb = conversationsRepositories.empty() ? 0 : conversationsRepositories.size();
-    ctx->contacts = acc->getContacts(); // Avoid to lock configurationMtx while conv Mtx is locked
+    ctx->contacts = std::move(contacts);
 
     for (auto repository : conversationsRepositories) {
         auto r = std::make_shared<std::string>(repository);
@@ -1434,13 +1435,17 @@ ConversationModule::loadConversations()
                     // If we got a 1:1 conversation, but not in the contact details, it's rather a
                     // duplicate or a weird state
                     auto& otherUri = members[0];
-                    std::string convFromDetails;
                     auto itContact = std::find_if(ctx->contacts.cbegin(), ctx->contacts.cend(), [&](const auto& c) {
                         return c.at("id") == otherUri;
                     });
-                    auto isRemoved = itContact == ctx->contacts.end();
-                    if (!isRemoved)
-                        convFromDetails = itContact->at("conversationId");
+                    if (itContact == ctx->contacts.end()) {
+                        JAMI_WARNING("Contact {} not found", otherUri);
+                        return;
+                    }
+                    std::string convFromDetails = itContact->at("conversationId");
+                    auto removed = std::stoul(itContact->at("removed"));
+                    auto added = std::stoul(itContact->at("added"));
+                    auto isRemoved = removed > added;
                     if (convFromDetails != repository) {
                         if (convFromDetails.empty()) {
                             if (isRemoved) {
