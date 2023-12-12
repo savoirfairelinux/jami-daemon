@@ -294,7 +294,7 @@ public:
      */
     void addContact(const std::string& uri, bool confirmed = false);
     void removeContact(const std::string& uri, bool banned = true);
-    std::vector<std::map<std::string, std::string>> getContacts() const;
+    std::vector<std::map<std::string, std::string>> getContacts(bool includeRemoved = false) const;
 
     /**
      * Replace in contact's details related conversation
