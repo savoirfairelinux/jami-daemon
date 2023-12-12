@@ -554,7 +554,7 @@ AccountManager::updateContactConversation(const std::string& uri, const std::str
 }
 
 std::vector<std::map<std::string, std::string>>
-AccountManager::getContacts() const
+AccountManager::getContacts(bool includeRemoved) const
 {
     if (not info_) {
         JAMI_ERR("getContacts(): account not loaded");
@@ -565,6 +565,8 @@ AccountManager::getContacts() const
     ret.reserve(contacts.size());
 
     for (const auto& c : contacts) {
+        if (!c.second.isActive() && !includeRemoved && !c.second.isBanned())
+            continue;
         auto details = c.second.toMap();
         if (not details.empty()) {
             details["id"] = c.first.toString();
