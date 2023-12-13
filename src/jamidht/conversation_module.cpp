@@ -1814,16 +1814,16 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     }
     auto convId = conversation->id();
     auto conv = pimpl_->startConversation(convId);
-    std::lock_guard<std::mutex> lk(conv->mtx);
+    std::unique_lock<std::mutex> lk(conv->mtx);
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace_back(pimpl_->username_);
     if (!otherMember.empty())
         conv->info.members.emplace_back(otherMember);
     conv->conversation = conversation;
     addConvInfo(conv->info);
+    lk.unlock();
 
     pimpl_->needsSyncingCb_({});
-
     emitSignal<libjami::ConversationSignal::ConversationReady>(pimpl_->accountId_, convId);
     return convId;
 }
