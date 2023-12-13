@@ -490,15 +490,19 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             },
             MIME_TYPE_GIT);
 
-        JAMI_LOG("[Account {}] New conversation detected: {}. Ask device {} to clone it",
+        JAMI_LOG("[Account {}] New conversation detected: {}. Ask device {} ({}) to clone it",
                  accountId_,
                  conv->info.id,
-                 deviceId);
+                 deviceId,
+                 peerUri);
         conv->info.created = std::time(nullptr);
-        conv->info.members.emplace_back(username_);
+        if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), username_) == conv->info.members.cend()) {
+            conv->info.members.emplace_back(username_);
+        }
         conv->info.lastDisplayed = lastDisplayed;
-        if (peerUri != username_)
+        if (peerUri != username_ && std::find(conv->info.members.cbegin(), conv->info.members.cend(), peerUri) == conv->info.members.cend()) {
             conv->info.members.emplace_back(peerUri);
+        }
         addConvInfo(conv->info);
     } else {
         conv->conversation->updateLastDisplayed(lastDisplayed);
@@ -1295,12 +1299,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
-    std::lock_guard<std::mutex> lk(conv->mtx);
-    conv->info = {};
-    conv->info.id = conversationId;
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(username_);
-    conv->info.members.emplace_back(uri);
     acc->forEachDevice(
         memberHash,
         [w = weak(), conv, conversationId, oldConvId](
@@ -1311,7 +1309,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
                 return;
             sthis->cloneConversationFrom(conv, deviceId, oldConvId);
         });
-    addConvInfo(conv->info);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1724,6 +1721,23 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
             // Already a conversation with the contact.
             if (oldConv != convId && acc->updateConvForContact(from, oldConv, convId)) {
                 initReplay(oldConv, convId);
+
+                {
+                    auto conv = pimpl_->startConversation(convId);
+                    std::lock_guard<std::mutex> lk(conv->mtx);
+                    conv->info.id = convId;
+                    conv->info.created = std::time(nullptr);
+                    conv->info.removed = 0;
+                    conv->info.erased = 0;
+                    if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), from) == conv->info.members.cend()) {
+                        conv->info.members.emplace_back(from);
+                    }
+                    if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), pimpl_->username_) == conv->info.members.cend()) {
+                        conv->info.members.emplace_back(pimpl_->username_);
+                    }
+                    addConvInfo(conv->info);
+                }
+
                 cloneConversationFrom(convId, from, oldConv);
                 return;
             }
@@ -1790,6 +1804,23 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     pimpl_->rmConversationRequest(conversationId);
     if (pimpl_->updateConvReqCb_)
         pimpl_->updateConvReqCb_(conversationId, request->from, true);
+
+    {
+        auto conv = pimpl_->startConversation(conversationId);
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        conv->info.id = conversationId;
+        conv->info.created = std::time(nullptr);
+        conv->info.removed = 0;
+        conv->info.erased = 0;
+        if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), request->from) == conv->info.members.cend()) {
+            conv->info.members.emplace_back(request->from);
+        }
+        if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), pimpl_->username_) == conv->info.members.cend()) {
+            conv->info.members.emplace_back(pimpl_->username_);
+        }
+        addConvInfo(conv->info);
+    }
+
     cloneConversationFrom(conversationId, request->from);
 }
 
@@ -1844,9 +1875,12 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     auto conv = pimpl_->startConversation(convId);
     std::unique_lock<std::mutex> lk(conv->mtx);
     conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(pimpl_->username_);
-    if (!otherMember.empty())
+    if (!otherMember.empty() && std::find(conv->info.members.cbegin(), conv->info.members.cend(), otherMember) == conv->info.members.cend()) {
         conv->info.members.emplace_back(otherMember);
+    }
+    if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), pimpl_->username_) == conv->info.members.cend()) {
+        conv->info.members.emplace_back(pimpl_->username_);
+    }
     conv->conversation = conversation;
     addConvInfo(conv->info);
     lk.unlock();
@@ -1861,6 +1895,22 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                           const std::string& uri,
                                           const std::string& oldConvId)
 {
+    {
+        auto conv = pimpl_->startConversation(conversationId);
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        conv->info.id = conversationId;
+        conv->info.created = std::time(nullptr);
+        conv->info.removed = 0;
+        conv->info.erased = 0;
+        if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), uri) == conv->info.members.cend()) {
+            conv->info.members.emplace_back(uri);
+        }
+        if (std::find(conv->info.members.cbegin(), conv->info.members.cend(), pimpl_->username_) == conv->info.members.cend()) {
+            conv->info.members.emplace_back(pimpl_->username_);
+        }
+        addConvInfo(conv->info);
+    }
+
     pimpl_->cloneConversationFrom(conversationId, uri, oldConvId);
 }
 
