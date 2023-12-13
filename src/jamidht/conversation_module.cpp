@@ -1295,12 +1295,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
-    std::lock_guard<std::mutex> lk(conv->mtx);
-    conv->info = {};
-    conv->info.id = conversationId;
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(username_);
-    conv->info.members.emplace_back(uri);
     acc->forEachDevice(
         memberHash,
         [w = weak(), conv, conversationId, oldConvId](
@@ -1311,7 +1305,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
                 return;
             sthis->cloneConversationFrom(conv, deviceId, oldConvId);
         });
-    addConvInfo(conv->info);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1724,6 +1717,19 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
             // Already a conversation with the contact.
             if (oldConv != convId && acc->updateConvForContact(from, oldConv, convId)) {
                 initReplay(oldConv, convId);
+
+                {
+                    auto conv = pimpl_->startConversation(convId);
+                    std::lock_guard<std::mutex> lk(conv->mtx);
+                    conv->info.id = convId;
+                    conv->info.created = std::time(nullptr);
+                    conv->info.removed = 0;
+                    conv->info.erased = 0;
+                    conv->info.members.emplace_back(pimpl_->username_);
+                    conv->info.members.emplace_back(from);
+                    addConvInfo(conv->info);
+                }
+
                 cloneConversationFrom(convId, from, oldConv);
                 return;
             }
@@ -1790,6 +1796,19 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     pimpl_->rmConversationRequest(conversationId);
     if (pimpl_->updateConvReqCb_)
         pimpl_->updateConvReqCb_(conversationId, request->from, true);
+
+    {
+        auto conv = pimpl_->startConversation(conversationId);
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        conv->info.id = conversationId;
+        conv->info.created = std::time(nullptr);
+        conv->info.removed = 0;
+        conv->info.erased = 0;
+        conv->info.members.emplace_back(pimpl_->username_);
+        conv->info.members.emplace_back(request->from);
+        addConvInfo(conv->info);
+    }
+
     cloneConversationFrom(conversationId, request->from);
 }
 
@@ -1861,6 +1880,18 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
                                           const std::string& uri,
                                           const std::string& oldConvId)
 {
+    {
+        auto conv = pimpl_->startConversation(conversationId);
+        std::lock_guard<std::mutex> lk(conv->mtx);
+        conv->info.id = conversationId;
+        conv->info.created = std::time(nullptr);
+        conv->info.removed = 0;
+        conv->info.erased = 0;
+        conv->info.members.emplace_back(pimpl_->username_);
+        conv->info.members.emplace_back(uri);
+        addConvInfo(conv->info);
+    }
+
     pimpl_->cloneConversationFrom(conversationId, uri, oldConvId);
 }
 
