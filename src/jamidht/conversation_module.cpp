@@ -2937,15 +2937,20 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
 void
 ConversationModule::connectivityChanged()
 {
-    std::vector<std::shared_ptr<Conversation>> conversations;
+    std::vector<std::shared_ptr<SyncedConversation>> syncedConversations;
     {
         std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
-        conversations.reserve(pimpl_->conversations_.size());
+        syncedConversations.reserve(pimpl_->conversations_.size());
         for (const auto& [k, c]: pimpl_->conversations_) {
-            std::lock_guard<std::mutex> lkc(c->mtx);
-            if (c->conversation)
-                conversations.emplace_back(c->conversation);
+            syncedConversations.emplace_back(c);
         }
+    }
+    std::vector<std::shared_ptr<Conversation>> conversations;
+    conversations.reserve(syncedConversations.size());
+    for (const auto& c: syncedConversations) {
+        std::lock_guard<std::mutex> lkc(c->mtx);
+        if (c->conversation)
+            conversations.emplace_back(c->conversation);
     }
     for (const auto& conv: conversations)
         conv->connectivityChanged();
