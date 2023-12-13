@@ -2113,6 +2113,9 @@ ConversationModule::onSyncData(const SyncMsg& msg,
 
         auto conv = pimpl_->startConversation(convInfo);
         std::unique_lock<std::mutex> lk(conv->mtx);
+        auto update = convInfo.created >= conv->info.created || convInfo.removed >= conv->info.removed;
+        if (!update)
+            continue;
         if (not convInfo.isRemoved()) {
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
