@@ -26,7 +26,7 @@ constexpr static const char* DEFAULT_TURN_PWD = "ring";
 constexpr static const char* DEFAULT_TURN_REALM = "ring";
 
 struct JamiAccountConfig : public SipAccountBaseConfig {
-    JamiAccountConfig(const std::string& id = {}, const std::string& path = {})
+    JamiAccountConfig(const std::string& id = {}, const std::filesystem::path& path = {})
         : SipAccountBaseConfig(std::string(ACCOUNT_TYPE_JAMI), id, path)
     {
         // Default values specific to Jami accounts

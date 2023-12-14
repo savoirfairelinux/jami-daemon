@@ -21,7 +21,7 @@ namespace jami {
 constexpr static std::string_view ACCOUNT_TYPE_SIP = "SIP";
 
 struct SipAccountConfig : public SipAccountBaseConfig {
-    SipAccountConfig(const std::string& id = {}, const std::string& path = {}): SipAccountBaseConfig(std::string(ACCOUNT_TYPE_SIP), id, path) {}
+    SipAccountConfig(const std::string& id = {}, const std::filesystem::path& path = {}): SipAccountBaseConfig(std::string(ACCOUNT_TYPE_SIP), id, path) {}
     void serialize(YAML::Emitter& out) const override;
     void unserialize(const YAML::Node& node) override;
     std::map<std::string, std::string> toMap() const override;
