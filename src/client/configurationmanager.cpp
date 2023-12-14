@@ -451,7 +451,7 @@ sendTrustRequest(const std::string& accountId,
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
-    if (accountType == Account::ProtocolNames::RING)
+    if (accountType == Account::ProtocolNames::JAMI || accountType == Account::ProtocolNames::RING)
         return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
         return jami::SipAccountConfig().toMap();
