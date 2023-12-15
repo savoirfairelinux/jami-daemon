@@ -160,7 +160,7 @@ SwarmMessageSpread::generateSwarmManagers()
 {
     for (size_t i = 0; i < nNodes; i++) {
         const NodeId node = Hash<32>::getRandom();
-        auto sm = std::make_shared<SwarmManager>(node);
+        auto sm = std::make_shared<SwarmManager>(node, rd, std::move([](auto) {return false;}));
         swarmManagers[node] = sm;
         randomNodeIds.emplace_back(node);
         swarmManagersShuffled.emplace_back(sm);
