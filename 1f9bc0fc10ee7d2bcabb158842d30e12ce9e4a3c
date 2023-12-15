@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "efde5553_398e2d36",
+        "filename": "src/jamidht/jamiaccount_config.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-15T17:49:11Z",
+      "side": 0,
+      "message": "Agents, tests will probably be broken too? Clients will need to change I guess.",
+      "range": {
+        "startLine": 21,
+        "startChar": 34,
+        "endLine": 21,
+        "endChar": 51
+      },
+      "revId": "1f9bc0fc10ee7d2bcabb158842d30e12ce9e4a3c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
