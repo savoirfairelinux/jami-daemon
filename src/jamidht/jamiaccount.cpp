@@ -2207,8 +2207,8 @@ JamiAccount::convModule()
                     auto shared = w.lock();
                     if (!shared)
                         return;
-                    std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
                     auto cm = shared->convModule();
+                    std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
