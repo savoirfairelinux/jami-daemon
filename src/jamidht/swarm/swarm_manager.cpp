@@ -55,15 +55,22 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
             }
         }
     }
-    // If we detect a new node which already got a TCP link
-    // we can use it to speed-up the bootstrap (because opening
-    // a new channel will be easy)
-    std::set<NodeId> toConnect;
-    for (const auto& nodeId: newNodes) {
-        if (toConnectCb_ && toConnectCb_(nodeId))
-            toConnect.emplace(nodeId);
-    }
-    maintainBuckets(toConnect);
+
+    dht::ThreadPool::io().run([w=weak(), newNodes=std::move(newNodes)] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        // If we detect a new node which already got a TCP link
+        // we can use it to speed-up the bootstrap (because opening
+        // a new channel will be easy)
+        std::set<NodeId> toConnect;
+        for (const auto& nodeId: newNodes) {
+            if (shared->toConnectCb_ && shared->toConnectCb_(nodeId))
+                toConnect.emplace(nodeId);
+        }
+        shared->maintainBuckets(toConnect);
+    });
+
 }
 
 void
