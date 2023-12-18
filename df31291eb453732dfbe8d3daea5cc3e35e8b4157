@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d97b9874_e438de30",
+        "filename": "bin/nodejs/configurationmanager.i",
+        "patchSetId": 10
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-12-18T20:44:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f3278c21_6bc7c89b",
+      "range": {
+        "startLine": 95,
+        "startChar": 0,
+        "endLine": 95,
+        "endChar": 62
+      },
+      "revId": "df31291eb453732dfbe8d3daea5cc3e35e8b4157",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8cabb2b7_27d221b9",
@@ -417,6 +441,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3693fe2e_04e221d2",
+        "filename": "src/jamidht/account_manager.h",
+        "patchSetId": 10
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-12-18T20:44:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "885693b9_c00a4cae",
+      "revId": "df31291eb453732dfbe8d3daea5cc3e35e8b4157",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8d4842d9_e2f13142",
@@ -571,6 +613,30 @@
       "writtenOn": "2023-12-05T20:06:02Z",
       "side": 1,
       "message": "ec is an output argument",
+      "range": {
+        "startLine": 576,
+        "startChar": 95,
+        "endLine": 576,
+        "endChar": 99
+      },
+      "revId": "df31291eb453732dfbe8d3daea5cc3e35e8b4157",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df8d0299_6167b10d",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 576,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2023-12-18T20:44:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f45f66e1_94c24fee",
       "range": {
         "startLine": 576,
         "startChar": 95,
