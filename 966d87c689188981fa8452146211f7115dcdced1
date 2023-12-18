@@ -16,6 +16,24 @@
       "message": "did you generate plugins that we can test?",
       "revId": "966d87c689188981fa8452146211f7115dcdced1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "44e30ba4_39faf9c9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-18T14:31:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1f8d73b9_72b1263b",
+      "revId": "966d87c689188981fa8452146211f7115dcdced1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
