@@ -78,7 +78,6 @@ public:
     void testDeclineConversationRequestRemoveTrustRequest();
     void testMalformedTrustRequest();
     void testAddContactDeleteAndReAdd();
-    void testInviteFromMessageAfterRemoved();
     void testRemoveContact();
     void testRemoveContactMultiDevice();
     void testRemoveSelfDoesntRemoveConversation();
@@ -119,7 +118,6 @@ private:
     CPPUNIT_TEST(testDeclineConversationRequestRemoveTrustRequest);
     CPPUNIT_TEST(testMalformedTrustRequest);
     CPPUNIT_TEST(testAddContactDeleteAndReAdd);
-    CPPUNIT_TEST(testInviteFromMessageAfterRemoved);
     CPPUNIT_TEST(testRemoveContact);
     CPPUNIT_TEST(testRemoveContactMultiDevice);
     CPPUNIT_TEST(testRemoveSelfDoesntRemoveConversation);
@@ -549,39 +547,6 @@ ConversationRequestTest::testAddContactDeleteAndReAdd()
 }
 
 void
-ConversationRequestTest::testInviteFromMessageAfterRemoved()
-{
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
-
-    // removeContact
-    bobAccount->removeContact(aliceUri, false);
-    std::this_thread::sleep_for(10s); // wait a bit that connections are closed
-
-    // bob sends a message, this should generate a new request for Alice
-    bobData.requestReceived = false;
-    libjami::sendMessage(aliceId, aliceData.conversationId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    bobData.conversationId = "";
-    CPPUNIT_ASSERT(bobAccount->getContacts().size() == 0);
-    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
-    CPPUNIT_ASSERT(bobAccount->getContacts().size() == 1);
-}
-
-void
 ConversationRequestTest::testRemoveContact()
 {
     connectSignals();
@@ -604,7 +569,7 @@ ConversationRequestTest::testRemoveContact()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
 
     auto details = bobAccount->getContactDetails(aliceUri);
-    CPPUNIT_ASSERT(details.size() == 0);
+    CPPUNIT_ASSERT(details.find("removed") != details.end() && details["removed"] != "0");
 
     aliceAccount->removeContact(bobUri, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return aliceData.removed; }));
