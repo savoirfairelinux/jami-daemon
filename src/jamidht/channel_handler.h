@@ -21,11 +21,16 @@
 #pragma once
 
 #include <dhtnet/multiplexed_socket.h>
+// #include <opendht/crypto.h>
 
 namespace jami {
 
 using DeviceId = dht::PkId;
 using ConnectCb = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&)>;
+using ConnectCallbackLegacy = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const dht::InfoHash&)>;
+
+// using ConnectCb = dhtnet::ConnectCallback;
+// using ConnectCallbackLegacy = dhtnet::ConnectCallbackLegacy;
 
 /**
  * A Channel handler is used to make the link between JamiAccount and ConnectionManager
@@ -44,6 +49,8 @@ public:
      */
     virtual void connect(const DeviceId& deviceId, const std::string& name, ConnectCb&& cb)
         = 0;
+
+    virtual void connect(const dht::InfoHash& infoHash, const std::string& name, ConnectCallbackLegacy&& cb) {}
 
     /**
      * Determine if we accept or not the request. Called when ConnectionManager receives a request

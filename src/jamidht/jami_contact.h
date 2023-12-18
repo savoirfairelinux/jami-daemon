@@ -110,13 +110,16 @@ struct Contact
 
     std::map<std::string, std::string> toMap() const
     {
+        if (not(isActive() or isBanned())) {
+            return {};
+        }
+
         std::map<std::string, std::string> result {{"added", std::to_string(added)},
-                                                   {"removed", std::to_string(removed)},
                                                    {"conversationId", conversationId}};
 
         if (isActive())
             result.emplace("confirmed", confirmed ? TRUE_STR : FALSE_STR);
-        if (isBanned())
+        else if (isBanned())
             result.emplace("banned", TRUE_STR);
 
         return result;

@@ -147,7 +147,7 @@ public:
 
     std::unique_ptr<AccountConfig> buildConfig() const override
     {
-        return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_);
+        return std::make_unique<JamiAccountConfig>(getAccountID(), idPath_.string());
     }
 
     /**
@@ -294,7 +294,7 @@ public:
      */
     void addContact(const std::string& uri, bool confirmed = false);
     void removeContact(const std::string& uri, bool banned = true);
-    std::vector<std::map<std::string, std::string>> getContacts(bool includeRemoved = false) const;
+    std::vector<std::map<std::string, std::string>> getContacts() const;
 
     /**
      * Replace in contact's details related conversation
@@ -336,7 +336,10 @@ public:
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices */
-    void addDevice(const std::string& password);
+    // uint8_t addDevice(const std::string& password, const uint64_t code);
+    uint8_t addDevice(const std::string& accountId, const std::string& uriProvided);
+    // TODO naming is bad
+    void addDevice(std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Export the archive to a file
      * @param destinationPath
@@ -668,6 +671,8 @@ private:
 
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
+
+
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
     void loadAccount(const std::string& archive_password = {},
                      const std::string& archive_pin = {},

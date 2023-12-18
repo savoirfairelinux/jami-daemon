@@ -43,6 +43,8 @@ Uri::Uri(const std::string_view& uri)
             scheme_ = Uri::Scheme::RENDEZVOUS;
         else if (scheme_str == "sync")
             scheme_ = Uri::Scheme::SYNC;
+        else if (scheme_str == "auth")
+            scheme_ = Uri::Scheme::AUTH;
         else
             scheme_ = Uri::Scheme::UNRECOGNIZED;
         authority_ = uri.substr(posSep + 1);
@@ -87,6 +89,8 @@ Uri::schemeToString() const
         return "git";
     case Uri::Scheme::SYNC:
         return "sync";
+    case Uri::Scheme::AUTH:
+        return "auth";
     case Uri::Scheme::JAMI:
     case Uri::Scheme::UNRECOGNIZED:
     default:

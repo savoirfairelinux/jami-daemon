@@ -34,6 +34,8 @@
 #include <string>
 #include <filesystem>
 
+#include <dhtnet/multiplexed_socket.h>
+
 namespace dht {
 class DhtRunner;
 }
@@ -148,20 +150,22 @@ public:
     // Device management
 
     enum class AddDeviceResult {
-        SUCCESS_SHOW_PIN = 0,
+        SUCCESS_SHOW_URI= 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
-    using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
+
+    using AddDeviceCallback = std::function<void(AddDeviceResult)>;
 
     enum class RevokeDeviceResult {
         SUCCESS = 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
+
     using RevokeDeviceCallback = std::function<void(RevokeDeviceResult)>;
 
-    virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
+    virtual void addDevice(const std::shared_ptr<dhtnet::ChannelSocket>&) {};
     virtual bool revokeDevice(const std::string& /*password*/,
                               const std::string& /*device*/,
                               RevokeDeviceCallback)
@@ -223,7 +227,7 @@ public:
     void removeContact(const std::string& uri, bool banned = true);
     void removeContactConversation(const std::string& uri); // for non swarm contacts
     void updateContactConversation(const std::string& uri, const std::string& convId);
-    std::vector<std::map<std::string, std::string>> getContacts(bool includeRemoved = false) const;
+    std::vector<std::map<std::string, std::string>> getContacts() const;
 
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;

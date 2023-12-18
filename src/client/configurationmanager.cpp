@@ -336,11 +336,41 @@ setMessageDisplayed(const std::string& accountId,
 bool
 exportOnRing(const std::string& accountId, const std::string& password)
 {
-    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        account->addDevice(password);
-        return true;
-    }
     return false;
+}
+
+// TODO make this function and JamiAccount::addDevice unified in return type either void or uint64_t... and also add the appropriate callback listeners to unitTest/linkdevice
+uint8_t // TODO change uint8_t to error code and cast it where needed for java/qt bindings
+exportToPeer(const std::string& accountId, const std::string& uri)
+{
+    JAMI_DBG("[LinkDevice] exportToPeer called.");
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        // TODO remove this
+        // try {
+        //     // // // TODO rewrite with suffix="/"
+        //     // // const std::string prefix = "jami-auth://";
+        //     // // const std::string suffix = "?code=";
+        //     // // const auto posSep = uri.find(suffix);
+        //     // // const std::string accountUsername = uri.substr(prefix.length(), 40);
+        //     // //     // std::string accountUsername = uri.substr(prefix.length(), posSep-1);
+        //     // //     // std::string accountUsername = uri.substr(prefix.length(), uri.find("?"));
+        //     // // // TODO send account code in channel to validate interaction
+        //     // // const std::string accountCodeStr = uri.substr(posSep+6, uri.length());
+        //     // // uint64_t accountCode = std::stoull(accountCodeStr);
+        //     // JAMI_DBG(
+        //     //     (
+        //     //         "[LinkDevice] {" + uri + "} exportToPeer calls addDevice(" + accountUsername + ", " + accountCodeStr + ") with id = " + accountId
+        //     //     ).c_str()
+        //     // );
+        //     return account->addDevice(uri);
+        // } catch (std::exception e) {
+        //     JAMI_ERR(("[LinkDevice] Error parsing jami-auth url: " + uri).c_str());
+        // }
+        // return account->addDevice(accountId, uri);
+        return account->addDevice(accountId, uri);
+    }
+    // TODO standardize error codes
+    return 3;
 }
 
 bool
@@ -451,7 +481,7 @@ sendTrustRequest(const std::string& accountId,
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
-    if (accountType == Account::ProtocolNames::JAMI || accountType == Account::ProtocolNames::RING)
+    if (accountType == Account::ProtocolNames::RING)
         return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
         return jami::SipAccountConfig().toMap();

@@ -261,4 +261,11 @@ ut_swarm_spread_SOURCES = swarm/swarm_spread.cpp common.cpp
 check_PROGRAMS += ut_namedirectory
 ut_namedirectory_SOURCES = namedirectory/namedirectory.cpp common.cpp
 
+#
+# linkdevice
+#
+check_PROGRAMS += ut_linkdevice
+ut_linkdevice_SOURCES = linkdevice/linkdevice.cpp common.cpp
+
+
 TESTS = $(check_PROGRAMS)

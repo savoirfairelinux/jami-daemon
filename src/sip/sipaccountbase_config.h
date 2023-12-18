@@ -24,7 +24,7 @@ constexpr static unsigned MAX_PORT {65536};
 constexpr static unsigned HALF_MAX_PORT {MAX_PORT / 2};
 
 struct SipAccountBaseConfig: public AccountConfig {
-    SipAccountBaseConfig(const std::string& type, const std::string& id, const std::filesystem::path& path)
+    SipAccountBaseConfig(const std::string& type, const std::string& id, const std::string& path)
         : AccountConfig(type, id, path) {}
 
     void serializeDiff(YAML::Emitter& out, const SipAccountBaseConfig& def) const;

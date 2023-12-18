@@ -99,7 +99,7 @@ MediaPlayer::configureMediaInputs()
             audioInput_->start();
         }
     } catch (const std::exception& e) {
-        JAMI_ERROR("MediaPlayer {} open audio input failed: {}", path_, e.what());
+        JAMI_ERR("media player: %s open audio input failed: %s", path_.c_str(), e.what());
     }
 #ifdef ENABLE_VIDEO
     try {
@@ -110,7 +110,7 @@ MediaPlayer::configureMediaInputs()
         }
     } catch (const std::exception& e) {
         videoInput_ = nullptr;
-        JAMI_ERROR("MediaPlayer {} open video input failed: {}", path_, e.what());
+        JAMI_ERR("media player: %s open video input failed: %s", path_.c_str(), e.what());
     }
 #endif
 
@@ -164,7 +164,7 @@ MediaPlayer::process()
         demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Finished);
         break;
     case MediaDemuxer::Status::ReadError:
-        JAMI_ERROR("Failed to decode frame");
+        JAMI_ERR() << "Failed to decode frame";
         break;
     case MediaDemuxer::Status::ReadBufferOverflow:
         readBufferOverflow_ = true;

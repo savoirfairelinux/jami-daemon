@@ -1469,21 +1469,18 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
     if (userUri.empty())
         return false;
 
-    // Check if profile is changed by an user with correct privilege
     auto valid = false;
-    if (updateProfilePermLvl_ == MemberRole::ADMIN) {
-        std::string adminFile = fmt::format("admins/{}.crt", userUri);
-        auto adminCert = fileAtTree(adminFile, treeNew);
-        valid |= adminCert != nullptr;
+    {
+        std::lock_guard<std::mutex> lk(membersMtx_);
+        for (const auto& member : members_) {
+            if (member.uri == userUri) {
+                valid = member.role <= updateProfilePermLvl_;
+                break;
+            }
+        }
     }
-    if (updateProfilePermLvl_ >= MemberRole::MEMBER) {
-        std::string memberFile = fmt::format("members/{}.crt", userUri);
-        auto memberCert = fileAtTree(memberFile, treeNew);
-        valid |= memberCert != nullptr;
-    }
-
     if (!valid) {
-        JAMI_ERROR("Profile changed from unauthorized user: {} ({})", userDevice, userUri);
+        JAMI_ERROR("Profile changed from unauthorized user: {}", userDevice);
         return false;
     }
 
