@@ -9,7 +9,7 @@ $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
 .sum-vpx: libvpx-$(VPX_HASH).tar.gz
 
 libvpx: libvpx-$(VPX_HASH).tar.gz .sum-vpx
-	rm -Rf $@-$(VPX_HASH)
+	rm -Rf $@-$(VPX_HASH) $@
 	mkdir -p $@-$(VPX_HASH)
 	(cd $@-$(VPX_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
 	$(MOVE)
