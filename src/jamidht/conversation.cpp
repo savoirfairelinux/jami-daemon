@@ -663,6 +663,12 @@ public:
     std::vector<libjami::SwarmMessage> addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
                         bool messageReceived = false,
                         History* history = nullptr) const;
+    // While loading the history, we need to avoid:
+    // - reloading history (can just be ignored)
+    // - adding new commits (should wait for history to be loaded)
+    std::atomic_bool isLoadingHistory_ {false};
+    mutable std::mutex historyMtx_ {};
+    mutable std::condition_variable historyCv_ {};
 
     void handleReaction(History& history, const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
     void handleEdition(History& history, const std::shared_ptr<libjami::SwarmMessage>& sharedCommit, bool messageReceived) const;
@@ -816,8 +822,9 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 std::vector<libjami::SwarmMessage>
 Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
 {
-    if (!repository_)
+    if (!repository_ || isLoadingHistory_)
         return {};
+    isLoadingHistory_ = true;
     auto startLogging = options.from == "";
     auto breakLogging = false;
     auto currentHistorySize = loadedHistory_.messageList.size();
@@ -864,6 +871,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
         [](auto, auto, auto) { return false; },
         options.from,
         options.logIfNotFound);
+    isLoadingHistory_ = false;
     return ret;
 }
 
@@ -984,6 +992,10 @@ Conversation::Impl::handleMessage(History& history, const std::shared_ptr<libjam
 std::vector<libjami::SwarmMessage>
 Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits, bool messageReceived, History* optHistory) const
 {
+    if (messageReceived && isLoadingHistory_) {
+        std::unique_lock<std::mutex> lk(historyMtx_);
+        historyCv_.wait(lk, [&] { return !isLoadingHistory_; });
+    }
     std::vector<libjami::SwarmMessage> messages;
     auto addCommit = [&](const auto& commit) {
         auto* history = optHistory ? optHistory : &loadedHistory_;
