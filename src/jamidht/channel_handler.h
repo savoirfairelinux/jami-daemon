@@ -25,7 +25,8 @@
 namespace jami {
 
 using DeviceId = dht::PkId;
-using ConnectCb = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&)>;
+using ConnectCb = dhtnet::ConnectCallback;
+using ConnectCallbackLegacy = dhtnet::ConnectCallbackLegacy;
 
 /**
  * A Channel handler is used to make the link between JamiAccount and ConnectionManager
@@ -44,6 +45,14 @@ public:
      */
     virtual void connect(const DeviceId& deviceId, const std::string& name, ConnectCb&& cb)
         = 0;
+
+    /**
+     * Ask for a new channel
+     * @param deviceId      The device to connect
+     * @param name          The name of the channel
+     * @param cb            The callback to call when connected (can be immediate if already connected)
+     */
+    virtual void connect(const dht::InfoHash& deviceId, const std::string& name, ConnectCallbackLegacy&& cb) {}
 
     /**
      * Determine if we accept or not the request. Called when ConnectionManager receives a request
