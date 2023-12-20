@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 311bd018fc07aaf62d4c2d2494e08b5ee97e6846
+PJPROJECT_VERSION := d044ad6c5b4221648c555da16196804e4721299c
 PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
@@ -42,7 +42,6 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
-	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif

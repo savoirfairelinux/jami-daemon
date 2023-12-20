@@ -1,10 +1,9 @@
 {
     "name": "pjproject",
-    "version": "311bd018fc07aaf62d4c2d2494e08b5ee97e6846",
+    "version": "d044ad6c5b4221648c555da16196804e4721299c",
     "url": "https://github.com/savoirfairelinux/pjproject/archive/__VERSION__.tar.gz",
     "deps": ["gnutls"],
     "patches": [
-        "0009-add-config-site.patch",
         "0001-win-config.patch",
         "0002-win-vs-gnutls.patch"
     ],
