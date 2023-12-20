@@ -1371,7 +1371,6 @@ Conversation::sync(const std::string& member,
                     start = 0;
                 sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
             }
-            account->sendProfile(sthis->id(), member, deviceId);
         }
     });
 }
@@ -1953,7 +1952,22 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
 void
 Conversation::addSwarmChannel(std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
+    auto deviceId = channel->deviceId();
+    // Transmit avatar if necessary
+    // We do this here, because at this point we know both sides are connected and in
+    // the same conversation
+    // addSwarmChannel is a bit more complex, but it should be the best moment to do this.
+    auto cert = channel->peerCertificate();
+    if (!cert || !cert->issuer)
+        return;
+    auto member = cert->issuer->getId().toString();
     pimpl_->swarmManager_->addChannel(std::move(channel));
+    dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w=weak_from_this()]{
+        auto sthis = w.lock();
+        if (auto account = a.lock()) {
+            account->sendProfile(sthis->id(), member, deviceId.toString());
+        }
+    });
 }
 
 uint32_t
