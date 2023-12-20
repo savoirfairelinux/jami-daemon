@@ -1,6 +1,6 @@
 {
     "name": "pjproject",
-    "version": "311bd018fc07aaf62d4c2d2494e08b5ee97e6846",
+    "version": "68be61f33402dd7a9b091e98e3f9a7e5c6c55d8d",
     "url": "https://github.com/savoirfairelinux/pjproject/archive/__VERSION__.tar.gz",
     "deps": ["gnutls"],
     "patches": [
