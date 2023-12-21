@@ -1183,6 +1183,19 @@ ConversationModule::Impl::fixStructures(std::shared_ptr<JamiAccount> acc, const 
                 }
             }
         }
+        auto requestRemoved = false;
+        for (auto it = conversationsRequests_.begin(); it != conversationsRequests_.end();) {
+            if (it->second.from == username_) {
+                JAMI_WARNING("Detected request from ourself, this makes no sense. Remove {}", it->first);
+                it = conversationsRequests_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        if (requestRemoved) {
+            saveConvRequests();
+        }
+
     }
     for (const auto& invalidPendingRequest : invalidPendingRequests)
         acc->discardTrustRequest(invalidPendingRequest);
@@ -2167,6 +2180,10 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     }
 
     for (const auto& [convId, req] : msg.cr) {
+        if (req.from == pimpl_->username_) {
+            JAMI_WARNING("Detected request from ourself, ignore {}.", convId);
+            continue;
+        }
         if (pimpl_->isConversation(convId)) {
             // Already handled request
             pimpl_->rmConversationRequest(convId);
