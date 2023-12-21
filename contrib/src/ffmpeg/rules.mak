@@ -188,7 +188,9 @@ FFMPEGCONF += \
 #plugins
 
 ifdef WITH_FREETYPE
+ifndef HAVE_LINUX
 DEPS_ffmpeg += freetype
+endif
 endif
 
 ifdef __DEBUG__
