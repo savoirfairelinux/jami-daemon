@@ -24,6 +24,10 @@
 
 namespace jami {
 
+using namespace std::string_view_literals;
+
+static constexpr std::string_view DATA_TRANSFER_SCHEME = "data-transfer://"sv;
+
 class Uri
 {
 public:
@@ -38,7 +42,7 @@ public:
         UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 
-    Uri(const std::string_view& uri);
+    Uri(std::string_view uri);
 
     const std::string& authority() const;
     Scheme scheme() const;

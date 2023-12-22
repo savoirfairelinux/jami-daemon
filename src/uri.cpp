@@ -21,7 +21,7 @@
 
 namespace jami {
 
-Uri::Uri(const std::string_view& uri)
+Uri::Uri(std::string_view uri)
 {
     // TODO better handling of Uri, for now it's only used for
     // setMessageDisplayed to differentiate swarm:xxx

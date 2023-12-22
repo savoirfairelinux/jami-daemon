@@ -108,9 +108,6 @@ constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
-static constexpr const char FILE_URI[] {"file://"};
-static constexpr const char VCARD_URI[] {"vcard://"};
-static constexpr const char DATA_TRANSFER_URI[] {"data-transfer://"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 static constexpr auto TREATED_PATH = "treatedImMessages";
@@ -3693,9 +3690,10 @@ JamiAccount::sendProfile(const std::string& convId,
                          const std::string& peerUri,
                          const std::string& deviceId)
 {
-    if (not std::filesystem::is_regular_file(profilePath()))
+    auto accProfilePath = profilePath();
+    if (not std::filesystem::is_regular_file(accProfilePath))
         return;
-    auto currentSha3 = fileutils::sha3File(profilePath());
+    auto currentSha3 = fileutils::sha3File(accProfilePath);
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
         JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
@@ -3703,14 +3701,14 @@ JamiAccount::sendProfile(const std::string& convId,
     }
     // We need a new channel
     transferFile(convId,
-                 profilePath().string(),
+                 accProfilePath.string(),
                  deviceId,
                  "profile.vcf",
                  "",
                  0,
                  0,
                  currentSha3,
-                 fileutils::lastWriteTimeInSeconds(profilePath()),
+                 fileutils::lastWriteTimeInSeconds(accProfilePath),
                  [accId = getAccountID(), peerUri, deviceId]() {
                      // Mark the VCard as sent
                      auto sendDir = fileutils::get_cache_dir() / accId / "vcard" / peerUri;
@@ -4082,8 +4080,8 @@ JamiAccount::transferFile(const std::string& conversationId,
         fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified) : fileId;
     auto channelName
         = conversationId.empty()
-              ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_URI, sha3Sum, modified)
-              : fmt::format("{}{}/{}/{}", DATA_TRANSFER_URI, conversationId, currentDeviceId(), fid);
+              ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_SCHEME, sha3Sum, modified)
+              : fmt::format("{}{}/{}/{}", DATA_TRANSFER_SCHEME, conversationId, currentDeviceId(), fid);
     std::lock_guard<std::mutex> lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
@@ -4137,7 +4135,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
             return;
 
         auto channelName = fmt::format("{}{}/{}/{}",
-                                       DATA_TRANSFER_URI,
+                                       DATA_TRANSFER_SCHEME,
                                        conversationId,
                                        currentDeviceId(),
                                        fileId);
@@ -4196,7 +4194,7 @@ JamiAccount::askForProfile(const std::string& conversationId,
         return;
 
     auto channelName = fmt::format("{}{}/profile/{}.vcf",
-                                   DATA_TRANSFER_URI,
+                                   DATA_TRANSFER_SCHEME,
                                    conversationId,
                                    memberUri);
     // We can avoid to negotiate new sessions, as the file notif

@@ -53,7 +53,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
         return false;
     auto uri = cert->issuer->getId().toString();
     // Else, check if it's a profile or file in a conversation.
-    auto idstr = std::string_view(name).substr(16);
+    auto idstr = std::string_view(name).substr(DATA_TRANSFER_SCHEME.size());
     // Remove arguments for now
     auto sep = idstr.find_last_of('?');
     idstr = idstr.substr(0, sep);
@@ -95,7 +95,8 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     if (!acc)
         return;
 
-    auto idstr = name.substr(16);
+    // Remove scheme
+    auto idstr = name.substr(DATA_TRANSFER_SCHEME.size());
     // Parse arguments
     auto sep = idstr.find_last_of('?');
     std::string arguments;
