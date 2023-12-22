@@ -247,6 +247,7 @@ public:
             waitingPath_ = conversationDataPath_ / "waiting";
         }
         profilesPath_ = fileutils::get_data_dir() / accountId_ / "profiles";
+        accountProfilePath_ = fileutils::get_data_dir() / accountId / "profile.vcf";
         loadWaiting();
     }
 
@@ -285,6 +286,7 @@ public:
     std::string to_ {};
     std::filesystem::path waitingPath_ {};
     std::filesystem::path profilesPath_ {};
+    std::filesystem::path accountProfilePath_ {};
     std::filesystem::path conversationDataPath_ {};
 
     std::mutex mapMutex_ {};
@@ -546,6 +548,17 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                                                  code] {
                 if (auto sthis_ = w.lock()) {
                     auto& pimpl = sthis_->pimpl_;
+
+                    auto destPath = sthis_->profilePath(uri);
+                    std::filesystem::rename(path, destPath);
+
+                    if (!pimpl->accountUri_.empty() && uri == pimpl->accountUri_) {
+                        if (!fileutils::createFileLink(destPath, pimpl->accountProfilePath_)) {
+                            std::error_code ec;
+                            std::filesystem::copy_file(destPath, pimpl->accountProfilePath_, ec);
+                        }
+                    }
+
                     std::lock_guard<std::mutex> lk {pimpl->mapMutex_};
                     auto itO = pimpl->vcards_.find({deviceId, uri});
                     if (itO != pimpl->vcards_.end())
@@ -553,7 +566,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                     if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
                         emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                   uri,
-                                                                                  path);
+                                                                                  destPath);
                     }
                 }
             });
