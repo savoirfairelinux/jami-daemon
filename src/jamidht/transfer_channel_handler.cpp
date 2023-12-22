@@ -164,7 +164,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         return;
     } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
         auto path = acc->dataTransfer()->profilePath(fileId.substr(0, fileId.size() - 4));
-        acc->dataTransfer()->transferFile(channel, fileId, "", path);
+        acc->dataTransfer()->transferFile(channel, fileId, "", path.string());
         return;
     } else if (fileId == "profile.vcf") {
         acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
@@ -178,8 +178,8 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         return;
     }
     auto interactionId = fileId.substr(0, sep);
-    std::string path = dt->path(fileId);
-    dt->transferFile(channel, fileId, interactionId, path, start, end);
+    auto path = dt->path(fileId);
+    dt->transferFile(channel, fileId, interactionId, path.string(), start, end);
 }
 
 } // namespace jami

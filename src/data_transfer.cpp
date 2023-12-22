@@ -369,7 +369,7 @@ TransferManager::info(const std::string& fileId,
 
     auto itI = pimpl_->incomings_.find(fileId);
     auto itW = pimpl_->waitingIds_.find(fileId);
-    path = this->path(fileId);
+    path = this->path(fileId).string();
     if (itI != pimpl_->incomings_.end()) {
         total = itI->second->info().totalSize;
         progress = itI->second->info().bytesProgress;
@@ -478,10 +478,10 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     }
 }
 
-std::string
+std::filesystem::path
 TransferManager::path(const std::string& fileId) const
 {
-    return (pimpl_->conversationDataPath_ / fileId).string();
+    return pimpl_->conversationDataPath_ / fileId;
 }
 
 void
@@ -560,11 +560,10 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     }
 }
 
-std::string
+std::filesystem::path
 TransferManager::profilePath(const std::string& contactId) const
 {
-    // TODO iOS?
-    return (pimpl_->profilesPath_ / fmt::format("{}.vcf", base64::encode(contactId))).string();
+    return pimpl_->profilesPath_ / fmt::format("{}.vcf", base64::encode(contactId));
 }
 
 std::vector<WaitingRequest>

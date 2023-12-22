@@ -188,7 +188,7 @@ public:
      * Retrieve path of a file
      * @param id
      */
-    std::string path(const std::string& fileId) const;
+    std::filesystem::path path(const std::string& fileId) const;
 
     /**
      * Retrieve waiting files
@@ -202,7 +202,7 @@ public:
      * @param contactId     contact's id
      * @return where profile.vcf is stored
      */
-    std::string profilePath(const std::string& contactId) const;
+    std::filesystem::path profilePath(const std::string& contactId) const;
 
 private:
     std::weak_ptr<TransferManager> weak()
