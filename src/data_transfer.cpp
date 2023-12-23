@@ -494,9 +494,9 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     if (!channel)
         return;
 
-    auto name = channel->name();
+    auto chName = channel->name();
+    std::string_view name = chName;
     auto sep = name.find_last_of('?');
-    std::string arguments;
     if (sep != std::string::npos)
         name = name.substr(0, sep);
 
@@ -509,7 +509,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
         return;
 
     auto uri = fileId == "profile.vcf" ? cert->issuer->getId().toString()
-                                       : fileId.substr(0, fileId.size() - 4 /*.vcf*/);
+                                       : std::string(fileId.substr(0, fileId.size() - 4 /*.vcf*/));
 
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
     auto idx = std::make_pair(deviceId, uri);
