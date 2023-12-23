@@ -328,8 +328,7 @@ public:
                            const std::string& userUri,
                            std::string_view oldCert = ""sv) const
     {
-        auto cert = dht::crypto::Certificate((const uint8_t*) certContent.data(),
-                                             certContent.size());
+        auto cert = dht::crypto::Certificate(certContent);
         auto isDeviceCertificate = cert.getId().toString() != userUri;
         auto issuerUid = cert.getIssuerUID();
         if (isDeviceCertificate && issuerUid.empty()) {
@@ -337,8 +336,7 @@ public:
             JAMI_ERROR("Empty issuer for {}", cert.getId().toString());
         }
         if (!oldCert.empty()) {
-            auto deviceCert = dht::crypto::Certificate((const uint8_t*) oldCert.data(),
-                                                       oldCert.size());
+            auto deviceCert = dht::crypto::Certificate(oldCert);
             if (isDeviceCertificate) {
                 if (issuerUid != deviceCert.getIssuerUID()) {
                     // NOTE: Here, because JAMS certificate can be incorrectly formatted, there is
@@ -1290,7 +1288,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     std::vector<std::string> devicesRemoved;
 
     // Check that no weird file is added nor removed
-    const std::regex regex_devices("devices.(\\w+)\\.crt");
+    static const std::regex regex_devices("devices.(\\w+)\\.crt");
     std::smatch base_match;
     for (const auto& f : changedFiles) {
         if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile
@@ -1354,11 +1352,11 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     std::vector<std::string> bannedFiles;
     // Check that no weird file is added nor removed
 
-    const std::regex regex_votes("votes." + voteType
+    static const std::regex regex_votes("votes." + voteType
                                  + ".(members|devices|admins|invited).(\\w+).(\\w+)");
-    const std::regex regex_devices("devices.(\\w+)\\.crt");
-    const std::regex regex_banned("banned.(members|devices|admins).(\\w+)\\.crt");
-    const std::regex regex_banned_invited("banned.(invited).(\\w+)");
+    static const std::regex regex_devices("devices.(\\w+)\\.crt");
+    static const std::regex regex_banned("banned.(members|devices|admins).(\\w+)\\.crt");
+    static const std::regex regex_banned_invited("banned.(invited).(\\w+)");
     std::smatch base_match;
     for (const auto& f : changedFiles) {
         if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile
@@ -1525,10 +1523,7 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         JAMI_ERROR("{} announced but not found", deviceFile);
         return false;
     }
-    auto* blob = reinterpret_cast<git_blob*>(blob_device.get());
-    auto deviceCert = dht::crypto::Certificate(static_cast<const uint8_t*>(
-                                                   git_blob_rawcontent(blob)),
-                                               git_blob_rawsize(blob));
+    auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
     auto userUri = deviceCert.getIssuerUID();
     if (userUri.empty()) {
         JAMI_ERROR("{} got no issuer UID", deviceFile);
@@ -1551,10 +1546,7 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     }
 
     // Check that certificates were still valid
-    blob = reinterpret_cast<git_blob*>(blob_parent.get());
-    auto parentCert = dht::crypto::Certificate(static_cast<const uint8_t*>(
-                                                   git_blob_rawcontent(blob)),
-                                               git_blob_rawsize(blob));
+    auto parentCert = dht::crypto::Certificate(as_view(blob_parent));
 
     git_oid oid;
     git_commit* commit_ptr = nullptr;
