@@ -176,6 +176,7 @@ public:
             swarmManager_->setMobility(shared->isMobile());
             accountId_ = shared->getAccountID();
             transferManager_ = std::make_shared<TransferManager>(shared->getAccountID(),
+                                                                 "",
                                                                  repository_->id(),
                                                                  Manager::instance().getSeededRandomEngine());
             conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID()

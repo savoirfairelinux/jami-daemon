@@ -235,8 +235,9 @@ IncomingFile::process()
 class TransferManager::Impl
 {
 public:
-    Impl(const std::string& accountId, const std::string& to, const std::mt19937_64& rand)
+    Impl(const std::string& accountId, const std::string& accountUri, const std::string& to, const std::mt19937_64& rand)
         : accountId_(accountId)
+        , accountUri_(accountUri)
         , to_(to)
         , rand_(rand)
     {
@@ -280,6 +281,7 @@ public:
     }
 
     std::string accountId_ {};
+    std::string accountUri_ {};
     std::string to_ {};
     std::filesystem::path waitingPath_ {};
     std::filesystem::path profilesPath_ {};
@@ -294,8 +296,8 @@ public:
     std::mt19937_64 rand_;
 };
 
-TransferManager::TransferManager(const std::string& accountId, const std::string& to, const std::mt19937_64& rand)
-    : pimpl_ {std::make_unique<Impl>(accountId, to, rand)}
+TransferManager::TransferManager(const std::string& accountId, const std::string& accountUri, const std::string& to, const std::mt19937_64& rand)
+    : pimpl_ {std::make_unique<Impl>(accountId, accountUri, to, rand)}
 {}
 
 TransferManager::~TransferManager() {}

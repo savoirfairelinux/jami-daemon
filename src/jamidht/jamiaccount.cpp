@@ -274,7 +274,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
     , connectionManager_ {}
-    , nonSwarmTransferManager_(std::make_shared<TransferManager>(accountId, "", dht::crypto::getDerivedRandomEngine(rand)))
+    , nonSwarmTransferManager_()
 {}
 
 JamiAccount::~JamiAccount() noexcept
@@ -4217,6 +4217,8 @@ JamiAccount::askForProfile(const std::string& conversationId,
 void
 JamiAccount::initConnectionManager()
 {
+    if (!nonSwarmTransferManager_)
+        nonSwarmTransferManager_ = std::make_shared<TransferManager>(accountID_, config().username, "", dht::crypto::getDerivedRandomEngine(rand));
     if (!connectionManager_) {
         auto connectionManagerConfig = std::make_shared<dhtnet::ConnectionManager::Config>();
         connectionManagerConfig->ioContext = Manager::instance().ioContext();
