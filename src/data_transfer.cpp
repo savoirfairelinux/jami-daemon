@@ -247,6 +247,7 @@ public:
             waitingPath_ = conversationDataPath_ / "waiting";
         }
         profilesPath_ = fileutils::get_data_dir() / accountId_ / "profiles";
+        accountProfilePath_ = fileutils::get_data_dir() / accountId / "profile.vcf";
         loadWaiting();
     }
 
@@ -285,6 +286,7 @@ public:
     std::string to_ {};
     std::filesystem::path waitingPath_ {};
     std::filesystem::path profilesPath_ {};
+    std::filesystem::path accountProfilePath_ {};
     std::filesystem::path conversationDataPath_ {};
 
     std::mutex mapMutex_ {};
@@ -510,7 +512,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                                        : fileId.substr(0, fileId.size() - 4 /*.vcf*/);
 
     std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
-    auto idx = std::pair<std::string, std::string> {deviceId, uri};
+    auto idx = std::make_pair(deviceId, uri);
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itV = pimpl_->vcards_.find(idx);
     if (itV != pimpl_->vcards_.end()) {
@@ -536,24 +538,37 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                                        accountId = pimpl_->accountId_,
                                        cert = std::move(cert),
                                        path = info.path](uint32_t code) {
-            // schedule destroy transfer as not needed
             dht::ThreadPool().computation().run([w,
                                                  uri = std::move(uri),
                                                  deviceId = std::move(deviceId),
                                                  accountId = std::move(accountId),
-                                                 cert = std::move(cert),
                                                  path = std::move(path),
                                                  code] {
                 if (auto sthis_ = w.lock()) {
                     auto& pimpl = sthis_->pimpl_;
-                    std::lock_guard<std::mutex> lk {pimpl->mapMutex_};
+
+                    auto destPath = sthis_->profilePath(uri);
+                    {
+                        // Move profile to destination path
+                        std::lock_guard lock(dhtnet::fileutils::getFileLock(destPath));
+                        std::filesystem::rename(path, destPath);
+                        if (!pimpl->accountUri_.empty() && uri == pimpl->accountUri_) {
+                            // If this is the account profile, link or copy it to the account profile path
+                            if (!fileutils::createFileLink(destPath, pimpl->accountProfilePath_)) {
+                                std::error_code ec;
+                                std::filesystem::copy_file(destPath, pimpl->accountProfilePath_, ec);
+                            }
+                        }
+                    }
+
+                    std::lock_guard lk {pimpl->mapMutex_};
                     auto itO = pimpl->vcards_.find({deviceId, uri});
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
                         emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                   uri,
-                                                                                  path);
+                                                                                  destPath);
                     }
                 }
             });
