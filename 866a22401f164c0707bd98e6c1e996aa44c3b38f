@@ -22,6 +22,52 @@
       },
       "revId": "866a22401f164c0707bd98e6c1e996aa44c3b38f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "60ae388b_1ede1a94",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 2141,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-27T14:24:05Z",
+      "side": 0,
+      "message": "re-add",
+      "range": {
+        "startLine": 2141,
+        "startChar": 48,
+        "endLine": 2141,
+        "endChar": 67
+      },
+      "revId": "866a22401f164c0707bd98e6c1e996aa44c3b38f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1347b322_4502c83f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 2885,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-27T14:24:05Z",
+      "side": 0,
+      "message": "re-add",
+      "range": {
+        "startLine": 2885,
+        "startChar": 30,
+        "endLine": 2885,
+        "endChar": 44
+      },
+      "revId": "866a22401f164c0707bd98e6c1e996aa44c3b38f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
