@@ -1978,9 +1978,12 @@ JamiAccount::doRegister_()
                 }
 
                 auto uri = Uri(name);
-                auto itHandler = channelHandlers_.find(uri.scheme());
-                if (itHandler != channelHandlers_.end() && itHandler->second)
-                    return itHandler->second->onRequest(cert, name);
+                {
+                    std::lock_guard<std::mutex> lk(connManagerMtx_);
+                    auto itHandler = channelHandlers_.find(uri.scheme());
+                    if (itHandler != channelHandlers_.end() && itHandler->second)
+                        return itHandler->second->onRequest(cert, name);
+                }
                 if (name == "sip") {
                     return true;
                 }
@@ -2065,6 +2068,7 @@ JamiAccount::doRegister_()
                 } else {
                     // TODO move git://
                     auto uri = Uri(name);
+                    std::lock_guard<std::mutex> lk(connManagerMtx_);
                     auto itHandler = channelHandlers_.find(uri.scheme());
                     if (itHandler != channelHandlers_.end() && itHandler->second)
                         itHandler->second->onReady(cert, name, std::move(channel));
@@ -2095,10 +2099,15 @@ JamiAccount::doRegister_()
                                     }
                                     std::map<std::string, std::string> payloads = {
                                         {datatype, utf8_make_valid(v.msg)}};
-                                    onTextMessage(msgId,
-                                                  peer_account.toString(),
-                                                  cert->getPublicKey().getLongId().toString(),
-                                                  payloads);
+                                    // Re-trigger on IO to avoid to lock configurationMtx from a DHT callback
+                                    dht::ThreadPool::io().run([w=weak(), payloads=std::move(payloads), msgId, peer_account, cert] {
+                                        if (auto shared = w.lock()) {
+                                            shared->onTextMessage(msgId,
+                                                        peer_account.toString(),
+                                                        cert->getPublicKey().getLongId().toString(),
+                                                        payloads);
+                                        }
+                                    });
                                     JAMI_DBG() << "Sending message confirmation " << v.id;
                                     dht_->putEncrypted(inboxDeviceKey,
                                                        v.from,
