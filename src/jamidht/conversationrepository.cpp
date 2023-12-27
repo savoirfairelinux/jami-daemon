@@ -1352,7 +1352,7 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     std::vector<std::string> bannedFiles;
     // Check that no weird file is added nor removed
 
-    static const std::regex regex_votes("votes." + voteType
+    const std::regex regex_votes("votes." + voteType
                                  + ".(members|devices|admins|invited).(\\w+).(\\w+)");
     static const std::regex regex_devices("devices.(\\w+)\\.crt");
     static const std::regex regex_banned("banned.(members|devices|admins).(\\w+)\\.crt");
