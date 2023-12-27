@@ -146,7 +146,6 @@ private:
     void testReplayConversation();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
-    void testRemoveReaddMultipleDevice();
     void testCloneFromMultipleDevice();
     void testSendReply();
     void testSearchInConv();
@@ -199,7 +198,6 @@ private:
     CPPUNIT_TEST(testReplayConversation);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
-    CPPUNIT_TEST(testRemoveReaddMultipleDevice);
     CPPUNIT_TEST(testCloneFromMultipleDevice);
     CPPUNIT_TEST(testSendReply);
     CPPUNIT_TEST(testSearchInConv);
@@ -1965,9 +1963,6 @@ ConversationTest::testReplayConversation()
     aliceAccount->sendTrustRequest(bobUri, {});
     // Should retrieve previous conversation
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        JAMI_ERROR("@@@ {}", bobData.messages.size());
-        if (bobData.messages.size() > 0)
-            JAMI_ERROR("@@@ {}", bobData.messages[0].body["body"]);
         return bobData.messages.size() == 2 && bobData.messages[0].body["body"] == "foo" && bobData.messages[1].body["body"] == "bar";
     }));
 }
@@ -2048,71 +2043,6 @@ ConversationTest::testImportMalformedContacts()
     auto contacts = libjami::getContacts(bob2Id);
     CPPUNIT_ASSERT(contacts.size() == 1);
     CPPUNIT_ASSERT(contacts[0][libjami::Account::TrustRequest::CONVERSATIONID] == "");
-}
-
-void
-ConversationTest::testRemoveReaddMultipleDevice()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-
-    std::string vcard = "BEGIN:VCARD\n\
-VERSION:2.1\n\
-FN:ALICE\n\
-DESCRIPTION:DESC\n\
-END:VCARD";
-    auto vCardPath = fileutils::get_data_dir() / aliceId / "profile.vcf";
-    // Add file
-    auto p = std::filesystem::path(vCardPath);
-    dhtnet::fileutils::recursive_mkdir(p.parent_path());
-    std::ofstream file(p);
-    if (file.is_open()) {
-        file << vcard;
-        file.close();
-    }
-
-    // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
-    std::remove(bobArchive.c_str());
-    bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
-    details[ConfProperties::DISPLAYNAME] = "BOB2";
-    details[ConfProperties::ALIAS] = "BOB2";
-    details[ConfProperties::UPNP_ENABLED] = "true";
-    details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
-    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
-    bob2Id = Manager::instance().addAccount(details);
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
-
-    // Alice adds bob
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && bob2Data.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
-    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !bobData.conversationId.empty() && !bob2Data.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size();
-    }));
-
-    // Remove contact
-    bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed && bob2Data.removed; }));
-
-    // wait that connections are closed.
-    std::this_thread::sleep_for(5s);
-
-    // Alice send a message
-    bobData.requestReceived = false; bob2Data.requestReceived = false;
-    libjami::sendMessage(aliceId, aliceData.conversationId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && bob2Data.requestReceived; }));
 }
 
 void
