@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4645ff02_497b2613",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2023-12-27T14:16:53Z",
+      "side": 0,
+      "message": "This should stay (or should be removed in the API)",
+      "range": {
+        "startLine": 337,
+        "startChar": 0,
+        "endLine": 337,
+        "endChar": 12
+      },
+      "revId": "866a22401f164c0707bd98e6c1e996aa44c3b38f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
