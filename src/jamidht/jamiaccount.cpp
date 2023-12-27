@@ -300,8 +300,8 @@ JamiAccount::shutdownConnections()
         // Just move destruction on another thread.
         dht::ThreadPool::io().run([conMgr = std::make_shared<decltype(connectionManager_)>(
                                        std::move(connectionManager_))] {});
-        channelHandlers_.clear();
         connectionManager_.reset();
+        channelHandlers_.clear();
     }
     if (convModule_)
         convModule_->shutdownConnections();
@@ -1981,10 +1981,7 @@ JamiAccount::doRegister_()
                 auto itHandler = channelHandlers_.find(uri.scheme());
                 if (itHandler != channelHandlers_.end() && itHandler->second)
                     return itHandler->second->onRequest(cert, name);
-                if (name == "sip") {
-                    return true;
-                }
-                return false;
+                return name == "sip";
             });
         connectionManager_->onConnectionReady([this](const DeviceId& deviceId,
                                                      const std::string& name,
@@ -2095,10 +2092,15 @@ JamiAccount::doRegister_()
                                     }
                                     std::map<std::string, std::string> payloads = {
                                         {datatype, utf8_make_valid(v.msg)}};
-                                    onTextMessage(msgId,
-                                                  peer_account.toString(),
-                                                  cert->getPublicKey().getLongId().toString(),
-                                                  payloads);
+                                    // Re-trigger on IO to avoid to lock configurationMtx from a DHT callback
+                                    dht::ThreadPool::io().run([w=weak(), payloads=std::move(payloads), msgId, peer_account, cert] {
+                                        if (auto shared = w.lock()) {
+                                            shared->onTextMessage(msgId,
+                                                        peer_account.toString(),
+                                                        cert->getPublicKey().getLongId().toString(),
+                                                        payloads);
+                                        }
+                                    });
                                     JAMI_DBG() << "Sending message confirmation " << v.id;
                                     dht_->putEncrypted(inboxDeviceKey,
                                                        v.from,
