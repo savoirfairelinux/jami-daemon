@@ -119,6 +119,7 @@ ContactList::updateConversation(const dht::InfoHash& h, const std::string& conve
 bool
 ContactList::removeContact(const dht::InfoHash& h, bool ban)
 {
+    std::unique_lock<std::mutex> lk(mutex_);
     JAMI_WARN("[Contacts] removeContact: %s", h.to_c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
@@ -133,6 +134,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     if (trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
+    lk.unlock();
 #ifdef ENABLE_PLUGIN
     auto filename = path_.filename().string();
     jami::Manager::instance()
@@ -206,8 +208,11 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
-        if (trustRequests_.erase(id) > 0)
-            saveTrustRequests();
+        {
+            std::lock_guard<std::mutex> lk(mutex_);
+            if (trustRequests_.erase(id) > 0)
+                saveTrustRequests();
+        }
         if (c->second.isActive()) {
             trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
@@ -290,6 +295,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
 {
     bool accept = false;
     // Check existing contact
+    std::unique_lock<std::mutex> lk(mutex_);
     auto contact = contacts_.find(peer_account);
     bool active = false;
     if (contact != contacts_.end()) {
@@ -329,6 +335,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
         }
         saveTrustRequests();
     }
+    lk.unlock();
     // Note: call JamiAccount's callback to build ConversationRequest anyway
     if (!confirm)
         callbacks_.trustRequest(peer_account.toString(),
@@ -349,6 +356,7 @@ ContactList::getTrustRequests() const
 {
     using Map = std::map<std::string, std::string>;
     std::vector<Map> ret;
+    std::lock_guard<std::mutex> lk(mutex_);
     ret.reserve(trustRequests_.size());
     for (const auto& r : trustRequests_) {
         ret.emplace_back(
@@ -365,6 +373,7 @@ std::map<std::string, std::string>
 ContactList::getTrustRequest(const dht::InfoHash& from) const
 {
     using Map = std::map<std::string, std::string>;
+    std::lock_guard<std::mutex> lk(mutex_);
     auto r = trustRequests_.find(from);
     if (r == trustRequests_.end())
         return {};
@@ -379,13 +388,16 @@ bool
 ContactList::acceptTrustRequest(const dht::InfoHash& from)
 {
     // The contact sent us a TR so we are in its contact list
+    std::unique_lock<std::mutex> lk(mutex_);
     auto i = trustRequests_.find(from);
     if (i == trustRequests_.end())
         return false;
-    addContact(from, true, i->second.conversationId);
+    auto convId =  i->second.conversationId;
     // Clear trust request
     trustRequests_.erase(i);
     saveTrustRequests();
+    lk.unlock();
+    addContact(from, true, convId);
     return true;
 }
 
@@ -399,6 +411,7 @@ ContactList::acceptConversation(const std::string& convId, const std::string& de
 bool
 ContactList::discardTrustRequest(const dht::InfoHash& from)
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     if (trustRequests_.erase(from) > 0) {
         saveTrustRequests();
         return true;
@@ -572,6 +585,7 @@ ContactList::getSyncData() const
     sync_data.peers = getContacts();
 
     static constexpr size_t MAX_TRUST_REQUESTS = 20;
+    std::lock_guard<std::mutex> lk(mutex_);
     if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
         for (const auto& req : trustRequests_)
             sync_data.trust_requests.emplace(req.first,

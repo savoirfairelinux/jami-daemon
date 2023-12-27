@@ -147,7 +147,7 @@ public:
     bool syncDevice(const dht::PkId& device, const time_point& syncDate);
 
 private:
-    mutable std::mutex lock;
+    mutable std::mutex mutex_;
     std::map<dht::InfoHash, Contact> contacts_;
     std::map<dht::InfoHash, TrustRequest> trustRequests_;
     std::map<dht::InfoHash, KnownDevice> knownDevicesLegacy_;
