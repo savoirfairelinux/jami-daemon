@@ -170,6 +170,19 @@ public:
             throw std::logic_error("Couldn't clone repository");
         }
         init();
+        auto updateAC = true;
+#if TARGET_OS_IOS
+        updateAC = !Manager::instance().isIOSExtension;
+#endif
+        if (updateAC) {
+            // To get current active calls from previous commit, we need to read the history
+            auto convCommits = loadMessages({});
+            std::reverse(std::begin(convCommits), std::end(convCommits));
+            for (const auto& c : convCommits) {
+                updateActiveCalls(c);
+            }
+        }
+
     }
 
     void init()
