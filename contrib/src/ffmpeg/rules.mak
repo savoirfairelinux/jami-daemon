@@ -235,11 +235,8 @@ FFMPEGCONF += \
 	--enable-filter=lut \
 	--enable-filter=negate \
 	--enable-filter=colorkey \
-	--enable-filter=transpose
-
-ifdef WITH_FREETYPE
-FFMPEGCONF += --enable-libfreetype
-endif
+	--enable-filter=transpose \
+	--enable-libfreetype
 
 #platform specific options
 
