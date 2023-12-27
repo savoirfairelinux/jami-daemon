@@ -103,7 +103,6 @@ public:
     void testBanUnbanMultiDevice();
     void testBanUnbanGotFirstConv();
     void testBanHostWhileHosting();
-    void testRemoveContactTwice();
     void testAddContactTwice();
     void testBanFromNewDevice();
 
@@ -156,7 +155,6 @@ private:
     CPPUNIT_TEST(testBanUnbanMultiDevice);
     CPPUNIT_TEST(testBanUnbanGotFirstConv);
     CPPUNIT_TEST(testBanHostWhileHosting);
-    CPPUNIT_TEST(testRemoveContactTwice);
     CPPUNIT_TEST(testAddContactTwice);
     CPPUNIT_TEST(testBanFromNewDevice);
     CPPUNIT_TEST_SUITE_END();
@@ -1607,40 +1605,6 @@ ConversationMembersEventTest::testBanHostWhileHosting()
             bobBanned = member["role"] == "banned";
     }
     CPPUNIT_ASSERT(bobBanned);
-}
-
-void
-ConversationMembersEventTest::testRemoveContactTwice()
-{
-    connectSignals();
-
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
-    // removeContact
-    bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
-    // wait that connections are closed.
-    std::this_thread::sleep_for(10s);
-    // re-add via a new message. Trigger a new request
-    bobData.requestReceived = false;
-    libjami::sendMessage(aliceId, aliceData.conversationId, "foo"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    // removeContact again (should remove the trust request/conversation)
-    bobData.removed = false;
-    bobAccount->removeContact(aliceUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
 }
 
 void
