@@ -23,16 +23,10 @@
 #include "base64.h"
 #include "fileutils.h"
 #include "manager.h"
-#include "map_utils.h"
-#include "string_utils.h"
 #include "client/ring_signal.h"
 
-#include <thread>
-#include <stdexcept>
 #include <mutex>
-#include <future>
-#include <charconv> // std::from_chars
-#include <cstdlib>  // mkstemp
+#include <cstdlib> // mkstemp
 #include <filesystem>
 
 #include <opendht/rng.h>
@@ -145,8 +139,8 @@ void
 OutgoingFile::cancel()
 {
     // Remove link, not original file
-    auto path = fileutils::get_data_dir() / "conversation_data"
-                / info_.accountId / info_.conversationId / fileId_;
+    auto path = fileutils::get_data_dir() / "conversation_data" / info_.accountId
+                / info_.conversationId / fileId_;
     if (std::filesystem::is_symlink(path))
         dhtnet::fileutils::remove(path);
     isUserCancelled_ = true;
@@ -161,7 +155,8 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
 {
-    stream_.open(std::filesystem::path(info_.path), std::ios::binary | std::ios::out | std::ios::app);
+    stream_.open(std::filesystem::path(info_.path),
+                 std::ios::binary | std::ios::out | std::ios::app);
     if (!stream_)
         return;
 
@@ -216,8 +211,10 @@ IncomingFile::process()
                 correct = true;
             } else {
                 JAMI_WARN() << "Invalid sha3sum detected, unfinished file: " << shared->info_.path;
-                if (shared->info_.totalSize != 0 && shared->info_.totalSize < shared->info_.bytesProgress) {
-                    JAMI_WARN() << "Remove file, larger file than announced for " << shared->info_.path;
+                if (shared->info_.totalSize != 0
+                    && shared->info_.totalSize < shared->info_.bytesProgress) {
+                    JAMI_WARN() << "Remove file, larger file than announced for "
+                                << shared->info_.path;
                     dhtnet::fileutils::remove(shared->info_.path, true);
                 }
             }
@@ -235,14 +232,18 @@ IncomingFile::process()
 class TransferManager::Impl
 {
 public:
-    Impl(const std::string& accountId, const std::string& accountUri, const std::string& to, const std::mt19937_64& rand)
+    Impl(const std::string& accountId,
+         const std::string& accountUri,
+         const std::string& to,
+         const std::mt19937_64& rand)
         : accountId_(accountId)
         , accountUri_(accountUri)
         , to_(to)
         , rand_(rand)
     {
         if (!to_.empty()) {
-            conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / to_;
+            conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data"
+                                    / to_;
             dhtnet::fileutils::check_dir(conversationDataPath_);
             waitingPath_ = conversationDataPath_ / "waiting";
         }
@@ -298,7 +299,10 @@ public:
     std::mt19937_64 rand_;
 };
 
-TransferManager::TransferManager(const std::string& accountId, const std::string& accountUri, const std::string& to, const std::mt19937_64& rand)
+TransferManager::TransferManager(const std::string& accountId,
+                                 const std::string& accountUri,
+                                 const std::string& to,
+                                 const std::mt19937_64& rand)
     : pimpl_ {std::make_unique<Impl>(accountId, accountUri, to, rand)}
 {}
 
@@ -442,7 +446,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     // a symlink(Note: this will not work on Windows).
     auto filePath = path(fileId);
     if (info.path.empty()) {
-        info.path = filePath;
+        info.path = filePath.string();
     } else {
         // We don't need to check if this is an existing symlink here, as
         // the attempt to create one should report the error string correctly.
@@ -489,7 +493,8 @@ TransferManager::path(const std::string& fileId) const
 }
 
 void
-TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel, const std::string& sha3Sum)
+TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                                   const std::string& sha3Sum)
 {
     if (!channel)
         return;
@@ -568,7 +573,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                     if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
                         emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
                                                                                   uri,
-                                                                                  destPath);
+                                                                                  destPath.string());
                     }
                 }
             });
