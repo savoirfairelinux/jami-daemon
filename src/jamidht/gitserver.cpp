@@ -51,6 +51,12 @@ public:
         , repository_(repository)
         , socket_(socket)
     {
+        // Check at least if repository is correct
+        git_repository* repo;
+        if (git_repository_open(&repo, repository_.c_str()) != 0) {
+            socket_->shutdown();
+            return;
+        }
         socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
             std::lock_guard<std::mutex> lk(destroyMtx_);
             if (isDestroying_)
@@ -204,7 +210,8 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
     git_repository* repo;
     if (git_repository_open(&repo, repository_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open %s", repository_.c_str());
+        JAMI_WARNING("Couldn't open {}", repository_);
+        socket_->shutdown();
         return;
     }
     GitRepository rep {repo, git_repository_free};
@@ -221,14 +228,16 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                        packet.str().size(),
                        ec);
         if (ec) {
-            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
+            socket_->shutdown();
             return;
         }
     }
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, rep.get(), "HEAD") < 0) {
-        JAMI_ERR("Cannot get reference for HEAD");
+        JAMI_ERROR("Cannot get reference for HEAD");
+        socket_->shutdown();
         return;
     }
     currentHead = git_oid_tostr_s(&commit_id);
@@ -246,7 +255,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         for (std::size_t i = 0; i < refs.count; ++i) {
             std::string ref = refs.strings[i];
             if (git_reference_name_to_id(&commit_id, rep.get(), ref.c_str()) < 0) {
-                JAMI_WARN("Cannot get reference for %s", ref.c_str());
+                JAMI_WARNING("Cannot get reference for {}", ref);
                 continue;
             }
             currentHead = git_oid_tostr_s(&commit_id);
@@ -263,7 +272,8 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     auto toSend = packet.str();
     socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
     if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+        JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
+        socket_->shutdown();
     }
 }
 
@@ -280,7 +290,8 @@ GitServer::Impl::ACKCommon()
         auto toSend = packet.str();
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
-            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
+            socket_->shutdown();
         }
     }
 }
@@ -298,7 +309,8 @@ GitServer::Impl::ACKFirst()
         auto toSend = packet.str();
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
-            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
+            socket_->shutdown();
             return false;
         }
     }
@@ -312,7 +324,8 @@ GitServer::Impl::NAK()
     // NAK
     socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
     if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+        JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
+        socket_->shutdown();
         return false;
     }
     return true;
@@ -330,7 +343,7 @@ GitServer::Impl::sendPackData()
 
     git_packbuilder* pb_ptr;
     if (git_packbuilder_new(&pb_ptr, repo.get()) != 0) {
-        JAMI_WARN("Couldn't open packbuilder for %s", repository_.c_str());
+        JAMI_WARNING("Couldn't open packbuilder for {}", repository_);
         return;
     }
     GitPackBuilder pb {pb_ptr, git_packbuilder_free};
@@ -338,7 +351,7 @@ GitServer::Impl::sendPackData()
     std::string fetched = wantedReference_;
     git_oid oid;
     if (git_oid_fromstr(&oid, wantedReference_.c_str()) < 0) {
-        JAMI_ERR("Cannot get reference for commit %s", wantedReference_.c_str());
+        JAMI_ERROR("Cannot get reference for commit {}", wantedReference_);
         return;
     }
 
@@ -409,7 +422,7 @@ GitServer::Impl::sendPackData()
                        toSendStr.size(),
                        ec);
         if (ec) {
-            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
             git_buf_dispose(&data);
             return;
         }
@@ -420,7 +433,7 @@ GitServer::Impl::sendPackData()
     // And finish by a little FLUSH
     socket_->write(reinterpret_cast<const uint8_t*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
     if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+        JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
     }
 
     // Clear sent data

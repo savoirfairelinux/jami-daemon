@@ -623,6 +623,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         }
 
                         {
+
                             std::lock_guard<std::mutex> lk(conv->mtx);
                             conv->pending.reset();
                             // Notify peers that a new commit is there (DRT)
@@ -744,7 +745,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         }
         if (!commitId.empty())
             sendMessageNotification(*conversation, false, commitId);
-        lk.unlock();
+        erasePending(); // Will unlock
 
 #ifdef LIBJAMI_TESTABLE
         conversation->onBootstrapStatus(bootstrapCbTest_);
