@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e88b124_9b14e9fa",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 57
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2023-12-28T16:57:07Z",
+      "side": 1,
+      "message": "do we use linearized_parent? It is never set. ",
+      "revId": "5c9de9c26ae898e3e6d76d016641cd3ad08c8247",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
