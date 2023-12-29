@@ -338,7 +338,7 @@ JamiPluginManager::loadPlugins()
 {
 #ifdef ENABLE_PLUGIN
     bool status = true;
-    auto loadedPlugins = getLoadedPlugins();
+    auto loadedPlugins = jami::Manager::instance().pluginPreferences.getLoadedPlugins();
     for (const auto& pluginPath : loadedPlugins) {
         status &= loadPlugin(pluginPath);
     }
