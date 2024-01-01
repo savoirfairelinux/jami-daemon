@@ -1032,7 +1032,7 @@ JamiAccount::forceReloadAccount()
 void
 JamiAccount::unlinkConversations(const std::set<std::string>& removed)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (auto info = accountManager_->getInfo()) {
         auto contacts = info->contacts->getContacts();
         for (auto& [id, c] : contacts) {
@@ -1398,7 +1398,7 @@ JamiAccount::getVolatileAccountDetails() const
 void
 JamiAccount::lookupName(const std::string& name)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (accountManager_)
         accountManager_->lookupUri(name,
                                    config().nameServer,
@@ -1412,7 +1412,7 @@ JamiAccount::lookupName(const std::string& name)
 void
 JamiAccount::lookupAddress(const std::string& addr)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     auto acc = getAccountID();
     if (accountManager_)
         accountManager_->lookupAddress(
@@ -1427,7 +1427,7 @@ JamiAccount::lookupAddress(const std::string& addr)
 void
 JamiAccount::registerName(const std::string& name, const std::string& scheme, const std::string& password)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (accountManager_)
         accountManager_->registerName(
             name,
@@ -1495,7 +1495,7 @@ JamiAccount::registerAsyncOps()
         if (++(*loaded) == 2u) {
             runOnMainThread([w = weak()] {
                 if (auto s = w.lock()) {
-                    std::lock_guard<std::recursive_mutex> lock(s->configurationMutex_);
+                    std::lock_guard lock(s->configurationMutex_);
                     s->doRegister_();
                 }
             });
@@ -1592,7 +1592,7 @@ JamiAccount::registerAsyncOps()
 void
 JamiAccount::doRegister()
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARNING("[Account {:s}] Account must be enabled and active to register, ignoring",
                      getAccountID());
@@ -1732,7 +1732,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
             return;
         // In this case, the TrustRequest was sent but never confirmed (cause the contact was
         // offline maybe) To avoid the contact to never receive the conv request, retry there
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (accountManager_) {
             // Retrieve cached payload for trust request.
             auto requestPath = cachePath_ / "requests" / contactId.toString();
@@ -2546,7 +2546,7 @@ JamiAccount::isMessageTreated(std::string_view id)
 std::map<std::string, std::string>
 JamiAccount::getKnownDevices() const
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (not accountManager_ or not accountManager_->getInfo())
         return {};
     std::map<std::string, std::string> ids;
@@ -2850,7 +2850,7 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (accountManager_)
         accountManager_->removeContact(uri, ban);
     else
@@ -2863,7 +2863,7 @@ JamiAccount::updateConvForContact(const std::string& uri,
                                   const std::string& newConv)
 {
     if (newConv != oldConv) {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         auto details = getContactDetails(uri);
         auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
         if (itDetails != details.end() && itDetails->second != oldConv) {
@@ -2879,7 +2879,7 @@ JamiAccount::updateConvForContact(const std::string& uri,
 std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     return accountManager_
                ? accountManager_->getContactDetails(uri)
                : std::map<std::string, std::string> {};
@@ -2888,7 +2888,7 @@ JamiAccount::getContactDetails(const std::string& uri) const
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getContacts(bool includeRemoved) const
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (not accountManager_)
         return {};
     return accountManager_->getContacts(includeRemoved);
@@ -2899,7 +2899,7 @@ JamiAccount::getContacts(bool includeRemoved) const
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     return accountManager_ ? accountManager_->getTrustRequests()
                            : std::vector<std::map<std::string, std::string>> {};
 }
@@ -2933,7 +2933,7 @@ JamiAccount::discardTrustRequest(const std::string& from)
     }
 
     // Remove trust request
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     if (accountManager_)
         return accountManager_->discardTrustRequest(from);
     JAMI_WARNING("[Account {:s}] discardTrustRequest: account not loaded", getAccountID());
@@ -2946,7 +2946,7 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
     auto peerId = convModule()->peerFromConversationRequest(conversationId);
     convModule()->declineConversationRequest(conversationId);
     if (!peerId.empty()) {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (auto info = accountManager_->getInfo()) {
             // Verify if we have a trust request with this peer + convId
             auto req = info->contacts->getTrustRequest(dht::InfoHash(peerId));
@@ -2986,7 +2986,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     if (conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, to);
     if (not conversation.empty()) {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (accountManager_)
             accountManager_->sendTrustRequest(to, conversation, payload);
         else

@@ -73,7 +73,7 @@ AudioRtpSession::~AudioRtpSession()
 void
 AudioRtpSession::startSender()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     JAMI_DEBUG("Start audio RTP sender: input [{}] - muted [{}]",
              input_,
              muteState_ ? "YES" : "NO");
@@ -166,7 +166,7 @@ AudioRtpSession::startSender()
 void
 AudioRtpSession::restartSender()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     // ensure that start has been called before restart
     if (not socketPair_) {
         return;
@@ -210,7 +210,7 @@ AudioRtpSession::startReceiver()
 void
 AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     if (not send_.enabled and not receive_.enabled) {
         stop();
@@ -251,7 +251,7 @@ AudioRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 void
 AudioRtpSession::stop()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     JAMI_DEBUG("[{}] Stopping receiver", fmt::ptr(this));
 
@@ -282,7 +282,7 @@ AudioRtpSession::setMuted(bool muted, Direction dir)
 {
     Manager::instance().ioContext()->post([w=weak_from_this(), muted, dir]() {
         if (auto shared = w.lock()) {
-            std::lock_guard<std::recursive_mutex> lock(shared->mutex_);
+            std::lock_guard lock(shared->mutex_);
             if (dir == Direction::SEND) {
                 shared->muteState_ = muted;
                 if (shared->audioInput_) {
@@ -311,7 +311,7 @@ AudioRtpSession::setMuted(bool muted, Direction dir)
 void
 AudioRtpSession::setVoiceCallback(std::function<void(bool)> cb)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     voiceCallback_ = std::move(cb);
     if (sender_) {
         sender_->setVoiceCallback(voiceCallback_);
@@ -400,7 +400,7 @@ AudioRtpSession::processRtcpChecker()
 void
 AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     MediaStream remoteMS = ms;
@@ -413,7 +413,7 @@ AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (!recorder_ || !audioInput_)
         return;
     MediaStream localMS = ms;

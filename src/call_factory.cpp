@@ -49,7 +49,7 @@ CallFactory::newSipCall(const std::shared_ptr<SIPAccountBase>& account,
         return {};
     }
 
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
     auto id = getNewCallID();
     auto call = std::make_shared<SIPCall>(account, id, type, mediaList);
     callMaps_[call->getLinkType()].emplace(id, call);
@@ -66,7 +66,7 @@ CallFactory::forbid()
 void
 CallFactory::removeCall(Call& call)
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     const auto& id = call.getCallId();
     JAMI_DBG("Removing call %s", id.c_str());
@@ -78,7 +78,7 @@ CallFactory::removeCall(Call& call)
 void
 CallFactory::removeCall(const std::string& id)
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     if (auto call = getCall(id)) {
         removeCall(*call);
@@ -89,7 +89,7 @@ CallFactory::removeCall(const std::string& id)
 bool
 CallFactory::hasCall(const std::string& id) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     for (const auto& item : callMaps_) {
         const auto& map = item.second;
@@ -103,7 +103,7 @@ CallFactory::hasCall(const std::string& id) const
 bool
 CallFactory::empty() const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     for (const auto& item : callMaps_) {
         if (not item.second.empty())
@@ -116,14 +116,14 @@ CallFactory::empty() const
 void
 CallFactory::clear()
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
     callMaps_.clear();
 }
 
 std::shared_ptr<Call>
 CallFactory::getCall(const std::string& id) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     for (const auto& item : callMaps_) {
         const auto& map = item.second;
@@ -138,7 +138,7 @@ CallFactory::getCall(const std::string& id) const
 std::vector<std::shared_ptr<Call>>
 CallFactory::getAllCalls() const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
     std::vector<std::shared_ptr<Call>> v;
 
     for (const auto& itemmap : callMaps_) {
@@ -169,7 +169,7 @@ CallFactory::getCallIDs() const
 std::size_t
 CallFactory::callCount() const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
     std::size_t count = 0;
 
     for (const auto& itemmap : callMaps_)
@@ -181,7 +181,7 @@ CallFactory::callCount() const
 bool
 CallFactory::hasCall(const std::string& id, Call::LinkType link) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     auto const map = getMap_(link);
     return map and map->find(id) != map->cend();
@@ -190,7 +190,7 @@ CallFactory::hasCall(const std::string& id, Call::LinkType link) const
 bool
 CallFactory::empty(Call::LinkType link) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     const auto map = getMap_(link);
     return !map or map->empty();
@@ -199,7 +199,7 @@ CallFactory::empty(Call::LinkType link) const
 std::shared_ptr<Call>
 CallFactory::getCall(const std::string& id, Call::LinkType link) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     const auto map = getMap_(link);
     if (!map)
@@ -215,7 +215,7 @@ CallFactory::getCall(const std::string& id, Call::LinkType link) const
 std::vector<std::shared_ptr<Call>>
 CallFactory::getAllCalls(Call::LinkType link) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
     std::vector<std::shared_ptr<Call>> v;
 
     const auto map = getMap_(link);
@@ -231,7 +231,7 @@ CallFactory::getAllCalls(Call::LinkType link) const
 std::vector<std::string>
 CallFactory::getCallIDs(Call::LinkType link) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
     std::vector<std::string> v;
 
     const auto map = getMap_(link);
@@ -247,7 +247,7 @@ CallFactory::getCallIDs(Call::LinkType link) const
 std::size_t
 CallFactory::callCount(Call::LinkType link) const
 {
-    std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
+    std::lock_guard lk(callMapsMutex_);
 
     const auto map = getMap_(link);
     if (!map)

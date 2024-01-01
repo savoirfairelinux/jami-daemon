@@ -167,14 +167,14 @@ Call::getAccountId() const
 Call::ConnectionState
 Call::getConnectionState() const
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    std::lock_guard lock(callMutex_);
     return connectionState_;
 }
 
 Call::CallState
 Call::getState() const
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    std::lock_guard lock(callMutex_);
     return callState_;
 }
 
@@ -290,14 +290,14 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 bool
 Call::setState(CallState call_state, signed code)
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    std::lock_guard lock(callMutex_);
     return setState(call_state, connectionState_, code);
 }
 
 bool
 Call::setState(ConnectionState cnx_state, signed code)
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    std::lock_guard lock(callMutex_);
     return setState(callState_, cnx_state, code);
 }
 
@@ -403,7 +403,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard lk {callMutex_};
         if (parent_) {
             pendingInMessages_.emplace_back(std::move(messages), "");
             return;
@@ -430,7 +430,7 @@ Call::peerHungup()
 void
 Call::addSubCall(Call& subcall)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     // Add subCall only if call is not connected or terminated
     // Because we only want to addSubCall if the peer didn't answer
@@ -480,7 +480,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
         // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
         // as an subcall and not a master call.
         // XXX: having a way to unsubscribe the state listener could be better than such test
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard lk {callMutex_};
         auto sit = subcalls_.find(getPtr(subcall));
         if (sit == subcalls_.end())
             return;
@@ -519,7 +519,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
             JAMI_WARN("[call:%s] subcall %s failed",
                       getCallId().c_str(),
                       subcall.getCallId().c_str());
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard lk {callMutex_};
         subcalls_.erase(getPtr(subcall));
 
         // Parent call fails if last subcall is busy or failed
@@ -584,7 +584,7 @@ Call::merge(Call& subcall)
 void
 Call::checkPendingIM()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     auto state = getStateStr();
     // Let parent call handles IM after the merge
@@ -626,7 +626,7 @@ Call::checkAudio()
 Call::SubcallSet
 Call::safePopSubcalls()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     // std::exchange is C++14
     auto old_value = std::move(subcalls_);
     subcalls_.clear();

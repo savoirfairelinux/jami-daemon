@@ -115,7 +115,7 @@ VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 void
 VideoRtpSession::startSender()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     JAMI_DBG("[%p] Start video RTP sender: input [%s] - muted [%s]",
              this,
@@ -227,7 +227,7 @@ VideoRtpSession::startSender()
 void
 VideoRtpSession::restartSender()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     // ensure that start has been called before restart
     if (not socketPair_)
@@ -368,7 +368,7 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
 void
 VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     if (not send_.enabled and not receive_.enabled) {
         stop();
@@ -425,7 +425,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
 void
 VideoRtpSession::stop()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     stopSender(true);
     stopReceiver(true);
@@ -449,7 +449,7 @@ VideoRtpSession::stop()
 void
 VideoRtpSession::setMuted(bool mute, Direction dir)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     // Sender
     if (dir == Direction::SEND) {
@@ -499,7 +499,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
 void
 VideoRtpSession::forceKeyFrame()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 #if __ANDROID__
     if (videoLocal_)
         emitSignal<libjami::VideoSignal::RequestKeyFrame>(videoLocal_->getName());
@@ -566,7 +566,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
 void
 VideoRtpSession::enterConference(Conference& conference)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     exitConference();
 
@@ -587,7 +587,7 @@ VideoRtpSession::enterConference(Conference& conference)
 void
 VideoRtpSession::exitConference()
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     if (!conference_)
         return;
@@ -802,7 +802,7 @@ VideoRtpSession::processRtcpChecker()
 void
 VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
     if (auto ob = recorder_->addStream(ms)) {
@@ -813,7 +813,7 @@ VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
 void
 VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (!recorder_ || !videoLocal_ || !Manager::instance().videoPreferences.getRecordPreview())
         return;
     if (auto ob = recorder_->addStream(ms)) {

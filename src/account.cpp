@@ -451,7 +451,7 @@ Account::meetMinimumRequiredVersion(const std::vector<unsigned>& version,
 bool
 Account::setPushNotificationConfig(const std::map<std::string, std::string>& data)
 {
-    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+    std::lock_guard lock(configurationMutex_);
     auto platform = data.find("platform");
     auto topic = data.find("topic");
     auto token = data.find("token");

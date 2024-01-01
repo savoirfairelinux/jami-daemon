@@ -55,7 +55,7 @@ public:
     template<class T = Account>
     bool hasAccount(std::string_view id) const
     {
-        std::lock_guard<std::recursive_mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
 
         const auto map = getMap_<T>();
         return map and map->find(id) != map->cend();
@@ -64,7 +64,7 @@ public:
     template<class T = Account>
     void clear()
     {
-        std::lock_guard<std::recursive_mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
 
         auto map = getMap_<T>();
         if (!map)
@@ -76,7 +76,7 @@ public:
     template<class T = Account>
     bool empty() const
     {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
 
         const auto map = getMap_<T>();
         return map and map->empty();
@@ -85,7 +85,7 @@ public:
     template<class T = Account>
     std::size_t accountCount() const
     {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
 
         const auto map = getMap_<T>();
         if (!map)
@@ -97,7 +97,7 @@ public:
     template<class T = Account>
     std::shared_ptr<T> getAccount(std::string_view id) const
     {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
 
         const auto map = getMap_<T>();
         if (!map)
@@ -113,7 +113,7 @@ public:
     template<class T = Account>
     std::vector<std::shared_ptr<T>> getAllAccounts() const
     {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
         std::vector<std::shared_ptr<T>> v;
 
         if (const auto map = getMap_<T>()) {

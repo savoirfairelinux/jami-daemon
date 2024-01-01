@@ -629,7 +629,6 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         }
 
                         {
-
                             std::lock_guard lk(conv->mtx);
                             conv->pending.reset();
                             // Notify peers that a new commit is there (DRT)

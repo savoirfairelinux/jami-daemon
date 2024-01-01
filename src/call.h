@@ -336,7 +336,7 @@ public:
 
     void addStateListener(StateListenerCb&& listener)
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard lk {callMutex_};
         stateChangedListeners_.emplace_back(std::move(listener));
     }
 
@@ -351,7 +351,7 @@ public:
     ///
     bool isSubcall() const
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard lk {callMutex_};
         return parent_ != nullptr;
     }
 

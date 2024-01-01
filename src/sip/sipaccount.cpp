@@ -584,7 +584,7 @@ void
 SIPAccount::doRegister1_()
 {
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (isIP2IP()) {
             doRegister2_();
             return;
@@ -595,7 +595,7 @@ SIPAccount::doRegister1_()
                          config().tlsEnable ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
                          [w = weak()](std::vector<dhtnet::IpAddr> host_ips) {
                              if (auto acc = w.lock()) {
-                                 std::lock_guard<std::recursive_mutex> lock(
+                                 std::lock_guard lock(
                                      acc->configurationMutex_);
                                  if (host_ips.empty()) {
                                      JAMI_ERR("Can't resolve hostname for registration.");

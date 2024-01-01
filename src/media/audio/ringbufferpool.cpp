@@ -54,7 +54,7 @@ RingBufferPool::~RingBufferPool()
 void
 RingBufferPool::setInternalSamplingRate(unsigned sr)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     if (sr != internalAudioFormat_.sample_rate) {
         flushAllBuffers();
@@ -65,7 +65,7 @@ RingBufferPool::setInternalSamplingRate(unsigned sr)
 void
 RingBufferPool::setInternalAudioFormat(AudioFormat format)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     if (format != internalAudioFormat_) {
         flushAllBuffers();
@@ -79,7 +79,7 @@ RingBufferPool::setInternalAudioFormat(AudioFormat format)
 std::shared_ptr<RingBuffer>
 RingBufferPool::getRingBuffer(const std::string& id)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     const auto& it = ringBufferMap_.find(id);
     if (it != ringBufferMap_.cend()) {
@@ -94,7 +94,7 @@ RingBufferPool::getRingBuffer(const std::string& id)
 std::shared_ptr<RingBuffer>
 RingBufferPool::getRingBuffer(const std::string& id) const
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     const auto& it = ringBufferMap_.find(id);
     if (it != ringBufferMap_.cend())
@@ -106,7 +106,7 @@ RingBufferPool::getRingBuffer(const std::string& id) const
 std::shared_ptr<RingBuffer>
 RingBufferPool::createRingBuffer(const std::string& id)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     auto rbuf = getRingBuffer(id);
     if (rbuf) {
@@ -185,7 +185,7 @@ RingBufferPool::bindRingbuffers(const std::string& ringbufferId1, const std::str
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     addReaderToRingBuffer(rb1, ringbufferId2);
     addReaderToRingBuffer(rb2, ringbufferId1);
@@ -197,7 +197,7 @@ RingBufferPool::bindHalfDuplexOut(const std::string& processId, const std::strin
     /* This method is used only for active ringbuffers, if this ringbuffer does not exist,
      * do nothing */
     if (const auto& rb = getRingBuffer(ringbufferId)) {
-        std::lock_guard<std::recursive_mutex> lk(stateLock_);
+        std::lock_guard lk(stateLock_);
 
         addReaderToRingBuffer(rb, processId);
     }
@@ -220,7 +220,7 @@ RingBufferPool::unbindRingbuffers(const std::string& ringbufferId1, const std::s
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     removeReaderFromRingBuffer(rb1, ringbufferId2);
     removeReaderFromRingBuffer(rb2, ringbufferId1);
@@ -229,7 +229,7 @@ RingBufferPool::unbindRingbuffers(const std::string& ringbufferId1, const std::s
 void
 RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::string& ringbufferId)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     if (const auto& rb = getRingBuffer(ringbufferId))
         removeReaderFromRingBuffer(rb, process_id);
@@ -244,7 +244,7 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -267,7 +267,7 @@ RingBufferPool::unBindAll(const std::string& ringbufferId)
         return;
     }
 
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -283,7 +283,7 @@ RingBufferPool::unBindAll(const std::string& ringbufferId)
 std::shared_ptr<AudioFrame>
 RingBufferPool::getData(const std::string& ringbufferId)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -334,7 +334,7 @@ RingBufferPool::waitForDataAvailable(const std::string& ringbufferId,
 std::shared_ptr<AudioFrame>
 RingBufferPool::getAvailableData(const std::string& ringbufferId)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -369,7 +369,7 @@ RingBufferPool::getAvailableData(const std::string& ringbufferId)
 size_t
 RingBufferPool::availableForGet(const std::string& ringbufferId) const
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -394,7 +394,7 @@ RingBufferPool::availableForGet(const std::string& ringbufferId) const
 size_t
 RingBufferPool::discard(size_t toDiscard, const std::string& ringbufferId)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -409,7 +409,7 @@ RingBufferPool::discard(size_t toDiscard, const std::string& ringbufferId)
 void
 RingBufferPool::flush(const std::string& ringbufferId)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     const auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -422,7 +422,7 @@ RingBufferPool::flush(const std::string& ringbufferId)
 void
 RingBufferPool::flushAllBuffers()
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
     for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end();) {
         if (const auto rb = item->second.lock()) {
@@ -438,7 +438,7 @@ RingBufferPool::flushAllBuffers()
 bool
 RingBufferPool::isAudioMeterActive(const std::string& id)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
     if (!id.empty()) {
         if (auto rb = getRingBuffer(id)) {
             return rb->isAudioMeterActive();
@@ -458,7 +458,7 @@ RingBufferPool::isAudioMeterActive(const std::string& id)
 void
 RingBufferPool::setAudioMeterState(const std::string& id, bool state)
 {
-    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    std::lock_guard lk(stateLock_);
     if (!id.empty()) {
         if (auto rb = getRingBuffer(id)) {
             rb->setAudioMeterState(state);

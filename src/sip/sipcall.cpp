@@ -161,7 +161,7 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
 
 SIPCall::~SIPCall()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     setSipTransport({});
     setInviteSession(); // prevents callback usage
@@ -541,7 +541,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
 {
     assert(not mediaAttrList.empty());
 
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     // Do nothing if no invitation processed yet
     if (not inviteSession_ or inviteSession_->invite_tsx)
@@ -616,7 +616,7 @@ SIPCall::SIPSessionReinvite()
 void
 SIPCall::sendSIPInfo(std::string_view body, std::string_view subtype)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     if (not inviteSession_ or not inviteSession_->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
@@ -739,7 +739,7 @@ SIPCall::sendVoiceActivity(std::string_view streamId, bool state)
 void
 SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     if (inviteSession == nullptr and inviteSession_) {
         JAMI_DBG("[call:%s] Delete current invite session", getCallId().c_str());
@@ -769,7 +769,7 @@ void
 SIPCall::terminateSipSession(int status)
 {
     JAMI_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     if (inviteSession_ and inviteSession_->state != PJSIP_INV_STATE_DISCONNECTED) {
         pjsip_tx_data* tdata = nullptr;
         auto ret = pjsip_inv_end_session(inviteSession_.get(), status, nullptr, &tdata);
@@ -806,7 +806,7 @@ SIPCall::terminateSipSession(int status)
 void
 SIPCall::answer()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     auto account = getSIPAccount();
     if (!account) {
         JAMI_ERR("No account detected");
@@ -861,7 +861,7 @@ SIPCall::answer()
 void
 SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     auto account = getSIPAccount();
     if (not account) {
         JAMI_ERR("No account detected");
@@ -1000,7 +1000,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 void
 SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     auto account = getSIPAccount();
     if (not account) {
@@ -1104,7 +1104,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
 void
 SIPCall::hangup(int reason)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     pendingRecord_ = false;
     if (inviteSession_ and inviteSession_->dlg) {
         pjsip_route_hdr* route = inviteSession_->dlg->route_set.next;
@@ -1599,7 +1599,7 @@ SIPCall::removeCall()
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(
         getCallId());
 #endif
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     JAMI_DBG("[call:%s] removeCall()", getCallId().c_str());
     if (sdp_) {
         sdp_->setActiveLocalSdpSession(nullptr);
@@ -1809,14 +1809,14 @@ SIPCall::setPeerUaVersion(std::string_view ua)
 void
 SIPCall::setPeerAllowMethods(std::vector<std::string> methods)
 {
-    std::lock_guard<std::recursive_mutex> lock {callMutex_};
+    std::lock_guard lock {callMutex_};
     peerAllowedMethods_ = std::move(methods);
 }
 
 bool
 SIPCall::isSipMethodAllowedByPeer(const std::string_view method) const
 {
-    std::lock_guard<std::recursive_mutex> lock {callMutex_};
+    std::lock_guard lock {callMutex_};
 
     return std::find(peerAllowedMethods_.begin(), peerAllowedMethods_.end(), method)
            != peerAllowedMethods_.end();
@@ -2509,7 +2509,7 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
 bool
 SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
     bool hasFileSharing {false};
 
@@ -2649,7 +2649,7 @@ SIPCall::currentMediaList() const
 std::vector<MediaAttribute>
 SIPCall::getMediaAttributeList() const
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     std::vector<MediaAttribute> mediaList;
     mediaList.reserve(rtpStreams_.size());
     for (auto const& stream : rtpStreams_)
@@ -2676,7 +2676,7 @@ SIPCall::onMediaNegotiationComplete()
 {
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
-            std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
+            std::lock_guard lk {this_->callMutex_};
             JAMI_DBG("[call:%s] Media negotiation complete", this_->getCallId().c_str());
 
             // If the call has already ended, we don't need to start the media.
@@ -2782,7 +2782,7 @@ SIPCall::startIceMedia()
 void
 SIPCall::onIceNegoSucceed()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
 
     JAMI_DBG("[call:%s] ICE negotiation succeeded", getCallId().c_str());
 
@@ -3116,7 +3116,7 @@ SIPCall::getDetails() const
 #endif
 
 #ifdef ENABLE_CLIENT_CERT
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         if (tlsInfos.cipher != PJ_TLS_UNKNOWN_CIPHER) {
@@ -3172,7 +3172,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
 void
 SIPCall::exitConference()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard lk {callMutex_};
     JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
@@ -3242,7 +3242,7 @@ SIPCall::setRotation(int streamIdx, int rotation)
     // Retrigger on another thread to avoid to lock pjsip
     dht::ThreadPool::io().run([w = weak(), streamIdx, rotation] {
         if (auto shared = w.lock()) {
-            std::lock_guard<std::recursive_mutex> lk {shared->callMutex_};
+            std::lock_guard lk {shared->callMutex_};
             shared->rotation_ = rotation;
             if (streamIdx == -1) {
                 for (const auto& videoRtp : shared->getRtpSessionList(MediaType::MEDIA_VIDEO))
@@ -3262,7 +3262,7 @@ SIPCall::setRotation(int streamIdx, int rotation)
 void
 SIPCall::createSinks(ConfInfo& infos)
 {
-    std::lock_guard<std::recursive_mutex> lk(callMutex_);
+    std::lock_guard lk(callMutex_);
     std::lock_guard lkS(sinksMtx_);
     if (!hasVideo())
         return;
@@ -3442,7 +3442,7 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
             if (!ok or !call or !call->waitForIceInit_.exchange(false))
                 return;
 
-            std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
+            std::lock_guard lk {call->callMutex_};
             auto rem_ice_attrs = call->sdp_->getIceAttributes();
             // Init done but no remote_ice_attributes, the ice->start will be triggered later
             if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty())
@@ -3456,7 +3456,7 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
                 cb(ok);
             if (auto call = w.lock()) {
                 // The ICE is related to subcalls, but medias are handled by parent call
-                std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
+                std::lock_guard lk {call->callMutex_};
                 call = call->isSubcall() ? std::dynamic_pointer_cast<SIPCall>(call->parent_) : call;
                 if (!ok) {
                     JAMI_ERR("[call:%s] Media ICE negotiation failed", call->getCallId().c_str());
@@ -3509,8 +3509,8 @@ SIPCall::merge(Call& call)
     auto& subcall = static_cast<SIPCall&>(call);
 
     std::lock(callMutex_, subcall.callMutex_);
-    std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
-    std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
+    std::lock_guard lk1 {callMutex_, std::adopt_lock};
+    std::lock_guard lk2 {subcall.callMutex_, std::adopt_lock};
     inviteSession_ = std::move(subcall.inviteSession_);
     if (inviteSession_)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;

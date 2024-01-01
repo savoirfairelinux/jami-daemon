@@ -99,7 +99,7 @@ public:
 
     void setConfig(std::unique_ptr<AccountConfig>&& config)
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         config_ = std::move(config);
         loadConfig();
     }
@@ -119,7 +119,7 @@ public:
 
     inline void editConfig(std::function<void(AccountConfig& config)>&& edit)
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         edit(*config_);
         saveConfig();
     }
@@ -128,7 +128,7 @@ public:
 
     void setAccountDetails(const std::map<std::string, std::string>& details)
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (not config_)
             config_ = buildConfig();
         config_->fromMap(details);
@@ -138,7 +138,7 @@ public:
 
     std::map<std::string, std::string> getAccountDetails() const
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         return config().toMap();
     }
 
@@ -225,7 +225,7 @@ public:
 
     virtual bool setPushNotificationToken(const std::string& pushDeviceToken = "")
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (config_ && config_->deviceKey != pushDeviceToken) {
             config_->deviceKey = pushDeviceToken;
             saveConfig();
@@ -236,7 +236,7 @@ public:
 
     virtual bool setPushNotificationTopic(const std::string& topic = "")
     {
-        std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
+        std::lock_guard lock(configurationMutex_);
         if (config_ && config_->notificationTopic != topic) {
             config_->notificationTopic = topic;
             saveConfig();

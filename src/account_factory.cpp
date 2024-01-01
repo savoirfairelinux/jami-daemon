@@ -57,7 +57,7 @@ AccountFactory::createAccount(std::string_view accountType, const std::string& i
 
     std::shared_ptr<Account> account = it->second(id);
     {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
         auto m = accountMaps_.find(accountType);
         if (m == accountMaps_.end())
             m = accountMaps_.emplace(std::string(accountType), AccountMap<Account>{}).first;
@@ -76,7 +76,7 @@ void
 AccountFactory::removeAccount(Account& account)
 {
     std::string_view account_type = account.getAccountType();
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     const auto& id = account.getAccountID();
     JAMI_DEBUG("Removing account {:s}", id);
     auto m = accountMaps_.find(account_type);
@@ -89,7 +89,7 @@ AccountFactory::removeAccount(Account& account)
 void
 AccountFactory::removeAccount(std::string_view id)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     if (auto account = getAccount(id)) {
         removeAccount(*account);
@@ -101,7 +101,7 @@ template<>
 bool
 AccountFactory::hasAccount(std::string_view id) const
 {
-    std::lock_guard<std::recursive_mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
 
     for (const auto& item : accountMaps_) {
         const auto& map = item.second;
@@ -116,7 +116,7 @@ template<>
 void
 AccountFactory::clear()
 {
-    std::lock_guard<std::recursive_mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     accountMaps_.clear();
 }
 
@@ -124,7 +124,7 @@ template<>
 std::vector<std::shared_ptr<Account>>
 AccountFactory::getAllAccounts() const
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     std::vector<std::shared_ptr<Account>> v;
 
     for (const auto& itemmap : accountMaps_) {
@@ -141,7 +141,7 @@ template<>
 std::shared_ptr<Account>
 AccountFactory::getAccount(std::string_view id) const
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     for (const auto& item : accountMaps_) {
         const auto& map = item.second;
@@ -157,7 +157,7 @@ template<>
 bool
 AccountFactory::empty() const
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
 
     for (const auto& item : accountMaps_) {
         const auto& map = item.second;
@@ -172,7 +172,7 @@ template<>
 std::size_t
 AccountFactory::accountCount() const
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     std::size_t count = 0;
 
     for (const auto& it : accountMaps_)
