@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa2b776b_3a0679cb",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 532,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-01-02T17:11:03Z",
+      "side": 1,
+      "message": "template argument actually not required in c++17",
+      "range": {
+        "startLine": 532,
+        "startChar": 23,
+        "endLine": 532,
+        "endChar": 35
+      },
+      "revId": "b9c84db1441a604dec7496e4cb48830f73fe9d77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
