@@ -118,7 +118,7 @@ RevokeTest::testRevokeDevice()
     auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(60), [&] { return knownChanged; }));
     alice2Device = std::string(alice2Account->currentDeviceId());
-    aliceAccount->revokeDevice("", alice2Device);
+    aliceAccount->revokeDevice(alice2Device);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return deviceRevoked; }));
 
     std::remove("test.gz");
@@ -143,7 +143,7 @@ RevokeTest::testRevokeInvalidDevice()
                 cv.notify_one();
             }));
     libjami::registerSignalHandlers(confHandlers);
-    aliceAccount->revokeDevice("", "foo");
+    aliceAccount->revokeDevice("foo");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return revokeFailed; }));
 }
 

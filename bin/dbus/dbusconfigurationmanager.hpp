@@ -99,19 +99,21 @@ public:
     auto
     exportToFile(const std::string& accountID,
                  const std::string& destinationPath,
+                 const std::string& scheme,
                  const std::string& password)
-        -> decltype(libjami::exportToFile(accountID, destinationPath, password))
+        -> decltype(libjami::exportToFile(accountID, destinationPath, scheme, password))
     {
-        return libjami::exportToFile(accountID, destinationPath, password);
+        return libjami::exportToFile(accountID, destinationPath, scheme, password);
     }
 
     auto
     revokeDevice(const std::string& accountID,
-                 const std::string& password,
-                 const std::string& device)
-        -> decltype(libjami::revokeDevice(accountID, password, device))
+                 const std::string& device,
+                 const std::string& scheme,
+                 const std::string& password)
+        -> decltype(libjami::revokeDevice(accountID, device, scheme, password))
     {
-        return libjami::revokeDevice(accountID, password, device);
+        return libjami::revokeDevice(accountID, device, scheme, password);
     }
 
     auto
@@ -150,11 +152,12 @@ public:
 
     auto
     registerName(const std::string& account,
-                 const std::string& password,
-                 const std::string& name)
-        -> decltype(libjami::registerName(account, password, name))
+                 const std::string& name,
+                 const std::string& scheme,
+                 const std::string& password)
+        -> decltype(libjami::registerName(account, name, scheme, password))
     {
-        return libjami::registerName(account, password, name);
+        return libjami::registerName(account, name, scheme, password);
     }
 
     auto

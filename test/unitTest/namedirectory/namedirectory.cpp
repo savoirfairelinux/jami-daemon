@@ -196,7 +196,7 @@ NameDirectoryTest::testRegisterName()
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(libjami::registerName(aliceId, "", "foo"));
+    CPPUNIT_ASSERT(libjami::registerName(aliceId, "", "password", "foo"));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return nameRegistered; }));
 }
 

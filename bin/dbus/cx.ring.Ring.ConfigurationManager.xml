@@ -21,7 +21,7 @@
             <tp:docstring>
                 Get all parameters of the specified account.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
                 <tp:docstring>
                     The account ID
                 </tp:docstring>
@@ -75,7 +75,7 @@
         </method>
 
         <method name="getVolatileAccountDetails" tp:name-for-bindings="getVolatileAccountDetails">
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
                 <tp:docstring>
                    The account ID
                 </tp:docstring>
@@ -99,7 +99,7 @@
                 <tp:rationale>Account settings are written to the configuration file when ring properly quits.</tp:rationale>
                 <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountDetailsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
@@ -111,7 +111,7 @@
               Set if this account is currently enabled (can be used).
               It is only a runtime proprety with no impact on the "enabled" state of the account.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
                 <tp:docstring>
                     The account ID
                 </tp:docstring>
@@ -124,7 +124,7 @@
         </method>
 
         <method name="setCredentials" tp:name-for-bindings="setCredentials">
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="credentialInformation" direction="in" tp:type="String_String_Map">
@@ -132,7 +132,7 @@
         </method>
 
         <method name="getCredentials" tp:name-for-bindings="getCredentials">
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="credentialInformation" direction="out">
@@ -162,7 +162,7 @@
             <tp:docstring>
                Export account on the DHT using the given password and generated PIN (returned through exportOnRingEnded signal).
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="password" direction="in">
             </arg>
@@ -174,13 +174,23 @@
         </method>
 
         <method name="exportToFile" tp:name-for-bindings="exportToFile">
-            <tp:added version="5.1.0"/>
+            <tp:added version="15.0.0"/>
             <tp:docstring>
                Copy the account archive to the path provided in argument.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="destinationPath" direction="in">
+            </arg>
+            <arg type="s" name="scheme" direction="in">
+            <tp:docstring>
+               The password scheme. Accepted values:
+                <ul>
+                     <li>(empty string): no encryption.</li>
+                     <li>password: plain-text password string.</li>
+                     <li>key: base64-encoded binary key.</li>
+                </ul>
+            </tp:docstring>
             </arg>
             <arg type="s" name="password" direction="in">
             </arg>
@@ -195,7 +205,7 @@
             <tp:docstring>
                Notify clients when the exportOnRing operation ended.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="i" name="status">
                 <tp:docstring>
@@ -215,14 +225,17 @@
         </signal>
 
         <method name="revokeDevice" tp:name-for-bindings="revokeDevice">
+            <tp:added version="15.0.0"/>
             <tp:docstring>
                Revoke device attached to the given Ring account, and publish the new revocation list.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
-            </arg>
-            <arg type="s" name="password" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="deviceId" direction="in">
+            </arg>
+            <arg type="s" name="scheme" direction="in">
+            </arg>
+            <arg type="s" name="password" direction="in">
             </arg>
             <arg type="b" name="success" direction="out">
                 <tp:docstring>
@@ -234,7 +247,7 @@
             <tp:docstring>
                Notify clients when the revokeDevice operation ended.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="s" name="deviceId">
             </arg>
@@ -254,7 +267,7 @@
             <tp:docstring>
                Notify clients when a newly created account's profile is available for storage.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="s" name="displayName">
             </arg>
@@ -266,7 +279,7 @@
             <tp:docstring>
                Notify clients when a new device linked to this account is found.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
             <arg type="a{ss}" name="devices" tp:type="String_String_Map">
@@ -280,7 +293,7 @@
             <tp:docstring>
                Gets list of known devices for this account.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="devices" direction="out">
@@ -294,7 +307,7 @@
             <tp:docstring>
                Change the account archive password.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="oldPassword" direction="in">
             </arg>
@@ -311,11 +324,11 @@
             <tp:docstring>
                Performs name lookup for the specified account (if any) or using the default nameserver.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
               The account to use. If empty, use the default nameserver.
             </arg>
             <arg type="s" name="nameserverUri" direction="in">
-              The name server URI to use, considered only if accountID is empty.
+              The name server URI to use, considered only if accountId is empty.
             </arg>
             <arg type="s" name="name" direction="in">
             </arg>
@@ -329,11 +342,11 @@
             <tp:docstring>
                Performs address lookup for the specified account (if any) or using the default nameserver.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
               The account to use. If empty, use the default nameserver.
             </arg>
             <arg type="s" name="nameserverUri" direction="in">
-              The name server URI to use, considered only if accountID is empty.
+              The name server URI to use, considered only if accountId is empty.
             </arg>
             <arg type="s" name="address" direction="in">
                 <tp:docstring>
@@ -352,7 +365,7 @@
                Notify clients when a new registered address-name mapping is known.
                If status is not success (0), requested field (name or address) is left empty.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="i" name="status">
                 <tp:docstring>
@@ -375,17 +388,16 @@
             <tp:docstring>
                Performs name registration with RingNS protocol for the specified account.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
-            </arg>
-            <arg type="s" name="password" direction="in">
-                <tp:docstring>
-                 Ring account main password.
-                </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="name" direction="in">
                 <tp:docstring>
                    Name to register. Must be lower-case ASCII, digits or "-" or "_".
                 </tp:docstring>
+            </arg>
+            <arg type="s" name="scheme" direction="in">
+            </arg>
+            <arg type="s" name="password" direction="in">
             </arg>
             <arg type="b" name="success" direction="out">
                 <tp:docstring>
@@ -398,7 +410,7 @@
             <tp:docstring>
                Notify clients when the registerName operation ended.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="i" name="status">
                 <tp:docstring>
@@ -423,7 +435,7 @@
             <tp:docstring>
                Performs name registration with RingNS protocol for the specified account.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="query" direction="in">
                 <tp:docstring>
@@ -440,7 +452,7 @@
             <tp:docstring>
                Notify clients when the registerName operation ended.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="i" name="status">
             </arg>
@@ -503,7 +515,7 @@
                 Send account registration (REGISTER) to the registrar.
                 Register the account if enable=true, unregister if enable=false.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
                 <tp:docstring>
                     The account ID
                 </tp:docstring>
@@ -517,7 +529,7 @@
         </method>
 
         <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="to" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
             <arg type="a{ss}" name="payloads" direction="in"/>
@@ -536,7 +548,7 @@
         </method>
 
         <method name="cancelMessage" tp:name-for-bindings="cancelMessage">
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="t" name="id" direction="in"/>
             <arg type="b" name="success" direction="out">
                 <tp:docstring>
@@ -546,7 +558,7 @@
         </method>
 
         <method name="getLastMessages" tp:name-for-bindings="getLastMessages">
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="t" name="base_timestamp" direction="in"/>
             <arg type="a(sa{ss}t)" name="messages" direction="out"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="messages"/>
@@ -554,7 +566,7 @@
 
 
         <method name="getNearbyPeers" tp:name-for-bindings="getNearbyPeers">
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map"/>
             <tp:docstring>
@@ -583,7 +595,7 @@
             <tp:docstring>
                Notify clients that a new text message has been received at the account level.
             </tp:docstring>
-            <arg type="s" name="accountID"/>
+            <arg type="s" name="accountId"/>
             <arg type="s" name="messageID"/>
             <arg type="s" name="from"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="MapStringString"/>
@@ -595,7 +607,7 @@
             <tp:docstring>
                Notify clients that a sent text message status have changed
             </tp:docstring>
-            <arg type="s" name="accountID"/>
+            <arg type="s" name="accountId"/>
             <arg type="s" name="conversationId"/>
             <arg type="s" name="peer"/>
             <arg type="s" name="id"/>
@@ -629,7 +641,7 @@
             <tp:docstring>
                Notify clients that a vCard has been received
             </tp:docstring>
-            <arg type="s" name="accountID"/>
+            <arg type="s" name="accountId"/>
             <arg type="s" name="from"/>
             <arg type="s" name="path"/>
         </signal>
@@ -881,7 +893,7 @@
         </method>
 
         <method name="getCodecDetails" tp:name-for-bindings="getCodecDetails">
-            <arg type="s" name="accountID" direction="in"></arg>
+            <arg type="s" name="accountId" direction="in"></arg>
             <arg type="u" name="codecId" direction="in"></arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
@@ -890,7 +902,7 @@
 
         <method name="setCodecDetails" tp:name-for-bindings="setCodecDetails">
             <arg type="b" name="result" direction="out"></arg>
-            <arg type="s" name="accountID" direction="in"></arg>
+            <arg type="s" name="accountId" direction="in"></arg>
             <arg type="u" name="codecId" direction="in"></arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
@@ -899,7 +911,7 @@
 
         <method name="getActiveCodecList" tp:name-for-bindings="getActiveCodecList">
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorUInt"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="au" name="list" direction="out">
             </arg>
@@ -907,7 +919,7 @@
 
         <method name="setActiveCodecList" tp:name-for-bindings="setActiveCodecList">
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorUInt"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="au" name="list" direction="in">
             </arg>
@@ -1082,7 +1094,7 @@
         </signal>
 
         <signal name="accountDetailsChanged" tp:name-for-bindings="accountDetailsChanged">
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
                 <tp:docstring>
                    The account ID
                 </tp:docstring>
@@ -1096,7 +1108,7 @@
         </signal>
 
         <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
-            <arg type="s" name="accountID"/>
+            <arg type="s" name="accountId"/>
             <arg type="s" name="registrationState"/>
             <arg type="i" name="registrationDetail">
                 <tp:docstring>
@@ -1111,7 +1123,7 @@
         </signal>
 
         <signal name="volatileAccountDetailsChanged" tp:name-for-bindings="volatileAccountDetailsChanged">
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
                 <tp:docstring>
                    The account ID
                 </tp:docstring>
@@ -1152,7 +1164,7 @@
                 Returns a list of supported encryption ciphers used to encrypt SIP messages. The list depends on the TLS library being used.
                 Only registered SIP accounts currently support setting custom ciphers. This method returns an empty list if TLS support is disabled in either pjproject or Jami.
             </tp:docstring>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
                 <tp:docstring>
                     A SIP account id, other account IDs will be rejected.
                 </tp:docstring>
@@ -1448,7 +1460,7 @@
 
         <method name="getTrustRequests" tp:name-for-bindings="getTrustRequests">
             <tp:added version="2.2.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="requests" direction="out">
@@ -1463,7 +1475,7 @@
 
         <method name="acceptTrustRequest" tp:name-for-bindings="acceptTrustRequest">
             <tp:added version="2.2.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="from" direction="in">
             </arg>
@@ -1476,7 +1488,7 @@
 
         <method name="discardTrustRequest" tp:name-for-bindings="discardTrustRequest">
             <tp:added version="2.2.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="from" direction="in">
             </arg>
@@ -1492,7 +1504,7 @@
             <tp:docstring>
                Notify clients that a new contact request has been received.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="s" name="conversationId">
             </arg>
@@ -1506,7 +1518,7 @@
 
         <method name="sendTrustRequest" tp:name-for-bindings="sendTrustRequest">
             <tp:added version="2.2.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="to" direction="in">
             </arg>
@@ -1516,7 +1528,7 @@
 
         <method name="addContact" tp:name-for-bindings="addContact">
             <tp:added version="3.0.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="uri" direction="in">
             </arg>
@@ -1524,7 +1536,7 @@
 
         <method name="removeContact" tp:name-for-bindings="removeContact">
             <tp:added version="3.0.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="uri" direction="in">
             </arg>
@@ -1538,7 +1550,7 @@
 
         <method name="getContactDetails" tp:name-for-bindings="getContactDetails">
             <tp:added version="3.0.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <arg type="s" name="uri" direction="in">
             </arg>
@@ -1552,7 +1564,7 @@
 
         <method name="getContacts" tp:name-for-bindings="getContacts">
             <tp:added version="3.0.0"/>
-            <arg type="s" name="accountID" direction="in">
+            <arg type="s" name="accountId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="contacts" direction="out">
@@ -1567,7 +1579,7 @@
             <tp:docstring>
                Notify clients that a new contact has been added.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="s" name="uri">
             </arg>
@@ -1580,7 +1592,7 @@
             <tp:docstring>
                Notify clients that a new contact has been removed.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
             </arg>
             <arg type="s" name="uri">
             </arg>
@@ -1917,7 +1929,7 @@
             <tp:docstring>
                Notify clients that a media parameter changed.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
                 <tp:docstring>
                    An account id.
                 </tp:docstring>
@@ -1939,7 +1951,7 @@
             <tp:docstring>
                Notify clients when migration is ended.
             </tp:docstring>
-            <arg type="s" name="accountID">
+            <arg type="s" name="accountId">
                 <tp:docstring>
                    An account id.
                 </tp:docstring>
@@ -2382,14 +2394,14 @@
 
         <method name="setDefaultModerator" tp:name-for-bindings="setDefaultModerator">
             <tp:added version="9.9.0"/>
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="peerURI" direction="in"/>
             <arg type="b" name="state" direction="in"/>
         </method>
 
         <method name="getDefaultModerators" tp:name-for-bindings="getDefaultModerators">
             <tp:added version="9.9.0"/>
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
             <arg type="as" name="list" direction="out">
             </arg>
@@ -2397,23 +2409,23 @@
 
         <method name="enableLocalModerators" tp:name-for-bindings="enableLocalModerators">
             <tp:added version="9.9.0"/>
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="b" name="isModEnabled" direction="in"/>
         </method>
         <method name="isLocalModeratorsEnabled" tp:name-for-bindings="isLocalModeratorsEnabled">
             <tp:added version="9.9.0"/>
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="b" name="isModEnabled" direction="out"/>
         </method>
 
         <method name="setAllModerators" tp:name-for-bindings="setAllModerators">
             <tp:added version="9.10.0"/>
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="b" name="allModerators" direction="in"/>
         </method>
         <method name="isAllModerators" tp:name-for-bindings="isAllModerators">
             <tp:added version="9.10.0"/>
-            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="accountId" direction="in"/>
             <arg type="b" name="allModerators" direction="out"/>
         </method>
 

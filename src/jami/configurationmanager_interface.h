@@ -53,36 +53,38 @@ struct LIBJAMI_PUBLIC Message
     uint64_t received;
 };
 
-LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountDetails(const std::string& accountId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(
-    const std::string& accountID);
-LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountID,
+    const std::string& accountId);
+LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountId,
                                       const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC void setAccountActive(const std::string& accountID,
+LIBJAMI_PUBLIC void setAccountActive(const std::string& accountId,
                                      bool active,
                                      bool shutdownConnections = false);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 LIBJAMI_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
-                                      const std::string& accountID = {});
+                                      const std::string& accountId = {});
 LIBJAMI_PUBLIC void monitor(bool continuous);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConnectionList(
     const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelList(
     const std::string& accountId, const std::string& connectionId);
 
-LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
-LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
+LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountId, const std::string& password);
+LIBJAMI_PUBLIC bool exportToFile(const std::string& accountId,
                                  const std::string& destinationPath,
+                                 const std::string& scheme = {},
                                  const std::string& password = {});
-LIBJAMI_PUBLIC bool revokeDevice(const std::string& accountID,
-                                 const std::string& password,
-                                 const std::string& deviceID);
-LIBJAMI_PUBLIC std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
-LIBJAMI_PUBLIC bool changeAccountPassword(const std::string& accountID,
+LIBJAMI_PUBLIC bool revokeDevice(const std::string& accountId,
+                                 const std::string& deviceId,
+                                 const std::string& scheme = {},
+                                 const std::string& password = {});
+LIBJAMI_PUBLIC std::map<std::string, std::string> getKnownRingDevices(const std::string& accountId);
+LIBJAMI_PUBLIC bool changeAccountPassword(const std::string& accountId,
                                           const std::string& password_old,
                                           const std::string& password_new);
-LIBJAMI_PUBLIC bool isPasswordValid(const std::string& accountID, const std::string& password);
-LIBJAMI_PUBLIC std::vector<uint8_t> getPasswordKey(const std::string& accountID, const std::string& password);
+LIBJAMI_PUBLIC bool isPasswordValid(const std::string& accountId, const std::string& password);
+LIBJAMI_PUBLIC std::vector<uint8_t> getPasswordKey(const std::string& accountId, const std::string& password);
 
 LIBJAMI_PUBLIC bool lookupName(const std::string& account,
                                const std::string& nameserver,
@@ -91,43 +93,44 @@ LIBJAMI_PUBLIC bool lookupAddress(const std::string& account,
                                   const std::string& nameserver,
                                   const std::string& address);
 LIBJAMI_PUBLIC bool registerName(const std::string& account,
-                                 const std::string& password,
-                                 const std::string& name);
+                                 const std::string& name,
+                                 const std::string& scheme = {},
+                                 const std::string& password = {});
 LIBJAMI_PUBLIC bool searchUser(const std::string& account, const std::string& query);
 
-LIBJAMI_PUBLIC void removeAccount(const std::string& accountID);
+LIBJAMI_PUBLIC void removeAccount(const std::string& accountId);
 LIBJAMI_PUBLIC std::vector<std::string> getAccountList();
-LIBJAMI_PUBLIC void sendRegister(const std::string& accountID, bool enable);
+LIBJAMI_PUBLIC void sendRegister(const std::string& accountId, bool enable);
 LIBJAMI_PUBLIC void registerAllAccounts(void);
-LIBJAMI_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountID,
+LIBJAMI_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountId,
                                                const std::string& to,
                                                const std::map<std::string, std::string>& payloads,
                                                int32_t flags);
-LIBJAMI_PUBLIC bool cancelMessage(const std::string& accountID, uint64_t message);
-LIBJAMI_PUBLIC std::vector<Message> getLastMessages(const std::string& accountID,
+LIBJAMI_PUBLIC bool cancelMessage(const std::string& accountId, uint64_t message);
+LIBJAMI_PUBLIC std::vector<Message> getLastMessages(const std::string& accountId,
                                                     const uint64_t& base_timestamp);
-LIBJAMI_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountId);
 LIBJAMI_PUBLIC int getMessageStatus(uint64_t id);
-LIBJAMI_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
-LIBJAMI_PUBLIC void setIsComposing(const std::string& accountID,
+LIBJAMI_PUBLIC int getMessageStatus(const std::string& accountId, uint64_t id);
+LIBJAMI_PUBLIC void setIsComposing(const std::string& accountId,
                                    const std::string& conversationUri,
                                    bool isWriting);
-LIBJAMI_PUBLIC bool setMessageDisplayed(const std::string& accountID,
+LIBJAMI_PUBLIC bool setMessageDisplayed(const std::string& accountId,
                                         const std::string& conversationUri,
                                         const std::string& messageId,
                                         int status);
 
 LIBJAMI_PUBLIC std::vector<unsigned> getCodecList();
 LIBJAMI_PUBLIC std::vector<std::string> getSupportedTlsMethod();
-LIBJAMI_PUBLIC std::vector<std::string> getSupportedCiphers(const std::string& accountID);
-LIBJAMI_PUBLIC std::map<std::string, std::string> getCodecDetails(const std::string& accountID,
+LIBJAMI_PUBLIC std::vector<std::string> getSupportedCiphers(const std::string& accountId);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getCodecDetails(const std::string& accountId,
                                                                   const unsigned& codecId);
-LIBJAMI_PUBLIC bool setCodecDetails(const std::string& accountID,
+LIBJAMI_PUBLIC bool setCodecDetails(const std::string& accountId,
                                     const unsigned& codecId,
                                     const std::map<std::string, std::string>& details);
-LIBJAMI_PUBLIC std::vector<unsigned> getActiveCodecList(const std::string& accountID);
+LIBJAMI_PUBLIC std::vector<unsigned> getActiveCodecList(const std::string& accountId);
 
-LIBJAMI_PUBLIC void setActiveCodecList(const std::string& accountID,
+LIBJAMI_PUBLIC void setActiveCodecList(const std::string& accountId,
                                        const std::vector<unsigned>& list);
 
 LIBJAMI_PUBLIC std::vector<std::string> getAudioPluginList();
@@ -180,8 +183,8 @@ LIBJAMI_PUBLIC int32_t getRingingTimeout();
 LIBJAMI_PUBLIC void setAccountsOrder(const std::string& order);
 
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getCredentials(
-    const std::string& accountID);
-LIBJAMI_PUBLIC void setCredentials(const std::string& accountID,
+    const std::string& accountId);
+LIBJAMI_PUBLIC void setCredentials(const std::string& accountId,
                                    const std::vector<std::map<std::string, std::string>>& details);
 
 LIBJAMI_PUBLIC std::string getAddrFromInterfaceName(const std::string& iface);
@@ -293,34 +296,34 @@ LIBJAMI_PUBLIC void setAudioMeterState(const std::string& id, bool state);
 /**
  * Add/remove default moderator for conferences
  */
-LIBJAMI_PUBLIC void setDefaultModerator(const std::string& accountID,
+LIBJAMI_PUBLIC void setDefaultModerator(const std::string& accountId,
                                         const std::string& peerURI,
                                         bool state);
 
 /**
  * Get default moderators for an account
  */
-LIBJAMI_PUBLIC std::vector<std::string> getDefaultModerators(const std::string& accountID);
+LIBJAMI_PUBLIC std::vector<std::string> getDefaultModerators(const std::string& accountId);
 
 /**
  * Enable/disable local moderators for conferences
  */
-LIBJAMI_PUBLIC void enableLocalModerators(const std::string& accountID, bool isModEnabled);
+LIBJAMI_PUBLIC void enableLocalModerators(const std::string& accountId, bool isModEnabled);
 
 /**
  * Get local moderators state
  */
-LIBJAMI_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountID);
+LIBJAMI_PUBLIC bool isLocalModeratorsEnabled(const std::string& accountId);
 
 /**
  * Enable/disable all moderators for conferences
  */
-LIBJAMI_PUBLIC void setAllModerators(const std::string& accountID, bool allModerators);
+LIBJAMI_PUBLIC void setAllModerators(const std::string& accountId, bool allModerators);
 
 /**
  * Get all moderators state
  */
-LIBJAMI_PUBLIC bool isAllModerators(const std::string& accountID);
+LIBJAMI_PUBLIC bool isAllModerators(const std::string& accountId);
 
 struct LIBJAMI_PUBLIC AudioSignal
 {

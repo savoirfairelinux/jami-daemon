@@ -161,12 +161,12 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
 }
 
 bool
-ArchiveAccountManager::setValidity(const std::string& password,
+ArchiveAccountManager::setValidity(std::string_view scheme, const std::string& password,
                                    dht::crypto::Identity& device,
                                    const dht::InfoHash& id,
                                    int64_t validity)
 {
-    auto archive = readArchive(password);
+    auto archive = readArchive(scheme, password);
     // We need the CA key to resign certificates
     if (not archive.id.first or not *archive.id.first or not archive.id.second or not archive.ca_key
         or not *archive.ca_key)
@@ -201,7 +201,7 @@ ArchiveAccountManager::setValidity(const std::string& password,
     }
 
     if (updated) {
-        archive.save(fileutils::getFullPath(path_, archivePath_), password);
+        archive.save(fileutils::getFullPath(path_, archivePath_), scheme, password);
     }
 
     if (updated or not id or device.second->getId() == id) {
@@ -241,7 +241,7 @@ ArchiveAccountManager::loadFromFile(AuthContext& ctx)
     JAMI_WARN("[Auth] loading archive from: %s", ctx.credentials->uri.c_str());
     AccountArchive archive;
     try {
-        archive = AccountArchive(ctx.credentials->uri, ctx.credentials->password);
+        archive = AccountArchive(ctx.credentials->uri, ctx.credentials->password_scheme, ctx.credentials->password);
     } catch (const std::exception& ex) {
         JAMI_WARN("[Auth] can't read file: %s", ex.what());
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
@@ -350,7 +350,7 @@ ArchiveAccountManager::migrateAccount(AuthContext& ctx)
     JAMI_WARN("[Auth] account migration needed");
     AccountArchive archive;
     try {
-        archive = readArchive(ctx.credentials->password);
+        archive = readArchive(ctx.credentials->password_scheme, ctx.credentials->password);
     } catch (...) {
         JAMI_DBG("[Auth] Can't load archive");
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
@@ -374,7 +374,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
     dhtnet::fileutils::check_dir(path_, 0700);
 
-    a.save(fileutils::getFullPath(path_, archivePath_), ctx.credentials ? ctx.credentials->password : "");
+    a.save(fileutils::getFullPath(path_, archivePath_), ctx.credentials ? ctx.credentials->password_scheme : "", ctx.credentials ? ctx.credentials->password : "");
 
     if (not a.id.second->isCA()) {
         JAMI_ERR("[Auth] trying to sign a certificate with a non-CA.");
@@ -568,10 +568,10 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
 }
 
 AccountArchive
-ArchiveAccountManager::readArchive(const std::string& pwd) const
+ArchiveAccountManager::readArchive(std::string_view scheme, const std::string& pwd) const
 {
     JAMI_DBG("[Auth] reading account archive");
-    return AccountArchive(fileutils::getFullPath(path_, archivePath_), pwd);
+    return AccountArchive(fileutils::getFullPath(path_, archivePath_), scheme, pwd);
 }
 
 void
@@ -625,13 +625,13 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
 }
 
 void
-ArchiveAccountManager::saveArchive(AccountArchive& archive, const std::string& pwd)
+ArchiveAccountManager::saveArchive(AccountArchive& archive, std::string_view scheme, const std::string& pwd)
 {
     try {
         updateArchive(archive);
         if (archivePath_.empty())
             archivePath_ = "export.gz";
-        archive.save(fileutils::getFullPath(path_, archivePath_), pwd);
+        archive.save(fileutils::getFullPath(path_, archivePath_), scheme, pwd);
     } catch (const std::runtime_error& ex) {
         JAMI_ERR("[Auth] Can't export archive: %s", ex.what());
         return;
@@ -644,7 +644,8 @@ ArchiveAccountManager::changePassword(const std::string& password_old,
 {
     try {
         auto path = fileutils::getFullPath(path_, archivePath_);
-        AccountArchive(path, password_old).save(path, password_new);
+        AccountArchive(path, fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, password_old)
+            .save(path, fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, password_new);
         return true;
     } catch (const std::exception&) {
         return false;
@@ -693,7 +694,7 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
         try {
             JAMI_DBG("[Auth] exporting account");
 
-            a = this_->readArchive(password);
+            a = this_->readArchive("password", password);
 
             // Generate random PIN
             pin_str = generatePIN();
@@ -731,15 +732,15 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
 }
 
 bool
-ArchiveAccountManager::revokeDevice(
+ArchiveAccountManager::revokeDevice(const std::string& device,
+                                    std::string_view scheme,
                                     const std::string& password,
-                                    const std::string& device,
                                     RevokeDeviceCallback cb)
 {
     auto fa = dht::ThreadPool::computation().getShared<AccountArchive>(
-        [this, password] { return readArchive(password); });
+        [this, scheme=std::string(scheme), password] { return readArchive(scheme, password); });
     findCertificate(DeviceId(device),
-        [fa = std::move(fa), password, device, cb, w=weak_from_this()](
+        [fa = std::move(fa), scheme=std::string(scheme), password, device, cb, w=weak_from_this()](
             const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
                 if (not crt) {
                     cb(RevokeDeviceResult::ERROR_NETWORK);
@@ -768,7 +769,7 @@ ArchiveAccountManager::revokeDevice(
                 auto h = a.id.second->getId();
                 this_->dht_->put(h, a.revoked, dht::DoneCallback {}, {}, true);
 
-                this_->saveArchive(a, password);
+                this_->saveArchive(a, scheme, password);
                 this_->info_->contacts->removeAccountDevice(crt->getLongId());
                 cb(RevokeDeviceResult::SUCCESS);
                 this_->syncDevices();
@@ -777,22 +778,19 @@ ArchiveAccountManager::revokeDevice(
 }
 
 bool
-ArchiveAccountManager::exportArchive(const std::string& destinationPath, const std::string& password)
+ArchiveAccountManager::exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password)
 {
     try {
         // Save contacts if possible before exporting
-        AccountArchive archive = readArchive(password);
+        AccountArchive archive = readArchive(scheme, password);
         updateArchive(archive);
-        archive.save(fileutils::getFullPath(path_, archivePath_), password);
+        auto archivePath = fileutils::getFullPath(path_, archivePath_);
+        archive.save(archivePath, scheme, password);
 
         // Export the file
-        auto sourcePath = fileutils::getFullPath(path_, archivePath_);
-        std::ifstream src(sourcePath, std::ios::in | std::ios::binary);
-        if (!src)
-            return false;
-        std::ofstream dst(destinationPath, std::ios::out | std::ios::binary);
-        dst << src.rdbuf();
-        return true;
+        std::error_code ec;
+        std::filesystem::copy_file(archivePath, destinationPath, std::filesystem::copy_options::overwrite_existing, ec);
+        return !ec;
     } catch (const std::runtime_error& ex) {
         JAMI_ERR("[Auth] Can't export archive: %s", ex.what());
         return false;
@@ -806,7 +804,7 @@ bool
 ArchiveAccountManager::isPasswordValid(const std::string& password)
 {
     try {
-        readArchive(password);
+        readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, password);
         return true;
     } catch (...) {
         return false;
@@ -815,8 +813,9 @@ ArchiveAccountManager::isPasswordValid(const std::string& password)
 
 #if HAVE_RINGNS
 void
-ArchiveAccountManager::registerName(const std::string& password,
-                                    const std::string& name,
+ArchiveAccountManager::registerName(const std::string& name,
+                                    std::string_view scheme,
+                                    const std::string& password,
                                     RegistrationCallback cb)
 {
     std::string signedName;
@@ -827,7 +826,7 @@ ArchiveAccountManager::registerName(const std::string& password,
     std::string ethAccount;
 
     try {
-        auto archive = readArchive(password);
+        auto archive = readArchive(scheme, password);
         auto privateKey = archive.id.first;
         const auto& pk = privateKey->getPublicKey();
         publickey = pk.toString();
