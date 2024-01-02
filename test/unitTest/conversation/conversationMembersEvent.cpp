@@ -584,12 +584,23 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
                 requestReceived = true;
                 cv.notify_one();
             }));
+    bool aliceStopped = false;
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string&, const std::map<std::string, std::string>&) {
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "UNREGISTERED")
+                    aliceStopped = true;
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return requestReceived; }));
 
     Manager::instance().sendRegister(aliceId, false); // This avoid to sync immediately
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return aliceStopped; }));
     libjami::acceptConversationRequest(bobId, convId);
 
     std::this_thread::sleep_for(40s); // Wait for negotiation to timeout
