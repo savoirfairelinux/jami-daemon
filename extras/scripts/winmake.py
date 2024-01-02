@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 SPDX-License-Identifier: GPL-3.0-or-later
-Copyright (c) 2023 Savoir-faire Linux
+Copyright (c) 2024 Savoir-faire Linux
 
 Uses pywinmake to build the daemon and its dependencies.
 """

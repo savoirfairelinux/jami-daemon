@@ -1,6 +1,6 @@
 # -*- mode: makefile; -*-
 #
-#  Copyright (C) 2018-2023 Savoir-faire Linux Inc.
+#  Copyright (C) 2018-2024 Savoir-faire Linux Inc.
 #
 #  Author: Sebastien Blin <sebastien.blin@savoirfairelinux.com>
 #
