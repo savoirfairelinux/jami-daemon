@@ -158,12 +158,13 @@ public:
      * @param account           The account getting the conversation
      * @param deviceId          Remote device
      * @param conversationId    Conversation to clone
-     * @param socket            Socket used to clone
+     * @param checkCommitCb     Used if commits should be treated
      */
     static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
         const std::shared_ptr<JamiAccount>& account,
         const std::string& deviceId,
-        const std::string& conversationId);
+        const std::string& conversationId,
+        std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb = {});
 
     /**
      * Open a conversation repository for an account and an id
@@ -334,7 +335,7 @@ public:
      */
     std::pair<std::vector<ConversationCommit>, bool> validFetch(
         const std::string& remoteDevice) const;
-    bool validClone() const;
+    bool validClone(std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb) const;
 
     /**
      * Delete branch with remote
