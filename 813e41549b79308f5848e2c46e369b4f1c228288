@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "756be607_26263ad9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1810,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-01-02T22:25:19Z",
+      "side": 1,
+      "message": "should be done atomically with the operation above",
+      "range": {
+        "startLine": 1810,
+        "startChar": 12,
+        "endLine": 1810,
+        "endChar": 33
+      },
+      "revId": "813e41549b79308f5848e2c46e369b4f1c228288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa6af3ac_5328f781",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2237,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-01-02T22:25:19Z",
+      "side": 1,
+      "message": "should be done atomically with the operation above",
+      "range": {
+        "startLine": 2237,
+        "startChar": 20,
+        "endLine": 2237,
+        "endChar": 41
+      },
+      "revId": "813e41549b79308f5848e2c46e369b4f1c228288",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
