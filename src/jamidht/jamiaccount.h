@@ -344,8 +344,8 @@ public:
      * doesn't have a password
      * @return if the archive was exported
      */
-    bool exportArchive(const std::string& destinationPath, const std::string& password = {});
-    bool revokeDevice(const std::string& password, const std::string& device);
+    bool exportArchive(const std::string& destinationPath, std::string_view scheme = {}, const std::string& password = {});
+    bool revokeDevice(const std::string& device, std::string_view scheme, const std::string& password = {});
     std::map<std::string, std::string> getKnownDevices() const;
 
     bool isPasswordValid(const std::string& password);
@@ -361,7 +361,7 @@ public:
 #if HAVE_RINGNS
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
-    void registerName(const std::string& password, const std::string& name);
+    void registerName(const std::string& name, const std::string& scheme, const std::string& password);
 #endif
     bool searchUser(const std::string& nameQuery);
 
