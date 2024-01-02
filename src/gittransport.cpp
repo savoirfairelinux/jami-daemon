@@ -144,37 +144,37 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
 {
     auto* sub = reinterpret_cast<P2PSubTransport*>(transport);
     if (!sub || !sub->remote) {
-        JAMI_ERR("Invalid subtransport");
+        JAMI_ERROR("Invalid subtransport");
         return -1;
     }
 
     auto repo = git_remote_owner(sub->remote);
     if (!repo) {
-        JAMI_ERR("No repository linked to the transport");
+        JAMI_ERROR("No repository linked to the transport");
         return -1;
     }
 
     const auto* workdir = git_repository_workdir(repo);
     if (!workdir) {
-        JAMI_ERR("No working linked to the repository");
+        JAMI_ERROR("No working linked to the repository");
         return -1;
     }
     std::string_view path = workdir;
     auto delimConv = path.rfind("/conversations");
     if (delimConv == std::string::npos) {
-        JAMI_ERR("No conversation id found");
+        JAMI_ERROR("No conversation id found");
         return -1;
     }
     auto delimAccount = path.rfind('/', delimConv - 1);
     if (delimAccount == std::string::npos && delimConv - 1 - delimAccount == 16) {
-        JAMI_ERR("No account id found");
+        JAMI_ERROR("No account id found");
         return -1;
     }
     auto accountId = path.substr(delimAccount + 1, delimConv - 1 - delimAccount);
-    std::string_view gitUrl = url + std::string("git://").size();
+    std::string_view gitUrl = url + ("git://"sv).size();
     auto delim = gitUrl.find('/');
     if (delim == std::string::npos) {
-        JAMI_ERR("Incorrect url %s", std::string(gitUrl).c_str());
+        JAMI_ERROR("Incorrect url {:s}", gitUrl);
         return -1;
     }
     auto deviceId = gitUrl.substr(0, delim);
