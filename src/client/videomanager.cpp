@@ -694,7 +694,7 @@ getVideoInput(const std::string& resource, video::VideoInputMode inputMode, cons
 {
     auto sinkId = sink.empty() ? resource : sink;
     auto& vmgr = Manager::instance().getVideoManager();
-    std::lock_guard<std::mutex> lk(vmgr.videoMutex);
+    std::lock_guard lk(vmgr.videoMutex);
     auto it = vmgr.videoInputs.find(sinkId);
     if (it != vmgr.videoInputs.end()) {
         if (auto input = it->second.lock()) {
@@ -718,7 +718,7 @@ std::shared_ptr<AudioInput>
 getAudioInput(const std::string& device)
 {
     auto& vmgr = Manager::instance().getVideoManager();
-    std::lock_guard<std::mutex> lk(vmgr.audioMutex);
+    std::lock_guard lk(vmgr.audioMutex);
 
     // erase expired audio inputs
     for (auto it = vmgr.audioInputs.cbegin(); it != vmgr.audioInputs.cend();) {

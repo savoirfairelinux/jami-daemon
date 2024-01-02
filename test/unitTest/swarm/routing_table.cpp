@@ -57,7 +57,7 @@ struct Counter
 
     void count()
     {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         ++added;
         if (added == target)
             cv.notify_one();
@@ -240,7 +240,7 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
             if (!sm || sm->isShutdown())
                 return;
             NodeId node = dhtnet::DeviceId(nodeId);
-            std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+            std::lock_guard lk(channelSocketsMtx_);
             if (auto smRemote = getManager(node)) {
                 if (sm->isShutdown()) {
                     std::cout << "SWARMMANAGER " << sm->getId() << " IS SHUTDOWN" << std::endl;
@@ -1222,7 +1222,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
     CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
 
     // SHUTTING DOWN ADDED NODES
-    std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+    std::lock_guard lk(channelSocketsMtx_);
     for (auto& nodes : nodeTestIds1) {
         auto it = swarmManagers.find(nodes);
         if (it != swarmManagers.end()) {
@@ -1286,7 +1286,7 @@ RoutingTableTest::testSwarmManagersWMobileModes()
 
     // Shutting down Mobile Nodes
     {
-        std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+        std::lock_guard lk(channelSocketsMtx_);
         for (auto it = swarmManagers.begin(); it != swarmManagers.end();) {
             if (it->second->isMobile()) {
                 it->second->shutdown();

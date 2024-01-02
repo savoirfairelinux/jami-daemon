@@ -126,13 +126,13 @@ private:
 
     std::string nameCache(const std::string& addr)
     {
-        std::lock_guard<std::mutex> l(cacheLock_);
+        std::lock_guard l(cacheLock_);
         auto cacheRes = nameCache_.find(addr);
         return cacheRes != nameCache_.end() ? cacheRes->second : std::string {};
     }
     std::string addrCache(const std::string& name)
     {
-        std::lock_guard<std::mutex> l(cacheLock_);
+        std::lock_guard l(cacheLock_);
         auto cacheRes = addrCache_.find(name);
         return cacheRes != addrCache_.end() ? cacheRes->second : std::string {};
     }

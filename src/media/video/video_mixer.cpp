@@ -55,7 +55,7 @@ struct VideoMixer::VideoMixerSource
     std::shared_ptr<VideoFrame> render_frame;
     void atomic_copy(const VideoFrame& other)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
         auto newFrame = std::make_shared<VideoFrame>();
         newFrame->copyFrom(other);
         render_frame = newFrame;
@@ -63,7 +63,7 @@ struct VideoMixer::VideoMixerSource
 
     std::shared_ptr<VideoFrame> getRenderFrame()
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
         return render_frame;
     }
 
@@ -116,7 +116,7 @@ VideoMixer::switchInputs(const std::vector<std::string>& inputs)
 {
     // Do not stop video inputs that are already there
     // But only detach it to get new index
-    std::lock_guard<std::mutex> lk(localInputsMtx_);
+    std::lock_guard lk(localInputsMtx_);
     decltype(localInputs_) newInputs;
     for (auto i = 0u; i != inputs.size(); ++i) {
         auto videoInput = getVideoInput(inputs[i]);
@@ -185,7 +185,7 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
         return;
     JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
     {
-        std::lock_guard<std::mutex> lk(videoToStreamInfoMtx_);
+        std::lock_guard lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
     }
     frame->attach(this);
@@ -294,7 +294,7 @@ VideoMixer::process()
     libav_utils::fillWithBlack(output.pointer());
 
     {
-        std::lock_guard<std::mutex> lk(audioOnlySourcesMtx_);
+        std::lock_guard lk(audioOnlySourcesMtx_);
         std::shared_lock lock(rwMutex_);
 
         int i = 0;

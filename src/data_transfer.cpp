@@ -254,7 +254,7 @@ public:
 
     ~Impl()
     {
-        std::lock_guard<std::mutex> lk {mapMutex_};
+        std::lock_guard lk {mapMutex_};
         for (const auto& [channel, _of] : outgoings_) {
             channel->shutdown();
         }
@@ -270,7 +270,7 @@ public:
             auto file = fileutils::loadFile(waitingPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {mapMutex_};
+            std::lock_guard lk {mapMutex_};
             oh.get().convert(waitingIds_);
         } catch (const std::exception& e) {
             return;
@@ -317,7 +317,7 @@ TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& chan
                               size_t end,
                               OnFinishedCb onFinished)
 {
-    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    std::lock_guard lk {pimpl_->mapMutex_};
     if (pimpl_->outgoings_.find(channel) != pimpl_->outgoings_.end())
         return;
     libjami::DataTransferInfo info;
@@ -333,7 +333,7 @@ TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& chan
         dht::ThreadPool().computation().run([w, channel] {
             if (auto sthis_ = w.lock()) {
                 auto& pimpl = sthis_->pimpl_;
-                std::lock_guard<std::mutex> lk {pimpl->mapMutex_};
+                std::lock_guard lk {pimpl->mapMutex_};
                 auto itO = pimpl->outgoings_.find(channel);
                 if (itO != pimpl->outgoings_.end())
                     pimpl->outgoings_.erase(itO);
@@ -350,7 +350,7 @@ TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& chan
 bool
 TransferManager::cancel(const std::string& fileId)
 {
-    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    std::lock_guard lk {pimpl_->mapMutex_};
     // Remove from waiting, this avoid auto-download
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW != pimpl_->waitingIds_.end()) {
@@ -422,7 +422,7 @@ void
 TransferManager::onIncomingFileTransfer(const std::string& fileId,
                                         const std::shared_ptr<dhtnet::ChannelSocket>& channel)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    std::lock_guard lk(pimpl_->mapMutex_);
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itC = pimpl_->incomings_.find(fileId);
     if (itC != pimpl_->incomings_.end()) {
@@ -468,7 +468,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
             dht::ThreadPool().computation().run([w, fileId, code] {
                 if (auto sthis_ = w.lock()) {
                     auto& pimpl = sthis_->pimpl_;
-                    std::lock_guard<std::mutex> lk {pimpl->mapMutex_};
+                    std::lock_guard lk {pimpl->mapMutex_};
                     auto itO = pimpl->incomings_.find(fileId);
                     if (itO != pimpl->incomings_.end())
                         pimpl->incomings_.erase(itO);
@@ -516,7 +516,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     auto uri = fileId == "profile.vcf" ? cert->issuer->getId().toString()
                                        : std::string(fileId.substr(0, fileId.size() - 4 /*.vcf*/));
 
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    std::lock_guard lk(pimpl_->mapMutex_);
     auto idx = std::make_pair(deviceId, uri);
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itV = pimpl_->vcards_.find(idx);
@@ -595,7 +595,7 @@ std::vector<WaitingRequest>
 TransferManager::waitingRequests() const
 {
     std::vector<WaitingRequest> res;
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    std::lock_guard lk(pimpl_->mapMutex_);
     for (const auto& [fileId, req] : pimpl_->waitingIds_) {
         auto itC = pimpl_->incomings_.find(fileId);
         if (itC == pimpl_->incomings_.end())
@@ -607,7 +607,7 @@ TransferManager::waitingRequests() const
 bool
 TransferManager::isWaiting(const std::string& fileId) const
 {
-    std::lock_guard<std::mutex> lk(pimpl_->mapMutex_);
+    std::lock_guard lk(pimpl_->mapMutex_);
     return pimpl_->waitingIds_.find(fileId) != pimpl_->waitingIds_.end();
 }
 

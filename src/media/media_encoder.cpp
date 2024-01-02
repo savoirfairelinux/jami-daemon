@@ -225,7 +225,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
              systemCodecInfo.name.c_str(),
              systemCodecInfo.libName.c_str());
 
-    std::lock_guard<std::mutex> lk(encMutex_);
+    std::lock_guard lk(encMutex_);
 
     if (!outputCtx_)
         throw MediaEncoderException("Cannot allocate stream");
@@ -854,7 +854,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
 int
 MediaEncoder::setBitrate(uint64_t br)
 {
-    std::lock_guard<std::mutex> lk(encMutex_);
+    std::lock_guard lk(encMutex_);
     AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
     if (not encoderCtx)
         return -1; // NOK
@@ -888,7 +888,7 @@ MediaEncoder::setBitrate(uint64_t br)
 int
 MediaEncoder::setPacketLoss(uint64_t pl)
 {
-    std::lock_guard<std::mutex> lk(encMutex_);
+    std::lock_guard lk(encMutex_);
     AVCodecContext* encoderCtx = getCurrentAudioAVCtx();
     if (not encoderCtx)
         return -1; // NOK

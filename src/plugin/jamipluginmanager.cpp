@@ -458,7 +458,7 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
         pluginUserPreferencesMap[key] = value;
         auto preferencesValuesFilePath
             = PluginPreferencesUtils::valuesFilePath(rootPath, acc);
-        std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
+        std::lock_guard guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
             if (force) {

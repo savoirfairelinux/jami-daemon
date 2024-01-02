@@ -392,7 +392,7 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
 {
     const std::string AVStreamId = StreamData.id + std::to_string(static_cast<int>(StreamData.type))
                                    + std::to_string(StreamData.direction);
-    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    std::lock_guard lk(avStreamsMtx_);
     auto it = callAVStreams.find(AVStreamId);
     if (it != callAVStreams.end())
         return;
@@ -407,7 +407,7 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
 void
 SIPCall::clearCallAVStreams()
 {
-    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    std::lock_guard lk(avStreamsMtx_);
     callAVStreams.clear();
 }
 #endif // ENABLE_PLUGIN
@@ -1608,7 +1608,7 @@ SIPCall::removeCall()
     Call::removeCall();
 
     {
-        std::lock_guard<std::mutex> lk(transportMtx_);
+        std::lock_guard lk(transportMtx_);
         resetTransport(std::move(iceMedia_));
         resetTransport(std::move(reinvIceMedia_));
     }
@@ -2242,7 +2242,7 @@ SIPCall::stopAllMedia()
 
 #ifdef ENABLE_VIDEO
     {
-        std::lock_guard<std::mutex> lk(sinksMtx_);
+        std::lock_guard lk(sinksMtx_);
         for (auto it = callSinksMap_.begin(); it != callSinksMap_.end();) {
             for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO)) {
                 auto& videoReceive = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)
@@ -2263,7 +2263,7 @@ SIPCall::stopAllMedia()
 #ifdef ENABLE_PLUGIN
     {
         clearCallAVStreams();
-        std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        std::lock_guard lk(avStreamsMtx_);
         Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
             getCallId());
     }
@@ -3205,7 +3205,7 @@ SIPCall::setActiveMediaStream(const std::string& accountUri,
     auto remoteStreamId = streamId;
 #ifdef ENABLE_VIDEO
     {
-        std::lock_guard<std::mutex> lk(sinksMtx_);
+        std::lock_guard lk(sinksMtx_);
         const auto& localIt = local2RemoteSinks_.find(streamId);
         if (localIt != local2RemoteSinks_.end()) {
             remoteStreamId = localIt->second;
@@ -3263,7 +3263,7 @@ void
 SIPCall::createSinks(ConfInfo& infos)
 {
     std::lock_guard<std::recursive_mutex> lk(callMutex_);
-    std::lock_guard<std::mutex> lkS(sinksMtx_);
+    std::lock_guard lkS(sinksMtx_);
     if (!hasVideo())
         return;
 
@@ -3482,7 +3482,7 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
 std::vector<std::string>
 SIPCall::getLocalIceCandidates(unsigned compId) const
 {
-    std::lock_guard<std::mutex> lk(transportMtx_);
+    std::lock_guard lk(transportMtx_);
     if (not iceMedia_) {
         JAMI_WARN("[call:%s] no media ICE transport", getCallId().c_str());
         return {};
@@ -3556,7 +3556,7 @@ SIPCall::remoteHasValidIceAttributes() const
 void
 SIPCall::setIceMedia(std::shared_ptr<dhtnet::IceTransport> ice, bool isReinvite)
 {
-    std::lock_guard<std::mutex> lk(transportMtx_);
+    std::lock_guard lk(transportMtx_);
 
     if (isReinvite) {
         JAMI_DBG("[call:%s] Setting re-invite ICE session [%p]", getCallId().c_str(), ice.get());
@@ -3572,7 +3572,7 @@ SIPCall::setIceMedia(std::shared_ptr<dhtnet::IceTransport> ice, bool isReinvite)
 void
 SIPCall::switchToIceReinviteIfNeeded()
 {
-    std::lock_guard<std::mutex> lk(transportMtx_);
+    std::lock_guard lk(transportMtx_);
 
     if (reinvIceMedia_) {
         JAMI_DBG("[call:%s] Switching to re-invite ICE session [%p]",
@@ -3634,7 +3634,7 @@ SIPCall::setupIceResponse(bool isReinvite)
 bool
 SIPCall::isIceRunning() const
 {
-    std::lock_guard<std::mutex> lk(transportMtx_);
+    std::lock_guard lk(transportMtx_);
     return iceMedia_ and iceMedia_->isRunning();
 }
 
@@ -3647,7 +3647,7 @@ SIPCall::newIceSocket(unsigned compId)
 void
 SIPCall::rtpSetupSuccess()
 {
-    std::lock_guard<std::mutex> lk {setupSuccessMutex_};
+    std::lock_guard lk {setupSuccessMutex_};
 
     readyToRecord_ = true; // We're ready to record whenever a stream is ready
 

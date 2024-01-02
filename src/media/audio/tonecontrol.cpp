@@ -41,7 +41,7 @@ ToneControl::~ToneControl() {}
 void
 ToneControl::setSampleRate(unsigned rate, AVSampleFormat sampleFormat)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     sampleRate_ = rate;
     sampleFormat_ = sampleFormat;
     if (!telephoneTone_)
@@ -62,7 +62,7 @@ ToneControl::setSampleRate(unsigned rate, AVSampleFormat sampleFormat)
 std::shared_ptr<AudioLoop>
 ToneControl::getTelephoneTone()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     if (telephoneTone_)
         return telephoneTone_->getCurrentTone();
     return nullptr;
@@ -71,14 +71,14 @@ ToneControl::getTelephoneTone()
 std::shared_ptr<AudioLoop>
 ToneControl::getTelephoneFile(void)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     return audioFile_;
 }
 
 bool
 ToneControl::setAudioFile(const std::string& file)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
 
     if (audioFile_) {
         emitSignal<libjami::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
@@ -97,7 +97,7 @@ ToneControl::setAudioFile(const std::string& file)
 void
 ToneControl::stopAudioFile()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
 
     if (audioFile_) {
         emitSignal<libjami::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
@@ -108,7 +108,7 @@ ToneControl::stopAudioFile()
 void
 ToneControl::stop()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
 
     if (telephoneTone_)
         telephoneTone_->setCurrentTone(Tone::ToneId::TONE_NULL);
@@ -122,7 +122,7 @@ ToneControl::stop()
 void
 ToneControl::play(Tone::ToneId toneId)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
 
     if (telephoneTone_)
         telephoneTone_->setCurrentTone(toneId);
@@ -131,7 +131,7 @@ ToneControl::play(Tone::ToneId toneId)
 void
 ToneControl::seek(double value)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
 
     if (audioFile_)
         audioFile_->seek(value);

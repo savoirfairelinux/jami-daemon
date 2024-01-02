@@ -108,7 +108,7 @@ void
 AudioInput::readFromDevice()
 {
     {
-        std::lock_guard<std::mutex> lk(resourceMutex_);
+        std::lock_guard lk(resourceMutex_);
         if (decodingFile_)
             while (ringBuf_ && ringBuf_->isEmpty())
                 readFromFile();
@@ -136,7 +136,7 @@ AudioInput::readFromDevice()
         audioFrame->has_voice = false; // force no voice activity when muted
     }
 
-    std::lock_guard<std::mutex> lk(fmtMutex_);
+    std::lock_guard lk(fmtMutex_);
     if (bufferPool.getInternalAudioFormat() != format_)
         audioFrame = resampler_->resample(std::move(audioFrame), format_);
     resizer_->enqueue(std::move(audioFrame));
@@ -403,7 +403,7 @@ AudioInput::createDecoder()
 void
 AudioInput::setFormat(const AudioFormat& fmt)
 {
-    std::lock_guard<std::mutex> lk(fmtMutex_);
+    std::lock_guard lk(fmtMutex_);
     format_ = fmt;
     resizer_->setFormat(format_, format_.sample_rate * MS_PER_PACKET.count() / 1000);
 }
@@ -418,14 +418,14 @@ AudioInput::setMuted(bool isMuted)
 MediaStream
 AudioInput::getInfo() const
 {
-    std::lock_guard<std::mutex> lk(fmtMutex_);
+    std::lock_guard lk(fmtMutex_);
     return MediaStream("a:local", format_, sent_samples);
 }
 
 MediaStream
 AudioInput::getInfo(const std::string& name) const
 {
-    std::lock_guard<std::mutex> lk(fmtMutex_);
+    std::lock_guard lk(fmtMutex_);
     auto ms = MediaStream(name, format_, sent_samples);
     return ms;
 }

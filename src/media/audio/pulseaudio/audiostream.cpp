@@ -231,7 +231,7 @@ AudioStream::moved(pa_stream* s)
             },
             this);
 
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
         pa_operation_set_state_callback(op, [](pa_operation *op, void *userdata){
             static_cast<AudioStream*>(userdata)->opEnded(op);
         }, this);
@@ -242,7 +242,7 @@ AudioStream::moved(pa_stream* s)
 void
 AudioStream::opEnded(pa_operation* op)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     ongoing_ops.erase(op);
     pa_operation_unref(op);
     cond_.notify_all();

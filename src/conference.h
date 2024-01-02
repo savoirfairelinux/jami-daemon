@@ -358,7 +358,7 @@ public:
 
     std::vector<std::map<std::string, std::string>> getConferenceInfos() const
     {
-        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        std::lock_guard lk(confInfoMutex_);
         return confInfo_.toVectorMapStringString();
     }
 

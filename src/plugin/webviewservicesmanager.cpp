@@ -58,7 +58,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
 {
     // called by the plugin manager whenever a plugin is loaded
     auto registerWebViewHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard<std::mutex> lk(pmMtx_);
+        std::lock_guard lk(pmMtx_);
 
         WebViewHandlerPtr ptr {(static_cast<WebViewHandler*>(data))};
 
@@ -79,7 +79,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
 
     // called by the plugin manager whenever a plugin is unloaded
     auto unregisterWebViewHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard<std::mutex> pluginManagerLock(pmMtx_);
+        std::lock_guard pluginManagerLock(pmMtx_);
 
         WebViewHandler* ptr {(static_cast<WebViewHandler*>(data))};
 

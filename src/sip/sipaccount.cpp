@@ -1222,21 +1222,21 @@ SIPAccount::getServerUri() const
 dhtnet::IpAddr
 SIPAccount::getContactAddress() const
 {
-    std::lock_guard<std::mutex> lock(contactMutex_);
+    std::lock_guard lock(contactMutex_);
     return contactAddress_;
 }
 
 std::string
 SIPAccount::getContactHeader() const
 {
-    std::lock_guard<std::mutex> lock(contactMutex_);
+    std::lock_guard lock(contactMutex_);
     return contactHeader_;
 }
 
 void
 SIPAccount::updateContactHeader()
 {
-    std::lock_guard<std::mutex> lock(contactMutex_);
+    std::lock_guard lock(contactMutex_);
 
     if (not transport_ or not transport_->get()) {
         JAMI_ERR("Transport not created yet");
@@ -1320,7 +1320,7 @@ SIPAccount::initContactAddress()
         }
     }
 
-    std::lock_guard<std::mutex> lock(contactMutex_);
+    std::lock_guard lock(contactMutex_);
     contactAddress_ = dhtnet::IpAddr(address);
     contactAddress_.setPort(port);
 
@@ -1687,7 +1687,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
         }
 
         // Update
-        std::lock_guard<std::mutex> lock(contactMutex_);
+        std::lock_guard lock(contactMutex_);
         contactHeader_ = std::move(tempContact);
     }
 

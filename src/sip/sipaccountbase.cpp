@@ -305,7 +305,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
     message.from = from;
     message.payloads = payloads;
     message.received = std::time(nullptr);
-    std::lock_guard<std::mutex> lck(mutexLastMessages_);
+    std::lock_guard lck(mutexLastMessages_);
     lastMessages_.emplace_back(std::move(message));
     while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
         lastMessages_.pop_front();
@@ -344,7 +344,7 @@ SIPAccountBase::setPublishedAddress(const dhtnet::IpAddr& ip_addr)
 std::vector<libjami::Message>
 SIPAccountBase::getLastMessages(const uint64_t& base_timestamp)
 {
-    std::lock_guard<std::mutex> lck(mutexLastMessages_);
+    std::lock_guard lck(mutexLastMessages_);
     auto it = lastMessages_.begin();
     size_t num = lastMessages_.size();
     while (it != lastMessages_.end() and it->received <= base_timestamp) {

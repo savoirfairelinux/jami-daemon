@@ -34,41 +34,41 @@ class CallSet
 public:
     std::shared_ptr<Call> getCall(const std::string& callId) const
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         auto i = calls_.find(callId);
         return i == calls_.end() ? std::shared_ptr<Call> {} : i->second.lock();
     }
     std::shared_ptr<Conference> getConference(const std::string& conferenceId) const
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         auto i = conferences_.find(conferenceId);
         return i == conferences_.end() ? std::shared_ptr<Conference> {} : i->second;
     }
 
     void add(const std::shared_ptr<Call>& call)
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         calls_.emplace(call->getCallId(), call);
     }
     void add(const std::shared_ptr<Conference>& conference)
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         conferences_.emplace(conference->getConfId(), conference);
     }
     bool remove(const std::shared_ptr<Call>& call)
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         return calls_.erase(call->getCallId()) > 0;
     }
     bool removeConference(const std::string& confId)
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         return conferences_.erase(confId) > 0;
     }
 
     std::vector<std::string> getCallIds() const
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         std::vector<std::string> ids;
         ids.reserve(calls_.size());
         for (const auto& callIt : calls_)
@@ -77,7 +77,7 @@ public:
     }
     std::vector<std::shared_ptr<Call>> getCalls() const
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         std::vector<std::shared_ptr<Call>> calls;
         calls.reserve(calls_.size());
         for (const auto& callIt : calls_)
@@ -88,7 +88,7 @@ public:
 
     std::vector<std::string> getConferenceIds() const
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         std::vector<std::string> ids;
         ids.reserve(conferences_.size());
         for (const auto& confIt : conferences_)
@@ -97,7 +97,7 @@ public:
     }
     std::vector<std::shared_ptr<Conference>> getConferences() const
     {
-        std::lock_guard<std::mutex> l(mutex_);
+        std::lock_guard l(mutex_);
         std::vector<std::shared_ptr<Conference>> confs;
         confs.reserve(conferences_.size());
         for (const auto& confIt : conferences_)

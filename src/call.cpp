@@ -674,7 +674,7 @@ Call::setConferenceInfo(const std::string& msg)
     }
 
     {
-        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        std::lock_guard lk(confInfoMutex_);
         if (not isConferenceParticipant()) {
             // confID_ empty -> participant set confInfo with the received one
             confInfo_ = std::move(newInfo);

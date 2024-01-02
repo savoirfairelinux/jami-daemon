@@ -98,7 +98,7 @@ PreferenceServicesManager::registerComponentsLifeCycleManagers(PluginManager& pl
 {
     // registerHandler may be called by the PluginManager upon loading a plugin.
     auto registerHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard<std::mutex> lk(pmMtx_);
+        std::lock_guard lk(pmMtx_);
         PreferenceHandlerPtr ptr {(static_cast<PreferenceHandler*>(data))};
 
         if (!ptr)
@@ -109,7 +109,7 @@ PreferenceServicesManager::registerComponentsLifeCycleManagers(PluginManager& pl
 
     // unregisterHandler may be called by the PluginManager while unloading.
     auto unregisterHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard<std::mutex> lk(pmMtx_);
+        std::lock_guard lk(pmMtx_);
         auto handlerIt = std::find_if(handlers_.begin(),
                                       handlers_.end(),
                                       [data](PreferenceHandlerPtr& handler) {

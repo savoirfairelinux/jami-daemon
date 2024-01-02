@@ -133,7 +133,7 @@ public:
     bool run(const char* executor_name)
     {
         bool cont;
-        std::lock_guard<std::mutex> l(lock_);
+        std::lock_guard l(lock_);
 
         if (not cancel_.load() and job_.fn) {
             jami_tracepoint(scheduled_executor_task_begin,
@@ -162,7 +162,7 @@ public:
     void destroy()
     {
         cancel();
-        std::lock_guard<std::mutex> l(lock_);
+        std::lock_guard l(lock_);
         job_.reset();
     }
 

@@ -1458,13 +1458,13 @@ public:
 
     void registerCallback(uintptr_t key, ResolveCallback&& cb)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         cbMap_.emplace(key, std::move(cb));
     }
 
     void process(uintptr_t key, pj_status_t status, const pjsip_server_addresses* addr)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         auto it = cbMap_.find(key);
         if (it != cbMap_.end()) {
             it->second(status, addr);

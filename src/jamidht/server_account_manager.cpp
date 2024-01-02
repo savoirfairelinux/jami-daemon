@@ -276,7 +276,7 @@ ServerAccountManager::sendRequest(const std::shared_ptr<dht::http::Request>& req
 {
     request->set_header_field(restinio::http_field_t::user_agent, "Jami");
     {
-        std::lock_guard<std::mutex> lock(requestLock_);
+        std::lock_guard lock(requestLock_);
         requests_.emplace(request);
     }
     request->send();
@@ -286,7 +286,7 @@ void
 ServerAccountManager::clearRequest(const std::weak_ptr<dht::http::Request>& request)
 {
     if (auto req = request.lock()) {
-        std::lock_guard<std::mutex> lock(requestLock_);
+        std::lock_guard lock(requestLock_);
         requests_.erase(req);
     }
 }
@@ -296,7 +296,7 @@ ServerAccountManager::authFailed(TokenScope scope, int code)
 {
     RequestQueue requests;
     {
-        std::lock_guard<std::mutex> lock(tokenLock_);
+        std::lock_guard lock(tokenLock_);
         requests = std::move(getRequestQueue(scope));
     }
     JAMI_DBG("[Auth] Failed auth with scope %d, ending %zu pending requests",
@@ -313,7 +313,7 @@ void
 ServerAccountManager::authError(TokenScope scope)
 {
     {
-        std::lock_guard<std::mutex> lock(tokenLock_);
+        std::lock_guard lock(tokenLock_);
         if (scope <= tokenScope_) {
             token_ = {};
             tokenScope_ = TokenScope::None;
@@ -328,7 +328,7 @@ ServerAccountManager::setToken(std::string token,
                                TokenScope scope,
                                std::chrono::steady_clock::time_point expiration)
 {
-    std::lock_guard<std::mutex> lock(tokenLock_);
+    std::lock_guard lock(tokenLock_);
     token_ = std::move(token);
     tokenScope_ = scope;
     tokenExpire_ = expiration;
@@ -351,7 +351,7 @@ ServerAccountManager::setToken(std::string token,
 void
 ServerAccountManager::sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req)
 {
-    std::lock_guard<std::mutex> lock(tokenLock_);
+    std::lock_guard lock(tokenLock_);
     if (hasAuthorization(TokenScope::Device)) {
         setAuthHeaderFields(*req);
         sendRequest(req);
@@ -367,7 +367,7 @@ void
 ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req,
                                          const std::string& pwd)
 {
-    std::lock_guard<std::mutex> lock(tokenLock_);
+    std::lock_guard lock(tokenLock_);
     if (hasAuthorization(TokenScope::User)) {
         setAuthHeaderFields(*req);
         sendRequest(req);

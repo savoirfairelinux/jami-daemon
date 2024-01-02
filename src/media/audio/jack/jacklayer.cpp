@@ -378,7 +378,7 @@ JackLayer::process_playback(jack_nframes_t frames, void* arg)
  */
 void JackLayer::startStream(AudioDeviceType)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (status_ != Status::Idle)
         return;
     status_ = Status::Started;
@@ -404,7 +404,7 @@ JackLayer::onShutdown(void* /* data */)
  */
 void JackLayer::stopStream(AudioDeviceType)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (status_ != Status::Started)
         return;
     status_ = Status::Idle;

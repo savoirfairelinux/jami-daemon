@@ -130,7 +130,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string& ringbufferId)
 void
 RingBuffer::createReadOffset(const std::string& ringbufferId)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     if (!hasThisReadOffset(ringbufferId))
         readoffsets_.emplace(ringbufferId, ReadOffset {endPos_, {}});
 }
@@ -138,7 +138,7 @@ RingBuffer::createReadOffset(const std::string& ringbufferId)
 void
 RingBuffer::removeReadOffset(const std::string& ringbufferId)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     auto iter = readoffsets_.find(ringbufferId);
     if (iter != readoffsets_.end())
         readoffsets_.erase(iter);
@@ -163,7 +163,7 @@ RingBuffer::hasNoReadOffsets() const
 void
 RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
 {
-    std::lock_guard<std::mutex> l(writeLock_);
+    std::lock_guard l(writeLock_);
     resizer_.enqueue(resampler_.resample(std::move(data), format_));
 }
 
@@ -171,7 +171,7 @@ RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
 void
 RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return;
@@ -220,7 +220,7 @@ RingBuffer::availableForGet(const std::string& ringbufferId) const
 std::shared_ptr<AudioFrame>
 RingBuffer::get(const std::string& ringbufferId)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
 
     auto offset = readoffsets_.find(ringbufferId);
     if (offset == readoffsets_.end())
@@ -274,7 +274,7 @@ RingBuffer::waitForDataAvailable(const std::string& ringbufferId, const time_poi
 size_t
 RingBuffer::discard(size_t toDiscard, const std::string& ringbufferId)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
 
     const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)

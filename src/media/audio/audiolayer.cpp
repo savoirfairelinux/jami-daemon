@@ -117,7 +117,7 @@ AudioLayer::playbackChanged(bool started)
 void
 AudioLayer::recordChanged(bool started)
 {
-    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    std::lock_guard lock(audioProcessorMutex);
     if (started) {
         // create audio processor
         createAudioProcessor();
@@ -154,7 +154,7 @@ void
 AudioLayer::setHasNativeAEC(bool hasNativeAEC)
 {
     JAMI_INFO("[audiolayer] setHasNativeAEC: %d", hasNativeAEC);
-    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    std::lock_guard lock(audioProcessorMutex);
     hasNativeAEC_ = hasNativeAEC;
     // if we have a current audio processor, tell it to enable/disable its own AEC
     if (audioProcessor) {
@@ -167,7 +167,7 @@ void
 AudioLayer::setHasNativeNS(bool hasNativeNS)
 {
     JAMI_INFO("[audiolayer] setHasNativeNS: %d", hasNativeNS);
-    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    std::lock_guard lock(audioProcessorMutex);
     hasNativeNS_ = hasNativeNS;
     // if we have a current audio processor, tell it to enable/disable its own noise suppression
     if (audioProcessor) {
@@ -319,7 +319,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
             resampled = resampler_->resample(std::move(buf), format);
         } else {
-            std::lock_guard<std::mutex> lock(audioProcessorMutex);
+            std::lock_guard lock(audioProcessorMutex);
             if (audioProcessor) {
                 auto silence = std::make_shared<AudioFrame>(format, writableSamples);
                 libav_utils::fillWithSilence(silence->pointer());
@@ -329,7 +329,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
         }
 
         if (resampled) {
-            std::lock_guard<std::mutex> lock(audioProcessorMutex);
+            std::lock_guard lock(audioProcessorMutex);
             if (audioProcessor) {
                 audioProcessor->putPlayback(resampled);
             }
@@ -346,7 +346,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 void
 AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
 {
-    std::lock_guard<std::mutex> lock(audioProcessorMutex);
+    std::lock_guard lock(audioProcessorMutex);
     if (audioProcessor && playbackStarted_ && recordStarted_) {
         audioProcessor->putRecorded(std::move(frame));
         while (auto rec = audioProcessor->getProcessed()) {

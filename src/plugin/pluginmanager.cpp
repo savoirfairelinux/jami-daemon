@@ -85,7 +85,7 @@ PluginManager::unload(const std::string& path)
     destroyPluginComponents(path);
     auto it = dynPluginMap_.find(path);
     if (it != dynPluginMap_.end()) {
-        std::lock_guard<std::mutex> lk(mtx_);
+        std::lock_guard lk(mtx_);
         exitFunc_[path]();
         dynPluginMap_.erase(it);
         exitFunc_.erase(path);

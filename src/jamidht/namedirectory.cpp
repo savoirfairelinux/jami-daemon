@@ -111,7 +111,7 @@ NameDirectory::~NameDirectory()
 {
     decltype(requests_) requests;
     {
-        std::lock_guard<std::mutex> lk(requestsMtx_);
+        std::lock_guard lk(requestsMtx_);
         requests = std::move(requests_);
     }
     for (auto& req : requests)
@@ -130,7 +130,7 @@ NameDirectory::instance(const std::string& serverUrl, std::shared_ptr<dht::Logge
     const std::string& s = serverUrl.empty() ? DEFAULT_SERVER_HOST : serverUrl;
     static std::mutex instanceMtx {};
 
-    std::lock_guard<std::mutex> lock(instanceMtx);
+    std::lock_guard lock(instanceMtx);
     static std::map<std::string, NameDirectory> instances {};
     auto it = instances.find(s);
     if (it != instances.end())
@@ -197,7 +197,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                         }
                         JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
                         {
-                            std::lock_guard<std::mutex> l(cacheLock_);
+                            std::lock_guard l(cacheLock_);
                             addrCache_.emplace(name, addr);
                             nameCache_.emplace(addr, name);
                         }
@@ -208,18 +208,18 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                         cb("", Response::error);
                     }
                 }
-                std::lock_guard<std::mutex> lk(requestsMtx_);
+                std::lock_guard lk(requestsMtx_);
                 if (auto req = response.request.lock())
                     requests_.erase(req);
             });
         {
-            std::lock_guard<std::mutex> lk(requestsMtx_);
+            std::lock_guard lk(requestsMtx_);
             requests_.emplace(request);
         }
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing address lookup: %s", e.what());
-        std::lock_guard<std::mutex> lk(requestsMtx_);
+        std::lock_guard lk(requestsMtx_);
         if (request)
             requests_.erase(request);
     }
@@ -300,7 +300,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     }
                     JAMI_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
                     {
-                        std::lock_guard<std::mutex> l(cacheLock_);
+                        std::lock_guard l(cacheLock_);
                         addrCache_.emplace(name, addr);
                         nameCache_.emplace(addr, name);
                     }
@@ -315,13 +315,13 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                 requests_.erase(req);
         });
         {
-            std::lock_guard<std::mutex> lk(requestsMtx_);
+            std::lock_guard lk(requestsMtx_);
             requests_.emplace(request);
         }
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERR("Name lookup for %s failed: %s", name.c_str(), e.what());
-        std::lock_guard<std::mutex> lk(requestsMtx_);
+        std::lock_guard lk(requestsMtx_);
         if (request)
             requests_.erase(request);
     }
@@ -410,25 +410,25 @@ NameDirectory::registerName(const std::string& addr,
                              addr.c_str(),
                              success ? "success" : "failure");
                     if (success) {
-                        std::lock_guard<std::mutex> l(cacheLock_);
+                        std::lock_guard l(cacheLock_);
                         addrCache_.emplace(name, addr);
                         nameCache_.emplace(addr, name);
                     }
                     cb(success ? RegistrationResponse::success : RegistrationResponse::error);
                 }
-                std::lock_guard<std::mutex> lk(requestsMtx_);
+                std::lock_guard lk(requestsMtx_);
                 if (auto req = response.request.lock())
                     requests_.erase(req);
             });
         {
-            std::lock_guard<std::mutex> lk(requestsMtx_);
+            std::lock_guard lk(requestsMtx_);
             requests_.emplace(request);
         }
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing name registration: %s", e.what());
         cb(RegistrationResponse::error);
-        std::lock_guard<std::mutex> lk(requestsMtx_);
+        std::lock_guard lk(requestsMtx_);
         if (request)
             requests_.erase(request);
     }
@@ -449,10 +449,10 @@ void
 NameDirectory::saveCache()
 {
     dhtnet::fileutils::recursive_mkdir(fileutils::get_cache_dir() / CACHE_DIRECTORY);
-    std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(cachePath_));
+    std::lock_guard lock(dhtnet::fileutils::getFileLock(cachePath_));
     std::ofstream file(cachePath_, std::ios::trunc | std::ios::binary);
     {
-        std::lock_guard<std::mutex> l(cacheLock_);
+        std::lock_guard l(cacheLock_);
         msgpack::pack(file, nameCache_);
     }
     JAMI_DBG("Saved %lu name-address mappings to %s",
@@ -467,7 +467,7 @@ NameDirectory::loadCache()
 
     // read file
     {
-        std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(cachePath_));
+        std::lock_guard lock(dhtnet::fileutils::getFileLock(cachePath_));
         std::ifstream file(cachePath_);
         if (!file.is_open()) {
             JAMI_DBG("Could not load %s", cachePath_.c_str());
@@ -482,7 +482,7 @@ NameDirectory::loadCache()
     }
 
     // load values
-    std::lock_guard<std::mutex> l(cacheLock_);
+    std::lock_guard l(cacheLock_);
     msgpack::object_handle oh;
     if (pac.next(oh))
         oh.get().convert(nameCache_);

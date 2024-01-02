@@ -49,7 +49,7 @@ using std::vector;
 vector<string>
 VideoDeviceMonitor::getDeviceList() const
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     vector<string> ids;
     ids.reserve(devices_.size());
     for (const auto& dev : devices_) {
@@ -62,7 +62,7 @@ VideoDeviceMonitor::getDeviceList() const
 libjami::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& id) const
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto iter = findDeviceById(id);
     if (iter == devices_.end())
         return libjami::VideoCapabilities();
@@ -73,7 +73,7 @@ VideoDeviceMonitor::getCapabilities(const string& id) const
 VideoSettings
 VideoDeviceMonitor::getSettings(const string& id)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
 
     const auto prefIter = findPreferencesById(id);
     if (prefIter == preferences_.end())
@@ -85,7 +85,7 @@ VideoDeviceMonitor::getSettings(const string& id)
 void
 VideoDeviceMonitor::applySettings(const string& id, const VideoSettings& settings)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto iter = findDeviceById(id);
 
     if (iter == devices_.end())
@@ -100,7 +100,7 @@ VideoDeviceMonitor::applySettings(const string& id, const VideoSettings& setting
 string
 VideoDeviceMonitor::getDefaultDevice() const
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto it = findDeviceById(defaultDevice_);
     if (it == std::end(devices_) || it->getDeviceId() == DEVICE_DESKTOP)
         return {};
@@ -110,7 +110,7 @@ VideoDeviceMonitor::getDefaultDevice() const
 std::string
 VideoDeviceMonitor::getMRLForDefaultDevice() const
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto it = findDeviceById(defaultDevice_);
     if (it == std::end(devices_) || it->getDeviceId() == DEVICE_DESKTOP)
         return {};
@@ -121,7 +121,7 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
 bool
 VideoDeviceMonitor::setDefaultDevice(const std::string& id)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto itDev = findDeviceById(id);
     if (itDev != devices_.end()) {
         if (defaultDevice_ == itDev->getDeviceId())
@@ -145,7 +145,7 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
 void
 VideoDeviceMonitor::setDeviceOrientation(const std::string& id, int angle)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto itd = findDeviceById(id);
     if (itd != devices_.cend()) {
         itd->setOrientation(angle);
@@ -157,7 +157,7 @@ VideoDeviceMonitor::setDeviceOrientation(const std::string& id, int angle)
 DeviceParams
 VideoDeviceMonitor::getDeviceParams(const std::string& id) const
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto itd = findDeviceById(id);
     if (itd == devices_.cend())
         return DeviceParams();
@@ -192,7 +192,7 @@ VideoDeviceMonitor::addDevice(const string& id,
                               const std::vector<std::map<std::string, std::string>>& devInfo)
 {
     try {
-        std::lock_guard<std::mutex> l(lock_);
+        std::lock_guard l(lock_);
         if (findDeviceById(id) != devices_.end())
             return false;
 
@@ -230,7 +230,7 @@ void
 VideoDeviceMonitor::removeDevice(const string& id)
 {
     {
-        std::lock_guard<std::mutex> l(lock_);
+        std::lock_guard l(lock_);
         const auto it = findDeviceById(id);
         if (it == devices_.end())
             return;
@@ -287,14 +287,14 @@ VideoDeviceMonitor::overwritePreferences(const VideoSettings& settings)
 void
 VideoDeviceMonitor::serialize(YAML::Emitter& out) const
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     out << YAML::Key << "devices" << YAML::Value << preferences_;
 }
 
 void
 VideoDeviceMonitor::unserialize(const YAML::Node& in)
 {
-    std::lock_guard<std::mutex> l(lock_);
+    std::lock_guard l(lock_);
     const auto& node = in[CONFIG_LABEL];
 
     /* load the device list from the "video" YAML section */

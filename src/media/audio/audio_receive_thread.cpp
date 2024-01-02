@@ -55,7 +55,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame>&& frame) mutable {
         notify(frame);
         ringbuffer_->put(std::static_pointer_cast<AudioFrame>(frame));
@@ -108,7 +108,7 @@ AudioReceiveThread::process()
 void
 AudioReceiveThread::cleanup()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     audioDecoder_.reset();
     demuxContext_.reset();
 }
