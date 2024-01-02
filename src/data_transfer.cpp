@@ -553,9 +553,10 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                     auto& pimpl = sthis_->pimpl_;
 
                     auto destPath = sthis_->profilePath(uri);
-                    {
+                    try {
                         // Move profile to destination path
                         std::lock_guard lock(dhtnet::fileutils::getFileLock(destPath));
+                        dhtnet::fileutils::recursive_mkdir(destPath.parent_path());
                         std::filesystem::rename(path, destPath);
                         if (!pimpl->accountUri_.empty() && uri == pimpl->accountUri_) {
                             // If this is the account profile, link or copy it to the account profile path
@@ -564,6 +565,8 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                                 std::filesystem::copy_file(destPath, pimpl->accountProfilePath_, ec);
                             }
                         }
+                    } catch (const std::exception& e) {
+                        JAMI_ERROR("{}", e.what());
                     }
 
                     std::lock_guard lk {pimpl->mapMutex_};
