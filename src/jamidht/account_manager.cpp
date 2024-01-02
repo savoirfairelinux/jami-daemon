@@ -74,7 +74,7 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
                 return;
-            // std::lock_guard<std::mutex> lock(deviceListMutex_);
+            // std::lock_guard lock(deviceListMutex_);
             foundAccountDevice(crt, d.second);
         });
     }
@@ -83,7 +83,7 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
                         [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                             if (not crt || crt->getLongId() != d.first)
                                 return;
-                            // std::lock_guard<std::mutex> lock(deviceListMutex_);
+                            // std::lock_guard lock(deviceListMutex_);
                             foundAccountDevice(crt, d.second.name);
                         });
     }

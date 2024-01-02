@@ -258,7 +258,7 @@ public:
 
     std::shared_ptr<dhtnet::IceTransport> getIceMedia() const
     {
-        std::lock_guard<std::mutex> lk(transportMtx_);
+        std::lock_guard lk(transportMtx_);
         return reinvIceMedia_ ? reinvIceMedia_ : iceMedia_;
     };
 

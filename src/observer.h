@@ -60,7 +60,7 @@ public:
      */
     virtual ~Observable()
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
 
         for (auto& pobs : priority_observers_) {
             if (auto so = pobs.lock()) {
@@ -74,7 +74,7 @@ public:
 
     bool attach(Observer<T>* o)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         if (o and observers_.insert(o).second) {
             o->attached(this);
             return true;
@@ -84,14 +84,14 @@ public:
 
     void attachPriorityObserver(std::shared_ptr<Observer<T>> o)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         priority_observers_.push_back(o);
         o->attached(this);
     }
 
     void detachPriorityObserver(Observer<T>* o)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         for (auto it = priority_observers_.begin(); it != priority_observers_.end(); it++) {
             if (auto so = it->lock()) {
                 if (so.get() == o) {
@@ -105,7 +105,7 @@ public:
 
     bool detach(Observer<T>* o)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         if (o and observers_.erase(o)) {
             o->detached(this);
             return true;
@@ -115,14 +115,14 @@ public:
 
     size_t getObserversCount()
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         return observers_.size() + priority_observers_.size();
     }
 
 protected:
     void notify(T data)
     {
-        std::lock_guard<std::mutex> lk(mutex_);
+        std::lock_guard lk(mutex_);
         for (auto it = priority_observers_.begin(); it != priority_observers_.end();) {
             if (auto so = it->lock()) {
                 it++;
@@ -221,7 +221,7 @@ public:
      */
     virtual void detached(Observable<T1>*) override
     {
-        std::lock_guard<std::mutex> lk(this->mutex_);
+        std::lock_guard lk(this->mutex_);
         for (auto& pobs : this->priority_observers_) {
             if (auto so = pobs.lock()) {
                 so->detached(this);

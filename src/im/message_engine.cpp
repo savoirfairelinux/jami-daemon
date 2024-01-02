@@ -51,7 +51,7 @@ MessageEngine::sendMessage(const std::string& to,
         return 0;
     MessageToken token;
     {
-        std::lock_guard<std::mutex> lock(messagesMutex_);
+        std::lock_guard lock(messagesMutex_);
 
         auto& peerMessages = deviceId.empty() ? messages_[to] : messagesDevices_[deviceId];
         auto previousIt = peerMessages.find(refreshToken);
@@ -96,7 +96,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout, const std
     };
     std::vector<PendingMsg> pending {};
     {
-        std::lock_guard<std::mutex> lock(messagesMutex_);
+        std::lock_guard lock(messagesMutex_);
 
         auto& m = deviceId.empty() ? messages_ : messagesDevices_;
         auto p = m.find(deviceId.empty() ? peer : deviceId);
@@ -131,7 +131,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout, const std
 MessageStatus
 MessageEngine::getStatus(MessageToken t) const
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
+    std::lock_guard lock(messagesMutex_);
     for (const auto& p : messages_) {
         const auto m = p.second.find(t);
         if (m != p.second.end())
@@ -143,7 +143,7 @@ MessageEngine::getStatus(MessageToken t) const
 bool
 MessageEngine::cancel(MessageToken t)
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
+    std::lock_guard lock(messagesMutex_);
     for (auto& p : messages_) {
         auto m = p.second.find(t);
         if (m != p.second.end()) {
@@ -171,7 +171,7 @@ MessageEngine::onMessageSent(const std::string& peer,
                              const std::string& deviceId)
 {
     JAMI_DEBUG("[message {:d}] Message sent: {:s}", token, ok ? "success"sv : "failure"sv);
-    std::lock_guard<std::mutex> lock(messagesMutex_);
+    std::lock_guard lock(messagesMutex_);
     auto& m = deviceId.empty() ? messages_ : messagesDevices_;
 
     auto p = m.find(deviceId.empty() ? peer : deviceId);
@@ -239,14 +239,14 @@ MessageEngine::load()
     try {
         Json::Value root;
         {
-            std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(savePath_));
+            std::lock_guard lock(dhtnet::fileutils::getFileLock(savePath_));
             std::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
             file.open(savePath_);
             if (file.is_open())
                 file >> root;
         }
-        std::lock_guard<std::mutex> lock(messagesMutex_);
+        std::lock_guard lock(messagesMutex_);
         long unsigned loaded {0};
         for (auto i = root.begin(); i != root.end(); ++i) {
             auto to = i.key().asString();
@@ -285,7 +285,7 @@ MessageEngine::load()
 void
 MessageEngine::save() const
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
+    std::lock_guard lock(messagesMutex_);
     save_();
 }
 
@@ -325,7 +325,7 @@ MessageEngine::save_() const
         dht::ThreadPool::computation().run([path = savePath_,
                                             root = std::move(root),
                                             accountID = account_.getAccountID()] {
-            std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(path));
+            std::lock_guard lock(dhtnet::fileutils::getFileLock(path));
             try {
                 Json::StreamWriterBuilder wbuilder;
                 wbuilder["commentStyle"] = "None";

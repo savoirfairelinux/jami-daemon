@@ -48,7 +48,7 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
     isShutdown_ = false;
     std::vector<NodeId> newNodes;
     {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         for (const auto& nodeId : known_nodes) {
             if (addKnownNode(nodeId)) {
                 newNodes.emplace_back(nodeId);
@@ -77,7 +77,7 @@ void
 SwarmManager::setMobileNodes(const std::vector<NodeId>& mobile_nodes)
 {
     {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         for (const auto& nodeId : mobile_nodes)
             addMobileNodes(nodeId);
     }
@@ -90,7 +90,7 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
     if (channel) {
         auto emit = false;
         {
-            std::lock_guard<std::mutex> lock(mutex);
+            std::lock_guard lock(mutex);
             emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
             auto bucket = routing_table.findBucket(channel->deviceId());
             if (routing_table.addNode(channel, bucket)) {
@@ -121,7 +121,7 @@ SwarmManager::removeNode(const NodeId& nodeId)
 void
 SwarmManager::changeMobility(const NodeId& nodeId, bool isMobile)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     auto bucket = routing_table.findBucket(nodeId);
     bucket->changeMobility(nodeId, isMobile);
 }
@@ -139,7 +139,7 @@ SwarmManager::shutdown()
         return;
     }
     isShutdown_ = true;
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     routing_table.shutdownAllNodes();
 }
 
@@ -210,7 +210,7 @@ SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>&
 void
 SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const Message& msg_)
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
 
     if (msg_.request->q == Query::FIND) {
         auto nodes = routing_table.closestNodes(msg_.request->nodeId, msg_.request->num);
@@ -367,7 +367,7 @@ SwarmManager::removeNodeInternal(const NodeId& nodeId)
 std::vector<NodeId>
 SwarmManager::getAllNodes() const
 {
-    std::lock_guard<std::mutex> lock(mutex);
+    std::lock_guard lock(mutex);
     std::vector<NodeId> nodes;
     const auto& rtNodes = routing_table.getAllNodes();
     nodes.insert(nodes.end(), rtNodes.begin(), rtNodes.end());
@@ -379,7 +379,7 @@ void
 SwarmManager::deleteNode(std::vector<NodeId> nodes)
 {
     {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         for (const auto& node : nodes) {
             routing_table.deleteNode(node);
         }

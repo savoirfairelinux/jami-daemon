@@ -68,7 +68,7 @@ public:
 
     void doExecuteInGuile(Args... args)
     {
-        std::unique_lock lck(mutex_);
+        std::unique_lock<std::mutex> lck(mutex_);
         std::vector<SCM> old;
         std::vector<SCM> to_keep;
 
@@ -141,7 +141,7 @@ on_signal_binding(SCM signal_sym, SCM handler_proc)
     callbacks = static_cast<std::vector<SCM>*>(scm_to_pointer(scm_car(handler_pair)));
     mutex = static_cast<std::mutex*>(scm_to_pointer(scm_cdr(handler_pair)));
 
-    std::unique_lock lck(*mutex);
+    std::unique_lock<std::mutex> lck(*mutex);
     scm_gc_protect_object(handler_proc);
     callbacks->push_back(handler_proc);
 

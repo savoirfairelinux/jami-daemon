@@ -73,7 +73,7 @@ struct Counter
 
     void count()
     {
-        std::lock_guard<std::mutex> lock(mutex);
+        std::lock_guard lock(mutex);
         ++added;
         if (added == target)
             cv.notify_one();
@@ -235,7 +235,7 @@ SwarmMessageSpread::receiveMessage(const NodeId nodeId,
                 oh.get().convert(msg);
 
                 if (msg.identifier_ == 1) {
-                    std::lock_guard<std::mutex> lk(channelSocketsMtx_);
+                    std::lock_guard lk(channelSocketsMtx_);
                     auto var = numberTimesReceived.find(nodeId);
                     iterations = iterations + 1;
 

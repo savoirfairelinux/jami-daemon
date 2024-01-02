@@ -56,7 +56,7 @@ index 53efda0514..a6fb30cdea 100644
 +SKIPHEADERS-$(CONFIG_DXGIGRAB_INDEV)     += dxgigrab.h \
 +                                            windows_capture.h \
 +                                            dxgigrab_c.h
- 
+
  TESTPROGS-$(CONFIG_JACK_INDEV)           += timefilter
 diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
 index 22323a0a44..fb0a37513b 100644
@@ -756,7 +756,7 @@ index 0000000000..c6b29f1a1d
 +void
 +WindowsCapture::StartCapture()
 +{
-+    std::lock_guard<std::mutex> lk(mtx_);
++    std::lock_guard lk(mtx_);
 +    running_ = true;
 +    m_session.StartCapture();
 +}
@@ -765,7 +765,7 @@ index 0000000000..c6b29f1a1d
 +void
 +WindowsCapture::Close()
 +{
-+    std::lock_guard<std::mutex> lk(mtx_);
++    std::lock_guard lk(mtx_);
 +    running_ = false;
 +    if (texture) {
 +        texture->Release();
@@ -785,7 +785,7 @@ index 0000000000..c6b29f1a1d
 +bool
 +WindowsCapture::checkNewFrameArrived()
 +{
-+    std::lock_guard<std::mutex> lk(mtx_);
++    std::lock_guard lk(mtx_);
 +    if (!running_)
 +        return false;
 +    auto shouldResize = false;
@@ -835,7 +835,7 @@ index 0000000000..c6b29f1a1d
 +{
 +    if (!checkNewFrameArrived() || !running_ || !texture)
 +        return 0;
-+    std::lock_guard<std::mutex> lk(mtx_);
++    std::lock_guard lk(mtx_);
 +
 +    // now, map the staging resource TO CPU
 +    D3D11_MAPPED_SUBRESOURCE mapInfo;
@@ -959,6 +959,6 @@ index 0000000000..3e9269ed58
 +    std::mutex mtx_;
 +    bool running_;
 +};
--- 
+--
 2.30.2.windows.1
 

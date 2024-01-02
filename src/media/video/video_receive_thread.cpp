@@ -94,7 +94,7 @@ VideoReceiveThread::setup()
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         libav_utils::AVBufferPtr displayMatrix;
         {
-            std::lock_guard<std::mutex> l(rotationMtx_);
+            std::lock_guard l(rotationMtx_);
             if (displayMatrix_)
                 displayMatrix.reset(av_buffer_ref(displayMatrix_.get()));
         }
@@ -329,7 +329,7 @@ VideoReceiveThread::setRotation(int angle)
 {
     libav_utils::AVBufferPtr displayMatrix(av_buffer_alloc(sizeof(int32_t) * 9));
     av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
-    std::lock_guard<std::mutex> l(rotationMtx_);
+    std::lock_guard l(rotationMtx_);
     displayMatrix_ = std::move(displayMatrix);
 }
 

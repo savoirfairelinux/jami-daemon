@@ -95,7 +95,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 {
     // registerMediaHandler may be called by the PluginManager upon loading a plugin.
     auto registerMediaHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard<std::mutex> lk(pmMtx_);
+        std::lock_guard lk(pmMtx_);
         CallMediaHandlerPtr ptr {(static_cast<CallMediaHandler*>(data))};
 
         if (!ptr)
@@ -111,7 +111,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
 
     // unregisterMediaHandler may be called by the PluginManager while unloading.
     auto unregisterMediaHandler = [this](void* data, std::mutex& pmMtx_) {
-        std::lock_guard<std::mutex> lk(pmMtx_);
+        std::lock_guard lk(pmMtx_);
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
                                       [data](CallMediaHandlerPtr& handler) {

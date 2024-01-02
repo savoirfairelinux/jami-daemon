@@ -115,7 +115,7 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                 return;
             ConfInfo newInfo;
             {
-                std::lock_guard<std::mutex> lock(shared->confInfoMutex_);
+                std::lock_guard lock(shared->confInfoMutex_);
                 newInfo.w = shared->confInfo_.w;
                 newInfo.h = shared->confInfo_.h;
                 newInfo.layout = shared->confInfo_.layout;
@@ -320,7 +320,7 @@ Conference::~Conference()
 #endif // ENABLE_VIDEO
 #ifdef ENABLE_PLUGIN
     {
-        std::lock_guard<std::mutex> lk(avStreamsMtx_);
+        std::lock_guard lk(avStreamsMtx_);
         jami::Manager::instance()
             .getJamiPluginManager()
             .getCallServicesManager()
@@ -453,7 +453,7 @@ Conference::createConfAVStream(const StreamData& StreamData,
                                const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject,
                                bool force)
 {
-    std::lock_guard<std::mutex> lk(avStreamsMtx_);
+    std::lock_guard lk(avStreamsMtx_);
     const std::string AVStreamId = StreamData.id + std::to_string(static_cast<int>(StreamData.type))
                                    + std::to_string(StreamData.direction);
     auto it = confAVStreams.find(AVStreamId);
@@ -717,7 +717,7 @@ Conference::addParticipant(const std::string& participant_id)
     jami_tracepoint(conference_add_participant, id_.c_str(), participant_id.c_str());
 
     {
-        std::lock_guard<std::mutex> lk(participantsMtx_);
+        std::lock_guard lk(participantsMtx_);
         if (!participants_.insert(participant_id).second)
             return;
     }
@@ -833,7 +833,7 @@ Conference::setLayout(int layout)
     if (!videoMixer_)
         return;
     {
-        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        std::lock_guard lk(confInfoMutex_);
         confInfo_.layout = layout;
     }
     videoMixer_->setVideoLayout(static_cast<video::Layout>(layout));
@@ -899,7 +899,7 @@ Conference::sendConferenceInfos()
 void
 Conference::createSinks(const ConfInfo& infos)
 {
-    std::lock_guard<std::mutex> lk(sinksMtx_);
+    std::lock_guard lk(sinksMtx_);
     if (!videoMixer_)
         return;
     auto& sink = videoMixer_->getSink();
@@ -916,7 +916,7 @@ Conference::removeParticipant(const std::string& participant_id)
 {
     JAMI_DEBUG("Remove call {:s} in conference {:s}", participant_id, id_);
     {
-        std::lock_guard<std::mutex> lk(participantsMtx_);
+        std::lock_guard lk(participantsMtx_);
         if (!participants_.erase(participant_id))
             return;
     }
@@ -1111,7 +1111,7 @@ Conference::unbindHost()
 ParticipantSet
 Conference::getParticipantList() const
 {
-    std::lock_guard<std::mutex> lk(participantsMtx_);
+    std::lock_guard lk(participantsMtx_);
     return participants_;
 }
 
@@ -1405,7 +1405,7 @@ Conference::setModerator(const std::string& participant_id, const bool& state)
 void
 Conference::updateModerators()
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    std::lock_guard lk(confInfoMutex_);
     for (auto& info : confInfo_) {
         info.isModerator = isModerator(string_remove_suffix(info.uri, '@'));
     }
@@ -1415,7 +1415,7 @@ Conference::updateModerators()
 void
 Conference::updateHandsRaised()
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    std::lock_guard lk(confInfoMutex_);
     for (auto& info : confInfo_)
         info.handRaised = isHandRaised(info.device);
     sendConferenceInfos();
@@ -1424,7 +1424,7 @@ Conference::updateHandsRaised()
 void
 Conference::updateVoiceActivity()
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    std::lock_guard lk(confInfoMutex_);
 
     // streamId is actually sinkId
     for (ParticipantInfo& participantInfo : confInfo_) {
@@ -1548,7 +1548,7 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
 void
 Conference::updateRecording()
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    std::lock_guard lk(confInfoMutex_);
     for (auto& info : confInfo_) {
         if (info.uri.empty()) {
             info.recording = isRecording();
@@ -1563,7 +1563,7 @@ Conference::updateRecording()
 void
 Conference::updateMuted()
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    std::lock_guard lk(confInfoMutex_);
     for (auto& info : confInfo_) {
         if (info.uri.empty()) {
             info.audioModeratorMuted = isMuted("host"sv);
@@ -1639,7 +1639,7 @@ Conference::isHostDevice(std::string_view deviceId) const
 void
 Conference::updateConferenceInfo(ConfInfo confInfo)
 {
-    std::lock_guard<std::mutex> lk(confInfoMutex_);
+    std::lock_guard lk(confInfoMutex_);
     confInfo_ = std::move(confInfo);
     sendConferenceInfos();
 }
@@ -1789,7 +1789,7 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 {
     if (newInfo.empty()) {
         JAMI_DBG("confInfo empty, remove remoteHost");
-        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        std::lock_guard lk(confInfoMutex_);
         remoteHosts_.erase(peerURI);
         sendConferenceInfos();
         return;

@@ -209,7 +209,7 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
     }
     if (stateChanged) {
         {
-            std::lock_guard<std::mutex> lk(mutex_);
+            std::lock_guard lk(mutex_);
             if (trustRequests_.erase(id) > 0)
                 saveTrustRequests();
         }
@@ -356,7 +356,7 @@ ContactList::getTrustRequests() const
 {
     using Map = std::map<std::string, std::string>;
     std::vector<Map> ret;
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     ret.reserve(trustRequests_.size());
     for (const auto& r : trustRequests_) {
         ret.emplace_back(
@@ -373,7 +373,7 @@ std::map<std::string, std::string>
 ContactList::getTrustRequest(const dht::InfoHash& from) const
 {
     using Map = std::map<std::string, std::string>;
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     auto r = trustRequests_.find(from);
     if (r == trustRequests_.end())
         return {};
@@ -411,7 +411,7 @@ ContactList::acceptConversation(const std::string& convId, const std::string& de
 bool
 ContactList::discardTrustRequest(const dht::InfoHash& from)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     if (trustRequests_.erase(from) > 0) {
         saveTrustRequests();
         return true;
@@ -585,7 +585,7 @@ ContactList::getSyncData() const
     sync_data.peers = getContacts();
 
     static constexpr size_t MAX_TRUST_REQUESTS = 20;
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
         for (const auto& req : trustRequests_)
             sync_data.trust_requests.emplace(req.first,

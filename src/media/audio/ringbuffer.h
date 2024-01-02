@@ -72,7 +72,7 @@ public:
 
     inline void setFormat(const AudioFormat& format)
     {
-        std::lock_guard<std::mutex> l(writeLock_);
+        std::lock_guard l(writeLock_);
         format_ = format;
         resizer_.setFormat(format, format.sample_rate / 50);
     }

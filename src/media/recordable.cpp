@@ -67,7 +67,7 @@ Recordable::toggleRecording()
 bool
 Recordable::startRecording(const std::string& path)
 {
-    std::lock_guard<std::mutex> lk {apiMutex_};
+    std::lock_guard lk {apiMutex_};
     if (!recorder_) {
         JAMI_ERR("couldn't start recording, non existent recorder");
         return false;
@@ -91,7 +91,7 @@ Recordable::startRecording(const std::string& path)
 void
 Recordable::stopRecording()
 {
-    std::lock_guard<std::mutex> lk {apiMutex_};
+    std::lock_guard lk {apiMutex_};
     if (!recorder_) {
         JAMI_WARN("couldn't stop recording, non existent recorder");
         return;

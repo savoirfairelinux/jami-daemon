@@ -32,7 +32,7 @@ LocalRecorderManager::instance()
 void
 LocalRecorderManager::removeRecorderByPath(const std::string& path)
 {
-    std::lock_guard<std::mutex> lock(recorderMapMutex_);
+    std::lock_guard lock(recorderMapMutex_);
     recorderMap_.erase(path);
 }
 
@@ -43,7 +43,7 @@ LocalRecorderManager::insertRecorder(const std::string& path, std::unique_ptr<Lo
         throw std::invalid_argument("couldn't insert null recorder");
     }
 
-    std::lock_guard<std::mutex> lock(recorderMapMutex_);
+    std::lock_guard lock(recorderMapMutex_);
     auto ret = recorderMap_.emplace(path, std::move(rec));
 
     if (!ret.second) {

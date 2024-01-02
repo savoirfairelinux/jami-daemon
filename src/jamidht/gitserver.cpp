@@ -60,7 +60,7 @@ public:
         git_repository_free(repo);
 
         socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
-            std::lock_guard<std::mutex> lk(destroyMtx_);
+            std::lock_guard lk(destroyMtx_);
             if (isDestroying_)
                 return len;
             if (parseOrder(std::string_view((const char*)buf, len)))
@@ -71,7 +71,7 @@ public:
     ~Impl() { stop(); }
     void stop()
     {
-        std::lock_guard<std::mutex> lk(destroyMtx_);
+        std::lock_guard lk(destroyMtx_);
         if (isDestroying_.exchange(true)) {
             socket_->setOnRecv({});
             socket_->shutdown();

@@ -197,13 +197,13 @@ SocketPair::SocketPair(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
              rtcp_sock_->getCompId());
 
     rtp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
-        std::lock_guard<std::mutex> l(dataBuffMutex_);
+        std::lock_guard l(dataBuffMutex_);
         rtpDataBuff_.emplace_back(buf, buf + len);
         cv_.notify_one();
         return len;
     });
     rtcp_sock_->setOnRecv([this](uint8_t* buf, size_t len) {
-        std::lock_guard<std::mutex> l(dataBuffMutex_);
+        std::lock_guard l(dataBuffMutex_);
         rtcpDataBuff_.emplace_back(buf, buf + len);
         cv_.notify_one();
         return len;
@@ -236,7 +236,7 @@ SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
     if (header->pt != 201) // 201 = RR PT
         return;
 
-    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    std::lock_guard lock(rtcpInfo_mutex_);
 
     if (listRtcpRRHeader_.size() >= MAX_LIST_SIZE) {
         listRtcpRRHeader_.pop_front();
@@ -260,7 +260,7 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
     if (header->uid != 0x424D4552) // uid must be "REMB"
         return;
 
-    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    std::lock_guard lock(rtcpInfo_mutex_);
 
     if (listRtcpREMBHeader_.size() >= MAX_LIST_SIZE) {
         listRtcpREMBHeader_.pop_front();
@@ -274,14 +274,14 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
 std::list<rtcpRRHeader>
 SocketPair::getRtcpRR()
 {
-    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    std::lock_guard lock(rtcpInfo_mutex_);
     return std::move(listRtcpRRHeader_);
 }
 
 std::list<rtcpREMBHeader>
 SocketPair::getRtcpREMB()
 {
-    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    std::lock_guard lock(rtcpInfo_mutex_);
     return std::move(listRtcpREMBHeader_);
 }
 

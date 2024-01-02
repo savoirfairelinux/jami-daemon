@@ -290,13 +290,13 @@ JamiAccount::shutdownConnections()
 
     decltype(gitServers_) gservers;
     {
-        std::lock_guard<std::mutex> lk(gitServersMtx_);
+        std::lock_guard lk(gitServersMtx_);
         gservers = std::move(gitServers_);
     }
     for (auto& [_id, gs] : gservers)
         gs->stop();
     {
-        std::lock_guard<std::mutex> lk(connManagerMtx_);
+        std::lock_guard lk(connManagerMtx_);
         // Just move destruction on another thread.
         dht::ThreadPool::io().run([conMgr = std::make_shared<decltype(connectionManager_)>(
                                        std::move(connectionManager_))] {});
@@ -306,7 +306,7 @@ JamiAccount::shutdownConnections()
     if (convModule_)
         convModule_->shutdownConnections();
 
-    std::lock_guard<std::mutex> lk(sipConnsMtx_);
+    std::lock_guard lk(sipConnsMtx_);
     sipConns_.clear();
 }
 
@@ -469,7 +469,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, co
             }
             lkSipConn.unlock();
             {
-                std::lock_guard<std::mutex> lkP(pendingCallsMutex_);
+                std::lock_guard lkP(pendingCallsMutex_);
                 pendingCalls_[deviceId].emplace_back(call);
             }
 
@@ -497,7 +497,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         return;
 
     // Avoid concurrent checks in this part
-    std::lock_guard<std::mutex> lk(rdvMtx_);
+    std::lock_guard lk(rdvMtx_);
     auto isNotHosting = !convModule()->isHosting(conversationId, confId);
     if (confId == "0") {
         auto currentCalls = convModule()->getActiveCalls(conversationId);
@@ -641,7 +641,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             call->addSubCall(*dev_call);
             dev_call->setIceMedia(call->getIceMedia());
             {
-                std::lock_guard<std::mutex> lk(pendingCallsMutex_);
+                std::lock_guard lk(pendingCallsMutex_);
                 pendingCalls_[deviceId].emplace_back(dev_call);
             }
 
@@ -688,7 +688,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         dev_call->setState(Call::ConnectionState::PROGRESSING);
 
         {
-            std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
+            std::lock_guard lk(onConnectionClosedMtx_);
             onConnectionClosed_[key.second] = sendRequest;
         }
 
@@ -732,7 +732,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             if (devices.find(deviceId) != devices.end())
                 return;
             {
-                std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
+                std::lock_guard lk(onConnectionClosedMtx_);
                 onConnectionClosed_[deviceId] = sendRequest;
             }
             sendRequest(deviceId, false);
@@ -887,7 +887,7 @@ JamiAccount::saveConfig() const
         YAML::Emitter accountOut;
         config().serialize(accountOut);
         auto accountConfig = config().path / "config.yml";
-        std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(accountConfig));
+        std::lock_guard lock(dhtnet::fileutils::getFileLock(accountConfig));
         std::ofstream fout(accountConfig);
         fout.write(accountOut.c_str(), accountOut.size());
         JAMI_DBG("Saved account config to %s", accountConfig.c_str());
@@ -1477,7 +1477,7 @@ JamiAccount::forEachPendingCall(const DeviceId& deviceId,
 {
     std::vector<std::shared_ptr<SIPCall>> pc;
     {
-        std::lock_guard<std::mutex> lk(pendingCallsMutex_);
+        std::lock_guard lk(pendingCallsMutex_);
         pc = std::move(pendingCalls_[deviceId]);
     }
     for (const auto& pendingCall : pc) {
@@ -1644,7 +1644,7 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
              buddy_id.c_str());
 
     auto h = dht::InfoHash(buddyUri);
-    std::lock_guard<std::mutex> lock(buddyInfoMtx);
+    std::lock_guard lock(buddyInfoMtx);
     if (track) {
         auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
         if (buddy.second) {
@@ -1672,7 +1672,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired) {
               bool wasConnected, isConnected;
               {
-                  std::lock_guard<std::mutex> lock(buddyInfoMtx);
+                  std::lock_guard lock(buddyInfoMtx);
                   auto buddy = trackedBuddies_.find(h);
                   if (buddy == trackedBuddies_.end())
                       return true;
@@ -1707,7 +1707,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 std::map<std::string, bool>
 JamiAccount::getTrackedBuddyPresence() const
 {
-    std::lock_guard<std::mutex> lock(buddyInfoMtx);
+    std::lock_guard lock(buddyInfoMtx);
     std::map<std::string, bool> presence_info;
     for (const auto& buddy_info_p : trackedBuddies_)
         presence_info.emplace(buddy_info_p.first.toString(), buddy_info_p.second.devices_cnt > 0);
@@ -2048,7 +2048,7 @@ JamiAccount::doRegister_()
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
-                        std::lock_guard<std::mutex> lk(gitServersMtx_);
+                        std::lock_guard lk(gitServersMtx_);
                         gitServers_[serverId] = std::move(gs);
                     }
                     channel->onShutdown([w = weak(), serverId]() {
@@ -2057,7 +2057,7 @@ JamiAccount::doRegister_()
                             auto shared = w.lock();
                             if (!shared)
                                 return;
-                            std::lock_guard<std::mutex> lk(shared->gitServersMtx_);
+                            std::lock_guard lk(shared->gitServersMtx_);
                             shared->gitServers_.erase(serverId);
                         });
                     });
@@ -2120,7 +2120,7 @@ JamiAccount::doRegister_()
                 });
         }
 
-        std::lock_guard<std::mutex> lock(buddyInfoMtx);
+        std::lock_guard lock(buddyInfoMtx);
         for (auto& buddy : trackedBuddies_) {
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
@@ -2140,7 +2140,7 @@ JamiAccount::convModule()
         return nullptr;
     }
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
-    std::lock_guard<std::mutex> lk(moduleMtx_);
+    std::lock_guard lk(moduleMtx_);
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
             weak(),
@@ -2209,7 +2209,7 @@ JamiAccount::convModule()
                     if (!shared)
                         return;
                     auto cm = shared->convModule();
-                    std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
+                    std::lock_guard lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
@@ -2274,7 +2274,7 @@ JamiAccount::syncModule()
         JAMI_ERR() << "Calling syncModule() with an uninitialized account.";
         return nullptr;
     }
-    std::lock_guard<std::mutex> lk(moduleMtx_);
+    std::lock_guard lk(moduleMtx_);
     if (!syncModule_)
         syncModule_ = std::make_unique<SyncModule>(weak());
     return syncModule_.get();
@@ -2317,14 +2317,14 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     dht_->shutdown(
         [&] {
             JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
-            std::lock_guard<std::mutex> lock(mtx);
+            std::lock_guard lock(mtx);
             shutdown_complete = true;
             cv.notify_all();
         },
         true);
 
     {
-        std::lock_guard<std::mutex> lk(pendingCallsMutex_);
+        std::lock_guard lk(pendingCallsMutex_);
         pendingCalls_.clear();
     }
 
@@ -2391,7 +2391,7 @@ JamiAccount::connectivityChanged()
         cm->connectivityChanged();
     dht_->connectivityChanged();
     {
-        std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+        std::lock_guard lkCM(connManagerMtx_);
         if (connectionManager_) {
             connectionManager_->connectivityChanged();
             // reset cache
@@ -2504,7 +2504,7 @@ saveIdList(const std::filesystem::path& path, const List& ids)
 void
 JamiAccount::loadTreatedMessages()
 {
-    std::lock_guard<std::mutex> lock(messageMutex_);
+    std::lock_guard lock(messageMutex_);
     auto path = cachePath_ / TREATED_PATH;
     treatedMessages_ = loadIdList<std::string>(path.string());
     if (treatedMessages_.empty()) {
@@ -2520,7 +2520,7 @@ JamiAccount::saveTreatedMessages() const
     dht::ThreadPool::io().run([w = weak()]() {
         if (auto sthis = w.lock()) {
             auto& this_ = *sthis;
-            std::lock_guard<std::mutex> lock(this_.messageMutex_);
+            std::lock_guard lock(this_.messageMutex_);
             dhtnet::fileutils::check_dir(this_.cachePath_);
             saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ / TREATED_PATH,
                                                          this_.treatedMessages_);
@@ -2531,7 +2531,7 @@ JamiAccount::saveTreatedMessages() const
 bool
 JamiAccount::isMessageTreated(std::string_view id)
 {
-    std::lock_guard<std::mutex> lock(messageMutex_);
+    std::lock_guard lock(messageMutex_);
     auto res = treatedMessages_.emplace(id);
     if (res.second) {
         saveTreatedMessages();
@@ -2565,7 +2565,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
         try {
             std::vector<uint8_t> data;
             {
-                std::lock_guard<std::mutex> lk(dhtnet::fileutils::getFileLock(cachePath));
+                std::lock_guard lk(dhtnet::fileutils::getFileLock(cachePath));
                 data = fileutils::loadCacheFile(cachePath, cacheDuration);
             }
             dht::http::Response ret;
@@ -2582,7 +2582,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
                     [cb, cachePath, w](const dht::http::Response& response) {
                         if (response.status_code == 200) {
                             try {
-                                std::lock_guard<std::mutex> lk(dhtnet::fileutils::getFileLock(cachePath));
+                                std::lock_guard lk(dhtnet::fileutils::getFileLock(cachePath));
                                 fileutils::saveFile(cachePath,
                                                     (const uint8_t*) response.body.data(),
                                                     response.body.size(),
@@ -3152,12 +3152,12 @@ JamiAccount::sendMessage(const std::string& to,
                 auto payload_type = payloads.cbegin()->first;
                 requestSIPConnection(to, deviceId, payload_type);
                 {
-                    std::lock_guard<std::mutex> lock(messageMutex_);
+                    std::lock_guard lock(messageMutex_);
                     sentMessages_[token].to.emplace(deviceId);
                 }
 
                 auto h = dht::InfoHash::get("inbox:" + dev->getId().toString());
-                std::lock_guard<std::mutex> l(confirm->lock);
+                std::lock_guard l(confirm->lock);
                 auto list_token = dht_->listen<
                     dht::ImMessage>(h, [this, to, token, confirm](dht::ImMessage&& msg) {
                     // check expected message confirmation
@@ -3165,7 +3165,7 @@ JamiAccount::sendMessage(const std::string& to,
                         return true;
 
                     {
-                        std::lock_guard<std::mutex> lock(messageMutex_);
+                        std::lock_guard lock(messageMutex_);
                         auto e = sentMessages_.find(msg.id);
                         if (e == sentMessages_.end()
                             or e->second.to.find(msg.owner->getLongId()) == e->second.to.end()) {
@@ -3186,7 +3186,7 @@ JamiAccount::sendMessage(const std::string& to,
 
                     // report message as confirmed received
                     {
-                        std::lock_guard<std::mutex> l(confirm->lock);
+                        std::lock_guard l(confirm->lock);
                         for (auto& t : confirm->listenTokens)
                             dht_->cancelListen(t.first, std::move(t.second));
                         confirm->listenTokens.clear();
@@ -3232,7 +3232,7 @@ JamiAccount::sendMessage(const std::string& to,
                 if (devices->size() == 1 && devices->begin()->toString() == currentDeviceId()) {
                     // Current user only have devices, so no message are sent
                     {
-                        std::lock_guard<std::mutex> l(confirm->lock);
+                        std::lock_guard l(confirm->lock);
                         for (auto& t : confirm->listenTokens)
                             dht_->cancelListen(t.first, std::move(t.second));
                         confirm->listenTokens.clear();
@@ -3408,7 +3408,7 @@ JamiAccount::startAccountDiscovery()
     auto id = dht::InfoHash(accountManager_->getInfo()->accountId);
     peerDiscovery_->startDiscovery<AccountPeerInfo>(
         PEER_DISCOVERY_JAMI_SERVICE, [this, id](AccountPeerInfo&& v, dht::SockAddr&&) {
-            std::lock_guard<std::mutex> lc(discoveryMapMtx_);
+            std::lock_guard lc(discoveryMapMtx_);
             // Make sure that account itself will not be recorded
             if (v.accountId != id) {
                 // Create or Find the old one
@@ -3431,7 +3431,7 @@ JamiAccount::startAccountDiscovery()
                     [w = weak(), p = v.accountId, a = v.displayName] {
                         if (auto this_ = w.lock()) {
                             {
-                                std::lock_guard<std::mutex> lc(this_->discoveryMapMtx_);
+                                std::lock_guard lc(this_->discoveryMapMtx_);
                                 this_->discoveredPeers_.erase(p);
                                 this_->discoveredPeerMap_.erase(p.toString());
                             }
@@ -3602,7 +3602,7 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 {
     std::function<void(const DeviceId&, bool)> cb;
     {
-        std::lock_guard<std::mutex> lk(onConnectionClosedMtx_);
+        std::lock_guard lk(onConnectionClosedMtx_);
         auto it = onConnectionClosed_.find(deviceId);
         if (it != onConnectionClosed_.end()) {
             if (eraseDummy) {
@@ -3637,7 +3637,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
              deviceId.to_c_str());
 
     // If a connection already exists or is in progress, no need to do this
-    std::lock_guard<std::mutex> lk(sipConnsMtx_);
+    std::lock_guard lk(sipConnsMtx_);
     auto id = std::make_pair(peerId, deviceId);
 
     if (sipConns_.find(id) != sipConns_.end()) {
@@ -3647,7 +3647,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         return;
     }
     // If not present, create it
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
     // Note, Even if we send 50 "sip" request, the connectionManager_ will only use one socket.
@@ -3683,7 +3683,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 bool
 JamiAccount::isConnectedWith(const DeviceId& deviceId) const
 {
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (connectionManager_)
         return connectionManager_->isConnected(deviceId);
     return false;
@@ -3718,7 +3718,7 @@ JamiAccount::sendProfile(const std::string& convId,
                      auto sendDir = fileutils::get_cache_dir() / accId / "vcard" / peerUri;
                      auto path = sendDir / deviceId;
                      dhtnet::fileutils::recursive_mkdir(sendDir);
-                     std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(path));
+                     std::lock_guard lock(dhtnet::fileutils::getFileLock(path));
                      if (std::filesystem::is_regular_file(path))
                          return;
                      std::ofstream p(path);
@@ -3976,7 +3976,7 @@ JamiAccount::monitor()
 
     if (auto cm = convModule())
         cm->monitor();
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
 }
@@ -3984,7 +3984,7 @@ JamiAccount::monitor()
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getConnectionList(const std::string& conversationId)
 {
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (connectionManager_ && conversationId.empty()) {
         return connectionManager_->getConnectionList();
     } else if (connectionManager_ && convModule_) {
@@ -4005,7 +4005,7 @@ JamiAccount::getConnectionList(const std::string& conversationId)
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getChannelList(const std::string& connectionId)
 {
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (!connectionManager_)
         return {};
     return connectionManager_->getChannelList(connectionId);
@@ -4086,7 +4086,7 @@ JamiAccount::transferFile(const std::string& conversationId,
         = conversationId.empty()
               ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_SCHEME, sha3Sum, modified)
               : fmt::format("{}{}/{}/{}", DATA_TRANSFER_SCHEME, conversationId, currentDeviceId(), fid);
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
     connectionManager_
@@ -4134,7 +4134,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                                size_t end)
 {
     auto tryDevice = [=](const auto& did) {
-        std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+        std::lock_guard lkCM(connManagerMtx_);
         if (!connectionManager_)
             return;
 
@@ -4193,7 +4193,7 @@ JamiAccount::askForProfile(const std::string& conversationId,
                            const std::string& deviceId,
                            const std::string& memberUri)
 {
-    std::lock_guard<std::mutex> lkCM(connManagerMtx_);
+    std::lock_guard lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
 

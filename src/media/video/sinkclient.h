@@ -78,7 +78,7 @@ public:
 
     void registerTarget(libjami::SinkTarget target) noexcept
     {
-        std::lock_guard<std::mutex> lock(mtx_);
+        std::lock_guard lock(mtx_);
         target_ = std::move(target);
     }
 

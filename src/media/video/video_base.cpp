@@ -35,7 +35,7 @@ namespace video {
 VideoFrame&
 VideoGenerator::getNewFrame()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     writableFrame_.reset(new VideoFrame());
     return *writableFrame_.get();
 }
@@ -43,7 +43,7 @@ VideoGenerator::getNewFrame()
 void
 VideoGenerator::publishFrame()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     lastFrame_ = std::move(writableFrame_);
     notify(std::static_pointer_cast<MediaFrame>(lastFrame_));
 }
@@ -51,7 +51,7 @@ VideoGenerator::publishFrame()
 void
 VideoGenerator::publishFrame(std::shared_ptr<VideoFrame> frame)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     lastFrame_ = std::move(frame);
     notify(std::static_pointer_cast<MediaFrame>(lastFrame_));
 }
@@ -59,7 +59,7 @@ VideoGenerator::publishFrame(std::shared_ptr<VideoFrame> frame)
 void
 VideoGenerator::flushFrames()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     writableFrame_.reset();
     lastFrame_.reset();
 }
@@ -67,7 +67,7 @@ VideoGenerator::flushFrames()
 std::shared_ptr<VideoFrame>
 VideoGenerator::obtainLastFrame()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     return lastFrame_;
 }
 
