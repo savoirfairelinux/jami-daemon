@@ -125,7 +125,7 @@ public:
     inline auto withConv(const S& convId, T&& cb) const
     {
         if (auto conv = getConversation(convId)) {
-            std::lock_guard<std::mutex> lk(conv->mtx);
+            std::lock_guard lk(conv->mtx);
             return cb(*conv);
         } else {
             JAMI_WARNING("Conversation {} not found", convId);
@@ -136,7 +136,7 @@ public:
     inline auto withConversation(const S& convId, T&& cb)
     {
         if (auto conv = getConversation(convId)) {
-            std::lock_guard<std::mutex> lk(conv->mtx);
+            std::lock_guard lk(conv->mtx);
             if (conv->conversation)
                 return cb(*conv->conversation);
         } else {
@@ -227,14 +227,14 @@ public:
      */
     bool isConversation(const std::string& convId) const
     {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        std::lock_guard lk(conversationsMtx_);
         auto c = conversations_.find(convId);
         return c != conversations_.end() && c->second;
     }
 
     void addConvInfo(const ConvInfo& info)
     {
-        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        std::lock_guard lk(convInfosMtx_);
         convInfos_[info.id] = info;
         saveConvInfos();
     }
@@ -261,19 +261,19 @@ public:
 
     std::shared_ptr<SyncedConversation> getConversation(std::string_view convId) const
     {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        std::lock_guard lk(conversationsMtx_);
         auto c = conversations_.find(convId);
         return c != conversations_.end() ? c->second : nullptr;
     }
     std::shared_ptr<SyncedConversation> getConversation(std::string_view convId)
     {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        std::lock_guard lk(conversationsMtx_);
         auto c = conversations_.find(convId);
         return c != conversations_.end() ? c->second : nullptr;
     }
     std::shared_ptr<SyncedConversation> startConversation(const std::string& convId)
     {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        std::lock_guard lk(conversationsMtx_);
         auto& c = conversations_[convId];
         if (!c)
             c = std::make_shared<SyncedConversation>(convId);
@@ -281,7 +281,7 @@ public:
     }
     std::shared_ptr<SyncedConversation> startConversation(const ConvInfo& info)
     {
-        std::lock_guard<std::mutex> lk(conversationsMtx_);
+        std::lock_guard lk(conversationsMtx_);
         auto& c = conversations_[info.id];
         if (!c)
             c = std::make_shared<SyncedConversation>(info);
@@ -347,7 +347,7 @@ public:
     }
     void rmConversationRequest(const std::string& id)
     {
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        std::lock_guard lk(conversationsRequestsMtx_);
         conversationsRequests_.erase(id);
         saveConvRequests();
     }
@@ -468,7 +468,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             conv->info.id,
             deviceId,
             [=](const auto& channel) {
-                std::lock_guard<std::mutex> lk(conv->mtx);
+                std::lock_guard lk(conv->mtx);
                 if (conv->pending && !conv->pending->ready) {
                     if (channel) {
                         conv->pending->ready = true;
@@ -515,7 +515,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& commitId)
 {
     {
-        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        std::lock_guard lk(convInfosMtx_);
         auto itConv = convInfos_.find(conversationId);
         if (itConv != convInfos_.end() && itConv->second.isRemoved()) {
             // If the conversation is removed and we receives a new commit,
@@ -529,7 +529,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     }
     std::optional<ConversationRequest> oldReq;
     {
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        std::lock_guard lk(conversationsRequestsMtx_);
         oldReq = getRequest(conversationId);
         if (oldReq != std::nullopt && oldReq->declined) {
             JAMI_DEBUG("[Account {}] Received a request for a conversation already declined.", accountId_);
@@ -594,7 +594,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
              peer = std::move(peer),
              deviceId = std::move(deviceId),
              commitId = std::move(commitId)](const auto& channel) {
-                std::lock_guard<std::mutex> lk(conv->mtx);
+                std::lock_guard lk(conv->mtx);
                 // auto conversation = conversations_.find(conversationId);
                 auto acc = account_.lock();
                 if (!channel || !acc || !conv->conversation) {
@@ -630,7 +630,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
                         {
 
-                            std::lock_guard<std::mutex> lk(conv->mtx);
+                            std::lock_guard lk(conv->mtx);
                             conv->pending.reset();
                             // Notify peers that a new commit is there (DRT)
                             if (not commitId.empty()) {
@@ -742,7 +742,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         auto commitId = conversation->join();
         std::vector<std::map<std::string, std::string>> messages;
         {
-            std::lock_guard<std::mutex> lk(replayMtx_);
+            std::lock_guard lk(replayMtx_);
             auto replayIt = replay_.find(conversationId);
             if (replayIt != replay_.end()) {
                 messages = std::move(replayIt->second);
@@ -970,7 +970,7 @@ ConversationModule::Impl::sendMessageNotification(const std::string& conversatio
                                                   const std::string& deviceId)
 {
     if (auto conv = getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             sendMessageNotification(*conv->conversation, sync, commitId, deviceId);
     }
@@ -1011,7 +1011,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     std::vector<std::string> nonConnectedMembers;
     std::vector<NodeId> devices;
     {
-        std::lock_guard<std::mutex> lk(notSyncedNotificationMtx_);
+        std::lock_guard lk(notSyncedNotificationMtx_);
         devices = conversation.peersToSyncWith();
         auto members = conversation.memberUris(username_, {MemberRole::BANNED});
         std::vector<std::string> connectedMembers;
@@ -1093,7 +1093,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       OnDoneCb&& cb)
 {
     if (auto conv = getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             conv->conversation
                 ->sendMessage(std::move(value),
@@ -1124,7 +1124,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
     // Check that editedId is a valid commit, from ourself and plain/text
     auto validCommit = false;
     if (auto conv = getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             auto commit = conv->conversation->getCommit(editedId);
             if (commit != std::nullopt) {
@@ -1150,7 +1150,7 @@ ConversationModule::Impl::bootstrapCb(std::string convId)
 {
     std::string commitId;
     {
-        std::lock_guard<std::mutex> lk(notSyncedNotificationMtx_);
+        std::lock_guard lk(notSyncedNotificationMtx_);
         auto it = notSyncedNotification_.find(convId);
         if (it != notSyncedNotification_.end()) {
             commitId = it->second;
@@ -1175,7 +1175,7 @@ ConversationModule::Impl::fixStructures(std::shared_ptr<JamiAccount> acc, const 
     std::vector<std::string> invalidPendingRequests;
     {
         auto requests = acc->getTrustRequests();
-        std::lock_guard<std::mutex> lk(conversationsRequestsMtx_);
+        std::lock_guard lk(conversationsRequestsMtx_);
         for (const auto& request : requests) {
             auto itConvId = request.find(libjami::Account::TrustRequest::CONVERSATIONID);
             auto itConvFrom = request.find(libjami::Account::TrustRequest::FROM);
@@ -1218,7 +1218,7 @@ ConversationModule::Impl::fixStructures(std::shared_ptr<JamiAccount> acc, const 
 void
 ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv, const std::string& deviceId, const std::string& oldConvId)
 {
-    std::lock_guard<std::mutex> lk(conv->mtx);
+    std::lock_guard lk(conv->mtx);
     const auto& conversationId = conv->info.id;
     if (!conv->startFetch(deviceId, true)) {
         JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conversationId);
@@ -1230,7 +1230,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
         deviceId,
         [sthis=shared_from_this(), conv, conversationId, oldConvId, deviceId](const auto& channel) {
             auto acc = sthis->account_.lock();
-            std::lock_guard<std::mutex> lk(conv->mtx);
+            std::lock_guard lk(conv->mtx);
             if (conv->pending && !conv->pending->ready) {
                 conv->pending->removeId = oldConvId;
                 if (channel) {
@@ -1276,7 +1276,7 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
     };
     std::vector<std::string> toClone;
     if (convId.empty()) {
-        std::lock_guard<std::mutex> lk(convInfosMtx_);
+        std::lock_guard lk(convInfosMtx_);
         for (const auto& [conversationId, convInfo] : convInfos_) {
             auto conv = getConversation(conversationId);
             if (!conv)
@@ -1291,7 +1291,7 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
             }
         }
     } else if (auto conv = getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             bootstrap(conv->conversation);
     }
@@ -1315,7 +1315,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
-    std::lock_guard<std::mutex> lk(conv->mtx);
+    std::lock_guard lk(conv->mtx);
     conv->info = {};
     conv->info.id = conversationId;
     conv->info.created = std::time(nullptr);
@@ -1350,7 +1350,7 @@ ConversationModule::saveConvRequestsToPath(
     const std::filesystem::path& path, const std::map<std::string, ConversationRequest>& conversationsRequests)
 {
     auto p = path / "convRequests";
-    std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(p));
+    std::lock_guard lock(dhtnet::fileutils::getFileLock(p));
     std::ofstream file(p, std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversationsRequests);
 }
@@ -1470,14 +1470,14 @@ ConversationModule::loadConversations()
                             if (isRemoved) {
                                 // If details is empty, contact is removed and not banned.
                                 JAMI_ERROR("Conversation {} detected for {} and should be removed", repository, otherUri);
-                                std::lock_guard<std::mutex> lkMtx {ctx->toRmMtx};
+                                std::lock_guard lkMtx {ctx->toRmMtx};
                                 ctx->toRm.insert(repository);
                             } else {
                                 JAMI_ERROR("No conversation detected for {} but one exists ({}). "
                                         "Update details",
                                         otherUri,
                                         repository);
-                                std::lock_guard<std::mutex> lkMtx {ctx->toRmMtx};
+                                std::lock_guard lkMtx {ctx->toRmMtx};
                                 ctx->updateContactConv.emplace_back(std::make_tuple(otherUri, convFromDetails, repository));
                             }
                         } else {
@@ -1485,13 +1485,13 @@ ConversationModule::loadConversations()
                                     otherUri,
                                     repository,
                                     convFromDetails);
-                            std::lock_guard<std::mutex> lkMtx {ctx->toRmMtx};
+                            std::lock_guard lkMtx {ctx->toRmMtx};
                             ctx->toRm.insert(repository);
                         }
                     }
                 }
                 {
-                    std::lock_guard<std::mutex> lkMtx {ctx->convMtx};
+                    std::lock_guard lkMtx {ctx->convMtx};
                     auto convInfo = pimpl_->convInfos_.find(repository);
                     if (convInfo == pimpl_->convInfos_.end()) {
                         JAMI_ERROR("Missing conv info for {}. This is a bug!", repository);
@@ -1505,7 +1505,7 @@ ConversationModule::loadConversations()
                         if (convInfo->second.isRemoved()) {
                             // A conversation was removed, but repository still exists
                             conv->setRemovingFlag();
-                            std::lock_guard<std::mutex> lkMtx {ctx->toRmMtx};
+                            std::lock_guard lkMtx {ctx->toRmMtx};
                             ctx->toRm.insert(repository);
                         }
                     }
@@ -1519,14 +1519,14 @@ ConversationModule::loadConversations()
                     pimpl_->sendMessageNotification(*conv, true, *commits.rbegin());
                 }
                 sconv->conversation = conv;
-                std::lock_guard<std::mutex> lkMtx {ctx->convMtx};
+                std::lock_guard lkMtx {ctx->convMtx};
                 pimpl_->conversations_.emplace(repository, std::move(sconv));
             } catch (const std::logic_error& e) {
                 JAMI_WARNING("[Account {}] Conversations not loaded: {}",
                         pimpl_->accountId_,
                         e.what());
             }
-            std::lock_guard<std::mutex> lkCv {ctx->cvMtx};
+            std::lock_guard lkCv {ctx->cvMtx};
             --ctx->convNb;
             ctx->cv.notify_all();
         });
@@ -1636,7 +1636,7 @@ std::vector<std::string>
 ConversationModule::getConversations() const
 {
     std::vector<std::string> result;
-    std::lock_guard<std::mutex> lk(pimpl_->convInfosMtx_);
+    std::lock_guard lk(pimpl_->convInfosMtx_);
     result.reserve(pimpl_->convInfos_.size());
     for (const auto& [key, conv] : pimpl_->convInfos_) {
         if (conv.isRemoved())
@@ -1656,7 +1656,7 @@ std::vector<std::map<std::string, std::string>>
 ConversationModule::getConversationRequests() const
 {
     std::vector<std::map<std::string, std::string>> requests;
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+    std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
     requests.reserve(pimpl_->conversationsRequests_.size());
     for (const auto& [id, request] : pimpl_->conversationsRequests_) {
         if (request.declined)
@@ -1765,7 +1765,7 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
 std::string
 ConversationModule::peerFromConversationRequest(const std::string& convId) const
 {
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+    std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
     auto it = pimpl_->conversationsRequests_.find(convId);
     if (it != pimpl_->conversationsRequests_.end()) {
         return it->second.from;
@@ -1793,7 +1793,7 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     // For all conversation members, try to open a git channel with this conversation ID
     std::optional<ConversationRequest> request;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
         request = pimpl_->getRequest(conversationId);
     }
     if (request == std::nullopt) {
@@ -1816,7 +1816,7 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
 void
 ConversationModule::declineConversationRequest(const std::string& conversationId)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+    std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
     auto it = pimpl_->conversationsRequests_.find(conversationId);
     if (it != pimpl_->conversationsRequests_.end()) {
         it->second.declined = std::time(nullptr);
@@ -1979,7 +1979,7 @@ std::map<std::string, std::map<std::string, std::string>>
 ConversationModule::convDisplayed() const
 {
     std::map<std::string, std::map<std::string, std::string>> displayed;
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::lock_guard lk(pimpl_->conversationsMtx_);
     for (const auto& [id, conv] : pimpl_->conversations_) {
         if (conv && conv->conversation) {
             auto d = conv->conversation->displayed();
@@ -1997,7 +1997,7 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
 {
     auto acc = pimpl_->account_.lock();
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
             LogOptions options;
@@ -2021,7 +2021,7 @@ void
 ConversationModule::clearCache(const std::string& conversationId)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             conv->conversation->clearCache();
         }
@@ -2035,7 +2035,7 @@ ConversationModule::loadConversation(const std::string& conversationId,
 {
     auto acc = pimpl_->account_.lock();
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
             LogOptions options;
@@ -2062,7 +2062,7 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
 {
     auto acc = pimpl_->account_.lock();
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
             LogOptions options;
@@ -2097,7 +2097,7 @@ ConversationModule::onFileChannelRequest(const std::string& conversationId,
                                          bool verifyShaSum) const
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->onFileChannelRequest(member, fileId, verifyShaSum);
     }
@@ -2113,7 +2113,7 @@ ConversationModule::downloadFile(const std::string& conversationId,
                                  size_t end)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->downloadFile(interactionId, fileId, path, "", "", start, end);
     }
@@ -2127,9 +2127,9 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
     std::set<std::string> toFetch;
     std::set<std::string> toClone;
     {
-        std::lock_guard<std::mutex> lkCI(pimpl_->conversationsMtx_);
+        std::lock_guard lkCI(pimpl_->conversationsMtx_);
         for (const auto& [key, conv] : pimpl_->conversations_) {
-            std::lock_guard<std::mutex> lk(conv->mtx);
+            std::lock_guard lk(conv->mtx);
             if (conv->conversation) {
                 if (!conv->conversation->isRemoving() && conv->conversation->isMember(peer, false)) {
                     toFetch.emplace(key);
@@ -2297,9 +2297,9 @@ bool
 ConversationModule::needsSyncingWith(const std::string& memberUri, const std::string& deviceId) const
 {
     // Check if a conversation needs to fetch remote or to be cloned
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::lock_guard lk(pimpl_->conversationsMtx_);
     for (const auto& [key, ci] : pimpl_->conversations_) {
-        std::lock_guard<std::mutex> lk(ci->mtx);
+        std::lock_guard lk(ci->mtx);
         if (ci->conversation) {
             if (ci->conversation->isRemoving() && ci->conversation->isMember(memberUri, false))
                 return true;
@@ -2319,7 +2319,7 @@ ConversationModule::setFetched(const std::string& conversationId,
                                const std::string& commitId)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             bool remove = conv->conversation->isRemoving();
             conv->conversation->hasFetched(deviceId, commitId);
@@ -2383,7 +2383,7 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
                                              bool isDevice)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->removeMember(
                 contactUri, isDevice, [this, conversationId](bool ok, const std::string& commitId) {
@@ -2408,7 +2408,7 @@ ConversationModule::countInteractions(const std::string& convId,
                                       const std::string& authorUri) const
 {
     if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->countInteractions(toId, fromId, authorUri);
     }
@@ -2422,7 +2422,7 @@ ConversationModule::search(uint32_t req, const std::string& convId, const Filter
         auto finishedFlag = std::make_shared<std::atomic_int>(pimpl_->conversations_.size());
         std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
         for (const auto& [cid, conv] : pimpl_->conversations_) {
-            std::lock_guard<std::mutex> lk(conv->mtx);
+            std::lock_guard lk(conv->mtx);
             if (!conv->conversation) {
                 if ((*finishedFlag)-- == 1) {
                     emitSignal<libjami::ConversationSignal::MessagesFound>(
@@ -2436,7 +2436,7 @@ ConversationModule::search(uint32_t req, const std::string& convId, const Filter
             }
         }
     } else if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             conv->conversation->search(req, filter, std::make_shared<std::atomic_int>(1));
     }
@@ -2452,7 +2452,7 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
         JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
         return;
     }
-    std::lock_guard<std::mutex> lk(conv->mtx);
+    std::lock_guard lk(conv->mtx);
     conv->conversation
         ->updateInfos(infos, [this, conversationId, sync](bool ok, const std::string& commitId) {
             if (ok && sync) {
@@ -2466,13 +2466,13 @@ std::map<std::string, std::string>
 ConversationModule::conversationInfos(const std::string& conversationId) const
 {
     {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
         auto itReq = pimpl_->conversationsRequests_.find(conversationId);
         if (itReq != pimpl_->conversationsRequests_.end())
             return itReq->second.metadatas;
     }
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->infos();
         else
@@ -2506,7 +2506,7 @@ ConversationModule::getConversationPreferences(const std::string& conversationId
                                                bool includeCreated) const
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->preferences(includeCreated);
     }
@@ -2517,7 +2517,7 @@ std::map<std::string, std::map<std::string, std::string>>
 ConversationModule::convPreferences() const
 {
     std::map<std::string, std::map<std::string, std::string>> p;
-    std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::lock_guard lk(pimpl_->conversationsMtx_);
     for (const auto& [id, conv] : pimpl_->conversations_) {
         if (conv && conv->conversation) {
             auto prefs = conv->conversation->preferences(true);
@@ -2532,7 +2532,7 @@ std::vector<uint8_t>
 ConversationModule::conversationVCard(const std::string& conversationId) const
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->vCard();
     }
@@ -2544,7 +2544,7 @@ bool
 ConversationModule::isBanned(const std::string& convId, const std::string& uri) const
 {
     if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (!conv->conversation)
             return true;
         if (conv->conversation->mode() != ConversationMode::ONE_TO_ONE)
@@ -2563,7 +2563,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
 {
     // Remove linked conversation's requests
     {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
         auto update = false;
         for (auto it = pimpl_->conversationsRequests_.begin();
              it != pimpl_->conversationsRequests_.end();
@@ -2605,9 +2605,9 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         return false;
     };
     {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        std::lock_guard lk(pimpl_->conversationsMtx_);
         for (auto& [convId, conv] : pimpl_->conversations_) {
-            std::lock_guard<std::mutex> lk(conv->mtx);
+            std::lock_guard lk(conv->mtx);
             if (conv->conversation) {
                 try {
                     // Note it's important to check getUsername(), else
@@ -2641,7 +2641,7 @@ void
 ConversationModule::initReplay(const std::string& oldConvId, const std::string& newConvId)
 {
     if (auto conv = pimpl_->getConversation(oldConvId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
             std::promise<bool> waitLoad;
             std::future<bool> fut = waitLoad.get_future();
@@ -2650,7 +2650,7 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
                 [&](auto&& messages) {
                     std::reverse(messages.begin(),
                                  messages.end()); // Log is inverted as we want to replay
-                    std::lock_guard<std::mutex> lk(pimpl_->replayMtx_);
+                    std::lock_guard lk(pimpl_->replayMtx_);
                     pimpl_->replay_[newConvId] = std::move(messages);
                     waitLoad.set_value(true);
                 },
@@ -2664,7 +2664,7 @@ bool
 ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
 {
     if (conversationId.empty()) {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        std::lock_guard lk(pimpl_->conversationsMtx_);
         return std::find_if(pimpl_->conversations_.cbegin(),
                             pimpl_->conversations_.cend(),
                             [&](const auto& conv) {
@@ -2876,7 +2876,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                 value["type"] = "application/call-history+json";
                 value["duration"] = std::to_string(duration);
 
-                std::lock_guard<std::mutex> lk(conv->mtx);
+                std::lock_guard lk(conv->mtx);
                 if (!conv->conversation) {
                     JAMI_ERROR("Conversation {} not found", conversationId);
                     return;
@@ -2908,7 +2908,7 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
     std::map<std::string, ConvInfo> convInfos;
     try {
         // read file
-        std::lock_guard<std::mutex> lock(
+        std::lock_guard lock(
             dhtnet::fileutils::getFileLock(path / "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
@@ -2933,7 +2933,7 @@ ConversationModule::convRequestsFromPath(const std::filesystem::path& path)
     std::map<std::string, ConversationRequest> convRequests;
     try {
         // read file
-        std::lock_guard<std::mutex> lock(
+        std::lock_guard lock(
             dhtnet::fileutils::getFileLock(path / "convRequests"));
         auto file = fileutils::loadFile("convRequests", path);
         // load values
@@ -2956,7 +2956,7 @@ ConversationModule::Impl::setConversationMembers(const std::string& convId,
                                                  const std::vector<std::string>& members)
 {
     if (auto conv = getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         conv->info.members = members;
         addConvInfo(conv->info);
     }
@@ -2966,7 +2966,7 @@ std::shared_ptr<Conversation>
 ConversationModule::getConversation(const std::string& convId)
 {
     if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         return conv->conversation;
     }
     return nullptr;
@@ -2976,7 +2976,7 @@ std::shared_ptr<dhtnet::ChannelSocket>
 ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId) const
 {
     if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->gitSocket(DeviceId(deviceId));
         else if (conv->pending)
@@ -2991,7 +2991,7 @@ ConversationModule::addGitSocket(std::string_view deviceId,
                                  const std::shared_ptr<dhtnet::ChannelSocket>& channel)
 {
     if (auto conv = pimpl_->getConversation(convId)) {
-        std::lock_guard<std::mutex> lk(conv->mtx);
+        std::lock_guard lk(conv->mtx);
         conv->conversation->addGitSocket(DeviceId(deviceId), channel);
     } else
         JAMI_WARNING("addGitSocket: can't find conversation {:s}", convId);
@@ -3008,14 +3008,14 @@ ConversationModule::shutdownConnections()
 {
     std::vector<std::shared_ptr<SyncedConversation>> conversations;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        std::lock_guard lk(pimpl_->conversationsMtx_);
         conversations.reserve(pimpl_->conversations_.size());
         for (auto& [k, c]: pimpl_->conversations_) {
             conversations.emplace_back(c);
         }
     }
     for (const auto& c: conversations) {
-        std::lock_guard<std::mutex> lkc(c->mtx);
+        std::lock_guard lkc(c->mtx);
         if (c->conversation)
             c->conversation->shutdownConnections();
         if (c->pending)
@@ -3035,7 +3035,7 @@ ConversationModule::connectivityChanged()
 {
     std::vector<std::shared_ptr<SyncedConversation>> syncedConversations;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->conversationsMtx_);
+        std::lock_guard lk(pimpl_->conversationsMtx_);
         syncedConversations.reserve(pimpl_->conversations_.size());
         for (const auto& [k, c]: pimpl_->conversations_) {
             syncedConversations.emplace_back(c);
@@ -3044,7 +3044,7 @@ ConversationModule::connectivityChanged()
     std::vector<std::shared_ptr<Conversation>> conversations;
     conversations.reserve(syncedConversations.size());
     for (const auto& c: syncedConversations) {
-        std::lock_guard<std::mutex> lkc(c->mtx);
+        std::lock_guard lkc(c->mtx);
         if (c->conversation)
             conversations.emplace_back(c->conversation);
     }

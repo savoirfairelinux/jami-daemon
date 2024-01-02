@@ -145,7 +145,7 @@ public:
 
     StreamInfo streamInfo(Observable<std::shared_ptr<MediaFrame>>* frame) const
     {
-        std::lock_guard<std::mutex> lk(videoToStreamInfoMtx_);
+        std::lock_guard lk(videoToStreamInfoMtx_);
         auto it = videoToStreamInfo_.find(frame);
         if (it == videoToStreamInfo_.end())
             return {};

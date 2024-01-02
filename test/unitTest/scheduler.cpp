@@ -62,7 +62,7 @@ SchedulerTest::schedulerTest()
         for (uint64_t i=0; i<64 * N; i++)
             sum += rng();
         result += sum;
-        std::lock_guard<std::mutex> l(mtx);
+        std::lock_guard l(mtx);
         if (++taskRun == N)
             cv.notify_all();
     };

@@ -91,7 +91,7 @@ Account::hangupCalls()
 void
 Account::updateUpnpController()
 {
-    std::lock_guard<std::mutex> lk {upnp_mtx};
+    std::lock_guard lk {upnp_mtx};
 
     if (not config().upnpEnabled or not isUsable()) {
         upnpCtrl_.reset();
@@ -276,7 +276,7 @@ Account::getDefaultCodecDetails(const unsigned& codecId)
 dhtnet::IpAddr
 Account::getUPnPIpAddress() const
 {
-    std::lock_guard<std::mutex> lk(upnp_mtx);
+    std::lock_guard lk(upnp_mtx);
     if (upnpCtrl_)
         return upnpCtrl_->getExternalIP();
     return {};
@@ -289,7 +289,7 @@ Account::getUPnPIpAddress() const
 bool
 Account::getUPnPActive() const
 {
-    std::lock_guard<std::mutex> lk(upnp_mtx);
+    std::lock_guard lk(upnp_mtx);
     if (upnpCtrl_)
         return upnpCtrl_->isReady();
     return false;

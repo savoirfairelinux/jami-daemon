@@ -173,7 +173,7 @@ public:
 
     std::vector<ConversationMember> members() const
     {
-        std::lock_guard<std::mutex> lk(membersMtx_);
+        std::lock_guard lk(membersMtx_);
         return members_;
     }
 
@@ -231,7 +231,7 @@ public:
     std::vector<std::string> memberUris(std::string_view filter,
                                         const std::set<MemberRole>& filteredRoles) const
     {
-        std::lock_guard<std::mutex> lk(membersMtx_);
+        std::lock_guard lk(membersMtx_);
         std::vector<std::string> ret;
         if (filter.empty() and filteredRoles.empty())
             ret.reserve(members_.size());
@@ -262,7 +262,7 @@ public:
         auto acc = account_.lock();
         if (!acc)
             return {};
-        std::lock_guard<std::mutex> lk(deviceToUriMtx_);
+        std::lock_guard lk(deviceToUriMtx_);
         auto it = deviceToUri_.find(deviceId);
         if (it != deviceToUri_.end())
             return it->second;
@@ -2346,7 +2346,7 @@ ConversationRepository::Impl::initMembers()
         throw std::logic_error("Invalid git repository");
 
     std::vector<std::string> uris;
-    std::lock_guard<std::mutex> lk(membersMtx_);
+    std::lock_guard lk(membersMtx_);
     members_.clear();
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     std::vector<std::filesystem::path> paths = {repoPath / "admins",
@@ -2836,7 +2836,7 @@ ConversationRepository::addMember(const std::string& uri)
         return {};
 
     {
-        std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+        std::lock_guard lk(pimpl_->membersMtx_);
         pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::INVITED});
     }
 
@@ -3267,7 +3267,7 @@ ConversationRepository::join()
     wbuilder["indentation"] = "";
 
     {
-        std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+        std::lock_guard lk(pimpl_->membersMtx_);
         auto updated = false;
 
         for (auto& member : pimpl_->members_) {
@@ -3348,7 +3348,7 @@ ConversationRepository::leave()
     wbuilder["indentation"] = "";
 
     {
-        std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+        std::lock_guard lk(pimpl_->membersMtx_);
         std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
             return member.uri == account->getUsername();
         });
@@ -3504,7 +3504,7 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
                 continue;
             }
         }
-        std::lock_guard<std::mutex> lk(membersMtx_);
+        std::lock_guard lk(membersMtx_);
         auto updated = false;
 
         for (auto& member : members_) {
@@ -3543,7 +3543,7 @@ ConversationRepository::Impl::resolveUnban(const std::string_view type, const st
         return false;
     }
 
-    std::lock_guard<std::mutex> lk(membersMtx_);
+    std::lock_guard lk(membersMtx_);
     auto updated = false;
 
     auto role = MemberRole::MEMBER;
@@ -3735,7 +3735,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     auto uri = std::string(account->getUsername());
     auto valid = false;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->membersMtx_);
+        std::lock_guard lk(pimpl_->membersMtx_);
         for (const auto& member : pimpl_->members_) {
             if (member.uri == uri) {
                 valid = member.role <= pimpl_->updateProfilePermLvl_;

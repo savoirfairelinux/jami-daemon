@@ -291,7 +291,7 @@ public:
             return;
         if (commit.at("type") == "member") {
             // In this case, we need to check if we are not removing a hosting member or device
-            std::lock_guard<std::mutex> lk(activeCallsMtx_);
+            std::lock_guard lk(activeCallsMtx_);
             auto it = activeCalls_.begin();
             auto updateActives = false;
             while (it != activeCalls_.end()) {
@@ -321,7 +321,7 @@ public:
             auto confId = commit.at("confId");
             auto uri = commit.at("uri");
             auto device = commit.at("device");
-            std::lock_guard<std::mutex> lk(activeCallsMtx_);
+            std::lock_guard lk(activeCallsMtx_);
             auto itActive = std::find_if(activeCalls_.begin(),
                                          activeCalls_.end(),
                                          [&](const auto& value) {
@@ -482,7 +482,7 @@ public:
             auto file = fileutils::loadFile(fetchedPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {fetchedDevicesMtx_};
+            std::lock_guard lk {fetchedDevicesMtx_};
             oh.get().convert(fetchedDevices_);
         } catch (const std::exception& e) {
             return;
@@ -501,7 +501,7 @@ public:
             auto file = fileutils::loadFile(sendingPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {writeMtx_};
+            std::lock_guard lk {writeMtx_};
             oh.get().convert(sending_);
         } catch (const std::exception& e) {
             return;
@@ -520,7 +520,7 @@ public:
             auto file = fileutils::loadFile(lastDisplayedPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {lastDisplayedMtx_};
+            std::lock_guard lk {lastDisplayedMtx_};
             oh.get().convert(lastDisplayed_);
         } catch (const std::exception& e) {
             return;
@@ -540,7 +540,7 @@ public:
             auto file = fileutils::loadFile(activeCallsPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {activeCallsMtx_};
+            std::lock_guard lk {activeCallsMtx_};
             oh.get().convert(activeCalls_);
         } catch (const std::exception& e) {
             return;
@@ -560,7 +560,7 @@ public:
             auto file = fileutils::loadFile(hostedCallsPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard<std::mutex> lk {activeCallsMtx_};
+            std::lock_guard lk {activeCallsMtx_};
             oh.get().convert(hostedCalls_);
         } catch (const std::exception& e) {
             return;
@@ -710,7 +710,7 @@ Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool inclu
 {
     std::vector<std::map<std::string, std::string>> result;
     auto members = repository_->members();
-    std::lock_guard<std::mutex> lk(lastDisplayedMtx_);
+    std::lock_guard lk(lastDisplayedMtx_);
     for (const auto& member : members) {
         if (member.role == MemberRole::BANNED && !includeBanned) {
             continue;
@@ -838,7 +838,7 @@ std::vector<libjami::SwarmMessage>
 Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
 {
     {
-        std::lock_guard<std::mutex> lock(historyMtx_);
+        std::lock_guard lock(historyMtx_);
         if (!repository_ || (!optHistory && isLoadingHistory_))
             return {};
         if (!optHistory)
@@ -901,7 +901,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
         options.logIfNotFound);
 
     if (!optHistory) {
-        std::lock_guard<std::mutex> lock(historyMtx_);
+        std::lock_guard lock(historyMtx_);
         isLoadingHistory_ = false;
         historyCv_.notify_all();
     }
@@ -1589,7 +1589,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
 void
 Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->pullcbsMtx_);
+    std::lock_guard lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
     pimpl_->pullcbs_.emplace_back(deviceId, std::move(commitId), std::move(cb));
     if (isInProgress)
@@ -1611,7 +1611,7 @@ Conversation::Impl::pull()
         decltype(pullcbs_)::value_type pullcb;
         decltype(fetchingRemotes_.begin()) it;
         {
-            std::lock_guard<std::mutex> lk(pullcbsMtx_);
+            std::lock_guard lk(pullcbsMtx_);
             if (pullcbs_.empty())
                 return;
             auto& elem = pullcbs_.front();
@@ -1633,14 +1633,14 @@ Conversation::Impl::pull()
         // If recently fetched, the commit can already be there, so no need to do complex operations
         if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
             cb(true);
-            std::lock_guard<std::mutex> lk(pullcbsMtx_);
+            std::lock_guard lk(pullcbsMtx_);
             fetchingRemotes_.erase(it);
             continue;
         }
         // Pull from remote
         auto fetched = repo->fetch(deviceId);
         {
-            std::lock_guard<std::mutex> lk(pullcbsMtx_);
+            std::lock_guard lk(pullcbsMtx_);
             fetchingRemotes_.erase(it);
         }
 
@@ -1731,7 +1731,7 @@ std::string
 Conversation::leave()
 {
     setRemovingFlag();
-    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
+    std::lock_guard lk(pimpl_->writeMtx_);
     return pimpl_->repository_->leave();
 }
 
@@ -1754,7 +1754,7 @@ Conversation::erase()
         dhtnet::fileutils::removeAll(pimpl_->conversationDataPath_, true);
     if (!pimpl_->repository_)
         return;
-    std::lock_guard<std::mutex> lk(pimpl_->writeMtx_);
+    std::lock_guard lk(pimpl_->writeMtx_);
     pimpl_->repository_->erase();
 }
 
@@ -1960,7 +1960,7 @@ Conversation::downloadFile(const std::string& interactionId,
 void
 Conversation::clearFetched()
 {
-    std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
+    std::lock_guard lk(pimpl_->fetchedDevicesMtx_);
     pimpl_->fetchedDevices_.clear();
     pimpl_->saveFetched();
 }
@@ -1968,7 +1968,7 @@ Conversation::clearFetched()
 bool
 Conversation::needsFetch(const std::string& deviceId) const
 {
-    std::lock_guard<std::mutex> lk(pimpl_->fetchedDevicesMtx_);
+    std::lock_guard lk(pimpl_->fetchedDevicesMtx_);
     return pimpl_->fetchedDevices_.find(deviceId) == pimpl_->fetchedDevices_.end();
 }
 
@@ -1980,12 +1980,12 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
         if (!sthis)
             return;
         {
-            std::lock_guard<std::mutex> lk(sthis->pimpl_->fetchedDevicesMtx_);
+            std::lock_guard lk(sthis->pimpl_->fetchedDevicesMtx_);
             sthis->pimpl_->fetchedDevices_.emplace(deviceId);
             sthis->pimpl_->saveFetched();
         }
         // Update sent status
-        std::lock_guard<std::mutex> lk(sthis->pimpl_->writeMtx_);
+        std::lock_guard lk(sthis->pimpl_->writeMtx_);
         auto itCommit = std::find(sthis->pimpl_->sending_.begin(),
                                   sthis->pimpl_->sending_.end(),
                                   commitId);
@@ -2012,7 +2012,7 @@ Conversation::setMessageDisplayed(const std::string& uri, const std::string& int
 {
     if (auto acc = pimpl_->account_.lock()) {
         {
-            std::lock_guard<std::mutex> lk(pimpl_->lastDisplayedMtx_);
+            std::lock_guard lk(pimpl_->lastDisplayedMtx_);
             if (pimpl_->lastDisplayed_[uri] == interactionId)
                 return false;
             pimpl_->lastDisplayed_[uri] = interactionId;
@@ -2433,7 +2433,7 @@ Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
     auto now = std::chrono::system_clock::now();
     auto nowSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
     {
-        std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
+        std::lock_guard lk(pimpl_->activeCallsMtx_);
         pimpl_->hostedCalls_[message["confId"].asString()] = nowSecs;
         pimpl_->saveHostedCalls();
     }
@@ -2450,7 +2450,7 @@ Conversation::isHosting(const std::string& confId) const
     auto info = infos();
     if (info["rdvDevice"] == shared->currentDeviceId() && info["rdvHost"] == shared->getUsername())
         return true; // We are the current device Host
-    std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
+    std::lock_guard lk(pimpl_->activeCallsMtx_);
     return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
 }
 
@@ -2464,7 +2464,7 @@ Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
 
     auto erased = false;
     {
-        std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
+        std::lock_guard lk(pimpl_->activeCallsMtx_);
         erased = pimpl_->hostedCalls_.erase(message["confId"].asString());
     }
     if (erased) {
@@ -2477,7 +2477,7 @@ Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
 std::vector<std::map<std::string, std::string>>
 Conversation::currentCalls() const
 {
-    std::lock_guard<std::mutex> lk(pimpl_->activeCallsMtx_);
+    std::lock_guard lk(pimpl_->activeCallsMtx_);
     return pimpl_->activeCalls_;
 }
 } // namespace jami

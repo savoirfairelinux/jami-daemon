@@ -147,7 +147,7 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
 
     std::vector<SipTransportStateCallback> cbs;
     {
-        std::lock_guard<std::mutex> lock(stateListenersMutex_);
+        std::lock_guard lock(stateListenersMutex_);
         cbs.reserve(stateListeners_.size());
         for (auto& l : stateListeners_)
             cbs.push_back(l.second);
@@ -159,7 +159,7 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
 void
 SipTransport::addStateListener(uintptr_t lid, SipTransportStateCallback cb)
 {
-    std::lock_guard<std::mutex> lock(stateListenersMutex_);
+    std::lock_guard lock(stateListenersMutex_);
     auto pair = stateListeners_.insert(std::make_pair(lid, cb));
     if (not pair.second)
         pair.first->second = cb;
@@ -168,7 +168,7 @@ SipTransport::addStateListener(uintptr_t lid, SipTransportStateCallback cb)
 bool
 SipTransport::removeStateListener(uintptr_t lid)
 {
-    std::lock_guard<std::mutex> lock(stateListenersMutex_);
+    std::lock_guard lock(stateListenersMutex_);
     auto it = stateListeners_.find(lid);
     if (it != stateListeners_.end()) {
         stateListeners_.erase(it);
@@ -213,7 +213,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
     // and remove it from any mapping if destroy pending or done.
 
     std::shared_ptr<SipTransport> sipTransport;
-    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    std::lock_guard lock(transportMapMutex_);
     auto key = transports_.find(tp);
     if (key == transports_.end())
         return;
@@ -248,7 +248,7 @@ std::shared_ptr<SipTransport>
 SipTransportBroker::addTransport(pjsip_transport* t)
 {
     if (t) {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        std::lock_guard lock(transportMapMutex_);
 
         auto key = transports_.find(t);
         if (key != transports_.end()) {
@@ -282,7 +282,7 @@ SipTransportBroker::shutdown()
 std::shared_ptr<SipTransport>
 SipTransportBroker::getUdpTransport(const dhtnet::IpAddr& ipAddress)
 {
-    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    std::lock_guard lock(transportMapMutex_);
     auto itp = udpTransports_.find(ipAddress);
     if (itp != udpTransports_.end()) {
         auto it = transports_.find(itp->second);
@@ -393,7 +393,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
     auto ret = std::make_shared<SipTransport>(transport, l);
     pjsip_transport_dec_ref(transport);
     {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        std::lock_guard lock(transportMapMutex_);
         transports_[ret->get()] = ret;
     }
     return ret;
@@ -415,7 +415,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
     sip_tr->setAccount(account);
 
     {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        std::lock_guard lock(transportMapMutex_);
         // we do not check for key existence as we've just created it
         // (member of new SipIceTransport instance)
         transports_.emplace(tr, sip_tr);

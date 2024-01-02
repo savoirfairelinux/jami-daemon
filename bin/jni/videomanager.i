@@ -329,7 +329,7 @@ libjami::FrameBuffer sinkTargetPullCallback(ANativeWindow *window)
     try {
         libjami::FrameBuffer frame;
         {
-            std::lock_guard<std::mutex> guard(windows_mutex);
+            std::lock_guard guard(windows_mutex);
             frame = std::move(windows.at(window));
         }
         if (frame) {
@@ -369,7 +369,7 @@ JNIEXPORT jboolean JNICALL Java_net_jami_daemon_JamiServiceJNI_registerVideoCall
     auto p_display_cb = std::bind(&sinkTargetPullCallback, nativeWindow);
 
     {
-        std::lock_guard<std::mutex> guard(windows_mutex);
+        std::lock_guard guard(windows_mutex);
         windows.emplace(nativeWindow, libjami::FrameBuffer{av_frame_alloc()});
     }
     return libjami::registerSinkTarget(sink, libjami::SinkTarget {.pull=p_display_cb, .push=f_display_cb}) ? JNI_TRUE : JNI_FALSE;
@@ -390,7 +390,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_unregisterVideoCallba
 
     libjami::registerSinkTarget(sink, libjami::SinkTarget {});
 
-    std::lock_guard<std::mutex> guard(windows_mutex);
+    std::lock_guard guard(windows_mutex);
     windows.erase(nativeWindow);
 }
 

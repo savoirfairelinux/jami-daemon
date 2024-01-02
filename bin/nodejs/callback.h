@@ -218,7 +218,7 @@ void
 handlePendingSignals(uv_async_t* async_data)
 {
     SWIGV8_HANDLESCOPE();
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     while (not pendingSignals.empty()) {
         pendingSignals.front()();
         pendingSignals.pop();
@@ -231,7 +231,7 @@ registrationStateChanged(const std::string& accountId,
                          int code,
                          const std::string& detail_str)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, state, code, detail_str]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     registrationStateChangedCb);
@@ -253,7 +253,7 @@ composingStatusChanged(const std::string& accountId,
                        const std::string& from,
                        int state)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, from, state]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), composingStatusChangedCb);
         if (!func.IsEmpty()) {
@@ -272,7 +272,7 @@ void
 volatileDetailsChanged(const std::string& accountId,
                        const std::map<std::string, std::string>& details)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, details]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), volatileDetailsChangedCb);
         if (!func.IsEmpty()) {
@@ -289,7 +289,7 @@ void
 accountDetailsChanged(const std::string& accountId,
                       const std::map<std::string, std::string>& details)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, details]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountDetailsChangedCb);
         if (!func.IsEmpty()) {
@@ -305,7 +305,7 @@ accountDetailsChanged(const std::string& accountId,
 void
 accountsChanged()
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountsChangedCb);
         if (!func.IsEmpty()) {
@@ -320,7 +320,7 @@ accountsChanged()
 void
 contactAdded(const std::string& accountId, const std::string& uri, bool confirmed)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, uri, confirmed]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), contactAddedCb);
         if (!func.IsEmpty()) {
@@ -337,7 +337,7 @@ contactAdded(const std::string& accountId, const std::string& uri, bool confirme
 void
 contactRemoved(const std::string& accountId, const std::string& uri, bool banned)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, uri, banned]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), contactRemovedCb);
         if (!func.IsEmpty()) {
@@ -354,7 +354,7 @@ contactRemoved(const std::string& accountId, const std::string& uri, bool banned
 void
 exportOnRingEnded(const std::string& accountId, int state, const std::string& pin)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, state, pin]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), exportOnRingEndedCb);
         if (!func.IsEmpty()) {
@@ -371,7 +371,7 @@ exportOnRingEnded(const std::string& accountId, int state, const std::string& pi
 void
 nameRegistrationEnded(const std::string& accountId, int state, const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, state, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), nameRegistrationEndedCb);
         if (!func.IsEmpty()) {
@@ -391,7 +391,7 @@ registeredNameFound(const std::string& accountId,
                     const std::string& address,
                     const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, state, address, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), registeredNameFoundCb);
         if (!func.IsEmpty()) {
@@ -413,7 +413,7 @@ accountMessageStatusChanged(const std::string& account_id,
                             const std::string& message_id,
                             int state)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, message_id, peer, state]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     accountMessageStatusChangedCb);
@@ -432,7 +432,7 @@ accountMessageStatusChanged(const std::string& account_id,
 void
 needsHost(const std::string& account_id, const std::string& conversationId)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, conversationId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), needsHostCb);
         if (!func.IsEmpty()) {
@@ -450,7 +450,7 @@ activeCallsChanged(const std::string& account_id,
                    const std::string& conversationId,
                    const std::vector<std::map<std::string, std::string>>& activeCalls)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([account_id, conversationId, activeCalls]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), activeCallsChangedCb);
         if (!func.IsEmpty()) {
@@ -470,7 +470,7 @@ incomingAccountMessage(const std::string& accountId,
                        const std::string& from,
                        const std::map<std::string, std::string>& payloads)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, from, payloads]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingAccountMessageCb);
         if (!func.IsEmpty()) {
@@ -488,7 +488,7 @@ incomingAccountMessage(const std::string& accountId,
 void
 knownDevicesChanged(const std::string& accountId, const std::map<std::string, std::string>& devices)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, devices]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), knownDevicesChangedCb);
         if (!func.IsEmpty()) {
@@ -507,7 +507,7 @@ incomingTrustRequest(const std::string& accountId,
                      const std::vector<uint8_t>& payload,
                      time_t received)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, from, payload, received]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingTrustRequestCb);
         if (!func.IsEmpty()) {
@@ -528,7 +528,7 @@ callStateChanged(const std::string& accountId,
                  const std::string& state,
                  int detail_code)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, state, detail_code]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), callStateChangedCb);
         if (!func.IsEmpty()) {
@@ -548,7 +548,7 @@ mediaChangeRequested(const std::string& accountId,
                      const std::string& callId,
                      const std::vector<std::map<std::string, std::string>>& mediaList)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, mediaList]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), mediaChangeRequestedCb);
         if (!func.IsEmpty()) {
@@ -568,7 +568,7 @@ incomingMessage(const std::string& accountId,
                 const std::string& from,
                 const std::map<std::string, std::string>& messages)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, id, from, messages]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingMessageCb);
         if (!func.IsEmpty()) {
@@ -586,7 +586,7 @@ incomingMessage(const std::string& accountId,
 void
 incomingCall(const std::string& accountId, const std::string& callId, const std::string& from)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, from]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallCb);
         if (!func.IsEmpty()) {
@@ -606,7 +606,7 @@ incomingCallWithMedia(const std::string& accountId,
                       const std::string& from,
                       const std::vector<std::map<std::string, std::string>>& mediaList)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, from, mediaList]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallWithMediaCb);
         if (!func.IsEmpty()) {
@@ -629,7 +629,7 @@ conversationLoaded(uint32_t id,
                    const std::string& conversationId,
                    const std::vector<std::map<std::string, std::string>>& message)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([id, accountId, conversationId, message]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationLoadedCb);
         if (!func.IsEmpty()) {
@@ -649,7 +649,7 @@ messagesFound(uint32_t id,
               const std::string& conversationId,
               const std::vector<std::map<std::string, std::string>>& messages)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([id, accountId, conversationId, messages]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), messagesFoundCb);
         if (!func.IsEmpty()) {
@@ -668,7 +668,7 @@ messageReceived(const std::string& accountId,
                 const std::string& conversationId,
                 const std::map<std::string, std::string>& message)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, message]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), messageReceivedCb);
         if (!func.IsEmpty()) {
@@ -686,7 +686,7 @@ conversationProfileUpdated(const std::string& accountId,
                            const std::string& conversationId,
                            const std::map<std::string, std::string>& profile)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, profile]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     conversationProfileUpdatedCb);
@@ -705,7 +705,7 @@ conversationRequestReceived(const std::string& accountId,
                             const std::string& conversationId,
                             const std::map<std::string, std::string>& message)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, message]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     conversationRequestReceivedCb);
@@ -722,7 +722,7 @@ conversationRequestReceived(const std::string& accountId,
 void
 conversationRequestDeclined(const std::string& accountId, const std::string& conversationId)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     conversationRequestDeclinedCb);
@@ -738,7 +738,7 @@ conversationRequestDeclined(const std::string& accountId, const std::string& con
 void
 conversationReady(const std::string& accountId, const std::string& conversationId)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationReadyCb);
         if (!func.IsEmpty()) {
@@ -755,7 +755,7 @@ conversationReady(const std::string& accountId, const std::string& conversationI
 void
 conversationRemoved(const std::string& accountId, const std::string& conversationId)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationRemovedCb);
         if (!func.IsEmpty()) {
@@ -775,7 +775,7 @@ conversationMemberEvent(const std::string& accountId,
                         const std::string& memberUri,
                         int event)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, memberUri, event]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     conversationMemberEventCb);
@@ -796,7 +796,7 @@ onConversationError(const std::string& accountId,
                     uint32_t code,
                     const std::string& what)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, conversationId, code, what]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), onConversationErrorCb);
         if (!func.IsEmpty()) {
@@ -813,7 +813,7 @@ onConversationError(const std::string& accountId,
 void
 conferenceCreated(const std::string& accountId, const std::string& confId)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, confId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceCreatedCb);
         if (!func.IsEmpty()) {
@@ -828,7 +828,7 @@ conferenceCreated(const std::string& accountId, const std::string& confId)
 void
 conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, confId, state]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceChangedCb);
         if (!func.IsEmpty()) {
@@ -844,7 +844,7 @@ conferenceChanged(const std::string& accountId, const std::string& confId, const
 void
 conferenceRemoved(const std::string& accountId, const std::string& confId)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, confId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceRemovedCb);
         if (!func.IsEmpty()) {
@@ -861,7 +861,7 @@ onConferenceInfosUpdated(const std::string& accountId,
                          const std::string& confId,
                          const std::vector<std::map<std::string, std::string>>& infos)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, confId, infos]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     onConferenceInfosUpdatedCb);
@@ -880,7 +880,7 @@ conversationPreferencesUpdated(const std::string& accountId,
                                const std::string& convId,
                                const std::map<std::string, std::string>& preferences)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, convId, preferences]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
                                                     conversationPreferencesUpdatedCb);
@@ -897,7 +897,7 @@ conversationPreferencesUpdated(const std::string& accountId,
 void
 logMessage(const std::string& message)
 {
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([message]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), messageSendCb);
         if (!func.IsEmpty()) {

@@ -54,7 +54,7 @@ OpenSLLayer::startStream(AudioDeviceType stream)
 {
     using namespace std::placeholders;
 
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (!engineObject_)
         initAudioEngine();
 
@@ -93,7 +93,7 @@ OpenSLLayer::startStream(AudioDeviceType stream)
         }
     } else if (stream == AudioDeviceType::CAPTURE) {
         if (not recorder_) {
-            std::lock_guard<std::mutex> lck(recMtx);
+            std::lock_guard lck(recMtx);
             try {
                 recorder_.reset(
                     new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
@@ -115,7 +115,7 @@ OpenSLLayer::startStream(AudioDeviceType stream)
 void
 OpenSLLayer::stopStream(AudioDeviceType stream)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     if (!engineObject_)
         return; // bufs_ should be initialized
     JAMI_WARN("Stopping OpenSL audio layer for type %u", (unsigned) stream);
@@ -372,7 +372,7 @@ OpenSLLayer::stopAudioCapture()
     JAMI_DBG("Stop audio capture");
 
     {
-        std::lock_guard<std::mutex> lck(recMtx);
+        std::lock_guard lck(recMtx);
         if (recorder_) {
             recorder_->stop();
             recorder_.reset();

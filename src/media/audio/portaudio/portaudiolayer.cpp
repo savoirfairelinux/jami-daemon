@@ -227,7 +227,7 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
     };
 
     auto stopPlayback = [this, &stopPaStream](bool fullDuplexMode = false) -> bool {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard lock(mutex_);
         if (status_.load() != Status::Started)
             return false;
         bool stopped = false;

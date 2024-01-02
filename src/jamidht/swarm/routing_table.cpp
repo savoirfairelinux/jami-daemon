@@ -433,7 +433,7 @@ RoutingTable::shutdownNode(const NodeId& nodeId)
 std::vector<NodeId>
 RoutingTable::getNodes() const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard lock(mutex_);
     std::vector<NodeId> ret;
     for (const auto& b : buckets) {
         const auto& nodes = b.getNodeIds();

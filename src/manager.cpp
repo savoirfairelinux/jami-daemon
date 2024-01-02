@@ -499,7 +499,7 @@ Manager::ManagerPimpl::playATone(Tone::ToneId toneId)
     if (not base_.voipPreferences.getPlayTones())
         return;
 
-    std::lock_guard<std::mutex> lock(audioLayerMutex_);
+    std::lock_guard lock(audioLayerMutex_);
     if (not audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
         return;
@@ -607,7 +607,7 @@ Manager::ManagerPimpl::unsetCurrentCall()
 void
 Manager::ManagerPimpl::switchCall(const std::string& id)
 {
-    std::lock_guard<std::mutex> m(currentCallMutex_);
+    std::lock_guard m(currentCallMutex_);
     JAMI_DBG("----- Switch current call id to '%s' -----", not id.empty() ? id.c_str() : "none");
     currentCall_ = id;
 }
@@ -615,7 +615,7 @@ Manager::ManagerPimpl::switchCall(const std::string& id)
 void
 Manager::ManagerPimpl::addWaitingCall(const std::string& id)
 {
-    std::lock_guard<std::mutex> m(waitingCallsMutex_);
+    std::lock_guard m(waitingCallsMutex_);
     // Enable incoming call beep if needed.
     if (audiodriver_ and waitingCalls_.empty() and not currentCall_.empty())
         audiodriver_->playIncomingCallNotification(true);
@@ -625,7 +625,7 @@ Manager::ManagerPimpl::addWaitingCall(const std::string& id)
 void
 Manager::ManagerPimpl::removeWaitingCall(const std::string& id)
 {
-    std::lock_guard<std::mutex> m(waitingCallsMutex_);
+    std::lock_guard m(waitingCallsMutex_);
     waitingCalls_.erase(id);
     if (audiodriver_ and waitingCalls_.empty())
         audiodriver_->playIncomingCallNotification(false);
@@ -860,7 +860,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     }
 
     if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_AUDIO)) {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
         pimpl_->initAudioDriver();
         if (pimpl_->audiodriver_) {
             auto format = pimpl_->audiodriver_->getFormat();
@@ -905,7 +905,7 @@ Manager::finish() noexcept
         accountFactory.clear();
 
         {
-            std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+            std::lock_guard lock(pimpl_->audioLayerMutex_);
             pimpl_->audiodriver_.reset();
         }
 
@@ -1714,7 +1714,7 @@ Manager::addAudio(Call& call)
         auto oldGuard = std::move(call.audioGuard);
         call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
 
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
         if (!pimpl_->audiodriver_) {
             JAMI_ERROR("Audio driver not initialized");
             return;
@@ -1823,7 +1823,7 @@ Manager::saveConfig()
         pluginPreferences.serialize(out);
 #endif
 
-        std::lock_guard<std::mutex> lock(dhtnet::fileutils::getFileLock(pimpl_->path_));
+        std::lock_guard lock(dhtnet::fileutils::getFileLock(pimpl_->path_));
         std::ofstream fout(pimpl_->path_);
         fout.write(out.c_str(), out.size());
     } catch (const YAML::Exception& e) {
@@ -1852,7 +1852,7 @@ Manager::playDtmf(char code)
         return;
     }
 
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     // fast return, no sound, so no dtmf
     if (not pimpl_->audiodriver_ or not pimpl_->dtmfKey_) {
@@ -1897,7 +1897,7 @@ Manager::playDtmf(char code)
 bool
 Manager::incomingCallsWaiting()
 {
-    std::lock_guard<std::mutex> m(pimpl_->waitingCallsMutex_);
+    std::lock_guard m(pimpl_->waitingCallsMutex_);
     return not pimpl_->waitingCalls_.empty();
 }
 
@@ -2013,7 +2013,7 @@ Manager::peerAnsweredCall(Call& call)
     addAudio(call);
 
     if (pimpl_->audiodriver_) {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
         getRingBufferPool().flushAllBuffers();
         pimpl_->audiodriver_->flushUrgent();
     }
@@ -2164,7 +2164,7 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
             JAMI_ERR("no audio layer in ringtone");
@@ -2200,7 +2200,7 @@ void
 Manager::setAudioPlugin(const std::string& audioPlugin)
 {
     {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
         audioPreference.setAlsaPlugin(audioPlugin);
         pimpl_->audiodriver_.reset();
         pimpl_->initAudioDriver();
@@ -2215,7 +2215,7 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
 void
 Manager::setAudioDevice(int index, AudioDeviceType type)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio driver not initialized");
@@ -2240,7 +2240,7 @@ Manager::setAudioDevice(int index, AudioDeviceType type)
 std::vector<std::string>
 Manager::getAudioOutputDeviceList()
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
@@ -2256,7 +2256,7 @@ Manager::getAudioOutputDeviceList()
 std::vector<std::string>
 Manager::getAudioInputDeviceList()
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
@@ -2272,7 +2272,7 @@ Manager::getAudioInputDeviceList()
 std::vector<std::string>
 Manager::getCurrentAudioDevicesIndex()
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
         return {};
@@ -2360,7 +2360,7 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
     JAMI_DBG("Start recorded file playback %s", filepath.c_str());
 
     {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
             JAMI_ERR("No audio layer in start recorded file playback");
@@ -2423,7 +2423,7 @@ bool
 Manager::setAudioManager(const std::string& api)
 {
     {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_)
             return false;
@@ -2435,7 +2435,7 @@ Manager::setAudioManager(const std::string& api)
     }
 
     {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
         audioPreference.setAudioApi(api);
         pimpl_->audiodriver_.reset();
         pimpl_->initAudioDriver();
@@ -2456,7 +2456,7 @@ Manager::getAudioManager() const
 int
 Manager::getAudioInputDeviceIndex(const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
@@ -2469,7 +2469,7 @@ Manager::getAudioInputDeviceIndex(const std::string& name)
 int
 Manager::getAudioOutputDeviceIndex(const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
@@ -2924,7 +2924,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                         JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
                     }
                 }
-                std::lock_guard<std::mutex> l(lock);
+                std::lock_guard l(lock);
                 remaining--;
                 cv.notify_one();
             });
@@ -3120,7 +3120,7 @@ Manager::createSinkClients(
     std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
     const std::string& accountId)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->sinksMutex_);
+    std::lock_guard lk(pimpl_->sinksMutex_);
     std::set<std::string> sinkIdsList {};
 
     // create video sinks
@@ -3317,14 +3317,14 @@ Manager::isAllModerators(const std::string& accountID)
 void
 Manager::insertGitTransport(git_smart_subtransport* tr, std::unique_ptr<P2PSubTransport>&& sub)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->gitTransportsMtx_);
+    std::lock_guard lk(pimpl_->gitTransportsMtx_);
     pimpl_->gitTransports_[tr] = std::move(sub);
 }
 
 void
 Manager::eraseGitTransport(git_smart_subtransport* tr)
 {
-    std::lock_guard<std::mutex> lk(pimpl_->gitTransportsMtx_);
+    std::lock_guard lk(pimpl_->gitTransportsMtx_);
     pimpl_->gitTransports_.erase(tr);
 }
 

@@ -41,7 +41,7 @@ public:
      */
     bool isRecording() const
     {
-        std::lock_guard<std::mutex> lk {apiMutex_};
+        std::lock_guard lk {apiMutex_};
         return recording_;
     }
 

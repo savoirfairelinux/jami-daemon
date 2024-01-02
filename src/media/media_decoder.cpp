@@ -246,13 +246,13 @@ void
 MediaDemuxer::clearFrames()
 {
     {
-        std::lock_guard<std::mutex> lk {videoBufferMutex_};
+        std::lock_guard lk {videoBufferMutex_};
         while (!videoBuffer_.empty()) {
             videoBuffer_.pop();
         }
     }
     {
-        std::lock_guard<std::mutex> lk {audioBufferMutex_};
+        std::lock_guard lk {audioBufferMutex_};
         while (!audioBuffer_.empty()) {
             audioBuffer_.pop();
         }
@@ -327,13 +327,13 @@ MediaDemuxer::demuxe()
 
     AVStream* stream = inputCtx_->streams[streamIndex];
     if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-        std::lock_guard<std::mutex> lk {videoBufferMutex_};
+        std::lock_guard lk {videoBufferMutex_};
         videoBuffer_.push(std::move(packet));
         if (videoBuffer_.size() >= 90) {
             return Status::ReadBufferOverflow;
         }
     } else {
-        std::lock_guard<std::mutex> lk {audioBufferMutex_};
+        std::lock_guard lk {audioBufferMutex_};
         audioBuffer_.push(std::move(packet));
         if (audioBuffer_.size() >= 300) {
             return Status::ReadBufferOverflow;

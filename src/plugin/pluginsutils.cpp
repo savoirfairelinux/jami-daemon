@@ -159,7 +159,7 @@ checkManifestValidity(const std::vector<uint8_t>& vec)
 std::map<std::string, std::string>
 parseManifestFile(const std::filesystem::path& manifestFilePath, const std::string& rootPath)
 {
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(manifestFilePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(manifestFilePath));
     std::ifstream file(manifestFilePath);
     if (file) {
         try {

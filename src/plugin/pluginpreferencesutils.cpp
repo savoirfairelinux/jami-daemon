@@ -103,7 +103,7 @@ std::vector<std::map<std::string, std::string>>
 PluginPreferencesUtils::getPreferences(const std::filesystem::path& rootPath, const std::string& accountId)
 {
     auto preferenceFilePath = getPreferencesConfigFilePath(rootPath, accountId);
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferenceFilePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(preferenceFilePath));
     std::ifstream file(preferenceFilePath);
     Json::Value root;
     Json::CharReaderBuilder rbuilder;
@@ -167,7 +167,7 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::filesystem::path&
                                                     const std::string& accountId)
 {
     auto preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string> rmap;
 
@@ -237,7 +237,7 @@ PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath,
     std::map<std::string, std::string> pluginPreferencesMap {};
 
     auto preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
     std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
     if (!fs.good()) {
         return false;
@@ -256,7 +256,7 @@ void
 PluginPreferencesUtils::setAllowDenyListPreferences(const ChatHandlerList& list)
 {
     auto filePath = getAllowDenyListsPath();
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(filePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(filePath));
     std::ofstream fs(filePath, std::ios::binary);
     if (!fs.good()) {
         return;
@@ -272,7 +272,7 @@ void
 PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
 {
     auto filePath = getAllowDenyListsPath();
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(filePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(filePath));
     std::ifstream file(filePath, std::ios::binary);
 
     // If file is accessible
@@ -309,7 +309,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
         auto filePath = getPreferencesConfigFilePath(rootPath);
         Json::Value root;
 
-        std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(filePath));
+        std::lock_guard guard(dhtnet::fileutils::getFileLock(filePath));
         std::ifstream file(filePath);
         Json::CharReaderBuilder rbuilder;
         Json::Value preference;
@@ -329,7 +329,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
     auto filePath = getPreferencesConfigFilePath(rootPath, "acc");
     Json::Value root;
     {
-        std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(filePath));
+        std::lock_guard guard(dhtnet::fileutils::getFileLock(filePath));
         std::ifstream file(filePath);
         Json::CharReaderBuilder rbuilder;
         Json::Value preference;
@@ -353,7 +353,7 @@ PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerNam
         preference["scope"] = "accountId";
         root.append(preference);
     }
-    std::lock_guard<std::mutex> guard(dhtnet::fileutils::getFileLock(filePath));
+    std::lock_guard guard(dhtnet::fileutils::getFileLock(filePath));
     std::ofstream outFile(filePath);
     if (outFile) {
         // Save preference.json file with new "always preference"

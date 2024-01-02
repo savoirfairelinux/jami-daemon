@@ -482,7 +482,7 @@ public:
             std::vector<Logger::Msg> pendingQ_;
             while (isEnable()) {
                 {
-                    std::unique_lock lk(mtx_);
+                    std::unique_lock<std::mutex> lk(mtx_);
                     cv_.wait(lk, [&] { return not isEnable() or not currentQ_.empty(); });
                     if (not isEnable())
                         break;

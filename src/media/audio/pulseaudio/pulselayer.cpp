@@ -463,7 +463,7 @@ PulseLayer::startStream(AudioDeviceType type)
     }
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
 
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     status_ = Status::Started;
     startedCv_.notify_all();
 }
@@ -485,7 +485,7 @@ PulseLayer::stopStream(AudioDeviceType type)
     if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::ALL)
         playbackChanged(false);
 
-    std::lock_guard<std::mutex> lk(mutex_);
+    std::lock_guard lk(mutex_);
     if (not playback_ and not ringtone_ and not record_) {
         pendingStreams = 0;
         status_ = Status::Idle;
@@ -697,7 +697,7 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
              pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
 
     PulseLayer* context = static_cast<PulseLayer*>(userdata);
-    std::lock_guard<std::mutex> lk(context->readyMtx_);
+    std::lock_guard lk(context->readyMtx_);
     context->defaultSink_ = {};
     context->defaultSource_ = {};
     context->defaultAudioFormat_ = {
@@ -706,7 +706,7 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
         sampleFormatFromPulse(i->sample_spec.format)
     };
     {
-        std::lock_guard<std::mutex> lk(context->mutex_);
+        std::lock_guard lk(context->mutex_);
         context->hardwareFormatAvailable(context->defaultAudioFormat_);
     }
     /*if (not context->sinkList_.empty())
@@ -728,7 +728,7 @@ PulseLayer::source_input_info_callback(pa_context* c UNUSED,
     PulseLayer* context = static_cast<PulseLayer*>(userdata);
 
     if (eol) {
-        std::lock_guard<std::mutex> lk(context->readyMtx_);
+        std::lock_guard lk(context->readyMtx_);
         context->enumeratingSources_ = false;
         context->readyCv_.notify_all();
         return;
@@ -772,7 +772,7 @@ PulseLayer::sink_input_info_callback(pa_context* c UNUSED,
                                      void* userdata)
 {
     PulseLayer* context = static_cast<PulseLayer*>(userdata);
-    std::lock_guard<std::mutex> lk(context->readyMtx_);
+    std::lock_guard lk(context->readyMtx_);
 
     if (eol) {
         context->enumeratingSinks_ = false;
