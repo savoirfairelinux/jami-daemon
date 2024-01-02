@@ -182,6 +182,16 @@
             </arg>
             <arg type="s" name="destinationPath" direction="in">
             </arg>
+            <arg type="s" name="scheme" direction="in">
+            <tp:docstring>
+               The password scheme. Accepted values:
+                <ul>
+                     <li>(empty string): no encryption.</li>
+                     <li>password: plain-text password string.</li>
+                     <li>key: base64-encoded binary key.</li>
+                </ul>
+            </tp:docstring>
+            </arg>
             <arg type="s" name="password" direction="in">
             </arg>
             <arg type="b" name="success" direction="out">
