@@ -132,6 +132,7 @@ constexpr static const char HAS_CUSTOM_USER_AGENT[] = "Account.hasCustomUserAgen
 constexpr static const char ALLOW_CERT_FROM_HISTORY[] = "Account.allowCertFromHistory";
 constexpr static const char ALLOW_CERT_FROM_CONTACT[] = "Account.allowCertFromContact";
 constexpr static const char ALLOW_CERT_FROM_TRUSTED[] = "Account.allowCertFromTrusted";
+constexpr static const char ARCHIVE_PASSWORD_SCHEME[] = "Account.archivePasswordScheme";
 constexpr static const char ARCHIVE_PASSWORD[] = "Account.archivePassword";
 constexpr static const char ARCHIVE_HAS_PASSWORD[] = "Account.archiveHasPassword";
 constexpr static const char ARCHIVE_PATH[] = "Account.archivePath";

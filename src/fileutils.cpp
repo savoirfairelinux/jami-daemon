@@ -22,6 +22,8 @@
 #include "fileutils.h"
 #include "archiver.h"
 #include "compiler_intrinsics.h"
+#include "base64.h"
+
 #include <opendht/crypto.h>
 
 #ifdef __APPLE__
@@ -302,10 +304,10 @@ loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::
     return loadTextFile(path);
 }
 
-std::vector<uint8_t>
-readArchive(const std::filesystem::path& path, const std::string& pwd)
+ArchiveStorageData
+readArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd)
 {
-    JAMI_LOG("Reading archive from {}", path);
+    JAMI_LOG("Reading archive from {} with scheme '{}'", path, scheme);
 
     auto isUnencryptedGzip = [](const std::vector<uint8_t>& data) {
         // NOTE: some webserver modify gzip files and this can end with a gunzip in a gunzip
@@ -325,45 +327,69 @@ readArchive(const std::filesystem::path& path, const std::string& pwd)
         }
     };
 
-    std::vector<uint8_t> data;
+    ArchiveStorageData ret;
+
     // Read file
     try {
-        data = dhtnet::fileutils::loadFile(path);
+        ret.data = dhtnet::fileutils::loadFile(path);
     } catch (const std::exception& e) {
         JAMI_ERR("Error loading archive: %s", e.what());
         throw e;
     }
 
-    if (isUnencryptedGzip(data)) {
+    if (isUnencryptedGzip(ret.data)) {
         if (!pwd.empty())
             JAMI_WARNING("A gunzip in a gunzip is detected. A webserver may have a bad config");
-        decompress(data);
+        decompress(ret.data);
     }
 
     if (!pwd.empty()) {
         // Decrypt
-        try {
-            data = dht::crypto::aesDecrypt(data, pwd);
-        } catch (const std::exception& e) {
-            JAMI_ERROR("Error decrypting archive: {}", e.what());
-            throw e;
+        if (scheme == ARCHIVE_AUTH_SCHEME_KEY) {
+            try {
+                ret.salt = dht::crypto::aesGetSalt(ret.data);
+                ret.data = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(ret.data), base64::decode(pwd));
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error decrypting archive: {}", e.what());
+                throw e;
+            }
+        } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD) {
+            try {
+                ret.salt = dht::crypto::aesGetSalt(ret.data);
+                ret.data = dht::crypto::aesDecrypt(ret.data, pwd);
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Error decrypting archive: {}", e.what());
+                throw e;
+            }
         }
-        decompress(data);
-    } else if (isUnencryptedGzip(data)) {
+        decompress(ret.data);
+    } else if (isUnencryptedGzip(ret.data)) {
         JAMI_WARNING("A gunzip in a gunzip is detected. A webserver may have a bad config");
-        decompress(data);
+        decompress(ret.data);
     }
-    return data;
+    return ret;
 }
 
 void
 writeArchive(const std::string& archive_str,
              const std::filesystem::path& path,
-             const std::string& password)
+             std::string_view scheme,
+             const std::string& password,
+             const std::vector<uint8_t>& password_salt)
 {
     JAMI_LOG("Writing archive to {}", path);
 
-    if (not password.empty()) {
+    if (scheme == ARCHIVE_AUTH_SCHEME_KEY) {
+        // Encrypt using provided key
+        try {
+            auto key = base64::decode(password);
+            auto newArchive = dht::crypto::aesEncrypt(archiver::compress(archive_str), key);
+            saveFile(path, dht::crypto::aesBuildEncrypted(newArchive, password_salt));
+        } catch (const std::runtime_error& ex) {
+            JAMI_ERROR("Export failed: {}", ex.what());
+            return;
+        }
+    } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD and not password.empty()) {
         // Encrypt using provided password
         try {
             saveFile(path, dht::crypto::aesEncrypt(archiver::compress(archive_str), password));
