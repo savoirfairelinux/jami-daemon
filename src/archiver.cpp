@@ -55,64 +55,6 @@ using namespace std::literals;
 namespace jami {
 namespace archiver {
 
-std::map<std::string, std::string>
-jsonValueToAccount(Json::Value& value, const std::string& accountId)
-{
-    auto idPath_ = fileutils::get_data_dir() / accountId;
-    dhtnet::fileutils::check_dir(idPath_.c_str(), 0700);
-    auto detailsMap = libjami::getAccountTemplate(
-        value[libjami::Account::ConfProperties::TYPE].asString());
-
-    for (Json::ValueIterator itr = value.begin(); itr != value.end(); itr++) {
-        if (itr->asString().empty())
-            continue;
-        if (itr.key().asString().compare(libjami::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
-            std::string fileContent(itr->asString());
-            fileutils::saveFile(idPath_ / "ca.key",
-                                {fileContent.begin(), fileContent.end()},
-                                0600);
-
-        } else if (itr.key().asString().compare(
-                       libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE)
-                   == 0) {
-            std::string fileContent(itr->asString());
-            fileutils::saveFile(idPath_ / "dht.key",
-                                {fileContent.begin(), fileContent.end()},
-                                0600);
-
-        } else if (itr.key().asString().compare(
-                       libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE)
-                   == 0) {
-            std::string fileContent(itr->asString());
-            fileutils::saveFile(idPath_ / "dht.crt",
-                                {fileContent.begin(), fileContent.end()},
-                                0600);
-        } else
-            detailsMap[itr.key().asString()] = itr->asString();
-    }
-
-    return detailsMap;
-}
-
-Json::Value
-accountToJsonValue(const std::map<std::string, std::string>& details)
-{
-    Json::Value root;
-    for (const auto& i : details) {
-        if (i.first == libjami::Account::ConfProperties::Ringtone::PATH) {
-            // Ringtone path is not exportable
-        } else if (i.first == libjami::Account::ConfProperties::TLS::CA_LIST_FILE
-                   || i.first == libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE
-                   || i.first == libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
-            // replace paths by the files content
-            root[i.first] = fileutils::loadTextFile(std::filesystem::path(i.second));
-        } else
-            root[i.first] = i.second;
-    }
-
-    return root;
-}
-
 std::vector<uint8_t>
 compress(const std::string& str)
 {
