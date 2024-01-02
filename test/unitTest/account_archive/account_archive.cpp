@@ -149,7 +149,7 @@ AccountArchiveTest::testExportImportPassword()
 {
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
 
-    CPPUNIT_ASSERT(bobAccount->exportArchive("test.gz", "test"));
+    CPPUNIT_ASSERT(bobAccount->exportArchive("test.gz", "password", "test"));
 
     std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
@@ -168,7 +168,7 @@ AccountArchiveTest::testExportImportPasswordDoubleGunzip()
 {
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
 
-    CPPUNIT_ASSERT(bobAccount->exportArchive("test.gz", "test"));
+    CPPUNIT_ASSERT(bobAccount->exportArchive("test.gz", "password", "test"));
     auto dat = fileutils::loadFile("test.gz");
     archiver::compressGzip(dat, "test.gz");
 
