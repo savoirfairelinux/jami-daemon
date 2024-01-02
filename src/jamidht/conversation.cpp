@@ -161,14 +161,24 @@ public:
          const std::string& conversationId)
         : account_(account)
     {
+        std::vector<ConversationCommit> commits;
         repository_ = ConversationRepository::cloneConversation(account,
                                                                 remoteDevice,
-                                                                conversationId);
+                                                                conversationId,
+                                                                std::move([&](auto c) {
+                                                                    commits = std::move(c);
+                                                                }));
         if (!repository_) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(
                 account->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
             throw std::logic_error("Couldn't clone repository");
         }
+        // To detect current active calls, we need to check history
+        conversationDataPath_ = fileutils::get_data_dir() / account->getAccountID()
+                                        / "conversation_data" / conversationId;
+        activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
+        for (const auto& c: repository_->convCommitToMap(commits))
+            updateActiveCalls(c);
         init();
     }
 
@@ -271,10 +281,11 @@ public:
      * Update activeCalls_ via announced commits (in load or via new commits)
      * @param commit        Commit to check
      * @param eraseOnly     If we want to ignore added commits
+     * @param emitSig    If we want to emit to client
      * @note eraseOnly is used by loadMessages. This is a fail-safe, this SHOULD NOT happen
      */
     void updateActiveCalls(const std::map<std::string, std::string>& commit,
-                           bool eraseOnly = false) const
+                           bool eraseOnly = false, bool emitSig = true) const
     {
         if (!repository_)
             return;
@@ -296,9 +307,10 @@ public:
             }
             if (updateActives) {
                 saveActiveCalls();
-                emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
-                                                                             repository_->id(),
-                                                                             activeCalls_);
+                if (emitSig)
+                    emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
+                                                                                repository_->id(),
+                                                                                activeCalls_);
             }
             return;
         }
@@ -331,9 +343,10 @@ public:
                     activeCall["device"] = device;
                     activeCalls_.emplace_back(activeCall);
                     saveActiveCalls();
-                    emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
-                                                                                 repository_->id(),
-                                                                                 activeCalls_);
+                    if (emitSig)
+                        emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
+                                                                                    repository_->id(),
+                                                                                    activeCalls_);
                 }
             } else {
                 if (itActive != activeCalls_.end()) {
@@ -366,9 +379,10 @@ public:
                     }
                 }
                 saveActiveCalls();
-                emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
-                                                                             repository_->id(),
-                                                                             activeCalls_);
+                if (emitSig)
+                    emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
+                                                                                repository_->id(),
+                                                                                activeCalls_);
             }
         }
     }

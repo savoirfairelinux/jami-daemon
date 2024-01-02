@@ -2524,7 +2524,8 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
 std::unique_ptr<ConversationRepository>
 ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& account,
                                           const std::string& deviceId,
-                                          const std::string& conversationId)
+                                          const std::string& conversationId,
+                                          std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb)
 {
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
@@ -2570,7 +2571,7 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
     repo->pinCertificates(true); // need to load certificates to validate non known members
-    if (!repo->validClone()) {
+    if (!repo->validClone(std::move(checkCommitCb))) {
         repo->erase();
         JAMI_ERROR("Error when validating remote conversation");
         return nullptr;
@@ -3635,9 +3636,15 @@ ConversationRepository::validFetch(const std::string& remoteDevice) const
 }
 
 bool
-ConversationRepository::validClone() const
+ConversationRepository::validClone(std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb) const
 {
-    return pimpl_->validCommits(log({}));
+    auto commits = log({});
+    auto res = pimpl_->validCommits(commits);
+    if (!res)
+        return false;
+    if (checkCommitCb)
+        checkCommitCb(std::move(commits));
+    return true;
 }
 
 void
