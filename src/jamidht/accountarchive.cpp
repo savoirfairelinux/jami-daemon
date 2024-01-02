@@ -27,9 +27,11 @@
 namespace jami {
 
 void
-AccountArchive::deserialize(const std::vector<uint8_t>& dat)
+AccountArchive::deserialize(const std::vector<uint8_t>& dat, const std::vector<uint8_t>& salt)
 {
     JAMI_DEBUG("Loading account archive ({:d} bytes)", dat.size());
+
+    password_salt = salt;
 
     // Decode string
     auto* char_data = reinterpret_cast<const char*>(&dat[0]);

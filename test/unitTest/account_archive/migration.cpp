@@ -112,7 +112,7 @@ MigrationTest::testLoadExpiredAccount()
     auto accountExpiration = archive.id.second->getExpiration();
 
     // Update validity
-    CPPUNIT_ASSERT(aliceAccount->setValidity("", {}, 9));
+    CPPUNIT_ASSERT(aliceAccount->setValidity("", "", {}, 9));
     archive = AccountArchive(archivePath, "");
     deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     auto newDeviceExpiration = deviceCert.getExpiration();
@@ -295,7 +295,7 @@ MigrationTest::testExpiredDeviceInSwarm()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceRegistering; }));
     auto aliceDevice = std::string(aliceAccount->currentDeviceId());
-    CPPUNIT_ASSERT(aliceAccount->setValidity("", {}, 90));
+    CPPUNIT_ASSERT(aliceAccount->setValidity("", "", {}, 90));
     auto now = std::chrono::system_clock::now();
     aliceRegistered = false;
     aliceAccount->forceReloadAccount();
