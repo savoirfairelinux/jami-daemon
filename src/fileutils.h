@@ -17,6 +17,8 @@
 #pragma once
 #include "jami/def.h"
 
+#include <dhtnet/fileutils.h>
+
 #include <string>
 #include <vector>
 #include <chrono>
@@ -24,8 +26,7 @@
 #include <cstdio>
 #include <ios>
 #include <filesystem>
-
-#include <dhtnet/fileutils.h>
+#include <string_view>
 
 #ifndef _WIN32
 #include <sys/stat.h>               // mode_t
@@ -41,6 +42,8 @@
 
 namespace jami {
 namespace fileutils {
+
+using namespace std::literals;
 
 std::filesystem::path get_home_dir();
 std::filesystem::path get_config_dir(const char* pkg);
@@ -100,10 +103,20 @@ std::vector<uint8_t> loadCacheFile(const std::filesystem::path& path,
                                    std::chrono::system_clock::duration maxAge);
 std::string loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge);
 
-std::vector<uint8_t> readArchive(const std::filesystem::path& path, const std::string& password = {});
+static constexpr auto ARCHIVE_AUTH_SCHEME_NONE = ""sv;
+static constexpr auto ARCHIVE_AUTH_SCHEME_PASSWORD = "password"sv;
+static constexpr auto ARCHIVE_AUTH_SCHEME_KEY = "key"sv;
+
+struct ArchiveStorageData {
+    std::vector<uint8_t> data;
+    std::vector<uint8_t> salt;
+};
+ArchiveStorageData readArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd);
+
 void writeArchive(const std::string& data,
                   const std::filesystem::path& path,
-                  const std::string& password = {});
+                  std::string_view scheme,
+                  const std::string& password = {}, const std::vector<uint8_t>& password_salt = {});
 
 int64_t size(const std::filesystem::path& path);
 
