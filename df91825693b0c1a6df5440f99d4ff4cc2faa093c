@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0328835a_5f06380b",
+        "filename": "src/jamidht/jamiaccount_config.h",
+        "patchSetId": 22
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-01-02T17:39:07Z",
+      "side": 0,
+      "message": "keep comment",
+      "range": {
+        "startLine": 70,
+        "startChar": 0,
+        "endLine": 70,
+        "endChar": 2
+      },
+      "revId": "df91825693b0c1a6df5440f99d4ff4cc2faa093c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
