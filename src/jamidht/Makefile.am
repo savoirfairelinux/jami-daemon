@@ -47,7 +47,9 @@ libjamiacc_la_SOURCES = \
 	./jamidht/swarm/swarm_channel_handler.h \
 	./jamidht/swarm/swarm_channel_handler.cpp \
 	./jamidht/swarm/swarm_manager.h \
-	./jamidht/swarm/swarm_manager.cpp
+	./jamidht/swarm/swarm_manager.cpp \
+	./jamidht/auth_channel_handler.h \
+	./jamidht/auth_channel_handler.cpp
 
 
 if RINGNS

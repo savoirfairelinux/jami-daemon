@@ -32,6 +32,7 @@
 #include "jamidht/channeled_transport.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "auth_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
 #include "jami/media_const.h"
@@ -956,6 +957,7 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
         }
         return false;
     }
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(getAccountID(), 1, "account_manager_unavailable");
     if (password_old != password_new)
         emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                         getAccountDetails());
@@ -974,28 +976,50 @@ JamiAccount::getPasswordKey(const std::string& password)
     return accountManager_ ? accountManager_->getPasswordKey(password) : std::vector<uint8_t>();
 }
 
-
-void
-JamiAccount::addDevice(const std::string& password)
+// oldDev
+uint8_t
+JamiAccount::addDevice(const std::string& accountId, const std::string& uriProvided)
 {
+    JAMI_LOG("[LinkDevice] JamiAccount::addDevice({}, {})", accountId, uriProvided);
     if (not accountManager_) {
-        emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-        return;
+        JAMI_ERR("[LinkDevice] Invalid AccountManager instance while adding a device.");
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(accountId, 1, "invalid_state");
+        return 1;
     }
-    accountManager_
-        ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
-            switch (result) {
-            case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
-                break;
-            case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
-                break;
-            case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-                break;
+
+    try {
+        // TODO use url parser for more flexibility
+        auto sep1 = uriProvided.find("jami-auth://") + 12;
+        // auto sep2 = uriProvided.substr(sep1).find("/") + 1;
+
+        const std::string& peerTempAcc = uriProvided.substr(sep1, 40);
+        const std::string& peerCodeS = uriProvided.substr(sep1 + peerTempAcc.length() + 1, 6);
+        JAMI_LOG("[LinkDevice] ======\n * addDevice::peerTempAcc =  {}\n * addDevice::peerCodeS = {}", peerTempAcc, peerCodeS);
+        // const uint64_t peerCode = std::stoull(peerCodeS);
+
+        auto channelPath = fmt::format("{}:{}", "auth", peerCodeS);
+        if (channelHandlers_.find(Uri::Scheme::AUTH) == channelHandlers_.end()) {
+            JAMI_ERROR("[LinkDevice] Auth channel not found... aborting!");
+            return 1;
+        }
+        channelHandlers_[Uri::Scheme::AUTH]->connect(
+            dht::InfoHash(peerTempAcc),
+            channelPath,
+            [this] (std::shared_ptr<dhtnet::ChannelSocket> socket, const dht::InfoHash& infoHash) {
+                if (!socket) {
+                    JAMI_WARN("[LinkDevice] Invalid socket event while AccountManager connecting.");
+                    return 1;
+                } else {
+                    accountManager_->addDevice(socket);
+                }
             }
-        });
+        );
+        return 0;
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[LinkDevice] Parsing uri failed: {}", uriProvided);
+        return 1;
+    }
+
 }
 
 bool
@@ -1236,6 +1260,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
+            convModule()->loadConversations();
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
@@ -1256,22 +1281,26 @@ JamiAccount::loadAccount(const std::string& archive_password,
             if (conf.managerUri.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
                 auto archivePath = fileutils::getFullPath(idPath_, conf.archivePath);
-                bool hasArchive = std::filesystem::is_regular_file(archivePath);
+                // bool hasArchive = std::filesystem::is_regular_file(archivePath);
 
                 if (not archive_path.empty()) {
                     // Importing external archive
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
+                } else if (!conf.archive_url.empty() && conf.archive_url == "jami-auth") {
+                    // Importing over a Peer2Peer TLS connection with DHT as DNS
+                    acreds->scheme = "p2p";
+                    acreds->uri = conf.archive_url;
                 } else if (not archive_pin.empty()) {
                     // Importing from DHT
                     acreds->scheme = "dht";
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
                     acreds->dhtPort = dhtPortUsed();
-                } else if (hasArchive) {
+                } else if (std::filesystem::is_regular_file(archivePath)) {
                     // Migrating local account
                     acreds->scheme = "local";
-                    acreds->uri = std::move(archivePath).string();
+                    acreds->uri = archivePath.string();
                     acreds->updateIdentity = id;
                     migrating = true;
                 }
@@ -1334,6 +1363,7 @@ JamiAccount::loadAccount(const std::string& archive_password,
                         emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(
                             getAccountID(), config_->displayName, info.photo);
                     setRegistrationState(RegistrationState::UNREGISTERED);
+                    convModule()->loadConversations();
                     doRegister();
                 },
                 [w = weak(),
@@ -2137,7 +2167,6 @@ JamiAccount::convModule()
                  getAccountID().c_str());
         return nullptr;
     }
-    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
     std::lock_guard<std::mutex> lk(moduleMtx_);
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
@@ -2206,8 +2235,8 @@ JamiAccount::convModule()
                     auto shared = w.lock();
                     if (!shared)
                         return;
-                    auto cm = shared->convModule();
                     std::lock_guard<std::mutex> lkCM(shared->connManagerMtx_);
+                    auto cm = shared->convModule();
                     if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
@@ -2881,12 +2910,12 @@ JamiAccount::getContactDetails(const std::string& uri) const
 }
 
 std::vector<std::map<std::string, std::string>>
-JamiAccount::getContacts(bool includeRemoved) const
+JamiAccount::getContacts() const
 {
     std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     if (not accountManager_)
         return {};
-    return accountManager_->getContacts(includeRemoved);
+    return accountManager_->getContacts();
 }
 
 /* trust requests */
@@ -4248,6 +4277,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::AUTH]
+            = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
