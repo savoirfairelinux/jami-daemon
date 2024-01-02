@@ -22,6 +22,30 @@
       },
       "revId": "b9c84db1441a604dec7496e4cb48830f73fe9d77",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7712faf8_df058f01",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 532,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-01-02T19:37:13Z",
+      "side": 1,
+      "message": "Done in https://review.jami.net/c/jami-daemon/+/27101",
+      "parentUuid": "fa2b776b_3a0679cb",
+      "range": {
+        "startLine": 532,
+        "startChar": 23,
+        "endLine": 532,
+        "endChar": 35
+      },
+      "revId": "b9c84db1441a604dec7496e4cb48830f73fe9d77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
