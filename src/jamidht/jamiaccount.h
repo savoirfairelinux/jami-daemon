@@ -336,7 +336,8 @@ public:
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices */
-    void addDevice(const std::string& password);
+    uint8_t addDevice(const std::string& accountId, const std::string& uriProvided);
+    void addDevice(std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Export the archive to a file
      * @param destinationPath
@@ -668,6 +669,8 @@ private:
 
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
+
+
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
     void loadAccount(const std::string& archive_password = {},
                      const std::string& archive_pin = {},

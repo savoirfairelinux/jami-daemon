@@ -55,6 +55,8 @@ getSignalHandlers()
         /* Configuration */
         exported_callback<libjami::ConfigurationSignal::VolumeChanged>(),
         exported_callback<libjami::ConfigurationSignal::AccountsChanged>(),
+        exported_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(),
+        exported_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(),
         exported_callback<libjami::ConfigurationSignal::AccountDetailsChanged>(),
         exported_callback<libjami::ConfigurationSignal::StunStatusFailed>(),
         exported_callback<libjami::ConfigurationSignal::RegistrationStateChanged>(),

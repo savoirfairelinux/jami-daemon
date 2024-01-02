@@ -204,6 +204,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, archive_path);
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_URL, archive_url);
 
     auto oldProxyServer = proxyServer, oldProxyServerList = proxyListUrl;
     parseString(details, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);

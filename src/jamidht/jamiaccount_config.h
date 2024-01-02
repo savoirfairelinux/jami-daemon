@@ -26,7 +26,7 @@ constexpr static const char* DEFAULT_TURN_PWD = "ring";
 constexpr static const char* DEFAULT_TURN_REALM = "ring";
 
 struct JamiAccountConfig : public SipAccountBaseConfig {
-    JamiAccountConfig(const std::string& id = {}, const std::filesystem::path& path = {})
+    JamiAccountConfig(const std::string& id = {}, const std::string& path = {})
         : SipAccountBaseConfig(std::string(ACCOUNT_TYPE_JAMI), id, path)
     {
         // Default values specific to Jami accounts
@@ -67,10 +67,11 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
 
     std::string archivePath {"archive.gz"};
     bool archiveHasPassword {true};
-    // not saved, only used client->daemon
+    
     std::string archive_password;
     std::string archive_pin;
     std::string archive_path;
+    std::string archive_url;
 
     std::string receipt {};
     std::vector<uint8_t> receiptSignature {};
