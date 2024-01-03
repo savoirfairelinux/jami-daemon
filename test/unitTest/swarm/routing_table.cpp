@@ -501,14 +501,30 @@ RoutingTableTest::testSwarmManagerConnectingNodes_1b()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    SwarmManager sm1(nodeTestIds1.at(0), rd, std::move([](auto) {return false;}));
-    auto& rt1 = sm1.getRoutingTable();
+    std::vector<NodeId> tryConnect;
+    std::vector<std::string> needSocketNodes;
+    std::condition_variable cv;
+    std::mutex mutex;
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, std::move([&](auto n) {
+        std::lock_guard<std::mutex> lk(mutex);
+        tryConnect.emplace_back(n);
+        cv.notify_one();
+        return false;
+    }));
+    sm1->needSocketCb_ = [&](const auto& n, auto) {
+        std::lock_guard<std::mutex> lk(mutex);
+        needSocketNodes.emplace_back(n);
+        cv.notify_one();
+    };
+    auto& rt1 = sm1->getRoutingTable();
 
     std::vector<NodeId> toTest(
         {NodeId("053927d831827a9f7e606d4c9c9fe833922c0d35b3960dd2250085f46c0e4f41"),
          NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")});
 
-    sm1.setKnownNodes(toTest);
+    std::unique_lock<std::mutex> lk(mutex);
+    sm1->setKnownNodes(toTest);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&](){return tryConnect.size() != 0 && needSocketNodes.size() != 0;}));
 
     CPPUNIT_ASSERT(!rt1.hasConnectingNode(nodeTestIds1.at(0)));
     CPPUNIT_ASSERT(rt1.hasConnectingNode(nodeTestIds1.at(1)));
@@ -521,11 +537,11 @@ RoutingTableTest::testClosestNodes_1b()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    SwarmManager sm1(nodeTestIds1.at(0), rd, std::move([](auto) {return false;}));
-    SwarmManager sm2(nodeTestIds2.at(0), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, std::move([](auto) {return false;}));
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds2.at(0), rd, std::move([](auto) {return false;}));
 
-    auto& rt1 = sm1.getRoutingTable();
-    auto& rt2 = sm2.getRoutingTable();
+    auto& rt1 = sm1->getRoutingTable();
+    auto& rt2 = sm2->getRoutingTable();
 
     auto bucket1 = rt1.findBucket(nodeTestIds1.at(0));
     auto bucket2 = rt2.findBucket(nodeTestIds2.at(0));
