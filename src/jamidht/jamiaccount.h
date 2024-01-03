@@ -345,7 +345,7 @@ public:
      * @return if the archive was exported
      */
     bool exportArchive(const std::string& destinationPath, std::string_view scheme = {}, const std::string& password = {});
-    bool revokeDevice(const std::string& device, std::string_view scheme, const std::string& password = {});
+    bool revokeDevice(const std::string& device, std::string_view scheme = {}, const std::string& password = {});
     std::map<std::string, std::string> getKnownDevices() const;
 
     bool isPasswordValid(const std::string& password);

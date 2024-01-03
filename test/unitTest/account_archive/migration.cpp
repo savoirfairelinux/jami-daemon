@@ -106,14 +106,14 @@ MigrationTest::testLoadExpiredAccount()
     // Get alice's expiration
     auto archivePath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "archive.gz";
     auto devicePath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "ring_device.crt";
-    auto archive = AccountArchive(archivePath, "");
+    auto archive = AccountArchive(archivePath);
     auto deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     auto deviceExpiration = deviceCert.getExpiration();
     auto accountExpiration = archive.id.second->getExpiration();
 
     // Update validity
     CPPUNIT_ASSERT(aliceAccount->setValidity("", "", {}, 9));
-    archive = AccountArchive(archivePath, "");
+    archive = AccountArchive(archivePath);
     deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     auto newDeviceExpiration = deviceCert.getExpiration();
     auto newAccountExpiration = archive.id.second->getExpiration();
@@ -144,7 +144,7 @@ MigrationTest::testLoadExpiredAccount()
     aliceAccount->forceReloadAccount();
     CPPUNIT_ASSERT(cv.wait_for(lk, 15s, [&]() { return aliceMigrated; }));
 
-    archive = AccountArchive(archivePath, "");
+    archive = AccountArchive(archivePath);
     deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     deviceExpiration = deviceCert.getExpiration();
     accountExpiration = archive.id.second->getExpiration();
@@ -213,7 +213,7 @@ MigrationTest::testMigrationAfterRevokation()
 
     // Revoke bob2
     auto bob2Device = std::string(bob2Account->currentDeviceId());
-    bobAccount->revokeDevice("", bob2Device);
+    bobAccount->revokeDevice(bob2Device);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return deviceRevoked; }));
     // Note: bob2 will need some seconds to get the revokation list
     std::this_thread::sleep_for(10s);
