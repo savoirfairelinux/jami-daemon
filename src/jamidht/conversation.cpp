@@ -678,7 +678,7 @@ public:
      * Loaded history represents the linearized history to show for clients
      */
     mutable History loadedHistory_ {};
-    std::vector<libjami::SwarmMessage> addToHistory(
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> addToHistory(
         const std::vector<std::map<std::string, std::string>>& commits,
         bool messageReceived = false,
         History* history = nullptr) const;
@@ -856,7 +856,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
     auto breakLogging = false;
     auto currentHistorySize = loadedHistory_.messageList.size();
     std::vector<std::string> replies;
-    std::vector<libjami::SwarmMessage> ret;
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> msgList;
     repository_->log(
         [&](const auto& id, const auto& author, const auto& commit) {
             if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
@@ -903,13 +903,28 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if (it != replies.end()) {
                 replies.erase(it);
             }
+            std::shared_ptr<libjami::SwarmMessage> firstMsg;
+            if (!optHistory && msgList.empty() && !loadedHistory_.messageList.empty()) {
+                firstMsg = *loadedHistory_.messageList.rbegin();
+            }
             auto added = addToHistory({map}, false, optHistory);
-            ret.insert(ret.end(), added.begin(), added.end());
+            if (!added.empty() && firstMsg) {
+                emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
+                                                                             repository_->id(),
+                                                                             *firstMsg);
+            }
+            msgList.insert(msgList.end(), added.begin(), added.end());
         },
         [](auto, auto, auto) { return false; },
         options.from,
         options.logIfNotFound);
 
+    // Convert for client (remove ptr)
+    std::vector<libjami::SwarmMessage> ret;
+    ret.reserve(msgList.size());
+    for (const auto& msg: msgList) {
+        ret.emplace_back(*msg);
+    }
     if (!optHistory) {
         std::lock_guard lock(historyMtx_);
         isLoadingHistory_ = false;
@@ -1024,7 +1039,7 @@ Conversation::Impl::handleMessage(History& history,
         // For a loaded message, we load from newest to oldest
         // So we change the parent of the last message.
         if (!history.messageList.empty())
-            sharedCommit->linearizedParent = (*history.messageList.rbegin())->id;
+            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
         history.messageList.emplace_back(sharedCommit);
     }
     // Handle pending reactions/editions
@@ -1053,7 +1068,7 @@ Conversation::Impl::handleMessage(History& history,
     return !messageReceived;
 }
 
-std::vector<libjami::SwarmMessage>
+std::vector<std::shared_ptr<libjami::SwarmMessage>>
 Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
                                  History* optHistory) const
@@ -1062,7 +1077,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         std::unique_lock<std::mutex> lk(historyMtx_);
         historyCv_.wait(lk, [&] { return !isLoadingHistory_; });
     }
-    std::vector<libjami::SwarmMessage> messages;
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
     auto addCommit = [&](const auto& commit) {
         auto* history = optHistory ? optHistory : &loadedHistory_;
         auto commitId = commit.at("id");
@@ -1084,7 +1099,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         } else if (editIt != commit.end() && !editIt->second.empty()) {
             handleEdition(*history, sharedCommit, messageReceived);
         } else if (handleMessage(*history, sharedCommit, messageReceived)) {
-            messages.emplace_back(*sharedCommit);
+            messages.emplace_back(sharedCommit);
         }
     };
     std::for_each(commits.begin(), commits.end(), addCommit);
