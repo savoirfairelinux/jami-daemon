@@ -21,7 +21,6 @@ Persistent<Function> activeCallsChangedCb;
 Persistent<Function> incomingTrustRequestCb;
 Persistent<Function> contactAddedCb;
 Persistent<Function> contactRemovedCb;
-Persistent<Function> exportOnRingEndedCb;
 Persistent<Function> nameRegistrationEndedCb;
 Persistent<Function> knownDevicesChangedCb;
 Persistent<Function> registeredNameFoundCb;
@@ -84,8 +83,6 @@ getPresistentCb(std::string_view signal)
         return &contactAddedCb;
     else if (signal == "ContactRemoved")
         return &contactRemovedCb;
-    else if (signal == "ExportOnRingEnded")
-        return &exportOnRingEndedCb;
     else if (signal == "NameRegistrationEnded")
         return &nameRegistrationEndedCb;
     else if (signal == "KnownDevicesChanged")
@@ -390,23 +387,6 @@ contactRemoved(const std::string& accountId, const std::string& uri, bool banned
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(uri),
                                             SWIGV8_BOOLEAN_NEW(banned)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
-        }
-    });
-
-    uv_async_send(&signalAsync);
-}
-
-void
-exportOnRingEnded(const std::string& accountId, int state, const std::string& pin)
-{
-    std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, state, pin]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), exportOnRingEndedCb);
-        if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
-                                            SWIGV8_INTEGER_NEW(state),
-                                            V8_STRING_NEW_LOCAL(pin)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
