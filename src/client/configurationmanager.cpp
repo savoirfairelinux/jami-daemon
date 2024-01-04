@@ -47,6 +47,9 @@
 #include <dhtnet/upnp/upnp_context.h>
 #include <dhtnet/certstore.h>
 
+
+#include <regex>
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -333,14 +336,54 @@ setMessageDisplayed(const std::string& accountId,
     return false;
 }
 
+// deprecated
 bool
 exportOnRing(const std::string& accountId, const std::string& password)
 {
-    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        account->addDevice(password);
-        return true;
-    }
     return false;
+}
+
+
+const std::regex AUTH_URI_VALIDATOR {
+    "jami-auth:\/\/([-a-zA-Z0-9@:%._\+~#=]{40}\b)\/([0-9]{6}\b)"
+};
+
+// TODO make this function and JamiAccount::addDevice unified in return type either void or uint64_t... and also add the appropriate callback listeners to unitTest/linkdevice
+uint32_t // TODO change uint8_t to error code and cast it where needed for java/qt bindings
+exportToPeer(const std::string& accountId, const std::string& uri)
+{
+    JAMI_DEBUG("[LinkDevice {}] exportToPeer called.", accountId);
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+            // TODO validate with regex in the future
+            // bool hasCorrectScheme = false;
+            // std::cmatch urlMatches;
+            // if (std::regex_match(uri, pieces_match, URI_VALIDATOR)) {
+            //     if (pieces_match.size() == 4) {
+            //         if (pieces_match[2].length() == 0)
+            //             instance(default_ns).lookupName(pieces_match[3], std::move(cb));
+            //         else
+            //             instance(pieces_match[3].str()).lookupName(pieces_match[2], std::move(cb));
+            //         return;
+            //     }
+            // }
+            // JAMI_ERR("Can't parse URI: %.*s", (int) uri.size(), uri.data());
+        bool uriValid = false;
+        try {
+            const std::string prefix = "jami-auth://";
+            const std::string uriPrefix = uri.substr(0, prefix.length());
+            const std::string accountUsername = uri.substr(prefix.length(), 40);
+            const std::string accountCodeStr = uri.substr(prefix.length()+41, 6);
+            uint64_t accountCode = std::stoull(accountCodeStr);
+            if (uriPrefix == prefix) {
+                uriValid = true;
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[LinkDevice] Error: invalid jami-auth url: {}", uri);
+        }
+        return account->addDevice(accountId, uri);
+    }
+    // TODO standardize error codes
+    return 0;
 }
 
 bool
@@ -452,7 +495,7 @@ sendTrustRequest(const std::string& accountId,
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
-    if (accountType == Account::ProtocolNames::JAMI || accountType == Account::ProtocolNames::RING)
+    if (accountType == Account::ProtocolNames::RING)
         return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
         return jami::SipAccountConfig().toMap();

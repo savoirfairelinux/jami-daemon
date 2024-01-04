@@ -34,6 +34,8 @@
 #include <string>
 #include <filesystem>
 
+#include <dhtnet/multiplexed_socket.h>
+
 namespace dht {
 class DhtRunner;
 }
@@ -149,20 +151,22 @@ public:
     // Device management
 
     enum class AddDeviceResult {
-        SUCCESS_SHOW_PIN = 0,
+        SUCCESS_SHOW_URI= 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
-    using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
+
+    using AddDeviceCallback = std::function<void(AddDeviceResult)>;
 
     enum class RevokeDeviceResult {
         SUCCESS = 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
+
     using RevokeDeviceCallback = std::function<void(RevokeDeviceResult)>;
 
-    virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
+    virtual void addDevice(const std::string& accountId, uint32_t token, const std::shared_ptr<dhtnet::ChannelSocket>&) {};
     virtual bool revokeDevice(const std::string& /*device*/,
                               std::string_view /*scheme*/,
                               const std::string& /*password*/,

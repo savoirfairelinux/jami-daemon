@@ -2300,8 +2300,6 @@ ConversationTest::testFixContactDetails()
 
     aliceAccount->convModule()->loadConversations();
 
-    std::this_thread::sleep_for(5s); // Let the daemon fix the structures
-
     details = aliceAccount->getContactDetails(bobUri);
     CPPUNIT_ASSERT(details["conversationId"] == aliceData.conversationId);
 }
@@ -2451,7 +2449,6 @@ ConversationTest::testLoadPartiallyRemovedConversation()
     // Reloading conversation should remove directory
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice));
     aliceAccount->convModule()->loadConversations();
-    std::this_thread::sleep_for(5s); // Let the daemon the time to fix structures
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPathAlice));
 }
 

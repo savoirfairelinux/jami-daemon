@@ -25,7 +25,10 @@
 #include "account_schema.h"
 #include "jamidht/conversation_module.h"
 #include "manager.h"
+#include "jamidht/auth_channel_handler.h"
+#include "client/ring_signal.h"
 
+#include <dhtnet/multiplexed_socket.h>
 #include <opendht/dhtrunner.h>
 #include <opendht/thread_pool.h>
 
@@ -35,6 +38,7 @@
 namespace jami {
 
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
+static const uint8_t MAX_OPEN_CHANNELS {1}; // TODO enforce this in ::connect
 
 void
 ArchiveAccountManager::initAuthentication(const std::string& accountId,
@@ -64,19 +68,26 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
     if (ctx->credentials->scheme == "dht") {
         loadFromDHT(ctx);
         return;
+    } else if (ctx->credentials->scheme == "p2p") {
+        // newDev
+        JAMI_DBG("[LinkDevice] p2p scheme detected. Running startLoadArchiveFromDevice(ctx)");
+        startLoadArchiveFromDevice(ctx);
+        return;
     }
 
     dht::ThreadPool::computation().run([ctx = std::move(ctx), w = weak_from_this()] {
         auto this_ = std::static_pointer_cast<ArchiveAccountManager>(w.lock());
-        if (not this_) return;
+        if (not this_)
+            return;
         try {
             if (ctx->credentials->scheme == "file") {
                 // Import from external archive
                 this_->loadFromFile(*ctx);
-            } else {
+            }
+            else {
                 // Create/migrate local account
                 bool hasArchive = not ctx->credentials->uri.empty()
-                                    and std::filesystem::is_regular_file(ctx->credentials->uri);
+                                  and std::filesystem::is_regular_file(ctx->credentials->uri);
                 if (hasArchive) {
                     // Create/migrate from local archive
                     if (ctx->credentials->updateIdentity.first
@@ -87,15 +98,15 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
                         this_->loadFromFile(*ctx);
                     }
                 } else if (ctx->credentials->updateIdentity.first
-                            and ctx->credentials->updateIdentity.second) {
+                           and ctx->credentials->updateIdentity.second) {
                     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(
                         &dev::KeyPair::create);
                     AccountArchive a;
                     JAMI_WARN("[Auth] converting certificate from old account %s",
-                                ctx->credentials->updateIdentity.first->getPublicKey()
-                                    .getId()
-                                    .toString()
-                                    .c_str());
+                              ctx->credentials->updateIdentity.first->getPublicKey()
+                                  .getId()
+                                  .toString()
+                                  .c_str());
                     a.id = std::move(ctx->credentials->updateIdentity);
                     try {
                         a.ca_key = std::make_shared<dht::crypto::PrivateKey>(
@@ -250,6 +261,7 @@ ArchiveAccountManager::loadFromFile(AuthContext& ctx)
     onArchiveLoaded(ctx, std::move(archive));
 }
 
+// TODO remove?
 struct ArchiveAccountManager::DhtLoadContext
 {
     dht::DhtRunner dht;
@@ -257,6 +269,509 @@ struct ArchiveAccountManager::DhtLoadContext
     std::pair<bool, bool> stateNew {false, true};
     bool found {false};
 };
+
+// this enum is for the states of add device TLS protocol
+enum class AuthDecodingState : uint8_t {ESTABLISHED=0, SCHEME_SENT, CREDENTIALS, ARCHIVE, SCHEME_KNOWN, REQUEST_TRANSMITTED, ARCHIVE_SENT, ARCHIVE_RECEIVED, GENERIC_ERROR, AUTH_ERROR};
+
+// used for status codes on DeviceAuthStateChanged
+enum class AuthState: uint8_t {NONE=0, TOKEN_AVAIL=1, CONNECTING=2, AUTH=3, DONE=4};
+
+// TODO potentially move all NewLinkDevImpl stuff to separate class called ImportManager but probably not since still fits ArchiveAccountManager scope
+// all data related to NewLinkDevImpl
+struct ArchiveAccountManager::LinkDeviceContext
+{
+    dht::crypto::Identity tmpId;
+    uint64_t opId;
+
+    std::shared_ptr<dhtnet::ConnectionManager> connectionManager;
+    AuthDecodingState state; // TODO use this in the function calls
+
+    unsigned numOpenChannels;
+    unsigned maxOpenChannels {1};
+
+    AuthDecodingState deviceState {AuthDecodingState::ESTABLISHED};
+    bool passwordEnabled {false};
+    bool archiveTransferredWithoutFailure {false};
+    std::vector<uint8_t> accData;
+
+    // TODO pack this into a single int with bitwise arithmetic
+    unsigned failedPasswordAttempts {0};
+    unsigned numTries {0};
+    unsigned maxTries {0};
+
+    LinkDeviceContext(dht::crypto::Identity id)
+        : tmpId(std::move(id))
+        , connectionManager(tmpId)
+    {}
+
+    std::shared_ptr<dhtnet::ChannelSocket> channel;
+};
+
+struct ArchiveAccountManager::AuthMsg {
+    uint8_t schemeId {0};
+    std::map<std::string, std::string> payload;
+    std::vector<uint8_t> archive;
+    MSGPACK_DEFINE_MAP(schemeId, payload, archive)
+};
+
+// ArchiveAccountManager::ChannelModule(std::weak_ptr<JamiAccount>&& account)
+//     : pimpl_ {std::make_shared<Impl>(std::move(account))}
+// {}
+
+// this is for signals and not the channel op state
+// aka this is for jami-client
+enum LinkDeviceState {SUCCESS=0, ERROR=1, CONTINUE=2}; //scheme is the password type, attempt is the cli/serv exchange, archive is the account download phase
+
+
+struct ArchiveAccountManager::DecodingContext
+{
+    msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
+                           nullptr,
+                           512};
+};
+
+// old device
+void
+ArchiveAccountManager::onAuthReady(const std::string& deviceId, std::shared_ptr<dhtnet::ChannelSocket> channel)
+{
+    JAMI_DBG("[LinkDevice] ArhiveAccountManager::onAuthReady");
+    auto ctx = std::make_shared<AuthContext>();
+    auto decodeCtx = std::make_shared<DecodingContext>();
+
+    ctx->linkDevCtx->maxOpenChannels = MAX_OPEN_CHANNELS;
+    ctx->linkDevCtx->channel = std::move(channel);
+    channel->setOnRecv(
+        [
+            w = weak_from_this(),
+            ctx,
+            decodeCtx
+        ] (const uint8_t* buf, size_t len) {
+            auto this_ = std::static_pointer_cast<ArchiveAccountManager>(w.lock());
+            if (not this_) return (ssize_t)-1;
+            this_->onAuthRecv(ctx, decodeCtx, buf, len);
+            return (ssize_t)len;
+        }
+    );
+}
+
+// gets called on the newDevice once user submits a password to the client
+// void
+// TODO implement with key as bytes instead of string for multiple authentication schemes
+bool
+ArchiveAccountManager::provideAccountAuthentication(const std::string& passwordFromUser) {
+// ArchiveAccountManager::onPasswordProvided(const std::string& passwordFromUser) {
+
+    JAMI_DBG("[LinkDevice] ArhiveAccountManager::provideAccountAuthentication");
+
+    AuthMsg toSend;
+    toSend.payload["password"] = std::move(passwordFromUser);
+    toSend.payload["name"] = "requestTransmitted";
+    msgpack::sbuffer buffer(UINT16_MAX);
+    msgpack::pack(buffer, toSend);
+    std::error_code ec = std::make_error_code(std::errc(AuthDecodingState::GENERIC_ERROR));
+    bool retVal = false;
+    try {
+        if (auto channel = authChannel_.lock()) {
+            channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            retVal = true;
+        }
+    }
+    catch (std::exception e) {
+        JAMI_WARN("[LinkDevice] Failed to send password over Auth ChannelSocket.");
+    }
+    return retVal;
+}
+
+// callback for NewLinkDevImpl
+// the new device will execute this code
+void
+ArchiveAccountManager::onAuthRecv(const std::shared_ptr<AuthContext>& ctx, const std::shared_ptr<DecodingContext>& decodeCtx, const uint8_t* buf, size_t len)
+{
+    JAMI_DBG("[LinkDevice] ArhiveAccountManager::onAuthRecv");
+
+    if (!buf) { return; }
+    if (ctx->linkDevCtx->deviceState == AuthDecodingState::GENERIC_ERROR) { return; }
+
+    // int opId = ctx->linkDevCtx->opId;
+    // TODO change all channel to ctx->linkDevCtx->channel
+
+    decodeCtx->pac.reserve_buffer(len); // TODO rework like this
+
+    std::copy_n(buf, len, decodeCtx->pac.buffer());
+    decodeCtx->pac.buffer_consumed(len);
+
+    // handle unpacking the data from the peer
+    msgpack::object_handle oh;
+    AuthMsg msg;
+    try {
+        decodeCtx->pac.next(oh);
+        oh.get().convert(msg);
+    } catch (std::exception e) {
+        ctx->linkDevCtx->deviceState = AuthDecodingState::GENERIC_ERROR; // set the generic error state in the context
+        JAMI_WARN("[LinkDevice] error unpacking message from msgpack"); // also warn in logs
+    }
+
+    if (msg.schemeId != 0) {
+        JAMI_WARN("[LinkDevice] Unsupported scheme received from a connection.");
+        ctx->linkDevCtx->deviceState = AuthDecodingState::GENERIC_ERROR; // set the generic error state in the context
+    }
+
+    auto packAndWrite = [](std::shared_ptr<dhtnet::ChannelSocket> channel, const ArchiveAccountManager::AuthMsg& msg) {
+        msgpack::sbuffer buffer(UINT16_MAX);
+        msgpack::pack(buffer, msg);
+        std::error_code ec;
+        channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    };
+
+    AuthMsg toSend;
+    if (ctx->linkDevCtx->deviceState == AuthDecodingState::GENERIC_ERROR) {
+        JAMI_WARN("[LinkDevice] Undefined behavior encountered during a link auth session.");
+        ctx->linkDevCtx->channel->shutdown();
+    }
+    else if (ctx->linkDevCtx->deviceState == AuthDecodingState::ESTABLISHED) {
+        // send back protocolId
+        toSend.schemeId = 0;
+        packAndWrite(ctx->linkDevCtx->channel, toSend);
+        ctx->linkDevCtx->deviceState = AuthDecodingState::CREDENTIALS;
+    }
+    else if (ctx->linkDevCtx->deviceState == AuthDecodingState::ARCHIVE){
+        bool credentialsValid = msg.payload["credentialsValid"] == "true" ? true : false;
+        if (credentialsValid) {
+            // save archive
+            AccountArchive a;
+            a.deserialize(msg.archive, {});
+            saveArchive(a, fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, std::move(msg.payload["password"]));
+            // write the success status
+            toSend.payload["transferSuccessful"] = "true";
+            packAndWrite(ctx->linkDevCtx->channel, toSend);
+            ctx->linkDevCtx->channel->shutdown();
+            // break;
+        } else {
+            if (ctx->linkDevCtx->numTries > ctx->linkDevCtx->maxTries){
+                // set error state and let old device know via error msg toSend
+                ctx->linkDevCtx->deviceState = AuthDecodingState::AUTH_ERROR;
+                // break;
+            } else {
+                // increment numTries and continue back to CREDENTIALS state
+                ctx->linkDevCtx->numTries++;
+                // break;
+            }
+        }
+    }
+    else if (ctx->linkDevCtx->deviceState == AuthDecodingState::CREDENTIALS) {
+        if (msg.payload["hasPassword"] == "true") {
+            if (ctx->linkDevCtx->numTries < ctx->linkDevCtx->maxTries) {
+                // ctx->channel = std::move(channel);
+                authChannel_ = std::weak_ptr(ctx->linkDevCtx->channel);
+                emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                    ctx->accountId,
+                    ctx->token,
+                    static_cast<uint8_t>(AuthState::AUTH),
+                    "archive_authentication_required"
+                );
+            } else {
+                // TODO
+                // emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                //     // ctx->linkDevCtx->tmpId.second->getId().toString(),
+                //     // static_cast<uint8_t>(AuthDecodingState::GENERIC_ERROR),
+                //     std::static_cast<uint8_t>(AuthState::AUTH),
+                //     "archive_authentication_failed"
+                // );
+            }
+        } else /* no password enabled for account*/ {
+            // save archive
+            AccountArchive a;
+            a.deserialize(msg.archive, {});
+            saveArchive(a, fileutils::ARCHIVE_AUTH_SCHEME_NONE, ""/* because no password */);
+            // write the success status
+            toSend.payload["transferSuccessful"] = "true";
+            packAndWrite(ctx->linkDevCtx->channel, toSend);
+            ctx->linkDevCtx->channel->shutdown();
+        }
+    }
+    else if (ctx->linkDevCtx->deviceState == AuthDecodingState::AUTH_ERROR) {
+        JAMI_WARN("[LinkDevice] Isssue with authentication");
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+            ctx->accountId,
+            ctx->token,
+            static_cast<uint8_t>(AuthState::AUTH),
+            "requestFailed"
+        ); // let the client know that the auth has failed
+        // write the failure status
+        toSend.payload["transferSuccessful"] = "false";
+        packAndWrite(ctx->linkDevCtx->channel, toSend);
+        ctx->linkDevCtx->channel->shutdown();
+    } else {
+        // do nothing / default
+    }
+
+}
+
+// link device: new device creates a new temporary account on the DHT for establishing a TLS connection
+void
+ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthContext>& ctx)
+{
+    dht::ThreadPool::computation().run([ctx = std::move(ctx), w=weak_from_this()] {
+        auto generator = Manager::instance().getSeededRandomEngine();
+        // JAMI_DBG("[LinkDevice] Established generator.");
+
+        // create a temporary Jami account for negotioating a TLS connection via DhtNet
+        // JAMI_INFO("[LinkDevice] Generating temporary account.");
+        auto ca = dht::crypto::generateEcIdentity("Jami Temporary CA");
+        auto user = dht::crypto::generateIdentity("Jami Temporary User", ca);
+        // JAMI_DBG("[LinkDevice] Created EcIdentity.");
+        ctx->linkDevCtx = std::make_unique<LinkDeviceContext>(dht::crypto::generateIdentity("Jami Temporary device", user));
+        // JAMI_DBG("[LinkDevice] Created link context.");
+        ctx->linkDevCtx->opId = std::uniform_int_distribution<uint64_t>(100000, 999999)(generator);
+        auto accountScheme = fmt::format("jami-auth://{}/{}", ctx->linkDevCtx->tmpId.second->getId(), ctx->linkDevCtx->opId);
+
+        // wait for first incoming ICE connection
+        ctx->linkDevCtx->connectionManager.onICERequest([this](const DeviceId& deviceId) {
+            return true;
+        });
+        // open the first jami-auth chanenl
+        ctx->linkDevCtx->connectionManager->onChannelRequest([this](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
+            JAMI_WARNING("[LinkDevice] onChannelRequest {} {}", cert->getId(), name);
+            constexpr auto AUTH_SCHEME = "auth:"sv;
+            std::string_view url(name);
+            auto sep1 = url.find(AUTH_SCHEME);
+            if (sep1 == std::string_view::npos) {
+                return false;
+            }
+            auto after_scheme = url.substr(sep1 + AUTH_SCHEME.size());
+
+            auto parsedOpId = jami::to_int<uint64_t>(after_scheme);
+
+	        if (ctx->linkDevCtx->numOpenChannels < ctx->linkDevCtx->maxOpenChannels) {
+	           if (name == uri::Uri::AUTH.schemeToString() && ctx->linkDevCtx->opId == parsedOpId) {
+	    	        ctx->linkDevCtx->numOpenChannels++;
+		            return true;
+		        } else {
+	                //ctx->emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged(ctx->accountId, 1, "too_many_channels"); // TODO use some string from JAMI_WARN, etc., that is standardized across the project
+		            return false;
+		        }
+	      }
+	      return false;
+    });
+
+    ctx->linkDevCtx->connectionManager->onConnectionReady([ctx](const DeviceId& deviceId, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> channel) {
+
+        socket->onShutdown([deviceId, name]() {
+            JAMI_WARNING("[LinkDevice] socket->onShutdown {} {}", deviceId, name);
+            // need to handle a few things in this function
+            // // if the channel shuts down and the archive was not successfully loaded yet, we need to communicate this to the client in order to present a failure status
+            // 1. if the channel shuts down and (the arhcive is not loaded) but (!password || password && no password) we need to emit error signal with error state
+            if (!ctx->linkDevCtx->authDecodingState->archiveReceived) {
+                // let client know there was an error
+                ctx->emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged(ctx->accountId, 1, "channel_closed_errror"); // TODO use some string from JAMI_WARN, etc., that is standardized across the project
+            } // this may be a duplicate message if the socket encounters errors during setOnRecv
+            ctx->linkDevCtx->numOpenChannels--;
+        });
+        socket->setOnRecv([wsocket = std::weak_ptr<dhtnet::ChannelSocketInterface>(socket), ctx, decodingCtx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
+            // if socket weak ptr is null then return
+            if (!buf)
+                return len;
+            decodingCtx->pac.reserve_buffer(len);
+            std::copy_n(buf, len, decodingCtx->pac.buffer());
+            decodingCtx->pac.buffer_consumed(len);
+            msgpack::object_handle oh;
+            try {
+                decodingCtx->pac.next(oh); // TODO move try catch to just this line in order to handle errors more narrowly
+            } catch (std::exception e) {
+                JAMI_WARN("[Link Device] error unpacking message from msgpack");
+            }
+            if (ctx->linkDevCtx->authDecodingState->state == AuthDecodingState::SCHEME) {
+                PassowrdSchemeMsg passwordSchemeMsg;
+                oh.get().convert(passwordSchemeMsg);
+                if (!passwordSchemeMsg.passwordEnabled.empty()) {
+                    auto pwEnbl = passwordSchemeMsg.passwordEnabled;
+                    ctx->linkDevCtx->passwordEnabled = pwEnbl; //passwordSchemeMsg.passwordEnabled;
+                    if (pwEnbl) {
+                        ctx->emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged(ctx->accountId, 2, "password_required");
+                    }
+                } else {
+                    JAMI_WARN("[Link Device] passwordEnabled flag is empty!");
+                }
+                if (!passwordSchemeMsg.password.empty()) {
+                    auto pw = passwordSchemeMsg.password;
+                } else {
+                    JAMI_WARN("[Link Device] password flag is empty!");
+                }
+            } else if (ctx->linkDevCtx->authDecodingState->state == AuthDecodingState::ATTEMPT) {
+                    // do nothing
+            }
+            else if (ctx->linkDevCtx->authDecodingState->state == AuthDecodingState::ARCHIVE) {
+                PackableArchiveMsg archiveSchemeMsg;
+                oh.get().convert(archiveSchemeMsg);
+                if (!archiveSchemeMsg.archive.empty()) {
+                    auto archive = archiveSchemeMsg.archive;
+                    decrypted = archiver::decompress(dht::crypto::aesDecrypt(archive, ctx->linkDevCtx->password));
+                    ctx->linkDevCtx->transferredAccArchive = std::move(archive || decrypted); // TODO
+                    ctx->emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged(ctx->accountId, 0, "archive_loaded"); // TODO use some string from JAMI_WARN, etc., that is standardized across the project
+                } else {
+                    JAMI_WARN("[Link Device] archive is empty!");
+                    ctx->emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged(ctx->accountId, 1, "archive_load_failed"); // TODO use some string from JAMI_WARN, etc., that is standardized across the project
+                }
+            }
+            else if (ctx->linkDevCtx->authDecodingState->state == AuthDecodingState::ASK) {
+                JAMI_WARN("[Link Device] unimplemented ASK request");
+            }
+            else {
+                JAMI_WARN("[Link Device] channel operation mode is unspecified (unspecified auth protocol)");
+            }
+        }); // !onConnectionReady // TODO emit AuthStateChanged+"connection ready" signal
+
+        // JAMI_DBG("[LinkDevice] Built account scheme.");
+        JAMI_LOG("[LinkDevice {}] Generated temporary account.", ctx->linkDevCtx->tmpId.second->getId());
+        emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+            ctx->linkDevCtx->tmpId.second->getId().toString(),
+            static_cast<uint8_t>(AuthState::CONNECTING),
+            accountScheme
+        );
+    });
+}
+
+// oldDev
+// TODO add opId
+void
+ArchiveAccountManager::addDevice(const std::string& accountId, uint32_t token, const std::shared_ptr<dhtnet::ChannelSocket>& channel)
+{
+    auto ctx = std::make_shared<AuthContext>();
+    ctx->linkDevCtx->channel = std::move(channel);
+    ctx->accountId = accountId;
+    ctx->token = token;
+
+    // TODO rewrite this as an inline or with another pointer type to increase performance
+    auto packAndWrite = [](std::shared_ptr<dhtnet::ChannelSocket> channel, const ArchiveAccountManager::AuthMsg& msg) {
+        msgpack::sbuffer buffer(UINT16_MAX);
+        msgpack::pack(buffer, msg);
+        std::error_code ec;
+        channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    };
+
+    try {
+        // send the first message in the TLS connection
+        ArchiveAccountManager::AuthMsg msg;
+        packAndWrite(channel, msg);
+        ctx->linkDevCtx->deviceState = AuthDecodingState::ESTABLISHED;
+    } catch (std::exception e) {
+        JAMI_WARN("[LinkDevice] error sending message on TLS channel.");
+    }
+
+    channel->onShutdown([ctx] () {
+        // check if the archive was successfully loaded and emitSignal
+        if (ctx->linkDevCtx->archiveTransferredWithoutFailure) {
+            emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                ctx->accountId,
+                ctx->token,
+                static_cast<uint8_t>(AuthState::DONE),
+                "success"
+            );
+        } else {
+            emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                ctx->accountId,
+                ctx->token,
+                static_cast<uint8_t>(AuthState::DONE),
+                "failure"
+            );
+        }
+        // cb();
+    });
+
+    // for now we assume that the only valid protocol version is AuthMsg::scheme = 0 but can later add in more schemes inside this callback function
+    ctx->linkDevCtx->deviceState = AuthDecodingState::CREDENTIALS;
+    channel->setOnRecv([
+                ctx,
+                wthis = weak_from_this(),
+                decodeCtx = std::make_shared<ArchiveAccountManager::DecodingContext>()
+            ]
+            (const uint8_t* buf, size_t len) {
+                // when archive is sent to newDev we will get back a success or fail response before the connection closese and we need to handle this and pas it to the shutdown callback
+                auto this_ = std::static_pointer_cast<ArchiveAccountManager>(wthis.lock());
+                if (not this_) return (size_t)0;
+
+                auto packAndWrite = [](std::shared_ptr<dhtnet::ChannelSocket> channel, const ArchiveAccountManager::AuthMsg& msg) {
+                    msgpack::sbuffer buffer(UINT16_MAX);
+                    msgpack::pack(buffer, msg);
+                    std::error_code ec;
+                    channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+                };
+
+                if (!buf) { return len; }
+
+                if (ctx->linkDevCtx->deviceState == AuthDecodingState::GENERIC_ERROR) { return len; }
+
+                decodeCtx->pac.reserve_buffer(len); // TODO rework like this
+
+                std::copy_n(buf, len, decodeCtx->pac.buffer());
+                decodeCtx->pac.buffer_consumed(len);
+
+                // handle unpacking the data from the peer
+                msgpack::object_handle oh;
+                AuthMsg msg;
+                try {
+                    decodeCtx->pac.next(oh);
+                    oh.get().convert(msg);
+                } catch (std::exception e) {
+                    ctx->linkDevCtx->deviceState = AuthDecodingState::GENERIC_ERROR; // set the generic error state in the context
+                    JAMI_WARN("[LinkDevice] error unpacking message from msgpack"); // also warn in logs
+                }
+
+                if (msg.schemeId != 0) {
+                    JAMI_WARN("[LinkDevice] Unsupported scheme received from a connection.");
+                    ctx->linkDevCtx->deviceState = AuthDecodingState::GENERIC_ERROR; // set the generic error state in the context
+                }
+
+                if (ctx->linkDevCtx->deviceState == AuthDecodingState::GENERIC_ERROR) {
+                    JAMI_WARN("[LinkDevice] Undefined behavior encountered during a link auth session.");
+                    ctx->linkDevCtx->channel->shutdown();
+                    emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                        ctx->accountId,
+                        ctx->token,
+                        static_cast<uint8_t>(AuthState::DONE),
+                        "failure"
+                    ); // let the client know that the auth has failed
+                }
+                else if (ctx->linkDevCtx->deviceState == AuthDecodingState::CREDENTIALS) {
+                    // receive the incoming password, check if the password is right, and send back the archive if it is correct
+                    AuthMsg toSend;
+                    AccountArchive archive;
+                    try {
+                        toSend.archive = fileutils::readArchive(this_->path_, fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, msg.payload["password"]).data;
+                        ctx->linkDevCtx->archiveTransferredWithoutFailure = true;
+                    } catch (...) {
+                        if (ctx->linkDevCtx->numTries < ctx->linkDevCtx->maxTries) {
+                            JAMI_DBG("[LinkDevice] Incorrect password was submitted to this server... allowing a retry.");
+                            toSend.payload["passwordCorrect"] = "false";
+                            toSend.payload["canRetry"] = "true";
+                        } else {
+                            JAMI_DBG("[LinkDevice] Incorrect password was submitted to this server... NOT allowing a retry because threshold already reached!");
+                            toSend.payload["canRetry"] = "false";
+                        }
+                    }
+                    packAndWrite(ctx->linkDevCtx->channel, toSend);
+                }
+                else if (ctx->linkDevCtx->deviceState == AuthDecodingState::ARCHIVE) {
+                    // get whether the operation on newDev succeeded or failed from the payload and set the flag, then close the channel so that core can emit an onShutdown signal
+                    ctx->linkDevCtx->channel->shutdown();
+                }
+                else if (ctx->linkDevCtx->deviceState == AuthDecodingState::AUTH_ERROR) {
+                    // update the flag and
+                    // read local flag of whether the operation on newDev succeeded or failed from the payload, then close the channel so that core can emit an onShutdown signal
+                    JAMI_WARN("[LinkDevice] Isssue with authentication.");
+                    ctx->linkDevCtx->channel->shutdown();
+                    emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                        ctx->accountId,
+                        ctx->token,
+                        static_cast<uint8_t>(AuthState::DONE),
+                        "auth_error"
+                    ); // let the client know that the auth has failed
+                }
+                else {}
+            return len;
+        } // !channel->onRecv callback end
+    );
+}
 
 void
 ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
@@ -281,7 +796,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
         }
     };
 
-    auto search = [ctx, searchEnded, w=weak_from_this()](bool previous) {
+    auto search = [ctx, searchEnded, w = weak_from_this()](bool previous) {
         std::vector<uint8_t> key;
         dht::InfoHash loc;
         auto& s = previous ? ctx->dhtContext->stateOld : ctx->dhtContext->stateNew;
@@ -308,17 +823,18 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                     }
                     JAMI_DBG("[Auth] found archive on the DHT");
                     ctx->dhtContext->found = true;
-                    dht::ThreadPool::computation().run([ctx,
-                                                        decrypted = std::move(decrypted), w] {
+                    dht::ThreadPool::computation().run([ctx, decrypted = std::move(decrypted), w] {
                         try {
                             auto archive = AccountArchive(decrypted);
-                            if (auto sthis = std::static_pointer_cast<ArchiveAccountManager>(w.lock())) {
+                            if (auto sthis = std::static_pointer_cast<ArchiveAccountManager>(
+                                    w.lock())) {
                                 if (ctx->dhtContext) {
                                     ctx->dhtContext->dht.join();
                                     ctx->dhtContext.reset();
                                 }
                                 sthis->onArchiveLoaded(*ctx,
-                                                      std::move(archive) /*, std::move(contacts)*/);
+                                                       std::move(
+                                                           archive) /*, std::move(contacts)*/);
                             }
                         } catch (const std::exception& e) {
                             ctx->onFailure(AuthError::UNKNOWN, "");
@@ -367,6 +883,7 @@ ArchiveAccountManager::migrateAccount(AuthContext& ctx)
         ctx.onFailure(AuthError::UNKNOWN, "");
 }
 
+// KESS is it necessary to call this for linkdevice?
 void
 ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
                                        AccountArchive&& a)
@@ -662,73 +1179,6 @@ ArchiveAccountManager::getPasswordKey(const std::string& password)
         JAMI_ERR("Error loading archive: %s", e.what());
     }
     return {};
-}
-
-std::string
-generatePIN(size_t length = 16, size_t split = 8)
-{
-    static constexpr const char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    std::random_device rd;
-    std::uniform_int_distribution<size_t> dis(0, sizeof(alphabet) - 2);
-    std::string ret;
-    ret.reserve(length);
-    for (size_t i = 0; i < length; i++) {
-        ret.push_back(alphabet[dis(rd)]);
-        if (i % split == split - 1 and i != length - 1)
-            ret.push_back('-');
-    }
-    return ret;
-}
-
-void
-ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback cb)
-{
-    dht::ThreadPool::computation().run([password, cb = std::move(cb), w=weak_from_this()] {
-        auto this_ = std::static_pointer_cast<ArchiveAccountManager>(w.lock());
-        if (not this_) return;
-
-        std::vector<uint8_t> key;
-        dht::InfoHash loc;
-        std::string pin_str;
-        AccountArchive a;
-        try {
-            JAMI_DBG("[Auth] exporting account");
-
-            a = this_->readArchive("password", password);
-
-            // Generate random PIN
-            pin_str = generatePIN();
-
-            std::tie(key, loc) = computeKeys(password, pin_str);
-        } catch (const std::exception& e) {
-            JAMI_ERR("[Auth] can't export account: %s", e.what());
-            cb(AddDeviceResult::ERROR_CREDENTIALS, {});
-            return;
-        }
-        // now that key and loc are computed, display to user in lowercase
-        std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::tolower);
-        try {
-            this_->updateArchive(a);
-            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
-            if (not this_->dht_ or not this_->dht_->isRunning())
-                throw std::runtime_error("DHT is not running..");
-            JAMI_WARN("[Auth] exporting account with PIN: %s at %s (size %zu)",
-                        pin_str.c_str(),
-                        loc.toString().c_str(),
-                        encrypted.size());
-            this_->dht_->put(loc, encrypted, [cb, pin = std::move(pin_str)](bool ok) {
-                JAMI_DBG("[Auth] account archive published: %s", ok ? "success" : "failure");
-                if (ok)
-                    cb(AddDeviceResult::SUCCESS_SHOW_PIN, pin);
-                else
-                    cb(AddDeviceResult::ERROR_NETWORK, {});
-            });
-        } catch (const std::exception& e) {
-            JAMI_ERR("[Auth] can't export account: %s", e.what());
-            cb(AddDeviceResult::ERROR_NETWORK, {});
-            return;
-        }
-    });
 }
 
 bool

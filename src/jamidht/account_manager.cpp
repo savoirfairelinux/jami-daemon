@@ -272,6 +272,7 @@ AccountManager::announceFromReceipt(const std::string& receipt)
     return root;
 }
 
+// KESS look for null Query for local certificate store: 9d7306454fdc4843aa678f854cdcca8bb30a9b96: 0->1 found.socket
 void
 AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
 {
