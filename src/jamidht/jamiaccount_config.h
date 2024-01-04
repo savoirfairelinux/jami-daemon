@@ -67,14 +67,24 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
     std::string managerUsername {};
 
     std::string archivePath {"archive.gz"};
+    // KESS use this one
     bool archiveHasPassword {true};
+
     // not saved, only used client->daemon
+// <<<<<<< HEAD
     struct Credentials {
         std::string archive_password_scheme;
         std::string archive_password;
         std::string archive_pin;
         std::string archive_path;
     } credentials;
+// =======
+//     std::string archive_password_scheme;
+//     std::string archive_password;
+//     std::string archive_pin;
+//     std::string archive_path;
+std::string archive_url; // KESS TODO discuss removal or impl with Adrien
+// >>>>>>> 808e24a98 ((WIP) ArchiveAccountManager: add support for p2p)
 
     std::string receipt {};
     std::vector<uint8_t> receiptSignature {};
