@@ -70,6 +70,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e78320e7_1e3a5f5f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 1368,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-01-04T01:02:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2614f8d8_7c16a85d",
+      "range": {
+        "startLine": 1368,
+        "startChar": 34,
+        "endLine": 1368,
+        "endChar": 51
+      },
+      "revId": "5d6f0223196c683fc636dea095eebe7b01bb6630",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2144ddcc_6bfcac2f",
@@ -83,6 +107,30 @@
       "writtenOn": "2023-12-27T14:24:05Z",
       "side": 1,
       "message": "re-add before lock",
+      "range": {
+        "startLine": 2239,
+        "startChar": 38,
+        "endLine": 2239,
+        "endChar": 48
+      },
+      "revId": "5d6f0223196c683fc636dea095eebe7b01bb6630",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4153f0a2_3fa3a559",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 2239,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-01-04T01:02:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2144ddcc_6bfcac2f",
       "range": {
         "startLine": 2239,
         "startChar": 38,
