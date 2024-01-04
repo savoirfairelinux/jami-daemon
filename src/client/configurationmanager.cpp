@@ -47,6 +47,9 @@
 #include <dhtnet/upnp/upnp_context.h>
 #include <dhtnet/certstore.h>
 
+
+#include <regex>
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -336,14 +339,69 @@ setMessageDisplayed(const std::string& accountId,
     return false;
 }
 
+// bool
+// authenticateAccount(const std::string& accountId, const std::string& password, const std::string& scheme) {
+//     if (const auto acc = jami::Manager::instance().getAccount<JamiAccount>(accountId)) {
+//         acc->provideAccountAuthentication(passwordFromUser, scheme);
+//         return true;
+//     }
+//     return false;
+// }
+    // =======
+    // // KESS pipe creds to accauth
+    // // TODO make this have a callback and return false
+    // bool
+    // authenticateAccount(const std::string& accountId, const std::string& passwordFromUser, const std::string& scheme) {
+    //     // if (const auto acc = jami::Manager::instance().getAccount(accountId)) {
+    //     //     if (auto am = acc->accountManager())
+    //     //         return am->provideAccountAuthentication(passwordFromUser, scheme);
+    //     //     // auto am = acc->accountManager();
+    //     //     // am->provideAccountAuthentication(passwordFromUser, scheme);
+    //     //     // return true;
+    //     // }
+    //     // return false;
+    //
+    //     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+    //         return acc->provideAccountAuthentication(passwordFromUser, scheme);
+    //     return false;
+    // }
+    // >>>>>>> 708b64291 (trying to setup provideAuth)
+
+// deprecated
 bool
 exportOnRing(const std::string& accountId, const std::string& password)
 {
-    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        account->addDevice(password);
-        return true;
-    }
     return false;
+}
+
+
+const std::regex AUTH_URI_VALIDATOR {
+    "jami-auth:\/\/([-a-zA-Z0-9@:%._\+~#=]{40}\b)\/([0-9]{6}\b)"
+};
+
+// TODO make this function and JamiAccount::addDevice unified in return type either void or uint64_t... and also add the appropriate callback listeners to unitTest/linkdevice
+// TODO change uint8_t to error code and cast it where needed for java/qt bindings
+uint32_t
+exportToPeer(const std::string& accountId, const std::string& uri)
+{
+    JAMI_DEBUG("[LinkDevice {}] exportToPeer called.", accountId);
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        bool uriValid = false;
+        try {
+            const std::string prefix = "jami-auth://";
+            const std::string uriPrefix = uri.substr(0, prefix.length());
+            const std::string accountUsername = uri.substr(prefix.length(), 40);
+            const std::string accountCodeStr = uri.substr(prefix.length()+41, 6);
+            uint64_t accountCode = std::stoull(accountCodeStr);
+            if (uriPrefix == prefix) {
+                uriValid = true;
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[LinkDevice] Error: invalid jami-auth url: {}", uri);
+        }
+        return account->addDevice(uri);
+    }
+    return 0;
 }
 
 bool
@@ -458,7 +516,7 @@ sendTrustRequest(const std::string& accountId,
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
-    if (accountType == Account::ProtocolNames::JAMI || accountType == Account::ProtocolNames::RING)
+    if (accountType == Account::ProtocolNames::RING)
         return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
         return jami::SipAccountConfig().toMap();
