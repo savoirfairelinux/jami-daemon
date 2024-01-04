@@ -338,7 +338,11 @@ public:
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices */
-    void addDevice(const std::string& password);
+    bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string_view scheme);
+    // bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& uri);
+    uint32_t addDevice(const std::string& uriProvided);
+    // uint32_t addDevice(const std::string& accountId, const std::string& uriProvided);
+    // void addDevice(std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Export the archive to a file
      * @param destinationPath
@@ -617,9 +621,10 @@ private:
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
      */
-    static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
+    /* static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
                                                                       const std::string& pin,
                                                                       bool previous = false);
+								      */
 
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
