@@ -47,6 +47,9 @@
 #include <dhtnet/upnp/upnp_context.h>
 #include <dhtnet/certstore.h>
 
+
+#include <regex>
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -336,14 +339,33 @@ setMessageDisplayed(const std::string& accountId,
     return false;
 }
 
-bool
-exportOnRing(const std::string& accountId, const std::string& password)
+const std::regex AUTH_URI_VALIDATOR {
+    "jami-auth:\/\/([-a-zA-Z0-9@:%._\+~#=]{40}\b)\/([0-9]{6}\b)"
+};
+
+// TODO make this function and JamiAccount::addDevice unified in return type either void or uint64_t... and also add the appropriate callback listeners to unitTest/linkdevice
+// TODO change uint8_t to error code and cast it where needed for java/qt bindings
+uint32_t
+exportToPeer(const std::string& accountId, const std::string& uri)
 {
+    JAMI_DEBUG("[LinkDevice {}] exportToPeer called.", accountId);
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        account->addDevice(password);
-        return true;
+        bool uriValid = false;
+        try {
+            const std::string prefix = "jami-auth://";
+            const std::string uriPrefix = uri.substr(0, prefix.length());
+            const std::string accountUsername = uri.substr(prefix.length(), 40);
+            const std::string accountCodeStr = uri.substr(prefix.length()+41, 6);
+            uint64_t accountCode = std::stoull(accountCodeStr);
+            if (uriPrefix == prefix) {
+                uriValid = true;
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[LinkDevice] Error: invalid jami-auth url: {}", uri);
+        }
+        return account->addDevice(uri);
     }
-    return false;
+    return 0;
 }
 
 bool
@@ -458,7 +480,7 @@ sendTrustRequest(const std::string& accountId,
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
-    if (accountType == Account::ProtocolNames::JAMI || accountType == Account::ProtocolNames::RING)
+    if (accountType == Account::ProtocolNames::RING)
         return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
         return jami::SipAccountConfig().toMap();

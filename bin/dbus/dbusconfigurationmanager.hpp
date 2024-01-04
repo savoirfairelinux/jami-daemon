@@ -90,13 +90,6 @@ public:
     }
 
     auto
-    exportOnRing(const std::string& accountID, const std::string& password)
-        -> decltype(libjami::exportOnRing(accountID, password))
-    {
-        return libjami::exportOnRing(accountID, password);
-    }
-
-    auto
     exportToFile(const std::string& accountID,
                  const std::string& destinationPath,
                  const std::string& scheme,
@@ -1101,8 +1094,6 @@ private:
                 std::bind(&DBusConfigurationManager::emitContactAdded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::ContactRemoved>(
                 std::bind(&DBusConfigurationManager::emitContactRemoved, this, _1, _2, _3)),
-            exportable_serialized_callback<ConfigurationSignal::ExportOnRingEnded>(
-                std::bind(&DBusConfigurationManager::emitExportOnRingEnded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::KnownDevicesChanged>(
                 std::bind(&DBusConfigurationManager::emitKnownDevicesChanged, this, _1, _2)),
             exportable_serialized_callback<ConfigurationSignal::NameRegistrationEnded>(

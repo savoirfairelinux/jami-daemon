@@ -1,0 +1,2 @@
+- fully successful unit tests for no pass, good pass, 3 bad pass
+- ensure signals are accurate for UI to respond properly
