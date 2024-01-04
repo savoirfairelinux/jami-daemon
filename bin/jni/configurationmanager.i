@@ -40,7 +40,8 @@ public:
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
-    virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
+    virtual void deviceAuthStateChanged(const std::string& /*account_id*/, int /*state*/, const std::string& /*detail*/){}
+    virtual void addDeviceStateChanged(const std::string& /*account_id*/, uint32_t op_id, int /*state*/, const std::string& /*detail*/){}
 
     virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
@@ -119,8 +120,9 @@ std::vector<std::string> getSupportedCiphers(const std::string& accountId);
 std::map<std::string, std::string> getCodecDetails(const std::string& accountId, const unsigned& codecId);
 bool setCodecDetails(const std::string& accountId, const unsigned& codecId, const std::map<std::string, std::string>& details);
 std::vector<unsigned> getActiveCodecList(const std::string& accountId);
-bool exportOnRing(const std::string& accountId, const std::string& password);
 bool exportToFile(const std::string& accountId, const std::string& destinationPath, const std::string& scheme, const std::string& password);
+uint32_t exportToPeer(const std::string& accountId, const std::string& uri);
+bool provideAccountAuthentication(const std::string& accountId, const std::string& credentials, const std::string_view scheme);
 
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountId);
 bool revokeDevice(const std::string& accountId, const std::string& deviceId, const std::string& scheme, const std::string& password);
@@ -261,7 +263,8 @@ public:
     virtual void activeCallsChanged(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::vector<std::map<std::string, std::string>>& /*activeCalls*/ ){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
-    virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
+    virtual void deviceAuthStateChanged(const std::string& /*account_id*/, int /*state*/, const std::string& /*detail*/){}
+    virtual void addDeviceStateChanged(const std::string& /*account_id*/, uint32_t op_id, int /*state*/, const std::string& /*detail*/){}
 
     virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
