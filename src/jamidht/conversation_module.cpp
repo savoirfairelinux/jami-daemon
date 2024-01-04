@@ -1994,7 +1994,7 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
@@ -2032,7 +2032,7 @@ ConversationModule::loadConversation(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
@@ -2059,7 +2059,7 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
             LogOptions options;
             options.from = fromMessage;
             options.to = toMessage;

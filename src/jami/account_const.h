@@ -37,7 +37,6 @@ namespace ProtocolNames {
 constexpr static const char SIP[] = "SIP";
 constexpr static const char IP2IP[] = "IP2IP";
 constexpr static const char RING[] = "RING";
-constexpr static const char JAMI[] = "JAMI";
 
 } // namespace ProtocolNames
 
@@ -136,6 +135,7 @@ constexpr static const char ARCHIVE_PASSWORD_SCHEME[] = "Account.archivePassword
 constexpr static const char ARCHIVE_PASSWORD[] = "Account.archivePassword";
 constexpr static const char ARCHIVE_HAS_PASSWORD[] = "Account.archiveHasPassword";
 constexpr static const char ARCHIVE_PATH[] = "Account.archivePath";
+constexpr static const char ARCHIVE_URL[] = "Account.archiveURL";
 constexpr static const char ARCHIVE_PIN[] = "Account.archivePIN";
 constexpr static const char DEVICE_ID[] = "Account.deviceID";
 constexpr static const char DEVICE_NAME[] = "Account.deviceName";

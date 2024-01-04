@@ -336,7 +336,8 @@ public:
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices */
-    void addDevice(const std::string& password);
+    uint32_t addDevice(const std::string& accountId, const std::string& uriProvided);
+    void addDevice(std::shared_ptr<dhtnet::ChannelSocket>& channel);
     /**
      * Export the archive to a file
      * @param destinationPath

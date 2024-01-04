@@ -32,6 +32,7 @@
 #include "jamidht/channeled_transport.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "auth_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
 #include "jami/media_const.h"
@@ -974,28 +975,51 @@ JamiAccount::getPasswordKey(const std::string& password)
     return accountManager_ ? accountManager_->getPasswordKey(password) : std::vector<uint8_t>();
 }
 
-
-void
-JamiAccount::addDevice(const std::string& password)
+// oldDev
+uint32_t
+JamiAccount::addDevice(const std::string& accountId, const std::string& uriProvided)
 {
+    JAMI_LOG("[LinkDevice] JamiAccount::addDevice({}, {})", accountId, uriProvided);
     if (not accountManager_) {
-        emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-        return;
+        JAMI_ERR("[LinkDevice] Invalid AccountManager instance while adding a device.");
+        return 0;
     }
-    accountManager_
-        ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
-            switch (result) {
-            case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
-                break;
-            case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
-                break;
-            case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-                break;
+
+    try {
+        constexpr auto AUTH_SCHEME = "jami-auth://"sv;
+        std::string_view url(uriProvided);
+        auto sep1 = url.find(AUTH_SCHEME);
+        if (sep1 == std::string_view::npos) {
+            JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+            return 0;
+        }
+        sep1 += AUTH_SCHEME.length();
+        auto peerTempAcc = url.substr(sep1, 40);
+        auto peerCodeS = url.substr(sep1 + peerTempAcc.length() + 1, 6);
+        JAMI_LOG("[LinkDevice] ======\n * addDevice::peerTempAcc =  {}\n * addDevice::peerCodeS = {}", peerTempAcc, peerCodeS);
+        // const uint64_t peerCode = std::stoull(peerCodeS);
+
+        auto token = std::uniform_int_distribution<uint32_t>{1}(rand);
+        auto authHandler = channelHandlers_.find(Uri::Scheme::AUTH);
+        if (authHandler == channelHandlers_.end())
+            return 0;
+        authHandler->second->connect(
+            dht::InfoHash(peerTempAcc),
+            fmt::format("auth:{}", peerCodeS),
+            [this, token] (std::shared_ptr<dhtnet::ChannelSocket> socket, const dht::InfoHash& infoHash) {
+                if (!socket) {
+                    JAMI_WARN("[LinkDevice] Invalid socket event while AccountManager connecting.");
+                    emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(accountID_, token, 1, "invalid_state");
+                } else {
+                    accountManager_->addDevice(accountID_, token, socket);
+                }
             }
-        });
+        );
+        return token;
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[LinkDevice] Parsing uri failed: {}", uriProvided);
+        return 0;
+    }
 }
 
 bool
@@ -1240,6 +1264,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 convModule(); // Init conv module
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
+            convModule()->loadConversations();
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
@@ -1260,22 +1285,27 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (conf.managerUri.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
                 auto archivePath = fileutils::getFullPath(idPath_, conf.archivePath);
-                bool hasArchive = std::filesystem::is_regular_file(archivePath);
+                // bool hasArchive = std::filesystem::is_regular_file(archivePath);
 
-                if (not archive_path.empty()) {
+                if (!archive_path.empty()) {
                     // Importing external archive
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
-                } else if (not archive_pin.empty()) {
+                } else if (!conf.archive_url.empty() && conf.archive_url == "jami-auth") {
+                    // Importing over a Peer2Peer TLS connection with DHT as DNS
+                    JAMI_DEBUG("[JamiAccount] [LinkDevice] acreds scheme p2p & uri {}", conf.archive_url);
+                    acreds->scheme = "p2p";
+                    acreds->uri = conf.archive_url;
+                } else if (!archive_pin.empty()) {
                     // Importing from DHT
                     acreds->scheme = "dht";
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
                     acreds->dhtPort = dhtPortUsed();
-                } else if (hasArchive) {
+                } else if (std::filesystem::is_regular_file(archivePath)) {
                     // Migrating local account
                     acreds->scheme = "local";
-                    acreds->uri = std::move(archivePath).string();
+                    acreds->uri = archivePath.string();
                     acreds->updateIdentity = id;
                     migrating = true;
                 }
@@ -4262,6 +4292,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::AUTH]
+            = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
