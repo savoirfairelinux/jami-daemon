@@ -413,6 +413,19 @@ test('utf8_utils', ut_utf8_utils,
 )
 
 
+# # # #
+ut_linkdevice = executable('ut_linkdevice',
+    sources: files('unitTest/linkdevice/linkdevice.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('linkdevice', ut_linkdevice,
+    workdir: ut_workdir, is_parallel: false, timeout: 1200 
+)
+# # # #
+
+
 if conf.get('ENABLE_VIDEO')
     ut_plugins = executable('ut_plugins',
         sources: files('unitTest/plugins/plugins.cpp'),
