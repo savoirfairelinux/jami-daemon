@@ -1024,7 +1024,7 @@ Conversation::Impl::handleMessage(History& history,
         // For a loaded message, we load from newest to oldest
         // So we change the parent of the last message.
         if (!history.messageList.empty())
-            sharedCommit->linearizedParent = (*history.messageList.rbegin())->id;
+            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
         history.messageList.emplace_back(sharedCommit);
     }
     // Handle pending reactions/editions
