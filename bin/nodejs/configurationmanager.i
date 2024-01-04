@@ -39,7 +39,6 @@ public:
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
-    virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
     virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
@@ -111,7 +110,6 @@ std::vector<std::map<std::string, std::string>> getActiveCalls(const std::string
 std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
 bool setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details);
 std::vector<unsigned> getActiveCodecList(const std::string& accountID);
-bool exportOnRing(const std::string& accountID, const std::string& password);
 bool exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password);
 
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
@@ -243,7 +241,6 @@ public:
     virtual void profileReceived(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*path*/){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*convId*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
-    virtual void exportOnRingEnded(const std::string& /*account_id*/, int /*state*/, const std::string& /*pin*/){}
 
     virtual void incomingTrustRequest(const std::string& /*account_id*/, const std::string& /*conversationId*/, const std::string& /*from*/, const std::vector<uint8_t>& /*payload*/, time_t received){}
     virtual void contactAdded(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed){}
