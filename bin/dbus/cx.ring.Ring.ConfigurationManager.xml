@@ -158,21 +158,6 @@
             </arg>
         </method>
 
-        <method name="exportOnRing" tp:name-for-bindings="exportOnRing">
-            <tp:docstring>
-               Export account on the DHT using the given password and generated PIN (returned through exportOnRingEnded signal).
-            </tp:docstring>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="s" name="password" direction="in">
-            </arg>
-            <arg type="b" name="success" direction="out">
-                <tp:docstring>
-                   True if the operation was initialized successfully. exportOnRingEnded will be trigered on completion.
-                </tp:docstring>
-            </arg>
-        </method>
-
         <method name="exportToFile" tp:name-for-bindings="exportToFile">
             <tp:added version="15.0.0"/>
             <tp:docstring>
@@ -200,29 +185,6 @@
                 </tp:docstring>
             </arg>
         </method>
-
-        <signal name="exportOnRingEnded" tp:name-for-bindings="exportOnRingEnded">
-            <tp:docstring>
-               Notify clients when the exportOnRing operation ended.
-            </tp:docstring>
-            <arg type="s" name="accountId">
-            </arg>
-            <arg type="i" name="status">
-                <tp:docstring>
-                   Status code: 0 for success
-                    <ul>
-                        <li>SUCCESS = 0         everything went fine. PIN is set.</li>
-                        <li>WRONG_PASSWORD = 1  wrong password provided.</li>
-                        <li>NETWORK_ERROR = 2   can't publish archive on the network.</li>
-                    </ul>
-                </tp:docstring>
-            </arg>
-            <arg type="s" name="PIN">
-                <tp:docstring>
-                   A PIN to show to the user to import the account from somewhere else.
-                </tp:docstring>
-            </arg>
-        </signal>
 
         <method name="revokeDevice" tp:name-for-bindings="revokeDevice">
             <tp:added version="15.0.0"/>
