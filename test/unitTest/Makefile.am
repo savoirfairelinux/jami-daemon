@@ -271,4 +271,9 @@ ut_namedirectory_SOURCES = namedirectory/namedirectory.cpp common.cpp
 check_PROGRAMS += ut_presence
 ut_presence_SOURCES = presence/presence.cpp common.cpp
 
+# linkdevice
+#
+check_PROGRAMS += ut_linkdevice
+ut_linkdevice_SOURCES = linkdevice/linkdevice.cpp common.cpp
+
 TESTS = $(check_PROGRAMS)
