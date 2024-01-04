@@ -1708,14 +1708,19 @@ ConversationModule::onTrustRequest(const std::string& uri,
 void
 ConversationModule::onConversationRequest(const std::string& from, const Json::Value& value)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
     ConversationRequest req(value);
+    auto acc = pimpl_->account_.lock();
+    auto isOneToOne = req.isOneToOne();
+    std::string oldConv;
+    if (acc && isOneToOne) {
+        oldConv = getOneToOneConversation(from);
+    }
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
     JAMI_DEBUG("[Account {}] Receive a new conversation request for conversation {} from {}",
               pimpl_->accountId_,
               req.conversationId,
               from);
     auto convId = req.conversationId;
-    req.from = from;
 
     // Already accepted request, do nothing
     if (pimpl_->isConversation(convId))
@@ -1727,15 +1732,10 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                   pimpl_->accountId_, static_cast<int>(oldReq->declined));
         return;
     }
-    req.received = std::time(nullptr);
-    auto reqMap = req.toMap();
-    auto isOneToOne = req.isOneToOne();
-    std::string oldConv;
-    auto acc = pimpl_->account_.lock();
+
     if (acc && isOneToOne) {
-        lk.unlock();
-        auto oldConv = getOneToOneConversation(from);
         if (!oldConv.empty()) {
+            lk.unlock();
             // Already a conversation with the contact.
             if (oldConv != convId && acc->updateConvForContact(from, oldConv, convId)) {
                 initReplay(oldConv, convId);
@@ -1750,6 +1750,9 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
         }
     }
 
+    req.received = std::time(nullptr);
+    req.from = from;
+    auto reqMap = req.toMap();
     if (pimpl_->addConversationRequest(convId, std::move(req))) {
         lk.unlock();
         // Note: no need to sync here because other connected devices should receive
