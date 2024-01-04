@@ -407,7 +407,7 @@ public:
     /**
      * Convert ConversationCommit to MapStringString for the client
      */
-    std::vector<std::map<std::string, std::string>> convCommitToMap(
+    std::vector<std::map<std::string, std::string>> convCommitsToMap(
         const std::vector<ConversationCommit>& commits) const;
     std::optional<std::map<std::string, std::string>> convCommitToMap(
         const ConversationCommit& commit) const;

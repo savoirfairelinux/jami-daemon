@@ -177,7 +177,7 @@ public:
         conversationDataPath_ = fileutils::get_data_dir() / account->getAccountID()
                                         / "conversation_data" / conversationId;
         activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
-        for (const auto& c: repository_->convCommitToMap(commits))
+        for (const auto& c: repository_->convCommitsToMap(commits))
             updateActiveCalls(c);
         init();
     }
@@ -276,7 +276,7 @@ public:
                 convcommits.emplace_back(*commit);
             }
         }
-        announce(repository_->convCommitToMap(convcommits));
+        announce(repository_->convCommitsToMap(convcommits));
     }
 
     /**
@@ -838,7 +838,7 @@ Conversation::Impl::loadMessages(const LogOptions& options)
         [](auto, auto, auto) { return false; },
         options.from,
         options.logIfNotFound);
-    return repository_->convCommitToMap(commits);
+    return repository_->convCommitsToMap(commits);
 }
 
 std::vector<libjami::SwarmMessage>
@@ -895,15 +895,18 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             return CallbackResult::Ok; // Continue
         },
         [&](auto&& cc) {
-            std::map<std::string, std::string> map = *repository_->convCommitToMap(cc);
-            if (map.find("reply-to") != map.end()) {
-                replies.emplace_back(map.at("reply-to"));
+            auto optMessage = repository_->convCommitToMap(cc);
+            if (!optMessage.has_value())
+                return;
+            auto message = optMessage.value();
+            if (message.find("reply-to") != message.end()) {
+                replies.emplace_back(message.at("reply-to"));
             }
-            auto it = std::find(replies.begin(), replies.end(), map.at("id"));
+            auto it = std::find(replies.begin(), replies.end(), message.at("id"));
             if (it != replies.end()) {
                 replies.erase(it);
             }
-            auto added = addToHistory({map}, false, optHistory);
+            auto added = addToHistory({message}, false, optHistory);
             ret.insert(ret.end(), added.begin(), added.end());
         },
         [](auto, auto, auto) { return false; },
@@ -1609,7 +1612,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     }
 
     JAMI_DEBUG("Successfully merge history with {:s}", uri);
-    auto result = repository_->convCommitToMap(newCommits);
+    auto result = repository_->convCommitsToMap(newCommits);
     for (const auto& commit : result) {
         auto it = commit.find("type");
         if (it != commit.end() && it->second == "member") {
@@ -2400,9 +2403,8 @@ Conversation::search(uint32_t req,
                     return CallbackResult::Ok; // Continue
                 },
                 [&](auto&& cc) {
-                    sthis->pimpl_->addToHistory({*sthis->pimpl_->repository_->convCommitToMap(cc)},
-                                                false,
-                                                &history);
+                    if (auto optMessage = sthis->pimpl_->repository_->convCommitToMap(cc))
+                        sthis->pimpl_->addToHistory({optMessage.value()}, false, &history);
                 },
                 [&](auto id, auto, auto) {
                     if (id == filter.lastId)

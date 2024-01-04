@@ -3876,7 +3876,7 @@ ConversationRepository::convCommitToMap(const ConversationCommit& commit) const
 }
 
 std::vector<std::map<std::string, std::string>>
-ConversationRepository::convCommitToMap(const std::vector<ConversationCommit>& commits) const
+ConversationRepository::convCommitsToMap(const std::vector<ConversationCommit>& commits) const
 {
     std::vector<std::map<std::string, std::string>> result = {};
     result.reserve(commits.size());
