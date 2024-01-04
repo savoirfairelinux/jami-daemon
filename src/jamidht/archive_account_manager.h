@@ -18,6 +18,10 @@
 #pragma once
 
 #include "account_manager.h"
+#include "jamidht/auth_channel_handler.h"
+
+#include <dhtnet/multiplexed_socket.h>
+#include <memory>
 
 namespace jami {
 
@@ -39,6 +43,8 @@ public:
         in_port_t dhtPort;
         std::vector<std::string> dhtBootstrap;
         dht::crypto::Identity updateIdentity;
+        // std::string scheme;
+        // std::string uri;
     };
 
     void initAuthentication(const std::string& accountId,
@@ -56,12 +62,16 @@ public:
 
     void syncDevices() override;
 
-    void addDevice(const std::string& password, AddDeviceCallback) override;
     bool revokeDevice(const std::string& device,
                       std::string_view scheme, const std::string& password,
                       RevokeDeviceCallback) override;
     bool exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password);
     bool isPasswordValid(const std::string& password) override;
+
+    // link device: NEW: for authenticating exporting account to another device but can be used for any sort of authentication in the future
+    void provideCurrentAccountAuthentication(const std::string& credentialsFromUser, const std::string_view scheme);
+    // TODO KESS maybe we need to map the channelhandler per account in order to make this call easier to understand?
+    // KESS
 
 #if HAVE_RINGNS
     /*void lookupName(const std::string& name, LookupCallback cb) override;
@@ -79,19 +89,58 @@ public:
                      const dht::InfoHash& id,
                      int64_t validity);
 
+    // for linking devices
+    void onAuthReady(const std::string& deviceId, std::shared_ptr<dhtnet::ChannelSocket> channel);
+
 private:
     struct DhtLoadContext;
+    struct PeerLoadContext;
+    struct LinkDeviceContext;
     struct AuthContext
     {
         std::string accountId;
+        uint32_t token;
         PrivateKey key;
         CertRequest request;
         std::string deviceName;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
         std::unique_ptr<DhtLoadContext> dhtContext;
+        std::shared_ptr<LinkDeviceContext> linkDevCtx; // data for NEW dev
+        std::unique_ptr<PeerLoadContext> peerLoadCtx;  // data for OLD dev
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
     };
+    struct DecodingContext;
+    struct AuthMsg;
+
+    // void linkDevMsg(const dhtnet::ChannelSocket& channel, const ArchiveAccountManager::AuthMsg& msg, const std::string& failureAlert="[LinkDevice] An error occured.", const bool& isCritical=true);
+
+    // void linkDevMsg(const std::shared_ptr<dhtnet::ChannelSocket>& channelPtr, const ArchiveAccountManager::AuthMsg& msg, const std::string& failureAlert="[LinkDevice] An error occured.", const bool& isCritical=true);
+
+    // this enum is for the states of add device TLS protocol
+    // used for LinkDeviceProtocolStateChanged = AddDeviceStateChanged
+    enum class AuthDecodingState : uint8_t {
+        HANDSHAKE = 0,
+        EST,
+        AUTH,
+        DATA,
+        ERR,
+        AUTH_ERROR,
+        DONE
+    };
+
+    enum class DeviceAuthState : uint8_t {
+        NONE = 0,
+        TOKEN_AVAIL = 1,
+        CONNECTING = 2,
+        AUTH = 3,
+        DONE = 4,
+        ERROR = 5
+    };
+    // enum class AuthDecodingState : uint8_t {ESTABLISHED=0, SCHEME_SENT, CREDENTIALS, ARCHIVE, SCHEME_KNOWN, REQUEST_TRANSMITTED, ARCHIVE_SENT, ARCHIVE_RECEIVED, GENERIC_ERROR, AUTH_ERROR};
+
+    std::shared_ptr<LinkDeviceContext> linkDeviceContext_;
+    std::shared_ptr<AuthContext> authContext_; // for OLD device to hold lifetime of AuthContext after addDevice initializes it
 
     void createAccount(AuthContext& ctx);
     void migrateAccount(AuthContext& ctx);
@@ -110,9 +159,19 @@ private:
     static bool needsMigration(const dht::crypto::Identity& id);
 
     void loadFromFile(AuthContext& ctx);
+
+    // for linking devices
+    char* formatAuthState(AuthDecodingState t);
+    void startLoadArchiveFromDevice(const std::shared_ptr<AuthContext>& ctx);
+    // 2024 UNUSED
+    // void onAuthRecv(const std::shared_ptr<AuthContext>& ctx, const std::shared_ptr<DecodingContext>& decodeCtx, const uint8_t* buf, size_t len);
+    // TODO naming
+    void addDevice(std::string_view scheme, uint32_t token, const std::shared_ptr<dhtnet::ChannelSocket>& channel) override;
+    // void addDevice(const std::string& accountId, uint32_t token, const std::shared_ptr<dhtnet::ChannelSocket>& channel) override;
+
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
     void onArchiveLoaded(AuthContext& ctx,
-                         AccountArchive&& a);
+                         AccountArchive&& a, bool isLinkDevProtocol);
 
     OnExportConfig onExportConfig_;
     std::string archivePath_;
