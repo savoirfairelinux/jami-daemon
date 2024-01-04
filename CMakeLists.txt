@@ -712,6 +712,10 @@ else()
         target_link_libraries(ut_base64 ut_library)
         add_test(NAME base64 COMMAND ut_base64)
 
+	# add_executable(ut_ice_media_cand_exchange test/unitTest/ice/ice_media_cand_exchange.cpp)
+	# target_link_libraries(ut_ice_media_cand_exchange ut_library)
+	# add_test(NAME ice_media_cand_exchange COMMAND ut_ice_media_cand_exchange)
+
         add_executable(ut_ice test/unitTest/ice/ice.cpp)
         target_link_libraries(ut_ice ut_library)
         add_test(NAME ice COMMAND ut_ice)
@@ -851,6 +855,10 @@ else()
         add_executable(ut_test_media_player test/unitTest/media/test_media_player.cpp)
         target_link_libraries(ut_test_media_player ut_library)
         add_test(NAME test_media_player COMMAND ut_test_media_player)
+	
+        add_executable(ut_linkdevice test/unitTest/linkdevice/linkdevice.cpp)
+        target_link_libraries(ut_linkdevice ut_library)
+	add_test(NAME linkdevice COMMAND ut_linkdevice)
 
         if (JAMI_PLUGIN)
             add_executable(ut_plugins test/unitTest/plugins/plugins.cpp)
