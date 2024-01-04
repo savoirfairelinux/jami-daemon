@@ -326,11 +326,6 @@ install_signal_primitives(void*)
                 const std::string&,
                 bool>(handlers, "contact-removed");
 
-    add_handler<libjami::ConfigurationSignal::ExportOnRingEnded,
-                const std::string&,
-                int,
-                const std::string&>(handlers, "export-on-ring-ended");
-
     add_handler<libjami::ConfigurationSignal::NameRegistrationEnded,
                 const std::string&,
                 int,
