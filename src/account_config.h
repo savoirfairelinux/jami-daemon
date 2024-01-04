@@ -80,6 +80,9 @@ struct AccountConfig : public Serializable
     /** If true mix calls into a conference */
     bool isRendezVous {false};
 
+    // KESS TENTATIVE
+    std::string archive_url {};
+
     /**
      * The number of concurrent calls for the account
      * -1: Unlimited
