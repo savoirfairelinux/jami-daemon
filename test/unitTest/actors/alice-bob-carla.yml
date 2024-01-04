@@ -1,5 +1,5 @@
 default-account:
-      type: RING
+      type: JAMI
       upnpEnabled: "true"
       archivePassword: ""
       archivePIN: ""
