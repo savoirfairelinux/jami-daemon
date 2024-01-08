@@ -1884,6 +1884,18 @@
             <arg type="u" name="id" direction="out"/>
         </method>
 
+        <method name="loadSwarmUntil" tp:name-for-bindings="loadSwarmUntil">
+            <tp:added version="15.1.0"/>
+            <tp:docstring>
+                Load messages from a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="fromMessage" direction="in"/>
+            <arg type="s" name="toMessage" direction="in"/>
+            <arg type="u" name="id" direction="out"/>
+        </method>
+
         <method name="countInteractions" tp:name-for-bindings="countInteractions">
             <tp:added version="10.0.0"/>
             <tp:docstring>

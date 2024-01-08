@@ -45,6 +45,7 @@ public:
 %}
 
 %feature("director") ConversationCallback;
+%template(SwarmMessageVect) std::vector<libjami::SwarmMessage>;
 
 namespace libjami {
 
@@ -81,6 +82,7 @@ struct SwarmMessage
   uint32_t loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t loadConversation(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t loadConversationUntil(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const std::string& toMessage);
+  uint32_t loadSwarmUntil(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const std::string& toMessage);
   uint32_t countInteractions(const std::string& accountId, const std::string& conversationId, const std::string& toId, const std::string& fromId, const std::string& authorUri);
   void clearCache(const std::string& accountId, const std::string& conversationId);
   uint32_t searchConversation(const std::string& accountId,

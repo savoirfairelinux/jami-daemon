@@ -954,6 +954,15 @@ public:
     }
 
     uint32_t
+    loadSwarmUntil(const std::string& accountId,
+                   const std::string& conversationId,
+                   const std::string& fromMessage,
+                   const std::string& toMessage)
+    {
+        return libjami::loadSwarmUntil(accountId, conversationId, fromMessage, toMessage);
+    }
+
+    uint32_t
     countInteractions(const std::string& accountId,
                       const std::string& conversationId,
                       const std::string& toId,

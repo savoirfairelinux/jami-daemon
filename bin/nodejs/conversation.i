@@ -81,6 +81,7 @@ struct SwarmMessage
   uint32_t loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t loadConversation(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
   uint32_t loadConversationUntil(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const std::string& toMessage);
+  uint32_t loadSwarmUntil(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const std::string& toMessage);
   void clearCache(const std::string& accountId, const std::string& conversationId);
   uint32_t countInteractions(const std::string& accountId, const std::string& conversationId, const std::string& toId, const std::string& fromId, const std::string& authorUri);
   uint32_t searchConversation(const std::string& accountId,

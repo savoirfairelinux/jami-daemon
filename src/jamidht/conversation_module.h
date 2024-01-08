@@ -232,6 +232,9 @@ public:
     uint32_t loadConversationUntil(const std::string& conversationId,
                                    const std::string& fromMessage,
                                    const std::string& to);
+    uint32_t loadSwarmUntil(const std::string& conversationId,
+                            const std::string& fromMessage,
+                            const std::string& toMessage);
     /**
      * Clear loaded interactions
      * @param conversationId

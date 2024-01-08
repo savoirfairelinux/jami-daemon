@@ -220,6 +220,18 @@ loadConversationUntil(const std::string& accountId,
 }
 
 uint32_t
+loadSwarmUntil(const std::string& accountId,
+               const std::string& conversationId,
+               const std::string& fromMessage,
+               const std::string& toMessage)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule())
+            return convModule->loadSwarmUntil(conversationId, fromMessage, toMessage);
+    return 0;
+}
+
+uint32_t
 countInteractions(const std::string& accountId,
                   const std::string& conversationId,
                   const std::string& toId,
