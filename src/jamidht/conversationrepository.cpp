@@ -3381,7 +3381,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     auto account = pimpl_->account_.lock();
     if (!account || !repo)
         return {};
-    std::string_view repoPath = git_repository_workdir(repo.get());
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto cert = account->identity().second;
     if (!cert || !cert->issuer)
         return {};
@@ -3391,14 +3391,14 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
         return {};
     }
 
-    if (!std::filesystem::is_regular_file(
-            fmt::format("{}/{}/{}{}", repoPath, type, uri, (type != "invited" ? ".crt" : "")))) {
+    auto oldFile = repoPath / type / (uri + (type != "invited" ? ".crt" : ""));
+    if (!std::filesystem::is_regular_file(oldFile)) {
         JAMI_WARNING("Didn't found file for {} with type {}", uri, type);
         return {};
     }
 
     auto relativeVotePath = fmt::format("votes/ban/{}/{}", type, uri);
-    auto voteDirectory = repoPath + relativeVotePath;
+    auto voteDirectory = repoPath / relativeVotePath;
     if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
@@ -3411,8 +3411,8 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     }
     voteFile.close();
 
-    auto toAdd = fileutils::getFullPath(relativeVotePath, adminUri);
-    if (!pimpl_->add(toAdd.string()))
+    auto toAdd = fmt::format("{}/{}", relativeVotePath, adminUri);
+    if (!pimpl_->add(toAdd))
         return {};
 
     Json::Value json;
