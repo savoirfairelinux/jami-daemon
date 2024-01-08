@@ -1,5 +1,5 @@
 # libnatpmp
-NATPMP_VERSION := 20150609
+NATPMP_VERSION := 20230423
 NATPMP_URL := http://miniupnp.free.fr/files/download.php?file=libnatpmp-$(NATPMP_VERSION).tar.gz
 
 ifndef HAVE_WIN32
