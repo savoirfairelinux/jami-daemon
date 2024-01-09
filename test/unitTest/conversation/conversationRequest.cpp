@@ -93,6 +93,7 @@ public:
     void testNeedsSyncingWithForCloning();
     void testRemoveContactRemoveTrustRequest();
     void testAddConversationNoPresenceThenConnects();
+    void testRequestBigPayload();
     std::string aliceId;
     UserData aliceData;
     std::string bobId;
@@ -133,6 +134,7 @@ private:
     CPPUNIT_TEST(testNeedsSyncingWithForCloning);
     CPPUNIT_TEST(testRemoveContactRemoveTrustRequest);
     CPPUNIT_TEST(testAddConversationNoPresenceThenConnects);
+    CPPUNIT_TEST(testRequestBigPayload);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1081,6 +1083,27 @@ ConversationRequestTest::testAddConversationNoPresenceThenConnects()
     auto carlaDetails = carlaAccount->getContactDetails(aliceUri);
     auto aliceDetails = aliceAccount->getContactDetails(carlaUri);
     CPPUNIT_ASSERT(carlaDetails["conversationId"] == aliceDetails["conversationId"] && carlaDetails["conversationId"] == convId);
+}
+
+void
+ConversationRequestTest::testRequestBigPayload()
+{
+    connectSignals();
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    aliceAccount->addContact(bobUri);
+
+    auto data = std::string(64000, 'A');
+    std::vector<uint8_t> payload(data.begin(), data.end());
+    aliceAccount->sendTrustRequest(bobUri, payload);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 1);
+    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+    CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
 }
 
 } // namespace test
