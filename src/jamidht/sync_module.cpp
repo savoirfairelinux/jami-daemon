@@ -106,7 +106,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
 
-        auto convModule = acc->convModule();
+        auto convModule = acc->convModule(true);
         if (!convModule)
             return;
         // Sync conversation's preferences
@@ -201,7 +201,8 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                     manager->onSyncData(std::move(msg.ds), false);
 
                 if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())
-                    acc->convModule()->onSyncData(msg, peerId, device.toString());
+                    if (auto cm = acc->convModule(true))
+                        cm->onSyncData(msg, peerId, device.toString());
             }
         } catch (const std::exception& e) {
             JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());

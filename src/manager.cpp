@@ -567,8 +567,9 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 return;
 
             if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
-                if (acc->convModule()->isHosting("", conf.getConfId()))
-                    return;
+                if (auto cm = acc->convModule(true))
+                    if (cm->isHosting("", conf.getConfId()))
+                        return;
 
             // Else go in 1:1
             if (current_callId != conf.getConfId())
@@ -3235,7 +3236,7 @@ Manager::gitSocket(std::string_view accountId,
                    std::string_view conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
-        if (auto convModule = acc->convModule())
+        if (auto convModule = acc->convModule(true))
             return convModule->gitSocket(deviceId, conversationId);
     return nullptr;
 }

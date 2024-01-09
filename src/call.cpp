@@ -123,8 +123,8 @@ Call::Call(const std::shared_ptr<Account>& account,
                     // TODO: This will be removed when 1:1 swarm will have a conference.
                     // For now, only commit for 1:1 calls
                     if (toUsername().find('/') == std::string::npos && getCallType() == CallType::OUTGOING) {
-                        jamiAccount->convModule()->addCallHistoryMessage(getPeerNumber(),
-                                                                         getCallDuration().count());
+                        if (auto cm = jamiAccount->convModule(true))
+                            cm->addCallHistoryMessage(getPeerNumber(), getCallDuration().count());
                     }
                     monitor();
                 }

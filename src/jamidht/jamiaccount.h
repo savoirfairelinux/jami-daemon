@@ -498,7 +498,7 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "");
 
-    ConversationModule* convModule();
+    ConversationModule* convModule(bool noCreation = false);
     SyncModule* syncModule();
 
     /**

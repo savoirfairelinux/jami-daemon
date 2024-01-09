@@ -32,8 +32,8 @@ TransferChannelHandler::TransferChannelHandler(const std::shared_ptr<JamiAccount
     , account_(account)
     , connectionManager_(cm)
 {
-    auto acc = account_.lock();
-    idPath_ = fileutils::get_data_dir() / acc->getAccountID();
+    if (auto acc = account_.lock())
+        idPath_ = fileutils::get_data_dir() / acc->getAccountID();
 }
 
 TransferChannelHandler::~TransferChannelHandler() {}
@@ -50,6 +50,9 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
 {
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
+        return false;
+    auto cm = acc->convModule(true);
+    if (!cm)
         return false;
     auto uri = cert->issuer->getId().toString();
     // Else, check if it's a profile or file in a conversation.
@@ -72,7 +75,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     // Check if peer is member of the conversation
     if (fileId == fmt::format("{}.vcf", acc->getUsername()) || fileId == "profile.vcf") {
         // Or a member from the conversation
-        auto members = acc->convModule()->getConversationMembers(conversationId);
+        auto members = cm->getConversationMembers(conversationId);
         return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; })
                != members.end();
     } else if (fileHost == "profile") {
@@ -80,7 +83,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
         return uri == acc->getUsername();
     }
 
-    return acc->convModule()->onFileChannelRequest(conversationId,
+    return cm->onFileChannelRequest(conversationId,
                                                    uri,
                                                    std::string(fileId),
                                                    acc->sha3SumVerify());

@@ -1983,6 +1983,7 @@ JamiAccount::doRegister_()
                 }
 
                 auto uri = Uri(name);
+                std::lock_guard lk(connManagerMtx_);
                 auto itHandler = channelHandlers_.find(uri.scheme());
                 if (itHandler != channelHandlers_.end() && itHandler->second)
                     return itHandler->second->onRequest(cert, name);
@@ -2066,6 +2067,7 @@ JamiAccount::doRegister_()
                     });
                 } else {
                     // TODO move git://
+                    std::lock_guard lk(connManagerMtx_);
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
                     if (itHandler != channelHandlers_.end() && itHandler->second)
@@ -2135,8 +2137,10 @@ JamiAccount::doRegister_()
 }
 
 ConversationModule*
-JamiAccount::convModule()
+JamiAccount::convModule(bool noCreation)
 {
+    if (noCreation)
+        return convModule_.get();
     if (!accountManager() || currentDeviceId() == "") {
         JAMI_ERR("[Account %s] Calling convModule() with an uninitialized account",
                  getAccountID().c_str());
