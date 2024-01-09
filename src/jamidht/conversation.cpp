@@ -206,6 +206,7 @@ public:
             conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID()
                                     / "conversation_data" / repository_->id();
             fetchedPath_ = conversationDataPath_ / "fetched";
+            lastFetchedPath_ = conversationDataPath_ / "lastFetched";
             sendingPath_ = conversationDataPath_ / "sending";
             lastDisplayedPath_ = conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
             preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
@@ -479,21 +480,30 @@ public:
 
     void loadFetched()
     {
+        std::lock_guard lk {fetchedDevicesMtx_};
         try {
             // read file
             auto file = fileutils::loadFile(fetchedPath_);
             // load values
             msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::lock_guard lk {fetchedDevicesMtx_};
             oh.get().convert(fetchedDevices_);
         } catch (const std::exception& e) {
-            return;
+        }
+        try {
+            // read file
+            auto file = fileutils::loadFile(lastFetchedPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            oh.get().convert(lastFetched_);
+        } catch (const std::exception& e) {
         }
     }
     void saveFetched()
     {
         std::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, fetchedDevices_);
+        std::ofstream fileLF(lastFetchedPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(fileLF, lastFetched_);
     }
 
     void loadSending()
@@ -643,6 +653,7 @@ public:
     std::shared_ptr<TransferManager> transferManager_ {};
     std::filesystem::path conversationDataPath_ {};
     std::filesystem::path fetchedPath_ {};
+    std::filesystem::path lastFetchedPath_ {};
 
     std::mutex fetchedDevicesMtx_ {};
     std::set<std::string> fetchedDevices_ {};
@@ -655,6 +666,7 @@ public:
     std::filesystem::path preferencesPath_ {};
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
     mutable std::map<std::string, std::string> lastDisplayed_ {};
+    mutable std::map<std::string, std::string> lastFetched_ {};
     std::function<void(const std::string&, const std::string&)> lastDisplayedUpdatedCb_ {};
     OnMembersChanged onMembersChanged_ {};
 
@@ -2030,11 +2042,14 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
         auto sthis = w.lock();
         if (!sthis)
             return;
+        auto uri = sthis->uriFromDevice(deviceId);
         {
             std::lock_guard lk(sthis->pimpl_->fetchedDevicesMtx_);
             sthis->pimpl_->fetchedDevices_.emplace(deviceId);
+            sthis->pimpl_->lastFetched_[uri] = commitId;
             sthis->pimpl_->saveFetched();
         }
+        // TODO update per member
         // Update sent status
         std::lock_guard lk(sthis->pimpl_->writeMtx_);
         auto itCommit = std::find(sthis->pimpl_->sending_.begin(),
@@ -2048,7 +2063,7 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
                 emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                     acc->getAccountID(),
                     sthis->id(),
-                    acc->getUsername(),
+                    uri,
                     *it,
                     static_cast<int>(libjami::Account::MessageStates::SENT));
             }
@@ -2162,6 +2177,67 @@ Conversation::displayed() const
     } catch (const std::exception& e) {
     }
     return {};
+}
+
+std::map<std::string, std::string>
+Conversation::lastFetched() const
+{
+    try {
+        std::map<std::string, std::string> lastFetched;
+        auto filePath = pimpl_->conversationDataPath_ / "lastFetched";
+        auto file = fileutils::loadFile(filePath);
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+        oh.get().convert(lastFetched);
+        lastFetched[LAST_MODIFIED] = std::to_string(fileutils::lastWriteTimeInSeconds(filePath));
+        return lastFetched;
+    } catch (const std::exception& e) {
+    }
+    return {};
+}
+
+bool
+Conversation::setMessageFetched(const std::string& uri, const std::string& interactionId)
+{
+    if (auto acc = pimpl_->account_.lock()) {
+        {
+            std::lock_guard lk(pimpl_->fetchedDevicesMtx_);
+            if (pimpl_->lastFetched_[uri] == interactionId)
+                return false;
+            pimpl_->lastFetched_[uri] = interactionId;
+            pimpl_->saveFetched();
+        }
+        // TODO message sent
+        emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+            acc->getAccountID(),
+            id(),
+            uri,
+            interactionId,
+            static_cast<int>(libjami::Account::MessageStates::SENT));
+    }
+    return true;
+}
+
+void
+Conversation::updateLastFetched(const std::map<std::string, std::string>& map)
+{
+    auto filePath = pimpl_->conversationDataPath_ / "lastFetched";
+    auto prefs = map;
+    auto itLast = prefs.find(LAST_MODIFIED);
+    if (itLast != prefs.end()) {
+        if (std::filesystem::is_regular_file(filePath)) {
+            auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
+            try {
+                if (lastModified >= std::stoul(itLast->second))
+                    return;
+            } catch (...) {
+                return;
+            }
+        }
+        prefs.erase(itLast);
+    }
+
+    for (const auto& [uri, id] : prefs)
+        setMessageFetched(uri, id);
 }
 
 #ifdef LIBJAMI_TESTABLE
