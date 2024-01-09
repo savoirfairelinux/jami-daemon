@@ -1742,7 +1742,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
             } catch (...) {
             }
 
-            if (payload.size() > 64000) {
+            if (payload.size() >= 64000) {
                 JAMI_WARN() << "Trust request is too big, reset payload";
                 payload.clear();
             }
@@ -2978,8 +2978,8 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         req.write(reinterpret_cast<const char*>(payload.data()), payload.size());
     }
 
-    if (payload.size() > 64000) {
-        JAMI_WARN() << "Trust request is too big";
+    if (payload.size() >= 64000) {
+        JAMI_WARN() << "Trust request is too big. Remove payload";
     }
 
     auto conversation = convModule()->getOneToOneConversation(to);
@@ -2988,7 +2988,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     if (not conversation.empty()) {
         std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
         if (accountManager_)
-            accountManager_->sendTrustRequest(to, conversation, payload);
+            accountManager_->sendTrustRequest(to, conversation, payload.size() >= 64000 ? std::vector<uint8_t> {} : payload);
         else
             JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
     } else

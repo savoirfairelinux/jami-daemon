@@ -1784,6 +1784,10 @@ Conversation::generateInvitation() const
     Json::Value root;
     auto& metadata = root[ConversationMapKeys::METADATAS];
     for (const auto& [k, v] : infos()) {
+        if (v.size() >= 64000) {
+            JAMI_WARNING("Cutting invite because the SIP message will be to long");
+            continue;
+        }
         metadata[k] = v;
     }
     root[ConversationMapKeys::CONVERSATIONID] = id();
