@@ -1989,6 +1989,21 @@ ConversationModule::convDisplayed() const
     return displayed;
 }
 
+std::map<std::string, std::map<std::string, std::string>>
+ConversationModule::convFetched() const
+{
+    std::map<std::string, std::map<std::string, std::string>> fetched;
+    std::lock_guard lk(pimpl_->conversationsMtx_);
+    for (const auto& [id, conv] : pimpl_->conversations_) {
+        if (conv && conv->conversation) {
+            auto d = conv->conversation->lastFetched();
+            if (!d.empty())
+                fetched[id] = std::move(d);
+        }
+    }
+    return fetched;
+}
+
 uint32_t
 ConversationModule::loadConversationMessages(const std::string& conversationId,
                                              const std::string& fromMessage,
@@ -2317,6 +2332,18 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 conversation->updateLastDisplayed(ld);
             } else if (conv->pending) {
                 conv->pending->lastDisplayed = ld;
+            }
+        }
+    }
+
+    // Updates fetched for conversations
+    for (const auto& [convId, lf] : msg.lf) {
+        if (auto conv = pimpl_->getConversation(convId)) {
+            std::unique_lock<std::mutex> lk(conv->mtx);
+            if (conv->conversation) {
+                auto conversation = conv->conversation;
+                lk.unlock();
+                conversation->updateLastFetched(lf);
             }
         }
     }
