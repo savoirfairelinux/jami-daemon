@@ -487,6 +487,26 @@ public:
      * @return displayed
      */
     std::map<std::string, std::string> displayed() const;
+
+    /**
+     * Change last fetched for multiple uris
+     * @param map       New last fetched
+     */
+    void updateLastFetched(const std::map<std::string, std::string>& map);
+
+    /**
+     * Store last fetched commit (returned in getMembers)
+     * @param uri               Of the member
+     * @param interactionId     Last interaction displayed
+     * @return if updated
+     */
+    bool setMessageFetched(const std::string& uri, const std::string& interactionId);
+    /**
+     * Retrieve last fetched id
+     * @return fetched
+     */
+    std::map<std::string, std::string> lastFetched() const;
+
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param toId      "" for getting the whole history
