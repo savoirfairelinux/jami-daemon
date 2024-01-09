@@ -2066,6 +2066,7 @@ JamiAccount::doRegister_()
                     });
                 } else {
                     // TODO move git://
+                    std::lock_guard lk(connManagerMtx_);
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
                     if (itHandler != channelHandlers_.end() && itHandler->second)
