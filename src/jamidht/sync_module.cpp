@@ -135,6 +135,19 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
         buffer.clear();
+        // Sync sent status
+        auto lf = convModule->convFetched();
+        if (!lf.empty()) {
+            SyncMsg msg;
+            msg.lf = std::move(lf);
+            msgpack::pack(buffer, msg);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERROR("{:s}", ec.message());
+                return;
+            }
+        }
+        buffer.clear();
 
     } else {
         msgpack::pack(buffer, *syncMsg);
