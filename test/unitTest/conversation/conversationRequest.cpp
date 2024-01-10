@@ -945,7 +945,16 @@ ConversationRequestTest::testCacheRequestFromClient()
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 1);
     libjami::acceptConversationRequest(bobId, aliceData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
-    CPPUNIT_ASSERT(!std::filesystem::is_regular_file(cachedPath));
+    // cachedPath is removed on confirmation (from the DHT), so this can take a few secs to come
+    auto removed = false;
+    for (int i = 0; i <= 10; ++i) {
+        if (!std::filesystem::is_regular_file(cachedPath)) {
+            removed = true;
+            break;
+        }
+        std::this_thread::sleep_for(1s);
+    }
+    CPPUNIT_ASSERT(removed);
 }
 
 void
