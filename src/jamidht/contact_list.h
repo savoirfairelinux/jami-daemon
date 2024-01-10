@@ -128,9 +128,6 @@ public:
     bool acceptTrustRequest(const dht::InfoHash& from);
     bool discardTrustRequest(const dht::InfoHash& from);
 
-    /** Should be called only after onTrustRequest */
-    void saveTrustRequests() const;
-
     /* Devices */
     const std::map<dht::PkId, KnownDevice>& getKnownDevices() const { return knownDevices_; }
     void foundAccountDevice(const dht::PkId& device,
@@ -169,6 +166,9 @@ private:
 
     void loadKnownDevices();
     void saveKnownDevices() const;
+
+    /** Should be called only after onTrustRequest */
+    void saveTrustRequests() const;
 };
 
 } // namespace jami
