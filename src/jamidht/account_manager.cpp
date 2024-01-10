@@ -103,7 +103,6 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
                                         false,
                                         tr.second.conversationId,
                                         {});
-    info_->contacts->saveTrustRequests();
 }
 
 dht::crypto::Identity
@@ -359,7 +358,6 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                             JAMI_WARNING("Accept with old convId: {}", conversationId);
                         }
                         sendTrustRequestConfirm(peer_account, conversationId);
-                        info_->contacts->saveTrustRequests();
                     }
             });
         return true;

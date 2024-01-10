@@ -254,6 +254,7 @@ ContactList::saveContacts() const
 void
 ContactList::saveTrustRequests() const
 {
+    // mutex_ MUST BE locked
     std::ofstream file(path_ / "incomingTrustRequests",
                        std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
