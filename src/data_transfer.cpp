@@ -167,8 +167,11 @@ IncomingFile::~IncomingFile()
 {
     if (channel_)
         channel_->setOnRecv({});
-    if (stream_ && stream_.is_open())
-        stream_.close();
+    {
+        std::lock_guard<std::mutex> lk(streamMtx_);
+        if (stream_ && stream_.is_open())
+            stream_.close();
+    }
     if (channel_)
         channel_->shutdown();
 }
@@ -187,6 +190,7 @@ IncomingFile::process()
 {
     channel_->setOnRecv([w = weak()](const uint8_t* buf, size_t len) {
         if (auto shared = w.lock()) {
+            // No need to lock, setOnRecv is resetted before closing
             if (shared->stream_.is_open())
                 shared->stream_.write(reinterpret_cast<const char*>(buf), len);
             shared->info_.bytesProgress = shared->stream_.tellp();
@@ -197,8 +201,11 @@ IncomingFile::process()
         auto shared = w.lock();
         if (!shared)
             return;
-        if (shared->stream_ && shared->stream_.is_open())
-            shared->stream_.close();
+        {
+            std::lock_guard<std::mutex> lk(shared->streamMtx_);
+            if (shared->stream_ && shared->stream_.is_open())
+                shared->stream_.close();
+        }
         auto correct = shared->sha3Sum_.empty();
         if (!correct) {
             // Verify shaSum
