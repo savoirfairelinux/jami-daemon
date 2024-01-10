@@ -881,9 +881,6 @@ Manager::finish() noexcept
         return;
 
     try {
-        // Terminate UPNP context
-        upnpContext()->shutdown();
-
         // Forbid call creation
         callFactory.forbid();
 
@@ -903,6 +900,9 @@ Manager::finish() noexcept
         // Disconnect accounts, close link stacks and free allocated ressources
         unregisterAccounts();
         accountFactory.clear();
+
+        // Terminate UPNP context (after shutdown all controller via unregisterAccounts)
+        upnpContext()->shutdown();
 
         {
             std::lock_guard lock(pimpl_->audioLayerMutex_);
