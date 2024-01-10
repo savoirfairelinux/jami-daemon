@@ -1,0 +1,151 @@
+ src/upnp/upnp_context.cpp | 35 +++++++----------------------------
+ src/upnp/upnp_control.cpp | 13 +------------
+ 2 files changed, 8 insertions(+), 40 deletions(-)
+
+diff --git a/src/upnp/upnp_context.cpp b/src/upnp/upnp_context.cpp
+index a69528b..6a7273e 100644
+--- a/src/upnp/upnp_context.cpp
++++ b/src/upnp/upnp_context.cpp
+@@ -104,7 +104,7 @@ UPnPContext::shutdown()
+     std::condition_variable cv;
+
+     ctx->post([&, this] { shutdown(cv); });
+-
++
+     if (logger_) logger_->debug("Waiting for shutdown ...");
+
+     if (cv.wait_for(lk, std::chrono::seconds(30), [this] { return shutdownComplete_; })) {
+@@ -114,10 +114,11 @@ UPnPContext::shutdown()
+     }
+
+     if (ioContextRunner_) {
+-        if (logger_) logger_->debug("UPnPContext: stopping io_context thread");
++        if (logger_) logger_->debug("UPnPContext: stopping io_context thread {}", fmt::ptr(this));
+         ctx->stop();
+         ioContextRunner_->join();
+         ioContextRunner_.reset();
++        if (logger_) logger_->debug("UPnPContext: stopping io_context thread - finished {}", fmt::ptr(this));
+     }
+ }
+
+@@ -160,11 +161,6 @@ UPnPContext::startUpnp()
+ void
+ UPnPContext::stopUpnp(bool forceRelease)
+ {
+-    /*if (not isValidThread()) {
+-        ctx->post([this, forceRelease] { stopUpnp(forceRelease); });
+-        return;
+-    }*/
+-
+     if (logger_) logger_->debug("Stopping UPNP context");
+
+     // Clear all current mappings if any.
+@@ -392,6 +388,8 @@ void
+ UPnPContext::releaseMapping(const Mapping& map)
+ {
+     ctx->dispatch([this, map] {
++        if (shutdownComplete_)
++            return;
+         auto mapPtr = getMappingWithKey(map.getMapKey());
+
+         if (not mapPtr) {
+@@ -435,6 +433,8 @@ UPnPContext::registerController(void* controller)
+ void
+ UPnPContext::unregisterController(void* controller)
+ {
++    if (shutdownComplete_)
++        return;
+     std::unique_lock<std::mutex> lock(mappingMutex_);
+     if (controllerList_.erase(controller) == 1) {
+         if (logger_) logger_->debug("Successfully unregistered controller {}", fmt::ptr(controller));
+@@ -473,12 +473,6 @@ void
+ UPnPContext::requestMapping(const Mapping::sharedPtr_t& map)
+ {
+     assert(map);
+-
+-    /*if (not isValidThread()) {
+-        ctx->post([this, map] { requestMapping(map); });
+-        return;
+-    }*/
+-
+     auto const& igd = getPreferredIgd();
+     // We must have at least a valid IGD pointer if we get here.
+     // Not this method is called only if there were a valid IGD, however,
+@@ -928,11 +922,6 @@ UPnPContext::onIgdUpdated(const std::shared_ptr<IGD>& igd, UpnpIgdEvent event)
+ {
+     assert(igd);
+
+-    /*if (not isValidThread()) {
+-        ctx->post([this, igd, event] { onIgdUpdated(igd, event); });
+-        return;
+-    }*/
+-
+     // Reset to start search for a new best IGD.
+     preferredIgd_.reset();
+
+@@ -1079,11 +1068,6 @@ UPnPContext::requestRemoveMapping(const Mapping::sharedPtr_t& map)
+ void
+ UPnPContext::deleteAllMappings(PortType type)
+ {
+-    /*if (not isValidThread()) {
+-        ctx->post([this, type] { deleteAllMappings(type); });
+-        return;
+-    }*/
+-
+     std::lock_guard<std::mutex> lock(mappingMutex_);
+     auto& mappingList = getMappingList(type);
+
+@@ -1098,11 +1082,6 @@ UPnPContext::onMappingRemoved(const std::shared_ptr<IGD>& igd, const Mapping& ma
+     if (not mapRes.isValid())
+         return;
+
+-    /*if (not isValidThread()) {
+-        ctx->post([this, igd, mapRes] { onMappingRemoved(igd, mapRes); });
+-        return;
+-    }*/
+-
+     auto map = getMappingWithKey(mapRes.getMapKey());
+     // Notify the listener.
+     if (map and map->getNotifyCallback())
+diff --git a/src/upnp/upnp_control.cpp b/src/upnp/upnp_control.cpp
+index 4ee6a43..8dacd74 100644
+--- a/src/upnp/upnp_control.cpp
++++ b/src/upnp/upnp_control.cpp
+@@ -26,13 +26,10 @@ Controller::Controller(const std::shared_ptr<UPnPContext>& ctx)
+     upnpContext_->dispatch([c=upnpContext_, this]{
+         c->registerController(this);
+     });
+-    //if (upnpContext_->logger_) upnpContext_->logger_->debug("Controller@{}: Created UPnP Controller session", fmt::ptr(this));
+ }
+
+ Controller::~Controller()
+ {
+-    //if (logger_) logger_->debug("Controller@{}: Destroying UPnP Controller session", fmt::ptr(this));
+-
+     releaseAllMappings();
+     upnpContext_->dispatch([c=upnpContext_, this]{
+         c->unregisterController(this);
+@@ -112,9 +109,6 @@ Controller::addLocalMap(const Mapping& map)
+     if (map.getMapKey()) {
+         std::lock_guard<std::mutex> lock(mapListMutex_);
+         auto ret = mappingList_.emplace(map.getMapKey(), map);
+-        if (not ret.second) {
+-            // JAMI_WARN("Mapping request for %s already in the list!", map.toString().c_str());
+-        }
+     }
+ }
+
+@@ -124,12 +118,7 @@ Controller::removeLocalMap(const Mapping& map)
+     assert(upnpContext_);
+
+     std::lock_guard<std::mutex> lk(mapListMutex_);
+-    if (mappingList_.erase(map.getMapKey()) != 1) {
+-        // JAMI_ERR("Failed to remove mapping %s from local list", map.getTypeStr());
+-        return false;
+-    }
+-
+-    return true;
++    return mappingList_.erase(map.getMapKey()) == 1;
+ }
+
+ uint16_t

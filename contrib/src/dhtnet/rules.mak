@@ -19,6 +19,7 @@ endif
 DHTNET_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_BENCHMARKS=Off \
 	-DBUILD_TOOLS=Off \
+	-DCMAKE_RELEASE_TYPE=Debug -DCMAKE_CXX_FLAGS=" -g -O0 " \
 	-DBUILD_TESTING=Off \
 	-DBUILD_DEPENDENCIES=Off
 
@@ -32,6 +33,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	mkdir -p $(UNPACK_DIR)
 	$(UNPACK) -C $(UNPACK_DIR)
+	$(APPLY) $(SRC)/dhtnet/debug.patch
 	$(MOVE)
 
 .dhtnet: dhtnet toolchain.cmake .sum-dhtnet
