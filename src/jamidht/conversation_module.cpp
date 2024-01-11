@@ -1735,11 +1735,6 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     if (!oldConv.empty()) {
         lk.unlock();
         // Already a conversation with the contact.
-        if (oldConv != convId && acc->updateConvForContact(from, oldConv, convId)) {
-            initReplay(oldConv, convId);
-            cloneConversationFrom(convId, from, oldConv);
-            return;
-        }
         // If there is already an active one to one conversation here, it's an active
         // contact and the contact will reclone this activeConv, so ignore the request
         JAMI_WARNING("Contact is sending a request for a non active conversation. Ignore. They will "
