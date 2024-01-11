@@ -294,8 +294,8 @@ ConversationCallTest::testActiveCalls()
     aliceData_.messages.clear();
     auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     // should get message
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); });
-    CPPUNIT_ASSERT(aliceData_.messages[0].type == "application/call-history+json");
+    cv.wait_for(lk, 30s, [&]() { return !aliceData_.conferenceChanged && !aliceData_.messages.empty(); });
+    CPPUNIT_ASSERT(aliceData_.messages.rbegin()->type == "application/call-history+json");
 
     // get active calls = 1
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 1);
@@ -306,7 +306,7 @@ ConversationCallTest::testActiveCalls()
 
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); });
-    CPPUNIT_ASSERT(aliceData_.messages[0].body.find("duration") != aliceData_.messages[0].body.end());
+    CPPUNIT_ASSERT(aliceData_.messages.rbegin()->body.find("duration") != aliceData_.messages.rbegin()->body.end());
 
     // get active calls = 0
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 0);
