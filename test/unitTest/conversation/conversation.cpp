@@ -1257,10 +1257,10 @@ ConversationTest::testSendMessageWithLotOfKnownDevices()
         alice2Account->accountManager()->getInfo()->contacts->foundAccountDevice(h);
     }
 
-    auto bootstraped = false;
+    auto bootstraped = std::make_shared<bool>(false);
     alice2Account->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            bootstraped = status == Conversation::BootstrapStatus::SUCCESS;
+        [=](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            *bootstraped = status == Conversation::BootstrapStatus::SUCCESS;
             cv.notify_one();
         });
 
@@ -1268,8 +1268,8 @@ ConversationTest::testSendMessageWithLotOfKnownDevices()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationAlice2Ready; }));
 
     // Should bootstrap successfully
-    bootstraped = false;
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bootstraped; }));
+    *bootstraped = false;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return *bootstraped; }));
     libjami::unregisterSignalHandlers();
 }
 
