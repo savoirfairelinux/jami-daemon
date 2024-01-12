@@ -729,7 +729,6 @@ private:
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
     mutable std::mutex dhtValuesMtx_;
-    bool dhtPublicInCalls_ {true};
 
     std::atomic_int syncCnt_ {0};
     /**

@@ -56,6 +56,7 @@ JamiAccountConfig::serialize(YAML::Emitter& out) const
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
 
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt;
     if (receiptSignature.size() > 0)
@@ -100,6 +101,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
+    parseValueOptional(node, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
 
     parsePathOptional(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath, path);
     parseValueOptional(node,
@@ -159,6 +161,7 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
+    a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls ? TRUE_STR : FALSE_STR);
 #if HAVE_RINGNS
     a.emplace(libjami::Account::ConfProperties::RingNS::URI, nameServer);
 #endif
@@ -197,6 +200,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
 
     parseString(details, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseString(details, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
+    parseBool(details, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
     // parseString(details, libjami::Account::ConfProperties::USERNAME, username);
 
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);

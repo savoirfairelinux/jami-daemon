@@ -1956,7 +1956,7 @@ JamiAccount::doRegister_()
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
-                                                                  dhtPublicInCalls_,
+                                                                  this->config().dhtPublicInCalls,
                                                                   peer_account_id);
                     JAMI_LOG("{} ICE request from {}",
                         res ? "Accepting" : "Discarding", peer_account_id);
@@ -2086,7 +2086,7 @@ JamiAccount::doRegister_()
                 return true;
             accountManager_
                 ->onPeerMessage(*v.owner,
-                                dhtPublicInCalls_,
+                                this->config().dhtPublicInCalls,
                                 [this,
                                  v,
                                  inboxDeviceKey,

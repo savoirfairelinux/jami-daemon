@@ -73,6 +73,7 @@ private:
     void testSocketInfos();
     void testInvalidTurn();
     void testTransfer();
+    void testDhtPublicInCall();
 
     CPPUNIT_TEST_SUITE(CallTest);
     CPPUNIT_TEST(testCall);
@@ -83,6 +84,7 @@ private:
     CPPUNIT_TEST(testSocketInfos);
     CPPUNIT_TEST(testInvalidTurn);
     CPPUNIT_TEST(testTransfer);
+    CPPUNIT_TEST(testDhtPublicInCall);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -566,6 +568,50 @@ CallTest::testTransfer()
     Manager::instance().hangupCall(carlaId, carlaCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallStopped.load(); }));
 }
+
+void
+CallTest::testDhtPublicInCall()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::atomic_bool callReceived {false};
+    std::atomic<int> callStopped {0};
+    // Watch signals
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string&,
+            const std::string&,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
+            callReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string&, const std::string&, const std::string& state, signed) {
+            if (state == "OVER") {
+                callStopped += 1;
+                if (callStopped == 2)
+                    cv.notify_one();
+            }
+        }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    std::map<std::string, std::string> details;
+    details["DHT.PublicInCalls"] = "FALSE";
+    libjami::setAccountDetails(bobId, details);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
+
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return callReceived.load(); }));
+}
+
 } // namespace test
 } // namespace jami
 

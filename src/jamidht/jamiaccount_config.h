@@ -75,6 +75,8 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
 
     std::string receipt {};
     std::vector<uint8_t> receiptSignature {};
+
+    bool dhtPublicInCalls {true};
 };
 
 }
