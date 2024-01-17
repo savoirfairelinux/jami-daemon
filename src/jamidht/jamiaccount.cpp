@@ -1107,7 +1107,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (jami::Manager::instance().syncOnRegister) {
                 dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
                     if (auto shared = w.lock()) {
-                        if (auto cm = shared->convModule()) {
+                        if (auto cm = shared->convModule(true)) {
                             auto activeConv = cm->getOneToOneConversation(uri);
                             if (!activeConv.empty())
                                 cm->bootstrap(activeConv);
@@ -1125,7 +1125,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             dht::ThreadPool::io().run([w = weak(), uri, banned] {
                 if (auto shared = w.lock()) {
                     // Erase linked conversation's requests
-                    if (auto convModule = shared->convModule())
+                    if (auto convModule = shared->convModule(true))
                         convModule->removeContact(uri, banned);
                     // Remove current connections with contact
                     // Note: if contact is ourself, we don't close the connection
@@ -1156,7 +1156,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         return;
                     }
                     // Here account can be initializing
-                    if (auto cm = shared->convModule()) {
+                    if (auto cm = shared->convModule(true)) {
                         auto activeConv = cm->getOneToOneConversation(uri);
                         if (activeConv != conversationId)
                             cm->onTrustRequest(uri, conversationId, payload, received);
@@ -1179,16 +1179,18 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
-            convModule()->acceptConversationRequest(conversationId, deviceId);
+            if (auto cm = convModule(true))
+                cm->acceptConversationRequest(conversationId, deviceId);
         },
         [this](const std::string& uri, const std::string& convFromReq) {
             dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
                 if (auto shared = w.lock()) {
+                    auto cm = shared->convModule(true);
                     // Remove cached payload if there is one
                     auto requestPath = shared->cachePath_ / "requests"/ uri;
                     dhtnet::fileutils::remove(requestPath);
                     if (!convFromReq.empty()) {
-                        auto oldConv = shared->convModule()->getOneToOneConversation(uri);
+                        auto oldConv = cm->getOneToOneConversation(uri);
                         // If we previously removed the contact, and re-add it, we may
                         // receive a convId different from the request. In that case,
                         // we need to remove the current conversation and clone the old
@@ -1197,8 +1199,8 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         // may have send in the request we sent.
                         if (oldConv != convFromReq
                             && shared->updateConvForContact(uri, oldConv, convFromReq)) {
-                            shared->convModule()->initReplay(oldConv, convFromReq);
-                            shared->convModule()->cloneConversationFrom(convFromReq, uri, oldConv);
+                            cm->initReplay(oldConv, convFromReq);
+                            cm->cloneConversationFrom(convFromReq, uri, oldConv);
                         }
                     }
                 }
