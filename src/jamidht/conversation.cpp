@@ -165,9 +165,9 @@ public:
         repository_ = ConversationRepository::cloneConversation(account,
                                                                 remoteDevice,
                                                                 conversationId,
-                                                                std::move([&](auto c) {
+                                                                [&](auto c) {
                                                                     commits = std::move(c);
-                                                                }));
+                                                                });
         if (!repository_) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(
                 account->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
