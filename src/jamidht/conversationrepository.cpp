@@ -3349,9 +3349,9 @@ ConversationRepository::leave()
 
     {
         std::lock_guard lk(pimpl_->membersMtx_);
-        std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
+        pimpl_->members_.erase(std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
             return member.uri == account->getUsername();
-        });
+        }), pimpl_->members_.end());
     }
 
     return pimpl_->commit(Json::writeString(wbuilder, json), false);
