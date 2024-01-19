@@ -14,6 +14,7 @@ $(TARBALLS)/pupnp-release-$(UPNP_VERSION).tar.gz:
 
 upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
 	$(UNPACK)
+	$(APPLY) $(SRC)/upnp/debug.patch
 ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
