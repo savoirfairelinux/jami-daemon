@@ -158,6 +158,7 @@ private:
     void testMessageReaction();
     void testLoadPartiallyRemovedConversation();
     void testReactionsOnEditedMessage();
+    void testUpdateProfileMultiDevice();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -211,6 +212,7 @@ private:
     CPPUNIT_TEST(testMessageReaction);
     CPPUNIT_TEST(testLoadPartiallyRemovedConversation);
     CPPUNIT_TEST(testReactionsOnEditedMessage);
+    CPPUNIT_TEST(testUpdateProfileMultiDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -2486,6 +2488,41 @@ ConversationTest::testReactionsOnEditedMessage()
 
     // Reaction is kept
     CPPUNIT_ASSERT(emojiId == aliceData.messagesUpdated[0].reactions[0]["id"]);
+}
+
+void
+ConversationTest::testUpdateProfileMultiDevice()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+
+    // Bob creates a second device
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    std::remove(bobArchive.c_str());
+    bobAccount->exportArchive(bobArchive);
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB2";
+    details[ConfProperties::ALIAS] = "BOB2";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = bobArchive;
+    bob2Id = Manager::instance().addAccount(details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.registered; }));
+
+    // Bob creates a conversation
+    auto convId = libjami::startConversation(bobId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bob2Data.conversationId.empty(); }));
+
+
+    auto bobMsgSize = bobData.messages.size();
+    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+    bob2Account->convModule()->updateConversationInfos(bob2Data.conversationId, {{"title", "My awesome swarm"}});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+
 }
 
 } // namespace test

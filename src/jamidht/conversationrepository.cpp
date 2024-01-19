@@ -1506,9 +1506,21 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
 
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     // Check that no weird file is added nor removed
+    std::string userDeviceFile = fmt::format("devices/{}.crt", userDevice);
     for (const auto& f : changedFiles) {
         if (f == "profile.vcf") {
             // Ignore
+        } else if (f == userDeviceFile) {
+            // In this case, device is added or modified (certificate expiration)
+            auto oldFile = fileAtTree(f, treeOld);
+            std::string_view oldCert;
+            if (oldFile)
+                oldCert = as_view(oldFile);
+            auto newFile = fileAtTree(f, treeNew);
+            if (!verifyCertificate(as_view(newFile), userUri, oldCert)) {
+                JAMI_ERROR("Invalid certificate {}", f);
+                return false;
+            }
         } else {
             JAMI_ERROR("Unwanted changed file detected: {}", f);
             return false;
@@ -3844,7 +3856,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
 
-    return pimpl_->commit(Json::writeString(wbuilder, json));
+    return commitMessage(Json::writeString(wbuilder, json));
 }
 
 std::map<std::string, std::string>
