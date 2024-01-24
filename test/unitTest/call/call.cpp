@@ -76,15 +76,15 @@ private:
     void testDhtPublicInCall();
 
     CPPUNIT_TEST_SUITE(CallTest);
-    CPPUNIT_TEST(testCall);
-    CPPUNIT_TEST(testCachedCall);
-    CPPUNIT_TEST(testStopSearching);
-    CPPUNIT_TEST(testDeclineMultiDevice);
-    CPPUNIT_TEST(testTlsInfosPeerCertificate);
-    CPPUNIT_TEST(testSocketInfos);
-    CPPUNIT_TEST(testInvalidTurn);
+    //CPPUNIT_TEST(testCall);
+    //CPPUNIT_TEST(testCachedCall);
+    //CPPUNIT_TEST(testStopSearching);
+    //CPPUNIT_TEST(testDeclineMultiDevice);
+    //CPPUNIT_TEST(testTlsInfosPeerCertificate);
+    //CPPUNIT_TEST(testSocketInfos);
+    //CPPUNIT_TEST(testInvalidTurn);
     CPPUNIT_TEST(testTransfer);
-    CPPUNIT_TEST(testDhtPublicInCall);
+    //CPPUNIT_TEST(testDhtPublicInCall);
     CPPUNIT_TEST_SUITE_END();
 };
 

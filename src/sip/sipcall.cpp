@@ -1295,8 +1295,9 @@ SIPCall::transfer(const std::string& to)
     if (Call::isRecording())
         stopRecording();
 
-    auto uri = Uri(account->getToUri(to));
-    const pj_str_t dst(CONST_PJ_STR(uri.authority()));
+    std::string toUri = account->getToUri(to);
+    const pj_str_t dst(CONST_PJ_STR(toUri));
+
     JAMI_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int) dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))
