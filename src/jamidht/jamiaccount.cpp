@@ -2723,7 +2723,9 @@ JamiAccount::getFromUri() const
 std::string
 JamiAccount::getToUri(const std::string& to) const
 {
-    return fmt::format("<sips:{};transport=tls>", to);
+    auto username = to;
+    string_replace(username, "sip:", "");
+    return fmt::format("<sips:{};transport=tls>", username);
 }
 
 std::string
