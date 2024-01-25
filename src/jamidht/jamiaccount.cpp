@@ -1237,6 +1237,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             config_->username = info->accountId;
             JAMI_WARNING("[Account {:s}] loaded account identity", getAccountID());
             if (not isEnabled()) {
+                convModule(); // Init conv module
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
         } else if (isEnabled()) {

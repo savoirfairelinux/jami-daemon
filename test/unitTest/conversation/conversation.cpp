@@ -108,6 +108,7 @@ public:
 
 private:
     void testCreateConversation();
+    void testOfflineConvModule();
     void testCreateConversationInvalidDisplayName();
     void testGetConversation();
     void testGetConversationsAfterRm();
@@ -162,6 +163,7 @@ private:
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
+    CPPUNIT_TEST(testOfflineConvModule);
     CPPUNIT_TEST(testCreateConversationInvalidDisplayName);
     CPPUNIT_TEST(testGetConversation);
     CPPUNIT_TEST(testGetConversationsAfterRm);
@@ -545,6 +547,14 @@ ConversationTest::testCreateConversation()
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)),
                              std::istreambuf_iterator<char>());
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationTest::testOfflineConvModule()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    CPPUNIT_ASSERT(carlaAccount->convModule() != nullptr);
 }
 
 void
