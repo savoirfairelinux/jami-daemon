@@ -567,7 +567,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                         std::filesystem::rename(path, destPath);
                         if (!pimpl->accountUri_.empty() && uri == pimpl->accountUri_) {
                             // If this is the account profile, link or copy it to the account profile path
-                            if (!fileutils::createFileLink(destPath, pimpl->accountProfilePath_)) {
+                            if (!fileutils::createFileLink(pimpl->accountProfilePath_, destPath)) {
                                 std::error_code ec;
                                 std::filesystem::copy_file(destPath, pimpl->accountProfilePath_, ec);
                             }
