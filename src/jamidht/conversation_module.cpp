@@ -1984,6 +1984,21 @@ ConversationModule::convDisplayed() const
     return displayed;
 }
 
+std::map<std::string, std::map<std::string, std::map<std::string, std::string>>>
+ConversationModule::convMessageStatus() const
+{
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> messageStatus;
+    std::lock_guard lk(pimpl_->conversationsMtx_);
+    for (const auto& [id, conv] : pimpl_->conversations_) {
+        if (conv && conv->conversation) {
+            auto d = conv->conversation->messageStatus();
+            if (!d.empty())
+                messageStatus[id] = std::move(d);
+        }
+    }
+    return messageStatus;
+}
+
 uint32_t
 ConversationModule::loadConversationMessages(const std::string& conversationId,
                                              const std::string& fromMessage,
@@ -2312,6 +2327,18 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 conversation->updateLastDisplayed(ld);
             } else if (conv->pending) {
                 conv->pending->lastDisplayed = ld;
+            }
+        }
+    }
+
+    // Updates displayed for conversations
+    for (const auto& [convId, ms] : msg.ms) {
+        if (auto conv = pimpl_->getConversation(convId)) {
+            std::unique_lock<std::mutex> lk(conv->mtx);
+            if (conv->conversation) {
+                auto conversation = conv->conversation;
+                lk.unlock();
+                conversation->updateMessageStatus(ms);
             }
         }
     }
