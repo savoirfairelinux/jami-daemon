@@ -125,6 +125,19 @@ test('conversation_call', ut_conversation_call,
 )
 
 
+ut_conversation_fetch_sent = executable('ut_conversation_fetch_sent',
+    sources: files(
+        'unitTest/conversation/conversationcommon.cpp',
+        'unitTest/conversation/conversationFetchSent.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('conversation_fetch_sent', ut_conversation_fetch_sent,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
+
 ut_conversation_members_event = executable('ut_conversation_members_event',
     sources: files(
         'unitTest/conversation/conversationMembersEvent.cpp',
