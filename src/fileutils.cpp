@@ -195,6 +195,14 @@ createHardlink(const std::filesystem::path& linkFile, const std::filesystem::pat
 bool
 createFileLink(const std::filesystem::path& linkFile, const std::filesystem::path& target, bool hard)
 {
+    if (linkFile == target)
+        return true;
+    std::error_code ec;
+    if (std::filesystem::exists(linkFile, ec)) {
+        if (std::filesystem::is_symlink(linkFile, ec) && std::filesystem::read_symlink(linkFile, ec) == target)
+            return true;
+        std::filesystem::remove(linkFile, ec);
+    }
     if (not hard or not createHardlink(linkFile, target))
         return createSymlink(linkFile, target);
     return true;
