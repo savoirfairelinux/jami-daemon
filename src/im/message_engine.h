@@ -65,8 +65,6 @@ public:
                        bool success,
                        const std::string& deviceId = {});
 
-    void onMessageDisplayed(const std::string& peer, MessageToken t, bool displayed);
-
     /**
      * @TODO change MessageEngine by a queue,
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
