@@ -56,16 +56,12 @@ public:
 
     MessageStatus getStatus(MessageToken t) const;
 
-    bool cancel(MessageToken t);
-
     bool isSent(MessageToken t) const { return getStatus(t) == MessageStatus::SENT; }
 
     void onMessageSent(const std::string& peer,
                        MessageToken t,
                        bool success,
                        const std::string& deviceId = {});
-
-    void onMessageDisplayed(const std::string& peer, MessageToken t, bool displayed);
 
     /**
      * @TODO change MessageEngine by a queue,

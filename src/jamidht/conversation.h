@@ -188,14 +188,6 @@ public:
      */
     std::vector<std::string> commitsEndedCalls();
 
-    /**
-     * Add a callback to update upper layers
-     * @note to call after the construction (and before ConversationReady)
-     * @param lastDisplayedUpdatedCb    Triggered when last displayed for account is updated
-     */
-    void onLastDisplayedUpdated(
-        std::function<void(const std::string&, const std::string&)>&& lastDisplayedUpdatedCb);
-
     void onMembersChanged(OnMembersChanged&& cb);
 
     /**
@@ -451,11 +443,6 @@ public:
      */
     void clearFetched();
     /**
-     * Check if a device has fetched last commit
-     * @param deviceId
-     */
-    bool needsFetch(const std::string& deviceId) const;
-    /**
      * Store informations about who fetch or not. This simplify sync (sync when a device without the
      * last fetch is detected)
      * @param deviceId
@@ -470,23 +457,31 @@ public:
      * @return if updated
      */
     bool setMessageDisplayed(const std::string& uri, const std::string& interactionId);
-
     /**
-     * Compute, with multi device support the last message displayed of a conversation
-     * @param lastDisplayed      Latest displayed interaction
+     * Retrieve last displayed and fetch status per member
+     * @return A map with the following structure:
+     * {uri, {
+     *          {"fetch", "commitId"},
+     *          {"fetched_ts", "timestamp"},
+     *          {"read", "commitId"},
+     *          {"read_ts", "timestamp"}
+     *       }
+     * }
      */
-    void updateLastDisplayed(const std::string& lastDisplayed);
-
+    std::map<std::string, std::map<std::string, std::string>> messageStatus() const;
     /**
-     * Change last displayed for multiple uris
-     * @param map       New last displayed
+     * Update fetch/read status
+     * @param messageStatus     A map with the following structure:
+     * {uri, {
+     *          {"fetch", "commitId"},
+     *          {"fetched_ts", "timestamp"},
+     *          {"read", "commitId"},
+     *          {"read_ts", "timestamp"}
+     *       }
+     * }
      */
-    void updateLastDisplayed(const std::map<std::string, std::string>& map);
-    /**
-     * Retrieve last displayed id
-     * @return displayed
-     */
-    std::map<std::string, std::string> displayed() const;
+    void updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus);
+    void onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb);
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param toId      "" for getting the whole history

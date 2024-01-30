@@ -3587,9 +3587,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
 
             if (!isReadReceiptEnabled())
                 return true;
-            if (conversationId.empty()) // Old method
-                messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
-            else if (isDisplayed) {
+            if (isDisplayed) {
                 if (convModule()->onMessageDisplayed(from, conversationId, messageId)) {
                     JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
                     emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
