@@ -46,7 +46,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::map<std::string, std::string> preferences {};
-    std::map<std::string, std::string> lastDisplayed {};
+    std::map<std::string, std::string> lastDisplayed {}; // remove
     std::set<std::string> connectingTo {};
     std::shared_ptr<dhtnet::ChannelSocket> socket {};
 };
@@ -245,7 +245,7 @@ public:
     void onLastDisplayedUpdated(const std::string& convId, const std::string& lastId)
     {
         withConv(convId, [&](auto& conv) {
-            conv.info.lastDisplayed = lastId;
+            conv.info.lastDisplayed = lastId; // Remove
             addConvInfo(conv.info);
         });
         // Updates info for client
@@ -697,11 +697,13 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     };
     try {
         auto conversation = std::make_shared<Conversation>(acc, deviceId, conversationId);
-        conversation->onLastDisplayedUpdated([&](const auto& convId, const auto& lastId) {
-            onLastDisplayedUpdated(convId, lastId);
-        });
         conversation->onMembersChanged([this, conversationId](const auto& members) {
             setConversationMembers(conversationId, members);
+        });
+        conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
+            auto msg = std::make_shared<SyncMsg>();
+            msg->ms = {{conversationId, status}};
+            needsSyncingCb_(std::move(msg));
         });
         conversation->onNeedSocket(onNeedSwarmSocket_);
         if (!conversation->isMember(username_, true)) {
@@ -1435,9 +1437,10 @@ ConversationModule::loadConversations()
                 auto sconv = std::make_shared<SyncedConversation>(repository);
 
                 auto conv = std::make_shared<Conversation>(acc, repository);
-                conv->onLastDisplayedUpdated([w = pimpl_->weak_from_this()](auto convId, auto lastId) {
-                    if (auto p = w.lock())
-                        p->onLastDisplayedUpdated(convId, lastId);
+                conv->onMessageStatusChanged([this, repository](const auto& status) {
+                    auto msg = std::make_shared<SyncMsg>();
+                    msg->ms = {{repository, status}};
+                    pimpl_->needsSyncingCb_(std::move(msg));
                 });
                 conv->onMembersChanged([w = pimpl_->weak_from_this(), repository](const auto& members) {
                     if (auto p = w.lock())
@@ -1835,10 +1838,14 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     std::shared_ptr<Conversation> conversation;
     try {
         conversation = std::make_shared<Conversation>(acc, mode, otherMember);
-        conversation->onLastDisplayedUpdated(
-            [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
+        auto conversationId = conversation->id();
+        conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
+            auto msg = std::make_shared<SyncMsg>();
+            msg->ms = {{conversationId, status}};
+            pimpl_->needsSyncingCb_(std::move(msg));
+        });
         conversation->onMembersChanged(
-            [this, conversationId = conversation->id()](const auto& members) {
+            [this, conversationId](const auto& members) {
                 pimpl_->setConversationMembers(conversationId, members);
             });
         conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
@@ -1847,7 +1854,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
                                           pimpl_.get(),
-                                          conversation->id()),
+                                          conversationId),
                                 kd);
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
@@ -1983,6 +1990,21 @@ ConversationModule::convDisplayed() const
         }
     }
     return displayed;
+}
+
+std::map<std::string, std::map<std::string, std::map<std::string, std::string>>>
+ConversationModule::convMessageStatus() const
+{
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> messageStatus;
+    std::lock_guard lk(pimpl_->conversationsMtx_);
+    for (const auto& [id, conv] : pimpl_->conversations_) {
+        if (conv && conv->conversation) {
+            auto d = conv->conversation->messageStatus();
+            if (!d.empty())
+                messageStatus[id] = std::move(d);
+        }
+    }
+    return messageStatus;
 }
 
 uint32_t
@@ -2313,6 +2335,19 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 conversation->updateLastDisplayed(ld);
             } else if (conv->pending) {
                 conv->pending->lastDisplayed = ld;
+            }
+        }
+    }
+
+    // Updates displayed for conversations
+    for (const auto& [convId, ms] : msg.ms) {
+        if (auto conv = pimpl_->getConversation(convId)) {
+            std::unique_lock<std::mutex> lk(conv->mtx);
+            if (conv->conversation) {
+                auto conversation = conv->conversation;
+                lk.unlock();
+                JAMI_ERROR("UPDATE STATUS FOR {}", convId);
+                conversation->updateMessageStatus(ms);
             }
         }
     }

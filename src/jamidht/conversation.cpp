@@ -206,6 +206,7 @@ public:
             conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID()
                                     / "conversation_data" / repository_->id();
             fetchedPath_ = conversationDataPath_ / "fetched";
+            statusPath_ = conversationDataPath_ / "status";
             sendingPath_ = conversationDataPath_ / "sending";
             lastDisplayedPath_ = conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
             preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
@@ -215,6 +216,7 @@ public:
             loadSending();
             loadLastDisplayed();
             loadActiveCalls();
+            loadStatus();
         }
     }
 
@@ -258,15 +260,15 @@ public:
     bool isAdmin() const;
     std::filesystem::path repoPath() const;
 
-    void announce(const std::string& commitId) const
+    void announce(const std::string& commitId, bool commitFromSelf = false) const
     {
         std::vector<std::string> vec;
         if (!commitId.empty())
             vec.emplace_back(commitId);
-        announce(vec);
+        announce(vec, commitFromSelf);
     }
 
-    void announce(const std::vector<std::string>& commits) const
+    void announce(const std::vector<std::string>& commits, bool commitFromSelf = false) const
     {
         std::vector<ConversationCommit> convcommits;
         convcommits.reserve(commits.size());
@@ -276,7 +278,7 @@ public:
                 convcommits.emplace_back(*commit);
             }
         }
-        announce(repository_->convCommitsToMap(convcommits));
+        announce(repository_->convCommitsToMap(convcommits), commitFromSelf);
     }
 
     /**
@@ -391,7 +393,7 @@ public:
         }
     }
 
-    void announce(const std::vector<std::map<std::string, std::string>>& commits) const
+    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false) const
     {
         auto shared = account_.lock();
         if (!shared or !repository_)
@@ -399,7 +401,7 @@ public:
         auto convId = repository_->id();
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
-        addToHistory(commits, true);
+        addToHistory(commits, true, commitFromSelf);
         if (ok) {
             bool announceMember = false;
             for (const auto& c : commits) {
@@ -489,13 +491,30 @@ public:
             std::lock_guard lk {fetchedDevicesMtx_};
             oh.get().convert(fetchedDevices_);
         } catch (const std::exception& e) {
-            return;
         }
     }
     void saveFetched()
     {
         std::ofstream file(fetchedPath_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, fetchedDevices_);
+    }
+
+    void loadStatus()
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(statusPath_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard lk {messageStatusMtx_};
+            oh.get().convert(messagesStatus_);
+        } catch (const std::exception& e) {
+        }
+    }
+    void saveStatus()
+    {
+        std::ofstream file(statusPath_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, messagesStatus_);
     }
 
     void loadSending()
@@ -683,6 +702,7 @@ public:
     std::vector<std::shared_ptr<libjami::SwarmMessage>> addToHistory(
         const std::vector<std::map<std::string, std::string>>& commits,
         bool messageReceived = false,
+        bool commitFromSelf = false,
         History* history = nullptr) const;
     // While loading the history, we need to avoid:
     // - reloading history (can just be ignored)
@@ -699,6 +719,31 @@ public:
     bool handleMessage(History& history,
                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                        bool messageReceived) const;
+
+    /**
+     * {uri, {
+     *          {"fetch", "commitId"},
+     *          {"fetched_ts", "timestamp"},
+     *          {"read", "commitId"},
+     *          {"read_ts", "timestamp"}
+     *       }
+     * }
+     */
+    mutable std::mutex messageStatusMtx_;
+    std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)> messageStatusCb_ {};
+    std::filesystem::path statusPath_ {};
+    mutable std::map<std::string, std::map<std::string, std::string>> messagesStatus_ {};
+    /**
+     * Status: 0 = commited, 1 = fetched, 2 = read
+     * This cache the curent status to add in the messages
+     */
+    mutable std::map<std::string, int32_t> memberToStatus;
+    mutable std::map<std::string, std::map<std::string, int32_t>> futureStatus;
+    void updateStatus(const std::string& uri,
+                      int status,
+                      const std::string& commitId,
+                      const std::string& ts,
+                      bool emit = false);
 };
 
 bool
@@ -912,7 +957,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if (!optHistory && msgList.empty() && !loadedHistory_.messageList.empty()) {
                 firstMsg = *loadedHistory_.messageList.rbegin();
             }
-            auto added = addToHistory({message}, false, optHistory);
+            auto added = addToHistory({message}, false, false, optHistory);
             if (!added.empty() && firstMsg) {
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                              repository_->id(),
@@ -1076,8 +1121,13 @@ Conversation::Impl::handleMessage(History& history,
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
 Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
+                                 bool commitFromSelf,
                                  History* optHistory) const
 {
+    auto acc = account_.lock();
+    if (!acc)
+        return {};
+    auto username = acc->getUsername();
     if (messageReceived && (!optHistory && isLoadingHistory_)) {
         std::unique_lock<std::mutex> lk(historyMtx_);
         historyCv_.wait(lk, [&] { return !isLoadingHistory_; });
@@ -1097,6 +1147,48 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
+        // Set message status based on cache (only on history)
+        if (!commitFromSelf && optHistory == nullptr) {
+            std::lock_guard lk(messageStatusMtx_);
+            for (const auto& member: repository_->members()) {
+                if (member.uri == username)
+                    continue;
+                auto itFuture = futureStatus.find(sharedCommit->id);
+                if (itFuture != futureStatus.end()) {
+                    sharedCommit->status = std::move(itFuture->second);
+                    futureStatus.erase(itFuture);
+                    continue;
+                }
+                auto& cache = memberToStatus[member.uri];
+                if (member.uri == commit.at("author")) {
+                    messagesStatus_[member.uri]["read"] = sharedCommit->id;
+                    messagesStatus_[member.uri]["fetched"] = sharedCommit->id;
+                    sharedCommit->status[commit.at("author")] = 2;
+                    cache = 2;
+                    continue;
+                }
+                if (!messageReceived) {
+                    if (cache == 1) {
+                        if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
+                            cache = 2;
+                        }
+                    } else if (cache == 0) {
+                        if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
+                            cache = 1;
+                        }
+                    }
+                    sharedCommit->status[member.uri] = cache;
+                } else {
+                    auto status = 0;
+                    if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
+                        status = 2;
+                    } else if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
+                        status = 1;
+                    }
+                    sharedCommit->status[member.uri] = status;
+                }
+            }
+        }
         history->quickAccess[commitId] = sharedCommit;
 
         if (reactToIt != commit.end() && !reactToIt->second.empty()) {
@@ -1187,7 +1279,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
             // Add member files and commit
             std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
             auto commit = sthis->pimpl_->repository_->addMember(contactUri);
-            sthis->pimpl_->announce(commit);
+            sthis->pimpl_->announce(commit, true);
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
@@ -1277,7 +1369,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri,
         lastId = resolveCommit;
         JAMI_WARN("Vote solved for unbanning %s.", contactUri.c_str());
     }
-    announce(commits);
+    announce(commits, true);
     lk.unlock();
     if (cb)
         cb(!lastId.empty(), lastId);
@@ -1360,7 +1452,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                     sthis->removeGitSocket(did);
             }
 
-            sthis->pimpl_->announce(commits);
+            sthis->pimpl_->announce(commits, true);
             lk.unlock();
             cb(!lastId.empty(), lastId);
         }
@@ -1503,7 +1595,8 @@ Conversation::sendMessage(Json::Value&& value,
                 lk.unlock();
                 if (onCommit)
                     onCommit(commit);
-                sthis->pimpl_->announce(commit);
+                sthis->pimpl_->announce(commit, true);
+                // TODO remove sending
                 emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                     acc->getAccountID(),
                     sthis->id(),
@@ -1530,7 +1623,7 @@ Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& 
                 commits.emplace_back(std::move(commit));
             }
             lk.unlock();
-            sthis->pimpl_->announce(commits);
+            sthis->pimpl_->announce(commits, true);
             sthis->clearFetched();
             if (cb)
                 cb(commits);
@@ -1842,7 +1935,7 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
             auto& repo = sthis->pimpl_->repository_;
             std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
             auto commit = repo->updateInfos(map);
-            sthis->pimpl_->announce(commit);
+            sthis->pimpl_->announce(commit, true);
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
@@ -2022,13 +2115,6 @@ Conversation::clearFetched()
     pimpl_->saveFetched();
 }
 
-bool
-Conversation::needsFetch(const std::string& deviceId) const
-{
-    std::lock_guard lk(pimpl_->fetchedDevicesMtx_);
-    return pimpl_->fetchedDevices_.find(deviceId) == pimpl_->fetchedDevices_.end();
-}
-
 void
 Conversation::hasFetched(const std::string& deviceId, const std::string& commitId)
 {
@@ -2036,6 +2122,19 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
         auto sthis = w.lock();
         if (!sthis)
             return;
+        auto acc = sthis->pimpl_->account_.lock();
+        // Update fetched for Uri
+        auto uri = sthis->uriFromDevice(deviceId);
+        JAMI_ERROR("@@@@@@@@@ FETCH {} vs {}", uri, acc->getUsername());
+        if (uri.empty() || !acc || uri == acc->getUsername())
+            return;
+        sthis->pimpl_->updateStatus(uri, 1, commitId, std::to_string(std::time(nullptr)), true);
+        // TODO sync with conebncetd
+
+
+        // TODO
+        // 5. Remove fetched
+        // Synced
         {
             std::lock_guard lk(sthis->pimpl_->fetchedDevicesMtx_);
             sthis->pimpl_->fetchedDevices_.emplace(deviceId);
@@ -2064,9 +2163,78 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
     });
 }
 
+
+void
+Conversation::Impl::updateStatus(const std::string& uri,
+                      int st,
+                      const std::string& commitId,
+                      const std::string& ts,
+                      bool emit)
+{
+    if (!emit) {
+        JAMI_ERROR("@@@ {} {} {} {} {}", uri, st, commitId, ts, emit);
+    }
+    LogOptions options;
+    std::map<std::string, std::map<std::string, std::string>> newStatus;
+    {
+        std::lock_guard lk(messageStatusMtx_);
+        auto& status = messagesStatus_[uri];
+        auto& oldStatus = status[st == 1 ? "fetched" : "read"];
+        if (oldStatus == commitId)
+            return; // Nothing to do
+        options.to = oldStatus;
+        options.from = commitId;
+        oldStatus = commitId;
+        status[st == 1 ? "fetched_ts" : "read_ts"] = ts;
+        saveStatus();
+        if (emit)
+            newStatus[uri] = status;
+    }
+    if (emit && messageStatusCb_) messageStatusCb_(newStatus);
+    // Update messages status for all commit between the old and new one
+    options.logIfNotFound = false;
+    options.fastLog = true;
+    History optHistory;
+    if (!emit) {
+        JAMI_ERROR("@@@2 {} {} {} {} {}", uri, st, commitId, ts, emit);
+    }
+    auto res = loadMessages2(options, &optHistory);
+    if (!emit) {
+        JAMI_ERROR("@@@2.1 {} {} {} {} {} {}", uri, st, commitId, ts, emit, res.size());
+    }
+    for (const auto& [cid, _]: optHistory.quickAccess) {
+        std::lock_guard lk(historyMtx_);
+        auto message = loadedHistory_.quickAccess.find(cid);
+        if (message != loadedHistory_.quickAccess.end()) {
+            message->second->status[uri] = st; // TODO status
+        } else {
+            futureStatus[cid][uri] = st;
+        }
+    if (!emit) {
+        JAMI_ERROR("@@@3 {} {} {} {} {}", uri, st, commitId, ts, emit);
+    }
+        emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+            accountId_,
+            repository_->id(),
+            uri,
+            cid,
+            static_cast<int>(st == 1 ? libjami::Account::MessageStates::SENT : libjami::Account::MessageStates::DISPLAYED));
+    }
+}
+
 bool
 Conversation::setMessageDisplayed(const std::string& uri, const std::string& interactionId)
 {
+    dht::ThreadPool::io().run([w = weak(), uri, interactionId]() {
+        auto sthis = w.lock();
+        if (!sthis)
+            return;
+        sthis->pimpl_->updateStatus(uri, 2, interactionId, std::to_string(std::time(nullptr)), true);
+    });
+
+    // TODO
+    // 5. Remove lastDisplayed
+    // Synced
     if (auto acc = pimpl_->account_.lock()) {
         {
             std::lock_guard lk(pimpl_->lastDisplayedMtx_);
@@ -2084,6 +2252,7 @@ Conversation::setMessageDisplayed(const std::string& uri, const std::string& int
 void
 Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
 {
+    // TODO sync informations
     auto filePath = pimpl_->conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
     auto prefs = map;
     auto itLast = prefs.find(LAST_MODIFIED);
@@ -2168,6 +2337,53 @@ Conversation::displayed() const
     } catch (const std::exception& e) {
     }
     return {};
+}
+
+std::map<std::string, std::map<std::string, std::string>>
+Conversation::messageStatus() const
+{
+    std::lock_guard lk(pimpl_->messageStatusMtx_);
+    return pimpl_->messagesStatus_;
+}
+
+void
+Conversation::updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus)
+{
+    auto acc = pimpl_->account_.lock();
+    std::unique_lock<std::mutex> lk(pimpl_->messageStatusMtx_);
+    std::vector<std::tuple<int, std::string, std::string, std::string>> stVec;
+    JAMI_ERROR("@@@ UPDATE STATUS");
+    for (const auto& [uri, status] : messageStatus) {
+        if (uri == acc->getUsername())
+            continue;
+        auto& oldMs = pimpl_->messagesStatus_[uri];
+        JAMI_ERROR("@@@ UPDATE STATUS?");
+        if (status.find("fetched_ts") != status.end() && status.at("fetched") != oldMs["fetched"]) {
+            if (oldMs["fetched_ts"].empty() || std::stol(oldMs["fetched_ts"]) <= std::stol(status.at("fetched_ts"))) {
+        JAMI_ERROR("@@@ UPDATE STATUS!");
+                stVec.emplace_back(1, uri, status.at("fetched"), status.at("fetched_ts"));
+            }
+        }
+        if (status.find("read_ts") != status.end() && status.at("read") != oldMs["read"]) {
+            if (oldMs["read_ts"].empty() || std::stol(oldMs["read_ts"]) <= std::stol(status.at("read_ts"))) {
+                stVec.emplace_back(2, uri, status.at("read"), status.at("read_ts"));
+            }
+        }
+    }
+    lk.unlock();
+
+    for (const auto& [status, uri, commitId, ts] : stVec) {
+        JAMI_ERROR("@@@ UPDATE STATUS=> {} {} {} {}", uri, status, commitId, ts);
+
+        pimpl_->updateStatus(uri, status, commitId, ts);
+    }
+}
+
+void
+Conversation::onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb)
+{
+    std::unique_lock<std::mutex> lk(pimpl_->messageStatusMtx_);
+    pimpl_->messageStatusCb_ = cb;
 }
 
 #ifdef LIBJAMI_TESTABLE
@@ -2317,7 +2533,7 @@ Conversation::commitsEndedCalls()
         // Announce to client
         dht::ThreadPool::io().run([w = weak(), commits] {
             if (auto sthis = w.lock())
-                sthis->pimpl_->announce(commits);
+                sthis->pimpl_->announce(commits, true);
         });
     }
     return commits;
@@ -2425,7 +2641,7 @@ Conversation::search(uint32_t req,
                 },
                 [&](auto&& cc) {
                     if (auto optMessage = sthis->pimpl_->repository_->convCommitToMap(cc))
-                        sthis->pimpl_->addToHistory({optMessage.value()}, false, &history);
+                        sthis->pimpl_->addToHistory({optMessage.value()}, false, false, &history);
                 },
                 [&](auto id, auto, auto) {
                     if (id == filter.lastId)
