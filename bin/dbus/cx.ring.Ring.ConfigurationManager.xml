@@ -552,6 +552,7 @@
             <arg type="t" name="id" direction="in"/>
             <arg type="b" name="success" direction="out">
                 <tp:docstring>
+                TODO deprecated
                Cancel pending message.
                 </tp:docstring>
             </arg>
@@ -578,7 +579,7 @@
             <arg type="t" name="id" direction="in"/>
             <arg type="i" name="status" direction="out">
                 <tp:docstring>
-               The message status.
+               The message status. TODO deprecated
                     <ul>
                         <li>UNKNOWN = 0    unknown message or message status</li>
                         <li>SENDING = 1    message is being sent or waiting for peer confirmation.</li>
@@ -612,7 +613,14 @@
             <arg type="s" name="peer"/>
             <arg type="s" name="id"/>
             <arg type="i" name="status">
-                <tp:docstring>The new status of the message, see getMessageStatus for possible values.</tp:docstring>
+                <tp:docstring>
+                The message status.
+                    <ul>
+                        <li>SENDING = 0    message is being sent or waiting for peer confirmation.</li>
+                        <li>SENT    = 1    message have been received from the other end.</li>
+                        <li>READ    = 2    message have been read by the peer.</li>
+                    </ul>
+                </tp:docstring>
             </arg>
         </signal>
 
@@ -2058,7 +2066,7 @@
                </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="VectorSwarmMessage"/>
-           <arg type="a(sssa{ss}aa{ss}aa{ss})" name="messages">
+           <arg type="a(sssa{ss}aa{ss}aa{ss}a{si})" name="messages">
                <tp:docstring>
                     Messages of the conversation
                </tp:docstring>
@@ -2132,7 +2140,7 @@
                </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="SwarmMessage"/>
-           <arg type="(sssa{ss}aa{ss}aa{ss})" name="message">
+           <arg type="(sssa{ss}aa{ss}aa{ss}a{si})" name="message">
                <tp:docstring>
                     The new message
                </tp:docstring>
@@ -2155,7 +2163,7 @@
                </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="SwarmMessage"/>
-           <arg type="(sssa{ss}aa{ss}aa{ss})" name="message">
+           <arg type="(sssa{ss}aa{ss}aa{ss}a{si})" name="message">
                <tp:docstring>
                     The new message
                </tp:docstring>
