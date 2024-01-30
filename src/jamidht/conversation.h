@@ -451,11 +451,6 @@ public:
      */
     void clearFetched();
     /**
-     * Check if a device has fetched last commit
-     * @param deviceId
-     */
-    bool needsFetch(const std::string& deviceId) const;
-    /**
      * Store informations about who fetch or not. This simplify sync (sync when a device without the
      * last fetch is detected)
      * @param deviceId
@@ -487,6 +482,31 @@ public:
      * @return displayed
      */
     std::map<std::string, std::string> displayed() const;
+    /**
+     * Retrieve last displayed and fetch status per member
+     * @return A map with the following structure:
+     * {uri, {
+     *          {"fetch", "commitId"},
+     *          {"fetched_ts", "timestamp"},
+     *          {"read", "commitId"},
+     *          {"read_ts", "timestamp"}
+     *       }
+     * }
+     */
+    std::map<std::string, std::map<std::string, std::string>> messageStatus() const;
+    /**
+     * Update fetch/read status
+     * @param messageStatus     A map with the following structure:
+     * {uri, {
+     *          {"fetch", "commitId"},
+     *          {"fetched_ts", "timestamp"},
+     *          {"read", "commitId"},
+     *          {"read_ts", "timestamp"}
+     *       }
+     * }
+     */
+    void updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus);
+    void onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb);
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param toId      "" for getting the whole history
