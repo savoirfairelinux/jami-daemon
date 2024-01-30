@@ -46,7 +46,9 @@ struct SyncMsg
     std::map<std::string, std::map<std::string, std::string>> p;
     // Last displayed messages
     std::map<std::string, std::map<std::string, std::string>> ld;
-    MSGPACK_DEFINE(ds, c, cr, p, ld)
+    // Read & fetched status
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+    MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
@@ -214,7 +216,7 @@ public:
     bool onMessageDisplayed(const std::string& peer,
                             const std::string& conversationId,
                             const std::string& interactionId);
-    std::map<std::string, std::map<std::string, std::string>> convDisplayed() const;
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> convMessageStatus() const;
 
     /**
      * Load conversation's messages
