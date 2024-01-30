@@ -134,6 +134,18 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
                 return;
             }
         }
+        // Sync read's status
+        auto ms = convModule->convMessageStatus();
+        if (!ms.empty()) {
+            SyncMsg msg;
+            msg.ms = std::move(ms);
+            msgpack::pack(buffer, msg);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERROR("{:s}", ec.message());
+                return;
+            }
+        }
         buffer.clear();
 
     } else {
@@ -200,7 +212,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 if (auto manager = acc->accountManager())
                     manager->onSyncData(std::move(msg.ds), false);
 
-                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())
+                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
                     if (auto cm = acc->convModule(true))
                         cm->onSyncData(msg, peerId, device.toString());
             }
