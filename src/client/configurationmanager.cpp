@@ -310,8 +310,6 @@ getMessageStatus(const std::string& accountId, uint64_t messageId)
 bool
 cancelMessage(const std::string& accountId, uint64_t messageId)
 {
-    if (const auto acc = jami::Manager::instance().getAccount(accountId))
-        return acc->cancelMessage(messageId);
     return {};
 }
 

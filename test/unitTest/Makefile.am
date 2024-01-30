@@ -169,6 +169,12 @@ check_PROGRAMS += ut_conversation_call
 ut_conversation_call_SOURCES = conversation/conversationcommon.cpp conversation/call.cpp common.cpp
 
 #
+# conversation_fetch_sent
+#
+check_PROGRAMS += ut_conversation_fetch_sent
+ut_conversation_fetch_sent_SOURCES = conversation/conversationcommon.cpp conversation/conversationFetchSent.cpp common.cpp
+
+#
 # media_negotiation
 #
 check_PROGRAMS += ut_media_negotiation

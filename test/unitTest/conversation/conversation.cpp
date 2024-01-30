@@ -121,8 +121,6 @@ private:
     void testSendMessageToMultipleParticipants();
     void testPingPongMessages();
     void testIsComposing();
-    void testMessageStatus();
-    void testSetMessageDisplayed();
     void testSetMessageDisplayedTwice();
     void testSetMessageDisplayedPreference();
     void testSetMessageDisplayedAfterClone();
@@ -176,8 +174,6 @@ private:
     CPPUNIT_TEST(testSendMessageToMultipleParticipants);
     CPPUNIT_TEST(testPingPongMessages);
     CPPUNIT_TEST(testIsComposing);
-    CPPUNIT_TEST(testMessageStatus);
-    CPPUNIT_TEST(testSetMessageDisplayed);
     CPPUNIT_TEST(testSetMessageDisplayedTwice);
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
     CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
@@ -991,100 +987,6 @@ ConversationTest::testIsComposing()
 }
 
 void
-ConversationTest::testMessageStatus()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
-
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto convId = libjami::startConversation(aliceId);
-    auto aliceMsgSize = aliceData.messages.size();
-    libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
-    // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() / aliceId
-                    / "conversations" / convId;
-    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
-    // Check created files
-    auto bobInvited = repoPath / "invited" / bobUri;
-    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
-
-    aliceData.sending = false;
-    aliceData.sent = false;
-    libjami::sendMessage(aliceId, convId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.sending && aliceData.sent; }));
-}
-
-void
-ConversationTest::testSetMessageDisplayed()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto aliceUri = aliceAccount->getUsername();
-    auto bobUri = bobAccount->getUsername();
-    auto convId = libjami::startConversation(aliceId);
-    auto aliceMsgSize = aliceData.messages.size();
-    libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
-    // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() / aliceId
-                    / "conversations" / convId;
-    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
-    // Check created files
-    auto bobInvited = repoPath / "invited" / bobUri;
-    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
-
-    // Last displayed messages should not be set yet
-    auto membersInfos = libjami::getConversationMembers(bobId, convId);
-    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
-                                membersInfos.end(),
-                                [&](auto infos) {
-                                    return infos["uri"] == aliceUri && infos["lastDisplayed"] == "";
-                                })
-                   != membersInfos.end());
-    membersInfos = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
-                                membersInfos.end(),
-                                [&](auto infos) {
-                                    // Last read for alice is when bob is added to the members
-                                    return infos["uri"] == aliceUri
-                                           && infos["lastDisplayed"] == aliceData.messages[0].id;
-                                })
-                   != membersInfos.end());
-    bobData.sent = false;
-    aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.sent; }));
-
-    // Now, the last displayed message should be updated in member's infos (both sides)
-    membersInfos = libjami::getConversationMembers(bobId, convId);
-    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
-                                membersInfos.end(),
-                                [&](auto infos) {
-                                    return infos["uri"] == aliceUri
-                                           && infos["lastDisplayed"] == convId;
-                                })
-                   != membersInfos.end());
-    membersInfos = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
-                                membersInfos.end(),
-                                [&](auto infos) {
-                                    return infos["uri"] == aliceUri
-                                           && infos["lastDisplayed"] == convId;
-                                })
-                   != membersInfos.end());
-}
-
-void
 ConversationTest::testSetMessageDisplayedTwice()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
@@ -1142,30 +1044,9 @@ ConversationTest::testSetMessageDisplayedPreference()
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
 
-    // Last displayed messages should not be set yet
-    auto membersInfos = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
-                                membersInfos.end(),
-                                [&](auto infos) {
-                                    // Last read for alice is when bob is added to the members
-                                    return infos["uri"] == aliceUri
-                                           && infos["lastDisplayed"] == aliceData.messages[0].id;
-                                })
-                   != membersInfos.end());
-
     aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
     // Bob should not receive anything here, as sendMessageDisplayed is disabled for Alice
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.sent; }));
-
-    // Assert that message is set as displayed for self (for the read status)
-    membersInfos = libjami::getConversationMembers(aliceId, convId);
-    CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
-                                membersInfos.end(),
-                                [&](auto infos) {
-                                    return infos["uri"] == aliceUri
-                                           && infos["lastDisplayed"] == convId;
-                                })
-                   != membersInfos.end());
 }
 
 void
