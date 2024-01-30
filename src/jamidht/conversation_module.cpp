@@ -46,7 +46,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::map<std::string, std::string> preferences {};
-    std::map<std::string, std::string> lastDisplayed {};
+    std::map<std::string, std::string> lastDisplayed {}; // remove
     std::set<std::string> connectingTo {};
     std::shared_ptr<dhtnet::ChannelSocket> socket {};
 };
@@ -237,24 +237,6 @@ public:
         std::lock_guard lk(convInfosMtx_);
         convInfos_[info.id] = info;
         saveConvInfos();
-    }
-
-    /**
-     * Updates last displayed for sync infos and client
-     */
-    void onLastDisplayedUpdated(const std::string& convId, const std::string& lastId)
-    {
-        withConv(convId, [&](auto& conv) {
-            conv.info.lastDisplayed = lastId;
-            addConvInfo(conv.info);
-        });
-        // Updates info for client
-        emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-            accountId_,
-            convId,
-            username_,
-            lastId,
-            static_cast<int>(libjami::Account::MessageStates::DISPLAYED));
     }
 
     std::string getOneToOneConversation(const std::string& uri) const noexcept;
@@ -457,11 +439,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // at the same time.
         if (!conv->startFetch(deviceId, true)) {
             JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conv->info.id);
-            if (conv->info.lastDisplayed.empty()) {
-                // If fetchNewCommits called before sync
-                conv->info.lastDisplayed = lastDisplayed;
-                addConvInfo(conv->info);
-            }
+            addConvInfo(conv->info);
             return;
         }
         onNeedSocket_(
@@ -498,12 +476,10 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                  deviceId);
         conv->info.created = std::time(nullptr);
         conv->info.members.emplace(username_);
-        conv->info.lastDisplayed = lastDisplayed;
         if (peerUri != username_)
             conv->info.members.emplace(peerUri);
         addConvInfo(conv->info);
     } else {
-        conv->conversation->updateLastDisplayed(lastDisplayed);
         JAMI_DEBUG("[Account {}] Already have conversation {}", accountId_, conv->info.id);
     }
 }
@@ -697,11 +673,13 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     };
     try {
         auto conversation = std::make_shared<Conversation>(acc, deviceId, conversationId);
-        conversation->onLastDisplayedUpdated([&](const auto& convId, const auto& lastId) {
-            onLastDisplayedUpdated(convId, lastId);
-        });
         conversation->onMembersChanged([this, conversationId](const auto& members) {
             setConversationMembers(conversationId, members);
+        });
+        conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
+            auto msg = std::make_shared<SyncMsg>();
+            msg->ms = {{conversationId, status}};
+            needsSyncingCb_(std::move(msg));
         });
         conversation->onNeedSocket(onNeedSwarmSocket_);
         if (!conversation->isMember(username_, true)) {
@@ -721,15 +699,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         // must not be announced and removed.
         if (conv->info.isRemoved())
             removeRepo = true;
-        std::string lastDisplayedInfo;
-        std::map<std::string, std::string> lastDisplayed;
         std::map<std::string, std::string> preferences;
-        if (!conv->info.lastDisplayed.empty()) {
-            lastDisplayedInfo = conv->info.lastDisplayed;
-        }
         if (conv->pending) {
             preferences = std::move(conv->pending->preferences);
-            lastDisplayed = std::move(conv->pending->lastDisplayed);
         }
         conv->conversation = conversation;
         if (removeRepo) {
@@ -760,12 +732,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
                                           conversation->id()),
                                 kd);
 
-        if (!lastDisplayedInfo.empty())
-            conversation->updateLastDisplayed(lastDisplayedInfo);
         if (!preferences.empty())
             conversation->updatePreferences(preferences);
-        if (!lastDisplayed.empty())
-            conversation->updateLastDisplayed(lastDisplayed);
 
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -1435,9 +1403,10 @@ ConversationModule::loadConversations()
                 auto sconv = std::make_shared<SyncedConversation>(repository);
 
                 auto conv = std::make_shared<Conversation>(acc, repository);
-                conv->onLastDisplayedUpdated([w = pimpl_->weak_from_this()](auto convId, auto lastId) {
-                    if (auto p = w.lock())
-                        p->onLastDisplayedUpdated(convId, lastId);
+                conv->onMessageStatusChanged([this, repository](const auto& status) {
+                    auto msg = std::make_shared<SyncMsg>();
+                    msg->ms = {{repository, status}};
+                    pimpl_->needsSyncingCb_(std::move(msg));
                 });
                 conv->onMembersChanged([w = pimpl_->weak_from_this(), repository](const auto& members) {
                     if (auto p = w.lock())
@@ -1835,10 +1804,14 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     std::shared_ptr<Conversation> conversation;
     try {
         conversation = std::make_shared<Conversation>(acc, mode, otherMember);
-        conversation->onLastDisplayedUpdated(
-            [&](auto convId, auto lastId) { pimpl_->onLastDisplayedUpdated(convId, lastId); });
+        auto conversationId = conversation->id();
+        conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
+            auto msg = std::make_shared<SyncMsg>();
+            msg->ms = {{conversationId, status}};
+            pimpl_->needsSyncingCb_(std::move(msg));
+        });
         conversation->onMembersChanged(
-            [this, conversationId = conversation->id()](const auto& members) {
+            [this, conversationId](const auto& members) {
                 pimpl_->setConversationMembers(conversationId, members);
             });
         conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
@@ -1847,7 +1820,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
 #endif // LIBJAMI_TESTABLE
         conversation->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
                                           pimpl_.get(),
-                                          conversation->id()),
+                                          conversationId),
                                 kd);
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] Error while generating a conversation %s",
@@ -1959,30 +1932,25 @@ ConversationModule::onMessageDisplayed(const std::string& peer,
         std::unique_lock<std::mutex> lk(conv->mtx);
         if (auto conversation = conv->conversation) {
             lk.unlock();
-            if (conversation->setMessageDisplayed(peer, interactionId)) {
-                auto msg = std::make_shared<SyncMsg>();
-                msg->ld = {{conversationId, conversation->displayed()}};
-                pimpl_->needsSyncingCb_(std::move(msg));
-                return true;
-            }
+            return conversation->setMessageDisplayed(peer, interactionId);
         }
     }
     return false;
 }
 
-std::map<std::string, std::map<std::string, std::string>>
-ConversationModule::convDisplayed() const
+std::map<std::string, std::map<std::string, std::map<std::string, std::string>>>
+ConversationModule::convMessageStatus() const
 {
-    std::map<std::string, std::map<std::string, std::string>> displayed;
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> messageStatus;
     std::lock_guard lk(pimpl_->conversationsMtx_);
     for (const auto& [id, conv] : pimpl_->conversations_) {
         if (conv && conv->conversation) {
-            auto d = conv->conversation->displayed();
+            auto d = conv->conversation->messageStatus();
             if (!d.empty())
-                displayed[id] = std::move(d);
+                messageStatus[id] = std::move(d);
         }
     }
-    return displayed;
+    return messageStatus;
 }
 
 uint32_t
@@ -2304,15 +2272,13 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     }
 
     // Updates displayed for conversations
-    for (const auto& [convId, ld] : msg.ld) {
+    for (const auto& [convId, ms] : msg.ms) {
         if (auto conv = pimpl_->getConversation(convId)) {
             std::unique_lock<std::mutex> lk(conv->mtx);
             if (conv->conversation) {
                 auto conversation = conv->conversation;
                 lk.unlock();
-                conversation->updateLastDisplayed(ld);
-            } else if (conv->pending) {
-                conv->pending->lastDisplayed = ld;
+                conversation->updateMessageStatus(ms);
             }
         }
     }
