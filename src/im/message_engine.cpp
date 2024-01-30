@@ -220,20 +220,6 @@ MessageEngine::onMessageSent(const std::string& peer,
 }
 
 void
-MessageEngine::onMessageDisplayed(const std::string& peer, MessageToken token, bool displayed)
-{
-    if (not displayed)
-        return;
-    JAMI_DBG() << "[message " << token << "] Displayed by peer";
-    emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-        account_.getAccountID(),
-        "", /* No related conversation */
-        peer,
-        std::to_string(token),
-        static_cast<int>(libjami::Account::MessageStates::DISPLAYED));
-}
-
-void
 MessageEngine::load()
 {
     try {
