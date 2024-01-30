@@ -123,10 +123,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
         }
         buffer.clear();
         // Sync read's status
-        auto ld = convModule->convDisplayed();
-        if (!ld.empty()) {
+        auto ms = convModule->convMessageStatus();
+        if (!ms.empty()) {
             SyncMsg msg;
-            msg.ld = std::move(ld);
+            msg.ms = std::move(ms);
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
@@ -200,7 +200,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 if (auto manager = acc->accountManager())
                     manager->onSyncData(std::move(msg.ds), false);
 
-                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty())
+                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
                     if (auto cm = acc->convModule(true))
                         cm->onSyncData(msg, peerId, device.toString());
             }
@@ -210,6 +210,8 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
         return len;
     });
+
+    pimpl_->syncInfos(socket, nullptr);
 }
 
 void
