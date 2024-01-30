@@ -451,11 +451,6 @@ public:
      */
     void clearFetched();
     /**
-     * Check if a device has fetched last commit
-     * @param deviceId
-     */
-    bool needsFetch(const std::string& deviceId) const;
-    /**
      * Store informations about who fetch or not. This simplify sync (sync when a device without the
      * last fetch is detected)
      * @param deviceId
