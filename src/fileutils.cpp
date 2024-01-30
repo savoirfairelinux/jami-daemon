@@ -400,7 +400,7 @@ writeArchive(const std::string& archive_str,
     } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD and not password.empty()) {
         // Encrypt using provided password
         try {
-            saveFile(path, dht::crypto::aesEncrypt(archiver::compress(archive_str), password));
+            saveFile(path, dht::crypto::aesEncrypt(archiver::compress(archive_str), password, password_salt));
         } catch (const std::runtime_error& ex) {
             JAMI_ERROR("Export failed: {}", ex.what());
             return;
