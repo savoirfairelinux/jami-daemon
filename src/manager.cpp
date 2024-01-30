@@ -3008,41 +3008,17 @@ Manager::sendTextMessage(const std::string& accountID,
 }
 
 int
-statusFromImStatus(im::MessageStatus status)
+Manager::getMessageStatus(uint64_t) const
 {
-    switch (status) {
-    case im::MessageStatus::IDLE:
-    case im::MessageStatus::SENDING:
-        return static_cast<int>(libjami::Account::MessageStates::SENDING);
-    case im::MessageStatus::SENT:
-        return static_cast<int>(libjami::Account::MessageStates::SENT);
-    case im::MessageStatus::DISPLAYED:
-        return static_cast<int>(libjami::Account::MessageStates::DISPLAYED);
-    case im::MessageStatus::FAILURE:
-        return static_cast<int>(libjami::Account::MessageStates::FAILURE);
-    default:
-        return static_cast<int>(libjami::Account::MessageStates::UNKNOWN);
-    }
+    JAMI_ERROR("Deprecated method. Please use status from message");
+    return 0;
 }
 
 int
-Manager::getMessageStatus(uint64_t id) const
+Manager::getMessageStatus(const std::string&, uint64_t) const
 {
-    const auto& allAccounts = accountFactory.getAllAccounts();
-    for (const auto& acc : allAccounts) {
-        auto status = acc->getMessageStatus(id);
-        if (status != im::MessageStatus::UNKNOWN)
-            return statusFromImStatus(status);
-    }
-    return static_cast<int>(libjami::Account::MessageStates::UNKNOWN);
-}
-
-int
-Manager::getMessageStatus(const std::string& accountID, uint64_t id) const
-{
-    if (const auto acc = getAccount(accountID))
-        return statusFromImStatus(acc->getMessageStatus(id));
-    return static_cast<int>(libjami::Account::MessageStates::UNKNOWN);
+    JAMI_ERROR("Deprecated method. Please use status from message");
+    return 0;
 }
 
 void

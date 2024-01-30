@@ -140,30 +140,6 @@ MessageEngine::getStatus(MessageToken t) const
     return MessageStatus::UNKNOWN;
 }
 
-bool
-MessageEngine::cancel(MessageToken t)
-{
-    std::lock_guard lock(messagesMutex_);
-    for (auto& p : messages_) {
-        auto m = p.second.find(t);
-        if (m != p.second.end()) {
-            auto emit = m->second.payloads.find("application/im-gitmessage-id")
-                        == m->second.payloads.end();
-            m->second.status = MessageStatus::CANCELLED;
-            if (emit)
-                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-                    account_.getAccountID(),
-                    "",
-                    m->second.to,
-                    std::to_string(t),
-                    static_cast<int>(libjami::Account::MessageStates::CANCELLED));
-            save_();
-            return true;
-        }
-    }
-    return false;
-}
-
 void
 MessageEngine::onMessageSent(const std::string& peer,
                              MessageToken token,
@@ -217,20 +193,6 @@ MessageEngine::onMessageSent(const std::string& peer,
     } else {
         JAMI_DEBUG("[message {:d}] Can't find message", token);
     }
-}
-
-void
-MessageEngine::onMessageDisplayed(const std::string& peer, MessageToken token, bool displayed)
-{
-    if (not displayed)
-        return;
-    JAMI_DBG() << "[message " << token << "] Displayed by peer";
-    emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-        account_.getAccountID(),
-        "", /* No related conversation */
-        peer,
-        std::to_string(token),
-        static_cast<int>(libjami::Account::MessageStates::DISPLAYED));
 }
 
 void

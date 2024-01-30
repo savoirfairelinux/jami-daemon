@@ -40,6 +40,7 @@ struct SwarmMessage
     std::map<std::string, std::string> body;
     std::vector<std::map<std::string, std::string>> reactions;
     std::vector<std::map<std::string, std::string>> editions;
+    std::map<std::string, int32_t> status;
 
     void fromMapStringString(const std::map<std::string, std::string>& commit) {
         id = commit.at("id");
