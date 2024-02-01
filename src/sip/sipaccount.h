@@ -132,7 +132,7 @@ public:
     /**
      * Actually useless, since config loading is done in init()
      */
-    void loadConfig() override;
+    void loadConfig(const std::string& convId = {}) override;
 
     /**
      * Initialize the SIP voip link with the account parameters and send registration
