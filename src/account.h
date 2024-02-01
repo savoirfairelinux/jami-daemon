@@ -107,7 +107,7 @@ public:
     /**
      * Load the settings in this account.
      */
-    virtual void loadConfig();
+    virtual void loadConfig(const std::string& convId = {});
 
     const AccountConfig& config() const
     {

@@ -45,7 +45,7 @@ namespace libjami {
 InitFlag initFlags = {};
 
 bool
-init(enum InitFlag flags) noexcept
+init(enum InitFlag flags, const std::string& accountID, const std::string& convId) noexcept
 {
     initFlags = flags;
     jami::Logger::setDebugMode(LIBJAMI_FLAG_DEBUG == (flags & LIBJAMI_FLAG_DEBUG));
@@ -83,10 +83,10 @@ init(enum InitFlag flags) noexcept
 }
 
 bool
-start(const std::filesystem::path& config_file) noexcept
+start(const std::filesystem::path& config_file, const std::string& accountID, const std::string& convId) noexcept
 {
     try {
-        jami::Manager::instance().init(config_file, initFlags);
+        jami::Manager::instance().init(config_file, initFlags, accountID, convId);
     } catch (...) {
         return false;
     }

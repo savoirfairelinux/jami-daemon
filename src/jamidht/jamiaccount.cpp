@@ -368,7 +368,8 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
-                or not call->initIceMediaTransport(true, std::forward<dhtnet::IceTransportOptions>(opts))) {
+                or not call->initIceMediaTransport(true,
+                                                   std::forward<dhtnet::IceTransportOptions>(opts))) {
                 return;
             }
         }
@@ -540,8 +541,9 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             JAMI_ERROR("Conference {} not found", confId);
             return;
         }
-        for (const auto& m: conf->currentMediaList()) {
-            if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE) == libjami::Media::MediaAttributeValue::VIDEO
+        for (const auto& m : conf->currentMediaList()) {
+            if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
+                    == libjami::Media::MediaAttributeValue::VIDEO
                 && !call->hasVideo()) {
                 continue;
             }
@@ -560,8 +562,8 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         conf->bindParticipant(callId);
         Manager::instance().addAudio(*call);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
-                                                        conf->getConfId(),
-                                                        conf->getStateStr());
+                                                           conf->getConfId(),
+                                                           conf->getStateStr());
     }
 }
 
@@ -758,11 +760,12 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
         return;
     JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
 
-    const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
+    const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(),
+                                                                 target.getFamily());
 
     dhtnet::IpAddr addrSdp = getPublishedSameasLocal()
-                         ? localAddress
-                         : connectionManager_->getPublishedIpAddress(target.getFamily());
+                                 ? localAddress
+                                 : connectionManager_->getPublishedIpAddress(target.getFamily());
 
     // fallback on local address
     if (not addrSdp)
@@ -897,7 +900,7 @@ JamiAccount::saveConfig() const
 }
 
 void
-JamiAccount::loadConfig()
+JamiAccount::loadConfig(const std::string& convId)
 {
     SIPAccountBase::loadConfig();
     registeredName_ = config().registeredName;
@@ -915,8 +918,7 @@ JamiAccount::loadConfig()
         }
     }
     try {
-        auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy",
-                                                std::chrono::hours(24 * 7));
+        auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy", std::chrono::hours(24 * 7));
         std::string err;
         Json::Value root;
         Json::CharReaderBuilder rbuilder;
@@ -931,7 +933,11 @@ JamiAccount::loadConfig()
                  getAccountID().c_str(),
                  e.what());
     }
-    loadAccount(config().archive_password_scheme, config().archive_password, config().archive_pin, config().archive_path);
+    loadAccount(config().archive_password_scheme,
+                config().archive_password,
+                config().archive_pin,
+                config().archive_path,
+                convId);
 }
 
 bool
@@ -974,7 +980,6 @@ JamiAccount::getPasswordKey(const std::string& password)
     return accountManager_ ? accountManager_->getPasswordKey(password) : std::vector<uint8_t>();
 }
 
-
 void
 JamiAccount::addDevice(const std::string& password)
 {
@@ -999,7 +1004,9 @@ JamiAccount::addDevice(const std::string& password)
 }
 
 bool
-JamiAccount::exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password)
+JamiAccount::exportArchive(const std::string& destinationPath,
+                           std::string_view scheme,
+                           const std::string& password)
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
         return manager->exportArchive(destinationPath, scheme, password);
@@ -1008,7 +1015,10 @@ JamiAccount::exportArchive(const std::string& destinationPath, std::string_view 
 }
 
 bool
-JamiAccount::setValidity(std::string_view scheme, const std::string& pwd, const dht::InfoHash& id, int64_t validity)
+JamiAccount::setValidity(std::string_view scheme,
+                         const std::string& pwd,
+                         const dht::InfoHash& id,
+                         int64_t validity)
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
         if (manager->setValidity(scheme, pwd, id_, id, validity)) {
@@ -1062,12 +1072,14 @@ JamiAccount::isValidAccountDevice(const dht::crypto::Certificate& cert) const
 }
 
 bool
-JamiAccount::revokeDevice(const std::string& device, std::string_view scheme, const std::string& password)
+JamiAccount::revokeDevice(const std::string& device,
+                          std::string_view scheme,
+                          const std::string& password)
 {
     if (not accountManager_)
         return false;
-    return accountManager_
-        ->revokeDevice(device, scheme, password, [this, device](AccountManager::RevokeDeviceResult result) {
+    return accountManager_->revokeDevice(
+        device, scheme, password, [this, device](AccountManager::RevokeDeviceResult result) {
             emitSignal<libjami::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(),
                                                                             device,
                                                                             static_cast<int>(
@@ -1094,20 +1106,21 @@ void
 JamiAccount::loadAccount(const std::string& archive_password_scheme,
                          const std::string& archive_password,
                          const std::string& archive_pin,
-                         const std::string& archive_path)
+                         const std::string& archive_path,
+                         const std::string& convId)
 {
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
     JAMI_DEBUG("[Account {:s}] loading account", getAccountID());
     AccountManager::OnChangeCallback callbacks {
-        [this](const std::string& uri, bool confirmed) {
+        [this, convId](const std::string& uri, bool confirmed) {
             if (!id_.first)
                 return;
             if (jami::Manager::instance().syncOnRegister) {
-                dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
+                dht::ThreadPool::io().run([w = weak(), uri, confirmed, convId] {
                     if (auto shared = w.lock()) {
-                        if (auto cm = shared->convModule(true)) {
+                        if (auto cm = shared->convModule(true, convId)) {
                             auto activeConv = cm->getOneToOneConversation(uri);
                             if (!activeConv.empty())
                                 cm->bootstrap(activeConv);
@@ -1119,13 +1132,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 });
             }
         },
-        [this](const std::string& uri, bool banned) {
+        [this, convId](const std::string& uri, bool banned) {
             if (!id_.first)
                 return;
-            dht::ThreadPool::io().run([w = weak(), uri, banned] {
+            dht::ThreadPool::io().run([w = weak(), uri, banned, convId] {
                 if (auto shared = w.lock()) {
                     // Erase linked conversation's requests
-                    if (auto convModule = shared->convModule(true))
+                    if (auto convModule = shared->convModule(true, convId))
                         convModule->removeContact(uri, banned);
                     // Remove current connections with contact
                     // Note: if contact is ourself, we don't close the connection
@@ -1140,13 +1153,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 }
             });
         },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               time_t received) {
+        [this, convId](const std::string& uri,
+                       const std::string& conversationId,
+                       const std::vector<uint8_t>& payload,
+                       time_t received) {
             if (!id_.first)
                 return;
-            dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received] {
+            dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received, convId] {
                 if (auto shared = w.lock()) {
                     shared->clearProfileCache(uri);
                     if (conversationId.empty()) {
@@ -1156,7 +1169,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         return;
                     }
                     // Here account can be initializing
-                    if (auto cm = shared->convModule(true)) {
+                    if (auto cm = shared->convModule(true, convId)) {
                         auto activeConv = cm->getOneToOneConversation(uri);
                         if (activeConv != conversationId)
                             cm->onTrustRequest(uri, conversationId, payload, received);
@@ -1175,19 +1188,19 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
         },
-        [this](const std::string& conversationId, const std::string& deviceId) {
+        [this, convId](const std::string& conversationId, const std::string& deviceId) {
             // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
-            if (auto cm = convModule(true))
+            if (auto cm = convModule(true, convId))
                 cm->acceptConversationRequest(conversationId, deviceId);
         },
-        [this](const std::string& uri, const std::string& convFromReq) {
-            dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
+        [this, convId](const std::string& uri, const std::string& convFromReq) {
+            dht::ThreadPool::io().run([w = weak(), convFromReq, uri, convId] {
                 if (auto shared = w.lock()) {
-                    auto cm = shared->convModule(true);
+                    auto cm = shared->convModule(true, convId);
                     // Remove cached payload if there is one
-                    auto requestPath = shared->cachePath_ / "requests"/ uri;
+                    auto requestPath = shared->cachePath_ / "requests" / uri;
                     dhtnet::fileutils::remove(requestPath);
                     if (!convFromReq.empty()) {
                         auto oldConv = cm->getOneToOneConversation(uri);
@@ -1297,12 +1310,16 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
-                [w=weak(), this, migrating, hasPassword](const AccountInfo& info,
-                                               const std::map<std::string, std::string>& config,
-                                               std::string&& receipt,
-                                               std::vector<uint8_t>&& receipt_signature) {
+                [w = weak(),
+                 this,
+                 migrating,
+                 hasPassword](const AccountInfo& info,
+                              const std::map<std::string, std::string>& config,
+                              std::string&& receipt,
+                              std::vector<uint8_t>&& receipt_signature) {
                     auto sthis = w.lock();
-                    if (not sthis) return;
+                    if (not sthis)
+                        return;
                     JAMI_LOG("[Account {}] Auth success!", getAccountID());
 
                     dhtnet::fileutils::check_dir(idPath_, 0700);
@@ -1428,13 +1445,16 @@ JamiAccount::lookupAddress(const std::string& addr)
 }
 
 void
-JamiAccount::registerName(const std::string& name, const std::string& scheme, const std::string& password)
+JamiAccount::registerName(const std::string& name,
+                          const std::string& scheme,
+                          const std::string& password)
 {
     std::lock_guard lock(configurationMutex_);
     if (accountManager_)
         accountManager_->registerName(
             name,
-            scheme, password,
+            scheme,
+            password,
             [acc = getAccountID(), name, w = weak()](NameDirectory::RegistrationResponse response) {
                 int res
                     = (response == NameDirectory::RegistrationResponse::success)
@@ -1962,7 +1982,8 @@ JamiAccount::doRegister_()
                                                                   this->config().dhtPublicInCalls,
                                                                   peer_account_id);
                     JAMI_LOG("{} ICE request from {}",
-                        res ? "Accepting" : "Discarding", peer_account_id);
+                             res ? "Accepting" : "Discarding",
+                             peer_account_id);
                     accept.set_value(res);
                 });
             fut.wait();
@@ -2087,35 +2108,36 @@ JamiAccount::doRegister_()
             auto msgId = to_hex_string(v.id);
             if (isMessageTreated(msgId))
                 return true;
-            accountManager_
-                ->onPeerMessage(*v.owner,
-                                this->config().dhtPublicInCalls,
-                                [this,
-                                 v,
-                                 inboxDeviceKey,
-                                 msgId](const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                        const dht::InfoHash& peer_account) {
-                                    auto now = clock::to_time_t(clock::now());
-                                    std::string datatype = utf8_make_valid(v.datatype);
-                                    if (datatype.empty()) {
-                                        datatype = "text/plain";
-                                    }
-                                    std::map<std::string, std::string> payloads = {
-                                        {datatype, utf8_make_valid(v.msg)}};
-                                    // Re-trigger on IO to avoid to lock configurationMtx from a DHT callback
-                                    dht::ThreadPool::io().run([w=weak(), payloads=std::move(payloads), msgId, peer_account, cert] {
-                                        if (auto shared = w.lock()) {
-                                            shared->onTextMessage(msgId,
-                                                        peer_account.toString(),
-                                                        cert->getPublicKey().getLongId().toString(),
-                                                        payloads);
-                                        }
-                                    });
-                                    JAMI_DBG() << "Sending message confirmation " << v.id;
-                                    dht_->putEncrypted(inboxDeviceKey,
-                                                       v.from,
-                                                       dht::ImMessage(v.id, std::string(), now));
-                                });
+            accountManager_->onPeerMessage(
+                *v.owner,
+                this->config().dhtPublicInCalls,
+                [this,
+                 v,
+                 inboxDeviceKey,
+                 msgId](const std::shared_ptr<dht::crypto::Certificate>& cert,
+                        const dht::InfoHash& peer_account) {
+                    auto now = clock::to_time_t(clock::now());
+                    std::string datatype = utf8_make_valid(v.datatype);
+                    if (datatype.empty()) {
+                        datatype = "text/plain";
+                    }
+                    std::map<std::string, std::string> payloads = {
+                        {datatype, utf8_make_valid(v.msg)}};
+                    // Re-trigger on IO to avoid to lock configurationMtx from a DHT callback
+                    dht::ThreadPool::io().run(
+                        [w = weak(), payloads = std::move(payloads), msgId, peer_account, cert] {
+                            if (auto shared = w.lock()) {
+                                shared->onTextMessage(msgId,
+                                                      peer_account.toString(),
+                                                      cert->getPublicKey().getLongId().toString(),
+                                                      payloads);
+                            }
+                        });
+                    JAMI_DBG() << "Sending message confirmation " << v.id;
+                    dht_->putEncrypted(inboxDeviceKey,
+                                       v.from,
+                                       dht::ImMessage(v.id, std::string(), now));
+                });
             return true;
         });
 
@@ -2123,8 +2145,8 @@ JamiAccount::doRegister_()
             dynamic_cast<ServerAccountManager*>(accountManager_.get())
                 ->syncBlueprintConfig([this](const std::map<std::string, std::string>& config) {
                     editConfig([&](JamiAccountConfig& conf) { conf.fromMap(config); });
-                    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
-                                                            getAccountDetails());
+                    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(
+                        getAccountID(), getAccountDetails());
                 });
         }
 
@@ -2140,7 +2162,7 @@ JamiAccount::doRegister_()
 }
 
 ConversationModule*
-JamiAccount::convModule(bool noCreation)
+JamiAccount::convModule(bool noCreation, const std::string& convId)
 {
     if (noCreation)
         return convModule_.get();
@@ -2261,18 +2283,22 @@ JamiAccount::convModule(bool noCreation)
                 }
             },
             [this](auto&& convId, auto&& from) {
-                accountManager_->findCertificate(dht::InfoHash(from), [this, from, convId](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                    auto info = accountManager_->getInfo();
-                    if (!cert || !info)
-                        return;
-                    info->contacts->onTrustRequest(dht::InfoHash(from),
-                                                   cert->getSharedPublicKey(),
-                                                   time(nullptr),
-                                                   false,
-                                                   convId,
-                                                   {});
-                });
-            });
+                accountManager_
+                    ->findCertificate(dht::InfoHash(from),
+                                      [this, from, convId](
+                                          const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                                          auto info = accountManager_->getInfo();
+                                          if (!cert || !info)
+                                              return;
+                                          info->contacts->onTrustRequest(dht::InfoHash(from),
+                                                                         cert->getSharedPublicKey(),
+                                                                         time(nullptr),
+                                                                         false,
+                                                                         convId,
+                                                                         {});
+                                      });
+            },
+            convId);
     }
     return convModule_.get();
 }
@@ -2876,7 +2902,9 @@ JamiAccount::updateConvForContact(const std::string& uri,
         auto details = getContactDetails(uri);
         auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
         if (itDetails != details.end() && itDetails->second != oldConv) {
-            JAMI_DEBUG("Old conversation is not found in details {} - found: {}", oldConv, itDetails->second);
+            JAMI_DEBUG("Old conversation is not found in details {} - found: {}",
+                       oldConv,
+                       itDetails->second);
             return false;
         }
         accountManager_->updateContactConversation(uri, newConv);
@@ -2889,9 +2917,8 @@ std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
     std::lock_guard lock(configurationMutex_);
-    return accountManager_
-               ? accountManager_->getContactDetails(uri)
-               : std::map<std::string, std::string> {};
+    return accountManager_ ? accountManager_->getContactDetails(uri)
+                           : std::map<std::string, std::string> {};
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -2997,7 +3024,10 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     if (not conversation.empty()) {
         std::lock_guard lock(configurationMutex_);
         if (accountManager_)
-            accountManager_->sendTrustRequest(to, conversation, payload.size() >= 64000 ? std::vector<uint8_t> {} : payload);
+            accountManager_->sendTrustRequest(to,
+                                              conversation,
+                                              payload.size() >= 64000 ? std::vector<uint8_t> {}
+                                                                      : payload);
         else
             JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
     } else
@@ -3673,8 +3703,9 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
     connectionManager_->connectDevice(
         deviceId,
         "sip",
-        [w = weak(), id = std::move(id), pc = std::move(pc)](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                             const DeviceId&) {
+        [w = weak(),
+         id = std::move(id),
+         pc = std::move(pc)](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
             if (socket)
                 return;
             auto shared = w.lock();
@@ -3749,14 +3780,14 @@ JamiAccount::needToSendProfile(const std::string& peerUri,
     try {
         previousSha3 = fileutils::loadTextFile(sha3Path);
     } catch (...) {
-        fileutils::saveFile(sha3Path, (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
+        fileutils::saveFile(sha3Path, (const uint8_t*) sha3Sum.data(), sha3Sum.size(), 0600);
         return true;
     }
     if (sha3Sum != previousSha3) {
         // Incorrect sha3 stored. Update it
         dhtnet::fileutils::removeAll(vCardPath, true);
         dhtnet::fileutils::check_dir(vCardPath, 0700);
-        fileutils::saveFile(sha3Path, (const uint8_t*)sha3Sum.data(), sha3Sum.size(), 0600);
+        fileutils::saveFile(sha3Path, (const uint8_t*) sha3Sum.data(), sha3Sum.size(), 0600);
         return true;
     }
     auto peerPath = vCardPath / peerUri;
@@ -3906,8 +3937,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     }
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARNING("[Account {:s}] New SIP channel opened with {:s}",
-                 getAccountID(), deviceId);
+    JAMI_WARNING("[Account {:s}] New SIP channel opened with {:s}", getAccountID(), deviceId);
     lk.unlock();
 
     dht::ThreadPool::io().run([w = weak(), peerId, deviceId] {
@@ -4005,7 +4035,9 @@ JamiAccount::getConnectionList(const std::string& conversationId)
             for (const auto& deviceId : conv->getDeviceIdList()) {
                 auto connections = connectionManager_->getConnectionList(deviceId);
                 connectionList.reserve(connectionList.size() + connections.size());
-                std::move(connections.begin(), connections.end(), std::back_inserter(connectionList));
+                std::move(connections.begin(),
+                          connections.end(),
+                          std::back_inserter(connectionList));
             }
         }
         return connectionList;
@@ -4054,8 +4086,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                 [accId = shared->getAccountID(), conversationId, tid, path](
                     const std::string& commitId) {
                     // Create a symlink to answer to re-ask
-                    auto filelinkPath = fileutils::get_data_dir() / accId
-                                        / "conversation_data"
+                    auto filelinkPath = fileutils::get_data_dir() / accId / "conversation_data"
                                         / conversationId / (commitId + "_" + std::to_string(tid));
                     filelinkPath += path.extension();
                     if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
@@ -4092,12 +4123,17 @@ JamiAccount::transferFile(const std::string& conversationId,
     if (lastWriteTime != 0) {
         modified = fmt::format("&modified={}", lastWriteTime);
     }
-    auto fid = fileId == "profile.vcf" ?
-        fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified) : fileId;
-    auto channelName
-        = conversationId.empty()
-              ? fmt::format("{}profile.vcf?sha3={}{}", DATA_TRANSFER_SCHEME, sha3Sum, modified)
-              : fmt::format("{}{}/{}/{}", DATA_TRANSFER_SCHEME, conversationId, currentDeviceId(), fid);
+    auto fid = fileId == "profile.vcf" ? fmt::format("profile.vcf?sha3={}{}", sha3Sum, modified)
+                                       : fileId;
+    auto channelName = conversationId.empty() ? fmt::format("{}profile.vcf?sha3={}{}",
+                                                            DATA_TRANSFER_SCHEME,
+                                                            sha3Sum,
+                                                            modified)
+                                              : fmt::format("{}{}/{}/{}",
+                                                            DATA_TRANSFER_SCHEME,
+                                                            conversationId,
+                                                            currentDeviceId(),
+                                                            fid);
     std::lock_guard lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
@@ -4111,8 +4147,9 @@ JamiAccount::transferFile(const std::string& conversationId,
                          interactionId,
                          start,
                          end,
-                         onFinished = std::move(onFinished)](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                             const DeviceId&) {
+                         onFinished = std::move(
+                             onFinished)](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                          const DeviceId&) {
                             if (!socket)
                                 return;
                             dht::ThreadPool::io().run([w = weak(),
@@ -4163,8 +4200,10 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         connectionManager_->connectDevice(
             did,
             channelName,
-            [this, conversationId, fileId, interactionId](std::shared_ptr<dhtnet::ChannelSocket> channel,
-                                                          const DeviceId&) {
+            [this,
+             conversationId,
+             fileId,
+             interactionId](std::shared_ptr<dhtnet::ChannelSocket> channel, const DeviceId&) {
                 if (!channel)
                     return;
                 dht::ThreadPool::io().run(
@@ -4234,7 +4273,11 @@ void
 JamiAccount::initConnectionManager()
 {
     if (!nonSwarmTransferManager_)
-        nonSwarmTransferManager_ = std::make_shared<TransferManager>(accountID_, config().username, "", dht::crypto::getDerivedRandomEngine(rand));
+        nonSwarmTransferManager_
+            = std::make_shared<TransferManager>(accountID_,
+                                                config().username,
+                                                "",
+                                                dht::crypto::getDerivedRandomEngine(rand));
     if (!connectionManager_) {
         auto connectionManagerConfig = std::make_shared<dhtnet::ConnectionManager::Config>();
         connectionManagerConfig->ioContext = Manager::instance().ioContext();
@@ -4252,7 +4295,8 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->logger = Logger::dhtLogger();
         connectionManagerConfig->factory = Manager::instance().getIceTransportFactory();
         connectionManagerConfig->turnCache = turnCache_;
-        connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
+        connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(
+            dht::crypto::getDerivedRandomEngine(rand));
         connectionManager_ = std::make_unique<dhtnet::ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::SWARM]
             = std::make_unique<SwarmChannelHandler>(shared(), *connectionManager_.get());
