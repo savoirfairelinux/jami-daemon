@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>

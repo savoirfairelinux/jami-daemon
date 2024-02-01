@@ -243,6 +243,13 @@ setAccountActive(const std::string& accountId, bool enable, bool shutdownConnect
 }
 
 void
+loadAccountAndConversation(const std::string& accountID, const std::string& convID)
+{
+    jami::Manager::instance().loadAccountAndConversation(accountID, convID);
+
+}
+
+void
 sendRegister(const std::string& accountId, bool enable)
 {
     jami::Manager::instance().sendRegister(accountId, enable);

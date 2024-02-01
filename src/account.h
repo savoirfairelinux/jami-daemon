@@ -390,6 +390,7 @@ public:
     // once the  backward compatibility is no more required.
     bool isIceCompIdRfc5245Compliant() const { return iceCompIdRfc5245Compliant_; }
     void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
+    void enableAutoLoadConversations(bool enable) { autoLoadConversations_ = enable; }
 
     std::shared_ptr<Call> getCall(const std::string& callId) const
     {
@@ -486,6 +487,10 @@ protected:
 
     bool iceForMediaEnabled_ {true};
     bool iceCompIdRfc5245Compliant_ {false};
+    /**
+     * Auto load conversations when creatinf convModule()
+     */
+    bool autoLoadConversations_ {true};
 
     /**
      * private account codec searching functions

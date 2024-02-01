@@ -44,7 +44,8 @@ enum InitFlag {
     LIBJAMI_FLAG_NO_LOCAL_AUDIO = 1 << 6,
     LIBJAMI_FLAG_NO_LOCAL_VIDEO = 1 << 7,
     LIBJAMI_FLAG_NO_LOCAL_MEDIA = LIBJAMI_FLAG_NO_LOCAL_AUDIO | LIBJAMI_FLAG_NO_LOCAL_VIDEO,
-    LIBJAMI_FLAG_NO_AUTOSYNC = 1 << 8
+    LIBJAMI_FLAG_NO_AUTOSYNC = 1 << 8,
+    LIBJAMI_FLAG_NO_AUTOLOAD = 1 << 9 // disable auto loading of accounts and conversations
 };
 
 /**
@@ -69,6 +70,7 @@ LIBJAMI_PUBLIC bool init(enum InitFlag flags) noexcept;
  * Start asynchronously daemon created by init().
  * @returns true if daemon started successfully
  */
+
 LIBJAMI_PUBLIC bool start(const std::filesystem::path& config_file = {}) noexcept;
 
 /**
