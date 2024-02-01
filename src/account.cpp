@@ -121,9 +121,9 @@ Account::setRegistrationState(RegistrationState state,
                          detail_str,
                          details = getVolatileAccountDetails()] {
             emitSignal<libjami::ConfigurationSignal::RegistrationStateChanged>(accountId,
-                                                                             state,
-                                                                             detail_code,
-                                                                             detail_str);
+                                                                               state,
+                                                                               detail_code,
+                                                                               detail_str);
 
             emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountId, details);
         });
@@ -155,7 +155,8 @@ Account::loadDefaultCodecs()
 }
 
 void
-Account::loadConfig() {
+Account::loadConfig()
+{
     setActiveCodecs(config_->activeCodecs);
     auto ringtoneDir = fmt::format("{}/{}", JAMI_DATADIR, RINGDIR);
     ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
@@ -304,8 +305,7 @@ Account::searchCodecById(unsigned codecId, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if ((codecIt->id == codecId)
-                && (codecIt->mediaType & mediaType))
+            if ((codecIt->id == codecId) && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
@@ -317,8 +317,7 @@ Account::searchCodecByName(const std::string& name, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if (codecIt->name == name
-                && (codecIt->mediaType & mediaType))
+            if (codecIt->name == name && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
@@ -330,8 +329,7 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if ((codecIt->payloadType == payload)
-                && (codecIt->mediaType & mediaType))
+            if ((codecIt->payloadType == payload) && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }

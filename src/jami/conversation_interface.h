@@ -124,7 +124,7 @@ LIBJAMI_PUBLIC uint32_t searchConversation(const std::string& accountId,
                                            const int64_t& before,
                                            const uint32_t& maxResult,
                                            const int32_t& flag);
-LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId);
+    LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId, const std::string& convId = {});
 
 struct LIBJAMI_PUBLIC ConversationSignal
 {
