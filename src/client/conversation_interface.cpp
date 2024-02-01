@@ -280,12 +280,12 @@ searchConversation(const std::string& accountId,
 }
 
 void
-reloadConversationsAndRequests(const std::string& accountId)
+reloadConversationsAndRequests(const std::string& accountId, const std::string& convId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto convModule = acc->convModule(true)) {
             convModule->reloadRequests();
-            convModule->loadConversations();
+            convModule->loadSingleConversation(convId);
         }
     }
 }
