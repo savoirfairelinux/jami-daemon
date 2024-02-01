@@ -61,6 +61,8 @@ LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountId,
 LIBJAMI_PUBLIC void setAccountActive(const std::string& accountId,
                                      bool active,
                                      bool shutdownConnections = false);
+LIBJAMI_PUBLIC void loadAccountAndConversation(const std::string& accountID,
+                                               const std::string& convID);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 LIBJAMI_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
                                       const std::string& accountId = {});
@@ -84,7 +86,8 @@ LIBJAMI_PUBLIC bool changeAccountPassword(const std::string& accountId,
                                           const std::string& password_old,
                                           const std::string& password_new);
 LIBJAMI_PUBLIC bool isPasswordValid(const std::string& accountId, const std::string& password);
-LIBJAMI_PUBLIC std::vector<uint8_t> getPasswordKey(const std::string& accountId, const std::string& password);
+LIBJAMI_PUBLIC std::vector<uint8_t> getPasswordKey(const std::string& accountId,
+                                                   const std::string& password);
 
 LIBJAMI_PUBLIC bool lookupName(const std::string& account,
                                const std::string& nameserver,

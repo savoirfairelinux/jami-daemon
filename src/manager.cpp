@@ -187,8 +187,7 @@ check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& 
         for (const auto& file_iterator : std::filesystem::directory_iterator(old_dir, ec)) {
             const auto& file_path = file_iterator.path();
             auto new_path = new_dir / file_path.filename();
-            if (file_iterator.is_directory()
-                and std::filesystem::is_directory(new_path)) {
+            if (file_iterator.is_directory() and std::filesystem::is_directory(new_path)) {
                 check_rename(file_path, new_path);
             } else {
                 JAMI_WARNING("Migrating {} to {}", old_dir, new_path);
@@ -871,7 +870,13 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
                          getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
     }
-    registerAccounts();
+
+    if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
+        JAMI_DBG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts and conversations will not be loaded");
+        return;
+    } else {
+        registerAccounts();
+    }
 }
 
 void
@@ -1404,9 +1409,7 @@ Manager::addParticipant(const std::string& accountId,
 bool
 Manager::addParticipant(Call& call, Conference& conference)
 {
-    JAMI_DEBUG("Add participant {} to conference {}",
-             call.getCallId(),
-             conference.getConfId());
+    JAMI_DEBUG("Add participant {} to conference {}", call.getCallId(), conference.getConfId());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     pimpl_->bindCallToConference(call, conference);
@@ -1709,8 +1712,7 @@ Manager::addAudio(Call& call)
         auto medias = call.getAudioStreams();
         for (const auto& media : medias) {
             JAMI_DEBUG("[call:{}] Attach audio", media.first);
-            getRingBufferPool().bindRingbuffers(media.first,
-                                            RingBufferPool::DEFAULT_ID);
+            getRingBufferPool().bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
         }
         auto oldGuard = std::move(call.audioGuard);
         call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
@@ -2573,9 +2575,9 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         JAMI_WARNING("Incoming call {} has an empty media list", incomCallId);
 
     JAMI_DEBUG("Incoming call {} on account {} with {} media",
-              incomCallId,
-              accountId,
-              mediaList.size());
+               incomCallId,
+               accountId,
+               mediaList.size());
 
     emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId,
                                                            incomCallId,
@@ -3070,6 +3072,28 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
     }
     emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
         accountID, acc->getVolatileAccountDetails());
+}
+
+void
+Manager::loadAccountAndConversation(const std::string& accountID, const std::string& convID)
+{
+    if (const auto a = getAccount(accountID)) {
+        a->enableAutoLoadConversations(false);
+        if (a->getRegistrationState() == RegistrationState::UNLOADED) {
+            a->loadConfig();
+        }
+        a->setActive(true);
+        if (a->isUsable())
+            a->doRegister();
+        if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(a)) {
+            // load contacts and requests before loading conversation
+            jamiAcc->reloadContacts();
+            if (auto convModule = jamiAcc->convModule()) {
+                convModule->reloadRequests();
+            }
+            jamiAcc->loadConversation(convID);
+        }
+    }
 }
 
 std::shared_ptr<AudioLayer>

@@ -41,7 +41,8 @@ struct SwarmMessage
     std::vector<std::map<std::string, std::string>> reactions;
     std::vector<std::map<std::string, std::string>> editions;
 
-    void fromMapStringString(const std::map<std::string, std::string>& commit) {
+    void fromMapStringString(const std::map<std::string, std::string>& commit)
+    {
         id = commit.at("id");
         type = commit.at("type");
         body = commit; // TODO erase type/id?
@@ -97,9 +98,9 @@ LIBJAMI_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                  const std::string& fromMessage,
                                                  size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversation(const std::string& accountId,
-                                                 const std::string& conversationId,
-                                                 const std::string& fromMessage,
-                                                 size_t n);
+                                         const std::string& conversationId,
+                                         const std::string& fromMessage,
+                                         size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
                                               const std::string& conversationId,
                                               const std::string& fromMessage,

@@ -68,7 +68,7 @@ dynamic_unique_cast(std::unique_ptr<From>&& p)
     return {};
 }
 
-class AccountManager: public std::enable_shared_from_this<AccountManager>
+class AccountManager : public std::enable_shared_from_this<AccountManager>
 {
 public:
     using OnChangeCallback = ContactList::OnChangeCallback;
@@ -142,9 +142,13 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence = true);
+    virtual void startSync(const OnNewDeviceCb& cb,
+                           const OnDeviceAnnouncedCb& dcb,
+                           bool publishPresence = true);
 
     const AccountInfo* getInfo() const { return info_.get(); }
+
+    void reloadContacts();
 
     // Device management
 
@@ -238,11 +242,13 @@ public:
         const dht::PkId& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
-    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id,
+                              dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                               dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(
+        dhtnet::tls::TrustStore::PermissionStatus status);
     dhtnet::tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;
     bool isAllowed(const crypto::Certificate& crt, bool allowPublic = false);
 
