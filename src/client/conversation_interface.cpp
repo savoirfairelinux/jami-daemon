@@ -197,9 +197,9 @@ loadConversationMessages(const std::string& accountId,
 
 uint32_t
 loadConversation(const std::string& accountId,
-                         const std::string& conversationId,
-                         const std::string& fromMessage,
-                         size_t n)
+                 const std::string& conversationId,
+                 const std::string& fromMessage,
+                 size_t n)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule(true))

@@ -50,7 +50,8 @@ AccountManager::buildRequest(PrivateKey fDeviceKey)
         });
 }
 
-AccountManager::~AccountManager() {
+AccountManager::~AccountManager()
+{
     if (dht_)
         dht_->join();
 }
@@ -68,8 +69,8 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 
     // Sync known devices
     JAMI_DEBUG("[Contacts] received device sync data ({:d} devices, {:d} contacts)",
-             sync.devices_known.size() + sync.devices.size(),
-             sync.peers.size());
+               sync.devices_known.size() + sync.devices.size(),
+               sync.peers.size());
     for (const auto& d : sync.devices_known) {
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
@@ -116,10 +117,7 @@ AccountManager::loadIdentity(const std::string& accountId,
     if (crt_path.empty() or key_path.empty())
         return {};
 
-    JAMI_DEBUG("Loading certificate from '{}' and key from '{}' at {}",
-             crt_path,
-             key_path,
-             path_);
+    JAMI_DEBUG("Loading certificate from '{}' and key from '{}' at {}", crt_path, key_path, path_);
     try {
         dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, path_));
         dht::crypto::PrivateKey dht_key(fileutils::loadFile(key_path, path_), key_pwd);
@@ -272,7 +270,9 @@ AccountManager::announceFromReceipt(const std::string& receipt)
 }
 
 void
-AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
+AccountManager::startSync(const OnNewDeviceCb& cb,
+                          const OnDeviceAnnouncedCb& dcb,
+                          bool publishPresence)
 {
     // Put device announcement
     if (info_->announce) {
@@ -306,10 +306,9 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
             if (crl.isSignedBy(*info_->identity.second->issuer)) {
                 JAMI_DEBUG("found CRL for account.");
-                certStore()
-                    .pinRevocationList(info_->accountId,
-                                       std::make_shared<dht::crypto::RevocationList>(
-                                           std::move(crl)));
+                certStore().pinRevocationList(info_->accountId,
+                                              std::make_shared<dht::crypto::RevocationList>(
+                                                  std::move(crl)));
             }
             return true;
         });
@@ -330,10 +329,10 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
                       dht::InfoHash peer_account) mutable {
                 JAMI_WARNING("Got trust request (confirm: {}) from: {} / {}. ConversationId: {}",
-                          v.confirm,
-                          peer_account.toString(),
-                          v.from.toString(),
-                          v.conversationId);
+                             v.confirm,
+                             peer_account.toString(),
+                             v.from.toString(),
+                             v.conversationId);
                 if (info_)
                     if (info_->contacts->onTrustRequest(peer_account,
                                                         v.owner,
@@ -344,14 +343,16 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                         auto conversationId = v.conversationId;
                         // Check if there was an old active conversation.
                         auto details = info_->contacts->getContactDetails(peer_account);
-                        auto oldConvIt = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
+                        auto oldConvIt = details.find(
+                            libjami::Account::TrustRequest::CONVERSATIONID);
                         if (oldConvIt != details.end() && oldConvIt->second != "") {
                             if (conversationId == oldConvIt->second) {
                                 // Here, it's possible that we already have accepted the conversation
                                 // but contact were offline and sync failed.
-                                // So, retrigger the callback so upper layer will clone conversation if needed
-                                // instead of getting stuck in sync.
-                                info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
+                                // So, retrigger the callback so upper layer will clone conversation
+                                // if needed instead of getting stuck in sync.
+                                info_->contacts->acceptConversation(conversationId,
+                                                                    v.owner->getLongId().toString());
                                 return;
                             }
                             conversationId = oldConvIt->second;
@@ -600,8 +601,8 @@ AccountManager::findCertificate(
             cb(cert);
     } else {
         dht_->findCertificate(h,
-                              [cb = std::move(cb), this](
-                                  const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                              [cb = std::move(cb),
+                               this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                                   if (crt && info_) {
                                       certStore().pinCertificate(crt);
                                   }
@@ -637,8 +638,8 @@ AccountManager::setCertificateStatus(const std::string& cert_id,
 
 bool
 AccountManager::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              dhtnet::tls::TrustStore::PermissionStatus status,
-                              bool local)
+                                     dhtnet::tls::TrustStore::PermissionStatus status,
+                                     bool local)
 {
     return info_ and info_->contacts->setCertificateStatus(cert, status, local);
 }
