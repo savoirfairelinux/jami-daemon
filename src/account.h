@@ -107,7 +107,7 @@ public:
     /**
      * Load the settings in this account.
      */
-    virtual void loadConfig();
+    virtual void loadConfig(const std::string& convId = {});
 
     const AccountConfig& config() const
     {
@@ -163,7 +163,7 @@ public:
      * Register the account.
      * This should update the getRegistrationState() return value.
      */
-    virtual void doRegister() = 0;
+    virtual void doRegister(const std::string& convId = {}) = 0;
 
     /**
      * Unregister the account.

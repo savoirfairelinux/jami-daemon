@@ -155,7 +155,7 @@ Account::loadDefaultCodecs()
 }
 
 void
-Account::loadConfig() {
+Account::loadConfig(const std::string& convId) {
     setActiveCodecs(config_->activeCodecs);
     auto ringtoneDir = fmt::format("{}/{}", JAMI_DATADIR, RINGDIR);
     ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);

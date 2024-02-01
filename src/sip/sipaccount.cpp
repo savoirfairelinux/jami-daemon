@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -558,7 +558,7 @@ SIPAccount::pushNotificationReceived(const std::string& from,
 }
 
 void
-SIPAccount::doRegister()
+SIPAccount::doRegister(const std::string& convId)
 {
     if (not isUsable()) {
         JAMI_WARN("Account must be enabled and active to register, ignoring");
@@ -1068,7 +1068,7 @@ SIPAccount::initStunConfiguration()
 }
 
 void
-SIPAccount::loadConfig()
+SIPAccount::loadConfig(const std::string& convId)
 {
     SIPAccountBase::loadConfig();
     setCredentials(config().credentials);

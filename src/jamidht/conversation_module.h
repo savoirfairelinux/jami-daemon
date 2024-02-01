@@ -67,13 +67,16 @@ public:
                        NeedSocketCb&& onNeedSocket,
                        NeedSocketCb&& onNeedSwarmSocket,
                        UpdateConvReq&& updateConvReqCb,
-                       OneToOneRecvCb&& oneToOneRecvCb);
+                       OneToOneRecvCb&& oneToOneRecvCb,
+                       const std::string& convId = {});
     ~ConversationModule() = default;
 
     /**
      * Refresh informations about conversations
      */
     void loadConversations();
+
+    void loadSingleConversation(const std::string& convId);
 
 #ifdef LIBJAMI_TESTABLE
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
@@ -152,7 +155,8 @@ public:
      * @param convId
      * @param deviceId      If a trust request is accepted from a device (can help to sync)
      */
-    void acceptConversationRequest(const std::string& conversationId, const std::string& deviceId = "");
+    void acceptConversationRequest(const std::string& conversationId,
+                                   const std::string& deviceId = "");
 
     /**
      * Decline a conversation's request
@@ -227,8 +231,8 @@ public:
                                       const std::string& fromMessage = "",
                                       size_t n = 0);
     uint32_t loadConversation(const std::string& conversationId,
-                                const std::string& fromMessage = "",
-                                size_t n = 0);
+                              const std::string& fromMessage = "",
+                              size_t n = 0);
     uint32_t loadConversationUntil(const std::string& conversationId,
                                    const std::string& fromMessage,
                                    const std::string& to);
@@ -459,7 +463,8 @@ public:
     static std::map<std::string, ConvInfo> convInfos(const std::string& accountId);
     static std::map<std::string, ConvInfo> convInfosFromPath(const std::filesystem::path& path);
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
-    static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::filesystem::path& path);
+    static std::map<std::string, ConversationRequest> convRequestsFromPath(
+        const std::filesystem::path& path);
     void addConvInfo(const ConvInfo& info);
 
     /**
@@ -474,7 +479,7 @@ public:
      * @return the related socket
      */
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view deviceId,
-                                             std::string_view convId) const;
+                                                     std::string_view convId) const;
     void removeGitSocket(std::string_view deviceId, std::string_view convId);
     void addGitSocket(std::string_view deviceId,
                       std::string_view convId,
@@ -488,7 +493,8 @@ public:
      * @param conversationId
      * @param socket
      */
-    void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
+    void addSwarmChannel(const std::string& conversationId,
+                         std::shared_ptr<dhtnet::ChannelSocket> socket);
     /**
      * Triggers a bucket maintainance for DRTs
      */

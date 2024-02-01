@@ -93,7 +93,7 @@ public:
         return *static_cast<const SipAccountBaseConfig*>(&Account::config());
     }
 
-    void loadConfig() override;
+    void loadConfig(const std::string& convId = {}) override;
 
     /**
      * Create incoming SIPCall.

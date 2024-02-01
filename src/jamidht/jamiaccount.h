@@ -129,7 +129,7 @@ public:
         return *static_cast<const JamiAccountConfig*>(&Account::config());
     }
 
-    void loadConfig() override;
+    void loadConfig(const std::string& convId = {}) override;
 
     /**
      * Constructor
@@ -171,7 +171,7 @@ public:
     /**
      * Connect to the DHT.
      */
-    void doRegister() override;
+    void doRegister(const std::string& convId = {}) override;
 
     /**
      * Disconnect from the DHT.
@@ -267,11 +267,13 @@ public:
 
     virtual bool getSrtpFallback() const override { return false; }
 
-    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id,
+                              dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                               dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(
+        dhtnet::tls::TrustStore::PermissionStatus status);
 
     bool findCertificate(const std::string& id);
     bool findCertificate(
@@ -344,8 +346,12 @@ public:
      * doesn't have a password
      * @return if the archive was exported
      */
-    bool exportArchive(const std::string& destinationPath, std::string_view scheme = {}, const std::string& password = {});
-    bool revokeDevice(const std::string& device, std::string_view scheme = {}, const std::string& password = {});
+    bool exportArchive(const std::string& destinationPath,
+                       std::string_view scheme = {},
+                       const std::string& password = {});
+    bool revokeDevice(const std::string& device,
+                      std::string_view scheme = {},
+                      const std::string& password = {});
     std::map<std::string, std::string> getKnownDevices() const;
 
     bool isPasswordValid(const std::string& password);
@@ -361,7 +367,9 @@ public:
 #if HAVE_RINGNS
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
-    void registerName(const std::string& name, const std::string& scheme, const std::string& password);
+    void registerName(const std::string& name,
+                      const std::string& scheme,
+                      const std::string& password);
 #endif
     bool searchUser(const std::string& nameQuery);
 
@@ -370,15 +378,9 @@ public:
     /// further calls
     bool isMessageTreated(std::string_view id);
 
-    std::shared_ptr<dht::DhtRunner> dht()
-    {
-        return dht_;
-    }
+    std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
 
-    const dht::crypto::Identity& identity() const
-    {
-        return id_;
-    }
+    const dht::crypto::Identity& identity() const { return id_; }
 
     void forEachDevice(const dht::InfoHash& to,
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
@@ -426,23 +428,15 @@ public:
     std::map<std::string, std::string> getNearbyPeers() const override;
 
 #ifdef LIBJAMI_TESTABLE
-    dhtnet::ConnectionManager& connectionManager()
-    {
-        return *connectionManager_;
-    }
+    dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 
     /**
      * Only used for tests, disable sha3sum verification for transfers.
      * @param newValue
      */
-    void noSha3sumVerification(bool newValue)
-    {
-        noSha3sumVerification_ = newValue;
-    }
+    void noSha3sumVerification(bool newValue) { noSha3sumVerification_ = newValue; }
 
-    void publishPresence(bool newValue) {
-        publishPresence_  = newValue;
-    }
+    void publishPresence(bool newValue) { publishPresence_ = newValue; }
 #endif
 
     /**
@@ -460,7 +454,8 @@ public:
 
     void monitor();
     // conversationId optional
-    std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& conversationId = "");
+    std::vector<std::map<std::string, std::string>> getConnectionList(
+        const std::string& conversationId = "");
     std::vector<std::map<std::string, std::string>> getChannelList(const std::string& connectionId);
 
     // File transfer
@@ -498,7 +493,7 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "");
 
-    ConversationModule* convModule(bool noCreation = false);
+    ConversationModule* convModule(bool noCreation = false, const std::string& convId = "");
     SyncModule* syncModule();
 
     /**
@@ -534,14 +529,9 @@ public:
 
     std::filesystem::path profilePath() const;
 
-    const std::shared_ptr<AccountManager>& accountManager() {
-        return accountManager_;
-    }
+    const std::shared_ptr<AccountManager>& accountManager() { return accountManager_; }
 
-    bool sha3SumVerify() const
-    {
-        return !noSha3sumVerification_;
-    }
+    bool sha3SumVerify() const { return !noSha3sumVerification_; }
 
     /**
      * Change certificate's validity period
@@ -550,7 +540,10 @@ public:
      * @param validity  New validity
      * @note forceReloadAccount may be necessary to retrigger the migration
      */
-    bool setValidity(std::string_view scheme, const std::string& pwd, const dht::InfoHash& id, int64_t validity);
+    bool setValidity(std::string_view scheme,
+                     const std::string& pwd,
+                     const dht::InfoHash& id,
+                     int64_t validity);
     /**
      * Try to reload the account to force the identity to be updated
      */
@@ -576,10 +569,7 @@ public:
      * connected. This kind of node corresponds to devices with push notifications & proxy and are
      * stored in the mobile nodes
      */
-    bool isMobile() const
-    {
-        return config().proxyEnabled and not config().deviceKey.empty();
-    }
+    bool isMobile() const { return config().proxyEnabled and not config().deviceKey.empty(); }
 
 #ifdef LIBJAMI_TESTABLE
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
@@ -588,10 +578,7 @@ public:
     };
 #endif
 
-    dhtnet::tls::CertificateStore& certStore() const
-    {
-        return *certStore_;
-    }
+    dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
     /**
      * Check if a Device is connected
      * @param deviceId
@@ -628,7 +615,7 @@ private:
 
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
-    void doRegister_();
+    void doRegister_(const std::string& convId = {});
 
     const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
@@ -670,7 +657,8 @@ private:
     void loadAccount(const std::string& archive_password_scheme = {},
                      const std::string& archive_password = {},
                      const std::string& archive_pin = {},
-                     const std::string& archive_path = {});
+                     const std::string& archive_path = {},
+                     const std::string& convId = {});
 
     std::vector<std::string> loadBootstrap() const;
 
@@ -722,7 +710,6 @@ private:
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
     std::set<std::string, std::less<>> treatedMessages_ {};
-
 
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
