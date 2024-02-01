@@ -1094,20 +1094,21 @@ void
 JamiAccount::loadAccount(const std::string& archive_password_scheme,
                          const std::string& archive_password,
                          const std::string& archive_pin,
-                         const std::string& archive_path)
+                         const std::string& archive_path,
+                         const std::string& convId)
 {
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
     JAMI_DEBUG("[Account {:s}] loading account", getAccountID());
     AccountManager::OnChangeCallback callbacks {
-        [this](const std::string& uri, bool confirmed) {
+        [this, convId](const std::string& uri, bool confirmed) {
             if (!id_.first)
                 return;
             if (jami::Manager::instance().syncOnRegister) {
-                dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
+                dht::ThreadPool::io().run([w = weak(), uri, confirmed, convId] {
                     if (auto shared = w.lock()) {
-                        if (auto cm = shared->convModule(true)) {
+                        if (auto cm = shared->convModule(true, convId)) {
                             auto activeConv = cm->getOneToOneConversation(uri);
                             if (!activeConv.empty())
                                 cm->bootstrap(activeConv);
@@ -1119,13 +1120,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 });
             }
         },
-        [this](const std::string& uri, bool banned) {
+        [this, convId](const std::string& uri, bool banned) {
             if (!id_.first)
                 return;
-            dht::ThreadPool::io().run([w = weak(), uri, banned] {
+            dht::ThreadPool::io().run([w = weak(), uri, banned, convId] {
                 if (auto shared = w.lock()) {
                     // Erase linked conversation's requests
-                    if (auto convModule = shared->convModule(true))
+                    if (auto convModule = shared->convModule(true, convId))
                         convModule->removeContact(uri, banned);
                     // Remove current connections with contact
                     // Note: if contact is ourself, we don't close the connection
@@ -1140,13 +1141,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 }
             });
         },
-        [this](const std::string& uri,
+        [this, convId](const std::string& uri,
                const std::string& conversationId,
                const std::vector<uint8_t>& payload,
                time_t received) {
             if (!id_.first)
                 return;
-            dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received] {
+            dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received, convId] {
                 if (auto shared = w.lock()) {
                     shared->clearProfileCache(uri);
                     if (conversationId.empty()) {
@@ -1156,7 +1157,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         return;
                     }
                     // Here account can be initializing
-                    if (auto cm = shared->convModule(true)) {
+                    if (auto cm = shared->convModule(true, convId)) {
                         auto activeConv = cm->getOneToOneConversation(uri);
                         if (activeConv != conversationId)
                             cm->onTrustRequest(uri, conversationId, payload, received);
@@ -1175,17 +1176,17 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
         },
-        [this](const std::string& conversationId, const std::string& deviceId) {
+        [this, convId](const std::string& conversationId, const std::string& deviceId) {
             // Note: Do not retrigger on another thread. This has to be done
             // at the same time of acceptTrustRequest a synced state between TrustRequest
             // and convRequests.
-            if (auto cm = convModule(true))
+            if (auto cm = convModule(true, convId))
                 cm->acceptConversationRequest(conversationId, deviceId);
         },
-        [this](const std::string& uri, const std::string& convFromReq) {
-            dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
+        [this, convId](const std::string& uri, const std::string& convFromReq) {
+            dht::ThreadPool::io().run([w = weak(), convFromReq, uri, convId] {
                 if (auto shared = w.lock()) {
-                    auto cm = shared->convModule(true);
+                    auto cm = shared->convModule(true, convId);
                     // Remove cached payload if there is one
                     auto requestPath = shared->cachePath_ / "requests"/ uri;
                     dhtnet::fileutils::remove(requestPath);
@@ -2140,7 +2141,7 @@ JamiAccount::doRegister_()
 }
 
 ConversationModule*
-JamiAccount::convModule(bool noCreation)
+JamiAccount::convModule(bool noCreation, const std::string& convId)
 {
     if (noCreation)
         return convModule_.get();
@@ -2272,7 +2273,8 @@ JamiAccount::convModule(bool noCreation)
                                                    convId,
                                                    {});
                 });
-            });
+            },
+            convId);
     }
     return convModule_.get();
 }

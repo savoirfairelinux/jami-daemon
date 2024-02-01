@@ -498,7 +498,7 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "");
 
-    ConversationModule* convModule(bool noCreation = false);
+    ConversationModule* convModule(bool noCreation = false, const std::string& convId = "");
     SyncModule* syncModule();
 
     /**
@@ -670,7 +670,8 @@ private:
     void loadAccount(const std::string& archive_password_scheme = {},
                      const std::string& archive_password = {},
                      const std::string& archive_pin = {},
-                     const std::string& archive_path = {});
+                     const std::string& archive_path = {},
+                     const std::string& convId = {});
 
     std::vector<std::string> loadBootstrap() const;
 

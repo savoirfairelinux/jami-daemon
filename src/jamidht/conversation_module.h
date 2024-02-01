@@ -67,13 +67,16 @@ public:
                        NeedSocketCb&& onNeedSocket,
                        NeedSocketCb&& onNeedSwarmSocket,
                        UpdateConvReq&& updateConvReqCb,
-                       OneToOneRecvCb&& oneToOneRecvCb);
+                       OneToOneRecvCb&& oneToOneRecvCb,
+                       const std::string& convId = {});
     ~ConversationModule() = default;
 
     /**
      * Refresh informations about conversations
      */
     void loadConversations();
+
+    void loadSingleConversation(const std::string& convId);
 
 #ifdef LIBJAMI_TESTABLE
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);

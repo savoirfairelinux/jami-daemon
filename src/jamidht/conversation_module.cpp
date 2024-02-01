@@ -1376,7 +1376,8 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
                                        NeedSocketCb&& onNeedSocket,
                                        NeedSocketCb&& onNeedSwarmSocket,
                                        UpdateConvReq&& updateConvReqCb,
-                                       OneToOneRecvCb&& oneToOneRecvCb)
+                                       OneToOneRecvCb&& oneToOneRecvCb,
+                                       const std::string& convId)
     : pimpl_ {std::make_unique<Impl>(std::move(account),
                                      std::move(needsSyncingCb),
                                      std::move(sendMsgCb),
@@ -1385,7 +1386,11 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
                                      std::move(updateConvReqCb),
                                      std::move(oneToOneRecvCb))}
 {
-    loadConversations();
+    if (convId.empty()) {
+        loadConversations();
+    } else {
+       loadSingleConversation(convId);
+    }
 }
 
 #ifdef LIBJAMI_TESTABLE
@@ -1587,6 +1592,38 @@ ConversationModule::loadConversations()
                 shared->fixStructures(acc, updateContactConv, toRm);
         });
 
+}
+
+void
+ConversationModule::loadSingleConversation(const std::string& convId)
+{
+    auto acc = pimpl_->account_.lock();
+    if (!acc)
+        return;
+    JAMI_LOG("[Account {}] Start loading conversation {}", pimpl_->accountId_, convId);
+
+    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock<std::mutex> ilk(pimpl_->convInfosMtx_);
+    pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
+    pimpl_->conversations_.clear();
+
+    try {
+        auto sconv = std::make_shared<SyncedConversation>(convId);
+
+        auto conv = std::make_shared<Conversation>(acc, convId);
+
+        conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
+
+        sconv->conversation = conv;
+        pimpl_->conversations_.emplace(convId, std::move(sconv));
+    } catch (const std::logic_error& e) {
+        JAMI_WARNING("[Account {}] Conversations not loaded: {}",
+                pimpl_->accountId_,
+                e.what());
+    }
+
+    ilk.unlock();
+    lk.unlock();
 }
 
 void
