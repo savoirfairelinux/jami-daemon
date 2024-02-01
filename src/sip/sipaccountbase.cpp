@@ -132,7 +132,7 @@ SIPAccountBase::flush()
 }
 
 void
-SIPAccountBase::loadConfig()
+SIPAccountBase::loadConfig(const std::string& convId)
 {
     Account::loadConfig();
     const auto& conf = config();

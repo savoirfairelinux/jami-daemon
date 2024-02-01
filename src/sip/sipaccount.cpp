@@ -1068,7 +1068,7 @@ SIPAccount::initStunConfiguration()
 }
 
 void
-SIPAccount::loadConfig()
+SIPAccount::loadConfig(const std::string& convId)
 {
     SIPAccountBase::loadConfig();
     setCredentials(config().credentials);
