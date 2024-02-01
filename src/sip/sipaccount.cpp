@@ -1,4 +1,4 @@
-﻿/*
+/*
  *  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -595,8 +595,7 @@ SIPAccount::doRegister1_()
                          config().tlsEnable ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
                          [w = weak()](std::vector<dhtnet::IpAddr> host_ips) {
                              if (auto acc = w.lock()) {
-                                 std::lock_guard lock(
-                                     acc->configurationMutex_);
+                                 std::lock_guard lock(acc->configurationMutex_);
                                  if (host_ips.empty()) {
                                      JAMI_ERR("Can't resolve hostname for registration.");
                                      acc->setRegistrationState(RegistrationState::ERROR_GENERIC,

@@ -203,10 +203,7 @@ public:
         return messageEngine_.getStatus(id);
     }
 
-    bool cancelMessage(uint64_t id) override
-    {
-        return messageEngine_.cancel(id);
-    }
+    bool cancelMessage(uint64_t id) override { return messageEngine_.cancel(id); }
 
     virtual void onTextMessage(const std::string& id,
                                const std::string& from,
