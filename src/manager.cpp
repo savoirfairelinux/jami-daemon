@@ -764,7 +764,7 @@ Manager::setAutoAnswer(bool enable)
 }
 
 void
-Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
+Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags, const std::string& accountID)
 {
     // FIXME: this is no good
     initialized = true;
@@ -871,7 +871,12 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
                          getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
     }
-    registerAccounts();
+
+    if (accountID.empty()) {
+         registerAccounts();
+    } else {
+        registerAccount(accountID);
+    }
 }
 
 void
@@ -2965,6 +2970,15 @@ Manager::registerAccounts()
 
         a->loadConfig();
 
+        if (a->isUsable())
+            a->doRegister();
+    }
+}
+
+void
+Manager::registerAccount(const std::string& accountID) {
+    if (const auto a = getAccount(accountID)) {
+        a->loadConfig();
         if (a->isUsable())
             a->doRegister();
     }

@@ -126,9 +126,10 @@ public:
 
     /**
      * Initialisation of thread (sound) and map.
-     * Init a new VoIPLink, audio codec and audio driver
+     * Init a new VoIPLink, audio codec and audio driver.
+     * Load accounts. If accountID is empty, load all accounts.
      */
-    void init(const std::filesystem::path& config_file, libjami::InitFlag flags);
+    void init(const std::filesystem::path& config_file, libjami::InitFlag flags, const std::string& accountID = {});
 
     /*
      * Terminate all threads and exit DBus loop
@@ -770,6 +771,11 @@ public:
      * Send registration for all enabled accounts
      */
     void registerAccounts();
+
+    /**
+     * Send registration for one account
+     */
+    void registerAccount(const std::string& accountID);
 
     /**
      * Send unregister for all enabled accounts
