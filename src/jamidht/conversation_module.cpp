@@ -1458,6 +1458,9 @@ ConversationModule::loadConversations()
                     });
                     if (itContact == ctx->contacts.end()) {
                         JAMI_WARNING("Contact {} not found", otherUri);
+                        std::lock_guard lkCv {ctx->cvMtx};
+                        --ctx->convNb;
+                        ctx->cv.notify_all();
                         return;
                     }
                     std::string convFromDetails = itContact->at("conversationId");
