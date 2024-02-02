@@ -125,6 +125,7 @@ struct ConversationMember
 
         return {{"uri", uri}, {"role", rolestr}};
     }
+    MSGPACK_DEFINE(uri, role)
 };
 
 enum class CallbackResult { Skip, Break, Ok };
@@ -424,3 +425,4 @@ private:
 };
 
 } // namespace jami
+MSGPACK_ADD_ENUM(jami::MemberRole);

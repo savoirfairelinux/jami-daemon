@@ -61,8 +61,34 @@ public:
         : account_(account)
         , id_(id)
     {
-        initMembers();
+        auto acc = account.lock();
+        conversationDataPath_ = fileutils::get_data_dir() / acc->getAccountID()
+                                / "conversation_data" / id_;
+        membersCache_ = conversationDataPath_ / "members";
+        loadMembers();
+        if (members_.empty()) {
+            initMembers();
+        }
     }
+
+    void loadMembers()
+    {
+        try {
+            // read file
+            auto file = fileutils::loadFile(membersCache_);
+            // load values
+            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
+            std::lock_guard lk {membersMtx_};
+            oh.get().convert(members_);
+        } catch (const std::exception& e) {
+        }
+    }
+    void saveMembers()
+    {
+        std::ofstream file(membersCache_, std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, members_);
+    }
+
 
     // NOTE! We use temporary GitRepository to avoid to keep file opened (TODO check why
     // git_remote_fetch() leaves pack-data opened)
@@ -174,6 +200,10 @@ public:
         std::lock_guard lk(membersMtx_);
         return members_;
     }
+
+
+    std::filesystem::path conversationDataPath_ {};
+    std::filesystem::path membersCache_ {};
 
     std::map<std::string, std::vector<DeviceId>> devices(bool ignoreExpired = true) const
     {
@@ -2423,6 +2453,7 @@ ConversationRepository::Impl::initMembers()
             }
         }
     }
+    saveMembers();
 }
 
 std::optional<std::map<std::string, std::string>>
@@ -2881,6 +2912,7 @@ ConversationRepository::addMember(const std::string& uri)
     {
         std::lock_guard lk(pimpl_->membersMtx_);
         pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::INVITED});
+        pimpl_->saveMembers();
     }
 
     Json::Value json;
@@ -3326,6 +3358,7 @@ ConversationRepository::join()
         }
         if (!updated)
             pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::MEMBER});
+        pimpl_->saveMembers();
     }
 
     return commitMessage(Json::writeString(wbuilder, json));
@@ -3399,6 +3432,7 @@ ConversationRepository::leave()
         pimpl_->members_.erase(std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
             return member.uri == account->getUsername();
         }), pimpl_->members_.end());
+        pimpl_->saveMembers();
     }
 
     return pimpl_->commit(Json::writeString(wbuilder, json), false);
@@ -3561,6 +3595,7 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
         }
         if (!updated)
             members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
+        saveMembers();
     }
     return true;
 }
@@ -3604,6 +3639,7 @@ ConversationRepository::Impl::resolveUnban(const std::string_view type, const st
     }
     if (!updated)
         members_.emplace_back(ConversationMember {uri, role});
+    saveMembers();
     return true;
 }
 
