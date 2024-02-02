@@ -657,7 +657,10 @@ ArchiveAccountManager::getPasswordKey(const std::string& password)
 {
     try {
         auto data = dhtnet::fileutils::loadFile(fileutils::getFullPath(path_, archivePath_));
-        return dht::crypto::aesGetKey(data, password);
+        // Try to decrypt to check if password is valid
+        auto key = dht::crypto::aesGetKey(data, password);
+        auto decrypted = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(data), key);
+        return key;
     } catch (const std::exception& e) {
         JAMI_ERR("Error loading archive: %s", e.what());
     }
