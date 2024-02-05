@@ -2232,7 +2232,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                     // offline before)
                     continue;
                 }
-                JAMI_DEBUG("Re-add previously removed conversation {:s}", convId);
+                JAMI_DEBUG("Re-add previously removed conversation {:s} {} vs {}", convId, conv->info.removed, convInfo.created);
             }
             conv->info = convInfo;
             if (!conv->conversation) {
