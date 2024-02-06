@@ -20,7 +20,7 @@ endif
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
-PUPNP_OPTIONS=--disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation
+PUPNP_OPTIONS=--disable-blocking_tcp_connections --disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation
 
 .upnp: upnp
 ifdef HAVE_WIN32
