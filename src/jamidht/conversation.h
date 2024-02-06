@@ -108,7 +108,7 @@ struct ConvInfo
     time_t created {0};
     time_t removed {0};
     time_t erased {0};
-    std::vector<std::string> members;
+    std::set<std::string> members;
     std::string lastDisplayed {};
 
     ConvInfo() = default;
@@ -140,7 +140,7 @@ using OnLoadMessages2
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
-using OnMembersChanged = std::function<void(const std::vector<std::string>&)>;
+using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 using DeviceId = dht::PkId;
 using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
@@ -244,7 +244,7 @@ public:
      * @param filteredRoles    If we want to ignore some roles
      * @return members' uris
      */
-    std::vector<std::string> memberUris(
+    std::set<std::string> memberUris(
         std::string_view filter = {},
         const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
                                                      MemberRole::LEFT,
