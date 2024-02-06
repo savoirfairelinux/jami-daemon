@@ -189,7 +189,7 @@ public:
      */
     std::vector<std::map<std::string, std::string>> getConversationMembers(
         const std::string& conversationId, bool includeBanned = false) const;
-    void setConversationMembers(const std::string& convId, const std::vector<std::string>& members);
+    void setConversationMembers(const std::string& convId, const std::set<std::string>& members);
 
     /**
      * Remove a repository and all files
@@ -497,10 +497,10 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                  conv->info.id,
                  deviceId);
         conv->info.created = std::time(nullptr);
-        conv->info.members.emplace_back(username_);
+        conv->info.members.emplace(username_);
         conv->info.lastDisplayed = lastDisplayed;
         if (peerUri != username_)
-            conv->info.members.emplace_back(peerUri);
+            conv->info.members.emplace(peerUri);
         addConvInfo(conv->info);
     } else {
         conv->conversation->updateLastDisplayed(lastDisplayed);
@@ -926,8 +926,7 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv)
     if (isSyncing)
         conv.info.erased = std::time(nullptr);
     // Sync now, because it can take some time to really removes the datas
-    if (hasMembers)
-        needsSyncingCb_({});
+    needsSyncingCb_({});
     addConvInfo(conv.info);
     emitSignal<libjami::ConversationSignal::ConversationRemoved>(accountId_, conv.info.id);
     if (isSyncing)
@@ -1022,7 +1021,6 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                     connectedMembers.emplace_back(cert->issuer->getId().toString());
             }
         }
-        std::sort(std::begin(members), std::end(members));
         std::sort(std::begin(connectedMembers), std::end(connectedMembers));
         std::set_difference(members.begin(),
                             members.end(),
@@ -1318,8 +1316,8 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
     conv->info = {};
     conv->info.id = conversationId;
     conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(username_);
-    conv->info.members.emplace_back(uri);
+    conv->info.members.emplace(username_);
+    conv->info.members.emplace(uri);
     acc->forEachDevice(
         memberHash,
         [w = weak(), conv, conversationId, oldConvId](
@@ -1452,7 +1450,7 @@ ConversationModule::loadConversations()
                 if (conv->mode() == ConversationMode::ONE_TO_ONE && members.size() == 1) {
                     // If we got a 1:1 conversation, but not in the contact details, it's rather a
                     // duplicate or a weird state
-                    auto& otherUri = members[0];
+                    auto otherUri = *members.begin();
                     auto itContact = std::find_if(ctx->contacts.cbegin(), ctx->contacts.cend(), [&](const auto& c) {
                         return c.at("id") == otherUri;
                     });
@@ -1561,7 +1559,7 @@ ConversationModule::loadConversations()
             itConv->second->conversation->setRemovingFlag();
         if (!info.isRemoved() && itConv == pimpl_->conversations_.end()) {
             // In this case, the conversation is not synced and we only know ourself
-            if (info.members.size() == 1 && info.members.at(0) == acc->getUsername()) {
+            if (info.members.size() == 1 && *info.members.begin() == acc->getUsername()) {
                 JAMI_WARNING("[Account {:s}] Conversation {:s} seems not present/synced.",
                              pimpl_->accountId_,
                              info.id);
@@ -1861,9 +1859,9 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     auto conv = pimpl_->startConversation(convId);
     std::unique_lock<std::mutex> lk(conv->mtx);
     conv->info.created = std::time(nullptr);
-    conv->info.members.emplace_back(pimpl_->username_);
+    conv->info.members.emplace(pimpl_->username_);
     if (!otherMember.empty())
-        conv->info.members.emplace_back(otherMember);
+        conv->info.members.emplace(otherMember);
     conv->conversation = conversation;
     addConvInfo(conv->info);
     lk.unlock();
@@ -2939,8 +2937,9 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
             dhtnet::fileutils::getFileLock(path / "convInfo"));
         auto file = fileutils::loadFile("convInfo", path);
         // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-        oh.get().convert(convInfos);
+        msgpack::unpacked result;
+        msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
+        result.get().convert(convInfos);
     } catch (const std::exception& e) {
         JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
     }
@@ -2964,8 +2963,9 @@ ConversationModule::convRequestsFromPath(const std::filesystem::path& path)
             dhtnet::fileutils::getFileLock(path / "convRequests"));
         auto file = fileutils::loadFile("convRequests", path);
         // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-        oh.get().convert(convRequests);
+        msgpack::unpacked result;
+        msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
+        result.get().convert(convRequests);
     } catch (const std::exception& e) {
         JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
     }
@@ -2980,7 +2980,7 @@ ConversationModule::addConvInfo(const ConvInfo& info)
 
 void
 ConversationModule::Impl::setConversationMembers(const std::string& convId,
-                                                 const std::vector<std::string>& members)
+                                                 const std::set<std::string>& members)
 {
     if (auto conv = getConversation(convId)) {
         std::lock_guard lk(conv->mtx);

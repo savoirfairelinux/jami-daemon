@@ -55,7 +55,7 @@ ConvInfo::ConvInfo(const Json::Value& json)
     removed = json[ConversationMapKeys::REMOVED].asLargestUInt();
     erased = json[ConversationMapKeys::ERASED].asLargestUInt();
     for (const auto& v : json[ConversationMapKeys::MEMBERS]) {
-        members.emplace_back(v["uri"].asString());
+        members.emplace(v["uri"].asString());
     }
     lastDisplayed = json[ConversationMapKeys::LAST_DISPLAYED].asString();
 }
@@ -1373,7 +1373,7 @@ Conversation::getMembers(bool includeInvited, bool includeLeft, bool includeBann
     return pimpl_->getMembers(includeInvited, includeLeft, includeBanned);
 }
 
-std::vector<std::string>
+std::set<std::string>
 Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const
 {
     return pimpl_->repository_->memberUris(filter, filteredRoles);

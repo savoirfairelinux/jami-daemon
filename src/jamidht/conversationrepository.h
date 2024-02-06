@@ -367,7 +367,7 @@ public:
      * @param filteredRoles    If we want to ignore some roles
      * @return members' uris
      */
-    std::vector<std::string> memberUris(std::string_view filter,
+    std::set<std::string> memberUris(std::string_view filter,
                                         const std::set<MemberRole>& filteredRoles) const;
 
     /**
