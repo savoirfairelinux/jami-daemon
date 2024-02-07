@@ -3197,6 +3197,24 @@ JamiAccount::sendMessage(const std::string& to,
 
                 // Else, ask for a channel and send a DHT message
                 auto payload_type = payloads.cbegin()->first;
+
+                // try to extract conversationId, to add it to payload_type
+                auto payload_data = payloads.cbegin()->second;
+                Json::Value parsed;
+                Json::CharReaderBuilder readerBuilder;
+                std::unique_ptr<Json::CharReader> const reader(readerBuilder.newCharReader());
+                std::string errors;
+
+                bool parsingSuccessful = reader->parse(payload_data.c_str(),
+                                                       payload_data.c_str() + payload_data.size(),
+                                                       &parsed,
+                                                       &errors);
+
+                // Extract the id value
+                if (parsed.isMember("id")) {
+                    auto id = parsed["id"].asString();
+                    payload_type = payload_type + "/" + id;
+                }
                 requestSIPConnection(to, deviceId, payload_type);
                 {
                     std::lock_guard lock(messageMutex_);
@@ -3314,6 +3332,24 @@ JamiAccount::sendMessage(const std::string& to,
         // Set message as not sent in order to be re-triggered
         messageEngine_.onMessageSent(to, token, false, deviceId);
         auto payload_type = payloads.cbegin()->first;
+
+        // try to extract conversationId, to add it to payload_type
+        auto payload_data = payloads.cbegin()->second;
+        Json::Value parsed;
+        Json::CharReaderBuilder readerBuilder;
+        std::unique_ptr<Json::CharReader> const reader(readerBuilder.newCharReader());
+        std::string errors;
+
+        bool parsingSuccessful = reader->parse(payload_data.c_str(),
+                                               payload_data.c_str() + payload_data.size(),
+                                               &parsed,
+                                               &errors);
+
+        // Extract the id value
+        if (parsed.isMember("id")) {
+            auto id = parsed["id"].asString();
+            payload_type = payload_type + "/" + id;
+        }
         requestSIPConnection(to, DeviceId(deviceId), payload_type);
     }
 }
