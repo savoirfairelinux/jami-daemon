@@ -2020,7 +2020,8 @@ JamiAccount::doRegister_()
                     return;
                 auto peerId = cert->issuer->getId().toString();
                 // A connection request can be sent just before member is banned and this must be ignored.
-                if (accountManager()->getCertificateStatus(peerId) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                if (accountManager()->getCertificateStatus(peerId)
+                    == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
                     channel->shutdown();
                     return;
                 }
@@ -3202,6 +3203,32 @@ JamiAccount::sendMessage(const std::string& to,
 
                 // Else, ask for a channel and send a DHT message
                 auto payload_type = payloads.cbegin()->first;
+                if (payload_type == MIME_TYPE_GIT) {
+                    auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
+                        Json::Value parsed;
+                        Json::CharReaderBuilder readerBuilder;
+                        auto reader = readerBuilder.newCharReader();
+                        std::string errors;
+
+                        if (reader->parse(jsonData.c_str(),
+                                          jsonData.c_str() + jsonData.size(),
+                                          &parsed,
+                                          &errors)) {
+                            if (parsed.isMember("id") && parsed["id"].isString()) {
+                                return parsed["id"].asString();
+                            }
+                        } else {
+                            JAMI_WARNING("Could not parse jsonData to get conversation id");
+                        }
+                        return "";
+                    };
+                    auto payload_data = payloads.cbegin()->second;
+                    std::string id = extractIdFromJson(payload_data);
+
+                    if (!id.empty()) {
+                        payload_type += "/" + id;
+                    }
+                }
                 requestSIPConnection(to, deviceId, payload_type);
                 {
                     std::lock_guard lock(messageMutex_);
@@ -3319,6 +3346,33 @@ JamiAccount::sendMessage(const std::string& to,
         // Set message as not sent in order to be re-triggered
         messageEngine_.onMessageSent(to, token, false, deviceId);
         auto payload_type = payloads.cbegin()->first;
+
+        if (payload_type == MIME_TYPE_GIT) {
+            auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
+                Json::Value parsed;
+                Json::CharReaderBuilder readerBuilder;
+                auto reader = readerBuilder.newCharReader();
+                std::string errors;
+
+                if (reader->parse(jsonData.c_str(),
+                                  jsonData.c_str() + jsonData.size(),
+                                  &parsed,
+                                  &errors)) {
+                    if (parsed.isMember("id") && parsed["id"].isString()) {
+                        return parsed["id"].asString();
+                    }
+                } else {
+                    JAMI_WARNING("Could not parse jsonData to get conversation id");
+                }
+                return "";
+            };
+            auto payload_data = payloads.cbegin()->second;
+            std::string id = extractIdFromJson(payload_data);
+
+            if (!id.empty()) {
+                payload_type += "/" + id;
+            }
+        }
         requestSIPConnection(to, DeviceId(deviceId), payload_type);
     }
 }
