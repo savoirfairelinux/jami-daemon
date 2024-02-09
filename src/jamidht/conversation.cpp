@@ -1019,6 +1019,9 @@ Conversation::Impl::handleEdition(History& history,
                 // Normal message
                 it->second->editions.emplace(it->second->editions.begin(), it->second->body);
                 it->second->body["body"] = sharedCommit->body["body"];
+                // Remove reactions
+                if (sharedCommit->body.at("body").empty())
+                    it->second->reactions.clear();
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                              repository_->id(),
                                                                              *it->second);

@@ -157,6 +157,7 @@ private:
     void testRemoveOneToOneNotInDetails();
     void testMessageEdition();
     void testMessageReaction();
+    void testMessageEditionWithReaction();
     void testLoadPartiallyRemovedConversation();
     void testReactionsOnEditedMessage();
     void testUpdateProfileMultiDevice();
@@ -212,6 +213,7 @@ private:
     CPPUNIT_TEST(testRemoveOneToOneNotInDetails);
     CPPUNIT_TEST(testMessageEdition);
     CPPUNIT_TEST(testMessageReaction);
+    CPPUNIT_TEST(testMessageEditionWithReaction);
     CPPUNIT_TEST(testLoadPartiallyRemovedConversation);
     CPPUNIT_TEST(testReactionsOnEditedMessage);
     CPPUNIT_TEST(testUpdateProfileMultiDevice);
@@ -2431,6 +2433,35 @@ ConversationTest::testMessageReaction()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 10s, [&]() { return aliceData.reactionRemoved.size() == 1; }));
     CPPUNIT_ASSERT(emojiId == aliceData.reactionRemoved[0]);
+}
+
+void
+ConversationTest::testMessageEditionWithReaction()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+    auto convId = libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData.conversationId.empty(); }));
+    auto msgSize = aliceData.messages.size();
+    libjami::sendMessage(aliceId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == msgSize + 1; }));
+    msgSize = aliceData.messages.size();
+
+    // Add reaction
+    auto reactId = aliceData.messages.rbegin()->id;
+    libjami::sendMessage(aliceId, convId, "👋"s, reactId, 2);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 10s, [&]() { return aliceData.reactions.size() == 1; }));
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("react-to") == reactId);
+    CPPUNIT_ASSERT(aliceData.reactions.rbegin()->at("body") == "👋");
+    auto emojiId = aliceData.reactions.rbegin()->at("id");
+
+    // Remove base message should remove reaction
+    libjami::sendMessage(aliceId, convId, ""s, reactId, 1);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.messagesUpdated.size() == 1; }));
+    // Reaction is deleted
+    CPPUNIT_ASSERT(aliceData.messagesUpdated[0].reactions.empty());
 }
 
 void
