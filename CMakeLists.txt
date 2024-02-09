@@ -235,6 +235,7 @@ elseif(MSVC)
          "${Source_Files__media__video__uwpvideo}"
          "${Source_Files__media__video__winvideo}"
          "${Source_Files__media__audio__webrtc}"
+         "${Source_Files__media__audio__speexdsp}"
    )
 endif()
 
