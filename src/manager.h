@@ -57,7 +57,7 @@ class io_context;
 namespace dhtnet {
 class ChannelSocket;
 class IceTransportFactory;
-}
+} // namespace dhtnet
 
 namespace jami {
 namespace video {
@@ -126,7 +126,7 @@ public:
 
     /**
      * Initialisation of thread (sound) and map.
-     * Init a new VoIPLink, audio codec and audio driver
+     * Init a new VoIPLink, audio codec and audio driver.
      */
     void init(const std::filesystem::path& config_file, libjami::InitFlag flags);
 
@@ -137,8 +137,10 @@ public:
 
     void monitor(bool continuous);
 
-    std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& accountId, const std::string& conversationId);
-    std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId, const std::string& connectionId);
+    std::vector<std::map<std::string, std::string>> getConnectionList(
+        const std::string& accountId, const std::string& conversationId);
+    std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId,
+                                                                   const std::string& connectionId);
 
     /**
      * Accessor to audiodriver.
@@ -441,6 +443,7 @@ public:
                            const std::map<std::string, ::std::string>& details);
 
     void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
+    void loadAccountAndConversation(const std::string& accountID, const std::string& convID);
 
     std::mt19937_64 getSeededRandomEngine();
 
@@ -772,6 +775,11 @@ public:
     void registerAccounts();
 
     /**
+     * Send registration for one account
+     */
+    void registerAccount(const std::string& accountID, const std::string& convId = {});
+
+    /**
      * Send unregister for all enabled accounts
      */
     void unregisterAccounts();
@@ -864,8 +872,8 @@ public:
      * @return std::optional<std::weak_ptr<ChannelSocket>> the related socket
      */
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const std::string_view accountId,
-                                             const std::string_view deviceId,
-                                             const std::string_view conversationId);
+                                                     const std::string_view deviceId,
+                                                     const std::string_view conversationId);
 
     void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
