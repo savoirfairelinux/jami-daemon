@@ -113,7 +113,8 @@ struct SyncedConversation
 class ConversationModule::Impl : public std::enable_shared_from_this<Impl>
 {
 public:
-    Impl(std::weak_ptr<JamiAccount>&& account,
+    Impl(std::shared_ptr<JamiAccount>&& account,
+         std::shared_ptr<AccountManager>&& accountManager,
          NeedsSyncingCb&& needsSyncingCb,
          SengMsgCb&& sendMsgCb,
          NeedSocketCb&& onNeedSocket,
@@ -353,6 +354,7 @@ public:
     }
 
     std::weak_ptr<JamiAccount> account_;
+    std::shared_ptr<AccountManager> accountManager_;
     NeedsSyncingCb needsSyncingCb_;
     SengMsgCb sendMsgCb_;
     NeedSocketCb onNeedSocket_;
@@ -404,7 +406,8 @@ public:
                             const std::string& oldConvId = "");
 };
 
-ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
+ConversationModule::Impl::Impl(std::shared_ptr<JamiAccount>&& account,
+                               std::shared_ptr<AccountManager>&& accountManager,
                                NeedsSyncingCb&& needsSyncingCb,
                                SengMsgCb&& sendMsgCb,
                                NeedSocketCb&& onNeedSocket,
@@ -412,20 +415,20 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
                                UpdateConvReq&& updateConvReqCb,
                                OneToOneRecvCb&& oneToOneRecvCb)
     : account_(account)
+    , accountManager_(accountManager)
     , needsSyncingCb_(needsSyncingCb)
     , sendMsgCb_(sendMsgCb)
     , onNeedSocket_(onNeedSocket)
     , onNeedSwarmSocket_(onNeedSwarmSocket)
     , updateConvReqCb_(updateConvReqCb)
     , oneToOneRecvCb_(oneToOneRecvCb)
+    , accountId_(account->getAccountID())
 {
-    if (auto shared = account.lock()) {
-        accountId_ = shared->getAccountID();
-        deviceId_ = shared->currentDeviceId();
-        if (auto accm = shared->accountManager())
-            if (const auto* info = accm->getInfo())
-                username_ = info->accountId;
-    }
+    if (auto accm = account->accountManager())
+        if (const auto* info = accm->getInfo()) {
+            deviceId_ = info->deviceId;
+            username_ = info->accountId;
+        }
     conversationsRequests_ = convRequests(accountId_);
 }
 
@@ -467,7 +470,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         onNeedSocket_(
             conv->info.id,
             deviceId,
-            [=](const auto& channel) {
+            [w = weak(), conv, deviceId](const auto& channel) {
                 std::lock_guard lk(conv->mtx);
                 if (conv->pending && !conv->pending->ready) {
                     if (channel) {
@@ -476,7 +479,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                         conv->pending->socket = channel;
                         if (!conv->pending->cloning) {
                             conv->pending->cloning = true;
-                            dht::ThreadPool::io().run([w = weak(),
+                            dht::ThreadPool::io().run([w,
                                                        convId = conv->info.id,
                                                        deviceId = conv->pending->deviceId]() {
                                 if (auto sthis = w.lock())
@@ -588,25 +591,25 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         onNeedSocket_(
             conversationId,
             deviceId,
-            [this,
+            [w = weak(),
              conv,
              conversationId = std::move(conversationId),
              peer = std::move(peer),
              deviceId = std::move(deviceId),
              commitId = std::move(commitId)](const auto& channel) {
                 std::lock_guard lk(conv->mtx);
-                // auto conversation = conversations_.find(conversationId);
-                auto acc = account_.lock();
+                auto sthis = w.lock();
+                auto acc = sthis ? sthis->account_.lock() : nullptr;
                 if (!channel || !acc || !conv->conversation) {
                     conv->stopFetch(deviceId);
-                    syncCnt.fetch_sub(1);
+                    sthis->syncCnt.fetch_sub(1);
                     return false;
                 }
                 conv->conversation->addGitSocket(channel->deviceId(), channel);
                 conv->conversation->sync(
                     peer,
                     deviceId,
-                    [w = weak(),
+                    [w,
                      conv,
                      conversationId = std::move(conversationId),
                      peer = std::move(peer),
@@ -679,9 +682,12 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     if (!acc)
         return;
     std::vector<DeviceId> kd;
-    for (const auto& [id, _] : acc->getKnownDevices())
-        kd.emplace_back(id);
-
+    {
+        const auto& devices = accountManager_->getKnownDevices();
+        kd.reserve(devices.size());
+        for (const auto& [id, _] : devices)
+            kd.emplace_back(id);
+    }
     auto conv = getConversation(conversationId);
     if (!conv)
         return;
@@ -829,10 +835,7 @@ ConversationModule::Impl::getRequest(const std::string& id) const
 std::string
 ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const noexcept
 {
-    auto acc = account_.lock();
-    if (!acc)
-        return {};
-    auto details = acc->getContactDetails(uri);
+    auto details = accountManager_->getContactDetails(uri);
     auto it = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
     if (it != details.end())
         return it->second;
@@ -879,14 +882,13 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
         JAMI_LOG("Remove conversation: {}", conv.info.id);
         try {
             if (conv.conversation->mode() == ConversationMode::ONE_TO_ONE) {
-                auto account = account_.lock();
+                const auto& ownId = accountManager_->getInfo()->accountId;
                 for (const auto& member : conv.conversation->getInitialMembers()) {
-                    if (member != account->getUsername()) {
+                    if (member != ownId) {
                         // Note: this can happen while re-adding a contact.
                         // In this case, check that we are removing the linked conversation.
                         if (conv.info.id == getOneToOneConversation(member)) {
-                            if (auto am = account->accountManager())
-                                am->removeContactConversation(member);
+                            accountManager_->removeContactConversation(member);
                         }
                     }
                 }
@@ -1014,12 +1016,10 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         auto members = conversation.memberUris(username_, {MemberRole::BANNED});
         std::vector<std::string> connectedMembers;
         // print all members
-        if (auto acc = account_.lock()) {
-            for (const auto& device : devices) {
-                auto cert = acc->certStore().getCertificate(device.toString());
-                if (cert && cert->issuer)
-                    connectedMembers.emplace_back(cert->issuer->getId().toString());
-            }
+        for (const auto& device : devices) {
+            auto cert = acc->certStore().getCertificate(device.toString());
+            if (cert && cert->issuer)
+                connectedMembers.emplace_back(cert->issuer->getId().toString());
         }
         std::sort(std::begin(connectedMembers), std::end(connectedMembers));
         std::set_difference(members.begin(),
@@ -1225,8 +1225,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
     onNeedSocket_(
         conversationId,
         deviceId,
-        [sthis=shared_from_this(), conv, conversationId, oldConvId, deviceId](const auto& channel) {
-            auto acc = sthis->account_.lock();
+        [wthis=weak_from_this(), conv, conversationId, oldConvId, deviceId](const auto& channel) {
             std::lock_guard lk(conv->mtx);
             if (conv->pending && !conv->pending->ready) {
                 conv->pending->removeId = oldConvId;
@@ -1236,10 +1235,10 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     conv->pending->socket = channel;
                     if (!conv->pending->cloning) {
                         conv->pending->cloning = true;
-                        dht::ThreadPool::io().run([w = sthis->weak(),
+                        dht::ThreadPool::io().run([wthis,
                                                     conversationId,
                                                     deviceId = conv->pending->deviceId]() {
-                            if (auto sthis = w.lock())
+                            if (auto sthis = wthis.lock())
                                 sthis->handlePendingConversation(conversationId, deviceId);
                         });
                     }
@@ -1257,9 +1256,12 @@ void
 ConversationModule::Impl::bootstrap(const std::string& convId)
 {
     std::vector<DeviceId> kd;
-    if (auto acc = account_.lock())
-        for (const auto& [id, _] : acc->getKnownDevices())
+    {
+        const auto& devices = accountManager_->getKnownDevices();
+        kd.reserve(devices.size());
+        for (const auto& [id, _] : devices)
             kd.emplace_back(id);
+    }
     auto bootstrap = [&](auto& conv) {
         if (conv) {
 #ifdef LIBJAMI_TESTABLE
@@ -1305,9 +1307,8 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
 void
 ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId, const std::string& uri, const std::string& oldConvId)
 {
-    auto acc = account_.lock();
     auto memberHash = dht::InfoHash(uri);
-    if (!acc || !memberHash) {
+    if (!memberHash) {
         JAMI_WARNING("Invalid member detected: {}", uri);
         return;
     }
@@ -1318,7 +1319,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace(username_);
     conv->info.members.emplace(uri);
-    acc->forEachDevice(
+    accountManager_->forEachDevice(
         memberHash,
         [w = weak(), conv, conversationId, oldConvId](
             const std::shared_ptr<dht::crypto::PublicKey>& pk) {
@@ -1368,7 +1369,8 @@ ConversationModule::saveConvInfosToPath(const std::filesystem::path& path, const
 
 ////////////////////////////////////////////////////////////////
 
-ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
+ConversationModule::ConversationModule(std::shared_ptr<JamiAccount> account,
+                                       std::shared_ptr<AccountManager> accountManager,
                                        NeedsSyncingCb&& needsSyncingCb,
                                        SengMsgCb&& sendMsgCb,
                                        NeedSocketCb&& onNeedSocket,
@@ -1376,6 +1378,7 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
                                        UpdateConvReq&& updateConvReqCb,
                                        OneToOneRecvCb&& oneToOneRecvCb)
     : pimpl_ {std::make_unique<Impl>(std::move(account),
+                                     std::move(accountManager),
                                      std::move(needsSyncingCb),
                                      std::move(sendMsgCb),
                                      std::move(onNeedSocket),
@@ -1384,6 +1387,12 @@ ConversationModule::ConversationModule(std::weak_ptr<JamiAccount>&& account,
                                      std::move(oneToOneRecvCb))}
 {
     loadConversations();
+}
+
+void
+ConversationModule::setAccountManager(std::shared_ptr<AccountManager> accountManager)
+{
+    pimpl_->accountManager_ = accountManager;
 }
 
 #ifdef LIBJAMI_TESTABLE
@@ -1409,7 +1418,7 @@ ConversationModule::loadConversations()
     auto conversationsRepositories = dhtnet::fileutils::readDirectory(
         fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
 
-    auto contacts = acc->getContacts(true); // Avoid to lock configurationMtx while conv Mtx is locked
+    auto contacts = pimpl_->accountManager_->getContacts(true); // Avoid to lock configurationMtx while conv Mtx is locked
     std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
     std::unique_lock<std::mutex> ilk(pimpl_->convInfosMtx_);
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
@@ -1421,16 +1430,16 @@ ConversationModule::loadConversations()
         std::mutex toRmMtx;
         std::set<std::string> toRm;
         std::mutex convMtx;
-        std::atomic_int convNb;
+        size_t convNb;
         std::vector<std::map<std::string, std::string>> contacts;
         std::vector<std::tuple<std::string, std::string, std::string>> updateContactConv;
     };
     auto ctx = std::make_shared<Ctx>();
-    ctx->convNb = conversationsRepositories.empty() ? 0 : conversationsRepositories.size();
+    ctx->convNb = conversationsRepositories.size();
     ctx->contacts = std::move(contacts);
 
-    for (auto repository : conversationsRepositories) {
-        dht::ThreadPool::io().run([this, ctx, repository, acc] {
+    for (auto&& r : conversationsRepositories) {
+        dht::ThreadPool::io().run([this, ctx, repository=std::move(r), acc] {
             try {
                 auto sconv = std::make_shared<SyncedConversation>(repository);
 
@@ -1532,8 +1541,8 @@ ConversationModule::loadConversations()
         });
     }
 
-    std::unique_lock<std::mutex> lkCv {ctx->cvMtx};
-    ctx->cv.wait(lkCv, [&] {return ctx->convNb.load() == 0;});
+    std::unique_lock lkCv(ctx->cvMtx);
+    ctx->cv.wait(lkCv, [&] { return ctx->convNb == 0; });
 
     // Prune any invalid conversations without members and
     // set the removed flag if needed
