@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4c5b7522_ef4966f3",
+        "filename": "src/jamidht/conversation_module.h",
+        "patchSetId": 21
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-12T19:59:56Z",
+      "side": 1,
+      "message": "please document the data structure here (what\u0027s the key in the first, second and third nested map)",
+      "range": {
+        "startLine": 49,
+        "startChar": 0,
+        "endLine": 49,
+        "endChar": 2
+      },
+      "revId": "36f945367d4fc4c813fbcd3c6e04e84dd1791ad1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
