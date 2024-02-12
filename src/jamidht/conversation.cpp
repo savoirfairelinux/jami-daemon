@@ -139,27 +139,36 @@ public:
          const std::string& otherMember = "")
         : repository_(ConversationRepository::createConversation(account, mode, otherMember))
         , account_(account)
+        , accountId_(account->getAccountID())
+        , userId_(account->getUsername())
+        , deviceId_(account->currentDeviceId())
     {
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
-        init();
+        init(*account);
     }
 
     Impl(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId)
         : account_(account)
+        , accountId_(account->getAccountID())
+        , userId_(account->getUsername())
+        , deviceId_(account->currentDeviceId())
     {
         repository_ = std::make_unique<ConversationRepository>(account, conversationId);
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
-        init();
+        init(*account);
     }
 
     Impl(const std::shared_ptr<JamiAccount>& account,
          const std::string& remoteDevice,
          const std::string& conversationId)
         : account_(account)
+        , accountId_(account->getAccountID())
+        , userId_(account->getUsername())
+        , deviceId_(account->currentDeviceId())
     {
         std::vector<ConversationCommit> commits;
         repository_ = ConversationRepository::cloneConversation(account,
@@ -170,67 +179,61 @@ public:
                                                                 });
         if (!repository_) {
             emitSignal<libjami::ConversationSignal::OnConversationError>(
-                account->getAccountID(), conversationId, EFETCH, "Couldn't clone repository");
+                accountId_, conversationId, EFETCH, "Couldn't clone repository");
             throw std::logic_error("Couldn't clone repository");
         }
         // To detect current active calls, we need to check history
-        conversationDataPath_ = fileutils::get_data_dir() / account->getAccountID()
+        conversationDataPath_ = fileutils::get_data_dir() / accountId_
                                 / "conversation_data" / conversationId;
         activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
         for (const auto& c : repository_->convCommitsToMap(commits))
             updateActiveCalls(c);
-        init();
+        init(*account);
     }
 
-    void init()
-    {
-        if (auto shared = account_.lock()) {
-            ioContext_ = Manager::instance().ioContext();
-            fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
-            swarmManager_
-                = std::make_shared<SwarmManager>(NodeId(shared->currentDeviceId()),
-                                                 Manager::instance().getSeededRandomEngine(),
-                                                 [account = account_](const DeviceId& deviceId) {
-                                                     if (auto acc = account.lock()) {
-                                                         return acc->isConnectedWith(deviceId);
-                                                     }
-                                                     return false;
-                                                 });
-            swarmManager_->setMobility(shared->isMobile());
-            accountId_ = shared->getAccountID();
-            transferManager_
-                = std::make_shared<TransferManager>(shared->getAccountID(),
-                                                    "",
-                                                    repository_->id(),
-                                                    Manager::instance().getSeededRandomEngine());
-            conversationDataPath_ = fileutils::get_data_dir() / shared->getAccountID()
-                                    / "conversation_data" / repository_->id();
-            fetchedPath_ = conversationDataPath_ / "fetched";
-            sendingPath_ = conversationDataPath_ / "sending";
-            lastDisplayedPath_ = conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
-            preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
-            activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
-            hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
-            loadFetched();
-            loadSending();
-            loadLastDisplayed();
-            loadActiveCalls();
-        }
+    void init(JamiAccount& account) {
+        ioContext_ = Manager::instance().ioContext();
+        fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
+        swarmManager_
+            = std::make_shared<SwarmManager>(NodeId(deviceId_),
+                                                Manager::instance().getSeededRandomEngine(),
+                                                [account = account_](const DeviceId& deviceId) {
+                                                    if (auto acc = account.lock()) {
+                                                        return acc->isConnectedWith(deviceId);
+                                                    }
+                                                    return false;
+                                                });
+        swarmManager_->setMobility(account.isMobile());
+        transferManager_
+            = std::make_shared<TransferManager>(accountId_,
+                                                "",
+                                                repository_->id(),
+                                                Manager::instance().getSeededRandomEngine());
+        conversationDataPath_ = fileutils::get_data_dir() / accountId_
+                                / "conversation_data" / repository_->id();
+        fetchedPath_ = conversationDataPath_ / "fetched";
+        sendingPath_ = conversationDataPath_ / "sending";
+        lastDisplayedPath_ = conversationDataPath_ / ConversationMapKeys::LAST_DISPLAYED;
+        preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
+        activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
+        hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
+        loadFetched();
+        loadSending();
+        loadLastDisplayed();
+        loadActiveCalls();
     }
 
     const std::string& toString() const
     {
         if (fmtStr_.empty()) {
             if (repository_->mode() == ConversationMode::ONE_TO_ONE) {
-                if (auto acc = account_.lock()) {
-                    auto peer = acc->getUsername();
-                    for (const auto& member : repository_->getInitialMembers()) {
-                        if (member != acc->getUsername()) {
-                            peer = member;
-                        }
+                auto peer = userId_;
+                for (const auto& member : repository_->getInitialMembers()) {
+                    if (member != userId_) {
+                        peer = member;
                     }
-                    fmtStr_ = fmt::format("[Conversation (1:1) {}]", peer);
                 }
+                fmtStr_ = fmt::format("[Conversation (1:1) {}]", peer);
             } else {
                 fmtStr_ = fmt::format("[Conversation {}]", repository_->id());
             }
@@ -393,8 +396,7 @@ public:
 
     void announce(const std::vector<std::map<std::string, std::string>>& commits) const
     {
-        auto shared = account_.lock();
-        if (!shared or !repository_)
+        if (!repository_)
             return;
         auto convId = repository_->id();
         auto ok = !commits.empty();
@@ -438,7 +440,7 @@ public:
                 if (pluginChatManager.hasHandlers()) {
                     auto cm = std::make_shared<JamiMessage>(accountId_,
                                                             convId,
-                                                            c.at("author") != shared->getUsername(),
+                                                            c.at("author") != userId_,
                                                             c,
                                                             false);
                     cm->isSwarm = true;
@@ -460,12 +462,12 @@ public:
                         updateCached = true;
                         lastDisplayed_.erase(cached);
                     }
-                } else if (c.at("author") == shared->getUsername()) {
+                } else if (c.at("author") == userId_) {
                     updateCached = true;
                 }
 
                 if (updateCached) {
-                    lastDisplayed_[shared->getUsername()] = c.at(ConversationMapKeys::ID);
+                    lastDisplayed_[userId_] = c.at(ConversationMapKeys::ID);
                     saveLastDisplayed();
                     lk.unlock();
                     if (lastDisplayedUpdatedCb_)
@@ -585,17 +587,18 @@ public:
 
     std::string_view bannedType(const std::string& uri) const
     {
+        auto repo = repoPath();
         auto crt = fmt::format("{}.crt", uri);
-        auto bannedMember = repoPath() / "banned" / "members" / crt;
+        auto bannedMember = repo / "banned" / "members" / crt;
         if (std::filesystem::is_regular_file(bannedMember))
             return "members"sv;
-        auto bannedAdmin = repoPath() / "banned" / "admins" / crt;
+        auto bannedAdmin = repo / "banned" / "admins" / crt;
         if (std::filesystem::is_regular_file(bannedAdmin))
             return "admins"sv;
-        auto bannedInvited = repoPath() / "banned" / "invited" / uri;
+        auto bannedInvited = repo / "banned" / "invited" / uri;
         if (std::filesystem::is_regular_file(bannedInvited))
             return "invited"sv;
-        auto bannedDevice = repoPath() / "banned" / "devices" / crt;
+        auto bannedDevice = repo / "banned" / "devices" / crt;
         if (std::filesystem::is_regular_file(bannedDevice))
             return "devices"sv;
         return {};
@@ -631,6 +634,9 @@ public:
     std::unique_ptr<ConversationRepository> repository_;
     std::shared_ptr<SwarmManager> swarmManager_;
     std::weak_ptr<JamiAccount> account_;
+    std::string accountId_ {};
+    std::string userId_;
+    std::string deviceId_;
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
     std::vector<libjami::SwarmMessage> loadMessages2(const LogOptions& options,
@@ -652,7 +658,6 @@ public:
     std::filesystem::path sendingPath_ {};
     std::vector<std::string> sending_ {};
     // Manage last message displayed
-    std::string accountId_ {};
     std::filesystem::path lastDisplayedPath_ {};
     std::filesystem::path preferencesPath_ {};
     mutable std::mutex lastDisplayedMtx_ {}; // for lastDisplayed_
@@ -674,7 +679,6 @@ public:
     std::shared_ptr<asio::io_context> ioContext_;
     std::unique_ptr<asio::steady_timer> fallbackTimer_;
 
-    bool isMobile {false};
 
     /**
      * Loaded history represents the linearized history to show for clients
@@ -704,16 +708,8 @@ public:
 bool
 Conversation::Impl::isAdmin() const
 {
-    auto shared = account_.lock();
-    if (!shared)
-        return false;
-
     auto adminsPath = repoPath() / "admins";
-    auto cert = shared->identity().second;
-    if (!cert->issuer)
-        return false;
-    auto uri = cert->issuer->getId().toString();
-    return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, uri + ".crt"));
+    return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, userId_ + ".crt"));
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -745,7 +741,6 @@ Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool inclu
 std::vector<std::string>
 Conversation::Impl::commitsEndedCalls()
 {
-    auto shared = account_.lock();
     // Handle current calls
     std::vector<std::string> commits {};
     std::unique_lock<std::mutex> lk(writeMtx_);
@@ -756,10 +751,8 @@ Conversation::Impl::commitsEndedCalls()
         // will not be correctly updated
         // We don't need to send notifications there, as peers will sync with presence
         Json::Value value;
-        auto uri = shared->getUsername();
-        auto device = std::string(shared->currentDeviceId());
-        value["uri"] = uri;
-        value["device"] = device;
+        value["uri"] = userId_;
+        value["device"] = deviceId_;
         value["confId"] = hostedCall.first;
         value["type"] = "application/call-history+json";
         auto now = std::chrono::system_clock::now();
@@ -768,9 +761,9 @@ Conversation::Impl::commitsEndedCalls()
         value["duration"] = std::to_string((nowConverted - hostedCall.second) * 1000);
         auto itActive = std::find_if(activeCalls_.begin(),
                                      activeCalls_.end(),
-                                     [confId = hostedCall.first, uri, device](auto value) {
-                                         return value.at("id") == confId && value.at("uri") == uri
-                                                && value.at("device") == device;
+                                     [this, confId = hostedCall.first](auto value) {
+                                         return value.at("id") == confId && value.at("uri") == userId_
+                                                && value.at("device") == deviceId_;
                                      });
         if (itActive != activeCalls_.end())
             activeCalls_.erase(itActive);
@@ -1494,9 +1487,6 @@ Conversation::sendMessage(Json::Value&& value,
     dht::ThreadPool::io().run(
         [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
             if (auto sthis = w.lock()) {
-                auto acc = sthis->pimpl_->account_.lock();
-                if (!acc)
-                    return;
                 std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
                 auto commit = sthis->pimpl_->repository_->commitMessage(
                     Json::writeString(jsonBuilder, value));
@@ -1508,9 +1498,9 @@ Conversation::sendMessage(Json::Value&& value,
                     onCommit(commit);
                 sthis->pimpl_->announce(commit);
                 emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-                    acc->getAccountID(),
+                    sthis->pimpl_->accountId_,
                     sthis->id(),
-                    acc->getUsername(),
+                    sthis->pimpl_->userId_,
                     commit,
                     static_cast<int>(libjami::Account::MessageStates::SENDING));
                 if (cb)
@@ -1738,9 +1728,8 @@ Conversation::Impl::pull()
             auto changedFiles = repo->changedFiles(diffStats);
             if (find(changedFiles.begin(), changedFiles.end(), "profile.vcf")
                 != changedFiles.end()) {
-                if (auto account = account_.lock())
-                    emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(
-                        account->getAccountID(), repo->id(), repo->infos());
+                emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(
+                    accountId_, repo->id(), repo->infos());
             }
         }
     }
@@ -1754,18 +1743,16 @@ Conversation::sync(const std::string& member,
 {
     JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pull(deviceId, std::move(cb), commitId);
-    dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w = weak_from_this()] {
+    dht::ThreadPool::io().run([member, deviceId, w = weak_from_this()] {
         auto sthis = w.lock();
-        if (auto account = a.lock()) {
-            // For waiting request, downloadFile
-            for (const auto& wr : sthis->dataTransfer()->waitingRequests()) {
-                auto path = fileutils::get_data_dir() / account->getAccountID()
-                            / "conversation_data" / sthis->id() / wr.fileId;
-                auto start = fileutils::size(path.string());
-                if (start < 0)
-                    start = 0;
-                sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
-            }
+        // For waiting request, downloadFile
+        for (const auto& wr : sthis->dataTransfer()->waitingRequests()) {
+            auto path = fileutils::get_data_dir() / sthis->pimpl_->accountId_
+                        / "conversation_data" / sthis->id() / wr.fileId;
+            auto start = fileutils::size(path);
+            if (start < 0)
+                start = 0;
+            sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
         }
     });
 }
@@ -1849,9 +1836,8 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);
-            if (auto account = sthis->pimpl_->account_.lock())
-                emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(
-                    account->getAccountID(), repo->id(), repo->infos());
+            emitSignal<libjami::ConversationSignal::ConversationProfileUpdated>(
+                sthis->pimpl_->accountId_, repo->id(), repo->infos());
         }
     });
 }
@@ -2050,14 +2036,13 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
                                   sthis->pimpl_->sending_.end(),
                                   commitId);
         if (itCommit != sthis->pimpl_->sending_.end()) {
-            auto acc = sthis->pimpl_->account_.lock();
             // Clear fetched commits and mark it as announced
             auto end = std::next(itCommit);
             for (auto it = sthis->pimpl_->sending_.begin(); it != end; ++it) {
                 emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-                    acc->getAccountID(),
+                    sthis->pimpl_->accountId_,
                     sthis->id(),
-                    acc->getUsername(),
+                    sthis->pimpl_->userId_,
                     *it,
                     static_cast<int>(libjami::Account::MessageStates::SENT));
             }
@@ -2070,17 +2055,15 @@ Conversation::hasFetched(const std::string& deviceId, const std::string& commitI
 bool
 Conversation::setMessageDisplayed(const std::string& uri, const std::string& interactionId)
 {
-    if (auto acc = pimpl_->account_.lock()) {
-        {
-            std::lock_guard lk(pimpl_->lastDisplayedMtx_);
-            if (pimpl_->lastDisplayed_[uri] == interactionId)
-                return false;
-            pimpl_->lastDisplayed_[uri] = interactionId;
-            pimpl_->saveLastDisplayed();
-        }
-        if (uri == acc->getUsername() && pimpl_->lastDisplayedUpdatedCb_)
-            pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), interactionId);
+    {
+        std::lock_guard lk(pimpl_->lastDisplayedMtx_);
+        if (pimpl_->lastDisplayed_[uri] == interactionId)
+            return false;
+        pimpl_->lastDisplayed_[uri] = interactionId;
+        pimpl_->saveLastDisplayed();
     }
+    if (uri == pimpl_->userId_ && pimpl_->lastDisplayedUpdatedCb_)
+        pimpl_->lastDisplayedUpdatedCb_(pimpl_->repository_->id(), interactionId);
     return true;
 }
 
@@ -2110,14 +2093,13 @@ Conversation::updateLastDisplayed(const std::map<std::string, std::string>& map)
 void
 Conversation::updateLastDisplayed(const std::string& lastDisplayed)
 {
-    auto acc = pimpl_->account_.lock();
-    if (!acc or !pimpl_->repository_)
+    if (!pimpl_->repository_)
         return;
 
     // Here, there can be several different scenarios
     // 1. lastDisplayed is the current last displayed interaction. Nothing to do.
     std::unique_lock<std::mutex> lk(pimpl_->lastDisplayedMtx_);
-    auto& currentLastDisplayed = pimpl_->lastDisplayed_[acc->getUsername()];
+    auto& currentLastDisplayed = pimpl_->lastDisplayed_[pimpl_->userId_];
     if (lastDisplayed == currentLastDisplayed)
         return;
 
@@ -2197,7 +2179,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
         auto member = members.back();
         members.pop_back();
         auto& uri = member.at("uri");
-        if (uri != acc->getUsername()
+        if (uri != pimpl_->userId_
             && pimpl_->checkedMembers_.find(uri) == pimpl_->checkedMembers_.end())
             break;
     }
@@ -2393,10 +2375,6 @@ Conversation::search(uint32_t req,
     // do it asynchronously
     dht::ThreadPool::io().run([w = weak(), req, filter, flag] {
         if (auto sthis = w.lock()) {
-            auto acc = sthis->pimpl_->account_.lock();
-            if (!acc)
-                return;
-
             History history;
             std::vector<std::map<std::string, std::string>> commits {};
             // std::regex_constants::ECMAScript is the default flag.
@@ -2469,14 +2447,14 @@ Conversation::search(uint32_t req,
 
             if (commits.size() > 0)
                 emitSignal<libjami::ConversationSignal::MessagesFound>(req,
-                                                                       acc->getAccountID(),
+                                                                       sthis->pimpl_->accountId_,
                                                                        sthis->id(),
                                                                        std::move(commits));
             // If we're the latest thread, inform client that the search is finished
             if ((*flag)-- == 1 /* decrement return the old value */) {
                 emitSignal<libjami::ConversationSignal::MessagesFound>(
                     req,
-                    acc->getAccountID(),
+                    sthis->pimpl_->accountId_,
                     std::string {},
                     std::vector<std::map<std::string, std::string>> {});
             }
@@ -2506,11 +2484,8 @@ Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
 bool
 Conversation::isHosting(const std::string& confId) const
 {
-    auto shared = pimpl_->account_.lock();
-    if (!shared)
-        return false;
     auto info = infos();
-    if (info["rdvDevice"] == shared->currentDeviceId() && info["rdvHost"] == shared->getUsername())
+    if (info["rdvDevice"] == pimpl_->deviceId_ && info["rdvHost"] == pimpl_->userId_)
         return true; // We are the current device Host
     std::lock_guard lk(pimpl_->activeCallsMtx_);
     return pimpl_->hostedCalls_.find(confId) != pimpl_->hostedCalls_.end();
