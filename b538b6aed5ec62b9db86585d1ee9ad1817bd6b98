@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1044da6a_64ffdd5f",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1030,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-12T18:36:17Z",
+      "side": 1,
+      "message": "SwarmMessageUpdated already has a list of reactions. Also, reactions are not cleared from it-\u003esecond-\u003ereactions so the reaction list would still be sent to the client.",
+      "range": {
+        "startLine": 1022,
+        "startChar": 0,
+        "endLine": 1030,
+        "endChar": 2
+      },
+      "revId": "b538b6aed5ec62b9db86585d1ee9ad1817bd6b98",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
