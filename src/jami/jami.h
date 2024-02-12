@@ -44,7 +44,8 @@ enum InitFlag {
     LIBJAMI_FLAG_NO_LOCAL_AUDIO = 1 << 6,
     LIBJAMI_FLAG_NO_LOCAL_VIDEO = 1 << 7,
     LIBJAMI_FLAG_NO_LOCAL_MEDIA = LIBJAMI_FLAG_NO_LOCAL_AUDIO | LIBJAMI_FLAG_NO_LOCAL_VIDEO,
-    LIBJAMI_FLAG_NO_AUTOSYNC = 1 << 8
+    LIBJAMI_FLAG_NO_AUTOSYNC = 1 << 8,
+    LIBJAMI_FLAG_NO_AUTOLOAD = 1 << 9 // disable auto loading of accounts and conversations
 };
 
 /**
@@ -69,6 +70,7 @@ LIBJAMI_PUBLIC bool init(enum InitFlag flags) noexcept;
  * Start asynchronously daemon created by init().
  * @returns true if daemon started successfully
  */
+
 LIBJAMI_PUBLIC bool start(const std::filesystem::path& config_file = {}) noexcept;
 
 /**
@@ -185,12 +187,13 @@ private:
 
     // This is quite a ugly method used to transmit templated TFunc with their arguments in the
     // ioContext of the manager to avoid locks for signals.
-    template <typename TCallback>
+    template<typename TCallback>
     auto ioContextWrapper(TCallback&& fun)
     {
-        return [this, fun{std::move(fun)}](auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...))
-        {
-            post([fun{std::move(fun)}, forwardArgs=std::make_tuple(std::move(args)...)]() mutable {
+        return [this, fun {std::move(fun)}](
+                   auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...)) {
+            post([fun {std::move(fun)},
+                  forwardArgs = std::make_tuple(std::move(args)...)]() mutable {
                 std::apply(std::move(fun), std::move(forwardArgs));
             });
         };
@@ -255,8 +258,8 @@ exportable_callback(std::function<typename Ts::cb_type>&& func,
 template<typename Ts>
 std::pair<std::string, std::shared_ptr<CallbackWrapperBase>>
 exportable_serialized_callback(std::function<typename Ts::cb_type>&& func,
-                    const char* file = CURRENT_FILENAME(),
-                    uint32_t linum = CURRENT_LINE())
+                               const char* file = CURRENT_FILENAME(),
+                               uint32_t linum = CURRENT_LINE())
 {
     return std::make_pair((const std::string&) Ts::name,
                           std::make_shared<SerializedCallbackWrapper<typename Ts::cb_type>>(
