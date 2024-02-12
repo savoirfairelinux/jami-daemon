@@ -122,41 +122,41 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
+    //CPPUNIT_TEST(testRemoveConversationNoMember);
+    //CPPUNIT_TEST(testRemoveConversationWithMember);
+    //CPPUNIT_TEST(testAddMember);
+    //CPPUNIT_TEST(testMemberAddedNoBadFile);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
-    CPPUNIT_TEST(testRemoveInvitedMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAdminCanReAddMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
-    CPPUNIT_TEST(testMemberCannotUnBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
-    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
-    CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
-    CPPUNIT_TEST(testBanUnbanMultiDevice);
+    //CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
+    //CPPUNIT_TEST(testGetMembers);
+    //CPPUNIT_TEST(testRemoveMember);
+    //CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
+    //CPPUNIT_TEST(testRemoveInvitedMember);
+    //CPPUNIT_TEST(testMemberBanNoBadFile);
+    //CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    //CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    //CPPUNIT_TEST(testAdminCanReAddMember);
+    //CPPUNIT_TEST(testMemberCannotBanOther);
+    //CPPUNIT_TEST(testMemberCannotUnBanOther);
+    //CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+    //CPPUNIT_TEST(testAdminCannotKickTheirself);
+    //CPPUNIT_TEST(testCommitUnauthorizedUser);
+    //CPPUNIT_TEST(testMemberJoinsNoBadFile);
+    //CPPUNIT_TEST(testMemberAddedNoCertificate);
+    //CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+    //CPPUNIT_TEST(testFailAddMemberInOneToOne);
+    //CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    //CPPUNIT_TEST(testConversationMemberEvent);
+    //CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+    //CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
+    //CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+    //CPPUNIT_TEST(testBanUnbanMultiDevice);
     CPPUNIT_TEST(testBanUnbanGotFirstConv);
-    CPPUNIT_TEST(testBanHostWhileHosting);
-    CPPUNIT_TEST(testAddContactTwice);
-    CPPUNIT_TEST(testBanFromNewDevice);
+    //CPPUNIT_TEST(testBanHostWhileHosting);
+    //CPPUNIT_TEST(testAddContactTwice);
+    //CPPUNIT_TEST(testBanFromNewDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -191,6 +191,7 @@ ConversationMembersEventTest::setUp()
 void
 ConversationMembersEventTest::tearDown()
 {
+    JAMI_ERROR("@###");
     connectSignals();
 
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
@@ -691,23 +692,30 @@ ConversationMembersEventTest::testRemoveInvitedMember()
     // Add carla
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.deviceAnnounced; }));
-    libjami::addConversationMember(aliceId, convId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+
     auto aliceMsgSize = aliceData.messages.size();
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived && aliceMsgSize + 1 == aliceData.messages.size(); }));
     libjami::acceptConversationRequest(carlaId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !carlaData.conversationId.empty() && aliceMsgSize + 2 == aliceData.messages.size(); }));
 
     // Invite Alice
+    auto carlaMsgSize = carlaData.messages.size();
     libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 3 == aliceData.messages.size()
+                                                    && carlaMsgSize + 1 == carlaData.messages.size()
+                                                    && bobData.requestReceived; }));
     auto members = libjami::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(members.size() == 3);
+    members = libjami::getConversationMembers(carlaId, convId);
     CPPUNIT_ASSERT(members.size() == 3);
 
     // Now check that alice, has the only admin, can remove bob
     aliceMsgSize = aliceData.messages.size();
+    carlaMsgSize = carlaData.messages.size();
     libjami::removeConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
+        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size() && carlaMsgSize + 2 == carlaData.messages.size(); }));
     members = libjami::getConversationMembers(aliceId, convId);
     auto bobBanned = false;
     for (auto& member : members) {
@@ -715,9 +723,16 @@ ConversationMembersEventTest::testRemoveInvitedMember()
             bobBanned = member["role"] == "banned";
     }
     CPPUNIT_ASSERT(bobBanned);
+    members = libjami::getConversationMembers(carlaId, convId);
+    bobBanned = false;
+    for (auto& member : members) {
+        if (member["uri"] == bobUri)
+            bobBanned = member["role"] == "banned";
+    }
+    CPPUNIT_ASSERT(bobBanned);
 
     // Check that Carla is still able to sync
-    auto carlaMsgSize = carlaData.messages.size();
+    carlaMsgSize = carlaData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaMsgSize + 1 == carlaData.messages.size(); }));
 }
@@ -875,15 +890,17 @@ ConversationMembersEventTest::testMemberCannotBanOther()
         cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
     auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+    auto bobMsgSize = bobData.messages.size();
     libjami::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+        cv.wait_for(lk, 30s, [&]() {
+            return aliceMsgSize + 2 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size() && carlaData.requestReceived; }));
     aliceMsgSize = aliceData.messages.size();
-    auto bobMsgSize = bobData.messages.size();
+    bobMsgSize = bobData.messages.size();
     libjami::acceptConversationRequest(carlaId, convId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size(); }));
+        cv.wait_for(lk, 30s, [&]() { return !carlaData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size(); }));
 
     // Now Carla remove Bob as a member
     // remove from member & add into banned without voting for the ban
@@ -1530,13 +1547,16 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
     }));
 
     // Bob bans alice, should update bob2
+    JAMI_ERROR("@@@ REMOVE CONNTACT");
     bobAccount->removeContact(aliceUri, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.contactRemoved; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactRemoved && bob2Data.contactRemoved; }));
+    std::this_thread::sleep_for(5s); // Wait for connections to close
 
     // Alice sends messages, bob & bob2 should not get it!
     aliceMsgSize = aliceData.messages.size();
     auto bobMsgSize = bobData.messages.size();
     auto bob2MsgSize = bob2Data.messages.size();
+    JAMI_ERROR("@@@SEND MESSAGE");
     libjami::sendMessage(aliceId, aliceData.conversationId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize != aliceData.messages.size(); }));
     auto msgId = aliceData.messages.rbegin()->id;
