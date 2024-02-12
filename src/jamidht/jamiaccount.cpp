@@ -2000,6 +2000,9 @@ JamiAccount::doRegister_()
                 if (!cert || !cert->issuer)
                     return;
                 auto peerId = cert->issuer->getId().toString();
+                if (accountManager()->getCertificateStatus(peerId) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                    JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ READY FROM BANNED!");
+                }
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } else if (name.find("git://") == 0) {
@@ -2298,6 +2301,9 @@ JamiAccount::onTextMessage(const std::string& id,
 {
     try {
         const std::string fromUri {parseJamiUri(from)};
+        if (accountManager()->getCertificateStatus(fromUri) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+            JAMI_ERROR("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ MESSAGE FROM BANNED!");
+        }
         SIPAccountBase::onTextMessage(id, fromUri, deviceId, payloads);
     } catch (...) {
     }
