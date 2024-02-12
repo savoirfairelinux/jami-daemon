@@ -243,6 +243,12 @@ setAccountActive(const std::string& accountId, bool enable, bool shutdownConnect
 }
 
 void
+loadAccountAndConversation(const std::string& accountID, const std::string& convID)
+{
+    jami::Manager::instance().loadAccountAndConversation(accountID, convID);
+}
+
+void
 sendRegister(const std::string& accountId, bool enable)
 {
     jami::Manager::instance().sendRegister(accountId, enable);
@@ -263,7 +269,6 @@ getPasswordKey(const std::string& accountID, const std::string& password)
         return acc->getPasswordKey(password);
     return {};
 }
-
 
 void
 registerAllAccounts()
@@ -343,9 +348,9 @@ exportOnRing(const std::string& accountId, const std::string& password)
 
 bool
 exportToFile(const std::string& accountId,
-            const std::string& destinationPath,
-            const std::string& scheme,
-            const std::string& password)
+             const std::string& destinationPath,
+             const std::string& scheme,
+             const std::string& password)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         return account->exportArchive(destinationPath, scheme, password);
@@ -354,7 +359,10 @@ exportToFile(const std::string& accountId,
 }
 
 bool
-revokeDevice(const std::string& accountId, const std::string& deviceId, const std::string& scheme, const std::string& password)
+revokeDevice(const std::string& accountId,
+             const std::string& deviceId,
+             const std::string& scheme,
+             const std::string& password)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         return account->revokeDevice(deviceId, scheme, password);
@@ -553,8 +561,7 @@ setCodecDetails(const std::string& accountId,
                 JAMI_WARN("parameters for %s changed ", foundCodec->name.c_str());
                 if (auto call = jami::Manager::instance().getCurrentCall()) {
                     if (call->getVideoCodec() == foundCodec) {
-                        JAMI_WARN("%s running. Need to restart encoding",
-                                  foundCodec->name.c_str());
+                        JAMI_WARN("%s running. Need to restart encoding", foundCodec->name.c_str());
                         call->restartMediaSender();
                     }
                 }
@@ -1045,7 +1052,10 @@ searchUser(const std::string& account, const std::string& query)
 }
 
 bool
-registerName(const std::string& account, const std::string& name, const std::string& scheme, const std::string& password)
+registerName(const std::string& account,
+             const std::string& name,
+             const std::string& scheme,
+             const std::string& password)
 {
 #if HAVE_RINGNS
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {

@@ -2301,7 +2301,8 @@ JamiAccount::convModule(bool noCreation)
                                                                          convId,
                                                                          {});
                                       });
-            });
+            },
+            autoLoadConversations_);
     }
     return convModule_.get();
 }
@@ -2330,6 +2331,13 @@ JamiAccount::onTextMessage(const std::string& id,
         SIPAccountBase::onTextMessage(id, fromUri, deviceId, payloads);
     } catch (...) {
     }
+}
+
+void
+JamiAccount::loadConversation(const std::string& convId)
+{
+    if (auto cm = convModule(false))
+        cm->loadSingleConversation(convId);
 }
 
 void
