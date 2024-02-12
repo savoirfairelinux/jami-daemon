@@ -2000,6 +2000,11 @@ JamiAccount::doRegister_()
                 if (!cert || !cert->issuer)
                     return;
                 auto peerId = cert->issuer->getId().toString();
+                // A connection request can be sent just before member is banned and this must be ignored.
+                if (accountManager()->getCertificateStatus(peerId) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                    channel->shutdown();
+                    return;
+                }
                 if (name == "sip") {
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } else if (name.find("git://") == 0) {
