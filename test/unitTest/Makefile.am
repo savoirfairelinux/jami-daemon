@@ -32,12 +32,6 @@ check_PROGRAMS += ut_migration
 ut_migration_SOURCES = account_archive/migration.cpp common.cpp
 
 #
-# certstore
-#
-check_PROGRAMS += ut_certstore
-ut_certstore_SOURCES = certstore.cpp common.cpp
-
-#
 # scheduler
 #
 check_PROGRAMS += ut_scheduler
@@ -216,11 +210,6 @@ ut_typers_SOURCES = conversation/typers.cpp conversation/conversationcommon.cpp 
 check_PROGRAMS += ut_syncHistory
 ut_syncHistory_SOURCES = syncHistory/syncHistory.cpp common.cpp
 
-#
-# ice
-#
-check_PROGRAMS += ut_ice
-ut_ice_SOURCES = ice/ice.cpp common.cpp
 
 #
 # revoke
