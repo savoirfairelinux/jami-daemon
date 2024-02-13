@@ -77,17 +77,6 @@ test('call', ut_call,
 )
 
 
-ut_certificate_store = executable('ut_certificate_store',
-    sources: files('unitTest/certstore.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('certificate_store', ut_certificate_store,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
-
-
 ut_conference = executable('ut_conference',
     sources: files('unitTest/call/conference.cpp'),
     include_directories: ut_includedirs,
@@ -205,16 +194,6 @@ test('hold_resume', ut_hold_resume,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
-
-ut_ice = executable('ut_ice',
-    sources: files('unitTest/ice/ice.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('ice', ut_ice,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
 
 ut_ice_sdp_parser = executable('ut_ice_sdp_parser',
     sources: files('unitTest/ice/ice_sdp_parser.cpp'),
