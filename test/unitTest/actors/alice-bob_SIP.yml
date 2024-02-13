@@ -1,0 +1,19 @@
+default-account:
+    type: SIP
+    upnpEnabled: "true"
+    SRTP.keyExchange: "none"
+
+accounts:
+  alice:
+    displayName: ALICE
+    alias: ALICE
+    hostname: X.X.X.X
+    username: YYY
+    password: ZZZ
+
+  bob:
+    displayName: BOB
+    alias: BOB
+    hostname: X.X.X.X
+    username: AAA
+    password: BBB
