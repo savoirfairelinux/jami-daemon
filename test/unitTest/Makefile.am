@@ -134,6 +134,12 @@ check_PROGRAMS += ut_call
 ut_call_SOURCES = call/call.cpp common.cpp
 
 #
+# SIPcall
+#
+check_PROGRAMS += ut_sipcall
+ut_sipcall_SOURCES = call/sipcall.cpp common.cpp
+
+#
 # recorder
 #
 check_PROGRAMS += ut_recorder
