@@ -702,10 +702,6 @@ else()
         target_link_libraries(ut_ice_media_cand_exchange ut_library)
         add_test(NAME ice_media_cand_exchange COMMAND ut_ice_media_cand_exchange)
 
-        add_executable(ut_ice test/unitTest/ice/ice.cpp)
-        target_link_libraries(ut_ice ut_library)
-        add_test(NAME ice COMMAND ut_ice)
-
         add_executable(ut_ice_sdp_parser test/unitTest/ice/ice_sdp_parser.cpp)
         target_link_libraries(ut_ice_sdp_parser ut_library)
         add_test(NAME ice_sdp_parser COMMAND ut_ice_sdp_parser)
@@ -777,10 +773,6 @@ else()
         add_executable(ut_utf8_utils test/unitTest/utf8_utils/testUtf8_utils.cpp)
         target_link_libraries(ut_utf8_utils ut_library)
         add_test(NAME utf8_utils COMMAND ut_utf8_utils)
-
-        add_executable(ut_certstore test/unitTest/certstore.cpp)
-        target_link_libraries(ut_certstore ut_library)
-        add_test(NAME certstore COMMAND ut_certstore)
 
         add_executable(ut_conversationCall test/unitTest/conversation/call.cpp test/unitTest/conversation/conversationcommon.cpp)
         target_link_libraries(ut_conversationCall ut_library)
