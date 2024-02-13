@@ -58,13 +58,20 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
                         continue;
                     }
 
-                    try {
-                        if ("true"
-                            != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
+                    if (jami::Manager::instance().getAccount(accountID)->getAccountType() == "SIP") {
+                        auto daemonStatus = details.at(libjami::Account::ConfProperties::Registration::STATUS);
+                        if (daemonStatus != "REGISTERED") {
                             continue;
                         }
-                    } catch (const std::out_of_range&) {
-                        continue;
+                    } else {
+                        try {
+                            if ("true"
+                                != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
+                                continue;
+                            }
+                        } catch (const std::out_of_range&) {
+                            continue;
+                        }
                     }
 
                     accountsReady[i] = true;
@@ -148,7 +155,6 @@ std::map<std::string, std::string>
 load_actors(const std::filesystem::path& from_yaml)
 {
     std::map<std::string, std::string> actors {};
-    std::map<std::string, std::string> default_details = libjami::getAccountTemplate("RING");
 
     std::ifstream file(from_yaml);
 
@@ -160,9 +166,15 @@ load_actors(const std::filesystem::path& from_yaml)
 
     auto default_account = node["default-account"];
 
+    std::map<std::string, std::string> default_details = libjami::getAccountTemplate(default_account["type"].as<std::string>());
     if (default_account.IsMap()) {
         for (const auto& kv : default_account) {
-            default_details["Account." + kv.first.as<std::string>()] = kv.second.as<std::string>();
+            auto key = kv.first.as<std::string>();
+            if (default_details.find(key) != default_details.end()) {
+                default_details[key] = kv.second.as<std::string>();
+            } else {
+                default_details["Account." + key] = kv.second.as<std::string>();
+            }
         }
     }
 
@@ -176,7 +188,12 @@ load_actors(const std::filesystem::path& from_yaml)
         auto details = std::map<std::string, std::string>(default_details);
 
         for (const auto& detail : account) {
-            details["Account." + detail.first.as<std::string>()] = detail.second.as<std::string>();
+            auto key = detail.first.as<std::string>();
+            if (details.find(key) != details.end()) {
+                details[key] = detail.second.as<std::string>();
+            } else {
+                details["Account." + key] = detail.second.as<std::string>();
+            }
         }
 
         actors[account_name] = jami::Manager::instance().addAccount(details);
