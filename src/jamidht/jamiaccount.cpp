@@ -1037,15 +1037,14 @@ JamiAccount::unlinkConversations(const std::set<std::string>& removed)
         auto contacts = info->contacts->getContacts();
         for (auto& [id, c] : contacts) {
             if (removed.find(c.conversationId) != removed.end()) {
-                JAMI_WARN(
-                    "[Account %s] Detected removed conversation (%s) in contact details for %s",
-                    getAccountID().c_str(),
-                    c.conversationId.c_str(),
-                    id.to_c_str());
-                c.conversationId.clear();
+                info->contacts->updateConversation(id, "");
+                JAMI_WARNING(
+                    "[Account {}] Detected removed conversation ({}) in contact details for {}",
+                    getAccountID(),
+                    c.conversationId,
+                    id.toString());
             }
         }
-        info->contacts->setContacts(contacts);
     }
 }
 

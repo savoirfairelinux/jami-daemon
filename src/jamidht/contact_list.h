@@ -105,7 +105,7 @@ public:
 
     const std::map<dht::InfoHash, Contact>& getContacts() const;
     void setContacts(const std::map<dht::InfoHash, Contact>&);
-    void updateContact(const dht::InfoHash&, const Contact&);
+    void updateContact(const dht::InfoHash&, const Contact&, bool emit = true);
 
     /** Should be called only after updateContact */
     void saveContacts() const;
