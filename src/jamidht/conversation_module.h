@@ -73,7 +73,8 @@ using OneToOneRecvCb = std::function<void(const std::string&, const std::string&
 class ConversationModule
 {
 public:
-    ConversationModule(std::weak_ptr<JamiAccount>&& account,
+    ConversationModule(std::shared_ptr<JamiAccount> account,
+                       std::shared_ptr<AccountManager> accountManager,
                        NeedsSyncingCb&& needsSyncingCb,
                        SengMsgCb&& sendMsgCb,
                        NeedSocketCb&& onNeedSocket,
@@ -82,6 +83,8 @@ public:
                        OneToOneRecvCb&& oneToOneRecvCb,
                        bool autoLoadConversations = true);
     ~ConversationModule() = default;
+
+    void setAccountManager(std::shared_ptr<AccountManager> accountManager);
 
     /**
      * Refresh informations about conversations
