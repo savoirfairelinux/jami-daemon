@@ -38,6 +38,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0768ea65_f34c570b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-02-14T20:26:57Z",
+      "side": 1,
+      "message": "The information is added to the ticket description",
+      "parentUuid": "3303f060_b21253e3",
+      "revId": "31314c279e9af7bfa69d4d3260dec1a7acdae048",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "48057147_0a50d31b",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 5
@@ -49,6 +67,30 @@
       "writtenOn": "2024-02-13T20:03:42Z",
       "side": 1,
       "message": "unused, also may throw?",
+      "range": {
+        "startLine": 3208,
+        "startChar": 21,
+        "endLine": 3208,
+        "endChar": 38
+      },
+      "revId": "31314c279e9af7bfa69d4d3260dec1a7acdae048",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a8c479b2_40198086",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3208,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-02-14T20:26:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "48057147_0a50d31b",
       "range": {
         "startLine": 3208,
         "startChar": 21,
@@ -72,6 +114,30 @@
       "writtenOn": "2024-02-13T20:03:42Z",
       "side": 1,
       "message": "I guess you can only do work on \"m.first \u003d\u003d MIME_TYPE_GIT\" ?",
+      "range": {
+        "startLine": 3215,
+        "startChar": 23,
+        "endLine": 3215,
+        "endChar": 53
+      },
+      "revId": "31314c279e9af7bfa69d4d3260dec1a7acdae048",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1af8afd0_e09100d2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3215,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-02-14T20:26:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bd1724c4_21891a2e",
       "range": {
         "startLine": 3215,
         "startChar": 23,
