@@ -110,7 +110,7 @@ void
 ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId)
 {
     auto c = contacts_.find(h);
-    if (c != contacts_.end()) {
+    if (c != contacts_.end() && c->second.conversationId != conversationId) {
         c->second.conversationId = conversationId;
         saveContacts();
     }
@@ -191,7 +191,7 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
 }
 
 void
-ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
+ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool emit)
 {
     if (not id) {
         JAMI_ERR("[Contacts] updateContact: invalid contact ID");
@@ -215,12 +215,14 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
         }
         if (c->second.isActive()) {
             trust_->setCertificateStatus(id.toString(), dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
-            callbacks_.contactAdded(id.toString(), c->second.confirmed);
+            if (emit)
+                callbacks_.contactAdded(id.toString(), c->second.confirmed);
         } else {
             if (c->second.banned)
                 trust_->setCertificateStatus(id.toString(),
                                             dhtnet::tls::TrustStore::PermissionStatus::BANNED);
-            callbacks_.contactRemoved(id.toString(), c->second.banned);
+            if (emit)
+                callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
     }
 }
@@ -241,7 +243,7 @@ ContactList::loadContacts()
     }
 
     for (auto& peer : contacts)
-        updateContact(peer.first, peer.second);
+        updateContact(peer.first, peer.second, false);
 }
 
 void
