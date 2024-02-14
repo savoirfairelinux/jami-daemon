@@ -202,6 +202,8 @@ public:
         return connecting_nodes.find(nodeId) != connecting_nodes.end();
     }
 
+    bool isEmpty() const { return nodes.empty(); }
+
     /**
      * Indicate if bucket is full
      * @return true if bucket is full, false if not

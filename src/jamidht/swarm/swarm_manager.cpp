@@ -91,7 +91,7 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
         auto emit = false;
         {
             std::lock_guard lock(mutex);
-            emit = routing_table.findBucket(getId())->getNodeIds().size() == 0;
+            emit = routing_table.findBucket(getId())->isEmpty();
             auto bucket = routing_table.findBucket(channel->deviceId());
             if (routing_table.addNode(channel, bucket)) {
                 std::error_code ec;
@@ -348,7 +348,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           bucket->addKnownNode(nodeId);
                           bucket = shared->routing_table.findBucket(shared->getId());
                           if (bucket->getConnectingNodesSize() == 0
-                              && bucket->getNodeIds().size() == 0 && shared->onConnectionChanged_) {
+                              && bucket->isEmpty() && shared->onConnectionChanged_) {
                               lk.unlock();
                               JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
                                            fmt::ptr(shared.get()));
@@ -368,11 +368,7 @@ std::vector<NodeId>
 SwarmManager::getAllNodes() const
 {
     std::lock_guard lock(mutex);
-    std::vector<NodeId> nodes;
-    const auto& rtNodes = routing_table.getAllNodes();
-    nodes.insert(nodes.end(), rtNodes.begin(), rtNodes.end());
-
-    return nodes;
+    return routing_table.getAllNodes();
 }
 
 void

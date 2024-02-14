@@ -503,7 +503,7 @@ RoutingTable::getAllNodes() const
         const auto& knownNodes = b.getKnownNodes();
         const auto& mobileNodes = b.getMobileNodes();
         const auto& connectingNodes = b.getConnectingNodes();
-
+        ret.reserve(nodes.size() + knownNodes.size() + mobileNodes.size() + connectingNodes.size());
         ret.insert(ret.end(), nodes.begin(), nodes.end());
         ret.insert(ret.end(), knownNodes.begin(), knownNodes.end());
         ret.insert(ret.end(), mobileNodes.begin(), mobileNodes.end());
