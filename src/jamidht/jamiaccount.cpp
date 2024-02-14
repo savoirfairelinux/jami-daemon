@@ -1209,6 +1209,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
     const auto& conf = config();
     try {
+        auto oldIdentity = id_.first ? id_.first->getPublicKey().getLongId() : DeviceId();
         if (conf.managerUri.empty()) {
             accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getPath(),
@@ -1236,8 +1237,15 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             id_ = std::move(id);
             config_->username = info->accountId;
             JAMI_WARNING("[Account {:s}] loaded account identity", getAccountID());
+            if (info->identity.first->getPublicKey().getLongId() != oldIdentity) {
+                JAMI_WARNING("[Account {:s}] identity changed", getAccountID());
+                std::lock_guard lk(moduleMtx_);
+                convModule_.reset();
+            } else {
+                convModule_->setAccountManager(accountManager_);
+            }
+            convModule(); // Init conv module
             if (not isEnabled()) {
-                convModule(); // Init conv module
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
         } else if (isEnabled()) {
@@ -1335,6 +1343,10 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         conf.fromMap(config);
                     });
                     id_ = std::move(id);
+                    {
+                        std::lock_guard lk(moduleMtx_);
+                        convModule_.reset();
+                    }
                     if (migrating) {
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
@@ -2158,7 +2170,8 @@ JamiAccount::convModule(bool noCreation)
     std::lock_guard lk(moduleMtx_);
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
-            weak(),
+            shared(),
+            accountManager_,
             [this](auto&& syncMsg) {
                 dht::ThreadPool::io().run([w = weak(), syncMsg] {
                     if (auto shared = w.lock()) {
@@ -2200,7 +2213,7 @@ JamiAccount::convModule(bool noCreation)
 
                     shared->connectionManager_->connectDevice(
                         DeviceId(deviceId),
-                        "git://" + deviceId + "/" + convId,
+                        fmt::format("git://{:s}/{:s}", deviceId, convId),
                         [shared, cb, convId](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                              const DeviceId&) {
                             if (socket) {
