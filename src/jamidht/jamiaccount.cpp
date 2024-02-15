@@ -3233,8 +3233,8 @@ JamiAccount::sendMessage(const std::string& to,
             if (!id.empty()) {
                 payload_type += "/" + id;
             }
-            return payload_type;
         }
+        return payload_type;
     };
 
     if (deviceId.empty()) {
