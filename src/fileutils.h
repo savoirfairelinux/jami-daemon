@@ -47,11 +47,11 @@ using namespace std::literals;
 
 std::filesystem::path get_home_dir();
 std::filesystem::path get_config_dir(const char* pkg);
-std::filesystem::path get_data_dir(const char* pkg);
+const std::filesystem::path& get_data_dir(const char* pkg);
 std::filesystem::path get_cache_dir(const char* pkg);
 
 std::filesystem::path get_config_dir();
-std::filesystem::path get_data_dir();
+const std::filesystem::path& get_data_dir();
 std::filesystem::path get_cache_dir();
 
 /**
