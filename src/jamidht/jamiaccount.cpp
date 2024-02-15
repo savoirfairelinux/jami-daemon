@@ -106,6 +106,7 @@ namespace jami {
 
 constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
+static constexpr const char MIME_TYPE_PIDF[] {"application/pidf+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
@@ -303,8 +304,9 @@ JamiAccount::shutdownConnections()
         connectionManager_.reset();
         channelHandlers_.clear();
     }
-    if (convModule_)
+    if (convModule_) {
         convModule_->shutdownConnections();
+    }
 
     std::lock_guard lk(sipConnsMtx_);
     sipConns_.clear();
@@ -1741,8 +1743,12 @@ void
 JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 {
     std::string id(contactId.toString());
-    JAMI_DBG("Buddy %s online", id.c_str());
-    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1, "");
+    JAMI_DEBUG("Buddy {} online", id);
+    auto& state = presenceState_[id];
+    if (state < PresenceState::DHT_PRESENCE) {
+        state = PresenceState::DHT_PRESENCE;
+        emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(), id, static_cast<int>(PresenceState::DHT_PRESENCE), "");
+    }
 
     auto details = getContactDetails(id);
     auto it = details.find("confirmed");
@@ -1775,11 +1781,19 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 void
 JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 {
-    JAMI_DBG("Buddy %s offline", contactId.toString().c_str());
-    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                              contactId.toString(),
-                                                              0,
-                                                              "");
+    auto id = contactId.toString();
+    JAMI_DEBUG("Buddy {} offline", id);
+    auto& state = presenceState_[id];
+    if (state > PresenceState::DISCONNECTED) {
+        if (state == PresenceState::CONNECTED) {
+            JAMI_WARNING("Buddy {} is not present on the DHT, but p2p connected", id);
+        }
+        state = PresenceState::DISCONNECTED;
+        emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
+                                                                    id,
+                                                                    static_cast<int>(PresenceState::DISCONNECTED),
+                                                                    "");
+    }
 }
 
 void
@@ -2790,6 +2804,22 @@ getDisplayed(const std::string& conversationId, const std::string& messageId)
         conversationId.empty() ? "" : "<conversation>" + conversationId + "</conversation>");
 }
 
+std::string
+getPIDF(const std::string& note)
+{
+    // implementing https://datatracker.ietf.org/doc/html/rfc3863
+    return fmt::format(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\">\n"
+        "    <tuple>\n"
+        "    <status>\n"
+        "        <basic>{}</basic>\n"
+        "    </status>\n"
+        "    </tuple>\n"
+        "</presence>",
+        note);
+}
+
 void
 JamiAccount::setIsComposing(const std::string& conversationUri, bool isWriting)
 {
@@ -3576,7 +3606,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERR("Can't parse server response: %s", err.c_str());
+            JAMI_ERROR("Can't parse server response: {}", err);
             return false;
         }
 
@@ -3600,7 +3630,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERR("Can't parse server response: %s", err.c_str());
+            JAMI_ERROR("Can't parse server response: {}", err);
             return false;
         }
         convModule()->onConversationRequest(from, json);
@@ -3623,12 +3653,11 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             onIsComposing(conversationId, from, isComposing);
             return true;
         } catch (const std::exception& e) {
-            JAMI_WARN("Error parsing composing state: %s", e.what());
+            JAMI_WARNING("Error parsing composing state: {}", e.what());
         }
     } else if (m.first == MIME_TYPE_IMDN) {
         try {
             static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
-            static const std::regex IMDN_STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
             std::smatch matched_pattern;
 
             std::regex_search(m.second, matched_pattern, IMDN_MSG_ID_REGEX);
@@ -3636,16 +3665,17 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 messageId = matched_pattern[1];
             } else {
-                JAMI_WARN("Message displayed: can't parse message ID");
+                JAMI_WARNING("Message displayed: can't parse message ID");
                 return false;
             }
 
-            std::regex_search(m.second, matched_pattern, IMDN_STATUS_REGEX);
+            static const std::regex STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
+            std::regex_search(m.second, matched_pattern, STATUS_REGEX);
             bool isDisplayed {false};
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 isDisplayed = matched_pattern[1] == "displayed";
             } else {
-                JAMI_WARN("Message displayed: can't parse status");
+                JAMI_WARNING("Message displayed: can't parse status");
                 return false;
             }
 
@@ -3660,7 +3690,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                 return true;
             if (isDisplayed) {
                 if (convModule()->onMessageDisplayed(from, conversationId, messageId)) {
-                    JAMI_DBG() << "[message " << messageId << "] Displayed by peer";
+                    JAMI_DEBUG("[message {}] Displayed by peer", messageId);
                     emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         accountID_,
                         conversationId,
@@ -3671,7 +3701,22 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             }
             return true;
         } catch (const std::exception& e) {
-            JAMI_WARN("Error parsing display notification: %s", e.what());
+            JAMI_ERROR("Error parsing display notification: {}", e.what());
+        }
+    } else if (m.first == MIME_TYPE_PIDF) {
+        std::smatch matched_pattern;
+        static const std::regex BASIC_REGEX("<basic>([\\w\\s]+)<\\/basic>");
+        std::regex_search(m.second, matched_pattern, BASIC_REGEX);
+        std::string customStatus {};
+        if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+            customStatus = matched_pattern[1];
+            emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
+                                                                        from,
+                                                                        static_cast<int>(PresenceState::CONNECTED),
+                                                                        customStatus);
+            return true;
+        } else {
+            JAMI_WARNING("Presence: can't parse status");
         }
     }
 
@@ -3769,6 +3814,29 @@ JamiAccount::isConnectedWith(const DeviceId& deviceId) const
     if (connectionManager_)
         return connectionManager_->isConnected(deviceId);
     return false;
+}
+
+void
+JamiAccount::sendPresenceNote(const std::string& note)
+{
+    if (auto info = accountManager_->getInfo()) {
+        if (!info || !info->contacts)
+            return;
+        presenceNote_ = note;
+        auto contacts = info->contacts->getContacts();
+        std::vector<SipConnectionKey> keys;
+        {
+            std::lock_guard lk(sipConnsMtx_);
+            for (auto& [key, conns] : sipConns_) {
+                keys.push_back(key);
+            }
+        }
+        auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
+        std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(presenceNote_)}};
+        for (auto& key : keys) {
+            sendMessage(key.first, key.second.toString(), msg, token, false, true);
+        }
+    }
 }
 
 void
@@ -3956,7 +4024,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
     // Convert to SIP transport
     auto onShutdown = [w = weak(), peerId, key, socket]() {
-        runOnMainThread([w = std::move(w), peerId, key, socket] {
+        dht::ThreadPool::io().run([w = std::move(w), peerId, key, socket] {
             auto shared = w.lock();
             if (!shared)
                 return;
@@ -3981,6 +4049,12 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
     dht::ThreadPool::io().run([w = weak(), peerId, deviceId] {
         if (auto shared = w.lock()) {
+            if (shared->presenceNote_ != "") {
+                // If a presence note is set, send it to this device.
+                auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(shared->rand);
+                std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(shared->presenceNote_)}};
+                shared->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
+            }
             shared->convModule()->syncConversations(peerId, deviceId.toString());
         }
     });
@@ -4008,6 +4082,15 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
             }
         }
     });
+
+    auto& state = presenceState_[peerId];
+    if (state != PresenceState::CONNECTED) {
+        state = PresenceState::CONNECTED;
+        emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
+                                                                    peerId,
+                                                                    static_cast<int>(PresenceState::CONNECTED),
+                                                                    "");
+    }
 }
 
 void
@@ -4024,8 +4107,30 @@ JamiAccount::shutdownSIPConnection(const std::shared_ptr<dhtnet::ChannelSocket>&
                                    conns.end(),
                                    [&](auto v) { return v.channel == channel; }),
                     conns.end());
-        if (conns.empty())
+        if (conns.empty()) {
             sipConns_.erase(it);
+            // If all devices of an account are disconnected, we need to update the presence state
+            auto it = std::find_if(sipConns_.begin(),
+                         sipConns_.end(),
+                         [&](const auto& v) { return v.first.first == peerId; });
+            if (it == sipConns_.end()) {
+                auto& state = presenceState_[peerId];
+                if (state == PresenceState::CONNECTED) {
+                    std::lock_guard lock(buddyInfoMtx);
+                    auto buddy = trackedBuddies_.find(dht::InfoHash(peerId));
+                    if (buddy == trackedBuddies_.end())
+                        state = PresenceState::DISCONNECTED;
+                    else
+                        state = buddy->second.devices_cnt > 0 ? PresenceState::DHT_PRESENCE : PresenceState::DISCONNECTED;
+                    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(
+                        getAccountID(),
+                        peerId,
+                        static_cast<int>(state),
+                        "");
+                }
+            }
+
+        }
     }
     lk.unlock();
     // Shutdown after removal to let the callbacks do stuff if needed
