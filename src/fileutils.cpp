@@ -451,14 +451,15 @@ get_cache_dir(const char* pkg)
 #endif
 }
 
-std::filesystem::path
+const std::filesystem::path&
 get_cache_dir()
 {
-    return get_cache_dir(PACKAGE);
+    static const std::filesystem::path cache_dir = get_cache_dir(PACKAGE);
+    return cache_dir;
 }
 
 std::filesystem::path
-get_home_dir()
+get_home_dir_impl()
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
@@ -493,6 +494,13 @@ get_home_dir()
 #endif
 }
 
+const std::filesystem::path&
+get_home_dir()
+{
+    static const std::filesystem::path home_dir = get_home_dir_impl();
+    return home_dir;
+}
+
 std::filesystem::path
 get_data_dir(const char* pkg)
 {
@@ -525,10 +533,11 @@ get_data_dir(const char* pkg)
 #endif
 }
 
-std::filesystem::path
+const std::filesystem::path&
 get_data_dir()
 {
-    return get_data_dir(PACKAGE);
+    static const std::filesystem::path data_dir = get_data_dir(PACKAGE);
+    return data_dir;
 }
 
 std::filesystem::path
@@ -558,7 +567,7 @@ get_config_dir(const char* pkg)
     else
         configdir = fileutils::get_home_dir() / ".config" / pkg;
 #endif
-    if (dhtnet::fileutils::recursive_mkdir(configdir, 0700) != true) {
+    if (!dhtnet::fileutils::recursive_mkdir(configdir, 0700)) {
         // If directory creation failed
         if (errno != EEXIST)
             JAMI_DBG("Cannot create directory: %s!", configdir.c_str());
@@ -566,10 +575,11 @@ get_config_dir(const char* pkg)
     return configdir;
 }
 
-std::filesystem::path
+const std::filesystem::path&
 get_config_dir()
 {
-    return get_config_dir(PACKAGE);
+    static const std::filesystem::path config_dir = get_config_dir(PACKAGE);
+    return config_dir;
 }
 
 #ifdef _WIN32
