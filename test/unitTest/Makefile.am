@@ -267,4 +267,10 @@ ut_swarm_spread_SOURCES = swarm/swarm_spread.cpp common.cpp
 check_PROGRAMS += ut_namedirectory
 ut_namedirectory_SOURCES = namedirectory/namedirectory.cpp common.cpp
 
+#
+# presence
+#
+check_PROGRAMS += ut_presence
+ut_presence_SOURCES = presence/presence.cpp common.cpp
+
 TESTS = $(check_PROGRAMS)
