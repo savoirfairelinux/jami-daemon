@@ -2167,7 +2167,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
     while (!members.empty()) {
         auto member = members.back();
         members.pop_back();
-        auto& uri = member.at("uri");
+        uri = member.at("uri");
         if (uri != acc->getUsername()
             && pimpl_->checkedMembers_.find(uri) == pimpl_->checkedMembers_.end())
             break;
