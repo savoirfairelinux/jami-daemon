@@ -773,7 +773,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     auto res = git_transport_register("git", p2p_transport_cb, nullptr);
     if (res < 0) {
         const git_error* error = giterr_last();
-        JAMI_ERR("Unable to initialize git transport %s", error ? error->message : "(unknown)");
+        JAMI_ERROR("Unable to initialize git transport: {}", error ? error->message : "(unknown)");
     }
 
 #ifndef WIN32
@@ -804,13 +804,13 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     setGnuTlsLogLevel();
 
-    JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
-    JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
-    JAMI_DBG("Using OpenDHT version %s", dht::version());
-    JAMI_DBG("Using FFmpeg version %s", av_version_info());
+    JAMI_LOG("Using PJSIP version {:s} for {:s}", pj_get_version(), PJ_OS_NAME);
+    JAMI_LOG("Using GnuTLS version {:s}", gnutls_check_version(nullptr));
+    JAMI_LOG("Using OpenDHT version {:s}", dht::version());
+    JAMI_LOG("Using FFmpeg version {:s}", av_version_info());
     int git2_major = 0, git2_minor = 0, git2_rev = 0;
     if (git_libgit2_version(&git2_major, &git2_minor, &git2_rev) == 0) {
-        JAMI_DBG("Using Libgit2 version %d.%d.%d", git2_major, git2_minor, git2_rev);
+        JAMI_LOG("Using Libgit2 version {:d}.{:d}.{:d}", git2_major, git2_minor, git2_rev);
     }
 
     setDhtLogLevel();
@@ -819,16 +819,16 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     // So only create the SipLink once
     pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
-    check_rename(fileutils::get_cache_dir(PACKAGE_OLD).string(),
-                 fileutils::get_cache_dir().string());
-    check_rename(fileutils::get_data_dir(PACKAGE_OLD).string(), fileutils::get_data_dir().string());
-    check_rename(fileutils::get_config_dir(PACKAGE_OLD).string(),
-                 fileutils::get_config_dir().string());
+    check_rename(fileutils::get_cache_dir(PACKAGE_OLD),
+                 fileutils::get_cache_dir());
+    check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
+    check_rename(fileutils::get_config_dir(PACKAGE_OLD),
+                 fileutils::get_config_dir());
 
     pimpl_->ice_tf_ = std::make_shared<dhtnet::IceTransportFactory>(Logger::dhtLogger());
 
     pimpl_->path_ = config_file.empty() ? pimpl_->retrieveConfigPath() : config_file;
-    JAMI_DBG("Configuration file path: %s", pimpl_->path_.c_str());
+    JAMI_LOG("Configuration file path: {}", pimpl_->path_);
 
 #ifdef ENABLE_PLUGIN
     pimpl_->jami_plugin_manager = std::make_unique<JamiPluginManager>();
@@ -851,7 +851,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         make_backup(pimpl_->path_);
     } else {
         // restore previous configuration
-        JAMI_WARN("Restoring last working configuration");
+        JAMI_WARNING("Restoring last working configuration");
 
         try {
             // remove accounts from broken configuration
@@ -859,8 +859,8 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
             restore_backup(pimpl_->path_);
             pimpl_->parseConfiguration();
         } catch (const YAML::Exception& e) {
-            JAMI_ERR("%s", e.what());
-            JAMI_WARN("Restoring backup failed");
+            JAMI_ERROR("{}", e.what());
+            JAMI_WARNING("Restoring backup failed");
         }
     }
 
