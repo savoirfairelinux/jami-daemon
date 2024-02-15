@@ -782,6 +782,10 @@ else()
         target_link_libraries(ut_certstore ut_library)
         add_test(NAME certstore COMMAND ut_certstore)
 
+        add_executable(ut_presence test/unitTest/presence/presence.cpp)
+        target_link_libraries(ut_presence ut_library)
+        add_test(NAME presence COMMAND ut_presence)
+
         add_executable(ut_conversationCall test/unitTest/conversation/call.cpp test/unitTest/conversation/conversationcommon.cpp)
         target_link_libraries(ut_conversationCall ut_library)
         add_test(NAME conversationCall COMMAND ut_conversationCall)

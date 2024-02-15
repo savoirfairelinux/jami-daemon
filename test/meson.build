@@ -381,6 +381,15 @@ test('sip_basic_calls', ut_sip_basic_calls,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
+ut_presence = executable('ut_presence',
+    sources: files('unitTest/presence/presence.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('presence', ut_presence,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
 
 ut_sip_srtp = executable('ut_sip_srtp',
     sources: files('unitTest/sip_account/sip_srtp.cpp'),
