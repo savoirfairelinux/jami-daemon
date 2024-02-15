@@ -118,7 +118,7 @@
                     The registered URI
                 </tp:docstring>
             </arg>
-            <arg type="b" name="status">
+            <arg type="i" name="status">
                 <tp:docstring>
                     Is the URI present or not
                 </tp:docstring>

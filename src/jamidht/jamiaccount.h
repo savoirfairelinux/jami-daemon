@@ -599,6 +599,12 @@ public:
      */
     bool isConnectedWith(const DeviceId& deviceId) const;
 
+    /**
+     * Send a presence note
+     * @param note
+     */
+    void sendPresenceNote(const std::string& note);
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -887,6 +893,14 @@ private:
     std::mutex rdvMtx_;
 
     void initConnectionManager();
+
+    enum class PresenceState : int {
+        DISCONNECTED = 0,
+        DHT_PRESENCE,
+        CONNECTED
+    };
+    std::map<std::string, PresenceState> presenceState_;
+    std::string presenceNote_;
 };
 
 static inline std::ostream&
