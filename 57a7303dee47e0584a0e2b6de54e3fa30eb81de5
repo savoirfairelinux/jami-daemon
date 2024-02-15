@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7f75a0d9_3535a746",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 3207,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-15T15:55:05Z",
+      "side": 1,
+      "message": "can be extracted, as duplicated in same method (you can pass this to the lambda). Else ok for me",
+      "range": {
+        "startLine": 3207,
+        "startChar": 25,
+        "endLine": 3207,
+        "endChar": 42
+      },
+      "revId": "57a7303dee47e0584a0e2b6de54e3fa30eb81de5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
