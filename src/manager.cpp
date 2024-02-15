@@ -437,7 +437,7 @@ struct Manager::ManagerPimpl
     std::unique_ptr<SIPVoIPLink> sipLink_;
 #ifdef ENABLE_PLUGIN
     /* Jami Plugin Manager */
-    JamiPluginManager jami_plugin_manager;
+    std::unique_ptr<JamiPluginManager> jami_plugin_manager;
 #endif
 
     std::mutex gitTransportsMtx_ {};
@@ -829,6 +829,8 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     pimpl_->path_ = config_file.empty() ? pimpl_->retrieveConfigPath() : config_file;
     JAMI_DBG("Configuration file path: %s", pimpl_->path_.c_str());
+
+    pimpl_->jami_plugin_manager = std::make_unique<JamiPluginManager>();
 
     bool no_errors = true;
 
@@ -3222,7 +3224,7 @@ Manager::sipVoIPLink() const
 JamiPluginManager&
 Manager::getJamiPluginManager() const
 {
-    return pimpl_->jami_plugin_manager;
+    return *pimpl_->jami_plugin_manager;
 }
 #endif
 
