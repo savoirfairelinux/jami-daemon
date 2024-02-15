@@ -494,12 +494,13 @@ get_home_dir()
 }
 
 std::filesystem::path
-get_data_dir(const char* pkg)
+get_data_dir_impl(const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
     paths.reserve(1);
     emitSignal<libjami::ConfigurationSignal::GetAppDataPath>("files", &paths);
+    JAMI_WARNING("get_data_dir_impl = {}", paths.size());
     if (not paths.empty())
         return paths[0];
     return {};
@@ -523,6 +524,12 @@ get_data_dir(const char* pkg)
     // $HOME/.local/share should be used."
     return get_home_dir() / ".local" / "share" / pkg;
 #endif
+}
+
+std::filesystem::path
+get_data_dir(const char* pkg) {
+    static const std::filesystem::path data_dir = get_data_dir_impl(pkg);
+    return data_dir;
 }
 
 std::filesystem::path
@@ -558,7 +565,7 @@ get_config_dir(const char* pkg)
     else
         configdir = fileutils::get_home_dir() / ".config" / pkg;
 #endif
-    if (dhtnet::fileutils::recursive_mkdir(configdir, 0700) != true) {
+    if (!dhtnet::fileutils::recursive_mkdir(configdir, 0700)) {
         // If directory creation failed
         if (errno != EEXIST)
             JAMI_DBG("Cannot create directory: %s!", configdir.c_str());
