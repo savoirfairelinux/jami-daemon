@@ -3473,6 +3473,13 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
     iceOptions.streamsCount = static_cast<unsigned>(rtpStreams_.size());
     // Each RTP stream requires a pair of ICE components (RTP + RTCP).
     iceOptions.compCountPerStream = ICE_COMP_COUNT_PER_STREAM;
+    iceOptions.qosType.reserve(rtpStreams_.size() * ICE_COMP_COUNT_PER_STREAM);
+    for (const auto& stream : rtpStreams_) {
+        iceOptions.qosType.push_back(stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO
+                                        ? dhtnet::QosType::AUDIO
+                                        : dhtnet::QosType::VIDEO);
+        iceOptions.qosType.push_back(dhtnet::QosType::CONTROL);
+    }
 
     // Init ICE.
     iceMedia->initIceInstance(iceOptions);
