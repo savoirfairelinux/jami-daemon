@@ -73,6 +73,8 @@ init(enum InitFlag flags) noexcept
         if (flags & LIBJAMI_FLAG_IOS_EXTENSION)
             manager.isIOSExtension = true;
 #endif
+        if (flags & LIBJAMI_FLAG_NO_AUTOLOAD)
+            manager.autoLoadAccountAndConversation = false;
         if (flags & LIBJAMI_FLAG_NO_AUTOSYNC)
             manager.syncOnRegister = false;
 
