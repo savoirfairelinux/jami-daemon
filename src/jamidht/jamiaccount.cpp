@@ -271,16 +271,27 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , idPath_(fileutils::get_data_dir() / accountId)
     , cachePath_(fileutils::get_cache_dir() / accountId)
     , dataPath_(cachePath_ / "values")
-    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
     , connectionManager_ {}
     , nonSwarmTransferManager_()
-{}
+{
+    if (jami::Manager::instance().autoLoadAccountAndConversation) {
+        certStore_ = std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger());
+    }
+}
 
 JamiAccount::~JamiAccount() noexcept
 {
     if (dht_)
         dht_->join();
+}
+
+void
+JamiAccount::loadCertStore()
+{
+    if (!certStore_) {
+        certStore_ = std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger());
+    }
 }
 
 void

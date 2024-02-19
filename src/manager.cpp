@@ -141,6 +141,8 @@ std::atomic_bool Manager::initialized = {false};
 bool Manager::isIOSExtension = {false};
 #endif
 
+bool Manager::autoLoadAccountAndConversation = {true};
+
 bool Manager::syncOnRegister = {true};
 
 static void
@@ -818,11 +820,9 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     // So only create the SipLink once
     pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
-    check_rename(fileutils::get_cache_dir(PACKAGE_OLD),
-                 fileutils::get_cache_dir());
+    check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
-    check_rename(fileutils::get_config_dir(PACKAGE_OLD),
-                 fileutils::get_config_dir());
+    check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
 
     pimpl_->ice_tf_ = std::make_shared<dhtnet::IceTransportFactory>(Logger::dhtLogger());
 
@@ -3054,19 +3054,18 @@ void
 Manager::loadAccountAndConversation(const std::string& accountID, const std::string& convID)
 {
     if (const auto a = getAccount(accountID)) {
-        a->enableAutoLoadConversations(false);
-        if (a->getRegistrationState() == RegistrationState::UNLOADED) {
-            a->loadConfig();
-        }
-        a->setActive(true);
-        if (a->isUsable())
-            a->doRegister();
         if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(a)) {
-            // load requests before loading conversation
+            jamiAcc->enableAutoLoadConversations(false);
+            if (jamiAcc->getRegistrationState() == RegistrationState::UNLOADED) {
+                jamiAcc->loadCertStore();
+                jamiAcc->loadConfig();
+            }
+            jamiAcc->setActive(true);
+            if (jamiAcc->isUsable())
+                jamiAcc->doRegister();
             if (auto convModule = jamiAcc->convModule()) {
                 convModule->reloadRequests();
             }
-            jamiAcc->loadConversation(convID);
         }
     }
 }
