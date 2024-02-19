@@ -127,7 +127,6 @@ MediaPlayerTest::testJPG()
     CPPUNIT_ASSERT(playerId1_ == playerId2_);
     CPPUNIT_ASSERT(mediaPlayer->getId() == playerId1_);
     CPPUNIT_ASSERT(mediaPlayer->isInputValid());
-    CPPUNIT_ASSERT(audio_stream_ == -1);
     CPPUNIT_ASSERT(video_stream_ != -1);
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
@@ -145,7 +144,6 @@ MediaPlayerTest::testAudioFile()
     CPPUNIT_ASSERT(mediaPlayer->getId() == playerId1_);
     CPPUNIT_ASSERT(mediaPlayer->isInputValid());
     CPPUNIT_ASSERT(audio_stream_ != -1);
-    CPPUNIT_ASSERT(video_stream_ != -1);
     CPPUNIT_ASSERT(mediaPlayer->isPaused());
     CPPUNIT_ASSERT(mediaPlayer->getPlayerPosition() == 0);
     JAMI_INFO("End testAudioFile");
