@@ -446,6 +446,8 @@ public:
      */
     void shutdownConnections();
 
+    void loadCertStore();
+
     std::string_view currentDeviceId() const;
 
     // Received a new commit notification

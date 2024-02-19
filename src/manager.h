@@ -121,7 +121,6 @@ public:
 #if TARGET_OS_IOS
     static bool isIOSExtension;
 #endif
-
     static bool syncOnRegister;
 
     /**

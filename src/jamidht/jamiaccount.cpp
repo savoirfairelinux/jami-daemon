@@ -284,6 +284,15 @@ JamiAccount::~JamiAccount() noexcept
 }
 
 void
+JamiAccount::loadCertStore()
+{
+    if (!certStore_) {
+        certStore_ = std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger());
+        dht_ = std::make_shared<dht::DhtRunner>();
+    }
+}
+
+void
 JamiAccount::shutdownConnections()
 {
     JAMI_DBG("[Account %s] Shutdown connections", getAccountID().c_str());
