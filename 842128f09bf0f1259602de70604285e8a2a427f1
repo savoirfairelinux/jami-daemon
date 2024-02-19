@@ -16,6 +16,24 @@
       "message": "Not sure if technically possible: But can you make it possible that other blocked (or kicked?) contacts won\u0027t view the presence of your own account (anymore)? Only if unblocked (again)?",
       "revId": "842128f09bf0f1259602de70604285e8a2a427f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2733ef8c_dba6beea",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-19T20:34:04Z",
+      "side": 1,
+      "message": "you can\u0027t know if peer blocked you or not and presence depends on DHT so no it\u0027s not possible",
+      "parentUuid": "d0855613_fb254924",
+      "revId": "842128f09bf0f1259602de70604285e8a2a427f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
