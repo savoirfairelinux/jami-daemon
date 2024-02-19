@@ -54,8 +54,9 @@ public:
     /**
      * Set list of nodes to the routing table known_nodes
      * @param known_nodes
+     * @return if some are new
      */
-    void setKnownNodes(const std::vector<NodeId>& known_nodes);
+    bool setKnownNodes(const std::vector<NodeId>& known_nodes);
 
     /**
      * Set list of nodes to the routing table mobile_nodes

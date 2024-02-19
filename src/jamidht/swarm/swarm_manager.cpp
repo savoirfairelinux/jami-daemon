@@ -42,7 +42,7 @@ SwarmManager::~SwarmManager()
         shutdown();
 }
 
-void
+bool
 SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
 {
     isShutdown_ = false;
@@ -55,6 +55,9 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
             }
         }
     }
+
+    if (newNodes.empty())
+        return false;
 
     dht::ThreadPool::io().run([w=weak(), newNodes=std::move(newNodes)] {
         auto shared = w.lock();
@@ -70,7 +73,7 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
         }
         shared->maintainBuckets(toConnect);
     });
-
+    return true;
 }
 
 void

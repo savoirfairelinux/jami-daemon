@@ -2200,6 +2200,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
             auto sthis = w.lock();
             if (!sthis)
                 return;
+            auto checkNext = true;
             if (ok && devices->size() != 0) {
 #ifdef LIBJAMI_TESTABLE
                 if (sthis->pimpl_->bootstrapCbTest_)
@@ -2209,8 +2210,10 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                              sthis->pimpl_->toString(),
                              fmt::ptr(sthis->pimpl_->swarmManager_.get()),
                              uri);
-                sthis->pimpl_->swarmManager_->setKnownNodes(*devices);
-            } else {
+                if (sthis->pimpl_->swarmManager_->setKnownNodes(*devices))
+                    checkNext = false;
+            }
+            if (checkNext) {
                 // Check next member
                 sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
                 sthis->pimpl_->fallbackTimer_->async_wait(
