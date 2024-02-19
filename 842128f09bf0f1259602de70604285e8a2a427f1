@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d0855613_fb254924",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2024-02-19T19:12:38Z",
+      "side": 1,
+      "message": "Not sure if technically possible: But can you make it possible that other blocked (or kicked?) contacts won\u0027t view the presence of your own account (anymore)? Only if unblocked (again)?",
+      "revId": "842128f09bf0f1259602de70604285e8a2a427f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
