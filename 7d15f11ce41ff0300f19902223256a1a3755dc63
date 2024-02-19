@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93852a1d_a0ce284c",
+        "filename": "contrib/src/torch/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 993
+      },
+      "writtenOn": "2024-02-19T13:42:56Z",
+      "side": 1,
+      "message": "be carreful on platform and architecture compatibility",
+      "range": {
+        "startLine": 3,
+        "startChar": 63,
+        "endLine": 3,
+        "endChar": 84
+      },
+      "revId": "7d15f11ce41ff0300f19902223256a1a3755dc63",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
