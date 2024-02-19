@@ -46,7 +46,7 @@ struct PendingConversationFetch
     std::string deviceId {};
     std::string removeId {};
     std::map<std::string, std::string> preferences {};
-    std::map<std::string, std::string> lastDisplayed {}; // remove
+    std::map<std::string, std::map<std::string, std::string>> status {};
     std::set<std::string> connectingTo {};
     std::shared_ptr<dhtnet::ChannelSocket> socket {};
 };
@@ -151,16 +151,13 @@ public:
      * Clone a conversation (initial) from device
      * @param deviceId
      * @param convId
-     * @param lastDisplayed      Last message displayed by account
      */
     void cloneConversation(const std::string& deviceId,
                            const std::string& peer,
-                           const std::string& convId,
-                           const std::string& lastDisplayed = "");
+                           const std::string& convId);
     void cloneConversation(const std::string& deviceId,
                            const std::string& peer,
-                           const std::shared_ptr<SyncedConversation>& conv,
-                           const std::string& lastDisplayed = "");
+                           const std::shared_ptr<SyncedConversation>& conv);
 
     /**
      * Pull remote device
@@ -418,21 +415,19 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
 void
 ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::string& peerUri,
-                                            const std::string& convId,
-                                            const std::string& lastDisplayed)
+                                            const std::string& convId)
 {
     JAMI_DEBUG("[Account {}] Clone conversation on device {}", accountId_, deviceId);
 
     auto conv = startConversation(convId);
     std::unique_lock<std::mutex> lk(conv->mtx);
-    cloneConversation(deviceId, peerUri, conv, lastDisplayed);
+    cloneConversation(deviceId, peerUri, conv);
 }
 
 void
 ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::string& peerUri,
-                                            const std::shared_ptr<SyncedConversation>& conv,
-                                            const std::string& lastDisplayed)
+                                            const std::shared_ptr<SyncedConversation>& conv)
 {
     // conv->mtx must be locked
     if (!conv->conversation) {
@@ -705,8 +700,10 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (conv->info.isRemoved())
             removeRepo = true;
         std::map<std::string, std::string> preferences;
+        std::map<std::string, std::map<std::string, std::string>> status;
         if (conv->pending) {
             preferences = std::move(conv->pending->preferences);
+            status = std::move(conv->pending->status);
         }
         conv->conversation = conversation;
         if (removeRepo) {
@@ -739,6 +736,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 
         if (!preferences.empty())
             conversation->updatePreferences(preferences);
+        if (!status.empty())
+            conversation->updateMessageStatus(status);
 
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -2240,7 +2239,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             conv->info = convInfo;
             if (!conv->conversation) {
                 if (deviceId != "") {
-                    pimpl_->cloneConversation(deviceId, peerId, conv, convInfo.lastDisplayed);
+                    pimpl_->cloneConversation(deviceId, peerId, conv);
                 } else {
                     // In this case, informations are from JAMS
                     // JAMS doesn't store the conversation itself, so we
@@ -2338,6 +2337,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                 auto conversation = conv->conversation;
                 lk.unlock();
                 conversation->updateMessageStatus(ms);
+            } else if (conv->pending) {
+                conv->pending->status = ms;
             }
         }
     }

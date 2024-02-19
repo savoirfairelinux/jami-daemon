@@ -2116,8 +2116,6 @@ Conversation::updateMessageStatus(const std::map<std::string, std::map<std::stri
     std::unique_lock<std::mutex> lk(pimpl_->messageStatusMtx_);
     std::vector<std::tuple<libjami::Account::MessageStates, std::string, std::string, std::string>> stVec;
     for (const auto& [uri, status] : messageStatus) {
-        if (uri == acc->getUsername())
-            continue;
         auto& oldMs = pimpl_->messagesStatus_[uri];
         if (status.find("fetched_ts") != status.end() && status.at("fetched") != oldMs["fetched"]) {
             if (oldMs["fetched_ts"].empty() || std::stol(oldMs["fetched_ts"]) <= std::stol(status.at("fetched_ts"))) {
