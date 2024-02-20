@@ -76,6 +76,7 @@ namespace VolatileProperties {
 
 constexpr static const char ACTIVE[] = "Account.active";
 constexpr static const char DEVICE_ANNOUNCED[] = "Account.deviceAnnounced";
+constexpr static const char DHT_BOUND_PORT[] = "Account.dhtBoundPort";
 constexpr static const char REGISTERED_NAME[] = "Account.registeredName";
 
 // Volatile parameters
@@ -150,6 +151,7 @@ constexpr static const char MANAGER_URI[] = "Account.managerUri";
 constexpr static const char MANAGER_USERNAME[] = "Account.managerUsername";
 constexpr static const char BOOTSTRAP_LIST_URL[] = "Account.bootstrapListUrl";
 constexpr static const char DHT_PROXY_LIST_URL[] = "Account.dhtProxyListUrl";
+constexpr static const char DHT_PORT[] = "Account.dhtPort";
 constexpr static const char DEFAULT_MODERATORS[] = "Account.defaultModerators";
 constexpr static const char LOCAL_MODERATORS_ENABLED[] = "Account.localModeratorsEnabled";
 constexpr static const char ALL_MODERATORS_ENABLED[] = "Account.allModeratorsEnabled";
@@ -240,7 +242,6 @@ constexpr static const char NEGOTIATION_TIMEOUT_SEC[] = "TLS.negotiationTimeoutS
 
 namespace DHT {
 
-constexpr static const char PORT[] = "DHT.port";
 constexpr static const char PUBLIC_IN_CALLS[] = "DHT.PublicInCalls";
 constexpr static const char ALLOW_FROM_TRUSTED[] = "DHT.AllowFromTrusted";
 

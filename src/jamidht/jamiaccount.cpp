@@ -1403,6 +1403,7 @@ JamiAccount::getVolatileAccountDetails() const
         a.emplace(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
 #endif
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
+    a.emplace(libjami::Account::VolatileProperties::DHT_BOUND_PORT, std::to_string(dhtBoundPort_));
     a.emplace(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED,
               deviceAnnounced_ ? TRUE_STR : FALSE_STR);
     if (accountManager_) {
@@ -1977,6 +1978,8 @@ JamiAccount::doRegister_()
 
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
+
+        dhtBoundPort_ = dht_->getBoundPort();
 
         accountManager_->setDht(dht_);
 

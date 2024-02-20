@@ -65,6 +65,7 @@ static const char* const CONFIG_ACCOUNT_VIDEO_PORT_MIN = "Account.videoPortMin";
 static const char* const CONFIG_ACCOUNT_VIDEO_PORT_MAX = "Account.videoPortMax";
 
 static const char* const CONFIG_BIND_ADDRESS = "Account.bindAddress";
+static const char* const CONFIG_DHT_PORT = "Account.dhtPort";
 static const char* const CONFIG_LOCAL_INTERFACE = "Account.localInterface";
 static const char* const CONFIG_PUBLISHED_SAMEAS_LOCAL = "Account.publishedSameAsLocal";
 static const char* const CONFIG_LOCAL_PORT = "Account.localPort";
@@ -107,7 +108,6 @@ static const char* const CONFIG_TLS_DISABLE_SECURE_DLG_CHECK = "TLS.disableSecur
 static const char* const CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC = "TLS.negotiationTimeoutSec";
 
 // DHT specific parameters
-static const char* const CONFIG_DHT_PORT = "DHT.port";
 static const char* const CONFIG_DHT_PUBLIC_IN_CALLS = "DHT.PublicInCalls";
 
 // Volatile parameters
