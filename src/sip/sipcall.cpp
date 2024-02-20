@@ -1164,7 +1164,7 @@ SIPCall::refuse()
     stopAllMedia();
 
     // Notify the peer
-    terminateSipSession(PJSIP_SC_BUSY_HERE);
+    terminateSipSession(PJSIP_SC_DECLINE);
 
     setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
     removeCall();

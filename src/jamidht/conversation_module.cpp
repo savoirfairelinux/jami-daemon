@@ -1966,7 +1966,7 @@ ConversationModule::reactToMessage(const std::string& conversationId,
 }
 
 void
-ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms)
+ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms, const std::string& reason)
 {
     auto finalUri = uri.substr(0, uri.find("@ring.dht"));
     finalUri = finalUri.substr(0, uri.find("@jami.dht"));
@@ -1976,6 +1976,8 @@ ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t durat
         value["to"] = finalUri;
         value["type"] = "application/call-history+json";
         value["duration"] = std::to_string(duration_ms);
+        if (!reason.empty())
+            value["reason"] = reason;
         sendMessage(convId, std::move(value));
     }
 }

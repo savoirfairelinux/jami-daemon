@@ -94,7 +94,6 @@ SIPCallTest::testCall()
     auto aliceAccount = Manager::instance().getAccount<SIPAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<SIPAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
-    JAMI_ERROR("@@@@@@@@@22 {}", bobUri);
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
