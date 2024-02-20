@@ -223,8 +223,9 @@ public:
      * Add to the related conversation the call history message
      * @param uri           Peer number
      * @param duration_ms   The call duration in ms
+     * @param reason
      */
-    void addCallHistoryMessage(const std::string& uri, uint64_t duration_ms);
+    void addCallHistoryMessage(const std::string& uri, uint64_t duration_ms, const std::string& reason);
 
     // Received that a peer displayed a message
     bool onMessageDisplayed(const std::string& peer,
