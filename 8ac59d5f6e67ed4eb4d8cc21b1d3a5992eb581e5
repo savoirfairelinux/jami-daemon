@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65152ee8_144c4a49",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3479,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-20T15:13:07Z",
+      "side": 1,
+      "message": "VOICE, you didn\u0027t add AUDIO in dhtnet",
+      "range": {
+        "startLine": 3479,
+        "startChar": 59,
+        "endLine": 3479,
+        "endChar": 64
+      },
+      "revId": "8ac59d5f6e67ed4eb4d8cc21b1d3a5992eb581e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
