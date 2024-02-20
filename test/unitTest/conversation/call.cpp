@@ -40,6 +40,7 @@ namespace test {
 struct ConvData
 {
     std::string id {};
+    std::string callId {};
     bool requestReceived {false};
     bool needsHost {false};
     bool conferenceChanged {false};
@@ -87,6 +88,9 @@ private:
     void testNeedsHost();
     void testAudioOnly();
     void testJoinAfterMuteHost();
+    void testBusy();
+    void testDecline();
+    void testNoDevice();
 
     CPPUNIT_TEST_SUITE(ConversationCallTest);
     CPPUNIT_TEST(testActiveCalls);
@@ -101,6 +105,9 @@ private:
     CPPUNIT_TEST(testNeedsHost);
     CPPUNIT_TEST(testAudioOnly);
     CPPUNIT_TEST(testJoinAfterMuteHost);
+    CPPUNIT_TEST(testBusy);
+    CPPUNIT_TEST(testDecline);
+    CPPUNIT_TEST(testNoDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -235,9 +242,15 @@ ConversationCallTest::connectSignals()
             }
             cv.notify_one();
         }));
-
-
-
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+        [&](const std::string& accountId,
+            const std::string& callId,
+            const std::string&,
+            const std::vector<std::map<std::string, std::string>>&) {
+            if (accountId == bobId)
+                bobData_.callId = callId;
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&,
             const std::vector<std::map<std::string, std::string>> participantsInfos) {
@@ -1084,6 +1097,134 @@ ConversationCallTest::testJoinAfterMuteHost()
     // Audio of the host is still muted
     CPPUNIT_ASSERT(pInfos_[0]["audioLocalMuted"] == "true");
 
+}
+
+void
+ConversationCallTest::testBusy()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData_.id.empty(); }));
+
+
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttribute
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+            libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+            {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    mediaList.emplace_back(mediaAttribute);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->type == "application/call-history+json";
+    };
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return lastCommitIsCall(aliceData_);
+    }));
+    auto reason = aliceData_.messages.rbegin()->body.at("reason");
+    CPPUNIT_ASSERT(reason == "busy");
+}
+void
+ConversationCallTest::testDecline()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData_.requestReceived; }));
+
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData_.id.empty(); }));
+
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttribute
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+            libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+            {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    mediaList.emplace_back(mediaAttribute);
+    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData_.callId.empty(); }));
+
+    libjami::refuse(bobId, bobData_.callId);
+
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->type == "application/call-history+json";
+    };
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return lastCommitIsCall(aliceData_);
+    }));
+    auto reason = aliceData_.messages.rbegin()->body.at("reason");
+    CPPUNIT_ASSERT(reason == "declined");
+}
+
+void
+ConversationCallTest::testNoDevice()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+
+    aliceAccount->addContact("e2eb225c76be68713d4874d290200849436c6355");
+    aliceAccount->sendTrustRequest("e2eb225c76be68713d4874d290200849436c6355", {});
+
+    // start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    std::vector<std::map<std::string, std::string>> mediaList;
+    std::map<std::string, std::string> mediaAttribute
+        = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+            libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+            {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    mediaList.emplace_back(mediaAttribute);
+    auto callId = libjami::placeCallWithMedia(aliceId, "e2eb225c76be68713d4874d290200849436c6355", mediaList);
+
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->type == "application/call-history+json";
+    };
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return lastCommitIsCall(aliceData_);
+    }));
+    auto reason = aliceData_.messages.rbegin()->body.at("reason");
+    CPPUNIT_ASSERT(reason == "no_device");
 }
 
 } // namespace test
