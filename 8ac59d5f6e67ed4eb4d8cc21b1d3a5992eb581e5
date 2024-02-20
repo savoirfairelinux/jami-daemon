@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4a124f62_48938f9f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-20T15:32:56Z",
+      "side": 1,
+      "message": "I don\u0027t see any QoS packet related to voice or video passing during a call with WireShark\n\nI tried \"qos\" as a filter and \"ip.dsfield.dscp !\u003d 0\" (with Dhtnet/pjproject and daemon up to date (and replace AUDIO by VOICE)",
+      "revId": "8ac59d5f6e67ed4eb4d8cc21b1d3a5992eb581e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "65152ee8_144c4a49",
         "filename": "src/sip/sipcall.cpp",
         "patchSetId": 1
