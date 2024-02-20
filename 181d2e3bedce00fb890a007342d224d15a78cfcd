@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3601b6a_fc6e9aec",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1985,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-20T14:41:16Z",
+      "side": 1,
+      "message": "0 means \"choose an available port\".\nIt\u0027s a valid configuration value.\n\nWhen the port is bound, it should not override the configuration. The bound port is already cached by OpenDHT internally as part of the state cache to be reused later, so in theory the dht port should remain the same when the configured port is 0 if the cache is not cleared.\n\nIf we really need to know the bound port, it could be part of the volatile details.",
+      "range": {
+        "startLine": 1981,
+        "startChar": 0,
+        "endLine": 1985,
+        "endChar": 1
+      },
+      "revId": "181d2e3bedce00fb890a007342d224d15a78cfcd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
