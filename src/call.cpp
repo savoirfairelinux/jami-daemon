@@ -88,7 +88,7 @@ Call::Call(const std::shared_ptr<Account>& account,
 {
     addStateListener([this](Call::CallState call_state,
                             Call::ConnectionState cnx_state,
-                            UNUSED int code) {
+                            int code) {
         checkPendingIM();
         runOnMainThread([callWkPtr = weak()] {
             if (auto call = callWkPtr.lock())
@@ -116,15 +116,16 @@ Call::Call(const std::shared_ptr<Account>& account,
         }
 
         if (!isSubcall()) {
+            if (code == static_cast<int>(std::errc::no_such_device_or_address)) {
+                reason_ = "no_device";
+            }
             if (cnx_state == ConnectionState::CONNECTED && duration_start_ == time_point::min())
                 duration_start_ = clock::now();
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
-                    // TODO: This will be removed when 1:1 swarm will have a conference.
-                    // For now, only commit for 1:1 calls
                     if (toUsername().find('/') == std::string::npos && getCallType() == CallType::OUTGOING) {
                         if (auto cm = jamiAccount->convModule(true))
-                            cm->addCallHistoryMessage(getPeerNumber(), getCallDuration().count());
+                            cm->addCallHistoryMessage(getPeerNumber(), getCallDuration().count(), reason_);
                     }
                     monitor();
                 }
@@ -504,7 +505,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
         JAMI_WARN("[call:%s] subcall %s hangup by peer",
                   getCallId().c_str(),
                   subcall.getCallId().c_str());
-
+        reason_ = new_state == CallState::ACTIVE ? "declined" : "busy";
         hangupCalls(safePopSubcalls(), 0);
         Manager::instance().peerHungupCall(*this);
         removeCall();

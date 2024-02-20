@@ -526,6 +526,8 @@ protected:
     /** Inactive/Active/Hold/Busy/Error */
     CallState callState_ {CallState::INACTIVE};
 
+    std::string reason_ {};
+
     /** Direct IP-to-IP or classic call */
     bool isIPToIP_ {false};
 
