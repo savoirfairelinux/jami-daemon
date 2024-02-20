@@ -818,11 +818,9 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     // So only create the SipLink once
     pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
-    check_rename(fileutils::get_cache_dir(PACKAGE_OLD),
-                 fileutils::get_cache_dir());
+    check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
-    check_rename(fileutils::get_config_dir(PACKAGE_OLD),
-                 fileutils::get_config_dir());
+    check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
 
     pimpl_->ice_tf_ = std::make_shared<dhtnet::IceTransportFactory>(Logger::dhtLogger());
 
@@ -838,28 +836,32 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     // manager can restart without being recreated (Unit tests)
     pimpl_->finished_ = false;
 
-    try {
-        no_errors = pimpl_->parseConfiguration();
-    } catch (const YAML::Exception& e) {
-        JAMI_ERR("%s", e.what());
-        no_errors = false;
-    }
-
-    // always back up last error-free configuration
-    if (no_errors) {
-        make_backup(pimpl_->path_);
+    if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
+        JAMI_DBG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts will neither be loaded nor backed up");
     } else {
-        // restore previous configuration
-        JAMI_WARNING("Restoring last working configuration");
-
         try {
-            // remove accounts from broken configuration
-            removeAccounts();
-            restore_backup(pimpl_->path_);
-            pimpl_->parseConfiguration();
+            no_errors = pimpl_->parseConfiguration();
         } catch (const YAML::Exception& e) {
-            JAMI_ERROR("{}", e.what());
-            JAMI_WARNING("Restoring backup failed");
+            JAMI_ERR("%s", e.what());
+            no_errors = false;
+        }
+
+        // always back up last error-free configuration
+        if (no_errors) {
+            make_backup(pimpl_->path_);
+        } else {
+            // restore previous configuration
+            JAMI_WARNING("Restoring last working configuration");
+
+            try {
+                // remove accounts from broken configuration
+                removeAccounts();
+                restore_backup(pimpl_->path_);
+                pimpl_->parseConfiguration();
+            } catch (const YAML::Exception& e) {
+                JAMI_ERROR("{}", e.what());
+                JAMI_WARNING("Restoring backup failed");
+            }
         }
     }
 
@@ -3053,21 +3055,37 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
 void
 Manager::loadAccountAndConversation(const std::string& accountID, const std::string& convID)
 {
-    if (const auto a = getAccount(accountID)) {
-        a->enableAutoLoadConversations(false);
-        if (a->getRegistrationState() == RegistrationState::UNLOADED) {
-            a->loadConfig();
-        }
-        a->setActive(true);
-        if (a->isUsable())
-            a->doRegister();
-        if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(a)) {
-            // load requests before loading conversation
-            if (auto convModule = jamiAcc->convModule()) {
-                convModule->reloadRequests();
+    auto account = getAccount(accountID);
+    if (!account) {
+        /*
+         With the LIBJAMI_FLAG_NO_AUTOLOAD flag active, accounts are not automatically created
+         during manager initialization, nor are their configurations set or backed up. This is
+         because account creation triggers the initialization of the certStore. There why account
+         creation now occurs here in response to a received notification.
+         */
+        auto accountBaseDir = fileutils::get_data_dir();
+        auto configFile = accountBaseDir / accountID / "config.yml";
+        try {
+            if (account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountID)) {
+                account->enableAutoLoadConversations(false);
+                auto configNode = YAML::LoadFile(configFile.string());
+                auto config = account->buildConfig();
+                config->unserialize(configNode);
+                account->setConfig(std::move(config));
+                account->loConfig(
             }
-            jamiAcc->loadConversation(convID);
+        } catch (const std::runtime_error& e) {
+            return;
         }
+    }
+    if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {
+        jamiAcc->setActive(true);
+        if (jamiAcc->isUsable())
+            jamiAcc->doRegister();
+        if (auto convModule = jamiAcc->convModule()) {
+            convModule->reloadRequests();
+        }
+        jamiAcc->loadConversation(convID);
     }
 }
 
