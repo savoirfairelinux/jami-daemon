@@ -26,6 +26,7 @@
 #include "jami.h"
 #include "fileutils.h"
 #include "account_const.h"
+#include "account_schema.h"
 #include "common.h"
 
 #include <dhtnet/connectionmanager.h>
@@ -67,6 +68,12 @@ public:
     std::string bobId;
     std::string bob2Id;
 
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    bool aliceReady = false;
+
 private:
     void testExportImportNoPassword();
     void testExportImportNoPasswordDoubleGunzip();
@@ -75,6 +82,7 @@ private:
     void testExportDht();
     void testExportDhtWrongPassword();
     void testChangePassword();
+    void testChangeDhtPort();
 
     CPPUNIT_TEST_SUITE(AccountArchiveTest);
     CPPUNIT_TEST(testExportImportNoPassword);
@@ -84,6 +92,7 @@ private:
     CPPUNIT_TEST(testExportDht);
     CPPUNIT_TEST(testExportDhtWrongPassword);
     CPPUNIT_TEST(testChangePassword);
+    CPPUNIT_TEST(testChangeDhtPort);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -95,6 +104,23 @@ AccountArchiveTest::setUp()
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob-password.yml");
     aliceId = actors["alice"];
     bobId = actors["bob"];
+
+
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId,
+                const std::map<std::string, std::string>& details) {
+                if (accountId != aliceId) {
+                    return;
+                }
+                try {
+                    aliceReady |= accountId == aliceId
+                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
+                                && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
+                } catch (const std::out_of_range&) {}
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
 }
 
 void
@@ -244,6 +270,27 @@ AccountArchiveTest::testChangePassword()
     CPPUNIT_ASSERT(!libjami::changeAccountPassword(aliceId, "", "new"));
     // Remove password again (should succeed)
     CPPUNIT_ASSERT(libjami::changeAccountPassword(aliceId, "new", ""));
+}
+
+void
+AccountArchiveTest::testChangeDhtPort()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+
+    std::map<std::string, std::string> newDetails;
+    newDetails[libjami::Account::ConfProperties::DHT_PORT] = "1412";
+    aliceReady = false;
+    libjami::setAccountDetails(aliceId, newDetails);
+    cv.wait_for(lk, 20s, [&] { return aliceReady; });
+
+    CPPUNIT_ASSERT(aliceAccount->dht()->getBoundPort() == 1412);
+
+    newDetails[libjami::Account::ConfProperties::DHT_PORT] = "1413";
+    aliceReady = false;
+    libjami::setAccountDetails(aliceId, newDetails);
+    cv.wait_for(lk, 20s, [&] { return aliceReady; });
+
+    CPPUNIT_ASSERT(aliceAccount->dht()->getBoundPort() == 1413);
 }
 
 } // namespace test

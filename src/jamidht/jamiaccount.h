@@ -724,10 +724,6 @@ private:
     mutable std::mutex dhtValuesMtx_;
 
     std::atomic_int syncCnt_ {0};
-    /**
-     * DHT port preference
-     */
-    in_port_t dhtDefaultPort_ {0};
 
     /**
      * DHT port actually used.
@@ -737,7 +733,7 @@ private:
     in_port_t dhtPortUsed()
     {
         return (upnpCtrl_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort()
-                                                         : dhtDefaultPort_;
+                                                         : config().dhtPort;
     }
 
     /* Current UPNP mapping */

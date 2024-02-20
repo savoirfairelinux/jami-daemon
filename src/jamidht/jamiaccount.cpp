@@ -1978,6 +1978,11 @@ JamiAccount::doRegister_()
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
 
+        // Update account config with currently bounded port to use in client
+        editConfig([&](JamiAccountConfig& conf) {
+            conf.dhtPort = dht_->getBoundPort();
+        });
+
         accountManager_->setDht(dht_);
 
         std::unique_lock<std::mutex> lkCM(connManagerMtx_);
