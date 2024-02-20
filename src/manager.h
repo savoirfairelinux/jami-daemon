@@ -124,6 +124,8 @@ public:
 
     static bool syncOnRegister;
 
+    static bool autoLoad;
+
     /**
      * Initialisation of thread (sound) and map.
      * Init a new VoIPLink, audio codec and audio driver.
