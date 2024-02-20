@@ -90,6 +90,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
         parsePathOptional(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile, path);
     } catch (...) {
     }
+    parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort);
     parseValueOptional(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory);
     parseValueOptional(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact);
     parseValueOptional(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted);
