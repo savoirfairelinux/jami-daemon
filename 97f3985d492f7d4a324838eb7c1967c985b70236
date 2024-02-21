@@ -63,6 +63,29 @@
       "message": "doesn\u0027t work on iOS",
       "revId": "97f3985d492f7d4a324838eb7c1967c985b70236",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0e11b538_f44f6a08",
+        "filename": "contrib/src/upnp/poll.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 146,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-21T19:54:33Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 138,
+        "startChar": 8,
+        "endLine": 146,
+        "endChar": 7
+      },
+      "revId": "97f3985d492f7d4a324838eb7c1967c985b70236",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
