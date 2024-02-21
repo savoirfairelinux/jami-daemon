@@ -16,6 +16,24 @@
       "message": "Will you also show different colors? https://git.jami.net/savoirfairelinux/jami-project/-/issues/1400#note_35834",
       "revId": "3b269698af36aca01c65676fd5da495d2dbe342a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9fcedae1_723f6aa9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-21T16:13:50Z",
+      "side": 1,
+      "message": "No",
+      "parentUuid": "b0236b51_e60c4be5",
+      "revId": "3b269698af36aca01c65676fd5da495d2dbe342a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
