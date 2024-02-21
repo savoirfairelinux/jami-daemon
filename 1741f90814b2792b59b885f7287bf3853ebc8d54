@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "78fbccfa_8b9fac1e",
+        "filename": "src/manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 3061,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-21T21:10:31Z",
+      "side": 1,
+      "message": "we should check the flag btw, else we may create a unwanted account.",
+      "range": {
+        "startLine": 3061,
+        "startChar": 18,
+        "endLine": 3061,
+        "endChar": 42
+      },
+      "revId": "1741f90814b2792b59b885f7287bf3853ebc8d54",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
