@@ -2170,15 +2170,18 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
             && pimpl_->checkedMembers_.find(uri) == pimpl_->checkedMembers_.end())
             break;
     }
+    auto fallbackFailed = [](auto sthis) {
+        JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback failed. Wait for remote connections.",
+                    sthis->pimpl_->toString(),
+                    fmt::ptr(sthis->pimpl_->swarmManager_.get()));
+#ifdef LIBJAMI_TESTABLE
+        if (sthis->pimpl_->bootstrapCbTest_)
+            sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FAILED);
+#endif
+    };
     // If members is empty, we finished the fallback un-successfully
     if (members.empty() && uri.empty()) {
-        JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback failed. Wait for remote connections.",
-                     pimpl_->toString(),
-                     fmt::ptr(pimpl_->swarmManager_.get()));
-#ifdef LIBJAMI_TESTABLE
-        if (pimpl_->bootstrapCbTest_)
-            pimpl_->bootstrapCbTest_(id(), BootstrapStatus::FAILED);
-#endif
+        fallbackFailed(this);
         return;
     }
 
@@ -2194,7 +2197,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                     devices->emplace_back(dev->getLongId());
             }
         },
-        [w = weak(), devices, members = std::move(members), uri](bool ok) {
+        [w = weak(), devices, members = std::move(members), uri, fallbackFailed=std::move(fallbackFailed)](bool ok) {
             auto sthis = w.lock();
             if (!sthis)
                 return;
@@ -2219,6 +2222,9 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                               sthis,
                               std::placeholders::_1,
                               std::move(members)));
+            } else {
+                // In this case, all members are checked. Fallback failed
+                fallbackFailed(sthis);
             }
         });
 }
@@ -2241,9 +2247,29 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
                fmt::ptr(pimpl_->swarmManager_.get()),
                devices.size());
     // set callback
-    pimpl_->swarmManager_->onConnectionChanged([w = weak()](bool ok) {
+    auto fallback = [](auto sthis) {
+        // Fallback
+        auto acc = sthis->pimpl_->account_.lock();
+        if (!acc)
+            return;
+        auto members = sthis->getMembers(false, false);
+        std::shuffle(members.begin(), members.end(), acc->rand);
+        auto timeForBootstrap = std::min(static_cast<size_t>(8), members.size());
+        JAMI_DEBUG("{}[SwarmManager {}] Fallback in {} seconds",
+                    sthis->pimpl_->toString(),
+                    fmt::ptr(sthis->pimpl_->swarmManager_.get()),
+                    (20 - timeForBootstrap));
+        sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
+                                                    - std::chrono::seconds(timeForBootstrap));
+        sthis->pimpl_->fallbackTimer_->async_wait(std::bind(&Conversation::checkBootstrapMember,
+                                                            sthis,
+                                                            std::placeholders::_1,
+                                                            std::move(members)));
+    };
+
+    pimpl_->swarmManager_->onConnectionChanged([w = weak(), fallback](bool ok) {
         // This will call methods from accounts, so trigger on another thread.
-        dht::ThreadPool::io().run([w, ok] {
+        dht::ThreadPool::io().run([w, ok, fallback=std::move(fallback)] {
             auto sthis = w.lock();
             if (!sthis)
                 return;
@@ -2258,28 +2284,13 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
 #endif
                 return;
             }
-            // Fallback
-            auto acc = sthis->pimpl_->account_.lock();
-            if (!acc)
-                return;
-            auto members = sthis->getMembers(false, false);
-            std::shuffle(members.begin(), members.end(), acc->rand);
-            // TODO decide a formula
-            auto timeForBootstrap = std::min(static_cast<size_t>(8), members.size());
-            JAMI_DEBUG("{}[SwarmManager {}] Fallback in {} seconds",
-                       sthis->pimpl_->toString(),
-                       fmt::ptr(sthis->pimpl_->swarmManager_.get()),
-                       (20 - timeForBootstrap));
-            sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
-                                                      - std::chrono::seconds(timeForBootstrap));
-            sthis->pimpl_->fallbackTimer_->async_wait(std::bind(&Conversation::checkBootstrapMember,
-                                                                sthis,
-                                                                std::placeholders::_1,
-                                                                std::move(members)));
+            fallback(sthis);
         });
     });
     pimpl_->checkedMembers_.clear();
-    pimpl_->swarmManager_->setKnownNodes(devices);
+    if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
+        fallback(this);
+    }
 }
 
 std::vector<std::string>

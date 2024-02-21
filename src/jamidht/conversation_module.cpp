@@ -1240,6 +1240,7 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
     if (auto acc = account_.lock())
         for (const auto& [id, _] : acc->getKnownDevices())
             kd.emplace_back(id);
+
     auto bootstrap = [&](auto& conv) {
         if (conv) {
 #ifdef LIBJAMI_TESTABLE
