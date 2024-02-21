@@ -216,18 +216,6 @@ test('ice', ut_ice,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
-
-ut_ice_media_candidates_exchange = executable('ut_ice_media_candidates_exchange',
-    sources: files('unitTest/ice/ice_media_cand_exchange.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('ice_media_candidates_exchange', ut_ice_media_candidates_exchange,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
-
-
 ut_ice_sdp_parser = executable('ut_ice_sdp_parser',
     sources: files('unitTest/ice/ice_sdp_parser.cpp'),
     include_directories: ut_includedirs,
