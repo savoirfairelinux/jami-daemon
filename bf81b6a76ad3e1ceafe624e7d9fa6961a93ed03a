@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a85e285e_c2fbbd3c",
+        "filename": "src/manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 3072,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-21T18:57:54Z",
+      "side": 1,
+      "message": "why this? can you comment?",
+      "range": {
+        "startLine": 3061,
+        "startChar": 33,
+        "endLine": 3072,
+        "endChar": 9
+      },
+      "revId": "bf81b6a76ad3e1ceafe624e7d9fa6961a93ed03a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
