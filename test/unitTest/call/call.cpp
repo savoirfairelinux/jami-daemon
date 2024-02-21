@@ -23,6 +23,7 @@
 #include "../../test_runner.h"
 #include "jami.h"
 #include "account_const.h"
+#include "account_schema.h"
 #include "media_const.h"
 #include "call_const.h"
 #include "common.h"
@@ -461,6 +462,7 @@ CallTest::testInvalidTurn()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
+    bool aliceReady = false;
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
         [&](const std::string&,
@@ -478,11 +480,27 @@ CallTest::testInvalidTurn()
                     cv.notify_one();
             }
         }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+            [&](const std::string& accountId,
+                const std::map<std::string, std::string>& details) {
+                if (accountId != aliceId) {
+                    return;
+                }
+                try {
+                    aliceReady |= accountId == aliceId
+                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
+                                && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
+                } catch (const std::out_of_range&) {}
+                cv.notify_one();
+            }));
     libjami::registerSignalHandlers(confHandlers);
 
     std::map<std::string, std::string> details;
     details[ConfProperties::TURN::SERVER] = "1.1.1.1";
+    aliceReady = false;
     libjami::setAccountDetails(aliceId, details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceReady; }));
 
     JAMI_INFO("Start call between alice and Bob");
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, {});
