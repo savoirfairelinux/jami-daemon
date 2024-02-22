@@ -266,11 +266,6 @@ protected:
     static constexpr size_t MAX_WAITING_MESSAGES_SIZE = 1000;
     std::deque<libjami::Message> lastMessages_;
 
-    std::string composingUri_;
-    std::chrono::steady_clock::time_point composingTime_ {
-        std::chrono::steady_clock::time_point::min()};
-    std::shared_ptr<Task> composingTimeout_;
-
     std::shared_ptr<dhtnet::TurnCache> turnCache_;
 
 private:

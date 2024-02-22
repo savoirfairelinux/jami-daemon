@@ -205,6 +205,12 @@ check_PROGRAMS += ut_conversationMembersEvent
 ut_conversationMembersEvent_SOURCES = conversation/conversationMembersEvent.cpp conversation/conversationcommon.cpp common.cpp
 
 #
+# typers
+#
+check_PROGRAMS += ut_typers
+ut_typers_SOURCES = conversation/typers.cpp conversation/conversationcommon.cpp common.cpp
+
+#
 # syncHistory
 #
 check_PROGRAMS += ut_syncHistory

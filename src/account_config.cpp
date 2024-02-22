@@ -38,6 +38,7 @@ constexpr const char* HOSTNAME_KEY = "hostname";
 constexpr const char* ACCOUNT_ENABLE_KEY = "enable";
 constexpr const char* ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
 constexpr const char* ACCOUNT_READRECEIPT_KEY = "sendReadReceipt";
+constexpr const char* ACCOUNT_COMPOSING_KEY = "sendComposing";
 constexpr const char* ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
 constexpr const char* ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
 constexpr const char* MAILBOX_KEY = "mailbox";
@@ -68,6 +69,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
         << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
     SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
+    SERIALIZE_CONFIG(ACCOUNT_COMPOSING_KEY, sendComposing);
     SERIALIZE_CONFIG(ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
     SERIALIZE_CONFIG(ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit);
     SERIALIZE_CONFIG(RINGTONE_ENABLED_KEY, ringtoneEnabled);
@@ -95,6 +97,7 @@ AccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, HOSTNAME_KEY, hostname);
     parseValueOptional(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     parseValueOptional(node, ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
+    parseValueOptional(node, ACCOUNT_COMPOSING_KEY, sendComposing);
     parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
     parseValueOptional(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit);
     parseValueOptional(node, MAILBOX_KEY, mailbox);
@@ -136,6 +139,7 @@ AccountConfig::toMap() const
             {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent},
             {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_SENDCOMPOSING, sendComposing ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous ? TRUE_STR : FALSE_STR},
             {libjami::Account::ConfProperties::ACTIVE_CALL_LIMIT, std::to_string(activeCallLimit)},
             {Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled ? TRUE_STR : FALSE_STR},
@@ -159,6 +163,7 @@ AccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailbox);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled);
     parseBool(details, Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt);
+    parseBool(details, Conf::CONFIG_ACCOUNT_SENDCOMPOSING, sendComposing);
     parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous);
     parseInt(details, libjami::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled);
