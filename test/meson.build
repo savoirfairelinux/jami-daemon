@@ -379,6 +379,17 @@ test('presence', ut_presence,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
+ut_typers = executable('ut_typers',
+    sources: files('unitTest/conversation/typers.cpp',
+        'unitTest/conversation/conversationcommon.cpp'),
+    include_directories: ut_includedirs,
+    dependencies: ut_dependencies,
+    link_with: ut_library
+)
+test('typers', ut_typers,
+    workdir: ut_workdir, is_parallel: false, timeout: 1800
+)
+
 ut_sip_srtp = executable('ut_sip_srtp',
     sources: files('unitTest/sip_account/sip_srtp.cpp'),
     include_directories: ut_includedirs,
