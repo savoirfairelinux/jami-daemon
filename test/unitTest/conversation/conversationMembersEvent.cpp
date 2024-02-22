@@ -57,6 +57,7 @@ struct UserData {
     std::string payloadTrustRequest;
     std::vector<libjami::SwarmMessage> messages;
     std::vector<libjami::SwarmMessage> messagesUpdated;
+    std::map<std::string, int> members;
 };
 
 class ConversationMembersEventTest : public CppUnit::TestFixture
@@ -266,6 +267,19 @@ ConversationMembersEventTest::connectSignals()
                 bob2Data.conversationId = conversationId;
             } else if (accountId == carlaId) {
                 carlaData.conversationId = conversationId;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
+        [&](const std::string& accountId, const std::string& conversationId, const auto& member, auto status) {
+            if (accountId == aliceId) {
+                aliceData.members[member] = status;
+            } else if (accountId == bobId) {
+                bobData.members[member] = status;
+            } else if (accountId == bob2Id) {
+                bob2Data.members[member] = status;
+            } else if (accountId == carlaId) {
+                carlaData.members[member] = status;
             }
             cv.notify_one();
         }));
@@ -890,26 +904,22 @@ ConversationMembersEventTest::testMemberCannotBanOther()
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
     libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
-    auto bobMsgSize = bobData.messages.size();
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceData.members[bobUri] == 1; }));
     libjami::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() {
-            return aliceMsgSize + 2 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size() && carlaData.requestReceived; }));
-    aliceMsgSize = aliceData.messages.size();
-    bobMsgSize = bobData.messages.size();
+            return aliceData.members.find(carlaUri) != aliceData.members.end() && bobData.members.find(carlaUri) != bobData.members.end() && carlaData.requestReceived; }));
     libjami::acceptConversationRequest(carlaId, convId);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return !carlaData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size(); }));
+        cv.wait_for(lk, 30s, [&]() { return !carlaData.conversationId.empty() && aliceData.members[carlaUri] == 1 && bobData.members[carlaUri] == 1; }));
 
     // Now Carla remove Bob as a member
     // remove from member & add into banned without voting for the ban
     simulateRemoval(carlaAccount, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
 
-    bobMsgSize = bobData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 }
@@ -939,27 +949,22 @@ ConversationMembersEventTest::testMemberCannotUnBanOther()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
     aliceMsgSize = aliceData.messages.size();
-    auto bobMsgSize = bobData.messages.size();
     libjami::acceptConversationRequest(carlaId, convId);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return !carlaData.conversationId.empty()
-                                        && aliceMsgSize + 1 == aliceData.messages.size()
-                                        && bobMsgSize + 1 == bobData.messages.size(); }));
+                                        && aliceData.members[carlaUri] == 1
+                                        && bobData.members[carlaUri] == 1; }));
 
     // Now check that alice, has the only admin, can remove bob
-    aliceMsgSize = aliceData.messages.size();
     libjami::removeConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
-    auto msgId = aliceData.messages.rbegin()->id;
-    auto getMessage = [](const auto& data, const auto& mid) -> bool {
-        return std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.id == mid; }) != data.messages.end();
-    };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return getMessage(carlaData, msgId); }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData.members[bobUri] == 3
+                                        && carlaData.members[bobUri] == 3; }));
 
-    aliceMsgSize = aliceData.messages.size();
     libjami::addConversationMember(carlaId, convId, bobUri);
     CPPUNIT_ASSERT(
-        !cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size();; }));
+        !cv.wait_for(lk, 10s, [&]() { return aliceData.members[bobUri] == 1
+                                        && carlaData.members[bobUri] == 1; }));
     auto members = libjami::getConversationMembers(aliceId, convId);
     auto bobBanned = false;
     for (auto& member : members) {
@@ -1574,9 +1579,16 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
 
     // Alice can sends some messages now
     aliceMsgSize = aliceData.messages.size();
+    auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
+        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
+        if (it != data.messages.end()) {
+            return it->id;
+        }
+        return {};
+    };
     libjami::sendMessage(aliceId, aliceData.conversationId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize != aliceData.messages.size(); }));
-    msgId = aliceData.messages.rbegin()->id;
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !getMessageFromBody(aliceData, "hi").empty(); }));
+    msgId = getMessageFromBody(aliceData, "hi");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return getMessage(bobData, msgId) && getMessage(bob2Data, msgId); }));
 }
 

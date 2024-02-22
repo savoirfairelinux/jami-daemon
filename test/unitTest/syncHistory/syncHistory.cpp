@@ -57,6 +57,7 @@ struct UserData {
     std::vector<libjami::SwarmMessage> messages;
     std::vector<libjami::SwarmMessage> messagesLoaded;
     std::vector<libjami::SwarmMessage> messagesUpdated;
+    std::map<std::string, int> members;
 };
 
 class SyncHistoryTest : public CppUnit::TestFixture
@@ -210,6 +211,17 @@ SyncHistoryTest::connectSignals()
                 alice2Data.profilePath = path;
             cv.notify_one();
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
+        [&](const std::string& accountId, const std::string& conversationId, const auto& member, auto status) {
+            if (accountId == aliceId) {
+                aliceData.members[member] = status;
+            } else if (accountId == bobId) {
+                bobData.members[member] = status;
+            } else if (accountId == alice2Id) {
+                alice2Data.members[member] = status;
+            }
+            cv.notify_one();
+        }));
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
             [&](const std::string& accountId,
@@ -283,6 +295,8 @@ SyncHistoryTest::connectSignals()
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
                 bobData.messages.emplace_back(message);
+            } else if (accountId == alice2Id) {
+                alice2Data.messages.emplace_back(message);
             }
             cv.notify_one();
         }));
@@ -874,34 +888,55 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {return alice2Data.deviceAnnounced; }));
+    auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
+        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
+        if (it != data.messages.end()) {
+            return it->id;
+        }
+        return {};
+    };
+    auto getMessage = [](const auto& data, const auto& mid) -> bool {
+        return std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.id == mid; }) != data.messages.end();
+    };
 
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && !alice2Data.conversationId.empty(); }));
 
-    auto aliceMsgSize = aliceData.messages.size();
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+        cv.wait_for(lk, 30s, [&]() { return aliceData.members[bobUri] == 1 && alice2Data.members[bobUri] == 1; }));
 
     // Start conversation
+    bobData.messages.clear();
     libjami::sendMessage(bobId, aliceData.conversationId, std::string("Message 1"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceMsgSize + 2 == aliceData.messages.size(); }));
-    libjami::sendMessage(bobId, aliceData.conversationId, std::string("Message 2"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceMsgSize + 3 == aliceData.messages.size(); }));
-    libjami::sendMessage(bobId, aliceData.conversationId, std::string("Message 3"), "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceMsgSize + 4 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !getMessageFromBody(bobData, "Message 1").empty(); }));
+    auto msgId = getMessageFromBody(bobData, "Message 1");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return getMessage(aliceData, msgId) && getMessage(alice2Data, msgId); }));
 
-    auto displayedId = aliceData.messages.rbegin()->id;
-    libjami::setMessageDisplayed(aliceId, "swarm:" + aliceData.conversationId, displayedId, 3);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return aliceData.sent && alice2Data.sent; }));
+    bobData.messages.clear();
+    libjami::sendMessage(bobId, aliceData.conversationId, std::string("Message 2"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !getMessageFromBody(bobData, "Message 2").empty(); }));
+    msgId = getMessageFromBody(bobData, "Message 2");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return getMessage(aliceData, msgId) && getMessage(alice2Data, msgId); }));
+
+    bobData.messages.clear();
+    libjami::sendMessage(bobId, aliceData.conversationId, std::string("Message 3"), "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !getMessageFromBody(bobData, "Message 3").empty(); }));
+    msgId = getMessageFromBody(bobData, "Message 3");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return getMessage(aliceData, msgId) && getMessage(alice2Data, msgId); }));
+
+    libjami::setMessageDisplayed(aliceId, "swarm:" + aliceData.conversationId, msgId, 3);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+        return aliceData.sent && alice2Data.sent; }));
 
     auto membersInfos = libjami::getConversationMembers(alice2Id, alice2Data.conversationId);
     CPPUNIT_ASSERT(std::find_if(membersInfos.begin(),
                                 membersInfos.end(),
                                 [&](auto infos) {
                                     return infos["uri"] == aliceUri
-                                           && infos["lastDisplayed"] == displayedId;
+                                           && infos["lastDisplayed"] == msgId;
                                 })
                    != membersInfos.end());
 }
