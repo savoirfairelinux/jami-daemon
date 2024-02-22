@@ -107,10 +107,8 @@ namespace jami {
 constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_PIDF[] {"application/pidf+xml"};
-static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
-static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 static constexpr auto TREATED_PATH = "treatedImMessages"sv;
 
 struct PendingConfirmation
@@ -2708,18 +2706,6 @@ JamiAccount::getToUri(const std::string& to) const
 }
 
 std::string
-getIsComposing(const std::string& conversationId, bool isWriting)
-{
-    // implementing https://tools.ietf.org/rfc/rfc3994.txt
-    return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
-                       "<isComposing><state>{}</state>{}</isComposing>",
-                       isWriting ? "active"sv : "idle"sv,
-                       conversationId.empty()
-                           ? ""
-                           : "<conversation>" + conversationId + "</conversation>");
-}
-
-std::string
 getDisplayed(const std::string& conversationId, const std::string& messageId)
 {
     // implementing https://tools.ietf.org/rfc/rfc5438.txt
@@ -2754,46 +2740,19 @@ JamiAccount::setIsComposing(const std::string& conversationUri, bool isWriting)
 {
     Uri uri(conversationUri);
     std::string conversationId = {};
-    if (uri.scheme() == Uri::Scheme::SWARM)
+    if (uri.scheme() == Uri::Scheme::SWARM) {
         conversationId = uri.authority();
-    const auto& uid = uri.authority();
-
-    if (not isWriting and conversationUri != composingUri_)
-        return;
-
-    if (composingTimeout_) {
-        composingTimeout_->cancel();
-        composingTimeout_.reset();
-    }
-    if (isWriting) {
-        if (not composingUri_.empty() and composingUri_ != conversationUri) {
-            sendInstantMessage(uid,
-                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, false)}});
-            composingTime_ = std::chrono::steady_clock::time_point::min();
-        }
-        composingUri_.clear();
-        composingUri_.insert(composingUri_.end(), conversationUri.begin(), conversationUri.end());
-        auto now = std::chrono::steady_clock::now();
-        if (now >= composingTime_ + COMPOSING_TIMEOUT) {
-            sendInstantMessage(uid,
-                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, true)}});
-            composingTime_ = now;
-        }
-        composingTimeout_ = Manager::instance().scheduleTask(
-            [w = weak(), uid, conversationId]() {
-                if (auto sthis = w.lock()) {
-                    sthis->sendInstantMessage(uid,
-                                              {{MIME_TYPE_IM_COMPOSING,
-                                                getIsComposing(conversationId, false)}});
-                    sthis->composingUri_.clear();
-                    sthis->composingTime_ = std::chrono::steady_clock::time_point::min();
-                }
-            },
-            now + COMPOSING_TIMEOUT);
     } else {
-        sendInstantMessage(uid, {{MIME_TYPE_IM_COMPOSING, getIsComposing(conversationId, false)}});
-        composingUri_.clear();
-        composingTime_ = std::chrono::steady_clock::time_point::min();
+        return;
+    }
+
+    if (auto cm = convModule(false)) {
+        if (auto typer = cm->getTypers(conversationId)) {
+            if (isWriting)
+                typer->addTyper(getUsername());
+            else
+                typer->removeTyper(getUsername());
+        }
     }
 }
 
@@ -3341,22 +3300,6 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
     }
 }
 
-void
-JamiAccount::onIsComposing(const std::string& conversationId,
-                           const std::string& peer,
-                           bool isWriting)
-{
-    try {
-        const std::string fromUri {parseJamiUri(peer)};
-        emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountID_,
-                                                                         conversationId,
-                                                                         peer,
-                                                                         isWriting ? 1 : 0);
-    } catch (...) {
-        JAMI_ERR("[Account %s] Can't parse URI: %s", getAccountID().c_str(), peer.c_str());
-    }
-}
-
 dhtnet::IceTransportOptions
 JamiAccount::getIceOptions() const noexcept
 {
@@ -3577,7 +3520,16 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 conversationId = matched_pattern[1];
             }
-            onIsComposing(conversationId, from, isComposing);
+            if (!conversationId.empty()) {
+                if (auto cm = convModule(false)) {
+                    if (auto typer = cm->getTypers(conversationId)) {
+                        if (isComposing)
+                            typer->addTyper(from);
+                        else
+                            typer->removeTyper(from);
+                    }
+                }
+            }
             return true;
         } catch (const std::exception& e) {
             JAMI_WARNING("Error parsing composing state: {}", e.what());

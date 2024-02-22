@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "conversation.h"
 #include "scheduled_executor.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/conversation.h"
@@ -512,6 +511,13 @@ public:
      * Triggers a bucket maintainance for DRTs
      */
     void connectivityChanged();
+
+    /**
+     * Get Typers object for a conversation
+     * @param convId
+     * @return the Typer object
+     */
+    std::shared_ptr<Typers> getTypers(const std::string& convId);
 
 private:
     class Impl;

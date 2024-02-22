@@ -114,6 +114,7 @@ constexpr static const char MAILBOX[] = "Account.mailbox";
 constexpr static const char DTMF_TYPE[] = "Account.dtmfType";
 constexpr static const char AUTOANSWER[] = "Account.autoAnswer";
 constexpr static const char SENDREADRECEIPT[] = "Account.sendReadReceipt";
+constexpr static const char SENDCOMPOSING[] = "Account.sendComposing";
 constexpr static const char ISRENDEZVOUS[] = "Account.rendezVous";
 constexpr static const char ACTIVE_CALL_LIMIT[] = "Account.activeCallLimit";
 constexpr static const char HOSTNAME[] = "Account.hostname";

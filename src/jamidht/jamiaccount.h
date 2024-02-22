@@ -93,6 +93,8 @@ struct TextMessageCtx;
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
+static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
+
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
  */
@@ -331,7 +333,6 @@ public:
                              bool onlyConnected = false) override;
     void sendInstantMessage(const std::string& convId,
                             const std::map<std::string, std::string>& msg);
-    void onIsComposing(const std::string& conversationId, const std::string& peer, bool isWriting);
 
     /**
      * Create and return ICE options.
