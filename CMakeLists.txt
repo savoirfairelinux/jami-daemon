@@ -786,6 +786,10 @@ else()
         target_link_libraries(ut_presence ut_library)
         add_test(NAME presence COMMAND ut_presence)
 
+        add_executable(ut_typers test/unitTest/conversation/typers.cpp test/unitTest/conversation/conversationcommon.cpp)
+        target_link_libraries(ut_typers ut_library)
+        add_test(NAME typers COMMAND ut_typers)
+
         add_executable(ut_conversationCall test/unitTest/conversation/call.cpp test/unitTest/conversation/conversationcommon.cpp)
         target_link_libraries(ut_conversationCall ut_library)
         add_test(NAME conversationCall COMMAND ut_conversationCall)

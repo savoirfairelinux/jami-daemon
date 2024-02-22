@@ -310,6 +310,7 @@ public:
     bool isRendezVous() const { return config().isRendezVous; }
     bool isAutoAnswerEnabled() const { return config().autoAnswerEnabled; }
     bool isReadReceiptEnabled() const { return config().sendReadReceipt; }
+    bool isComposingEnabled() const { return config().sendComposing; }
 
     /**
      * returns whether or not UPnP is enabled and active

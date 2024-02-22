@@ -23,6 +23,7 @@
 #include "conversationrepository.h"
 #include "swarm/swarm_protocol.h"
 #include "jami/conversation_interface.h"
+#include "jamidht/typers.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -560,6 +561,12 @@ public:
      * @return getAllNodes()    Nodes that are linked to the conversation
     */
     std::vector<jami::DeviceId> getDeviceIdList() const;
+
+    /**
+     * Get Typers object
+     * @return Typers object
+     */
+    std::shared_ptr<Typers> typers() const;
 
 private:
     std::shared_ptr<Conversation> shared()

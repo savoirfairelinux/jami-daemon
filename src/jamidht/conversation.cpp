@@ -213,6 +213,7 @@ public:
             hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
             loadActiveCalls();
             loadStatus();
+            typers_ = std::make_shared<Typers>(shared, repository_->id());
         }
     }
 
@@ -420,6 +421,7 @@ public:
                         if (actionStr == "ban" || actionStr == "remove") {
                             // In this case, a potential host was removed during a call.
                             updateActiveCalls(c);
+                            typers_->removeTyper(uri);
                         }
                         if (action != -1) {
                             announceMember = true;
@@ -657,6 +659,9 @@ public:
                       const std::string& commitId,
                       const std::string& ts,
                       bool emit = false);
+
+
+    std::shared_ptr<Typers> typers_;
 };
 
 bool
@@ -1243,6 +1248,12 @@ std::vector<jami::DeviceId>
 Conversation::getDeviceIdList() const
 {
     return pimpl_->swarmManager_->getRoutingTable().getAllNodes();
+}
+
+std::shared_ptr<Typers>
+Conversation::typers() const
+{
+    return pimpl_->typers_;
 }
 
 bool

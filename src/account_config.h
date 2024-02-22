@@ -74,6 +74,9 @@ struct AccountConfig : public Serializable
     /** If true, send displayed status (and emit to the client) */
     bool sendReadReceipt {true};
 
+    /** If true, send composing status (and emit to the client) */
+    bool sendComposing {true};
+
     /** If true mix calls into a conference */
     bool isRendezVous {false};
 

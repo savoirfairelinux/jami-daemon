@@ -3129,4 +3129,16 @@ ConversationModule::connectivityChanged()
     for (const auto& conv : conversations)
         conv->connectivityChanged();
 }
+
+std::shared_ptr<Typers>
+ConversationModule::getTypers(const std::string& convId)
+{
+    if (auto c = pimpl_->getConversation(convId)) {
+        std::lock_guard lk(c->mtx);
+        if (c->conversation)
+            return c->conversation->typers();
+    }
+    return nullptr;
+}
+
 } // namespace jami
