@@ -3065,8 +3065,12 @@ Manager::loadAccountAndConversation(const std::string& accountID, const std::str
             // load requests before loading conversation
             if (auto convModule = jamiAcc->convModule()) {
                 convModule->reloadRequests();
+                if (!convID.empty()) {
+                    jamiAcc->loadConversation(convID);
+                } else {
+                    convModule->loadConversations();
+                }
             }
-            jamiAcc->loadConversation(convID);
         }
     }
 }
