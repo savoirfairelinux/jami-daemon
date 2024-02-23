@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "815abe08_dd5aa026",
+        "filename": "src/jamidht/typers.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-23T19:58:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3d4b496b_2f39722c",
+      "range": {
+        "startLine": 63,
+        "startChar": 30,
+        "endLine": 63,
+        "endChar": 97
+      },
+      "revId": "4f19a8376ec76877b18492da6474e04e61adc248",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de52eeb1_34296a2d",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-02-23T18:59:40Z",
       "side": 1,
       "message": "could be (but doesn\u0027t have to) std::map\u003cstd::string, asio::steady_timer\u003e",
+      "range": {
+        "startLine": 44,
+        "startChar": 4,
+        "endLine": 44,
+        "endChar": 62
+      },
+      "revId": "4f19a8376ec76877b18492da6474e04e61adc248",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f097f2d8_5d10b970",
+        "filename": "src/jamidht/typers.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-23T19:58:11Z",
+      "side": 1,
+      "message": "yeah I think it\u0027s better",
+      "parentUuid": "de52eeb1_34296a2d",
       "range": {
         "startLine": 44,
         "startChar": 4,
