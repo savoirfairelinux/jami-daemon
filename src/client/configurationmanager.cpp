@@ -243,9 +243,9 @@ setAccountActive(const std::string& accountId, bool enable, bool shutdownConnect
 }
 
 void
-loadAccountAndConversation(const std::string& accountID, const std::string& convID)
+loadAccountAndConversation(const std::string& accountId, bool loadAll, const std::string& convId)
 {
-    jami::Manager::instance().loadAccountAndConversation(accountID, convID);
+    jami::Manager::instance().loadAccountAndConversation(accountId, loadAll, convId);
 }
 
 void
