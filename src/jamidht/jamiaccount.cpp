@@ -2529,7 +2529,7 @@ bool
 JamiAccount::isMessageTreated(dht::Value::Id id)
 {
     std::lock_guard lock(messageMutex_);
-    return treatedMessages_.add(id);
+    return !treatedMessages_.add(id);
 }
 
 std::map<std::string, std::string>
