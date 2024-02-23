@@ -291,6 +291,7 @@ SyncHistoryTest::connectSignals()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             libjami::SwarmMessage message) {
+
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
@@ -889,8 +890,9 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {return alice2Data.deviceAnnounced; }));
-    auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
-        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
+    auto getMessageFromBody = [](auto& data, const auto& body) -> std::string {
+        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) {
+            return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
         if (it != data.messages.end()) {
             return it->id;
         }
