@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d4b496b_2f39722c",
+        "filename": "src/jamidht/typers.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-23T18:59:40Z",
+      "side": 1,
+      "message": "emplace(typer, std::make_unique\u003casio::steady_timer\u003e(*ioContext_))",
+      "range": {
+        "startLine": 63,
+        "startChar": 30,
+        "endLine": 63,
+        "endChar": 97
+      },
+      "revId": "4f19a8376ec76877b18492da6474e04e61adc248",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de52eeb1_34296a2d",
+        "filename": "src/jamidht/typers.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 44,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-23T18:59:40Z",
+      "side": 1,
+      "message": "could be (but doesn\u0027t have to) std::map\u003cstd::string, asio::steady_timer\u003e",
+      "range": {
+        "startLine": 44,
+        "startChar": 4,
+        "endLine": 44,
+        "endChar": 62
+      },
+      "revId": "4f19a8376ec76877b18492da6474e04e61adc248",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
