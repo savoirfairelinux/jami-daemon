@@ -61,8 +61,9 @@ LIBJAMI_PUBLIC void setAccountDetails(const std::string& accountId,
 LIBJAMI_PUBLIC void setAccountActive(const std::string& accountId,
                                      bool active,
                                      bool shutdownConnections = false);
-LIBJAMI_PUBLIC void loadAccountAndConversation(const std::string& accountID,
-                                               const std::string& convID);
+LIBJAMI_PUBLIC void loadAccountAndConversation(const std::string& accountId,
+                                               bool loadAll,
+                                               const std::string& convId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 LIBJAMI_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details,
                                       const std::string& accountId = {});
