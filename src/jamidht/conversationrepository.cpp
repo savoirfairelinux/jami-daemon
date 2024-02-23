@@ -1771,7 +1771,7 @@ ConversationRepository::Impl::validateDevice()
         relativeParentPath = memberPath;
     parentPath /= relativeParentPath;
     if (relativeParentPath.empty()) {
-        JAMI_ERROR("Invalid parent path (not in members or admins");
+        JAMI_ERROR("Invalid parent path (not in members or admins)");
         return false;
     }
     wrongDeviceFile = false;

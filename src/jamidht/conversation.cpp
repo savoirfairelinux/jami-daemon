@@ -1584,10 +1584,15 @@ Conversation::lastCommitId() const
     LogOptions options;
     options.nbOfCommits = 1;
     options.skipMerge = true;
-    auto messages = pimpl_->loadMessages(options);
-    if (messages.empty())
+    History optHistory;
+    std::lock_guard lk(pimpl_->historyMtx_);
+    if (!pimpl_->loadedHistory_.messageList.empty()) {
+        return (*pimpl_->loadedHistory_.messageList.begin())->id;
+    }
+    auto res = pimpl_->loadMessages2(options, &optHistory);
+    if (res.empty())
         return {};
-    return messages.front().at(ConversationMapKeys::ID);
+    return (*optHistory.messageList.begin())->id;
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -2293,7 +2298,10 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
         });
     });
     pimpl_->checkedMembers_.clear();
-    if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
+    // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic connectivity change
+    if (pimpl_->swarmManager_->isShutdown()) {
+        pimpl_->swarmManager_->maintainBuckets();
+    } else if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
         fallback(this, true);
     }
 }
