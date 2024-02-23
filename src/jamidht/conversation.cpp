@@ -1584,10 +1584,14 @@ Conversation::lastCommitId() const
     LogOptions options;
     options.nbOfCommits = 1;
     options.skipMerge = true;
-    auto messages = pimpl_->loadMessages(options);
-    if (messages.empty())
+    History optHistory;
+    std::lock_guard lk(pimpl_->historyMtx_);
+    if (!pimpl_->loadedHistory_.messageList.empty())
+        return (*pimpl_->loadedHistory_.messageList.rbegin())->id;
+    auto res = pimpl_->loadMessages2(options, &optHistory);
+    if (res.empty())
         return {};
-    return messages.front().at(ConversationMapKeys::ID);
+    return (*optHistory.messageList.rbegin())->id;
 }
 
 std::vector<std::map<std::string, std::string>>
