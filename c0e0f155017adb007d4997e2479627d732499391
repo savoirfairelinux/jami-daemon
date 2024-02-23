@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ea624c23_8001448c",
+        "filename": "contrib/src/dhtnet/package.json",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-23T16:50:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e31459a9_544684c8",
+      "range": {
+        "startLine": 3,
+        "startChar": 16,
+        "endLine": 3,
+        "endChar": 56
+      },
+      "revId": "c0e0f155017adb007d4997e2479627d732499391",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d6a0f942_db17a112",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-02-23T16:03:24Z",
       "side": 1,
       "message": "Maybe make this class thread safe and no mutex necessary",
+      "range": {
+        "startLine": 2532,
+        "startChar": 11,
+        "endLine": 2532,
+        "endChar": 27
+      },
+      "revId": "c0e0f155017adb007d4997e2479627d732499391",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "63cc7492_4db79225",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2532,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-23T16:50:52Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "d6a0f942_db17a112",
       "range": {
         "startLine": 2532,
         "startChar": 11,
