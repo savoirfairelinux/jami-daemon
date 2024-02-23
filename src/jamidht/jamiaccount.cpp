@@ -2869,11 +2869,20 @@ JamiAccount::updateConvForContact(const std::string& uri,
     if (newConv != oldConv) {
         std::lock_guard lock(configurationMutex_);
         auto details = getContactDetails(uri);
-        auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
-        if (itDetails != details.end() && itDetails->second != oldConv) {
+        auto itRemoved = details.find("removed");
+        if (itRemoved != details.end() && itRemoved->second != "0") {
+            auto itBanned = details.find("banned");
+            auto itAdded = details.find("added");
+            // Check if contact is removed
+            // If banned, conversation is still on disk
+            if (std::stoi(itRemoved->second) > std::stoi(itAdded->second) && itBanned->second == "0")
+                return false;
+        }
+        auto itConv = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
+        if (itConv != details.end() && itConv->second != oldConv) {
             JAMI_DEBUG("Old conversation is not found in details {} - found: {}",
                        oldConv,
-                       itDetails->second);
+                       itConv->second);
             return false;
         }
         accountManager_->updateContactConversation(uri, newConv);

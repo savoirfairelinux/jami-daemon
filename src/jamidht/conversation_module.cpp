@@ -536,6 +536,10 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         if (not commitId.empty() && conv->conversation->getCommit(commitId) != std::nullopt) {
             return;
         }
+        if (conv->conversation->isRemoving()) {
+            JAMI_WARNING("[Account {}] Conversation {} is being removed", accountId_, conversationId);
+            return;
+        }
         if (!conv->conversation->isMember(peer, true)) {
             JAMI_WARNING("[Account {}] {} is not a member of {}", accountId_, peer, conversationId);
             return;
@@ -807,8 +811,14 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     auto details = acc->getContactDetails(uri);
     auto itRemoved = details.find("removed");
     // If contact is removed there is no conversation
-    if (itRemoved != details.end() && itRemoved->second != "0")
-        return {};
+    if (itRemoved != details.end() && itRemoved->second != "0") {
+        auto itBanned = details.find("banned");
+        auto itAdded = details.find("added");
+        // Check if contact is removed
+        // If banned, conversation is still on disk
+        if (std::stoi(itRemoved->second) > std::stoi(itAdded->second) && itBanned->second == "0")
+            return {};
+    }
     auto it = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
     if (it != details.end())
         return it->second;
@@ -852,6 +862,9 @@ void
 ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sync, bool force)
 {
     if (conv.conversation && (force || conv.conversation->isRemoving())) {
+        // Stop fetch!
+        conv.pending.reset();
+
         JAMI_LOG("Remove conversation: {}", conv.info.id);
         try {
             if (conv.conversation->mode() == ConversationMode::ONE_TO_ONE) {
