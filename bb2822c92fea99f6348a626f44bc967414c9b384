@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee62500b_8073f86f",
+        "filename": "src/jamidht/typers.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-02-23T16:58:42Z",
+      "side": 1,
+      "message": "typers_ and watcher_ can be combined",
+      "range": {
+        "startLine": 42,
+        "startChar": 0,
+        "endLine": 45,
+        "endChar": 2
+      },
+      "revId": "bb2822c92fea99f6348a626f44bc967414c9b384",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
