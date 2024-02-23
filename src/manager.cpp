@@ -3082,6 +3082,7 @@ Manager::loadAccountAndConversation(const std::string& accountID, const std::str
             return;
         }
     }
+
     if (!account) {
         JAMI_WARN("Could not load account %s", accountID.c_str());
         return;
@@ -3092,8 +3093,12 @@ Manager::loadAccountAndConversation(const std::string& accountID, const std::str
             jamiAcc->doRegister();
         if (auto convModule = jamiAcc->convModule()) {
             convModule->reloadRequests();
+            if (!convID.empty()) {
+                jamiAcc->loadConversation(convID);
+            } else {
+                convModule->loadConversations();
+            }
         }
-        jamiAcc->loadConversation(convID);
     }
 }
 
