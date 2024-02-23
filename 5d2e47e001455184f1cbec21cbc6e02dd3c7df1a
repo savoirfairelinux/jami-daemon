@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b283f8c_70545d59",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-02-23T18:29:53Z",
+      "side": 1,
+      "message": "It should be also be possible do not load any conversation",
+      "revId": "5d2e47e001455184f1cbec21cbc6e02dd3c7df1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8cc04d02_798857d6",
