@@ -348,8 +348,9 @@ transaction_request_cb(pjsip_rx_data* rdata)
                 if (not id.empty()) {
                     try {
                         // Mark message as treated
+                        auto intid = from_hex_string(id);
                         auto acc = std::dynamic_pointer_cast<JamiAccount>(account);
-                        if (acc and acc->isMessageTreated(id))
+                        if (acc and acc->isMessageTreated(intid))
                             return PJ_FALSE;
                     } catch (...) {
                     }

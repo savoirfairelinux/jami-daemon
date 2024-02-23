@@ -111,7 +111,7 @@ static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposin
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
-static constexpr auto TREATED_PATH = "treatedImMessages";
+static constexpr auto TREATED_PATH = "treatedImMessages"sv;
 
 struct PendingConfirmation
 {
@@ -274,6 +274,7 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , dataPath_(cachePath_ / "values")
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
     , dht_(new dht::DhtRunner)
+    , treatedMessages_(cachePath_ / TREATED_PATH)
     , connectionManager_ {}
     , nonSwarmTransferManager_()
 {}
@@ -1812,7 +1813,6 @@ JamiAccount::doRegister_()
         if (not accountManager_ or not accountManager_->getInfo())
             throw std::runtime_error("No identity configured for this account.");
 
-        loadTreatedMessages();
         if (dht_->isRunning()) {
             JAMI_ERR("[Account %s] DHT already running (stopping it first).",
                      getAccountID().c_str());
@@ -2125,8 +2125,7 @@ JamiAccount::doRegister_()
         auto inboxDeviceKey = dht::InfoHash::get(
             "inbox:" + accountManager_->getInfo()->devicePk->getId().toString());
         dht_->listen<dht::ImMessage>(inboxDeviceKey, [this, inboxDeviceKey](dht::ImMessage&& v) {
-            auto msgId = to_hex_string(v.id);
-            if (isMessageTreated(msgId))
+            if (isMessageTreated(v.id))
                 return true;
             accountManager_->onPeerMessage(
                 *v.owner,
@@ -2134,7 +2133,7 @@ JamiAccount::doRegister_()
                 [this,
                  v,
                  inboxDeviceKey,
-                 msgId](const std::shared_ptr<dht::crypto::Certificate>& cert,
+                 msgId = to_hex_string(v.id)](const std::shared_ptr<dht::crypto::Certificate>& cert,
                         const dht::InfoHash& peer_account) {
                     auto now = clock::to_time_t(clock::now());
                     std::string datatype = utf8_make_valid(v.datatype);
@@ -2526,81 +2525,11 @@ JamiAccount::getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus s
     return {};
 }
 
-template<typename ID = dht::Value::Id>
-std::set<ID, std::less<>>
-loadIdList(const std::filesystem::path& path)
-{
-    std::set<ID, std::less<>> ids;
-    std::ifstream file(path);
-    if (!file.is_open()) {
-        JAMI_DBG("Could not load %s", path.c_str());
-        return ids;
-    }
-    std::string line;
-    while (std::getline(file, line)) {
-        if constexpr (std::is_same<ID, std::string>::value) {
-            ids.emplace(std::move(line));
-        } else if constexpr (std::is_integral<ID>::value) {
-            ID vid;
-            if (auto [p, ec] = std::from_chars(line.data(), line.data() + line.size(), vid, 16);
-                ec == std::errc()) {
-                ids.emplace(vid);
-            }
-        }
-    }
-    return ids;
-}
-
-template<typename List = std::set<dht::Value::Id>>
-void
-saveIdList(const std::filesystem::path& path, const List& ids)
-{
-    std::ofstream file(path, std::ios::trunc | std::ios::binary);
-    if (!file.is_open()) {
-        JAMI_ERR("Could not save to %s", path.c_str());
-        return;
-    }
-    for (auto& c : ids)
-        file << std::hex << c << "\n";
-}
-
-void
-JamiAccount::loadTreatedMessages()
-{
-    std::lock_guard lock(messageMutex_);
-    auto path = cachePath_ / TREATED_PATH;
-    treatedMessages_ = loadIdList<std::string>(path.string());
-    if (treatedMessages_.empty()) {
-        auto messages = loadIdList(path.string());
-        for (const auto& m : messages)
-            treatedMessages_.emplace(to_hex_string(m));
-    }
-}
-
-void
-JamiAccount::saveTreatedMessages() const
-{
-    dht::ThreadPool::io().run([w = weak()]() {
-        if (auto sthis = w.lock()) {
-            auto& this_ = *sthis;
-            std::lock_guard lock(this_.messageMutex_);
-            dhtnet::fileutils::check_dir(this_.cachePath_);
-            saveIdList<decltype(this_.treatedMessages_)>(this_.cachePath_ / TREATED_PATH,
-                                                         this_.treatedMessages_);
-        }
-    });
-}
-
 bool
-JamiAccount::isMessageTreated(std::string_view id)
+JamiAccount::isMessageTreated(dht::Value::Id id)
 {
     std::lock_guard lock(messageMutex_);
-    auto res = treatedMessages_.emplace(id);
-    if (res.second) {
-        saveTreatedMessages();
-        return false;
-    }
-    return true;
+    return treatedMessages_.add(id);
 }
 
 std::map<std::string, std::string>
@@ -2620,7 +2549,7 @@ JamiAccount::getKnownDevices() const
 
 void
 JamiAccount::loadCachedUrl(const std::string& url,
-                           const std::string& cachePath,
+                           const std::filesystem::path& cachePath,
                            const std::chrono::seconds& cacheDuration,
                            std::function<void(const dht::http::Response& response)> cb)
 {
@@ -2650,14 +2579,10 @@ JamiAccount::loadCachedUrl(const std::string& url,
                                                     (const uint8_t*) response.body.data(),
                                                     response.body.size(),
                                                     0600);
-                                JAMI_DBG("Cached result to '%.*s'",
-                                         (int) cachePath.size(),
-                                         cachePath.c_str());
+                                JAMI_LOG("Cached result to '{}'", cachePath);
                             } catch (const std::exception& ex) {
-                                JAMI_WARN("Failed to save result to %.*s: %s",
-                                          (int) cachePath.size(),
-                                          cachePath.c_str(),
-                                          ex.what());
+                                JAMI_WARNING("Failed to save result to '{}': {}",
+                                          cachePath, ex.what());
                             }
                         } else {
                             JAMI_WARN("Failed to download url");
@@ -2684,7 +2609,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
             cb(getDhtProxyServer(conf.proxyServer));
         } else {
             loadCachedUrl(conf.proxyListUrl,
-                          (cachePath_ / "dhtproxylist").string(),
+                          cachePath_ / "dhtproxylist",
                           std::chrono::hours(24 * 3),
                           [w = weak(), cb = std::move(cb)](const dht::http::Response& response) {
                               if (auto sthis = w.lock()) {
@@ -3294,11 +3219,9 @@ JamiAccount::sendMessage(const std::string& to,
                                    << "] Received text message reply";
 
                         // add treated message
-                        auto res = treatedMessages_.emplace(to_hex_string(msg.id));
-                        if (!res.second)
+                        if (!treatedMessages_.add(msg.id))
                             return true;
                     }
-                    saveTreatedMessages();
 
                     // report message as confirmed received
                     {

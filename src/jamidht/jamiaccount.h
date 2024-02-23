@@ -50,6 +50,7 @@
 #include <dhtnet/connectionmanager.h>
 #include <dhtnet/upnp/mapping.h>
 #include <dhtnet/ip_utils.h>
+#include <dhtnet/fileutils.h>
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -377,7 +378,7 @@ public:
     /// \return true if the given DHT message identifier has been treated
     /// \note if message has not been treated yet this method store this id and returns true at
     /// further calls
-    bool isMessageTreated(std::string_view id);
+    bool isMessageTreated(dht::Value::Id id);
 
     std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
 
@@ -672,9 +673,6 @@ private:
                                                             const std::filesystem::path& path,
                                                             const std::string& name);
 
-    void loadTreatedMessages();
-    void saveTreatedMessages() const;
-
     void replyToIncomingIceMsg(const std::shared_ptr<SIPCall>&,
                                const std::shared_ptr<IceTransport>&,
                                const std::shared_ptr<IceTransport>&,
@@ -683,7 +681,7 @@ private:
                                const dht::InfoHash& from);
 
     void loadCachedUrl(const std::string& url,
-                       const std::string& cachePath,
+                       const std::filesystem::path& cachePath,
                        const std::chrono::seconds& cacheDuration,
                        std::function<void(const dht::http::Response& response)>);
 
@@ -715,7 +713,7 @@ private:
 
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
-    std::set<std::string, std::less<>> treatedMessages_ {};
+    dhtnet::fileutils::IdList treatedMessages_;
 
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
