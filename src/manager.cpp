@@ -3056,9 +3056,9 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
 }
 
 void
-Manager::loadAccountAndConversation(const std::string& accountID, const std::string& convID)
+Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, const std::string& convId)
 {
-    auto account = getAccount(accountID);
+    auto account = getAccount(accountId);
     if (!account && !autoLoad) {
         /*
          With the LIBJAMI_FLAG_NO_AUTOLOAD flag active, accounts are not
@@ -3068,9 +3068,9 @@ Manager::loadAccountAndConversation(const std::string& accountID, const std::str
          account creation now occurs here in response to a received notification.
          */
         auto accountBaseDir = fileutils::get_data_dir();
-        auto configFile = accountBaseDir / accountID / "config.yml";
+        auto configFile = accountBaseDir / accountId / "config.yml";
         try {
-            if (account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountID)) {
+            if (account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountId)) {
                 account->enableAutoLoadConversations(false);
                 auto configNode = YAML::LoadFile(configFile.string());
                 auto config = account->buildConfig();
@@ -3082,8 +3082,9 @@ Manager::loadAccountAndConversation(const std::string& accountID, const std::str
             return;
         }
     }
+
     if (!account) {
-        JAMI_WARN("Could not load account %s", accountID.c_str());
+        JAMI_WARN("Could not load account %s", accountId.c_str());
         return;
     }
     if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {
@@ -3092,8 +3093,12 @@ Manager::loadAccountAndConversation(const std::string& accountID, const std::str
             jamiAcc->doRegister();
         if (auto convModule = jamiAcc->convModule()) {
             convModule->reloadRequests();
+            if (loadAll) {
+                convModule->loadConversations();
+            } else {
+                jamiAcc->loadConversation(convId);
+            }
         }
-        jamiAcc->loadConversation(convID);
     }
 }
 

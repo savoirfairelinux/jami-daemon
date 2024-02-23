@@ -445,7 +445,7 @@ public:
                            const std::map<std::string, ::std::string>& details);
 
     void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
-    void loadAccountAndConversation(const std::string& accountID, const std::string& convID);
+    void loadAccountAndConversation(const std::string& accountId, bool loadAll, const std::string& convId);
 
     std::mt19937_64 getSeededRandomEngine();
 
