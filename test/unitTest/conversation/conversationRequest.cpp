@@ -94,6 +94,7 @@ public:
     void testRemoveContactRemoveTrustRequest();
     void testAddConversationNoPresenceThenConnects();
     void testRequestBigPayload();
+    void testBothRemoveReadd();
     std::string aliceId;
     UserData aliceData;
     std::string bobId;
@@ -135,6 +136,7 @@ private:
     CPPUNIT_TEST(testRemoveContactRemoveTrustRequest);
     CPPUNIT_TEST(testAddConversationNoPresenceThenConnects);
     CPPUNIT_TEST(testRequestBigPayload);
+    CPPUNIT_TEST(testBothRemoveReadd);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1114,6 +1116,41 @@ ConversationRequestTest::testRequestBigPayload()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
     CPPUNIT_ASSERT(bobAccount->getTrustRequests().size() == 0);
 }
+
+void
+ConversationRequestTest::testBothRemoveReadd()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+
+    // removeContact
+    aliceAccount->removeContact(bobUri, false);
+    bobAccount->removeContact(aliceUri, false);
+    std::this_thread::sleep_for(5s); // wait a bit that connections are closed
+
+    // re-add
+    aliceData.conversationId.clear();
+    bobData.requestReceived = false;
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    // Should retrieve previous conversation
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !aliceData.conversationId.empty() && bobData.conversationId == aliceData.conversationId; }));
+}
+
 
 } // namespace test
 } // namespace jami

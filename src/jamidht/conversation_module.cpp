@@ -805,6 +805,10 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     if (!acc)
         return {};
     auto details = acc->getContactDetails(uri);
+    auto itRemoved = details.find("removed");
+    // If contact is removed there is no conversation
+    if (itRemoved != details.end() && itRemoved->second != "0")
+        return {};
     auto it = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
     if (it != details.end())
         return it->second;
@@ -1693,7 +1697,8 @@ ConversationModule::onTrustRequest(const std::string& uri,
                                    const std::vector<uint8_t>& payload,
                                    time_t received)
 {
-    if (getOneToOneConversation(uri) != "") {
+    auto oldConv = getOneToOneConversation(uri);
+    if (!oldConv.empty() && pimpl_->isConversation(oldConv)) {
         // If there is already an active one to one conversation here, it's an active
         // contact and the contact will reclone this activeConv, so ignore the request
         JAMI_WARNING(
