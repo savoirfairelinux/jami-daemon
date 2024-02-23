@@ -890,7 +890,8 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {return alice2Data.deviceAnnounced; }));
     auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
-        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
+        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) {
+            return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
         if (it != data.messages.end()) {
             return it->id;
         }

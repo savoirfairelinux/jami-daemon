@@ -54,6 +54,8 @@ struct UserData {
     bool stopped {false};
     bool deviceAnnounced {false};
     bool contactRemoved {false};
+    bool contactAdded {false};
+    Conversation::BootstrapStatus bootstrap {Conversation::BootstrapStatus::FAILED};
     std::string payloadTrustRequest;
     std::vector<libjami::SwarmMessage> messages;
     std::vector<libjami::SwarmMessage> messagesUpdated;
@@ -385,6 +387,15 @@ ConversationMembersEventTest::connectSignals()
             }
             cv.notify_one();
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& accountId, const std::string&, bool) {
+            if (accountId == bobId) {
+                bobData.contactAdded = true;
+            } else if (accountId == bob2Id) {
+                bob2Data.contactAdded = true;
+            }
+            cv.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
 }
 
@@ -594,7 +605,7 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
     // Accepts
     libjami::acceptConversationRequest(bobId, aliceData.conversationId);
 
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
@@ -917,7 +928,8 @@ ConversationMembersEventTest::testMemberCannotBanOther()
     // Now Carla remove Bob as a member
     // remove from member & add into banned without voting for the ban
     simulateRemoval(carlaAccount, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+    // Note: it may be possible that alice doesn't get the error if they got messages from bob (and bob rejects due to an error)
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected || bobData.errorDetected; }));
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
@@ -1559,8 +1571,27 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
     }));
 
     // Bob bans alice, should update bob2
+    aliceAccount->convModule()->onBootstrapStatus(
+        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            aliceData.bootstrap = status;
+            cv.notify_one();
+        });
+    bobAccount->convModule()->onBootstrapStatus(
+        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            bobData.bootstrap = status;
+            cv.notify_one();
+        });
+    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
+    bob2Account->convModule()->onBootstrapStatus(
+        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+            bob2Data.bootstrap = status;
+            cv.notify_one();
+        });
     bobAccount->removeContact(aliceUri, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactRemoved && bob2Data.contactRemoved; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.contactRemoved && bob2Data.contactRemoved
+                                                    && bobData.bootstrap == Conversation::BootstrapStatus::FAILED
+                                                    && bob2Data.bootstrap == Conversation::BootstrapStatus::FAILED; }));
 
     // Alice sends messages, bob & bob2 should not get it!
     aliceMsgSize = aliceData.messages.size();
@@ -1570,26 +1601,17 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
     auto getMessage = [](const auto& data, const auto& mid) -> bool {
         return std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.id == mid; }) != data.messages.end();
     };
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return getMessage(bobData, msgId) && getMessage(bob2Data, msgId); }));
+    // Connection MUST fail
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 20s, [&]() { return getMessage(bobData, msgId) && getMessage(bob2Data, msgId); }));
 
     // Bobs re-add Alice
+    bobData.contactAdded = false; bob2Data.contactAdded = false;
     bobAccount->addContact(aliceUri);
-    bobAccount->sendTrustRequest(aliceUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
-
-    // Alice can sends some messages now
-    aliceMsgSize = aliceData.messages.size();
-    auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
-        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
-        if (it != data.messages.end()) {
-            return it->id;
-        }
-        return {};
-    };
-    libjami::sendMessage(aliceId, aliceData.conversationId, "hi"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !getMessageFromBody(aliceData, "hi").empty(); }));
-    msgId = getMessageFromBody(aliceData, "hi");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return getMessage(bobData, msgId) && getMessage(bob2Data, msgId); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactAdded
+                                                    && bob2Data.contactAdded
+                                                    && aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS
+                                                    && bobData.bootstrap == Conversation::BootstrapStatus::SUCCESS
+                                                    && bob2Data.bootstrap == Conversation::BootstrapStatus::SUCCESS; }));
 }
 
 void
