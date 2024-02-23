@@ -341,6 +341,8 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                                                         v.confirm,
                                                         v.conversationId,
                                                         std::move(v.payload))) {
+                        if (v.confirm) // No need to send a confirmation as already accepted here
+                            return;
                         auto conversationId = v.conversationId;
                         // Check if there was an old active conversation.
                         auto details = info_->contacts->getContactDetails(peer_account);

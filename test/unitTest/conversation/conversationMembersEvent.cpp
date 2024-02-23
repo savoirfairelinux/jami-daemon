@@ -54,6 +54,7 @@ struct UserData {
     bool stopped {false};
     bool deviceAnnounced {false};
     bool contactRemoved {false};
+    bool contactAdded {false};
     std::string payloadTrustRequest;
     std::vector<libjami::SwarmMessage> messages;
     std::vector<libjami::SwarmMessage> messagesUpdated;
@@ -385,6 +386,15 @@ ConversationMembersEventTest::connectSignals()
             }
             cv.notify_one();
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
+        [&](const std::string& accountId, const std::string&, bool) {
+            if (accountId == bobId) {
+                bobData.contactAdded = true;
+            } else if (accountId == bob2Id) {
+                bob2Data.contactAdded = true;
+            }
+            cv.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
 }
 
@@ -594,7 +604,7 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
     // Accepts
     libjami::acceptConversationRequest(bobId, aliceData.conversationId);
 
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
@@ -917,7 +927,8 @@ ConversationMembersEventTest::testMemberCannotBanOther()
     // Now Carla remove Bob as a member
     // remove from member & add into banned without voting for the ban
     simulateRemoval(carlaAccount, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+    // Note: it may be possible that alice doesn't get the error if they got messages from bob (and bob rejects due to an error)
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected || bobData.errorDetected; }));
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
@@ -1574,8 +1585,10 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
 
     // Bobs re-add Alice
     bobAccount->addContact(aliceUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.contactAdded && bob2Data.contactAdded; }));
     bobAccount->sendTrustRequest(aliceUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
 
     // Alice can sends some messages now
     aliceMsgSize = aliceData.messages.size();
