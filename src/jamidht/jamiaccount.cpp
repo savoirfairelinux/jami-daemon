@@ -2872,14 +2872,13 @@ JamiAccount::updateConvForContact(const std::string& uri,
                                   const std::string& oldConv,
                                   const std::string& newConv)
 {
-    if (newConv != oldConv) {
-        std::lock_guard lock(configurationMutex_);
-        auto details = getContactDetails(uri);
-        auto itDetails = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
-        if (itDetails != details.end() && itDetails->second != oldConv) {
+    auto cm = convModule(false);
+    if (newConv != oldConv && cm) {
+        auto conversation = cm->getOneToOneConversation(uri);
+        if (conversation != oldConv) {
             JAMI_DEBUG("Old conversation is not found in details {} - found: {}",
                        oldConv,
-                       itDetails->second);
+                       conversation);
             return false;
         }
         accountManager_->updateContactConversation(uri, newConv);
