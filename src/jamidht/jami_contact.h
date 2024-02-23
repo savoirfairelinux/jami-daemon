@@ -82,6 +82,10 @@ struct Contact
         if (c.confirmed != confirmed) {
             confirmed = c.confirmed or confirmed;
         }
+        if (isActive()) {
+            removed = 0;
+            banned = 0;
+        }
         if (c.isActive() and conversationId.empty() and not c.conversationId.empty()) {
             conversationId = c.conversationId;
         }
