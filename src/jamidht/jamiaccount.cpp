@@ -1471,8 +1471,9 @@ JamiAccount::registerName(const std::string& name,
                 if (response == NameDirectory::RegistrationResponse::success) {
                     if (auto this_ = w.lock()) {
                         this_->registeredName_ = name;
-                        this_->editConfig(
-                            [&](JamiAccountConfig& config) { config.registeredName = name; });
+                        if (config().registeredName != name)
+                            this_->editConfig(
+                                [&](JamiAccountConfig& config) { config.registeredName = name; });
                         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                             this_->accountID_, this_->getVolatileAccountDetails());
                     }
