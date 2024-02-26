@@ -1,0 +1,8 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Submitted-by: Kateryna Kostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Submitted-at: Mon, 26 Feb 2024 10:15:34 -0500
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/27671
+Comments-Total: 3
+Project: jami-daemon
+Branch: refs/heads/master
