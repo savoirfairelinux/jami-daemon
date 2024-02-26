@@ -47,6 +47,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "64542dad_8aed33fc",
+        "filename": "contrib/src/ffmpeg/0001-libavdevice-pipewiregrab-add-pipewire-based-grab.patch",
+        "patchSetId": 19
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-02-26T22:25:14Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "76b52551_85d22a12",
+      "range": {
+        "startLine": 1,
+        "startChar": 20,
+        "endLine": 1,
+        "endChar": 27
+      },
+      "revId": "1207db54b5eb1bfd20b6d4ad5efaac7efc25b6cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9251bc50_bb063814",
@@ -93,6 +117,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "221ce85e_cbd3b8a2",
+        "filename": "contrib/src/ffmpeg/0001-libavdevice-pipewiregrab-add-pipewire-based-grab.patch",
+        "patchSetId": 19
+      },
+      "lineNbr": 990,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-02-26T22:25:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ea5bd372_c92f445a",
+      "range": {
+        "startLine": 990,
+        "startChar": 40,
+        "endLine": 990,
+        "endChar": 44
+      },
+      "revId": "1207db54b5eb1bfd20b6d4ad5efaac7efc25b6cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a708e2ab_617594f8",
@@ -106,6 +154,30 @@
       "writtenOn": "2024-02-23T15:07:31Z",
       "side": 1,
       "message": "If you have a link to the documentation for future references",
+      "range": {
+        "startLine": 55,
+        "startChar": 45,
+        "endLine": 55,
+        "endChar": 57
+      },
+      "revId": "1207db54b5eb1bfd20b6d4ad5efaac7efc25b6cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b7e5675_79099083",
+        "filename": "src/media/media_device.h",
+        "patchSetId": 19
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-02-26T22:25:14Z",
+      "side": 1,
+      "message": "There\u0027s no documentation to link to at the moment (outside of the patch\u0027s source code). We could add a more self-explanatory option to the patch to set this parameter, e.g. something like \"source:screen\" or \"source:window\" instead of \"capture-type:1\" or \"capture-type:2\". Do you want me to do that?",
+      "parentUuid": "a708e2ab_617594f8",
       "range": {
         "startLine": 55,
         "startChar": 45,
