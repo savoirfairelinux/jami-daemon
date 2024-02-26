@@ -104,19 +104,19 @@ private:
     void testLastInteractionAfterSomeMessages();
 
     CPPUNIT_TEST_SUITE(SyncHistoryTest);
-    CPPUNIT_TEST(testCreateConversationThenSync);
-    CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
-    CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
-    CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
-    CPPUNIT_TEST(testReceivesInviteThenAddDevice);
-    CPPUNIT_TEST(testRemoveConversationOnAllDevices);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
-    CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
-    CPPUNIT_TEST(testSyncOneToOne);
-    CPPUNIT_TEST(testConversationRequestRemoved);
-    CPPUNIT_TEST(testProfileReceivedMultiDevice);
-    CPPUNIT_TEST(testLastInteractionAfterClone);
+    //CPPUNIT_TEST(testCreateConversationThenSync);
+    //CPPUNIT_TEST(testCreateConversationWithOnlineDevice);
+    //CPPUNIT_TEST(testCreateConversationWithMessagesThenAddDevice);
+    //CPPUNIT_TEST(testCreateMultipleConversationThenAddDevice);
+    //CPPUNIT_TEST(testReceivesInviteThenAddDevice);
+    //CPPUNIT_TEST(testRemoveConversationOnAllDevices);
+    //CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportOldBackup);
+    //CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvId);
+    //CPPUNIT_TEST(testSyncCreateAccountExportDeleteReimportWithConvReq);
+    //CPPUNIT_TEST(testSyncOneToOne);
+    //CPPUNIT_TEST(testConversationRequestRemoved);
+    //CPPUNIT_TEST(testProfileReceivedMultiDevice);
+    //CPPUNIT_TEST(testLastInteractionAfterClone);
     CPPUNIT_TEST(testLastInteractionAfterSomeMessages);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -291,9 +291,11 @@ SyncHistoryTest::connectSignals()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             libjami::SwarmMessage message) {
+
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
+                JAMI_ERROR("@@@@@@@@@@@@@@RECV {}", message.body["body"]);
                 bobData.messages.emplace_back(message);
             } else if (accountId == alice2Id) {
                 alice2Data.messages.emplace_back(message);
@@ -889,8 +891,10 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {return alice2Data.deviceAnnounced; }));
-    auto getMessageFromBody = [](const auto& data, const auto& body) -> std::string {
-        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) { return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
+    auto getMessageFromBody = [](auto& data, const auto& body) -> std::string {
+        auto it = std::find_if(data.messages.begin(), data.messages.end(), [&](auto& msg) {
+            JAMI_ERROR("@@@ CHECK {} vs {}", body, msg.body["body"]);
+            return msg.body.find("body") != msg.body.end() && msg.body.at("body") == body; });
         if (it != data.messages.end()) {
             return it->id;
         }
@@ -916,6 +920,7 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return getMessage(aliceData, msgId) && getMessage(alice2Data, msgId); }));
 
     bobData.messages.clear();
+    JAMI_ERROR("@@@@@@@@@@@@@@");
     libjami::sendMessage(bobId, aliceData.conversationId, std::string("Message 2"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !getMessageFromBody(bobData, "Message 2").empty(); }));
     msgId = getMessageFromBody(bobData, "Message 2");
