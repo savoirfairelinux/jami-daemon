@@ -218,7 +218,7 @@ public:
     std::vector<libjami::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
     // Build the list of medias to be included in the SDP (offer/answer)
-    std::vector<MediaAttribute> createDefaultMediaList(bool addVideo, bool onHold = false);
+    std::vector<MediaAttribute> createDefaultMediaList(bool addVideo, bool onHold = false, bool muted = false);
 
 public: // overloaded methods
     virtual void flush() override;

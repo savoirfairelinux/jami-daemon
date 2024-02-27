@@ -829,6 +829,10 @@ ConversationCallTest::testUsePreference()
 
     // Alice should be the host
     CPPUNIT_ASSERT(aliceAccount->getConference(confId));
+    // Bob should be the only participant
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return pInfos_.size() == 1; }));
+    auto uri = string_remove_suffix(pInfos_[0]["uri"], '@');
+    CPPUNIT_ASSERT(uri == bobUri);
     Manager::instance().hangupCall(bobId, callId);
 }
 

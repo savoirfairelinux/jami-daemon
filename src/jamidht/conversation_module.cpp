@@ -2859,7 +2859,7 @@ ConversationModule::call(const std::string& url,
             lk.unlock();
             if (confId == "0")
                 confId = call->getCallId();
-            hostConference(conversationId, confId, call->getCallId());
+            hostConference(conversationId, confId, call->getCallId(), true);
             return;
         }
         JAMI_DEBUG("Calling: {:s}", callUri);
@@ -2875,13 +2875,14 @@ ConversationModule::call(const std::string& url,
     // the client.
     call->reportMediaNegotiationStatus();
     lk.unlock();
-    hostConference(conversationId, confId, call->getCallId());
+    hostConference(conversationId, confId, call->getCallId(), true);
 }
 
 void
 ConversationModule::hostConference(const std::string& conversationId,
                                    const std::string& confId,
-                                   const std::string& callId)
+                                   const std::string& callId,
+                                   bool local)
 {
     auto acc = pimpl_->account_.lock();
     if (!acc)
@@ -2889,13 +2890,13 @@ ConversationModule::hostConference(const std::string& conversationId,
     std::shared_ptr<Call> call;
     call = acc->getCall(callId);
     if (!call) {
-        JAMI_WARN("No call with id %s found", callId.c_str());
+        JAMI_WARNING("No call with id {} found", callId);
         return;
     }
     auto conf = acc->getConference(confId);
     auto createConf = !conf;
     if (createConf) {
-        conf = std::make_shared<Conference>(acc, confId, true, call->getMediaAttributeList());
+        conf = std::make_shared<Conference>(acc, confId, local, call->getMediaAttributeList());
         acc->attach(conf);
     }
     conf->addParticipant(callId);

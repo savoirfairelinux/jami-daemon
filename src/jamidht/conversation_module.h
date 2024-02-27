@@ -459,7 +459,8 @@ public:
               std::function<void(const std::string&, const DeviceId&)>&& cb);
     void hostConference(const std::string& conversationId,
                         const std::string& confId,
-                        const std::string& callId);
+                        const std::string& callId,
+                        bool local);
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
