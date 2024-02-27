@@ -551,17 +551,22 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             currentMediaList.emplace_back(m);
         }
     }
+    if (currentMediaList.empty()) {
+        // If we're hosting, start muted.
+        currentMediaList = MediaAttribute::mediaAttributesToMediaMaps(
+            createDefaultMediaList(call->hasVideo(), true, true));
+    }
     Manager::instance().answerCall(*call, currentMediaList);
 
     if (isNotHosting) {
+        JAMI_DEBUG("Creating conference for swarm {} with id {}", conversationId, confId);
         // Create conference and host it.
-        convModule()->hostConference(conversationId, confId, callId);
-        if (auto conf = getConference(confId))
-            conf->detachLocalParticipant();
+        convModule()->hostConference(conversationId, confId, callId, false);
     } else {
+        JAMI_DEBUG("Adding participant {} for swarm {} with id {}", callId, conversationId, confId);
+        Manager::instance().addAudio(*call);
         conf->addParticipant(callId);
         conf->bindParticipant(callId);
-        Manager::instance().addAudio(*call);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
                                                            conf->getStateStr());
