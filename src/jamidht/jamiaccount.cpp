@@ -1672,11 +1672,17 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
              buddy_id.c_str());
 
     auto h = dht::InfoHash(buddyUri);
-    std::lock_guard lock(buddyInfoMtx);
+    std::unique_lock lock(buddyInfoMtx);
     if (track) {
         auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
         if (buddy.second) {
             trackPresence(buddy.first->first, buddy.first->second);
+        }
+        auto it = presenceState_.find(buddyUri);
+        if (it != presenceState_.end() && it->second != PresenceState::DISCONNECTED) {
+            lock.unlock();
+            emitSignal<libjami::PresenceSignal::NewBuddyNotification>(
+                getAccountID(), buddyUri, static_cast<int>(it->second), "");
         }
     } else {
         auto buddy = trackedBuddies_.find(h);
@@ -1764,7 +1770,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
         std::lock_guard lock(configurationMutex_);
         if (accountManager_) {
             // Retrieve cached payload for trust request.
-            auto requestPath = cachePath_ / "requests" / contactId.toString();
+            auto requestPath = cachePath_ / "requests" / id;
             std::vector<uint8_t> payload;
             try {
                 payload = fileutils::loadFile(requestPath);
