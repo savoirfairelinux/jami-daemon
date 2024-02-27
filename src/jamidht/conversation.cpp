@@ -1637,18 +1637,27 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     return result;
 }
 
-void
+bool
 Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
     std::lock_guard lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
+    auto itPull = std::find_if(pimpl_->pullcbs_.begin(),
+                               pimpl_->pullcbs_.end(),
+                               [&](const auto& elem) { return std::get<0>(elem) == deviceId && std::get<1>(elem) == commitId; });
+    if (itPull != pimpl_->pullcbs_.end()) {
+        cb(false);
+        return false;
+    }
+    JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pimpl_->pullcbs_.emplace_back(deviceId, std::move(commitId), std::move(cb));
     if (isInProgress)
-        return;
+        return true;
     dht::ThreadPool::io().run([w = weak()] {
         if (auto sthis_ = w.lock())
             sthis_->pimpl_->pull();
     });
+    return true;
 }
 
 void
@@ -1747,8 +1756,8 @@ Conversation::sync(const std::string& member,
                    OnPullCb&& cb,
                    std::string commitId)
 {
-    JAMI_INFO() << "Sync " << id() << " with " << deviceId;
-    pull(deviceId, std::move(cb), commitId);
+    if (!pull(deviceId, std::move(cb), commitId))
+        return;
     dht::ThreadPool::io().run([member, deviceId, a = pimpl_->account_, w = weak_from_this()] {
         auto sthis = w.lock();
         if (auto account = a.lock()) {

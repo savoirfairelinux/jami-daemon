@@ -319,8 +319,9 @@ public:
      * @param deviceId  Peer device
      * @param cb        On pulled callback
      * @param commitId  Commit id that triggered this fetch
+     * @return true if callback will be called later
      */
-    void pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId = "");
+    bool pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId = "");
     /**
      * Fetch new commits and re-ask for waiting files
      * @param member
