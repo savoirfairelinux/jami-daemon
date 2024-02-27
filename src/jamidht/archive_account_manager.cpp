@@ -226,7 +226,7 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
     if (!a.id.first || !a.id.second) {
         throw std::runtime_error("Can't generate identity for this account.");
     }
-    JAMI_WARN("[Auth] new account: CA: %s, RingID: %s",
+    JAMI_WARN("[Auth] new account: CA: %s, ID: %s",
               ca.second->getId().toString().c_str(),
               a.id.second->getId().toString().c_str());
     a.ca_key = ca.first;
