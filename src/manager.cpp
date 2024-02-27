@@ -1144,7 +1144,7 @@ Manager::answerCall(const std::string& accountId,
 bool
 Manager::answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_INFO("Answer call %s", call.getCallId().c_str());
+    JAMI_LOG("Answer call {}", call.getCallId());
 
     if (call.getConnectionState() != Call::ConnectionState::RINGING) {
         // The call is already answered
@@ -1703,37 +1703,27 @@ Manager::joinConference(const std::string& accountId,
 void
 Manager::addAudio(Call& call)
 {
+    if (call.isConferenceParticipant())
+        return;
     const auto& callId = call.getCallId();
     JAMI_LOG("Add audio to call {}", callId);
 
-    if (call.isConferenceParticipant()) {
-        JAMI_DEBUG("[conf:{}] Attach local audio", callId);
-
-        // bind to conference participant
-        /*auto iter = pimpl_->conferenceMap_.find(callId);
-        if (iter != pimpl_->conferenceMap_.end() and iter->second) {
-            iter->second->bindParticipant(callId);
-        }*/
-    } else {
-        JAMI_DEBUG("[call:{}] Attach audio", callId);
-
-        // bind to main
-        auto medias = call.getAudioStreams();
-        for (const auto& media : medias) {
-            JAMI_DEBUG("[call:{}] Attach audio", media.first);
-            getRingBufferPool().bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
-        }
-        auto oldGuard = std::move(call.audioGuard);
-        call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
-
-        std::lock_guard lock(pimpl_->audioLayerMutex_);
-        if (!pimpl_->audiodriver_) {
-            JAMI_ERROR("Audio driver not initialized");
-            return;
-        }
-        pimpl_->audiodriver_->flushUrgent();
-        getRingBufferPool().flushAllBuffers();
+    // bind to main
+    auto medias = call.getAudioStreams();
+    for (const auto& media : medias) {
+        JAMI_DEBUG("[call:{}] Attach audio", media.first);
+        getRingBufferPool().bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
     }
+    auto oldGuard = std::move(call.audioGuard);
+    call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
+
+    std::lock_guard lock(pimpl_->audioLayerMutex_);
+    if (!pimpl_->audiodriver_) {
+        JAMI_ERROR("Audio driver not initialized");
+        return;
+    }
+    pimpl_->audiodriver_->flushUrgent();
+    getRingBufferPool().flushAllBuffers();
 }
 
 void

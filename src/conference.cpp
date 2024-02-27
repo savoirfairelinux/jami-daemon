@@ -235,6 +235,8 @@ Conference::Conference(const std::shared_ptr<Account>& account,
     }
     if (attachHost) {
         setState(State::ACTIVE_ATTACHED);
+    } else {
+        setState(State::ACTIVE_DETACHED);
     }
     auto conf_res = split_string_to_unsigned(jami::Manager::instance()
                                                  .videoPreferences.getConferenceResolution(),
@@ -551,10 +553,6 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
                 setLocalHostMuteState(iter->type_, iter->muted_ or isMediaSourceMuted(iter->type_));
             }
         }
-
-        // Un-mute media in the call. The mute/un-mute state will be handled
-        // by the conference/mixer from now on.
-        iter->muted_ = false;
     }
 
     // Update the media states in the newly added call.
@@ -589,8 +587,9 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
     JAMI_DEBUG("[conf {:s}] Request media change", getConfId());
 
-    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);bool hasFileSharing {false};
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
 
+    bool hasFileSharing {false};
     for (const auto& media : mediaAttrList) {
         if (!media.enabled_ || media.sourceUri_.empty())
             continue;
@@ -713,6 +712,7 @@ void
 Conference::addParticipant(const std::string& participant_id)
 {
     JAMI_DEBUG("Adding call {:s} to conference {:s}", participant_id, id_);
+
 
     jami_tracepoint(conference_add_participant, id_.c_str(), participant_id.c_str());
 
@@ -889,6 +889,7 @@ Conference::sendConferenceInfos()
     createSinks(confInfo);
 #endif
 
+
     // Inform client that layout has changed
     jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_,
                                                                     confInfo
@@ -1037,7 +1038,7 @@ Conference::bindParticipant(const std::string& participant_id)
 void
 Conference::unbindParticipant(const std::string& participant_id)
 {
-    JAMI_INFO("Unbind participant %s from conference %s", participant_id.c_str(), id_.c_str());
+    JAMI_LOG("Unbind participant {} from conference {}", participant_id, id_);
     if (auto call = getCall(participant_id)) {
         auto medias = call->getAudioStreams();
         auto& rbPool = Manager::instance().getRingBufferPool();
@@ -1587,6 +1588,11 @@ Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view d
         if (it->uri.empty() and not destURI.empty()) {
             // fill the empty uri with the local host URI, let void for local client
             it->uri = localHostURI;
+            // If we're detached, remove the host
+            if (getState() == State::ACTIVE_DETACHED) {
+                it = newInfo.erase(it);
+                continue;
+            }
         }
         if (isRemoteHost) {
             // Don't send back the ParticipantInfo for remote Host

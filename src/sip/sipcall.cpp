@@ -2348,19 +2348,19 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 
     if (newMediaAttr.muted_ == mediaAttr->muted_) {
         // Nothing to do. Already in the desired state.
-        JAMI_DBG("[call:%s] [%s] already %s",
-                 getCallId().c_str(),
-                 mediaAttr->label_.c_str(),
+        JAMI_DEBUG("[call:{}] [{}] already {}",
+                 getCallId(),
+                 mediaAttr->label_,
                  mediaAttr->muted_ ? "muted " : "un-muted ");
 
     } else {
         // Update
         mediaAttr->muted_ = newMediaAttr.muted_;
         notifyMute = true;
-        JAMI_DBG("[call:%s] %s [%s]",
-                 getCallId().c_str(),
+        JAMI_DEBUG("[call:{}] {} [{}]",
+                 getCallId(),
                  mediaAttr->muted_ ? "muting" : "un-muting",
-                 mediaAttr->label_.c_str());
+                 mediaAttr->label_);
     }
 
     // Only update source and type if actually set.
