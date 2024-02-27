@@ -357,13 +357,13 @@ SIPAccountBase::getLastMessages(const uint64_t& base_timestamp)
 }
 
 std::vector<MediaAttribute>
-SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
+SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold, bool muted)
 {
     std::vector<MediaAttribute> mediaList;
     bool secure = isSrtpEnabled();
     // Add audio and DTMF events
     mediaList.emplace_back(MediaAttribute(MediaType::MEDIA_AUDIO,
-                                          false,
+                                          muted,
                                           secure,
                                           true,
                                           "",
@@ -374,7 +374,7 @@ SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
         mediaList.emplace_back(MediaAttribute(MediaType::MEDIA_VIDEO,
-                                              false,
+                                              muted,
                                               secure,
                                               true,
                                               "",
