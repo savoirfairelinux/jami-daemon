@@ -904,9 +904,10 @@
               Emitted when a new conference is created. Client is responsible for storing the confID and call <tp:member-ref>getParticipantList</tp:member-ref> to update the display.
             </tp:docstring>
             <arg type="s" name="accountId" />
-            <arg type="s" name="confID">
+            <arg type="s" name="conversationId" />
+            <arg type="s" name="confId">
               <tp:docstring>
-                A new conference ID.
+                A new conference Id.
               </tp:docstring>
             </arg>
         </signal>
