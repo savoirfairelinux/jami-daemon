@@ -809,6 +809,9 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     if (!acc)
         return {};
     auto details = acc->getContactDetails(uri);
+    for (const auto& [k,v] : details) {
+        JAMI_DEBUG("@@@Contact details: {} {} -> {}", acc->getAccountID(), k, v);
+    }
     auto itRemoved = details.find("removed");
     // If contact is removed there is no conversation
     if (itRemoved != details.end() && itRemoved->second != "0") {
@@ -1213,6 +1216,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                                                 const std::string& deviceId,
                                                 const std::string& oldConvId)
 {
+    JAMI_ERROR("@@@X1");
     std::lock_guard lk(conv->mtx);
     const auto& conversationId = conv->info.id;
     if (!conv->startFetch(deviceId, true)) {
@@ -1220,20 +1224,25 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
         return;
     }
 
+    JAMI_ERROR("@@@X2");
     onNeedSocket_(
         conversationId,
         deviceId,
         [sthis = shared_from_this(), conv, conversationId, oldConvId, deviceId](
             const auto& channel) {
             auto acc = sthis->account_.lock();
+            JAMI_ERROR("@@@X3");
             std::lock_guard lk(conv->mtx);
+            JAMI_ERROR("@@@X4");
             if (conv->pending && !conv->pending->ready) {
                 conv->pending->removeId = oldConvId;
                 if (channel) {
+            JAMI_ERROR("@@@X5");
                     conv->pending->ready = true;
                     conv->pending->deviceId = channel->deviceId().toString();
                     conv->pending->socket = channel;
                     if (!conv->pending->cloning) {
+            JAMI_ERROR("@@@X6");
                         conv->pending->cloning = true;
                         dht::ThreadPool::io().run([w = sthis->weak(),
                                                    conversationId,
@@ -1244,6 +1253,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     }
                     return true;
                 } else {
+            JAMI_ERROR("@@@X7");
                     conv->stopFetch(deviceId);
                 }
             }

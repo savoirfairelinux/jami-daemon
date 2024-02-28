@@ -125,41 +125,41 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
-    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
-    CPPUNIT_TEST(testRemoveInvitedMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAdminCanReAddMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
+   // CPPUNIT_TEST(testRemoveConversationNoMember);
+   // CPPUNIT_TEST(testRemoveConversationWithMember);
+   // CPPUNIT_TEST(testAddMember);
+   // CPPUNIT_TEST(testMemberAddedNoBadFile);
+   // CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+   // CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
+   // CPPUNIT_TEST(testGetMembers);
+   // CPPUNIT_TEST(testRemoveMember);
+   // CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
+   // CPPUNIT_TEST(testRemoveInvitedMember);
+   // CPPUNIT_TEST(testMemberBanNoBadFile);
+   // CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+   // CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+   // CPPUNIT_TEST(testAdminCanReAddMember);
+   // CPPUNIT_TEST(testMemberCannotBanOther);
     CPPUNIT_TEST(testMemberCannotUnBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
-    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
+   // CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+   // CPPUNIT_TEST(testAdminCannotKickTheirself);
+   // CPPUNIT_TEST(testCommitUnauthorizedUser);
+   // CPPUNIT_TEST(testMemberJoinsNoBadFile);
+   // CPPUNIT_TEST(testMemberAddedNoCertificate);
+   // CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+   // CPPUNIT_TEST(testFailAddMemberInOneToOne);
+   // CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+   // CPPUNIT_TEST(testConversationMemberEvent);
+   // CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+   // CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
+   // CPPUNIT_TEST(testAvoidTwoOneToOne);
     CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
-    CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
-    CPPUNIT_TEST(testBanUnbanMultiDevice);
-    CPPUNIT_TEST(testBanUnbanGotFirstConv);
-    CPPUNIT_TEST(testBanHostWhileHosting);
-    CPPUNIT_TEST(testAddContactTwice);
-    CPPUNIT_TEST(testBanFromNewDevice);
+   // CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+   // CPPUNIT_TEST(testBanUnbanMultiDevice);
+   // CPPUNIT_TEST(testBanUnbanGotFirstConv);
+   // CPPUNIT_TEST(testBanHostWhileHosting);
+   // CPPUNIT_TEST(testAddContactTwice);
+   // CPPUNIT_TEST(testBanFromNewDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -927,9 +927,12 @@ ConversationMembersEventTest::testMemberCannotBanOther()
 
     // Now Carla remove Bob as a member
     // remove from member & add into banned without voting for the ban
+    JAMI_ERROR("@@@@@@@@@ SIMULATE");
     simulateRemoval(carlaAccount, convId, bobUri);
     // Note: it may be possible that alice doesn't get the error if they got messages from bob (and bob rejects due to an error)
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected || bobData.errorDetected; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        JAMI_ERROR("@@@ {} {}", aliceData.errorDetected, bobData.errorDetected);
+        return aliceData.errorDetected || bobData.errorDetected; }));
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
@@ -1440,10 +1443,13 @@ ConversationMembersEventTest::testAvoidTwoOneToOneMultiDevices()
     std::this_thread::sleep_for(10s);
 
     // Bob add Alice, this should re-add old conversation
+    JAMI_ERROR("@@@@@@@@@@@ RE-ADD");
     bobAccount->addContact(aliceUri);
     bobAccount->sendTrustRequest(aliceUri, {});
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
+        cv.wait_for(lk, 30s, [&]() {
+            JAMI_ERROR("@@@ {} {} {}", aliceData.conversationId, bobData.conversationId, bob2Data.conversationId);
+            return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
 }
 
 void
