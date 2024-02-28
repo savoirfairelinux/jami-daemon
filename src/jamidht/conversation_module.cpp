@@ -809,6 +809,9 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     if (!acc)
         return {};
     auto details = acc->getContactDetails(uri);
+    for (const auto& [k,v] : details) {
+        JAMI_DEBUG("@@@Contact details: {} -> {}", k, v);
+    }
     auto itRemoved = details.find("removed");
     // If contact is removed there is no conversation
     if (itRemoved != details.end() && itRemoved->second != "0") {

@@ -2807,6 +2807,7 @@ void
 JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
     auto conversation = convModule()->getOneToOneConversation(uri);
+    JAMI_ERROR("@@@@@@@@ {}", conversation);
     if (!confirmed && conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, uri);
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
