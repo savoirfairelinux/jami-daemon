@@ -576,6 +576,8 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
     auto aliceMsgSize = aliceData.messages.size();
     libjami::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&] { return carlaData.requestReceived; }));
+
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaData.requestReceived; }));
 
@@ -929,7 +931,8 @@ ConversationMembersEventTest::testMemberCannotBanOther()
     // remove from member & add into banned without voting for the ban
     simulateRemoval(carlaAccount, convId, bobUri);
     // Note: it may be possible that alice doesn't get the error if they got messages from bob (and bob rejects due to an error)
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected || bobData.errorDetected; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.errorDetected || bobData.errorDetected; }));
 
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
@@ -966,7 +969,7 @@ ConversationMembersEventTest::testMemberCannotUnBanOther()
         cv.wait_for(lk, 30s, [&]() { return !carlaData.conversationId.empty()
                                         && aliceData.members[carlaUri] == 1
                                         && bobData.members[carlaUri] == 1; }));
-
+    std::this_thread::sleep_for(3s); // Wait that carla finish the clone
     // Now check that alice, has the only admin, can remove bob
     libjami::removeConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(
@@ -1443,7 +1446,8 @@ ConversationMembersEventTest::testAvoidTwoOneToOneMultiDevices()
     bobAccount->addContact(aliceUri);
     bobAccount->sendTrustRequest(aliceUri, {});
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
+        cv.wait_for(lk, 30s, [&]() {
+            return bobData.conversationId == aliceData.conversationId && bob2Data.conversationId == aliceData.conversationId; }));
 }
 
 void
@@ -1695,7 +1699,6 @@ ConversationMembersEventTest::testBanFromNewDevice()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bob2Data.conversationId.empty(); }));
-
 
     auto bobMsgSize = bobData.messages.size();
     libjami::removeConversationMember(bob2Id, convId, aliceUri);
