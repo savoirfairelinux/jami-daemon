@@ -40,7 +40,7 @@ public:
     virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
-    virtual void conferenceCreated(const std::string& accountId, const std::string& confId){}
+    virtual void conferenceCreated(const std::string& accountId, const std::string& conversationId, const std::string& confId){}
     virtual void conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){}
     virtual void conferenceRemoved(const std::string& accountId, const std::string& confId){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
@@ -164,7 +164,7 @@ public:
     virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
-    virtual void conferenceCreated(const std::string& accountId, const std::string& confId){}
+    virtual void conferenceCreated(const std::string& accountId, const std::string& conversationId, const std::string& confId){}
     virtual void conferenceChanged(const std::string& accountId, const std::string& confId, const std::string& state){}
     virtual void conferenceRemoved(const std::string& accountId, const std::string& confId){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
