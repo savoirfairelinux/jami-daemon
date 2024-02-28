@@ -1113,7 +1113,7 @@ Manager::outgoingCall(const std::string& account_id,
     try {
         call = newOutgoingCall(trim(to), account_id, mediaList);
     } catch (const std::exception& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("{}", e.what());
         return {};
     }
 
@@ -1452,8 +1452,12 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 bool
 Manager::ManagerPimpl::hangupConference(Conference& conference)
 {
-    JAMI_DBG("Hangup conference %s", conference.getConfId().c_str());
+    JAMI_DEBUG("Hangup conference {}", conference.getConfId());
     ParticipantSet participants(conference.getParticipantList());
+    if (participants.empty()) {
+        if (auto account = conference.getAccount())
+            account->removeConference(conference.getConfId());
+    }
     for (const auto& callId : participants) {
         if (auto call = base_.getCallFromCallID(callId))
             base_.hangupCall(call->getAccountId(), callId);
@@ -1527,7 +1531,7 @@ Manager::joinParticipant(const std::string& accountId,
         mediaAttr = call2->getMediaAttributeList();
     auto conf = std::make_shared<Conference>(account, "", true, mediaAttr);
     account->attach(conf);
-    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), conf->getConfId());
+    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1585,7 +1589,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         account->attach(conf);
-        emitSignal<libjami::CallSignal::ConferenceCreated>(accountId, conf->getConfId());
+        emitSignal<libjami::CallSignal::ConferenceCreated>(accountId, "", conf->getConfId());
     }
 }
 
@@ -2619,7 +2623,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             // First call
             auto conf = std::make_shared<Conference>(account, "", false);
             account->attach(conf);
-            emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
+            emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "",
                                                                conf->getConfId());
 
             // Bind calls according to their state
