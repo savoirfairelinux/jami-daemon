@@ -258,7 +258,7 @@ struct LIBJAMI_PUBLIC CallSignal
     struct LIBJAMI_PUBLIC ConferenceCreated
     {
         constexpr static const char* name = "ConferenceCreated";
-        using cb_type = void(const std::string&, const std::string&);
+        using cb_type = void(const std::string&, const std::string&, const std::string&);
     };
     struct LIBJAMI_PUBLIC ConferenceChanged
     {

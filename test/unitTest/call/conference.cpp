@@ -235,7 +235,7 @@ ConferenceTest::registerSignalHandlers()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceCreated>(
-        [=](const std::string&, const std::string& conferenceId) {
+        [=](const std::string&, const std::string&, const std::string& conferenceId) {
             confId = conferenceId;
             cv.notify_one();
         }));
