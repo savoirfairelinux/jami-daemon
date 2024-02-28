@@ -2766,10 +2766,10 @@ ConversationModule::getActiveCalls(const std::string& conversationId) const
     });
 }
 
-void
+std::shared_ptr<SIPCall>
 ConversationModule::call(const std::string& url,
-                         const std::shared_ptr<SIPCall>& call,
-                         std::function<void(const std::string&, const DeviceId&)>&& cb)
+                         const std::vector<libjami::MediaMap>& mediaList,
+                         std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&& cb)
 {
     std::string conversationId = "", confId = "", uri = "", deviceId = "";
     if (url.find('/') == std::string::npos) {
@@ -2778,7 +2778,7 @@ ConversationModule::call(const std::string& url,
         auto parameters = jami::split_string(url, '/');
         if (parameters.size() != 4) {
             JAMI_ERROR("Incorrect url {:s}", url);
-            return;
+            return {};
         }
         conversationId = parameters[0];
         uri = parameters[1];
@@ -2786,36 +2786,14 @@ ConversationModule::call(const std::string& url,
         confId = parameters[3];
     }
 
-    std::string callUri;
-    auto sendCall = [&]() {
-        call->setState(Call::ConnectionState::TRYING);
-        call->setPeerNumber(callUri);
-        call->setPeerUri("rdv:" + callUri);
-        call->addStateListener([w = pimpl_->weak(), conversationId](Call::CallState call_state,
-                                                                    Call::ConnectionState cnx_state,
-                                                                    int) {
-            if (cnx_state == Call::ConnectionState::DISCONNECTED
-                && call_state == Call::CallState::MERROR) {
-                auto shared = w.lock();
-                if (!shared)
-                    return false;
-                if (auto acc = shared->account_.lock())
-                    emitSignal<libjami::ConfigurationSignal::NeedsHost>(acc->getAccountID(),
-                                                                        conversationId);
-                return true;
-            }
-            return true;
-        });
-        cb(callUri, DeviceId(deviceId));
-    };
 
     auto conv = pimpl_->getConversation(conversationId);
     if (!conv)
-        return;
+        return {};
     std::unique_lock<std::mutex> lk(conv->mtx);
     if (!conv->conversation) {
         JAMI_ERROR("Conversation {:s} not found", conversationId);
-        return;
+        return {};
     }
 
     // Check if we want to join a specific conference
@@ -2828,7 +2806,6 @@ ConversationModule::call(const std::string& url,
     auto sendCallRequest = false;
     if (confId != "") {
         sendCallRequest = true;
-        confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
         JAMI_DEBUG("Calling self, join conference");
     } else if (!activeCalls.empty()) {
         // Else, we try to join active calls
@@ -2837,7 +2814,6 @@ ConversationModule::call(const std::string& url,
         confId = ac.at("id");
         uri = ac.at("uri");
         deviceId = ac.at("device");
-        JAMI_DEBUG("Calling last active call: {:s}", callUri);
     } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
         // Else, creates "to" (accountId/deviceId/conversationId/confId) and ask remote host
         sendCallRequest = true;
@@ -2846,65 +2822,100 @@ ConversationModule::call(const std::string& url,
         confId = "0";
         JAMI_DEBUG("Remote host detected. Calling {:s} on device {:s}", uri, deviceId);
     }
+    lk.unlock();
 
-    if (sendCallRequest) {
-        callUri = fmt::format("{}/{}/{}/{}", conversationId, uri, deviceId, confId);
-        if (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_) {
-            // In this case, we're probably hosting the conference.
-            call->setState(Call::ConnectionState::CONNECTED);
-            // In this case, the call is the only one in the conference
-            // and there is no peer, so media succeeded and are shown to
-            // the client.
-            call->reportMediaNegotiationStatus();
-            lk.unlock();
-            if (confId == "0")
-                confId = call->getCallId();
-            hostConference(conversationId, confId, call->getCallId(), true);
-            return;
-        }
-        JAMI_DEBUG("Calling: {:s}", callUri);
-        sendCall();
-        return;
+    if (!sendCallRequest
+        || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {
+        confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
+        // TODO attach host with media list
+        hostConference(conversationId, confId, "");
+        return {};
     }
 
-    // Else, we are the host.
-    confId = Manager::instance().callFactory.getNewCallID();
-    call->setState(Call::ConnectionState::CONNECTED);
-    // In this case, the call is the only one in the conference
-    // and there is no peer, so media succeeded and are shown to
-    // the client.
-    call->reportMediaNegotiationStatus();
-    lk.unlock();
-    hostConference(conversationId, confId, call->getCallId(), true);
+    // Else we need to create a call
+    auto account = pimpl_->account_.lock();
+    auto& manager = Manager::instance();
+    std::shared_ptr<SIPCall> call;
+
+    // SIP allows sending empty invites, this use case is not used with Jami accounts.
+    if (not mediaList.empty()) {
+        call = manager.callFactory.newSipCall(account, Call::CallType::OUTGOING, mediaList);
+    } else {
+        JAMI_WARN("Media list is empty, setting a default list");
+        call = manager.callFactory.newSipCall(account,
+                                              Call::CallType::OUTGOING,
+                                              MediaAttribute::mediaAttributesToMediaMaps(
+                                                  account->createDefaultMediaList(account->isVideoEnabled())));
+    }
+
+    if (not call)
+        return {};
+
+    auto callUri = fmt::format("{}/{}/{}/{}", conversationId, uri, deviceId, confId);
+    account->getIceOptions([call, accountId = account->getAccountID(), callUri, uri = std::move(uri), conversationId, deviceId, cb=std::move(cb)](auto&& opts) {
+        if (call->isIceEnabled()) {
+            if (not call->createIceMediaTransport(false)
+                or not call->initIceMediaTransport(true,
+                                                   std::forward<dhtnet::IceTransportOptions>(opts))) {
+                return;
+            }
+        }
+        JAMI_DEBUG("New outgoing call with {}", uri);
+        call->setPeerNumber(uri);
+        call->setPeerUri("swarm:" + uri);
+
+        JAMI_DEBUG("Calling: {:s}", callUri);
+        call->setState(Call::ConnectionState::TRYING);
+        call->setPeerNumber(callUri);
+        call->setPeerUri("rdv:" + callUri);
+        call->addStateListener([accountId, conversationId](Call::CallState call_state,
+                                                            Call::ConnectionState cnx_state,
+                                                            int) {
+            if (cnx_state == Call::ConnectionState::DISCONNECTED
+                && call_state == Call::CallState::MERROR) {
+                emitSignal<libjami::ConfigurationSignal::NeedsHost>(accountId, conversationId);
+                return true;
+            }
+            return true;
+        });
+        cb(callUri, DeviceId(deviceId), call);
+    });
+
+    return call;
 }
 
 void
 ConversationModule::hostConference(const std::string& conversationId,
                                    const std::string& confId,
-                                   const std::string& callId,
-                                   bool local)
+                                   const std::string& callId)
 {
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return;
-    std::shared_ptr<Call> call;
-    call = acc->getCall(callId);
-    if (!call) {
-        JAMI_WARNING("No call with id {} found", callId);
-        return;
-    }
     auto conf = acc->getConference(confId);
     auto createConf = !conf;
+    std::shared_ptr<SIPCall> call;
+    if (!callId.empty()) {
+        call = std::dynamic_pointer_cast<SIPCall>(acc->getCall(callId));
+        if (!call) {
+            JAMI_WARNING("No call with id {} found", callId);
+            return;
+        }
+    }
     if (createConf) {
-        conf = std::make_shared<Conference>(acc, confId, local, call->getMediaAttributeList());
+        conf = std::make_shared<Conference>(acc, confId, callId.empty(), callId.empty()? std::vector<MediaAttribute> {} : call->getMediaAttributeList());
         acc->attach(conf);
     }
-    conf->addParticipant(callId);
+
+    if (!callId.empty())
+        conf->addParticipant(callId);
+
+    if (!createConf && callId.empty()) // TODO use mediaList
+        conf->attachLocalParticipant();
 
     if (createConf) {
-        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), confId);
+        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, confId);
     } else {
-        conf->attachLocalParticipant();
         conf->reportMediaNegotiationStatus();
         emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(),
                                                            conf->getConfId(),
@@ -2944,7 +2955,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     // Master call, so when it's stopped, the conference will be stopped (as we use the hold
     // state for detaching the call)
     conf->onShutdown(
-        [w = pimpl_->weak(), accountUri = pimpl_->username_, confId, conversationId, call, conv](
+        [w = pimpl_->weak(), accountUri = pimpl_->username_, confId, conversationId, conv](
             int duration) {
             auto shared = w.lock();
             if (shared) {
