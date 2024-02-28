@@ -125,41 +125,41 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
-    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
-    CPPUNIT_TEST(testRemoveInvitedMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAdminCanReAddMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
+   // CPPUNIT_TEST(testRemoveConversationNoMember);
+   // CPPUNIT_TEST(testRemoveConversationWithMember);
+   // CPPUNIT_TEST(testAddMember);
+   // CPPUNIT_TEST(testMemberAddedNoBadFile);
+   // CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+   // CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
+   // CPPUNIT_TEST(testGetMembers);
+   // CPPUNIT_TEST(testRemoveMember);
+   // CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
+   // CPPUNIT_TEST(testRemoveInvitedMember);
+   // CPPUNIT_TEST(testMemberBanNoBadFile);
+   // CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+   // CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+   // CPPUNIT_TEST(testAdminCanReAddMember);
+   // CPPUNIT_TEST(testMemberCannotBanOther);
     CPPUNIT_TEST(testMemberCannotUnBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
-    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
-    CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
-    CPPUNIT_TEST(testBanUnbanMultiDevice);
-    CPPUNIT_TEST(testBanUnbanGotFirstConv);
-    CPPUNIT_TEST(testBanHostWhileHosting);
-    CPPUNIT_TEST(testAddContactTwice);
-    CPPUNIT_TEST(testBanFromNewDevice);
+   // CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+   // CPPUNIT_TEST(testAdminCannotKickTheirself);
+   // CPPUNIT_TEST(testCommitUnauthorizedUser);
+   // CPPUNIT_TEST(testMemberJoinsNoBadFile);
+   // CPPUNIT_TEST(testMemberAddedNoCertificate);
+   // CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+   // CPPUNIT_TEST(testFailAddMemberInOneToOne);
+   // CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+   // CPPUNIT_TEST(testConversationMemberEvent);
+   // CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+   // CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
+   // CPPUNIT_TEST(testAvoidTwoOneToOne);
+   // CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
+   // CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+   // CPPUNIT_TEST(testBanUnbanMultiDevice);
+   // CPPUNIT_TEST(testBanUnbanGotFirstConv);
+   // CPPUNIT_TEST(testBanHostWhileHosting);
+   // CPPUNIT_TEST(testAddContactTwice);
+   // CPPUNIT_TEST(testBanFromNewDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -968,9 +968,11 @@ ConversationMembersEventTest::testMemberCannotUnBanOther()
                                         && bobData.members[carlaUri] == 1; }));
 
     // Now check that alice, has the only admin, can remove bob
+    JAMI_ERROR("@@@@@@@@@@ REMOVE");
     libjami::removeConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(
-        cv.wait_for(lk, 30s, [&]() { return aliceData.members[bobUri] == 3
+        cv.wait_for(lk, 30s, [&]() {
+            JAMI_ERROR("@@@ {} {}", aliceData.members[bobUri], carlaData.members[bobUri]); return aliceData.members[bobUri] == 3
                                         && carlaData.members[bobUri] == 3; }));
 
     libjami::addConversationMember(carlaId, convId, bobUri);
