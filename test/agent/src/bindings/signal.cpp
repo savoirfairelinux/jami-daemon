@@ -211,7 +211,7 @@ install_signal_primitives(void*)
     add_handler<libjami::CallSignal::RecordPlaybackFilepath, const std::string&, const std::string&>(
         handlers, "record-playback-filepath");
 
-    add_handler<libjami::CallSignal::ConferenceCreated, const std::string&, const std::string&>(
+    add_handler<libjami::CallSignal::ConferenceCreated, const std::string&, const std::string&, const std::string&>(
         handlers, "conference-created");
 
     add_handler<libjami::CallSignal::ConferenceChanged,
