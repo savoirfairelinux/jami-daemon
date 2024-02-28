@@ -451,16 +451,16 @@ public:
     /**
      * Call the conversation
      * @param url       Url to call (swarm:conversation or swarm:conv/account/device/conf to join)
-     * @param call      Call to use
+     * @param mediaList The media list
      * @param cb        Callback to pass which device to call (called in the same thread)
+     * @return call if a call is started, else nullptr
      */
-    void call(const std::string& url,
-              const std::shared_ptr<SIPCall>& call,
-              std::function<void(const std::string&, const DeviceId&)>&& cb);
+    std::shared_ptr<SIPCall> call(const std::string& url,
+                                const std::vector<libjami::MediaMap>& mediaList,
+                                std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&& cb);
     void hostConference(const std::string& conversationId,
                         const std::string& confId,
-                        const std::string& callId,
-                        bool local);
+                        const std::string& callId);
 
     // The following methods modify what is stored on the disk
     static void saveConvInfos(const std::string& accountId,
