@@ -870,9 +870,9 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
         JAMI_LOG("Remove conversation: {}", conv.info.id);
         try {
             if (conv.conversation->mode() == ConversationMode::ONE_TO_ONE) {
-                auto account = account_.lock();
                 for (const auto& member : conv.conversation->getInitialMembers()) {
-                    if (member != account->getUsername()) {
+                        auto account = account_.lock();
+                        if (member != account->getUsername()) {
                         // Note: this can happen while re-adding a contact.
                         // In this case, check that we are removing the linked conversation.
                         if (conv.info.id == getOneToOneConversation(member)) {
@@ -2252,7 +2252,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             // If multi devices, it can detect a conversation that was already
             // removed, so just check if the convinfo contains a removed conv
             if (conv->info.removed) {
-                if (conv->info.removed > convInfo.created) {
+                if (conv->info.removed >= convInfo.created) {
                     // Only reclone if re-added, else the peer is not synced yet (could be
                     // offline before)
                     continue;
