@@ -338,6 +338,7 @@ public:
      * Create and return ICE options.
      */
     dhtnet::IceTransportOptions getIceOptions() const noexcept override;
+    void getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const noexcept;
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices */
@@ -695,7 +696,7 @@ private:
     void generateDhParams();
 
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
-    void newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
+    std::shared_ptr<SIPCall> newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
     std::filesystem::path idPath_ {};

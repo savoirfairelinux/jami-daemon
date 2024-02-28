@@ -340,6 +340,13 @@ JamiAccount::newIncomingCall(const std::string& from,
 std::shared_ptr<Call>
 JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::MediaMap>& mediaList)
 {
+    auto uri = Uri(toUrl);
+    if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS) {
+        // NOTE: In this case newOutgoingCall can act as "unholdConference" and just attach the
+        // host to the current hosted conference. So, no call will be returned in that case.
+        return newSwarmOutgoingCallHelper(uri, mediaList);
+    }
+
     auto& manager = Manager::instance();
     std::shared_ptr<SIPCall> call;
 
@@ -357,7 +364,6 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     if (not call)
         return {};
 
-    auto uri = Uri(toUrl);
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
@@ -373,10 +379,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
         call->setPeerNumber(uri.authority());
         call->setPeerUri(uri.toString());
 
-        if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS)
-            shared->newSwarmOutgoingCallHelper(call, uri);
-        else
-            shared->newOutgoingCallHelper(call, uri);
+        shared->newOutgoingCallHelper(call, uri);
     });
 
     return call;
@@ -419,16 +422,17 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
     }
 }
 
-void
-JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
+std::shared_ptr<SIPCall>
+JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_DBG("[Account %s] Calling conversation %s",
-             getAccountID().c_str(),
-             uri.authority().c_str());
-    convModule()->call(
-        uri.authority(),
-        call,
-        [this, uri, call](const std::string& accountUri, const DeviceId& deviceId) {
+    JAMI_DEBUG("[Account {}] Calling conversation {}",
+             getAccountID(),
+             uri.authority());
+    return convModule()->call(
+        uri.authority(), mediaList,
+        [this, uri](const auto& accountUri, const auto& deviceId, const auto& call) {
+            if (!call)
+                return;
             std::unique_lock lkSipConn(sipConnsMtx_);
             for (auto& [key, value] : sipConns_) {
                 if (key.first != accountUri || key.second != deviceId)
@@ -469,8 +473,8 @@ JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, co
 
             // Else, ask for a channel (for future calls/text messages)
             auto type = call->hasVideo() ? "videoCall" : "audioCall";
-            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
-                      call->getCallId().c_str());
+            JAMI_WARNING("[call {}] No channeled socket with this peer. Send request",
+                      call->getCallId());
             requestSIPConnection(accountUri, deviceId, type, true, call);
         });
 }
@@ -552,7 +556,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     if (isNotHosting) {
         JAMI_DEBUG("Creating conference for swarm {} with id {}", conversationId, confId);
         // Create conference and host it.
-        convModule()->hostConference(conversationId, confId, callId, false);
+        convModule()->hostConference(conversationId, confId, callId);
     } else {
         JAMI_DEBUG("Adding participant {} for swarm {} with id {}", callId, conversationId, confId);
         Manager::instance().addAudio(*call);
@@ -3150,6 +3154,12 @@ dhtnet::IceTransportOptions
 JamiAccount::getIceOptions() const noexcept
 {
     return connectionManager_->getIceOptions();
+}
+
+void
+JamiAccount::getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const noexcept
+{
+    return connectionManager_->getIceOptions(std::move(cb));
 }
 
 dhtnet::IpAddr
