@@ -811,15 +811,16 @@ onConversationError(const std::string& accountId,
 }
 
 void
-conferenceCreated(const std::string& accountId, const std::string& confId)
+conferenceCreated(const std::string& accountId, const std::string& conversationId, const std::string& confId)
 {
     std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, confId]() {
+    pendingSignals.emplace([accountId, confId, conversationId]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conferenceCreatedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
                                             V8_STRING_NEW_LOCAL(confId)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
     uv_async_send(&signalAsync);
