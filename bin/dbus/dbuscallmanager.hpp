@@ -489,7 +489,7 @@ private:
                 exportable_serialized_callback<CallSignal::RecordPlaybackFilepath>(
                     std::bind(&DBusCallManager::emitRecordPlaybackFilepath, this, _1, _2)),
                 exportable_serialized_callback<CallSignal::ConferenceCreated>(
-                    std::bind(&DBusCallManager::emitConferenceCreated, this, _1, _2)),
+                    std::bind(&DBusCallManager::emitConferenceCreated, this, _1, _2, _3)),
                 exportable_serialized_callback<CallSignal::ConferenceChanged>(
                     std::bind(&DBusCallManager::emitConferenceChanged, this, _1, _2, _3)),
                 exportable_serialized_callback<CallSignal::UpdatePlaybackScale>(

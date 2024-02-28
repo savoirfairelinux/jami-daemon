@@ -298,10 +298,10 @@ class libjamiCtrl(Thread):
     def onConferenceCreated_cb(self):
         pass
 
-    def onConferenceCreated_callback(self, confId):
+    def onConferenceCreated_callback(self, convId, confId):
         pass
 
-    def onConferenceCreated(self, confId):
+    def onConferenceCreated(self, convId, confId):
         self.currentConfId = confId
         self.onConferenceCreated_cb()
         self.onConferenceCreated_callback(confId)
