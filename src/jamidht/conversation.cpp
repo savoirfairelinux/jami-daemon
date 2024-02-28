@@ -1596,10 +1596,10 @@ Conversation::lastCommitId() const
     options.nbOfCommits = 1;
     options.skipMerge = true;
     History optHistory;
+    std::lock_guard wlk(pimpl_->writeMtx_); // Avoid any write during a loading operation
     std::lock_guard lk(pimpl_->historyMtx_);
-    if (!pimpl_->loadedHistory_.messageList.empty()) {
+    if (!pimpl_->loadedHistory_.messageList.empty())
         return (*pimpl_->loadedHistory_.messageList.begin())->id;
-    }
     auto res = pimpl_->loadMessages2(options, &optHistory);
     if (res.empty())
         return {};
