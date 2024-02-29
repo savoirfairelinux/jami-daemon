@@ -842,10 +842,10 @@ ConferenceTest::testIsConferenceParticipant()
     startConference();
 
     // is Conference participant should be true for Carla
-    auto participants = aliceAccount->getConference(confId)->getParticipantList();
-    CPPUNIT_ASSERT(participants.size() == 2);
-    auto call1 = *participants.begin();
-    auto call2 = *participants.rbegin();
+    auto subCalls = aliceAccount->getConference(confId)->getSubCalls();
+    CPPUNIT_ASSERT(subCalls.size() == 2);
+    auto call1 = *subCalls.begin();
+    auto call2 = *subCalls.rbegin();
     CPPUNIT_ASSERT(aliceAccount->getCall(call1)->isConferenceParticipant());
     CPPUNIT_ASSERT(aliceAccount->getCall(call2)->isConferenceParticipant());
 
