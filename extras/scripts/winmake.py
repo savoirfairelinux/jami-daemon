@@ -11,6 +11,7 @@ import os
 import time
 from datetime import timedelta
 import argparse
+import sys
 
 from pywinmake.utils import log, logger, sh_exec
 from pywinmake.package import Versioner, Paths, Operation, Package
@@ -77,7 +78,11 @@ def build_from_dir(path, out_dir=None):
     # Build the package at the given path.
     out_dir = os.path.join(path, "build") if out_dir is None else out_dir
     pkg = Package(src_dir=path, buildsrc_dir=out_dir)
-    builder.build(pkg)
+    if builder.build(pkg):
+        log.info(f"Package {pkg.name} built successfully.")
+    else:
+        log.error(f"Package {pkg.name} failed to build.")
+        sys.exit(1)
 
 def main():
     start_time = time.time()
