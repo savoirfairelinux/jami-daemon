@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2e259a91_0e8205b4",
+        "filename": "docker/Dockerfile_ubuntu_22.04",
+        "patchSetId": 1
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-02-29T15:35:23Z",
+      "side": 1,
+      "message": "should not be necessary",
+      "range": {
+        "startLine": 34,
+        "startChar": 13,
+        "endLine": 36,
+        "endChar": 14
+      },
+      "revId": "e553556e99ce063b3e1c131bce65c2e66539569b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
