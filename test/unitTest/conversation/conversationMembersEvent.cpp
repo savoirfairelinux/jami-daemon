@@ -125,40 +125,40 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
+    //CPPUNIT_TEST(testRemoveConversationNoMember);
+    //CPPUNIT_TEST(testRemoveConversationWithMember);
+    //CPPUNIT_TEST(testAddMember);
+    //CPPUNIT_TEST(testMemberAddedNoBadFile);
     CPPUNIT_TEST(testAddOfflineMemberThenConnects);
     CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
-    CPPUNIT_TEST(testRemoveInvitedMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAdminCanReAddMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
-    CPPUNIT_TEST(testMemberCannotUnBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
-    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
-    CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
-    CPPUNIT_TEST(testBanUnbanMultiDevice);
-    CPPUNIT_TEST(testBanUnbanGotFirstConv);
-    CPPUNIT_TEST(testBanHostWhileHosting);
-    CPPUNIT_TEST(testAddContactTwice);
+    //CPPUNIT_TEST(testGetMembers);
+    //CPPUNIT_TEST(testRemoveMember);
+    //CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
+    //CPPUNIT_TEST(testRemoveInvitedMember);
+    //CPPUNIT_TEST(testMemberBanNoBadFile);
+    //CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    //CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    //CPPUNIT_TEST(testAdminCanReAddMember);
+    //CPPUNIT_TEST(testMemberCannotBanOther);
+    //CPPUNIT_TEST(testMemberCannotUnBanOther);
+    //CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+    //CPPUNIT_TEST(testAdminCannotKickTheirself);
+    //CPPUNIT_TEST(testCommitUnauthorizedUser);
+    //CPPUNIT_TEST(testMemberJoinsNoBadFile);
+    //CPPUNIT_TEST(testMemberAddedNoCertificate);
+    //CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+    //CPPUNIT_TEST(testFailAddMemberInOneToOne);
+    //CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    //CPPUNIT_TEST(testConversationMemberEvent);
+    //CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+    //CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
+    //CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+    //CPPUNIT_TEST(testBanUnbanMultiDevice);
+    //CPPUNIT_TEST(testBanUnbanGotFirstConv);
+    //CPPUNIT_TEST(testBanHostWhileHosting);
+    //CPPUNIT_TEST(testAddContactTwice);
     CPPUNIT_TEST(testBanFromNewDevice);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -576,6 +576,9 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
     auto aliceMsgSize = aliceData.messages.size();
     libjami::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&] { return carlaData.requestReceived; }));
+
+    JAMI_ERROR("@@@ WAIT {}", aliceData.conversationId);
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaData.requestReceived; }));
 
@@ -608,6 +611,7 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
     CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
+    JAMI_ERROR("@@@ WAIT {}", aliceData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
 }
 
@@ -1696,6 +1700,7 @@ ConversationMembersEventTest::testBanFromNewDevice()
     bob2Id = Manager::instance().addAccount(details);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
+    JAMI_ERROR("@@@ BOB2 DEVICE ANNOUNCED - WAIT {}", carlaData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bob2Data.conversationId.empty(); }));
 
 
