@@ -1525,7 +1525,8 @@ Manager::joinParticipant(const std::string& accountId,
     auto mediaAttr = call1->getMediaAttributeList();
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
-    auto conf = std::make_shared<Conference>(account, "", true, mediaAttr);
+    auto conf = std::make_shared<Conference>(account);
+    conf->attachHost();
     account->attach(conf);
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
@@ -1564,6 +1565,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     }
 
     auto conf = std::make_shared<Conference>(account);
+    conf->attachHost();
 
     unsigned successCounter = 0;
     for (const auto& numberaccount : participantList) {
@@ -2617,7 +2619,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             }
 
             // First call
-            auto conf = std::make_shared<Conference>(account, "", false);
+            auto conf = std::make_shared<Conference>(account);
             account->attach(conf);
             emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "",
                                                                conf->getConfId());
