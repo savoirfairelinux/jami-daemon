@@ -186,7 +186,7 @@ struct ConfInfo : public std::vector<ParticipantInfo>
     std::string toString() const;
 };
 
-using ParticipantSet = std::set<std::string>;
+using CallIdSet = std::set<std::string>;
 using clock = std::chrono::steady_clock;
 
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
@@ -292,49 +292,29 @@ public:
                                   const std::vector<libjami::MediaMap>& remoteMediaList);
 
     /**
-     * Add a new participant to the conference
+     * Add a new subcall to the conference
      */
-    void addParticipant(const std::string& participant_id);
+    void addSubCall(const std::string& callId);
 
     /**
-     * Remove a participant from the conference
+     * Remove a subcall from the conference
      */
-    void removeParticipant(const std::string& participant_id);
+    void removeSubCall(const std::string& callId);
 
     /**
-     * Attach local audio/video to the conference
+     * Attach host
      */
-    void attachLocalParticipant();
+    void attachHost();
 
     /**
      * Detach local audio/video from the conference
      */
-    void detachLocalParticipant();
-
-    /**
-     * Bind a participant to the conference
-     */
-    void bindParticipant(const std::string& participant_id);
-
-    /**
-     * Bind host to the conference
-     */
-    void bindHost();
-
-    /**
-     * unbind a participant from the conference
-     */
-    void unbindParticipant(const std::string& participant_id);
-
-    /**
-     * unbind host from conference
-     */
-    void unbindHost();
+    void detachHost();
 
     /**
      * Get the participant list for this conference
      */
-    ParticipantSet getParticipantList() const;
+    CallIdSet getSubCalls() const;
 
     /**
      * Start/stop recording toggle
@@ -439,8 +419,8 @@ private:
     std::string id_;
     std::weak_ptr<Account> account_;
     State confState_ {State::ACTIVE_ATTACHED};
-    mutable std::mutex participantsMtx_ {};
-    ParticipantSet participants_;
+    mutable std::mutex subcallsMtx_ {};
+    CallIdSet subCalls_;
     std::string mediaPlayerId_ {};
 
     mutable std::mutex confInfoMutex_ {};
@@ -480,6 +460,8 @@ private:
      * of the local host.
      */
     std::vector<MediaAttribute> hostSources_;
+    // Because host doesn't have a call, we need to store the audio inputs
+    std::map<std::string, std::shared_ptr<jami::AudioInput>> hostAudioInputs_;
 
     bool localModAdded_ {false};
 
@@ -537,6 +519,26 @@ private:
 
     std::function<void(int)> shutdownCb_;
     clock::time_point duration_start_;
+
+    /**
+     * Bind host's audio
+     */
+    void bindHostAudio();
+
+    /**
+     * Unbind host's audio
+     */
+    void unbindHostAudio();
+
+    /**
+     * Bind call's audio to the conference
+     */
+    void bindSubCallAudio(const std::string& callId);
+
+    /**
+     * Unbind call's audio from the conference
+     */
+    void unbindSubCallAudio(const std::string& callId);
 };
 
 } // namespace jami
