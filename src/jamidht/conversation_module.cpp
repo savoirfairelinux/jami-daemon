@@ -2999,13 +2999,13 @@ ConversationModule::hostConference(const std::string& conversationId,
     }
 
     if (!callId.empty())
-        conf->addParticipant(callId);
+        conf->addSubCall(callId);
 
     if (!createConf && callId.empty()) // TODO use mediaList
-        conf->attachLocalParticipant();
+        conf->attachHost();
 
     if (createConf) {
-        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, confId);
+        emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, conf->getConfId());
     } else {
         conf->reportMediaNegotiationStatus();
         emitSignal<libjami::CallSignal::ConferenceChanged>(acc->getAccountID(),
@@ -3026,7 +3026,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     Json::Value value;
     value["uri"] = pimpl_->username_;
     value["device"] = pimpl_->deviceId_;
-    value["confId"] = confId;
+    value["confId"] = conf->getConfId();
     value["type"] = "application/call-history+json";
     conv->conversation->hostConference(std::move(value),
                                        [w = pimpl_->weak(),
@@ -3046,7 +3046,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     // Master call, so when it's stopped, the conference will be stopped (as we use the hold
     // state for detaching the call)
     conf->onShutdown(
-        [w = pimpl_->weak(), accountUri = pimpl_->username_, confId, conversationId, conv](
+        [w = pimpl_->weak(), accountUri = pimpl_->username_, confId=conf->getConfId(), conversationId, conv](
             int duration) {
             auto shared = w.lock();
             if (shared) {

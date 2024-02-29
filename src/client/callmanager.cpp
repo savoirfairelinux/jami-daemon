@@ -239,7 +239,7 @@ addParticipant(const std::string& accountId,
                const std::string& account2Id,
                const std::string& confId)
 {
-    return jami::Manager::instance().addParticipant(accountId, callId, account2Id, confId);
+    return jami::Manager::instance().addSubCall(accountId, callId, account2Id, confId);
 }
 
 bool
@@ -251,7 +251,7 @@ addMainParticipant(const std::string& accountId, const std::string& confId)
 bool
 detachLocalParticipant()
 {
-    return jami::Manager::instance().detachLocalParticipant();
+    return jami::Manager::instance().detachHost();
 }
 
 bool
@@ -322,8 +322,8 @@ getParticipantList(const std::string& accountId, const std::string& confId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId))
         if (auto conf = account->getConference(confId)) {
-            const auto& participants(conf->getParticipantList());
-            return {participants.begin(), participants.end()};
+            const auto& subcalls(conf->getSubCalls());
+            return {subcalls.begin(), subcalls.end()};
         }
     return {};
 }
