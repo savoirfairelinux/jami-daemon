@@ -55,56 +55,18 @@ using namespace std::literals;
 namespace jami {
 
 Conference::Conference(const std::shared_ptr<Account>& account,
-                       const std::string& confId,
-                       bool attachHost,
-                       const std::vector<MediaAttribute>& hostAttr)
+                       const std::string& confId)
     : id_(confId.empty() ? Manager::instance().callFactory.getNewCallID() : confId)
     , account_(account)
 #ifdef ENABLE_VIDEO
     , videoEnabled_(account->isVideoEnabled())
-    , attachHost_(attachHost)
 #endif
 {
-    /** NOTE:
-     *
-     *** Handling mute state of the local host.
-     *
-     * When a call is added to a conference, the media source of the
-     * call is set to the audio/video mixers output, and the host media
-     * source (e.g. camera), is added as a source for the mixer.
-     * Note that, by design, the mixers are never muted, but the mixer
-     * can produce audio/video frames with no content (silence or black
-     * video frames) if all the participants are muted.
-     *
-     * The mute state of the local host is set as follows:
-     *
-     * 1. If the video is disabled, the mute state is irrelevant.
-     * 2. If the local is not attached, the mute state is irrelevant.
-     * 3. When the conference is created from existing calls:
-     *  the mute state is set to true if the local mute state of
-     *  all participating calls are true.
-     * 4. Attaching the local host to an existing conference:
-     *  the audio and video is set to the default capture device
-     *  (microphone and/or camera), and set to un-muted state.
-     */
-
-    JAMI_INFO("Create new conference %s", id_.c_str());
-    if (hostAttr.empty()) {
-        setLocalHostDefaultMediaSource();
-    } else {
-        hostSources_ = hostAttr;
-        reportMediaNegotiationStatus();
-    }
+    JAMI_LOG("Create new conference {}", id_);
     duration_start_ = clock::now();
 
 #ifdef ENABLE_VIDEO
-    auto itVideo = std::find_if(hostSources_.begin(), hostSources_.end(), [&](auto attr) {
-        return attr.type_ == MediaType::MEDIA_VIDEO;
-    });
-    // Only set host source if creating conference from joining calls
-    auto hasVideo = videoEnabled_ && itVideo != hostSources_.end() && attachHost_;
-    auto source = hasVideo ? itVideo->sourceUri_ : "";
-    videoMixer_ = std::make_shared<video::VideoMixer>(id_, source, hasVideo);
+    videoMixer_ = std::make_shared<video::VideoMixer>(id_);
     videoMixer_->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
         runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
@@ -228,16 +190,6 @@ Conference::Conference(const std::shared_ptr<Account>& account,
             shared->updateConferenceInfo(std::move(newInfo));
         });
     });
-
-    if (attachHost && itVideo == hostSources_.end()) {
-        // If no video, we still want to attach outself
-        videoMixer_->addAudioOnlySource("", "host_audio_0");
-    }
-    if (attachHost) {
-        setState(State::ACTIVE_ATTACHED);
-    } else {
-        setState(State::ACTIVE_DETACHED);
-    }
     auto conf_res = split_string_to_unsigned(jami::Manager::instance()
                                                  .videoPreferences.getConferenceResolution(),
                                              'x');
