@@ -547,7 +547,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             // To mute the local source, all the sources of the participating
             // calls must be muted. If it's the first participant, just use
             // its mute state.
-            if (participants_.size() == 1) {
+            if (subCalls_.size() == 1) {
                 setLocalHostMuteState(iter->type_, iter->muted_);
             } else {
                 setLocalHostMuteState(iter->type_, iter->muted_ or isMediaSourceMuted(iter->type_));
@@ -652,7 +652,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 #endif
     hostSources_ = mediaAttrList; // New medias
     if (!isMuted("host"sv) && !isMediaSourceMuted(MediaType::MEDIA_AUDIO))
-        bindHost();
+        bindHostAudio();
 
     // It's host medias, so no need to negotiate anything, but inform the client.
     reportMediaNegotiationStatus();
@@ -709,20 +709,20 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 }
 
 void
-Conference::addParticipant(const std::string& participant_id)
+Conference::addSubCall(const std::string& callId)
 {
-    JAMI_DEBUG("Adding call {:s} to conference {:s}", participant_id, id_);
+    JAMI_DEBUG("Adding call {:s} to conference {:s}", callId, id_);
 
 
-    jami_tracepoint(conference_add_participant, id_.c_str(), participant_id.c_str());
+    jami_tracepoint(conference_add_participant, id_.c_str(), callId.c_str());
 
     {
-        std::lock_guard lk(participantsMtx_);
-        if (!participants_.insert(participant_id).second)
+        std::lock_guard lk(subcallsMtx_);
+        if (!subCalls_.insert(callId).second)
             return;
     }
 
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant_id))) {
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
         // Check if participant was muted before conference
         if (call->isPeerMuted())
             participantsMuted_.emplace(call->getCallId());
@@ -730,7 +730,7 @@ Conference::addParticipant(const std::string& participant_id)
         // NOTE:
         // When a call joins a conference, the media source of the call
         // will be set to the output of the conference mixer.
-        takeOverMediaSourceControl(participant_id);
+        takeOverMediaSourceControl(callId);
         auto w = call->getAccount();
         auto account = w.lock();
         if (account) {
@@ -774,12 +774,46 @@ Conference::addParticipant(const std::string& participant_id)
                 this->toggleRecording();
             }
         }
+        bindSubCallAudio(callId);
 #endif // ENABLE_VIDEO
     } else
-        JAMI_ERR("no call associate to participant %s", participant_id.c_str());
+        JAMI_ERROR("no call associate to participant {}", callId.c_str());
 #ifdef ENABLE_PLUGIN
     createConfAVStreams();
 #endif
+}
+
+void
+Conference::removeSubCall(const std::string& callId)
+{
+    JAMI_DEBUG("Remove call {:s} in conference {:s}", callId, id_);
+    {
+        std::lock_guard lk(subcallsMtx_);
+        if (!subCalls_.erase(callId))
+            return;
+    }
+    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
+        const auto& peerId = getRemoteId(call);
+        participantsMuted_.erase(call->getCallId());
+        if (auto* transport = call->getTransport())
+            handsRaised_.erase(std::string(transport->deviceId()));
+        if (videoMixer_) {
+            for (auto const& rtpSession : call->getRtpSessionList()) {
+                if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO)
+                    videoMixer_->removeAudioOnlySource(callId, rtpSession->streamId());
+                if (videoMixer_->verifyActive(rtpSession->streamId()))
+                    videoMixer_->resetActiveStream();
+            }
+        }
+
+#ifdef ENABLE_VIDEO
+        auto sinkId = getConfId() + peerId;
+        unbindSubCallAudio(callId);
+        call->exitConference();
+        if (call->isPeerRecording())
+            call->peerRecording(false);
+#endif // ENABLE_VIDEO
+    }
 }
 
 void
@@ -913,39 +947,7 @@ Conference::createSinks(const ConfInfo& infos)
 #endif
 
 void
-Conference::removeParticipant(const std::string& participant_id)
-{
-    JAMI_DEBUG("Remove call {:s} in conference {:s}", participant_id, id_);
-    {
-        std::lock_guard lk(participantsMtx_);
-        if (!participants_.erase(participant_id))
-            return;
-    }
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(participant_id))) {
-        const auto& peerId = getRemoteId(call);
-        participantsMuted_.erase(call->getCallId());
-        if (auto* transport = call->getTransport())
-            handsRaised_.erase(std::string(transport->deviceId()));
-        if (videoMixer_) {
-            for (auto const& rtpSession : call->getRtpSessionList()) {
-                if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO)
-                    videoMixer_->removeAudioOnlySource(participant_id, rtpSession->streamId());
-                if (videoMixer_->verifyActive(rtpSession->streamId()))
-                    videoMixer_->resetActiveStream();
-            }
-        }
-
-#ifdef ENABLE_VIDEO
-        auto sinkId = getConfId() + peerId;
-        call->exitConference();
-        if (call->isPeerRecording())
-            call->peerRecording(false);
-#endif // ENABLE_VIDEO
-    }
-}
-
-void
-Conference::attachLocalParticipant()
+Conference::attachHost()
 {
     JAMI_LOG("Attach local participant to conference {}", id_);
 
@@ -953,7 +955,7 @@ Conference::attachLocalParticipant()
         setState(State::ACTIVE_ATTACHED);
         setLocalHostDefaultMediaSource();
 
-        bindHost();
+        bindHostAudio();
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
@@ -966,19 +968,19 @@ Conference::attachLocalParticipant()
         }
 #endif
     } else {
-        JAMI_WARN(
-            "Invalid conference state in attach participant: current \"%s\" - expected \"%s\"",
+        JAMI_WARNING(
+            "Invalid conference state in attach participant: current \"{}\" - expected \"{}\"",
             getStateStr(),
             "ACTIVE_DETACHED");
     }
 }
 
 void
-Conference::detachLocalParticipant()
+Conference::detachHost()
 {
     JAMI_INFO("Detach local participant from conference %s", id_.c_str());
     if (getState() == State::ACTIVE_ATTACHED) {
-        unbindHost();
+        unbindHostAudio();
 
 #ifdef ENABLE_VIDEO
         if (videoMixer_)
@@ -996,124 +998,11 @@ Conference::detachLocalParticipant()
     setState(State::ACTIVE_DETACHED);
 }
 
-void
-Conference::bindParticipant(const std::string& participant_id)
+CallIdSet
+Conference::getSubCalls() const
 {
-    JAMI_LOG("Bind participant {} to conference {}", participant_id, id_);
-
-    auto& rbPool = Manager::instance().getRingBufferPool();
-
-    // Bind each of the new participant's audio streams to each of the other participants audio streams
-    if (auto participantCall = getCall(participant_id)) {
-        auto participantStreams = participantCall->getAudioStreams();
-        for (auto stream : participantStreams) {
-            for (const auto& other : getParticipantList()) {
-                auto otherCall = other != participant_id ? getCall(other) : nullptr;
-                if (otherCall) {
-                    auto otherStreams = otherCall->getAudioStreams();
-                    for (auto otherStream : otherStreams) {
-                        if (isMuted(other))
-                            rbPool.bindHalfDuplexOut(otherStream.first, stream.first);
-                        else
-                            rbPool.bindRingbuffers(stream.first, otherStream.first);
-
-                        rbPool.flush(otherStream.first);
-                    }
-                }
-            }
-
-            // Bind local participant to other participants only if the
-            // local is attached to the conference.
-            if (getState() == State::ACTIVE_ATTACHED) {
-                if (isMediaSourceMuted(MediaType::MEDIA_AUDIO))
-                    rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
-                else
-                    rbPool.bindRingbuffers(stream.first, RingBufferPool::DEFAULT_ID);
-                rbPool.flush(RingBufferPool::DEFAULT_ID);
-            }
-        }
-    }
-}
-
-void
-Conference::unbindParticipant(const std::string& participant_id)
-{
-    JAMI_LOG("Unbind participant {} from conference {}", participant_id, id_);
-    if (auto call = getCall(participant_id)) {
-        auto medias = call->getAudioStreams();
-        auto& rbPool = Manager::instance().getRingBufferPool();
-        for (const auto& [id, muted] : medias) {
-            rbPool.unBindAllHalfDuplexOut(id);
-        }
-    }
-}
-
-void
-Conference::bindHost()
-{
-    JAMI_LOG("Bind host to conference {}", id_);
-
-    auto& rbPool = Manager::instance().getRingBufferPool();
-
-    for (const auto& item : getParticipantList()) {
-        if (auto call = getCall(item)) {
-            auto medias = call->getAudioStreams();
-            for (const auto& [id, muted] : medias) {
-                for (const auto& source : hostSources_) {
-                    if (source.type_ == MediaType::MEDIA_AUDIO) {
-                        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                            if (muted)
-                                rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
-                            else
-                                rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
-                        } else {
-                            auto buffer = source.sourceUri_;
-                            static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-                            const auto pos = source.sourceUri_.find(sep);
-                            if (pos != std::string::npos)
-                                buffer = source.sourceUri_.substr(pos + sep.size());
-
-                            if (muted)
-                                rbPool.bindHalfDuplexOut(id, buffer);
-                            else
-                                rbPool.bindRingbuffers(id, buffer);
-                        }
-                    }
-                }
-                rbPool.flush(id);
-            }
-        }
-    }
-    rbPool.flush(RingBufferPool::DEFAULT_ID);
-}
-
-
-void
-Conference::unbindHost()
-{
-    JAMI_INFO("Unbind host from conference %s", id_.c_str());
-    for (const auto& source : hostSources_) {
-        if (source.type_ == MediaType::MEDIA_AUDIO) {
-            if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
-            } else {
-                auto buffer = source.sourceUri_;
-                static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-                const auto pos = source.sourceUri_.find(sep);
-                if (pos != std::string::npos)
-                    buffer = source.sourceUri_.substr(pos + sep.size());
-
-                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(buffer);
-            }
-        }
-    }
-}
-
-ParticipantSet
-Conference::getParticipantList() const
-{
-    std::lock_guard lk(participantsMtx_);
-    return participants_;
+    std::lock_guard lk(subcallsMtx_);
+    return subCalls_;
 }
 
 bool
@@ -1228,7 +1117,7 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
     ghostRingBuffer_ = rbPool.createRingBuffer(getConfId());
 
     // Bind it to ringbufferpool in order to get the all mixed frames
-    bindParticipant(getConfId());
+    bindSubCallAudio(getConfId());
 
     // Add stream to recorder
     audioMixer_ = jami::getAudioInput(getConfId());
@@ -1311,7 +1200,7 @@ Conference::setHandRaised(const std::string& deviceId, const bool& state)
             updateHandsRaised();
         }
     } else {
-        for (const auto& p : getParticipantList()) {
+        for (const auto& p : getSubCalls()) {
             if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
                 auto isPeerRequiringAttention = isHandRaised(deviceId);
                 std::string callDeviceId;
@@ -1383,7 +1272,7 @@ Conference::setVoiceActivity(const std::string& streamId, const bool& newState)
 void
 Conference::setModerator(const std::string& participant_id, const bool& state)
 {
-    for (const auto& p : getParticipantList()) {
+    for (const auto& p : getSubCalls()) {
         if (auto call = getCall(p)) {
             auto isPeerModerator = isModerator(participant_id);
             if (participant_id == getRemoteId(call)) {
@@ -1451,7 +1340,7 @@ Conference::updateVoiceActivity()
 void
 Conference::foreachCall(const std::function<void(const std::shared_ptr<Call>& call)>& cb)
 {
-    for (const auto& p : getParticipantList())
+    for (const auto& p : getSubCalls())
         if (auto call = getCall(p))
             cb(call);
 }
@@ -1487,13 +1376,13 @@ Conference::muteHost(bool state)
         participantsMuted_.emplace("host"sv);
         if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
             JAMI_DBG("Mute host");
-            unbindHost();
+            unbindHostAudio();
         }
     } else if (not state and isHostMuted) {
         participantsMuted_.erase("host");
         if (not isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
             JAMI_DBG("Unmute host");
-            bindHost();
+            bindHostAudio();
         }
     }
     updateMuted();
@@ -1506,12 +1395,12 @@ Conference::muteCall(const std::string& callId, bool state)
     if (state and not isPartMuted) {
         JAMI_DEBUG("Mute participant {:s}", callId);
         participantsMuted_.emplace(callId);
-        unbindParticipant(callId);
+        unbindSubCallAudio(callId);
         updateMuted();
     } else if (not state and isPartMuted) {
         JAMI_DEBUG("Unmute participant {:s}", callId);
         participantsMuted_.erase(callId);
-        bindParticipant(callId);
+        bindSubCallAudio(callId);
         updateMuted();
     }
 }
@@ -1623,7 +1512,7 @@ Conference::isHost(std::string_view uri) const
 
     // Check if the URI is a local URI (AccountID) for at least one of the subcall
     // (a local URI can be in the call with another device)
-    for (const auto& p : getParticipantList()) {
+    for (const auto& p : getSubCalls()) {
         if (auto call = getCall(p)) {
             if (auto account = call->getAccount().lock()) {
                 if (account->getUsername() == uri)
@@ -1662,7 +1551,7 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
             return;
         } else {
             if (accountUri == acc->getUsername() && deviceId == acc->currentDeviceId()) {
-                Manager::instance().detachLocalParticipant(shared_from_this());
+                Manager::instance().detachHost(shared_from_this());
                 return;
             } else if (auto call = getCallWith(accountUri, deviceId)) {
                 Manager::instance().hangupCall(acc->getAccountID(), call->getCallId());
@@ -1695,10 +1584,10 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         auto isHostMuted = isMuted("host"sv);
         if (is_muted and not isMediaSourceMuted(MediaType::MEDIA_AUDIO) and not isHostMuted) {
             JAMI_DBG("Muting local audio source");
-            unbindHost();
+            unbindHostAudio();
         } else if (not is_muted and isMediaSourceMuted(MediaType::MEDIA_AUDIO) and not isHostMuted) {
             JAMI_DBG("Un-muting local audio source");
-            bindHost();
+            bindHostAudio();
         }
         setLocalHostMuteState(MediaType::MEDIA_AUDIO, is_muted);
         updateMuted();
@@ -1844,7 +1733,7 @@ Conference::findHostforRemoteParticipant(std::string_view uri, std::string_view 
 std::shared_ptr<Call>
 Conference::getCallFromPeerID(std::string_view peerID)
 {
-    for (const auto& p : getParticipantList()) {
+    for (const auto& p : getSubCalls()) {
         auto call = getCall(p);
         if (call && getRemoteId(call) == peerID) {
             return call;
@@ -1856,7 +1745,7 @@ Conference::getCallFromPeerID(std::string_view peerID)
 std::shared_ptr<Call>
 Conference::getCallWith(const std::string& accountUri, const std::string& deviceId)
 {
-    for (const auto& p : getParticipantList()) {
+    for (const auto& p : getSubCalls()) {
         if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(p))) {
             auto* transport = call->getTransport();
             if (accountUri == string_remove_suffix(call->getPeerNumber(), '@') && transport
@@ -1892,5 +1781,120 @@ Conference::startRecording(const std::string& path)
     updateRecording();
     return res;
 }
+
+/// PRIVATE
+
+void
+Conference::bindHostAudio()
+{
+    JAMI_LOG("Bind host to conference {}", id_);
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+
+    for (const auto& item : getSubCalls()) {
+        if (auto call = getCall(item)) {
+            auto medias = call->getAudioStreams();
+            for (const auto& [id, muted] : medias) {
+                for (const auto& source : hostSources_) {
+                    if (source.type_ == MediaType::MEDIA_AUDIO) {
+                        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
+                            if (muted)
+                                rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
+                            else
+                                rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
+                        } else {
+                            auto buffer = source.sourceUri_;
+                            static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+                            const auto pos = source.sourceUri_.find(sep);
+                            if (pos != std::string::npos)
+                                buffer = source.sourceUri_.substr(pos + sep.size());
+
+                            if (muted)
+                                rbPool.bindHalfDuplexOut(id, buffer);
+                            else
+                                rbPool.bindRingbuffers(id, buffer);
+                        }
+                    }
+                }
+                rbPool.flush(id);
+            }
+        }
+    }
+    rbPool.flush(RingBufferPool::DEFAULT_ID);
+}
+
+void
+Conference::unbindHostAudio()
+{
+    JAMI_INFO("Unbind host from conference %s", id_.c_str());
+    for (const auto& source : hostSources_) {
+        if (source.type_ == MediaType::MEDIA_AUDIO) {
+            if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
+                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
+            } else {
+                auto buffer = source.sourceUri_;
+                static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
+                const auto pos = source.sourceUri_.find(sep);
+                if (pos != std::string::npos)
+                    buffer = source.sourceUri_.substr(pos + sep.size());
+
+                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(buffer);
+            }
+        }
+    }
+}
+
+void
+Conference::bindSubCallAudio(const std::string& callId)
+{
+    JAMI_LOG("Bind participant {} to conference {}", callId, id_);
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+
+    // Bind each of the new participant's audio streams to each of the other participants audio streams
+    if (auto participantCall = getCall(callId)) {
+        auto participantStreams = participantCall->getAudioStreams();
+        for (auto stream : participantStreams) {
+            for (const auto& other : getSubCalls()) {
+                auto otherCall = other != callId ? getCall(other) : nullptr;
+                if (otherCall) {
+                    auto otherStreams = otherCall->getAudioStreams();
+                    for (auto otherStream : otherStreams) {
+                        if (isMuted(other))
+                            rbPool.bindHalfDuplexOut(otherStream.first, stream.first);
+                        else
+                            rbPool.bindRingbuffers(stream.first, otherStream.first);
+
+                        rbPool.flush(otherStream.first);
+                    }
+                }
+            }
+
+            // Bind local participant to other participants only if the
+            // local is attached to the conference.
+            if (getState() == State::ACTIVE_ATTACHED) {
+                if (isMediaSourceMuted(MediaType::MEDIA_AUDIO))
+                    rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
+                else
+                    rbPool.bindRingbuffers(stream.first, RingBufferPool::DEFAULT_ID);
+                rbPool.flush(RingBufferPool::DEFAULT_ID);
+            }
+        }
+    }
+}
+
+void
+Conference::unbindSubCallAudio(const std::string& callId)
+{
+    JAMI_LOG("Unbind participant {} from conference {}", callId, id_);
+    if (auto call = getCall(callId)) {
+        auto medias = call->getAudioStreams();
+        auto& rbPool = Manager::instance().getRingBufferPool();
+        for (const auto& [id, muted] : medias) {
+            rbPool.unBindAllHalfDuplexOut(id);
+        }
+    }
+}
+
 
 } // namespace jami
