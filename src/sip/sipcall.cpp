@@ -3163,7 +3163,6 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
         for (const auto& videoRtp : getRtpSessionList(MediaType::MEDIA_VIDEO))
             std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->enterConference(*conference);
 #endif
-    conference->bindParticipant(getCallId());
 
 #ifdef ENABLE_PLUGIN
     clearCallAVStreams();
