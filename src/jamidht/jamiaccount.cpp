@@ -561,8 +561,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     } else {
         JAMI_DEBUG("Adding participant {} for swarm {} with id {}", callId, conversationId, confId);
         Manager::instance().addAudio(*call);
-        conf->addParticipant(callId);
-        conf->bindParticipant(callId);
+        conf->addSubCall(callId);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
                                                            conf->getStateStr());
