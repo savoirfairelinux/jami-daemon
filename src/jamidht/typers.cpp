@@ -55,7 +55,7 @@ getIsComposing(const std::string& conversationId, bool isWriting)
 }
 
 void
-Typers::addTyper(const std::string &typer)
+Typers::addTyper(const std::string &typer, bool sendMessage)
 {
     auto acc = acc_.lock();
     if (!acc || !acc->isComposingEnabled())
@@ -73,27 +73,30 @@ Typers::addTyper(const std::string &typer)
 
         if (typer != selfUri_)
             emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountId_,
-                                                                            convId_,
-                                                                            typer,
-                                                                            1);
+                                                                                convId_,
+                                                                                typer,
+                                                                                1);
+        return;
     }
-    if (typer == selfUri_) {
+    if (sendMessage) {
+        // In this case we should emit for remote to update the timer
         acc->sendInstantMessage(convId_,
                                {{MIME_TYPE_IM_COMPOSING, getIsComposing(convId_, true)}});
     }
 }
 
 void
-Typers::removeTyper(const std::string &typer)
+Typers::removeTyper(const std::string &typer, bool sendMessage)
 {
     auto acc = acc_.lock();
     if (!acc || !acc->isComposingEnabled())
         return;
     if (watcher_.erase(typer)) {
-        if (typer == selfUri_) {
+        if (sendMessage) {
             acc->sendInstantMessage(convId_,
                                 {{MIME_TYPE_IM_COMPOSING, getIsComposing(convId_, false)}});
-        } else {
+        }
+        if (typer != selfUri_) {
             emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountId_,
                                                                                 convId_,
                                                                                 typer,

@@ -34,8 +34,13 @@ public:
     Typers(const std::shared_ptr<JamiAccount>& acc, const std::string &convId);
     ~Typers();
 
-    void addTyper(const std::string &typer);
-    void removeTyper(const std::string &typer);
+    /**
+     * Add typer to the list of typers
+     * @param typer
+     * @param sendMessage (should be true for local typer, false for remote typer)
+     */
+    void addTyper(const std::string &typer, bool sendMessage = false);
+    void removeTyper(const std::string &typer, bool sendMessage = false);
 
 private:
     void onTyperTimeout(const asio::error_code& ec, const std::string &typer);
