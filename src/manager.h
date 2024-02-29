@@ -254,15 +254,15 @@ public:
     bool unHoldConference(const std::string& accountId, const std::string& confId);
 
     /**
-     * Add a participant to a conference
+     * Add a subcall to a conference
      * @param the call id
      * @param the conference id
      */
-    bool addParticipant(const std::string& accountId,
+    bool addSubCall(const std::string& accountId,
                         const std::string& callId,
                         const std::string& account2Id,
                         const std::string& confId);
-    bool addParticipant(Call& call, Conference& conference);
+    bool addSubCall(Call& call, Conference& conference);
     void bindCallToConference(Call& call, Conference& conf);
 
     /**
@@ -300,7 +300,7 @@ public:
      * Detach the local participant from curent conference.
      * Remote participants are placed in hold.
      */
-    bool detachLocalParticipant(const std::shared_ptr<Conference>& conf = {});
+    bool detachHost(const std::shared_ptr<Conference>& conf = {});
 
     /**
      * Remove the conference participant from a conference
