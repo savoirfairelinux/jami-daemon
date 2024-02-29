@@ -2910,10 +2910,10 @@ ConversationModule::hostConference(const std::string& conversationId,
     }
 
     if (!callId.empty())
-        conf->addParticipant(callId);
+        conf->addSubCall(callId);
 
     if (!createConf && callId.empty()) // TODO use mediaList
-        conf->attachLocalParticipant();
+        conf->attachHost();
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, confId);
