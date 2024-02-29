@@ -2957,14 +2957,14 @@ ConversationModule::hostConference(const std::string& conversationId,
         }
     }
     if (createConf) {
-        conf = std::make_shared<Conference>(acc, confId, callId.empty(), callId.empty()? std::vector<MediaAttribute> {} : call->getMediaAttributeList());
+        conf = std::make_shared<Conference>(acc, confId);
         acc->attach(conf);
     }
 
     if (!callId.empty())
         conf->addSubCall(callId);
 
-    if (!createConf && callId.empty()) // TODO use mediaList
+    if (callId.empty()) // TODO use mediaList
         conf->attachHost();
 
     if (createConf) {
