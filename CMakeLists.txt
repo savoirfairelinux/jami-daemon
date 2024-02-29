@@ -116,10 +116,14 @@ if (BUILD_CONTRIB)
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
     else()
         set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
-        execute_process(COMMAND python -m pip install ${SCRIPTS_DIR}/pywinmake)
         execute_process(
             COMMAND python ${SCRIPTS_DIR}/winmake.py
-            WORKING_DIRECTORY ${SCRIPTS_DIR})
+            WORKING_DIRECTORY ${SCRIPTS_DIR}
+            RESULT_VARIABLE BUILD_RESULT
+        )
+        if (BUILD_RESULT)
+            message(FATAL_ERROR "Failed to build contrib.")
+        endif()
     endif()
 endif()
 
