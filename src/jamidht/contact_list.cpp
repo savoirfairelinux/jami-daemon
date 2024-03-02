@@ -119,7 +119,7 @@ ContactList::updateConversation(const dht::InfoHash& h, const std::string& conve
 bool
 ContactList::removeContact(const dht::InfoHash& h, bool ban)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::unique_lock lk(mutex_);
     JAMI_WARN("[Contacts] removeContact: %s", h.to_c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
@@ -298,7 +298,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
 {
     bool accept = false;
     // Check existing contact
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::unique_lock lk(mutex_);
     auto contact = contacts_.find(peer_account);
     bool active = false;
     if (contact != contacts_.end()) {
@@ -391,7 +391,7 @@ bool
 ContactList::acceptTrustRequest(const dht::InfoHash& from)
 {
     // The contact sent us a TR so we are in its contact list
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::unique_lock lk(mutex_);
     auto i = trustRequests_.find(from);
     if (i == trustRequests_.end())
         return false;

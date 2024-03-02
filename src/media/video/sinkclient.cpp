@@ -453,7 +453,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 #endif
 
-    std::unique_lock<std::mutex> lock(mtx_);
+    std::unique_lock lock(mtx_);
     bool hasObservers = getObserversCount() != 0;
     bool hasDirectListener = target_.push and not target_.pull;
     bool hasTransformedListener = target_.push and target_.pull;

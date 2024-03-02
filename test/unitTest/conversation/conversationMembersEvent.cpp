@@ -118,7 +118,7 @@ public:
     std::string carlaId;
     UserData carlaData;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
 
     void connectSignals();

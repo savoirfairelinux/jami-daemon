@@ -183,7 +183,7 @@ AudioStream::stop()
     }
     audiostream_ = nullptr;
 
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock lock(mutex_);
     for (auto op : ongoing_ops)
         pa_operation_cancel(op);
     // wait for all operations to end

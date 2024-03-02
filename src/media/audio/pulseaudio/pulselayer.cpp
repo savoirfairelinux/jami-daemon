@@ -175,7 +175,7 @@ PulseLayer::contextStateChanged(pa_context* c)
 void
 PulseLayer::updateSinkList()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock lk(readyMtx_);
     if (not enumeratingSinks_) {
         JAMI_DBG("Updating PulseAudio sink list");
         enumeratingSinks_ = true;
@@ -192,7 +192,7 @@ PulseLayer::updateSinkList()
 void
 PulseLayer::updateSourceList()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock lk(readyMtx_);
     if (not enumeratingSources_) {
         JAMI_DBG("Updating PulseAudio source list");
         enumeratingSources_ = true;
@@ -209,7 +209,7 @@ PulseLayer::updateSourceList()
 void
 PulseLayer::updateServerInfo()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock lk(readyMtx_);
     if (not gettingServerInfo_) {
         JAMI_DBG("Updating PulseAudio server infos");
         gettingServerInfo_ = true;
@@ -628,7 +628,7 @@ PulseLayer::contextChanged(pa_context* c UNUSED,
 void
 PulseLayer::waitForDevices()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock lk(readyMtx_);
     readyCv_.wait(lk, [this] {
         return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
     });
@@ -637,7 +637,7 @@ PulseLayer::waitForDevices()
 void
 PulseLayer::waitForDeviceList()
 {
-    std::unique_lock<std::mutex> lock(readyMtx_);
+    std::unique_lock lock(readyMtx_);
     if (waitingDeviceList_.exchange(true))
         return;
     if (streamStarter_.joinable())

@@ -157,7 +157,7 @@ SipSrtpTest::tearDown()
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
     std::atomic_bool accountsRemoved {false};
@@ -222,7 +222,7 @@ SipSrtpTest::onIncomingCallWithMedia(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
@@ -257,7 +257,7 @@ SipSrtpTest::onCallStateChange(const std::string&,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
@@ -295,7 +295,7 @@ SipSrtpTest::onMediaNegotiationStatus(const std::string& callId,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
@@ -309,7 +309,7 @@ SipSrtpTest::waitForSignal(CallData& callData,
                            const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
 
     // Combined signal + event (if any).
     std::string sigEvent(expectedSignal);

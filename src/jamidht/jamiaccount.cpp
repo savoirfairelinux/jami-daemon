@@ -437,7 +437,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, co
         uri.authority(),
         call,
         [this, uri, call](const std::string& accountUri, const DeviceId& deviceId) {
-            std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
+            std::unique_lock lkSipConn(sipConnsMtx_);
             for (auto& [key, value] : sipConns_) {
                 if (key.first != accountUri || key.second != deviceId)
                     continue;
@@ -604,7 +604,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     // Call connected devices
     std::set<DeviceId> devices;
-    std::unique_lock<std::mutex> lkSipConn(sipConnsMtx_);
+    std::unique_lock lkSipConn(sipConnsMtx_);
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
     auto dummyCall = createSubCall(call);
@@ -1945,7 +1945,7 @@ JamiAccount::doRegister_()
                         if (accountManager_->getInfo()->deviceId == deviceId)
                             return;
 
-                        std::unique_lock<std::mutex> lk(connManagerMtx_);
+                        std::unique_lock lk(connManagerMtx_);
                         initConnectionManager();
                         channelHandlers_[Uri::Scheme::SYNC]
                             ->connect(crt->getLongId(),
@@ -1988,7 +1988,7 @@ JamiAccount::doRegister_()
 
         accountManager_->setDht(dht_);
 
-        std::unique_lock<std::mutex> lkCM(connManagerMtx_);
+        std::unique_lock lkCM(connManagerMtx_);
         initConnectionManager();
         connectionManager_->onDhtConnected(*accountManager_->getInfo()->devicePk);
         connectionManager_->onICERequest([this](const DeviceId& deviceId) {
@@ -2232,7 +2232,7 @@ JamiAccount::convModule(bool noCreation)
                             cb({});
                         return;
                     }
-                    std::unique_lock<std::mutex> lkCM(shared->connManagerMtx_);
+                    std::unique_lock lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_) {
                         lkCM.unlock();
                         cb({});
@@ -2407,7 +2407,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     {
-        std::unique_lock<std::mutex> lock(mtx);
+        std::unique_lock lock(mtx);
         cv.wait(lock, [&] { return shutdown_complete; });
     }
     dht_->join();
@@ -3034,7 +3034,7 @@ JamiAccount::sendMessage(const std::string& to,
     }
 
     std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
-    std::unique_lock<std::mutex> lk(sipConnsMtx_);
+    std::unique_lock lk(sipConnsMtx_);
 
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
@@ -3213,7 +3213,7 @@ JamiAccount::sendMessage(const std::string& to,
                                            << token << "] Put encrypted " << (ok ? "ok" : "failed");
                                        if (not ok
                                            && connectionManager_ /* Check if not joining */) {
-                                           std::unique_lock<std::mutex> l(confirm->lock);
+                                           std::unique_lock l(confirm->lock);
                                            auto lt = confirm->listenTokens.find(h);
                                            if (lt != confirm->listenTokens.end()) {
                                                std::shared_future<size_t> tok = std::move(
@@ -3251,7 +3251,7 @@ JamiAccount::sendMessage(const std::string& to,
         // Timeout cleanup
         Manager::instance().scheduleTaskIn(
             [w = weak(), confirm, to, token]() {
-                std::unique_lock<std::mutex> l(confirm->lock);
+                std::unique_lock l(confirm->lock);
                 if (not confirm->replied) {
                     if (auto this_ = w.lock()) {
                         JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
@@ -3279,7 +3279,7 @@ void
 JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code)
 {
     if (code == PJSIP_SC_OK) {
-        std::unique_lock<std::mutex> l(ctx->confirmation->lock);
+        std::unique_lock l(ctx->confirmation->lock);
         ctx->confirmation->replied = true;
         l.unlock();
         if (!ctx->onlyConnected)
@@ -3894,7 +3894,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                                 const std::string& peerId,
                                 const DeviceId& deviceId)
 {
-    std::unique_lock<std::mutex> lk(sipConnsMtx_);
+    std::unique_lock lk(sipConnsMtx_);
     // Verify that the connection is not already cached
     SipConnectionKey key(peerId, deviceId);
     auto& connections = sipConns_[key];
@@ -3982,7 +3982,7 @@ JamiAccount::shutdownSIPConnection(const std::shared_ptr<dhtnet::ChannelSocket>&
                                    const std::string& peerId,
                                    const DeviceId& deviceId)
 {
-    std::unique_lock<std::mutex> lk(sipConnsMtx_);
+    std::unique_lock lk(sipConnsMtx_);
     SipConnectionKey key(peerId, deviceId);
     auto it = sipConns_.find(key);
     if (it != sipConns_.end()) {

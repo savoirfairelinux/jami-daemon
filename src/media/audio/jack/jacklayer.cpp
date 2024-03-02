@@ -153,7 +153,7 @@ JackLayer::ringbuffer_worker()
     flushUrgent();
 
     while (true) {
-        std::unique_lock<std::mutex> lock(ringbuffer_thread_mutex_);
+        std::unique_lock lock(ringbuffer_thread_mutex_);
 
         // may have changed, we don't want to wait for a notification we won't get
         if (status_ != Status::Started)

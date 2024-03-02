@@ -94,7 +94,7 @@ RevokeTest::testRevokeDevice()
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto deviceRevoked = false;
@@ -131,7 +131,7 @@ RevokeTest::testRevokeInvalidDevice()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto revokeFailed = false;

@@ -378,7 +378,7 @@ TransferManager::info(const std::string& fileId,
                       int64_t& total,
                       int64_t& progress) const noexcept
 {
-    std::unique_lock<std::mutex> lk {pimpl_->mapMutex_};
+    std::unique_lock lk {pimpl_->mapMutex_};
     if (pimpl_->to_.empty())
         return false;
 
@@ -417,7 +417,7 @@ TransferManager::waitForTransfer(const std::string& fileId,
                                  const std::string& path,
                                  std::size_t total)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->mapMutex_);
+    std::unique_lock lk(pimpl_->mapMutex_);
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW != pimpl_->waitingIds_.end())
         return;

@@ -80,12 +80,12 @@ struct Counter
     }
     bool wait(std::chrono::steady_clock::duration timeout)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::unique_lock lock(mutex);
         return cv.wait_for(lock, timeout, [&] { return added == target; });
     }
     void wait()
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::unique_lock lock(mutex);
         return cv.wait(lock, [&] { return added == target; });
     }
 };
@@ -284,7 +284,7 @@ SwarmMessageSpread::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                 NodeId node = dhtnet::DeviceId(nodeId);
                 if (auto smRemote = getManager(node)) {
                     auto myId = sm->getId();
-                    std::unique_lock<std::mutex> lk(channelSocketsMtx_);
+                    std::unique_lock lk(channelSocketsMtx_);
                     auto& cstRemote = channelSockets_[node][myId];
                     auto& cstMe = channelSockets_[myId][node];
                     if (cstMe.second && cstMe.first)
@@ -419,7 +419,7 @@ SwarmMessageSpread::testWriteMessage()
         }
     }
 
-    std::unique_lock<std::mutex> lk(channelSocketsMtx_);
+    std::unique_lock lk(channelSocketsMtx_);
     bool ok = channelSocketsCv_.wait_for(lk, 1200s, [&] {
         std::cout << "\r"
                   << "Size of Received " << numberTimesReceived.size();

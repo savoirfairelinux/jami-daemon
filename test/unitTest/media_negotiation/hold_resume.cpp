@@ -211,7 +211,7 @@ HoldResumeTest::onIncomingCallWithMedia(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
@@ -236,7 +236,7 @@ HoldResumeTest::onIncomingCall(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCall::name));
 
@@ -263,7 +263,7 @@ HoldResumeTest::onMediaChangeRequested(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::MediaChangeRequested::name));
 
@@ -297,7 +297,7 @@ HoldResumeTest::onCallStateChange(const std::string& callId,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
@@ -334,7 +334,7 @@ HoldResumeTest::onMediaNegotiationStatus(const std::string& callId,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
@@ -348,7 +348,7 @@ HoldResumeTest::waitForSignal(CallData& callData,
                               const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
 
     // Combined signal + event (if any).
     std::string sigEvent(expectedSignal);

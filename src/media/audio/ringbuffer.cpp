@@ -243,7 +243,7 @@ RingBuffer::get(const std::string& ringbufferId)
 size_t
 RingBuffer::waitForDataAvailable(const std::string& ringbufferId, const time_point& deadline) const
 {
-    std::unique_lock<std::mutex> l(lock_);
+    std::unique_lock l(lock_);
 
     if (buffer_.empty())
         return 0;

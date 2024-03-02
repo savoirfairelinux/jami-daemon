@@ -2912,7 +2912,7 @@ Manager::loadAccountMap(const YAML::Node& node)
     std::condition_variable cv;
     std::mutex lock;
     size_t remaining {0};
-    std::unique_lock<std::mutex> l(lock);
+    std::unique_lock l(lock);
     for (const auto& dir : dirs) {
         if (accountFactory.hasAccount<JamiAccount>(dir)) {
             continue;

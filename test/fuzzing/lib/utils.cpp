@@ -37,7 +37,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono:
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
 
     auto cv = std::make_shared<std::condition_variable>();
     auto accountsReady = std::make_shared<std::vector<std::atomic_bool>>(accountIDs.size());
@@ -98,7 +98,7 @@ wait_for_removal_of(const std::vector<std::string> accounts, std::chrono::second
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
 
     auto cv = std::make_shared<std::condition_variable>();
     auto accountsRemoved = std::make_shared<std::atomic_bool>(false);

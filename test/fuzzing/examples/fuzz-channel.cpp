@@ -34,7 +34,7 @@ static void channel_spammer(void)
 {
         std::thread([&]{
 
-                std::unique_lock<std::mutex> ulock(spammer_lock);
+                std::unique_lock ulock(spammer_lock);
                 while (true) {
 
                 }

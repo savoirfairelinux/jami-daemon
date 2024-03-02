@@ -336,7 +336,7 @@ OpenSLLayer::startAudioCapture()
     if (recThread.joinable())
         return;
     recThread = std::thread([&]() {
-        std::unique_lock<std::mutex> lck(recMtx);
+        std::unique_lock lck(recMtx);
         if (recorder_)
             recorder_->start();
         recordChanged(true);
