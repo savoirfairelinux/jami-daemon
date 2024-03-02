@@ -173,7 +173,7 @@ PortAudioLayer::startStream(AudioDeviceType stream)
     }
 
     auto startPlayback = [this](bool fullDuplexMode = false) -> bool {
-        std::unique_lock<std::mutex> lock(mutex_);
+        std::unique_lock lock(mutex_);
         if (status_.load() != Status::Idle)
             return false;
         bool ret {false};

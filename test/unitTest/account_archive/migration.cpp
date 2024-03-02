@@ -127,7 +127,7 @@ MigrationTest::testLoadExpiredAccount()
 
     // reload account, check migration signals
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto aliceMigrated = false;
@@ -163,7 +163,7 @@ MigrationTest::testMigrationAfterRevokation()
 
     // Generate bob2
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
 
     // Add second device for Bob
@@ -231,7 +231,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;

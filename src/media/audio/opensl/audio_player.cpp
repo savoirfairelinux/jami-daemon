@@ -45,7 +45,7 @@ bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* ctx)
 void
 AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
 {
-    std::unique_lock<std::mutex> lk(m_, std::defer_lock);
+    std::unique_lock lk(m_, std::defer_lock);
     if (!lk.try_lock())
         return;
 
@@ -198,7 +198,7 @@ bool
 AudioPlayer::start()
 {
     JAMI_DBG("OpenSL playback start");
-    std::unique_lock<std::mutex> lk(m_);
+    std::unique_lock lk(m_);
     SLuint32 state;
     SLresult result = (*playItf_)->GetPlayState(playItf_, &state);
     if (result != SL_RESULT_SUCCESS)

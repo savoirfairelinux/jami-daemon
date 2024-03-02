@@ -220,7 +220,7 @@ SocketPair::~SocketPair()
 bool
 SocketPair::waitForRTCP(std::chrono::seconds interval)
 {
-    std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
+    std::unique_lock lock(rtcpInfo_mutex_);
     return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
         return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
     });
@@ -422,7 +422,7 @@ SocketPair::waitForData()
 
     // work with IceSocket
     {
-        std::unique_lock<std::mutex> lk(dataBuffMutex_);
+        std::unique_lock lk(dataBuffMutex_);
         cv_.wait(lk, [this] {
             return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty()
                    or not readBlockingMode_;
@@ -453,7 +453,7 @@ SocketPair::readRtpData(void* buf, int buf_size)
     }
 
     // handle ICE
-    std::unique_lock<std::mutex> lk(dataBuffMutex_);
+    std::unique_lock lk(dataBuffMutex_);
     if (not rtpDataBuff_.empty()) {
         auto pkt = std::move(rtpDataBuff_.front());
         rtpDataBuff_.pop_front();
@@ -483,7 +483,7 @@ SocketPair::readRtcpData(void* buf, int buf_size)
     }
 
     // handle ICE
-    std::unique_lock<std::mutex> lk(dataBuffMutex_);
+    std::unique_lock lk(dataBuffMutex_);
     if (not rtcpDataBuff_.empty()) {
         auto pkt = std::move(rtcpDataBuff_.front());
         rtcpDataBuff_.pop_front();

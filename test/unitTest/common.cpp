@@ -42,7 +42,7 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::vector<std::atomic_bool> accountsReady(accountIDs.size());
 
@@ -113,7 +113,7 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::atomic_bool accountsRemoved {false};
 

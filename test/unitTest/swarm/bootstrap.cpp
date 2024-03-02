@@ -215,7 +215,7 @@ BootstrapTest::testBootstrapOk()
             cv.notify_one();
         });
 
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
 
     libjami::addConversationMember(aliceData.accountId, convId, bobUri);
@@ -243,7 +243,7 @@ BootstrapTest::testBootstrapFailed()
             cv.notify_one();
         });
 
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
 
     libjami::addConversationMember(aliceData.accountId, convId, bobUri);
@@ -278,7 +278,7 @@ BootstrapTest::testBootstrapNeverNewDevice()
             cv.notify_one();
         });
 
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
 
     libjami::addConversationMember(aliceData.accountId, convId, bobUri);
@@ -366,7 +366,7 @@ BootstrapTest::testBootstrapCompat()
         ->disableSwarmManager
         = true;
 
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
 
     libjami::addConversationMember(aliceData.accountId, convId, bobUri);

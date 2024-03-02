@@ -67,7 +67,7 @@ public:
     std::vector<std::string> accountIds;
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
 
 private:
@@ -162,7 +162,7 @@ SwarmConversationTest::testSendMessage()
     }
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
 
     connectSignals();

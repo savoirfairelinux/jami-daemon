@@ -270,7 +270,7 @@ SipTransportBroker::addTransport(pjsip_transport* t)
 void
 SipTransportBroker::shutdown()
 {
-    std::unique_lock<std::mutex> lock(transportMapMutex_);
+    std::unique_lock lock(transportMapMutex_);
     isDestroying_ = true;
     for (auto& t : transports_) {
         if (auto transport = t.second.lock()) {

@@ -104,7 +104,7 @@ public:
     template<class Rep, class Period>
     bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const
     {
-        std::unique_lock<std::mutex> lk(mutex_);
+        std::unique_lock lk(mutex_);
         startedCv_.wait_for(lk, rel_time, [this] { return isStarted(); });
         return isStarted();
     }

@@ -310,7 +310,7 @@ JNIEXPORT void JNICALL Java_net_jami_daemon_JamiServiceJNI_setNativeWindowGeomet
 
 void releaseBuffer(ANativeWindow *window, libjami::FrameBuffer frame)
 {
-    std::unique_lock<std::mutex> guard(windows_mutex);
+    std::unique_lock guard(windows_mutex);
     try {
         windows.at(window) = std::move(frame);
     } catch (...) {

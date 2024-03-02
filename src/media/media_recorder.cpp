@@ -224,7 +224,7 @@ MediaRecorder::startRecording()
                 std::shared_ptr<MediaFrame> frame;
                 // get frame from queue
                 {
-                    std::unique_lock<std::mutex> lk(rec->mutexFrameBuff_);
+                    std::unique_lock lk(rec->mutexFrameBuff_);
                     rec->cv_.wait(lk, [rec] {
                         return rec->interrupted_ or not rec->frameBuff_.empty();
                     });

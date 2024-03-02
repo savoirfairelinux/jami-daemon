@@ -102,7 +102,7 @@ IceTest::testRawIceConnection()
     ice_config.tcpEnable = true;
     std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
-    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+    std::unique_lock lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
     std::condition_variable cv, cv_create, cv_resp, cv_init;
     std::string init = {};
@@ -197,7 +197,7 @@ IceTest::testTurnMasterIceConnection()
     ice_config.tcpEnable = true;
     std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
-    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+    std::unique_lock lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
     std::condition_variable cv, cv_create, cv_resp, cv_init;
     std::string init = {};
@@ -318,7 +318,7 @@ IceTest::testTurnSlaveIceConnection()
     ice_config.tcpEnable = true;
     std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
-    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+    std::unique_lock lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
     std::condition_variable cv, cv_create, cv_resp, cv_init;
     std::string init = {};
@@ -436,7 +436,7 @@ IceTest::testReceiveTooManyCandidates()
     ice_config.tcpEnable = true;
     std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
-    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+    std::unique_lock lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
     std::condition_variable cv, cv_create, cv_resp, cv_init;
     std::string init = {};
@@ -545,7 +545,7 @@ IceTest::testCompleteOnFailure()
     ice_config.tcpEnable = true;
     std::shared_ptr<dhtnet::IceTransport> ice_master, ice_slave;
     std::mutex mtx, mtx_create, mtx_resp, mtx_init;
-    std::unique_lock<std::mutex> lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
+    std::unique_lock lk {mtx}, lk_create {mtx_create}, lk_resp {mtx_resp},
         lk_init {mtx_init};
     std::condition_variable cv, cv_create, cv_resp, cv_init;
     std::string init = {};

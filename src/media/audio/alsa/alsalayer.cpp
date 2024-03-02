@@ -126,7 +126,7 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
 void
 AlsaLayer::startStream(AudioDeviceType type)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::unique_lock lk(mutex_);
     status_ = Status::Starting;
     stopThread();
 
@@ -172,7 +172,7 @@ AlsaLayer::startStream(AudioDeviceType type)
 void
 AlsaLayer::stopStream(AudioDeviceType stream)
 {
-    std::unique_lock<std::mutex> lk(mutex_);
+    std::unique_lock lk(mutex_);
     stopThread();
 
     if (stream == AudioDeviceType::CAPTURE && is_capture_open_) {

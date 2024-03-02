@@ -83,7 +83,7 @@ public:
     UserData alice2Data;
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     void connectSignals();
 
@@ -475,7 +475,7 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     alice2Id = Manager::instance().addAccount(details);
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_int conversationReady = 0;

@@ -706,8 +706,8 @@ Conversation::Impl::commitsEndedCalls()
     auto shared = account_.lock();
     // Handle current calls
     std::vector<std::string> commits {};
-    std::unique_lock<std::mutex> lk(writeMtx_);
-    std::unique_lock<std::mutex> lkA(activeCallsMtx_);
+    std::unique_lock lk(writeMtx_);
+    std::unique_lock lkA(activeCallsMtx_);
     for (const auto& hostedCall : hostedCalls_) {
         // In this case, this means that we left
         // the conference while still hosting it, so activeCalls
@@ -1044,7 +1044,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         return {};
     auto username = acc->getUsername();
     if (messageReceived && (!optHistory && isLoadingHistory_)) {
-        std::unique_lock<std::mutex> lk(historyMtx_);
+        std::unique_lock lk(historyMtx_);
         historyCv_.wait(lk, [&] { return !isLoadingHistory_; });
     }
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
@@ -1198,7 +1198,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
     dht::ThreadPool::io().run([w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
             // Add member files and commit
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            std::unique_lock lk(sthis->pimpl_->writeMtx_);
             auto commit = sthis->pimpl_->repository_->addMember(contactUri);
             sthis->pimpl_->announce(commit, true);
             lk.unlock();
@@ -1277,7 +1277,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri,
     }
 
     // Vote for removal
-    std::unique_lock<std::mutex> lk(writeMtx_);
+    std::unique_lock lk(writeMtx_);
     auto voteCommit = repository_->voteUnban(contactUri, type);
     if (voteCommit.empty()) {
         JAMI_WARN("Unbanning %s failed", contactUri.c_str());
@@ -1342,7 +1342,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
             }
 
             // Vote for removal
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            std::unique_lock lk(sthis->pimpl_->writeMtx_);
             auto voteCommit = sthis->pimpl_->repository_->voteKick(contactUri, type);
             if (voteCommit.empty()) {
                 JAMI_WARN("Kicking %s failed", contactUri.c_str());
@@ -1513,7 +1513,7 @@ Conversation::sendMessage(Json::Value&& value,
                 auto acc = sthis->pimpl_->account_.lock();
                 if (!acc)
                     return;
-                std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+                std::unique_lock lk(sthis->pimpl_->writeMtx_);
                 auto commit = sthis->pimpl_->repository_->commitMessage(
                     Json::writeString(jsonBuilder, value));
                 lk.unlock();
@@ -1533,7 +1533,7 @@ Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& 
         if (auto sthis = w.lock()) {
             std::vector<std::string> commits;
             commits.reserve(messages.size());
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            std::unique_lock lk(sthis->pimpl_->writeMtx_);
             for (const auto& message : messages) {
                 auto commit = sthis->pimpl_->repository_->commitMessage(
                     Json::writeString(jsonBuilder, message));
@@ -1726,7 +1726,7 @@ Conversation::Impl::pull()
         }
         auto oldHead = repo->getHead();
         std::string newHead = oldHead;
-        std::unique_lock<std::mutex> lk(writeMtx_);
+        std::unique_lock lk(writeMtx_);
         auto commits = mergeHistory(deviceId);
         if (!commits.empty()) {
             newHead = commits.rbegin()->at("id");
@@ -1863,7 +1863,7 @@ Conversation::updateInfos(const std::map<std::string, std::string>& map, const O
     dht::ThreadPool::io().run([w = weak(), map = std::move(map), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
             auto& repo = sthis->pimpl_->repository_;
-            std::unique_lock<std::mutex> lk(sthis->pimpl_->writeMtx_);
+            std::unique_lock lk(sthis->pimpl_->writeMtx_);
             auto commit = repo->updateInfos(map);
             sthis->pimpl_->announce(commit, true);
             lk.unlock();
@@ -2138,7 +2138,7 @@ void
 Conversation::updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus)
 {
     auto acc = pimpl_->account_.lock();
-    std::unique_lock<std::mutex> lk(pimpl_->messageStatusMtx_);
+    std::unique_lock lk(pimpl_->messageStatusMtx_);
     std::vector<std::tuple<libjami::Account::MessageStates, std::string, std::string, std::string>> stVec;
     for (const auto& [uri, status] : messageStatus) {
         auto& oldMs = pimpl_->messagesStatus_[uri];
@@ -2163,7 +2163,7 @@ Conversation::updateMessageStatus(const std::map<std::string, std::map<std::stri
 void
 Conversation::onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb)
 {
-    std::unique_lock<std::mutex> lk(pimpl_->messageStatusMtx_);
+    std::unique_lock lk(pimpl_->messageStatusMtx_);
     pimpl_->messageStatusCb_ = cb;
 }
 

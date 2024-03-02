@@ -98,7 +98,7 @@ void
 MediaReceiver::update(Observable<std::shared_ptr<jami::MediaFrame>>*,
                       const std::shared_ptr<jami::MediaFrame>& frame)
 {
-    std::unique_lock<std::mutex> lock {mtx_};
+    std::unique_lock lock {mtx_};
     if (frame and frame->getFrame())
         frameCounter_++;
 
@@ -113,7 +113,7 @@ MediaReceiver::update(Observable<std::shared_ptr<jami::MediaFrame>>*,
 bool
 MediaReceiver::waitForMediaFlow()
 {
-    std::unique_lock<std::mutex> lock {mtx_};
+    std::unique_lock lock {mtx_};
 
     return cv_.wait_for(lock, TIME_OUT, [this] { return frameCounter_ > 100; });
 }
@@ -260,7 +260,7 @@ IceSdpParsingTest::onIncomingCallWithMedia(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
@@ -295,7 +295,7 @@ IceSdpParsingTest::onCallStateChange(const std::string&,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
@@ -332,7 +332,7 @@ IceSdpParsingTest::onMediaNegotiationStatus(const std::string& callId,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
@@ -346,7 +346,7 @@ IceSdpParsingTest::waitForSignal(CallData& callData,
                                  const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
 
     // Combined signal + event (if any).
     std::string sigEvent(expectedSignal);

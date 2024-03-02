@@ -122,7 +122,7 @@ CallTest::testCall()
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false};
@@ -171,7 +171,7 @@ CallTest::testCachedCall()
     aliceAccount->certStore().pinCertificate(bobAccount->identity().second);
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false}, successfullyConnected {false};
@@ -228,7 +228,7 @@ CallTest::testStopSearching()
     Manager::instance().sendRegister(bobId, false);
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callStopped {false};
@@ -259,7 +259,7 @@ CallTest::testDeclineMultiDevice()
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
 
     // Add second device for Bob
@@ -327,7 +327,7 @@ CallTest::testTlsInfosPeerCertificate()
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic<int> callStopped {0};
@@ -385,7 +385,7 @@ CallTest::testSocketInfos()
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic<int> callStopped {0};
@@ -457,7 +457,7 @@ CallTest::testInvalidTurn()
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false};
@@ -527,7 +527,7 @@ CallTest::testTransfer()
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool bobCallReceived {false};
@@ -596,7 +596,7 @@ CallTest::testDhtPublicInCall()
     auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::atomic_bool callReceived {false};

@@ -420,7 +420,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
     JAMI_DEBUG("[Account {}] Clone conversation on device {}", accountId_, deviceId);
 
     auto conv = startConversation(convId);
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
     cloneConversation(deviceId, peerUri, conv);
 }
 
@@ -529,7 +529,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                    0);
         return;
     }
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
 
     if (conv->conversation) {
         // Check if we already have the commit
@@ -667,7 +667,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     auto conv = getConversation(conversationId);
     if (!conv)
         return;
-    std::unique_lock<std::mutex> lk(conv->mtx, std::defer_lock);
+    std::unique_lock lk(conv->mtx, std::defer_lock);
     auto erasePending = [&] {
         std::string toRm;
         if (conv->pending && !conv->pending->removeId.empty())
@@ -858,7 +858,7 @@ ConversationModule::Impl::removeRepository(const std::string& conversationId, bo
     auto conv = getConversation(conversationId);
     if (!conv)
         return;
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
     removeRepositoryImpl(*conv, sync, force);
 }
 
@@ -1397,7 +1397,7 @@ ConversationModule::onBootstrapStatus(
     const std::function<void(std::string, Conversation::BootstrapStatus)>& cb)
 {
     pimpl_->bootstrapCbTest_ = cb;
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock lk(pimpl_->conversationsMtx_);
     for (auto& [_, c] : pimpl_->conversations_)
         if (c && c->conversation)
             c->conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
@@ -1416,8 +1416,8 @@ ConversationModule::loadConversations()
 
     auto contacts = acc->getContacts(
         true); // Avoid to lock configurationMtx while conv Mtx is locked
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
-    std::unique_lock<std::mutex> ilk(pimpl_->convInfosMtx_);
+    std::unique_lock lk(pimpl_->conversationsMtx_);
+    std::unique_lock ilk(pimpl_->convInfosMtx_);
     pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
     pimpl_->conversations_.clear();
 
@@ -1546,7 +1546,7 @@ ConversationModule::loadConversations()
         });
     }
 
-    std::unique_lock<std::mutex> lkCv {ctx->cvMtx};
+    std::unique_lock lkCv {ctx->cvMtx};
     ctx->cv.wait(lkCv, [&] { return ctx->convNb.load() == 0; });
 
     // Prune any invalid conversations without members and
@@ -1613,7 +1613,7 @@ ConversationModule::loadSingleConversation(const std::string& convId)
         return;
     JAMI_LOG("[Account {}] Start loading conversation {}", pimpl_->accountId_, convId);
 
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock lk(pimpl_->conversationsMtx_);
     pimpl_->conversations_.clear();
 
     try {
@@ -1641,7 +1641,7 @@ ConversationModule::bootstrap(const std::string& convId)
 void
 ConversationModule::monitor()
 {
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock lk(pimpl_->conversationsMtx_);
     for (auto& [_, conv] : pimpl_->conversations_) {
         if (conv && conv->conversation) {
             conv->conversation->monitor();
@@ -1659,7 +1659,7 @@ ConversationModule::clearPendingFetch()
     // syncing the conversation. It may have been killed in some un-expected way avoiding to
     // call the callbacks. This should never happen, but if it's the case, this will allow
     // new messages to be synced correctly.
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+    std::unique_lock lk(pimpl_->conversationsMtx_);
     for (auto& [_, conv] : pimpl_->conversations_) {
         if (conv && conv->pending) {
             JAMI_ERR("This is a bug, seems to still fetch to some device on initializing");
@@ -1723,7 +1723,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
             "clone the old one");
         return;
     }
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+    std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     ConversationRequest req;
     req.from = uri;
     req.conversationId = conversationId;
@@ -1759,7 +1759,7 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
     if (acc && isOneToOne) {
         oldConv = getOneToOneConversation(from);
     }
-    std::unique_lock<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+    std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     JAMI_DEBUG("[Account {}] Receive a new conversation request for conversation {} from {}",
                pimpl_->accountId_,
                req.conversationId,
@@ -1834,12 +1834,12 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
                                               const std::string& deviceId)
 {
     // For all conversation members, try to open a git channel with this conversation ID
-    std::unique_lock<std::mutex> lkCr(pimpl_->conversationsRequestsMtx_);
+    std::unique_lock lkCr(pimpl_->conversationsRequestsMtx_);
     auto request = pimpl_->getRequest(conversationId);
     if (request == std::nullopt) {
         lkCr.unlock();
         if (auto conv = pimpl_->getConversation(conversationId)) {
-            std::unique_lock<std::mutex> lk(conv->mtx);
+            std::unique_lock lk(conv->mtx);
             if (!conv->conversation) {
                 lk.unlock();
                 pimpl_->cloneConversationFrom(conv, deviceId);
@@ -1910,7 +1910,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     }
     auto convId = conversation->id();
     auto conv = pimpl_->startConversation(convId);
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace(pimpl_->username_);
     if (!otherMember.empty())
@@ -2011,7 +2011,7 @@ ConversationModule::onMessageDisplayed(const std::string& peer,
                                        const std::string& interactionId)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::unique_lock<std::mutex> lk(conv->mtx);
+        std::unique_lock lk(conv->mtx);
         if (auto conversation = conv->conversation) {
             lk.unlock();
             return conversation->setMessageDisplayed(peer, interactionId);
@@ -2245,7 +2245,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
         }
 
         auto conv = pimpl_->startConversation(convInfo);
-        std::unique_lock<std::mutex> lk(conv->mtx);
+        std::unique_lock lk(conv->mtx);
         // Skip outdated info
         if (std::max(convInfo.created, convInfo.removed)
             < std::max(conv->info.created, conv->info.removed))
@@ -2307,7 +2307,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
             JAMI_WARNING("Detected request from ourself, ignore {}.", convId);
             continue;
         }
-        std::unique_lock<std::mutex> lk(pimpl_->conversationsRequestsMtx_);
+        std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
         if (pimpl_->isConversation(convId)) {
             // Already handled request
             pimpl_->rmConversationRequest(convId);
@@ -2343,7 +2343,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     // Updates preferences for conversations
     for (const auto& [convId, p] : msg.p) {
         if (auto conv = pimpl_->getConversation(convId)) {
-            std::unique_lock<std::mutex> lk(conv->mtx);
+            std::unique_lock lk(conv->mtx);
             if (conv->conversation) {
                 auto conversation = conv->conversation;
                 lk.unlock();
@@ -2357,7 +2357,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
     // Updates displayed for conversations
     for (const auto& [convId, ms] : msg.ms) {
         if (auto conv = pimpl_->getConversation(convId)) {
-            std::unique_lock<std::mutex> lk(conv->mtx);
+            std::unique_lock lk(conv->mtx);
             if (conv->conversation) {
                 auto conversation = conv->conversation;
                 lk.unlock();
@@ -2424,7 +2424,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
         return;
     }
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
 
     if (conv->conversation->isMember(contactUri, true)) {
         JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUri, conversationId);
@@ -2440,7 +2440,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
         contactUri,
         [this, conv, conversationId, sendRequest, contactUri](bool ok, const std::string& commitId) {
             if (ok) {
-                std::unique_lock<std::mutex> lk(conv->mtx);
+                std::unique_lock lk(conv->mtx);
                 pimpl_->sendMessageNotification(*conv->conversation,
                                                 true,
                                                 commitId); // For the other members
@@ -2496,7 +2496,7 @@ ConversationModule::search(uint32_t req, const std::string& convId, const Filter
 {
     if (convId.empty()) {
         auto finishedFlag = std::make_shared<std::atomic_int>(pimpl_->conversations_.size());
-        std::unique_lock<std::mutex> lk(pimpl_->conversationsMtx_);
+        std::unique_lock lk(pimpl_->conversationsMtx_);
         for (const auto& [cid, conv] : pimpl_->conversations_) {
             std::lock_guard lk(conv->mtx);
             if (!conv->conversation) {
@@ -2563,7 +2563,7 @@ ConversationModule::setConversationPreferences(const std::string& conversationId
                                                const std::map<std::string, std::string>& prefs)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::unique_lock<std::mutex> lk(conv->mtx);
+        std::unique_lock lk(conv->mtx);
         if (not conv->conversation) {
             JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
             return;
@@ -2814,7 +2814,7 @@ ConversationModule::call(const std::string& url,
     auto conv = pimpl_->getConversation(conversationId);
     if (!conv)
         return;
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
     if (!conv->conversation) {
         JAMI_ERROR("Conversation {:s} not found", conversationId);
         return;
@@ -2916,7 +2916,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     auto conv = pimpl_->getConversation(conversationId);
     if (!conv)
         return;
-    std::unique_lock<std::mutex> lk(conv->mtx);
+    std::unique_lock lk(conv->mtx);
     if (!conv->conversation) {
         JAMI_ERROR("Conversation {} not found", conversationId);
         return;

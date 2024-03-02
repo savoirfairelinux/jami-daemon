@@ -197,7 +197,7 @@ VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
     if (!frame)
         return;
     bool detach = false;
-    std::unique_lock<std::mutex> lk(videoToStreamInfoMtx_);
+    std::unique_lock lk(videoToStreamInfoMtx_);
     auto it = videoToStreamInfo_.find(frame);
     if (it != videoToStreamInfo_.end()) {
         JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());

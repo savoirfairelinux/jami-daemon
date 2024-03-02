@@ -123,7 +123,7 @@ public:
 
     void addAudioOnlySource(const std::string& callId, const std::string& streamId)
     {
-        std::unique_lock<std::mutex> lk(audioOnlySourcesMtx_);
+        std::unique_lock lk(audioOnlySourcesMtx_);
         audioOnlySources_.insert({callId, streamId});
         lk.unlock();
         updateLayout();
@@ -131,7 +131,7 @@ public:
 
     void removeAudioOnlySource(const std::string& callId, const std::string& streamId)
     {
-        std::unique_lock<std::mutex> lk(audioOnlySourcesMtx_);
+        std::unique_lock lk(audioOnlySourcesMtx_);
         if (audioOnlySources_.erase({callId, streamId})) {
             lk.unlock();
             updateLayout();

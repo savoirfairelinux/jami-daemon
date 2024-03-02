@@ -183,7 +183,7 @@ void
 NameDirectoryTest::testRegisterName()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameRegistered {false};
@@ -204,7 +204,7 @@ void
 NameDirectoryTest::testLookupName()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameFound {false};
@@ -226,7 +226,7 @@ void
 NameDirectoryTest::testLookupNameInvalid()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameInvalid {false};
@@ -248,7 +248,7 @@ void
 NameDirectoryTest::testLookupNameNotFound()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameNotFound {false};
@@ -270,7 +270,7 @@ void
 NameDirectoryTest::testLookupAddr()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool addrFound {false};
@@ -292,7 +292,7 @@ void
 NameDirectoryTest::testLookupAddrInvalid()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool addrInvalid {false};
@@ -314,7 +314,7 @@ void
 NameDirectoryTest::testLookupAddrNotFound()
 {
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool addrNotFound {false};

@@ -64,12 +64,12 @@ struct Counter
     }
     bool wait(std::chrono::steady_clock::duration timeout)
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::unique_lock lock(mutex);
         return cv.wait_for(lock, timeout, [&] { return added == target; });
     }
     void wait()
     {
-        std::unique_lock<std::mutex> lock(mutex);
+        std::unique_lock lock(mutex);
         return cv.wait(lock, [&] { return added == target; });
     }
 };
@@ -522,7 +522,7 @@ RoutingTableTest::testSwarmManagerConnectingNodes_1b()
         {NodeId("053927d831827a9f7e606d4c9c9fe833922c0d35b3960dd2250085f46c0e4f41"),
          NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8")});
 
-    std::unique_lock<std::mutex> lk(mutex);
+    std::unique_lock lk(mutex);
     sm1->setKnownNodes(toTest);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&](){return tryConnect.size() != 0 && needSocketNodes.size() != 0;}));
 

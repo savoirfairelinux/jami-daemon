@@ -256,7 +256,7 @@ public:
     {
         std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
         std::mutex mtx;
-        std::unique_lock<std::mutex> lk {mtx};
+        std::unique_lock lk {mtx};
         std::condition_variable cv;
         std::atomic_bool accountsRemoved {false};
         confHandlers.insert(
@@ -453,7 +453,7 @@ MediaNegotiationTest::onIncomingCallWithMedia(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
@@ -483,7 +483,7 @@ MediaNegotiationTest::onIncomingCall(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCall::name));
 
@@ -515,7 +515,7 @@ MediaNegotiationTest::onMediaChangeRequested(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::MediaChangeRequested::name));
 
@@ -537,7 +537,7 @@ MediaNegotiationTest::onCallStateChange(const std::string& accountId,
     CPPUNIT_ASSERT(accountId == callData.accountId_);
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
@@ -575,7 +575,7 @@ MediaNegotiationTest::onVideoMuted(const std::string& callId, bool muted, CallDa
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::VideoMuted::name, muted ? "muted" : "un-muted"));
     }
@@ -610,7 +610,7 @@ MediaNegotiationTest::onMediaNegotiationStatus(const std::string& callId,
         return;
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
@@ -624,7 +624,7 @@ MediaNegotiationTest::waitForSignal(CallData& callData,
                                     const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
 
     // Combined signal + event (if any).
     std::string sigEvent(expectedSignal);

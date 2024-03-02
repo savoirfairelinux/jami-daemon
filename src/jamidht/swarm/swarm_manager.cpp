@@ -113,7 +113,7 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
 void
 SwarmManager::removeNode(const NodeId& nodeId)
 {
-    std::unique_lock<std::mutex> lk(mutex);
+    std::unique_lock lk(mutex);
     if (isConnectedWith(nodeId)) {
         removeNodeInternal(nodeId);
         lk.unlock();
@@ -164,7 +164,7 @@ void
 SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 {
     std::set<NodeId> nodes = toConnect;
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     auto& buckets = routing_table.getBuckets();
     for (auto it = buckets.begin(); it != buckets.end(); ++it) {
         auto& bucket = *it;
@@ -345,7 +345,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                               shared->addChannel(socket);
                               return true;
                           }
-                          std::unique_lock<std::mutex> lk(shared->mutex);
+                          std::unique_lock lk(shared->mutex);
                           auto bucket = shared->routing_table.findBucket(nodeId);
                           bucket->removeConnectingNode(nodeId);
                           bucket->addKnownNode(nodeId);

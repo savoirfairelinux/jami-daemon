@@ -278,7 +278,7 @@ std::shared_future<DeviceParams>
 AudioInput::switchInput(const std::string& resource)
 {
     // Always switch inputs, even if it's the same resource, so audio will be in sync with video
-    std::unique_lock<std::mutex> lk(resourceMutex_);
+    std::unique_lock lk(resourceMutex_);
 
     JAMI_DEBUG("Switching audio source from {} to {}", resource_, resource);
 

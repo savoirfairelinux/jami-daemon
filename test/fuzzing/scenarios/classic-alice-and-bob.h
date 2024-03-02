@@ -50,7 +50,7 @@ int main(void)
         std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
         std::atomic_bool callReceived {false};
         std::mutex mtx;
-        std::unique_lock<std::mutex> lk {mtx};
+        std::unique_lock lk {mtx};
         std::condition_variable cv;
 
         confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(

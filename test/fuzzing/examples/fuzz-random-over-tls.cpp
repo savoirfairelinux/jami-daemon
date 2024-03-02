@@ -38,7 +38,7 @@ init(void)
 {
         std::thread([&] {
 
-                std::unique_lock<std::mutex> lock(worker_lock);
+                std::unique_lock lock(worker_lock);
 
                 cv.wait(lock);
 

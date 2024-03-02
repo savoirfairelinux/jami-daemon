@@ -51,7 +51,7 @@ SchedulerTest::schedulerTest()
     constexpr unsigned N = 1024;
     std::mutex mtx;
     std::condition_variable cv;
-    std::unique_lock<std::mutex> lk(mtx);
+    std::unique_lock lk(mtx);
 
     std::atomic_uint64_t taskRun {0};
     std::atomic_uint64_t result {0};

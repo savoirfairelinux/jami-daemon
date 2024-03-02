@@ -275,7 +275,7 @@ MediaDemuxer::pushFrameFrom(
     bool isAudio,
     std::mutex& mutex)
 {
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock lock(mutex);
     if (buffer.empty()) {
         if (currentState_ == MediaDemuxer::CurrentState::Finished) {
             fileFinishedCb_(isAudio);

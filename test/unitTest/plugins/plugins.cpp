@@ -180,7 +180,7 @@ PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
         return;
     }
 
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
     callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
 
@@ -202,7 +202,7 @@ PluginsTest::onCallStateChange(const std::string& accountId,
     CPPUNIT_ASSERT(accountId == callData.accountId_);
 
     {
-        std::unique_lock<std::mutex> lock {callData.mtx_};
+        std::unique_lock lock {callData.mtx_};
         callData.signals_.emplace_back(
             CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
@@ -547,7 +547,7 @@ PluginsTest::waitForSignal(CallData& callData,
                             const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
-    std::unique_lock<std::mutex> lock {callData.mtx_};
+    std::unique_lock lock {callData.mtx_};
 
     // Combined signal + event (if any).
     std::string sigEvent(expectedSignal);
@@ -691,7 +691,7 @@ PluginsTest::testMessage()
     // end call
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
+    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
