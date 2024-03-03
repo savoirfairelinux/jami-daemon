@@ -2241,18 +2241,20 @@ JamiAccount::convModule(bool noCreation)
 
                     shared->connectionManager_->connectDevice(
                         DeviceId(deviceId),
-                        "git://" + deviceId + "/" + convId,
-                        [shared, cb, convId](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                        fmt::format("git://{}/{}", deviceId, convId),
+                        [shared, cb = std::move(cb), convId](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                              const DeviceId&) {
-                            if (socket) {
-                                socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
-                                    shared->convModule()->removeGitSocket(deviceId.toString(),
-                                                                          convId);
-                                });
-                                if (!cb(socket))
-                                    socket->shutdown();
-                            } else
-                                cb({});
+                            dht::ThreadPool::io().run([cb = std::move(cb), socket=std::move(socket)] {
+                                if (socket) {
+                                    socket->onShutdown([shared, deviceId = socket->deviceId(), convId] {
+                                        shared->convModule()->removeGitSocket(deviceId.toString(),
+                                                                            convId);
+                                    });
+                                    if (!cb(socket))
+                                        socket->shutdown();
+                                } else
+                                    cb({});
+                            });
                         },
                         false,
                         false,
@@ -2260,7 +2262,7 @@ JamiAccount::convModule(bool noCreation)
                 });
             },
             [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType) {
-                dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb, connectionType] {
+                dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb=std::move(cb), connectionType] {
                     auto shared = w.lock();
                     if (!shared)
                         return;
@@ -2276,7 +2278,7 @@ JamiAccount::convModule(bool noCreation)
                         shared->connectionManager_->connectDevice(
                             DeviceId(deviceId),
                             fmt::format("swarm://{}", convId),
-                            [w, cb](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                            [w, cb=std::move(cb)](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                     const DeviceId& deviceId) {
                                 if (socket) {
                                     auto shared = w.lock();
