@@ -1631,6 +1631,7 @@ JamiAccount::doRegister()
         || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION)
         return;
 
+    convModule();  // Init conv module before passing in trying
     setRegistrationState(RegistrationState::TRYING);
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnpCtrl_ or proxyServerCached_.empty()) {
@@ -1807,11 +1808,11 @@ void
 JamiAccount::doRegister_()
 {
     if (registrationState_ != RegistrationState::TRYING) {
-        JAMI_ERR("[Account %s] already registered", getAccountID().c_str());
+        JAMI_ERROR("[Account {}] already registered", getAccountID());
         return;
     }
 
-    JAMI_DBG("[Account %s] Starting account...", getAccountID().c_str());
+    JAMI_DEBUG("[Account {}] Starting account...", getAccountID());
     const auto& conf = config();
 
     try {
@@ -1819,8 +1820,8 @@ JamiAccount::doRegister_()
             throw std::runtime_error("No identity configured for this account.");
 
         if (dht_->isRunning()) {
-            JAMI_ERR("[Account %s] DHT already running (stopping it first).",
-                     getAccountID().c_str());
+            JAMI_ERROR("[Account {}] DHT already running (stopping it first).",
+                     getAccountID());
             dht_->join();
         }
 
@@ -1978,7 +1979,6 @@ JamiAccount::doRegister_()
                 publishPresence_);
         };
 
-        setRegistrationState(RegistrationState::TRYING);
         dht_->run(dhtPortUsed(), config, std::move(context));
 
         for (const auto& bootstrap : loadBootstrap())
@@ -2191,8 +2191,8 @@ JamiAccount::convModule(bool noCreation)
     if (noCreation)
         return convModule_.get();
     if (!accountManager() || currentDeviceId() == "") {
-        JAMI_ERR("[Account %s] Calling convModule() with an uninitialized account",
-                 getAccountID().c_str());
+        JAMI_ERROR("[Account {}] Calling convModule() with an uninitialized account",
+                 getAccountID());
         return nullptr;
     }
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
@@ -2361,7 +2361,7 @@ JamiAccount::onTextMessage(const std::string& id,
 void
 JamiAccount::loadConversation(const std::string& convId)
 {
-    if (auto cm = convModule(false))
+    if (auto cm = convModule(true))
         cm->loadSingleConversation(convId);
 }
 
@@ -2757,7 +2757,7 @@ JamiAccount::setIsComposing(const std::string& conversationUri, bool isWriting)
         return;
     }
 
-    if (auto cm = convModule(false)) {
+    if (auto cm = convModule(true)) {
         if (auto typer = cm->getTypers(conversationId)) {
             if (isWriting)
                 typer->addTyper(getUsername());
@@ -3531,7 +3531,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                 conversationId = matched_pattern[1];
             }
             if (!conversationId.empty()) {
-                if (auto cm = convModule(false)) {
+                if (auto cm = convModule(true)) {
                     if (auto typer = cm->getTypers(conversationId)) {
                         if (isComposing)
                             typer->addTyper(from);
