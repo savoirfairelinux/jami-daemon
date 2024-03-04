@@ -1075,6 +1075,10 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                 }
                 // Else we need to compute the status.
                 auto& cache = memberToStatus[member.uri];
+                if (cache == 0) {
+                    // Message is sending, sent or displayed
+                    cache = static_cast<int32_t>(libjami::Account::MessageStates::SENDING);
+                }
                 if (!messageReceived) {
                     // For loading previous messages, there is 3 cases. Last value cached is displayed, so is every previous commits
                     // Else, if last value is sent, we can compare to the last read commit to update the cache
@@ -1083,7 +1087,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                         if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
                             cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
                         }
-                    } else if (cache < static_cast<int32_t>(libjami::Account::MessageStates::SENDING)) { // SENDING or UNKNOWN
+                    } else if (cache <= static_cast<int32_t>(libjami::Account::MessageStates::SENDING)) { // SENDING or UNKNOWN
                         if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
                             cache = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
                         }
