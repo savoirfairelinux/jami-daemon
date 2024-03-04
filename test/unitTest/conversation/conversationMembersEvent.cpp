@@ -576,6 +576,8 @@ ConversationMembersEventTest::testAddOfflineMemberThenConnects()
     auto aliceMsgSize = aliceData.messages.size();
     libjami::addConversationMember(aliceId, convId, carlaUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&] { return carlaData.requestReceived; }));
+
     JAMI_ERROR("@@@ WAIT {}", aliceData.conversationId);
     Manager::instance().sendRegister(carlaId, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return carlaData.requestReceived; }));
@@ -609,7 +611,7 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
     CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
 
     Manager::instance().sendRegister(aliceId, true); // This avoid to sync immediately
-    JAMI_ERROR("@@@ WAIT {}", bobData.conversationId);
+    JAMI_ERROR("@@@ WAIT {}", aliceData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return !bobData.conversationId.empty(); }));
 }
 
