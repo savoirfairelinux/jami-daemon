@@ -568,25 +568,27 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         onNeedSocket_(
             conversationId,
             deviceId,
-            [this,
+            [w = weak(),
              conv,
              conversationId = std::move(conversationId),
              peer = std::move(peer),
              deviceId = std::move(deviceId),
              commitId = std::move(commitId)](const auto& channel) {
-                std::lock_guard lk(conv->mtx);
-                // auto conversation = conversations_.find(conversationId);
-                auto acc = account_.lock();
-                if (!channel || !acc || !conv->conversation) {
+                auto sthis = w.lock();
+                auto acc = sthis ? sthis->account_.lock() : nullptr;
+                std::unique_lock lk(conv->mtx);
+                auto conversation = conv->conversation;
+                if (!channel || !acc || !conversation) {
                     conv->stopFetch(deviceId);
-                    syncCnt.fetch_sub(1);
+                    if (sthis) sthis->syncCnt.fetch_sub(1);
                     return false;
                 }
-                conv->conversation->addGitSocket(channel->deviceId(), channel);
-                conv->conversation->sync(
+                conversation->addGitSocket(channel->deviceId(), channel);
+                lk.unlock();
+                conversation->sync(
                     peer,
                     deviceId,
-                    [w = weak(),
+                    [w,
                      conv,
                      conversationId = std::move(conversationId),
                      peer = std::move(peer),
