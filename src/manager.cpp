@@ -3072,7 +3072,7 @@ Manager::loadAccountAndConversation(const std::string& accountId,
         auto accountBaseDir = fileutils::get_data_dir();
         auto configFile = accountBaseDir / accountId / "config.yml";
         try {
-            if (account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountId)) {
+            if ((account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountId))) {
                 account->enableAutoLoadConversations(false);
                 auto configNode = YAML::LoadFile(configFile.string());
                 auto config = account->buildConfig();
