@@ -548,7 +548,6 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 }
             }
         }
-
         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
     } else if (n == 1) {
         // this call is the last participant, hence

@@ -301,8 +301,9 @@ public:
 
     /**
      * Attach host
+     * @param mediaList list of media to attach
      */
-    void attachHost();
+    void attachHost(const std::vector<libjami::MediaMap>& mediaList = {});
 
     /**
      * Detach local audio/video from the conference
@@ -319,7 +320,6 @@ public:
      */
     bool toggleRecording() override;
 
-    void switchInput(const std::string& input);
     void setActiveParticipant(const std::string& participant_id);
     void setActiveStream(const std::string& streamId, bool state);
     void setLayout(int layout);

@@ -472,4 +472,18 @@ RingBufferPool::setAudioMeterState(const std::string& id, bool state)
     }
 }
 
+std::string
+RingBufferPool::toString() const
+{
+    std::lock_guard lk(stateLock_);
+
+    std::string str;
+    for (const auto& [id, buffers] : readBindingsMap_) {
+        for (const auto rb: buffers) {
+            str += id + "->" + rb->getId() + "\n";
+        }
+    }
+    return str;
+}
+
 } // namespace jami

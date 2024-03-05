@@ -75,6 +75,8 @@ LocalRecorder::startRecording()
 
     // audio recording
     // create read offset in RingBuffer
+        JAMI_ERROR("@@@");
+
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
 
     audioInput_ = getAudioInput(path_);
