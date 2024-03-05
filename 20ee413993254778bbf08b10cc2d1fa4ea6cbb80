@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8c45b32f_accce75e",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 695,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-05T18:44:20Z",
+      "side": 1,
+      "message": "Here, you probably want to do a findCertificate from the accountManager to compare it to the certificate given. Cf jamiaccount (onChannelRequest). else for futher operation if no findCertificate is done, it will be not found",
+      "revId": "20ee413993254778bbf08b10cc2d1fa4ea6cbb80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
