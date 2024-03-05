@@ -76,7 +76,6 @@ Typers::addTyper(const std::string &typer, bool sendMessage)
                                                                                 convId_,
                                                                                 typer,
                                                                                 1);
-        return;
     }
     if (sendMessage) {
         // In this case we should emit for remote to update the timer
