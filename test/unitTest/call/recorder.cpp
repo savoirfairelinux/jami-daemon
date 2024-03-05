@@ -84,7 +84,7 @@ public:
     CallData bobCall {};
 
     std::mutex mtx;
-    std::unique_lock lk {mtx};
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
     std::string videoPath = "file://" + std::filesystem::absolute("media/test_video_file.mp4").string();

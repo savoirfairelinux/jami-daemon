@@ -105,7 +105,7 @@ public:
     UserData carlaData;
 
     std::mutex mtx;
-    std::unique_lock lk {mtx};
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
     void connectSignals();
@@ -718,9 +718,6 @@ ConversationRequestTest::testBanContactRestartAccount()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     auto aliceUri = aliceAccount->getUsername();
-    std::mutex mtx;
-    std::unique_lock lk {mtx};
-    std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool conversationReady = false, requestReceived = false, memberMessageGenerated = false;
     std::string convId = "";

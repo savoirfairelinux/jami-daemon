@@ -85,7 +85,7 @@ public:
     std::filesystem::path recv2Path {std::filesystem::current_path() / "RECV2"};
 
     std::mutex mtx;
-    std::unique_lock lk {mtx};
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
     void connectSignals();

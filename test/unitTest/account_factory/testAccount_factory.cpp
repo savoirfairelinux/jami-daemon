@@ -68,7 +68,7 @@ private:
     size_t initialAccounts;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock lk {mtx};
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 };
 

@@ -64,7 +64,7 @@ private:
     std::shared_ptr<MediaPlayer> mediaPlayer {};
 
     std::mutex mtx;
-    std::unique_lock lk {mtx};
+    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 };
 
