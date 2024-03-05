@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99309135_c7e8de43",
+        "filename": "contrib/src/natpmp/SHA512SUMS",
+        "patchSetId": 8
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-05T20:34:15Z",
+      "side": 1,
+      "message": "will check tomorrow, but also what do we want to do with pupnp?",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 1,
+        "endChar": 100
+      },
+      "revId": "bfb90e801de843194d4e94950fff102155b9a858",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
