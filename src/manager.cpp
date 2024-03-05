@@ -1726,6 +1726,7 @@ Manager::addAudio(Call& call)
     }
     pimpl_->audiodriver_->flushUrgent();
     getRingBufferPool().flushAllBuffers();
+    JAMI_ERROR("@@@ {}", getRingBufferPool().toString());
 }
 
 void

@@ -115,6 +115,8 @@ public:
     bool isAudioMeterActive(const std::string& id);
     void setAudioMeterState(const std::string& id, bool state);
 
+    std::string toString() const;
+
 private:
     NON_COPYABLE(RingBufferPool);
 

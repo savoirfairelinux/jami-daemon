@@ -2773,6 +2773,7 @@ ConversationModule::call(const std::string& url,
                          const std::vector<libjami::MediaMap>& mediaList,
                          std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&& cb)
 {
+    JAMI_ERROR("@@@ call()");
     std::string conversationId = "", confId = "", uri = "", deviceId = "";
     if (url.find('/') == std::string::npos) {
         conversationId = url;
@@ -2830,6 +2831,7 @@ ConversationModule::call(const std::string& url,
         || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {
         confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
         // TODO attach host with media list
+    JAMI_ERROR("@@@ host call()");
         hostConference(conversationId, confId, "");
         return {};
     }
@@ -2839,6 +2841,7 @@ ConversationModule::call(const std::string& url,
     auto& manager = Manager::instance();
     std::shared_ptr<SIPCall> call;
 
+    JAMI_ERROR("@@@new call()");
     // SIP allows sending empty invites, this use case is not used with Jami accounts.
     if (not mediaList.empty()) {
         call = manager.callFactory.newSipCall(account, Call::CallType::OUTGOING, mediaList);
@@ -2891,6 +2894,7 @@ ConversationModule::hostConference(const std::string& conversationId,
                                    const std::string& confId,
                                    const std::string& callId)
 {
+    JAMI_ERROR("@@@ HOST CONF {}", callId);
     auto acc = pimpl_->account_.lock();
     if (!acc)
         return;
