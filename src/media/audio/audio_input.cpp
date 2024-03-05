@@ -214,6 +214,8 @@ AudioInput::configureFilePlayback(const std::string& path,
         [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
     // have file audio mixed into the local buffer so it gets played
+        JAMI_ERROR("@@@");
+
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     // Bind to itself to be able to read from the ringbuffer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, id_);
@@ -230,6 +232,7 @@ AudioInput::configureFilePlayback(const std::string& path,
 void
 AudioInput::setPaused(bool paused)
 {
+        JAMI_ERROR("@@@");
     if (paused) {
         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
         deviceGuard_.reset();
@@ -268,6 +271,7 @@ AudioInput::initFile(const std::string& path)
     wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
 
     // have file audio mixed into the local buffer so it gets played
+        JAMI_ERROR("@@@");
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     decodingFile_ = true;
     deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);

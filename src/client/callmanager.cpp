@@ -446,7 +446,7 @@ switchInput(const std::string& accountId, const std::string& callId, const std::
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(callId)) {
-            conf->switchInput(resource);
+            JAMI_ERR("Use requestMediaChange");
             return true;
         } else if (auto call = account->getCall(callId)) {
             call->switchInput(resource);

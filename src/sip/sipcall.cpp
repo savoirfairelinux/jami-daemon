@@ -861,7 +861,7 @@ SIPCall::answer()
 void
 SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 {
-    std::lock_guard lk {callMutex_};
+    std::unique_lock lk {callMutex_};
     auto account = getSIPAccount();
     if (not account) {
         JAMI_ERR("No account detected");
@@ -995,6 +995,11 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     }
 
     setState(CallState::ACTIVE, ConnectionState::CONNECTED);
+
+    lk.unlock();
+
+    auto oldGuard = std::move(audioGuard);
+    audioGuard = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
 }
 
 void
