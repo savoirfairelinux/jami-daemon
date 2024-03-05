@@ -2760,9 +2760,9 @@ JamiAccount::setIsComposing(const std::string& conversationUri, bool isWriting)
     if (auto cm = convModule(true)) {
         if (auto typer = cm->getTypers(conversationId)) {
             if (isWriting)
-                typer->addTyper(getUsername());
+                typer->addTyper(getUsername(), true);
             else
-                typer->removeTyper(getUsername());
+                typer->removeTyper(getUsername(), true);
         }
     }
 }

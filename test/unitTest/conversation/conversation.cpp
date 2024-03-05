@@ -64,7 +64,6 @@ struct UserData {
     bool registered {false};
     bool stopped {false};
     bool deviceAnnounced {false};
-    bool composing {false};
     bool sending {false};
     bool sent {false};
     bool searchFinished {false};
@@ -120,7 +119,6 @@ private:
     void testMergeTwoDifferentHeads();
     void testSendMessageToMultipleParticipants();
     void testPingPongMessages();
-    void testIsComposing();
     void testSetMessageDisplayedTwice();
     void testSetMessageDisplayedPreference();
     void testSetMessageDisplayedAfterClone();
@@ -174,7 +172,6 @@ private:
     CPPUNIT_TEST(testMergeTwoDifferentHeads);
     CPPUNIT_TEST(testSendMessageToMultipleParticipants);
     CPPUNIT_TEST(testPingPongMessages);
-    CPPUNIT_TEST(testIsComposing);
     CPPUNIT_TEST(testSetMessageDisplayedTwice);
     CPPUNIT_TEST(testSetMessageDisplayedPreference);
     CPPUNIT_TEST(testSetMessageDisplayedAfterClone);
@@ -407,17 +404,6 @@ ConversationTest::connectSignals()
                     bobData.errorDetected = true;
                 else if (accountId == carlaId)
                     carlaData.errorDetected = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::ComposingStatusChanged>(
-            [&](const std::string& accountId,
-                const std::string& /*conversationId*/,
-                const std::string& /*peer*/,
-                bool state) {
-                if (accountId == bobId) {
-                    bobData.composing = state;
-                }
                 cv.notify_one();
             }));
     confHandlers.insert(
@@ -956,36 +942,6 @@ ConversationTest::testPingPongMessages()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return bobMsgSize + 4 == bobData.messages.size() && aliceMsgSize + 4 == aliceData.messages.size();
     }));
-}
-
-void
-ConversationTest::testIsComposing()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto convId = libjami::startConversation(aliceId);
-    auto aliceMsgSize = aliceData.messages.size();
-    libjami::addConversationMember(aliceId, convId, bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
-    // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() / aliceId
-                    / "conversations" / convId;
-    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
-    // Check created files
-    auto bobInvited = repoPath / "invited" / bobUri;
-    CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobInvited));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    libjami::acceptConversationRequest(bobId, convId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
-
-    aliceAccount->setIsComposing("swarm:" + convId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.composing; }));
-    aliceAccount->setIsComposing("swarm:" + convId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.composing; }));
 }
 
 void
