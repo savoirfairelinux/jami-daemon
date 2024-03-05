@@ -596,7 +596,8 @@ ConversationMembersEventTest::testAddAcceptOfflineThenConnects()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
-    auto convId = libjami::startConversation(aliceId);
+    libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return !aliceData.conversationId.empty(); }));
 
     libjami::addConversationMember(aliceId, aliceData.conversationId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&] { return bobData.requestReceived; }));
