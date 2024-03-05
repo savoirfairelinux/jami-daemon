@@ -2829,8 +2829,7 @@ ConversationModule::call(const std::string& url,
     if (!sendCallRequest
         || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {
         confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
-        // TODO attach host with media list
-        hostConference(conversationId, confId, "");
+        hostConference(conversationId, confId, "", mediaList);
         return {};
     }
 
@@ -2889,7 +2888,8 @@ ConversationModule::call(const std::string& url,
 void
 ConversationModule::hostConference(const std::string& conversationId,
                                    const std::string& confId,
-                                   const std::string& callId)
+                                   const std::string& callId,
+                                   const std::vector<libjami::MediaMap>& mediaList)
 {
     auto acc = pimpl_->account_.lock();
     if (!acc)
@@ -2913,7 +2913,7 @@ ConversationModule::hostConference(const std::string& conversationId,
         conf->addSubCall(callId);
 
     if (callId.empty()) // TODO use mediaList
-        conf->attachHost();
+        conf->attachHost(mediaList);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, confId);
@@ -2948,8 +2948,8 @@ ConversationModule::hostConference(const std::string& conversationId,
                                                                                    true,
                                                                                    commitId);
                                            } else {
-                                               JAMI_ERR("Failed to send message to conversation %s",
-                                                        conversationId.c_str());
+                                               JAMI_ERROR("Failed to send message to conversation {}",
+                                                        conversationId);
                                            }
                                        });
 

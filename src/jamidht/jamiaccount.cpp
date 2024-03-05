@@ -511,7 +511,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             confId = currentCalls[0]["id"];
             isNotHosting = false;
         } else {
-            confId = callId;
+            confId = Manager::instance().callFactory.getNewCallID();
             JAMI_DEBUG("No active call to join, create conference");
         }
     }
@@ -561,6 +561,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             createDefaultMediaList(call->hasVideo(), true, true));
     }
     Manager::instance().answerCall(*call, currentMediaList);
+    // TODO REPLACE PER call->answer(currentMediaList);
 
     if (isNotHosting) {
         JAMI_DEBUG("Creating conference for swarm {} with id {}", conversationId, confId);
@@ -568,7 +569,6 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         convModule()->hostConference(conversationId, confId, callId);
     } else {
         JAMI_DEBUG("Adding participant {} for swarm {} with id {}", callId, conversationId, confId);
-        Manager::instance().addAudio(*call);
         conf->addSubCall(callId);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
                                                            conf->getConfId(),
