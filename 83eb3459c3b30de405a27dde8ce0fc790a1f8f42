@@ -33,6 +33,24 @@
       "message": "Wait, it seems that I have a bug. Need to check.",
       "revId": "83eb3459c3b30de405a27dde8ce0fc790a1f8f42",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7db12b59_9823ce3f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-03-06T15:43:02Z",
+      "side": 1,
+      "message": "No, that\u0027s good, false positive 😊",
+      "parentUuid": "b095fdcc_049b63bf",
+      "revId": "83eb3459c3b30de405a27dde8ce0fc790a1f8f42",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
