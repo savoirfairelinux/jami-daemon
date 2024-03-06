@@ -1088,7 +1088,10 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                             cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
                         }
                     } else if (cache <= static_cast<int32_t>(libjami::Account::MessageStates::SENDING)) { // SENDING or UNKNOWN
-                        if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
+                        // cache can be upgraded to displayed or sent
+                        if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
+                            cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
+                        } else if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
                             cache = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
                         }
                     }
