@@ -84,10 +84,12 @@ public:
 private:
     void testSyncFetch();
     void testSyncAfterDisconnection();
+    void testDisplayedOnLoad();
 
     CPPUNIT_TEST_SUITE(ConversationFetchSentTest);
     CPPUNIT_TEST(testSyncFetch);
     CPPUNIT_TEST(testSyncAfterDisconnection);
+    CPPUNIT_TEST(testDisplayedOnLoad);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -171,6 +173,19 @@ ConversationFetchSentTest::connectSignals()
                 }
                 cv.notify_one();
             }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
+        [&](uint32_t, const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::vector<libjami::SwarmMessage> messages) {
+            if (accountId == aliceId) {
+                aliceData.messages.insert(aliceData.messages.end(), messages.begin(), messages.end());
+            } else if (accountId == bobId) {
+                bobData.messages.insert(bobData.messages.end(), messages.begin(), messages.end());
+            } else if (accountId == bob2Id) {
+                bob2Data.messages.insert(bob2Data.messages.end(), messages.begin(), messages.end());
+            }
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -465,6 +480,64 @@ ConversationFetchSentTest::testSyncFetch()
     CPPUNIT_ASSERT(getMsgStatus(bobData, msgId5, aliceUri) == libjami::Account::MessageStates::UNKNOWN);
     CPPUNIT_ASSERT(getMsgStatus(bobData, msgId6, aliceUri) == libjami::Account::MessageStates::UNKNOWN);
 }
+
+void
+ConversationFetchSentTest::testDisplayedOnLoad()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+
+    // Create conversation between alice and bob
+    aliceAccount->addContact(bobUri);
+    aliceAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty(); }));
+
+    std::this_thread::sleep_for(5s); // Wait for all join messages to be received
+
+    // bob send 2 messages
+    auto aliceMsgSize = aliceData.messages.size(), bobMsgSize = bobData.messages.size();
+    libjami::sendMessage(bobId, bobData.conversationId, "1"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.messages.size() == aliceMsgSize + 1
+                && bobData.messages.size() == bobMsgSize + 1; }));
+    auto msgId1 = aliceData.messages.rbegin()->id;
+    auto getMsgStatus = [&](const auto& data, const auto& id, const auto& peer) {
+        for (const auto& msg : data.messages) {
+            if (msg.id == id && msg.status.find(peer) != msg.status.end()) {
+                return static_cast<libjami::Account::MessageStates>(msg.status.at(peer));
+            }
+        }
+        return libjami::Account::MessageStates::UNKNOWN;
+    };
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::SENT; }));
+    libjami::sendMessage(bobId, bobData.conversationId, "2"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 2
+                                                    && bobData.messages.size() == bobMsgSize + 2;}));
+    auto msgId2 = aliceData.messages.rbegin()->id;
+
+    // Second message is set to displayed by alice
+    aliceAccount->setMessageDisplayed("swarm:" + aliceData.conversationId, msgId2, 3);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
+                                                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED; }));
+
+    bobAccount->convModule()->loadConversations(); // Reset data
+    bobData.messages.clear();
+    // Load messages, messages should be displayed
+    CPPUNIT_ASSERT(getMsgStatus(bobData, msgId1, aliceUri) != libjami::Account::MessageStates::DISPLAYED);
+    libjami::loadConversation(bobId, bobData.conversationId, "", 0);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return getMsgStatus(bobData, msgId1, aliceUri) == libjami::Account::MessageStates::DISPLAYED
+                                                && getMsgStatus(bobData, msgId2, aliceUri) == libjami::Account::MessageStates::DISPLAYED; }));
+
+}
+
 
 } // namespace test
 } // namespace jami
