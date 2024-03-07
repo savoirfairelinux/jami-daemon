@@ -95,6 +95,7 @@ public:
     void testAddConversationNoPresenceThenConnects();
     void testRequestBigPayload();
     void testBothRemoveReadd();
+    void doNotLooseMetadata();
     std::string aliceId;
     UserData aliceData;
     std::string bobId;
@@ -137,6 +138,7 @@ private:
     CPPUNIT_TEST(testAddConversationNoPresenceThenConnects);
     CPPUNIT_TEST(testRequestBigPayload);
     CPPUNIT_TEST(testBothRemoveReadd);
+    CPPUNIT_TEST(doNotLooseMetadata);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1148,6 +1150,40 @@ ConversationRequestTest::testBothRemoveReadd()
         return !aliceData.conversationId.empty() && bobData.conversationId == aliceData.conversationId; }));
 }
 
+void
+ConversationRequestTest::doNotLooseMetadata()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    libjami::startConversation(aliceId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.conversationId != ""; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    aliceAccount->convModule()->updateConversationInfos(aliceData.conversationId, {{"title", "My awesome swarm"}});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceMsgSize + 1 == aliceData.messages.size();
+    }));
+
+    libjami::addConversationMember(aliceId, aliceData.conversationId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    Manager::instance().sendRegister(aliceId, false);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.stopped; }));
+
+    libjami::acceptConversationRequest(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.conversationId != ""; }));
+
+    // Force reset
+    bobAccount->convModule()->loadConversations();
+    auto infos = libjami::conversationInfos(bobId, aliceData.conversationId);
+    CPPUNIT_ASSERT(infos["syncing"] == "true");
+    CPPUNIT_ASSERT(infos["title"] == "My awesome swarm");
+}
 
 } // namespace test
 } // namespace jami
