@@ -385,6 +385,29 @@ public:
     void cloneConversationFrom(const std::string& conversationId,
                                const std::string& uri,
                                const std::string& oldConvId = "");
+
+    // While syncing, we do not want to lose avatar/title and mode<
+    std::map<std::string, std::map<std::string, std::string>> syncingMd_;
+    void saveMd() {
+        auto path = fileutils::get_data_dir() / accountId_;
+        std::ofstream file(path / "syncingMd", std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, syncingMd_);
+    }
+
+    void loadMd() {
+        try {
+            // read file
+            auto path = fileutils::get_data_dir() / accountId_;
+            std::lock_guard lock(dhtnet::fileutils::getFileLock(path / "syncingMd"));
+            auto file = fileutils::loadFile("syncingMd", path);
+            // load values
+            msgpack::unpacked result;
+            msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
+            result.get().convert(syncingMd_);
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[ConversationModule] error loading syncingMd_: {}", e.what());
+        }
+    }
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -410,6 +433,7 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
                 username_ = info->accountId;
     }
     conversationsRequests_ = convRequests(accountId_);
+    loadMd();
 }
 
 void
@@ -744,6 +768,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             conversation->updatePreferences(preferences);
         if (!status.empty())
             conversation->updateMessageStatus(status);
+        syncingMd_.erase(conversationId);
+        saveMd();
 
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -1568,6 +1594,20 @@ ConversationModule::loadConversations()
                          .emplace(info.id, std::make_shared<SyncedConversation>(info))
                          .first;
         }
+        if (info.id == "3ce3c4404665d5b0f41df311cf0b8135bf43f63c") {
+            auto root = info.toJson();
+
+            Json::StreamWriterBuilder wbuilder;
+            wbuilder["commentStyle"] = "None";
+            wbuilder["indentation"] = "";
+            JAMI_ERROR("@@@ {}", Json::writeString(wbuilder, root));
+
+             std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
+            auto it = pimpl_->conversationsRequests_.find(info.id);
+            if (it != pimpl_->conversationsRequests_.end()) {
+                JAMI_ERROR("@@@ {}", Json::writeString(wbuilder, it->second.toJson()));
+            }
+        }
         if (itConv != pimpl_->conversations_.end() && itConv->second && itConv->second->conversation
             && info.isRemoved())
             itConv->second->conversation->setRemovingFlag();
@@ -1850,6 +1890,11 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
                      conversationId);
         return;
     }
+    auto& md = pimpl_->syncingMd_[conversationId];
+    md = request->metadatas;
+    md["syncing"] = "true";
+    md["created"] = std::to_string(request->received);
+    pimpl_->saveMd();
     pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
     if (pimpl_->updateConvReqCb_)
@@ -2549,10 +2594,22 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
     }
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
+        std::map<std::string, std::string> md;
+        {
+            auto syncingMetadatasIt = pimpl_->syncingMd_.find(conversationId);
+            if (syncingMetadatasIt != pimpl_->syncingMd_.end()) {
+                if (conv->conversation) {
+                    pimpl_->syncingMd_.erase(syncingMetadatasIt);
+                    pimpl_->saveMd();
+                } else {
+                    md = syncingMetadatasIt->second;
+                }
+            }
+        }
         if (conv->conversation)
             return conv->conversation->infos();
         else
-            return {{"syncing", "true"}, {"created", std::to_string(conv->info.created)}};
+            return md;
     }
     JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
     return {};
