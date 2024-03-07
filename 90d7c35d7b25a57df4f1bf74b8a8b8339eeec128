@@ -16,6 +16,24 @@
       "message": "TODO sync",
       "revId": "90d7c35d7b25a57df4f1bf74b8a8b8339eeec128",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ee1fd294_c97ed19a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-07T18:45:50Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ace7197c_96d648a5",
+      "revId": "90d7c35d7b25a57df4f1bf74b8a8b8339eeec128",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
