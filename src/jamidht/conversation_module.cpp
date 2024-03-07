@@ -326,6 +326,14 @@ public:
     void rmConversationRequest(const std::string& id)
     {
         // conversationsRequestsMtx_ MUST BE LOCKED
+        auto it = conversationsRequests_.find(id);
+        if (it != conversationsRequests_.end()) {
+            auto& md = syncingMetadatas_[id];
+            md = it->second.metadatas;
+            md["syncing"] = "true";
+            md["created"] = std::to_string(it->second.received);
+        }
+        saveMetadatas();
         conversationsRequests_.erase(id);
         saveConvRequests();
     }
@@ -385,6 +393,29 @@ public:
     void cloneConversationFrom(const std::string& conversationId,
                                const std::string& uri,
                                const std::string& oldConvId = "");
+
+    // While syncing, we do not want to lose metadata (avatar/title and mode)
+    std::map<std::string, std::map<std::string, std::string>> syncingMetadatas_;
+    void saveMetadatas() {
+        auto path = fileutils::get_data_dir() / accountId_;
+        std::ofstream file(path / "syncingMetadatas", std::ios::trunc | std::ios::binary);
+        msgpack::pack(file, syncingMetadatas_);
+    }
+
+    void loadMetadatas() {
+        try {
+            // read file
+            auto path = fileutils::get_data_dir() / accountId_;
+            std::lock_guard lock(dhtnet::fileutils::getFileLock(path / "syncingMetadatas"));
+            auto file = fileutils::loadFile("syncingMetadatas", path);
+            // load values
+            msgpack::unpacked result;
+            msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
+            result.get().convert(syncingMetadatas_);
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[ConversationModule] error loading syncingMetadatas_: {}", e.what());
+        }
+    }
 };
 
 ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
@@ -410,6 +441,7 @@ ConversationModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account,
                 username_ = info->accountId;
     }
     conversationsRequests_ = convRequests(accountId_);
+    loadMetadatas();
 }
 
 void
@@ -473,10 +505,8 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                  accountId_,
                  conv->info.id,
                  deviceId);
-        conv->info.created = std::time(nullptr);
         conv->info.members.emplace(username_);
-        if (peerUri != username_)
-            conv->info.members.emplace(peerUri);
+        conv->info.members.emplace(peerUri);
         addConvInfo(conv->info);
     } else {
         JAMI_DEBUG("[Account {}] Already have conversation {}", accountId_, conv->info.id);
@@ -744,6 +774,8 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             conversation->updatePreferences(preferences);
         if (!status.empty())
             conversation->updateMessageStatus(status);
+        syncingMetadatas_.erase(conversationId);
+        saveMetadatas();
 
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -839,6 +871,8 @@ ConversationModule::Impl::declineOtherConversationWith(const std::string& uri) n
         if (request.isOneToOne() && request.from == uri) {
             JAMI_WARNING("Decline conversation request ({}) from {}", id, uri);
             request.declined = std::time(nullptr);
+            syncingMetadatas_.erase(id);
+            saveMetadatas();
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(accountId_, id);
         }
     }
@@ -1866,6 +1900,8 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
         it->second.declined = std::time(nullptr);
         pimpl_->saveConvRequests();
     }
+    pimpl_->syncingMetadatas_.erase(conversationId);
+    pimpl_->saveMetadatas();
     emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                          conversationId);
     pimpl_->needsSyncingCb_({});
@@ -2325,6 +2361,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                      pimpl_->accountId_,
                      convId,
                      deviceId);
+            pimpl_->syncingMetadatas_.erase(convId);
+            pimpl_->saveMetadatas();
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                                  convId);
             continue;
@@ -2549,10 +2587,22 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
     }
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
+        std::map<std::string, std::string> md;
+        {
+            auto syncingMetadatasIt = pimpl_->syncingMetadatas_.find(conversationId);
+            if (syncingMetadatasIt != pimpl_->syncingMetadatas_.end()) {
+                if (conv->conversation) {
+                    pimpl_->syncingMetadatas_.erase(syncingMetadatasIt);
+                    pimpl_->saveMetadatas();
+                } else {
+                    md = syncingMetadatasIt->second;
+                }
+            }
+        }
         if (conv->conversation)
             return conv->conversation->infos();
         else
-            return {{"syncing", "true"}, {"created", std::to_string(conv->info.created)}};
+            return md;
     }
     JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
     return {};
@@ -2647,6 +2697,8 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
              ++it) {
             if (it->second.from == uri && !it->second.declined) {
                 JAMI_DEBUG("Declining conversation request {:s} from {:s}", it->first, uri);
+                pimpl_->syncingMetadatas_.erase(it->first);
+                pimpl_->saveMetadatas();
                 emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(
                     pimpl_->accountId_, it->first);
                 update = true;
