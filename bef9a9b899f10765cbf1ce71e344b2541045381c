@@ -16,6 +16,24 @@
       "message": "remove",
       "revId": "bef9a9b899f10765cbf1ce71e344b2541045381c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "883f8560_afdcd8b2",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1611,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-07T20:38:05Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "337e946b_43a6371e",
+      "revId": "bef9a9b899f10765cbf1ce71e344b2541045381c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
