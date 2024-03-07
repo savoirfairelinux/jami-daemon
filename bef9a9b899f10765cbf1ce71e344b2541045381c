@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "337e946b_43a6371e",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1611,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-07T20:15:20Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "bef9a9b899f10765cbf1ce71e344b2541045381c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
