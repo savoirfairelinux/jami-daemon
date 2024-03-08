@@ -396,13 +396,15 @@ public:
 
     // While syncing, we do not want to lose metadata (avatar/title and mode)
     std::map<std::string, std::map<std::string, std::string>> syncingMetadatas_;
-    void saveMetadatas() {
+    void saveMetadatas()
+    {
         auto path = fileutils::get_data_dir() / accountId_;
         std::ofstream file(path / "syncingMetadatas", std::ios::trunc | std::ios::binary);
         msgpack::pack(file, syncingMetadatas_);
     }
 
-    void loadMetadatas() {
+    void loadMetadatas()
+    {
         try {
             // read file
             auto path = fileutils::get_data_dir() / accountId_;
@@ -567,7 +569,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
         if (conv->conversation->isRemoving()) {
-            JAMI_WARNING("[Account {}] Conversation {} is being removed", accountId_, conversationId);
+            JAMI_WARNING("[Account {}] Conversation {} is being removed",
+                         accountId_,
+                         conversationId);
             return;
         }
         if (!conv->conversation->isMember(peer, true)) {
@@ -610,7 +614,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                 auto conversation = conv->conversation;
                 if (!channel || !acc || !conversation) {
                     conv->stopFetch(deviceId);
-                    if (sthis) sthis->syncCnt.fetch_sub(1);
+                    if (sthis)
+                        sthis->syncCnt.fetch_sub(1);
                     return false;
                 }
                 conversation->addGitSocket(channel->deviceId(), channel);
@@ -907,8 +912,8 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
         try {
             if (conv.conversation->mode() == ConversationMode::ONE_TO_ONE) {
                 for (const auto& member : conv.conversation->getInitialMembers()) {
-                        auto account = account_.lock();
-                        if (member != account->getUsername()) {
+                    auto account = account_.lock();
+                    if (member != account->getUsername()) {
                         // Note: this can happen while re-adding a contact.
                         // In this case, check that we are removing the linked conversation.
                         if (conv.info.id == getOneToOneConversation(member)) {
@@ -1481,10 +1486,11 @@ ConversationModule::loadConversations()
                     msg->ms = {{repository, status}};
                     pimpl_->needsSyncingCb_(std::move(msg));
                 });
-                conv->onMembersChanged([w = pimpl_->weak_from_this(), repository](const auto& members) {
-                    if (auto p = w.lock())
-                        p->setConversationMembers(repository, members);
-                });
+                conv->onMembersChanged(
+                    [w = pimpl_->weak_from_this(), repository](const auto& members) {
+                        if (auto p = w.lock())
+                            p->setConversationMembers(repository, members);
+                    });
                 conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
                 auto members = conv->memberUris(acc->getUsername(), {});
                 // NOTE: The following if is here to protect against any incorrect state
@@ -1648,6 +1654,9 @@ ConversationModule::loadSingleConversation(const std::string& convId)
     JAMI_LOG("[Account {}] Start loading conversation {}", pimpl_->accountId_, convId);
 
     std::unique_lock lk(pimpl_->conversationsMtx_);
+    std::unique_lock ilk(pimpl_->convInfosMtx_);
+    // Load convInfos to retrieve requests that have been accepted but not yet synchronized.
+    pimpl_->convInfos_ = convInfos(pimpl_->accountId_);
     pimpl_->conversations_.clear();
 
     try {
@@ -1663,6 +1672,35 @@ ConversationModule::loadSingleConversation(const std::string& convId)
         JAMI_WARNING("[Account {}] Conversations not loaded: {}", pimpl_->accountId_, e.what());
     }
 
+    // Add all other conversations as dummy conversations to indicate their existence so
+    // isConversation could detect conversations correctly.
+    auto conversationsRepositoryIds = dhtnet::fileutils::readDirectory(
+        fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
+    for (auto repositoryId : conversationsRepositoryIds) {
+        if (repositoryId != convId) {
+            auto conv = std::make_shared<SyncedConversation>(convId);
+            pimpl_->conversations_.emplace(repositoryId, conv);
+        }
+    }
+
+    // Add conversations from convInfos_ so isConversation could detect conversations correctly.
+    // This includes conversations that have been accepted but are not yet synchronized.
+    for (auto itInfo = pimpl_->convInfos_.begin(); itInfo != pimpl_->convInfos_.end();) {
+        const auto& info = itInfo->second;
+        if (info.members.empty()) {
+            itInfo = pimpl_->convInfos_.erase(itInfo);
+            continue;
+        }
+        auto itConv = pimpl_->conversations_.find(info.id);
+        if (itConv == pimpl_->conversations_.end()) {
+            // convInfos_ can contain a conversation that is not yet cloned
+            // so we need to add it there.
+            pimpl_->conversations_.emplace(info.id, std::make_shared<SyncedConversation>(info)).first;
+        }
+        ++itInfo;
+    }
+
+    ilk.unlock();
     lk.unlock();
 }
 
@@ -1926,10 +1964,9 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
             msg->ms = {{conversationId, status}};
             pimpl_->needsSyncingCb_(std::move(msg));
         });
-        conversation->onMembersChanged(
-            [this, conversationId](const auto& members) {
-                pimpl_->setConversationMembers(conversationId, members);
-            });
+        conversation->onMembersChanged([this, conversationId](const auto& members) {
+            pimpl_->setConversationMembers(conversationId, members);
+        });
         conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
 #ifdef LIBJAMI_TESTABLE
         conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
@@ -2025,7 +2062,9 @@ ConversationModule::reactToMessage(const std::string& conversationId,
 }
 
 void
-ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t duration_ms, const std::string& reason)
+ConversationModule::addCallHistoryMessage(const std::string& uri,
+                                          uint64_t duration_ms,
+                                          const std::string& reason)
 {
     auto finalUri = uri.substr(0, uri.find("@ring.dht"));
     finalUri = finalUri.substr(0, uri.find("@jami.dht"));
@@ -2712,9 +2751,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
     }
     if (banned) {
         auto conversationId = getOneToOneConversation(uri);
-        pimpl_->withConversation(conversationId,
-                                [&](auto& conv) {
-                                    conv.shutdownConnections(); });
+        pimpl_->withConversation(conversationId, [&](auto& conv) { conv.shutdownConnections(); });
         return; // Keep the conversation in banned model but stop connections
     }
     // Remove related conversation
