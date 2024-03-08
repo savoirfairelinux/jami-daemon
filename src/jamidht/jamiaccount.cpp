@@ -1363,11 +1363,11 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                  id,
                  accountId = getAccountID(),
                  migrating](AccountManager::AuthError error, const std::string& message) {
-                    JAMI_WARN("[Account %s] Auth error: %d %s",
-                              accountId.c_str(),
+                    JAMI_WARNING("[Account {}] Auth error: {} {}",
+                              accountId,
                               (int) error,
-                              message.c_str());
-                    if ((id.first || migrating)
+                              message);
+                    if ((id.first || migrating || (message == "Invalid credentials provided!"))
                         && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
                         // In cast of a migration or manager connexion failure stop the migration
                         // and block the account
@@ -1386,7 +1386,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 callbacks);
         }
     } catch (const std::exception& e) {
-        JAMI_WARN("[Account %s] error loading account: %s", getAccountID().c_str(), e.what());
+        JAMI_WARNING("[Account {}] error loading account: {}", getAccountID(), e.what());
         accountManager_.reset();
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
@@ -2166,6 +2166,15 @@ JamiAccount::doRegister_()
         });
 
         if (!conf.managerUri.empty() && accountManager_) {
+            dynamic_cast<ServerAccountManager*>(accountManager_.get())
+                ->onNeedsMigration([this]() {
+                    editConfig([&](JamiAccountConfig& conf) {
+                        conf.receipt.clear();
+                        conf.receiptSignature.clear();
+                    });
+                    Migration::setState(accountID_, Migration::State::INVALID);
+                    setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                });
             dynamic_cast<ServerAccountManager*>(accountManager_.get())
                 ->syncBlueprintConfig([this](const std::map<std::string, std::string>& config) {
                     editConfig([&](JamiAccountConfig& conf) { conf.fromMap(config); });

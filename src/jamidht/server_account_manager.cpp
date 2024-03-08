@@ -103,13 +103,13 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
             url,
             body,
             [ctx, w](Json::Value json, const dht::http::Response& response) {
-                JAMI_DBG("[Auth] Got request callback with status code=%u",
-                            response.status_code);
+                JAMI_DEBUG("[Auth] Got request callback with status code={} {}",
+                            response.status_code, response.body);
                 auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
                 if (response.status_code == 0 || this_ == nullptr)
                     ctx->onFailure(AuthError::SERVER_ERROR, "Can't connect to server");
                 else if (response.status_code >= 400 && response.status_code < 500)
-                    ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
+                    ctx->onFailure(AuthError::INVALID_ARGUMENTS, "Invalid credentials provided!");
                 else if (response.status_code < 200 || response.status_code > 299)
                     ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
                 else {
@@ -223,9 +223,26 @@ ServerAccountManager::onAuthEnded(const Json::Value& json,
                          : (scopeStr == "USER"sv ? TokenScope::User : TokenScope::None);
         auto expires_in = json["expires_in"].asLargestUInt();
         auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
-        JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
+        JAMI_WARNING("[Auth] Got server response: {} {}", response.status_code, response.body);
         setToken(json["access_token"].asString(), scope, expiration);
     } else {
+        JAMI_WARNING("[Auth] Got server response: {} {}", response.status_code, response.body);
+        if (response.status_code == 401) {
+            // NOTE: we do not login every time to the server but retrieve a device token to use the account
+            // If authentificate device fails with 401 and invalid credentials
+            // it means that the device is revoked
+            Json::Value bodyJson;
+            std::string err;
+            auto bodyReader = std::unique_ptr<Json::CharReader>(
+                Json::CharReaderBuilder {}.newCharReader());
+            if (bodyReader->parse(response.body.data(),
+                response.body.data() + response.body.size(),
+                &bodyJson,
+                &err)) {
+                    if (bodyJson["error"].asString() == "Invalid credentials provided!" && onNeedsMigration_)
+                        onNeedsMigration_();
+                }
+        }
         authFailed(expectedScope, response.status_code);
     }
     clearRequest(response.request);

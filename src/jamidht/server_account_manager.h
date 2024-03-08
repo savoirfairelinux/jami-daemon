@@ -68,6 +68,10 @@ public:
                       std::string_view scheme, const std::string& password,
                       RegistrationCallback cb) override;
 
+    void onNeedsMigration(std::function<void()> cb) {
+        onNeedsMigration_ = std::move(cb);
+    }
+
 private:
     struct AuthContext
     {
@@ -120,6 +124,7 @@ private:
     void authFailed(TokenScope scope, int code);
     void authError(TokenScope scope);
     void onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope scope);
+    std::function<void()> onNeedsMigration_;
 
     void setToken(std::string token,
                   TokenScope scope,
