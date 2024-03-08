@@ -1663,6 +1663,17 @@ ConversationModule::loadSingleConversation(const std::string& convId)
         JAMI_WARNING("[Account {}] Conversations not loaded: {}", pimpl_->accountId_, e.what());
     }
 
+    // Add all other conversations as dummy conversations to indicate their existence.
+
+    auto conversationsRepositories = dhtnet::fileutils::readDirectory(
+                                                                      fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
+    for (auto repository : conversationsRepositories) {
+        if (repository != convId) {
+            auto conv =  std::make_shared<SyncedConversation>(convId);
+            pimpl_->conversations_.emplace(repository, conv);
+        }
+    }
+
     lk.unlock();
 }
 
