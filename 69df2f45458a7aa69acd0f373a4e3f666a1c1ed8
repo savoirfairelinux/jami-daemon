@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44a6af09_97401422",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-08T20:18:05Z",
+      "side": 1,
+      "message": "acceptConversationRequest() remove from req and add it to convInfos_/conversations_\n\ncf:\n\nConversationModule::acceptConversationRequest which calls cloneConversationFrom that will call \"auto conv \u003d startConversation(conversationId);\"\n\nSo this should not be necessary",
+      "range": {
+        "startLine": 311,
+        "startChar": 34,
+        "endLine": 318,
+        "endChar": 9
+      },
+      "revId": "69df2f45458a7aa69acd0f373a4e3f666a1c1ed8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
