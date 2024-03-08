@@ -22,6 +22,30 @@
       },
       "revId": "69df2f45458a7aa69acd0f373a4e3f666a1c1ed8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35690cf0_6e6dbe53",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-03-08T20:48:04Z",
+      "side": 1,
+      "message": "At this point, \u0027auto conv \u003d startConversation(conversationId);\u0027 adds it to \u0027conversations_\u0027, but is the conversation repository created? If we restart the app, \u0027conversations_\u0027 will be lost. As I understand, the repository is created in the \u0027onNeedSocket_\u0027 callback. But in general I do not have errors. If I accept request and close and reopen application it works well. It is only happens in. background that I receive invitations for conversation requests I already accepted but not synchronize yet",
+      "parentUuid": "44a6af09_97401422",
+      "range": {
+        "startLine": 311,
+        "startChar": 34,
+        "endLine": 318,
+        "endChar": 9
+      },
+      "revId": "69df2f45458a7aa69acd0f373a4e3f666a1c1ed8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
