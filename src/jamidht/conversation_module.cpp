@@ -308,6 +308,14 @@ public:
         // conversationsRequestsMtx_ MUST BE LOCKED
         if (isConversation(id))
             return false;
+        // check if request accepted but not sync yet
+        {
+            std::lock_guard lk(convInfosMtx_);
+            auto ci = convInfos_.find(id);
+            if (ci != convInfos_.end()) {
+                return false;
+            }
+        }
         auto it = conversationsRequests_.find(id);
         if (it != conversationsRequests_.end()) {
             // We only remove requests (if accepted) or change .declined
