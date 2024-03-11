@@ -20,6 +20,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ab675507_4ef8abb0",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1370,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T19:28:42Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 1370,
+        "startChar": 47,
+        "endLine": 1370,
+        "endChar": 94
+      },
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ac903332_5d8e0b4a",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 2
@@ -35,6 +58,53 @@
         "startLine": 2169,
         "startChar": 0,
         "endLine": 2177,
+        "endChar": 2
+      },
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "16dc4099_522e9d24",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2177,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T19:28:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ac903332_5d8e0b4a",
+      "range": {
+        "startLine": 2169,
+        "startChar": 0,
+        "endLine": 2177,
+        "endChar": 2
+      },
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a037b406_5c8eab1c",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T19:28:42Z",
+      "side": 1,
+      "message": "* could be moved to authFailed\n* should not depend on the response string",
+      "range": {
+        "startLine": 230,
+        "startChar": 0,
+        "endLine": 245,
         "endChar": 2
       },
       "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
