@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab3ac890_65a0cf23",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T18:50:06Z",
+      "side": 1,
+      "message": "already handled by authFailed",
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac903332_5d8e0b4a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2177,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T18:50:06Z",
+      "side": 1,
+      "message": "logic should be handled by the account manager API.\n\nIt should be already handled by the existing authentication mechanism",
+      "range": {
+        "startLine": 2169,
+        "startChar": 0,
+        "endLine": 2177,
+        "endChar": 2
+      },
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
