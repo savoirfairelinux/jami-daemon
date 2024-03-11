@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40a97f5a_959c74a0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T18:51:22Z",
+      "side": 1,
+      "message": "major design issue.",
+      "revId": "0e4e7b6a9a91682431b6222a291899b6aab5fe4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ab333e8_e49d9a05",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1705,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-03-11T18:51:22Z",
+      "side": 1,
+      "message": "?????",
+      "range": {
+        "startLine": 1675,
+        "startChar": 0,
+        "endLine": 1705,
+        "endChar": 2
+      },
+      "revId": "0e4e7b6a9a91682431b6222a291899b6aab5fe4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
