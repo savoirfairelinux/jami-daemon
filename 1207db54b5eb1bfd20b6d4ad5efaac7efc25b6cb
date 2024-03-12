@@ -118,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e7e6c196_2da322b5",
+        "filename": "contrib/src/ffmpeg/0001-libavdevice-pipewiregrab-add-pipewire-based-grab.patch",
+        "patchSetId": 19
+      },
+      "lineNbr": 327,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-12T14:51:33Z",
+      "side": 1,
+      "message": "I haven\u0027t had any async bugs with the most recent versions of the patch.",
+      "parentUuid": "9251bc50_bb063814",
+      "range": {
+        "startLine": 327,
+        "startChar": 11,
+        "endLine": 327,
+        "endChar": 20
+      },
+      "revId": "1207db54b5eb1bfd20b6d4ad5efaac7efc25b6cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ea5bd372_c92f445a",
@@ -273,6 +297,30 @@
       "side": 1,
       "message": "Not blocking for a merge, just some information to search",
       "parentUuid": "925a802a_3c965e78",
+      "range": {
+        "startLine": 440,
+        "startChar": 7,
+        "endLine": 440,
+        "endChar": 13
+      },
+      "revId": "1207db54b5eb1bfd20b6d4ad5efaac7efc25b6cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9d1eb9f9_e2df122e",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 440,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-12T14:51:33Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "16d1eeab_8f074ef9",
       "range": {
         "startLine": 440,
         "startChar": 7,
