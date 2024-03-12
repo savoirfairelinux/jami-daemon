@@ -25,6 +25,7 @@ libgit2: libgit2-v$(LIBGIT2_VERSION).tar.gz .sum-libgit2
 LIBGIT2_CONF = -DCMAKE_BUILD_TYPE=Release \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DBUILD_TESTS=OFF \
+		-DBUILD_CLI=OFF \
 		-DUSE_HTTPS=OFF \
 		-DCURL=OFF \
 		-DUSE_HTTP_PARSER=system \
