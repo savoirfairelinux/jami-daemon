@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "eb1e46c3_cb8a9354",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T14:33:14Z",
+      "side": 1,
+      "message": "If you look at patchset 28 you\u0027ll see I added a comment to explain this. I\u0027m not sure there\u0027s more we can do to fix it (cf. my messages about this on Mattermost from yesterday).",
+      "parentUuid": "df2710c8_d256c6ed",
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1af103eb_64fe76d9",
@@ -31,6 +49,30 @@
       "writtenOn": "2024-03-14T13:44:01Z",
       "side": 1,
       "message": "Are we supporting window capture in this release?",
+      "range": {
+        "startLine": 156,
+        "startChar": 5,
+        "endLine": 156,
+        "endChar": 20
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c6186d99_e757d104",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T14:33:14Z",
+      "side": 1,
+      "message": "Yes! That\u0027s the purpose of the \"capture_type\" option. You can try window capture with the following command:\nffplay -f lavfi -i pipewiregrab\u003dcapture_type\u003d2",
+      "parentUuid": "1af103eb_64fe76d9",
       "range": {
         "startLine": 156,
         "startChar": 5,
@@ -77,6 +119,30 @@
       "writtenOn": "2024-03-14T13:44:01Z",
       "side": 1,
       "message": "Do we really need this?",
+      "range": {
+        "startLine": 242,
+        "startChar": 66,
+        "endLine": 242,
+        "endChar": 77
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a39beea_aa8c64f2",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T14:33:14Z",
+      "side": 1,
+      "message": "We need this for Jami, and I think other developers will probably find it useful too if they try to integrate pipewiregrab into their application. Being able to pass the fd as an option means that the portal logic can be handled by the application instead of inside FFmpeg if desired, which makes certain things much easier to handle (e.g. cancelling a share while the portal popup is still open). In Jami\u0027s case it also eliminates some bugs that would otherwise have been hard to get rid of and improves performance when the user cancels.",
+      "parentUuid": "c5698af9_b249299c",
       "range": {
         "startLine": 242,
         "startChar": 66,
