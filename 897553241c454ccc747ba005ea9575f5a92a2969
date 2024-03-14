@@ -214,6 +214,30 @@
       },
       "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b4ae914c_7d0f08e5",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T15:24:19Z",
+      "side": 1,
+      "message": "I looked at the documentation and examples provided by PipeWire and I don\u0027t see anything that suggests that this check is necessary. I can try to investigate further if you tell me more about what corner case this was supposed to handle or why you thought it was needed, but otherwise I think I\u0027m going to leave it as is for now.",
+      "parentUuid": "057025db_614044f9",
+      "range": {
+        "startLine": 694,
+        "startChar": 5,
+        "endLine": 694,
+        "endChar": 27
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
