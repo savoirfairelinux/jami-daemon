@@ -1,0 +1,153 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df2710c8_d256c6ed",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "Lets try to fix this as this was one of the review comment from FFMPEG community.",
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1af103eb_64fe76d9",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "Are we supporting window capture in this release?",
+      "range": {
+        "startLine": 156,
+        "startChar": 5,
+        "endLine": 156,
+        "endChar": 20
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0355a122_d9d316d0",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "Remove METEDATA if it is not used.",
+      "range": {
+        "startLine": 165,
+        "startChar": 5,
+        "endLine": 165,
+        "endChar": 32
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5698af9_b249299c",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "Do we really need this?",
+      "range": {
+        "startLine": 242,
+        "startChar": 66,
+        "endLine": 242,
+        "endChar": 77
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "da45823e_6ee66684",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "initialization complete with error.",
+      "range": {
+        "startLine": 558,
+        "startChar": 5,
+        "endLine": 558,
+        "endChar": 73
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f194b0b5_3c167e8d",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "Let\u0027s check the performance impact if any.",
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "057025db_614044f9",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 694,
+      "author": {
+        "id": 1059
+      },
+      "writtenOn": "2024-03-14T13:44:01Z",
+      "side": 1,
+      "message": "This condition was added to handle a corner case. Please check if this is required.\n    /* only put buffer in queue when stream state is streaming */\n    state \u003d pw_stream_get_state (buffer-\u003epw_stream, NULL);\n    if (state \u003d\u003d PW_STREAM_STATE_STREAMING) {\n        pw_stream_queue_buffer(buffer-\u003epw_stream, buffer-\u003epw_buf);\n   }",
+      "range": {
+        "startLine": 694,
+        "startChar": 5,
+        "endLine": 694,
+        "endChar": 27
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
