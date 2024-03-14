@@ -106,6 +106,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f676b730_0557d448",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T16:54:57Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0355a122_d9d316d0",
+      "range": {
+        "startLine": 165,
+        "startChar": 5,
+        "endLine": 165,
+        "endChar": 32
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c5698af9_b249299c",
@@ -176,6 +200,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a6e44c47_5833c80b",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 558,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T16:54:57Z",
+      "side": 1,
+      "message": "There may or may not be an error at this point; I modified the comment to make this clearer.",
+      "parentUuid": "da45823e_6ee66684",
+      "range": {
+        "startLine": 558,
+        "startChar": 5,
+        "endLine": 558,
+        "endChar": 73
+      },
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f194b0b5_3c167e8d",
@@ -189,6 +237,24 @@
       "writtenOn": "2024-03-14T13:44:01Z",
       "side": 1,
       "message": "Let\u0027s check the performance impact if any.",
+      "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0aa53985_b62136a6",
+        "filename": "contrib/src/ffmpeg/pipewiregrab-source-filter.patch",
+        "patchSetId": 27
+      },
+      "lineNbr": 678,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-14T16:54:57Z",
+      "side": 1,
+      "message": "The whole frame processing logic (starting with ff_get_video_buffer and ending with av_frame_ref) was averaging 2.0 ms per frame. If you look at the most recent patchset, you\u0027ll see I modified the code to avoid creating a new AVFrame and instead directly copy the data into current_frame. That didn\u0027t change the performane though (still averaging 2.0 ms per frame). Let me know if you think that\u0027s acceptable or if you can think of a way to completely avoid doing a memcpy.",
+      "parentUuid": "f194b0b5_3c167e8d",
       "revId": "897553241c454ccc747ba005ea9575f5a92a2969",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
