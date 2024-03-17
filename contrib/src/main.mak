@@ -562,6 +562,7 @@ ifdef HAVE_WIN32
 endif
 ifdef HAVE_DARWIN_OS
 	echo "set(CMAKE_SYSTEM_NAME Darwin)" >> $@
+	echo "set(CMAKE_SYSTEM_PROCESSOR $(ARCH))" >> $@
 	echo "set(CMAKE_C_FLAGS \"$(CFLAGS)\")" >> $@
 	echo "set(CMAKE_CXX_FLAGS \"$(CXXFLAGS)\")" >> $@
 	echo "set(CMAKE_LD_FLAGS \"$(LDFLAGS)\")" >> $@

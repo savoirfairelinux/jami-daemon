@@ -20,7 +20,7 @@ case "$HOST" in
 		ARCH="ppc64"
 		;;
 	aarch64-*)
-	if $HAVE_IOS
+	if $HAVE_DARWIN_OS
 	then
 		ARCH="arm64"
 	else
