@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := f2cee8e9ce24746caa7dee1847829c526d340284
+OPENDHT_VERSION := 855da3cd42a491b49a05f71d07a34edc47843366
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -8,7 +8,7 @@ PKGS_FOUND += opendht
 endif
 
 # Avoid building distro-provided dependencies in case opendht was built manually
-DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio
+DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio llhttp
 
 OPENDHT_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_TESTING=Off \
@@ -22,6 +22,8 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 	$(call download,$(OPENDHT_URL))
 
 .sum-opendht: opendht-$(OPENDHT_VERSION).tar.gz
+	$(warning $@ not implemented)
+	touch $@
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
