@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
-SSL_VERSION := 3.7.0
+SSL_VERSION := 3.9.0
 LIBRESSL_VERSION := libressl-$(SSL_VERSION)
 LIBRESSL_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/$(LIBRESSL_VERSION).tar.gz
 
@@ -35,9 +35,9 @@ libressl: $(LIBRESSL_VERSION).tar.gz
 	$(MOVE)
 
 LIBRESSL_CONF := \
+	-DBUILD_SHARED_LIBS=Off 
 	-DLIBRESSL_TESTS=Off \
-	-DLIBRESSL_APPS=Off  \
-	-DDESTDIR=$(PREFIX)
+	-DLIBRESSL_APPS=Off
 
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),x86_64)
