@@ -1,6 +1,7 @@
 # RESTINIO
-RESTINIO_VERSION := bbaa034dbcc7555ce67df0f8a1475591a7441733
-RESTINIO_URL := https://github.com/aberaud/restinio/archive/$(RESTINIO_VERSION).tar.gz
+RESTINIO_VERSION := 0.7.2
+RESTINIO_URL := https://github.com/Stiffstream/restinio/releases/download/v.$(RESTINIO_VERSION)/restinio-$(RESTINIO_VERSION).tar.bz2
+EXPECTED_LITE_URL := https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp
 
 PKGS += restinio
 ifeq ($(call need_pkg,'restinio'),)
@@ -17,23 +18,27 @@ endif
 ifneq ($(call need_pkg,"fmt >= 5.3.0"),)
 DEPS_restinio += fmt
 endif
-DEPS_restinio += http_parser
+DEPS_restinio += llhttp
 
-RESTINIO_CMAKECONF = -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF -DRESTINIO_INSTALL_SAMPLES=OFF \
-					 -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF -DRESTINIO_FIND_DEPS=ON \
-					 -DRESTINIO_ALLOW_SOBJECTIZER=OFF -DRESTINIO_USE_BOOST_ASIO=none \
+RESTINIO_CMAKECONF = -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
+					-DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
+					-DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system \
 					 -DZLIB_LIBRARY="$(PREFIX)/lib" -DZLIB_INCLUDE_DIR="$(PREFIX)/include"
 
 $(TARBALLS)/restinio-$(RESTINIO_VERSION).tar.gz:
 	$(call download,$(RESTINIO_URL))
 
+$(TARBALLS)/expected.hpp:
+	$(call download,$(EXPECTED_LITE_URL))
+
 .sum-restinio: restinio-$(RESTINIO_VERSION).tar.gz
 
-restinio: restinio-$(RESTINIO_VERSION).tar.gz
+restinio: restinio-$(RESTINIO_VERSION).tar.gz expected.hpp
 	$(UNPACK)
-	#$(APPLY) $(SRC)/restinio/cmake.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
+	mkdir -p $(PREFIX)/include/nonstd
+	cp $(TARBALLS)/expected.hpp $(PREFIX)/include/nonstd/expected.hpp
 
 .restinio: restinio .sum-restinio
 	cd $</dev && $(HOSTVARS) $(CMAKE) $(RESTINIO_CMAKECONF) .
