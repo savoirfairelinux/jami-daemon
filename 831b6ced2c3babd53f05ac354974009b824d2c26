@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f6e64aeb_ba6078da",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1370,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-19T16:54:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ab675507_4ef8abb0",
+      "range": {
+        "startLine": 1370,
+        "startChar": 47,
+        "endLine": 1370,
+        "endChar": 94
+      },
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ac903332_5d8e0b4a",
@@ -101,6 +125,30 @@
       "writtenOn": "2024-03-11T19:28:42Z",
       "side": 1,
       "message": "* could be moved to authFailed\n* should not depend on the response string",
+      "range": {
+        "startLine": 230,
+        "startChar": 0,
+        "endLine": 245,
+        "endChar": 2
+      },
+      "revId": "831b6ced2c3babd53f05ac354974009b824d2c26",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c666de11_e01a5970",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-19T16:54:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a037b406_5c8eab1c",
       "range": {
         "startLine": 230,
         "startChar": 0,
