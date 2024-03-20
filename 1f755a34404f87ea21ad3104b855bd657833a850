@@ -16,6 +16,24 @@
       "message": "is there anything missing.\n\nDid you check that x11 is not broken too?",
       "revId": "1f755a34404f87ea21ad3104b855bd657833a850",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8bcbfb3c_44ce1f40",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 30
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-03-20T18:41:50Z",
+      "side": 1,
+      "message": "D-Bus support was missing but I added it in the latest patchset. I don\u0027t think anything else is missing.\n\nI tested on Ubuntu 23.10, Debian 12 and Fedora 39 and X11 sharing still works exactly as before as far as I can tell.",
+      "parentUuid": "536b970b_2bb21660",
+      "revId": "1f755a34404f87ea21ad3104b855bd657833a850",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
