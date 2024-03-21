@@ -72,10 +72,10 @@ index d7db46c2af..87204fec71 100644
  extern const AVFilter ff_vsrc_smptebars;
 diff --git a/libavfilter/vsrc_pipewiregrab.c b/libavfilter/vsrc_pipewiregrab.c
 new file mode 100644
-index 0000000000..1ab9a3bc2c
+index 0000000000..ff9c3468ab
 --- /dev/null
 +++ b/libavfilter/vsrc_pipewiregrab.c
-@@ -0,0 +1,1358 @@
+@@ -0,0 +1,1373 @@
 +/*
 + * PipeWire input grabber (ScreenCast)
 + * Copyright (C) 2024 Savoir-faire Linux, Inc.
@@ -597,6 +597,9 @@ index 0000000000..1ab9a3bc2c
 +    uint8_t *map = NULL;
 +    void *sdata = NULL;
 +    struct spa_meta_header *header = NULL;
++    struct spa_meta_region *frame_region;
++    uint32_t frame_width;
++    uint32_t frame_height;
 +    AVFilterContext *ctx = user_data;
 +    PipewireGrabContext *pw_ctx = NULL;
 +
@@ -651,9 +654,21 @@ index 0000000000..1ab9a3bc2c
 +        goto end;
 +    }
 +
++    if ((frame_region = spa_buffer_find_meta_data(spa_buf, SPA_META_VideoCrop,
++                                                  sizeof(*frame_region)))
++         && spa_meta_region_is_valid(frame_region)) {
++        frame_width = frame_region->region.size.width;
++        frame_height = frame_region->region.size.height;
++    } else {
++        frame_width = pw_ctx->width;
++        frame_height = pw_ctx->height;
++    }
++
 +    // Update current_frame with the new data
 +    pthread_mutex_lock(&pw_ctx->current_frame_mutex);
-+    memcpy(pw_ctx->current_frame->data[0], sdata, pw_ctx->frame_size);
++    memcpy(pw_ctx->current_frame->data[0], sdata, spa_buf->datas[0].chunk->size);
++    pw_ctx->current_frame->width = frame_width;
++    pw_ctx->current_frame->height = frame_height;
 +    pthread_mutex_unlock(&pw_ctx->current_frame_mutex);
 +
 +    // Cleanup
@@ -1236,6 +1251,7 @@ index 0000000000..1ab9a3bc2c
 +    pthread_mutex_init(&pw_ctx->pipewire_initialization_mutex, NULL);
 +    pthread_mutex_init(&pw_ctx->current_frame_mutex, NULL);
 +
++    pw_ctx->pipewire_node = pw_ctx->pipewire_external_node;
 +    if (pw_ctx->pipewire_fd == 0) {
 +        ret = portal_init_screencast(ctx);
 +        if (ret != 0) {
@@ -1244,7 +1260,6 @@ index 0000000000..1ab9a3bc2c
 +            return ret;
 +        }
 +    }
-+    pw_ctx->pipewire_node = pw_ctx->pipewire_external_node;
 +
 +    ret = play_pipewire_stream(ctx);
 +    if (ret != 0)

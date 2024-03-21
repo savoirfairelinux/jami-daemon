@@ -575,7 +575,6 @@ VideoDeviceImpl::getDeviceParams() const
     params.input = path;
     if (unique_id == DEVICE_DESKTOP) {
         const auto* env = std::getenv("WAYLAND_DISPLAY");
-        params.format = !env || strlen(env) == 0? "x11grab" : "pipewiregrab";
         if (!env || strlen(env) == 0) {
             params.format = "x11grab";
         } else {
