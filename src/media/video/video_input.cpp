@@ -460,6 +460,7 @@ VideoInput::initLinuxGrab(const std::string& display)
         pid_t pid = std::stol(display.substr(pidPos));
         int fd = std::stoi(display.substr(fdPos));
         if (pid != getpid()) {
+#ifdef SYS_pidfd_getfd
             // We can't directly use a file descriptor that was opened in a different
             // process, so we try to duplicate it in the current process.
             int pidfd = syscall(SYS_pidfd_open, pid, 0);
@@ -472,6 +473,10 @@ VideoInput::initLinuxGrab(const std::string& display)
                 JAMI_ERROR("Can't duplicate PipeWire fd: call to pidfd_getfd failed (errno = {})", errno);
                 return false;
             }
+#else
+            JAMI_ERROR("Can't duplicate PipeWire fd: pidfd_getfd syscall not available");
+            return false;
+#endif
         }
         p.fd = fd;
         p.node = display.substr(nodePos);
