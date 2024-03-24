@@ -267,6 +267,26 @@ public:
             c = std::make_shared<SyncedConversation>(info);
         return c;
     }
+    std::vector<std::shared_ptr<SyncedConversation>> getSyncedConversations() const
+    {
+        std::lock_guard lk(conversationsMtx_);
+        std::vector<std::shared_ptr<SyncedConversation>> result;
+        result.reserve(conversations_.size());
+        for (const auto& [_, c] : conversations_)
+            result.emplace_back(c);
+        return result;
+    }
+    std::vector<std::shared_ptr<Conversation>> getConversations() const
+    {
+        std::lock_guard lk(conversationsMtx_);
+        std::vector<std::shared_ptr<Conversation>> result;
+        result.reserve(conversations_.size());
+        for (const auto& [_, sc] : conversations_) {
+            if (auto c = sc->conversation)
+                result.emplace_back(std::move(c));
+        }
+        return result;
+    }
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
@@ -1348,8 +1368,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
     }
     auto conv = startConversation(conversationId);
     std::lock_guard lk(conv->mtx);
-    conv->info = {};
-    conv->info.id = conversationId;
+    conv->info = {conversationId};
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace(username_);
     conv->info.members.emplace(uri);
@@ -1431,10 +1450,8 @@ ConversationModule::onBootstrapStatus(
     const std::function<void(std::string, Conversation::BootstrapStatus)>& cb)
 {
     pimpl_->bootstrapCbTest_ = cb;
-    std::unique_lock lk(pimpl_->conversationsMtx_);
-    for (auto& [_, c] : pimpl_->conversations_)
-        if (c && c->conversation)
-            c->conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
+    for (auto& c : pimpl_->getConversations())
+        c->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 }
 #endif
 
@@ -1675,12 +1692,8 @@ ConversationModule::bootstrap(const std::string& convId)
 void
 ConversationModule::monitor()
 {
-    std::unique_lock lk(pimpl_->conversationsMtx_);
-    for (auto& [_, conv] : pimpl_->conversations_) {
-        if (conv && conv->conversation) {
-            conv->conversation->monitor();
-        }
-    }
+    for (auto& conv : pimpl_->getConversations())
+        conv->monitor();
 }
 
 void
@@ -1693,8 +1706,8 @@ ConversationModule::clearPendingFetch()
     // syncing the conversation. It may have been killed in some un-expected way avoiding to
     // call the callbacks. This should never happen, but if it's the case, this will allow
     // new messages to be synced correctly.
-    std::unique_lock lk(pimpl_->conversationsMtx_);
-    for (auto& [_, conv] : pimpl_->conversations_) {
+    for (auto& conv : pimpl_->getSyncedConversations()) {
+        std::lock_guard lk(conv->mtx);
         if (conv && conv->pending) {
             JAMI_ERR("This is a bug, seems to still fetch to some device on initializing");
             conv->pending.reset();
@@ -2060,13 +2073,10 @@ std::map<std::string, std::map<std::string, std::map<std::string, std::string>>>
 ConversationModule::convMessageStatus() const
 {
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> messageStatus;
-    std::lock_guard lk(pimpl_->conversationsMtx_);
-    for (const auto& [id, conv] : pimpl_->conversations_) {
-        if (conv && conv->conversation) {
-            auto d = conv->conversation->messageStatus();
-            if (!d.empty())
-                messageStatus[id] = std::move(d);
-        }
+    for (const auto& conv : pimpl_->getConversations()) {
+        auto d = conv->messageStatus();
+        if (!d.empty())
+            messageStatus[conv->id()] = std::move(d);
     }
     return messageStatus;
 }
@@ -2235,25 +2245,22 @@ ConversationModule::syncConversations(const std::string& peer, const std::string
     // Sync conversations where peer is member
     std::set<std::string> toFetch;
     std::set<std::string> toClone;
-    {
-        std::lock_guard lkCI(pimpl_->conversationsMtx_);
-        for (const auto& [key, conv] : pimpl_->conversations_) {
-            std::lock_guard lk(conv->mtx);
-            if (conv->conversation) {
-                if (!conv->conversation->isRemoving() && conv->conversation->isMember(peer, false)) {
-                    toFetch.emplace(key);
-                    // TODO connect to Swarm
-                    // if (!conv->conversation->hasSwarmChannel(deviceId)) {
-                    //    if (auto acc = pimpl_->account_.lock()) {
-                    //    }
-                    // }
-                }
-            } else if (!conv->info.isRemoved()
-                       && std::find(conv->info.members.begin(), conv->info.members.end(), peer)
-                              != conv->info.members.end()) {
-                // In this case the conversation was never cloned (can be after an import)
-                toClone.emplace(key);
+    for (const auto& conv : pimpl_->getSyncedConversations()) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation) {
+            if (!conv->conversation->isRemoving() && conv->conversation->isMember(peer, false)) {
+                toFetch.emplace(conv->info.id);
+                // TODO connect to Swarm
+                // if (!conv->conversation->hasSwarmChannel(deviceId)) {
+                //    if (auto acc = pimpl_->account_.lock()) {
+                //    }
+                // }
             }
+        } else if (!conv->info.isRemoved()
+                    && std::find(conv->info.members.begin(), conv->info.members.end(), peer)
+                            != conv->info.members.end()) {
+            // In this case the conversation was never cloned (can be after an import)
+            toClone.emplace(conv->info.id);
         }
     }
     for (const auto& cid : toFetch)
@@ -2533,21 +2540,18 @@ void
 ConversationModule::search(uint32_t req, const std::string& convId, const Filter& filter) const
 {
     if (convId.empty()) {
-        auto finishedFlag = std::make_shared<std::atomic_int>(pimpl_->conversations_.size());
-        std::unique_lock lk(pimpl_->conversationsMtx_);
-        for (const auto& [cid, conv] : pimpl_->conversations_) {
-            std::lock_guard lk(conv->mtx);
-            if (!conv->conversation) {
-                if ((*finishedFlag)-- == 1) {
-                    emitSignal<libjami::ConversationSignal::MessagesFound>(
-                        req,
-                        pimpl_->accountId_,
-                        std::string {},
-                        std::vector<std::map<std::string, std::string>> {});
-                }
-            } else {
-                conv->conversation->search(req, filter, finishedFlag);
-            }
+        auto convs = pimpl_->getConversations();
+        if (convs.empty()) {
+            emitSignal<libjami::ConversationSignal::MessagesFound>(
+                req,
+                pimpl_->accountId_,
+                std::string {},
+                std::vector<std::map<std::string, std::string>> {});
+            return;
+        }
+        auto finishedFlag = std::make_shared<std::atomic_int>(convs.size());
+        for (const auto& conv : convs) {
+            conv->search(req, filter, finishedFlag);
         }
     } else if (auto conv = pimpl_->getConversation(convId)) {
         std::lock_guard lk(conv->mtx);
@@ -2643,13 +2647,10 @@ std::map<std::string, std::map<std::string, std::string>>
 ConversationModule::convPreferences() const
 {
     std::map<std::string, std::map<std::string, std::string>> p;
-    std::lock_guard lk(pimpl_->conversationsMtx_);
-    for (const auto& [id, conv] : pimpl_->conversations_) {
-        if (conv && conv->conversation) {
-            auto prefs = conv->conversation->preferences(true);
-            if (!prefs.empty())
-                p[id] = std::move(prefs);
-        }
+    for (const auto& conv : pimpl_->getConversations()) {
+        auto prefs = conv->preferences(true);
+        if (!prefs.empty())
+            p[conv->id()] = std::move(prefs);
     }
     return p;
 }
@@ -3030,8 +3031,7 @@ ConversationModule::hostConference(const std::string& conversationId,
 std::map<std::string, ConvInfo>
 ConversationModule::convInfos(const std::string& accountId)
 {
-    auto path = fileutils::get_data_dir() / accountId;
-    return convInfosFromPath(path);
+    return convInfosFromPath(fileutils::get_data_dir() / accountId);
 }
 
 std::map<std::string, ConvInfo>
@@ -3044,7 +3044,7 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
         auto file = fileutils::loadFile("convInfo", path);
         // load values
         msgpack::unpacked result;
-        msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
+        msgpack::unpack(result, (const char*) file.data(), file.size());
         result.get().convert(convInfos);
     } catch (const std::exception& e) {
         JAMI_WARN("[convInfo] error loading convInfo: %s", e.what());
@@ -3138,15 +3138,7 @@ ConversationModule::removeGitSocket(std::string_view deviceId, std::string_view 
 void
 ConversationModule::shutdownConnections()
 {
-    std::vector<std::shared_ptr<SyncedConversation>> conversations;
-    {
-        std::lock_guard lk(pimpl_->conversationsMtx_);
-        conversations.reserve(pimpl_->conversations_.size());
-        for (auto& [k, c] : pimpl_->conversations_) {
-            conversations.emplace_back(c);
-        }
-    }
-    for (const auto& c : conversations) {
+    for (const auto& c : pimpl_->getSyncedConversations()) {
         std::lock_guard lkc(c->mtx);
         if (c->conversation)
             c->conversation->shutdownConnections();
@@ -3165,22 +3157,7 @@ ConversationModule::addSwarmChannel(const std::string& conversationId,
 void
 ConversationModule::connectivityChanged()
 {
-    std::vector<std::shared_ptr<SyncedConversation>> syncedConversations;
-    {
-        std::lock_guard lk(pimpl_->conversationsMtx_);
-        syncedConversations.reserve(pimpl_->conversations_.size());
-        for (const auto& [k, c] : pimpl_->conversations_) {
-            syncedConversations.emplace_back(c);
-        }
-    }
-    std::vector<std::shared_ptr<Conversation>> conversations;
-    conversations.reserve(syncedConversations.size());
-    for (const auto& c : syncedConversations) {
-        std::lock_guard lkc(c->mtx);
-        if (c->conversation)
-            conversations.emplace_back(c->conversation);
-    }
-    for (const auto& conv : conversations)
+    for (const auto& conv : pimpl_->getConversations())
         conv->connectivityChanged();
 }
 
