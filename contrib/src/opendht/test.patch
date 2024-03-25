@@ -1,0 +1,745 @@
+ .github/workflows/ccpp.yml           | 53 +++++++++++++++++++++++++++++++++++++++++------------
+ .github/workflows/clang-analyzer.yml | 26 ++++++++++++++++----------
+ CMakeLists.txt                       | 43 ++++++++++++++++++++++++++++++++++++++-----
+ configure.ac                         | 14 +++++++-------
+ docker/DockerfileAlpine              |  4 ++--
+ docker/DockerfileDeps                | 22 +++++++++++++---------
+ docker/DockerfileDepsAlpine          | 24 ++++++++++++++----------
+ docker/DockerfileDepsBionic          | 20 ++++++++++++--------
+ docker/DockerfileDepsFocal           | 22 +++++++++++++---------
+ docker/DockerfileDepsLlvm            | 20 ++++++++++++--------
+ include/opendht/dht_proxy_server.h   | 10 +++++-----
+ include/opendht/http.h               | 26 ++++++--------------------
+ meson.build                          |  2 +-
+ opendht.pc.in                        |  2 +-
+ src/dht_proxy_client.cpp             |  2 +-
+ src/dht_proxy_server.cpp             | 15 ++++++++++++++-
+ src/http.cpp                         | 38 ++++++++++++++++++--------------------
+ 17 files changed, 214 insertions(+), 129 deletions(-)
+
+diff --git a/.github/workflows/ccpp.yml b/.github/workflows/ccpp.yml
+index 1f236139..676de5f2 100644
+--- a/.github/workflows/ccpp.yml
++++ b/.github/workflows/ccpp.yml
+@@ -12,13 +12,36 @@ jobs:
+       run: |
+         sudo apt install libncurses5-dev libreadline-dev nettle-dev libasio-dev \
+         libgnutls28-dev libuv1-dev python3-pip python3-dev python3-setuptools libcppunit-dev libjsoncpp-dev \
+-        autotools-dev autoconf libfmt-dev libhttp-parser-dev libmsgpack-dev libargon2-0-dev
++        autotools-dev autoconf libfmt-dev libmsgpack-dev libargon2-0-dev
+     - name: Cython
+       run: sudo pip3 install Cython
++    - name: llhttp
++      run: |
++        mkdir llhttp
++        wget https://github.com/nodejs/llhttp/archive/refs/tags/release/v9.2.0.tar.gz -O llhttp.tar.gz
++        tar -xzf llhttp.tar.gz -C llhttp --strip-components=1
++        cd llhttp && cmake -DCMAKE_INSTALL_PREFIX=/usr . && make -j2 && sudo make install
++        cd ../ && rm -rf llhttp*
++    - name: expected-lite
++      run: |
++        sudo mkdir /usr/local/include/nonstd && \
++        sudo wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++          -O /usr/local/include/nonstd/expected.hpp
++    - name: restinio
++      run: |
++        mkdir restinio && cd restinio
++        wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2
++        ls -l && tar -xjf restinio-0.7.2.tar.bz2
++        cd restinio-0.7.2/dev
++        cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++                -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++                -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system .
++        sudo make install
++        cd ../../ && rm -rf restinio*
+     - name: Configure
+       run: |
+         ./autogen.sh
+-        ./configure
++        ./configure --enable-proxy-client
+     - name: Build
+       run: make
+
+@@ -31,7 +54,7 @@ jobs:
+       run: |
+         sudo apt install ninja-build libncurses5-dev libreadline-dev nettle-dev libasio-dev \
+         libgnutls28-dev libuv1-dev python3-dev python3-setuptools python3-pip \
+-        libcppunit-dev libjsoncpp-dev libfmt-dev libhttp-parser-dev libmsgpack-dev libargon2-0-dev
++        libcppunit-dev libjsoncpp-dev libfmt-dev libmsgpack-dev libargon2-0-dev
+     - name: Python dependencies
+       run: sudo pip3 install meson Cython
+     - name: Configure
+@@ -66,19 +89,25 @@ jobs:
+     - uses: actions/checkout@v3
+     - name: Dependencies
+       run: |
+-        brew install msgpack-cxx asio gnutls nettle readline fmt jsoncpp argon2 openssl http-parser cppunit
++        brew install msgpack-cxx asio gnutls nettle readline fmt jsoncpp argon2 openssl cppunit
++
++    - name: expected-lite
++      run: |
++        sudo mkdir /usr/local/include/nonstd && \
++        sudo wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++          -O /usr/local/include/nonstd/expected.hpp
+
+     - name: restinio
+       run: |
+         mkdir restinio && cd restinio
+-        wget https://github.com/aberaud/restinio/archive/6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz
+-        ls -l && tar -xzf 6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz
+-        cd restinio-6fd08b65f6f15899dd0de3c801f6a5462b811c64/dev
+-        cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-                -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-                -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none .
+-        make -j8 && sudo make install
+-        cd ../../.. && rm -rf restinio
++        wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2
++        ls -l && tar -xjf restinio-0.7.2.tar.bz2
++        cd restinio-0.7.2/dev
++        cmake -DCMAKE_INSTALL_PREFIX=/usr/local -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++                -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++                -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system .
++        make -j2 && sudo make install
++        cd ../../ && rm -rf restinio*
+
+     - name: Configure
+       run: |
+diff --git a/.github/workflows/clang-analyzer.yml b/.github/workflows/clang-analyzer.yml
+index aa97de67..d275c9d8 100644
+--- a/.github/workflows/clang-analyzer.yml
++++ b/.github/workflows/clang-analyzer.yml
+@@ -11,21 +11,27 @@ jobs:
+         run: |
+           sudo apt install libncurses5-dev libreadline-dev nettle-dev \
+           libgnutls28-dev libuv1-dev python3-dev python3-setuptools libcppunit-dev libjsoncpp-dev \
+-          autotools-dev autoconf libfmt-dev libhttp-parser-dev libmsgpack-dev libargon2-0-dev libasio-dev \
++          autotools-dev autoconf libfmt-dev libmsgpack-dev libargon2-0-dev libasio-dev \
+           llvm llvm-dev clang clang-tools && \
+           sudo apt remove gcc g++
+
++      - name: expected-lite
++        run: |
++          sudo mkdir /usr/include/nonstd && \
++          sudo wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++            -O /usr/include/nonstd/expected.hpp
++
+       - name: restinio
+         run: |
+-          mkdir restinio && cd restinio \
+-          && wget https://github.com/aberaud/restinio/archive/6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-          && ls -l && tar -xzf 6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-          && cd restinio-6fd08b65f6f15899dd0de3c801f6a5462b811c64/dev \
+-          && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-                  -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-                  -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none . \
+-          && make -j8 && sudo make install \
+-          && cd ../../.. && rm -rf restinio
++          mkdir restinio && cd restinio
++          wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2
++          ls -l && tar -xjf restinio-0.7.2.tar.bz2
++          cd restinio-0.7.2/dev
++          cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++                  -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++                  -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system .
++          make -j2 && sudo make install
++          cd ../../ && rm -rf restinio*
+
+       - name: cmake
+         run: |
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d515f519..9625f007 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,7 @@
+ cmake_minimum_required (VERSION 3.16..3.28)
++if(POLICY CMP0135)
++  cmake_policy(SET CMP0135 NEW)
++endif()
+ project (opendht)
+
+ include(CMakePackageConfigHelpers)
+@@ -7,9 +10,10 @@ include(CheckIncludeFileCXX)
+ include(FindPkgConfig)
+ include(cmake/CheckAtomic.cmake)
+ include(CTest)
++include(FetchContent)
+
+ set (opendht_VERSION_MAJOR 3)
+-set (opendht_VERSION_MINOR 1.9)
++set (opendht_VERSION_MINOR 2.0)
+ set (opendht_VERSION ${opendht_VERSION_MAJOR}.${opendht_VERSION_MINOR})
+ set (PACKAGE_VERSION ${opendht_VERSION})
+ set (VERSION "${opendht_VERSION}")
+@@ -87,9 +91,35 @@ if (NOT MSVC)
+
+     if (OPENDHT_HTTP)
+         find_package(Restinio REQUIRED)
+-        find_library(HTTP_PARSER_LIBRARY http_parser)
+-        add_library(http_parser SHARED IMPORTED)
+-        set(http_parser_lib "-lhttp_parser")
++
++        # llhttp
++        find_path(LLHTTP_INCLUDE_DIR llhttp.h)
++        find_library(LLHTTP_LIBRARY libllhttp.a)
++        if (LLHTTP_INCLUDE_DIR AND LLHTTP_LIBRARY)
++            message(STATUS "Found llhttp ${LLHTTP_INCLUDE_DIR} ${LLHTTP_LIBRARY}")
++            add_library(llhttp_static STATIC IMPORTED)
++            set_target_properties(llhttp_static PROPERTIES
++                IMPORTED_LOCATION ${LLHTTP_LIBRARY}
++                INTERFACE_INCLUDE_DIRECTORIES ${LLHTTP_INCLUDE_DIR}
++            )
++            set(llhttp_target llhttp_static)
++        else()
++            FetchContent_Declare(llhttp-local URL "https://github.com/nodejs/llhttp/archive/refs/tags/release/v9.2.0.tar.gz")
++            if (BUILD_SHARED_LIBS)
++                set(BUILD_SHARED_LIBS ON CACHE INTERNAL "")
++            else()
++                set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "")
++                set(BUILD_STATIC_LIBS ON CACHE INTERNAL "")
++            endif()
++            FetchContent_MakeAvailable(llhttp-local)
++            if (BUILD_SHARED_LIBS)
++                set(llhttp_target llhttp_shared)
++            else()
++                set(llhttp_target llhttp_static)
++            endif()
++        endif()
++        set(http_lib "-lllhttp")
++
+         if (NOT Jsoncpp_FOUND)
+             message(SEND_ERROR "Jsoncpp is required for DHT proxy support")
+         endif()
+@@ -204,6 +234,7 @@ list (APPEND opendht_SOURCES
+ )
+
+ list (APPEND opendht_HEADERS
++    include/opendht.h
+     include/opendht/def.h
+     include/opendht/utils.h
+     include/opendht/sockaddr.h
+@@ -356,12 +387,14 @@ else()
+         PRIVATE
+             PkgConfig::argon2
+             PkgConfig::Nettle
+-            ${HTTP_PARSER_LIBRARY}
+         PUBLIC
+             ${CMAKE_THREAD_LIBS_INIT}
+             PkgConfig::GnuTLS
+             fmt::fmt
+     )
++    if (OPENDHT_HTTP)
++        target_link_libraries(opendht PUBLIC ${llhttp_target})
++    endif()
+     if (Jsoncpp_FOUND)
+         target_link_libraries(opendht PUBLIC PkgConfig::Jsoncpp)
+     endif()
+diff --git a/configure.ac b/configure.ac
+index da79eab4..4eceff9d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1,7 +1,7 @@
+ dnl define macros
+ m4_define([opendht_major_version], 3)
+-m4_define([opendht_minor_version], 1)
+-m4_define([opendht_patch_version], 9)
++m4_define([opendht_minor_version], 2)
++m4_define([opendht_patch_version], 0)
+ m4_define([opendht_version],
+ 		  [opendht_major_version.opendht_minor_version.opendht_patch_version])
+
+@@ -175,11 +175,11 @@ AS_IF([test "x$have_fmt" = "xyes"], [
+ AM_COND_IF([PROXY_CLIENT_OR_SERVER], [
+     AC_CHECK_HEADERS([asio.hpp],, AC_MSG_ERROR([Missing Asio headers files]))
+     CXXFLAGS="${CXXFLAGS} -DASIO_STANDALONE"
+-    # http_parser has no pkgconfig, instead we check with:
+-    AC_CHECK_LIB(http_parser, exit,, AC_MSG_ERROR([Missing HttpParser library files]))
+-    AC_CHECK_HEADERS([http_parser.h], [http_parser_headers=yes; break;])
+-    AC_SUBST(http_parser_lib, ["-lhttp_parser"])
+-    AS_IF([test "x$http_parser_headers" != "xyes"], AC_MSG_ERROR([Missing HttpParser headers files]))
++    # llhttp has no pkgconfig, instead we check with:
++    AC_CHECK_LIB(llhttp, exit,, AC_MSG_ERROR([Missing llhttp library files]))
++    AC_CHECK_HEADERS([llhttp.h], [llhttp_headers=yes; break;])
++    AC_SUBST(http_lib, ["-lllhttp"])
++    AS_IF([test "x$llhttp_headers" != "xyes"], AC_MSG_ERROR([Missing llhttp headers files]))
+ ])
+
+ CXXFLAGS="${CXXFLAGS} -DMSGPACK_NO_BOOST -DMSGPACK_DISABLE_LEGACY_NIL -DMSGPACK_DISABLE_LEGACY_CONVERT"
+diff --git a/docker/DockerfileAlpine b/docker/DockerfileAlpine
+index dde0fa87..33df2f24 100644
+--- a/docker/DockerfileAlpine
++++ b/docker/DockerfileAlpine
+@@ -19,7 +19,7 @@ RUN cd opendht && mkdir build && cd build \
+ 				-DOPENDHT_SYSTEMD=On \
+ 	&& make -j8 && make install
+
+-FROM alpine:3.18 AS install
++FROM alpine:3.19 AS install
+ COPY --from=build /install /
+ RUN apk add --no-cache \
+         libstdc++ \
+@@ -28,8 +28,8 @@ RUN apk add --no-cache \
+         openssl \
+         argon2-dev \
+         jsoncpp \
++        llhttp \
+         fmt \
+-        http-parser \
+         readline \
+         ncurses
+ CMD ["dhtnode", "-b", "bootstrap.jami.net", "-p", "4222", "--proxyserver", "8080"]
+diff --git a/docker/DockerfileDeps b/docker/DockerfileDeps
+index 83201417..97928dd4 100644
+--- a/docker/DockerfileDeps
++++ b/docker/DockerfileDeps
+@@ -13,18 +13,22 @@ RUN apt-get update && apt-get install -y \
+         python3-pip python3-dev python3-setuptools python3-build python3-virtualenv \
+         libncurses5-dev libreadline-dev nettle-dev libcppunit-dev \
+         libgnutls28-dev libuv1-dev libjsoncpp-dev libargon2-dev \
+-        libssl-dev libfmt-dev libhttp-parser-dev libasio-dev libmsgpack-dev \
++        libssl-dev libfmt-dev libasio-dev libmsgpack-dev \
+     && apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+ RUN pip3 install meson Cython
+
++RUN mkdir /usr/include/nonstd \
++    && wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++            -O /usr/include/nonstd/expected.hpp
++
+ RUN echo "*** Downloading RESTinio ***" \
+     && mkdir restinio && cd restinio \
+-    && wget https://github.com/aberaud/restinio/archive/6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-    && ls -l && tar -xzf 6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-    && cd restinio-6fd08b65f6f15899dd0de3c801f6a5462b811c64/dev \
+-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-             -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-             -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none . \
+-    && make -j8 && make install \
+-    && cd ../../.. && rm -rf restinio
++    && wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2 \
++    && ls -l && tar -xjf restinio-0.7.2.tar.bz2 \
++    && cd restinio-0.7.2/dev \
++    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++             -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++             -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system . \
++    && make -j2 && make install \
++    && cd ../../ && rm -rf restinio*
+diff --git a/docker/DockerfileDepsAlpine b/docker/DockerfileDepsAlpine
+index d4f41f2f..0fa34bd0 100644
+--- a/docker/DockerfileDepsAlpine
++++ b/docker/DockerfileDepsAlpine
+@@ -1,4 +1,4 @@
+-FROM alpine:3.18
++FROM alpine:3.19
+ LABEL maintainer="Adrien Béraud <adrien.beraud@savoirfairelinux.com>"
+ LABEL org.opencontainers.image.source https://github.com/savoirfairelinux/opendht
+
+@@ -8,16 +8,20 @@ RUN apk add --no-cache \
+         ncurses-dev readline-dev nettle-dev \
+         cppunit-dev gnutls-dev jsoncpp-dev \
+         argon2-dev openssl-dev fmt-dev \
+-        http-parser-dev asio-dev msgpack-cxx-dev \
++        llhttp-dev asio-dev msgpack-cxx-dev \
+     && rm -rf /var/cache/apk/*
+
++RUN mkdir /usr/include/nonstd \
++    && wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++            -O /usr/include/nonstd/expected.hpp
++
+ RUN echo "*** Downloading RESTinio ***" \
+     && mkdir restinio && cd restinio \
+-    && wget https://github.com/aberaud/restinio/archive/6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-    && tar -xzf 6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-    && cd restinio-6fd08b65f6f15899dd0de3c801f6a5462b811c64/dev \
+-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-             -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-             -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none . \
+-    && make -j8 && make install \
+-    && cd ../../.. && rm -rf restinio
++    && wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2 \
++    && ls -l && tar -xjf restinio-0.7.2.tar.bz2 \
++    && cd restinio-0.7.2/dev \
++    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++             -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++             -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system . \
++    && make -j2 && make install \
++    && cd ../../ && rm -rf restinio*
+diff --git a/docker/DockerfileDepsBionic b/docker/DockerfileDepsBionic
+index 02565bd6..73673986 100644
+--- a/docker/DockerfileDepsBionic
++++ b/docker/DockerfileDepsBionic
+@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
+         apt-transport-https build-essential pkg-config git wget libncurses5-dev libreadline-dev nettle-dev \
+         libgnutls28-dev libuv1-dev python3-dev python3-setuptools libcppunit-dev libjsoncpp-dev \
+         libargon2-0-dev \
+-        autotools-dev autoconf libfmt-dev libhttp-parser-dev libmsgpack-dev libssl-dev python3-pip \
++        autotools-dev autoconf libfmt-dev libmsgpack-dev libssl-dev python3-pip \
+     && apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+ RUN pip3 install --upgrade cmake meson Cython
+@@ -20,13 +20,17 @@ RUN echo "** Building a recent version of asio ***" \
+     && make install \
+     && cd ../../ && rm -rf asio*
+
++RUN mkdir /usr/include/nonstd \
++    && wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++            -O /usr/include/nonstd/expected.hpp
++
+ RUN echo "*** Downloading RESTinio ***" \
+     && mkdir restinio && cd restinio \
+-    && wget https://github.com/aberaud/restinio/archive/8d5d3e8237e0947adb9ba1ffc8281f4ad7cb2a59.tar.gz \
+-    && ls -l && tar -xzf 8d5d3e8237e0947adb9ba1ffc8281f4ad7cb2a59.tar.gz \
+-    && cd restinio-8d5d3e8237e0947adb9ba1ffc8281f4ad7cb2a59/dev \
+-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-             -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-             -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none . \
+-    && make -j8 && make install \
++    && wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2 \
++    && ls -l && tar -xjf restinio-0.7.2.tar.bz2 \
++    && cd restinio-0.7.2/dev \
++    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++             -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++             -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system . \
++    && make -j2 && make install \
+     && cd ../../ && rm -rf restinio*
+diff --git a/docker/DockerfileDepsFocal b/docker/DockerfileDepsFocal
+index 43d58016..da05fd5d 100644
+--- a/docker/DockerfileDepsFocal
++++ b/docker/DockerfileDepsFocal
+@@ -13,18 +13,22 @@ RUN apt-get update && apt-get install -y \
+         python3-dev python3-setuptools python3-pip \
+         libncurses5-dev libreadline-dev nettle-dev libcppunit-dev \
+         libgnutls28-dev libuv1-dev libjsoncpp-dev libargon2-dev \
+-        libssl-dev libfmt-dev libhttp-parser-dev libasio-dev libmsgpack-dev \
++        libssl-dev libfmt-dev libasio-dev libmsgpack-dev \
+     && apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+ RUN pip3 install meson Cython
+
++RUN mkdir /usr/include/nonstd \
++    && wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++            -O /usr/include/nonstd/expected.hpp
++
+ RUN echo "*** Downloading RESTinio ***" \
+     && mkdir restinio && cd restinio \
+-    && wget https://github.com/aberaud/restinio/archive/e0a261dd8488246a3cb8bbb3ea781ea5139c3c94.tar.gz \
+-    && ls -l && tar -xzf e0a261dd8488246a3cb8bbb3ea781ea5139c3c94.tar.gz \
+-    && cd restinio-e0a261dd8488246a3cb8bbb3ea781ea5139c3c94/dev \
+-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-             -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-             -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none . \
+-    && make -j8 && make install \
+-    && cd ../../.. && rm -rf restinio
++    && wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2 \
++    && ls -l && tar -xjf restinio-0.7.2.tar.bz2 \
++    && cd restinio-0.7.2/dev \
++    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++             -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++             -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system . \
++    && make -j2 && make install \
++    && cd ../../ && rm -rf restinio*
+diff --git a/docker/DockerfileDepsLlvm b/docker/DockerfileDepsLlvm
+index c6457b00..3342ab20 100644
+--- a/docker/DockerfileDepsLlvm
++++ b/docker/DockerfileDepsLlvm
+@@ -13,7 +13,7 @@ RUN apt-get update \
+        nettle-dev libgnutls28-dev libuv1-dev libmsgpack-dev libjsoncpp-dev python3-dev \
+        python3-setuptools libcppunit-dev python3-pip python3-build python3-virtualenv \
+        autotools-dev autoconf libssl-dev libargon2-dev \
+-       libfmt-dev libhttp-parser-dev libasio-dev \
++       libfmt-dev libasio-dev \
+     && apt-get remove -y gcc g++ && apt-get autoremove -y \
+     && apt-get clean && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+
+@@ -22,13 +22,17 @@ RUN pip3 install meson Cython
+ ENV CC cc
+ ENV CXX c++
+
++RUN mkdir /usr/include/nonstd \
++    && wget https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp \
++            -O /usr/include/nonstd/expected.hpp
++
+ RUN echo "*** Downloading RESTinio ***" \
+     && mkdir restinio && cd restinio \
+-    && wget https://github.com/aberaud/restinio/archive/6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-    && ls -l && tar -xzf 6fd08b65f6f15899dd0de3c801f6a5462b811c64.tar.gz \
+-    && cd restinio-6fd08b65f6f15899dd0de3c801f6a5462b811c64/dev \
+-    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF \
+-             -DRESTINIO_INSTALL_SAMPLES=OFF -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF \
+-             -DRESTINIO_FIND_DEPS=ON -DRESTINIO_ALLOW_SOBJECTIZER=Off -DRESTINIO_USE_BOOST_ASIO=none . \
+-    && make -j8 && make install \
++    && wget https://github.com/Stiffstream/restinio/releases/download/v.0.7.2/restinio-0.7.2.tar.bz2 \
++    && ls -l && tar -xjf restinio-0.7.2.tar.bz2 \
++    && cd restinio-0.7.2/dev \
++    && cmake -DCMAKE_INSTALL_PREFIX=/usr -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
++             -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
++             -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system . \
++    && make -j2 && make install \
+     && cd ../../ && rm -rf restinio*
+diff --git a/include/opendht/dht_proxy_server.h b/include/opendht/dht_proxy_server.h
+index 448a34b3..844b38c8 100644
+--- a/include/opendht/dht_proxy_server.h
++++ b/include/opendht/dht_proxy_server.h
+@@ -46,17 +46,17 @@ enum class PushType {
+ }
+ MSGPACK_ADD_ENUM(dht::PushType)
+
+-namespace http {
+-class Request;
+-struct ListenerSession;
+-}
+-
+ namespace Json {
+ class Value;
+ }
+
+ namespace dht {
+
++namespace http {
++class Request;
++struct ListenerSession;
++}
++
+ class DhtRunner;
+
+ using RestRouter = restinio::router::express_router_t<>;
+diff --git a/include/opendht/http.h b/include/opendht/http.h
+index 5eae17dc..6b3673c9 100644
+--- a/include/opendht/http.h
++++ b/include/opendht/http.h
+@@ -29,23 +29,20 @@
+ #   define snprintf snprintf
+ #endif
+
++#include <asio/ip/tcp.hpp>
++#include <asio/streambuf.hpp>
+ #include <asio/ssl/context.hpp>
+-#include <restinio/http_headers.hpp>
+ #include <restinio/message_builders.hpp>
+
+ #include <memory>
+ #include <queue>
+ #include <mutex>
++#include <future>
+
+ namespace Json {
+ class Value;
+ }
+
+-extern "C" {
+-struct http_parser;
+-struct http_parser_settings;
+-}
+-
+ namespace restinio {
+ namespace impl {
+ class tls_socket_t;
+@@ -154,17 +151,6 @@ private:
+     bool checkOcsp_ {false};
+ };
+
+-/**
+- * Session value associated with a connection_id_t key.
+- */
+-struct ListenerSession
+-{
+-    ListenerSession() = default;
+-    dht::InfoHash hash;
+-    std::future<size_t> token;
+-    std::shared_ptr<restinio::response_builder_t<restinio::chunked_output_t>> response;
+-};
+-
+ /* @class Resolver
+  * @brief The purpose is to only resolve once to avoid mutliple dns requests per operation.
+  */
+@@ -336,7 +322,7 @@ private:
+
+     void init_default_headers();
+     /**
+-     * Initialized and wraps the http_parser callbacks with our user defined callbacks.
++     * Initialized and wraps the llhttp callbacks with our user defined callbacks.
+      */
+     void init_parser();
+
+@@ -378,8 +364,8 @@ private:
+     Response response_ {};
+     std::string request_;
+     std::atomic<bool> finishing_ {false};
+-    std::unique_ptr<http_parser> parser_;
+-    std::unique_ptr<http_parser_settings> parser_s_;
++    std::unique_ptr<llhttp_t> parser_;
++    std::unique_ptr<llhttp_settings_t> parser_s_;
+
+     // Next request in case of redirect following
+     std::shared_ptr<Request> next_;
+diff --git a/meson.build b/meson.build
+index cca49181..dc6391a9 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1,5 +1,5 @@
+ project('opendht', 'c', 'cpp', 'cython',
+-    version: '3.1.9',
++    version: '3.2.0',
+     default_options: [
+         'cpp_std=c++17',
+         'warning_level=3'
+diff --git a/opendht.pc.in b/opendht.pc.in
+index b9c835ca..8526b697 100644
+--- a/opendht.pc.in
++++ b/opendht.pc.in
+@@ -6,7 +6,7 @@ Name: OpenDHT
+ Description: C++17 Distributed Hash Table library
+ Version: @VERSION@
+ Libs: -L${libdir} -lopendht
+-Libs.private: @http_parser_lib@ -pthread
++Libs.private: @http_lib@ -pthread
+ Requires: gnutls >= 3.3@jsoncpp_lib@@openssl_lib@
+ Requires.private: nettle >= 2.4@argon2_lib@
+ Cflags: -I${includedir}
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index f022ec80..e189ef60 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -23,7 +23,7 @@
+ #include "op_cache.h"
+ #include "utils.h"
+
+-#include <http_parser.h>
++#include <llhttp.h>
+ #include <deque>
+
+ namespace dht {
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index 3a90d36c..6f950c6a 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -58,6 +58,19 @@ constexpr const std::chrono::minutes PRINT_STATS_PERIOD {2};
+ using ResponseByParts = restinio::chunked_output_t;
+ using ResponseByPartsBuilder = restinio::response_builder_t<ResponseByParts>;
+
++namespace http {
++/**
++ * Session value associated with a connection_id_t key.
++ */
++struct ListenerSession
++{
++    ListenerSession() = default;
++    dht::InfoHash hash;
++    std::future<size_t> token;
++    std::shared_ptr<restinio::response_builder_t<restinio::chunked_output_t>> response;
++};
++}
++
+ class opendht_logger_t
+ {
+ public:
+@@ -116,7 +129,7 @@ private:
+ void
+ DhtProxyServer::ConnectionListener::state_changed(const restinio::connection_state::notice_t& notice) noexcept
+ {
+-    if (restinio::holds_alternative<restinio::connection_state::closed_t>(notice.cause())) {
++    if (std::holds_alternative<restinio::connection_state::closed_t>(notice.cause())) {
+         onClosed_(notice.connection_id());
+     }
+ }
+diff --git a/src/http.cpp b/src/http.cpp
+index 4257b451..b662257b 100644
+--- a/src/http.cpp
++++ b/src/http.cpp
+@@ -24,7 +24,7 @@
+
+ #include <asio.hpp>
+ #include <restinio/impl/tls_socket.hpp>
+-#include <http_parser.h>
++#include <llhttp.h>
+ #include <json/json.h>
+
+ #include <openssl/ocsp.h>
+@@ -1116,13 +1116,11 @@ Request::init_parser()
+     response_.request = shared_from_this();
+
+     if (!parser_)
+-        parser_ = std::make_unique<http_parser>();
+-    http_parser_init(parser_.get(), HTTP_RESPONSE);
+-    parser_->data = static_cast<void*>(this);
++        parser_ = std::make_unique<llhttp_t>();
+
+     if (!parser_s_)
+-        parser_s_ = std::make_unique<http_parser_settings>();
+-    http_parser_settings_init(parser_s_.get());
++        parser_s_ = std::make_unique<llhttp_settings_t>();
++    llhttp_settings_init(parser_s_.get());
+
+     cbs_.on_status = [this, statusCb = std::move(cbs_.on_status)](unsigned int status_code){
+         response_.status_code = status_code;
+@@ -1137,31 +1135,33 @@ Request::init_parser()
+         response_.headers[*header_field] = std::string(at, length);
+     };
+
+-    // http_parser raw c callback (note: no context can be passed into them)
+-    parser_s_->on_status = [](http_parser* parser, const char* /*at*/, size_t /*length*/) -> int {
++    // llhttp raw c callback (note: no context can be passed into them)
++    parser_s_->on_status = [](llhttp_t* parser, const char* /*at*/, size_t /*length*/) -> int {
+         static_cast<Request*>(parser->data)->cbs_.on_status(parser->status_code);
+         return 0;
+     };
+-    parser_s_->on_header_field = [](http_parser* parser, const char* at, size_t length) -> int {
++    parser_s_->on_header_field = [](llhttp_t* parser, const char* at, size_t length) -> int {
+         static_cast<Request*>(parser->data)->cbs_.on_header_field(at, length);
+         return 0;
+     };
+-    parser_s_->on_header_value = [](http_parser* parser, const char* at, size_t length) -> int {
++    parser_s_->on_header_value = [](llhttp_t* parser, const char* at, size_t length) -> int {
+         static_cast<Request*>(parser->data)->cbs_.on_header_value(at, length);
+         return 0;
+     };
+-    parser_s_->on_body = [](http_parser* parser, const char* at, size_t length) -> int {
++    parser_s_->on_body = [](llhttp_t* parser, const char* at, size_t length) -> int {
+         static_cast<Request*>(parser->data)->onBody(at, length);
+         return 0;
+     };
+-    parser_s_->on_headers_complete = [](http_parser* parser) -> int {
++    parser_s_->on_headers_complete = [](llhttp_t* parser) -> int {
+         static_cast<Request*>(parser->data)->onHeadersComplete();
+         return 0;
+     };
+-    parser_s_->on_message_complete = [](http_parser* parser) -> int {
++    parser_s_->on_message_complete = [](llhttp_t* parser) -> int {
+         static_cast<Request*>(parser->data)->onComplete();
+         return 0;
+     };
++    llhttp_init(parser_.get(), HTTP_RESPONSE, parser_s_.get());
++    parser_->data = static_cast<void*>(this);
+ }
+
+ void
+@@ -1318,7 +1318,7 @@ Request::terminate(const asio::error_code& ec)
+             logger_->debug("[http:request:{:d}] done with status code {:d}", id_, response_.status_code);
+     }
+
+-    if (!parser_ or !http_should_keep_alive(parser_.get()))
++    if (!parser_ or !llhttp_should_keep_alive(parser_.get()))
+         if (auto c = conn_)
+             c->close();
+     notify_state_change(State::DONE);
+@@ -1357,17 +1357,15 @@ Request::handle_response(const asio::error_code& ec, size_t /* n_bytes */)
+         return;
+     }
+     auto request = (ec == asio::error::eof) ? std::string{} : conn_->read_bytes();
+-    size_t ret = http_parser_execute(parser_.get(), parser_s_.get(), request.c_str(), request.size());
+-    if (ret != request.size()) {
++    enum llhttp_errno ret = llhttp_execute(parser_.get(), request.c_str(), request.size());
++    if (ret != HPE_OK && ret != HPE_PAUSED) {
+         if (logger_)
+-            logger_->e("Error parsing HTTP: %zu %s %s", ret,
+-                http_errno_name(HTTP_PARSER_ERRNO(parser_)),
+-                http_errno_description(HTTP_PARSER_ERRNO(parser_)));
++            logger_->e("Error parsing HTTP: %zu %s %d", (int)ret, llhttp_errno_name(ret), llhttp_get_error_reason(parser_.get()));
+         terminate(asio::error::basic_errors::broken_pipe);
+         return;
+     }
+
+-    if (state_ != State::DONE and parser_ and not http_body_is_final(parser_.get())) {
++    if (state_ != State::DONE and parser_ and not llhttp_message_needs_eof(parser_.get())) {
+         auto toRead = parser_->content_length ? std::min<uint64_t>(parser_->content_length, 64 * 1024) : 64 * 1024;
+         std::weak_ptr<Request> wthis = shared_from_this();
+         conn_->async_read_some(toRead, [wthis](const asio::error_code& ec, size_t bytes){

@@ -1,6 +1,6 @@
 # RESTINIO
-RESTINIO_VERSION := bbaa034dbcc7555ce67df0f8a1475591a7441733
-RESTINIO_URL := https://github.com/aberaud/restinio/archive/$(RESTINIO_VERSION).tar.gz
+RESTINIO_VERSION := 0.7.2
+RESTINIO_URL := https://github.com/Stiffstream/restinio/releases/download/v.${RESTINIO_VERSION}/restinio-${RESTINIO_VERSION}.tar.bz2
 
 PKGS += restinio
 ifeq ($(call need_pkg,'restinio'),)
@@ -19,17 +19,18 @@ DEPS_restinio += fmt
 endif
 DEPS_restinio += http_parser
 
-RESTINIO_CMAKECONF = -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF -DRESTINIO_INSTALL_SAMPLES=OFF \
-					 -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF -DRESTINIO_FIND_DEPS=ON \
-					 -DRESTINIO_ALLOW_SOBJECTIZER=OFF -DRESTINIO_USE_BOOST_ASIO=none \
-					 -DZLIB_LIBRARY="$(PREFIX)/lib" -DZLIB_INCLUDE_DIR="$(PREFIX)/include"
+RESTINIO_CMAKECONF = -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
+                -DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
+                -DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system .
 
-$(TARBALLS)/restinio-$(RESTINIO_VERSION).tar.gz:
+$(TARBALLS)/restinio-$(RESTINIO_VERSION).tar.bz2:
 	$(call download,$(RESTINIO_URL))
 
-.sum-restinio: restinio-$(RESTINIO_VERSION).tar.gz
+.sum-restinio: #restinio-$(RESTINIO_VERSION).tar.bz2
+	$(warning $@ not implemented)
+	touch $@
 
-restinio: restinio-$(RESTINIO_VERSION).tar.gz
+restinio: restinio-$(RESTINIO_VERSION).tar.bz2
 	$(UNPACK)
 	#$(APPLY) $(SRC)/restinio/cmake.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)

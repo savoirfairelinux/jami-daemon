@@ -1,6 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := 3.1.7
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/v$(OPENDHT_VERSION).tar.gz
+OPENDHT_VERSION := 4eaa53a4a6c5bee338c0363a765a68505bd75085
+OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht >= 3.1.7'),)
@@ -21,10 +21,13 @@ OPENDHT_CONF = -DBUILD_SHARED_LIBS=Off \
 $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 	$(call download,$(OPENDHT_URL))
 
-.sum-opendht: opendht-$(OPENDHT_VERSION).tar.gz
+.sum-opendht: #opendht-$(OPENDHT_VERSION).tar.gz
+	$(warning $@ not implemented)
+	touch $@
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/opendht/test.patch
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
