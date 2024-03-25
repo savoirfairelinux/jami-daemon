@@ -198,12 +198,6 @@ FFMPEGCONF += \
 
 #plugins
 
-ifdef WITH_FREETYPE
-ifndef HAVE_LINUX
-DEPS_ffmpeg += freetype
-endif
-endif
-
 ifdef __DEBUG__
 DEPS_ffmpeg += rav1e
 DEPS_ffmpeg += mp3lame
@@ -250,6 +244,7 @@ FFMPEGCONF += \
 
 ifdef WITH_FREETYPE
 FFMPEGCONF += --enable-libfreetype
+DEPS_ffmpeg += freetype
 endif
 
 #platform specific options
