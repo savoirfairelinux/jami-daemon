@@ -565,7 +565,7 @@ else()
         PkgConfig::swresample
         PkgConfig::swscale
         PkgConfig::jsoncpp
-        yaml-cpp
+        yaml-cpp::yaml-cpp
         PkgConfig::secp256k1
         PUBLIC
         PkgConfig::fmt
@@ -709,7 +709,7 @@ else()
             PkgConfig::swresample
             PkgConfig::swscale
             PkgConfig::jsoncpp
-            yaml-cpp
+            yaml-cpp::yaml-cpp
             PkgConfig::fmt
             PkgConfig::secp256k1
         )
