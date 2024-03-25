@@ -21,6 +21,7 @@ FFMPEGCONF += \
 	--enable-zlib \
 	--enable-gpl \
 	--enable-swscale \
+	--enable-libfreetype \
 	--enable-bsfs \
 	--disable-filters \
 	--disable-programs \
@@ -192,6 +193,7 @@ FFMPEGCONF += \
 	--enable-filter=aresample \
 	--enable-filter=format \
 	--enable-filter=aformat \
+	--enable-filter=drawtext \
 	--enable-filter=fps \
 	--enable-filter=transpose \
 	--enable-filter=pad
