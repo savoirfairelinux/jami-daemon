@@ -4,6 +4,10 @@
 GMP_VERSION := 6.3.0
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
 
+ifeq ($(call need_pkg,'gmp >= 6.2.0'),)
+PKGS_FOUND += gmp
+endif
+
 $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
 	$(call download,$(GMP_URL))
 
