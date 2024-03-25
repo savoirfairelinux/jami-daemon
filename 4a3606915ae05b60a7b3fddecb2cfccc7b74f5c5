@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5880410d_0f030169",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-25T12:43:35Z",
+      "side": 1,
+      "message": "already line 241",
+      "range": {
+        "startLine": 24,
+        "startChar": 10,
+        "endLine": 24,
+        "endChar": 21
+      },
+      "revId": "4a3606915ae05b60a7b3fddecb2cfccc7b74f5c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "376fe1fd_9db53859",
+        "filename": "contrib/src/ffmpeg/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-03-25T12:43:35Z",
+      "side": 1,
+      "message": "Already there line 228",
+      "range": {
+        "startLine": 197,
+        "startChar": 17,
+        "endLine": 197,
+        "endChar": 20
+      },
+      "revId": "4a3606915ae05b60a7b3fddecb2cfccc7b74f5c5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
