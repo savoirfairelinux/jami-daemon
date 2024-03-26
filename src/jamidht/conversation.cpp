@@ -146,7 +146,7 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
-        init(*account);
+        init(account);
     }
 
     Impl(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId)
@@ -159,7 +159,7 @@ public:
         if (!repository_) {
             throw std::logic_error("Couldn't create repository");
         }
-        init(*account);
+        init(account);
     }
 
     Impl(const std::shared_ptr<JamiAccount>& account,
@@ -188,10 +188,10 @@ public:
         activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
         for (const auto& c : repository_->convCommitsToMap(commits))
             updateActiveCalls(c);
-        init(*account);
+        init(account);
     }
 
-    void init(JamiAccount& account) {
+    void init(const std::shared_ptr<JamiAccount>& account) {
         ioContext_ = Manager::instance().ioContext();
         fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
         swarmManager_
@@ -203,7 +203,7 @@ public:
                                                 }
                                                 return false;
                                             });
-        swarmManager_->setMobility(account.isMobile());
+        swarmManager_->setMobility(account->isMobile());
         transferManager_
             = std::make_shared<TransferManager>(accountId_,
                                                 "",
@@ -219,7 +219,7 @@ public:
         hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
         loadActiveCalls();
         loadStatus();
-        typers_ = std::make_shared<Typers>(shared, repository_->id());
+        typers_ = std::make_shared<Typers>(account, repository_->id());
     }
 
     const std::string& toString() const
