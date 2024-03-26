@@ -1,0 +1,42 @@
+From 0d495d7dc385f8e6a957be9a1e0f9306c62b6788 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Adrien=20B=C3=A9raud?= <adrien.beraud@savoirfairelinux.com>
+Date: Tue, 26 Mar 2024 00:04:58 -0400
+Subject: [PATCH] remove shared libs, executables
+
+---
+ Makefile | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index b67b3e8..483c537 100644
+--- a/Makefile
++++ b/Makefile
+@@ -74,7 +74,7 @@ JNIHEADERS = fr_free_miniupnp_libnatpmp_NatPmp.h
+ 
+ .PHONY:	all clean depend install cleaninstall installpythonmodule
+ 
+-all: $(STATICLIB) $(SHAREDLIB) $(EXECUTABLES)
++all: $(STATICLIB)
+ 
+ pythonmodule: $(STATICLIB) libnatpmpmodule.c setup.py
+ 	python setup.py build
+@@ -91,15 +91,12 @@ clean:
+ depend:
+ 	makedepend -f$(MAKEFILE_LIST) -Y $(OBJS:.o=.c) 2>/dev/null
+ 
+-install:	$(HEADERS) $(STATICLIB) $(SHAREDLIB) natpmpc-shared
++install:	$(HEADERS) $(STATICLIB)
+ 	$(INSTALL) -d $(INSTALLDIRINC)
+ 	$(INSTALL) -m 644 $(HEADERS) $(INSTALLDIRINC)
+ 	$(INSTALL) -d $(INSTALLDIRLIB)
+ 	$(INSTALL) -m 644 $(STATICLIB) $(INSTALLDIRLIB)
+-	$(INSTALL) -m 644 $(SHAREDLIB) $(INSTALLDIRLIB)/$(SONAME)
+ 	$(INSTALL) -d $(INSTALLDIRBIN)
+-	$(INSTALL) -m 755 natpmpc-shared $(INSTALLDIRBIN)/natpmpc
+-	ln -s -f $(SONAME) $(INSTALLDIRLIB)/$(SHAREDLIB)
+ 
+ $(JNIHEADERS): fr/free/miniupnp/libnatpmp/NatPmp.class
+ 	$(JAVAH) -jni fr.free.miniupnp.libnatpmp.NatPmp
+-- 
+2.39.3 (Apple Git-146)
+
