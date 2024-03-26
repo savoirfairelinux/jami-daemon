@@ -21,6 +21,7 @@ $(TARBALLS)/libnatpmp-$(NATPMP_VERSION).tar.gz:
 
 natpmp: libnatpmp-$(NATPMP_VERSION).tar.gz .sum-natpmp
 	$(UNPACK)
+	$(APPLY) $(SRC)/natpmp/0001-remove-shared-libs-executables.patch
 	$(MOVE)
 
 .natpmp: natpmp
