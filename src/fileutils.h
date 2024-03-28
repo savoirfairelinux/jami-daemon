@@ -108,7 +108,7 @@ static constexpr auto ARCHIVE_AUTH_SCHEME_PASSWORD = "password"sv;
 static constexpr auto ARCHIVE_AUTH_SCHEME_KEY = "key"sv;
 
 struct ArchiveStorageData {
-    std::vector<uint8_t> data;
+    std::string data;
     std::vector<uint8_t> salt;
 };
 ArchiveStorageData readArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd);
