@@ -291,9 +291,8 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
             std::tie(key, loc) = computeKeys(ctx->credentials->password,
                                              ctx->credentials->uri,
                                              previous);
-            JAMI_DBG("[Auth] trying to load account from DHT with %s at %s",
-                     /**/ ctx->credentials->uri.c_str(),
-                     loc.toString().c_str());
+            JAMI_LOG("[Auth] trying to load account from DHT with {:s} at {:s}",
+                     ctx->credentials->uri, loc.toString());
             if (not ctx->dhtContext or ctx->dhtContext->found) {
                 return;
             }
@@ -327,13 +326,13 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                     return not ctx->dhtContext->found;
                 },
                 [=, &s](bool ok) {
-                    JAMI_DBG("[Auth] DHT archive search ended at %s", /**/ loc.toString().c_str());
+                    JAMI_LOG("[Auth] DHT archive search ended at {}", loc.toString());
                     s.first = true;
                     s.second = ok;
                     searchEnded();
                 });
         } catch (const std::exception& e) {
-            // JAMI_ERR("Error computing kedht::ThreadPool::computation().run(ys: %s", e.what());
+            // JAMI_ERROR("Error computing keys: {}", e.what());
             s.first = true;
             s.second = true;
             searchEnded();
