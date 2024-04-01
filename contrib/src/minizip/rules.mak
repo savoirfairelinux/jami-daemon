@@ -1,6 +1,6 @@
 # MINIZIP
-LIBMINIZIP_VERSION := 3.0.10
-LIBMINIZIP_URL := https://github.com/zlib-ng/minizip-ng/archive/refs/tags/$(LIBMINIZIP_VERSION).tar.gz
+LIBMINIZIP_VERSION := 5aec551bf78ed79f6bec3160a5c7ce7fdac66776
+LIBMINIZIP_URL := https://github.com/zlib-ng/minizip-ng/archive/$(LIBMINIZIP_VERSION).tar.gz
 
 ifdef HAVE_MACOSX
 PKGS += minizip
@@ -9,7 +9,6 @@ PKGS_FOUND += minizip
 endif
 DEPS_minizip = zlib iconv
 endif
-
 
 LIBMINIZIP_CMAKECONF := \
 		-DCMAKE_INSTALL_LIBDIR=lib \
