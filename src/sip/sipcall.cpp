@@ -2612,6 +2612,11 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         if (hasVideo)
             mediaAttrList.emplace_back(videoAttr);
     }
+
+    if (mediaAttrList.empty()) {
+        JAMI_ERROR("[call:{}] Invalid media change request: new media list is empty", getCallId());
+        return false;
+    }
     JAMI_DEBUG("[call:{}] Requesting media change. List of new media:", getCallId());
 
     unsigned idx = 0;
