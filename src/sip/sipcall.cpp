@@ -2447,6 +2447,14 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
 bool
 SIPCall::isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList)
 {
+    if (mediaAttrList.empty()) {
+        // The media list is usually not empty, but it can be if e.g. the user has
+        // no camera and no microphone. There's no need to re-invite in this case
+        // (and in fact doing so can cause a crash since SIPSessionReinvite assumes
+        // that the list is nonempty).
+        return false;
+    }
+
     if (mediaAttrList.size() != rtpStreams_.size())
         return true;
 
