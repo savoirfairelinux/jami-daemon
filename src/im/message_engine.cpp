@@ -268,10 +268,8 @@ MessageEngine::save_() const
                                                                           : v.status);
                 msg["to"] = v.to;
                 auto wall_time = std::chrono::system_clock::now()
-                                 + std::chrono::duration_cast<std::chrono::system_clock::duration>(
-                                     v.last_op - clock::now());
-                msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(
-                    wall_time);
+                                 + std::chrono::duration_cast<std::chrono::system_clock::duration>(v.last_op - clock::now());
+                msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(wall_time);
                 msg["retried"] = v.retried;
                 auto& payloads = msg["payload"];
                 for (const auto& p : v.payloads)

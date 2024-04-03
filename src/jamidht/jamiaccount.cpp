@@ -111,13 +111,6 @@ static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
 static constexpr auto TREATED_PATH = "treatedImMessages"sv;
 
-struct PendingConfirmation
-{
-    std::mutex lock;
-    bool replied {false};
-    std::map<dht::InfoHash, std::future<size_t>> listenTokens {};
-};
-
 // Used to pass infos to a pjsip callback (pjsip_endpt_send_request)
 struct TextMessageCtx
 {
@@ -128,7 +121,6 @@ struct TextMessageCtx
     bool retryOnTimeout;
     std::shared_ptr<dhtnet::ChannelSocket> channel;
     bool onlyConnected;
-    std::shared_ptr<PendingConfirmation> confirmation;
 };
 
 struct VCardMessageCtx
@@ -2126,45 +2118,6 @@ JamiAccount::doRegister_()
         });
         lkCM.unlock();
 
-        // Note: this code should be unused unless for DHT text messages
-        auto inboxDeviceKey = dht::InfoHash::get(
-            "inbox:" + accountManager_->getInfo()->devicePk->getId().toString());
-        dht_->listen<dht::ImMessage>(inboxDeviceKey, [this, inboxDeviceKey](dht::ImMessage&& v) {
-            if (isMessageTreated(v.id))
-                return true;
-            accountManager_->onPeerMessage(
-                *v.owner,
-                this->config().dhtPublicInCalls,
-                [this,
-                 v,
-                 inboxDeviceKey,
-                 msgId = to_hex_string(v.id)](const std::shared_ptr<dht::crypto::Certificate>& cert,
-                        const dht::InfoHash& peer_account) {
-                    auto now = clock::to_time_t(clock::now());
-                    std::string datatype = utf8_make_valid(v.datatype);
-                    if (datatype.empty()) {
-                        datatype = "text/plain";
-                    }
-                    std::map<std::string, std::string> payloads = {
-                        {datatype, utf8_make_valid(v.msg)}};
-                    // Re-trigger on IO to avoid to lock configurationMtx from a DHT callback
-                    dht::ThreadPool::io().run(
-                        [w = weak(), payloads = std::move(payloads), msgId, peer_account, cert] {
-                            if (auto shared = w.lock()) {
-                                shared->onTextMessage(msgId,
-                                                      peer_account.toString(),
-                                                      cert->getPublicKey().getLongId().toString(),
-                                                      payloads);
-                            }
-                        });
-                    JAMI_DBG() << "Sending message confirmation " << v.id;
-                    dht_->putEncrypted(inboxDeviceKey,
-                                       v.from,
-                                       dht::ImMessage(v.id, std::string(), now));
-                });
-            return true;
-        });
-
         if (!conf.managerUri.empty() && accountManager_) {
             dynamic_cast<ServerAccountManager*>(accountManager_.get())
                 ->onNeedsMigration([this]() {
@@ -3042,11 +2995,6 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    auto confirm = std::make_shared<PendingConfirmation>();
-    if (onlyConnected) {
-        confirm->replied = true;
-    }
-
     std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
     std::unique_lock lk(sipConnsMtx_);
 
@@ -3072,7 +3020,6 @@ JamiAccount::sendMessage(const std::string& to,
         ctx->onlyConnected = onlyConnected;
         ctx->retryOnTimeout = retryOnTimeout;
         ctx->channel = channel;
-        ctx->confirmation = confirm;
 
         try {
             auto res = sendSIPMessage(conn,
@@ -3081,15 +3028,12 @@ JamiAccount::sendMessage(const std::string& to,
                                       token,
                                       payloads,
                                       [](void* token, pjsip_event* event) {
-                                          std::shared_ptr<TextMessageCtx> c {
-                                              (TextMessageCtx*) token};
+                                          std::shared_ptr<TextMessageCtx> c {(TextMessageCtx*) token};
                                           auto code = event->body.tsx_state.tsx->status_code;
                                           runOnMainThread([c = std::move(c), code]() {
                                               if (c) {
-                                                  auto acc = c->acc.lock();
-                                                  if (not acc)
-                                                      return;
-                                                  acc->onSIPMessageSent(std::move(c), code);
+                                                  if (auto acc = c->acc.lock())
+                                                      acc->onSIPMessageSent(std::move(c), code);
                                               }
                                           });
                                       });
@@ -3119,6 +3063,8 @@ JamiAccount::sendMessage(const std::string& to,
 
     if (onlyConnected)
         return;
+    // We couldn't send the message directly, try connecting
+    messageEngine_.onMessageSent(to, token, false, deviceId);
 
     // get conversation id
     auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
@@ -3128,8 +3074,9 @@ JamiAccount::sendMessage(const std::string& to,
         std::string errors;
 
         if (reader->parse(jsonData.c_str(), jsonData.c_str() + jsonData.size(), &parsed, &errors)) {
-            if (parsed.isMember("id") && parsed["id"].isString()) {
-                return parsed["id"].asString();
+            auto value = parsed.get("value", Json::nullValue);
+            if (value && value.isString()) {
+                return value.asString();
             }
         } else {
             JAMI_WARNING("Could not parse jsonData to get conversation id");
@@ -3138,153 +3085,32 @@ JamiAccount::sendMessage(const std::string& to,
     };
 
     // get request type
-    auto getPayloadType = [payloads, extractIdFromJson]() -> std::string {
-        auto payload_type = payloads.cbegin()->first;
-        if (payload_type == MIME_TYPE_GIT) {
-            auto payload_data = payloads.cbegin()->second;
-            std::string id = extractIdFromJson(payload_data);
-
-            if (!id.empty()) {
-                payload_type += "/" + id;
-            }
+    auto payload_type = payloads.cbegin()->first;
+    if (payload_type == MIME_TYPE_GIT) {
+        auto payload_data = payloads.cbegin()->second;
+        std::string id = extractIdFromJson(payload_data);
+        if (!id.empty()) {
+            payload_type += "/" + id;
         }
-        return payload_type;
-    };
+    }
 
     if (deviceId.empty()) {
         auto toH = dht::InfoHash(toUri);
         // Find listening devices for this account
         accountManager_->forEachDevice(
             toH,
-            [this, confirm, to, token, payloads, devices, getPayloadType](
+            [this, to, devices, payload_type](
                 const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                 // Test if already sent
                 auto deviceId = dev->getLongId();
-                if (devices->find(deviceId) != devices->end()) {
-                    return;
-                }
-                if (deviceId.toString() == currentDeviceId()) {
-                    devices->emplace(deviceId);
+                if (!devices->emplace(deviceId).second || deviceId.toString() == currentDeviceId()) {
                     return;
                 }
 
-                // Else, ask for a channel and send a DHT message
-                auto payload_type = getPayloadType();
+                // Else, ask for a channel to send the message
                 requestSIPConnection(to, deviceId, payload_type);
-                {
-                    std::lock_guard lock(messageMutex_);
-                    sentMessages_[token].to.emplace(deviceId);
-                }
-
-                auto h = dht::InfoHash::get("inbox:" + dev->getId().toString());
-                std::lock_guard l(confirm->lock);
-                auto list_token = dht_->listen<
-                    dht::ImMessage>(h, [this, to, token, confirm](dht::ImMessage&& msg) {
-                    // check expected message confirmation
-                    if (msg.id != token)
-                        return true;
-
-                    {
-                        std::lock_guard lock(messageMutex_);
-                        auto e = sentMessages_.find(msg.id);
-                        if (e == sentMessages_.end()
-                            or e->second.to.find(msg.owner->getLongId()) == e->second.to.end()) {
-                            JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token
-                                       << "] Message not found";
-                            return true;
-                        }
-                        sentMessages_.erase(e);
-                        JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token
-                                   << "] Received text message reply";
-
-                        // add treated message
-                        if (!treatedMessages_.add(msg.id))
-                            return true;
-                    }
-
-                    // report message as confirmed received
-                    {
-                        std::lock_guard l(confirm->lock);
-                        for (auto& t : confirm->listenTokens)
-                            dht_->cancelListen(t.first, std::move(t.second));
-                        confirm->listenTokens.clear();
-                        confirm->replied = true;
-                    }
-                    messageEngine_.onMessageSent(to, token, true);
-                    return false;
-                });
-                confirm->listenTokens.emplace(h, std::move(list_token));
-                auto now = clock::to_time_t(clock::now());
-                dht_->putEncrypted(h,
-                                   dev,
-                                   dht::ImMessage(token,
-                                                  std::string(payloads.begin()->first),
-                                                  std::string(payloads.begin()->second),
-                                                  now),
-                                   [this, to, token, confirm, h](bool ok) {
-                                       JAMI_DBG()
-                                           << "[Account " << getAccountID() << "] [message "
-                                           << token << "] Put encrypted " << (ok ? "ok" : "failed");
-                                       if (not ok
-                                           && connectionManager_ /* Check if not joining */) {
-                                           std::unique_lock l(confirm->lock);
-                                           auto lt = confirm->listenTokens.find(h);
-                                           if (lt != confirm->listenTokens.end()) {
-                                               std::shared_future<size_t> tok = std::move(
-                                                   lt->second);
-                                               confirm->listenTokens.erase(lt);
-                                               dht_->cancelListen(h, tok);
-                                           }
-                                           if (confirm->listenTokens.empty()
-                                               and not confirm->replied) {
-                                               l.unlock();
-                                               messageEngine_.onMessageSent(to, token, false);
-                                           }
-                                       }
-                                   });
-
-                JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token
-                           << "] Sending message for device " << deviceId.toString();
-            },
-            [this, to, token, devices, confirm](bool ok) {
-                if (devices->size() == 1 && devices->begin()->toString() == currentDeviceId()) {
-                    // Current user only have devices, so no message are sent
-                    {
-                        std::lock_guard l(confirm->lock);
-                        for (auto& t : confirm->listenTokens)
-                            dht_->cancelListen(t.first, std::move(t.second));
-                        confirm->listenTokens.clear();
-                        confirm->replied = true;
-                    }
-                    messageEngine_.onMessageSent(to, token, true);
-                } else if (not ok) {
-                    messageEngine_.onMessageSent(to, token, false);
-                }
             });
-
-        // Timeout cleanup
-        Manager::instance().scheduleTaskIn(
-            [w = weak(), confirm, to, token]() {
-                std::unique_lock l(confirm->lock);
-                if (not confirm->replied) {
-                    if (auto this_ = w.lock()) {
-                        JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token
-                                   << "] Timeout";
-                        for (auto& t : confirm->listenTokens)
-                            this_->dht_->cancelListen(t.first, std::move(t.second));
-                        confirm->listenTokens.clear();
-                        confirm->replied = true;
-                        l.unlock();
-                        this_->messageEngine_.onMessageSent(to, token, false);
-                    }
-                }
-            },
-            std::chrono::minutes(1));
-
     } else {
-        // Set message as not sent in order to be re-triggered
-        messageEngine_.onMessageSent(to, token, false, deviceId);
-        auto payload_type = getPayloadType();
         requestSIPConnection(to, DeviceId(deviceId), payload_type);
     }
 }
@@ -3293,9 +3119,6 @@ void
 JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code)
 {
     if (code == PJSIP_SC_OK) {
-        std::unique_lock l(ctx->confirmation->lock);
-        ctx->confirmation->replied = true;
-        l.unlock();
         if (!ctx->onlyConnected)
             messageEngine_.onMessageSent(ctx->to, ctx->id, true, ctx->deviceId.toString());
     } else {
