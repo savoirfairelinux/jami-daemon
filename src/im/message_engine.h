@@ -83,7 +83,6 @@ public:
 
 private:
     static const constexpr unsigned MAX_RETRIES = 20;
-    static const std::chrono::minutes RETRY_PERIOD;
     using clock = std::chrono::steady_clock;
 
     void retrySend(const std::string& peer,
