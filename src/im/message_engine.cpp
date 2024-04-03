@@ -60,6 +60,7 @@ MessageEngine::sendMessage(const std::string& to,
             token = refreshToken;
             previousIt->second.to = to;
             previousIt->second.payloads = payloads;
+            previousIt->second.status = MessageStatus::IDLE;
         } else {
             do {
                 token = std::uniform_int_distribution<MessageToken> {1, JAMI_ID_MAX_VAL}(
@@ -95,6 +96,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout, const std
         std::map<std::string, std::string> payloads;
     };
     std::vector<PendingMsg> pending {};
+    auto now = clock::now();
     {
         std::lock_guard lock(messagesMutex_);
 
@@ -109,7 +111,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout, const std
                 || m->second.status == MessageStatus::IDLE) {
                 m->second.status = MessageStatus::SENDING;
                 m->second.retried++;
-                m->second.last_op = clock::now();
+                m->second.last_op = now;
                 pending.emplace_back(PendingMsg {m->first, m->second.to, m->second.payloads});
             }
         }
