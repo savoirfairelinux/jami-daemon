@@ -216,12 +216,11 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
 {
 #ifdef ENABLE_PLUGIN
 #if defined(__APPLE__)
-    void* zip_handle = NULL;
     mz_zip_file* info = NULL;
 
     dhtnet::fileutils::check_dir(dir.c_str());
 
-    mz_zip_create(&zip_handle);
+    void* zip_handle = mz_zip_create();
     auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
     status |= mz_zip_reader_goto_first_entry(zip_handle);
 
@@ -238,8 +237,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             std::string directory = filePath.substr(0, filePath.find_last_of(DIR_SEPARATOR_CH));
             dhtnet::fileutils::check_dir(directory.c_str());
             mz_zip_reader_entry_open(zip_handle);
-            void* buffStream = NULL;
-            buffStream = mz_stream_os_create(&buffStream);
+            void* buffStream = mz_stream_os_create();
             if (mz_stream_os_open(buffStream,
                                   filePath.c_str(),
                                   MZ_OPEN_MODE_WRITE | MZ_OPEN_MODE_CREATE)
@@ -355,10 +353,9 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
     std::vector<uint8_t> fileContent;
 #ifdef ENABLE_PLUGIN
 #if defined(__APPLE__)
-    void* zip_handle = NULL;
     mz_zip_file* info;
 
-    mz_zip_create(&zip_handle);
+    void* zip_handle = mz_zip_create();
     auto status = mz_zip_reader_open_file(zip_handle, archivePath.c_str());
     status |= mz_zip_reader_goto_first_entry(zip_handle);
 
@@ -446,10 +443,9 @@ listFilesFromArchive(const std::string& path)
     std::vector<std::string> filePaths;
 #ifdef ENABLE_PLUGIN
 #if defined(__APPLE__)
-    void* zip_handle = NULL;
     mz_zip_file* info = NULL;
 
-    mz_zip_create(&zip_handle);
+    void* zip_handle = mz_zip_create();
     auto status = mz_zip_reader_open_file(zip_handle, path.c_str());
     status |= mz_zip_reader_goto_first_entry(zip_handle);
 
