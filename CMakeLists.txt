@@ -283,6 +283,9 @@ endif()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENSL)
 endif()
+if (APPLE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_COREAUDIO)
+endif()
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/.;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
@@ -553,7 +556,6 @@ else()
         )
     elseif (APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE resolv)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_COREAUDIO)
     endif()
     if (JAMI_PLUGIN)
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::archive)
