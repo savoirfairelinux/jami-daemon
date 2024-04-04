@@ -1,6 +1,6 @@
 {
     "name": "jsoncpp",
-    "version": "81065748e315026017c633fca1bfc57cba5b246a",
+    "version": "1.9.3",
     "url": "https://github.com/open-source-parsers/jsoncpp/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
