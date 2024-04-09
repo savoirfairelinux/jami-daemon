@@ -309,7 +309,7 @@ Conference::setState(State state)
 }
 
 void
-Conference::setLocalHostDefaultMediaSource()
+Conference::initSourcesForHost()
 {
     hostSources_.clear();
     // Setup local audio source
@@ -907,7 +907,7 @@ Conference::attachHost()
 
     if (getState() == State::ACTIVE_DETACHED) {
         setState(State::ACTIVE_ATTACHED);
-        setLocalHostDefaultMediaSource();
+        initSourcesForHost();
         bindHostAudio();
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
@@ -946,7 +946,7 @@ Conference::detachHost()
         return;
     }
 
-    setLocalHostDefaultMediaSource();
+    initSourcesForHost();
     setState(State::ACTIVE_DETACHED);
 }
 
