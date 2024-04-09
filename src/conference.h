@@ -249,11 +249,6 @@ public:
     const char* getStateStr() const { return getStateStr(confState_); }
 
     /**
-     * Set default media source for the local host
-     */
-    void setLocalHostDefaultMediaSource();
-
-    /**
      * Set the mute state of the local host
      */
     void setLocalHostMuteState(MediaType type, bool muted);
@@ -262,14 +257,6 @@ public:
      * Get the mute state of the local host
      */
     bool isMediaSourceMuted(MediaType type) const;
-
-    /**
-     * Take over media control from the call.
-     * When a call joins a conference, the media control (mainly mute/un-mute
-     * state of the local media source) will be handled by the conference and
-     * the mixer.
-     */
-    void takeOverMediaSourceControl(const std::string& callId);
 
     /**
      * Process a media change request.
@@ -515,6 +502,19 @@ private:
 
     std::function<void(int)> shutdownCb_;
     clock::time_point duration_start_;
+
+    /**
+     * Initialize sources for host (takes default camera/audio)
+     */
+    void initSourcesForHost();
+
+    /**
+     * Take over media control from the call.
+     * When a call joins a conference, the media control (mainly mute/un-mute
+     * state of the local media source) will be handled by the conference and
+     * the mixer.
+     */
+    void takeOverMediaSourceControl(const std::string& callId);
 
     /**
      * Bind host's audio
