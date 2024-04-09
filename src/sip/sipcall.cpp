@@ -3158,10 +3158,20 @@ SIPCall::getDetails() const
 void
 SIPCall::enterConference(std::shared_ptr<Conference> conference)
 {
-    JAMI_DBG("[call:%s] Entering conference [%s]",
-             getCallId().c_str(),
-             conference->getConfId().c_str());
+    JAMI_DEBUG("[call:{}] Entering conference [{}]",
+             getCallId(),
+             conference->getConfId());
     conf_ = conference;
+    // Unbind audio. It will be rebinded in the conference if needed
+    auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
+    if (hasAudio) {
+        auto& rbPool = Manager::instance().getRingBufferPool();
+        auto medias = getAudioStreams();
+        for (const auto& media : medias) {
+            rbPool.unbindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
+        }
+        rbPool.flush(RingBufferPool::DEFAULT_ID);
+    }
 
 #ifdef ENABLE_VIDEO
     if (conference->isVideoEnabled())
