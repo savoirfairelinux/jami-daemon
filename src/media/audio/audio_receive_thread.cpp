@@ -91,7 +91,6 @@ AudioReceiveThread::setup()
     }
 
     ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId_);
-    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_AUDIO, 1);
