@@ -289,7 +289,7 @@ public:
     /**
      * Attach host
      */
-    void attachHost();
+    void attachHost(const std::vector<libjami::MediaMap>& mediaList = {});
 
     /**
      * Detach local audio/video from the conference
