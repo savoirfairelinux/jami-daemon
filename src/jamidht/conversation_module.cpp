@@ -2916,29 +2916,24 @@ ConversationModule::call(const std::string& url,
     }
     lk.unlock();
 
+    auto account = pimpl_->account_.lock();
+    std::vector<libjami::MediaMap> mediaMap = mediaList.empty()
+                                                  ? MediaAttribute::mediaAttributesToMediaMaps(
+                                                        pimpl_->account_.lock()->createDefaultMediaList(
+                                                            pimpl_->account_.lock()->isVideoEnabled()))
+                                                  : mediaList;
+
     if (!sendCallRequest
         || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {
         confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
         // TODO attach host with media list
-        hostConference(conversationId, confId, "");
+        hostConference(conversationId, confId, "", mediaMap);
         return {};
     }
 
     // Else we need to create a call
-    auto account = pimpl_->account_.lock();
     auto& manager = Manager::instance();
-    std::shared_ptr<SIPCall> call;
-
-    // SIP allows sending empty invites, this use case is not used with Jami accounts.
-    if (not mediaList.empty()) {
-        call = manager.callFactory.newSipCall(account, Call::CallType::OUTGOING, mediaList);
-    } else {
-        JAMI_WARN("Media list is empty, setting a default list");
-        call = manager.callFactory.newSipCall(account,
-                                              Call::CallType::OUTGOING,
-                                              MediaAttribute::mediaAttributesToMediaMaps(
-                                                  account->createDefaultMediaList(account->isVideoEnabled())));
-    }
+    std::shared_ptr<SIPCall> call = manager.callFactory.newSipCall(account, Call::CallType::OUTGOING, mediaMap);
 
     if (not call)
         return {};
@@ -2979,7 +2974,8 @@ ConversationModule::call(const std::string& url,
 void
 ConversationModule::hostConference(const std::string& conversationId,
                                    const std::string& confId,
-                                   const std::string& callId)
+                                   const std::string& callId,
+                                   const std::vector<libjami::MediaMap>& mediaList)
 {
     auto acc = pimpl_->account_.lock();
     if (!acc)
@@ -3002,8 +2998,8 @@ ConversationModule::hostConference(const std::string& conversationId,
     if (!callId.empty())
         conf->addSubCall(callId);
 
-    if (callId.empty()) // TODO use mediaList
-        conf->attachHost();
+    if (callId.empty())
+        conf->attachHost(mediaList);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, conf->getConfId());
