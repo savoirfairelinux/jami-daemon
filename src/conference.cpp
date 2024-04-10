@@ -1767,10 +1767,7 @@ Conference::bindHostAudio()
                         }
                         // Bind audio
                         if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                            if (muted)
-                                rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
-                            else
-                                rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
+                            rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
                         } else {
                             auto buffer = source.sourceUri_;
                             static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
@@ -1778,10 +1775,7 @@ Conference::bindHostAudio()
                             if (pos != std::string::npos)
                                 buffer = source.sourceUri_.substr(pos + sep.size());
 
-                            if (muted)
-                                rbPool.bindHalfDuplexOut(id, buffer);
-                            else
-                                rbPool.bindRingbuffers(id, buffer);
+                            rbPool.bindRingbuffers(id, buffer);
                         }
                     }
                 }
@@ -1795,7 +1789,7 @@ Conference::bindHostAudio()
 void
 Conference::unbindHostAudio()
 {
-    JAMI_INFO("Unbind host from conference %s", id_.c_str());
+    JAMI_LOG("Unbind host from conference {}", id_);
     for (const auto& source : hostSources_) {
         if (source.type_ == MediaType::MEDIA_AUDIO) {
             // Stop audio input
