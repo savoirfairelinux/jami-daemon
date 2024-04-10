@@ -583,7 +583,8 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         });
         // If video, add to newVideoInputs
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
-            newVideoInputs.emplace_back(mediaAttr.sourceUri_);
+            auto srcUri = mediaAttr.sourceUri_.empty() ? Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice() : mediaAttr.sourceUri_;
+            newVideoInputs.emplace_back(srcUri);
         } else {
             hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
         }
@@ -901,24 +902,28 @@ Conference::createSinks(const ConfInfo& infos)
 #endif
 
 void
-Conference::attachHost()
+Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
 {
     JAMI_LOG("Attach local participant to conference {}", id_);
 
     if (getState() == State::ACTIVE_DETACHED) {
         setState(State::ACTIVE_ATTACHED);
-        initSourcesForHost();
-        bindHostAudio();
+        if (mediaList.empty()) {
+            initSourcesForHost();
+            bindHostAudio();
 #ifdef ENABLE_VIDEO
-        if (videoMixer_) {
-            std::vector<std::string> videoInputs;
-            for (const auto& source : hostSources_) {
-                if (source.type_ == MediaType::MEDIA_VIDEO)
-                    videoInputs.emplace_back(source.sourceUri_);
+            if (videoMixer_) {
+                std::vector<std::string> videoInputs;
+                for (const auto& source : hostSources_) {
+                    if (source.type_ == MediaType::MEDIA_VIDEO)
+                        videoInputs.emplace_back(source.sourceUri_);
+                }
+                videoMixer_->switchInputs(videoInputs);
             }
-            videoMixer_->switchInputs(videoInputs);
-        }
 #endif
+        } else {
+            requestMediaChange(mediaList);
+        }
     } else {
         JAMI_WARNING(
             "Invalid conference state in attach participant: current \"{}\" - expected \"{}\"",
