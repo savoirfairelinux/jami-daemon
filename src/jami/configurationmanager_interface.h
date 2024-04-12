@@ -329,6 +329,11 @@ LIBJAMI_PUBLIC void setAllModerators(const std::string& accountId, bool allModer
  */
 LIBJAMI_PUBLIC bool isAllModerators(const std::string& accountId);
 
+/**
+ * Set the resource directory path
+ */
+LIBJAMI_PUBLIC void setResourceDirPath(const std::string& resourceDirPath);
+
 struct LIBJAMI_PUBLIC AudioSignal
 {
     struct LIBJAMI_PUBLIC DeviceEvent
