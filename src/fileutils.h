@@ -55,12 +55,22 @@ const std::filesystem::path& get_data_dir();
 const std::filesystem::path& get_cache_dir();
 
 /**
- * Check directory existence and create it with given mode if it doesn't.
- * @param path to check, relative or absolute
- * @param dir last directory creation mode
- * @param parents default mode for all created directories except the last
+ * Set the program directory.
+ * @param program_path The path to the application executable.
  */
-LIBJAMI_PUBLIC void set_program_dir(char* program_path); // public because bin/main.cpp uses it
+LIBJAMI_PUBLIC void set_program_dir(char* program_path);
+
+/**
+ * Get the program directory.
+ * @return The program directory.
+ */
+const std::filesystem::path& get_program_dir();
+
+/**
+ * Expand the given path.
+ * @param path The path to be expanded.
+ * @return The expanded path as a string.
+ */
 std::string expand_path(const std::string& path);
 
 bool isPathRelative(const std::filesystem::path& path);
