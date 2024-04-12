@@ -1159,4 +1159,10 @@ isAllModerators(const std::string& accountId)
     return jami::Manager::instance().isAllModerators(accountId);
 }
 
+void
+setResourceDirPath(const std::string& resourceDir)
+{
+    jami::fileutils::set_resource_dir_path(resourceDir);
+}
+
 } // namespace libjami
