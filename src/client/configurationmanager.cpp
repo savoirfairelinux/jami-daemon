@@ -1159,4 +1159,12 @@ isAllModerators(const std::string& accountId)
     return jami::Manager::instance().isAllModerators(accountId);
 }
 
+void
+setProgramDir(const std::string& programPath)
+{
+    std::vector<char> writable(programPath.size() + 1);
+    std::copy(std::begin(programPath), std::end(programPath),std::begin(writable));
+    jami::fileutils::set_program_dir(writable.data());
+}
+
 } // namespace libjami

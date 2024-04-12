@@ -425,6 +425,16 @@ set_program_dir(char* program_path)
 }
 #endif
 
+const std::filesystem::path&
+get_program_dir()
+{
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    return {};
+#else
+    return std::filesystem::path(program_dir);
+#endif
+}
+
 std::filesystem::path
 get_cache_dir(const char* pkg)
 {
