@@ -55,12 +55,23 @@ const std::filesystem::path& get_data_dir();
 const std::filesystem::path& get_cache_dir();
 
 /**
- * Check directory existence and create it with given mode if it doesn't.
- * @param path to check, relative or absolute
- * @param dir last directory creation mode
- * @param parents default mode for all created directories except the last
+ * Set the program's resource directory path. This is used for clients that may be installed in different
+ * locations and are deployed with ringtones and other resources in an application relative directory.
+ * @param resource_dir_path The path to the ringtone directory.
  */
-LIBJAMI_PUBLIC void set_program_dir(char* program_path); // public because bin/main.cpp uses it
+void set_resource_dir_path(const std::filesystem::path& resourceDirPath);
+
+/**
+ * Get the resource directory path that was set with set_resource_dir_path.
+ * @return The resource directory path.
+ */
+const std::filesystem::path& get_resource_dir_path();
+
+/**
+ * Expand the given path.
+ * @param path The path to be expanded.
+ * @return The expanded path as a string.
+ */
 std::string expand_path(const std::string& path);
 
 bool isPathRelative(const std::filesystem::path& path);
