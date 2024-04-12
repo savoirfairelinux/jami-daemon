@@ -157,7 +157,11 @@ Account::loadDefaultCodecs()
 void
 Account::loadConfig() {
     setActiveCodecs(config_->activeCodecs);
-    auto ringtoneDir = fmt::format("{}/{}", JAMI_DATADIR, RINGDIR);
+
+    // Try to get the client-defined resource base directory, if any. If not set, use the default
+    // JAMI_DATADIR that was set at build time.
+    auto resourceDirPath = fileutils::get_resource_dir_path().string();
+    auto ringtoneDir = fmt::format("{}/{}", resourceDirPath, RINGDIR);
     ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
     // If the user defined a custom ringtone, the file may not exists
     // In this case, fallback on the default ringtone path

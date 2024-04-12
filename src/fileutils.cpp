@@ -14,12 +14,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "logger.h"
 #include "fileutils.h"
+#include "logger.h"
 #include "archiver.h"
 #include "compiler_intrinsics.h"
 #include "base64.h"
@@ -118,6 +119,21 @@ winGetEnv(const wchar_t* name)
 
 namespace jami {
 namespace fileutils {
+
+static std::filesystem::path resource_dir_path;
+
+void
+set_resource_dir_path(const std::filesystem::path&  resourceDirPath)
+{
+    resource_dir_path = resourceDirPath;
+}
+
+const std::filesystem::path&
+get_resource_dir_path()
+{
+    const std::filesystem::path jami_default_data_dir(JAMI_DATADIR);
+    return resource_dir_path.empty() ? jami_default_data_dir : resource_dir_path;
+}
 
 std::string
 expand_path(const std::string& path)
@@ -411,20 +427,6 @@ writeArchive(const std::string& archive_str,
     }
 }
 
-#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-#else
-static char* program_dir = NULL;
-void
-set_program_dir(char* program_path)
-{
-#ifdef _MSC_VER
-    _splitpath(program_path, nullptr, program_dir, nullptr, nullptr);
-#else
-    program_dir = dirname(program_path);
-#endif
-}
-#endif
-
 std::filesystem::path
 get_cache_dir(const char* pkg)
 {
@@ -473,7 +475,7 @@ get_home_dir_impl()
     if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
         return jami::to_string(path);
     }
-    return program_dir;
+    return {};
 #else
 
     // 1) try getting user's home directory from the environment
