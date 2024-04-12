@@ -157,7 +157,19 @@ Account::loadDefaultCodecs()
 void
 Account::loadConfig() {
     setActiveCodecs(config_->activeCodecs);
-    auto ringtoneDir = fmt::format("{}/{}", JAMI_DATADIR, RINGDIR);
+    auto dataDir = fmt::format("{}", JAMI_DATADIR);
+    // If dataDir is not set, use the program directory instead
+    if (dataDir.empty()) {
+        dataDir = fileutils::get_program_dir().string();
+    }
+
+    // if on macos (not iOS), force using the app bundle path
+    // as the data dir, use compile time macro
+#if defined(__APPLE__) && !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    dataDir = fileutils::get_program_dir().string() + "/Resources";
+#endif
+
+    auto ringtoneDir = fmt::format("{}/{}", dataDir, RINGDIR);
     ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
     // If the user defined a custom ringtone, the file may not exists
     // In this case, fallback on the default ringtone path

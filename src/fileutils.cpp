@@ -413,17 +413,23 @@ writeArchive(const std::string& archive_str,
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 #else
-static char* program_dir = NULL;
+static std::filesystem::path program_dir;
 void
 set_program_dir(char* program_path)
 {
-#ifdef _MSC_VER
-    _splitpath(program_path, nullptr, program_dir, nullptr, nullptr);
-#else
-    program_dir = dirname(program_path);
-#endif
+    program_dir = std::filesystem::path(dirname(program_path));
 }
 #endif
+
+const std::filesystem::path&
+get_program_dir()
+{
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    return {};
+#else
+    return program_dir;
+#endif
+}
 
 std::filesystem::path
 get_cache_dir(const char* pkg)
@@ -473,7 +479,7 @@ get_home_dir_impl()
     if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
         return jami::to_string(path);
     }
-    return program_dir;
+    return {};
 #else
 
     // 1) try getting user's home directory from the environment
