@@ -26,6 +26,7 @@
 #include <getopt.h>
 #include <string>
 #include <chrono>
+#include <filesystem>
 
 #include "jami.h"
 #include "callmanager_interface.h"
@@ -194,13 +195,9 @@ signal_handler(int code)
 int
 main(int argc, char *argv [])
 {
-    // make a copy as we don't want to modify argv[0], copy it to a vector to
-    // guarantee that memory is correctly managed/exception safe
-    std::string programName {argv[0]};
-    std::vector<char> writable(programName.size() + 1);
-    std::copy(programName.begin(), programName.end(), writable.begin());
-
-    jami::fileutils::set_program_dir(writable.data());
+    // Set the program's directory path as the resource directory path.
+    std::filesystem::path programPath(argv[0]);
+    jami::fileutils::set_resource_dir_path(programPath.parent_path());
 
 #ifdef TOP_BUILDDIR
     if (!getenv("CODECS_PATH"))
