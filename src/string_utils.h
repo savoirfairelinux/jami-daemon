@@ -56,7 +56,7 @@ std::string to_hex_string(uint64_t id);
 uint64_t from_hex_string(const std::string& str);
 
 template<typename T>
-T
+inline T
 to_int(std::string_view str, T defaultValue)
 {
     T result;
