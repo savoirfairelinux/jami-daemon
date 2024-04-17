@@ -23,6 +23,7 @@
 #include "manager.h"
 #include <opendht/thread_pool.h>
 #include <dhtnet/multiplexed_socket.h>
+#include <fmt/compile.h>
 
 #include <charconv>
 #include <ctime>
@@ -204,6 +205,11 @@ GitServer::Impl::parseOrder(std::string_view buf)
     return !cachedPkt_.empty();
 }
 
+std::string
+toGitHex(size_t value) {
+    return fmt::format(FMT_COMPILE("{:04x}"), value & 0x0FFFF);
+}
+
 void
 GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 {
@@ -223,11 +229,10 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // **** with a version number (if "version=1" is sent as an Extra Parameter),
     std::string currentHead;
     std::error_code ec;
-    std::stringstream packet;
     if (sendVersion) {
-        packet << "000eversion 1\0";
-        socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
-                       packet.str().size(),
+        auto toSend = "000eversion 1\0"sv;
+        socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()),
+                       toSend.size(),
                        ec);
         if (ec) {
             JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
@@ -245,25 +250,22 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     currentHead = git_oid_tostr_s(&commit_id);
 
     // Send references
-    std::string capStr = currentHead + SERVER_CAPABILITIES;
-
-    packet.str("");
-    packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
-    packet << capStr << "\n";
+    std::ostringstream packet;
+    packet << toGitHex(5 + currentHead.size() + SERVER_CAPABILITIES.size());
+    packet << currentHead << SERVER_CAPABILITIES << "\n";
 
     // Now, add other references
     git_strarray refs;
     if (git_reference_list(&refs, rep.get()) == 0) {
         for (std::size_t i = 0; i < refs.count; ++i) {
-            std::string ref = refs.strings[i];
-            if (git_reference_name_to_id(&commit_id, rep.get(), ref.c_str()) < 0) {
+            std::string_view ref = refs.strings[i];
+            if (git_reference_name_to_id(&commit_id, rep.get(), ref.data()) < 0) {
                 JAMI_WARNING("Cannot get reference for {}", ref);
                 continue;
             }
             currentHead = git_oid_tostr_s(&commit_id);
 
-            packet << std::setw(4) << std::setfill('0') << std::hex
-                   << ((6 /* size + space + \n */ + currentHead.size() + ref.size()) & 0x0FFFF);
+            packet << toGitHex(6 /* size + space + \n */ + currentHead.size() + ref.size());
             packet << currentHead << " " << ref << "\n";
         }
     }
@@ -272,7 +274,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // And add FLUSH
     packet << FLUSH_PKT;
     auto toSend = packet.str();
-    socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
+    socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
     if (ec) {
         JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
         socket_->shutdown();
@@ -285,9 +287,8 @@ GitServer::Impl::ACKCommon()
     std::error_code ec;
     // Ack common base
     if (!common_.empty()) {
-        std::stringstream packet;
-        packet << std::setw(4) << std::setfill('0') << std::hex
-               << ((18 /* size + ACK + space * 2 + continue + \n */ + common_.size()) & 0x0FFFF);
+        std::ostringstream packet;
+        packet << toGitHex(18 /* size + ACK + space * 2 + continue + \n */ + common_.size());
         packet << "ACK " << common_ << " continue\n";
         auto toSend = packet.str();
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
@@ -304,9 +305,8 @@ GitServer::Impl::ACKFirst()
     std::error_code ec;
     // Ack common base
     if (!common_.empty()) {
-        std::stringstream packet;
-        packet << std::setw(4) << std::setfill('0') << std::hex
-               << ((9 /* size + ACK + space + \n */ + common_.size()) & 0x0FFFF);
+        std::ostringstream packet;
+        packet << toGitHex(9 /* size + ACK + space + \n */ + common_.size());
         packet << "ACK " << common_ << "\n";
         auto toSend = packet.str();
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
@@ -352,8 +352,8 @@ GitServer::Impl::sendPackData()
 
     std::string fetched = wantedReference_;
     git_oid oid;
-    if (git_oid_fromstr(&oid, wantedReference_.c_str()) < 0) {
-        JAMI_ERROR("Cannot get reference for commit {}", wantedReference_);
+    if (git_oid_fromstr(&oid, fetched.c_str()) < 0) {
+        JAMI_ERROR("Cannot get reference for commit {}", fetched);
         return;
     }
 
@@ -410,18 +410,21 @@ GitServer::Impl::sendPackData()
     std::size_t sent = 0;
     std::size_t len = data.size;
     std::error_code ec;
+    std::vector<uint8_t> toSendData;
     do {
         // cf https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
         // In 'side-band-64k' mode it will send up to 65519 data bytes plus 1 control code, for a
         // total of up to 65520 bytes in a pkt-line.
         std::size_t pkt_size = std::min(static_cast<std::size_t>(65515), len - sent);
-        std::stringstream toSend;
-        toSend << std::setw(4) << std::setfill('0') << std::hex << ((pkt_size + 5) & 0x0FFFF);
-        toSend << "\x1" << std::string_view(data.ptr + sent, pkt_size);
-        std::string toSendStr = toSend.str();
+        std::string toSendHeader = toGitHex(pkt_size + 5);
+        toSendData.clear();
+        toSendData.reserve(pkt_size + 5);
+        toSendData.insert(toSendData.end(), toSendHeader.begin(), toSendHeader.end());
+        toSendData.push_back(0x1);
+        toSendData.insert(toSendData.end(), data.ptr + sent, data.ptr + sent + pkt_size);
 
-        socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()),
-                       toSendStr.size(),
+        socket_->write(reinterpret_cast<const unsigned char*>(toSendData.data()),
+                       toSendData.size(),
                        ec);
         if (ec) {
             JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
@@ -431,6 +434,7 @@ GitServer::Impl::sendPackData()
         sent += pkt_size;
     } while (sent < len);
     git_buf_dispose(&data);
+    toSendData = {};
 
     // And finish by a little FLUSH
     socket_->write(reinterpret_cast<const uint8_t*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
