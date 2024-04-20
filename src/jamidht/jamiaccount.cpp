@@ -1716,7 +1716,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       return;
                   if (not expired) {
                       // Retry messages every time a new device announce its presence
-                      sthis->messageEngine_.onPeerOnline(h.toString());
+                      sthis->messageEngine_.onPeerOnline(h.toString(), dev.owner->getLongId().toString());
                   }
                   if (isConnected and not wasConnected) {
                       sthis->onTrackedBuddyOnline(h);
@@ -3138,7 +3138,7 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
         // After closing sockets with that peer, we try to re-connect to
         // that peer one time.
         if (ctx->retryOnTimeout)
-            messageEngine_.onPeerOnline(ctx->to, false, ctx->deviceId.toString());
+            messageEngine_.onPeerOnline(ctx->to, ctx->deviceId.toString());
     }
 }
 
@@ -3782,7 +3782,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
-    messageEngine_.onPeerOnline(peerId, true, deviceId.toString());
+    messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
 
     // Connect pending calls
     forEachPendingCall(deviceId, [&](const auto& pc) {

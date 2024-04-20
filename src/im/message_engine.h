@@ -27,6 +27,9 @@
 #include <cstdint>
 #include <filesystem>
 
+#include <msgpack.hpp>
+#include <asio/steady_timer.hpp>
+
 namespace jami {
 
 class SIPAccountBase;
@@ -35,7 +38,7 @@ namespace im {
 
 using MessageToken = uint64_t;
 
-enum class MessageStatus { UNKNOWN = 0, IDLE, SENDING, SENT, DISPLAYED, FAILURE, CANCELLED };
+enum class MessageStatus { UNKNOWN=0, IDLE, SENDING, SENT, FAILURE };
 
 class MessageEngine
 {
@@ -56,8 +59,6 @@ public:
 
     MessageStatus getStatus(MessageToken t) const;
 
-    bool isSent(MessageToken t) const { return getStatus(t) == MessageStatus::SENT; }
-
     void onMessageSent(const std::string& peer,
                        MessageToken t,
                        bool success,
@@ -68,8 +69,8 @@ public:
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
      */
     void onPeerOnline(const std::string& peer,
-                      bool retryOnTimeout = true,
-                      const std::string& deviceId = {});
+                      const std::string& deviceId = {},
+                      bool retryOnTimeout = true);
 
     /**
      * Load persisted messages
@@ -83,33 +84,39 @@ public:
 
 private:
     static const constexpr unsigned MAX_RETRIES = 20;
-    using clock = std::chrono::steady_clock;
+    using clock = std::chrono::system_clock;
 
     void retrySend(const std::string& peer,
-                   bool retryOnTimeout = true,
-                   const std::string& deviceId = {});
+                   const std::string& deviceId,
+                   bool retryOnTimeout);
 
     void save_() const;
+    void scheduleSave();
 
     struct Message
     {
+        MessageToken token;
         std::string to;
         std::map<std::string, std::string> payloads;
-        MessageStatus status {MessageStatus::UNKNOWN};
+        MessageStatus status {MessageStatus::IDLE};
         unsigned retried {0};
         clock::time_point last_op;
+
+        MSGPACK_DEFINE_MAP(token, to, payloads, status, retried, last_op)
     };
 
     SIPAccountBase& account_;
     const std::filesystem::path savePath_;
+    std::shared_ptr<asio::io_context> ioContext_;
+    asio::steady_timer saveTimer_;
 
-    std::map<std::string, std::map<MessageToken, Message>> messages_;
-    std::map<std::string, std::map<MessageToken, Message>> messagesDevices_;
-
-    std::set<MessageToken> sentMessages_;
+    std::map<std::string, std::list<Message>> messages_;
+    std::map<std::string, std::list<Message>> messagesDevices_;
 
     mutable std::mutex messagesMutex_ {};
 };
 
 } // namespace im
 } // namespace jami
+
+MSGPACK_ADD_ENUM(jami::im::MessageStatus);
