@@ -227,7 +227,6 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // Answer with the version number
     // **** When the client initially connects the server will immediately respond
     // **** with a version number (if "version=1" is sent as an Extra Parameter),
-    std::string currentHead;
     std::error_code ec;
     if (sendVersion) {
         auto toSend = "000eversion 1\0"sv;
@@ -247,7 +246,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         socket_->shutdown();
         return;
     }
-    currentHead = git_oid_tostr_s(&commit_id);
+    std::string currentHead = git_oid_tostr_s(&commit_id);
 
     // Send references
     std::ostringstream packet;
@@ -287,10 +286,8 @@ GitServer::Impl::ACKCommon()
     std::error_code ec;
     // Ack common base
     if (!common_.empty()) {
-        std::ostringstream packet;
-        packet << toGitHex(18 /* size + ACK + space * 2 + continue + \n */ + common_.size());
-        packet << "ACK " << common_ << " continue\n";
-        auto toSend = packet.str();
+        auto toSend = fmt::format(FMT_COMPILE("{:04x}ACK {} continue\n"),
+            18 + common_.size() /* size + ACK + space * 2 + continue + \n */, common_);
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
             JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
@@ -305,10 +302,8 @@ GitServer::Impl::ACKFirst()
     std::error_code ec;
     // Ack common base
     if (!common_.empty()) {
-        std::ostringstream packet;
-        packet << toGitHex(9 /* size + ACK + space + \n */ + common_.size());
-        packet << "ACK " << common_ << "\n";
-        auto toSend = packet.str();
+        auto toSend = fmt::format(FMT_COMPILE("{:04x}ACK {}\n"),
+            9 + common_.size() /* size + ACK + space + \n */, common_);
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
             JAMI_WARNING("Couldn't send data for {}: {}", repository_, ec.message());
