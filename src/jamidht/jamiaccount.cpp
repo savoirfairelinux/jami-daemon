@@ -4188,4 +4188,15 @@ JamiAccount::initConnectionManager()
     }
 }
 
+void
+JamiAccount::updateUpnpController()
+{
+    Account::updateUpnpController();
+    if (connectionManager_) {
+        auto config = connectionManager_->getConfig();
+        if (config)
+            config->upnpCtrl = upnpCtrl_;
+    }
+}
+
 } // namespace jami

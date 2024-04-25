@@ -753,24 +753,12 @@ private:
     mutable std::mutex connManagerMtx_ {};
     std::unique_ptr<dhtnet::ConnectionManager> connectionManager_;
 
+    virtual void updateUpnpController() override;
+
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
     std::map<dht::InfoHash, DiscoveredPeer> discoveredPeers_;
     std::map<std::string, std::string> discoveredPeerMap_;
-
-    /**
-     * Avoid to refresh the cache multiple times
-     */
-    std::atomic_bool isRefreshing_ {false};
-    /**
-     * This will cache the turn server resolution each time we launch
-     * Jami, or for each connectivityChange()
-     */
-    // TODO move in separate class
-    void testTurn(dhtnet::IpAddr server);
-    void refreshTurnDelay(bool scheduleNext);
-
-    std::chrono::seconds turnRefreshDelay_ {std::chrono::seconds(10)};
 
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
