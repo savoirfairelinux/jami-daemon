@@ -253,7 +253,14 @@ public:
      */
     bool isEnabled() const { return config().enabled; }
 
-    void setEnabled(bool enable) { config_->enabled = enable; }
+    void setEnabled(bool enable)
+    {
+        config_->enabled = enable;
+        // Update the UPnP controller to make sure it's in the correct state since this
+        // depends on whether the account is enabled or not (in particular, we don't want
+        // disabled accounts to generate UPnP activity).
+        updateUpnpController();
+    }
 
     /**
      * Tell if the account is activated
@@ -431,7 +438,7 @@ private:
     CallSet callSet_;
 
 protected:
-    void updateUpnpController();
+    virtual void updateUpnpController();
 
     std::unique_ptr<AccountConfig> config_ {};
 
