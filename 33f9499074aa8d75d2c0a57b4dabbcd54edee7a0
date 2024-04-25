@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e8991b9d_825fb6f3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4199,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2024-04-25T18:18:12Z",
+      "side": 1,
+      "message": "should upnp_mtx be locked while accessing upnpCtrl_?",
+      "range": {
+        "startLine": 4195,
+        "startChar": 4,
+        "endLine": 4199,
+        "endChar": 5
+      },
+      "revId": "33f9499074aa8d75d2c0a57b4dabbcd54edee7a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
