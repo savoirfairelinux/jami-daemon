@@ -22,6 +22,30 @@
       },
       "revId": "33f9499074aa8d75d2c0a57b4dabbcd54edee7a0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bd49eb31_fac7ec98",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4199,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-04-25T19:58:20Z",
+      "side": 1,
+      "message": "As far as I can tell, the only reason for having this mutex is that some functions check whether `upnpCtrl_` is null and then dereference it if it\u0027s not, so there\u0027s a potential race condition if `upnpCtrl_` is reset at the wrong time. But this isn\u0027t an issue here.\n\n(I\u0027m actually not sure if we even need this mutex at all. It was added a long time ago and the code has changed a lot since then. Only two functions besides `updateUpnpController` still use it -- all other accesses to `upnpCtrl_` are unprotected.)\n\nI guess there\u0027s another potential concern here though, namely whether it\u0027s safe to directly update `config-\u003eupnpCtrl` like this or if it could lead to race conditions inside the connection manager. I don\u0027t think it\u0027s actually a problem (and `JamiAccount::loadConfig` also modifies the connection manager\u0027s config directly without locking any mutex), but let me know if you think it\u0027s worth investigating this further.",
+      "parentUuid": "e8991b9d_825fb6f3",
+      "range": {
+        "startLine": 4195,
+        "startChar": 4,
+        "endLine": 4199,
+        "endChar": 5
+      },
+      "revId": "33f9499074aa8d75d2c0a57b4dabbcd54edee7a0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
