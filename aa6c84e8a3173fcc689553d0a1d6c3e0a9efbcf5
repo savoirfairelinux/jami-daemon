@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fdcdff90_7c85c064",
+        "filename": "src/jamidht/contact_list.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-04-25T14:05:23Z",
+      "side": 1,
+      "message": "just remove it? If somebody needs it, will be added",
+      "range": {
+        "startLine": 207,
+        "startChar": 7,
+        "endLine": 207,
+        "endChar": 77
+      },
+      "revId": "aa6c84e8a3173fcc689553d0a1d6c3e0a9efbcf5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
