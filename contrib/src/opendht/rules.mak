@@ -1,6 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := 3.1.11
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/v$(OPENDHT_VERSION).tar.gz
+OPENDHT_VERSION := f2cee8e9ce24746caa7dee1847829c526d340284
+OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht >= 3.1.7'),)
