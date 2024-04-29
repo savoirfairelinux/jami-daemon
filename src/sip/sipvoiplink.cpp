@@ -624,6 +624,7 @@ SIPVoIPLink::SIPVoIPLink()
             throw VoipLinkException(#ret " failed"); \
     } while (0)
 
+    sip_utils::register_thread();
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 64 * 1024, 4096, nullptr));
     if (!pool_)
