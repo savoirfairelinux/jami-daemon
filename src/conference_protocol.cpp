@@ -119,9 +119,12 @@ ConfProtocolParser::parseV1()
     auto isPeerModerator = checkAuthorization_(peerId_);
     for (Json::Value::const_iterator itr = data_.begin(); itr != data_.end(); itr++) {
         auto key = itr.key();
-        if (isPeerModerator && key == ProtocolKeys::LAYOUT) {
+        if (key == ProtocolKeys::LAYOUT) {
             // Note: can be removed soon
-            setLayout_(itr->asInt());
+            if (isPeerModerator)
+                setLayout_(itr->asInt());
+        } else if (key == ProtocolKeys::PROTOVERSION) {
+            continue;
         } else {
             auto accValue = *itr;
             if (accValue.isMember(ProtocolKeys::DEVICES)) {
