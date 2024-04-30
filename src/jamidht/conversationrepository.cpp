@@ -781,7 +781,14 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
 
     // Commit
     git_buf to_sign = {};
+    // Check if the libgit2 library version is 1.8.0 or higher
+#if( LIBGIT2_VER_MAJOR > 1 ) || ( LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR >= 8 )
+    // For libgit2 version 1.8.0 and above
+    git_commit* const parents_ptr[2] {parents[0].get(), parents[1].get()};
+#else
+    // For libgit2 versions older than 1.8.0
     const git_commit* parents_ptr[2] {parents[0].get(), parents[1].get()};
+#endif
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
@@ -1861,7 +1868,13 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     GitCommit head_commit {head_ptr, git_commit_free};
 
     git_buf to_sign = {};
+    // Check if the libgit2 library version is 1.8.0 or higher
+#if( LIBGIT2_VER_MAJOR > 1 ) || ( LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR >= 8 )
+    // For libgit2 version 1.8.0 and above
+    git_commit* const head_ref[1] = {head_commit.get()};
+#else
     const git_commit* head_ref[1] = {head_commit.get()};
+#endif
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
