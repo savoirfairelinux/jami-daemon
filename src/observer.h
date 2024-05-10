@@ -144,7 +144,7 @@ protected:
     }
 
 private:
-    NON_COPYABLE(Observable<T>);
+    NON_COPYABLE(Observable);
 
 protected:
     std::mutex mutex_; // lock observers_
