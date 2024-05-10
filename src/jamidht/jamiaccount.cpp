@@ -1716,7 +1716,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       return;
                   if (not expired) {
                       // Retry messages every time a new device announce its presence
-                      sthis->messageEngine_.onPeerOnline(h.toString(), dev.getLongId().toString());
+                      sthis->messageEngine_.onPeerOnline(h.toString());
                   }
                   if (isConnected and not wasConnected) {
                       sthis->onTrackedBuddyOnline(h);
