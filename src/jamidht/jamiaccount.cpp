@@ -1716,7 +1716,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                       return;
                   if (not expired) {
                       // Retry messages every time a new device announce its presence
-                      sthis->messageEngine_.onPeerOnline(h.toString(), dev.owner->getLongId().toString());
+                      sthis->messageEngine_.onPeerOnline(h.toString(), dev.getLongId().toString());
                   }
                   if (isConnected and not wasConnected) {
                       sthis->onTrackedBuddyOnline(h);
@@ -3070,7 +3070,7 @@ JamiAccount::sendMessage(const std::string& to,
     auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
         Json::Value parsed;
         Json::CharReaderBuilder readerBuilder;
-        auto reader = readerBuilder.newCharReader();
+        auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
         std::string errors;
 
         if (reader->parse(jsonData.c_str(), jsonData.c_str() + jsonData.size(), &parsed, &errors)) {
