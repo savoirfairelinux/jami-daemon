@@ -3070,7 +3070,7 @@ JamiAccount::sendMessage(const std::string& to,
     auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
         Json::Value parsed;
         Json::CharReaderBuilder readerBuilder;
-        auto reader = readerBuilder.newCharReader();
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         std::string errors;
 
         if (reader->parse(jsonData.c_str(), jsonData.c_str() + jsonData.size(), &parsed, &errors)) {
