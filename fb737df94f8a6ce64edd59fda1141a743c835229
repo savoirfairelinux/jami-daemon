@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "85c4d046_cac4b622",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 24
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-14T15:30:09Z",
+      "side": 1,
+      "message": "The goal of this patch is to avoid to maintain several logic between 1:1 and conferences and be able to add voice-activity, raise hand, mute and other moderation tools in 1:1. Also multi-stream must work in 1:1 (camera + screen sharing at the same time)\n\nThis page implements: https://docs.jami.net/en_US/search.html?q\u003dconference+protocol\u0026check_keywords\u003dyes\u0026area\u003ddefault\n\nThe idea is to attach all calls to a Conference object.\n\nSome notes/design to choose: \n\n+ UI/UX choice: Do we want to show all buttons in 1:1 that we have in conferences?\n+ UI/UX choice: Do we want to show the preview, or the conference layout? (Imho the layout because of multi-stream support)\n+ UI/UX: The process changes, because the conference starts directly. So Outgoing call page doesn\u0027t exists anymore, we can\nshow the conference layout directly in the client\n+ Video mixer is enabled. The mixer is here to compute the grid of the participants and must be used (to show the active participant and screen sharing \u0026 camera if needed). HOWEVER, frames MUST NOT be mixed in 1:1, because it will need computation and all parties already have all the needed streams.\n+ Because video mixer is not mixing in 1:1 (just calculating the layout to show), the video output MUST NOT be sent to peer until a third peer joins.\nHowever conferences infos MUST be sent.\n\n+ Please please do add tests",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 10
+      },
+      "revId": "fb737df94f8a6ce64edd59fda1141a743c835229",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
