@@ -95,12 +95,12 @@ private:
 
     struct Message
     {
-        MessageToken token;
-        std::string to;
-        std::map<std::string, std::string> payloads;
+        MessageToken token {};
+        std::string to {};
+        std::map<std::string, std::string> payloads {};
         MessageStatus status {MessageStatus::IDLE};
         unsigned retried {0};
-        clock::time_point last_op;
+        clock::time_point last_op {};
 
         MSGPACK_DEFINE_MAP(token, to, payloads, status, retried, last_op)
     };
