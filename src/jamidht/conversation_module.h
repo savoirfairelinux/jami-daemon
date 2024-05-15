@@ -484,6 +484,7 @@ public:
      * @param convId
      */
     std::shared_ptr<Conversation> getConversation(const std::string& convId);
+    bool isPendingConversation(const std::string& convId) const;
     /**
      * Return current git socket used for a conversation
      * @param deviceId          Related device
