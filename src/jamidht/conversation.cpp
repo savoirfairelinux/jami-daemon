@@ -1239,8 +1239,9 @@ Conversation::shutdownConnections()
 {
     pimpl_->fallbackTimer_->cancel();
     pimpl_->gitSocketList_.clear();
-    if (pimpl_->swarmManager_)
+    if (pimpl_->swarmManager_) {
         pimpl_->swarmManager_->shutdown();
+    }
     pimpl_->checkedMembers_.clear();
 }
 
@@ -2288,7 +2289,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
         auto acc = sthis->pimpl_->account_.lock();
         if (!acc)
             return;
-        auto members = sthis->getMembers(false, false);
+        auto members = sthis->getMembers(true, false);
         std::shuffle(members.begin(), members.end(), acc->rand);
         if (now) {
             sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
@@ -2328,10 +2329,12 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
         });
     });
     pimpl_->checkedMembers_.clear();
+
     // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic connectivity change
-    if (pimpl_->swarmManager_->isShutdown()) {
+    /*if (pimpl_->swarmManager_->isShutdown()) {
+    JAMI_ERROR("@@@@@@@@@ISSHUTDOWN");
         pimpl_->swarmManager_->maintainBuckets();
-    } else if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
+    } else */if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
         fallback(this, true);
     }
 }

@@ -3141,6 +3141,17 @@ ConversationModule::getConversation(const std::string& convId)
     return nullptr;
 }
 
+bool
+ConversationModule::isPendingConversation(const std::string& convId) const
+{
+    if (auto conv = pimpl_->getConversation(convId)) {
+        std::lock_guard lk(conv->mtx);
+        return conv->conversation == nullptr;
+    }
+    return false;
+}
+
+
 std::shared_ptr<dhtnet::ChannelSocket>
 ConversationModule::gitSocket(std::string_view deviceId, std::string_view convId) const
 {
