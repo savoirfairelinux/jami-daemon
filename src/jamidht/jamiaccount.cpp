@@ -3120,7 +3120,7 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
 {
     if (code == PJSIP_SC_OK) {
         if (!ctx->onlyConnected)
-            messageEngine_.onMessageSent(ctx->to, ctx->id, true, ctx->deviceId.toString());
+            messageEngine_.onMessageSent(ctx->to, ctx->id, true, ctx->deviceId ? ctx->deviceId.toString() : "");
     } else {
         // Note: This can be called from pjsip's eventloop while
         // sipConnsMtx_ is locked. So we should retrigger the shutdown.
@@ -3132,13 +3132,13 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
         // This MUST be done after closing the connection to avoid race condition
         // with messageEngine_
         if (!ctx->onlyConnected)
-            messageEngine_.onMessageSent(ctx->to, ctx->id, false, ctx->deviceId.toString());
+            messageEngine_.onMessageSent(ctx->to, ctx->id, false, ctx->deviceId ? ctx->deviceId.toString() : "");
 
         // In that case, the peer typically changed its connectivity.
         // After closing sockets with that peer, we try to re-connect to
         // that peer one time.
         if (ctx->retryOnTimeout)
-            messageEngine_.onPeerOnline(ctx->to, ctx->deviceId.toString());
+            messageEngine_.onPeerOnline(ctx->to, ctx->deviceId ? ctx->deviceId.toString() : "");
     }
 }
 
