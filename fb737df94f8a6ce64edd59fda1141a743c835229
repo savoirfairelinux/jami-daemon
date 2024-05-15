@@ -22,6 +22,23 @@
       },
       "revId": "fb737df94f8a6ce64edd59fda1141a743c835229",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5060b00f_86439317",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 24
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-05-15T02:22:23Z",
+      "side": 1,
+      "message": "`homogeneization` typo? Should the topic be updated from `1-1-homogeneization` to `1-1-homogenization`? Thank you",
+      "revId": "fb737df94f8a6ce64edd59fda1141a743c835229",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
