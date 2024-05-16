@@ -3756,6 +3756,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
             shared->callConnectionClosed(key.second, false);
         });
     };
+    // SIP is not a protocol that should receive a lot of messages per seconds, so enable flooding detection
+    socket->detectFlooding(true);
     auto sip_tr = link_.sipTransportBroker->getChanneledTransport(shared(),
                                                                   socket,
                                                                   std::move(onShutdown));
