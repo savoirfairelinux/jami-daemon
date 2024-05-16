@@ -1992,6 +1992,9 @@ JamiAccount::doRegister_()
                     auto res = accountManager_->onPeerCertificate(cert,
                                                                   this->config().dhtPublicInCalls,
                                                                   peer_account_id);
+                    std::lock_guard lk(blockedDevicesMtx_);
+                    if (blockedDevices_.find(cert->getLongId().toString()) != blockedDevices_.end())
+                        res = false;
                     JAMI_LOG("{} ICE request from {}",
                              res ? "Accepting" : "Discarding",
                              peer_account_id);
@@ -2308,6 +2311,29 @@ JamiAccount::syncModule()
 }
 
 void
+JamiAccount::handleFloodTimer(const asio::error_code& ec)
+{
+    if (ec == asio::error::operation_aborted)
+        return;
+    std::lock_guard lk(blockedDevicesMtx_);
+    for (auto it = blockedDevices_.begin(); it != blockedDevices_.end();) {
+        if (std::chrono::duration_cast<std::chrono::minutes>(
+                std::chrono::steady_clock::now() - it->second)
+                .count()
+            > 60) {
+            it = blockedDevices_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    if (!blockedDevices_.empty()) {
+        handleFloodTimer_->expires_at(std::chrono::steady_clock::now() + std::chrono::minutes(10));
+        handleFloodTimer_->async_wait(std::bind(&JamiAccount::handleFloodTimer,
+            shared(), std::placeholders::_1));
+    }
+}
+
+void
 JamiAccount::onTextMessage(const std::string& id,
                            const std::string& from,
                            const std::string& deviceId,
@@ -2315,6 +2341,37 @@ JamiAccount::onTextMessage(const std::string& id,
 {
     try {
         const std::string fromUri {parseJamiUri(from)};
+
+        floodCounter_[deviceId] += 1;
+        if (floodCounter_[deviceId] == 100) {
+            if (std::chrono::duration_cast<std::chrono::seconds>(
+                    std::chrono::steady_clock::now() - floodStart_[deviceId])
+                    .count()
+                < 5) {
+                JAMI_WARNING("[Account {}] Flood detected from {} (device {}). Stopping connection with this device.",
+                             getAccountID(),
+                             from,
+                             deviceId);
+                {
+                    std::lock_guard lk(blockedDevicesMtx_);
+                    blockedDevices_[deviceId] = std::chrono::steady_clock::now();
+                    if (!handleFloodTimer_) {
+                        handleFloodTimer_ = std::make_unique<asio::steady_timer>(
+                            *Manager::instance().ioContext());
+                        handleFloodTimer_->expires_at(std::chrono::steady_clock::now() + std::chrono::minutes(10));
+                        handleFloodTimer_->async_wait(std::bind(&JamiAccount::handleFloodTimer,
+                            shared(), std::placeholders::_1));
+                    }
+                }
+                if (connectionManager_) {
+                    // Close connections wiht this device
+                    connectionManager_->closeConnectionsWith(from, DeviceId(deviceId));
+                }
+                return;
+            }
+            floodStart_[deviceId] = std::chrono::steady_clock::now();
+            floodCounter_[deviceId] = 0;
+        }
         SIPAccountBase::onTextMessage(id, fromUri, deviceId, payloads);
     } catch (...) {
     }

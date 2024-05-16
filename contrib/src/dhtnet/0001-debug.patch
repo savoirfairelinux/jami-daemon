@@ -1,0 +1,69 @@
+ include/connectionmanager.h |  2 +-
+ src/connectionmanager.cpp   | 38 +++++++++++++++++++++-----------------
+ 2 files changed, 22 insertions(+), 18 deletions(-)
+
+diff --git a/include/connectionmanager.h b/include/connectionmanager.h
+index 086981f..904170c 100644
+--- a/include/connectionmanager.h
++++ b/include/connectionmanager.h
+@@ -150,7 +150,7 @@ public:
+      * Close all connections with a current device
+      * @param peerUri      Peer URI
+      */
+-    void closeConnectionsWith(const std::string& peerUri);
++    void closeConnectionsWith(const std::string& peerUri, const DeviceId& deviceId = {});
+
+     /**
+      * Method to call to listen to incoming requests
+diff --git a/src/connectionmanager.cpp b/src/connectionmanager.cpp
+index c0bde96..2ce6bd3 100644
+--- a/src/connectionmanager.cpp
++++ b/src/connectionmanager.cpp
+@@ -1832,26 +1832,30 @@ ConnectionManager::isConnected(const DeviceId& deviceId) const
+ }
+
+ void
+-ConnectionManager::closeConnectionsWith(const std::string& peerUri)
++ConnectionManager::closeConnectionsWith(const std::string& peerUri, const DeviceId& deviceId)
+ {
+     std::vector<std::shared_ptr<DeviceInfo>> dInfos;
+-    for (const auto& dinfo: pimpl_->infos_.getDeviceInfos()) {
+-        std::unique_lock lk(dinfo->mtx_);
+-        bool isPeer = false;
+-        for (auto const& [id, cinfo]: dinfo->info) {
+-            std::lock_guard lkv {cinfo->mutex_};
+-            auto tls = cinfo->tls_ ? cinfo->tls_.get() : (cinfo->socket_ ? cinfo->socket_->endpoint() : nullptr);
+-            auto cert = tls ? tls->peerCertificate() : nullptr;
+-            if (not cert)
+-                cert = pimpl_->certStore().getCertificate(dinfo->deviceId.toString());
+-            if (cert && cert->issuer && peerUri == cert->issuer->getId().toString()) {
+-                isPeer = true;
+-                break;
++    if (deviceId) {
++        dInfos.emplace_back(std::move(pimpl_->infos_.getDeviceInfo(deviceId)));
++    } else {
++        for (const auto& dinfo: pimpl_->infos_.getDeviceInfos()) {
++            std::unique_lock lk(dinfo->mtx_);
++            bool isPeer = false;
++            for (auto const& [id, cinfo]: dinfo->info) {
++                std::lock_guard lkv {cinfo->mutex_};
++                auto tls = cinfo->tls_ ? cinfo->tls_.get() : (cinfo->socket_ ? cinfo->socket_->endpoint() : nullptr);
++                auto cert = tls ? tls->peerCertificate() : nullptr;
++                if (not cert)
++                    cert = pimpl_->certStore().getCertificate(dinfo->deviceId.toString());
++                if (cert && cert->issuer && peerUri == cert->issuer->getId().toString()) {
++                    isPeer = true;
++                    break;
++                }
++            }
++            lk.unlock();
++            if (isPeer) {
++                dInfos.emplace_back(std::move(dinfo));
+             }
+-        }
+-        lk.unlock();
+-        if (isPeer) {
+-            dInfos.emplace_back(std::move(dinfo));
+         }
+     }
+     // Stop connections to all peers devices

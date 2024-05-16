@@ -873,6 +873,14 @@ private:
     };
     std::map<std::string, PresenceState> presenceState_;
     std::string presenceNote_;
+
+    std::map<std::string, int> floodCounter_;
+    std::map<std::string, std::chrono::steady_clock::time_point> floodStart_;
+    std::mutex blockedDevicesMtx_;
+    std::map<std::string, std::chrono::steady_clock::time_point> blockedDevices_;
+    std::unique_ptr<asio::steady_timer> handleFloodTimer_;
+
+    void handleFloodTimer(const asio::error_code& ec);
 };
 
 static inline std::ostream&
