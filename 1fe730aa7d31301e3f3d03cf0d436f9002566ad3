@@ -16,6 +16,24 @@
       "message": "Try to think on another solution",
       "revId": "1fe730aa7d31301e3f3d03cf0d436f9002566ad3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0efd27d6_634525b5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-16T14:14:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "57a51f09_b1e3a0c2",
+      "revId": "1fe730aa7d31301e3f3d03cf0d436f9002566ad3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
