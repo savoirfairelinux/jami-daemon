@@ -69,7 +69,7 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
             }
         }
         if (toggle)
-#ifndef __ANDROID__
+#ifndef TRUE
             // If activation is expected, we call activation function
             toggleCallMediaHandler((uintptr_t) callMediaHandler.get(), data.id, true);
 #else
