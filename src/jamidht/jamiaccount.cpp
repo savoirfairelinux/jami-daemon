@@ -2216,9 +2216,11 @@ JamiAccount::convModule(bool noCreation)
                             dht::ThreadPool::io().run([w, cb = std::move(cb), socket=std::move(socket), convId] {
                                 if (socket) {
                                     socket->onShutdown([w, deviceId = socket->deviceId(), convId] {
-                                        if (auto shared = w.lock())
-                                            shared->convModule()->removeGitSocket(deviceId.toString(),
-                                                                            convId);
+                                        dht::ThreadPool::io().run([w, deviceId, convId] {
+                                            if (auto shared = w.lock())
+                                                shared->convModule()->removeGitSocket(deviceId.toString(),
+                                                                                convId);
+                                        });
                                     });
                                     if (!cb(socket))
                                         socket->shutdown();
