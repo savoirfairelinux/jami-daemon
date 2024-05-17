@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "2a8b79a0_501e7a13",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 857,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-17T15:20:34Z",
+      "side": 1,
+      "message": "In fact if the peer is offline this will not be retriggered because no socket will be tried. This is only done if presence is detected. Also if a presence changes it will be detected automatically.\n\nIf it\u0027s \u003e24h I don\u0027t see a problem, this will mean several retry before this.",
+      "parentUuid": "ffe14da8_08da705d",
+      "range": {
+        "startLine": 857,
+        "startChar": 8,
+        "endLine": 857,
+        "endChar": 33
+      },
+      "revId": "5cb82fc8ecc1298de6ba1e1a93c08de08618aca6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f5caa045_09da5280",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 6
