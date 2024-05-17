@@ -46,6 +46,30 @@
       },
       "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5818e911_8bd88a91",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3760,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-05-17T17:56:11Z",
+      "side": 1,
+      "message": "Is the `ChannelSocket` class intended to be used _exclusively_ with the SIP protocol?\n\nMy comment was based on the (maybe wrong) assumption that `ChannelSocket` is a general-purpose class. In that case, the optimal values for `maxMsg` and `detectPeriod` will presumably vary depending on the protocol and use case, which is why I thought it didn\u0027t make sense to rely on the default values.",
+      "parentUuid": "a8d29425_bcb28fc6",
+      "range": {
+        "startLine": 3760,
+        "startChar": 4,
+        "endLine": 3760,
+        "endChar": 33
+      },
+      "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
