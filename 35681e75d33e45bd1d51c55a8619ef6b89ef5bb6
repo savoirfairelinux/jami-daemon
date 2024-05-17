@@ -22,6 +22,30 @@
       },
       "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8d29425_bcb28fc6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3760,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-17T16:36:36Z",
+      "side": 1,
+      "message": "I disagree with this.\n\nIdeally default values should be the best possible.\n\nIf a new default is specified in dhtnet, it should improve the detection. If jami needs more specific default values it should be updated there, but for now we do not really care if peer is blocked during X hours and how the detection is done if it works ;)",
+      "parentUuid": "945f7076_b79adaa6",
+      "range": {
+        "startLine": 3760,
+        "startChar": 4,
+        "endLine": 3760,
+        "endChar": 33
+      },
+      "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
