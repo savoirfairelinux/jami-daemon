@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b323b3e9_49a4bda7",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 857,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-05-21T13:22:51Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "2a8b79a0_501e7a13",
+      "range": {
+        "startLine": 857,
+        "startChar": 8,
+        "endLine": 857,
+        "endChar": 33
+      },
+      "revId": "5cb82fc8ecc1298de6ba1e1a93c08de08618aca6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f5caa045_09da5280",
@@ -61,6 +85,30 @@
       "writtenOn": "2024-05-16T21:03:12Z",
       "side": 1,
       "message": "Same question/comment as above.",
+      "range": {
+        "startLine": 1326,
+        "startChar": 20,
+        "endLine": 1326,
+        "endChar": 45
+      },
+      "revId": "5cb82fc8ecc1298de6ba1e1a93c08de08618aca6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cdfc8632_d77f5075",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1326,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-05-21T13:22:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f5caa045_09da5280",
       "range": {
         "startLine": 1326,
         "startChar": 20,
