@@ -2008,7 +2008,7 @@ Conversation::downloadFile(const std::string& interactionId,
 {
     auto commit = getCommit(interactionId);
     if (commit == std::nullopt || commit->at("type") != "application/data-transfer+json") {
-        JAMI_ERROR("Commit doesn't exists or is not a file transfer");
+        JAMI_ERROR("Commit doesn't exists or is not a file transfer {} (Conversation: {}) ", interactionId, id());
         return false;
     }
     auto tid = commit->find("tid");

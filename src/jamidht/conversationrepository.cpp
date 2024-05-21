@@ -308,18 +308,19 @@ public:
         if (it != deviceToUri_.end())
             return it->second;
 
-        if (!commitId.empty()) {
-            std::string uri = uriFromDeviceAtCommit(deviceId, commitId);
-            deviceToUri_.insert({deviceId, uri});
-            return uri;
-        }
-
         auto acc = account_.lock();
         if (!acc)
             return {};
 
         auto cert = acc->certStore().getCertificate(deviceId);
         if (!cert || !cert->issuer) {
+            if (!commitId.empty()) {
+                std::string uri = uriFromDeviceAtCommit(deviceId, commitId);
+                if (!uri.empty()) {
+                    deviceToUri_.insert({deviceId, uri});
+                    return uri;
+                }
+            }
             // Not pinned, so load certificate from repo
             auto repo = repository();
             if (!repo)
@@ -2481,8 +2482,10 @@ std::optional<std::map<std::string, std::string>>
 ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) const
 {
     auto authorId = uriFromDevice(commit.author.email, commit.id);
-    if (authorId.empty())
+    if (authorId.empty()) {
+        JAMI_ERROR("Invalid author id for commit {}", commit.id);
         return std::nullopt;
+    }
     std::string parents;
     auto parentsSize = commit.parents.size();
     for (std::size_t i = 0; i < parentsSize; ++i) {
