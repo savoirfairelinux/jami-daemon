@@ -94,6 +94,30 @@
       },
       "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6adf556b_4a57a195",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3760,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-05-22T14:41:09Z",
+      "side": 1,
+      "message": "What qualifies as \"flooding\" changes a lot based on the protocol and use-case.\n\nUsing a Jami account on a new device might generate a lot of legitimate traffic, for instance.",
+      "parentUuid": "e1be3357_cb32da0f",
+      "range": {
+        "startLine": 3760,
+        "startChar": 4,
+        "endLine": 3760,
+        "endChar": 33
+      },
+      "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
