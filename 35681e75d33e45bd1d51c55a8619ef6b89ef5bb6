@@ -70,6 +70,30 @@
       },
       "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e1be3357_cb32da0f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3760,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-22T14:18:29Z",
+      "side": 1,
+      "message": "No it\u0027s used by all kind of protocol. But for now, only SIP flooding is really problematic (cause each messages needs to be parsed and can launch subsequent channels to be created). Data transfer is designed to receive big files at full speed, git supports this too.\n\nI guess if other protocols needs this, jami will need more specific value in this case",
+      "parentUuid": "5818e911_8bd88a91",
+      "range": {
+        "startLine": 3760,
+        "startChar": 4,
+        "endLine": 3760,
+        "endChar": 33
+      },
+      "revId": "35681e75d33e45bd1d51c55a8619ef6b89ef5bb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
