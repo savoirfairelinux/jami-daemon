@@ -339,7 +339,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
         Manager::instance().answerCall(daviId, daviCall.callId);
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-        Manager::instance().addParticipant(aliceId, call1, aliceId, confId);
+        Manager::instance().addSubCall(aliceId, call1, aliceId, confId);
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
     }
 }
@@ -508,7 +508,7 @@ ConferenceTest::testMuteStatusAfterAdd()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call3, aliceId, confId);
+    Manager::instance().addSubCall(aliceId, call3, aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
 
     auto aliceConf = aliceAccount->getConference(confId);
@@ -600,7 +600,7 @@ ConferenceTest::testMuteStatusAfterRemove()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call2, aliceId, confId);
+    Manager::instance().addSubCall(aliceId, call2, aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.moderatorMuted.load(); }));
@@ -643,7 +643,7 @@ ConferenceTest::testActiveStatusAfterRemove()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call2, aliceId, confId);
+    Manager::instance().addSubCall(aliceId, call2, aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.active.load(); }));
@@ -707,7 +707,7 @@ ConferenceTest::testHandsUp()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    Manager::instance().addParticipant(aliceId, call2, aliceId, confId);
+    Manager::instance().addSubCall(aliceId, call2, aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.raisedHand.load(); }));
@@ -760,7 +760,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
-    CPPUNIT_ASSERT(Manager::instance().addParticipant(daviId, daviCall.callId, aliceId, confId));
+    CPPUNIT_ASSERT(Manager::instance().addSubCall(daviId, daviCall.callId, aliceId, confId));
     hangupConference();
 
     libjami::unregisterSignalHandlers();

@@ -602,8 +602,13 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     }
 
 #ifdef ENABLE_VIDEO
-    if (videoMixer_)
-        videoMixer_->switchInputs(newVideoInputs);
+    if (videoMixer_) {
+        if (newVideoInputs.empty()) {
+            videoMixer_->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
+        } else {
+            videoMixer_->switchInputs(newVideoInputs);
+        }
+    }
 #endif
     hostSources_ = mediaAttrList; // New medias
     if (!isMuted("host"sv) && !isMediaSourceMuted(MediaType::MEDIA_AUDIO))
@@ -918,7 +923,11 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
                     if (source.type_ == MediaType::MEDIA_VIDEO)
                         videoInputs.emplace_back(source.sourceUri_);
                 }
-                videoMixer_->switchInputs(videoInputs);
+                if (videoInputs.empty()) {
+                    videoMixer_->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
+                } else {
+                    videoMixer_->switchInputs(videoInputs);
+                }
             }
 #endif
         } else {
@@ -935,7 +944,8 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
 void
 Conference::detachHost()
 {
-    JAMI_INFO("Detach local participant from conference %s", id_.c_str());
+    JAMI_LOG("Detach local participant from conference {}", id_);
+
     if (getState() == State::ACTIVE_ATTACHED) {
         unbindHostAudio();
 
@@ -944,8 +954,8 @@ Conference::detachHost()
             videoMixer_->stopInputs();
 #endif
     } else {
-        JAMI_WARN(
-            "Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",
+        JAMI_WARNING(
+            "Invalid conference state in detach participant: current \"{}\" - expected \"{}\"",
             getStateStr(),
             "ACTIVE_ATTACHED");
         return;
