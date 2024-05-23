@@ -535,7 +535,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
     const std::string current_callId(base_.getCurrentCallId());
     CallIdSet subcalls(conf.getSubCalls());
     const size_t n = subcalls.size();
-    JAMI_DBG("Process remaining %zu participant(s) from conference %s", n, conf.getConfId().c_str());
+    JAMI_DEBUG("Process remaining {} participant(s) from conference {}", n, conf.getConfId());
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
@@ -550,43 +550,45 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
         }
 
         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
-    } else if (n == 1) {
-        // this call is the last participant, hence
-        // the conference is over
-        auto p = subcalls.begin();
-        if (auto call = base_.getCallFromCallID(*p)) {
-            // if we are not listening to this conference and not a rendez-vous
-            auto w = call->getAccount();
-            auto account = w.lock();
-            if (!account) {
-                JAMI_ERR("No account detected");
-                return;
+    } else {
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(conf.getAccount())) {
+            // Stay in a conference if 1 participants for swarm and rendezvous
+            if (auto cm = acc->convModule(true)) {
+                if (acc->isRendezVous() || cm->isHosting("", conf.getConfId())) {
+                    // Check if attached
+                    if (conf.getState() == Conference::State::ACTIVE_ATTACHED) {
+                        return;
+                    }
+                }
+            }
+        }
+        if (n == 1) {
+            // this call is the last participant, hence
+            // the conference is over
+            auto p = subcalls.begin();
+            if (auto call = base_.getCallFromCallID(*p)) {
+                // if we are not listening to this conference and not a rendez-vous
+                auto w = call->getAccount();
+                auto account = w.lock();
+                if (!account) {
+                    JAMI_ERR("No account detected");
+                    return;
+                }
+                if (current_callId != conf.getConfId())
+                    base_.onHoldCall(account->getAccountID(), call->getCallId());
+                else
+                    switchCall(call->getCallId());
             }
 
-            // Stay in a conference if 1 participants for swarm and rendezvous
-            if (account->isRendezVous())
-                return;
-
-            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
-                if (auto cm = acc->convModule(true))
-                    if (cm->isHosting("", conf.getConfId()))
-                        return;
-
-            // Else go in 1:1
-            if (current_callId != conf.getConfId())
-                base_.onHoldCall(account->getAccountID(), call->getCallId());
-            else
-                switchCall(call->getCallId());
+            JAMI_DBG("No remaining participants, remove conference");
+            if (auto account = conf.getAccount())
+                account->removeConference(conf.getConfId());
+        } else {
+            JAMI_DBG("No remaining participants, remove conference");
+            if (auto account = conf.getAccount())
+                account->removeConference(conf.getConfId());
+            unsetCurrentCall();
         }
-
-        JAMI_DBG("No remaining participants, remove conference");
-        if (auto account = conf.getAccount())
-            account->removeConference(conf.getConfId());
-    } else {
-        JAMI_DBG("No remaining participants, remove conference");
-        if (auto account = conf.getAccount())
-            account->removeConference(conf.getConfId());
-        unsetCurrentCall();
     }
 }
 
@@ -1221,7 +1223,7 @@ Manager::hangupConference(const std::string& accountId, const std::string& confI
         if (auto conference = account->getConference(confId)) {
             return pimpl_->hangupConference(*conference);
         } else {
-            JAMI_ERR("No such conference %s", confId.c_str());
+            JAMI_ERROR("No such conference {}", confId);
         }
     }
     return false;
@@ -1450,6 +1452,7 @@ Manager::ManagerPimpl::hangupConference(Conference& conference)
 {
     JAMI_DEBUG("Hangup conference {}", conference.getConfId());
     CallIdSet subcalls(conference.getSubCalls());
+    conference.detachHost();
     if (subcalls.empty()) {
         if (auto account = conference.getAccount())
             account->removeConference(conference.getConfId());

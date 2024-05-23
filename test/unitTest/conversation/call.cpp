@@ -41,6 +41,7 @@ struct ConvData
 {
     std::string id {};
     std::string callId {};
+    std::string confId {};
     bool requestReceived {false};
     bool needsHost {false};
     bool conferenceChanged {false};
@@ -211,6 +212,14 @@ ConversationCallTest::connectSignals()
                 aliceData_.conferenceChanged = true;
             cv.notify_one();
         }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceCreated>(
+        [&](const std::string& accountId, const std::string&, const std::string& confId) {
+            if (accountId == aliceId)
+                aliceData_.confId = confId;
+            else if (accountId == bobId)
+                bobData_.confId = confId;
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceRemoved>(
         [&](const std::string& accountId, const std::string&) {
             if (accountId == aliceId)
@@ -236,19 +245,11 @@ ConversationCallTest::connectSignals()
                         carlaData_.hostState = state;
                 }
             } else if (accountId == bobId) {
+                bobData_.callId = callId;
                 bobData_.state = state;
             } else if (accountId == carlaId) {
                 carlaData_.state = state;
             }
-            cv.notify_one();
-        }));
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
-        [&](const std::string& accountId,
-            const std::string& callId,
-            const std::string&,
-            const std::vector<std::map<std::string, std::string>>&) {
-            if (accountId == bobId)
-                bobData_.callId = callId;
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
@@ -305,7 +306,7 @@ ConversationCallTest::testActiveCalls()
 
     // start call
     aliceData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.conferenceChanged && !aliceData_.messages.empty(); });
     CPPUNIT_ASSERT(aliceData_.messages.rbegin()->type == "application/call-history+json");
@@ -315,10 +316,10 @@ ConversationCallTest::testActiveCalls()
 
     // hangup
     aliceData_.messages.clear();
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().hangupConference(aliceId, aliceData_.confId);
 
     // should get message
-    cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); }));
     CPPUNIT_ASSERT(aliceData_.messages.rbegin()->body.find("duration") != aliceData_.messages.rbegin()->body.end());
 
     // get active calls = 0
@@ -362,7 +363,7 @@ ConversationCallTest::testActiveCalls3Peers()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -385,7 +386,7 @@ ConversationCallTest::testActiveCalls3Peers()
         return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT";
     }));
     aliceData_.conferenceChanged = false;
-    // get 3 participants
+    // get 2 other participants
     libjami::placeCallWithMedia(carlaId, destination, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT" && libjami::getParticipantList(aliceId, confId).size() == 3;
@@ -450,7 +451,7 @@ ConversationCallTest::testRejoinCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -469,7 +470,7 @@ ConversationCallTest::testRejoinCall()
                                    confId);
 
     aliceData_.conferenceChanged = false;
-    auto bobCall = libjami::placeCallWithMedia(bobId, destination, {});
+    libjami::placeCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"  && bobData_.state == "CURRENT";
     });
@@ -485,7 +486,7 @@ ConversationCallTest::testRejoinCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     aliceData_.conferenceChanged = false;
-    Manager::instance().hangupCall(bobId, bobCall);
+    Manager::instance().hangupCall(bobId, bobData_.callId);
     cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && bobData_.hostState == "OVER";
     });
@@ -509,10 +510,10 @@ ConversationCallTest::testRejoinCall()
     Manager::instance().hangupConference(aliceId, confId);
 
     // should get message
-    cv.wait_for(lk, 30s, [&]() {
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return !aliceData_.messages.empty() && !bobData_.messages.empty()
                && !carlaData_.messages.empty();
-    });
+    }));
     CPPUNIT_ASSERT(aliceData_.messages[0].body.find("duration") != aliceData_.messages[0].body.end());
     CPPUNIT_ASSERT(bobData_.messages[0].body.find("duration") != bobData_.messages[0].body.end());
     CPPUNIT_ASSERT(carlaData_.messages[0].body.find("duration") != carlaData_.messages[0].body.end());
@@ -546,7 +547,7 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
     // start call
     aliceData_.messages.clear();
     bobData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -610,7 +611,7 @@ ConversationCallTest::testJoinFinishedCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -630,7 +631,7 @@ ConversationCallTest::testJoinFinishedCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().hangupConference(aliceId, aliceData_.confId);
     // should get message
     cv.wait_for(lk, 30s, [&]() {
         return !aliceData_.messages.empty() && !bobData_.messages.empty()
@@ -707,7 +708,7 @@ ConversationCallTest::testJoinFinishedCallForbidden()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -729,7 +730,7 @@ ConversationCallTest::testJoinFinishedCallForbidden()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().hangupConference(aliceId, aliceData_.confId);
 
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -816,7 +817,7 @@ ConversationCallTest::testUsePreference()
     // start call
     aliceData_.messages.clear();
     bobData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -833,7 +834,7 @@ ConversationCallTest::testUsePreference()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return pInfos_.size() == 1; }));
     auto uri = string_remove_suffix(pInfos_[0]["uri"], '@');
     CPPUNIT_ASSERT(uri == bobUri);
-    Manager::instance().hangupCall(bobId, callId);
+    Manager::instance().hangupConference(bobId, bobData_.confId);
 }
 
 void
@@ -851,7 +852,7 @@ ConversationCallTest::testJoinWhileActiveCall()
 
     // start call
     aliceData_.messages.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -920,7 +921,7 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     pInfos_.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->body.at("type") == "application/call-history+json";
@@ -977,7 +978,7 @@ ConversationCallTest::testNeedsHost()
     // Disable Host
     Manager::instance().sendRegister(aliceId, false);
     // start call
-    auto callId = libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
+    libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
     // Can fail after 30 seconds if it triggers a new ICE request (before No response from DHT)
     CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() { return bobData_.needsHost; }));
 }
@@ -1010,7 +1011,7 @@ ConversationCallTest::testAudioOnly()
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
     pInfos_.clear();
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty() && !pInfos_.empty(); });
     CPPUNIT_ASSERT(aliceData_.messages[0].type == "application/call-history+json");
@@ -1019,7 +1020,7 @@ ConversationCallTest::testAudioOnly()
 
     // hangup
     aliceData_.messages.clear();
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().hangupConference(aliceId, aliceData_.confId);
 
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); });
@@ -1066,7 +1067,7 @@ ConversationCallTest::testJoinAfterMuteHost()
             {libjami::Media::MediaAttributeKey::SOURCE, ""},
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    auto callId = libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->type == "application/call-history+json";
@@ -1078,8 +1079,8 @@ ConversationCallTest::testJoinAfterMuteHost()
     auto confId = bobData_.messages.rbegin()->body.at("confId");
 
     // Mute host
-    auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
-    auto proposedList = call->currentMediaList();
+    auto conference = aliceAccount->getConference(aliceData_.confId);
+    auto proposedList = conference->currentMediaList();
     for (auto& media : proposedList)
         if (media["LABEL"] == "audio_0")
             media["MUTED"] = "true";
@@ -1134,7 +1135,7 @@ ConversationCallTest::testBusy()
             {libjami::Media::MediaAttributeKey::SOURCE, ""},
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
                && data.messages.rbegin()->type == "application/call-history+json";
@@ -1176,7 +1177,7 @@ ConversationCallTest::testDecline()
             {libjami::Media::MediaAttributeKey::SOURCE, ""},
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData_.callId.empty(); }));
 
     libjami::refuse(bobId, bobData_.callId);
@@ -1217,7 +1218,7 @@ ConversationCallTest::testNoDevice()
             {libjami::Media::MediaAttributeKey::SOURCE, ""},
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    auto callId = libjami::placeCallWithMedia(aliceId, "e2eb225c76be68713d4874d290200849436c6355", mediaList);
+    libjami::placeCallWithMedia(aliceId, "e2eb225c76be68713d4874d290200849436c6355", mediaList);
 
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty()
