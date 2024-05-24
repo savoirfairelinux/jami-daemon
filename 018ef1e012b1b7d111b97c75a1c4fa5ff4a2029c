@@ -16,6 +16,29 @@
       "message": "In the daemon we should not add code without a test:\n\ntest/unitTest/fileTransfer/fileTransfer.cpp\n\nIf you got a scenario you should also open a ticket to explain it ;)",
       "revId": "018ef1e012b1b7d111b97c75a1c4fa5ff4a2029c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9be5d3b9_8fc1b4dd",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2521,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-24T17:26:07Z",
+      "side": 1,
+      "message": "Else code seems good.\n\nYou can modify FileTransferTest::testDeleteFile() to avoid any regression",
+      "range": {
+        "startLine": 2512,
+        "startChar": 23,
+        "endLine": 2521,
+        "endChar": 9
+      },
+      "revId": "018ef1e012b1b7d111b97c75a1c4fa5ff4a2029c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
