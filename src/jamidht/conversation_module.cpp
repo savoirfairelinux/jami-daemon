@@ -743,8 +743,12 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     };
     try {
         auto conversation = std::make_shared<Conversation>(acc, deviceId, conversationId);
-        conversation->onMembersChanged([this, conversationId](const auto& members) {
-            setConversationMembers(conversationId, members);
+        conversation->onMembersChanged([w=weak_from_this(), conversationId](const auto& members) {
+            // Delay in another thread to avoid deadlocks
+            dht::ThreadPool::io().run([w, conversationId, members = std::move(members)] {
+                if (auto sthis = w.lock())
+                    sthis->setConversationMembers(conversationId, members);
+            });
         });
         conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
             auto msg = std::make_shared<SyncMsg>();
@@ -1550,8 +1554,11 @@ ConversationModule::loadConversations()
                 });
                 conv->onMembersChanged(
                     [w = pimpl_->weak_from_this(), repository](const auto& members) {
-                        if (auto p = w.lock())
-                            p->setConversationMembers(repository, members);
+                        // Delay in another thread to avoid deadlocks
+                        dht::ThreadPool::io().run([w, repository, members = std::move(members)] {
+                            if (auto sthis = w.lock())
+                                sthis->setConversationMembers(repository, members);
+                        });
                     });
                 conv->onNeedSocket(pimpl_->onNeedSwarmSocket_);
                 auto members = conv->memberUris(acc->getUsername(), {});
@@ -2022,8 +2029,12 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
             msg->ms = {{conversationId, status}};
             pimpl_->needsSyncingCb_(std::move(msg));
         });
-        conversation->onMembersChanged([this, conversationId](const auto& members) {
-            pimpl_->setConversationMembers(conversationId, members);
+        conversation->onMembersChanged([w=pimpl_->weak_from_this(), conversationId](const auto& members) {
+            // Delay in another thread to avoid deadlocks
+            dht::ThreadPool::io().run([w, conversationId, members = std::move(members)] {
+                if (auto sthis = w.lock())
+                    sthis->setConversationMembers(conversationId, members);
+            });
         });
         conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
 #ifdef LIBJAMI_TESTABLE
