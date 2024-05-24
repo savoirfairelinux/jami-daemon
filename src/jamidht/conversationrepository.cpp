@@ -2509,10 +2509,16 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
         return std::nullopt;
     } else if (type == "application/data-transfer+json") {
         // Avoid the client to do the concatenation
-        message["fileId"] = commit.id + "_" + message["tid"];
-        auto extension = fileutils::getFileExtension(message["displayName"]);
-        if (!extension.empty())
-            message["fileId"] += "." + extension;
+        auto tid = message["tid"];
+        if (not tid.empty()) {
+            auto extension = fileutils::getFileExtension(message["displayName"]);
+            if (!extension.empty())
+                message["fileId"] = fmt::format("{}_{}.{}", commit.id, tid, extension);
+            else
+                message["fileId"] = fmt::format("{}_{}", commit.id, tid);
+        } else {
+            message["fileId"] = "";
+        }
     }
     message["id"] = commit.id;
     message["parents"] = parents;
