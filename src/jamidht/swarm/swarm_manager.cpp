@@ -339,7 +339,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
         needSocketCb_(nodeId.toString(),
                       [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                           auto shared = w.lock();
-                          if (!shared)
+                          if (!shared || shared->isShutdown_)
                               return true;
                           if (socket) {
                               shared->addChannel(socket);
