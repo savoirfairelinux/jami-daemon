@@ -18,7 +18,7 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
-SSL_VERSION := 3.7.0
+SSL_VERSION := 3.9.2
 PKG_CPE += cpe:2.3:a:openbsd:libressl:$(SSL_VERSION):*:*:*:*:*:*:*
 LIBRESSL_VERSION := libressl-$(SSL_VERSION)
 LIBRESSL_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/$(LIBRESSL_VERSION).tar.gz
@@ -36,19 +36,17 @@ libressl: $(LIBRESSL_VERSION).tar.gz
 	$(MOVE)
 
 LIBRESSL_CONF := \
+	-DBUILD_SHARED_LIBS=Off \
 	-DLIBRESSL_TESTS=Off \
-	-DLIBRESSL_APPS=Off  \
-	-DDESTDIR=$(PREFIX)
+	-DLIBRESSL_APPS=Off
 
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),x86_64)
 LIBRESSL_CONF += -DENABLE_ASM=Off
 endif
-else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
-LIBRESSL_CONF += -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch arm64'
-else ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
-LIBRESSL_CONF += -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64'
-else ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
+endif
+
+ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
 LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=arm -DENABLE_ASM=Off -DCMAKE_C_FLAGS='-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard'
 endif
 
@@ -59,7 +57,7 @@ ifdef HAVE_WIN32
 else ifdef HAVE_WIN64
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
 else
-	cd $< && mkdir -p build && cd build && $(CMAKE) $(LIBRESSL_CONF) .. && $(MAKE) && $(MAKE) install
+	cd $< && mkdir -p build && cd build && $(HOSTVARS) $(CMAKE) $(LIBRESSL_CONF) .. && $(MAKE) && $(MAKE) install
 endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@
