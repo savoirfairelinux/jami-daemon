@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b792a34_7d95a90a",
+        "filename": "src/account.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-05-29T19:39:02Z",
+      "side": 1,
+      "message": "path resourceDirPath \u003d fileutils::get_resource_dir_path(); // should have an appropriate default\nauto ringtoneDir \u003d resourceDirPath / RINGDIR;",
+      "range": {
+        "startLine": 163,
+        "startChar": 0,
+        "endLine": 167,
+        "endChar": 2
+      },
+      "revId": "3b08dc1148b005fe506fb3e1a49e5dc82079b405",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d7c8a7c_e65d4910",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-05-29T19:39:02Z",
+      "side": 1,
+      "message": "config.h should always remain first to make sure headers and implementation use the same config flags",
+      "revId": "3b08dc1148b005fe506fb3e1a49e5dc82079b405",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
