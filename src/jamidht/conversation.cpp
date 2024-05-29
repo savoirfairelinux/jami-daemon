@@ -931,9 +931,8 @@ Conversation::Impl::handleEdition(History& history,
         auto baseCommit = it->second;
         if (baseCommit) {
             auto itReact = baseCommit->body.find("react-to");
-            auto toReplace = "body";
-            if (baseCommit->type == "application/data-transfer+json")
-                toReplace = "tid";
+            std::string toReplace = (baseCommit->type == "application/data-transfer+json") ?
+                "tid" : "body";
             auto body = sharedCommit->body.at(toReplace);
             // Edit reaction
             if (itReact != baseCommit->body.end()) {
