@@ -694,9 +694,8 @@ FileTransferTest::testDeleteFile()
     libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !iid.empty(); }));
-    auto dataPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceId
-                    + DIR_SEPARATOR_STR + "conversation_data" + DIR_SEPARATOR_STR + convId;
-    CPPUNIT_ASSERT(fileutils::isFile(fmt::format("{}/{}_{}", dataPath, iid, tid)));
+    auto dataPath = fileutils::get_data_dir() / aliceId / "conversation_data" / convId;
+    CPPUNIT_ASSERT(dhtnet::fileutils::isFile(dataPath / fmt::format("{}_{}", iid, tid)));
 
     // Delete file
     libjami::sendMessage(aliceId, convId, ""s, iid, 1);
@@ -704,7 +703,7 @@ FileTransferTest::testDeleteFile()
     // Verify message is updated
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageUpdated; }));
     // Verify file is deleted
-    CPPUNIT_ASSERT(!fileutils::isFile(fmt::format("{}/{}_{}", dataPath, iid, tid)));
+    CPPUNIT_ASSERT(!dhtnet::fileutils::isFile(dataPath / fmt::format("{}_{}", iid, tid)));
 
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(5s);
