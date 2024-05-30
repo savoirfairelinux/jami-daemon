@@ -144,7 +144,14 @@ if(NOT MSVC)
     include(FindPkgConfig)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         pkg_search_module (udev REQUIRED IMPORTED_TARGET libudev)
-        pkg_search_module (pulseaudio REQUIRED IMPORTED_TARGET libpulse)
+        pkg_search_module (pulseaudio IMPORTED_TARGET libpulse)
+        pkg_search_module (alsa IMPORTED_TARGET alsa)
+        pkg_search_module (jack IMPORTED_TARGET libjack)
+
+        # Make sure at least one audio backend is available
+        if(NOT pulseaudio_FOUND AND NOT alsa_FOUND AND NOT jack_FOUND)
+            message(FATAL_ERROR "No audio library found. Please install PulseAudio, ALSA or JACK.")
+        endif()
     endif()
 endif()
 
@@ -223,10 +230,22 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
             ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/v4l2/video_device_monitor_impl.cpp
         )
     endif()
-    list (APPEND ALL_FILES ${ALL_FILES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/audiostream.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulselayer.cpp
-    )
+    if (pulseaudio_FOUND)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/audiostream.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulselayer.cpp
+        )
+    endif()
+    if (alsa_FOUND)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/alsa/alsalayer.cpp
+        )
+    endif()
+    if (jack_FOUND)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/jack/jacklayer.cpp
+        )
+    endif()
 elseif (APPLE)
     if (IOS)
         list (APPEND ALL_FILES ${ALL_FILES}
@@ -282,9 +301,10 @@ if (JAMI_NATPMP)
 endif()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENSL)
-endif()
-if (APPLE)
+elseif (APPLE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_COREAUDIO)
+elseif (MSVC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PORTAUDIO)
 endif()
 target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/.;"
@@ -550,10 +570,19 @@ else()
     if (ANDROID)
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenSLES log)
     elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_link_libraries(${PROJECT_NAME} PRIVATE
-            PkgConfig::udev
-            PkgConfig::pulseaudio
-        )
+        target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::udev)
+        if (pulseaudio_FOUND)
+            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PULSE)
+            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::pulseaudio)
+        endif()
+        if (alsa_FOUND)
+            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_ALSA)
+            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::alsa)
+        endif()
+        if (jack_FOUND)
+            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_JACK)
+            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::jack)
+        endif()
     elseif (APPLE)
         target_link_libraries(${PROJECT_NAME} PRIVATE resolv)
     endif()
