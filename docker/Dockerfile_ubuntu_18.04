@@ -33,7 +33,6 @@ RUN add-apt-repository universe && \
         qttools5-dev-tools \
         yasm \
         nasm \
-        autotools-dev \
         gettext \
         libsystemd-dev \
         libsdbus-c++-bin \

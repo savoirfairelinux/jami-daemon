@@ -36,7 +36,6 @@ RUN add-apt-repository universe && \
         qttools5-dev-tools \
         yasm \
         nasm \
-        autotools-dev \
         libtool \
         gettext \
         libsystemd-dev \

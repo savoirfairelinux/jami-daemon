@@ -33,7 +33,6 @@ RUN add-apt-repository universe && \
         libnotify-dev \
         yasm \
         nasm \
-        autotools-dev \
         libtool \
         gettext \
         libsystemd-dev \
