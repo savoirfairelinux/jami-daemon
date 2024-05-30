@@ -1,6 +1,6 @@
 {
     "name": "vpx",
-    "version": "c01b6dc8451f09745916c079e036364ab63b93cd",
+    "version": "f4d13145a2c3aea6fbf211dc493ea4e97be6a092",
     "url": "https://github.com/ShiftMediaProject/libvpx/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
