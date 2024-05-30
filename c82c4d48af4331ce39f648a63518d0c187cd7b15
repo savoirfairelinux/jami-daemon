@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dfd5acdf_bb626a5e",
+        "filename": "src/account.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 164,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-05-30T15:51:39Z",
+      "side": 1,
+      "message": "auto ringtoneDir \u003d fileutils::get_resource_dir_path() / RINGDIR;",
+      "range": {
+        "startLine": 163,
+        "startChar": 0,
+        "endLine": 164,
+        "endChar": 2
+      },
+      "revId": "c82c4d48af4331ce39f648a63518d0c187cd7b15",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d26073ee_46cc2826",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 134,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-05-30T15:51:39Z",
+      "side": 1,
+      "message": "static",
+      "range": {
+        "startLine": 134,
+        "startChar": 4,
+        "endLine": 134,
+        "endChar": 68
+      },
+      "revId": "c82c4d48af4331ce39f648a63518d0c187cd7b15",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
