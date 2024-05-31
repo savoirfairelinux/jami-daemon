@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "89aa3c23_04c714f3",
+        "filename": "contrib/src/freetype/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2024-05-31T13:53:55Z",
+      "side": 1,
+      "message": "you should not need the autogen but take from https://gitlab.freedesktop.org/freetype/freetype.git",
+      "range": {
+        "startLine": 34,
+        "startChar": 9,
+        "endLine": 34,
+        "endChar": 46
+      },
+      "revId": "6ea2cf0bbb0abe71046d2a1c52f7314ca7be8027",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
