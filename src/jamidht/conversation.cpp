@@ -1023,6 +1023,7 @@ Conversation::Impl::handleMessage(History& history,
         auto oldBody = sharedCommit->body;
         if (sharedCommit->type == "application/data-transfer+json") {
             sharedCommit->body["tid"] = peditIt->second.front()->body["tid"];
+            sharedCommit->body["fileId"] = "";
         } else {
             sharedCommit->body["body"] = peditIt->second.front()->body["body"];
         }
