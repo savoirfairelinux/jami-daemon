@@ -21,11 +21,17 @@ option(JAMI_VIDEO_ACCEL "Build video hardware acceleration support" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
+option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
   # Add AddressSanitizer flags for both compiler and linker
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+endif()
+
+if(ENABLE_COVERAGE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif()
 
 include(CTest)
