@@ -480,19 +480,14 @@ AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate
 }
 
 bool
-AccountManager::addContact(const std::string& uri, bool confirmed, const std::string& conversationId)
+AccountManager::addContact(const dht::InfoHash& uri, bool confirmed, const std::string& conversationId)
 {
-    JAMI_WARN("AccountManager::addContact %d", confirmed);
-    dht::InfoHash h(uri);
-    if (not h) {
-        JAMI_ERR("addContact: invalid contact URI");
-        return false;
-    }
+    JAMI_WARNING("AccountManager::addContact {}", confirmed);
     if (not info_) {
-        JAMI_ERR("addContact(): account not loaded");
+        JAMI_ERROR("addContact(): account not loaded");
         return false;
     }
-    if (info_->contacts->addContact(h, confirmed, conversationId)) {
+    if (info_->contacts->addContact(uri, confirmed, conversationId)) {
         syncDevices();
         return true;
     }
@@ -504,11 +499,11 @@ AccountManager::removeContact(const std::string& uri, bool banned)
 {
     dht::InfoHash h(uri);
     if (not h) {
-        JAMI_ERR("removeContact: invalid contact URI");
+        JAMI_ERROR("removeContact: invalid contact URI");
         return;
     }
     if (not info_) {
-        JAMI_ERR("addContact(): account not loaded");
+        JAMI_ERROR("addContact(): account not loaded");
         return;
     }
     if (info_->contacts->removeContact(h, banned))

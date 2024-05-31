@@ -193,7 +193,7 @@ public:
      * @return conversation's id
      */
     std::string startConversation(ConversationMode mode = ConversationMode::INVITES_ONLY,
-                                  const std::string& otherMember = "");
+                                  const dht::InfoHash& otherMember = {});
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
