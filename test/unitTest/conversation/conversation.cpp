@@ -2175,7 +2175,7 @@ ConversationTest::testRemoveOneToOneNotInDetails()
     auto firstConv = aliceData.conversationId;
     // Create a duplicate
     std::this_thread::sleep_for(2s); // Avoid to get same id
-    aliceAccount->convModule()->startConversation(ConversationMode::ONE_TO_ONE, bobUri);
+    aliceAccount->convModule()->startConversation(ConversationMode::ONE_TO_ONE, dht::InfoHash(bobUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return firstConv != aliceData.conversationId; }));
 
     // Assert that repository exists

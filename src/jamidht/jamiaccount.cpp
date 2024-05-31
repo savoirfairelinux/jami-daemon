@@ -2782,14 +2782,19 @@ JamiAccount::getContactHeader(const std::shared_ptr<SipTransport>& sipTransport)
 void
 JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
+    dht::InfoHash h(uri);
+    if (not h) {
+        JAMI_ERROR("addContact: invalid contact URI");
+        return;
+    }
     auto conversation = convModule()->getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
-        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, uri);
+        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, h);
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_)
-        accountManager_->addContact(uri, confirmed, conversation);
+        accountManager_->addContact(h, confirmed, conversation);
     else
-        JAMI_WARN("[Account %s] addContact: account not loaded", getAccountID().c_str());
+        JAMI_WARNING("[Account {}] addContact: account not loaded", getAccountID());
 }
 
 void
@@ -2799,7 +2804,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     if (accountManager_)
         accountManager_->removeContact(uri, ban);
     else
-        JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
+        JAMI_WARNING("[Account {}] removeContact: account not loaded", getAccountID());
 }
 
 bool
@@ -2852,16 +2857,21 @@ JamiAccount::getTrustRequests() const
 bool
 JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversation)
 {
+    dht::InfoHash h(from);
+    if (not h) {
+        JAMI_ERROR("addContact: invalid contact URI");
+        return false;
+    }
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
     if (accountManager_) {
         if (!accountManager_->acceptTrustRequest(from, includeConversation)) {
             // Note: unused for swarm
             // Typically the case where the trust request doesn't exists, only incoming DHT messages
-            return accountManager_->addContact(from, true);
+            return accountManager_->addContact(h, true);
         }
         return true;
     }
-    JAMI_WARN("[Account %s] acceptTrustRequest: account not loaded", getAccountID().c_str());
+    JAMI_WARNING("[Account {}] acceptTrustRequest: account not loaded", getAccountID());
     return false;
 }
 
@@ -2909,13 +2919,18 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
 void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
+    dht::InfoHash h(to);
+    if (not h) {
+        JAMI_ERROR("addContact: invalid contact URI");
+        return;
+    }
     // Here we cache payload sent by the client
     auto requestPath = cachePath_ / "requests";
     dhtnet::fileutils::recursive_mkdir(requestPath, 0700);
     auto cachedFile = requestPath / to;
     std::ofstream req(cachedFile, std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
-        JAMI_ERR("Could not write data to %s", cachedFile.c_str());
+        JAMI_ERROR("Could not write data to {}", cachedFile);
         return;
     }
 
@@ -2929,7 +2944,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 
     auto conversation = convModule()->getOneToOneConversation(to);
     if (conversation.empty())
-        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, to);
+        conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, h);
     if (not conversation.empty()) {
         std::lock_guard lock(configurationMutex_);
         if (accountManager_)
@@ -2938,9 +2953,9 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
                                               payload.size() >= 64000 ? std::vector<uint8_t> {}
                                                                       : payload);
         else
-            JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
+            JAMI_WARNING("[Account {}] sendTrustRequest: account not loaded", getAccountID());
     } else
-        JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
+        JAMI_WARNING("[Account {}] sendTrustRequest: account not loaded", getAccountID());
 }
 
 void

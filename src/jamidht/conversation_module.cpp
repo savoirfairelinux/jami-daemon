@@ -2024,7 +2024,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
 }
 
 std::string
-ConversationModule::startConversation(ConversationMode mode, const std::string& otherMember)
+ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash& otherMember)
 {
     auto acc = pimpl_->account_.lock();
     if (!acc)
@@ -2035,7 +2035,7 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     // Create the conversation object
     std::shared_ptr<Conversation> conversation;
     try {
-        conversation = std::make_shared<Conversation>(acc, mode, otherMember);
+        conversation = std::make_shared<Conversation>(acc, mode, otherMember.toString());
         auto conversationId = conversation->id();
         conversation->onMessageStatusChanged([this, conversationId](const auto& status) {
             auto msg = std::make_shared<SyncMsg>();
@@ -2068,8 +2068,8 @@ ConversationModule::startConversation(ConversationMode mode, const std::string& 
     std::unique_lock lk(conv->mtx);
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace(pimpl_->username_);
-    if (!otherMember.empty())
-        conv->info.members.emplace(otherMember);
+    if (!otherMember)
+        conv->info.members.emplace(otherMember.toString());
     conv->conversation = conversation;
     addConvInfo(conv->info);
     lk.unlock();

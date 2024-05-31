@@ -73,6 +73,7 @@ public:
                             const std::string& convId,
                             const std::string& uri);
 
+    void testAddInvalidUri();
     void testRemoveConversationNoMember();
     void testRemoveConversationWithMember();
     void testAddMember();
@@ -125,6 +126,7 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
+    CPPUNIT_TEST(testAddInvalidUri);
     CPPUNIT_TEST(testRemoveConversationNoMember);
     CPPUNIT_TEST(testRemoveConversationWithMember);
     CPPUNIT_TEST(testAddMember);
@@ -389,7 +391,9 @@ ConversationMembersEventTest::connectSignals()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ContactAdded>(
         [&](const std::string& accountId, const std::string&, bool) {
-            if (accountId == bobId) {
+            if (accountId == aliceId) {
+                aliceData.contactAdded = true;
+            } else if (accountId == bobId) {
                 bobData.contactAdded = true;
             } else if (accountId == bob2Id) {
                 bob2Data.contactAdded = true;
@@ -443,6 +447,17 @@ ConversationMembersEventTest::generateFakeInvite(std::shared_ptr<JamiAccount> ac
                          convId,
                          "trigger the fake history to be pulled"s,
                          "");
+}
+
+void
+ConversationMembersEventTest::testAddInvalidUri()
+{
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    aliceAccount->addContact("Shitty/Uri");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&]() { return aliceData.contactAdded; }));
+    CPPUNIT_ASSERT(aliceData.conversationId.empty());
 }
 
 void
