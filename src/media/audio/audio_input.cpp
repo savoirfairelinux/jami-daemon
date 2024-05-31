@@ -177,6 +177,7 @@ AudioInput::readFromFile()
         JAMI_ERR() << "Read buffer overflow detected";
         break;
     case MediaDemuxer::Status::FallBack:
+    case MediaDemuxer::Status::RestartRequired:
         break;
     }
 }

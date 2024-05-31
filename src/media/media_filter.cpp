@@ -116,7 +116,7 @@ MediaFilter::getInputParams(const std::string& inputName) const
     for (const auto& ms : inputParams_)
         if (ms.name == inputName)
             return ms;
-    return {};
+    throw std::out_of_range("Input '" + inputName + "' not found");
 }
 
 MediaStream
