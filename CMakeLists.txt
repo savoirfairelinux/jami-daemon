@@ -184,12 +184,16 @@ source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files
 source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files__media__audio__webrtc})
 source_group("Source Files\\media\\audio\\audio-processing" FILES ${Source_Files__media__audio__speexdsp})
 source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__audio__sound})
-source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
+if(JAMI_VIDEO)
+    source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
+endif()
 source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
 
 if(MSVC)
-   source_group("Source Files\\media\\audio\\portaudio" FILES ${Source_Files__media__audio__portaudio})
-   source_group("Source Files\\media\\video\\winvideo" FILES ${Source_Files__media__video__winvideo})
+    source_group("Source Files\\media\\audio\\portaudio" FILES ${Source_Files__media__audio__portaudio})
+    if(JAMI_VIDEO)
+       source_group("Source Files\\media\\video\\winvideo" FILES ${Source_Files__media__video__winvideo})
+    endif()
 endif()
 
 list (APPEND ALL_FILES
@@ -208,10 +212,12 @@ list (APPEND ALL_FILES
       ${Source_Files__media__audio}
       ${Source_Files__media__audio__sound}
       ${Source_Files__media__audio__audio_processing}
-      ${Source_Files__media__video}
       ${Source_Files__security}
       ${Source_Files__sip}
 )
+if (JAMI_VIDEO)
+    list (APPEND ALL_FILES ${Source_Files__media__video})
+endif()
 if (JAMI_PLUGIN)
     list (APPEND ALL_FILES ${Source_Files__plugin})
 endif()
@@ -264,11 +270,15 @@ elseif (APPLE)
 elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
-         "${Source_Files__media__video__uwpvideo}"
-         "${Source_Files__media__video__winvideo}"
          "${Source_Files__media__audio__webrtc}"
          "${Source_Files__media__audio__speexdsp}"
    )
+   if(JAMI_VIDEO)
+    list (APPEND ALL_FILES ${ALL_FILES}
+            "${Source_Files__media__video__uwpvideo}"
+            "${Source_Files__media__video__winvideo}"
+    )
+   endif()
 endif()
 
 add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
@@ -743,9 +753,35 @@ else()
         target_link_libraries(ut_base64 ut_library)
         add_test(NAME base64 COMMAND ut_base64)
 
-        add_executable(ut_ice_sdp_parser test/unitTest/ice/ice_sdp_parser.cpp)
-        target_link_libraries(ut_ice_sdp_parser ut_library)
-        add_test(NAME ice_sdp_parser COMMAND ut_ice_sdp_parser)
+        if (JAMI_VIDEO)
+            add_executable(ut_ice_sdp_parser test/unitTest/ice/ice_sdp_parser.cpp)
+            target_link_libraries(ut_ice_sdp_parser ut_library)
+            add_test(NAME ice_sdp_parser COMMAND ut_ice_sdp_parser)
+
+            add_executable(ut_conference test/unitTest/call/conference.cpp)
+            target_link_libraries(ut_conference ut_library)
+            add_test(NAME conference COMMAND ut_conference)
+
+            add_executable(ut_test_media_frame test/unitTest/media/test_media_frame.cpp)
+            target_link_libraries(ut_test_media_frame ut_library)
+            add_test(NAME test_media_frame COMMAND ut_test_media_frame)
+
+            add_executable(ut_test_video_scaler test/unitTest/media/video/test_video_scaler.cpp)
+            target_link_libraries(ut_test_video_scaler ut_library)
+            add_test(NAME test_video_scaler COMMAND ut_test_video_scaler)
+
+            add_executable(ut_testVideo_input test/unitTest/media/video/testVideo_input.cpp)
+            target_link_libraries(ut_testVideo_input ut_library)
+            add_test(NAME testVideo_input COMMAND ut_testVideo_input)
+
+            add_executable(ut_test_media_filter test/unitTest/media/test_media_filter.cpp)
+            target_link_libraries(ut_test_media_filter ut_library)
+            add_test(NAME test_media_filter COMMAND ut_test_media_filter)
+
+            add_executable(ut_test_media_player test/unitTest/media/test_media_player.cpp)
+            target_link_libraries(ut_test_media_player ut_library)
+            add_test(NAME test_media_player COMMAND ut_test_media_player)
+        endif()
 
         add_executable(ut_scheduler test/unitTest/scheduler.cpp)
         target_link_libraries(ut_scheduler ut_library)
@@ -758,10 +794,6 @@ else()
         add_executable(ut_call test/unitTest/call/call.cpp)
         target_link_libraries(ut_call ut_library)
         add_test(NAME call COMMAND ut_call)
-
-        add_executable(ut_conference test/unitTest/call/conference.cpp)
-        target_link_libraries(ut_conference ut_library)
-        add_test(NAME conference COMMAND ut_conference)
 
         add_executable(ut_recorder test/unitTest/call/recorder.cpp)
         target_link_libraries(ut_recorder ut_library)
@@ -838,19 +870,6 @@ else()
         add_executable(ut_conversationMembersEvent test/unitTest/conversation/conversationMembersEvent.cpp test/unitTest/conversation/conversationcommon.cpp)
         target_link_libraries(ut_conversationMembersEvent ut_library)
         add_test(NAME conversationMembersEvent COMMAND ut_conversationMembersEvent)
-
-        add_executable(ut_test_media_frame test/unitTest/media/test_media_frame.cpp)
-        target_link_libraries(ut_test_media_frame ut_library)
-        add_test(NAME test_media_frame COMMAND ut_test_media_frame)
-
-        add_executable(ut_test_video_scaler test/unitTest/media/video/test_video_scaler.cpp)
-        target_link_libraries(ut_test_video_scaler ut_library)
-        add_test(NAME test_video_scaler COMMAND ut_test_video_scaler)
-
-        add_executable(ut_testVideo_input test/unitTest/media/video/testVideo_input.cpp)
-        target_link_libraries(ut_testVideo_input ut_library)
-        add_test(NAME testVideo_input COMMAND ut_testVideo_input)
-
         add_executable(ut_test_media_encoder test/unitTest/media/test_media_encoder.cpp)
         target_link_libraries(ut_test_media_encoder ut_library)
         add_test(NAME test_media_encoder COMMAND ut_test_media_encoder)
@@ -866,14 +885,6 @@ else()
         add_executable(ut_test_audio_frame_resizer test/unitTest/media/audio/test_audio_frame_resizer.cpp)
         target_link_libraries(ut_test_audio_frame_resizer ut_library)
         add_test(NAME test_audio_frame_resizer COMMAND ut_test_audio_frame_resizer)
-
-        add_executable(ut_test_media_filter test/unitTest/media/test_media_filter.cpp)
-        target_link_libraries(ut_test_media_filter ut_library)
-        add_test(NAME test_media_filter COMMAND ut_test_media_filter)
-
-        add_executable(ut_test_media_player test/unitTest/media/test_media_player.cpp)
-        target_link_libraries(ut_test_media_player ut_library)
-        add_test(NAME test_media_player COMMAND ut_test_media_player)
 
         if (JAMI_PLUGIN)
             add_executable(ut_plugins test/unitTest/plugins/plugins.cpp)

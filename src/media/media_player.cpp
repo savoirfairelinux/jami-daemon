@@ -58,7 +58,9 @@ MediaPlayer::~MediaPlayer()
     pause(true);
     loop_.join();
     audioInput_.reset();
+#ifdef ENABLE_VIDEO
     videoInput_.reset();
+#endif
 }
 
 bool

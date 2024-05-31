@@ -166,7 +166,9 @@ SIPCall::~SIPCall()
     setSipTransport({});
     setInviteSession(); // prevents callback usage
 
+#ifdef ENABLE_VIDEO
     closeMediaPlayer(mediaPlayerId_);
+#endif
 }
 
 int
@@ -2532,12 +2534,16 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         if (prefix == libjami::Media::VideoProtocolPrefix::FILE) {
             hasFileSharing = true;
             mediaPlayerId_ = media.sourceUri_;
+#ifdef ENABLE_VIDEO
             createMediaPlayer(mediaPlayerId_);
+#endif
         }
     }
 
     if (!hasFileSharing) {
+#ifdef ENABLE_VIDEO
         closeMediaPlayer(mediaPlayerId_);
+#endif
         mediaPlayerId_ = "";
     }
 

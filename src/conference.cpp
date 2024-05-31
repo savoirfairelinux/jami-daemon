@@ -582,12 +582,16 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
                    && oldAttr.label_ == mediaAttr.label_;
         });
         // If video, add to newVideoInputs
+#ifdef ENABLE_VIDEO
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
             auto srcUri = mediaAttr.sourceUri_.empty() ? Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice() : mediaAttr.sourceUri_;
             newVideoInputs.emplace_back(srcUri);
         } else {
+#endif
             hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
+#ifdef ENABLE_VIDEO
         }
+#endif
         if (oldIdx != hostSources_.end()) {
             // Check if muted status changes
             if (mediaAttr.muted_ != oldIdx->muted_) {
@@ -757,6 +761,7 @@ Conference::removeSubCall(const std::string& callId)
         participantsMuted_.erase(call->getCallId());
         if (auto* transport = call->getTransport())
             handsRaised_.erase(std::string(transport->deviceId()));
+#ifdef ENABLE_VIDEO
         if (videoMixer_) {
             for (auto const& rtpSession : call->getRtpSessionList()) {
                 if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO)
@@ -766,7 +771,6 @@ Conference::removeSubCall(const std::string& callId)
             }
         }
 
-#ifdef ENABLE_VIDEO
         auto sinkId = getConfId() + peerId;
         unbindSubCallAudio(callId);
         call->exitConference();
