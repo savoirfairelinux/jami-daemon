@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f97caa4e_f034062b",
+        "filename": "src/account.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-04T13:56:48Z",
+      "side": 1,
+      "message": "could be removed",
+      "range": {
+        "startLine": 163,
+        "startChar": 0,
+        "endLine": 163,
+        "endChar": 2
+      },
+      "revId": "0a263ff8276845abc9f0cb8c7148f1c4c90f1a8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
