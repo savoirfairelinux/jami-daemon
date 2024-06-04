@@ -21,7 +21,7 @@
 #include "audio/audiolayer.h"
 
 #ifndef _MSC_VER
-#include <speex/speex_config_types.h>
+#include <speex/speexdsp_types.h>
 #endif
 extern "C" {
 #include <speex/speex_echo.h>
