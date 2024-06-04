@@ -21,7 +21,11 @@
 #include "audio/audiolayer.h"
 
 #ifndef _MSC_VER
+#if __has_include(<speex/speexdsp_config_types.h>)
+#include <speex/speexdsp_config_types.h>
+#else
 #include <speex/speex_config_types.h>
+#endif
 #endif
 extern "C" {
 #include <speex/speex_echo.h>
