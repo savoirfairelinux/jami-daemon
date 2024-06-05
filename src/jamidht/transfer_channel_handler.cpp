@@ -122,8 +122,11 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 sha3Sum = keyVal[1];
             } else if (keyVal[0] == "modified") {
                 try {
-                    lastModified = std::stoull(std::string(keyVal[1]));
-                } catch (...) {}
+                    lastModified = jami::to_int<uint64_t>(keyVal[1]);
+                } catch (const std::exception& e) {
+                    JAMI_WARNING("TransferChannel: can't parse modified date: {}: {}",
+                                 keyVal[1], e.what());
+                }
             }
         }
     }
