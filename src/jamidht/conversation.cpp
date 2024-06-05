@@ -2339,6 +2339,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
     pimpl_->checkedMembers_.clear();
     // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic connectivity change
     if (pimpl_->swarmManager_->isShutdown()) {
+        pimpl_->swarmManager_->restart();
         pimpl_->swarmManager_->maintainBuckets();
     } else if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
         fallback(this, true);

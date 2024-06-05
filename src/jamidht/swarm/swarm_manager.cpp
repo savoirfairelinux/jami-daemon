@@ -146,6 +146,12 @@ SwarmManager::shutdown()
     routing_table.shutdownAllNodes();
 }
 
+void
+SwarmManager::restart()
+{
+    isShutdown_ = false;
+}
+
 bool
 SwarmManager::addKnownNode(const NodeId& nodeId)
 {
