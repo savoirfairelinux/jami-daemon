@@ -1,0 +1,182 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f6c3cbc3_f6757169",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 34
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "set yourself as the commit author",
+      "range": {
+        "startLine": 2,
+        "startChar": 12,
+        "endLine": 2,
+        "endChar": 25
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "885075cb_d7c16b1f",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 34
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "remove wip",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 6
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c37ecdd_69eba6e2",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 34
+      },
+      "lineNbr": 907,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b110e0f6_dcfde13d",
+        "filename": "commit_msg_tmp.txt",
+        "patchSetId": 34
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "remove file",
+      "range": {
+        "startLine": 1,
+        "startChar": 1,
+        "endLine": 4,
+        "endChar": 2
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2da470bf_43acdb4b",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 290,
+        "startChar": 0,
+        "endLine": 303,
+        "endChar": 5
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5dd7548_1bbdfd30",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "duplicated",
+      "range": {
+        "startLine": 388,
+        "startChar": 4,
+        "endLine": 406,
+        "endChar": 5
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1c9d1758_d22cdfab",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 795,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "tabs",
+      "range": {
+        "startLine": 795,
+        "startChar": 1,
+        "endLine": 795,
+        "endChar": 5
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3fc2d10_230878f5",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 899,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-05T13:19:55Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 893,
+        "startChar": 0,
+        "endLine": 899,
+        "endChar": 2
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
