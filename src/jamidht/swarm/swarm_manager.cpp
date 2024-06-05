@@ -163,6 +163,7 @@ SwarmManager::addMobileNodes(const NodeId& nodeId)
 void
 SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 {
+    isShutdown_ = false;
     std::set<NodeId> nodes = toConnect;
     std::unique_lock lock(mutex);
     auto& buckets = routing_table.getBuckets();
