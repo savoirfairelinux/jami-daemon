@@ -154,8 +154,9 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
                            const std::string& sha3Sum)
     : FileInfo(channel, fileId, interactionId, info)
     , sha3Sum_(sha3Sum)
+    , path_(info.path + "." + std::to_string(rand()) + ".tmp")
 {
-    stream_.open(std::filesystem::path(info_.path),
+    stream_.open(path_,
                  std::ios::binary | std::ios::out | std::ios::app);
     if (!stream_)
         return;
@@ -188,7 +189,7 @@ IncomingFile::cancel()
 void
 IncomingFile::process()
 {
-    channel_->setOnRecv([w = weak()](const uint8_t* buf, size_t len) {
+    channel_->setOnRecv([w = weak_from_this()](const uint8_t* buf, size_t len) {
         if (auto shared = w.lock()) {
             // No need to lock, setOnRecv is resetted before closing
             if (shared->stream_.is_open())
@@ -197,7 +198,7 @@ IncomingFile::process()
         }
         return len;
     });
-    channel_->onShutdown([w = weak()] {
+    channel_->onShutdown([w = weak_from_this()] {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -209,22 +210,24 @@ IncomingFile::process()
         auto correct = shared->sha3Sum_.empty();
         if (!correct) {
             // Verify shaSum
-            auto sha3Sum = fileutils::sha3File(shared->info_.path);
+            auto sha3Sum = fileutils::sha3File(shared->path_);
             if (shared->isUserCancelled_) {
-                JAMI_WARN() << "Remove file, invalid sha3sum detected for " << shared->info_.path;
-                dhtnet::fileutils::remove(shared->info_.path, true);
+                JAMI_WARNING("Invalid sha3sum detected for {}, remove file", shared->info_.path);
             } else if (shared->sha3Sum_ == sha3Sum) {
-                JAMI_INFO() << "New file received: " << shared->info_.path;
+                JAMI_LOG("New file received:{}", shared->info_.path);
                 correct = true;
             } else {
-                JAMI_WARN() << "Invalid sha3sum detected, unfinished file: " << shared->info_.path;
+                JAMI_WARNING("Invalid sha3sum detected for {}, incomplete file: {}/{}", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
                 if (shared->info_.totalSize != 0
                     && shared->info_.totalSize < shared->info_.bytesProgress) {
-                    JAMI_WARN() << "Remove file, larger file than announced for "
-                                << shared->info_.path;
-                    dhtnet::fileutils::remove(shared->info_.path, true);
+                    JAMI_WARNING("Remove file, larger file than announced for {}", shared->info_.path);
                 }
             }
+        }
+        if (correct) {
+            std::filesystem::rename(shared->path_, shared->info_.path);
+        } else {
+            dhtnet::fileutils::remove(shared->path_, true);
         }
         if (shared->isUserCancelled_)
             return;

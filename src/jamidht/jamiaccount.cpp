@@ -4088,21 +4088,21 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                                        currentDeviceId(),
                                        fileId);
         if (start != 0 || end != 0) {
-            channelName += "?start=" + std::to_string(start) + "&end=" + std::to_string(end);
+            channelName += fmt::format("?start={}&end={}", start, end);
         }
         // We can avoid to negotiate new sessions, as the file notif
         // probably come from an online device or last connected device.
         connectionManager_->connectDevice(
             did,
             channelName,
-            [this,
+            [w = weak(),
              conversationId,
              fileId,
              interactionId](std::shared_ptr<dhtnet::ChannelSocket> channel, const DeviceId&) {
                 if (!channel)
                     return;
                 dht::ThreadPool::io().run(
-                    [w = weak(), conversationId, channel, fileId, interactionId] {
+                    [w, conversationId, channel, fileId, interactionId] {
                         auto shared = w.lock();
                         if (!shared)
                             return;
