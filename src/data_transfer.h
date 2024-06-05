@@ -87,19 +87,16 @@ public:
                  const libjami::DataTransferInfo& info,
                  const std::string& fileId,
                  const std::string& interactionId,
-                 const std::string& sha3Sum = "");
+                 const std::string& sha3Sum);
     ~IncomingFile();
     void process() override;
     void cancel() override;
 
 private:
-    std::weak_ptr<IncomingFile> weak()
-    {
-        return std::static_pointer_cast<IncomingFile>(shared_from_this());
-    }
     std::mutex streamMtx_;
     std::ofstream stream_;
     std::string sha3Sum_ {};
+    std::filesystem::path path_;
 };
 
 class OutgoingFile : public FileInfo
