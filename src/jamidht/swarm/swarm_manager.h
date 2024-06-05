@@ -113,6 +113,14 @@ public:
     void shutdown();
 
     /**
+     * Restart the swarm manager.
+     *
+     * This function must be called in situations where we want
+     * to use a swarm manager that was previously shut down.
+     */
+    void restart();
+
+    /**
      * Display swarm manager info
      */
     void display()
