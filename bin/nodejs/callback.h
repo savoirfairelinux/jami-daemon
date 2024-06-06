@@ -35,6 +35,9 @@ Persistent<Function> swarmLoadedCb;
 Persistent<Function> messagesFoundCb;
 Persistent<Function> messageReceivedCb;
 Persistent<Function> swarmMessageReceivedCb;
+Persistent<Function> swarmMessageUpdatedCb;
+Persistent<Function> reactionAddedCb;
+Persistent<Function> reactionRemovedCb;
 Persistent<Function> conversationProfileUpdatedCb;
 Persistent<Function> conversationRequestReceivedCb;
 Persistent<Function> conversationRequestDeclinedCb;
@@ -109,6 +112,12 @@ getPresistentCb(std::string_view signal)
         return &messageReceivedCb;
     else if (signal == "SwarmMessageReceived")
         return &swarmMessageReceivedCb;
+    else if (signal == "SwarmMessageUpdated")
+        return &swarmMessageUpdatedCb;
+    else if (signal == "ReactionAdded")
+        return &reactionAddedCb;
+    else if (signal == "ReactionRemoved")
+        return &reactionRemovedCb;
     else if (signal == "ConversationProfileUpdated")
         return &conversationProfileUpdatedCb;
     else if (signal == "ConversationReady")
@@ -138,6 +147,9 @@ getPresistentCb(std::string_view signal)
     else
         return nullptr;
 }
+
+#define V8_STRING_LITERAL(str) \
+    v8::String::NewFromUtf8Literal(v8::Isolate::GetCurrent(), str)
 
 #define V8_STRING_NEW(str) \
     v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), \
@@ -174,12 +186,46 @@ stringMapToJsMap(const std::map<std::string, std::string>& strmap)
     return jsMap;
 }
 
+inline SWIGV8_OBJECT
+stringIntMapToJsMap(const std::map<std::string, int32_t>& strmap)
+{
+    SWIGV8_OBJECT jsMap = SWIGV8_OBJECT_NEW();
+    for (auto& kvpair : strmap)
+        jsMap->Set(SWIGV8_CURRENT_CONTEXT(),
+                   V8_STRING_NEW_LOCAL(std::get<0>(kvpair)),
+                   SWIGV8_INTEGER_NEW(std::get<1>(kvpair)));
+    return jsMap;
+}
+
 inline SWIGV8_ARRAY
 stringMapVecToJsMapArray(const std::vector<std::map<std::string, std::string>>& vect)
 {
     SWIGV8_ARRAY jsArray = SWIGV8_ARRAY_NEW(vect.size());
     for (unsigned int i = 0; i < vect.size(); i++)
         jsArray->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_INTEGER_NEW_UNS(i), stringMapToJsMap(vect[i]));
+    return jsArray;
+}
+
+inline SWIGV8_OBJECT
+swarmMessageToJs(const libjami::SwarmMessage& message)
+{
+    SWIGV8_OBJECT jsMap = SWIGV8_OBJECT_NEW();
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("id"), V8_STRING_NEW_LOCAL(message.id));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("type"), V8_STRING_NEW_LOCAL(message.type));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("linearizedParent"), V8_STRING_NEW_LOCAL(message.linearizedParent));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("body"), stringMapToJsMap(message.body));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("reactions"), stringMapVecToJsMapArray(message.reactions));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("editions"), stringMapVecToJsMapArray(message.editions));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("status"), stringIntMapToJsMap(message.status));
+    return jsMap;
+}
+
+inline SWIGV8_ARRAY
+swarmMessagesToJsArray(const std::vector<libjami::SwarmMessage>& messages)
+{
+    SWIGV8_ARRAY jsArray = SWIGV8_ARRAY_NEW(messages.size());
+    for (unsigned int i = 0; i < messages.size(); i++)
+        jsArray->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_INTEGER_NEW_UNS(i), swarmMessageToJs(messages[i]));
     return jsArray;
 }
 
@@ -637,6 +683,102 @@ conversationLoaded(uint32_t id,
                                             V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(conversationId),
                                             stringMapVecToJsMapArray(message)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+swarmLoaded(uint32_t id,
+              const std::string& accountId,
+              const std::string& conversationId,
+              const std::vector<libjami::SwarmMessage>& messages)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([id, accountId, conversationId, messages]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), swarmLoadedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {SWIGV8_INTEGER_NEW_UNS(id),
+                                            V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            swarmMessagesToJsArray(messages)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+swarmMessageReceived(const std::string& accountId,
+                     const std::string& conversationId,
+                     const libjami::SwarmMessage& message)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, message]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), swarmMessageReceivedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            swarmMessageToJs(message)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+swarmMessageUpdated(const std::string& accountId,
+                    const std::string& conversationId,
+                    const libjami::SwarmMessage& message)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, message]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), swarmMessageUpdatedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            swarmMessageToJs(message)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+reactionAdded(const std::string& accountId,
+              const std::string& conversationId,
+              const std::string& messageId,
+              const std::map<std::string, std::string>& reaction)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, messageId, reaction]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), reactionAddedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            V8_STRING_NEW_LOCAL(messageId),
+                                            stringMapToJsMap(reaction)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+reactionRemoved(const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& messageId,
+                const std::string& reactionId)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, messageId, reactionId]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), reactionRemovedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            V8_STRING_NEW_LOCAL(messageId),
+                                            V8_STRING_NEW_LOCAL(reactionId)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
