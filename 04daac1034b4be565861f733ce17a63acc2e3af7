@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2b1e76db_f985bce5",
+        "filename": "contrib/src/freetype/SHA512SUMS",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1094
+      },
+      "writtenOn": "2024-06-06T20:15:59Z",
+      "side": 1,
+      "message": "This should fix the CI issue on android.",
+      "range": {
+        "startLine": 1,
+        "startChar": 130,
+        "endLine": 1,
+        "endChar": 186
+      },
+      "revId": "04daac1034b4be565861f733ce17a63acc2e3af7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
