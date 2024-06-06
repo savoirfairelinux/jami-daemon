@@ -566,12 +566,16 @@ else()
         PkgConfig::swresample
         PkgConfig::swscale
         PkgConfig::jsoncpp
-        yaml-cpp
         PkgConfig::secp256k1
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil
     )
+    if (TARGET yaml-cpp::yaml-cpp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
+    endif()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden
         -Wall -Wextra
@@ -710,7 +714,7 @@ else()
             PkgConfig::swresample
             PkgConfig::swscale
             PkgConfig::jsoncpp
-            yaml-cpp
+            yaml-cpp::yaml-cpp
             PkgConfig::fmt
             PkgConfig::secp256k1
         )
