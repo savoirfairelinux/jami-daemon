@@ -566,12 +566,16 @@ else()
         PkgConfig::swresample
         PkgConfig::swscale
         PkgConfig::jsoncpp
-        yaml-cpp
         PkgConfig::secp256k1
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil
     )
+    if (TARGET yaml-cpp)
+        target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
+    else()
+        target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
+    endif()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden
         -Wall -Wextra
@@ -710,10 +714,14 @@ else()
             PkgConfig::swresample
             PkgConfig::swscale
             PkgConfig::jsoncpp
-            yaml-cpp
             PkgConfig::fmt
             PkgConfig::secp256k1
         )
+        if (TARGET yaml-cpp)
+          target_link_libraries(ut_library PRIVATE yaml-cpp)
+        else()
+          target_link_libraries(ut_library PRIVATE yaml-cpp::yaml-cpp)
+        endif()
         target_include_directories(ut_library PUBLIC
             "${CMAKE_CURRENT_SOURCE_DIR}/test;"
             "${CMAKE_CURRENT_SOURCE_DIR}/test/unitTest;"
