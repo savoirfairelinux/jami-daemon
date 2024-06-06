@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5c1c3cf2_7d043f0a",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-06T20:45:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b6f6cdc2_2b355419",
+      "range": {
+        "startLine": 213,
+        "startChar": 12,
+        "endLine": 213,
+        "endChar": 62
+      },
+      "revId": "5dfd70fcf3eeef08d8b750914b54fa1afe87f5cc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "30581437_1f82c4f6",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-06-06T20:18:55Z",
       "side": 1,
       "message": "Warning doesn\u0027t match the condition tested in the if statement.",
+      "range": {
+        "startLine": 214,
+        "startChar": 12,
+        "endLine": 215,
+        "endChar": 97
+      },
+      "revId": "5dfd70fcf3eeef08d8b750914b54fa1afe87f5cc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d580eddf_d14854e4",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-06T20:45:17Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "30581437_1f82c4f6",
       "range": {
         "startLine": 214,
         "startChar": 12,
