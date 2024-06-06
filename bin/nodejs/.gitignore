@@ -1,2 +1,3 @@
 jami_wrapper.cpp
+binding.gyp
 build/
