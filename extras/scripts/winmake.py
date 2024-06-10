@@ -34,6 +34,7 @@ def build_contrib(args, paths):
         "onnx",
         "opencv",
         "opencv_contrib",
+        "freetype",
     ]
     versioner.extra_output_dirs = ["msvc"]
 
