@@ -2648,7 +2648,9 @@ ConversationRepository::cloneConversation(
 
     JAMI_DEBUG("Start clone of {:s} to {}", url, path);
     git_repository* rep = nullptr;
-    if (auto err = git_clone(&rep, url.c_str(), path.string().c_str(), nullptr)) {
+    git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
+    opts.fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
+    if (auto err = git_clone(&rep, url.c_str(), path.string().c_str(), &opts)) {
         if (const git_error* gerr = giterr_last())
             JAMI_ERROR("Error when retrieving remote conversation: {:s} {}", gerr->message, path);
         else
