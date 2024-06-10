@@ -22,6 +22,30 @@
       },
       "revId": "46b7297d22918db4a5eec5f97f7c7462f2dbabb6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e6288f93_80256e7f",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-10T15:11:21Z",
+      "side": 1,
+      "message": "In some cases totalSize might not be known, in which case it\u0027s zero.",
+      "parentUuid": "907466ff_ec817f0d",
+      "range": {
+        "startLine": 221,
+        "startChar": 24,
+        "endLine": 221,
+        "endChar": 52
+      },
+      "revId": "46b7297d22918db4a5eec5f97f7c7462f2dbabb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
