@@ -21,9 +21,7 @@ $(TARBALLS)/freetype-$(FREETYPE_HASH).tar.gz:
 .sum-freetype: freetype-$(FREETYPE_HASH).tar.gz
 
 freetype: freetype-$(FREETYPE_HASH).tar.gz .sum-freetype
-	rm -Rf $@-$(FREETYPE_HASH)
-	mkdir -p $@-$(FREETYPE_HASH)
-	(cd $@-$(FREETYPE_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f $<)
+	$(UNPACK)
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
