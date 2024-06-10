@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "907466ff_ec817f0d",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 221,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-06-10T15:03:36Z",
+      "side": 1,
+      "message": "Does it really make a difference whether `totalSize` is zero or not here?",
+      "range": {
+        "startLine": 221,
+        "startChar": 24,
+        "endLine": 221,
+        "endChar": 52
+      },
+      "revId": "46b7297d22918db4a5eec5f97f7c7462f2dbabb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
