@@ -2526,6 +2526,19 @@ JamiAccount::isMessageTreated(dht::Value::Id id)
     return !treatedMessages_.add(id);
 }
 
+bool
+JamiAccount::sha3SumVerify() const
+{
+    return !noSha3sumVerification_;
+}
+
+#ifdef LIBJAMI_TESTABLE
+void
+JamiAccount::noSha3sumVerification(bool newValue) {
+    noSha3sumVerification_ = newValue;
+}
+#endif
+
 std::map<std::string, std::string>
 JamiAccount::getKnownDevices() const
 {

@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "def.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -438,7 +439,7 @@ public:
      * Only used for tests, disable sha3sum verification for transfers.
      * @param newValue
      */
-    void noSha3sumVerification(bool newValue) { noSha3sumVerification_ = newValue; }
+    void noSha3sumVerification(bool newValue);
 
     void publishPresence(bool newValue) { publishPresence_ = newValue; }
 #endif
@@ -535,7 +536,7 @@ public:
 
     const std::shared_ptr<AccountManager>& accountManager() { return accountManager_; }
 
-    bool sha3SumVerify() const { return !noSha3sumVerification_; }
+    bool sha3SumVerify() const;
 
     /**
      * Change certificate's validity period
@@ -851,8 +852,8 @@ private:
     std::shared_ptr<TransferManager> nonSwarmTransferManager_;
 
     std::atomic_bool deviceAnnounced_ {false};
+    std::atomic_bool noSha3sumVerification_ {false};
 
-    bool noSha3sumVerification_ {false};
     bool publishPresence_ {true};
 
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>> channelHandlers_ {};
