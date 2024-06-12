@@ -301,7 +301,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE_VERSION="${PROJECT_VERSION}"
     PACKAGE="jami"
     LIBJAMI_BUILD
-    HAVE_RINGNS
+    HAVE_RINGNS=1
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
@@ -594,6 +594,9 @@ else()
         JAMI_DATADIR="${JAMI_DATADIR}"
         PJ_AUTOCONF=1
     )
+    if (BUILD_TESTING)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
+    endif()
     if (ANDROID)
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenSLES log)
     elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -809,9 +812,10 @@ else()
         target_compile_definitions(ut_library PUBLIC
             JAMI_DATADIR="${JAMI_DATADIR}"
             PJ_AUTOCONF=1
-            HAVE_RINGNS
+            HAVE_RINGNS=1
             ASIO_STANDALONE
             MSGPACK_NO_BOOST
+            DEBUG
         )
         if (JAMI_PLUGIN)
             target_compile_definitions(ut_library PUBLIC ENABLE_PLUGIN)
