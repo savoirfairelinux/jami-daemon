@@ -187,11 +187,13 @@ isDirectoryWritable(const std::string& directory)
 bool
 createSymlink(const std::filesystem::path& linkFile, const std::filesystem::path& target)
 {
-    try {
-        std::filesystem::create_symlink(target, linkFile);
-    } catch (const std::exception& e) {
-        JAMI_ERR("Couldn't create soft link: %s", e.what());
+    std::error_code ec;
+    std::filesystem::create_symlink(target, linkFile, ec);
+    if (ec) {
+        JAMI_WARNING("Couldn't create soft link from {} to {}: {}", linkFile, target, ec.message());
         return false;
+    } else {
+        JAMI_LOG("Created soft link from {} to {}", linkFile, target);
     }
     return true;
 }
@@ -199,11 +201,13 @@ createSymlink(const std::filesystem::path& linkFile, const std::filesystem::path
 bool
 createHardlink(const std::filesystem::path& linkFile, const std::filesystem::path& target)
 {
-    try {
-        std::filesystem::create_hard_link(target, linkFile);
-    } catch (const std::exception& e) {
-        JAMI_ERR("Couldn't create hard link: %s", e.what());
+    std::error_code ec;
+    std::filesystem::create_hard_link(target, linkFile, ec);
+    if (ec) {
+        JAMI_WARNING("Couldn't create hard link from {} to {}: {}", linkFile, target, ec.message());
         return false;
+    } else {
+        JAMI_LOG("Created hard link from {} to {}", linkFile, target);
     }
     return true;
 }
