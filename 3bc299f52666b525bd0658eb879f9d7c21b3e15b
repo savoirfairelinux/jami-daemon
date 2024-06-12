@@ -16,6 +16,29 @@
       "message": "Should we do this?\n\nIf yes, is it the correct place to do it?\n\nIs there a way to directly modifiy name instead of creating a temporary variable?",
       "revId": "3bc299f52666b525bd0658eb879f9d7c21b3e15b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "932d898a_74578ddd",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1065,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-06-12T17:46:24Z",
+      "side": 1,
+      "message": "Alread done in NameDirectory (see `toLower` in `registerName()`)",
+      "range": {
+        "startLine": 1064,
+        "startChar": 0,
+        "endLine": 1065,
+        "endChar": 2
+      },
+      "revId": "3bc299f52666b525bd0658eb879f9d7c21b3e15b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
