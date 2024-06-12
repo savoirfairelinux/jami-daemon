@@ -46,6 +46,8 @@
 #include <dhtnet/ip_utils.h>
 #include <dhtnet/upnp/upnp_context.h>
 #include <dhtnet/certstore.h>
+#include <algorithm>
+#include <cctype>
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -1059,7 +1061,9 @@ registerName(const std::string& account,
 {
 #if HAVE_RINGNS
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
-        acc->registerName(name, scheme, password);
+        std::string lowerName = name;
+        std::transform(lowerName.begin(), lowerName.end(), lowerName.begin(), [](unsigned char c){ return std::tolower(c); });
+        acc->registerName(lowerName, scheme, password);
         return true;
     }
 #endif
