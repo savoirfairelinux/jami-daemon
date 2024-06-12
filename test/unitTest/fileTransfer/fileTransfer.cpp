@@ -192,6 +192,7 @@ FileTransferTest::connectSignals()
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
             libjami::SwarmMessage message) {
+            std::unique_lock<std::mutex> lk {mtx};
             if (accountId == aliceId) {
                 aliceData.messages.emplace_back(message);
             } else if (accountId == bobId) {
@@ -389,7 +390,7 @@ FileTransferTest::testBadSha3sumOut()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
 
     // modifiy file
-    sendFile = std::ofstream(sendPath);
+    sendFile = std::ofstream(sendPath, std::ios::trunc);
     CPPUNIT_ASSERT(sendFile.is_open());
     sendFile << std::string(64000, 'B');
     sendFile.close();
@@ -635,7 +636,7 @@ FileTransferTest::testTooLarge()
     auto fileId = bobData.messages.rbegin()->body["fileId"];
 
     // Add some data for the reception. This will break the final shasum
-    std::ofstream recvFile(recvPath);
+    std::ofstream recvFile(recvPath + std::string(".tmp"));
     CPPUNIT_ASSERT(recvFile.is_open());
     recvFile << std::string(1000, 'B');
     recvFile.close();

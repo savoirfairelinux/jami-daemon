@@ -333,8 +333,8 @@ ConversationRequestTest::connectSignals()
 void
 ConversationRequestTest::tearDown()
 {
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
-    std::remove(bobArchive.c_str());
+    auto bobArchive = std::filesystem::current_path() / "bob.gz";
+    std::filesystem::remove(bobArchive);
 
     if (bob2Id.empty()) {
         wait_for_removal_of({aliceId, bobId, carlaId});
@@ -604,8 +604,8 @@ ConversationRequestTest::testRemoveContactMultiDevice()
 
     // Add second device for Bob
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
-    std::remove(bobArchive.c_str());
+    auto bobArchive = std::filesystem::current_path() / "bob.gz";
+    std::filesystem::remove(bobArchive);
     bobAccount->exportArchive(bobArchive);
 
     std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
