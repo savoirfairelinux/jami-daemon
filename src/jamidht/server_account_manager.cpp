@@ -627,9 +627,9 @@ ServerAccountManager::revokeDevice(const std::string& device,
 }
 
 void
-ServerAccountManager::registerName(const std::string&, std::string_view scheme, const std::string&, RegistrationCallback cb)
+ServerAccountManager::registerName(const std::string& name, std::string_view scheme, const std::string&, RegistrationCallback cb)
 {
-    cb(NameDirectory::RegistrationResponse::unsupported);
+    cb(NameDirectory::RegistrationResponse::unsupported, name);
 }
 
 bool

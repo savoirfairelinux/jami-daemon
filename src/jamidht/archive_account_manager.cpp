@@ -839,7 +839,7 @@ ArchiveAccountManager::registerName(const std::string& name,
         ethAccount = dev::KeyPair(dev::Secret(archive.eth_key)).address().hex();
     } catch (const std::exception& e) {
         // JAMI_ERR("[Auth] can't export account: %s", e.what());
-        cb(NameDirectory::RegistrationResponse::invalidCredentials);
+        cb(NameDirectory::RegistrationResponse::invalidCredentials, name);
         return;
     }
 

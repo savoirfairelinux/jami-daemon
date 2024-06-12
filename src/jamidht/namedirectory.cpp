@@ -344,16 +344,16 @@ NameDirectory::registerName(const std::string& addr,
 {
     std::string name {n};
     if (not validateName(name)) {
-        cb(RegistrationResponse::invalidName);
+        cb(RegistrationResponse::invalidName, name);
         return;
     }
     toLower(name);
     auto cacheResult = addrCache(name);
     if (not cacheResult.empty()) {
         if (cacheResult == addr)
-            cb(RegistrationResponse::success);
+            cb(RegistrationResponse::success, name);
         else
-            cb(RegistrationResponse::alreadyTaken);
+            cb(RegistrationResponse::alreadyTaken, name);
         return;
     }
     std::string body = fmt::format("{{\"addr\":\"{}\",\"owner\":\"{}\",\"signature\":\"{}\",\"publickey\":\"{}\"}}",
@@ -374,22 +374,22 @@ NameDirectory::registerName(const std::string& addr,
         request->add_on_done_callback(
             [this, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
                 if (response.status_code == 400) {
-                    cb(RegistrationResponse::incompleteRequest);
+                    cb(RegistrationResponse::incompleteRequest, name);
                     JAMI_ERR("RegistrationResponse::incompleteRequest");
                 } else if (response.status_code == 401) {
-                    cb(RegistrationResponse::signatureVerificationFailed);
+                    cb(RegistrationResponse::signatureVerificationFailed, name);
                     JAMI_ERR("RegistrationResponse::signatureVerificationFailed");
                 } else if (response.status_code == 403) {
-                    cb(RegistrationResponse::alreadyTaken);
+                    cb(RegistrationResponse::alreadyTaken, name);
                     JAMI_ERR("RegistrationResponse::alreadyTaken");
                 } else if (response.status_code == 409) {
-                    cb(RegistrationResponse::alreadyTaken);
+                    cb(RegistrationResponse::alreadyTaken, name);
                     JAMI_ERR("RegistrationResponse::alreadyTaken");
                 } else if (response.status_code > 400 && response.status_code < 500) {
-                    cb(RegistrationResponse::alreadyTaken);
+                    cb(RegistrationResponse::alreadyTaken, name);
                     JAMI_ERR("RegistrationResponse::alreadyTaken");
                 } else if (response.status_code < 200 || response.status_code > 299) {
-                    cb(RegistrationResponse::error);
+                    cb(RegistrationResponse::error, name);
                     JAMI_ERR("RegistrationResponse::error");
                 } else {
                     Json::Value json;
@@ -401,7 +401,7 @@ NameDirectory::registerName(const std::string& addr,
                                        response.body.data() + response.body.size(),
                                        &json,
                                        &err)) {
-                        cb(RegistrationResponse::error);
+                        cb(RegistrationResponse::error, name);
                         return;
                     }
                     auto success = json["success"].asBool();
@@ -414,7 +414,7 @@ NameDirectory::registerName(const std::string& addr,
                         addrCache_.emplace(name, addr);
                         nameCache_.emplace(addr, name);
                     }
-                    cb(success ? RegistrationResponse::success : RegistrationResponse::error);
+                    cb(success ? RegistrationResponse::success : RegistrationResponse::error, name);
                 }
                 std::lock_guard lk(requestsMtx_);
                 if (auto req = response.request.lock())
@@ -427,7 +427,7 @@ NameDirectory::registerName(const std::string& addr,
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing name registration: %s", e.what());
-        cb(RegistrationResponse::error);
+        cb(RegistrationResponse::error, name);
         std::lock_guard lk(requestsMtx_);
         if (request)
             requests_.erase(request);

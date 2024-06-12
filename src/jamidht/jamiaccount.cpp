@@ -1453,7 +1453,7 @@ JamiAccount::registerName(const std::string& name,
             name,
             scheme,
             password,
-            [acc = getAccountID(), name, w = weak()](NameDirectory::RegistrationResponse response) {
+            [acc = getAccountID(), name, w = weak()](NameDirectory::RegistrationResponse response, const std::string& regName) {
                 int res
                     = (response == NameDirectory::RegistrationResponse::success)
                           ? 0
@@ -1467,10 +1467,10 @@ JamiAccount::registerName(const std::string& name,
                                                : 4)));
                 if (response == NameDirectory::RegistrationResponse::success) {
                     if (auto this_ = w.lock()) {
-                        this_->registeredName_ = name;
-                        if (this_->config().registeredName != name)
+                        this_->registeredName_ = regName;
+                        if (this_->config().registeredName != regName)
                             this_->editConfig(
-                                [&](JamiAccountConfig& config) { config.registeredName = name; });
+                                [&](JamiAccountConfig& config) { config.registeredName = regName; });
                         emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
                             this_->accountID_, this_->getVolatileAccountDetails());
                     }
