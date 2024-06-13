@@ -168,7 +168,16 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         request->add_on_done_callback(
             [this, cb = std::move(cb), addr](const dht::http::Response& response) {
                 if (response.status_code >= 400 && response.status_code < 500) {
-                    cb("", Response::notFound);
+                    std::string regName, regAddr;
+                    {
+                        std::lock_guard l(cacheLock_);
+                        regName = registeredName_;
+                        regAddr = registeredAddr_;
+                    }
+                    if (not regAddr.empty() and addr == regAddr)
+                        cb(regName, Response::found);
+                    else
+                        cb("", Response::notFound);
                 } else if (response.status_code != 200) {
                     JAMI_ERR("Address lookup for %s failed with code=%i",
                              addr.c_str(),
@@ -356,6 +365,14 @@ NameDirectory::registerName(const std::string& addr,
             cb(RegistrationResponse::alreadyTaken, name);
         return;
     }
+    {
+        std::lock_guard l(cacheLock_);
+        if (isRegisteringName_) {
+            cb(RegistrationResponse::error, name);
+            return;
+        }
+        isRegisteringName_ = true;
+    }
     std::string body = fmt::format("{{\"addr\":\"{}\",\"owner\":\"{}\",\"signature\":\"{}\",\"publickey\":\"{}\"}}",
         addr,
         owner,
@@ -373,6 +390,10 @@ NameDirectory::registerName(const std::string& addr,
 
         request->add_on_done_callback(
             [this, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
+                {
+                    std::lock_guard l(cacheLock_);
+                    isRegisteringName_ = false;
+                }
                 if (response.status_code == 400) {
                     cb(RegistrationResponse::incompleteRequest, name);
                     JAMI_ERR("RegistrationResponse::incompleteRequest");
@@ -411,6 +432,8 @@ NameDirectory::registerName(const std::string& addr,
                              success ? "success" : "failure");
                     if (success) {
                         std::lock_guard l(cacheLock_);
+                        registeredAddr_ = addr;
+                        registeredName_ = name;
                         addrCache_.emplace(name, addr);
                         nameCache_.emplace(addr, name);
                     }
