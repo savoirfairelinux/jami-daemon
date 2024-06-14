@@ -1,4 +1,22 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "01a01a44_4026b7f9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1094
+      },
+      "writtenOn": "2024-06-14T20:47:11Z",
+      "side": 1,
+      "message": "https://git.jami.net/savoirfairelinux/jami-plugins/-/issues/65",
+      "revId": "c5ba0f59b485f6ba24575f158913407df3f74599",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ],
   "submitRequirementResults": []
 }
