@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5467a53c_042e6273",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 1378,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-06-17T21:12:42Z",
+      "side": 1,
+      "message": "Missing a lock on `conversationsMtx_`? (Also, what about the call to `acc-\u003egetKnownDevices` at the beginning of `ConversationModule::startConversation`? Should it be replaced by `accountManager_-\u003egetKnownDevices` too?)",
+      "range": {
+        "startLine": 1377,
+        "startChar": 4,
+        "endLine": 1378,
+        "endChar": 65
+      },
+      "revId": "7ff3e21d4313074bc5706b43b882405c21da57e9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
