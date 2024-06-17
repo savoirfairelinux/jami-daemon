@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95ba7d09_1554b8f5",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-06-17T20:25:52Z",
+      "side": 0,
+      "message": "Removing this changes the behavior of the function if it\u0027s called and `account_.lock()` is null. Can this actually happen? And if so, does the function still behave correctly when it does?",
+      "range": {
+        "startLine": 395,
+        "startChar": 8,
+        "endLine": 396,
+        "endChar": 19
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1dfb2e50_4d815efc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-06-17T20:25:52Z",
+      "side": 0,
+      "message": "As before, it looks like removing this check could change the behavior of the function if `acc` is null. Can this actually happen? Does it make sense to keep executing the rest of the function if it does?",
+      "range": {
+        "startLine": 1529,
+        "startChar": 16,
+        "endLine": 1531,
+        "endChar": 27
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "684c6f6e_5b034c92",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 2431,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-06-17T20:25:52Z",
+      "side": 0,
+      "message": "Same questions as before.",
+      "range": {
+        "startLine": 2429,
+        "startChar": 12,
+        "endLine": 2431,
+        "endChar": 23
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

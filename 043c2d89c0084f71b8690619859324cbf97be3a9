@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9fc44d6_b1eda75e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 402,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-06-17T20:25:52Z",
+      "side": 1,
+      "message": "This variable isn\u0027t used in the rest of the function.",
+      "range": {
+        "startLine": 402,
+        "startChar": 13,
+        "endLine": 402,
+        "endChar": 19
+      },
+      "revId": "043c2d89c0084f71b8690619859324cbf97be3a9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
