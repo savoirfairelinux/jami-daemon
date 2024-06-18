@@ -705,7 +705,21 @@ private:
     std::filesystem::path dataPath_ {};
 
 #if HAVE_RINGNS
+    mutable std::mutex registeredNameMutex_;
     std::string registeredName_;
+
+    bool setRegisteredName(const std::string& name) {
+        std::lock_guard<std::mutex> lock(registeredNameMutex_);
+        if (registeredName_ != name) {
+            registeredName_ = name;
+            return true;
+        }
+        return false;
+    }
+    std::string getRegisteredName() const {
+        std::lock_guard<std::mutex> lock(registeredNameMutex_);
+        return registeredName_;
+    }
 #endif
     std::shared_ptr<dht::Logger> logger_;
     std::shared_ptr<dhtnet::tls::CertificateStore> certStore_;

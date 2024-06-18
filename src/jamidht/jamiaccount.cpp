@@ -1397,8 +1397,9 @@ JamiAccount::getVolatileAccountDetails() const
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(libjami::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
 #if HAVE_RINGNS
-    if (not registeredName_.empty())
-        a.emplace(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+    auto registeredName = getRegisteredName();
+    if (not registeredName.empty())
+        a.emplace(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
 #endif
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
     a.emplace(libjami::Account::VolatileProperties::DHT_BOUND_PORT, std::to_string(dhtBoundPort_));
@@ -1454,25 +1455,14 @@ JamiAccount::registerName(const std::string& name,
             scheme,
             password,
             [acc = getAccountID(), name, w = weak()](NameDirectory::RegistrationResponse response, const std::string& regName) {
-                int res
-                    = (response == NameDirectory::RegistrationResponse::success)
-                          ? 0
-                          : ((response == NameDirectory::RegistrationResponse::invalidCredentials)
-                                 ? 1
-                                 : ((response == NameDirectory::RegistrationResponse::invalidName)
-                                        ? 2
-                                        : ((response
-                                            == NameDirectory::RegistrationResponse::alreadyTaken)
-                                               ? 3
-                                               : 4)));
+                auto res = (int) std::min(response, NameDirectory::RegistrationResponse::error);
                 if (response == NameDirectory::RegistrationResponse::success) {
                     if (auto this_ = w.lock()) {
-                        this_->registeredName_ = regName;
-                        if (this_->config().registeredName != regName)
-                            this_->editConfig(
-                                [&](JamiAccountConfig& config) { config.registeredName = regName; });
-                        emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-                            this_->accountID_, this_->getVolatileAccountDetails());
+                        if (this_->setRegisteredName(regName)) {
+                            this_->editConfig([&](JamiAccountConfig &config) { config.registeredName = regName; });
+                            emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+                                    this_->accountID_, this_->getVolatileAccountDetails());
+                        }
                     }
                 }
                 emitSignal<libjami::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
@@ -1832,21 +1822,13 @@ JamiAccount::doRegister_()
             accountManager_->getInfo()->accountId,
             [w = weak()](const std::string& result, const NameDirectory::Response& response) {
                 if (auto this_ = w.lock()) {
-                    if (response == NameDirectory::Response::found) {
-                        if (this_->registeredName_ != result) {
-                            this_->registeredName_ = result;
+                    if (response == NameDirectory::Response::found or response == NameDirectory::Response::notFound) {
+                        const auto& nameResult = response == NameDirectory::Response::found ? result : "";
+                        if (this_->setRegisteredName(nameResult)) {
                             this_->editConfig(
-                                [&](JamiAccountConfig& config) { config.registeredName = result; });
+                                    [&](JamiAccountConfig &config) { config.registeredName = nameResult; });
                             emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-                                this_->accountID_, this_->getVolatileAccountDetails());
-                        }
-                    } else if (response == NameDirectory::Response::notFound) {
-                        if (not this_->registeredName_.empty()) {
-                            this_->registeredName_.clear();
-                            this_->editConfig(
-                                [&](JamiAccountConfig& config) { config.registeredName.clear(); });
-                            emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-                                this_->accountID_, this_->getVolatileAccountDetails());
+                                    this_->accountID_, this_->getVolatileAccountDetails());
                         }
                     }
                 }
