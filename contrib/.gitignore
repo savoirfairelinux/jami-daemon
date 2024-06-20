@@ -8,3 +8,4 @@ i686*
 apple*
 build*
 msvc*
+tarballs/*
