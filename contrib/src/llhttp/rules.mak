@@ -31,7 +31,7 @@ llhttp: llhttp-$(LLHTTP_VERSION).tar.gz
 	mv llhttp-release-v$(LLHTTP_VERSION) $@
 
 .llhttp: llhttp .sum-llhttp
-	cd $< && mkdir -p build && cd build && $(CMAKE) $(LLHTTP_CMAKECONF) ..
+	cd $< && mkdir -p build && cd build && $(HOSTVARS) $(CMAKE) $(LLHTTP_CMAKECONF) ..
 	cd $</build && $(MAKE) && $(MAKE) install
 	touch $@
 
