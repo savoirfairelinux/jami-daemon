@@ -17,6 +17,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 LLHTTP_VERSION := 9.2.0
+PKG_CPE += cpe:2.3:a:llhttp:llhttp:9.2.0:*:*:*:*:*:*:*
 LLHTTP_URL := https://github.com/nodejs/llhttp/archive/refs/tags/release/v$(LLHTTP_VERSION).tar.gz
 
 LLHTTP_CMAKECONF := \

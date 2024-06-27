@@ -1,5 +1,6 @@
 # JSONCPP
 JSONCPP_VERSION := 1.9.3
+PKG_CPE += cpe:2.3:a:jsoncpp_project:jsoncpp:1.9.3:*:*:*:*:*:*:*
 
 JSONCPP_URL := https://github.com/open-source-parsers/jsoncpp/archive/$(JSONCPP_VERSION).tar.gz
 

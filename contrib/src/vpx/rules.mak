@@ -1,6 +1,7 @@
 # libvpx
 
 VPX_HASH := v1.14.1
+PKG_CPE += cpe:2.3:a:webmproject:libvpx:1.14.1:*:*:*:*:*:*:*
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 
 $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:

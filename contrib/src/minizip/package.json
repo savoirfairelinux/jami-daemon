@@ -1,6 +1,7 @@
 {
     "name": "minizip",
     "version": "3.0.0",
+    "cpe": "cpe:2.3:a:minizip_project:minizip:3.0.0:*:*:*:*:*:*:*",
     "url": "https://github.com/zlib-ng/minizip-ng/archive/refs/tags/__VERSION__.tar.gz",
     "deps": ["zlib", "iconv"],
     "patches": [],

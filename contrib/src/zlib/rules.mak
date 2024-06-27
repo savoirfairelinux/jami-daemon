@@ -1,5 +1,6 @@
 # ZLIB
 ZLIB_VERSION := 1.2.8
+PKG_CPE += cpe:2.3:a:zlib:zlib:1.2.8:*:*:*:*:*:*:*
 ZLIB_URL := https://github.com/madler/zlib/archive/v$(ZLIB_VERSION).tar.gz
 
 PKGS += zlib

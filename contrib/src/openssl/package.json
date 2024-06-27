@@ -1,6 +1,7 @@
 {
     "name": "openssl",
     "version": "OpenSSL_1_1_1-stable",
+    "cpe": "cpe:2.3:a:openssl:openssl:1.1.1:*:*:*:*:*:*:*",
     "url": "https://github.com/openssl/openssl/archive/__VERSION__.tar.gz",
     "custom_scripts": {
         "build": [

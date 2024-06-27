@@ -1,5 +1,6 @@
 # ONNX
 ONNX_VERSION := v1.16.3
+PKG_CPE += cpe:2.3:a:*:onnx:1.16.3:*:*:*:*:*:*:*
 ONNX_URL := https://github.com/microsoft/onnxruntime.git
 
 $(TARBALLS)/onnxruntime-$(ONNX_VERSION).tar.xz:

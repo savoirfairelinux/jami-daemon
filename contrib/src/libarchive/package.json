@@ -1,6 +1,7 @@
 {
     "name": "libarchive",
     "version": "a53d711261f4d5bf2104d9c3616a8602a45ba196",
+    "cpe": "cpe:2.3:a:libarchive:libarchive:3.6.0:*:*:*:*:*:*:*",
     "url": "https://github.com/libarchive/libarchive/archive/__VERSION__.tar.gz",
     "deps": ["iconv"],
     "patches": [

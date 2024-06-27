@@ -1,6 +1,7 @@
 {
     "name": "pthreads",
     "version": "v-2-10-0-rc",
+    "cpe": "cpe:2.3:a:pthread-win32_project:pthreads-win32:2.10.0:rc:*:*:*:*:*:*",
     "url": " https://github.com/jwinarske/pthreads4w/archive/refs/tags/__VERSION__.tar.gz",
     "win_patches": [
         "pthreads-windows.patch",

@@ -1,6 +1,7 @@
 {
     "name": "argon2",
     "version": "670229c849b9fe882583688b74eb7dfdc846f9f6",
+    "cpe": "cpe:2.3:a:argon2_project:argon2:-:*:*:*:*:*:*:*",
     "url": "https://github.com/P-H-C/phc-winner-argon2/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],

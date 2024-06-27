@@ -1,6 +1,7 @@
 {
     "name": "vpx",
     "version": "f4d13145a2c3aea6fbf211dc493ea4e97be6a092",
+    "cpe": "cpe:2.3:a:webmproject:libvpx:1.14.1:*:*:*:*:*:*:*",
     "url": "https://github.com/ShiftMediaProject/libvpx/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],

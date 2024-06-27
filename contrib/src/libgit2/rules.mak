@@ -1,5 +1,6 @@
 # LIBGIT2
 LIBGIT2_VERSION := 1.8.0
+PKG_CPE += cpe:2.3:a:libgit2:libgit2:1.8.0:*:*:*:*:*:*:*
 LIBGIT2_URL := https://github.com/libgit2/libgit2/archive/v${LIBGIT2_VERSION}.tar.gz
 
 PKGS += libgit2

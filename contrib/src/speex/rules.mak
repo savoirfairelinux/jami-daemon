@@ -1,6 +1,7 @@
 # speex
 
 SPEEX_HASH := Speex-1.2.1
+PKG_CPE += cpe:2.3:a:xiph:speex:1.2.1:*:*:*:*:*:*:*
 SPEEX_GITURL := https://gitlab.xiph.org/xiph/speex/-/archive/$(SPEEX_HASH)/speex-$(SPEEX_HASH).tar.gz
 
 PKGS += speex

@@ -1,6 +1,7 @@
 # opus
 
 OPUS_VERSION := 1.4
+PKG_CPE += cpe:2.3:a:*:opus:1.4:*:*:*:*:*:*:*
 OPUS_URL := https://github.com/xiph/opus/archive/v$(OPUS_VERSION).tar.gz
 
 PKGS += opus

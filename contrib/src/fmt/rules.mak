@@ -1,5 +1,6 @@
 # FMT
 FMT_VERSION := 10.1.0
+PKG_CPE += cpe:2.3:a:fmt:fmt:10.1.0:*:*:*:*:*:*:*
 FMT_URL := https://github.com/fmtlib/fmt/archive/$(FMT_VERSION).tar.gz
 
 PKGS += fmt

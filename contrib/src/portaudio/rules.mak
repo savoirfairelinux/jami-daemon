@@ -1,6 +1,7 @@
 # PortAudio
 
 PORTAUDIO_VERSION := v19_20140130
+PKG_CPE += cpe:2.3:a:*:portaudio:19.5.0:*:*:*:*:*:*:*
 PORTAUDIO_URL := http://www.portaudio.com/archives/pa_stable_$(PORTAUDIO_VERSION).tgz
 
 ifdef HAVE_WIN32

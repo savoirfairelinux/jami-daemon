@@ -1,6 +1,7 @@
 {
     "name": "opencv",
     "version": "4.6.0",
+    "cpe": "cpe:2.3:a:opencv:opencv:4.6.0:*:*:*:*:*:*:*",
     "url": "https://github.com/opencv/opencv/archive/__VERSION__.tar.gz",
     "deps": ["opencv_contrib"],
     "patches": [],

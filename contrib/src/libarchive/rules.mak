@@ -1,5 +1,6 @@
 # LIBARCHIVE
 LIBARCHIVE_VERSION := 3.6.0
+PKG_CPE += cpe:2.3:a:libarchive:libarchive:3.6.0:*:*:*:*:*:*:*
 LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
 ifndef HAVE_MACOSX
