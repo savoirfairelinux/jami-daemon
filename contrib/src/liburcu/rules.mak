@@ -1,6 +1,7 @@
 # liburcu
 
 LIBURCU_VERSION := 0.13.1
+PKG_CPE += cpe:2.3:a:lttng:urcu:${LIBURCU_VERSION}:*:*:*:*:*:*:*
 LIBURCU_URL     := https://lttng.org/files/urcu/userspace-rcu-${LIBURCU_VERSION}.tar.bz2
 
 ifeq ($(call need_pkg "liburcu >= 0.13.1"),)

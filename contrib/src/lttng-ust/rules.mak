@@ -1,6 +1,7 @@
 # lttng-ust
 
 LTTNG_UST_VERSION := 2.13.1
+PKG_CPE += cpe:2.3:a:lttng:ust:${LTTNG_UST_VERSION}:*:*:*:*:*:*:*
 LTTNG_UST_URL     := https://lttng.org/files/lttng-ust/lttng-ust-${LTTNG_UST_VERSION}.tar.bz2
 
 ifeq ($(call need_pkg "liblttng-ust >= 2.13.0"),)

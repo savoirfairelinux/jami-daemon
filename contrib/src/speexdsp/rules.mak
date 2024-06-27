@@ -1,6 +1,8 @@
 # speexdsp
 
-SPEEXDSP_HASH := SpeexDSP-1.2.0
+SPEEXDSP_VERSION := 1.2.0
+SPEEXDSP_HASH := SpeexDSP-$(SPEEXDSP_VERSION)
+PKG_CPE += cpe:2.3:a:xiph:speex:$(SPEEXDSP_VERSION):*:*:*:*:*:*:*
 SPEEXDSP_GITURL := https://gitlab.xiph.org/xiph/speexdsp/-/archive/$(SPEEXDSP_HASH)/speexdsp-$(SPEEXDSP_HASH).tar.gz
 
 PKGS += speexdsp

@@ -1,6 +1,7 @@
 {
     "name": "asio",
     "version": "asio-1-28-1",
+    "cpe": "cpe:2.3:a:*:asio:1.28.1:*:*:*:*:*:*:*",
     "url": "https://github.com/chriskohlhoff/asio/archive/__VERSION__.tar.gz",
     "deps": ["openssl"],
     "patches": [],

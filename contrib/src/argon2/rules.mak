@@ -1,5 +1,6 @@
 # ARGON2
 ARGON2_VERSION := 16d3df698db2486dde480b09a732bf9bf48599f9
+PKG_CPE += cpe:2.3:a:argon2_project:argon2:-:*:*:*:*:*:*:*
 ARGON2_URL := https://github.com/P-H-C/phc-winner-argon2/archive/$(ARGON2_VERSION).tar.gz
 
 ifeq ($(call need_pkg,'libargon2 > 20161029'),)

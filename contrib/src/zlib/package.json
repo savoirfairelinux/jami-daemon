@@ -1,6 +1,7 @@
 {
     "name": "zlib",
     "version": "8e4e3ead55cdd296130242d86b44b92fde3ea4d4",
+    "cpe": "cpe:2.3:a:zlib:zlib:1.2.8:*:*:*:*:*:*:*",
     "url": "https://github.com/ShiftMediaProject/zlib/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],

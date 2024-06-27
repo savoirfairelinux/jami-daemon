@@ -2,6 +2,7 @@
 
 
 GMP_VERSION := 6.3.0
+PKG_CPE += cpe:2.3:a:gmplib:gmp:$(GMP_VERSION):*:*:*:*:*:*:*
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
 
 ifeq ($(call need_pkg,'gmp >= 6.2.0'),)

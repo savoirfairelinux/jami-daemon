@@ -55,6 +55,9 @@ GNU := https://ftpmirror.gnu.org
 SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= https://downloads.videolan.org/pub/contrib
 
+# CPE ID list for generating SBOM
+PKG_CPE := 
+
 #
 # Machine-dependent variables
 #

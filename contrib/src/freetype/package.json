@@ -1,6 +1,7 @@
 {
     "name": "freetype",
     "version": "39ce3ac499d4cd7371031a062f410953c8ecce29",
+    "cpe": "cpe:2.3:a:freetype:freetype:2.10.1:*:*:*:*:*:*:*",
     "url": "https://gitlab.freedesktop.org/freetype/freetype/-/archive/__VERSION__/freetype-__VERSION__.tar.gz",
     "use_cmake": true
 }

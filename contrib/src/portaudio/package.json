@@ -1,6 +1,7 @@
 {
     "name": "portaudio",
     "version": "v190600_20161030",
+    "cpe": "cpe:2.3:a:*:portaudio:19.6.0:*:*:*:*:*:*:*",
     "url": "https://github.com/PortAudio/portaudio/archive/refs/tags/pa_stable___VERSION__.tar.gz",
     "use_cmake" : true,
     "defines": [
