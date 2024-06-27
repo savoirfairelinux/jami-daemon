@@ -1,5 +1,6 @@
 # HTTP_PARSER
 HTTP_PARSER_VERSION := 2.9.4
+PKG_CPE += cpe:2.3:a:nodejs:http-parser:$(HTTP_PARSER_VERSION):*:*:*:*:*:*:*
 HTTP_PARSER_URL := https://github.com/nodejs/http-parser/archive/v$(HTTP_PARSER_VERSION).tar.gz
 
 PKGS += http_parser

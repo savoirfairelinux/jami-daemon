@@ -1,5 +1,6 @@
 # UPNP
 UPNP_VERSION := 1.14.18
+PKG_CPE += cpe:2.3:a:pupnp_project:pupnp:$(UPNP_VERSION):*:*:*:*:*:*:*
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp

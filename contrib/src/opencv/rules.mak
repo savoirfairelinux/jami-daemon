@@ -1,5 +1,6 @@
 # OPENCV
 OPENCV_VERSION := 4.6.0
+PKG_CPE += cpe:2.3:a:opencv:opencv:$(OPENCV_VERSION):*:*:*:*:*:*:*
 OPENCV_CONTRIB_VERSION := 4.6.0
 OPENCV_URL := https://github.com/opencv/opencv/archive/$(OPENCV_VERSION).tar.gz
 

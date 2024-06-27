@@ -1,6 +1,7 @@
 {
     "name": "opus",
     "version": "76d2d6dca0a224f3ffb34b7429d7547bdbb1bad7",
+    "cpe": "cpe:2.3:a:*:opus:1.4:*:*:*:*:*:*:*",
     "url": "https://github.com/ShiftMediaProject/opus/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],

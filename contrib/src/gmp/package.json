@@ -1,6 +1,7 @@
 {
     "name": "gmp",
     "version": "eb35fdadc072ecae2b262fd6e6709c308cadc07a",
+    "cpe": "cpe:2.3:a:gmplib:gmp:6.3.0:*:*:*:*:*:*:*",
     "url": "https://github.com/ShiftMediaProject/gmp/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],

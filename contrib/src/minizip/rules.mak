@@ -1,5 +1,6 @@
 # MINIZIP
 LIBMINIZIP_VERSION := 4.0.7
+PKG_CPE += cpe:2.3:a:minizip_project:minizip:$(LIBMINIZIP_VERSION):*:*:*:*:*:*:*
 LIBMINIZIP_URL := https://github.com/zlib-ng/minizip-ng/archive/$(LIBMINIZIP_VERSION).tar.gz
 
 ifdef HAVE_MACOSX

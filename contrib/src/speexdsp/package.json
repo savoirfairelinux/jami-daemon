@@ -1,6 +1,7 @@
 {
     "name": "speexdsp",
     "version": "SpeexDSP-1.2.0",
+    "cpe": "cpe:2.3:a:xiph:speex:1.2.0:*:*:*:*:*:*:*",
     "url": "https://github.com/xiph/speexdsp/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": ["speexdsp_vs_proj.patch"],

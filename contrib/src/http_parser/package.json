@@ -1,6 +1,7 @@
 {
     "name": "http_parser",
     "version": "2.9.4",
+    "cpe": "cpe:2.3:a:nodejs:http-parser:2.9.4:*:*:*:*:*:*:*",
     "url": "https://github.com/nodejs/http-parser/archive/v__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
