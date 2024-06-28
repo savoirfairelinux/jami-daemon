@@ -311,6 +311,7 @@ Other targets:
  * make mostlyclean   clean everything except source tarballs
  * make clean         clean everything
  * make package       prepare prebuilt packages
+ * make cyclonedx     generate a CycloneDX SBOM file
 EOF
 
 mkdir -p ../tarballs || exit $?
