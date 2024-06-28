@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1db2109f_1b7e0960",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1101
+      },
+      "writtenOn": "2024-06-28T15:23:15Z",
+      "side": 1,
+      "message": "Added CPE for all package that exist in the database and to which it make sens to add it.",
+      "revId": "73736d06e7356e83cacfbddefc21b93fec81f4ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
