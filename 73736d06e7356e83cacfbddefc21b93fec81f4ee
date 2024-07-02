@@ -41,6 +41,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f915904e_bb1eb06b",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1101
+      },
+      "writtenOn": "2024-07-02T17:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "82c22897_7ddf8df0",
+      "range": {
+        "startLine": 3,
+        "startChar": 35,
+        "endLine": 3,
+        "endChar": 40
+      },
+      "revId": "73736d06e7356e83cacfbddefc21b93fec81f4ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dc61a549_611b9bb4",
@@ -64,6 +88,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ab5eee37_d09afe34",
+        "filename": "contrib/src/upnp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1101
+      },
+      "writtenOn": "2024-07-02T17:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dc61a549_611b9bb4",
+      "range": {
+        "startLine": 3,
+        "startChar": 41,
+        "endLine": 3,
+        "endChar": 48
+      },
+      "revId": "73736d06e7356e83cacfbddefc21b93fec81f4ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3292ea51_45ce57d4",
@@ -77,6 +125,30 @@
       "writtenOn": "2024-07-02T17:09:58Z",
       "side": 1,
       "message": "should we use *_VERSION when possible ?",
+      "range": {
+        "startLine": 3,
+        "startChar": 32,
+        "endLine": 3,
+        "endChar": 37
+      },
+      "revId": "73736d06e7356e83cacfbddefc21b93fec81f4ee",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1207bea7_11a59be8",
+        "filename": "contrib/src/yaml-cpp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 1101
+      },
+      "writtenOn": "2024-07-02T17:29:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3292ea51_45ce57d4",
       "range": {
         "startLine": 3,
         "startChar": 32,
