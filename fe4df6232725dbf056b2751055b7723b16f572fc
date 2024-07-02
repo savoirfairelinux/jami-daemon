@@ -26,6 +26,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6f2c3189_9ca3c138",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-07-02T19:16:07Z",
+      "side": 0,
+      "message": "The change prevents various race conditions when some functions are called on the repo while the account is being destroyed, typically on program shutdown or account deletion.\n\nGenerally, dependency from lower-level components (like the Conversation class)  towards higher-level components like Account is not a good design and creates various issues, such as proper handling of component lifecycle.",
+      "parentUuid": "95ba7d09_1554b8f5",
+      "range": {
+        "startLine": 395,
+        "startChar": 8,
+        "endLine": 396,
+        "endChar": 19
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "1dfb2e50_4d815efc",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 26
@@ -37,6 +61,30 @@
       "writtenOn": "2024-06-17T20:25:52Z",
       "side": 0,
       "message": "As before, it looks like removing this check could change the behavior of the function if `acc` is null. Can this actually happen? Does it make sense to keep executing the rest of the function if it does?",
+      "range": {
+        "startLine": 1529,
+        "startChar": 16,
+        "endLine": 1531,
+        "endChar": 27
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fbf5dab5_16c8b74e",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-07-02T19:16:07Z",
+      "side": 0,
+      "message": "If sendMessage was called, the client would expect the callback to be called, and not doing so based on object destruction time on a different thread creates a race condition that might introduce hard to debug occasional issues on shutdown.",
+      "parentUuid": "1dfb2e50_4d815efc",
       "range": {
         "startLine": 1529,
         "startChar": 16,
