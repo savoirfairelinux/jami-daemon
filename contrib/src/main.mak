@@ -507,7 +507,7 @@ package: install
 pprint = @echo '  $(or $(sort $1), None)' | fmt
 
 cyclonedx:
-	@$(SRC)/cyclonedx.sh "$(PKG_CPE)"
+	@$(SRC)/cyclonedx.sh "$(PKG_CPE)" "$(SRC)"
 
 list:
 	@echo All packages:
