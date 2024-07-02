@@ -175,7 +175,7 @@ public:
      * @param account       The related account
      * @param id            The conversation id
      */
-    ConversationRepository(const std::weak_ptr<JamiAccount>& account, const std::string& id);
+    ConversationRepository(const std::shared_ptr<JamiAccount>& account, const std::string& id);
     ~ConversationRepository();
 
     /**
