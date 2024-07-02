@@ -3008,6 +3008,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     git_remote* remote_ptr = nullptr;
     git_fetch_options fetch_opts;
     git_fetch_options_init(&fetch_opts, GIT_FETCH_OPTIONS_VERSION);
+    fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
 
     LogOptions options;
     options.nbOfCommits = 1;
