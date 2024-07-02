@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0970e282_353dbb2b",
+        "filename": "contrib/src/cyclonedx.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-07-02T17:11:45Z",
+      "side": 1,
+      "message": "might not be linux",
+      "range": {
+        "startLine": 12,
+        "startChar": 18,
+        "endLine": 12,
+        "endChar": 23
+      },
+      "revId": "92d0fc361013a07c56cbe503c81d34cb1e787251",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
