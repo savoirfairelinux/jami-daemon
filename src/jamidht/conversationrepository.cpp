@@ -220,11 +220,11 @@ public:
             return {};
         std::map<std::string, std::vector<DeviceId>> memberDevices;
         std::string deviceDir = fmt::format("{}devices/", git_repository_workdir(repo.get()));
-        for (const auto& file : dhtnet::fileutils::readDirectory(deviceDir)) {
-            std::shared_ptr<dht::crypto::Certificate> cert;
+        std::error_code ec;
+        for (const auto& fileIt : std::filesystem::directory_iterator(deviceDir, ec)) {
             try {
-                cert = std::make_shared<dht::crypto::Certificate>(
-                    fileutils::loadFile(deviceDir + file));
+                auto cert = std::make_shared<dht::crypto::Certificate>(
+                    fileutils::loadFile(fileIt.path()));
                 if (!cert)
                     continue;
                 if (ignoreExpired && cert->getExpiration() < std::chrono::system_clock::now())
@@ -240,7 +240,7 @@ public:
                                                  issuerUid);
                     auto parentCert = std::make_shared<dht::crypto::Certificate>(
                         dhtnet::fileutils::loadFile(
-                            std::filesystem::is_regular_file(memberFile) ? memberFile : adminFile));
+                            std::filesystem::is_regular_file(memberFile, ec) ? memberFile : adminFile));
                     if (parentCert
                         && (ignoreExpired
                             || parentCert->getExpiration() < std::chrono::system_clock::now()))
@@ -3416,13 +3416,14 @@ ConversationRepository::leave()
     auto adminFile = repoPath / "admins" / crt;
     auto memberFile = repoPath / "members" / crt;
     auto crlsPath = repoPath / "CRLs";
+    std::error_code ec;
 
-    if (std::filesystem::is_regular_file(adminFile)) {
-        dhtnet::fileutils::removeAll(adminFile, true);
+    if (std::filesystem::is_regular_file(adminFile, ec)) {
+        std::filesystem::remove(adminFile, ec);
     }
 
-    if (std::filesystem::is_regular_file(memberFile)) {
-        dhtnet::fileutils::removeAll(memberFile, true);
+    if (std::filesystem::is_regular_file(memberFile, ec)) {
+        std::filesystem::remove(memberFile, ec);
     }
 
     // /CRLs
@@ -3430,16 +3431,21 @@ ConversationRepository::leave()
         if (!crl)
             continue;
         auto crlPath = crlsPath / pimpl_->deviceId_ / fmt::format("{}.crl", dht::toHex(crl->getNumber()));
-        if (std::filesystem::is_regular_file(crlPath)) {
-            dhtnet::fileutils::removeAll(crlPath, true);
+        if (std::filesystem::is_regular_file(crlPath, ec)) {
+            std::filesystem::remove(crlPath, ec);
         }
     }
 
     // Devices
-    for (const auto& d : account->getKnownDevices()) {
-        auto deviceFile = repoPath / "devices" / fmt::format("{}.crt", d.first);
-        if (std::filesystem::is_regular_file(deviceFile)) {
-            dhtnet::fileutils::removeAll(deviceFile, true);
+    for (const auto& certificate : std::filesystem::directory_iterator(repoPath / "devices", ec)) {
+        if (certificate.is_regular_file(ec)) {
+            try {
+                crypto::Certificate cert(fileutils::loadFile(certificate.path()));
+                if (cert.getIssuerUID() == pimpl_->userId_)
+                    std::filesystem::remove(certificate.path(), ec);
+            } catch (...) {
+                continue;
+            }
         }
     }
 
@@ -3556,7 +3562,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
-    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto votePath = voteDirectory / adminUri;
     std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERROR("Could not write data to {}", votePath);
@@ -3604,12 +3610,13 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
 
     // If members, remove related devices and mark as banned
     if (type != "devices") {
-        for (const auto& certificate : dhtnet::fileutils::readDirectory(devicesPath)) {
-            auto certPath = fileutils::getFullPath(devicesPath, certificate);
+        std::error_code ec;
+        for (const auto& certificate : std::filesystem::directory_iterator(devicesPath, ec)) {
+            auto certPath = certificate.path();
             try {
                 crypto::Certificate cert(fileutils::loadFile(certPath));
                 if (auto issuer = cert.issuer)
-                    if (issuer->toString() == uri)
+                    if (issuer->getPublicKey().getId().to_view() == uri)
                         dhtnet::fileutils::remove(certPath, true);
             } catch (...) {
                 continue;
@@ -3933,7 +3940,8 @@ ConversationRepository::infos() const
             std::filesystem::path repoPath = git_repository_workdir(repo.get());
             auto profilePath = repoPath / "profile.vcf";
             std::map<std::string, std::string> result;
-            if (std::filesystem::is_regular_file(profilePath)) {
+            std::error_code ec;
+            if (std::filesystem::is_regular_file(profilePath, ec)) {
                 auto content = fileutils::loadFile(profilePath);
                 result = ConversationRepository::infosFromVCard(vCard::utils::toMap(
                     std::string_view {(const char*) content.data(), content.size()}));
