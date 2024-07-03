@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "93eed2aa_9d98dcf9",
+        "filename": "src/jamidht/conversationrepository.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-03T13:29:13Z",
+      "side": 1,
+      "message": "Need to update `conversationMembersEvent.cpp` (lines 435 and 1192) to remove the conversions from shared_ptr to weak_ptr.",
+      "range": {
+        "startLine": 178,
+        "startChar": 4,
+        "endLine": 178,
+        "endChar": 95
+      },
+      "revId": "4157c937cca2148be1a339b239548c6acee7df5b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
