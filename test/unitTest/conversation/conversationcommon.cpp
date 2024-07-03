@@ -72,7 +72,7 @@ addVote(std::shared_ptr<JamiAccount> account,
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    ConversationRepository cr(account->weak(), convId);
+    ConversationRepository cr(account, convId);
     cr.commitMessage(Json::writeString(wbuilder, json), false);
 }
 
@@ -104,7 +104,7 @@ simulateRemoval(std::shared_ptr<JamiAccount> account,
     git_index_write(index.get());
     git_strarray_dispose(&array);
 
-    ConversationRepository cr(account->weak(), convId);
+    ConversationRepository cr(account, convId);
 
     Json::Value json;
     json["action"] = "ban";
@@ -182,7 +182,7 @@ void
 commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Value& message)
 {
     ConversationRepository::DISABLE_RESET = true;
-    ConversationRepository cr(account->weak(), convId);
+    ConversationRepository cr(account, convId);
 
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
