@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fea35b97_e936d645",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 396,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T17:14:46Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "6f2c3189_9ca3c138",
+      "range": {
+        "startLine": 395,
+        "startChar": 8,
+        "endLine": 396,
+        "endChar": 19
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1dfb2e50_4d815efc",
@@ -95,6 +119,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "59ef6904_a60eec24",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 1531,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T17:14:46Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "fbf5dab5_16c8b74e",
+      "range": {
+        "startLine": 1529,
+        "startChar": 16,
+        "endLine": 1531,
+        "endChar": 27
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "684c6f6e_5b034c92",
@@ -108,6 +156,30 @@
       "writtenOn": "2024-06-17T20:25:52Z",
       "side": 0,
       "message": "Same questions as before.",
+      "range": {
+        "startLine": 2429,
+        "startChar": 12,
+        "endLine": 2431,
+        "endChar": 23
+      },
+      "revId": "fe4df6232725dbf056b2751055b7723b16f572fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ca781001_00d3410d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 2431,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T17:14:46Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "684c6f6e_5b034c92",
       "range": {
         "startLine": 2429,
         "startChar": 12,
