@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a8fb17a8_67c97a67",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2923,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T15:02:26Z",
+      "side": 1,
+      "message": "Delete?",
+      "range": {
+        "startLine": 2923,
+        "startChar": 4,
+        "endLine": 2923,
+        "endChar": 43
+      },
+      "revId": "04823b670ab0ce7bfbae4f3284e8b97775831f52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3743b49e_b2a90e71",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2952,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T15:02:26Z",
+      "side": 1,
+      "message": "Replace by `pimpl_-\u003eaccountId_`?",
+      "range": {
+        "startLine": 2952,
+        "startChar": 73,
+        "endLine": 2952,
+        "endChar": 96
+      },
+      "revId": "04823b670ab0ce7bfbae4f3284e8b97775831f52",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
