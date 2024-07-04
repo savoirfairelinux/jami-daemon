@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "88ddf6ba_21569143",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 702,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T15:26:04Z",
+      "side": 1,
+      "message": "Make the same change on lines 604-608?",
+      "range": {
+        "startLine": 700,
+        "startChar": 8,
+        "endLine": 702,
+        "endChar": 86
+      },
+      "revId": "082715c9cc4c2a9c99695a38d69c7c2db37be358",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
