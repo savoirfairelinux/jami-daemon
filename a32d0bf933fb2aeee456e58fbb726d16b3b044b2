@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "11620dd4_fad78494",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 596,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-07-04T14:57:12Z",
+      "side": 0,
+      "message": "We need to keep this because `account-\u003egetDisplayName()` doesn\u0027t perform the regex replacement (`ConversationRepository::Impl::getDisplayName` does, but we can\u0027t call it here because `initial_commit` isn\u0027t a member function).",
+      "range": {
+        "startLine": 596,
+        "startChar": 4,
+        "endLine": 596,
+        "endChar": 60
+      },
+      "revId": "a32d0bf933fb2aeee456e58fbb726d16b3b044b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
