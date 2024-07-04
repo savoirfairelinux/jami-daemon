@@ -432,7 +432,7 @@ ConversationMembersEventTest::generateFakeInvite(std::shared_ptr<JamiAccount> ac
     git_index_write(index.get());
     git_strarray_dispose(&array);
 
-    ConversationRepository cr(account->weak(), convId);
+    ConversationRepository cr(account, convId);
 
     Json::Value json;
     json["action"] = "add";
@@ -1189,7 +1189,7 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
-    ConversationRepository cr(carlaAccount->weak(), convId);
+    ConversationRepository cr(carlaAccount, convId);
     cr.commitMessage(Json::writeString(wbuilder, json), false);
 
     // Start Carla, should merge and all messages should be there
