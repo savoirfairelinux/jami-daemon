@@ -351,6 +351,8 @@ if(MSVC)
    # Target
    ################################################################################
    include("CMake/Utils.cmake")
+   # Only generate Release configuration
+   set(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "Limited configurations" FORCE)
    use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 
    ################################################################################
@@ -361,7 +363,6 @@ if(MSVC)
 
    # Supress generation of ZERO_CHECK
    set(CMAKE_SUPPRESS_REGENERATION true)
-   set(ROOT_NAMESPACE ringdaemon)
 
    ################################################################################
    # Output directory
