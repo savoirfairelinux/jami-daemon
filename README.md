@@ -168,6 +168,26 @@ Or, use your favorite package manager to install the necessary tools
 (macports or brew):
 `automake pkg-config libtool gettext yasm`
 
+How to compile on Windows
+----
+
+First, obtain and install `pywinmake` which is used to build the dependencies.
+
+```bash
+git clone "https://review.jami.net/pywinmake"
+cd pywinmake
+python -m pip install .
+```
+
+The rest of the build process uses CMake.
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
+```
+
 # Compile the dependencies
 ```bash
 cd contrib
