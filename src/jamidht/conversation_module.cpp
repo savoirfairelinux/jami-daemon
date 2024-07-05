@@ -2068,7 +2068,7 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
     std::unique_lock lk(conv->mtx);
     conv->info.created = std::time(nullptr);
     conv->info.members.emplace(pimpl_->username_);
-    if (!otherMember)
+    if (otherMember)
         conv->info.members.emplace(otherMember.toString());
     conv->conversation = conversation;
     addConvInfo(conv->info);
