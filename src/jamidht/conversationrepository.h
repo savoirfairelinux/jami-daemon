@@ -134,6 +134,7 @@ using PreConditionCb
     = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
 using PostConditionCb
     = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
+using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 
 /**
  * This class gives access to the git repository that represents the conversation
@@ -378,6 +379,8 @@ public:
      * To use after a merge with member's events, refresh members knowledge
      */
     void refreshMembers() const;
+
+    void onMembersChanged(OnMembersChanged&& cb);
 
     /**
      * Because conversations can contains non contacts certificates, this methods
