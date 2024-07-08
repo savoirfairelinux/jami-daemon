@@ -89,12 +89,22 @@ public:
         } catch (const std::exception& e) {
         }
     }
+    // Note: membersMtx_ needs to be locked when calling saveMembers
     void saveMembers()
     {
         std::ofstream file(membersCache_, std::ios::trunc | std::ios::binary);
         msgpack::pack(file, members_);
+
+        if (onMembersChanged_) {
+            std::set<std::string> memberUris;
+            for (const auto& member : members_) {
+                memberUris.emplace(member.uri);
+            }
+            onMembersChanged_(memberUris);
+        }
     }
 
+    OnMembersChanged onMembersChanged_ {};
 
     // NOTE! We use temporary GitRepository to avoid to keep file opened (TODO check why
     // git_remote_fetch() leaves pack-data opened)
@@ -2733,7 +2743,7 @@ ConversationRepository::Impl::validCommits(
                             "[conv {}] Malformed joins commit {}. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             id_, commit.id);
-    
+
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
                             accountId_,
                             id_,
@@ -2750,7 +2760,7 @@ ConversationRepository::Impl::validCommits(
                             "[conv {}] Malformed removes commit {}. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             id_, commit.id);
-    
+
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
                             accountId_,
                             id_,
@@ -2769,7 +2779,7 @@ ConversationRepository::Impl::validCommits(
                             "[conv {}] Malformed removes commit {}. Please check you use the latest version "
                             "of Jami, or that your contact is not doing unwanted stuff.",
                             id_, commit.id);
-    
+
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
                             accountId_,
                             id_,
@@ -2920,6 +2930,12 @@ ConversationRepository::addMember(const std::string& uri)
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+void
+ConversationRepository::onMembersChanged(OnMembersChanged&& cb)
+{
+    pimpl_->onMembersChanged_ = std::move(cb);
 }
 
 std::string

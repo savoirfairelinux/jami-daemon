@@ -764,6 +764,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             return;
         }
 
+        // Make sure that the list of members stored in convInfos_ matches the
+        // one from the conversation's repository.
+        // (https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1026)
+        setConversationMembers(conversationId, conversation->memberUris("", {}));
+
         lk.lock();
 
         if (conv->pending && conv->pending->socket)
@@ -1631,11 +1636,8 @@ ConversationModule::loadConversations()
                     if (convInfo == pimpl_->convInfos_.end()) {
                         JAMI_ERROR("Missing conv info for {}. This is a bug!", repository);
                         sconv->info.created = std::time(nullptr);
-                        sconv->info.members = std::move(members);
                         sconv->info.lastDisplayed
                             = conv->infos()[ConversationMapKeys::LAST_DISPLAYED];
-                        // convInfosMtx_ is already locked
-                        pimpl_->convInfos_[repository] = sconv->info;
                     } else {
                         sconv->info = convInfo->second;
                         if (convInfo->second.isRemoved()) {
@@ -1645,6 +1647,14 @@ ConversationModule::loadConversations()
                             ctx->toRm.insert(repository);
                         }
                     }
+                    // Even if we found the conversation in convInfos_, we cannot assume that the list of members
+                    // stored in `convInfo` is correct (https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1025).
+                    // For this reason, we always use the list we got from the conversation repository to set
+                    // the value of `sconv->info.members`.
+                    members.emplace(acc->getUsername());
+                    sconv->info.members = std::move(members);
+                    // convInfosMtx_ is already locked
+                    pimpl_->convInfos_[repository] = sconv->info;
                 }
                 auto commits = conv->commitsEndedCalls();
 
