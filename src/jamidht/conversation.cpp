@@ -2350,6 +2350,10 @@ void
 Conversation::onMembersChanged(OnMembersChanged&& cb)
 {
     pimpl_->onMembersChanged_ = std::move(cb);
+    pimpl_->repository_->onMembersChanged([w=weak()] (const std::set<std::string>& memberUris) {
+        if (auto sthis = w.lock())
+            sthis->pimpl_->onMembersChanged_(memberUris);
+    });
 }
 
 void
