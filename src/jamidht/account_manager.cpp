@@ -58,6 +58,10 @@ AccountManager::~AccountManager() {
 void
 AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 {
+    if (not info_) {
+        JAMI_ERROR("onSyncData(): account not loaded");
+        return;
+    }
     auto sync_date = clock::time_point(clock::duration(sync.date));
     if (checkDevice) {
         // If the DHT is used, we need to check the device here
