@@ -80,6 +80,9 @@ struct AccountArchive
     void save(const std::filesystem::path& path, std::string_view scheme, const std::string& password) const {
         fileutils::writeArchive(serialize(), path, scheme, password, password_salt);
     }
+
+    /** Attempt to detect and fix inconsistencies in the archive data. */
+    void fixInconsistencies();
 };
 
 } // namespace jami

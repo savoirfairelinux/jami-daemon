@@ -247,6 +247,7 @@ ArchiveAccountManager::loadFromFile(AuthContext& ctx)
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
+    archive.fixInconsistencies();
     onArchiveLoaded(ctx, std::move(archive));
 }
 
@@ -317,6 +318,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                                     ctx->dhtContext->dht.join();
                                     ctx->dhtContext.reset();
                                 }
+                                archive.fixInconsistencies();
                                 sthis->onArchiveLoaded(*ctx,
                                                       std::move(archive) /*, std::move(contacts)*/);
                             }

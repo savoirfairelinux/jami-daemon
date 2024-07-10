@@ -152,4 +152,41 @@ AccountArchive::serialize() const
     return Json::writeString(wbuilder, root);
 }
 
+void
+AccountArchive::fixInconsistencies()
+{
+    std::string accountUsername = config[libjami::Account::ConfProperties::USERNAME];
+
+    std::map<std::string, std::string> contactForConversation;
+    for (const auto& [hash, contact] : contacts) {
+        std::string convId = contact.conversationId;
+        if (!convId.empty())
+            contactForConversation[convId] = hash.toString();
+        else
+            JAMI_WARNING("Missing data in archive for account {}: contact {} doesn't have an associated conversation\n",
+                         accountUsername, hash.toString());
+    }
+
+    //
+    // A past bug caused the list of members for some 1:1 conversations to contain only one
+    // member (the user) instead of two (the user + their contact).
+    // [https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1025]
+    // Here we attempt to detect if this problem is present in the archive and fix it if it is.
+    //
+    for (auto& [convId, conv] : conversations) {
+        if (conv.members.size() == 1 && conv.removed == 0 && conv.erased == 0) {
+            auto contactIt = contactForConversation.find(convId);
+            if (contactIt == contactForConversation.end())
+                continue;
+
+            std::string contact = contactIt->second;
+            if (!conv.members.count(contact)) {
+                conv.members.emplace(contact);
+                JAMI_WARNING("Fixed inconsistency in archive for account {}: contact {} is associated with conversation {} but didn't appear in the list of members\n",
+                             accountUsername, contact, convId);
+            }
+        }
+    }
+}
+
 } // namespace jami
