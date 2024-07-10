@@ -142,6 +142,7 @@ constexpr static const char ARCHIVE_PIN[] = "Account.archivePIN";
 constexpr static const char DEVICE_ID[] = "Account.deviceID";
 constexpr static const char DEVICE_NAME[] = "Account.deviceName";
 constexpr static const char PROXY_ENABLED[] = "Account.proxyEnabled";
+constexpr static const char PROXY_LIST_ENABLED[] = "Account.proxyListEnabled";
 constexpr static const char PROXY_SERVER[] = "Account.proxyServer";
 constexpr static const char PROXY_PUSH_TOKEN[] = "Account.proxyPushToken";
 constexpr static const char KEEP_ALIVE_ENABLED[] = "Account.keepAliveEnabled";
