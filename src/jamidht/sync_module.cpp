@@ -58,7 +58,6 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
     auto acc = account_.lock();
     if (!acc)
         return;
-    Json::Value syncValue;
     msgpack::sbuffer buffer(UINT16_MAX); // Use max pkt size
     std::error_code ec;
     if (!syncMsg) {
