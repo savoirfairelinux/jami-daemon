@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3eb202b_b72fd929",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-07-10T22:38:32Z",
+      "side": 1,
+      "message": "Should `s` be removed? Should `contacts` be `contact`? Thank you\n\nfile name, not files name\nuser name, not users name",
+      "range": {
+        "startLine": 64,
+        "startChar": 16,
+        "endLine": 64,
+        "endChar": 24
+      },
+      "revId": "5d53606a671217273e006f50b7aa928aa9fb4663",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fc39e44_fb908d36",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-07-10T22:38:32Z",
+      "side": 1,
+      "message": "Should the `s` be removed? Should `infos` be `info`? Thank you",
+      "range": {
+        "startLine": 64,
+        "startChar": 25,
+        "endLine": 64,
+        "endChar": 30
+      },
+      "revId": "5d53606a671217273e006f50b7aa928aa9fb4663",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44400e89_a720e40b",
+        "filename": "src/jamidht/sync_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-07-10T22:38:32Z",
+      "side": 1,
+      "message": "Should the `s` be removed? Should `informations` be `information`? Thank you",
+      "range": {
+        "startLine": 66,
+        "startChar": 86,
+        "endLine": 66,
+        "endChar": 98
+      },
+      "revId": "5d53606a671217273e006f50b7aa928aa9fb4663",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
