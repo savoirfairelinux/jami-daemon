@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "181908ef_2991ef27",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-07-10T18:38:19Z",
+      "side": 1,
+      "message": "Not a commit to merge. Should be only used to run x86 emulator.",
+      "revId": "bc286004793a72326ff15f0bdb35eaabc98b78e2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
