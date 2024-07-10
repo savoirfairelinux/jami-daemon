@@ -10,7 +10,7 @@ PKGS_FOUND += ffmpeg
 endif
 endif
 
-DEPS_ffmpeg = iconv zlib vpx opus speex x264
+DEPS_ffmpeg = iconv zlib vpx opus speex
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -117,7 +117,6 @@ FFMPEGCONF += \
 	--enable-decoder=g723_1 \
 	--enable-encoder=rawvideo \
 	--enable-decoder=rawvideo \
-	--enable-encoder=libx264 \
 	--enable-decoder=h264 \
 	--enable-encoder=pcm_alaw \
 	--enable-decoder=pcm_alaw \
@@ -137,7 +136,6 @@ FFMPEGCONF += \
 	--enable-libspeex \
 	--enable-libopus \
 	--enable-libvpx \
-	--enable-libx264 \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
