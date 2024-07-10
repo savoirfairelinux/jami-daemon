@@ -48,6 +48,7 @@ JamiAccountConfig::serialize(YAML::Emitter& out) const
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
     SERIALIZE_CONFIG(Conf::PROXY_ENABLED_KEY, proxyEnabled);
     SERIALIZE_CONFIG(Conf::PROXY_SERVER_KEY, proxyServer);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::RingNS::URI, nameServer);
     SERIALIZE_CONFIG(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
@@ -98,6 +99,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, Conf::PROXY_ENABLED_KEY, proxyEnabled);
     parseValueOptional(node, Conf::PROXY_SERVER_KEY, proxyServer);
     parseValueOptional(node, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
+    parseValueOptional(node, libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
 
     parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
@@ -158,6 +160,7 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
     a.emplace(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
@@ -214,6 +217,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     auto oldProxyServer = proxyServer, oldProxyServerList = proxyListUrl;
     parseString(details, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     parseBool(details, libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled);
+    parseBool(details, libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
     parseString(details, libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
     parseString(details, libjami::Account::ConfProperties::UI_CUSTOMIZATION, uiCustomization);
     if (not managerUri.empty() and managerUri.rfind("http", 0) != 0) {
