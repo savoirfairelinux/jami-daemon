@@ -3801,7 +3801,9 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(shared->presenceNote_)}};
                 shared->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
             }
-            shared->convModule()->syncConversations(peerId, deviceId.toString());
+            if (auto cm = shared->convModule()) {
+                cm->syncConversations(peerId, deviceId.toString());
+            }
         }
     });
 
@@ -3897,7 +3899,10 @@ JamiAccount::dataTransfer(const std::string& id)
 {
     if (id.empty())
         return nonSwarmTransferManager_;
-    return convModule()->dataTransfer(id);
+    if (auto cm = convModule()) {
+        return cm->dataTransfer(id);
+    }
+    return {};
 }
 
 void
