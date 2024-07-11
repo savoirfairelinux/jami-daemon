@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee1e5f71_c1e239c9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 929,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-07-11T18:05:08Z",
+      "side": 1,
+      "message": "if we do not have cached proxy for the key, we need to clear proxyServerCached_.",
+      "revId": "c6b4b0e9a36584d4c88c47f70f2eb6a8df7db9bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
