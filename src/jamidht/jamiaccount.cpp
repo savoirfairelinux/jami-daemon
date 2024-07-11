@@ -917,21 +917,25 @@ JamiAccount::loadConfig()
             c->turnServerRealm = config().turnServerRealm;
         }
     }
-    try {
-        auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy", std::chrono::hours(24 * 7));
-        std::string err;
-        Json::Value root;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (reader->parse(str.data(), str.data() + str.size(), &root, &err)) {
-            auto key = root[getProxyConfigKey()];
-            if (key.isString())
-                proxyServerCached_ = key.asString();
+    if (config().proxyEnabled) {
+        try {
+            auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy", std::chrono::hours(24 * 7));
+            std::string err;
+            Json::Value root;
+            Json::CharReaderBuilder rbuilder;
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (reader->parse(str.data(), str.data() + str.size(), &root, &err)) {
+                auto key = root[getProxyConfigKey()];
+                if (key.isString())
+                    proxyServerCached_ = key.asString();
+            }
+        } catch (const std::exception& e) {
+            JAMI_LOG("[Account {}] Can't load proxy URL from cache: {}", getAccountID(), e.what());
         }
-    } catch (const std::exception& e) {
-        JAMI_DBG("[Account %s] Can't load proxy URL from cache: %s",
-                 getAccountID().c_str(),
-                 e.what());
+    } else {
+        proxyServerCached_.clear();
+        std::error_code ec;
+        std::filesystem::remove(cachePath_ / "dhtproxy", ec);
     }
     loadAccount(config().archive_password_scheme,
                 config().archive_password,
