@@ -66,7 +66,7 @@ public:
 namespace libjami {
 
 /* Call related methods */
-std::string placeCallWithMedia(const std::string& accountId,
+std::string makeCallWithMedia(const std::string& accountId,
                                const std::string& to,
                                const std::vector<std::map<std::string, std::string>>& mediaList);
 bool requestMediaChange(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);

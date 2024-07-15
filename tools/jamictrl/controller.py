@@ -575,7 +575,7 @@ class libjamiCtrl(Thread):
             raise libjamiCtrlAccountError("Can't place a call without a registered account")
 
         # Send the request to the CallManager
-        callid = self.callmanager.placeCall(self.account, dest)
+        callid = self.callmanager.makeCall(self.account, dest)
         if callid:
             # Add the call to the list of active calls and set status to SENT
             self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }

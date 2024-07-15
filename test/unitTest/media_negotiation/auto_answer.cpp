@@ -695,7 +695,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
     auto mediaCount = scenario.offer_.size();
     CPPUNIT_ASSERT_EQUAL(mediaCount, scenario.answer_.size());
 
-    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_,
+    aliceData.callId_ = libjami::makeCallWithMedia(aliceData.accountId_,
                                                   isSipAccount_ ? bobData.toUri_
                                                                 : bobData_.userName_,
                                                   MediaAttribute::mediaAttributesToMediaMaps(

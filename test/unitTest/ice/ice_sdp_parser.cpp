@@ -530,7 +530,7 @@ IceSdpParsingTest::test_call()
     auto bobAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
     bobAddr.setPort(bobData_.listeningPort_);
 
-    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
+    aliceData_.callId_ = libjami::makeCallWithMedia(aliceData_.accountId_,
                                                    bobAddr.toString(true),
                                                    MediaAttribute::mediaAttributesToMediaMaps(
                                                        offer));

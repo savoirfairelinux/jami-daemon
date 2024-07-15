@@ -132,7 +132,7 @@ SIPCallTest::testCall()
             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
 
-    auto call = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto call = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callReceived.load(); }));
 

@@ -427,7 +427,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer,
 
     std::string bobUri = "127.0.0.1:" + std::to_string(bobData_.listeningPort_);
 
-    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
+    aliceData_.callId_ = libjami::makeCallWithMedia(aliceData_.accountId_,
                                                    bobUri,
                                                    MediaAttribute::mediaAttributesToMediaMaps(
                                                        offer));

@@ -617,7 +617,7 @@ PluginsTest::testCall()
     answer.emplace_back(MediaAttribute(defaultVideo));
 
     JAMI_INFO("Start call between alice and Bob");
-    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_, bobData.userName_, MediaAttribute::mediaAttributesToMediaMaps(request));
+    aliceData.callId_ = libjami::makeCallWithMedia(aliceData.accountId_, bobData.userName_, MediaAttribute::mediaAttributesToMediaMaps(request));
     CPPUNIT_ASSERT(not aliceData.callId_.empty());
 
     auto aliceCall = std::static_pointer_cast<SIPCall>(

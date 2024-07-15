@@ -1629,7 +1629,7 @@ ConversationMembersEventTest::testBanHostWhileHosting()
 
     // Now, Bob starts a call
     aliceMsgSize = aliceData.messages.size();
-    auto callId = libjami::placeCallWithMedia(bobId, "swarm:" + convId, {});
+    auto callId = libjami::makeCallWithMedia(bobId, "swarm:" + convId, {});
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize != aliceData.messages.size(); }));
 
