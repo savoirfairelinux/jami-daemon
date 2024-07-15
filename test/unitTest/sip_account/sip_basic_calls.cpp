@@ -468,7 +468,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
                          + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
     callDataMap_["ALICE"].callId_
-        = libjami::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+        = libjami::makeCallWithMedia(callDataMap_["ALICE"].accountId_,
                                     bobUri,
                                     MediaAttribute::mediaAttributesToMediaMaps(offer));
 
@@ -717,7 +717,7 @@ SipBasicCallTest::hold_resume_test()
                              + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
         callDataMap_["ALICE"].callId_
-            = libjami::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+            = libjami::makeCallWithMedia(callDataMap_["ALICE"].accountId_,
                                         bobUri,
                                         MediaAttribute::mediaAttributesToMediaMaps(offer));
 
@@ -957,7 +957,7 @@ SipBasicCallTest::blind_transfer_test()
                          + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
     callDataMap_["ALICE"].callId_
-        = libjami::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+        = libjami::makeCallWithMedia(callDataMap_["ALICE"].accountId_,
                                     bobUri,
                                     MediaAttribute::mediaAttributesToMediaMaps(offer));
 

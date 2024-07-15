@@ -220,7 +220,7 @@ RecorderTest::testRecordCall()
         {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
         {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
     mediaList.emplace_back(mediaAttributeA);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     libjami::acceptWithMedia(bobId, bobCall.callId, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
@@ -312,7 +312,7 @@ RecorderTest::testRecordAudioOnlyCall()
            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
            {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttribute);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     libjami::acceptWithMedia(bobId, bobCall.callId, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
@@ -367,7 +367,7 @@ RecorderTest::testRecordCallOnePersonRdv()
            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
            {libjami::Media::MediaAttributeKey::SOURCE, ""}};
     mediaList.emplace_back(mediaAttributeA);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.mediaStatus
@@ -417,7 +417,7 @@ RecorderTest::testStopCallWhileRecording()
         {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     libjami::acceptWithMedia(bobId, bobCall.callId, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
@@ -469,7 +469,7 @@ RecorderTest::testDaemonPreference()
         {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
-    auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto callId = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     libjami::acceptWithMedia(bobId, bobCall.callId, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {

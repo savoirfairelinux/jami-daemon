@@ -312,13 +312,13 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
     }
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto call1 = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
+    auto call2 = libjami::makeCallWithMedia(aliceId, carlaUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
@@ -335,7 +335,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
 
     if (addDavi) {
         JAMI_INFO("Start call between Alice and Davi");
-        auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, mediaList);
+        auto call1 = libjami::makeCallWithMedia(aliceId, daviUri, mediaList);
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
         Manager::instance().answerCall(daviId, daviCall.callId);
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -429,7 +429,7 @@ ConferenceTest::testAudioVideoMutedStates()
     auto carlaUri = carlaAccount->getUsername();
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1Id = libjami::placeCallWithMedia(aliceId, bobUri, {});
+    auto call1Id = libjami::makeCallWithMedia(aliceId, bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
@@ -438,7 +438,7 @@ ConferenceTest::testAudioVideoMutedStates()
     call1->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2Id = libjami::placeCallWithMedia(aliceId, carlaUri, {});
+    auto call2Id = libjami::makeCallWithMedia(aliceId, carlaUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
@@ -488,13 +488,13 @@ ConferenceTest::testMuteStatusAfterAdd()
     mediaList.emplace_back(mediaAttribute);
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto call1 = libjami::makeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
     Manager::instance().answerCall(bobId, bobCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
+    auto call2 = libjami::makeCallWithMedia(aliceId, carlaUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
     Manager::instance().answerCall(carlaId, carlaCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
@@ -504,7 +504,7 @@ ConferenceTest::testMuteStatusAfterAdd()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
 
     JAMI_INFO("Add Davi");
-    auto call3 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call3 = libjami::makeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -596,7 +596,7 @@ ConferenceTest::testMuteStatusAfterRemove()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call2 = libjami::makeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -636,7 +636,7 @@ ConferenceTest::testActiveStatusAfterRemove()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = libjami::placeCallWithMedia(aliceId,
+    auto call2 = libjami::makeCallWithMedia(aliceId,
                                              daviUri,
                                              MediaAttribute::mediaAttributesToMediaMaps(
                                                  {defaultAudio}));
@@ -703,7 +703,7 @@ ConferenceTest::testHandsUp()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
     daviCall.reset();
 
-    auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call2 = libjami::makeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
@@ -756,7 +756,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand.load(); }));
 
     JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call1 = libjami::makeCallWithMedia(aliceId, daviUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
     Manager::instance().answerCall(daviId, daviCall.callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));

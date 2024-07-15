@@ -8,9 +8,9 @@
             <p>Since daemon supports multiple incoming/outgoing calls, any action involving a specific call must address the method using a unique callId.
             Daemon will generate a unique callId for outgoing and incoming calls.</p>
         </tp:docstring>
-        <method name="placeCall" tp:name-for-bindings="placeCall">
+        <method name="makeCall" tp:name-for-bindings="makeCall">
             <tp:docstring>
-              <p>This is the main method in order to place a new call. The call is registered with the daemon using this method.</p>
+              <p>This is the main method in order to make a new call. The call is registered with the daemon using this method.</p>
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
               <tp:docstring>
@@ -25,10 +25,10 @@
             <arg type="s" name="callId" direction="out"/>
         </method>
 
-        <method name="placeCallWithMedia" tp:name-for-bindings="placeCallWithMedia">
+        <method name="makeCallWithMedia" tp:name-for-bindings="makeCallWithMedia">
             <tp:added version="9.10.0"/>
             <tp:docstring>
-              <p>Place a new call. This version allows passing the list of medias and their attributes.</p>
+              <p>Make a new call. This version allows passing the list of media and their attributes.</p>
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
               <tp:docstring>

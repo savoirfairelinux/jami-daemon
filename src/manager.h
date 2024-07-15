@@ -160,7 +160,7 @@ public:
      * Place a new call
      * @param accountId the user's account ID
      * @param callee the callee's ID/URI. Depends on the account type.
-     * Refer to placeCall/placeCallWithMedia documentations.
+     * Refer to makeCall/makeCallWithMedia documentations.
      * @param mediaList a list of medias to include
      * @return the call ID on success, empty string otherwise
      */
