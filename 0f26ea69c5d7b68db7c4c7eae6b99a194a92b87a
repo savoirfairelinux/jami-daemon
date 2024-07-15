@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0683a2d7_a4fc9195",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-07-15T14:37:05Z",
+      "side": 1,
+      "message": "These API names are not used in the UI so it\u0027s not exposed to users. This is part of the Jami stable API. Generally, avoid changing it even if the wording is not perfect.\nAlso, isn\u0027t \"placing a call\" is a proper wording ?",
+      "range": {
+        "startLine": 11,
+        "startChar": 22,
+        "endLine": 11,
+        "endChar": 30
+      },
+      "revId": "0f26ea69c5d7b68db7c4c7eae6b99a194a92b87a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
