@@ -28,7 +28,7 @@
         <method name="placeCallWithMedia" tp:name-for-bindings="placeCallWithMedia">
             <tp:added version="9.10.0"/>
             <tp:docstring>
-              <p>Place a new call. This version allows passing the list of medias and their attributes.</p>
+              <p>Place a new call. This version allows passing the list of media and their attributes.</p>
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
               <tp:docstring>
