@@ -39,9 +39,9 @@ namespace libjami {
     const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Call related methods */
-LIBJAMI_PUBLIC std::string placeCall(const std::string& accountId, const std::string& to);
+LIBJAMI_PUBLIC std::string makeCall(const std::string& accountId, const std::string& to);
 
-LIBJAMI_PUBLIC std::string placeCallWithMedia(
+LIBJAMI_PUBLIC std::string makeCallWithMedia(
     const std::string& accountId,
     const std::string& to,
     const std::vector<std::map<std::string, std::string>>& mediaList);

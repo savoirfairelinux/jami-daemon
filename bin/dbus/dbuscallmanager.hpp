@@ -40,18 +40,18 @@ public:
     }
 
     auto
-    placeCall(const std::string& accountId, const std::string& to)
-        -> decltype(libjami::placeCall(accountId, to))
+    makeCall(const std::string& accountId, const std::string& to)
+        -> decltype(libjami::makeCall(accountId, to))
     {
-        return libjami::placeCall(accountId, to);
+        return libjami::makeCall(accountId, to);
     }
     auto
-    placeCallWithMedia(const std::string& accountId,
+    makeCallWithMedia(const std::string& accountId,
                        const std::string& to,
                        const std::vector<std::map<std::string, std::string>>& mediaList)
-        -> decltype(libjami::placeCallWithMedia(accountId, to, mediaList))
+        -> decltype(libjami::makeCallWithMedia(accountId, to, mediaList))
     {
-        return libjami::placeCallWithMedia(accountId, to, mediaList);
+        return libjami::makeCallWithMedia(accountId, to, mediaList);
     }
 
     auto

@@ -46,15 +46,15 @@ registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapper
 }
 
 std::string
-placeCall(const std::string& accountId, const std::string& to)
+makeCall(const std::string& accountId, const std::string& to)
 {
     // TODO. Remove ASAP.
-    JAMI_WARN("This API is deprecated, use placeCallWithMedia() instead");
-    return placeCallWithMedia(accountId, to, {});
+    JAMI_WARN("This API is deprecated, use makeCallWithMedia() instead");
+    return makeCallWithMedia(accountId, to, {});
 }
 
 std::string
-placeCallWithMedia(const std::string& accountId,
+makeCallWithMedia(const std::string& accountId,
                    const std::string& to,
                    const std::vector<libjami::MediaMap>& mediaList)
 {
