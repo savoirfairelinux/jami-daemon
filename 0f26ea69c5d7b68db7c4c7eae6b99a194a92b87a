@@ -46,6 +46,30 @@
       },
       "revId": "0f26ea69c5d7b68db7c4c7eae6b99a194a92b87a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b468e02b_1b56d87e",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1006
+      },
+      "writtenOn": "2024-07-15T20:42:57Z",
+      "side": 1,
+      "message": "\u003e Unfortunately, clicking on the link here does not work.\n\nThe CI server is in a intranet, so you can\u0027t access it.",
+      "parentUuid": "76e7baa3_4c860ffc",
+      "range": {
+        "startLine": 11,
+        "startChar": 22,
+        "endLine": 11,
+        "endChar": 30
+      },
+      "revId": "0f26ea69c5d7b68db7c4c7eae6b99a194a92b87a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
