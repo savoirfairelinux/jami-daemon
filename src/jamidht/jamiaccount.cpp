@@ -1208,7 +1208,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         // TODO: In the future, we may want to re-commit the messages we
                         // may have send in the request we sent.
                         if (oldConv != convFromReq
-                            && shared->updateConvForContact(uri, oldConv, convFromReq)) {
+                            && cm->updateConvForContact(uri, oldConv, convFromReq)) {
                             cm->initReplay(oldConv, convFromReq);
                             cm->cloneConversationFrom(convFromReq, uri, oldConv);
                         }
@@ -2268,15 +2268,6 @@ JamiAccount::convModule(bool noCreation)
                     }
                 });
             },
-            [this](auto&& convId, auto&& contactUri, bool accept) {
-                // NOTE: do not reschedule as the conversation's requests
-                // should be synched with trust requests
-                if (accept) {
-                    accountManager_->acceptTrustRequest(contactUri, true);
-                } else {
-                    updateConvForContact(contactUri, convId, "");
-                }
-            },
             [this](auto&& convId, auto&& from) {
                 accountManager_
                     ->findCertificate(dht::InfoHash(from),
@@ -2813,26 +2804,6 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         accountManager_->removeContact(uri, ban);
     else
         JAMI_WARNING("[Account {}] removeContact: account not loaded", getAccountID());
-}
-
-bool
-JamiAccount::updateConvForContact(const std::string& uri,
-                                  const std::string& oldConv,
-                                  const std::string& newConv)
-{
-    auto cm = convModule(false);
-    if (newConv != oldConv && cm) {
-        auto conversation = cm->getOneToOneConversation(uri);
-        if (conversation != oldConv) {
-            JAMI_DEBUG("Old conversation is not found in details {} - found: {}",
-                       oldConv,
-                       conversation);
-            return false;
-        }
-        accountManager_->updateContactConversation(uri, newConv);
-        return true;
-    }
-    return false;
 }
 
 std::map<std::string, std::string>
