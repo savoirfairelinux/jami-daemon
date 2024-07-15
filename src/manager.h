@@ -161,7 +161,7 @@ public:
      * @param accountId the user's account ID
      * @param callee the callee's ID/URI. Depends on the account type.
      * Refer to placeCall/placeCallWithMedia documentations.
-     * @param mediaList a list of medias to include
+     * @param mediaList a list of media to include
      * @return the call ID on success, empty string otherwise
      */
     std::string outgoingCall(const std::string& accountId,
