@@ -22,6 +22,30 @@
       },
       "revId": "0f26ea69c5d7b68db7c4c7eae6b99a194a92b87a",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76e7baa3_4c860ffc",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-07-15T19:31:42Z",
+      "side": 1,
+      "message": "Thank you for your comments.\n\n\u003e These API names are not used in the UI so it\u0027s not exposed to users. This is part of the Jami stable API. Generally, avoid changing it even if the wording is not perfect.\n\nIs it worthwhile to reduce technical debt and homogenize? Not sure what is an API and what is not.\n\nChanges have been done using the web browser. Could not get an IDE to work.\n\n\u003e Also, isn\u0027t \"placing a call\" is a proper wording?\n\n\"place a call\" originated from when the operator would physically have to plug the wires on a switchboard to make a call.\n\n\u003e If you have a US phone number and **make a call** when you\u0027re in another country/region, you\u0027re charged international rates.\nhttps://support.google.com/voice/answer/3379129?hl\u003den\u0026co\u003dGENIE.Platform%3DAndroid\n\nOn an Android phone, in the \"Phone\" app, when there are no recent calls in the \"Recent\" tab, it states:\n\u003e Calls that you make will show up here\n\u003e Make a call\n\n\"Make a call\" can be tapped to make a call.\n\n\u003e https://jenkins.jami.net/job/daemon-msvc/1393/ : FAILURE\n\nUnfortunately, clicking on the link here does not work.\n\nThank you once again.",
+      "parentUuid": "0683a2d7_a4fc9195",
+      "range": {
+        "startLine": 11,
+        "startChar": 22,
+        "endLine": 11,
+        "endChar": 30
+      },
+      "revId": "0f26ea69c5d7b68db7c4c7eae6b99a194a92b87a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
