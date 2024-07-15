@@ -38,7 +38,7 @@ place_call_with_media_binding(SCM accountID_str,
         call_media_vector_alist_optional = scm_c_make_vector(0, SCM_UNDEFINED);
     }
 
-    return to_guile(libjami::placeCallWithMedia(from_guile(accountID_str),
+    return to_guile(libjami::makeCallWithMedia(from_guile(accountID_str),
                                               from_guile(contact_str),
                                               from_guile(call_media_vector_alist_optional)));
 }
