@@ -128,7 +128,6 @@ public:
          SengMsgCb&& sendMsgCb,
          NeedSocketCb&& onNeedSocket,
          NeedSocketCb&& onNeedSwarmSocket,
-         UpdateConvReq&& updateConvReqCb,
          OneToOneRecvCb&& oneToOneRecvCb);
 
     template<typename S, typename T>
@@ -247,6 +246,11 @@ public:
     }
 
     std::string getOneToOneConversation(const std::string& uri) const noexcept;
+
+    bool updateConvForContact(const std::string& uri,
+                              const std::string& oldConv,
+                              const std::string& newConv);
+
 
     std::shared_ptr<SyncedConversation> getConversation(std::string_view convId) const
     {
@@ -373,7 +377,6 @@ public:
     SengMsgCb sendMsgCb_;
     NeedSocketCb onNeedSocket_;
     NeedSocketCb onNeedSwarmSocket_;
-    UpdateConvReq updateConvReqCb_;
     OneToOneRecvCb oneToOneRecvCb_;
 
     std::string accountId_ {};
@@ -457,7 +460,6 @@ ConversationModule::Impl::Impl(std::shared_ptr<JamiAccount>&& account,
                                SengMsgCb&& sendMsgCb,
                                NeedSocketCb&& onNeedSocket,
                                NeedSocketCb&& onNeedSwarmSocket,
-                               UpdateConvReq&& updateConvReqCb,
                                OneToOneRecvCb&& oneToOneRecvCb)
     : account_(account)
     , accountManager_(accountManager)
@@ -465,7 +467,6 @@ ConversationModule::Impl::Impl(std::shared_ptr<JamiAccount>&& account,
     , sendMsgCb_(sendMsgCb)
     , onNeedSocket_(onNeedSocket)
     , onNeedSwarmSocket_(onNeedSwarmSocket)
-    , updateConvReqCb_(updateConvReqCb)
     , oneToOneRecvCb_(oneToOneRecvCb)
     , accountId_(account->getAccountID())
 {
@@ -907,6 +908,25 @@ ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const 
     return {};
 }
 
+bool
+ConversationModule::Impl::updateConvForContact(const std::string& uri,
+                                               const std::string& oldConv,
+                                               const std::string& newConv)
+{
+    if (newConv != oldConv) {
+        auto conversation = getOneToOneConversation(uri);
+        if (conversation != oldConv) {
+            JAMI_DEBUG("Old conversation is not found in details {} - found: {}",
+                       oldConv,
+                       conversation);
+            return false;
+        }
+        accountManager_->updateContactConversation(uri, newConv);
+        return true;
+    }
+    return false;
+}
+
 void
 ConversationModule::Impl::declineOtherConversationWith(const std::string& uri) noexcept
 {
@@ -1027,8 +1047,8 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv)
         }
     } else {
         for (const auto& m : members)
-            if (username_ != m.at("uri") && updateConvReqCb_)
-                updateConvReqCb_(conv.info.id, m.at("uri"), false);
+            if (username_ != m.at("uri"))
+                updateConvForContact(m.at("uri"), conv.info.id, "");
     }
     // Else we are the last member, so we can remove
     removeRepositoryImpl(conv, true);
@@ -1253,7 +1273,7 @@ ConversationModule::Impl::fixStructures(
     const std::set<std::string>& toRm)
 {
     for (const auto& [uri, oldConv, newConv] : updateContactConv) {
-        acc->updateConvForContact(uri, oldConv, newConv);
+        updateConvForContact(uri, oldConv, newConv);
     }
     ////////////////////////////////////////////////////////////////
     // Note: This is only to homogeneize trust and convRequests
@@ -1491,7 +1511,6 @@ ConversationModule::ConversationModule(std::shared_ptr<JamiAccount> account,
                                        SengMsgCb&& sendMsgCb,
                                        NeedSocketCb&& onNeedSocket,
                                        NeedSocketCb&& onNeedSwarmSocket,
-                                       UpdateConvReq&& updateConvReqCb,
                                        OneToOneRecvCb&& oneToOneRecvCb,
                                        bool autoLoadConversations)
     : pimpl_ {std::make_unique<Impl>(std::move(account),
@@ -1500,7 +1519,6 @@ ConversationModule::ConversationModule(std::shared_ptr<JamiAccount> account,
                                      std::move(sendMsgCb),
                                      std::move(onNeedSocket),
                                      std::move(onNeedSwarmSocket),
-                                     std::move(updateConvReqCb),
                                      std::move(oneToOneRecvCb))}
 {
     if (autoLoadConversations) {
@@ -1846,6 +1864,14 @@ ConversationModule::getOneToOneConversation(const std::string& uri) const noexce
     return pimpl_->getOneToOneConversation(uri);
 }
 
+bool
+ConversationModule::updateConvForContact(const std::string& uri,
+                                         const std::string& oldConv,
+                                         const std::string& newConv)
+{
+    return pimpl_->updateConvForContact(uri, oldConv, newConv);
+}
+
 std::vector<std::map<std::string, std::string>>
 ConversationModule::getConversationRequests() const
 {
@@ -2003,8 +2029,7 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     }
     pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
-    if (pimpl_->updateConvReqCb_)
-        pimpl_->updateConvReqCb_(conversationId, request->from, true);
+    pimpl_->accountManager_->acceptTrustRequest(request->from, true);
     cloneConversationFrom(conversationId, request->from);
 }
 
@@ -2816,8 +2841,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
     auto isSelf = uri == pimpl_->username_;
     std::vector<std::string> toRm;
     auto updateClient = [&](const auto& convId) {
-        if (pimpl_->updateConvReqCb_)
-            pimpl_->updateConvReqCb_(convId, uri, false);
+        pimpl_->updateConvForContact(uri, convId, "");
         emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
     };
     auto removeConvInfo = [&](const auto& conv, const auto& members) {

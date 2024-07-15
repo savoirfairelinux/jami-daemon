@@ -2145,7 +2145,7 @@ ConversationTest::testFixContactDetails()
     auto details = aliceAccount->getContactDetails(bobUri);
     CPPUNIT_ASSERT(details["conversationId"] == aliceData.conversationId);
     // Erase convId from contact details, this should be fixed by next reload.
-    CPPUNIT_ASSERT(aliceAccount->updateConvForContact(bobUri, aliceData.conversationId, ""));
+    CPPUNIT_ASSERT(aliceAccount->convModule()->updateConvForContact(bobUri, aliceData.conversationId, ""));
     details = aliceAccount->getContactDetails(bobUri);
     CPPUNIT_ASSERT(details["conversationId"].empty());
 

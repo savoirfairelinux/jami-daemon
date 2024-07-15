@@ -66,7 +66,6 @@ using NeedSocketCb
 using SengMsgCb = std::function<
     uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
-using UpdateConvReq = std::function<void(const std::string&, const std::string&, bool)>;
 using OneToOneRecvCb = std::function<void(const std::string&, const std::string&)>;
 
 class ConversationModule
@@ -78,7 +77,6 @@ public:
                        SengMsgCb&& sendMsgCb,
                        NeedSocketCb&& onNeedSocket,
                        NeedSocketCb&& onNeedSwarmSocket,
-                       UpdateConvReq&& updateConvReqCb,
                        OneToOneRecvCb&& oneToOneRecvCb,
                        bool autoLoadConversations = true);
     ~ConversationModule() = default;
@@ -124,6 +122,17 @@ public:
      * @return the conversation id if found else empty
      */
     std::string getOneToOneConversation(const std::string& uri) const noexcept;
+
+    /**
+     * Replace linked conversation in contact's details
+     * @param uri           Of the contact
+     * @param oldConv       Current conversation
+     * @param newConv
+     * @return if replaced
+     */
+    bool updateConvForContact(const std::string& uri,
+                              const std::string& oldConv,
+                              const std::string& newConv);
 
     /**
      * Return conversation's requests
