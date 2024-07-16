@@ -22,6 +22,30 @@
       },
       "revId": "62c8bb9fe7456015f352af001532aab178da842c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e362ba41_fe5cb909",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 7
+      },
+      "lineNbr": 511,
+      "author": {
+        "id": 1101
+      },
+      "writtenOn": "2024-07-16T16:44:37Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "5a680055_4981e21b",
+      "range": {
+        "startLine": 509,
+        "startChar": 0,
+        "endLine": 511,
+        "endChar": 1
+      },
+      "revId": "62c8bb9fe7456015f352af001532aab178da842c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ],
   "submitRequirementResults": []
