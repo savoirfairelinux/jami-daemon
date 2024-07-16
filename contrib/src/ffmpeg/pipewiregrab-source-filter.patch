@@ -72,10 +72,10 @@ index d7db46c2af..87204fec71 100644
  extern const AVFilter ff_vsrc_smptebars;
 diff --git a/libavfilter/vsrc_pipewiregrab.c b/libavfilter/vsrc_pipewiregrab.c
 new file mode 100644
-index 0000000000..3ffe38b52f
+index 0000000000..44d64b1eac
 --- /dev/null
 +++ b/libavfilter/vsrc_pipewiregrab.c
-@@ -0,0 +1,1375 @@
+@@ -0,0 +1,1376 @@
 +/*
 + * PipeWire input grabber (ScreenCast)
 + * Copyright (C) 2024 Savoir-faire Linux, Inc.
@@ -671,6 +671,7 @@ index 0000000000..3ffe38b52f
 +    memcpy(pw_ctx->current_frame->data[0], sdata, spa_buf->datas[0].chunk->size);
 +    pw_ctx->current_frame->width = frame_width;
 +    pw_ctx->current_frame->height = frame_height;
++    pw_ctx->current_frame->linesize[0] = spa_buf->datas[0].chunk->stride;
 +    pthread_mutex_unlock(&pw_ctx->current_frame_mutex);
 +
 +    // Cleanup
