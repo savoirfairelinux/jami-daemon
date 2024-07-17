@@ -16,6 +16,24 @@
       "message": "if we do not have cached proxy for the key, we need to clear proxyServerCached_.",
       "revId": "c6b4b0e9a36584d4c88c47f70f2eb6a8df7db9bf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a09a1fa_beed89f6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 929,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-07-17T14:40:56Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ee1e5f71_c1e239c9",
+      "revId": "c6b4b0e9a36584d4c88c47f70f2eb6a8df7db9bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
