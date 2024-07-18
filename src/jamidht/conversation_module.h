@@ -356,7 +356,7 @@ public:
      * @param sendRequest   If we need to inform the peer (used for tests)
      */
     void addConversationMember(const std::string& conversationId,
-                               const std::string& contactUri,
+                               const dht::InfoHash& contactUri,
                                bool sendRequest = true);
     /**
      * Remove a member from a conversation (this will trigger a member event + new message on success)
@@ -365,7 +365,7 @@ public:
      * @param isDevice
      */
     void removeConversationMember(const std::string& conversationId,
-                                  const std::string& contactUri,
+                                  const dht::InfoHash& contactUri,
                                   bool isDevice = false);
     /**
      * Get members
