@@ -140,8 +140,14 @@ addConversationMember(const std::string& accountId,
                       const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule(true))
-            convModule->addConversationMember(conversationId, contactUri);
+        if (auto convModule = acc->convModule(true)) {
+            dht::InfoHash h(contactUri);
+            if (not h) {
+                JAMI_ERROR("addConversationMember: invalid contact URI `{}`", contactUri);
+                return;
+            }
+            convModule->addConversationMember(conversationId, h);
+        }
 }
 
 void
@@ -150,8 +156,14 @@ removeConversationMember(const std::string& accountId,
                          const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule(true))
-            convModule->removeConversationMember(conversationId, contactUri);
+        if (auto convModule = acc->convModule(true)) {
+            dht::InfoHash h(contactUri);
+            if (not h) {
+                JAMI_ERROR("removeConversationMember: invalid contact URI `{}`", contactUri);
+                return;
+            }
+            convModule->removeConversationMember(conversationId, h);
+        }
 }
 
 std::vector<std::map<std::string, std::string>>

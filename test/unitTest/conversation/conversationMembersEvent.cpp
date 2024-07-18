@@ -1105,7 +1105,7 @@ ConversationMembersEventTest::testMemberJoinsNoBadFile()
     auto convId = libjami::startConversation(aliceId);
 
     auto aliceMsgSize = aliceData.messages.size();
-    aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
+    aliceAccount->convModule()->addConversationMember(convId, dht::InfoHash(carlaUri), false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Cp conversations & convInfo
@@ -1164,7 +1164,7 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     auto convId = libjami::startConversation(aliceId);
 
     auto aliceMsgSize = aliceData.messages.size();
-    aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
+    aliceAccount->convModule()->addConversationMember(convId, dht::InfoHash(carlaUri), false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Cp conversations & convInfo
@@ -1214,7 +1214,7 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     auto convId = libjami::startConversation(aliceId);
 
     auto aliceMsgSize = aliceData.messages.size();
-    aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
+    aliceAccount->convModule()->addConversationMember(convId, dht::InfoHash(carlaUri), false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
     // Cp conversations & convInfo
