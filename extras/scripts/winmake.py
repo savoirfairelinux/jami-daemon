@@ -63,11 +63,11 @@ def build_contrib(args, paths):
     log.info(f"op={str(op)}, pkgs={args.pkg}, force={str(args.force)}")
 
     if op == Operation.CLEAN:
-        versioner.clean_all() if args.pkg == "all" else versioner.clean_pkg(args.pkg)
+        return versioner.clean_all() if args.pkg == "all" else versioner.clean_pkg(args.pkg)
     elif args.pkg == "all":
-        versioner.exec_for_all(op=op, force=args.force)
+        return versioner.exec_for_all(op=op, force=args.force)
     else:
-        versioner.exec_for_pkg(args.pkg, op=op, force=args.force, recurse=args.recurse)
+        return versioner.exec_for_pkg(args.pkg, op=op, force=args.force, recurse=args.recurse)
 
 def build_from_dir(path, out_dir=None):
     """Pretty much just for building libjami."""
@@ -81,9 +81,10 @@ def build_from_dir(path, out_dir=None):
     pkg = Package(src_dir=path, buildsrc_dir=out_dir)
     if builder.build(pkg):
         log.info(f"Package {pkg.name} built successfully.")
+        return True
     else:
         log.error(f"Package {pkg.name} failed to build.")
-        sys.exit(1)
+        return False
 
 def main():
     start_time = time.time()
@@ -108,16 +109,18 @@ def main():
     sh_exec.set_quiet_mode(args.quiet)
     sh_exec.set_debug_cmd(args.verbosity == 2)
 
-    build_from_dir_only = False
+    success = False
     try:
         # This will search for the base directory containing the contrib directory.
         paths = Paths(base_dir=base_dir, root_names=["daemon", "jami-daemon"])
-        build_contrib(args, paths)
+        log.info(f"Building contribs in {paths}.")
+        success = build_contrib(args, paths)
     except RuntimeError as e:
-        build_from_dir_only = True
+        log.info(f"Building from directory {base_dir}.")
+        success = build_from_dir(base_dir, args.out_dir)
 
-    if build_from_dir_only:
-        build_from_dir(base_dir, args.out_dir)
+    if not success:
+        sys.exit(1)
 
     log.info("--- %s ---" % seconds_to_str(time.time() - start_time))
 
