@@ -2596,7 +2596,7 @@ ConversationModule::fetchNewCommits(const std::string& peer,
 
 void
 ConversationModule::addConversationMember(const std::string& conversationId,
-                                          const std::string& contactUri,
+                                          const dht::InfoHash& contactUri,
                                           bool sendRequest)
 {
     auto conv = pimpl_->getConversation(conversationId);
@@ -2606,19 +2606,20 @@ ConversationModule::addConversationMember(const std::string& conversationId,
     }
     std::unique_lock lk(conv->mtx);
 
-    if (conv->conversation->isMember(contactUri, true)) {
-        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUri, conversationId);
+    auto contactUriStr = contactUri.toString();
+    if (conv->conversation->isMember(contactUriStr, true)) {
+        JAMI_DEBUG("{:s} is already a member of {:s}, resend invite", contactUriStr, conversationId);
         // Note: This should not be necessary, but if for whatever reason the other side didn't
         // join we should not forbid new invites
         auto invite = conv->conversation->generateInvitation();
         lk.unlock();
-        pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
+        pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
         return;
     }
 
     conv->conversation->addMember(
-        contactUri,
-        [this, conv, conversationId, sendRequest, contactUri](bool ok, const std::string& commitId) {
+            contactUriStr,
+        [this, conv, conversationId, sendRequest, contactUriStr](bool ok, const std::string& commitId) {
             if (ok) {
                 std::unique_lock lk(conv->mtx);
                 pimpl_->sendMessageNotification(*conv->conversation,
@@ -2627,7 +2628,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
                 if (sendRequest) {
                     auto invite = conv->conversation->generateInvitation();
                     lk.unlock();
-                    pimpl_->sendMsgCb_(contactUri, {}, std::move(invite), 0);
+                    pimpl_->sendMsgCb_(contactUriStr, {}, std::move(invite), 0);
                 }
             }
         });
@@ -2635,14 +2636,15 @@ ConversationModule::addConversationMember(const std::string& conversationId,
 
 void
 ConversationModule::removeConversationMember(const std::string& conversationId,
-                                             const std::string& contactUri,
+                                             const dht::InfoHash& contactUri,
                                              bool isDevice)
 {
+    auto contactUriStr = contactUri.toString();
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
             return conv->conversation->removeMember(
-                contactUri, isDevice, [this, conversationId](bool ok, const std::string& commitId) {
+                    contactUriStr, isDevice, [this, conversationId](bool ok, const std::string& commitId) {
                     if (ok) {
                         pimpl_->sendMessageNotification(conversationId, true, commitId);
                     }

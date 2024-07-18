@@ -781,7 +781,7 @@ ConversationTest::testMergeTwoDifferentHeads()
     auto convId = libjami::startConversation(aliceId);
 
     auto msgSize = aliceData.messages.size();
-    aliceAccount->convModule()->addConversationMember(convId, carlaUri, false);
+    aliceAccount->convModule()->addConversationMember(convId, dht::InfoHash(carlaUri), false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == msgSize + 1; }));
 
     // Cp conversations & convInfo
