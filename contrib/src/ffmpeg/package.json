@@ -18,8 +18,7 @@
         "libopusdec-enable-FEC.patch",
         "windows-configure.patch",
         "windows-configure-ffnvcodec.patch",
-        "windows-dxgi-support.patch",
-        "nvenc-fix-reorderqueueflush-crash.patch"
+        "windows-dxgi-support.patch"
     ],
     "win_patches": [
     ],
