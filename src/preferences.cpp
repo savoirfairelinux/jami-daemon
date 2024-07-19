@@ -328,8 +328,18 @@ AudioPreference::createAudioLayer()
     }
 #endif // HAVE_JACK
 
-#if HAVE_PULSE
+#if HAVE_PIPEWIRE
+    if (audioApi_ == PIPEWIRE_API_STR) {
+        try {
+            return new PipeWireLayer(*this);
+        } catch (const std::runtime_error& e) {
+            JAMI_WARN("Could not create pulseaudio layer, falling back to ALSA");
+        }
+    }
+#endif
 
+
+#if HAVE_PULSE
     if (audioApi_ == PULSEAUDIO_API_STR) {
         try {
             return new PulseLayer(*this);
@@ -337,11 +347,9 @@ AudioPreference::createAudioLayer()
             JAMI_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
     }
-
 #endif
 
 #if HAVE_ALSA
-
     audioApi_ = ALSA_API_STR;
     checkSoundCard(alsaCardin_, AudioDeviceType::CAPTURE);
     checkSoundCard(alsaCardout_, AudioDeviceType::PLAYBACK);
