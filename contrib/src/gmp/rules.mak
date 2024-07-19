@@ -3,18 +3,18 @@
 
 GMP_VERSION := 6.3.0
 PKG_CPE += cpe:2.3:a:gmplib:gmp:$(GMP_VERSION):*:*:*:*:*:*:*
-GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
+GMP_URL := https://gmplib.org/download/gmp/gmp-$(GMP_VERSION).tar.xz
 
 ifeq ($(call need_pkg,'gmp >= 6.2.0'),)
 PKGS_FOUND += gmp
 endif
 
-$(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
+$(TARBALLS)/gmp-$(GMP_VERSION).tar.xz:
 	$(call download,$(GMP_URL))
 
-.sum-gmp: gmp-$(GMP_VERSION).tar.bz2
+.sum-gmp: gmp-$(GMP_VERSION).tar.xz
 
-gmp: gmp-$(GMP_VERSION).tar.bz2 .sum-gmp
+gmp: gmp-$(GMP_VERSION).tar.xz .sum-gmp
 	$(UNPACK)
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/gmp/clock_gettime.patch
