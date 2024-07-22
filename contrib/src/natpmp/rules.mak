@@ -1,6 +1,6 @@
 # libnatpmp
-NATPMP_VERSION := 20230423
-NATPMP_URL := http://miniupnp.free.fr/files/download.php?file=libnatpmp-$(NATPMP_VERSION).tar.gz
+NATPMP_VERSION := 007c3a53165a0551c877130eea4d966885ce19ae
+NATPMP_URL := https://github.com/miniupnp/libnatpmp/archive/${NATPMP_VERSION}.tar.gz
 
 ifndef HAVE_WIN32
 ifndef HAVE_ANDROID
@@ -21,11 +21,9 @@ $(TARBALLS)/libnatpmp-$(NATPMP_VERSION).tar.gz:
 
 natpmp: libnatpmp-$(NATPMP_VERSION).tar.gz .sum-natpmp
 	$(UNPACK)
-	$(APPLY) $(SRC)/natpmp/0001-remove-shared-libs-executables.patch
 	$(MOVE)
 
-.natpmp: natpmp
-	cd $< && $(MAKE) INSTALLPREFIX="$(PREFIX)" $(HOSTVARS) install
-	-rm -f $(PREFIX)/lib/libnatpmp.so* $(PREFIX)/lib/libnatpmp.dylib*
-	cd $< && cp natpmp_declspec.h $(PREFIX)/include/
+.natpmp: natpmp toolchain.cmake
+	cd $< && $(HOSTVARS) $(CMAKE) .
+	cd $< && $(MAKE) install
 	touch $@
