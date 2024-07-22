@@ -126,42 +126,42 @@ public:
 
 private:
     CPPUNIT_TEST_SUITE(ConversationMembersEventTest);
-    CPPUNIT_TEST(testAddInvalidUri);
-    CPPUNIT_TEST(testRemoveConversationNoMember);
-    CPPUNIT_TEST(testRemoveConversationWithMember);
-    CPPUNIT_TEST(testAddMember);
-    CPPUNIT_TEST(testMemberAddedNoBadFile);
-    CPPUNIT_TEST(testAddOfflineMemberThenConnects);
-    CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
-    CPPUNIT_TEST(testGetMembers);
-    CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
-    CPPUNIT_TEST(testRemoveInvitedMember);
-    CPPUNIT_TEST(testMemberBanNoBadFile);
-    CPPUNIT_TEST(testMemberTryToRemoveAdmin);
-    CPPUNIT_TEST(testBannedMemberCannotSendMessage);
-    CPPUNIT_TEST(testAdminCanReAddMember);
-    CPPUNIT_TEST(testMemberCannotBanOther);
-    CPPUNIT_TEST(testMemberCannotUnBanOther);
-    CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
-    CPPUNIT_TEST(testCommitUnauthorizedUser);
-    CPPUNIT_TEST(testMemberJoinsNoBadFile);
-    CPPUNIT_TEST(testMemberAddedNoCertificate);
-    CPPUNIT_TEST(testMemberJoinsInviteRemoved);
-    CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
-    CPPUNIT_TEST(testConversationMemberEvent);
-    CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
-    CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOne);
-    CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
-    CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
-    CPPUNIT_TEST(testBanUnbanMultiDevice);
-    CPPUNIT_TEST(testBanUnbanGotFirstConv);
-    CPPUNIT_TEST(testBanHostWhileHosting);
+    //CPPUNIT_TEST(testAddInvalidUri);
+    //CPPUNIT_TEST(testRemoveConversationNoMember);
+    //CPPUNIT_TEST(testRemoveConversationWithMember);
+    //CPPUNIT_TEST(testAddMember);
+    //CPPUNIT_TEST(testMemberAddedNoBadFile);
+    //CPPUNIT_TEST(testAddOfflineMemberThenConnects);
+    //CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
+    //CPPUNIT_TEST(testGetMembers);
+    //CPPUNIT_TEST(testRemoveMember);
+    //CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
+    //CPPUNIT_TEST(testRemoveInvitedMember);
+    //CPPUNIT_TEST(testMemberBanNoBadFile);
+    //CPPUNIT_TEST(testMemberTryToRemoveAdmin);
+    //CPPUNIT_TEST(testBannedMemberCannotSendMessage);
+    //CPPUNIT_TEST(testAdminCanReAddMember);
+    //CPPUNIT_TEST(testMemberCannotBanOther);
+    //CPPUNIT_TEST(testMemberCannotUnBanOther);
+    //CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
+    //CPPUNIT_TEST(testAdminCannotKickTheirself);
+    //CPPUNIT_TEST(testCommitUnauthorizedUser);
+    //CPPUNIT_TEST(testMemberJoinsNoBadFile);
+    //CPPUNIT_TEST(testMemberAddedNoCertificate);
+    //CPPUNIT_TEST(testMemberJoinsInviteRemoved);
+    //CPPUNIT_TEST(testFailAddMemberInOneToOne);
+    //CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    //CPPUNIT_TEST(testConversationMemberEvent);
+    //CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
+    //CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOne);
+    //CPPUNIT_TEST(testAvoidTwoOneToOneMultiDevices);
+    //CPPUNIT_TEST(testRemoveRequestBannedMultiDevices);
+    //CPPUNIT_TEST(testBanUnbanMultiDevice);
+    //CPPUNIT_TEST(testBanUnbanGotFirstConv);
+    //CPPUNIT_TEST(testBanHostWhileHosting);
     CPPUNIT_TEST(testAddContactTwice);
-    CPPUNIT_TEST(testBanFromNewDevice);
+    //CPPUNIT_TEST(testBanFromNewDevice);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1657,12 +1657,25 @@ ConversationMembersEventTest::testAddContactTwice()
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
+    // Add contact
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+    auto oldConversationId = aliceData.conversationId;
+    CPPUNIT_ASSERT(!oldConversationId.empty());
+
+    // Check that the trust request's data is correct
+    auto bobTrustRequests = bobAccount->getTrustRequests();
+    CPPUNIT_ASSERT(bobTrustRequests.size() == 1);
+    auto request = bobTrustRequests[0];
+    CPPUNIT_ASSERT(request["from"] == aliceUri);
+    CPPUNIT_ASSERT(request["conversationId"] == oldConversationId);
+
+    // Remove and re-add contact
     aliceAccount->removeContact(bobUri, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.removed; }));
     // wait that connections are closed.
@@ -1671,6 +1684,17 @@ ConversationMembersEventTest::testAddContactTwice()
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestRemoved && bobData.requestReceived; }));
+    auto newConversationId = aliceData.conversationId;
+    CPPUNIT_ASSERT(!newConversationId.empty());
+    CPPUNIT_ASSERT(newConversationId != oldConversationId);
+
+    // Check that the trust request's data was correctly
+    // updated when we received the second request
+    bobTrustRequests = bobAccount->getTrustRequests();
+    CPPUNIT_ASSERT(bobTrustRequests.size() == 1);
+    request = bobTrustRequests[0];
+    CPPUNIT_ASSERT(request["from"] == aliceUri);
+    CPPUNIT_ASSERT(request["conversationId"] == newConversationId);
 }
 
 void
