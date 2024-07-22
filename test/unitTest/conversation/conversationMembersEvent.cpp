@@ -1657,12 +1657,25 @@ ConversationMembersEventTest::testAddContactTwice()
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
 
+    // Add contact
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+    auto oldConversationId = aliceData.conversationId;
+    CPPUNIT_ASSERT(!oldConversationId.empty());
+
+    // Check that the trust request's data is correct
+    auto bobTrustRequests = bobAccount->getTrustRequests();
+    CPPUNIT_ASSERT(bobTrustRequests.size() == 1);
+    auto request = bobTrustRequests[0];
+    CPPUNIT_ASSERT(request["from"] == aliceUri);
+    CPPUNIT_ASSERT(request["conversationId"] == oldConversationId);
+
+    // Remove and re-add contact
     aliceAccount->removeContact(bobUri, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.removed; }));
     // wait that connections are closed.
@@ -1671,6 +1684,17 @@ ConversationMembersEventTest::testAddContactTwice()
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestRemoved && bobData.requestReceived; }));
+    auto newConversationId = aliceData.conversationId;
+    CPPUNIT_ASSERT(!newConversationId.empty());
+    CPPUNIT_ASSERT(newConversationId != oldConversationId);
+
+    // Check that the trust request's data was correctly
+    // updated when we received the second request
+    bobTrustRequests = bobAccount->getTrustRequests();
+    CPPUNIT_ASSERT(bobTrustRequests.size() == 1);
+    request = bobTrustRequests[0];
+    CPPUNIT_ASSERT(request["from"] == aliceUri);
+    CPPUNIT_ASSERT(request["conversationId"] == newConversationId);
 }
 
 void

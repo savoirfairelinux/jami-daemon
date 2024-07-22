@@ -327,8 +327,9 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                       .first;
         } else {
             // Update trust request
-            if (received < req->second.received) {
+            if (received > req->second.received) {
                 req->second.device = peer_device;
+                req->second.conversationId = conversationId;
                 req->second.received = received;
                 req->second.payload = payload;
             } else {
