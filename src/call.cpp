@@ -154,6 +154,8 @@ Call::removeCall()
         Recordable::stopRecording();
     if (auto account = account_.lock())
         account->detach(this_);
+    parent_.reset();
+    subcalls_.clear();
 }
 
 std::string
