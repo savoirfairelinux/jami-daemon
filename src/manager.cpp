@@ -1695,6 +1695,7 @@ Manager::removeAudio(Call& call)
 {
     const auto& callId = call.getCallId();
     auto medias = call.getAudioStreams();
+    call.audioGuard.reset();
     for (const auto& media : medias) {
         JAMI_DEBUG("[call:{}] Remove local audio {}", callId, media.first);
         getRingBufferPool().unBindAll(media.first);
