@@ -133,6 +133,12 @@ public:
         return *static_cast<const JamiAccountConfig*>(&Account::config());
     }
 
+    JamiAccountConfig::Credentials
+    consumeConfigCredentials() {
+        auto conf = static_cast<JamiAccountConfig*>(config_.get());
+        return std::move(conf->credentials);
+    }
+
     void loadConfig() override;
 
     /**

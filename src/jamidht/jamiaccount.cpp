@@ -936,10 +936,11 @@ JamiAccount::loadConfig()
         std::error_code ec;
         std::filesystem::remove(cachePath_ / "dhtproxy", ec);
     }
-    loadAccount(config().archive_password_scheme,
-                config().archive_password,
-                config().archive_pin,
-                config().archive_path);
+    auto credentials = consumeConfigCredentials();
+    loadAccount(credentials.archive_password_scheme,
+                credentials.archive_password,
+                credentials.archive_pin,
+                credentials.archive_path);
 }
 
 bool
