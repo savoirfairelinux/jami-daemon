@@ -207,11 +207,11 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseBool(details, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
     // parseString(details, libjami::Account::ConfProperties::USERNAME, username);
 
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME, archive_password_scheme);
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PIN, archive_pin);
-    std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, archive_path);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, credentials.archive_password);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME, credentials.archive_password_scheme);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PIN, credentials.archive_pin);
+    std::transform(credentials.archive_pin.begin(), credentials.archive_pin.end(), credentials.archive_pin.begin(), ::toupper);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, credentials.archive_path);
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
 
     auto oldProxyServer = proxyServer, oldProxyServerList = proxyListUrl;

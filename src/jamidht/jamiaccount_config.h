@@ -69,10 +69,12 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
     std::string archivePath {"archive.gz"};
     bool archiveHasPassword {true};
     // not saved, only used client->daemon
-    std::string archive_password_scheme;
-    std::string archive_password;
-    std::string archive_pin;
-    std::string archive_path;
+    struct Credentials {
+        std::string archive_password_scheme;
+        std::string archive_password;
+        std::string archive_pin;
+        std::string archive_path;
+    } credentials;
 
     std::string receipt {};
     std::vector<uint8_t> receiptSignature {};
