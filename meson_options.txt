@@ -6,6 +6,7 @@ option('plugins', type: 'boolean', value: true, description: 'Enable support for
 option('name_service', type: 'feature', value: 'auto', description: 'Enable Name Service')
 option('opensl', type: 'feature', value: 'auto', description: 'Enable support for OpenSL')
 option('alsa', type: 'feature', value: 'auto', description: 'Enable support for ALSA')
+option('pipewire', type: 'feature', value: 'auto', description: 'Enable support for PipeWire audio')
 option('pulseaudio', type: 'feature', value: 'auto', description: 'Enable support for PulseAudio')
 option('jack', type: 'feature', value: 'auto', description: 'Enable support for Jack')
 option('portaudio', type: 'feature', value: 'auto', description: 'Enable support for PortAudio')
