@@ -82,7 +82,8 @@ public:
     void testAddAcceptOfflineThenConnects();
     void testGetMembers();
     void testRemoveMember();
-    void testRemovedMemberDoesNotReceiveMessage();
+    void testRemovedMemberDoesNotReceiveMessageFromAdmin();
+    void testRemovedMemberDoesNotReceiveMessageFromPeer();
     void testRemoveInvitedMember();
     void testMemberBanNoBadFile();
     void testMemberTryToRemoveAdmin();
@@ -135,7 +136,8 @@ private:
     CPPUNIT_TEST(testAddAcceptOfflineThenConnects);
     CPPUNIT_TEST(testGetMembers);
     CPPUNIT_TEST(testRemoveMember);
-    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessage);
+    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessageFromAdmin);
+    CPPUNIT_TEST(testRemovedMemberDoesNotReceiveMessageFromPeer);
     CPPUNIT_TEST(testRemoveInvitedMember);
     CPPUNIT_TEST(testMemberBanNoBadFile);
     CPPUNIT_TEST(testMemberTryToRemoveAdmin);
@@ -698,7 +700,7 @@ ConversationMembersEventTest::testRemoveMember()
 }
 
 void
-ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessage()
+ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromAdmin()
 {
     connectSignals();
 
@@ -712,7 +714,7 @@ ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessage()
     libjami::acceptConversationRequest(bobId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
-    // Now check that alice, has the only admin, can remove bob
+    // Now check that alice, as the only admin, can remove bob
     libjami::removeConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 3 /* vote + ban */; }));
@@ -721,6 +723,61 @@ ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessage()
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceId, convId, "hi"s, "");
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+}
+
+void
+ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromPeer()
+{
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    Manager::instance().sendRegister(carlaId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.deviceAnnounced; }));
+
+    // Make Carla send a contact request to Bob and wait until she receives a message from
+    // him confirming that he has accepted the request. The point of this is to make sure
+    // that Bob and Carla are connected; otherwise the test below where we check that Bob
+    // hasn't received a message from Carla could pass for the wrong reason.
+    carlaAccount->addContact(bobUri);
+    carlaAccount->sendTrustRequest(bobUri, {});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    auto carlaMsgSize = carlaData.messages.size();
+    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(carlaUri));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaMsgSize + 1 == carlaData.messages.size(); }));
+
+    // Alice creates a swarm and adds Bob and Carla to it
+    bobData.requestReceived = false;
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && carlaData.requestReceived; }));
+
+    libjami::acceptConversationRequest(bobId, convId);
+    libjami::acceptConversationRequest(carlaId, convId);
+    auto messageReceived = [](UserData& userData, const std::string& action, const std::string& uri) {
+        for (auto& message : userData.messages) {
+            if (message.type == "member" && message.body["action"] == action && message.body["uri"] == uri)
+                return true;
+        }
+        return false;
+    };
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(aliceData, "join", bobUri); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(carlaData, "join", bobUri); }));
+
+    // Alice bans Bob
+    libjami::removeConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(aliceData, "ban", bobUri); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(carlaData, "ban", bobUri); }));
+
+    // Carla's messages should now be received by Alice, but not Bob
+    auto aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
+    libjami::sendMessage(carlaId, convId, "hello"s, "");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobMsgSize < bobData.messages.size(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 }
 
 void

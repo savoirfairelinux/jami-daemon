@@ -557,6 +557,13 @@ public:
             gitSocketList_.erase(deviceSockets);
     }
 
+    /**
+     * Remove all git sockets and all DRT nodes associated with the given peer.
+     * This is used when a swarm member is banned to ensure that we stop syncing
+     * with them or sending them message notifications.
+     */
+    void disconnectFromPeer(const std::string& peerUri);
+
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited,
                                                                bool includeLeft) const;
 
@@ -672,6 +679,24 @@ Conversation::Impl::isAdmin() const
 {
     auto adminsPath = repoPath() / "admins";
     return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, userId_ + ".crt"));
+}
+
+void
+Conversation::Impl::disconnectFromPeer(const std::string& peerUri)
+{
+    // Remove nodes from swarmManager
+    const auto nodes = swarmManager_->getRoutingTable().getAllNodes();
+    std::vector<NodeId> toRemove;
+    for (const auto node : nodes)
+        if (peerUri == repository_->uriFromDevice(node.toString()))
+            toRemove.emplace_back(node);
+    swarmManager_->deleteNode(toRemove);
+
+    // Remove git sockets with this member
+    std::vector<DeviceId> gitToRm;
+    for (const auto& [deviceId, _] : gitSocketList_)
+        if (peerUri == repository_->uriFromDevice(deviceId.toString()))
+            removeGitSocket(deviceId);
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1370,21 +1395,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                 JAMI_WARN("Vote solved for %s. %s banned",
                           contactUri.c_str(),
                           isDevice ? "Device" : "Member");
-
-                const auto nodes = sthis->pimpl_->swarmManager_->getRoutingTable().getAllNodes();
-                // Remove nodes from swarmManager
-                std::vector<NodeId> toRemove;
-                for (const auto node : nodes)
-                    if (contactUri == sthis->uriFromDevice(node.toString()))
-                        toRemove.emplace_back(node);
-                sthis->pimpl_->swarmManager_->deleteNode(toRemove);
-                // Remove git sockets with this member
-                std::vector<DeviceId> gitToRm;
-                for (const auto& [deviceId, _] : sthis->pimpl_->gitSocketList_)
-                    if (contactUri == sthis->uriFromDevice(deviceId.toString()))
-                        gitToRm.emplace_back(deviceId);
-                for (const auto& did : gitToRm)
-                    sthis->removeGitSocket(did);
+                sthis->pimpl_->disconnectFromPeer(contactUri);
             }
 
             sthis->pimpl_->announce(commits, true);
@@ -1652,10 +1663,13 @@ Conversation::Impl::mergeHistory(const std::string& uri)
 
     JAMI_DEBUG("Successfully merge history with {:s}", uri);
     auto result = repository_->convCommitsToMap(newCommits);
-    for (const auto& commit : result) {
+    for (auto& commit : result) {
         auto it = commit.find("type");
         if (it != commit.end() && it->second == "member") {
             repository_->refreshMembers();
+
+            if (commit["action"] == "ban")
+                disconnectFromPeer(commit["uri"]);
         }
     }
     return result;
@@ -2269,8 +2283,10 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
     // If it works, the callback onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstraped);
     std::vector<DeviceId> devices = knownDevices;
-    for (const auto& m : pimpl_->repository_->devices())
-        devices.insert(devices.end(), m.second.begin(), m.second.end());
+    for (const auto& [member, memberDevices] : pimpl_->repository_->devices()) {
+        if (!isBanned(member))
+            devices.insert(devices.end(), memberDevices.begin(), memberDevices.end());
+    }
     JAMI_DEBUG("{}[SwarmManager {}] Bootstrap with {} devices",
                pimpl_->toString(),
                fmt::ptr(pimpl_->swarmManager_),
