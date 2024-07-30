@@ -217,7 +217,6 @@ void
 ArchiveAccountManager::createAccount(AuthContext& ctx)
 {
     AccountArchive a;
-    auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
     auto ca = dht::crypto::generateIdentity("Jami CA");
     if (!ca.first || !ca.second) {
         throw std::runtime_error("Can't generate CA for this account.");
@@ -230,7 +229,7 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
               ca.second->getId().toString().c_str(),
               a.id.second->getId().toString().c_str());
     a.ca_key = ca.first;
-    auto keypair = future_keypair.get();
+    auto keypair = dev::KeyPair::create();
     a.eth_key = keypair.secret().makeInsecure().asBytes();
     onArchiveLoaded(ctx, std::move(a));
 }
