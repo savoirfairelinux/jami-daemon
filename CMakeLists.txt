@@ -228,13 +228,14 @@ if(NOT MSVC)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         pkg_search_module (udev REQUIRED IMPORTED_TARGET libudev)
         pkg_search_module (pulseaudio IMPORTED_TARGET libpulse)
+        pkg_search_module (pipewire IMPORTED_TARGET libpipewire-0.3>=1.0)
         pkg_search_module (alsa IMPORTED_TARGET alsa)
         pkg_search_module (jack IMPORTED_TARGET libjack)
         pkg_search_module (pipewire IMPORTED_TARGET libpipewire-0.3)
 
         # Make sure at least one audio backend is available
-        if(NOT pulseaudio_FOUND AND NOT alsa_FOUND AND NOT jack_FOUND AND NOT pipewire_FOUND)
-            message(FATAL_ERROR "No audio library found. Please install PulseAudio, ALSA, JACK, or PipeWire.")
+        if(NOT pulseaudio_FOUND AND NOT pipewire_FOUND AND NOT alsa_FOUND AND NOT jack_FOUND)
+            message(FATAL_ERROR "No audio library found. Please install PulseAudio, PipeWire, ALSA or JACK.")
         endif()
     endif()
 endif()
@@ -325,6 +326,12 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         list (APPEND ALL_FILES ${ALL_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/audiostream.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulselayer.cpp
+        )
+    endif()
+    if (pipewire_FOUND)
+        list (APPEND ALL_FILES ${ALL_FILES}
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pipewire/pipestream.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pipewire/pipelayer.cpp
         )
     endif()
     if (alsa_FOUND)
@@ -694,6 +701,10 @@ else()
         if (pulseaudio_FOUND)
             target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PULSE)
             target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::pulseaudio)
+        endif()
+        if (pipewire_FOUND)
+            target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_PIPEWIRE)
+            target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::pipewire)
         endif()
         if (alsa_FOUND)
             target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_ALSA)
