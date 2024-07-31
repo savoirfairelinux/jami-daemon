@@ -117,9 +117,7 @@ private:
     std::mutex requestsMtx_ {};
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
-    bool isRegisteringName_ {false};
-    std::string registeredAddr_ {};
-    std::string registeredName_ {};
+    std::map<std::string, std::string> pendingRegistrations_ {};
 
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
