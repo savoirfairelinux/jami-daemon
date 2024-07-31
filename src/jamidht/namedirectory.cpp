@@ -382,6 +382,7 @@ NameDirectory::registerName(const std::string& addr,
                                              resolver_,
                                              serverUrl_ + QUERY_NAME + name);
     try {
+        request->set_logger(logger_);
         request->set_method(restinio::http_method_post());
         setHeaderFields(*request);
         request->set_body(body);
