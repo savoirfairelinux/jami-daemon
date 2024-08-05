@@ -2859,11 +2859,13 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
     auto removeConvInfo = [&](const auto& conv, const auto& members) {
         if ((isSelf && members.size() == 1)
             || (!isSelf && std::find(members.begin(), members.end(), uri) != members.end())) {
-            // Mark as removed
-            conv->info.removed = std::time(nullptr);
-            updateClient(conv->info.id);
-            pimpl_->addConvInfo(conv->info);
-            return true;
+            // Mark the conversation as removed if it wasn't already
+            if (!conv->info.isRemoved()) {
+                conv->info.removed = std::time(nullptr);
+                updateClient(conv->info.id);
+                pimpl_->addConvInfo(conv->info);
+                return true;
+            }
         }
         return false;
     };
