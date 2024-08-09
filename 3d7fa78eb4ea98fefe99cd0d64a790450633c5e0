@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c23b6528_03b2fe0b",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 816,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-08-09T22:01:28Z",
+      "side": 1,
+      "message": "`An error occurred while exporting account archive`\n\nCf. https://git.jami.net/savoirfairelinux/jami-client-qt/-/issues/1730#note_51884",
+      "range": {
+        "startLine": 816,
+        "startChar": 25,
+        "endLine": 816,
+        "endChar": 45
+      },
+      "revId": "3d7fa78eb4ea98fefe99cd0d64a790450633c5e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
