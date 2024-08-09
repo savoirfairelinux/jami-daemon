@@ -349,6 +349,10 @@ public:
     bool exportArchive(const std::string& destinationPath,
                        std::string_view scheme = {},
                        const std::string& password = {});
+    // @@@ TODO: add doc comment
+    bool exportArchiveAsPlainText(const std::string& destinationPath,
+                                  std::string_view scheme = {},
+                                  const std::string& password = {});
     bool revokeDevice(const std::string& device,
                       std::string_view scheme = {},
                       const std::string& password = {});
