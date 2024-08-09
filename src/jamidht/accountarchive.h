@@ -65,7 +65,7 @@ struct AccountArchive
     AccountArchive(const std::filesystem::path& path, std::string_view scheme = {}, const std::string& pwd = {}) { load(path, scheme, pwd); }
 
     /** Serialize structured archive data to memory. */
-    std::string serialize() const;
+    std::string serialize(bool includeCryptoData, const char *indentation = "") const;
 
     /** Deserialize archive from memory. */
     void deserialize(const std::vector<uint8_t>& data, const std::vector<uint8_t>& salt);
@@ -78,7 +78,7 @@ struct AccountArchive
 
     /** Save archive to file, optionally encrypted with provided password. */
     void save(const std::filesystem::path& path, std::string_view scheme, const std::string& password) const {
-        fileutils::writeArchive(serialize(), path, scheme, password, password_salt);
+        fileutils::writeArchive(serialize(true), path, scheme, password, password_salt);
     }
 };
 

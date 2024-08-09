@@ -1018,6 +1018,17 @@ JamiAccount::exportArchive(const std::string& destinationPath,
 }
 
 bool
+JamiAccount::exportArchiveAsPlainText(const std::string& destinationPath,
+                                      std::string_view scheme,
+                                      const std::string& password)
+{
+    if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
+        return manager->exportArchiveAsPlainText(destinationPath, scheme, password);
+    }
+    return false;
+}
+
+bool
 JamiAccount::setValidity(std::string_view scheme,
                          const std::string& pwd,
                          const dht::InfoHash& id,

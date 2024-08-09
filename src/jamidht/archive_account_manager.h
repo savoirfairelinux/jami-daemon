@@ -61,6 +61,7 @@ public:
                       std::string_view scheme, const std::string& password,
                       RevokeDeviceCallback) override;
     bool exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password);
+    bool exportArchiveAsPlainText(const std::string& destinationPath, std::string_view scheme, const std::string& password);
     bool isPasswordValid(const std::string& password) override;
 
 #if HAVE_RINGNS
