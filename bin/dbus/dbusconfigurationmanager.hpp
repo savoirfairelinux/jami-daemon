@@ -107,6 +107,16 @@ public:
     }
 
     auto
+    exportArchiveAsPlainText(const std::string& accountID,
+                             const std::string& destinationPath,
+                             const std::string& scheme,
+                             const std::string& password)
+        -> decltype(libjami::exportArchiveAsPlainText(accountID, destinationPath, scheme, password))
+    {
+        return libjami::exportArchiveAsPlainText(accountID, destinationPath, scheme, password);
+    }
+
+    auto
     revokeDevice(const std::string& accountID,
                  const std::string& device,
                  const std::string& scheme,

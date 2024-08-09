@@ -117,6 +117,7 @@ bool setCodecDetails(const std::string& accountId, const unsigned& codecId, cons
 std::vector<unsigned> getActiveCodecList(const std::string& accountId);
 bool exportOnRing(const std::string& accountId, const std::string& password);
 bool exportToFile(const std::string& accountId, const std::string& destinationPath, const std::string& scheme, const std::string& password);
+bool exportArchiveAsPlainText(const std::string& accountID, const std::string& destinationPath, const std::string& password);
 
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountId);
 bool revokeDevice(const std::string& accountId, const std::string& deviceId, const std::string& scheme, const std::string& password);

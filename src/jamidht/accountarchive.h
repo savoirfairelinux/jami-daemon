@@ -64,8 +64,16 @@ struct AccountArchive
     AccountArchive(const std::vector<uint8_t>& data, const std::vector<uint8_t>& password_salt = {}) { deserialize(data, password_salt); }
     AccountArchive(const std::filesystem::path& path, std::string_view scheme = {}, const std::string& pwd = {}) { load(path, scheme, pwd); }
 
-    /** Serialize structured archive data to memory. */
-    std::string serialize() const;
+    /**
+     * Serialize structured archive data to memory.
+     * @param includeCryptoData whether to include cryptographic information (certificates, keys)
+     *                          in the exported archive. This is necessary if the archive will
+     *                          be used to link an account to a new device.
+     * @param humanReadable whether the output should be formatted in order to make it easier to
+     *                      read by a human.
+     * @return a string containing the archive data in JSON format
+     */
+    std::string serialize(bool includeCryptoData, bool humanReadable = false) const;
 
     /** Deserialize archive from memory. */
     void deserialize(const std::vector<uint8_t>& data, const std::vector<uint8_t>& salt);
@@ -78,7 +86,7 @@ struct AccountArchive
 
     /** Save archive to file, optionally encrypted with provided password. */
     void save(const std::filesystem::path& path, std::string_view scheme, const std::string& password) const {
-        fileutils::writeArchive(serialize(), path, scheme, password, password_salt);
+        fileutils::writeArchive(serialize(true), path, scheme, password, password_salt);
     }
 };
 

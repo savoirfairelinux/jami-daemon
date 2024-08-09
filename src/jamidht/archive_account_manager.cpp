@@ -711,7 +711,7 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
         std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::tolower);
         try {
             this_->updateArchive(a);
-            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
+            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize(true)), key);
             if (not this_->dht_ or not this_->dht_->isRunning())
                 throw std::runtime_error("DHT is not running..");
             JAMI_WARN("[Auth] exporting account with PIN: %s at %s (size %zu)",
@@ -798,6 +798,22 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, std::st
         return false;
     } catch (...) {
         JAMI_ERR("[Auth] Can't export archive: can't read archive");
+        return false;
+    }
+}
+
+bool
+ArchiveAccountManager::exportArchiveAsPlainText(const std::string& destinationPath, std::string_view scheme, const std::string& password)
+{
+    try {
+        AccountArchive archive = readArchive(scheme, password);
+        updateArchive(archive);
+
+        auto archiveStr = archive.serialize(false, true);
+        fileutils::saveFile(destinationPath, (const uint8_t*) archiveStr.data(), archiveStr.size());
+        return true;
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Exception while exporting plaintext account archive: {}", e.what());
         return false;
     }
 }

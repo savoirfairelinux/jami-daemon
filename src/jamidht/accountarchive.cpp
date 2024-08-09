@@ -109,22 +109,29 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat, const std::vector<u
 }
 
 std::string
-AccountArchive::serialize() const
+AccountArchive::serialize(bool includeCryptoData, bool humanReadable) const
 {
     Json::Value root;
 
-    for (const auto& it : config)
-        root[it.first] = it.second;
+    if (includeCryptoData) {
+        for (const auto& it : config)
+            root[it.first] = it.second;
 
-    if (ca_key and *ca_key)
-        root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());
+        if (ca_key and *ca_key)
+            root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());
 
-    root[Conf::RING_ACCOUNT_KEY] = base64::encode(id.first->serialize());
-    root[Conf::RING_ACCOUNT_CERT] = base64::encode(id.second->getPacked());
-    root[Conf::ETH_KEY] = base64::encode(eth_key);
+        root[Conf::RING_ACCOUNT_KEY] = base64::encode(id.first->serialize());
+        root[Conf::RING_ACCOUNT_CERT] = base64::encode(id.second->getPacked());
+        root[Conf::ETH_KEY] = base64::encode(eth_key);
 
-    if (revoked)
-        root[Conf::RING_ACCOUNT_CRL] = base64::encode(revoked->getPacked());
+        if (revoked)
+            root[Conf::RING_ACCOUNT_CRL] = base64::encode(revoked->getPacked());
+    } else {
+        for (const auto& it : config) {
+            if (it.first.substr(0, 3) != "TLS")
+                root[it.first] = it.second;
+        }
+    }
 
     if (not contacts.empty()) {
         Json::Value& jsonContacts = root[Conf::RING_ACCOUNT_CONTACTS];
@@ -148,7 +155,7 @@ AccountArchive::serialize() const
 
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
+    wbuilder["indentation"] = humanReadable ? "  " : "";
     return Json::writeString(wbuilder, root);
 }
 

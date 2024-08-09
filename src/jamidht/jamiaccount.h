@@ -349,6 +349,17 @@ public:
     bool exportArchive(const std::string& destinationPath,
                        std::string_view scheme = {},
                        const std::string& password = {});
+    /**
+     * Export an archive of the account to a plaintext, uncompressed file.
+     * This is intended to be used for debugging purposes only.
+     *
+     * The content of the file will be the same as if it had been exported via the
+     * `exportArchive` function, except that some sensitive information (such as
+     * cryptographic keys and certificates) won't be included.
+     */
+    bool exportArchiveAsPlainText(const std::string& destinationPath,
+                                  std::string_view scheme = {},
+                                  const std::string& password = {});
     bool revokeDevice(const std::string& device,
                       std::string_view scheme = {},
                       const std::string& password = {});
