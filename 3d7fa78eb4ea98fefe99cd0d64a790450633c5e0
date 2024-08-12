@@ -22,6 +22,30 @@
       },
       "revId": "3d7fa78eb4ea98fefe99cd0d64a790450633c5e0",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0319dc93_44ca0249",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 816,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-08-12T19:55:48Z",
+      "side": 1,
+      "message": "The linked issue doesn\u0027t really apply here: the daemon logs are meant to help developers when debugging, they aren\u0027t shown to users in the UI and don\u0027t get translated.\n\nThat doesn\u0027t mean it wouldn\u0027t be good to make them more consistent, but this is a much lower priority than homogenizing the user-visible strings across the different clients, so I\u0027d encourage you not to spend time on this, at least for now.",
+      "parentUuid": "c23b6528_03b2fe0b",
+      "range": {
+        "startLine": 816,
+        "startChar": 25,
+        "endLine": 816,
+        "endChar": 45
+      },
+      "revId": "3d7fa78eb4ea98fefe99cd0d64a790450633c5e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
