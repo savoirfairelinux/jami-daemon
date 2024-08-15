@@ -2851,20 +2851,20 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         pimpl_->withConversation(conversationId, [&](auto& conv) { conv.shutdownConnections(); });
         return; // Keep the conversation in banned model but stop connections
     }
-    // Remove related conversation
+
+    // Removed contacts should not be linked to any conversation
+    pimpl_->accountManager_->updateContactConversation(uri, "");
+
+    // Remove all one-to-one conversations with the removed contact
     auto isSelf = uri == pimpl_->username_;
     std::vector<std::string> toRm;
-    auto updateClient = [&](const auto& convId) {
-        pimpl_->updateConvForContact(uri, convId, "");
-        emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
-    };
     auto removeConvInfo = [&](const auto& conv, const auto& members) {
         if ((isSelf && members.size() == 1)
             || (!isSelf && std::find(members.begin(), members.end(), uri) != members.end())) {
             // Mark the conversation as removed if it wasn't already
             if (!conv->info.isRemoved()) {
                 conv->info.removed = std::time(nullptr);
-                updateClient(conv->info.id);
+                emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, conv->info.id);
                 pimpl_->addConvInfo(conv->info);
                 return true;
             }
@@ -2892,8 +2892,6 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
             }
         }
     }
-    // Note, if we ban the device, we don't send the leave cause the other peer will just
-    // never got the notifications, so just erase the datas
     for (const auto& id : toRm)
         pimpl_->removeRepository(id, true, true);
 }
