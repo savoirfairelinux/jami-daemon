@@ -696,7 +696,7 @@ else()
         # Build nodejs binding
         add_custom_target(jamid
             ALL
-            COMMAND node-gyp rebuild --target=v18.19.1 --arch=x64
+            COMMAND node-gyp rebuild --target=v22.4.1 --arch=arm64
             DEPENDS
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/binding.gyp
             ${CMAKE_CURRENT_SOURCE_DIR}/bin/nodejs/callback.h
