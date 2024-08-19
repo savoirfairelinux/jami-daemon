@@ -186,8 +186,7 @@ public:
         conversationDataPath_ = fileutils::get_data_dir() / accountId_
                                 / "conversation_data" / conversationId;
         activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
-        for (const auto& c : repository_->convCommitsToMap(commits))
-            updateActiveCalls(c);
+        initActiveCalls(repository_->convCommitsToMap(commits));
         init(account);
     }
 
@@ -279,6 +278,54 @@ public:
             }
         }
         announce(repository_->convCommitsToMap(convcommits), commitFromSelf);
+    }
+
+    /**
+     * Initialize activeCalls_ from the list of commits in the repository
+     * @param commits in reverse chronological order (TODO: explain)
+     */
+    void initActiveCalls(const std::vector<std::map<std::string, std::string>>& commits) const
+    {
+        // URIs of members who we know cannot be the host of a currently active call
+        std::unordered_set<std::string> invalidHostUris;
+
+        // IDs of calls which (1) we know have ended or (2) have already be added to activeCalls_
+        std::unordered_set<std::string> invalidCallIds;
+
+        std::lock_guard lk(activeCallsMtx_);
+        for (const auto& commit : commits) {
+            if (commit.at("type") == "member") {
+                // TODO: explain
+                invalidHostUris.emplace(commit.at("uri"));
+            } else if (commit.find("confId") != commit.end() && commit.find("uri") != commit.end()
+                       && commit.find("device") != commit.end()) {
+                // TODO: explain
+                auto convId = repository_->id();
+                auto confId = commit.at("confId");
+                auto uri = commit.at("uri");
+                auto device = commit.at("device");
+
+                if (commit.find("duration") == commit.end()
+                    && invalidCallIds.find(confId) == invalidCallIds.end()
+                    && invalidHostUris.find(uri) == invalidHostUris.end()) {
+                    std::map<std::string, std::string> activeCall;
+                    activeCall["id"] = confId;
+                    activeCall["uri"] = uri;
+                    activeCall["device"] = device;
+                    activeCalls_.emplace_back(activeCall);
+                    fmt::print("swarm:{} new active call detected: {} (on device {}, account {})\n",
+                               convId,
+                               confId,
+                               device,
+                               uri);
+                }
+                invalidCallIds.emplace(confId);
+            }
+        }
+        saveActiveCalls();
+        emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
+                                                                     repository_->id(),
+                                                                     activeCalls_);
     }
 
     /**
