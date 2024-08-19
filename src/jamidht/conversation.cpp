@@ -186,8 +186,7 @@ public:
         conversationDataPath_ = fileutils::get_data_dir() / accountId_
                                 / "conversation_data" / conversationId;
         activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
-        for (const auto& c : repository_->convCommitsToMap(commits))
-            updateActiveCalls(c);
+        initActiveCalls(repository_->convCommitsToMap(commits));
         init(account);
     }
 
@@ -279,6 +278,62 @@ public:
             }
         }
         announce(repository_->convCommitsToMap(convcommits), commitFromSelf);
+    }
+
+    /**
+     * Initialize activeCalls_ from the list of commits in the repository
+     * @param commits Commits in reverse chronological order (i.e. from newest to oldest)
+     */
+    void initActiveCalls(const std::vector<std::map<std::string, std::string>>& commits) const
+    {
+        std::unordered_set<std::string> invalidHostUris;
+        std::unordered_set<std::string> invalidCallIds;
+
+        std::lock_guard lk(activeCallsMtx_);
+        for (const auto& commit : commits) {
+            if (commit.at("type") == "member") {
+                // Each commit of type "member" has an "action" field whose value can be one
+                // of the following: "add", "join", "remove", "ban", "unban"
+                // In the case of "remove" and "ban", we need to add the member's URI to
+                // invalidHostUris to ensure that any call they may have started in the past
+                // is no longer considered active.
+                // For the other actions, there's no harm in adding the member's URI anyway,
+                // since it's not possible to start hosting a call before joining the swarm (or
+                // before getting unbanned in the case of previously banned members).
+                invalidHostUris.emplace(commit.at("uri"));
+            } else if (commit.find("confId") != commit.end() && commit.find("uri") != commit.end()
+                       && commit.find("device") != commit.end()) {
+                // The commit indicates either the end or the beginning of a call
+                // (depending on whether there is a "duration" field or not).
+                auto convId = repository_->id();
+                auto confId = commit.at("confId");
+                auto uri = commit.at("uri");
+                auto device = commit.at("device");
+
+                if (commit.find("duration") == commit.end()
+                    && invalidCallIds.find(confId) == invalidCallIds.end()
+                    && invalidHostUris.find(uri) == invalidHostUris.end()) {
+                    std::map<std::string, std::string> activeCall;
+                    activeCall["id"] = confId;
+                    activeCall["uri"] = uri;
+                    activeCall["device"] = device;
+                    activeCalls_.emplace_back(activeCall);
+                    fmt::print("swarm:{} new active call detected: {} (on device {}, account {})\n",
+                               convId,
+                               confId,
+                               device,
+                               uri);
+                }
+                // Even if the call was active, we still add its ID to invalidCallIds to make sure it
+                // doesn't get added a second time. (This shouldn't happen normally, but in practice
+                // there are sometimes multiple commits indicating the beginning of the same call.)
+                invalidCallIds.emplace(confId);
+            }
+        }
+        saveActiveCalls();
+        emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
+                                                                     repository_->id(),
+                                                                     activeCalls_);
     }
 
     /**
