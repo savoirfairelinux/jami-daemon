@@ -92,6 +92,9 @@ ConversationRequest::ConversationRequest(const Json::Value& json)
     for (const auto& member : md.getMemberNames()) {
         metadatas.emplace(member, md[member].asString());
     }
+    if (metadatas.find("mode") == metadatas.end()) {
+        metadatas["mode"] = "0";
+    }
 }
 
 Json::Value
