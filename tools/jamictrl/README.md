@@ -7,13 +7,13 @@ These CLI tools can be useful on head-less servers like Raspberry Pis or for man
 
 Perform simple operations on a swarm from the CLI. 
 
-+ --get-all-accounts
-+ --get-registered-accounts
-+ --get-enabled-accounts
-+ --get-all-accounts-details
-+ --get-account-details
-+ --enable account
-+ --disable account
++ get-all-accounts
++ get-registered-accounts
++ get-enabled-accounts
++ get-all-accounts-details
++ get-account-details
++ enable account
++ disable account
 + and many more
 
 ## sendfile.py
@@ -51,6 +51,6 @@ For example, on Fedora 40 do this to install:
 
 To run:
 
-+ clone `jamictrl` directory to get access to the Python files, the CLI tools
++ clone or copy `jamictrl` directory to get access to the Python files, the CLI tools
 + make sure that the `jamid` daemon is running, see above
 + run any of these Python CLI tools like `python swarm.py`
