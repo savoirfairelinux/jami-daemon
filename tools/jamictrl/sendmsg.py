@@ -25,30 +25,15 @@ import signal
 import os.path
 
 class Controller(libjamiCtrl):
-    # https://git.jami.net/savoirfairelinux/jami-daemon/-/blob/master/bin/dbus/cx.ring.Ring.ConfigurationManager.xml?ref_type=heads
-    # dbus signature for "dataTransferEvent"
-    # codeis described here:
-    # https://git.jami.net/savoirfairelinux/jami-daemon/-/blob/master/src/jami/datatransfer_interface.h?ref_type=heads
-    # in particular code==6 means "finished"
-    def onDataTransferEvent(self, accountId, conversationId, interactionId, fileId, code):
-        datatransfereventcode_finished=6
-        if code != datatransfereventcode_finished:
-            print("transfer %s has not been finished. Code returned is %s. Look at "
-                "https://git.jami.net/savoirfairelinux/jami-daemon/-/blob/master/src/jami/datatransfer_interface.h?ref_type=heads"
-                " to find out about the meaning of the code %s." % (interactionId, code, code))
-            self.stopThread()
-        else:
-            print("Data transfer finished. onDataTransferEvent received: accountId %s, conversationId %s, "
-                "interactionId %s, fileId (id+tid) %s, code %s" % (accountId, conversationId, interactionId, fileId, code))
-            print("Stopping now.")
-            self.stopThread()
+    def onMessageSend(self, message):
+        print("Daemon log message is %s", message)
 
-parser = argparse.ArgumentParser(description="CLI to send a file to a jami (https://jami.net) conversation swarm. "
-    "Example: python sendfile.py --account 387ccae41bb25e23 --conversation 5fe3d677bdd76a874e261df3759c500219fe839a --filename book.pdf")
+parser = argparse.ArgumentParser(description="CLI to send a text message to a jami (https://jami.net) conversation swarm. "
+    "Example: python sendmsg.py --account 387ccae41bb25e23 --conversation 5fe3d677bdd76a874e261df3759c500219fe839a --message 'Hello world'")
 parser.add_argument('--account', help='Account to use', metavar='<account>', type=str)
 parser.add_argument('--conversation', help='Conversation identification related to used account', metavar='<conversation>', type=str, required=True)
-parser.add_argument('--filename', help='Pathname on file to send', metavar='<filename>', type=str, required=True)
-parser.add_argument('--displayname', help='Name displayed to peer', metavar='<displayname>', type=str)
+parser.add_argument('--message', help='Text to send', metavar='<message>', type=str, required=True)
+parser.add_argument('--parent', help='Parent', metavar='<parent>', type=str)
 
 args = parser.parse_args()
 ctrl = Controller(sys.argv[0], False)
@@ -69,11 +54,7 @@ if args.account not in ctrl.getAllEnabledAccounts():
 if args.conversation not in ctrl.listConversations(args.account):
     print(f"{args.conversation} is not a valid conversation")
     raise ValueError("not a valid conversation")
-if not args.displayname:
-    args.displayname = os.path.basename(args.filename)
+if not args.parent:
+    args.parent = ""
 
-tid = ctrl.sendFile(args.account, args.conversation, os.path.abspath(args.filename), args.displayname, "")
-
-signal.signal(signal.SIGINT, ctrl.interruptHandler)
-
-ctrl.run()
+ctrl.sendMessage(args.account, args.conversation, args.message, args.parent)
