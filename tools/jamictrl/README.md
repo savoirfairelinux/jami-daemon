@@ -1,4 +1,4 @@
-# jamictrl
+# jamictrl tools
 
 Here are some simple Python tools that can be used from the CLI, without any GUI and without installing any Jami front end. 
 These CLI tools can be useful on head-less servers like Raspberry Pis or for managing a Jami installation from the command line, or via SSH.
