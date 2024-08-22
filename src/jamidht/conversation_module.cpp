@@ -1918,6 +1918,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
     req.received = std::time(nullptr);
     req.metadatas = ConversationRepository::infosFromVCard(vCard::utils::toMap(
         std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size())));
+    req.metadatas["mode"] = "0";
     auto reqMap = req.toMap();
     if (pimpl_->addConversationRequest(conversationId, std::move(req))) {
         lk.unlock();
