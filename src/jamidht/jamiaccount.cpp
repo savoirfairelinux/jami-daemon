@@ -3078,7 +3078,8 @@ JamiAccount::sendMessage(const std::string& to,
     // We couldn't send the message directly, try connecting
     messageEngine_.onMessageSent(to, token, false, deviceId);
 
-    // get conversation id
+    // Get conversation id, which will be used by the iOS notification extension
+    // to load the conversation.
     auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
         Json::Value parsed;
         Json::CharReaderBuilder readerBuilder;
@@ -3086,7 +3087,7 @@ JamiAccount::sendMessage(const std::string& to,
         std::string errors;
 
         if (reader->parse(jsonData.c_str(), jsonData.c_str() + jsonData.size(), &parsed, &errors)) {
-            auto value = parsed.get("value", Json::nullValue);
+            auto value = parsed.get("id", Json::nullValue);
             if (value && value.isString()) {
                 return value.asString();
             }
