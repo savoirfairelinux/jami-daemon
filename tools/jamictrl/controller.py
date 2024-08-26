@@ -130,6 +130,8 @@ class libjamiCtrl(Thread):
             proxy_confmgr.connect_to_signal('conversationRequestReceived', self.onConversationRequestReceived)
             proxy_confmgr.connect_to_signal('conversationPreferencesUpdated', self.onConversationPreferencesUpdated)
             proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
+            # Signal triggered when a log is done in the daemon.
+            proxy_confmgr.connect_to_signal('messageSend', self.onMessageSend)
 
         except dbus.DBusException as e:
             raise libjamiCtrlDBusError("Unable to connect to jami DBus signals")
@@ -305,7 +307,7 @@ class libjamiCtrl(Thread):
         self.onConferenceCreated_cb()
         self.onConferenceCreated_callback(confId)
 
-    def onDataTransferEvent(self, transferId, code):
+    def onDataTransferEvent(self, account, conversationId, id, fileId, code):
         pass
 
     def onConversationReady(self, account, conversationId):
@@ -321,6 +323,9 @@ class libjamiCtrl(Thread):
         print(f'New message for {account} in conversation {conversationId} with id {message["id"]}')
         for key in message:
             print(f'\t {key}: {message[key]}')
+
+    def onMessageSend(self, message):
+        print(f'New message is logged by daemon: {message}')
 
     #
     # Account management
@@ -735,8 +740,8 @@ class libjamiCtrl(Thread):
         return self.configurationmanager.declineConversationRequest(account, conversationId)
 
     def sendMessage(self, account, conversationId, message, parent=''):
-        return self.configurationmanager.sendMessage(account, conversationId, message, parent)
-
+        return self.configurationmanager.sendMessage(account, conversationId, message, parent, 0)
+    
     def removeConversation(self, account, conversationId):
         return self.configurationmanager.removeConversation(account, conversationId)
 

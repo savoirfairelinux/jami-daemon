@@ -25,7 +25,7 @@ import signal
 import os.path
 import threading
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="CLI to perform simple operations on jami (https://jami.net) conversation swarms.")
 parser.add_argument('--account', help='Account to use', metavar='<account>', type=str)
 
 args = parser.parse_args()
@@ -36,15 +36,22 @@ if not args.account:
         details = ctrl.getAccountDetails(account)
         if details['Account.type'] == 'RING':
             args.account = account
+            print(f"{args.account} will be used as account")
             break
     if not args.account:
-        raise ValueError("no valid account")
+        print(f"No account found")
+        raise ValueError("no valid account found")
+if args.account not in ctrl.getAllEnabledAccounts():
+    print(f"{args.account} is not a valid account")
+    raise ValueError("not a valid account")
 
 def run_controller():
     ctrl.run()
 
 if __name__ == "__main__":
     ctrlThread = threading.Thread(target=run_controller, args=(), daemon=True)
+    print("Starting thread")
+    print("Account is ", args.account)
     ctrlThread.start()
     while True:
         print("""Swarm options:
@@ -59,7 +66,17 @@ if __name__ == "__main__":
 8. Send message
 9. Remove conversation
         """)
-        opt = int(input("> "))
+        try:
+            entry=input("> ")
+            if entry.lower() == "q":
+                break
+            opt = int(entry)
+        except KeyboardInterrupt:
+            print("Control C received ...")
+            break
+        except:
+            print("Not a number, try again, or 'q' to quit ...")
+            continue
         if opt == 0:
             ctrl.startConversation(args.account)
         elif opt == 1:
@@ -94,4 +111,4 @@ if __name__ == "__main__":
             ctrl.removeConversation(args.account, conversationId)
         else:
             print('Not implemented yet')
-    ctrlThread.join()
+    # ctrlThread.join()
