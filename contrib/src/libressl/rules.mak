@@ -33,6 +33,9 @@ $(TARBALLS)/$(LIBRESSL_VERSION).tar.gz:
 
 libressl: $(LIBRESSL_VERSION).tar.gz
 	$(UNPACK)
+ifdef HAVE_IOS
+	$(APPLY) $(SRC)/libressl/ios-add-byte-order-macros.patch
+endif
 	$(MOVE)
 
 LIBRESSL_CONF := \
@@ -48,6 +51,10 @@ endif
 
 ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
 LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=arm -DENABLE_ASM=Off -DCMAKE_C_FLAGS='-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard'
+endif
+
+ifdef HAVE_IOS
+LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DENABLE_ASM=Off
 endif
 
 .libressl: libressl .sum-libressl
