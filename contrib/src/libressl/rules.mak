@@ -57,6 +57,12 @@ ifdef HAVE_IOS
 LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DENABLE_ASM=Off
 endif
 
+ifdef HAVE_MACOSX
+ifeq ($(ARCH),arm64)
+LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DENABLE_ASM=Off
+endif
+endif
+
 .libressl: libressl .sum-libressl
 	mkdir -p "$(PREFIX)/include"
 ifdef HAVE_WIN32
