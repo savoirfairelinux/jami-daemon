@@ -1,8 +1,3 @@
- upnp/src/genlib/net/http/httpreadwrite.c |  89 +++++++++++++++-------------------------
- upnp/src/genlib/net/sock.c               | 103 ++++++++++++++++++----------------------------
- upnp/src/ssdp/ssdp_ctrlpt.c              | 155 +++++++++++++++++++++++++--------------------------------------------
- 3 files changed, 129 insertions(+), 218 deletions(-)
-
 diff --git a/upnp/src/genlib/net/http/httpreadwrite.c b/upnp/src/genlib/net/http/httpreadwrite.c
 index 27e9c3a5..69eb0a1f 100644
 --- a/upnp/src/genlib/net/http/httpreadwrite.c
@@ -12,9 +7,9 @@ index 27e9c3a5..69eb0a1f 100644
  #include <stdarg.h>
  #include <string.h>
 +#include <poll.h>
-
+ 
  #include "posix_overwrites.h"
-
+ 
 @@ -97,61 +98,39 @@ const int CHUNK_TAIL_SIZE = 10;
   *
   * \return 0 if successful, else -1.
@@ -109,7 +104,7 @@ index 27e9c3a5..69eb0a1f 100644
 +    return 0;
  }
  #endif /* UPNP_ENABLE_BLOCKING_TCP_CONNECTIONS */
-
+ 
 diff --git a/upnp/src/genlib/net/sock.c b/upnp/src/genlib/net/sock.c
 index 396c692a..b8a980f0 100644
 --- a/upnp/src/genlib/net/sock.c
@@ -119,7 +114,7 @@ index 396c692a..b8a980f0 100644
  #include <string.h>
  #include <time.h>
 +#include <poll.h>
-
+ 
  #ifdef UPNP_ENABLE_OPEN_SSL
  	#include <openssl/ssl.h>
 @@ -156,85 +157,59 @@ int sock_destroy(SOCKINFO *info, int ShutdownMethod)
@@ -247,29 +242,37 @@ index 396c692a..b8a980f0 100644
  				if (info->ssl) {
  					num_written = SSL_write(info->ssl,
 diff --git a/upnp/src/ssdp/ssdp_ctrlpt.c b/upnp/src/ssdp/ssdp_ctrlpt.c
-index 8644c746..050b4916 100644
+index 8644c746..714c5b14 100644
 --- a/upnp/src/ssdp/ssdp_ctrlpt.c
 +++ b/upnp/src/ssdp/ssdp_ctrlpt.c
 @@ -40,6 +40,7 @@
  #include "config.h"
-
+ 
  #include "upnputil.h"
 +#include <poll.h>
-
+ 
  #ifdef INCLUDE_CLIENT_APIS
  	#if EXCLUDE_SSDP == 0
-@@ -597,6 +598,7 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
+@@ -588,7 +589,6 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
+ 		#ifdef UPNP_ENABLE_IPV6
+ 	struct sockaddr_in6 *destAddr6 = (struct sockaddr_in6 *)&__ss_v6;
+ 		#endif
+-	fd_set wrSet;
+ 	SsdpSearchArg *newArg = NULL;
+ 	SsdpSearchExpArg *expArg = NULL;
+ 	int timeTillRead = 0;
+@@ -597,6 +597,7 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
  	struct in_addr addrv4;
  	SOCKET max_fd = 0;
  	int retVal;
-+	int numCopies = 0;
-
++	int numCopies;
+ 
  	/*ThreadData *ThData; */
  	ThreadPoolJob job;
-@@ -674,105 +676,60 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
+@@ -674,105 +675,56 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
  	HandleUnlock();
  	/* End of lock */
-
+ 
 -	FD_ZERO(&wrSet);
 -	if (gSsdpReqSocket4 != INVALID_SOCKET) {
 -		setsockopt(gSsdpReqSocket4,
@@ -397,28 +400,24 @@ index 8644c746..050b4916 100644
 +        return UPNP_E_INTERNAL_ERROR;
 +    }
 +#ifdef UPNP_ENABLE_IPV6
-+    if (gSsdpReqSocket6 != INVALID_SOCKET && FD_ISSET(gSsdpReqSocket6, &wrSet)) {
-+        while (numCopies < NUM_SSDP_COPY) {
++    if (gSsdpReqSocket6 != INVALID_SOCKET && (fds[nfds - 1].revents & POLLOUT)) {
++        for (numCopies = 0; numCopies < NUM_SSDP_COPY; numCopies++) {
 +            UpnpPrintf(UPNP_INFO, SSDP, __FILE__, __LINE__, ">>> SSDP SEND M-SEARCH >>>\n%s\n", ReqBufv6UlaGua);
 +            sendto(gSsdpReqSocket6, ReqBufv6UlaGua, (int)strlen(ReqBufv6UlaGua), 0, (struct sockaddr *)&__ss_v6, sizeof(struct sockaddr_in6));
-+            numCopies++;
 +            imillisleep(SSDP_PAUSE);
 +        }
-+        numCopies = 0;
 +        inet_pton(AF_INET6, SSDP_IPV6_LINKLOCAL, &destAddr6->sin6_addr);
-+        while (numCopies < NUM_SSDP_COPY) {
++        for (numCopies = 0; numCopies < NUM_SSDP_COPY; numCopies++) {
 +            UpnpPrintf(UPNP_INFO, SSDP, __FILE__, __LINE__, ">>> SSDP SEND M-SEARCH >>>\n%s\n", ReqBufv6);
 +            sendto(gSsdpReqSocket6, ReqBufv6, (int)strlen(ReqBufv6), 0, (struct sockaddr *)&__ss_v6, sizeof(struct sockaddr_in6));
-+            numCopies++;
 +            imillisleep(SSDP_PAUSE);
 +        }
 +    }
 +#endif /* IPv6 */
-+    if (gSsdpReqSocket4 != INVALID_SOCKET && FD_ISSET(gSsdpReqSocket4, &wrSet)) {
-+        while (numCopies < NUM_SSDP_COPY) {
++    if (gSsdpReqSocket4 != INVALID_SOCKET && (fds[0].revents & POLLOUT)) {
++        for (numCopies = 0; numCopies < NUM_SSDP_COPY; numCopies++) {
 +            UpnpPrintf(UPNP_INFO, SSDP, __FILE__, __LINE__, ">>> SSDP SEND M-SEARCH >>>\n%s\n", ReqBufv4);
 +            sendto(gSsdpReqSocket4, ReqBufv4, (int)strlen(ReqBufv4), 0, (struct sockaddr *)&__ss_v4, sizeof(struct sockaddr_in));
-+            numCopies++;
 +            imillisleep(SSDP_PAUSE);
 +        }
 +    }
