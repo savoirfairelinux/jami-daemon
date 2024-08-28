@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5fa90d0f_0aa4c002",
+        "filename": "contrib/src/upnp/poll.patch",
+        "patchSetId": 4
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2024-08-28T17:15:24Z",
+      "side": 1,
+      "message": "under which circumstances is this compiled/used? i.e. how did this compile previously?",
+      "range": {
+        "startLine": 261,
+        "startChar": 0,
+        "endLine": 268,
+        "endChar": 23
+      },
+      "revId": "00144f596c2a8fe55491aa3562c5b884c3d70795",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
