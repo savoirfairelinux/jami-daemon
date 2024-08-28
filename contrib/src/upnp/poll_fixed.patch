@@ -1,3 +1,8 @@
+ upnp/src/genlib/net/http/httpreadwrite.c |  89 +++++++-----------
+ upnp/src/genlib/net/sock.c               | 103 ++++++++-------------
+ upnp/src/ssdp/ssdp_ctrlpt.c              | 152 +++++++++++--------------------
+ 3 files changed, 125 insertions(+), 219 deletions(-)
+
 diff --git a/upnp/src/genlib/net/http/httpreadwrite.c b/upnp/src/genlib/net/http/httpreadwrite.c
 index 27e9c3a5..69eb0a1f 100644
 --- a/upnp/src/genlib/net/http/httpreadwrite.c
@@ -242,7 +247,7 @@ index 396c692a..b8a980f0 100644
  				if (info->ssl) {
  					num_written = SSL_write(info->ssl,
 diff --git a/upnp/src/ssdp/ssdp_ctrlpt.c b/upnp/src/ssdp/ssdp_ctrlpt.c
-index 8644c746..14c1f976 100644
+index 8644c746..714c5b14 100644
 --- a/upnp/src/ssdp/ssdp_ctrlpt.c
 +++ b/upnp/src/ssdp/ssdp_ctrlpt.c
 @@ -40,6 +40,7 @@
@@ -253,15 +258,23 @@ index 8644c746..14c1f976 100644
  
  #ifdef INCLUDE_CLIENT_APIS
  	#if EXCLUDE_SSDP == 0
-@@ -597,6 +598,7 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
+@@ -588,7 +589,6 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
+ 		#ifdef UPNP_ENABLE_IPV6
+ 	struct sockaddr_in6 *destAddr6 = (struct sockaddr_in6 *)&__ss_v6;
+ 		#endif
+-	fd_set wrSet;
+ 	SsdpSearchArg *newArg = NULL;
+ 	SsdpSearchExpArg *expArg = NULL;
+ 	int timeTillRead = 0;
+@@ -597,6 +597,7 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
  	struct in_addr addrv4;
  	SOCKET max_fd = 0;
  	int retVal;
-+	int numCopies = 0;
++	int numCopies;
  
  	/*ThreadData *ThData; */
  	ThreadPoolJob job;
-@@ -674,105 +676,56 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
+@@ -674,105 +675,56 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
  	HandleUnlock();
  	/* End of lock */
  
