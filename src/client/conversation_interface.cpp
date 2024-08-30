@@ -295,6 +295,7 @@ void
 reloadConversationsAndRequests(const std::string& accountId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        acc->reloadContacts();
         if (auto convModule = acc->convModule(true)) {
             convModule->reloadRequests();
             convModule->loadConversations();
