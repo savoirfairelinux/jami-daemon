@@ -30,6 +30,7 @@ Persistent<Function> mediaChangeRequestedCb;
 Persistent<Function> incomingMessageCb;
 Persistent<Function> incomingCallCb;
 Persistent<Function> incomingCallWithMediaCb;
+Persistent<Function> dataTransferEventCb;
 Persistent<Function> conversationLoadedCb;
 Persistent<Function> swarmLoadedCb;
 Persistent<Function> messagesFoundCb;
@@ -102,6 +103,8 @@ getPresistentCb(std::string_view signal)
         return &incomingCallCb;
     else if (signal == "IncomingCallWithMedia")
         return &incomingCallWithMediaCb;
+    else if (signal == "DataTransferEvent")
+        return &dataTransferEventCb;
     else if (signal == "ConversationLoaded")
         return &conversationLoadedCb;
     else if (signal == "SwarmLoaded")
@@ -664,6 +667,30 @@ incomingCallWithMedia(const std::string& accountId,
         }
     });
 
+    uv_async_send(&signalAsync);
+}
+
+/** Data Transfer */
+
+void
+dataTransferEvent(const std::string& accountId,
+                  const std::string& conversationId,
+                  const std::string& interactionId,
+                  const std::string& fileId,
+                  int eventCode)
+{
+    std::lock_guard<std::mutex> lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, conversationId, interactionId, fileId, eventCode]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), dataTransferEventCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(conversationId),
+                                            V8_STRING_NEW_LOCAL(interactionId),
+                                            V8_STRING_NEW_LOCAL(fileId),
+                                            SWIGV8_INTEGER_NEW(eventCode)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 5, callback_args);
+        }
+    });
     uv_async_send(&signalAsync);
 }
 
