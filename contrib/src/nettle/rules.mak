@@ -1,6 +1,6 @@
 # Nettle
 
-NETTLE_VERSION := nettle_3.9.1_release_20230601
+NETTLE_VERSION := nettle_3.9.1
 PKG_CPE += cpe:2.3:a:nettle_project:nettle:3.9.1:*:*:*:*:*:*:*
 NETTLE_URL := https://ftp.gnu.org/gnu/nettle/nettle-$(NETTLE_VERSION).tar.gz
 PKGS += nettle
