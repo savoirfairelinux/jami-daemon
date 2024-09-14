@@ -313,7 +313,7 @@ SipTransportBroker::getUdpTransport(const dhtnet::IpAddr& ipAddress)
 std::shared_ptr<SipTransport>
 SipTransportBroker::createUdpTransport(const dhtnet::IpAddr& ipAddress)
 {
-    RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
+    RETURN_IF_FAIL(ipAddress, nullptr, "Unable to determine IP address for this transport");
 
     pjsip_udp_transport_cfg pj_cfg;
     pjsip_udp_transport_cfg_default(&pj_cfg, ipAddress.getFamily());
@@ -337,7 +337,7 @@ std::shared_ptr<TlsListener>
 SipTransportBroker::getTlsListener(const dhtnet::IpAddr& ipAddress, const pjsip_tls_setting* settings)
 {
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
-    RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
+    RETURN_IF_FAIL(ipAddress, nullptr, "Unable to determine IP address for this transport");
     JAMI_DEBUG("Creating TLS listener on {:s}...", ipAddress.toString(true));
 #if 0
     JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
@@ -387,7 +387,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
                                                         &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        JAMI_ERR("Could not get new TLS transport: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERR("Unable to get new TLS transport: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
     }
     auto ret = std::make_shared<SipTransport>(transport, l);

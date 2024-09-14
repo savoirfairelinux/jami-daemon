@@ -441,11 +441,11 @@ public:
                       std::size_t end = 0);
 
     /**
-     * Reset fetched informations
+     * Reset fetched information
      */
     void clearFetched();
     /**
-     * Store informations about who fetch or not. This simplify sync (sync when a device without the
+     * Store information about who fetch or not. This simplify sync (sync when a device without the
      * last fetch is detected)
      * @param deviceId
      * @param commitId

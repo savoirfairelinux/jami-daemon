@@ -267,7 +267,7 @@ VideoV4l2Size::readFrameRates(int fd, unsigned int pixel_format)
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
         addRate(fallback_rate);
-        JAMI_ERR("could not query frame interval for size");
+        JAMI_ERR("Unable to query frame interval for size");
         return;
     }
 
@@ -343,7 +343,7 @@ VideoV4l2Channel::readSizes(int fd, unsigned int pixelformat)
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (ioctl(fd, VIDIOC_G_FMT, &fmt) < 0)
-            throw std::runtime_error("Could not get format");
+            throw std::runtime_error("Unable to get format");
 
         VideoV4l2Size size(fmt.fmt.pix.width, fmt.fmt.pix.height);
         size.readFrameRates(fd, fmt.fmt.pix.pixelformat);
@@ -415,7 +415,7 @@ VideoV4l2Channel::readFormats(int fd)
     }
 
     if (fmt_index == 0)
-        throw std::runtime_error("Could not enumerate formats");
+        throw std::runtime_error("Unable to enumerate formats");
 
     putCIFFirst();
 }
@@ -448,17 +448,17 @@ VideoDeviceImpl::VideoDeviceImpl(const string& id, const std::string& path)
     }
     int fd = open(path.c_str(), O_RDWR);
     if (fd == -1)
-        throw std::runtime_error("could not open device");
+        throw std::runtime_error("Unable to open device");
 
     v4l2_capability cap;
     if (ioctl(fd, VIDIOC_QUERYCAP, &cap))
-        throw std::runtime_error("could not query capabilities");
+        throw std::runtime_error("Unable to query capabilities");
 
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
-        throw std::runtime_error("not a capture device");
+        throw std::runtime_error("Not a capture device");
 
     if (cap.capabilities & V4L2_CAP_TOUCH)
-        throw std::runtime_error("touch device, ignoring it");
+        throw std::runtime_error("Touch device, ignoring it");
 
     name = string(reinterpret_cast<const char*>(cap.card));
 

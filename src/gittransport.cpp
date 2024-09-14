@@ -183,7 +183,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
     if (action == GIT_SERVICE_UPLOADPACK_LS) {
         auto gitSocket = jami::Manager::instance().gitSocket(accountId, deviceId, conversationId);
         if (!gitSocket) {
-            JAMI_ERROR("Can't find related socket for {:s}, {:s}, {:s}",
+            JAMI_ERROR("Unable to find related socket for {:s}, {:s}, {:s}",
                        accountId,
                        deviceId,
                        conversationId);

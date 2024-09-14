@@ -239,7 +239,7 @@ ShmHolder::renderFrame(const VideoFrame& src) noexcept
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
-        JAMI_ERR("[ShmHolder:%s] Could not resize area size: %dx%d, format: %d",
+        JAMI_ERR("[ShmHolder:%s] Unable to resize area size: %dx%d, format: %d",
                  openedName_.c_str(),
                  width,
                  height,

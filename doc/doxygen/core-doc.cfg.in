@@ -137,7 +137,7 @@ INLINE_INHERITED_MEMB  = NO
 
 # If the FULL_PATH_NAMES tag is set to YES, doxygen will prepend the full path
 # before files name in the file list and in the header files. If set to NO the
-# shortest path that makes the file name unique will be used
+# shortest path that makes the filename unique will be used
 # The default value is: YES.
 
 FULL_PATH_NAMES        = NO
@@ -164,7 +164,7 @@ STRIP_FROM_PATH        =
 STRIP_FROM_INC_PATH    =
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter (but
-# less readable) file names. This can be useful is your file systems doesn't
+# less readable) filenames. This can be useful is your file systems doesn't
 # support long names like on DOS, Mac, or CD-ROM.
 # The default value is: NO.
 
@@ -501,7 +501,7 @@ INTERNAL_DOCS          = NO
 # If the CASE_SENSE_NAMES tag is set to NO then doxygen will only generate file
 # names in lower-case letters. If set to YES, upper-case letters are also
 # allowed. This is useful if you have classes or files whose names only differ
-# in case and if your file system supports case sensitive file names. Windows
+# in case and if your file system supports case sensitive filenames. Windows
 # and Mac users are advised to set this option to NO.
 # The default value is: system dependent.
 
@@ -677,7 +677,7 @@ FILE_VERSION_FILTER    =
 # by doxygen. The layout file controls the global structure of the generated
 # output files in an output format independent way. To create the layout file
 # that represents doxygen's defaults, run doxygen with the -l option. You can
-# optionally specify a file name after the option, if omitted DoxygenLayout.xml
+# optionally specify a filename after the option, if omitted DoxygenLayout.xml
 # will be used as the name of the layout file.
 #
 # Note that if you run doxygen from a directory containing a file called
@@ -766,7 +766,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 
 # The INPUT tag is used to specify the files and/or directories that contain
-# documented source files. You may enter file names like myfile.cpp or
+# documented source files. You may enter filenames like myfile.cpp or
 # directories like /usr/src/myproject. Separate the files or directories with
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
@@ -889,11 +889,11 @@ IMAGE_PATH             =
 INPUT_FILTER           =
 
 # The FILTER_PATTERNS tag can be used to specify filters on a per file pattern
-# basis. Doxygen will compare the file name with each pattern and apply the
+# basis. Doxygen will compare the filename with each pattern and apply the
 # filter if there is a match. The filters are a list of the form: pattern=filter
 # (like *.cpp=my_cpp_filter). See INPUT_FILTER for further information on how
 # filters are used. If the FILTER_PATTERNS tag is empty or if none of the
-# patterns match the file name, INPUT_FILTER is applied.
+# patterns match the filename, INPUT_FILTER is applied.
 #
 # Note that for custom extensions or not directly supported extensions you also
 # need to set EXTENSION_MAPPING for the extension otherwise the files are not
@@ -1137,7 +1137,7 @@ HTML_EXTRA_STYLESHEET  =
 # other source files which should be copied to the HTML output directory. Note
 # that these files will be copied to the base HTML output directory. Use the
 # $relpath^ marker in the HTML_HEADER and/or HTML_FOOTER files to load these
-# files. In the HTML_STYLESHEET file, use the file name only. Also note that the
+# files. In the HTML_STYLESHEET file, use the filename only. Also note that the
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
@@ -1265,7 +1265,7 @@ DOCSET_PUBLISHER_NAME  = Publisher
 
 GENERATE_HTMLHELP      = NO
 
-# The CHM_FILE tag can be used to specify the file name of the resulting .chm
+# The CHM_FILE tag can be used to specify the filename of the resulting .chm
 # file. You can add a path in front of the file if the result should not be
 # written to the html output directory.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
@@ -1273,7 +1273,7 @@ GENERATE_HTMLHELP      = NO
 CHM_FILE               =
 
 # The HHC_LOCATION tag can be used to specify the location (absolute path
-# including file name) of the HTML help compiler (hhc.exe). If non-empty,
+# including filename) of the HTML help compiler (hhc.exe). If non-empty,
 # doxygen will try to run the HTML help compiler on the generated index.hhp.
 # The file has to be specified with full path.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
@@ -1318,7 +1318,7 @@ TOC_EXPAND             = NO
 GENERATE_QHP           = NO
 
 # If the QHG_LOCATION tag is specified, the QCH_FILE tag can be used to specify
-# the file name of the resulting .qch file. The path specified is relative to
+# the filename of the resulting .qch file. The path specified is relative to
 # the HTML output folder.
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
@@ -2078,7 +2078,7 @@ SKIP_FUNCTION_MACROS   = YES
 
 TAGFILES               =
 
-# When a file name is specified after GENERATE_TAGFILE, doxygen will create a
+# When a filename is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 

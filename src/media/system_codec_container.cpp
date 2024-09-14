@@ -218,7 +218,7 @@ SystemCodecContainer::setActiveH265()
         JAMI_WARN("Found a usable accelerated H265/HEVC codec: %s, enabling.", apiName.c_str());
         return true;
     } else {
-        JAMI_ERR("Can't find a usable accelerated H265/HEVC codec, disabling.");
+        JAMI_ERR("Unable to find a usable accelerated H265/HEVC codec, disabling.");
         removeCodecByName("H265");
     }
     return false;

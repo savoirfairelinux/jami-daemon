@@ -167,7 +167,7 @@ MediaEncoder::openOutput(const std::string& filename, const std::string& format)
                                                 format.empty() ? nullptr : format.c_str(),
                                                 filename.c_str());
     if (result < 0)
-        JAMI_ERR() << "Cannot open " << filename << ": " << libav_utils::getError(-result);
+        JAMI_ERR() << "Unable to open " << filename << ": " << libav_utils::getError(-result);
 }
 
 int
@@ -228,12 +228,12 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     std::lock_guard lk(encMutex_);
 
     if (!outputCtx_)
-        throw MediaEncoderException("Cannot allocate stream");
+        throw MediaEncoderException("Unable to allocate stream");
 
     // Must already have codec instance(s)
     if (outputCtx_->nb_streams == 0) {
-        JAMI_ERR("[%p] Can not init, output context has no coding sessions!", this);
-        throw MediaEncoderException("Can not init, output context has no coding sessions!");
+        JAMI_ERR("[%p] Unable to init, output context has no coding sessions!", this);
+        throw MediaEncoderException("Unable to init, output context has no coding sessions!");
     }
 
     AVCodecContext* encoderCtx = nullptr;
@@ -261,10 +261,10 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     }
 
     if (stream == nullptr) {
-        JAMI_ERR("[%p] Can not init, output context has no coding sessions for %s",
+        JAMI_ERR("[%p] Unable to init, output context has no coding sessions for %s",
                  this,
                  systemCodecInfo.name.c_str());
-        throw MediaEncoderException("Cannot allocate stream");
+        throw MediaEncoderException("Unable to allocate stream");
     }
 
     currentStreamIdx_ = stream->index;
@@ -328,7 +328,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         readConfig(encoderCtx);
         encoders_.emplace_back(encoderCtx);
         if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
-            throw MediaEncoderException("Could not open encoder");
+            throw MediaEncoderException("Unable to open encoder");
     }
 
     avcodec_parameters_from_context(stream->codecpar, encoderCtx);
@@ -352,7 +352,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
         if (scaledFrameBufferSize_ < 0)
             throw MediaEncoderException(
-                ("Could not compute buffer size: " + libav_utils::getError(scaledFrameBufferSize_))
+                ("Unable to compute buffer size: " + libav_utils::getError(scaledFrameBufferSize_))
                     .c_str());
         else if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");
@@ -382,7 +382,7 @@ MediaEncoder::openIOContext()
         if (!(outputCtx_->oformat->flags & AVFMT_NOFILE)) {
             fileIO_ = true;
             if ((ret = avio_open(&outputCtx_->pb, filename, AVIO_FLAG_WRITE)) < 0) {
-                throw MediaEncoderException(fmt::format("Could not open IO context for '{}': {}", filename, libav_utils::getError(ret)));
+                throw MediaEncoderException(fmt::format("Unable to open IO context for '{}': {}", filename, libav_utils::getError(ret)));
             }
         }
     }
@@ -394,7 +394,7 @@ MediaEncoder::startIO()
     if (!outputCtx_->pb)
         openIOContext();
     if (avformat_write_header(outputCtx_, options_ ? &options_ : nullptr)) {
-        JAMI_ERR("Could not write header for output file... check codec parameters");
+        JAMI_ERR("Unable to write header for output file... check codec parameters");
         throw MediaEncoderException("Failed to write output file header");
     }
 
@@ -562,7 +562,7 @@ MediaEncoder::flush()
     int ret = 0;
     for (size_t i = 0; i < outputCtx_->nb_streams; ++i) {
         if (encode(nullptr, i) < 0) {
-            JAMI_ERR() << "Could not flush stream #" << i;
+            JAMI_ERR() << "Unable to flush stream #" << i;
             ret |= 1u << i; // provide a way for caller to know which streams failed
         }
     }
@@ -879,7 +879,7 @@ MediaEncoder::setBitrate(uint64_t br)
         // stopEncoder();
         // encoderCtx = initCodec(codecType, codecId, br);
         // if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
-        //     throw MediaEncoderException("Could not open encoder");
+        //     throw MediaEncoderException("Unable to open encoder");
     }
     initAccel(encoderCtx, br);
     return 1; // OK

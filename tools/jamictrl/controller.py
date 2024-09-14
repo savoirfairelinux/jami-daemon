@@ -540,12 +540,12 @@ class libjamiCtrl(Thread):
         return [str(x) for x in self.callmanager.getConferenceList()]
 
     def getCallDetails(self, callid):
-        """Return informations on this call if exists"""
+        """Return information on this call if exists"""
 
         return self.callmanager.getCallDetails(callid)
 
     def getConferenceDetails(self, confid):
-        """Return informations on this conference if exists"""
+        """Return information on this conference if exists"""
 
         return self.callmanager.getConferenceDetails(confid)
 
@@ -572,7 +572,7 @@ class libjamiCtrl(Thread):
             self.setFirstRegisteredAccount()
 
         if self.account != "IP2IP" and not self.isAccountRegistered():
-            raise libjamiCtrlAccountError("Can't place a call without a registered account")
+            raise libjamiCtrlAccountError("Unable to place a call without a registered account")
 
         # Send the request to the CallManager
         callid = self.callmanager.placeCall(self.account, dest)
@@ -622,7 +622,7 @@ class libjamiCtrl(Thread):
             self.setFirstRegisteredAccount()
 
         if not self.isAccountRegistered():
-            raise libjamiCtrlAccountError("Can't accept a call without a registered account")
+            raise libjamiCtrlAccountError("Unable to accept a call without a registered account")
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")

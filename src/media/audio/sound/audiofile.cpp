@@ -41,7 +41,7 @@ void
 AudioFile::onBufferFinish()
 {
     if (buffer_->sample_rate == 0) {
-        JAMI_ERR("Error cannot update playback slider, sampling rate is 0");
+        JAMI_ERR("Error unable to update playback slider, sampling rate is 0");
         return;
     }
 
@@ -75,7 +75,7 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate, AVSam
     dev.name = fileName;
 
     if (decoder->openInput(dev) < 0)
-        throw AudioFileException("File could not be opened: " + fileName);
+        throw AudioFileException("Unable to open file: " + fileName);
 
     if (decoder->setupAudio() < 0)
         throw AudioFileException("Decoder setup failed: " + fileName);

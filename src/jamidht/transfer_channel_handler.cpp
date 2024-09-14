@@ -124,7 +124,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 try {
                     lastModified = jami::to_int<uint64_t>(keyVal[1]);
                 } catch (const std::exception& e) {
-                    JAMI_WARNING("TransferChannel: can't parse modified date: {}: {}",
+                    JAMI_WARNING("TransferChannel: Unable to parse modified date: {}: {}",
                                  keyVal[1], e.what());
                 }
             }

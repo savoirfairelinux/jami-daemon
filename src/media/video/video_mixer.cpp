@@ -67,7 +67,7 @@ struct VideoMixer::VideoMixerSource
         return render_frame;
     }
 
-    // Current render informations
+    // Current render information
     int x {};
     int y {};
     int w {};
