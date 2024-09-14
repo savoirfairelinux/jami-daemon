@@ -101,7 +101,7 @@ VideoDeviceImpl::setup()
                                   IID_ICaptureGraphBuilder2,
                                   (void**) &cInterface->captureGraph_);
     if (FAILED(hr))
-        return fail("Could not create the Filter Graph Manager");
+        return fail("Unable to create the Filter Graph Manager");
 
     hr = CoCreateInstance(CLSID_FilterGraph,
                           nullptr,
@@ -109,11 +109,11 @@ VideoDeviceImpl::setup()
                           IID_IGraphBuilder,
                           (void**) &cInterface->graph_);
     if (FAILED(hr))
-        return fail("Could not add the graph builder!");
+        return fail("Unable to add the graph builder!");
 
     hr = cInterface->captureGraph_->SetFiltergraph(cInterface->graph_);
     if (FAILED(hr))
-        return fail("Could not set filtergraph.");
+        return fail("Unable to set filtergraph.");
 
     ICreateDevEnum* pDevEnum;
     hr = CoCreateInstance(CLSID_SystemDeviceEnum,
@@ -195,7 +195,7 @@ VideoDeviceImpl::setup()
         if (SUCCEEDED(hr))
             hr = cInterface->graph_->AddFilter(cInterface->videoInputFilter_, var.bstrVal);
         else {
-            fail("Could not add filter to video device.");
+            fail("Unable to add filter to video device.");
         }
         hr = cInterface->captureGraph_->FindInterface(&PIN_CATEGORY_PREVIEW,
                                                       &MEDIATYPE_Video,
@@ -209,7 +209,7 @@ VideoDeviceImpl::setup()
                                                           IID_IAMStreamConfig,
                                                           (void**) &cInterface->streamConf_);
             if (FAILED(hr)) {
-                fail("Couldn't config the stream!");
+                fail("Unable to config the stream!");
             }
         }
 
@@ -222,7 +222,7 @@ VideoDeviceImpl::setup()
     pMoniker->Release();
 
     if (FAILED(hr) || cInterface->streamConf_ == NULL) {
-        fail("Could not find the video device.");
+        fail("Unable to find the video device.");
     }
 
     int piCount;
@@ -314,7 +314,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
             ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame
                 = (FrameRate(1e7) / params.framerate).real();
             if (FAILED(cInterface->streamConf_->SetFormat(pmt))) {
-                JAMI_ERR("Could not set settings.");
+                JAMI_ERR("Unable to set settings.");
             }
         }
     }

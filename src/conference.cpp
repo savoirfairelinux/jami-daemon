@@ -130,7 +130,7 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                         // TODO: this is a first version, we assume that the peer is not
                         // a master of a conference and there is only one remote
                         // In the future, we should retrieve confInfo from the call
-                        // To merge layouts informations
+                        // To merge layout information
                         isModeratorMuted = shared->isMuted(streamId);
                         if (auto videoMixer = shared->videoMixer_)
                             active = videoMixer->verifyActive(streamId);
@@ -1128,7 +1128,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %s", peerId.c_str());
+            JAMI_WARN("Unable to parse conference order from %s", peerId.c_str());
             return;
         }
 
@@ -1532,7 +1532,7 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
         // Else, it may be a remote host
         auto remoteHost = findHostforRemoteParticipant(accountUri, deviceId);
         if (remoteHost.empty()) {
-            JAMI_WARN("Can't hangup %s, peer not found", accountUri.c_str());
+            JAMI_WARN("Unable to hangup %s, peer not found", accountUri.c_str());
             return;
         }
         if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
@@ -1567,24 +1567,24 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
     } else if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
         if (not isVideoEnabled()) {
-            JAMI_ERR("Cant't mute, the video is disabled!");
+            JAMI_ERR("Unable to stop camera, the camera is disabled!");
             return;
         }
 
         if (is_muted == isMediaSourceMuted(MediaType::MEDIA_VIDEO)) {
-            JAMI_DEBUG("Local video source already in [{:s}] state",
-                       is_muted ? "muted" : "un-muted");
+            JAMI_DEBUG("Local camera source already in [{:s}] state",
+                       is_muted ? "stopped" : "started");
             return;
         }
         setLocalHostMuteState(MediaType::MEDIA_VIDEO, is_muted);
         if (is_muted) {
             if (auto mixer = videoMixer_) {
-                JAMI_DBG("Muting local video sources");
+                JAMI_DBG("Stopping local camera sources");
                 mixer->stopInputs();
             }
         } else {
             if (auto mixer = videoMixer_) {
-                JAMI_DBG("Un-muting local video sources");
+                JAMI_DBG("Starting local camera sources");
                 std::vector<std::string> videoInputs;
                 for (const auto& source : hostSources_) {
                     if (source.type_ == MediaType::MEDIA_VIDEO)
@@ -1617,7 +1617,7 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
                 remoteFrameHeight = recv->getHeight();
                 remoteFrameWidth = recv->getWidth();
                 // NOTE: this may be not the behavior we want, but this is only called
-                // when we receive conferences informations from a call, so the peer is
+                // when we receive conferences information from a call, so the peer is
                 // mixing the video and send only one stream, so we can break here
                 break;
             }

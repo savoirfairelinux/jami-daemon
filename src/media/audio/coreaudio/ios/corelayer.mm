@@ -137,7 +137,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
     auto comp = AudioComponentFindNext(nullptr, &outputUnitDescription);
     if (comp == nullptr) {
-        JAMI_ERR("Can't find default output audio component.");
+        JAMI_ERR("Unable to find default output audio component.");
         return false;
     }
 

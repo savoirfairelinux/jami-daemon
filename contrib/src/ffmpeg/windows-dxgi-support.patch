@@ -276,7 +276,7 @@ index 0000000000..9774e72ab1
 +            } catch (...) {}
 +            if (!s->hwnd) {
 +                av_log(s1, AV_LOG_ERROR,
-+                       "Can't find window from handle '%s', aborting.\n", handle.c_str());
++                       "Unable to find window from handle '%s', aborting.\n", handle.c_str());
 +                return AVERROR_EXTERNAL;
 +            }
 +        }

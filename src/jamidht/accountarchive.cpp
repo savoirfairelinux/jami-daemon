@@ -94,13 +94,13 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat, const std::vector<u
                     config[key] = itr->asString();
                 }
             } catch (const std::exception& ex) {
-                JAMI_ERR("Can't parse JSON entry with value of type %d: %s",
+                JAMI_ERR("Unable to parse JSON entry with value of type %d: %s",
                          (unsigned) itr->type(),
                          ex.what());
             }
         }
     } catch (const std::exception& ex) {
-        JAMI_ERR("Can't parse JSON: %s", ex.what());
+        JAMI_ERR("Unable to parse JSON: %s", ex.what());
     }
 
     if (not id.first) {

@@ -218,7 +218,7 @@ public:
                                                       uint32_t linum=CURRENT_LINE());
 
     /**
-     * Stop the scheduler, can't be reversed
+     * Stop the scheduler, it is unable to be reversed
      */
     void stop();
 

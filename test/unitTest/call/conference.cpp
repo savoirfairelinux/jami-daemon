@@ -327,7 +327,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
     confChanged = false;
     Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
     // ConfChanged is the signal emitted when the 2 calls will be added to the conference
-    // Also, wait that participants appears in conf info to get all good informations
+    // Also, wait for participants to appear in conf info to get all good information
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return !confId.empty() && confChanged && !carlaCall.device.empty()
                && !bobCall.device.empty();

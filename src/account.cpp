@@ -64,7 +64,7 @@ using namespace std::literals;
 
 namespace jami {
 
-// For portability, do not specify the absolute file name of the ringtone.
+// For portability, do not specify the absolute filename of the ringtone.
 // Instead, specify its base name to be looked in
 // JAMI_DATADIR/ringtones/, where JAMI_DATADIR is a preprocessor macro denoting
 // the data directory prefix that must be set at build time.

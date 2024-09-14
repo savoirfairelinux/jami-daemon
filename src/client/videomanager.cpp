@@ -144,13 +144,13 @@ AudioFrame::mix(const AudioFrame& frame)
     auto& fIn = *frame.pointer();
     if (f.ch_layout.nb_channels != fIn.ch_layout.nb_channels || f.format != fIn.format
         || f.sample_rate != fIn.sample_rate) {
-        throw std::invalid_argument("Can't mix frames with different formats");
+        throw std::invalid_argument("Unable to mix frames with different formats");
     }
     if (f.nb_samples == 0) {
         reserve(fIn.nb_samples);
         jami::libav_utils::fillWithSilence(&f);
     } else if (f.nb_samples != fIn.nb_samples) {
-        throw std::invalid_argument("Can't mix frames with different length");
+        throw std::invalid_argument("Unable to mix frames with different length");
     }
     AVSampleFormat fmt = (AVSampleFormat) f.format;
     bool isPlanar = av_sample_fmt_is_planar(fmt);
@@ -365,7 +365,7 @@ getNewFrame(std::string_view id)
 {
     if (auto input = jami::Manager::instance().getVideoManager().getVideoInput(id))
         return &input->getNewFrame();
-    JAMI_WARN("getNewFrame: can't find input %.*s", (int) id.size(), id.data());
+    JAMI_WARN("getNewFrame: Unable to find input %.*s", (int) id.size(), id.data());
     return nullptr;
 }
 
@@ -374,7 +374,7 @@ publishFrame(std::string_view id)
 {
     if (auto input = jami::Manager::instance().getVideoManager().getVideoInput(id))
         return input->publishFrame();
-    JAMI_WARN("publishFrame: can't find input %.*s", (int) id.size(), id.data());
+    JAMI_WARN("publishFrame: Unable to find input %.*s", (int) id.size(), id.data());
 }
 
 void
@@ -509,7 +509,7 @@ stopLocalRecorder(const std::string& filepath)
 {
     jami::LocalRecorder* rec = jami::LocalRecorderManager::instance().getRecorderByPath(filepath);
     if (!rec) {
-        JAMI_WARN("Can't stop non existing local recorder.");
+        JAMI_WARN("Unable to stop non existing local recorder.");
         return;
     }
 

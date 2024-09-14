@@ -84,7 +84,7 @@ public:
     void setAccountManager(std::shared_ptr<AccountManager> accountManager);
 
     /**
-     * Refresh informations about conversations
+     * Refresh information about conversations
      */
     void loadConversations();
 

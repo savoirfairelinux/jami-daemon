@@ -119,7 +119,7 @@ struct MediaStream
                 break;
             }
         } else {
-            JAMI_WARN() << "Trying to get stream info from null codec context";
+            JAMI_WARN() << "Attempting to get stream info from null codec context";
         }
     }
 

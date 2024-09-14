@@ -69,7 +69,7 @@ ContactList::setCertificateStatus(const std::string& cert_id,
                                   const dhtnet::tls::TrustStore::PermissionStatus status)
 {
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
-        JAMI_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
+        JAMI_DBG("Unable to set certificate status for existing contacts %s", cert_id.c_str());
         return false;
     }
     return trust_->setCertificateStatus(cert_id, status);
@@ -162,7 +162,7 @@ ContactList::getContactDetails(const dht::InfoHash& h) const
 {
     const auto c = contacts_.find(h);
     if (c == std::end(contacts_)) {
-        JAMI_WARN("[Contacts] contact '%s' not found", h.to_c_str());
+        JAMI_WARN("[Contacts] Contact '%s' not found", h.to_c_str());
         return {};
     }
 
@@ -200,11 +200,11 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact, bool
     bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
-        // JAMI_DBG("[Contacts] new contact: %s", id.toString().c_str());
+        // JAMI_DBG("[Contacts] New contact: %s", id.toString().c_str());
         c = contacts_.emplace(id, contact).first;
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
-        // JAMI_DBG("[Contacts] updated contact: %s", id.toString().c_str());
+        // JAMI_DBG("[Contacts] Updated contact: %s", id.toString().c_str());
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
@@ -238,7 +238,7 @@ ContactList::loadContacts()
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(contacts);
     } catch (const std::exception& e) {
-        JAMI_WARN("[Contacts] error loading contacts: %s", e.what());
+        JAMI_WARN("[Contacts] Error loading contacts: %s", e.what());
         return;
     }
 
@@ -275,7 +275,7 @@ ContactList::loadTrustRequests()
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(requests);
     } catch (const std::exception& e) {
-        JAMI_WARN("[Contacts] error loading trust requests: %s", e.what());
+        JAMI_WARN("[Contacts] Error loading trust requests: %s", e.what());
         return;
     }
 
@@ -437,9 +437,9 @@ ContactList::loadKnownDevices()
         for (const auto& d : knownDevices) {
             if (auto crt = jami::Manager::instance().certStore(accountId_).getCertificate(d.first.toString())) {
                 if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
-                    JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
+                    JAMI_WARN("[Contacts] Unable to add device %s", d.first.toString().c_str());
             } else {
-                JAMI_WARN("[Contacts] can't find certificate for device %s",
+                JAMI_WARN("[Contacts] Unable to find certificate for device %s",
                           d.first.toString().c_str());
             }
         }
@@ -455,11 +455,11 @@ ContactList::loadKnownDevices()
                     if (not foundAccountDevice(crt,
                                                d.second.first,
                                                clock::from_time_t(d.second.second)))
-                        JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
+                        JAMI_WARN("[Contacts] Unable to add device %s", d.first.toString().c_str());
                 }
             }
         } catch (const std::exception& e) {
-            JAMI_WARN("[Contacts] error loading devices: %s", e.what());
+            JAMI_WARN("[Contacts] Error loading devices: %s", e.what());
         }
         return;
     }
@@ -492,7 +492,7 @@ ContactList::foundAccountDevice(const dht::PkId& device,
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            JAMI_DBG("[Contacts] updating device name: %s %s",
+            JAMI_DBG("[Contacts] Updating device name: %s %s",
                      name.c_str(),
                      device.toString().c_str());
             it.first->second.name = name;
@@ -538,7 +538,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            JAMI_DBG("[Contacts] updating device name: %s %s", name.c_str(), id.to_c_str());
+            JAMI_DBG("[Contacts] Updating device name: %s %s", name.c_str(), id.to_c_str());
             it.first->second.name = name;
             saveKnownDevices();
             callbacks_.devicesChanged(knownDevices_);
@@ -629,11 +629,11 @@ ContactList::syncDevice(const dht::PkId& device, const time_point& syncDate)
 {
     auto it = knownDevices_.find(device);
     if (it == knownDevices_.end()) {
-        JAMI_WARN("[Contacts] dropping sync data from unknown device");
+        JAMI_WARN("[Contacts] Dropping sync data from unknown device");
         return false;
     }
     if (it->second.last_sync >= syncDate) {
-        JAMI_DBG("[Contacts] dropping outdated sync data");
+        JAMI_DBG("[Contacts] Dropping outdated sync data");
         return false;
     }
     it->second.last_sync = syncDate;
