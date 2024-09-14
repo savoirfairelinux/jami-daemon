@@ -96,7 +96,7 @@ VideoDeviceImpl::selectFormat()
         JAMI_DBG("Video: picked format %s", fmt_->name.c_str());
     } else {
         fmt_ = &ios_formats[0];
-        JAMI_ERR("Video: Could not find a known format to use");
+        JAMI_ERR("Video: Unable to find a known format to use");
     }
 }
 

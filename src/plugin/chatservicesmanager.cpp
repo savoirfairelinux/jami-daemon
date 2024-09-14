@@ -68,7 +68,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
                                                   uintptr_t handlerId) {
                                                   return (handlerId == id);
                                               });
-                // If ChatHandler we're trying to destroy is currently in use, we deactivate it.
+                // If ChatHandler is attempting to destroy one which is currently in use, we deactivate it.
                 if (handlerId != toggledList.second.end()) {
                     (*handlerIt)->detach(chatSubjects_[toggledList.first]);
                     toggledList.second.erase(handlerId);

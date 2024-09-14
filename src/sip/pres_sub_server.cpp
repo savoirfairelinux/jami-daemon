@@ -52,7 +52,7 @@ PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub* sub, UNUSED pjsip_eve
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        JAMI_ERR("Could not find account IP2IP");
+        JAMI_ERR("Unable to find account IP2IP");
         return;
     }
 
@@ -125,7 +125,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data* rdata)
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        JAMI_ERR("Could not find account IP2IP");
+        JAMI_ERR("Unable to find account IP2IP");
         return PJ_FALSE;
     }
 

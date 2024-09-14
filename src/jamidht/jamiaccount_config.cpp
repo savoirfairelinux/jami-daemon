@@ -116,7 +116,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
         auto receipt_sig = node[Conf::RING_ACCOUNT_RECEIPT_SIG].as<YAML::Binary>();
         receiptSignature = {receipt_sig.data(), receipt_sig.data() + receipt_sig.size()};
     } catch (const std::exception& e) {
-        JAMI_WARN("can't read receipt: %s", e.what());
+        JAMI_WARN("Unable to read receipt: %s", e.what());
     }
 
     parseValueOptional(node, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery);

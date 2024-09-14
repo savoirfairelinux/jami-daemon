@@ -64,7 +64,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
 
         // make sure pointer is valid
         if (!ptr) {
-            JAMI_ERR("trying to register a webview handler with invalid pointer!");
+            JAMI_ERR("Attempting to register a webview handler with invalid pointer!");
             return -1;
         }
 
@@ -85,7 +85,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
 
         // make sure pointer is valid
         if (!ptr) {
-            JAMI_ERR("trying to unregister a webview handler with invalid pointer!");
+            JAMI_ERR("Attempting to unregister a webview handler with invalid pointer!");
             return false;
         }
 

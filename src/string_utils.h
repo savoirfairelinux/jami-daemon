@@ -76,9 +76,9 @@ to_int(std::string_view str)
     if (ec == std::errc())
         return result;
     if (ec == std::errc::invalid_argument)
-        throw std::invalid_argument("Can't parse integer: invalid_argument");
+        throw std::invalid_argument("Unable to parse integer: invalid_argument");
     else if (ec == std::errc::result_out_of_range)
-        throw std::out_of_range("Can't parse integer: out of range");
+        throw std::out_of_range("Unable to parse integer: out of range");
     throw std::system_error(std::make_error_code(ec));
 }
 

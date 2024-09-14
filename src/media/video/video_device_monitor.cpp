@@ -150,7 +150,7 @@ VideoDeviceMonitor::setDeviceOrientation(const std::string& id, int angle)
     if (itd != devices_.cend()) {
         itd->setOrientation(angle);
     } else {
-        JAMI_WARN("Can't find device %s to set orientation %d", id.c_str(), angle);
+        JAMI_WARN("Unable to find device %s to set orientation %d", id.c_str(), angle);
     }
 }
 

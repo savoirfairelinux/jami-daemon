@@ -552,7 +552,7 @@ public:
     void reloadContacts();
 
     /**
-     * Make sure appdata/contacts.yml contains correct informations
+     * Make sure appdata/contacts.yml contains correct information
      * @param removedConv   The current removed conversations
      */
     void unlinkConversations(const std::set<std::string>& removedConv);
@@ -780,7 +780,7 @@ private:
     {
         std::shared_ptr<SipTransport> transport;
         // Needs to keep track of that channel to access underlying ICE
-        // informations, as the SipTransport use a generic transport
+        // information, as the SipTransport use a generic transport
         std::shared_ptr<dhtnet::ChannelSocket> channel;
     };
     // NOTE: here we use a vector to avoid race conditions. In fact the contact

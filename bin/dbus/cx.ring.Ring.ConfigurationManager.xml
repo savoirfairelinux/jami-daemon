@@ -212,8 +212,8 @@
                    Status code: 0 for success
                     <ul>
                         <li>SUCCESS = 0         everything went fine. PIN is set.</li>
-                        <li>WRONG_PASSWORD = 1  wrong password provided.</li>
-                        <li>NETWORK_ERROR = 2   can't publish archive on the network.</li>
+                        <li>WRONG_PASSWORD = 1  incorrect password provided.</li>
+                        <li>NETWORK_ERROR = 2   unable to publish archive on the network.</li>
                     </ul>
                 </tp:docstring>
             </arg>
@@ -256,7 +256,7 @@
                    Status code: 0 for success
                     <ul>
                         <li>SUCCESS = 0         everything went fine. Device is now revoked.</li>
-                        <li>WRONG_PASSWORD = 1  revocation failed: wrong password.</li>
+                        <li>WRONG_PASSWORD = 1  revocation failed: incorrect password.</li>
                         <li>UNKNOWN_DEVICE = 2  revocation failed: unknown device.</li>
                     </ul>
                 </tp:docstring>
@@ -417,7 +417,7 @@
                    Status code: 0 for success
                     <ul>
                         <li>SUCCESS = 0         everything went fine. Name is now registered.</li>
-                        <li>WRONG_PASSWORD = 1  registration failed: wrong password.</li>
+                        <li>WRONG_PASSWORD = 1  registration failed: incorrect password.</li>
                         <li>INVALID_NAME = 2    registration failed: invalid name.</li>
                         <li>ALREADY_TAKEN = 3   registration failed: name is already taken.</li>
                         <li>NETWORK_ERROR = 4   registration failed: network or server error.</li>

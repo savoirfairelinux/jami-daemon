@@ -261,7 +261,7 @@ endif
 FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
 
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
-download = $(error Trying to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
+download = $(error Attempting to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
 download = $(FLOCK_PREFIX) wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
@@ -351,7 +351,7 @@ HOSTVARS := $(HOSTTOOLS) \
 # $3: The git refspec to checkout.
 # $4: Set to anything to preserve the .git directory
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
-download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
+download_git = $(error Attempting to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
 download_git = $(FLOCK_PREFIX) sh -c "\
   rm -Rf '$(@:.tar.xz=)' && \

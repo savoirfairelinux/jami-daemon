@@ -128,7 +128,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
                                                              == (uintptr_t) handlerIt->get()
                                                          && handlerIdPair.second;
                                               });
-                // If MediaHandler we're trying to destroy is currently in use, we deactivate it.
+                // If MediaHandler is attempting to destroy one which is currently in use, we deactivate it.
                 if (handlerId != toggledList.second.end())
                     toggleCallMediaHandler((*handlerId).first, toggledList.first, false);
             }

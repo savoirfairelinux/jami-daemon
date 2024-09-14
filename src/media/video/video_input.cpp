@@ -265,7 +265,7 @@ VideoInput::configureFilePlayback(const std::string&,
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
-        JAMI_WARN("Could not determine pixel format, using default");
+        JAMI_WARN("Unable to determine pixel format, using default");
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
 
@@ -319,7 +319,7 @@ VideoInput::createDecoder()
         int ret = decoder->openInput(decOpts_);
         ready = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
-            JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
+            JAMI_ERR("Unable to open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
             foundDecOpts(decOpts_);
             return;
         } else if (-ret == EBUSY) {
@@ -358,7 +358,7 @@ VideoInput::createDecoder()
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
-        JAMI_WARN("Could not determine pixel format, using default");
+        JAMI_WARN("Unable to determine pixel format, using default");
         decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
     }
 
@@ -461,20 +461,20 @@ VideoInput::initLinuxGrab(const std::string& display)
         int fd = std::stoi(display.substr(fdPos));
         if (pid != getpid()) {
 #ifdef SYS_pidfd_getfd
-            // We can't directly use a file descriptor that was opened in a different
+            // We are unable to directly use a file descriptor that was opened in a different
             // process, so we try to duplicate it in the current process.
             int pidfd = syscall(SYS_pidfd_open, pid, 0);
             if (pidfd < 0) {
-                JAMI_ERROR("Can't duplicate PipeWire fd: call to pidfd_open failed (errno = {})", errno);
+                JAMI_ERROR("Unable to duplicate PipeWire fd: call to pidfd_open failed (errno = {})", errno);
                 return false;
             }
             fd = syscall(SYS_pidfd_getfd, pidfd, fd, 0);
             if (fd < 0) {
-                JAMI_ERROR("Can't duplicate PipeWire fd: call to pidfd_getfd failed (errno = {})", errno);
+                JAMI_ERROR("Unable to duplicate PipeWire fd: call to pidfd_getfd failed (errno = {})", errno);
                 return false;
             }
 #else
-            JAMI_ERROR("Can't duplicate PipeWire fd: pidfd_getfd syscall not available");
+            JAMI_ERROR("Unable to duplicate PipeWire fd: pidfd_getfd syscall not available");
             return false;
 #endif
         }
@@ -601,8 +601,8 @@ VideoInput::initFile(std::string path)
     }
 
     // check if file has video, fall back to default device if none
-    // FIXME the way this is done is hackish, but it can't be done in createDecoder because that
-    // would break the promise returned in switchInput
+    // FIXME the way this is done is hackish, but it is unable to be done in createDecoder
+    // because that would break the promise returned in switchInput
     DeviceParams p;
     p.input = path;
     p.name = path;
