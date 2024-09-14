@@ -85,7 +85,7 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
 
     onChange_ = std::move(onChange);
     const std::string url = managerHostname_ + PATH_DEVICE;
-    JAMI_WARN("[Auth] authentication with: %s to %s",
+    JAMI_WARN("[Auth] Authentication with: %s to %s",
               ctx->credentials->username.c_str(),
               url.c_str());
 
@@ -107,7 +107,7 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                             response.status_code, response.body);
                 auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
                 if (response.status_code == 0 || this_ == nullptr)
-                    ctx->onFailure(AuthError::SERVER_ERROR, "Can't connect to server");
+                    ctx->onFailure(AuthError::SERVER_ERROR, "Unable to connect to server");
                 else if (response.status_code >= 400 && response.status_code < 500)
                     ctx->onFailure(AuthError::INVALID_ARGUMENTS, "Invalid credentials provided!");
                 else if (response.status_code < 200 || response.status_code > 299)
@@ -120,7 +120,7 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                                 json["certificateChain"].asString());
                             auto accountCert = cert->issuer;
                             if (not accountCert) {
-                                JAMI_ERR("[Auth] Can't parse certificate: no issuer");
+                                JAMI_ERR("[Auth] Unable to parse certificate: no issuer");
                                 ctx->onFailure(AuthError::SERVER_ERROR,
                                                 "Invalid certificate from server");
                                 break;
@@ -134,10 +134,10 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                                                         receipt.data() + receipt.size(),
                                                         &receiptJson,
                                                         &err)) {
-                                JAMI_ERR("[Auth] Can't parse receipt from server: %s",
+                                JAMI_ERR("[Auth] Unable to parse receipt from server: %s",
                                             err.c_str());
                                 ctx->onFailure(AuthError::SERVER_ERROR,
-                                                "Can't parse receipt from server");
+                                                "Unable to parse receipt from server");
                                 break;
                             }
                             auto receiptSignature = base64::decode(
@@ -166,7 +166,7 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                                                 info->devicePk->getId().toString());
                             if (not info->announce) {
                                 ctx->onFailure(AuthError::SERVER_ERROR,
-                                                "Can't parse announce from server");
+                                                "Unable to parse announce from server");
                                 return;
                             }
                             info->username = ctx->credentials->username;
@@ -239,7 +239,7 @@ ServerAccountManager::authenticateDevice()
         authFailed(TokenScope::Device, 0);
     }
     const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
-    JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
+    JAMI_WARN("[Auth] Getting a device token: %s", url.c_str());
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
@@ -258,7 +258,7 @@ void
 ServerAccountManager::authenticateAccount(const std::string& username, const std::string& password)
 {
     const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
-    JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
+    JAMI_WARN("[Auth] Getting a device token: %s", url.c_str());
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
@@ -395,7 +395,7 @@ ServerAccountManager::syncDevices()
     const std::string urlConversations = managerHostname_ + PATH_CONVERSATIONS;
     const std::string urlConversationsRequests = managerHostname_ + PATH_CONVERSATIONS_REQUESTS;
 
-    JAMI_WARNING("[Auth] sync conversations {}", urlConversations);
+    JAMI_WARNING("[Auth] Sync conversations {}", urlConversations);
     Json::Value jsonConversations(Json::arrayValue);
     for (const auto& [key, convInfo] : ConversationModule::convInfos(accountId_)) {
         jsonConversations.append(convInfo.toJson());
@@ -413,7 +413,7 @@ ServerAccountManager::syncDevices()
                 try {
                     JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
                         SyncMsg convs;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
@@ -437,7 +437,7 @@ ServerAccountManager::syncDevices()
         },
         logger_));
 
-    JAMI_WARNING("[Auth] sync conversations requests {}", urlConversationsRequests);
+    JAMI_WARNING("[Auth] Sync conversations requests {}", urlConversationsRequests);
     Json::Value jsonConversationsRequests(Json::arrayValue);
     for (const auto& [key, convRequest] : ConversationModule::convRequests(accountId_)) {
         auto jsonConversation = convRequest.toJson();
@@ -456,7 +456,7 @@ ServerAccountManager::syncDevices()
                 try {
                     JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
                         SyncMsg convReqs;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
@@ -500,7 +500,7 @@ ServerAccountManager::syncDevices()
                 try {
                     JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
@@ -532,7 +532,7 @@ ServerAccountManager::syncDevices()
                 try {
                     JAMI_WARNING("[Auth] Got server response: {}", response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Auth] Can't parse server response: not an array");
+                        JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
@@ -560,7 +560,7 @@ ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
 {
     auto syncBlueprintCallback = std::make_shared<SyncBlueprintCallback>(onSuccess);
     const std::string urlBlueprints = managerHostname_ + PATH_BLUEPRINT;
-    JAMI_DEBUG("[Auth] synchronize blueprint configuration {}", urlBlueprints);
+    JAMI_DEBUG("[Auth] Synchronize blueprint configuration {}", urlBlueprints);
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlBlueprints,

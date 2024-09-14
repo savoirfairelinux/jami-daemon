@@ -280,11 +280,11 @@ MediaRecorder::addStream(const MediaStream& ms)
 {
     std::lock_guard lk(mutexStreamSetup_);
     if (audioOnly_ && ms.isVideo) {
-        JAMI_ERR() << "Trying to add video stream to audio only recording";
+        JAMI_ERR() << "Attempting to add video stream to audio only recording";
         return nullptr;
     }
     if (ms.format < 0 || ms.name.empty()) {
-        JAMI_ERR() << "Trying to add invalid stream to recording";
+        JAMI_ERR() << "Attempting to add invalid stream to recording";
         return nullptr;
     }
 
@@ -523,7 +523,7 @@ MediaRecorder::setupVideoOutput()
     int streams = peer.isValid() + local.isValid() + mixer.isValid();
     switch (streams) {
     case 0: {
-        JAMI_WARN() << "Trying to record a video stream but none is valid";
+        JAMI_WARN() << "Attempting to record a video stream but none is valid";
         return;
     }
     case 1: {
@@ -535,7 +535,7 @@ MediaRecorder::setupVideoOutput()
         else if (mixer.isValid())
             inputStream = mixer;
         else {
-            JAMI_ERR("Trying to record a stream but none is valid");
+            JAMI_ERR("Attempting to record a stream but none is valid");
             break;
         }
 
@@ -634,7 +634,7 @@ MediaRecorder::setupAudioOutput()
     int ret = -1;
 
     if (streams_.empty()) {
-        JAMI_WARN() << "Trying to record a audio stream but none is valid";
+        JAMI_WARN() << "Attempting to record a audio stream but none is valid";
         return;
     }
 

@@ -434,7 +434,7 @@ public:
 
     /**
      * A Call can be in a conference. If this is the case, the other side
-     * will send conference informations describing the rendered image
+     * will send conference information describing the rendered image
      * @msg     A JSON object describing the conference
      */
     void setConferenceInfo(const std::string& msg);

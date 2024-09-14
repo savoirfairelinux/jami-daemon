@@ -649,7 +649,7 @@ public:
     void playDtmf(char code);
 
     /**
-     * Handle played sound when a call can not be conpleted because of a busy recipient
+     * Handle played sound when a call is unable to be completed because of a busy recipient
      */
     void callBusy(Call& call);
 

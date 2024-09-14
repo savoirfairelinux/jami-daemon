@@ -261,13 +261,13 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     // Retrieve current HEAD
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
-        JAMI_ERR("Cannot get reference for HEAD");
+        JAMI_ERR("Unable to get reference for HEAD");
         return {};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo, &commit_id) < 0) {
-        JAMI_ERR("Could not look up HEAD commit");
+        JAMI_ERR("Unable to look up HEAD commit");
         return {};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
@@ -275,7 +275,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     // Retrieve current index
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERR("Could not open repository index");
+        JAMI_ERR("Unable to open repository index");
         return {};
     }
     GitIndex index {index_ptr, git_index_free};
@@ -288,7 +288,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
 
     git_tree* tree_ptr = nullptr;
     if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
-        JAMI_ERR("Could not look up initial tree");
+        JAMI_ERR("Unable to look up initial tree");
         return {};
     }
     GitTree tree = {tree_ptr, git_tree_free};
@@ -310,7 +310,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
                                  1,
                                  &head_ref[0])
         < 0) {
-        JAMI_ERR("Could not create commit buffer");
+        JAMI_ERR("Unable to create commit buffer");
         return {};
     }
 
@@ -324,7 +324,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
                                          signed_str.c_str(),
                                          "signature")
         < 0) {
-        JAMI_ERR("Could not sign commit");
+        JAMI_ERR("Unable to sign commit");
         return {};
     }
 
@@ -336,7 +336,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         std::string branch_name = "refs/heads/" + branch;
         if (git_reference_create(&ref_ptr, repo, branch_name.c_str(), &commit_id, true, nullptr)
             < 0) {
-            JAMI_WARN("Could not move commit to main");
+            JAMI_WARN("Unable to move commit to main");
         }
         git_reference_free(ref_ptr);
     }

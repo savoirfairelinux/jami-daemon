@@ -27,7 +27,7 @@
 namespace jami {
 
 /**
- * Manages channels for syncing informations
+ * Manages channels for syncing information
  */
 class SyncChannelHandler : public ChannelHandlerInterface
 {

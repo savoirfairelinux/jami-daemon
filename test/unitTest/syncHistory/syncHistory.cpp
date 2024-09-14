@@ -586,7 +586,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.deviceAnnounced; }));
 
-    // This will trigger a conversation request. Cause alice2 can't know first conversation
+    // This will trigger a conversation request. Cause alice2 is unable to know of first conversation
     libjami::sendMessage(bobId, convId, std::string("hi"), "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.requestReceived; }));
 

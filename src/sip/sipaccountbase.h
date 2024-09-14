@@ -164,7 +164,7 @@ public:
 
     /**
      * Socket port generators for media
-     * Note: given ports are application wide, a port cannot be given again
+     * Note: given ports are application wide, a port is unable to be given again
      * by any account instances until it's released by the static method
      * releasePort().
      */

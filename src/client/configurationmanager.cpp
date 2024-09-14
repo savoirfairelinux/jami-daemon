@@ -537,13 +537,13 @@ setCodecDetails(const std::string& accountId,
 {
     auto acc = jami::Manager::instance().getAccount(accountId);
     if (!acc) {
-        JAMI_ERR("Could not find account %s. can not set codec details", accountId.c_str());
+        JAMI_ERR("Unable to find account %s. Unable to set codec details", accountId.c_str());
         return false;
     }
 
     auto codec = acc->searchCodecById(codecId, jami::MEDIA_ALL);
     if (!codec) {
-        JAMI_ERR("can not find codec %d", codecId);
+        JAMI_ERR("Unable to find codec %d", codecId);
         return false;
     }
     try {
@@ -570,7 +570,7 @@ setCodecDetails(const std::string& accountId,
             }
         }
     } catch (const std::exception& e) {
-        JAMI_ERR("Cannot set codec specifications: %s", e.what());
+        JAMI_ERR("Unable to set codec specifications: %s", e.what());
     }
 
     return false;
@@ -581,7 +581,7 @@ getCodecDetails(const std::string& accountId, const unsigned& codecId)
 {
     auto acc = jami::Manager::instance().getAccount(accountId);
     if (!acc) {
-        JAMI_ERR("Could not find account %s return default codec details", accountId.c_str());
+        JAMI_ERR("Unable to find account %s return default codec details", accountId.c_str());
         return jami::Account::getDefaultCodecDetails(codecId);
     }
 
@@ -608,7 +608,7 @@ getActiveCodecList(const std::string& accountId)
 {
     if (auto acc = jami::Manager::instance().getAccount(accountId))
         return acc->getActiveCodecs();
-    JAMI_ERR("Could not find account %s, returning default", accountId.c_str());
+    JAMI_ERR("Unable to find account %s, returning default", accountId.c_str());
     return jami::Account::getDefaultCodecsId();
 }
 
@@ -619,7 +619,7 @@ setActiveCodecList(const std::string& accountId, const std::vector<unsigned>& li
         acc->setActiveCodecs(list);
         jami::Manager::instance().saveConfig(acc);
     } else {
-        JAMI_ERR("Could not find account %s", accountId.c_str());
+        JAMI_ERR("Unable to find account %s", accountId.c_str());
     }
 }
 
@@ -981,7 +981,7 @@ setCredentials(const std::string& accountId,
 void
 connectivityChanged()
 {
-    JAMI_WARN("received connectivity changed - trying to re-connect enabled accounts");
+    JAMI_WARN("received connectivity changed - attempting to re-connect enabled accounts");
 
     // reset the UPnP context
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)

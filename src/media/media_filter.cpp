@@ -180,7 +180,7 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
 
         int flags = AV_BUFFERSRC_FLAG_KEEP_REF;
         if ((ret = av_buffersrc_add_frame_flags(inputs_[i], frame, flags)) < 0)
-            return fail("Could not pass frame to filters", ret);
+            return fail("Unable to pass frame to filters", ret);
         else
             return 0;
     }
@@ -255,7 +255,7 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
 
     if ((ret = avfilter_link(out->filter_ctx, out->pad_idx, buffersinkCtx, 0)) < 0) {
         avfilter_free(buffersinkCtx);
-        return fail("Could not link buffer sink to graph", ret);
+        return fail("Unable to link buffer sink to graph", ret);
     }
 
     output_ = buffersinkCtx;

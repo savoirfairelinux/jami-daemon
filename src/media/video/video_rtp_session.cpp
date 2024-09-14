@@ -161,7 +161,7 @@ VideoRtpSession::startSender()
                     return;
                 }
             } else {
-                JAMI_WARN("Can't lock video input");
+                JAMI_WARN("Unable to lock video input");
                 return;
             }
 

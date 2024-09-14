@@ -109,7 +109,7 @@ AudioSender::setVoiceCallback(std::function<void(bool)> cb)
     if (cb) {
         voiceCallback_ = std::move(cb);
     } else {
-        JAMI_ERR("AudioSender trying to set invalid voice callback");
+        JAMI_ERR("AudioSender attempting to set invalid voice callback");
     }
 }
 

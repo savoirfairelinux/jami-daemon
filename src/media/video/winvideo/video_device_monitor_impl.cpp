@@ -239,7 +239,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
                                   IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
-        JAMI_ERR() << "Can't enumerate webcams";
+        JAMI_ERR() << "Unable to enumerate webcams";
         return {};
     }
 

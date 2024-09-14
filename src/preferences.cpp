@@ -334,7 +334,7 @@ AudioPreference::createAudioLayer()
         try {
             return new PulseLayer(*this);
         } catch (const std::runtime_error& e) {
-            JAMI_WARN("Could not create pulseaudio layer, falling back to ALSA");
+            JAMI_WARN("Unable to create pulseaudio layer, falling back to ALSA");
         }
     }
 
@@ -355,7 +355,7 @@ AudioPreference::createAudioLayer()
     try {
         return new CoreLayer(*this);
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Could not create coreaudio layer. There will be no sound.");
+        JAMI_WARN("Unable to create coreaudio layer. There will be no sound.");
     }
     return NULL;
 #endif
@@ -365,7 +365,7 @@ AudioPreference::createAudioLayer()
     try {
         return new PortAudioLayer(*this);
     } catch (const std::runtime_error& e) {
-        JAMI_WARN("Could not create PortAudio layer. There will be no sound.");
+        JAMI_WARN("Unable to create PortAudio layer. There will be no sound.");
     }
     return nullptr;
 #endif
@@ -456,7 +456,7 @@ AudioPreference::setRecordPath(const std::string& r)
         recordpath_ = path;
         return true;
     } else {
-        JAMI_ERR("%s is not writable, cannot be the recording path", path.c_str());
+        JAMI_ERR("%s is not writable, unable to be the recording path", path.c_str());
         return false;
     }
 }

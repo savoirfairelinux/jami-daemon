@@ -92,7 +92,7 @@ NameDirectory::lookupUri(std::string_view uri, const std::string& default_server
             return;
         }
     }
-    JAMI_ERR("Can't parse URI: %.*s", (int) uri.size(), uri.data());
+    JAMI_ERR("Unable to parse URI: %.*s", (int) uri.size(), uri.data());
     cb("", Response::invalidResponse);
 }
 
@@ -188,7 +188,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                                            response.body.data() + response.body.size(),
                                            &json,
                                            &err)) {
-                            JAMI_DBG("Address lookup for %s: can't parse server response: %s",
+                            JAMI_DBG("Address lookup for %s: Unable to parse server response: %s",
                                      addr.c_str(),
                                      response.body.c_str());
                             cb("", Response::error);
@@ -274,7 +274,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                                        response.body.data() + response.body.size(),
                                        &json,
                                        &err)) {
-                        JAMI_ERR("Name lookup for %s: can't parse server response: %s",
+                        JAMI_ERR("Name lookup for %s: Unable to parse server response: %s",
                                  name.c_str(),
                                  response.body.c_str());
                         cb("", Response::error);
@@ -490,7 +490,7 @@ NameDirectory::loadCache()
         std::lock_guard lock(dhtnet::fileutils::getFileLock(cachePath_));
         std::ifstream file(cachePath_);
         if (!file.is_open()) {
-            JAMI_DBG("Could not load %s", cachePath_.c_str());
+            JAMI_DBG("Unable to load %s", cachePath_.c_str());
             return;
         }
         std::string line;
