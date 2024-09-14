@@ -333,7 +333,7 @@ JamiAccount::newIncomingCall(const std::string& from,
         return call;
     }
 
-    JAMI_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
+    JAMI_ERR("newIncomingCall: unable to find matching call for %s", from.c_str());
     return nullptr;
 }
 
@@ -775,7 +775,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
     if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-        JAMI_WARN("Could not instantiate codec for early media");
+        JAMI_WARN("Unable to instantiate codec for early media");
 
     // Building the local SDP offer
     auto& sdp = call->getSDP();
@@ -790,7 +790,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     }
 
     if (not sdp.createOffer(mediaAttrList)) {
-        JAMI_ERR("Could not send outgoing INVITE request for new call");
+        JAMI_ERR("Unable to send outgoing INVITE request for new call");
         return;
     }
 
@@ -806,7 +806,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
             return;
 
         if (not account->SIPStartCall(*call, target)) {
-            JAMI_ERR("Could not send outgoing INVITE request for new call");
+            JAMI_ERR("Unable to send outgoing INVITE request for new call");
         }
     });
 }
@@ -852,14 +852,14 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
     pjsip_tx_data* tdata;
 
     if (pjsip_inv_invite(call.inviteSession_.get(), &tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize invite messager for this call");
+        JAMI_ERR("Unable to initialize invite messager for this call");
         return false;
     }
 
     pjsip_tpselector tp_sel;
     tp_sel.type = PJSIP_TPSELECTOR_TRANSPORT;
     if (!call.getTransport()) {
-        JAMI_ERR("Could not get transport for this call");
+        JAMI_ERR("Unable to get transport for this call");
         return false;
     }
     tp_sel.u.transport = call.getTransport()->get();
@@ -928,7 +928,7 @@ JamiAccount::loadConfig()
                 proxyServerCached_ = root[getProxyConfigKey()].asString();
             }
         } catch (const std::exception& e) {
-            JAMI_LOG("[Account {}] Can't load proxy URL from cache: {}", getAccountID(), e.what());
+            JAMI_LOG("[Account {}] Unable to load proxy URL from cache: {}", getAccountID(), e.what());
             proxyServerCached_.clear();
         }
     } else {
@@ -948,14 +948,14 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
 {
     try {
         if (!accountManager_->changePassword(password_old, password_new)) {
-            JAMI_ERR("[Account %s] Can't change archive password", getAccountID().c_str());
+            JAMI_ERR("[Account %s] Unable to change archive password", getAccountID().c_str());
             return false;
         }
         editConfig([&](JamiAccountConfig& config) {
             config.archiveHasPassword = not password_new.empty();
         });
     } catch (const std::exception& ex) {
-        JAMI_ERR("[Account %s] Can't change archive password: %s",
+        JAMI_ERR("[Account %s] Unable to change archive password: %s",
                  getAccountID().c_str(),
                  ex.what());
         if (password_old.empty()) {
@@ -1630,7 +1630,7 @@ JamiAccount::doRegister()
     JAMI_LOG("[Account {:s}] Starting account..", getAccountID());
 
     // invalid state transitions:
-    // INITIALIZING: generating/loading certificates, can't register
+    // INITIALIZING: generating/loading certificates, unable to register
     // NEED_MIGRATION: old account detected, user needs to migrate
     if (registrationState_ == RegistrationState::INITIALIZING
         || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION)
@@ -2655,7 +2655,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
         if (file.is_open())
             file << node;
         else
-            JAMI_WARNING("Cannot write into {}", proxyCachePath);
+            JAMI_WARNING("Unable to write into {}", proxyCachePath);
     }
     return proxyServerCached_;
 }
@@ -2918,7 +2918,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     auto cachedFile = requestPath / to;
     std::ofstream req(cachedFile, std::ios::trunc | std::ios::binary);
     if (!req.is_open()) {
-        JAMI_ERROR("Could not write data to {}", cachedFile);
+        JAMI_ERROR("Unable to write data to {}", cachedFile);
         return;
     }
 
@@ -3092,7 +3092,7 @@ JamiAccount::sendMessage(const std::string& to,
                 return value.asString();
             }
         } else {
-            JAMI_WARNING("Could not parse jsonData to get conversation id");
+            JAMI_WARNING("Unable to parse jsonData to get conversation id");
         }
         return "";
     };
@@ -3337,7 +3337,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERROR("Can't parse server response: {}", err);
+            JAMI_ERROR("Unable to parse server response: {}", err);
             return false;
         }
 
@@ -3361,7 +3361,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERROR("Can't parse server response: {}", err);
+            JAMI_ERROR("Unable to parse server response: {}", err);
             return false;
         }
         convModule()->onConversationRequest(from, json);
@@ -3405,7 +3405,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 messageId = matched_pattern[1];
             } else {
-                JAMI_WARNING("Message displayed: can't parse message ID");
+                JAMI_WARNING("Message displayed: unable to parse message ID");
                 return false;
             }
 
@@ -3415,7 +3415,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 isDisplayed = matched_pattern[1] == "displayed";
             } else {
-                JAMI_WARNING("Message displayed: can't parse status");
+                JAMI_WARNING("Message displayed: unable to parse status");
                 return false;
             }
 
@@ -3456,7 +3456,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                                                                         customStatus);
             return true;
         } else {
-            JAMI_WARNING("Presence: can't parse status");
+            JAMI_WARNING("Presence: unable to parse status");
         }
     }
 
@@ -3976,11 +3976,11 @@ JamiAccount::sendFile(const std::string& conversationId,
                     if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
                         if (!fileutils::createFileLink(filelinkPath, path, true)) {
                             JAMI_WARNING(
-                                "Cannot create symlink for file transfer {} - {}. Copy file",
+                                "Unable to create symlink for file transfer {} - {}. Copy file",
                                 filelinkPath,
                                 path);
                             if (!std::filesystem::copy_file(path, filelinkPath)) {
-                                JAMI_ERROR("Cannot copy file for file transfer {} - {}",
+                                JAMI_ERROR("Unable to copy file for file transfer {} - {}",
                                            filelinkPath,
                                            path);
                             }

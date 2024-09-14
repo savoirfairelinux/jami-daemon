@@ -95,7 +95,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
     auto iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat && !params.format.empty())
-        JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
+        JAMI_WARN("Unable to find format \"%s\"", params.format.c_str());
 
     std::string input;
 
@@ -222,7 +222,7 @@ MediaDemuxer::findStreamInfo()
         inputCtx_->max_analyze_duration = 30 * AV_TIME_BASE;
         int err;
         if ((err = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
-            JAMI_ERR() << "Could not find stream info: " << libav_utils::getError(err);
+            JAMI_ERR() << "Unable to find stream info: " << libav_utils::getError(err);
         }
         streamInfoFound_ = true;
     }
@@ -593,7 +593,7 @@ MediaDecoder::setupStream()
     ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
 #endif
     if (ret < 0) {
-        JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
+        JAMI_ERR() << "Unable to open codec: " << libav_utils::getError(ret);
         return -1;
     }
 

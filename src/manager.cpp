@@ -484,7 +484,7 @@ Manager::ManagerPimpl::parseConfiguration()
             result = false;
         }
     } catch (const YAML::BadFile& e) {
-        JAMI_WARN("Could not open configuration file");
+        JAMI_WARN("Unable to open configuration file");
         result = false;
     }
 
@@ -1191,7 +1191,7 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
     /* We often get here when the call was hungup before being created */
     auto call = account->getCall(callId);
     if (not call) {
-        JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
+        JAMI_WARN("Unable to hang up non-existant call %s", callId.c_str());
         return false;
     }
 
@@ -1507,21 +1507,21 @@ Manager::joinParticipant(const std::string& accountId,
               attached ? "YES" : "NO");
 
     if (callId1 == callId2) {
-        JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
+        JAMI_ERR("Unable to join participant %s to itself", callId1.c_str());
         return false;
     }
 
     // Set corresponding conference ids for call 1
     auto call1 = account->getCall(callId1);
     if (!call1) {
-        JAMI_ERR("Could not find call %s", callId1.c_str());
+        JAMI_ERR("Unable to find call %s", callId1.c_str());
         return false;
     }
 
     // Set corresponding conference details
     auto call2 = account2->getCall(callId2);
     if (!call2) {
-        JAMI_ERR("Could not find call %s", callId2.c_str());
+        JAMI_ERR("Unable to find call %s", callId2.c_str());
         return false;
     }
 
@@ -1557,7 +1557,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
 {
     auto account = getAccount(accountId);
     if (not account) {
-        JAMI_WARN("Can't find account");
+        JAMI_WARN("Unable to find account");
         return;
     }
 
@@ -1616,7 +1616,7 @@ Manager::detachParticipant(const std::string& callId)
 
     auto call = getCallFromCallID(callId);
     if (!call) {
-        JAMI_ERR("Could not find call %s", callId.c_str());
+        JAMI_ERR("Unable to find call %s", callId.c_str());
         return false;
     }
 
@@ -1635,7 +1635,7 @@ Manager::removeParticipant(Call& call)
 
     auto conf = call.getConference();
     if (not conf) {
-        JAMI_ERR("No conference, cannot remove participant");
+        JAMI_ERR("No conference, unable to remove participant");
         return;
     }
 
@@ -1659,11 +1659,11 @@ Manager::joinConference(const std::string& accountId,
     auto account = getAccount(accountId);
     auto account2 = getAccount(account2Id);
     if (not account) {
-        JAMI_ERR("Can't find account: %s", accountId.c_str());
+        JAMI_ERR("Unable to find account: %s", accountId.c_str());
         return false;
     }
     if (not account2) {
-        JAMI_ERR("Can't find account: %s", account2Id.c_str());
+        JAMI_ERR("Unable to find account: %s", account2Id.c_str());
         return false;
     }
 
@@ -1693,7 +1693,7 @@ Manager::joinConference(const std::string& accountId,
             removeAudio(*call);
             calls.emplace_back(std::move(call));
         } else {
-            JAMI_ERROR("Could not find call {}", callId);
+            JAMI_ERROR("Unable to find call {}", callId);
         }
     }
     // Remove conf1
@@ -2351,7 +2351,7 @@ Manager::toggleRecordingCall(const std::string& accountId, const std::string& id
             JAMI_DBG("toggle recording for call %s", id.c_str());
             rec = call;
         } else {
-            JAMI_ERR("Could not find recordable instance %s", id.c_str());
+            JAMI_ERR("Unable to find recordable instance %s", id.c_str());
             return false;
         }
         result = rec->toggleRecording();
@@ -2727,8 +2727,8 @@ Manager::getAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getAccountDetails();
     } else {
-        JAMI_ERR("Could not get account details on a non-existing accountID %s", accountID.c_str());
-        // return an empty map since we can't throw an exception to D-Bus
+        JAMI_ERR("Unable to get account details on a non-existing accountID %s", accountID.c_str());
+        // return an empty map since unable to throw an exception to D-Bus
         return {};
     }
 }
@@ -2741,7 +2741,7 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getVolatileAccountDetails();
     } else {
-        JAMI_ERR("Could not get volatile account details on a non-existing accountID %s",
+        JAMI_ERR("Unable to get volatile account details on a non-existing accountID %s",
                  accountID.c_str());
         return {};
     }
@@ -2755,7 +2755,7 @@ Manager::setAccountDetails(const std::string& accountID,
 
     auto account = getAccount(accountID);
     if (not account) {
-        JAMI_ERR("Could not find account %s", accountID.c_str());
+        JAMI_ERR("Unable to find account %s", accountID.c_str());
         return;
     }
 
@@ -2924,7 +2924,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                             a->setConfig(std::move(config));
                         }
                     } catch (const std::exception& e) {
-                        JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
+                        JAMI_ERR("Unable to import account %s: %s", dir.c_str(), e.what());
                     }
                 }
                 std::lock_guard l(lock);
@@ -3081,7 +3081,7 @@ Manager::loadAccountAndConversation(const std::string& accountId,
     }
 
     if (!account) {
-        JAMI_WARN("Could not load account %s", accountId.c_str());
+        JAMI_WARN("Unable to load account %s", accountId.c_str());
         return;
     }
     if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {

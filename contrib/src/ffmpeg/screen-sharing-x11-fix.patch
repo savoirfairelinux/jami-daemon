@@ -120,7 +120,7 @@ index 64a68ba497..76e654b424 100644
 -
 -    buf = av_buffer_pool_get(c->shm_pool);
 -    if (!buf) {
--        av_log(s, AV_LOG_ERROR, "Could not get shared memory buffer.\n");
+-        av_log(s, AV_LOG_ERROR, "Unable to get shared memory buffer.\n");
 -        return AVERROR(ENOMEM);
 -    }
 -    segment = (xcb_shm_seg_t)(uintptr_t)av_buffer_pool_buffer_get_opaque(buf);
@@ -134,7 +134,7 @@ index 64a68ba497..76e654b424 100644
 -
 -    if (e) {
 -        av_log(s, AV_LOG_ERROR,
--               "Cannot get the image data "
+-               "Unable to get the image data "
 -               "event_error: response_type:%u error_code:%u "
 -               "sequence:%u resource_id:%u minor_code:%u major_code:%u.\n",
 -               e->response_type, e->error_code,
@@ -257,12 +257,12 @@ index 64a68ba497..76e654b424 100644
 +        av_freep(&display_name);
  
 -    if ((ret = xcb_connection_has_error(c->conn))) {
--        av_log(s, AV_LOG_ERROR, "Cannot open display %s, error %d.\n",
+-        av_log(s, AV_LOG_ERROR, "Unable to open display %s, error %d.\n",
 -               s->url[0] ? s->url : "default", ret);
 -        return AVERROR(EIO);
 -    }
 +        if ((ret = xcb_connection_has_error(c->conn))) {
-+            av_log(s, AV_LOG_ERROR, "Cannot open display %s, error %d.\n",
++            av_log(s, AV_LOG_ERROR, "Unable to open display %s, error %d.\n",
 +                s->url[0] ? s->url : "default", ret);
 +            return AVERROR(EIO);
 +        }

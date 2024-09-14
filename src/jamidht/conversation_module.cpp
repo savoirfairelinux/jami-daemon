@@ -1232,7 +1232,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
         }
     }
     if (!validCommit) {
-        JAMI_ERROR("Cannot edit commit {:s}", editedId);
+        JAMI_ERROR("Unable to edit commit {:s}", editedId);
         return;
     }
     // Commit message edition
@@ -1667,7 +1667,7 @@ ConversationModule::loadConversations()
                             ctx->toRm.insert(repository);
                         }
                     }
-                    // Even if we found the conversation in convInfos_, we cannot assume that the list of members
+                    // Even if we found the conversation in convInfos_, unable to assume that the list of members
                     // stored in `convInfo` is correct (https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1025).
                     // For this reason, we always use the list we got from the conversation repository to set
                     // the value of `sconv->info.members`.

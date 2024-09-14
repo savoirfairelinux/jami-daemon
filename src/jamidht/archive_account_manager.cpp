@@ -527,7 +527,7 @@ ArchiveAccountManager::syncDevices()
         if (dev.first.toString() == info_->deviceId)
             continue;
         if (!dev.second.certificate) {
-            JAMI_WARNING("Cannot find certificate for {}", dev.first);
+            JAMI_WARNING("Unable to find certificate for {}", dev.first);
             continue;
         }
         auto pk = dev.second.certificate->getSharedPublicKey();
