@@ -166,7 +166,7 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
             return {};
         }
     } catch (const std::exception& e) {
-        JAMI_ERR("[Auth] can't read announce: %s", e.what());
+        JAMI_ERR("[Auth] unable to read announce: %s", e.what());
         return {};
     }
     return announce_val;
@@ -199,7 +199,7 @@ AccountManager::useIdentity(const std::string& accountId,
     auto contactList = std::make_unique<ContactList>(accountId, accountCertificate, path_, onChange);
     auto result = contactList->isValidAccountDevice(*identity.second);
     if (not result) {
-        JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified: %s",
+        JAMI_ERR("[Auth] unable to use identity: device certificate chain is unable to be verified: %s",
                  result.toString().c_str());
         return nullptr;
     }
@@ -323,7 +323,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         });
         syncDevices();
     } else {
-        JAMI_WARNING("can't announce device: no announcement...");
+        JAMI_WARNING("Unable to announce device: no announcement...");
     }
 
     auto inboxKey = dht::InfoHash::get("inbox:" + info_->devicePk->getId().toString());
@@ -414,7 +414,7 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
     while (top_issuer->issuer)
         top_issuer = top_issuer->issuer;
 
-    // Device certificate can't be self-signed
+    // Device certificate is unable to be self-signed
     if (top_issuer == crt) {
         JAMI_WARN("Found invalid peer device: %s", crt->getLongId().toString().c_str());
         return false;
@@ -711,7 +711,7 @@ AccountManager::sendTrustRequest(const std::string& to,
     JAMI_WARN("AccountManager::sendTrustRequest");
     auto toH = dht::InfoHash(to);
     if (not toH) {
-        JAMI_ERR("can't send trust request to invalid hash: %s", to.c_str());
+        JAMI_ERR("Unable to send trust request to invalid hash: %s", to.c_str());
         return;
     }
     if (not info_) {

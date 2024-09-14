@@ -132,7 +132,7 @@ SFLphoned/SFLphone (0.5a) / 2005-10-17
 
 SFLphone (0.4.1-pre2) / 2005-09-30
 	* rearranged utilspp use
-	* Bug fix when trying to use more than 6 lines.
+	* Bug fix when attempting to use more than 6 lines.
 	* Now, we send a final response to reINVITEs
 	  (thanks to Mikael Magnusson)
 	* We can build in different build directories.

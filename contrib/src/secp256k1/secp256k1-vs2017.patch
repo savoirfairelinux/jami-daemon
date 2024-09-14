@@ -312,7 +312,7 @@
 -    fp = fopen("src/ecmult_static_context.h","w");
 +    fopen_s(&fp, "src/ecmult_static_context.h","w");
      if (fp == NULL) {
-         fprintf(stderr, "Could not open src/ecmult_static_context.h for writing!\n");
+         fprintf(stderr, "Unable to open src/ecmult_static_context.h for writing!\n");
          return -1;
 -- 
 2.10.2.windows.1

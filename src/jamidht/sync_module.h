@@ -41,7 +41,7 @@ public:
                              const DeviceId& deviceId);
 
     /**
-     * Send sync informations to connected device
+     * Send sync information to connected device
      * @param deviceId      Connected device
      * @param socket        Related socket
      * @param syncMsg       Default message

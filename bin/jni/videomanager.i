@@ -314,7 +314,7 @@ void releaseBuffer(ANativeWindow *window, libjami::FrameBuffer frame)
     try {
         windows.at(window) = std::move(frame);
     } catch (...) {
-        __android_log_print(ANDROID_LOG_WARN, TAG, "Can't move frame: no window");
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Unable to move frame: no window");
     }
 }
 
@@ -342,7 +342,7 @@ libjami::FrameBuffer sinkTargetPullCallback(ANativeWindow *window)
                 frame->linesize[0] = buffer.stride * 4;
                 return frame;
             } else {
-                __android_log_print(ANDROID_LOG_WARN, TAG, "Can't lock window");
+                __android_log_print(ANDROID_LOG_WARN, TAG, "Unable to lock window");
                 releaseBuffer(window, std::move(frame));
             }
         }

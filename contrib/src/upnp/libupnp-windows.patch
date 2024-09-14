@@ -2022,7 +2022,7 @@ Subject: [PATCH] Windows patch.
 + * \return
 + * \li \c 0 on success.
 + * \li \c EAGAIN if not enough system resources to create minimum threads.
-+ * \li \c INVALID_POLICY if schedPolicy can't be set.
++ * \li \c INVALID_POLICY if schedPolicy is unable to be set.
 + * \li \c EMAXTHREADS if minimum threads is greater than maximum threads.
 + */
 +int ThreadPoolInit(
@@ -2081,7 +2081,7 @@ Subject: [PATCH] Windows patch.
 + *
 + * \return
 + * 	\li \c 0 on success, nonzero on failure.
-+ * 	\li \c INVALID_POLICY if policy can not be set.
++ * 	\li \c INVALID_POLICY if policy is unable to be set.
 + */
 +int ThreadPoolSetAttr(
 +	/*! valid thread pool pointer. */
@@ -2984,7 +2984,7 @@ Subject: [PATCH] Windows patch.
 - *
 - * \brief Network support routines missing in WIN32.
 - *
-- * \warning Don't even consider trying to compile this on a system where
+- * \warning Don't even consider attempting to compile this on a system where
 - * sizeof(int) < 4.  sizeof(int) 4 is fine; all the world's not a VAX.
 - *
 - */

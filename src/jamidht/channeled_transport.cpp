@@ -64,10 +64,10 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     base.pool = pool_.get();
 
     if (pj_atomic_create(pool_.get(), 0, &base.ref_cnt) != PJ_SUCCESS)
-        throw std::runtime_error("Can't create PJSIP atomic.");
+        throw std::runtime_error("Unable to create PJSIP atomic.");
 
     if (pj_lock_create_recursive_mutex(pool_.get(), "chan", &base.lock) != PJ_SUCCESS)
-        throw std::runtime_error("Can't create PJSIP mutex.");
+        throw std::runtime_error("Unable to create PJSIP mutex.");
 
     if (not local_) {
         JAMI_ERR("Invalid local address");
@@ -149,7 +149,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
 
     // Register callbacks
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
-        throw std::runtime_error("Can't register PJSIP transport.");
+        throw std::runtime_error("Unable to register PJSIP transport.");
 }
 
 void

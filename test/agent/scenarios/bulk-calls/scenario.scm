@@ -50,7 +50,7 @@
   (unless (agent:make-friend me bob-id)
     (raise-exception
      (make-exception
-      (make-exception-with-message "Can't make friend with bob"))))
+      (make-exception-with-message "Unable to make friend with bob"))))
 
   (define (call-bob timeout)
     (let ((this-call-id ""))

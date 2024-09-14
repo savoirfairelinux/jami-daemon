@@ -49,11 +49,11 @@ to_wstring(const std::string& str, int codePage)
     int srcLength = (int) str.length();
     int requiredSize = MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, nullptr, 0);
     if (!requiredSize) {
-        throw std::runtime_error("Can't convert string to wstring");
+        throw std::runtime_error("Unable to convert string to wstring");
     }
     std::wstring result((size_t) requiredSize, 0);
     if (!MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, &(*result.begin()), requiredSize)) {
-        throw std::runtime_error("Can't convert string to wstring");
+        throw std::runtime_error("Unable to convert string to wstring");
     }
     return result;
 }
@@ -64,12 +64,12 @@ to_string(const std::wstring& wstr, int codePage)
     int srcLength = (int) wstr.length();
     int requiredSize = WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, nullptr, 0, 0, 0);
     if (!requiredSize) {
-        throw std::runtime_error("Can't convert wstring to string");
+        throw std::runtime_error("Unable to convert wstring to string");
     }
     std::string result((size_t) requiredSize, 0);
     if (!WideCharToMultiByte(
             codePage, 0, wstr.c_str(), srcLength, &(*result.begin()), requiredSize, 0, 0)) {
-        throw std::runtime_error("Can't convert wstring to string");
+        throw std::runtime_error("Unable to convert wstring to string");
     }
     return result;
 }
@@ -81,7 +81,7 @@ to_string(double value)
     char buf[64];
     int len = snprintf(buf, sizeof(buf), "%-.*G", 16, value);
     if (len <= 0)
-        throw std::invalid_argument {"can't parse double"};
+        throw std::invalid_argument {"Unable to parse double"};
     return {buf, (size_t) len};
 }
 
@@ -96,7 +96,7 @@ from_hex_string(const std::string& str)
 {
     uint64_t id;
     if (auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), id, 16); ec != std::errc()) {
-        throw std::invalid_argument("Can't parse id: " + str);
+        throw std::invalid_argument("Unable to parse id: " + str);
     }
     return id;
 }

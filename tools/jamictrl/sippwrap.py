@@ -51,7 +51,7 @@ class SippWrapper:
         if not self.remotePort and not self.remoteServer:
             self.isUserAgentClient = False
         elif self.remotePort and not self.remoteServer:
-	    print "Error cannot have remote port specified with no server"
+	    print "Error: Unable to have remote port specified with no server"
             return
 
         if self.remoteServer:
@@ -130,7 +130,7 @@ class SippScreenStatParser:
 
         # TODO: Find a better way to determine which line to consider
         if "Failed call" not in self.logfile[40]:
-            print "Error: Could not find 'Failed call' statistics"
+            print "Error: Unable to find 'Failed call' statistics"
             # We consider this as a failure
             return True
 
@@ -142,7 +142,7 @@ class SippScreenStatParser:
 
         # TODO: Find a better way to determine which line to consider
         if "Successful call" not in self.logfile[39]:
-            print "Error: Could not find 'Successful call' statistics"
+            print "Error: Unable to find 'Successful call' statistics"
             return False
 
         return "1" in self.logfile[39]

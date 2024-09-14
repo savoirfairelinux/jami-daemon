@@ -653,9 +653,9 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
         [use 'dot' to generate graphs in doxygen (auto)])])
    if test "x$enable_doxygen" = xyes; then
      AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
-     test x$DOXYGEN = x && AC_MSG_ERROR([could not find doxygen])
+     test x$DOXYGEN = x && AC_MSG_ERROR([unable to find doxygen])
      AC_PATH_PROG(DOT, dot, , $PATH)
-     test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([could not find dot])
+     test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([unable to find dot])
    fi
    AM_CONDITIONAL(ENABLE_DOXYGEN, test "x$DOXYGEN" != "x")])
 

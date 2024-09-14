@@ -144,7 +144,7 @@ VideoReceiveThread::setup()
     }
 
     if (videoDecoder_->openInput(args_)) {
-        JAMI_ERR("Could not open input \"%s\"", args_.input.c_str());
+        JAMI_ERR("Unable to open input \"%s\"", args_.input.c_str());
         return false;
     }
 
@@ -241,7 +241,7 @@ VideoReceiveThread::configureVideoOutput()
     JAMI_DBG("[%p] Configuring video output", this);
 
     if (not loop_.isRunning()) {
-        JAMI_WARN("[%p] Can not configure video output, the loop is not running!", this);
+        JAMI_WARN("[%p] Unable to configure video output, the loop is not running!", this);
         return false;
     }
 

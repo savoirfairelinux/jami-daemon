@@ -40,7 +40,7 @@ void
 LocalRecorderManager::insertRecorder(const std::string& path, std::unique_ptr<LocalRecorder> rec)
 {
     if (!rec) {
-        throw std::invalid_argument("couldn't insert null recorder");
+        throw std::invalid_argument("Unable to insert null recorder");
     }
 
     std::lock_guard lock(recorderMapMutex_);
@@ -48,7 +48,7 @@ LocalRecorderManager::insertRecorder(const std::string& path, std::unique_ptr<Lo
 
     if (!ret.second) {
         throw std::invalid_argument(
-            "couldn't insert recorder (passed path is already used as key)");
+            "Unable to insert recorder (passed path is already used as key)");
     }
 }
 

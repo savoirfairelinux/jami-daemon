@@ -91,7 +91,7 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
                     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(
                         &dev::KeyPair::create);
                     AccountArchive a;
-                    JAMI_WARN("[Auth] converting certificate from old account %s",
+                    JAMI_WARN("[Auth] Converting certificate from old account %s",
                                 ctx->credentials->updateIdentity.first->getPublicKey()
                                     .getId()
                                     .toString()
@@ -219,13 +219,13 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
     AccountArchive a;
     auto ca = dht::crypto::generateIdentity("Jami CA");
     if (!ca.first || !ca.second) {
-        throw std::runtime_error("Can't generate CA for this account.");
+        throw std::runtime_error("Unable to generate CA for this account.");
     }
     a.id = dht::crypto::generateIdentity("Jami", ca, 4096, true);
     if (!a.id.first || !a.id.second) {
-        throw std::runtime_error("Can't generate identity for this account.");
+        throw std::runtime_error("Unable to generate identity for this account.");
     }
-    JAMI_WARN("[Auth] new account: CA: %s, ID: %s",
+    JAMI_WARN("[Auth] New account: CA: %s, ID: %s",
               ca.second->getId().toString().c_str(),
               a.id.second->getId().toString().c_str());
     a.ca_key = ca.first;
@@ -237,12 +237,12 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
 void
 ArchiveAccountManager::loadFromFile(AuthContext& ctx)
 {
-    JAMI_WARN("[Auth] loading archive from: %s", ctx.credentials->uri.c_str());
+    JAMI_WARN("[Auth] Loading archive from: %s", ctx.credentials->uri.c_str());
     AccountArchive archive;
     try {
         archive = AccountArchive(ctx.credentials->uri, ctx.credentials->password_scheme, ctx.credentials->password);
     } catch (const std::exception& ex) {
-        JAMI_WARN("[Auth] can't read file: %s", ex.what());
+        JAMI_WARN("[Auth] Unable to read file: %s", ex.what());
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
@@ -273,7 +273,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
             dht::ThreadPool::computation().run(
                 [ctx, network_error = !s.stateOld.second && !s.stateNew.second] {
                     ctx->dhtContext.reset();
-                    JAMI_WARN("[Auth] failure looking for archive on DHT: %s",
+                    JAMI_WARN("[Auth] Failure looking for archive on DHT: %s",
                               /**/ network_error ? "network error" : "not found");
                     ctx->onFailure(network_error ? AuthError::NETWORK : AuthError::UNKNOWN, "");
                 });
@@ -290,7 +290,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
             std::tie(key, loc) = computeKeys(ctx->credentials->password,
                                              ctx->credentials->uri,
                                              previous);
-            JAMI_DBG("[Auth] trying to load account from DHT with %s at %s",
+            JAMI_DBG("[Auth] Attempting to load account from DHT with %s at %s",
                      /**/ ctx->credentials->uri.c_str(),
                      loc.toString().c_str());
             if (not ctx->dhtContext or ctx->dhtContext->found) {
@@ -305,7 +305,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                     } catch (const std::exception& ex) {
                         return true;
                     }
-                    JAMI_DBG("[Auth] found archive on the DHT");
+                    JAMI_DBG("[Auth] Found archive on the DHT");
                     ctx->dhtContext->found = true;
                     dht::ThreadPool::computation().run([ctx,
                                                         decrypted = std::move(decrypted), w] {
@@ -346,12 +346,12 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
 void
 ArchiveAccountManager::migrateAccount(AuthContext& ctx)
 {
-    JAMI_WARN("[Auth] account migration needed");
+    JAMI_WARN("[Auth] Account migration needed");
     AccountArchive archive;
     try {
         archive = readArchive(ctx.credentials->password_scheme, ctx.credentials->password);
     } catch (...) {
-        JAMI_DBG("[Auth] Can't load archive");
+        JAMI_DBG("[Auth] Unable to load archive");
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
         return;
     }
@@ -376,7 +376,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
     a.save(fileutils::getFullPath(path_, archivePath_), ctx.credentials ? ctx.credentials->password_scheme : "", ctx.credentials ? ctx.credentials->password : "");
 
     if (not a.id.second->isCA()) {
-        JAMI_ERR("[Auth] trying to sign a certificate with a non-CA.");
+        JAMI_ERR("[Auth] Attempting to sign a certificate with a non-CA.");
     }
 
     std::shared_ptr<dht::crypto::Certificate> deviceCertificate;
@@ -397,7 +397,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
 
     // Generate a new device if needed
     if (!deviceCertificate) {
-        JAMI_WARN("[Auth] creating new device certificate");
+        JAMI_WARN("[Auth] Creating new device certificate");
         auto request = ctx.request.get();
         if (not request->verify()) {
             JAMI_ERR("[Auth] Invalid certificate request.");
@@ -406,7 +406,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
         }
         deviceCertificate = std::make_shared<dht::crypto::Certificate>(
             dht::crypto::Certificate::generate(*request, a.id));
-        JAMI_WARNING("[Auth] created new device: {}",
+        JAMI_WARNING("[Auth] Created new device: {}",
                   deviceCertificate->getLongId());
     }
 
@@ -473,7 +473,7 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
                                    const dht::crypto::Certificate& device,
                                    const std::string& ethAccount)
 {
-    JAMI_DBG("[Auth] signing device receipt");
+    JAMI_DBG("[Auth] Signing device receipt");
     auto devId = device.getId();
     DeviceAnnouncement announcement;
     announcement.dev = devId;
@@ -482,7 +482,7 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
     ann_val.sign(*id.first);
 
     auto packedAnnoucement = ann_val.getPacked();
-    JAMI_DBG("[Auth] device announcement size: %zu", packedAnnoucement.size());
+    JAMI_DBG("[Auth] Device announcement size: %zu", packedAnnoucement.size());
 
     std::ostringstream is;
     is << "{\"id\":\"" << id.second->getId() << "\",\"dev\":\"" << devId << "\",\"eth\":\""
@@ -527,7 +527,7 @@ ArchiveAccountManager::syncDevices()
         if (dev.first.toString() == info_->deviceId)
             continue;
         if (!dev.second.certificate) {
-            JAMI_WARNING("Cannot find certificate for {}", dev.first);
+            JAMI_WARNING("Unable to find certificate for {}", dev.first);
             continue;
         }
         auto pk = dev.second.certificate->getSharedPublicKey();
@@ -553,7 +553,7 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
                             [this,
                              sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                                 if (!cert or cert->getId() != sync.from) {
-                                    JAMI_WARN("Can't find certificate for device %s",
+                                    JAMI_WARN("Unable to find certificate for device %s",
                                               sync.from.toString().c_str());
                                     return;
                                 }
@@ -569,7 +569,7 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
 AccountArchive
 ArchiveAccountManager::readArchive(std::string_view scheme, const std::string& pwd) const
 {
-    JAMI_DBG("[Auth] reading account archive");
+    JAMI_DBG("[Auth] Reading account archive");
     return AccountArchive(fileutils::getFullPath(path_, archivePath_), scheme, pwd);
 }
 
@@ -595,7 +595,7 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                       TLS::CERTIFICATE_FILE,
                                       TLS::PRIVATE_KEY_FILE};
 
-    JAMI_DBG("[Auth] building account archive");
+    JAMI_DBG("[Auth] Building account archive");
     for (const auto& it : onExportConfig_()) {
         // filter-out?
         if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys), [&](const auto& key) {
@@ -632,7 +632,7 @@ ArchiveAccountManager::saveArchive(AccountArchive& archive, std::string_view sch
             archivePath_ = "export.gz";
         archive.save(fileutils::getFullPath(path_, archivePath_), scheme, pwd);
     } catch (const std::runtime_error& ex) {
-        JAMI_ERR("[Auth] Can't export archive: %s", ex.what());
+        JAMI_ERR("[Auth] Unable to export archive: %s", ex.what());
         return;
     }
 }
@@ -694,7 +694,7 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
         std::string pin_str;
         AccountArchive a;
         try {
-            JAMI_DBG("[Auth] exporting account");
+            JAMI_DBG("[Auth] Exporting account");
 
             a = this_->readArchive("password", password);
 
@@ -703,7 +703,7 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
 
             std::tie(key, loc) = computeKeys(password, pin_str);
         } catch (const std::exception& e) {
-            JAMI_ERR("[Auth] can't export account: %s", e.what());
+            JAMI_ERR("[Auth] Unable to export account: %s", e.what());
             cb(AddDeviceResult::ERROR_CREDENTIALS, {});
             return;
         }
@@ -714,19 +714,19 @@ ArchiveAccountManager::addDevice(const std::string& password, AddDeviceCallback 
             auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
             if (not this_->dht_ or not this_->dht_->isRunning())
                 throw std::runtime_error("DHT is not running..");
-            JAMI_WARN("[Auth] exporting account with PIN: %s at %s (size %zu)",
+            JAMI_WARN("[Auth] Exporting account with PIN: %s at %s (size %zu)",
                         pin_str.c_str(),
                         loc.toString().c_str(),
                         encrypted.size());
             this_->dht_->put(loc, encrypted, [cb, pin = std::move(pin_str)](bool ok) {
-                JAMI_DBG("[Auth] account archive published: %s", ok ? "success" : "failure");
+                JAMI_DBG("[Auth] Account archive published: %s", ok ? "success" : "failure");
                 if (ok)
                     cb(AddDeviceResult::SUCCESS_SHOW_PIN, pin);
                 else
                     cb(AddDeviceResult::ERROR_NETWORK, {});
             });
         } catch (const std::exception& e) {
-            JAMI_ERR("[Auth] can't export account: %s", e.what());
+            JAMI_ERR("[Auth] Unable to export account: %s", e.what());
             cb(AddDeviceResult::ERROR_NETWORK, {});
             return;
         }
@@ -794,10 +794,10 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, std::st
         std::filesystem::copy_file(archivePath, destinationPath, std::filesystem::copy_options::overwrite_existing, ec);
         return !ec;
     } catch (const std::runtime_error& ex) {
-        JAMI_ERR("[Auth] Can't export archive: %s", ex.what());
+        JAMI_ERR("[Auth] Unable to export archive: %s", ex.what());
         return false;
     } catch (...) {
-        JAMI_ERR("[Auth] Can't export archive: can't read archive");
+        JAMI_ERR("[Auth] Unable to export archive: Unable to read archive");
         return false;
     }
 }
@@ -837,7 +837,7 @@ ArchiveAccountManager::registerName(const std::string& name,
             privateKey->sign(std::vector<uint8_t>(nameLowercase.begin(), nameLowercase.end())));
         ethAccount = dev::KeyPair(dev::Secret(archive.eth_key)).address().hex();
     } catch (const std::exception& e) {
-        // JAMI_ERR("[Auth] can't export account: %s", e.what());
+        // JAMI_ERR("[Auth] Unable to export account: %s", e.what());
         cb(NameDirectory::RegistrationResponse::invalidCredentials, name);
         return;
     }

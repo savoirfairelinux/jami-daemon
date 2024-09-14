@@ -148,7 +148,7 @@ function(add_custom_command_if)
     add_custom_command_if_parse_arguments(${ARGN})
 
     if(OUTPUT AND TARGET)
-        message(FATAL_ERROR  "Wrong syntax. A TARGET and OUTPUT can not both be specified.")
+        message(FATAL_ERROR  "Wrong syntax. A TARGET and OUTPUT are unable to be both specified.")
     endif()
 
     if(OUTPUT)

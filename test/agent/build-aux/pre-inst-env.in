@@ -26,7 +26,7 @@
 # "./pre-inst-env agent"
 
 # By default we may end up with absolute directory names that contain '..',
-# which get into $GUILE_LOAD_PATH, leading to '..' in the module file names
+# which get into $GUILE_LOAD_PATH, leading to '..' in the module filenames
 # recorded by Guile.  To avoid that, make sure we get a real absolute directory
 # name.  Additionally, use '-P' to get the canonical directory name so that
 # Guile's 'relative' %file-port-name-canonicalization can actually work (see

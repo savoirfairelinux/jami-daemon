@@ -262,7 +262,7 @@ AccountArchiveTest::testExportDhtWrongPassword()
 void
 AccountArchiveTest::testChangePassword()
 {
-    // Test wrong password, should fail
+    // Test incorrect password, should fail
     CPPUNIT_ASSERT(!libjami::changeAccountPassword(aliceId, "wrong", "new"));
     // Test correct password, should succeed
     CPPUNIT_ASSERT(libjami::changeAccountPassword(aliceId, "", "new"));

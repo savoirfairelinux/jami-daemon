@@ -394,7 +394,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     unsigned options = 0;
 
     if (pjsip_inv_verify_request(rdata, &options, NULL, NULL, endpt_, NULL) != PJ_SUCCESS) {
-        JAMI_ERR("Couldn't verify INVITE request in secure dialog.");
+        JAMI_ERR("Unable to verify INVITE request in secure dialog.");
         try_respond_stateless(endpt_, rdata, PJSIP_SC_METHOD_NOT_ALLOWED, NULL, NULL, NULL);
         return PJ_FALSE;
     }
@@ -464,7 +464,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     pjsip_dialog* dialog = nullptr;
     if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog)
         != PJ_SUCCESS) {
-        JAMI_ERR("Could not create uas");
+        JAMI_ERR("Unable to create uas");
         call.reset();
         try_respond_stateless(endpt_,
                               rdata,
@@ -477,7 +477,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        JAMI_ERR("Could not set transport for dialog");
+        JAMI_ERR("Unable to set transport for dialog");
         if (dialog)
             pjsip_dlg_dec_lock(dialog);
         return PJ_FALSE;
@@ -530,7 +530,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                                  NULL,
                                  &tdata)
         != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer TRYING");
+        JAMI_ERR("Unable to create answer TRYING");
         return PJ_FALSE;
     }
 
@@ -538,7 +538,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not send msg TRYING");
+        JAMI_ERR("Unable to send msg TRYING");
         return PJ_FALSE;
     }
 
@@ -546,13 +546,13 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     if (pjsip_inv_answer(call->inviteSession_.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata)
         != PJ_SUCCESS) {
-        JAMI_ERR("Could not create answer RINGING");
+        JAMI_ERR("Unable to create answer RINGING");
         return PJ_FALSE;
     }
 
     sip_utils::addContactHeader(call->getContactHeader(), tdata);
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Could not send msg RINGING");
+        JAMI_ERR("Unable to send msg RINGING");
         return PJ_FALSE;
     }
 
@@ -627,7 +627,7 @@ SIPVoIPLink::SIPVoIPLink()
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 64 * 1024, 4096, nullptr));
     if (!pool_)
-        throw VoipLinkException("UserAgent: Could not initialize memory pool");
+        throw VoipLinkException("UserAgent: Unable to initialize memory pool");
 
     TRY(pjsip_endpt_create(&cp_.factory, pj_gethostname()->ptr, &endpt_));
 
@@ -673,7 +673,7 @@ SIPVoIPLink::SIPVoIPLink()
 
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), tp_state_callback);
     if (status != PJ_SUCCESS)
-        JAMI_ERR("Can't set transport callback: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERR("Unable to set transport callback: %s", sip_utils::sip_strerror(status).c_str());
 
     TRY(pjsip_tsx_layer_init_module(endpt_));
     TRY(pjsip_ua_init_module(endpt_, nullptr));
@@ -829,7 +829,7 @@ SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
         break;
 
     default:
-        JAMI_ERR("Could not schedule new timer in pjsip endpoint");
+        JAMI_ERR("Unable to schedule new timer in pjsip endpoint");
 
         /* fallthrough */
     case PJ_EINVAL:
@@ -1272,7 +1272,7 @@ static bool
 transferCall(SIPCall& call, const std::string& refer_to)
 {
     const auto& callId = call.getCallId();
-    JAMI_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to.c_str());
+    JAMI_WARN("[call:%s] Attempting to transfer to %s", callId.c_str(), refer_to.c_str());
     try {
         Manager::instance().newOutgoingCall(refer_to,
                                             call.getAccountId(),
@@ -1291,7 +1291,7 @@ replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
 {
     const auto ret = pjsip_dlg_respond(inv->dlg, rdata, status_code, nullptr, nullptr, nullptr);
     if (ret != PJ_SUCCESS)
-        JAMI_WARN("SIP: failed to reply %d to request", status_code);
+        JAMI_WARN("SIP: Failed to reply %d to request", status_code);
 }
 
 static void
@@ -1446,7 +1446,7 @@ void
 SIPVoIPLink::createSDPOffer(pjsip_inv_session* inv)
 {
     if (inv == nullptr) {
-        throw VoipLinkException("Invite session can not be null");
+        throw VoipLinkException("Invite session is unable to be null");
     }
     sdp_create_offer_cb(inv, nullptr);
 }
@@ -1532,7 +1532,7 @@ SIPVoIPLink::resolveSrvName(const std::string& name,
         token, [=, cb = std::move(cb)](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
-                    JAMI_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.",
+                    JAMI_WARN("Unable to resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.",
                               name.c_str());
                     dht::ThreadPool::io().run([=, cb = std::move(cb)]() {
                         auto ips = dhtnet::ip_utils::getAddrList(name.c_str());
@@ -1598,7 +1598,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     pjsip_tpmgr_fla2_param param
         = {transportType, &tp_sel, pjstring, PJ_FALSE, {nullptr, 0}, 0, nullptr};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_.get(), &param) != PJ_SUCCESS) {
-        JAMI_WARN("Could not retrieve local address and port from transport, using %s :%d",
+        JAMI_WARN("Unable to retrieve local address and port from transport, using %s :%d",
                   addr.c_str(),
                   port);
         return;
