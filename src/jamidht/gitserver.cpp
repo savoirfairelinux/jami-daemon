@@ -113,7 +113,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
     unsigned int pkt_len = 0;
     auto [p, ec] = std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
     if (ec != std::errc()) {
-        JAMI_ERROR("Can't parse packet size");
+        JAMI_ERROR("Unable to parse packet size");
     }
     if (pkt_len != pkt.size()) {
         // Store next packet part
@@ -242,7 +242,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, rep.get(), "HEAD") < 0) {
-        JAMI_ERROR("Cannot get reference for HEAD");
+        JAMI_ERROR("Unable to get reference for HEAD");
         socket_->shutdown();
         return;
     }
@@ -259,7 +259,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         for (std::size_t i = 0; i < refs.count; ++i) {
             std::string_view ref = refs.strings[i];
             if (git_reference_name_to_id(&commit_id, rep.get(), ref.data()) < 0) {
-                JAMI_WARNING("Cannot get reference for {}", ref);
+                JAMI_WARNING("Unable to get reference for {}", ref);
                 continue;
             }
             currentHead = git_oid_tostr_s(&commit_id);
@@ -348,7 +348,7 @@ GitServer::Impl::sendPackData()
     std::string fetched = wantedReference_;
     git_oid oid;
     if (git_oid_fromstr(&oid, fetched.c_str()) < 0) {
-        JAMI_ERROR("Cannot get reference for commit {}", fetched);
+        JAMI_ERROR("Unable to get reference for commit {}", fetched);
         return;
     }
 
@@ -383,7 +383,7 @@ GitServer::Impl::sendPackData()
         // Get next commit to pack
         git_commit* commit_ptr;
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_ERR("Could not look up current commit");
+            JAMI_ERR("Unable to look up current commit");
             return;
         }
         GitCommit commit {commit_ptr, git_commit_free};

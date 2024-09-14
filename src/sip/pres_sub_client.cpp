@@ -189,7 +189,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                      * subscribe.
                      */
                     /* giveup: The subscription has been terminated because
-                     * the notifier could not obtain authorization in a
+                     * the notifier was unable to obtain authorization in a
                      * timely fashion.  If a "retry-after" parameter is
                      * also present, the client SHOULD wait at least the
                      * number of seconds specified by that parameter before
@@ -570,7 +570,7 @@ PresSubClient::subscribe()
                                            acc->getCredentialCount(),
                                            acc->getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize credentials for subscribe session authentication");
+        JAMI_ERR("Unable to initialize credentials for subscribe session authentication");
     }
 
     /* Increment the dialog's lock otherwise when presence session creation
@@ -600,7 +600,7 @@ PresSubClient::subscribe()
                                            acc->getCredentialCount(),
                                            acc->getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize credentials for invite session authentication");
+        JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return false;
     }
 

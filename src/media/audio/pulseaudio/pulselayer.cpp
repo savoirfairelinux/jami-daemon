@@ -68,7 +68,7 @@ PulseLayer::PulseLayer(AudioPreference& pref)
 {
     JAMI_INFO("[audiolayer] created pulseaudio layer");
     if (!mainloop_)
-        throw std::runtime_error("Couldn't create pulseaudio mainloop");
+        throw std::runtime_error("Unable to create pulseaudio mainloop");
 
     if (pa_threaded_mainloop_start(mainloop_.get()) < 0)
         throw std::runtime_error("Failed to start pulseaudio mainloop");
@@ -85,12 +85,12 @@ PulseLayer::PulseLayer(AudioPreference& pref)
                                             PACKAGE_NAME,
                                             pl.get());
     if (!context_)
-        throw std::runtime_error("Couldn't create pulseaudio context");
+        throw std::runtime_error("Unable to create pulseaudio context");
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
     if (pa_context_connect(context_, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
-        throw std::runtime_error("Could not connect pulseaudio context to the server");
+        throw std::runtime_error("Unable to connect pulseaudio context to the server");
 
     // wait until context is ready
     for (;;) {

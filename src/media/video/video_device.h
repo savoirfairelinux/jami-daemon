@@ -211,7 +211,7 @@ private:
         try {
             rate_val = rate.empty() ? 0 : jami::stod(rate);
         } catch (...) {
-            JAMI_WARN("Can't read framerate \"%s\"", rate.c_str());
+            JAMI_WARN("Unable to read framerate \"%s\"", rate.c_str());
         }
         // fallback to framerate closest to 30 FPS
         if (rate_val == 0)
