@@ -145,7 +145,7 @@
 #define S_IXOTH 0
 #endif
 
-/* Maximum length of file name */
+/* Maximum length of filename */
 #if !defined(PATH_MAX)
 #define PATH_MAX MAX_PATH
 #endif
@@ -171,10 +171,10 @@
 #define DTTOIF(type) (type)
 
 /*
- * File type macros.  Note that block devices, sockets and links cannot be
- * distinguished on Windows and the macros S_ISBLK, S_ISSOCK and S_ISLNK are
- * only defined for compatibility.  These macros should always return false
- * on Windows.
+ * File type macros.  Note that block devices, sockets and links are
+ * not distinguishable on Windows and the macros S_ISBLK, S_ISSOCK and
+ * S_ISLNK are only defined for compatibility.
+ * These macros should always return false on Windows.
  */
 #if !defined(S_ISFIFO)
 #define S_ISFIFO(mode) (((mode) &S_IFMT) == S_IFIFO)
@@ -223,7 +223,7 @@ struct _wdirent
     /* File type */
     int d_type;
 
-    /* File name */
+    /* Filename */
     wchar_t d_name[PATH_MAX];
 };
 typedef struct _wdirent _wdirent;
@@ -275,7 +275,7 @@ struct dirent
     /* File type */
     int d_type;
 
-    /* File name */
+    /* Filename */
     char d_name[PATH_MAX];
 };
 typedef struct dirent dirent;
@@ -385,24 +385,24 @@ _wopendir(const wchar_t* dirname)
                     /* Directory stream opened successfully */
                     error = 0;
                 } else {
-                    /* Cannot retrieve first entry */
+                    /* Unable to retrieve first entry */
                     error = 1;
                     dirent_set_errno(ENOENT);
                 }
 
             } else {
-                /* Cannot retrieve full path name */
+                /* Unable to retrieve full path name */
                 dirent_set_errno(ENOENT);
                 error = 1;
             }
 
         } else {
-            /* Cannot allocate memory for search pattern */
+            /* Unable to allocate memory for search pattern */
             error = 1;
         }
 
     } else {
-        /* Cannot allocate _WDIR structure */
+        /* Unable to allocate _WDIR structure */
         error = 1;
     }
 
@@ -437,8 +437,8 @@ _wreaddir(_WDIR* dirp)
         entp = &dirp->ent;
 
         /*
-         * Copy file name as wide-character string.  If the file name is too
-         * long to fit in to the destination buffer, then truncate file name
+         * Copy filename as wide-character string.  If the filename is too
+         * long to fit in to the destination buffer, then truncate filename
          * to PATH_MAX characters and zero-terminate the buffer.
          */
         n = 0;
@@ -448,7 +448,7 @@ _wreaddir(_WDIR* dirp)
         }
         dirp->ent.d_name[n] = 0;
 
-        /* Length of file name excluding zero terminator */
+        /* Length of filename excluding zero terminator */
         entp->d_namlen = n;
 
         /* File type */
@@ -509,7 +509,7 @@ _wclosedir(_WDIR* dirp)
 
 /*
  * Rewind directory stream such that _wreaddir() returns the very first
- * file name again.
+ * filename again.
  */
 static void
 _wrewinddir(_WDIR* dirp)
@@ -619,7 +619,7 @@ opendir(const char* dirname)
 
         } else {
             /*
-             * Cannot convert file name to wide-character string.  This
+             * Unable to convert filename to wide-character string.  This
              * occurs if the string contains invalid multi-byte sequences or
              * the output buffer is too small to contain the resulting
              * string.
@@ -628,7 +628,7 @@ opendir(const char* dirname)
         }
 
     } else {
-        /* Cannot allocate DIR structure */
+        /* Unable to allocate DIR structure */
         error = 1;
     }
 
@@ -644,10 +644,10 @@ opendir(const char* dirname)
 /*
  * Read next directory entry.
  *
- * When working with text consoles, please note that file names returned by
+ * When working with text consoles, please note that filenames returned by
  * readdir() are represented in the default ANSI code page while any output to
  * console is typically formatted on another code page.  Thus, non-ASCII
- * characters in file names will not usually display correctly on console.  The
+ * characters in filenames will not usually display correctly on console.  The
  * problem can be fixed in two ways: (1) change the character set of console
  * to 1252 using chcp utility and use Lucida Console font, or (2) use
  * _cprintf function when writing to console.  The _cprinf() will re-encode
@@ -666,16 +666,16 @@ readdir(DIR* dirp)
         size_t n;
         int error;
 
-        /* Attempt to convert file name to multi-byte string */
+        /* Attempt to convert filename to multi-byte string */
         error = dirent_wcstombs_s(&n, dirp->ent.d_name, PATH_MAX, datap->cFileName, PATH_MAX);
 
         /*
-         * If the file name cannot be represented by a multi-byte string,
-         * then attempt to use old 8+3 file name.  This allows traditional
-         * Unix-code to access some file names despite of unicode
-         * characters, although file names may seem unfamiliar to the user.
+         * If the filename is unable to be represented by a multi-byte string,
+         * then attempt to use old 8.3 filename.  This allows traditional
+         * Unix-code to access some filenames despite of unicode
+         * characters, although filenames may seem unfamiliar to the user.
          *
-         * Be ware that the code below cannot come up with a short file
+         * Beware that the code below is unable to come up with a short file
          * name unless the file system provides one.  At least
          * VirtualBox shared folders fail to do this.
          */
@@ -693,7 +693,7 @@ readdir(DIR* dirp)
             /* Initialize directory entry for return */
             entp = &dirp->ent;
 
-            /* Length of file name excluding zero terminator */
+            /* Length of filename excluding zero terminator */
             entp->d_namlen = n - 1;
 
             /* File attributes */
@@ -712,9 +712,9 @@ readdir(DIR* dirp)
 
         } else {
             /*
-             * Cannot convert file name to multi-byte string so construct
+             * Unable to convert filename to multi-byte string so construct
              * an errornous directory entry and return that.  Note that
-             * we cannot return NULL as that would stop the processing
+             * it is unable to return NULL as that would stop the processing
              * of directory entries completely.
              */
             entp = &dirp->ent;
@@ -804,7 +804,7 @@ dirent_mbstowcs_s(
         error = 0;
 
     } else {
-        /* Could not convert string */
+        /* Unable to convert string */
         error = 1;
     }
 
@@ -853,7 +853,7 @@ dirent_wcstombs_s(size_t* pReturnValue,
         error = 0;
 
     } else {
-        /* Cannot convert string */
+        /* Unable to convert string */
         error = 1;
     }
 

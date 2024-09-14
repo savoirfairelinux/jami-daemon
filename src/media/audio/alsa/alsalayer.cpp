@@ -106,7 +106,7 @@ AlsaLayer::openDevice(snd_pcm_t** pcm,
     } while (err == -EBUSY and ++tries <= MAX_RETRIES);
 
     if (err < 0) {
-        JAMI_ERR("Alsa: couldn't open %s device %s : %s",
+        JAMI_ERR("Alsa: Unable to open %s device %s : %s",
                  (stream == SND_PCM_STREAM_CAPTURE)    ? "capture"
                  : (stream == SND_PCM_STREAM_PLAYBACK) ? "playback"
                                                        : "ringtone",
@@ -230,7 +230,7 @@ AlsaLayer::stopThread()
 void
 AlsaLayer::stopCaptureStream()
 {
-    if (captureHandle_ && ALSA_CALL(snd_pcm_drop(captureHandle_), "couldn't stop capture") >= 0) {
+    if (captureHandle_ && ALSA_CALL(snd_pcm_drop(captureHandle_), "Unable to stop capture") >= 0) {
         is_capture_running_ = false;
         is_capture_prepared_ = false;
     }
@@ -244,7 +244,7 @@ AlsaLayer::closeCaptureStream()
 
     JAMI_DBG("Alsa: Closing capture stream");
     if (is_capture_open_
-        && ALSA_CALL(snd_pcm_close(captureHandle_), "Couldn't close capture") >= 0) {
+        && ALSA_CALL(snd_pcm_close(captureHandle_), "Unable to close capture") >= 0) {
         is_capture_open_ = false;
         captureHandle_ = nullptr;
     }
@@ -254,7 +254,7 @@ void
 AlsaLayer::startCaptureStream()
 {
     if (captureHandle_ and not is_capture_running_)
-        if (ALSA_CALL(snd_pcm_start(captureHandle_), "Couldn't start capture") >= 0)
+        if (ALSA_CALL(snd_pcm_start(captureHandle_), "Unable to start capture") >= 0)
             is_capture_running_ = true;
 }
 
@@ -262,7 +262,7 @@ void
 AlsaLayer::stopPlaybackStream()
 {
     if (playbackHandle_ and is_playback_running_) {
-        if (ALSA_CALL(snd_pcm_drop(playbackHandle_), "Couldn't stop playback") >= 0) {
+        if (ALSA_CALL(snd_pcm_drop(playbackHandle_), "Unable to stop playback") >= 0) {
             is_playback_running_ = false;
         }
     }
@@ -286,8 +286,8 @@ void
 AlsaLayer::closeRingtoneStream()
 {
     if (ringtoneHandle_) {
-        ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
-        ALSA_CALL(snd_pcm_close(ringtoneHandle_), "Couldn't close ringtone");
+        ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Unable to stop ringtone");
+        ALSA_CALL(snd_pcm_close(ringtoneHandle_), "Unable to close ringtone");
         ringtoneHandle_ = nullptr;
     }
 }
@@ -302,7 +302,7 @@ void
 AlsaLayer::prepareCaptureStream()
 {
     if (is_capture_open_ and not is_capture_prepared_)
-        if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Couldn't prepare capture") >= 0)
+        if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Unable to prepare capture") >= 0)
             is_capture_prepared_ = true;
 }
 
@@ -373,7 +373,7 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     JAMI_DBG("Was set buffer_size = %lu", buffer_size);
 
     if (2 * period_size > buffer_size) {
-        JAMI_ERR("buffer to small, could not use");
+        JAMI_ERR("buffer to small, unable to use");
         return false;
     }
 
@@ -419,7 +419,7 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
         snd_pcm_status_t* status;
         snd_pcm_status_alloca(&status);
 
-        if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0)
+        if (ALSA_CALL(snd_pcm_status(handle, status), "Unable to get playback handle status") >= 0)
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
                 stopPlaybackStream();
                 startPlaybackStream();
@@ -436,7 +436,7 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
         snd_pcm_status_t* status;
         snd_pcm_status_alloca(&status);
 
-        if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0) {
+        if (ALSA_CALL(snd_pcm_status(handle, status), "Unable to get playback handle status") >= 0) {
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
                 JAMI_ERR("Writing in state SND_PCM_STATE_SETUP, should be "
                          "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
@@ -581,7 +581,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
                 int err;
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
-                    JAMI_WARN("Cannot get info for %s %s: %s",
+                    JAMI_WARN("Unable to get info for %s %s: %s",
                               getCapture ? "capture device" : "playback device",
                               name.c_str(),
                               snd_strerror(err));
@@ -677,7 +677,7 @@ AlsaLayer::capture()
     if (auto r = read(toGetFrames)) {
         putRecorded(std::move(r));
     } else
-        JAMI_ERR("ALSA MIC : Couldn't read!");
+        JAMI_ERR("ALSA MIC : Unable to read!");
 }
 
 void

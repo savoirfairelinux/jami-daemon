@@ -805,7 +805,7 @@ index 0000000..7ecd194
 +/* #undef HAVE_LSTAT */
 +
 +/* Define to 1 if `lstat' has the bug that it succeeds when given the
-+   zero-length file name argument. */
++   zero-length filename argument. */
 +/* #undef HAVE_LSTAT_EMPTY_STRING_BUG */
 +
 +/* Define to 1 if you have the `lutimes' function. */
@@ -956,7 +956,7 @@ index 0000000..7ecd194
 +/* #undef HAVE_STATVFS */
 +
 +/* Define to 1 if `stat' has the bug that it succeeds when given the
-+   zero-length file name argument. */
++   zero-length filename argument. */
 +/* #undef HAVE_STAT_EMPTY_STRING_BUG */
 +
 +/* Define to 1 if you have the <stdarg.h> header file. */

@@ -551,7 +551,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Create the socket. */
     sockfd = socket (PF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        JAMI_ERR("Could not create socket.");
+        JAMI_ERR("Unable to create socket.");
         return res;
     }
     /* Set non-blocking so we can dected timeouts. */
@@ -584,7 +584,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
                 tv.tv_usec = 0;
                 err = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
                 if (err < 0 && errno != EINTR) {
-                    JAMI_ERR("Could not connect to hostname %s at port %d",
+                    JAMI_ERR("Unable to connect to hostname %s at port %d",
                           host.c_str(), port);
                     goto out;
                 } else if (err > 0) {
@@ -604,7 +604,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
                 }
             } while(1);
         } else {
-            JAMI_ERR("Could not connect to hostname %s at port %d", host.c_str(), port);
+            JAMI_ERR("Unable to connect to hostname %s at port %d", host.c_str(), port);
             goto out;
         }
     }
@@ -619,7 +619,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Disable Nagle algorithm that slows down the SSL handshake. */
     err = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     if (err < 0) {
-        JAMI_ERR("Could not set TCP_NODELAY.");
+        JAMI_ERR("Unable to set TCP_NODELAY.");
         goto out;
     }
 
@@ -627,33 +627,33 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     /* Load the trusted CA certificates. */
     err = gnutls_certificate_allocate_credentials(&cred);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not allocate credentials - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to allocate credentials - %s", gnutls_strerror(err));
         goto out;
     }
     err = gnutls_certificate_set_x509_system_trust(cred);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not load credentials.");
+        JAMI_ERR("Unable to load credentials.");
         goto out;
     }
 
     /* Create the session object. */
     err = gnutls_init(&session, GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not init session -%s\n", gnutls_strerror(err));
+        JAMI_ERR("Unable to init session -%s\n", gnutls_strerror(err));
         goto out;
     }
 
     /* Configure the cipher preferences. The default set should be good enough. */
     err = gnutls_priority_set_direct(session, "NORMAL", &errptr);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
+        JAMI_ERR("Unable to set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
         goto out;
     }
 
     /* Install the trusted certificates. */
     err = gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, cred);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not set up credentials - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to set up credentials - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -661,7 +661,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t) (uintptr_t) sockfd);
     err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host.c_str(), host.size());
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not set server name - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to set server name - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -675,14 +675,14 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
      * itself is stored in the first element of the array. */
     certs = gnutls_certificate_get_peers(session, &certslen);
     if (certs == nullptr || certslen == 0) {
-        JAMI_ERR("Could not obtain peer certificate - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to obtain peer certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
     /* Validate the certificate chain. */
     err = gnutls_certificate_verify_peers2(session, &status);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not verify the certificate chain - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to verify the certificate chain - %s", gnutls_strerror(err));
         goto out;
     }
     if (status != 0) {
@@ -710,7 +710,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
 
     err = gnutls_x509_crt_init(&cert);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not init certificate - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to init certificate - %s", gnutls_strerror(err));
         goto out;
     }
 
@@ -719,7 +719,7 @@ int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint1
     if (err != GNUTLS_E_SUCCESS)
         err = gnutls_x509_crt_import(cert, certs, GNUTLS_X509_FMT_DER);
     if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Could not read peer certificate - %s", gnutls_strerror(err));
+        JAMI_ERR("Unable to read peer certificate - %s", gnutls_strerror(err));
         goto out;
     }
     /* Finally check if the hostnames match. */

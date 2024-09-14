@@ -585,7 +585,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
     auto conv = getConversation(conversationId);
     if (!conv) {
-        JAMI_WARNING("[Account {}] Could not find conversation {}, ask for an invite",
+        JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
                      accountId_,
                      conversationId);
         sendMsgCb_(peer,
@@ -666,7 +666,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         if (!shared)
                             return;
                         if (!ok) {
-                            JAMI_WARNING("[Account {}] Could not fetch new commit from "
+                            JAMI_WARNING("[Account {}] Unable to fetch new commit from "
                                          "{} for {}, other "
                                          "peer may be disconnected",
                                          shared->accountId_,
@@ -708,7 +708,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
         lk.unlock();
-        JAMI_WARNING("[Account {}] Could not find conversation {}, ask for an invite",
+        JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
                      accountId_,
                      conversationId);
         sendMsgCb_(peer,
@@ -763,7 +763,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         });
         conversation->onNeedSocket(onNeedSwarmSocket_);
         if (!conversation->isMember(username_, true)) {
-            JAMI_ERR("Conversation cloned but doesn't seems to be a valid member");
+            JAMI_ERR("Conversation cloned but does not seems to be a valid member");
             conversation->erase();
             lk.lock();
             erasePending();
@@ -1232,7 +1232,7 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
         }
     }
     if (!validCommit) {
-        JAMI_ERROR("Cannot edit commit {:s}", editedId);
+        JAMI_ERROR("Unable to edit commit {:s}", editedId);
         return;
     }
     // Commit message edition
@@ -1667,7 +1667,7 @@ ConversationModule::loadConversations()
                             ctx->toRm.insert(repository);
                         }
                     }
-                    // Even if we found the conversation in convInfos_, we cannot assume that the list of members
+                    // Even if we found the conversation in convInfos_, unable to assume that the list of members
                     // stored in `convInfo` is correct (https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1025).
                     // For this reason, we always use the list we got from the conversation repository to set
                     // the value of `sconv->info.members`.
@@ -2445,8 +2445,8 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                     pimpl_->cloneConversation(deviceId, peerId, conv);
                 } else {
                     // In this case, informations are from JAMS
-                    // JAMS doesn't store the conversation itself, so we
-                    // must use informations to clone the conversation
+                    // JAMS does not store the conversation itself, so we
+                    // must use information to clone the conversation
                     addConvInfo(convInfo);
                     toClone.emplace_back(convId);
                 }
@@ -2601,7 +2601,7 @@ ConversationModule::addConversationMember(const std::string& conversationId,
 {
     auto conv = pimpl_->getConversation(conversationId);
     if (not conv || not conv->conversation) {
-        JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
+        JAMI_ERROR("Conversation {:s} does not exist", conversationId);
         return;
     }
     std::unique_lock lk(conv->mtx);
@@ -2704,7 +2704,7 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
 {
     auto conv = pimpl_->getConversation(conversationId);
     if (not conv or not conv->conversation) {
-        JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
+        JAMI_ERROR("Conversation {:s} does not exist", conversationId);
         return;
     }
     std::lock_guard lk(conv->mtx);
@@ -2713,7 +2713,7 @@ ConversationModule::updateConversationInfos(const std::string& conversationId,
             if (ok && sync) {
                 pimpl_->sendMessageNotification(conversationId, true, commitId);
             } else if (sync)
-                JAMI_WARNING("Couldn't update infos on {:s}", conversationId);
+                JAMI_WARNING("Unable to update info on {:s}", conversationId);
         });
 }
 
@@ -2745,7 +2745,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
         else
             return md;
     }
-    JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
+    JAMI_ERROR("Conversation {:s} does not exist", conversationId);
     return {};
 }
 
@@ -2756,7 +2756,7 @@ ConversationModule::setConversationPreferences(const std::string& conversationId
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::unique_lock lk(conv->mtx);
         if (not conv->conversation) {
-            JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
+            JAMI_ERROR("Conversation {:s} does not exist", conversationId);
             return;
         }
         auto conversation = conv->conversation;
@@ -2800,7 +2800,7 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
         if (conv->conversation)
             return conv->conversation->vCard();
     }
-    JAMI_ERROR("Conversation {:s} doesn't exist", conversationId);
+    JAMI_ERROR("Conversation {:s} does not exist", conversationId);
     return {};
 }
 
@@ -3266,7 +3266,7 @@ ConversationModule::addGitSocket(std::string_view deviceId,
         std::lock_guard lk(conv->mtx);
         conv->conversation->addGitSocket(DeviceId(deviceId), channel);
     } else
-        JAMI_WARNING("addGitSocket: can't find conversation {:s}", convId);
+        JAMI_WARNING("addGitSocket: Unable to find conversation {:s}", convId);
 }
 
 void

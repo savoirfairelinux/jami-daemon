@@ -327,7 +327,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
                  use_cmake=use_cmake):
             track_build(pkg_name, md5, False)
         else:
-            log.error("Couldn't build contrib " + pkg_name)
+            log.error("Unable to build contrib " + pkg_name)
             exit(1)
         log.info(pkg_name + ' up to date')
         return True

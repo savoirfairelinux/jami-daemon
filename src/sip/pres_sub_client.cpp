@@ -189,7 +189,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                      * subscribe.
                      */
                     /* giveup: The subscription has been terminated because
-                     * the notifier could not obtain authorization in a
+                     * the notifier was unable to obtain authorization in a
                      * timely fashion.  If a "retry-after" parameter is
                      * also present, the client SHOULD wait at least the
                      * number of seconds specified by that parameter before
@@ -254,7 +254,7 @@ PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub* sub,
     /* No need to pres->lock() here since the client has a locked dialog*/
 
     if (!pres_client) {
-        JAMI_WARN("Couldn't find pres_client.");
+        JAMI_WARN("Unable to find pres_client.");
         return;
     }
 
@@ -304,7 +304,7 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub* sub,
     PresSubClient* pres_client = (PresSubClient*) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
-        JAMI_WARN("Couldn't find pres_client from ev_sub.");
+        JAMI_WARN("Unable to find pres_client from ev_sub.");
         return;
     }
     /* No need to pres->lock() here since the client has a locked dialog*/
@@ -313,7 +313,7 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub* sub,
     pres_client->reportPresence();
 
     /* The default is to send 200 response to NOTIFY.
-     * Just leave it there..
+     * Just leave it there.
      */
     PJ_UNUSED_ARG(rdata);
     PJ_UNUSED_ARG(p_st_code);
@@ -570,7 +570,7 @@ PresSubClient::subscribe()
                                            acc->getCredentialCount(),
                                            acc->getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize credentials for subscribe session authentication");
+        JAMI_ERR("Unable to initialize credentials for subscribe session authentication");
     }
 
     /* Increment the dialog's lock otherwise when presence session creation
@@ -600,7 +600,7 @@ PresSubClient::subscribe()
                                            acc->getCredentialCount(),
                                            acc->getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize credentials for invite session authentication");
+        JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return false;
     }
 

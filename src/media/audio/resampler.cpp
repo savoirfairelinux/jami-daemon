@@ -46,7 +46,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
     // NOTE swr_set_matrix should be called on an uninitialized context
     auto swrCtx = swr_alloc();
     if (!swrCtx) {
-        JAMI_ERR() << "Cannot allocate resampler context";
+        JAMI_ERR() << "Unable to allocate resampler context";
         throw std::bad_alloc();
     }
 
@@ -59,8 +59,8 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
     av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
 
     /**
-     * Downmixing from 5.1 requires extra setup, since libswresample can't do it automatically
-     * (not yet implemented).
+     * Downmixing from 5.1 requires extra setup, since libswresample is unable to do it
+     * automatically (not yet implemented).
      *
      * Source: https://www.atsc.org/wp-content/uploads/2015/03/A52-201212-17.pdf
      * Section 7.8.2 for the algorithm
@@ -71,7 +71,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      */
     if (in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1
         || in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1_BACK) {
-        // NOTE MSVC can't allocate dynamic size arrays on the stack
+        // NOTE: MSVC is unable to allocate dynamic size arrays on the stack
         if (out->ch_layout.nb_channels == 2) {
             double matrix[2][6];
             // L = 1.0*FL + 0.707*FC + 0.707*BL + 1.0*LFE

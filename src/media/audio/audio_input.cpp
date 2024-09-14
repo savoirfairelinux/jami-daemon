@@ -263,7 +263,7 @@ AudioInput::initFile(const std::string& path)
     devOpts_.loop = "1";
     // sets devOpts_'s sample rate and number of channels
     if (!createDecoder()) {
-        JAMI_WARN() << "Cannot decode audio from file, switching back to default device";
+        JAMI_WARN() << "Unable to decode audio from file, switching back to default device";
         return initDevice("");
     }
     wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
@@ -376,13 +376,13 @@ AudioInput::createDecoder()
         [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
 
     if (decoder->openInput(devOpts_) < 0) {
-        JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";
+        JAMI_ERR() << "Unable to open input '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
         return false;
     }
 
     if (decoder->setupAudio() < 0) {
-        JAMI_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
+        JAMI_ERR() << "Unable to setup decoder for '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
         return false;
     }
