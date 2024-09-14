@@ -4,9 +4,9 @@ Date: Thu, 11 Feb 2021 12:25:14 +0100
 Subject: [PATCH 2/2] avcodec/libopusenc: reload packet loss at encode
 
 An estimation of packet loss is required by libopus to compute its FEC
-data. Currently, this estimation is constant, and can not be changed
+data. Currently, this estimation is constant, and is unable to be changed
 after configuration. This means an application using libopus through
-ffmpeg can not adapt the packet loss estimation when the network
+ffmpeg is unable to adapt the packet loss estimation when the network
 quality degrades.
 
 This patch makes the encoder reload the packet_loss AVOption before

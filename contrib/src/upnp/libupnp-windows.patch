@@ -2081,7 +2081,7 @@ Subject: [PATCH] Windows patch.
 + *
 + * \return
 + * 	\li \c 0 on success, nonzero on failure.
-+ * 	\li \c INVALID_POLICY if policy can not be set.
++ * 	\li \c INVALID_POLICY if policy is unable to be set.
 + */
 +int ThreadPoolSetAttr(
 +	/*! valid thread pool pointer. */

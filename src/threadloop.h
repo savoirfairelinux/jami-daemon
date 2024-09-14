@@ -95,7 +95,7 @@ public:
     void wait_for(const std::chrono::duration<Rep, Period>& rel_time)
     {
         if (std::this_thread::get_id() != get_id())
-            throw std::runtime_error("can not call wait_for outside thread context");
+            throw std::runtime_error("Unable to call wait_for outside thread context");
 
         std::unique_lock lk(mutex_);
         cv_.wait_for(lk, rel_time, [this]() { return isStopping(); });
@@ -105,7 +105,7 @@ public:
     bool wait_for(const std::chrono::duration<Rep, Period>& rel_time, Pred&& pred)
     {
         if (std::this_thread::get_id() != get_id())
-            throw std::runtime_error("can not call wait_for outside thread context");
+            throw std::runtime_error("Unable to call wait_for outside thread context");
 
         std::unique_lock lk(mutex_);
         return cv_.wait_for(lk, rel_time, [this, pred] { return isStopping() || pred(); });
@@ -115,7 +115,7 @@ public:
     void wait(Pred&& pred)
     {
         if (std::this_thread::get_id() != get_id())
-            throw std::runtime_error("Can not call wait outside thread context");
+            throw std::runtime_error("Unable to call wait outside thread context");
 
         std::unique_lock lk(mutex_);
         cv_.wait(lk, [this, p = std::forward<Pred>(pred)] { return isStopping() || p(); });

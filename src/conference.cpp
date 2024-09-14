@@ -1128,7 +1128,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Couldn't parse conference order from %s", peerId.c_str());
+            JAMI_WARN("Unable to parse conference order from %s", peerId.c_str());
             return;
         }
 

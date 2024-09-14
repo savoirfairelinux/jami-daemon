@@ -635,7 +635,7 @@ class _IncludeState(object):
       _OTHER_HEADER: 'other header',
       }
   _SECTION_NAMES = {
-      _INITIAL_SECTION: "... nothing. (This can't be an error.)",
+      _INITIAL_SECTION: "... nothing. (This is not an error.)",
       _MY_H_SECTION: 'a header this file implements',
       _C_SECTION: 'C system header',
       _CPP_SECTION: 'C++ system header',
@@ -1286,7 +1286,7 @@ def RemoveMultiLineComments(filename, lines, error):
     lineix_end = FindNextMultiLineCommentEnd(lines, lineix_begin)
     if lineix_end >= len(lines):
       error(filename, lineix_begin + 1, 'readability/multiline_comment', 5,
-            'Could not find end of multi-line comment')
+            'Unable to find end of multi-line comment')
       return
     RemoveMultiLineCommentsFromRange(lines, lineix_begin, lineix_end + 1)
     lineix = lineix_end + 1
@@ -1858,7 +1858,7 @@ def CheckForNewlineAtEOF(filename, lines, error):
   # last-but-two element of lines() exists and is empty.
   if len(lines) < 3 or lines[-2]:
     error(filename, len(lines) - 2, 'whitespace/ending_newline', 5,
-          'Could not find a newline character at the end of the file.')
+          'Unable to find a newline character at the end of the file.')
 
 
 def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
@@ -2326,7 +2326,7 @@ class NestingState(object):
           pos = 0
         continue
 
-      # We can't be sure if we just find a single '<', and need to
+      # We are unsure if we just find a single '<', and need to
       # find the matching '>'.
       (_, end_line, end_pos) = CloseExpression(clean_lines, linenum, pos - 1)
       if end_pos < 0:
@@ -4715,7 +4715,7 @@ def _GetTextInside(text, start_pattern):
                    the text.
   Returns:
     The extracted text.
-    None if either the opening string or ending punctuation could not be found.
+    None if either the opening string or ending punctuation are unable to be found.
   """
   # TODO(unknown): Audit cpplint.py to see what places could be profitably
   # rewritten to use _GetTextInside (and use inferior regexp matching today).
@@ -5810,7 +5810,7 @@ def CheckRedundantVirtual(filename, clean_lines, linenum, error):
     start_col = 0
 
   if end_col < 0:
-    return  # Couldn't find end of parameter list, give up
+    return  # Unable to find end of parameter list, give up
 
   # Look for "override" or "final" after the parameter list
   # (possibly on the next few lines).
@@ -6121,7 +6121,7 @@ def ProcessConfigOverrides(filename):
 
     except IOError:
       sys.stderr.write(
-          "Skipping config file '%s': Can't open for reading\n" % cfg_file)
+          "Skipping config file '%s': Unable to open for reading\n" % cfg_file)
       keep_looking = False
 
   # Apply all the accumulated filters in reverse order (top-level directory
@@ -6182,7 +6182,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
 
   except IOError:
       sys.stderr.write(
-          "Skipping input '%s': Can't open for reading\n" % filename)
+          "Skipping input '%s': Unable to open for reading\n" % filename)
       _RestoreFilters()
       return
 
@@ -6205,7 +6205,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
     # since critique can handle these just fine, and the style guide
     # doesn't dictate a particular end of line sequence.
     #
-    # We can't depend on os.linesep to determine what the desired
+    # We are unable to depend on os.linesep to determine what the desired
     # end-of-line sequence should be, since that will return the
     # server-side end-of-line sequence.
     if lf_lines and crlf_lines:
