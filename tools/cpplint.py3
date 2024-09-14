@@ -1286,7 +1286,7 @@ def RemoveMultiLineComments(filename, lines, error):
     lineix_end = FindNextMultiLineCommentEnd(lines, lineix_begin)
     if lineix_end >= len(lines):
       error(filename, lineix_begin + 1, 'readability/multiline_comment', 5,
-            'Could not find end of multi-line comment')
+            'Unable to find end of multi-line comment')
       return
     RemoveMultiLineCommentsFromRange(lines, lineix_begin, lineix_end + 1)
     lineix = lineix_end + 1
@@ -1858,7 +1858,7 @@ def CheckForNewlineAtEOF(filename, lines, error):
   # last-but-two element of lines() exists and is empty.
   if len(lines) < 3 or lines[-2]:
     error(filename, len(lines) - 2, 'whitespace/ending_newline', 5,
-          'Could not find a newline character at the end of the file.')
+          'Unable to find a newline character at the end of the file.')
 
 
 def CheckForMultilineCommentsAndStrings(filename, clean_lines, linenum, error):
@@ -4715,7 +4715,7 @@ def _GetTextInside(text, start_pattern):
                    the text.
   Returns:
     The extracted text.
-    None if either the opening string or ending punctuation could not be found.
+    None if either the opening string or ending punctuation are unable to be found.
   """
   # TODO(unknown): Audit cpplint.py to see what places could be profitably
   # rewritten to use _GetTextInside (and use inferior regexp matching today).
