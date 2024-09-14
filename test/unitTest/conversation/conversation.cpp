@@ -1137,7 +1137,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
     if (git_repository_init_ext(&repo_ptr, repoPath.c_str(), &opts) < 0) {
-        JAMI_ERR("Couldn't create a git repository in %s", repoPath.c_str());
+        JAMI_ERR("Unable to create a git repository in %s", repoPath.c_str());
     }
     GitRepository repo {std::move(repo_ptr), git_repository_free};
 
@@ -1164,7 +1164,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     auto adminPath = adminsPath / fmt::format("{}.crt", parentCert->getId());
     std::ofstream file(adminPath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERROR("Could not write data to %s", adminPath.c_str());
+        JAMI_ERROR("Unable to write data to %s", adminPath.c_str());
     }
     file << parentCert->toString(true);
     file.close();
@@ -1177,7 +1177,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     auto devicePath = devicesPath / fmt::format("{}.crt", cert->getLongId());
     file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERR("Could not write data to %s", devicePath.c_str());
+        JAMI_ERR("Unable to write data to %s", devicePath.c_str());
     }
     file << (fakeCert.empty() ? deviceCert : fakeCert);
     file.close();
@@ -1213,7 +1213,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     GitSignature sig {sig_ptr, git_signature_free};
 
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
-        JAMI_ERR("Could not open repository index");
+        JAMI_ERR("Unable to open repository index");
     }
     GitIndex index {index_ptr, git_index_free};
 
@@ -1222,7 +1222,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     }
 
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_id) < 0) {
-        JAMI_ERR("Could not look up initial tree");
+        JAMI_ERR("Unable to look up initial tree");
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
@@ -1243,7 +1243,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
                                  0,
                                  nullptr)
         < 0) {
-        JAMI_ERR("Could not create initial buffer");
+        JAMI_ERR("Unable to create initial buffer");
         return {};
     }
 
@@ -1258,7 +1258,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
                                          signed_str.c_str(),
                                          "signature")
         < 0) {
-        JAMI_ERR("Could not sign initial commit");
+        JAMI_ERR("Unable to sign initial commit");
         return {};
     }
 

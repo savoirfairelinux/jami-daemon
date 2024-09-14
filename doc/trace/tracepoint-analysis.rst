@@ -96,11 +96,11 @@ Once this is done, try ``lttng status`` to see what happen::
     Recording event rules:
       jami:* (type: tracepoint) [enabled]
 
-There's a lots of informations here.  We won't go into the details of all.  The
+There's a lot of information here.  We won't go into the details of all.  The
 most important are the session name, and the channel's recording event rules.
 We can see that we're indeed in our session and that there's a recording rule
 ``jami:*`` for the ``channel0``.  Our rule is globing all events produced by the
-``jami`` provider.  Other informations are documented in the LTTng'
+``jami`` provider.  Other information is documented in the LTTng'
 documentation.
 
 NOTE!  Do not confuse the ``jami`` session with the ``jami`` provider.  Even

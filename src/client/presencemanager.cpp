@@ -69,7 +69,7 @@ subscribeBuddy(const std::string& accountId, const std::string& uri, bool flag)
                    accountId)) {
         ringaccount->trackBuddyPresence(uri, flag);
     } else
-        JAMI_ERROR("Could not find account {}", accountId);
+        JAMI_ERROR("Unable to find account {}", accountId);
 }
 
 /**
@@ -92,7 +92,7 @@ publish(const std::string& accountId, bool status, const std::string& note)
                    accountId)) {
         acc->sendPresenceNote(note);
     } else
-        JAMI_ERROR("Could not find account {}", accountId);
+        JAMI_ERROR("Unable to find account {}", accountId);
 }
 
 /**
@@ -111,7 +111,7 @@ answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
         else
             JAMI_ERROR("Presence not initialized");
     } else
-        JAMI_ERROR("Could not find account IP2IP");
+        JAMI_ERROR("Unable to find account IP2IP");
 #else
     JAMI_ERROR("answerServerRequest() is deprecated and does nothing");
 #endif
@@ -148,7 +148,7 @@ getSubscriptions(const std::string& accountId)
                   tracked_id.second ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY}});
         }
     } else
-        JAMI_ERROR("Could not find account {}", accountId);
+        JAMI_ERROR("Unable to find account {}", accountId);
 
     return ret;
 }
@@ -170,7 +170,7 @@ setSubscriptions(const std::string& accountId, const std::vector<std::string>& u
         for (const auto& u : uris)
             acc->trackBuddyPresence(u, true);
     } else
-        JAMI_ERROR("Could not find account {}", accountId);
+        JAMI_ERROR("Unable to find account {}", accountId);
 }
 
 } // namespace libjami

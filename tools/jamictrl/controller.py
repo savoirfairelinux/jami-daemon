@@ -540,12 +540,12 @@ class libjamiCtrl(Thread):
         return [str(x) for x in self.callmanager.getConferenceList()]
 
     def getCallDetails(self, callid):
-        """Return informations on this call if exists"""
+        """Return information on this call if exists"""
 
         return self.callmanager.getCallDetails(callid)
 
     def getConferenceDetails(self, confid):
-        """Return informations on this conference if exists"""
+        """Return information on this conference if exists"""
 
         return self.callmanager.getConferenceDetails(confid)
 

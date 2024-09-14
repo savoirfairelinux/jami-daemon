@@ -63,7 +63,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
     if (!syncMsg) {
         // Send contacts infos
         // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
-        // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all informations).
+        // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all information).
         if (auto info = acc->accountManager()->getInfo()) {
             if (info->contacts) {
                 SyncMsg msg;

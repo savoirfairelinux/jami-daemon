@@ -196,7 +196,7 @@ MessageEngine::onMessageSent(const std::string& peer,
             JAMI_DEBUG("[message {:d}] State is not SENDING", token);
         }
     } else {
-        JAMI_DEBUG("[message {:d}] Can't find message", token);
+        JAMI_DEBUG("[message {:d}] Unable to find message", token);
     }
 }
 
@@ -227,13 +227,13 @@ MessageEngine::load()
         std::lock_guard lock(messagesMutex_);
         messages_ = std::move(root);
         if (not messages_.empty()) {
-            JAMI_LOG("[Account {}] loaded {} messages from {}",
+            JAMI_LOG("[Account {}] Loaded {} messages from {}",
                      account_.getAccountID(),
                      messages_.size(),
                      savePath_);
         }
     } catch (const std::exception& e) {
-        JAMI_LOG("[Account {}] couldn't load messages from {}: {}",
+        JAMI_LOG("[Account {}] Unable to load messages from {}: {}",
                  account_.getAccountID(),
                  savePath_,
                  e.what());
@@ -268,7 +268,7 @@ MessageEngine::save_() const
         if (file.is_open())
             msgpack::pack(file, messages_);
     } catch (const std::exception& e) {
-        JAMI_ERROR("[Account {}] couldn't serialize pending messages: {}",
+        JAMI_ERROR("[Account {}] Unable to serialize pending messages: {}",
                  account_.getAccountID(), e.what());
     }
 }

@@ -115,7 +115,7 @@ public:
         git_repository* repo = nullptr;
         auto err = git_repository_open(&repo, path.c_str());
         if (err < 0) {
-            JAMI_ERROR("Couldn't open git repository: {} ({})", path, git_error_last()->message);
+            JAMI_ERROR("Unable to open git repository: {} ({})", path, git_error_last()->message);
             return {nullptr, git_repository_free};
         }
         return {std::move(repo), git_repository_free};
@@ -343,7 +343,7 @@ public:
             try {
                 cert = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(deviceFile));
             } catch (const std::exception&) {
-                JAMI_WARNING("Could not load certificate from {}", deviceFile);
+                JAMI_WARNING("Unable to load certificate from {}", deviceFile);
             }
             if (!cert)
                 return {};
@@ -457,7 +457,7 @@ create_empty_repository(const std::string& path)
     opts.flags |= GIT_REPOSITORY_INIT_MKPATH;
     opts.initial_head = "main";
     if (git_repository_init_ext(&repo, path.c_str(), &opts) < 0) {
-        JAMI_ERROR("Couldn't create a git repository in {}", path);
+        JAMI_ERROR("Unable to create a git repository in {}", path);
     }
     return {std::move(repo), git_repository_free};
 }
@@ -473,7 +473,7 @@ git_add_all(git_repository* repo)
     // git add -A
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERROR("Could not open repository index");
+        JAMI_ERROR("Unable to open repository index");
         return false;
     }
     GitIndex index {index_ptr, git_index_free};
@@ -520,7 +520,7 @@ add_initial_files(GitRepository& repo,
     auto adminPath = adminsPath / fmt::format("{}.crt", parentCert->getId().toString());
     std::ofstream file(adminPath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERROR("Could not write data to {}", adminPath);
+        JAMI_ERROR("Unable to write data to {}", adminPath);
         return false;
     }
     file << parentCert->toString(true);
@@ -535,7 +535,7 @@ add_initial_files(GitRepository& repo,
     auto devicePath = devicesPath / fmt::format("{}.crt", deviceId);
     file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERROR("Could not write data to {}", devicePath);
+        JAMI_ERROR("Unable to write data to {}", devicePath);
         return false;
     }
     file << deviceCert;
@@ -553,7 +553,7 @@ add_initial_files(GitRepository& repo,
         auto crlPath = crlsPath / deviceId / (dht::toHex(crl->getNumber()) + ".crl");
         std::ofstream file(crlPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            JAMI_ERROR("Could not write data to {}", crlPath);
+            JAMI_ERROR("Unable to write data to {}", crlPath);
             return false;
         }
         file << crl->toString();
@@ -574,7 +574,7 @@ add_initial_files(GitRepository& repo,
 
         std::ofstream file(invitedMemberPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            JAMI_ERROR("Could not write data to {}", invitedMemberPath);
+            JAMI_ERROR("Unable to write data to {}", invitedMemberPath);
             return false;
         }
     }
@@ -623,7 +623,7 @@ initial_commit(GitRepository& repo,
     GitSignature sig {sig_ptr, git_signature_free};
 
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
-        JAMI_ERROR("Could not open repository index");
+        JAMI_ERROR("Unable to open repository index");
         return {};
     }
     GitIndex index {index_ptr, git_index_free};
@@ -634,7 +634,7 @@ initial_commit(GitRepository& repo,
     }
 
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_id) < 0) {
-        JAMI_ERROR("Could not look up initial tree");
+        JAMI_ERROR("Unable to look up initial tree");
         return {};
     }
     GitTree tree = {tree_ptr, git_tree_free};
@@ -660,7 +660,7 @@ initial_commit(GitRepository& repo,
                                  0,
                                  nullptr)
         < 0) {
-        JAMI_ERROR("Could not create initial buffer");
+        JAMI_ERROR("Unable to create initial buffer");
         return {};
     }
 
@@ -675,7 +675,7 @@ initial_commit(GitRepository& repo,
                                          "signature")
         < 0) {
         git_buf_dispose(&to_sign);
-        JAMI_ERROR("Could not sign initial commit");
+        JAMI_ERROR("Unable to sign initial commit");
         return {};
     }
     git_buf_dispose(&to_sign);
@@ -730,7 +730,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     git_reference* head_ref_ptr = nullptr;
     auto repo = repository();
     if (!repo || git_repository_head(&head_ref_ptr, repo.get()) < 0) {
-        JAMI_ERROR("[conv {}] Could not get HEAD reference", id_);
+        JAMI_ERROR("[conv {}] Unable to get HEAD reference", id_);
         return {};
     }
     GitReference head_ref {head_ref_ptr, git_reference_free};
@@ -756,7 +756,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     GitCommit parents[2] {{nullptr, git_commit_free}, {nullptr, git_commit_free}};
     git_commit* parent = nullptr;
     if (git_reference_peel((git_object**) &parent, head_ref.get(), GIT_OBJ_COMMIT) < 0) {
-        JAMI_ERROR("[conv {}] Could not peel HEAD reference", id_);
+        JAMI_ERROR("[conv {}] Unable to peel HEAD reference", id_);
         return {};
     }
     parents[0] = {parent, git_commit_free};
@@ -766,12 +766,12 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[conv {}] Couldn't lookup commit {}", id_, wanted_ref);
+        JAMI_ERROR("[conv {}] Unable to lookup commit {}", id_, wanted_ref);
         return {};
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
     if (git_commit_lookup(&parent, repo.get(), git_annotated_commit_id(annotated.get())) < 0) {
-        JAMI_ERROR("[conv {}] Couldn't lookup commit {}", id_, wanted_ref);
+        JAMI_ERROR("[conv {}] Unable to lookup commit {}", id_, wanted_ref);
         return {};
     }
     parents[1] = {parent, git_commit_free};
@@ -782,11 +782,11 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     if (git_index_write_tree_to(&tree_oid, index, repo.get()) < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("[conv {}] Couldn't write index: {}", id_, err->message);
+            JAMI_ERROR("[conv {}] Unable to write index: {}", id_, err->message);
         return {};
     }
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_oid) < 0) {
-        JAMI_ERROR("[conv {}] Couldn't lookup tree", id_);
+        JAMI_ERROR("[conv {}] Unable to lookup tree", id_);
         return {};
     }
     GitTree tree = {tree_ptr, git_tree_free};
@@ -813,7 +813,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("[conv {}] Could not create commit buffer: {}", id_, err->message);
+            JAMI_ERROR("[conv {}] Unable to create commit buffer: {}", id_, err->message);
         return {};
     }
 
@@ -832,7 +832,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
                                          "signature")
         < 0) {
         git_buf_dispose(&to_sign);
-        JAMI_ERROR("[conv {}] Could not sign commit", id_);
+        JAMI_ERROR("[conv {}] Unable to sign commit", id_);
         return {};
     }
     git_buf_dispose(&to_sign);
@@ -846,7 +846,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
             < 0) {
             const git_error* err = giterr_last();
             if (err) {
-                JAMI_ERROR("[conv {}] Could not move commit to main: {}", id_, err->message);
+                JAMI_ERROR("[conv {}] Unable to move commit to main: {}", id_, err->message);
                 emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                              id_,
                                                                              ECOMMIT,
@@ -951,7 +951,7 @@ ConversationRepository::Impl::add(const std::string& path)
         return false;
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
-        JAMI_ERROR("Could not open repository index");
+        JAMI_ERROR("Unable to open repository index");
         return false;
     }
     GitIndex index {index_ptr, git_index_free};
@@ -1760,7 +1760,7 @@ ConversationRepository::Impl::validateDevice()
     std::filesystem::path devicePath = git_repository_workdir(repo.get());
     devicePath /= path;
     if (!std::filesystem::is_regular_file(devicePath)) {
-        JAMI_WARNING("[conv {}] Couldn't find file {}", id_, devicePath);
+        JAMI_WARNING("[conv {}] Unable to find file {}", id_, devicePath);
         return false;
     }
 
@@ -1781,13 +1781,13 @@ ConversationRepository::Impl::validateDevice()
         }
         std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            JAMI_ERROR("[conv {}] Could not write data to {}", id_, devicePath);
+            JAMI_ERROR("[conv {}] Unable to write data to {}", id_, devicePath);
             return false;
         }
         file << cert->toString(false);
         file.close();
         if (!add(path)) {
-            JAMI_ERROR("[conv {}] Couldn't add file {}", id_, devicePath);
+            JAMI_ERROR("[conv {}] Unable to add file {}", id_, devicePath);
             return false;
         }
     }
@@ -1820,13 +1820,13 @@ ConversationRepository::Impl::validateDevice()
         if (newCert && std::filesystem::is_regular_file(parentPath)) {
             std::ofstream file(parentPath, std::ios::trunc | std::ios::binary);
             if (!file.is_open()) {
-                JAMI_ERROR("Could not write data to {}", path);
+                JAMI_ERROR("Unable to write data to {}", path);
                 return false;
             }
             file << newCert->toString(true);
             file.close();
             if (!add(relativeParentPath.string())) {
-                JAMI_WARNING("Couldn't add file {}", path);
+                JAMI_WARNING("Unable to add file {}", path);
                 return false;
             }
         }
@@ -1844,7 +1844,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     }
     GitSignature sig = signature();
     if (!sig) {
-        JAMI_ERROR("[conv {}] commit failed: Can't generate signature", id_);
+        JAMI_ERROR("[conv {}] commit failed: Unable to generate signature", id_);
         return {};
     }
     auto account = account_.lock();
@@ -1855,7 +1855,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     if (!repo)
         return {};
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
-        JAMI_ERROR("[conv {}] commit failed: Could not open repository index", id_);
+        JAMI_ERROR("[conv {}] commit failed: Unable to open repository index", id_);
         return {};
     }
     GitIndex index {index_ptr, git_index_free};
@@ -1868,20 +1868,20 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 
     git_tree* tree_ptr = nullptr;
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_id) < 0) {
-        JAMI_ERROR("[conv {}] Could not look up initial tree", id_);
+        JAMI_ERROR("[conv {}] Unable to look up initial tree", id_);
         return {};
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[conv {}] Cannot get reference for HEAD", id_);
+        JAMI_ERROR("[conv {}] Unable to get reference for HEAD", id_);
         return {};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[conv {}] Could not look up HEAD commit", id_);
+        JAMI_ERROR("[conv {}] Unable to look up HEAD commit", id_);
         return {};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
@@ -1904,7 +1904,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
                                  1,
                                  &head_ref[0])
         < 0) {
-        JAMI_ERROR("[conv {}] Could not create commit buffer", id_);
+        JAMI_ERROR("[conv {}] Unable to create commit buffer", id_);
         return {};
     }
 
@@ -1918,7 +1918,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
                                          signed_str.c_str(),
                                          "signature")
         < 0) {
-        JAMI_ERROR("[conv {}] Could not sign commit", id_);
+        JAMI_ERROR("[conv {}] Unable to sign commit", id_);
         git_buf_dispose(&to_sign);
         return {};
     }
@@ -1930,7 +1930,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
         < 0) {
         const git_error* err = giterr_last();
         if (err) {
-            JAMI_ERROR("[conv {}] Could not move commit to main: {}", id_, err->message);
+            JAMI_ERROR("[conv {}] Unable to move commit to main: {}", id_, err->message);
             emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                          id_,
                                                                          ECOMMIT,
@@ -1963,7 +1963,7 @@ ConversationRepository::Impl::mode() const
                                                                         id_,
                                                                         EINVALIDMODE,
                                                                         "No initial commit");
-        throw std::logic_error("Can't retrieve first commit");
+        throw std::logic_error("Unable to retrieve first commit");
     }
     auto commitMsg = lastMsg[0].commit_msg;
 
@@ -1976,7 +1976,7 @@ ConversationRepository::Impl::mode() const
                                                                         id_,
                                                                         EINVALIDMODE,
                                                                         "No initial commit");
-        throw std::logic_error("Can't retrieve first commit");
+        throw std::logic_error("Unable to retrieve first commit");
     }
     if (!root.isMember("mode")) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
@@ -2026,7 +2026,7 @@ ConversationRepository::Impl::diff(git_repository* repo,
                                    const std::string& idOld) const
 {
     if (!repo) {
-        JAMI_ERROR("Cannot get reference for HEAD");
+        JAMI_ERROR("Unable to get reference for HEAD");
         return {nullptr, git_diff_free};
     }
 
@@ -2035,12 +2035,12 @@ ConversationRepository::Impl::diff(git_repository* repo,
     git_commit* commitNew = nullptr;
     if (idNew == "HEAD") {
         if (git_reference_name_to_id(&oid, repo, "HEAD") < 0) {
-            JAMI_ERROR("Cannot get reference for HEAD");
+            JAMI_ERROR("Unable to get reference for HEAD");
             return {nullptr, git_diff_free};
         }
 
         if (git_commit_lookup(&commitNew, repo, &oid) < 0) {
-            JAMI_ERROR("Could not look up HEAD commit");
+            JAMI_ERROR("Unable to look up HEAD commit");
             return {nullptr, git_diff_free};
         }
     } else {
@@ -2055,7 +2055,7 @@ ConversationRepository::Impl::diff(git_repository* repo,
 
     git_tree* tNew = nullptr;
     if (git_commit_tree(&tNew, new_commit.get()) < 0) {
-        JAMI_ERROR("Could not look up initial tree");
+        JAMI_ERROR("Unable to look up initial tree");
         return {nullptr, git_diff_free};
     }
     GitTree treeNew = {tNew, git_tree_free};
@@ -2063,7 +2063,7 @@ ConversationRepository::Impl::diff(git_repository* repo,
     git_diff* diff_ptr = nullptr;
     if (idOld.empty()) {
         if (git_diff_tree_to_tree(&diff_ptr, repo, nullptr, treeNew.get(), {}) < 0) {
-            JAMI_ERROR("Could not get diff to empty repository");
+            JAMI_ERROR("Unable to get diff to empty repository");
             return {nullptr, git_diff_free};
         }
         return {diff_ptr, git_diff_free};
@@ -2079,14 +2079,14 @@ ConversationRepository::Impl::diff(git_repository* repo,
 
     git_tree* tOld = nullptr;
     if (git_commit_tree(&tOld, old_commit.get()) < 0) {
-        JAMI_ERROR("Could not look up initial tree");
+        JAMI_ERROR("Unable to look up initial tree");
         return {nullptr, git_diff_free};
     }
     GitTree treeOld = {tOld, git_tree_free};
 
     // Calc diff
     if (git_diff_tree_to_tree(&diff_ptr, repo, treeOld.get(), treeNew.get(), {}) < 0) {
-        JAMI_ERROR("Could not get diff between {} and {}", idOld, idNew);
+        JAMI_ERROR("Unable to get diff between {} and {}", idOld, idNew);
         return {nullptr, git_diff_free};
     }
     return {diff_ptr, git_diff_free};
@@ -2100,19 +2100,19 @@ ConversationRepository::Impl::behind(const std::string& from) const
     if (!repo)
         return {};
     if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("Cannot get reference for HEAD");
+        JAMI_ERROR("Unable to get reference for HEAD");
         return {};
     }
     oid_head = oid_local;
     std::string head = git_oid_tostr_s(&oid_head);
     if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
-        JAMI_ERROR("Cannot get reference for commit {}", from);
+        JAMI_ERROR("Unable to get reference for commit {}", from);
         return {};
     }
 
     git_oidarray bases;
     if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERROR("Cannot get any merge base for commit {} and {}", from, head);
+        JAMI_ERROR("Unable to get any merge base for commit {} and {}", from, head);
         return {};
     }
     for (std::size_t i = 0; i < bases.count; ++i) {
@@ -2141,7 +2141,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     // Note: Start from head to get all merge possibilities and correct linearized parent.
     auto repo = repository();
     if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[conv {}] Cannot get reference for HEAD", id_);
+        JAMI_ERROR("[conv {}] Unable to get reference for HEAD", id_);
         return;
     }
 
@@ -2160,7 +2160,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         // This fail can be ok in the case we check if a commit exists before pulling (so can fail
         // there). only log if the fail is unwanted.
         if (logIfNotFound)
-            JAMI_DEBUG("[conv {}] Couldn't init revwalker", id_);
+            JAMI_DEBUG("[conv {}] Unable to init revwalker", id_);
         return;
     }
 
@@ -2206,7 +2206,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         git_buf signature = {}, signed_data = {};
         if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature")
             < 0) {
-            JAMI_WARNING("[conv {}] Could not extract signature for commit {}", id_, id);
+            JAMI_WARNING("[conv {}] Unable to extract signature for commit {}", id_, id);
         } else {
             cc.signature = base64::decode(
                 std::string(signature.ptr, signature.ptr + signature.size));
@@ -2312,7 +2312,7 @@ ConversationRepository::Impl::treeAtCommit(git_repository* repo, const std::stri
     GitCommit gc = {commit, git_commit_free};
     git_tree* tree = nullptr;
     if (git_commit_tree(&tree, gc.get()) < 0) {
-        JAMI_ERROR("[conv {}] Could not look up initial tree", id_);
+        JAMI_ERROR("[conv {}] Unable to look up initial tree", id_);
         return GitTree {nullptr, git_tree_free};
     }
     return GitTree {tree, git_tree_free};
@@ -2369,7 +2369,7 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
     git_oid head_commit_id;
     auto repo = repository();
     if (!repo || git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[conv {}] Cannot get reference for HEAD", id_);
+        JAMI_ERROR("[conv {}] Unable to get reference for HEAD", id_);
         return false;
     }
     auto commit_str = git_oid_tostr_s(&head_commit_id);
@@ -2415,7 +2415,7 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
     if (git_checkout_index(repo.get(), index, &opt) < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("Cannot checkout index: {}", err->message);
+            JAMI_ERROR("Unable to checkout index: {}", err->message);
         return false;
     }
 
@@ -2542,7 +2542,7 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
 {
     git_diff_stats* stats_ptr = nullptr;
     if (git_diff_get_stats(&stats_ptr, diff.get()) < 0) {
-        JAMI_ERROR("[conv {}] Could not get diff stats", id_);
+        JAMI_ERROR("[conv {}] Unable to get diff stats", id_);
         return {};
     }
     GitDiffStats stats = {stats_ptr, git_diff_stats_free};
@@ -2550,7 +2550,7 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
     git_diff_stats_format_t format = GIT_DIFF_STATS_FULL;
     git_buf statsBuf = {};
     if (git_diff_stats_to_buf(&statsBuf, stats.get(), format, 80) < 0) {
-        JAMI_ERROR("[conv {}] Could not format diff stats", id_);
+        JAMI_ERROR("[conv {}] Unable to format diff stats", id_);
         return {};
     }
 
@@ -2566,7 +2566,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
                                            ConversationMode mode,
                                            const std::string& otherMember)
 {
-    // Create temporary directory because we can't know the first hash for now
+    // Create temporary directory because we are unable to know the first hash for now
     std::uniform_int_distribution<uint64_t> dist;
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
@@ -2594,7 +2594,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     // Commit changes
     auto id = initial_commit(repo, account, mode, otherMember);
     if (id.empty()) {
-        JAMI_ERROR("Couldn't create initial commit in {}", tmpPath);
+        JAMI_ERROR("Unable to create initial commit in {}", tmpPath);
         dhtnet::fileutils::removeAll(tmpPath, true);
         return {};
     }
@@ -2604,7 +2604,7 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     std::error_code ec;
     std::filesystem::rename(tmpPath, newPath, ec);
     if (ec) {
-        JAMI_ERROR("Couldn't move {} in {}: {}", tmpPath, newPath, ec.message());
+        JAMI_ERROR("Unable to move {} in {}: {}", tmpPath, newPath, ec.message());
         dhtnet::fileutils::removeAll(tmpPath, true);
         return {};
     }
@@ -2909,7 +2909,7 @@ ConversationRepository::addMember(const std::string& uri)
 
     std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERROR("Could not write data to {}", devicePath);
+        JAMI_ERROR("Unable to write data to {}", devicePath);
         return {};
     }
     std::string path = "invited/" + uri;
@@ -2961,7 +2961,7 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
         < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("Could not amend commit: {}", err->message);
+            JAMI_ERROR("Unable to amend commit: {}", err->message);
         return {};
     }
 
@@ -2971,7 +2971,7 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
         < 0) {
         const git_error* err = giterr_last();
         if (err) {
-            JAMI_ERROR("Could not move commit to main: {}", err->message);
+            JAMI_ERROR("Unable to move commit to main: {}", err->message);
             emitSignal<libjami::ConversationSignal::OnConversationError>(pimpl_->accountId_,
                                                                          pimpl_->id_,
                                                                          ECOMMIT,
@@ -3014,13 +3014,13 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     auto res = git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str());
     if (res != 0) {
         if (res != GIT_ENOTFOUND) {
-            JAMI_ERROR("[conv {}] Couldn't lookup for remote {}", pimpl_->id_, remoteDeviceId);
+            JAMI_ERROR("[conv {}] Unable to lookup for remote {}", pimpl_->id_, remoteDeviceId);
             return false;
         }
         std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
         if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str())
             < 0) {
-            JAMI_ERROR("[conv {}] Could not create remote for repository", pimpl_->id_);
+            JAMI_ERROR("[conv {}] Unable to create remote for repository", pimpl_->id_);
             return false;
         }
     }
@@ -3044,7 +3044,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err) {
-            JAMI_WARNING("[conv {}] Could not fetch remote repository: {:s}",
+            JAMI_WARNING("[conv {}] Unable to fetch remote repository: {:s}",
                          pimpl_->id_,
                          err->message);
         }
@@ -3100,7 +3100,7 @@ ConversationRepository::Impl::addUserDevice()
     if (!std::filesystem::is_regular_file(devicePath)) {
         std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            JAMI_ERROR("Could not write data to {}", devicePath);
+            JAMI_ERROR("Unable to write data to {}", devicePath);
             return;
         }
         auto cert = account->identity().second;
@@ -3109,7 +3109,7 @@ ConversationRepository::Impl::addUserDevice()
         file.close();
 
         if (!add(path))
-            JAMI_WARNING("Couldn't add file {}", devicePath);
+            JAMI_WARNING("Unable to add file {}", devicePath);
     }
 }
 
@@ -3126,7 +3126,7 @@ ConversationRepository::Impl::resetHard()
     git_object *head_commit_obj = nullptr;
     auto error = git_revparse_single(&head_commit_obj, repo.get(), "HEAD");
     if (error < 0) {
-        JAMI_ERROR("Could not get HEAD commit");
+        JAMI_ERROR("Unable to get HEAD commit");
         return;
     }
     GitObject target {head_commit_obj, git_object_free};
@@ -3193,7 +3193,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     // First, the repository must be in a clean state
     auto repo = pimpl_->repository();
     if (!repo) {
-        JAMI_ERROR("[conv {}] Can't merge without repo", pimpl_->id_);
+        JAMI_ERROR("[conv {}] Unable to merge without repo", pimpl_->id_);
         return {false, ""};
     }
     int state = git_repository_state(repo.get());
@@ -3207,19 +3207,19 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     }
     // Checkout main (to do a `git_merge branch`)
     if (git_repository_set_head(repo.get(), "refs/heads/main") < 0) {
-        JAMI_ERROR("[conv {}] Merge operation aborted: couldn't checkout main branch", pimpl_->id_);
+        JAMI_ERROR("[conv {}] Merge operation aborted: unable to checkout main branch", pimpl_->id_);
         return {false, ""};
     }
 
     // Then check that merge_id exists
     git_oid commit_id;
     if (git_oid_fromstr(&commit_id, merge_id.c_str()) < 0) {
-        JAMI_ERROR("[conv {}] Merge operation aborted: couldn't lookup commit {}", pimpl_->id_, merge_id);
+        JAMI_ERROR("[conv {}] Merge operation aborted: unable to lookup commit {}", pimpl_->id_, merge_id);
         return {false, ""};
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[conv {}] Merge operation aborted: couldn't lookup commit {}", pimpl_->id_, merge_id);
+        JAMI_ERROR("[conv {}] Merge operation aborted: unable to lookup commit {}", pimpl_->id_, merge_id);
         return {false, ""};
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
@@ -3263,20 +3263,20 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     // Else we want to check for conflicts
     git_oid head_commit_id;
     if (git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[conv {}] Cannot get reference for HEAD", pimpl_->id_);
+        JAMI_ERROR("[conv {}] Unable to get reference for HEAD", pimpl_->id_);
         return {false, ""};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo.get(), &head_commit_id) < 0) {
-        JAMI_ERROR("[conv {}] Could not look up HEAD commit", pimpl_->id_);
+        JAMI_ERROR("[conv {}] Unable to look up HEAD commit", pimpl_->id_);
         return {false, ""};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
 
     git_commit* other__ptr = nullptr;
     if (git_commit_lookup(&other__ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[conv {}] Could not look up HEAD commit", pimpl_->id_);
+        JAMI_ERROR("[conv {}] Unable to look up HEAD commit", pimpl_->id_);
         return {false, ""};
     }
     GitCommit other_commit {other__ptr, git_commit_free};
@@ -3296,7 +3296,7 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     if (git_index_has_conflicts(index.get())) {
         JAMI_LOG("Some conflicts were detected during the merge operations. Resolution phase.");
         if (!pimpl_->resolveConflicts(index.get(), merge_id) or !git_add_all(repo.get())) {
-            JAMI_ERROR("Merge operation aborted; Can't automatically resolve conflicts");
+            JAMI_ERROR("Merge operation aborted; Unable to automatically resolve conflicts");
             return {false, ""};
         }
     }
@@ -3379,7 +3379,7 @@ ConversationRepository::join()
     }
     std::ofstream file(memberFile, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERROR("Could not write data to {}", memberFile);
+        JAMI_ERROR("Unable to write data to {}", memberFile);
         return {};
     }
     file << parentCert->toString(true);
@@ -3539,7 +3539,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
     std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
-        JAMI_ERROR("Could not write data to {}", votePath);
+        JAMI_ERROR("Unable to write data to {}", votePath);
         return {};
     }
     voteFile.close();
@@ -3581,7 +3581,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
     auto votePath = voteDirectory / adminUri;
     std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
-        JAMI_ERROR("Could not write data to {}", votePath);
+        JAMI_ERROR("Unable to write data to {}", votePath);
         return {};
     }
     voteFile.close();
@@ -3899,7 +3899,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     auto profilePath = repoPath / "profile.vcf";
     std::ofstream file(profilePath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        JAMI_ERROR("Could not write data to {}", profilePath);
+        JAMI_ERROR("Unable to write data to {}", profilePath);
         return {};
     }
 
@@ -3996,7 +3996,7 @@ ConversationRepository::getHead() const
     if (auto repo = pimpl_->repository()) {
         git_oid commit_id;
         if (git_reference_name_to_id(&commit_id, repo.get(), "HEAD") < 0) {
-            JAMI_ERROR("Cannot get reference for HEAD");
+            JAMI_ERROR("Unable to get reference for HEAD");
             return {};
         }
         if (auto commit_str = git_oid_tostr_s(&commit_id))

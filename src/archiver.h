@@ -75,10 +75,10 @@ gzFile openGzip(const std::string& path, const char* mode);
  * in dir folder according to a FileMatchPair f
  * @param path
  * @param dir
- * @param f takes a file name relative path inside the archive like mysubfolder/myfile
- * and returns a pair (bool, new file name relative path)
+ * @param f takes a filename relative path inside the archive like mysubfolder/myfile
+ * and returns a pair (bool, new filename relative path)
  * Where the bool indicates if we should uncompress this file
- * and the new file name relative path puts the file in the directory dir under a different
+ * and the new filename relative path puts the file in the directory dir under a different
  * relative path name like mynewsubfolder/myfile
  * @return void
  */

@@ -81,7 +81,7 @@ AudioStream::AudioStream(pa_context* c,
                                                ec ? pl.get() : nullptr);
     if (!audiostream_) {
         JAMI_ERR("%s: pa_stream_new() failed : %s", desc, pa_strerror(pa_context_errno(c)));
-        throw std::runtime_error("Could not create stream\n");
+        throw std::runtime_error("Unable to create stream\n");
     }
 
     pa_buffer_attr attributes;
