@@ -54,12 +54,12 @@ connectPorts(jack_client_t* client, int portType, const std::vector<jack_port_t*
         const char* port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
-                JAMI_ERR("Can't connect %s to %s", port, physical_ports[i]);
+                JAMI_ERR("Unable to connect %s to %s", port, physical_ports[i]);
                 break;
             }
         } else {
             if (jack_connect(client, physical_ports[i], port)) {
-                JAMI_ERR("Can't connect port %s to %s", physical_ports[i], port);
+                JAMI_ERR("Unable to connect port %s to %s", physical_ports[i], port);
                 break;
             }
         }
@@ -201,15 +201,15 @@ createPorts(jack_client_t* client,
                                                playback ? JackPortIsOutput : JackPortIsInput,
                                                0);
         if (port == nullptr)
-            throw std::runtime_error("Could not register JACK output port");
+            throw std::runtime_error("Unable to register JACK output port");
         ports.push_back(port);
 
         static const unsigned RB_SIZE = 16384;
         jack_ringbuffer_t* rb = jack_ringbuffer_create(RB_SIZE);
         if (rb == nullptr)
-            throw std::runtime_error("Could not create JACK ringbuffer");
+            throw std::runtime_error("Unable to create JACK ringbuffer");
         if (jack_ringbuffer_mlock(rb))
-            throw std::runtime_error("Could not lock JACK ringbuffer in memory");
+            throw std::runtime_error("Unable to lock JACK ringbuffer in memory");
         ringbuffers.push_back(rb);
     }
     jack_free(physical_ports);
@@ -224,13 +224,13 @@ JackLayer::JackLayer(const AudioPreference& p)
                                        (jack_options_t)(JackNullOption | JackNoStartServer),
                                        NULL);
     if (!playbackClient_)
-        throw std::runtime_error("Could not open JACK client");
+        throw std::runtime_error("Unable to open JACK client");
 
     captureClient_ = jack_client_open(PACKAGE_NAME,
                                       (jack_options_t)(JackNullOption | JackNoStartServer),
                                       NULL);
     if (!captureClient_)
-        throw std::runtime_error("Could not open JACK client");
+        throw std::runtime_error("Unable to open JACK client");
 
     jack_set_process_callback(captureClient_, process_capture, this);
     jack_set_process_callback(playbackClient_, process_playback, this);
@@ -257,9 +257,9 @@ JackLayer::~JackLayer()
         jack_port_unregister(captureClient_, p);
 
     if (jack_client_close(playbackClient_))
-        JAMI_ERR("JACK client could not close");
+        JAMI_ERR("Unable to close JACK client");
     if (jack_client_close(captureClient_))
-        JAMI_ERR("JACK client could not close");
+        JAMI_ERR("Unable to close JACK client");
 
     for (auto r : out_ringbuffers_)
         jack_ringbuffer_free(r);
@@ -336,7 +336,7 @@ JackLayer::process_capture(jack_nframes_t frames, void* arg)
     }
 
     /* Tell the ringbuffer thread there is work to do.  If it is already
-     * running, the lock will not be available.  We can't wait
+     * running, the lock will not be available.  We are unable to wait
      * here in the process() thread, but we don't need to signal
      * in that case, because the ringbuffer thread will read all the
      * data queued before waiting again. */
@@ -384,7 +384,7 @@ void JackLayer::startStream(AudioDeviceType)
     status_ = Status::Started;
 
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
-        JAMI_ERR("Could not activate JACK client");
+        JAMI_ERR("Unable to activate JACK client");
         return;
     }
     ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
@@ -411,7 +411,7 @@ void JackLayer::stopStream(AudioDeviceType)
     data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
-        JAMI_ERR("JACK client could not deactivate");
+        JAMI_ERR("Unable to deactivate JACK client");
     }
 
     if (ringbuffer_thread_.joinable())

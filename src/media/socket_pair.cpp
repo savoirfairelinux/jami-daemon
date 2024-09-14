@@ -101,14 +101,14 @@ public:
             // XXX: see srtp_open from libavformat/srtpproto.c
             if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
                 srtp_close();
-                throw std::runtime_error("Could not set crypto on output");
+                throw std::runtime_error("Unable to set crypto on output");
             }
         }
 
         if (in_suite && in_key) {
             if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
                 srtp_close();
-                throw std::runtime_error("Could not set crypto on input");
+                throw std::runtime_error("Unable to set crypto on input");
             }
         }
     }
@@ -525,7 +525,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             else if (header->pt == 200) {
                 // not used yet
             } else {
-                JAMI_DBG("Can't read RTCP: unknown packet type %u", header->pt);
+                JAMI_DBG("Unable to read RTCP: unknown packet type %u", header->pt);
             }
             fromRTCP = true;
         }

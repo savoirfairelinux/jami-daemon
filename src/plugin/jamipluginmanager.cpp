@@ -69,7 +69,7 @@ JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::strin
 {
     auto cert = PluginUtils::readPluginCertificate(rootPath, pluginId);
     if (!cert) {
-        JAMI_ERROR("Could not read plugin certificate");
+        JAMI_ERROR("Unable to read plugin certificate");
         return {};
     }
     return cert->getIssuerName();
@@ -325,7 +325,7 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                 JAMI_INFO() << "PLUGIN: unloading before uninstall.";
                 bool status = libjami::unloadPlugin(rootPath);
                 if (!status) {
-                    JAMI_INFO() << "PLUGIN: could not unload, not performing uninstall.";
+                    JAMI_INFO() << "PLUGIN: unable to unload, not performing uninstall.";
                     return FAILURE;
                 }
             }

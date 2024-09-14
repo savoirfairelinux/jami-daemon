@@ -132,7 +132,7 @@ protected:
         }
         if (recordQueue_.samples() < recordFrameSize
             || playbackQueue_.samples() < playbackFrameSize) {
-            // If there are not enough samples in either queue, we can't
+            // If there are not enough samples in either queue, we are unable to
             // process anything.
             return true;
         }

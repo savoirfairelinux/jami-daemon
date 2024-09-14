@@ -360,7 +360,7 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
 
     if (secure) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
-            throw SdpException("Could not add sdes attribute to media");
+            throw SdpException("Unable to add sdes attribute to media");
     }
 
     return med;
@@ -389,7 +389,7 @@ Sdp::setPublishedIP(const std::string& addr, pj_uint16_t addr_type)
         localSession_->origin.addr = sip_utils::CONST_PJ_STR(publishedIpAddr_);
         localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
-            JAMI_ERR("Could not validate SDP");
+            JAMI_ERR("Unable to validate SDP");
     }
 }
 
@@ -478,7 +478,7 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDir
 
     auto cloned_session = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned_session) {
-        JAMI_ERR("Could not clone SDP for printing");
+        JAMI_ERR("Unable to clone SDP for printing");
         return;
     }
 
@@ -640,7 +640,7 @@ Sdp::startNegotiation()
     JAMI_DBG("Starting media negotiation for [%s]", sessionName_.c_str());
 
     if (negotiator_ == NULL) {
-        JAMI_ERR("Can't start negotiation with invalid negotiator");
+        JAMI_ERR("Unable to start negotiation with invalid negotiator");
         return false;
     }
 
@@ -658,7 +658,7 @@ Sdp::startNegotiation()
     }
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
-        JAMI_ERR("Could not retrieve local active session");
+        JAMI_ERR("Unable to retrieve local active session");
 
     setActiveLocalSdpSession(active_local);
 
@@ -668,7 +668,7 @@ Sdp::startNegotiation()
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS
         or active_remote == nullptr) {
-        JAMI_ERR("Could not retrieve remote active session");
+        JAMI_ERR("Unable to retrieve remote active session");
         return false;
     }
 
@@ -692,7 +692,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
                  pj_pool_release);
     auto cloned = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned) {
-        JAMI_ERR("Could not clone SDP");
+        JAMI_ERR("Unable to clone SDP");
         return "";
     }
 
@@ -701,7 +701,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
     for (unsigned i = 0; i < cloned->media_count; i++)
         if (i != media_keep) {
             if (pjmedia_sdp_media_deactivate(tmpPool_.get(), cloned->media[i]) != PJ_SUCCESS)
-                JAMI_ERR("Could not deactivate media");
+                JAMI_ERR("Unable to deactivate media");
         } else {
             hasKeep = true;
         }
@@ -788,7 +788,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         // get connection info
         pjmedia_sdp_conn* conn = media->conn ? media->conn : session->conn;
         if (not conn) {
-            JAMI_ERR("Could not find connection information for media");
+            JAMI_ERR("Unable to find connection information for media");
             continue;
         }
         descr.addr = std::string_view(conn->addr.ptr, conn->addr.slen);
@@ -826,14 +826,14 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                                                                      &STR_RTPMAP,
                                                                      &media->desc.fmt[j]);
             if (!rtpMapAttribute) {
-                JAMI_ERR("Could not find rtpmap attribute");
+                JAMI_ERR("Unable to find rtpmap attribute");
                 descr.enabled = false;
                 continue;
             }
             pjmedia_sdp_rtpmap rtpmap;
             if (pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap) != PJ_SUCCESS
                 || rtpmap.enc_name.slen == 0) {
-                JAMI_ERR("Could not find payload type %.*s in SDP",
+                JAMI_ERR("Unable to find payload type %.*s in SDP",
                          (int) media->desc.fmt[j].slen,
                          media->desc.fmt[j].ptr);
                 descr.enabled = false;
@@ -843,7 +843,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             descr.rtp_clockrate = rtpmap.clock_rate;
             descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
-                JAMI_ERR("Could not find codec %.*s", (int) codec_raw.size(), codec_raw.data());
+                JAMI_ERR("Unable to find codec %.*s", (int) codec_raw.size(), codec_raw.data());
                 descr.enabled = false;
                 continue;
             }
@@ -895,7 +895,7 @@ void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
 {
     if (media_index >= localSession_->media_count) {
-        JAMI_ERR("addIceCandidates failed: cannot access media#%u (may be deactivated)",
+        JAMI_ERR("addIceCandidates failed: unable to access media#%u (may be deactivated)",
                  media_index);
         return;
     }
@@ -907,7 +907,7 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
         pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create(memPool_.get(), "candidate", &val);
 
         if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
-            throw SdpException("Could not add ICE candidates attribute to media");
+            throw SdpException("Unable to add ICE candidates attribute to media");
     }
 }
 
@@ -925,7 +925,7 @@ Sdp::getIceCandidates(unsigned media_index) const
         return {};
     }
     if (media_index >= remoteSession->media_count || media_index >= localSession->media_count) {
-        JAMI_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)",
+        JAMI_ERR("getIceCandidates failed: unable to access media#%u (may be deactivated)",
                  media_index);
         return {};
     }
@@ -957,13 +957,13 @@ Sdp::addIceAttributes(const dhtnet::IceTransport::Attribute&& ice_attrs)
     pjmedia_sdp_attr* attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-ufrag", &value);
 
     if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
-        throw SdpException("Could not add ICE.ufrag attribute to local SDP");
+        throw SdpException("Unable to add ICE.ufrag attribute to local SDP");
 
     value = sip_utils::CONST_PJ_STR(ice_attrs.pwd);
     attr = pjmedia_sdp_attr_create(memPool_.get(), "ice-pwd", &value);
 
     if (pjmedia_sdp_attr_add(&localSession_->attr_count, localSession_->attr, attr) != PJ_SUCCESS)
-        throw SdpException("Could not add ICE.pwd attribute to local SDP");
+        throw SdpException("Unable to add ICE.pwd attribute to local SDP");
 }
 
 dhtnet::IceTransport::Attribute
@@ -1074,7 +1074,7 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
         // Get transport.
         auto transp = getMediaTransport(media);
         if (transp == MediaTransport::UNKNOWN) {
-            JAMI_WARN("Media#%u could not determine transport type!", idx);
+            JAMI_WARN("Media#%u is unable to determine transport type!", idx);
         }
 
         // A media is secure if the transport is of type RTP/SAVP

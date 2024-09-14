@@ -162,7 +162,7 @@ Bucket::getNodeTimer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& sock
 {
     auto node = nodes.find(socket->deviceId());
     if (node == nodes.end()) {
-        throw std::range_error("Can't find timer " + socket->deviceId().toString());
+        throw std::range_error("Unable to find timer " + socket->deviceId().toString());
     }
     return node->second.refresh_timer;
 }

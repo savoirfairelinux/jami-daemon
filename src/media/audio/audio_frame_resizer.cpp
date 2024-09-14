@@ -137,7 +137,7 @@ AudioFrameResizer::dequeue()
                                   reinterpret_cast<void**>(frame->pointer()->data),
                                   frameSize_))
         < 0) {
-        JAMI_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);
+        JAMI_ERR() << "Unable to read samples from queue: " << libav_utils::getError(ret);
         return {};
     }
     frame->pointer()->pts = nextOutputPts_;

@@ -290,7 +290,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
         }
 
         if (!hwFrame->hw_frames_ctx) {
-            JAMI_ERR() << "Failed to allocate hardware buffer: Cannot allocate memory";
+            JAMI_ERR() << "Failed to allocate hardware buffer: Unable to allocate memory";
             return nullptr;
         }
 
@@ -325,7 +325,7 @@ HardwareAccel::initFrame()
 {
     int ret = 0;
     if (!deviceCtx_) {
-        JAMI_ERR() << "Cannot initialize hardware frames without a valid hardware device";
+        JAMI_ERR() << "Unable to initialize hardware frames without a valid hardware device";
         return false;
     }
 
@@ -377,11 +377,11 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
 {
     auto input = frame.pointer();
     if (not input)
-        throw std::runtime_error("Cannot transfer null frame");
+        throw std::runtime_error("Unable to transfer null frame");
 
     auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
     if (!desc) {
-        throw std::runtime_error("Cannot transfer frame with invalid format");
+        throw std::runtime_error("Unable to transfer frame with invalid format");
     }
 
     auto out = std::make_unique<VideoFrame>();
@@ -395,7 +395,7 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
 
     int ret = av_hwframe_transfer_data(output, input, 0);
     if (ret < 0) {
-        throw std::runtime_error("Cannot transfer the frame from GPU");
+        throw std::runtime_error("Unable to transfer the frame from GPU");
     }
 
     output->pts = input->pts;

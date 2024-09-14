@@ -47,7 +47,7 @@ void
 LocalRecorder::setPath(const std::string& path)
 {
     if (isRecording()) {
-        JAMI_ERR("can't set path while recording");
+        JAMI_ERR("Unable to set path while recording");
         return;
     }
 
@@ -59,17 +59,17 @@ bool
 LocalRecorder::startRecording()
 {
     if (isRecording()) {
-        JAMI_ERR("recording already started!");
+        JAMI_ERR("Recording already started!");
         return false;
     }
 
     if (path_.empty()) {
-        JAMI_ERR("could not start recording (path not set)");
+        JAMI_ERR("Unable to start recording (path not set)");
         return false;
     }
 
     if (!recorder_) {
-        JAMI_ERR("could not start recording (no recorder)");
+        JAMI_ERR("Unable to start recording (no recorder)");
         return false;
     }
 

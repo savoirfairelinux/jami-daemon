@@ -290,7 +290,7 @@ getLanguage()
         if (auto envLang = std::getenv("JAMI_LANG"))
             lang = envLang;
         else
-            JAMI_INFO() << "Error getting JAMI_LANG env, trying to get system language";
+            JAMI_INFO() << "Error getting JAMI_LANG env, attempting to get system language";
         // If language preference is empty, try to get from the system.
         if (lang.empty()) {
 #ifdef WIN32
@@ -309,11 +309,11 @@ getLanguage()
                 lang.append(utf8Buffer);
                 string_replace(lang, "-", "_");
             }
-            // Even though we default to the system variable in windows, technically this
+            // Even though we default to the system variable in Windows, technically this
             // part of the code should not be reached because the client-qt must define that
-            // variable and we cannot run the client and the daemon in diferent processes in Windows.
+            // variable and is unable to run the client and the daemon in diferent processes in Windows.
 #else
-            // The same way described in the comment just above, the android should not reach this
+            // The same way described in the comment just above, Android should not reach this
             // part of the code given the client-android must define "JAMI_LANG" system variable.
             // And even if this part is reached, it should not work since std::locale is not
             // supported by the NDK.

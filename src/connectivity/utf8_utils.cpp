@@ -46,7 +46,7 @@ using ssize_t = SSIZE_T;
  * Check whether a Unicode (5.2) char is in a valid range.
  *
  * The first check comes from the Unicode guarantee to never encode
- * a point above 0x0010ffff, since UTF-16 couldn't represent it.
+ * a point above 0x0010ffff, since UTF-16 is unable to represent it.
  *
  * The second check covers surrogate pairs (category Cs).
  *
