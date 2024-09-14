@@ -77,7 +77,7 @@ private:
     /**
      * @brief Libswresample resampler context.
      *
-     * NOTE SwrContext is an imcomplete type and cannot be stored in a smart pointer.
+     * NOTE SwrContext is an incomplete type and is unable to be stored in a smart pointer.
      */
     SwrContext* swrCtx_;
 

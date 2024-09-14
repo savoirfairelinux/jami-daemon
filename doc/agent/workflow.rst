@@ -15,7 +15,7 @@ Guile bindings
 
 Guile needs primitive bindings to communicate with Jami.  Usually, these
 bindings can written in pure Scheme using the foreign function interface (FFI)
-and some dlopen() magics.  However, this method cannot applies here for two main
+and some dlopen() magics.  However, this method is not applicable here for two main
 reasons:
 
   1. Jami source code is in C++ not C.

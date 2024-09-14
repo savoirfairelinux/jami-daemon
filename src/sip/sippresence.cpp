@@ -61,7 +61,7 @@ SIPPresence::SIPPresence(SIPAccount* acc)
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_.factory, "pres", 1000, 1000, NULL);
     if (!pool_)
-        throw std::runtime_error("Could not allocate pool for presence");
+        throw std::runtime_error("Unable to allocate pool for presence");
 
     /* init default status */
     updateStatus(false, " ");
@@ -527,7 +527,7 @@ SIPPresence::publish(SIPPresence* pres)
                                            acc->getCredentialCount(),
                                            acc->getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERR("Could not initialize credentials for invite session authentication");
+        JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return status;
     }
 

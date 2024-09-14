@@ -1192,18 +1192,18 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
             auto initialMembers = getInitialMembers();
             auto it = std::find(initialMembers.begin(), initialMembers.end(), contactUri);
             if (it == initialMembers.end()) {
-                JAMI_WARN("Cannot add new member in one to one conversation");
+                JAMI_WARN("Unable to add new member in one to one conversation");
                 cb(false, "");
                 return;
             }
         }
     } catch (const std::exception& e) {
-        JAMI_WARN("Cannot get mode: %s", e.what());
+        JAMI_WARN("Unable to get mode: %s", e.what());
         cb(false, "");
         return;
     }
     if (isMember(contactUri, true)) {
-        JAMI_WARN("Could not add member %s because it's already a member", contactUri.c_str());
+        JAMI_WARN("Unable to add member %s because it's already a member", contactUri.c_str());
         cb(false, "");
         return;
     }
@@ -1222,7 +1222,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                     }
                 });
         } else {
-            JAMI_WARN("Could not add member %s because this member is banned", contactUri.c_str());
+            JAMI_WARN("Unable to add member %s because this member is blocked", contactUri.c_str());
             cb(false, "");
         }
         return;
@@ -1304,7 +1304,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri,
 {
     // Check if admin
     if (!isAdmin()) {
-        JAMI_WARN("You're not an admin of this repo. Cannot unban %s", contactUri.c_str());
+        JAMI_WARN("You're not an admin of this repo. Unable to unblock %s", contactUri.c_str());
         cb(false, {});
         return;
     }
@@ -1345,7 +1345,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
         if (auto sthis = w.lock()) {
             // Check if admin
             if (!sthis->pimpl_->isAdmin()) {
-                JAMI_WARN("You're not an admin of this repo. Cannot ban %s", contactUri.c_str());
+                JAMI_WARN("You're not an admin of this repo. Unable to block %s", contactUri.c_str());
                 cb(false, {});
                 return;
             }
@@ -1634,7 +1634,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     }
     auto remoteHead = repository_->remoteHead(uri);
     if (remoteHead.empty()) {
-        JAMI_WARN("Could not get HEAD of %s", uri.c_str());
+        JAMI_WARN("Unable to get HEAD of %s", uri.c_str());
         return {};
     }
 
@@ -1642,7 +1642,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     auto [newCommits, err] = repository_->validFetch(uri);
     if (newCommits.empty()) {
         if (err)
-            JAMI_ERR("Could not validate history with %s", uri.c_str());
+            JAMI_ERR("Unable to validate history with %s", uri.c_str());
         repository_->removeBranchWith(uri);
         return {};
     }
@@ -1650,7 +1650,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     // If validated, merge
     auto [ok, cid] = repository_->merge(remoteHead);
     if (!ok) {
-        JAMI_ERR("Could not merge history with %s", uri.c_str());
+        JAMI_ERR("Unable to merge history with %s", uri.c_str());
         repository_->removeBranchWith(uri);
         return {};
     }

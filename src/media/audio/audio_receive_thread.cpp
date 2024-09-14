@@ -79,7 +79,7 @@ AudioReceiveThread::setup()
     audioDecoder_->setIOContext(sdpContext_.get());
     audioDecoder_->setFEC(true);
     if (audioDecoder_->openInput(args_)) {
-        JAMI_ERR("Could not open input \"%s\"", SDP_FILENAME);
+        JAMI_ERR("Unable to open input \"%s\"", SDP_FILENAME);
         return false;
     }
 

@@ -212,12 +212,12 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     git_repository* repo = nullptr;
     // TODO share this repo with GitServer
     if (git_repository_open(&repo, path.c_str()) != 0) {
-        JAMI_ERROR("Could not open repository");
+        JAMI_ERROR("Unable to open repository");
         return {};
     }
 
     if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERROR("Could not open repository index");
+        JAMI_ERROR("Unable to open repository index");
         return {};
     }
     GitIndex index {index_ptr, git_index_free};
@@ -230,20 +230,20 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
 
     git_tree* tree_ptr = nullptr;
     if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
-        JAMI_ERROR("Could not look up initial tree");
+        JAMI_ERROR("Unable to look up initial tree");
         return {};
     }
     GitTree tree = {tree_ptr, git_tree_free};
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
-        JAMI_ERROR("Cannot get reference for HEAD");
+        JAMI_ERROR("Unable to get reference for HEAD");
         return {};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo, &commit_id) < 0) {
-        JAMI_ERROR("Could not look up HEAD commit");
+        JAMI_ERROR("Unable to look up HEAD commit");
         return {};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
@@ -259,7 +259,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     if (git_commit_create_buffer(
             &to_sign, repo, sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0])
         < 0) {
-        JAMI_ERROR("Could not create commit buffer");
+        JAMI_ERROR("Unable to create commit buffer");
         return {};
     }
 
@@ -275,7 +275,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
         < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("Could not sign commit: {}", err->message);
+            JAMI_ERROR("Unable to sign commit: {}", err->message);
         return {};
     }
 
@@ -284,7 +284,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     if (git_reference_create(&ref_ptr, repo, "refs/heads/main", &commit_id, true, nullptr) < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("Could not move commit to main: {}", err->message);
+            JAMI_ERROR("Unable to move commit to main: {}", err->message);
         return {};
     }
     git_reference_free(ref_ptr);

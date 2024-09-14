@@ -253,14 +253,14 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         manager.scheduler().run([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
-                    JAMI_ERR("Could not send outgoing INVITE request for new call");
+                    JAMI_ERR("Unable to send outgoing INVITE request for new call");
                     call->onFailure();
                 }
             }
             return false;
         });
     } else {
-        throw VoipLinkException("Could not send outgoing INVITE request for new call");
+        throw VoipLinkException("Unable to send outgoing INVITE request for new call");
     }
 
     return call;
@@ -323,7 +323,7 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
                                                std::placeholders::_2));
         // Update contact address and header
         if (not initContactAddress()) {
-            JAMI_DEBUG("Can not register: invalid address");
+            JAMI_DEBUG("Unable to register: invalid address");
             return;
         }
         updateContactHeader();
@@ -381,14 +381,14 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (hasCredentials()
         and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo())
                 != PJ_SUCCESS) {
-        JAMI_ERROR("Could not initialize credentials for invite session authentication");
+        JAMI_ERROR("Unable to initialize credentials for invite session authentication");
         return false;
     }
 
     pjsip_tx_data* tdata;
 
     if (pjsip_inv_invite(call->inviteSession_.get(), &tdata) != PJ_SUCCESS) {
-        JAMI_ERROR("Could not initialize invite messager for this call");
+        JAMI_ERROR("Unable to initialize invite messager for this call");
         return false;
     }
 
@@ -1004,7 +1004,7 @@ SIPAccount::initTlsConfiguration()
     CipherArray avail_ciphers(256);
     unsigned cipherNum = avail_ciphers.size();
     if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-        JAMI_ERR("Could not determine cipher list on this system");
+        JAMI_ERR("Unable to determine cipher list on this system");
     avail_ciphers.resize(cipherNum);
 
     ciphers_.clear();
@@ -1397,7 +1397,7 @@ SIPAccount::getSupportedTlsCiphers()
         unsigned cipherNum = 256;
         CipherArray avail_ciphers(cipherNum);
         if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-            JAMI_ERR("Could not determine cipher list on this system");
+            JAMI_ERR("Unable to determine cipher list on this system");
         avail_ciphers.resize(cipherNum);
         availCiphers.reserve(cipherNum);
         for (const auto& item : avail_ciphers) {

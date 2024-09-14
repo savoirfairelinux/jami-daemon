@@ -45,7 +45,7 @@
 +        };
 +
 +        if (!gnutls_x509_trust_list_add_trust_mem(list, &data, NULL, GNUTLS_X509_FMT_DER, tl_flags, tl_vflags))
-+            printf("cannot add x509 credentials\n");
++            printf("Unable to add x509 credentials\n");
 +        else
 +            ret++;
 +    }

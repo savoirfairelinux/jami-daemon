@@ -373,7 +373,7 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     JAMI_DBG("Was set buffer_size = %lu", buffer_size);
 
     if (2 * period_size > buffer_size) {
-        JAMI_ERR("buffer to small, could not use");
+        JAMI_ERR("buffer to small, unable to use");
         return false;
     }
 
@@ -419,7 +419,7 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
         snd_pcm_status_t* status;
         snd_pcm_status_alloca(&status);
 
-        if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0)
+        if (ALSA_CALL(snd_pcm_status(handle, status), "Unable to get playback handle status") >= 0)
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
                 stopPlaybackStream();
                 startPlaybackStream();
@@ -436,7 +436,7 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
         snd_pcm_status_t* status;
         snd_pcm_status_alloca(&status);
 
-        if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0) {
+        if (ALSA_CALL(snd_pcm_status(handle, status), "Unable to get playback handle status") >= 0) {
             if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
                 JAMI_ERR("Writing in state SND_PCM_STATE_SETUP, should be "
                          "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
@@ -581,7 +581,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
                 int err;
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
-                    JAMI_WARN("Cannot get info for %s %s: %s",
+                    JAMI_WARN("Unable to get info for %s %s: %s",
                               getCapture ? "capture device" : "playback device",
                               name.c_str(),
                               snd_strerror(err));
