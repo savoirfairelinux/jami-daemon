@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc44cf52_d27f4dc1",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 12
+      },
+      "lineNbr": 123,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-09-16T17:57:34Z",
+      "side": 0,
+      "message": "Avoid modifying patch files, that could prevent them from being applied.",
+      "range": {
+        "startLine": 123,
+        "startChar": 35,
+        "endLine": 123,
+        "endChar": 46
+      },
+      "revId": "4d1e714569a3f892e47c513702c337cee8b9fb81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6e639bce_cf1093a0",
+        "filename": "contrib/src/ffmpeg/screen-sharing-x11-fix.patch",
+        "patchSetId": 12
+      },
+      "lineNbr": 260,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-09-16T17:57:34Z",
+      "side": 0,
+      "message": "Avoid modifying patch files, that could prevent them from being applied.",
+      "range": {
+        "startLine": 260,
+        "startChar": 0,
+        "endLine": 260,
+        "endChar": 2
+      },
+      "revId": "4d1e714569a3f892e47c513702c337cee8b9fb81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "22bd6e74_d55a55e5",
+        "filename": "contrib/src/gnutls/gnutls-3.6.7-win32-vs-support.patch",
+        "patchSetId": 12
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-09-16T17:57:34Z",
+      "side": 0,
+      "message": "Avoid modifying patch files, they are not jami source files, and changing them could prevent them from being applied or rebased.",
+      "range": {
+        "startLine": 153,
+        "startChar": 14,
+        "endLine": 154,
+        "endChar": 1
+      },
+      "revId": "4d1e714569a3f892e47c513702c337cee8b9fb81",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
