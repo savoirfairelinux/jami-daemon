@@ -660,6 +660,13 @@ public:
     // Note: only store int32_t cause it's easy to pass to dbus this way
     // memberToStatus serves as a cache for loading messages
     mutable std::map<std::string, int32_t> memberToStatus;
+
+
+    // Note : lastMessageLoaded is used to prevent from clearing the memberToStatus
+    // in case someone would load messages not from the beginning
+
+    mutable std::string lastMessageLoaded;
+
     // futureStatus is used to store the status for receiving messages
     // (because we're not sure to fetch the commit before receiving a status change for this)
     mutable std::map<std::string, std::map<std::string, int32_t>> futureStatus;
@@ -827,6 +834,12 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             return {};
         isLoadingHistory_ = true;
     }
+    // Reset variables if needed to get the correct status
+
+    //if(options.from != lastMessageLoaded) {
+    //    memberToStatus.clear();
+    //    lastMessageLoaded.clear();
+    //}
 
     auto startLogging = options.from == "";
     auto breakLogging = false;
@@ -1101,6 +1114,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                 }
                 // Else we need to compute the status.
                 auto& cache = memberToStatus[member.uri];
+                lastMessageLoaded = sharedCommit->id;
                 if (cache == 0) {
                     // Message is sending, sent or displayed
                     cache = static_cast<int32_t>(libjami::Account::MessageStates::SENDING);
