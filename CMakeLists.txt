@@ -962,6 +962,11 @@ else()
         add_executable(ut_conversationMembersEvent test/unitTest/conversation/conversationMembersEvent.cpp test/unitTest/conversation/conversationcommon.cpp)
         target_link_libraries(ut_conversationMembersEvent ut_library)
         add_test(NAME conversationMembersEvent COMMAND ut_conversationMembersEvent)
+
+        add_executable(ut_conversationFetchSent test/unitTest/conversation/conversationFetchSent.cpp test/unitTest/conversation/conversationcommon.cpp)
+        target_link_libraries(ut_conversationFetchSent ut_library)
+        add_test(NAME conversationFetchSent COMMAND ut_conversationFetchSent)
+
         add_executable(ut_test_media_encoder test/unitTest/media/test_media_encoder.cpp)
         target_link_libraries(ut_test_media_encoder ut_library)
         add_test(NAME test_media_encoder COMMAND ut_test_media_encoder)
