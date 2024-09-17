@@ -660,6 +660,11 @@ public:
     // Note: only store int32_t cause it's easy to pass to dbus this way
     // memberToStatus serves as a cache for loading messages
     mutable std::map<std::string, int32_t> memberToStatus;
+
+    // Note : lastSwarmMessageIdLoaded stores an interactionId and is used to prevent from clearing the memberToStatus
+    // in case someone would load messages not from the beginning
+    mutable std::string lastSwarmMessageIdLoaded;
+
     // futureStatus is used to store the status for receiving messages
     // (because we're not sure to fetch the commit before receiving a status change for this)
     mutable std::map<std::string, std::map<std::string, int32_t>> futureStatus;
@@ -826,6 +831,14 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
         if (!repository_ || isLoadingHistory_)
             return {};
         isLoadingHistory_ = true;
+    }
+
+    // Reset variables if needed to get the correct status
+    // options.from stores a swarmMessageId, this option is used
+    // to load the messages of a conversation from a specific message
+    if (options.from != lastSwarmMessageIdLoaded) {
+        memberToStatus.clear();
+        lastSwarmMessageIdLoaded.clear();
     }
 
     auto startLogging = options.from == "";
@@ -1101,6 +1114,11 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                 }
                 // Else we need to compute the status.
                 auto& cache = memberToStatus[member.uri];
+                // And we need to update lastSwarmMessageIdLoaded
+                // To garantee that we will clear the cache if
+                // we don't load messages from a specific message
+                // in order to get the correct status everytime we call this function
+                lastSwarmMessageIdLoaded = sharedCommit->id;
                 if (cache == 0) {
                     // Message is sending, sent or displayed
                     cache = static_cast<int32_t>(libjami::Account::MessageStates::SENDING);
