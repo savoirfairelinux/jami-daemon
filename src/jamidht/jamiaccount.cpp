@@ -3983,8 +3983,33 @@ JamiAccount::sendFile(const std::string& conversationId,
                                 JAMI_ERROR("Unable to copy file for file transfer {} - {}",
                                            filelinkPath,
                                            path);
+                                // Signal to notify clients that the operation failed.
+                                // The fileId field sends the filePath. libjami::DataTransferEventCode::unsupported (2) is unused elsewhere.
+                                emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
+                                    conversationId,
+                                    commitId,
+                                    path.u8string(),
+                                    uint32_t(libjami::DataTransferEventCode::invalid)
+                                );
                             }
-                        }
+                            else{
+                                // Signal to notify clients that the file is copied and can be safely deleted.
+                                // The fileId field sends the filePath. libjami::DataTransferEventCode::created (1) is unused elsewhere.
+                                emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
+                                    conversationId,
+                                    commitId,
+                                    path.u8string(),
+                                    uint32_t(libjami::DataTransferEventCode::created)
+                                );
+                            }
+                        }else{
+                            emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
+                                conversationId,
+                                commitId,
+                                path.u8string(),
+                                uint32_t(libjami::DataTransferEventCode::created)
+                            );
+                    }
                     }
                 });
         }
