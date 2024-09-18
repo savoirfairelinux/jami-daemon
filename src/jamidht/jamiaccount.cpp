@@ -3984,7 +3984,19 @@ JamiAccount::sendFile(const std::string& conversationId,
                                            filelinkPath,
                                            path);
                             }
-                        }
+                        }else{
+                            // this signal is used to notify the clients that the file has been copied and
+                            // can be safely deleted. Note that the filedId field is used to send the filePath
+                            // also libjami::DataTransferEventCode::created is equal to 1 and is not used
+                            // in other circumstances
+                            emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
+                            conversationId,
+                            commitId,
+                            path.u8string(),
+                            uint32_t(libjami::DataTransferEventCode::created)
+                            );
+                            JAMI_DEBUG("File transfer created");
+                    }
                     }
                 });
         }
