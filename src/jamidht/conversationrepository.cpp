@@ -2992,7 +2992,9 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
 bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
+    JAMI_ERROR("[conv {}] ConversationRepository::fetch1 {}", pimpl_->id_, remoteDeviceId);
     std::lock_guard lkOp(pimpl_->opMtx_);
+    JAMI_ERROR("[conv {}] ConversationRepository::fetch2 {}", pimpl_->id_, remoteDeviceId);
     pimpl_->resetHard();
     // Fetch distant repository
     git_remote* remote_ptr = nullptr;
@@ -3005,7 +3007,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     auto lastMsg = log(options);
     if (lastMsg.size() == 0)
         return false;
-    auto lastCommit = lastMsg[0].id;
+    //auto lastCommit = lastMsg[0].id;
 
     // Assert that repository exists
     auto repo = pimpl_->repository();
@@ -3041,6 +3043,7 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
         }
         return 0;
     };
+    JAMI_ERROR("[conv {}] git_remote_fetch {}", pimpl_->id_, remoteDeviceId);
     if (git_remote_fetch(remote.get(), nullptr, &fetch_opts, "fetch") < 0) {
         const git_error* err = giterr_last();
         if (err) {

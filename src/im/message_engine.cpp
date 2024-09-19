@@ -48,8 +48,12 @@ MessageEngine::sendMessage(const std::string& to,
                            const std::map<std::string, std::string>& payloads,
                            uint64_t refreshToken)
 {
-    if (payloads.empty() or to.empty())
+    JAMI_WARNING("devdebug message_engine sendMessage 1");
+
+    if (payloads.empty() or to.empty()){
+        JAMI_ERROR("devdebug message_engine sendMessage error");
         return 0;
+    }
     MessageToken token = 0;
     {
         std::lock_guard lock(messagesMutex_);
@@ -73,7 +77,9 @@ MessageEngine::sendMessage(const std::string& to,
         }
         scheduleSave();
     }
-    ioContext_->post([this, to, deviceId]() { retrySend(to, deviceId, true); });
+    ioContext_->post([this, to, deviceId]() {
+        JAMI_WARNING("devdebug message_engine sendMessage 2");
+        retrySend(to, deviceId, true); });
     return token;
 }
 
@@ -82,14 +88,18 @@ MessageEngine::onPeerOnline(const std::string& peer,
                             const std::string& deviceId,
                             bool retryOnTimeout)
 {
+    JAMI_WARNING("devdebug message_engine onPeerOnline 1");
     retrySend(peer, deviceId, retryOnTimeout);
 }
 
 void
 MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
-    if (account_.getRegistrationState() != RegistrationState::REGISTERED)
+    JAMI_WARN("devdebug message_engine retrySend 1");
+    if (account_.getRegistrationState() != RegistrationState::REGISTERED){
+        JAMI_WARN("devdebug message_engine retrySend silent return 1");
         return;
+    }
     struct PendingMsg {
         MessageToken token;
         std::string to;
@@ -101,8 +111,10 @@ MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, b
         std::lock_guard lock(messagesMutex_);
         auto& m = deviceId.empty() ? messages_ : messagesDevices_;
         auto p = m.find(deviceId.empty() ? peer : deviceId);
-        if (p == m.end())
+        if (p == m.end()) {
+            JAMI_WARN("devdebug message_engine retrySend silent return 2");
             return;
+        }
         auto& messages = p->second;
 
         for (auto& m: messages) {

@@ -2185,6 +2185,8 @@ JamiAccount::convModule(bool noCreation)
                 // No need to retrigger, sendTextMessage will call
                 // messageEngine_.sendMessage, already retriggering on
                 // main thread.
+                JAMI_WARNING("devdebug jami_account convModule callback 1 uri: {} device: {}",
+                          uri, device);
                 auto deviceId = device ? device.toString() : "";
                 return sendTextMessage(uri, deviceId, msg, token);
             },
@@ -2962,7 +2964,9 @@ JamiAccount::sendTextMessage(const std::string& to,
                              bool onlyConnected)
 {
     Uri uri(to);
+    JAMI_WARNING("devdebug jami_account sendTextMessage 1 uri = {}", uri.toString());
     if (uri.scheme() == Uri::Scheme::SWARM) {
+        JAMI_WARN("devdebug jami_account sendTextMessage A");
         sendInstantMessage(uri.authority(), payloads);
         return 0;
     }
@@ -2971,13 +2975,14 @@ JamiAccount::sendTextMessage(const std::string& to,
     try {
         toUri = parseJamiUri(to);
     } catch (...) {
-        JAMI_ERROR("Failed to send a text message due to an invalid URI {}", to);
+        JAMI_ERROR("devdebug Failed to send a text message due to an invalid URI {}", to);
         return 0;
     }
     if (payloads.size() != 1) {
-        JAMI_ERROR("Multi-part im is not supported yet by JamiAccount");
+        JAMI_ERROR("devdebug Multi-part im is not supported yet by JamiAccount");
         return 0;
     }
+//    JAMI_WARN("devdebug jami_account sendTextMessage B");
     return SIPAccountBase::sendTextMessage(toUri, deviceId, payloads, refreshToken, onlyConnected);
 }
 
@@ -2989,11 +2994,15 @@ JamiAccount::sendMessage(const std::string& to,
                          bool retryOnTimeout,
                          bool onlyConnected)
 {
+    JAMI_WARNING("devdebug jami_account sendMessage 1 to:{} - deviceid:{} payload[0]={} payload[1]={}",
+              to, deviceId,
+              payloads.begin()->first,
+              payloads.begin()->second);
     std::string toUri;
     try {
         toUri = parseJamiUri(to);
     } catch (...) {
-        JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        JAMI_ERR("devdebug Failed to send a text message due to an invalid URI %s", to.c_str());
         if (!onlyConnected)
             messageEngine_.onMessageSent(to, token, false, deviceId);
         return;
@@ -3001,7 +3010,7 @@ JamiAccount::sendMessage(const std::string& to,
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
-        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
+        JAMI_ERR("devdebug Multi-part im is not supported yet by JamiAccount");
         if (!onlyConnected)
             messageEngine_.onMessageSent(toUri, token, false, deviceId);
         return;
@@ -3131,6 +3140,7 @@ JamiAccount::sendMessage(const std::string& to,
 void
 JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code)
 {
+    JAMI_WARNING("devdebug jamiaccount onSIPMessageSent ctx->id = {} code = {}", ctx->id, code);
     if (code == PJSIP_SC_OK) {
         if (!ctx->onlyConnected)
             messageEngine_.onMessageSent(ctx->to, ctx->id, true, ctx->deviceId ? ctx->deviceId.toString() : "");
@@ -3142,6 +3152,7 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
             return;
         JAMI_WARN("Timeout when send a message, close current connection");
         shutdownSIPConnection(ctx->channel, ctx->to, ctx->deviceId);
+        ctx->channel->sendBeacon();
         // This MUST be done after closing the connection to avoid race condition
         // with messageEngine_
         if (!ctx->onlyConnected)
@@ -3331,13 +3342,14 @@ JamiAccount::sendInstantMessage(const std::string& convId,
 bool
 JamiAccount::handleMessage(const std::string& from, const std::pair<std::string, std::string>& m)
 {
+    JAMI_WARNING("devdebug2 jamiaccount handlemessage 1 from={} m.first={} m.second={}", from, m.first, m.second);
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
         std::string err;
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERROR("Unable to parse server response: {}", err);
+            JAMI_ERROR("devdebug2 Unable to parse server response: {}", err);
             return false;
         }
 
@@ -3351,6 +3363,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                     cm->fetchNewCommits(from, deviceId, id, commit);
             }
         });
+//        JAMI_WARNING("devdebug2 jamiaccount handlemessage 2 (end)");
         return true;
     } else if (m.first == MIME_TYPE_INVITE) {
         convModule()->onNeedConversationRequest(from, m.second);
@@ -3361,7 +3374,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERROR("Unable to parse server response: {}", err);
+            JAMI_ERROR("devdebug2 Unable to parse server response: {}", err);
             return false;
         }
         convModule()->onConversationRequest(from, json);
@@ -3405,7 +3418,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 messageId = matched_pattern[1];
             } else {
-                JAMI_WARNING("Message displayed: unable to parse message ID");
+                JAMI_WARNING("devdebug2 Message displayed: unable to parse message ID");
                 return false;
             }
 
@@ -3415,7 +3428,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 isDisplayed = matched_pattern[1] == "displayed";
             } else {
-                JAMI_WARNING("Message displayed: unable to parse status");
+                JAMI_WARNING("devdebug2 Message displayed: unable to parse status");
                 return false;
             }
 
@@ -3430,7 +3443,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                 return true;
             if (isDisplayed) {
                 if (convModule()->onMessageDisplayed(from, conversationId, messageId)) {
-                    JAMI_DEBUG("[message {}] Displayed by peer", messageId);
+                    JAMI_DEBUG("devdebug2 [message {}] Displayed by peer", messageId);
                     emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         accountID_,
                         conversationId,
@@ -3441,7 +3454,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
             }
             return true;
         } catch (const std::exception& e) {
-            JAMI_ERROR("Error parsing display notification: {}", e.what());
+            JAMI_ERROR("devdebug2 Error parsing display notification: {}", e.what());
         }
     } else if (m.first == MIME_TYPE_PIDF) {
         std::smatch matched_pattern;
@@ -3456,7 +3469,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                                                                         customStatus);
             return true;
         } else {
-            JAMI_WARNING("Presence: unable to parse status");
+            JAMI_WARNING("devdebug2 Presence: unable to parse status");
         }
     }
 
@@ -3650,14 +3663,18 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
                             const std::map<std::string, std::string>& data,
                             pjsip_endpt_send_callback cb)
 {
+    auto textMessageCtx = static_cast<TextMessageCtx*>(ctx);
+    JAMI_WARNING("devdebug jamiaccount sendSIPMessage 1 to {} ctx->id = {}", to, textMessageCtx->id);
     auto transport = conn.transport;
     auto channel = conn.channel;
     if (!channel)
         throw std::runtime_error(
             "A SIP transport exists without Channel, this is a bug. Please report");
     auto remote_address = channel->getRemoteAddress();
-    if (!remote_address)
+    if (!remote_address) {
+        JAMI_WARN("devdebug jamiaccount sendSIPMessage silent return 1");
         return false;
+    }
 
     // Build SIP Message
     // "deviceID@IP"
@@ -3672,6 +3689,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
 
     // Create request.
     pjsip_tx_data* tdata = nullptr;
+    JAMI_WARNING("devdebug parameters for pjsip_endpt_create_request: pjTo={} pjFrom={}" , toURI, from);
     pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(),
                                                     &msg_method,
                                                     &pjTo,
@@ -3683,7 +3701,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
                                                     nullptr,
                                                     &tdata);
     if (status != PJ_SUCCESS) {
-        JAMI_ERROR("Unable to create request: {}", sip_utils::sip_strerror(status));
+        JAMI_ERROR("devdebug Unable to create request: {}", sip_utils::sip_strerror(status));
         return false;
     }
 
@@ -3715,7 +3733,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
     status = pjsip_tx_data_set_transport(tdata, &tp_sel);
     if (status != PJ_SUCCESS) {
-        JAMI_ERROR("Unable to create request: {}", sip_utils::sip_strerror(status));
+        JAMI_ERROR("devdebug Unable to create request: {}", sip_utils::sip_strerror(status));
         return false;
     }
     im::fillPJSIPMessageBody(*tdata, data);
@@ -3723,12 +3741,20 @@ JamiAccount::sendSIPMessage(SipConnection& conn,
     // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
     dht::ThreadPool::io().run([w = weak(), tdata, ctx, cb = std::move(cb)] {
         auto shared = w.lock();
-        if (!shared)
+        if (!shared) {
+            JAMI_WARN("devdebug jamiaccount sendSIPMessage silent return 2");
             return;
+        }
+        JAMI_WARN("devdebug jamiaccount sendSIPMessage pjsip_endpt_send_request (via sip)");
+//        JAMI_DEBUG("devdebug parameters for pjsip_endpt_send_request: link_.getEndpoint()={}, tdata={}, -1, ctx={}, cb={}",
+//                   shared->link_.getEndpoint(), tdata, ctx, cb);
+
         auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx, cb);
         if (status != PJ_SUCCESS)
-            JAMI_ERROR("Unable to send request: {}", sip_utils::sip_strerror(status));
+            JAMI_ERROR("devdebug Unable to send request: {}", sip_utils::sip_strerror(status));
     });
+
+//    JAMI_WARN("devdebug jamiaccount sendSIPMessage return true (end)");
     return true;
 }
 

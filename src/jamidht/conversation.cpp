@@ -37,6 +37,7 @@
 #include "plugin/streamdata.h"
 #endif
 #include "jami/conversation_interface.h"
+#include <fmt/ranges.h>
 
 namespace jami {
 
@@ -543,18 +544,21 @@ public:
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const
     {
         auto deviceSockets = gitSocketList_.find(deviceId);
+        JAMI_WARNING("gitSocket {} {} {}", gitSocketList_.size(), deviceId.to_view(), fmt::ptr((deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr));
         return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
     }
 
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket)
     {
         gitSocketList_[deviceId] = socket;
+        JAMI_WARNING("addGitSocket {} {} {}", deviceId.to_view(), fmt::ptr(socket), gitSocketList_.size());
     }
     void removeGitSocket(const DeviceId& deviceId)
     {
-        auto deviceSockets = gitSocketList_.find(deviceId);
-        if (deviceSockets != gitSocketList_.end())
-            gitSocketList_.erase(deviceSockets);
+        //auto deviceSockets = gitSocketList_.find(deviceId);
+        //if (deviceSockets != gitSocketList_.end())
+        auto d = gitSocketList_.erase(deviceId);
+        JAMI_WARNING("removeGitSocket {} {}", deviceId.to_view(), d);
     }
 
     /**
@@ -1523,6 +1527,7 @@ Conversation::sendMessage(std::string&& message,
                           OnCommitCb&& onCommit,
                           OnDoneCb&& cb)
 {
+    JAMI_WARN("devdebug origineA");
     Json::Value json;
     json["body"] = std::move(message);
     json["type"] = type;
@@ -1535,6 +1540,7 @@ Conversation::sendMessage(Json::Value&& value,
                           OnCommitCb&& onCommit,
                           OnDoneCb&& cb)
 {
+    JAMI_WARN("devdebug conversation sendMessage %s", Json::writeString(jsonBuilder, value).c_str());
     if (!replyTo.empty()) {
         auto commit = pimpl_->repository_->getCommit(replyTo);
         if (commit == std::nullopt) {
@@ -1548,13 +1554,18 @@ Conversation::sendMessage(Json::Value&& value,
             if (auto sthis = w.lock()) {
                 std::unique_lock lk(sthis->pimpl_->writeMtx_);
                 auto commit = sthis->pimpl_->repository_->commitMessage(
-                    Json::writeString(jsonBuilder, value));
+                        Json::writeString(jsonBuilder, value));
                 lk.unlock();
-                if (onCommit)
+                if (onCommit) {
+//                    JAMI_WARN("devdebug pA");
                     onCommit(commit);
+                }
                 sthis->pimpl_->announce(commit, true);
-                if (cb)
+                if (cb) {
+//                    JAMI_WARN("devdebug pB");
                     cb(!commit.empty(), commit);
+                }
+                JAMI_WARN("devdebug sending message %s done", Json::writeString(jsonBuilder, value).c_str());
             }
         });
 }
@@ -1695,6 +1706,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
 bool
 Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
+    JAMI_WARNING("devdebug2 conversation pull commitid={} (begin)", commitId);
     std::lock_guard lk(pimpl_->pullcbsMtx_);
     auto isInProgress = not pimpl_->pullcbs_.empty();
     auto itPull = std::find_if(pimpl_->pullcbs_.begin(),
@@ -1702,15 +1714,23 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                                [&](const auto& elem) { return std::get<0>(elem) == deviceId && std::get<1>(elem) == commitId; });
     if (itPull != pimpl_->pullcbs_.end()) {
         cb(false);
+        JAMI_WARNING("devdebug2 conversation pull commitid={} silent return 1", commitId);
         return false;
     }
     JAMI_INFO() << "Sync " << id() << " with " << deviceId;
     pimpl_->pullcbs_.emplace_back(deviceId, std::move(commitId), std::move(cb));
-    if (isInProgress)
+    if (isInProgress) {
+        JAMI_WARNING("devdebug2 conversation pull commitid={} silent return 2", commitId);
         return true;
+    }
     dht::ThreadPool::io().run([w = weak()] {
-        if (auto sthis_ = w.lock())
+        JAMI_WARNING("devdebug2 conversation pull callback (begin)");
+        if (auto sthis_ = w.lock()) {
             sthis_->pimpl_->pull();
+        }
+        else {
+            JAMI_WARNING("devdebug2 conversation pull callback I don't think we want to go there)");
+        }
     });
     return true;
 }
@@ -1718,17 +1738,22 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
 void
 Conversation::Impl::pull()
 {
+    JAMI_WARNING("devdebug2 conversation pull:impl (begin)");
     auto& repo = repository_;
 
     std::string deviceId, commitId;
     OnPullCb cb;
+    std::chrono::milliseconds timeout(1);
     while (true) {
         decltype(pullcbs_)::value_type pullcb;
         decltype(fetchingRemotes_.begin()) it;
         {
-            std::lock_guard lk(pullcbsMtx_);
-            if (pullcbs_.empty())
+            std::unique_lock lk(pullcbsMtx_);
+            if (pullcbs_.empty()) {
+                JAMI_WARNING("devdebug2 conversation pull:impl silent return 1");
                 return;
+            }
+            JAMI_WARNING("devdebug2 conversation pull:impl {}", pullcbs_.size());
             auto& elem = pullcbs_.front();
             deviceId = std::move(std::get<0>(elem));
             commitId = std::move(std::get<1>(elem));
@@ -1741,31 +1766,40 @@ Conversation::Impl::pull()
             if (!itr.second) {
                 // Go to next pull
                 pullcbs_.emplace_back(std::move(deviceId), std::move(commitId), std::move(cb));
+                lk.unlock();
+                JAMI_WARNING("devdebug2 conversation pull:impl already using this remote {}", fetchingRemotes_);
+                std::this_thread::sleep_for(timeout);
+                timeout *= 2;
                 continue;
             }
             it = itr.first;
         }
         // If recently fetched, the commit can already be there, so no need to do complex operations
         if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
+            JAMI_WARNING("devdebug2 conversation pull:impl commit already there");
             cb(true);
             std::lock_guard lk(pullcbsMtx_);
             fetchingRemotes_.erase(it);
             continue;
         }
+        JAMI_WARNING("devdebug2 conversation pull:repo->fetch 1");
         // Pull from remote
         auto fetched = repo->fetch(deviceId);
+        JAMI_WARNING("devdebug2 conversation pull:repo->fetch 2");
         {
             std::lock_guard lk(pullcbsMtx_);
             fetchingRemotes_.erase(it);
         }
-
+        JAMI_WARNING("devdebug2 conversation pull:repo->fetch 3");
         if (!fetched) {
+            JAMI_WARNING("devdebug2 conversation pull: not fetch");
             cb(false);
             continue;
         }
         auto oldHead = repo->getHead();
         std::string newHead = oldHead;
         std::unique_lock lk(writeMtx_);
+        JAMI_WARNING("devdebug2 conversation pull:repo->fetch 4");
         auto commits = mergeHistory(deviceId);
         if (!commits.empty()) {
             newHead = commits.rbegin()->at("id");
@@ -1775,6 +1809,7 @@ Conversation::Impl::pull()
             // The client ill need to update it's model after this.
             std::string mergeBase = oldHead; // If fast-forward, the merge base is the previous head
             auto newHeadCommit = repo->getCommit(newHead);
+            JAMI_WARNING("devdebug2 conversation pull:announce {}", newHead);
             if (newHeadCommit != std::nullopt && newHeadCommit->parents.size() > 1) {
                 mergeBase = repo->mergeBase(newHeadCommit->parents[0], newHeadCommit->parents[1]);
                 LogOptions options;
@@ -1810,8 +1845,10 @@ Conversation::sync(const std::string& member,
                    OnPullCb&& cb,
                    std::string commitId)
 {
+    JAMI_WARNING("devdebug2 conversation sync commitid={} (begin)", commitId);
     pull(deviceId, std::move(cb), commitId);
     dht::ThreadPool::io().run([member, deviceId, w = weak_from_this()] {
+        JAMI_WARNING("devdebug2 conversation sync callback member={} deviceId={} (begin)", member, deviceId);
         auto sthis = w.lock();
         // For waiting request, downloadFile
         for (const auto& wr : sthis->dataTransfer()->waitingRequests()) {
