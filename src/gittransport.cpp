@@ -95,6 +95,7 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
     auto* fs = reinterpret_cast<P2PStream*>(stream);
     auto sock = fs->socket.lock();
     if (!sock) {
+        JAMI_WARNING("P2PStreamRead unavailable socket");
         giterr_set_str(GITERR_NET, "unavailable socket");
         return -1;
     }
@@ -107,7 +108,9 @@ P2PStreamRead(git_smart_subtransport_stream* stream, char* buffer, size_t buflen
 
     std::error_code ec;
     // TODO ChannelSocket needs a blocking read operation
+    JAMI_WARNING("P2PStreamRead waitForData {}", fmt::ptr(sock));
     size_t datalen = sock->waitForData(std::chrono::milliseconds(3600 * 1000 * 24), ec);
+    JAMI_WARNING("P2PStreamRead waitForData END {} {}", datalen, ec);
     if (datalen > 0)
         *read = sock->read(reinterpret_cast<unsigned char*>(buffer), std::min(datalen, buflen), ec);
 
@@ -124,7 +127,9 @@ P2PStreamWrite(git_smart_subtransport_stream* stream, const char* buffer, size_t
         return -1;
     }
     std::error_code ec;
+    JAMI_WARNING("P2PStreamWrite sock->write {}", len);
     sock->write(reinterpret_cast<const unsigned char*>(buffer), len, ec);
+    JAMI_WARNING("P2PStreamRead sock->write END {}", ec);
     if (ec) {
         giterr_set_str(GITERR_NET, ec.message().c_str());
         return -1;
@@ -189,6 +194,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
                        conversationId);
             return -1;
         }
+        gitSocket->sendBeacon();
         auto stream = std::make_unique<P2PStream>();
         stream->socket = gitSocket;
         stream->base.read = P2PStreamRead;

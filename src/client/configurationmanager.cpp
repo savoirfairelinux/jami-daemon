@@ -981,14 +981,15 @@ setCredentials(const std::string& accountId,
 void
 connectivityChanged()
 {
-    JAMI_WARN("received connectivity changed - attempting to re-connect enabled accounts");
+    JAMI_WARN("devdebug received connectivity changed - attempting to re-connect enabled accounts");
 
     // reset the UPnP context
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     try {
+        JAMI_WARN("devdebug connectivity changed upnp");
         jami::Manager::instance().upnpContext()->connectivityChanged();
     } catch (std::runtime_error& e) {
-        JAMI_ERR("UPnP context error: %s", e.what());
+        JAMI_ERR("devdebug UPnP context error: %s", e.what());
     }
 #endif
 

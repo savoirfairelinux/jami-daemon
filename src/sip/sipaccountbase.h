@@ -191,10 +191,13 @@ public:
                                      bool onlyConnected = false) override
     {
         if (onlyConnected) {
+            JAMI_WARN("devdebug sipaccountbase sendTextMessage A");
+
             auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
             sendMessage(to, deviceId, payloads, token, false, true);
             return token;
         }
+        JAMI_WARN("devdebug sipaccountbase sendTextMessage B");
         return messageEngine_.sendMessage(to, deviceId, payloads, refreshToken);
     }
 

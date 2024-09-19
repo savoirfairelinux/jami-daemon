@@ -554,6 +554,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& conversationId,
                                           const std::string& commitId)
 {
+    JAMI_WARNING("devdebug2 conversation_module fetchNewCommits 1");
     {
         std::lock_guard lk(convInfosMtx_);
         auto itConv = convInfos_.find(conversationId);
@@ -561,7 +562,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             // If the conversation is removed and we receives a new commit,
             // it means that the contact was removed but not banned.
             // If he wants a new conversation, they must removes/re-add the contact who declined.
-            JAMI_WARNING("[Account {:s}] Received a commit for {}, but conversation is removed",
+            JAMI_WARNING("devdebug2 [Account {:s}] Received a commit for {}, but conversation is removed",
                          accountId_,
                          conversationId);
             return;
@@ -572,12 +573,12 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         std::lock_guard lk(conversationsRequestsMtx_);
         oldReq = getRequest(conversationId);
         if (oldReq != std::nullopt && oldReq->declined) {
-            JAMI_DEBUG("[Account {}] Received a request for a conversation already declined.",
+            JAMI_DEBUG("devdebug2 [Account {}] Received a request for a conversation already declined.",
                        accountId_);
             return;
         }
     }
-    JAMI_DEBUG("[Account {:s}] fetch commits from {:s}, for {:s}, commit {:s}",
+    JAMI_DEBUG("devdebug2 conversation_module fetchNewCommits 2 [Account {:s}] fetch commits from {:s}, for {:s}, commit {:s}",
                accountId_,
                peer,
                conversationId,
@@ -585,7 +586,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
     auto conv = getConversation(conversationId);
     if (!conv) {
-        JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
+        JAMI_WARNING("devdebug2 [Account {}] Unable to find conversation {}, ask for an invite",
                      accountId_,
                      conversationId);
         sendMsgCb_(peer,
@@ -597,22 +598,24 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     std::unique_lock lk(conv->mtx);
 
     if (conv->conversation) {
+        JAMI_DEBUG("devdebug2 conversation_module fetchNewCommits path A");
         // Check if we already have the commit
         if (not commitId.empty() && conv->conversation->getCommit(commitId) != std::nullopt) {
+            JAMI_DEBUG("devdebug2 silent return 4");
             return;
         }
         if (conv->conversation->isRemoving()) {
-            JAMI_WARNING("[Account {}] Conversation {} is being removed",
+            JAMI_WARNING("devdebug2 [Account {}] Conversation {} is being removed",
                          accountId_,
                          conversationId);
             return;
         }
         if (!conv->conversation->isMember(peer, true)) {
-            JAMI_WARNING("[Account {}] {} is not a member of {}", accountId_, peer, conversationId);
+            JAMI_WARNING("devdebug2 [Account {}] {} is not a member of {}", accountId_, peer, conversationId);
             return;
         }
         if (conv->conversation->isBanned(deviceId)) {
-            JAMI_WARNING("[Account {}] {} is a banned device in conversation {}",
+            JAMI_WARNING("devdebug2 [Account {}] {} is a banned device in conversation {}",
                          accountId_,
                          deviceId,
                          conversationId);
@@ -622,12 +625,12 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         // Retrieve current last message
         auto lastMessageId = conv->conversation->lastCommitId();
         if (lastMessageId.empty()) {
-            JAMI_ERROR("[Account {}] No message detected. This is a bug", accountId_);
+            JAMI_ERROR("devdebug2 [Account {}] No message detected. This is a bug", accountId_);
             return;
         }
 
         if (!conv->startFetch(deviceId)) {
-            JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conversationId);
+            JAMI_WARNING("devdebug2 [Account {}] Already fetching {}", accountId_, conversationId);
             return;
         }
 
@@ -641,6 +644,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
              peer = std::move(peer),
              deviceId = std::move(deviceId),
              commitId = std::move(commitId)](const auto& channel) {
+                JAMI_WARNING("devdebug2 conversation_module onNeedSocket_ callback commitid={} (begin)", commitId);
                 auto sthis = w.lock();
                 auto acc = sthis ? sthis->account_.lock() : nullptr;
                 std::unique_lock lk(conv->mtx);
@@ -649,6 +653,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     conv->stopFetch(deviceId);
                     if (sthis)
                         sthis->syncCnt.fetch_sub(1);
+                    JAMI_DEBUG("devdebug2 conversation_module onNeedSocket_ callback silent return 6 channel(bool):{} acc(bool):{} conv(bool):{}", channel != nullptr, acc != nullptr, conversation != nullptr);
                     return false;
                 }
                 conversation->addGitSocket(channel->deviceId(), channel);
@@ -662,11 +667,13 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                      peer = std::move(peer),
                      deviceId = std::move(deviceId),
                      commitId = std::move(commitId)](bool ok) {
+                        JAMI_WARNING("devdebug2 conversation_module sync callback commitid={} (begin) {}", commitId, ok);
                         auto shared = w.lock();
-                        if (!shared)
-                            return;
+                        if (!shared) {
+                            JAMI_DEBUG("devdebug2 conversation_module sync callback silent return 5");
+                            return; }
                         if (!ok) {
-                            JAMI_WARNING("[Account {}] Unable to fetch new commit from "
+                            JAMI_WARNING("devdebug2 [Account {}] Unable to fetch new commit from "
                                          "{} for {}, other "
                                          "peer may be disconnected",
                                          shared->accountId_,
@@ -690,25 +697,33 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                             }
                         }
                         if (shared->syncCnt.fetch_sub(1) == 1) {
+                            JAMI_WARNING("devdebug2 conversation_module sync callback emitSignal");
                             emitSignal<libjami::ConversationSignal::ConversationSyncFinished>(shared->accountId_);
                         }
+                        JAMI_WARNING("devdebug2 conversation_module sync callback commitid={} (end)", commitId);
                     },
                     commitId);
+                JAMI_WARNING("devdebug2 conversation_module onNeedSocket_ callback commitid={} (end)", commitId);
                 return true;
             },
             "");
     } else {
-        if (oldReq != std::nullopt)
+        JAMI_DEBUG("devdebug2 conversation_module fetchNewCommits path B");
+        if (oldReq != std::nullopt) {
+            JAMI_DEBUG("devdebug2 silent return 1");
+            return; }
+        if (conv->pending) {
+            JAMI_DEBUG("devdebug2 silent return 2");
             return;
-        if (conv->pending)
-            return;
+        }
         bool clone = !conv->info.isRemoved();
         if (clone) {
             cloneConversation(deviceId, peer, conv);
+            JAMI_DEBUG("devdebug2 silent return 3");
             return;
         }
         lk.unlock();
-        JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
+        JAMI_WARNING("devdebug2 [Account {}] Unable to find conversation {}, ask for an invite",
                      accountId_,
                      conversationId);
         sendMsgCb_(peer,
@@ -1066,6 +1081,7 @@ ConversationModule::Impl::sendMessageNotification(const std::string& conversatio
                                                   const std::string& commitId,
                                                   const std::string& deviceId)
 {
+    JAMI_WARN("devdebug conversation_module sendMessageNotification 1");
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
@@ -1079,9 +1095,12 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                   const std::string& commitId,
                                                   const std::string& deviceId)
 {
+    JAMI_WARN("devdebug conversation_module sendMessageNotification 2");
     auto acc = account_.lock();
-    if (!acc)
+    if (!acc){
+        JAMI_WARN("devdebug silent return");
         return;
+      }
     Json::Value message;
     auto commit = commitId == "" ? conversation.lastCommitId() : commitId;
     message["id"] = conversation.id();
@@ -1095,6 +1114,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     // First, because our account can have several devices, announce to other devices
     if (sync) {
         // Announce to our devices
+        JAMI_WARNING("devdebug conversation_module sendMessageNotification 3 to {}", username_);
         refreshMessage[username_] = sendMsgCb_(username_,
                                                {},
                                                std::map<std::string, std::string> {
@@ -1102,6 +1122,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
                                                refreshMessage[username_]);
     }
 
+   
     // Then, we announce to 2 random members in the conversation that aren't in the DRT
     // This allow new devices without the ability to sync to their other devices to sync with us.
     // Or they can also use an old backup.
@@ -1146,10 +1167,13 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
 
     // Finally we send to devices that the DRT choose.
     for (const auto& device : devices) {
+        JAMI_WARNING("devdebug conversation_module sendMessageNotification 2 send to device {}", device);
         auto deviceIdStr = device.toString();
         auto memberUri = conversation.uriFromDevice(deviceIdStr);
-        if (memberUri.empty() || deviceIdStr == deviceId)
+        if (memberUri.empty() || deviceIdStr == deviceId) {
+            JAMI_ERROR("devdebug conversation_module sendMessageNotification 2 SILENT CONTINUE {}", device);
             continue;
+        }
         refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,
                                                  device,
                                                  std::map<std::string, std::string> {
@@ -1186,6 +1210,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       OnCommitCb&& onCommit,
                                       OnDoneCb&& cb)
 {
+    JAMI_WARN("devdebug conversation_module sendMessage 1");
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
@@ -1197,15 +1222,25 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                conversationId,
                                announce,
                                cb = std::move(cb)](bool ok, const std::string& commitId) {
-                                  if (cb)
+                                  if (cb){
+                                      JAMI_WARN("devdebug callback A");
                                       cb(ok, commitId);
+                                  }
                                   if (!announce)
+                                  {
+                                      JAMI_WARN("devdebug callback B");
                                       return;
+                                  }
                                   if (ok)
+                                  {
+//                                      JAMI_WARN("devdebug callback C");
                                       sendMessageNotification(conversationId, true, commitId);
-                                  else
+                                  }
+                                  else {
+                                      JAMI_WARN("devdebug callback D");
                                       JAMI_ERR("Failed to send message to conversation %s",
                                                conversationId.c_str());
+                                  }
                               });
     }
 }
