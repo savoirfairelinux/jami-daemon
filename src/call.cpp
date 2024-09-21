@@ -33,6 +33,7 @@
 #include "enumclass_utils.h"
 
 #include "errno.h"
+#include "json_utils.h"
 
 #include <dhtnet/ip_utils.h>
 #include <opendht/thread_pool.h>
@@ -636,10 +637,7 @@ Call::setConferenceInfo(const std::string& msg)
 {
     ConfInfo newInfo;
     Json::Value json;
-    std::string err;
-    Json::CharReaderBuilder rbuilder;
-    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-    if (reader->parse(msg.data(), msg.data() + msg.size(), &json, &err)) {
+    if (parseJson(msg, json)) {
         if (json.isObject()) {
             // new confInfo
             if (json.isMember("p")) {
