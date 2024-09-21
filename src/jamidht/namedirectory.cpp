@@ -92,7 +92,7 @@ NameDirectory::lookupUri(std::string_view uri, const std::string& default_server
             return;
         }
     }
-    JAMI_ERR("Unable to parse URI: %.*s", (int) uri.size(), uri.data());
+    JAMI_ERROR("Unable to parse URI: {}", uri);
     cb("", Response::invalidResponse);
 }
 
@@ -154,7 +154,7 @@ NameDirectory::setHeaderFields(Request& request)
 void
 NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 {
-    std::string cacheResult = nameCache(addr);
+    auto cacheResult = nameCache(addr);
     if (not cacheResult.empty()) {
         cb(cacheResult, Response::found);
         return;
@@ -168,15 +168,14 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         request->add_on_done_callback(
             [this, cb = std::move(cb), addr](const dht::http::Response& response) {
                 if (response.status_code >= 400 && response.status_code < 500) {
-                    std::string cacheResult = nameCache(addr);
+                    auto cacheResult = nameCache(addr);
                     if (not cacheResult.empty())
                         cb(cacheResult, Response::found);
                     else
                         cb("", Response::notFound);
                 } else if (response.status_code != 200) {
-                    JAMI_ERR("Address lookup for %s failed with code=%i",
-                             addr.c_str(),
-                             response.status_code);
+                    JAMI_ERROR("Address lookup for {} failed with code={}",
+                             addr, response.status_code);
                     cb("", Response::error);
                 } else {
                     try {
@@ -199,7 +198,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                             cb(name, Response::notFound);
                             return;
                         }
-                        JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
+                        JAMI_DEBUG("Found name for {}: {}", addr, name);
                         {
                             std::lock_guard l(cacheLock_);
                             addrCache_.emplace(name, addr);
@@ -208,7 +207,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                         cb(name, Response::found);
                         scheduleCacheSave();
                     } catch (const std::exception& e) {
-                        JAMI_ERR("Error when performing address lookup: %s", e.what());
+                        JAMI_ERROR("Error when performing address lookup: {}", e.what());
                         cb("", Response::error);
                     }
                 }
@@ -222,7 +221,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         }
         request->send();
     } catch (const std::exception& e) {
-        JAMI_ERR("Error when performing address lookup: %s", e.what());
+        JAMI_ERROR("Error when performing address lookup: {}", e.what());
         std::lock_guard lk(requestsMtx_);
         if (request)
             requests_.erase(request);
@@ -274,9 +273,8 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                                        response.body.data() + response.body.size(),
                                        &json,
                                        &err)) {
-                        JAMI_ERR("Name lookup for %s: Unable to parse server response: %s",
-                                 name.c_str(),
-                                 response.body.c_str());
+                        JAMI_ERROR("Name lookup for {}: Unable to parse server response: {}",
+                                 name, response.body);
                         cb("", Response::error);
                         return;
                     }
@@ -302,7 +300,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                             return;
                         }
                     }
-                    JAMI_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
+                    JAMI_DEBUG("Found address for {}: {}", name, addr);
                     {
                         std::lock_guard l(cacheLock_);
                         addrCache_.emplace(name, addr);
@@ -311,7 +309,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     cb(addr, Response::found);
                     scheduleCacheSave();
                 } catch (const std::exception& e) {
-                    JAMI_ERR("Error when performing name lookup: %s", e.what());
+                    JAMI_ERROR("Error when performing name lookup: {}", e.what());
                     cb("", Response::error);
                 }
             }
@@ -324,7 +322,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         }
         request->send();
     } catch (const std::exception& e) {
-        JAMI_ERR("Name lookup for %s failed: %s", name.c_str(), e.what());
+        JAMI_ERROR("Name lookup for {} failed: {}", name, e.what());
         std::lock_guard lk(requestsMtx_);
         if (request)
             requests_.erase(request);
@@ -363,7 +361,7 @@ NameDirectory::registerName(const std::string& addr,
     {
         std::lock_guard l(cacheLock_);
         if (not pendingRegistrations_.emplace(addr, name).second) {
-            JAMI_WARN("RegisterName: already registering name", addr.c_str(), name.c_str());
+            JAMI_WARNING("RegisterName: already registering name {} {}", addr, name);
             cb(RegistrationResponse::error, name);
             return;
         }
@@ -381,7 +379,7 @@ NameDirectory::registerName(const std::string& addr,
         setHeaderFields(*request);
         request->set_body(body);
 
-        JAMI_WARN("RegisterName: sending request %s %s", addr.c_str(), name.c_str());
+        JAMI_WARNING("RegisterName: sending request {} {}", addr, name);
 
         request->add_on_done_callback(
             [this, name, addr, cb = std::move(cb)](const dht::http::Response& response) {
@@ -391,22 +389,22 @@ NameDirectory::registerName(const std::string& addr,
                 }
                 if (response.status_code == 400) {
                     cb(RegistrationResponse::incompleteRequest, name);
-                    JAMI_ERR("RegistrationResponse::incompleteRequest");
+                    JAMI_ERROR("RegistrationResponse::incompleteRequest");
                 } else if (response.status_code == 401) {
                     cb(RegistrationResponse::signatureVerificationFailed, name);
-                    JAMI_ERR("RegistrationResponse::signatureVerificationFailed");
+                    JAMI_ERROR("RegistrationResponse::signatureVerificationFailed");
                 } else if (response.status_code == 403) {
                     cb(RegistrationResponse::alreadyTaken, name);
-                    JAMI_ERR("RegistrationResponse::alreadyTaken");
+                    JAMI_ERROR("RegistrationResponse::alreadyTaken");
                 } else if (response.status_code == 409) {
                     cb(RegistrationResponse::alreadyTaken, name);
-                    JAMI_ERR("RegistrationResponse::alreadyTaken");
+                    JAMI_ERROR("RegistrationResponse::alreadyTaken");
                 } else if (response.status_code > 400 && response.status_code < 500) {
                     cb(RegistrationResponse::alreadyTaken, name);
-                    JAMI_ERR("RegistrationResponse::alreadyTaken");
+                    JAMI_ERROR("RegistrationResponse::alreadyTaken");
                 } else if (response.status_code < 200 || response.status_code > 299) {
                     cb(RegistrationResponse::error, name);
-                    JAMI_ERR("RegistrationResponse::error");
+                    JAMI_ERROR("RegistrationResponse::error");
                 } else {
                     Json::Value json;
                     std::string err;
@@ -421,10 +419,8 @@ NameDirectory::registerName(const std::string& addr,
                         return;
                     }
                     auto success = json["success"].asBool();
-                    JAMI_DBG("Got reply for registration of %s %s: %s",
-                             name.c_str(),
-                             addr.c_str(),
-                             success ? "success" : "failure");
+                    JAMI_DEBUG("Got reply for registration of {} {}: {}",
+                             name, addr, success ? "success" : "failure");
                     if (success) {
                         std::lock_guard l(cacheLock_);
                         addrCache_.emplace(name, addr);
@@ -442,7 +438,7 @@ NameDirectory::registerName(const std::string& addr,
         }
         request->send();
     } catch (const std::exception& e) {
-        JAMI_ERR("Error when performing name registration: %s", e.what());
+        JAMI_ERROR("Error when performing name registration: {}", e.what());
         cb(RegistrationResponse::error, name);
         {
             std::lock_guard l(cacheLock_);
@@ -475,9 +471,8 @@ NameDirectory::saveCache()
         std::lock_guard l(cacheLock_);
         msgpack::pack(file, nameCache_);
     }
-    JAMI_DBG("Saved %lu name-address mappings to %s",
-             (long unsigned) nameCache_.size(),
-             cachePath_.c_str());
+    JAMI_DEBUG("Saved {:d} name-address mappings to {}",
+             nameCache_.size(), cachePath_);
 }
 
 void
@@ -490,7 +485,7 @@ NameDirectory::loadCache()
         std::lock_guard lock(dhtnet::fileutils::getFileLock(cachePath_));
         std::ifstream file(cachePath_);
         if (!file.is_open()) {
-            JAMI_DBG("Unable to load %s", cachePath_.c_str());
+            JAMI_DEBUG("Unable to load %s", cachePath_);
             return;
         }
         std::string line;
@@ -508,7 +503,7 @@ NameDirectory::loadCache()
         oh.get().convert(nameCache_);
     for (const auto& m : nameCache_)
         addrCache_.emplace(m.second, m.first);
-    JAMI_DBG("Loaded %lu name-address mappings", (long unsigned) nameCache_.size());
+    JAMI_DEBUG("Loaded {:d} name-address mappings", nameCache_.size());
 }
 
 } // namespace jami
