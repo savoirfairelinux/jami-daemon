@@ -25,6 +25,7 @@
 #include "string_utils.h"
 #include "client/ring_signal.h"
 #include "vcard.h"
+#include "json_utils.h"
 
 #include <ctime>
 #include <fstream>
@@ -1697,14 +1698,9 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
 
     std::string invited = {};
     if (mode_ == ConversationMode::ONE_TO_ONE) {
-        std::string err;
         Json::Value cm;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &cm, &err)) {
+        if (parseJson(commitMsg, cm)) {
             invited = cm["invited"].asString();
-        } else {
-            JAMI_WARNING("{}", err);
         }
     }
 
@@ -1967,11 +1963,8 @@ ConversationRepository::Impl::mode() const
     }
     auto commitMsg = lastMsg[0].commit_msg;
 
-    std::string err;
     Json::Value root;
-    Json::CharReaderBuilder rbuilder;
-    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-    if (!reader->parse(commitMsg.data(), commitMsg.data() + commitMsg.size(), &root, &err)) {
+    if (!parseJson(commitMsg, root)) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                         id_,
                                                                         EINVALIDMODE,
@@ -2339,14 +2332,8 @@ ConversationRepository::Impl::getInitialMembers() const
         return {};
     auto authorId = cert->issuer->getId().toString();
     if (mode() == ConversationMode::ONE_TO_ONE) {
-        std::string err;
         Json::Value root;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (!reader->parse(commit.commit_msg.data(),
-                           commit.commit_msg.data() + commit.commit_msg.size(),
-                           &root,
-                           &err)) {
+        if (!parseJson(commit.commit_msg, root)) {
             return {authorId};
         }
         if (root.isMember("invited") && root["invited"].asString() != authorId)
@@ -2493,14 +2480,8 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     std::string body {};
     std::map<std::string, std::string> message;
     if (type.empty()) {
-        std::string err;
         Json::Value cm;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (reader->parse(commit.commit_msg.data(),
-                          commit.commit_msg.data() + commit.commit_msg.size(),
-                          &cm,
-                          &err)) {
+        if (parseJson(commit.commit_msg, cm)) {
             for (auto const& id : cm.getMemberNames()) {
                 if (id == "type") {
                     type = cm[id].asString();
@@ -2508,8 +2489,6 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
                 }
                 message.insert({id, cm[id].asString()});
             }
-        } else {
-            JAMI_WARNING("{}", err);
         }
     }
     if (type.empty()) {
@@ -2694,15 +2673,11 @@ ConversationRepository::Impl::validCommits(
             }
         } else if (commit.parents.size() == 1) {
             std::string type = {}, editId = {};
-            std::string err;
             Json::Value cm;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (reader->parse(commit.commit_msg.data(), commit.commit_msg.data() + commit.commit_msg.size(), &cm, &err)) {
+            if (parseJson(commit.commit_msg, cm)) {
                 type = cm["type"].asString();
                 editId = cm["edit"].asString();
             } else {
-                JAMI_WARNING("{}", err);
                 emitSignal<libjami::ConversationSignal::OnConversationError>(
                     accountId_, id_, EVALIDFETCH, "Malformed commit");
                 return false;
