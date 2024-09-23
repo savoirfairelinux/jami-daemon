@@ -695,10 +695,12 @@ Conversation::Impl::disconnectFromPeer(const std::string& peerUri)
     swarmManager_->deleteNode(toRemove);
 
     // Remove git sockets with this member
-    std::vector<DeviceId> gitToRm;
-    for (const auto& [deviceId, _] : gitSocketList_)
-        if (peerUri == repository_->uriFromDevice(deviceId.toString()))
-            removeGitSocket(deviceId);
+    for (auto it = gitSocketList_.begin(); it != gitSocketList_.end();) {
+        if (peerUri == repository_->uriFromDevice(it->first.toString()))
+            it = gitSocketList_.erase(it);
+        else
+            ++it;
+    }
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -745,7 +747,7 @@ Conversation::Impl::commitsEndedCalls()
         value["duration"] = std::to_string((nowConverted - hostedCall.second) * 1000);
         auto itActive = std::find_if(activeCalls_.begin(),
                                      activeCalls_.end(),
-                                     [this, confId = hostedCall.first](auto value) {
+                                     [this, confId = hostedCall.first](const auto& value) {
                                          return value.at("id") == confId && value.at("uri") == userId_
                                                 && value.at("device") == deviceId_;
                                      });
