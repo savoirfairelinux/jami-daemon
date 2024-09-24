@@ -133,8 +133,8 @@ public:
         return *static_cast<const JamiAccountConfig*>(&Account::config());
     }
 
-    JamiAccountConfig::Credentials
-    consumeConfigCredentials() {
+    JamiAccountConfig::Credentials consumeConfigCredentials()
+    {
         auto conf = static_cast<JamiAccountConfig*>(config_.get());
         return std::move(conf->credentials);
     }
@@ -493,6 +493,12 @@ public:
      */
     std::shared_ptr<TransferManager> dataTransfer(const std::string& id = "");
 
+    /**
+     *   Used to get the instance of the ConversationModule class which is
+     *  responsible for managing conversations and messages between users.
+     * @param noCreate    whether or not to create a new instance
+     * @return conversationModule instance
+     */
     ConversationModule* convModule(bool noCreation = false);
     SyncModule* syncModule();
 
@@ -694,7 +700,8 @@ private:
     void generateDhParams();
 
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
-    std::shared_ptr<SIPCall> newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
+    std::shared_ptr<SIPCall> newSwarmOutgoingCallHelper(
+        const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
     std::filesystem::path idPath_ {};
@@ -705,7 +712,8 @@ private:
     mutable std::mutex registeredNameMutex_;
     std::string registeredName_;
 
-    bool setRegisteredName(const std::string& name) {
+    bool setRegisteredName(const std::string& name)
+    {
         std::lock_guard<std::mutex> lock(registeredNameMutex_);
         if (registeredName_ != name) {
             registeredName_ = name;
@@ -713,7 +721,8 @@ private:
         }
         return false;
     }
-    std::string getRegisteredName() const {
+    std::string getRegisteredName() const
+    {
         std::lock_guard<std::mutex> lock(registeredNameMutex_);
         return registeredName_;
     }
@@ -879,11 +888,7 @@ private:
 
     void initConnectionManager();
 
-    enum class PresenceState : int {
-        DISCONNECTED = 0,
-        AVAILABLE,
-        CONNECTED
-    };
+    enum class PresenceState : int { DISCONNECTED = 0, AVAILABLE, CONNECTED };
     std::map<std::string, PresenceState> presenceState_;
     std::string presenceNote_;
 };
