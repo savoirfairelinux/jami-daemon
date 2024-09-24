@@ -1253,14 +1253,15 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             JAMI_WARNING("[Account {:s}] loaded account identity", getAccountID());
             if (info->identity.first->getPublicKey().getLongId() != oldIdentity) {
                 JAMI_WARNING("[Account {:s}] identity changed", getAccountID());
-                std::lock_guard lk(moduleMtx_);
-                convModule_.reset();
+                {
+                  std::lock_guard lk(moduleMtx_);
+                  convModule_.reset();
+                }
+                convModule(); // convModule must absolutely be initialized in 
+                              // both branches of the if statement here in order
+                              // for it to exist for subsequent use. 
             } else {
-                convModule_->setAccountManager(accountManager_);
-            }
-            convModule(); // Init conv module
-            if (not isEnabled()) {
-                setRegistrationState(RegistrationState::UNREGISTERED);
+                convModule()->setAccountManager(accountManager_);
             }
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
@@ -3983,33 +3984,8 @@ JamiAccount::sendFile(const std::string& conversationId,
                                 JAMI_ERROR("Unable to copy file for file transfer {} - {}",
                                            filelinkPath,
                                            path);
-                                // Signal to notify clients that the operation failed.
-                                // The fileId field sends the filePath. libjami::DataTransferEventCode::unsupported (2) is unused elsewhere.
-                                emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
-                                    conversationId,
-                                    commitId,
-                                    path.u8string(),
-                                    uint32_t(libjami::DataTransferEventCode::invalid)
-                                );
                             }
-                            else{
-                                // Signal to notify clients that the file is copied and can be safely deleted.
-                                // The fileId field sends the filePath. libjami::DataTransferEventCode::created (1) is unused elsewhere.
-                                emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
-                                    conversationId,
-                                    commitId,
-                                    path.u8string(),
-                                    uint32_t(libjami::DataTransferEventCode::created)
-                                );
-                            }
-                        }else{
-                            emitSignal<libjami::DataTransferSignal::DataTransferEvent>(accId,
-                                conversationId,
-                                commitId,
-                                path.u8string(),
-                                uint32_t(libjami::DataTransferEventCode::created)
-                            );
-                    }
+                        }
                     }
                 });
         }
