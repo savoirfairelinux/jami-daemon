@@ -1256,9 +1256,9 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 std::lock_guard lk(moduleMtx_);
                 convModule_.reset();
             } else {
-                convModule_->setAccountManager(accountManager_);
+                convModule()->setAccountManager(accountManager_);
             }
-            convModule(); // Init conv module
+            convModule();
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
