@@ -146,7 +146,8 @@ NameDirectory::instance(const std::string& serverUrl, std::shared_ptr<dht::Logge
 void
 NameDirectory::setHeaderFields(Request& request)
 {
-    request.set_header_field(restinio::http_field_t::user_agent, "JamiDHT");
+    request.set_header_field(restinio::http_field_t::user_agent, fmt::format("Jami ({}/{})",
+        jami::platform(), jami::arch()));
     request.set_header_field(restinio::http_field_t::accept, "*/*");
     request.set_header_field(restinio::http_field_t::content_type, "application/json");
 }
