@@ -45,6 +45,40 @@ bool_to_str(bool b) noexcept
     return b ? TRUE_STR : FALSE_STR;
 }
 
+constexpr inline std::string_view
+platform() {
+#if defined(__ANDROID__)
+    return "android"sv;
+#elif defined(__linux__)
+    return "linux"sv;
+#elif defined(__APPLE__)
+#    if TARGET_OS_IPHONE
+    return "ios"sv;
+#    else
+    return "macos"sv;
+#    endif
+#elif defined(_WIN32)
+    return "windows"sv;
+#else
+    return "unknown"sv;
+#endif
+}
+
+constexpr inline std::string_view
+arch() {
+#if defined(__x86_64__) || defined(_M_X64)
+    return "x86_64"sv;
+#elif defined(__i386__) || defined(_M_IX86)
+    return "x86"sv;
+#elif defined(__aarch64__)
+    return "arm64"sv;
+#elif defined(__arm__)
+    return "arm"sv;
+#else
+    return "unknown"sv;
+#endif
+}
+
 std::string to_string(double value);
 
 #ifdef _WIN32
