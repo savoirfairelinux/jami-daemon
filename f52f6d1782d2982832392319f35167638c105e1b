@@ -16,6 +16,29 @@
       "message": "!build",
       "revId": "f52f6d1782d2982832392319f35167638c105e1b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "71bea7b4_398aacb0",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3987,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-09-26T18:23:05Z",
+      "side": 1,
+      "message": "* since the client expects the signal callback to be called, it needs to be called in every case, including in the case where a copy is made or if everything failed (maybe the file doesn\u0027t exist).\n\n* with the current logic, a symlink is created in case a hard link can\u0027t be created, so the original file can\u0027t be deleted in every case. Fix the documentation and potentially inform the client about what happened",
+      "range": {
+        "startLine": 3987,
+        "startChar": 25,
+        "endLine": 3987,
+        "endChar": 30
+      },
+      "revId": "f52f6d1782d2982832392319f35167638c105e1b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
