@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "26750554_16ff7e7f",
+        "filename": "test/unitTest/plugins/Test.crt",
+        "patchSetId": 4
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 1106
+      },
+      "writtenOn": "2024-09-27T19:17:34Z",
+      "side": 1,
+      "message": "your certificate have been duplicated, may remove doubles",
+      "range": {
+        "startLine": 28,
+        "startChar": 0,
+        "endLine": 81,
+        "endChar": 25
+      },
+      "revId": "0d89bb1f82d37a7d4bbf148dcf04582b23b71184",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
