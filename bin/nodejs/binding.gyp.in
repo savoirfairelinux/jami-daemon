@@ -5,7 +5,7 @@
       "sources": [ "jami_wrapper.cpp" ],
       'include_dirs': ['../../src/'],
       "ldflags": ["-Wl,-Bsymbolic"],
-      'libraries': ['-L@JAMI_LINK_DIRECTORIES@', '-ljami-core', '-lyaml-cpp', @JAMI_LINK_LIBRARIES@],
+      'libraries': ['-L@JAMI_LINK_DIRECTORIES@', '-ljami-core', @JAMI_LINK_LIBRARIES@],
       'cflags!': [ '-fno-exceptions' ],
       'cflags_cc!': [ '-fno-exceptions', '-fno-rtti', '-std=gnu++1y' ],
       'cflags_cc': [ '-std=gnu++17', '-frtti', '-fexceptions' ],
