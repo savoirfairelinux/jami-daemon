@@ -116,6 +116,30 @@
       },
       "revId": "a34eba7118ffb6897e4b0eb440dcbdea20a90404",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b4eb5fa_a6079e8e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2024-09-30T16:10:24Z",
+      "side": 1,
+      "message": "Should we only then call it right after convModule_.reset() and in the else statement?",
+      "parentUuid": "6cd0e0b5_5056c58a",
+      "range": {
+        "startLine": 1261,
+        "startChar": 12,
+        "endLine": 1261,
+        "endChar": 25
+      },
+      "revId": "a34eba7118ffb6897e4b0eb440dcbdea20a90404",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
