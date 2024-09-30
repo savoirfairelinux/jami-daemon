@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "880221ac_39890029",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 4
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-09-30T16:09:19Z",
+      "side": 1,
+      "message": "It\u0027s \"confidential\" but you should still be able to see it, you\u0027re probably missing a role on GitLab or something like that.",
+      "parentUuid": "a0822e62_6d103df9",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "a34eba7118ffb6897e4b0eb440dcbdea20a90404",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f08be402_e1d99d93",
