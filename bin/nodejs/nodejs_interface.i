@@ -145,7 +145,8 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::MessageSend>(bind(&logMessage, _1 )),
         exportable_callback<ConfigurationSignal::NeedsHost>(bind(&needsHost, _1, _2 )),
         exportable_callback<ConfigurationSignal::ActiveCallsChanged>(bind(&activeCallsChanged, _1, _2, _3 )),
-        //exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3, _4 )),
+        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&profileReceived, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::AccountProfileReceived>(bind(&accountProfileReceived, _1, _2, _3)),
         //exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
     };
 

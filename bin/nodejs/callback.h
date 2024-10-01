@@ -52,6 +52,8 @@ Persistent<Function> conferenceRemovedCb;
 Persistent<Function> onConferenceInfosUpdatedCb;
 Persistent<Function> conversationPreferencesUpdatedCb;
 Persistent<Function> messageSendCb;
+Persistent<Function> accountProfileReceivedCb;
+Persistent<Function> profileReceivedCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -147,6 +149,10 @@ getPresistentCb(std::string_view signal)
         return &conversationPreferencesUpdatedCb;
     else if (signal == "LogMessage")
         return &messageSendCb;
+    else if (signal == "AccountProfileReceived")
+        return &accountProfileReceivedCb;
+    else if (signal == "ProfileReceived")
+        return &profileReceivedCb;
     else
         return nullptr;
 }
@@ -1077,3 +1083,40 @@ logMessage(const std::string& message)
     });
     uv_async_send(&signalAsync);
 }
+
+void
+accountProfileReceived(const std::string& accountId,
+                     const std::string& displayName,
+                     const std::string& photo)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, displayName, photo]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), accountProfileReceivedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(displayName),
+                                            V8_STRING_NEW_LOCAL(photo)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+profileReceived(const std::string& accountId,
+                     const std::string& from,
+                     const std::string& path)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, from, path]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), profileReceivedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(from),
+                                            V8_STRING_NEW_LOCAL(path)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
