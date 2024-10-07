@@ -116,7 +116,7 @@ MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, b
     }
     // avoid locking while calling callback
     for (const auto& p : pending) {
-        JAMI_DEBUG("[message {:d}] Retry sending", p.token);
+        JAMI_DEBUG("[message {:d}] Reattempt sending", p.token);
         if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
             emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
