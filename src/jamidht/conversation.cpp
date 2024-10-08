@@ -638,7 +638,8 @@ public:
     bool handleMessage(History& history,
                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                        bool messageReceived) const;
-
+    void rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
+                       History& history) const;
     /**
      * {uri, {
      *          {"fetch", "commitId"},
@@ -1071,6 +1072,36 @@ Conversation::Impl::handleMessage(History& history,
     return !messageReceived;
 }
 
+void Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
+                                       History& history) const
+{
+
+    auto parentIt = history.quickAccess.find(message->linearizedParent);
+    auto currentMessage = message;
+
+    while(parentIt != history.quickAccess.end()){
+        const auto parent = parentIt->second;
+        for (const auto& [peer, value] : message->status) {
+            auto parentStatusIt = parent->status.find(peer);
+            if (parentStatusIt == parent->status.end() || parentStatusIt->second < value) {
+                parent->status[peer] = value;
+                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+                    accountId_,
+                    repository_->id(),
+                    peer,
+                    parent->id,
+                    value);
+            }
+            else if(parentStatusIt->second >= value){
+                break;
+            }
+        }
+        currentMessage = parent;
+        parentIt = history.quickAccess.find(parent->linearizedParent);
+    }
+}
+
+
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
 Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
@@ -1137,7 +1168,9 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                             cache = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
                         }
                     }
-                    sharedCommit->status[member.uri] = static_cast<int32_t>(cache);
+                    if(static_cast<int32_t>(cache) > sharedCommit->status[member.uri]){
+                        sharedCommit->status[member.uri] = static_cast<int32_t>(cache);
+                    }
                 } else {
                     // If member is author of the message received, they already saw it
                     if (member.uri == commit.at("author")) {
@@ -1155,7 +1188,9 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                     } else if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
                         status = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
                     }
-                    sharedCommit->status[member.uri] = static_cast<int32_t>(status);
+                    if(static_cast<int32_t>(status) > sharedCommit->status[member.uri]){
+                        sharedCommit->status[member.uri] = static_cast<int32_t>(status);
+                    }
                 }
             }
         }
@@ -1168,6 +1203,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         } else if (handleMessage(*history, sharedCommit, messageReceived)) {
             messages.emplace_back(sharedCommit);
         }
+        rectifyStatus(sharedCommit, *history);
     };
     std::for_each(commits.begin(), commits.end(), addCommit);
 
@@ -2119,13 +2155,15 @@ Conversation::Impl::updateStatus(const std::string& uri,
         auto message = loadedHistory_.quickAccess.find(cid);
         if (message != loadedHistory_.quickAccess.end()) {
             // Update message and emit to client,
-            message->second->status[uri] = static_cast<int32_t>(st);
-            emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-                accountId_,
-                repository_->id(),
-                uri,
-                cid,
-                static_cast<int>(st));
+            if(static_cast<int32_t>(st) > message->second->status[uri]){
+                message->second->status[uri] = static_cast<int32_t>(st);
+                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+                    accountId_,
+                    repository_->id(),
+                    uri,
+                    cid,
+                    static_cast<int>(st));
+            }
         } else {
             // In this case, commit is not loaded by client, so we cache it
             // No need to emit to client, they will get a correct status on load.
