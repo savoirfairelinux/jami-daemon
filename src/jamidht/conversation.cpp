@@ -1694,7 +1694,6 @@ Conversation::Impl::mergeHistory(const std::string& uri)
 bool
 Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
-    JAMI_DEBUG("Pulling from {:s} with commit {:s}", deviceId, commitId);
     std::lock_guard lk(pimpl_->pullcbsMtx_);
     auto [it, notInProgress] = pimpl_->fetchingRemotes_.emplace(deviceId, std::deque<std::pair<std::string, OnPullCb>>());
     auto& pullcbs = it->second;
@@ -1702,9 +1701,11 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                                pullcbs.end(),
                                [&](const auto& elem) { return std::get<0>(elem) == commitId; });
     if (itPull != pullcbs.end()) {
+        JAMI_DEBUG("Ignoring request to pull from {:s} with commit {:s}: pull already in progress", deviceId, commitId);
         cb(false);
         return false;
     }
+    JAMI_DEBUG("Pulling from {:s} with commit {:s}", deviceId, commitId);
     pullcbs.emplace_back(std::move(commitId), std::move(cb));
     if (notInProgress)
         dht::ThreadPool::io().run([w = weak(), deviceId] {
@@ -1776,8 +1777,33 @@ Conversation::Impl::pull(const std::string& deviceId)
             }
         }
         lk.unlock();
+
+        bool commitFound = false;
+        if (commitId != "") {
+            // If `commitId` is non-empty, then we were trying to pull a specific commit.
+            // We need to check if we actually got it; the fact that the fetch above was
+            // successful doesn't guarantee that we did.
+            for (const auto& commit : commits) {
+                if (commit.at("id") == commitId) {
+                    commitFound = true;
+                    break;
+                }
+            }
+        } else {
+            commitFound = true;
+        }
+        if (!commitFound)
+            JAMI_WARNING("Successfully fetched from device {} but didn't receive expected commit {}",
+                         deviceId, commitId);
+        // WARNING: If its argument is `true`, this callback will try to send a message notification
+        //          for commit `commitId` to other members of the swarm. It's important that we only
+        //          send these notifications if we actually have the commit. Otherwise, we can end up
+        //          in a situation where the members of the swarm keep sending notifications to each
+        //          other for a commit that none of them have (note that we cannot rule this out, as
+        //          nothing prevents a malicious user from intentionally sending a notification with
+        //          a fake commit ID).
         if (cb)
-            cb(true);
+            cb(commitFound);
         // Announce if profile changed
         if (oldHead != newHead) {
             auto diffStats = repo->diffStats(newHead, oldHead);
