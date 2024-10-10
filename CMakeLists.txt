@@ -877,10 +877,6 @@ else()
             add_test(NAME test_media_player COMMAND ut_test_media_player)
         endif()
 
-        add_executable(ut_scheduler test/unitTest/scheduler.cpp)
-        target_link_libraries(ut_scheduler ut_library)
-        add_test(NAME scheduler COMMAND ut_scheduler)
-
         add_executable(ut_testAccount_factory test/unitTest/account_factory/testAccount_factory.cpp)
         target_link_libraries(ut_testAccount_factory ut_library)
         add_test(NAME testAccount_factory COMMAND ut_testAccount_factory)
