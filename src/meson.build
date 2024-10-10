@@ -106,7 +106,6 @@ libjami_sources = files(
     'logger.cpp',
     'manager.cpp',
     'preferences.cpp',
-    'scheduled_executor.cpp',
     'string_utils.cpp',
     'threadloop.cpp',
     'uri.cpp',
