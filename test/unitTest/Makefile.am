@@ -32,12 +32,6 @@ check_PROGRAMS += ut_migration
 ut_migration_SOURCES = account_archive/migration.cpp common.cpp
 
 #
-# scheduler
-#
-check_PROGRAMS += ut_scheduler
-ut_scheduler_SOURCES = scheduler.cpp common.cpp
-
-#
 # base64
 #
 check_PROGRAMS += ut_base64

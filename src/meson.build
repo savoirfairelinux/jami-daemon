@@ -109,7 +109,6 @@ libjami_sources = files(
     'manager.cpp',
     'preferences.cpp',
     'ring_api.cpp',
-    'scheduled_executor.cpp',
     'string_utils.cpp',
     'threadloop.cpp',
     'uri.cpp',
