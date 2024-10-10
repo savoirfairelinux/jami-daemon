@@ -578,14 +578,14 @@ public:
      * enter BUSY state if not answered).
      * @param timeout in seconds
      */
-    void setRingingTimeout(int timeout);
+    void setRingingTimeout(std::chrono::seconds timeout);
 
     /**
      * Get ringing timeout (number of seconds after which a call will
      * enter BUSY state if not answered).
      * @return timeout in seconds
      */
-    int getRingingTimeout() const;
+    std::chrono::seconds getRingingTimeout() const;
 
     /**
      * Get the audio manager
@@ -798,17 +798,6 @@ public:
     std::shared_ptr<asio::io_context> ioContext() const;
     std::shared_ptr<dhtnet::upnp::UPnPContext> upnpContext() const;
 
-    ScheduledExecutor& scheduler();
-    std::shared_ptr<Task> scheduleTask(std::function<void()>&& task,
-                                       std::chrono::steady_clock::time_point when,
-                                       const char* filename = CURRENT_FILENAME(),
-                                       uint32_t linum = CURRENT_LINE());
-
-    std::shared_ptr<Task> scheduleTaskIn(std::function<void()>&& task,
-                                         std::chrono::steady_clock::duration timeout,
-                                         const char* filename = CURRENT_FILENAME(),
-                                         uint32_t linum = CURRENT_LINE());
-
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
 #ifdef ENABLE_VIDEO
@@ -908,7 +897,13 @@ template<typename Callback>
 static void
 runOnMainThread(Callback&& cb)
 {
-    Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
+    Manager::instance().ioContext()->post([cb = std::forward<Callback>(cb)]() mutable {
+        try {
+            cb();
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Exception running job: {}", e.what());
+        }
+    });
 }
 
 } // namespace jami
