@@ -29,11 +29,6 @@ LTTNG_UST_TRACEPOINT_EVENT(
                                 lttng_ust_field_integer(uint64_t, cookie, cookie)))
 
 LTTNG_UST_TRACEPOINT_EVENT(jami,
-                           scheduled_executor_task_end,
-                           LTTNG_UST_TP_ARGS(uint64_t, cookie),
-                           LTTNG_UST_TP_FIELDS(lttng_ust_field_integer(uint64_t, cookie, cookie)))
-
-LTTNG_UST_TRACEPOINT_EVENT(jami,
                            ice_transport_context,
                            LTTNG_UST_TP_ARGS(uint64_t, context),
                            LTTNG_UST_TP_FIELDS(lttng_ust_field_integer(uint64_t, ice_context, context)))
