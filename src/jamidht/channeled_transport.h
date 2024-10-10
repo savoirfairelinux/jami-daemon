@@ -17,7 +17,6 @@
 #pragma once
 
 #include "noncopyable.h"
-#include "scheduled_executor.h"
 #include "jamidht/abstract_sip_transport.h"
 
 #include <dhtnet/multiplexed_socket.h>

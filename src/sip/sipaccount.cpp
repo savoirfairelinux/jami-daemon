@@ -303,8 +303,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled()));
 
     if (created) {
-        std::weak_ptr<SIPCall> weak_call = call;
-        manager.scheduler().run([this, weak_call] {
+        runOnMainThread([this, weak_call=std::weak_ptr(call)] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Unable to send outgoing INVITE request for new call");

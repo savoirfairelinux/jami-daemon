@@ -323,9 +323,6 @@ struct Manager::ManagerPimpl
 
     std::shared_ptr<dhtnet::upnp::UPnPContext> upnpContext_;
 
-    /** Main scheduler */
-    ScheduledExecutor scheduler_ {"manager"};
-
     std::atomic_bool autoAnswer_ {false};
 
     /** Application wide tone controller */
@@ -350,6 +347,8 @@ struct Manager::ManagerPimpl
 
     /** Buffer to generate DTMF */
     std::shared_ptr<AudioFrame> dtmfBuf_;
+
+    std::shared_ptr<asio::steady_timer> dtmfTimer_;
 
     // To handle volume control
     // short speakerVolume_;
@@ -885,7 +884,6 @@ Manager::finish() noexcept
         JAMI_DBG("Stopping schedulers and worker threads");
 
         // Flush remaining tasks (free lambda' with capture)
-        pimpl_->scheduler_.stop();
         dht::ThreadPool::io().join();
         dht::ThreadPool::computation().join();
 
@@ -1697,12 +1695,6 @@ Manager::removeAudio(Call& call)
     }
 }
 
-ScheduledExecutor&
-Manager::scheduler()
-{
-    return pimpl_->scheduler_;
-}
-
 std::shared_ptr<asio::io_context>
 Manager::ioContext() const
 {
@@ -1713,24 +1705,6 @@ std::shared_ptr<dhtnet::upnp::UPnPContext>
 Manager::upnpContext() const
 {
     return pimpl_->upnpContext_;
-}
-
-std::shared_ptr<Task>
-Manager::scheduleTask(std::function<void()>&& task,
-                      std::chrono::steady_clock::time_point when,
-                      const char* filename,
-                      uint32_t linum)
-{
-    return pimpl_->scheduler_.schedule(std::move(task), when, filename, linum);
-}
-
-std::shared_ptr<Task>
-Manager::scheduleTaskIn(std::function<void()>&& task,
-                        std::chrono::steady_clock::duration timeout,
-                        const char* filename,
-                        uint32_t linum)
-{
-    return pimpl_->scheduler_.scheduleIn(std::move(task), timeout, filename, linum);
 }
 
 void
@@ -1849,10 +1823,19 @@ Manager::playDtmf(char code)
         pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
     }
 
-    scheduler().scheduleIn([audioGuard] { JAMI_WARN("End of dtmf"); },
-                           std::chrono::milliseconds(pulselen));
-
-    // TODO Cache the DTMF
+    auto dtmfTimer = std::make_unique<asio::steady_timer>(*pimpl_->ioContext_,
+                                                      std::chrono::milliseconds(pulselen));
+    dtmfTimer->async_wait([this,audioGuard,t=dtmfTimer.get()](const asio::error_code& ec) {
+        if (ec)
+            return;
+        JAMI_DBG("End of dtmf");
+        std::lock_guard lock(pimpl_->audioLayerMutex_);
+        if (pimpl_->dtmfTimer_.get() == t)
+            pimpl_->dtmfTimer_.reset();
+    });
+    if (pimpl_->dtmfTimer_)
+        pimpl_->dtmfTimer_->cancel();
+    pimpl_->dtmfTimer_ = std::move(dtmfTimer);
 }
 
 // Multi-thread
@@ -2365,14 +2348,14 @@ Manager::getHistoryLimit() const
 }
 
 void
-Manager::setRingingTimeout(int timeout)
+Manager::setRingingTimeout(std::chrono::seconds timeout)
 {
     JAMI_DBG("Set ringing timeout");
     preferences.setRingingTimeout(timeout);
     saveConfig();
 }
 
-int
+std::chrono::seconds
 Manager::getRingingTimeout() const
 {
     return preferences.getRingingTimeout();

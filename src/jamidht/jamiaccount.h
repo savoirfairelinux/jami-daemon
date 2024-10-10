@@ -30,7 +30,6 @@
 
 #include "noncopyable.h"
 #include "ring_types.h" // enable_if_base_of
-#include "scheduled_executor.h"
 #include "gitserver.h"
 #include "channel_handler.h"
 #include "conversation_module.h"

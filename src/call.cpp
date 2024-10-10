@@ -81,34 +81,33 @@ Call::Call(const std::shared_ptr<Account>& account,
     : id_(id)
     , type_(type)
     , account_(account)
+    , timeoutTimer_(*Manager::instance().ioContext())
 {
     addStateListener([this](Call::CallState call_state,
                             Call::ConnectionState cnx_state,
                             int code) {
         checkPendingIM();
-        runOnMainThread([callWkPtr = weak()] {
+        runOnMainThread([callWkPtr = weak_from_this()] {
             if (auto call = callWkPtr.lock())
                 call->checkAudio();
         });
 
         // if call just started ringing, schedule call timeout
         if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
-            auto timeout = Manager::instance().getRingingTimeout();
-            JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
-
-            Manager::instance().scheduler().scheduleIn(
-                [callWkPtr = weak()] {
-                    if (auto callShPtr = callWkPtr.lock()) {
-                        if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                            JAMI_DBG(
-                                "Call %s is still ringing after timeout, setting state to BUSY",
-                                callShPtr->getCallId().c_str());
-                            callShPtr->hangup(PJSIP_SC_BUSY_HERE);
-                            Manager::instance().callFailure(*callShPtr);
-                        }
+            timeoutTimer_.expires_from_now(std::chrono::seconds(Manager::instance().getRingingTimeout()));
+            timeoutTimer_.async_wait([callWkPtr = weak_from_this()](const std::error_code& ec) {
+                if (ec == asio::error::operation_aborted)
+                    return;
+                if (auto callShPtr = callWkPtr.lock()) {
+                    if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                        JAMI_LOG(
+                            "Call {} is still ringing after timeout, setting state to BUSY",
+                            callShPtr->getCallId());
+                        callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                        Manager::instance().callFailure(*callShPtr);
                     }
-                },
-                std::chrono::seconds(timeout));
+                }
+            });
         }
 
         if (!isSubcall()) {
@@ -452,7 +451,7 @@ Call::addSubCall(Call& subcall)
         subcall.sendTextMessage(msg.first, msg.second);
 
     subcall.addStateListener(
-        [sub = subcall.weak(), parent = weak()](Call::CallState new_state,
+        [sub = subcall.weak_from_this(), parent = weak_from_this()](Call::CallState new_state,
                                                 Call::ConnectionState new_cstate,
                                                 int /* code */) {
             runOnMainThread([sub, parent, new_state, new_cstate]() {

@@ -838,13 +838,13 @@ setHistoryLimit(int32_t days)
 int32_t
 getRingingTimeout()
 {
-    return jami::Manager::instance().getRingingTimeout();
+    return jami::Manager::instance().getRingingTimeout().count();
 }
 
 void
 setRingingTimeout(int32_t timeout)
 {
-    jami::Manager::instance().setRingingTimeout(timeout);
+    jami::Manager::instance().setRingingTimeout(std::chrono::seconds(timeout));
 }
 
 std::vector<std::string>
