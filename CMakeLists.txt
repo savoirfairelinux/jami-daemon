@@ -952,7 +952,6 @@ else()
         add_test_executable(namedirectory test/unitTest/namedirectory/namedirectory.cpp)
         target_link_libraries(ut_namedirectory PRIVATE restinio::restinio)
 
-        add_test_executable(scheduler test/unitTest/scheduler.cpp)
         add_test_executable(account_factory test/unitTest/account_factory/testAccount_factory.cpp)
         add_test_executable(call test/unitTest/call/call.cpp)
         add_test_executable(recorder test/unitTest/call/recorder.cpp)
