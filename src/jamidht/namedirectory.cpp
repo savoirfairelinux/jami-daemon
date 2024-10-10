@@ -24,7 +24,6 @@
 #include "string_utils.h"
 #include "fileutils.h"
 #include "base64.h"
-#include "scheduled_executor.h"
 
 #include <asio.hpp>
 
@@ -108,6 +107,7 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
     : serverUrl_(serverUrl)
     , logger_(std::move(l))
     , httpContext_(Manager::instance().ioContext())
+    , saveTask_(*httpContext_)
 {
     if (!serverUrl_.empty() && serverUrl_.back() == '/')
         serverUrl_.pop_back();
@@ -214,9 +214,9 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                             std::lock_guard l(cacheLock_);
                             addrCache_.emplace(name, std::pair(name, addr));
                             nameCache_.emplace(addr, std::pair(name, addr));
+                            scheduleCacheSave();
                         }
                         cb(name, addr, Response::found);
-                        scheduleCacheSave();
                     } catch (const std::exception& e) {
                         JAMI_ERROR("Error when performing address lookup: {}", e.what());
                         cb("", "", Response::error);
@@ -309,9 +309,9 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                         addrCache_.emplace(name, std::pair(nameResult, addr));
                         addrCache_.emplace(nameResult, std::pair(nameResult, addr));
                         nameCache_.emplace(addr, std::pair(nameResult, addr));
+                        scheduleCacheSave();
                     }
                     cb(nameResult, addr, Response::found);
-                    scheduleCacheSave();
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Error when performing name lookup: {}", e.what());
                     cb("", "", Response::error);
@@ -449,12 +449,12 @@ NameDirectory::registerName(const std::string& addr,
 void
 NameDirectory::scheduleCacheSave()
 {
-    // JAMI_DBG("Scheduling cache save to %s", cachePath_.c_str());
-    std::weak_ptr<Task> task = Manager::instance().scheduler().scheduleIn(
-        [this] { dht::ThreadPool::io().run([this] { saveCache(); }); }, SAVE_INTERVAL);
-    std::swap(saveTask_, task);
-    if (auto old = task.lock())
-        old->cancel();
+    saveTask_.expires_after(SAVE_INTERVAL);
+    saveTask_.async_wait([this](const asio::error_code& ec) {
+        if (ec)
+            return;
+        saveCache();
+    });
 }
 
 void
