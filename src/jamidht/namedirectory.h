@@ -21,6 +21,7 @@
 #include "noncopyable.h"
 
 #include <asio/io_context.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <functional>
 #include <map>
@@ -48,8 +49,6 @@ using Logger = log::Logger;
 } // namespace dht
 
 namespace jami {
-
-class Task;
 
 class NameDirectory
 {
@@ -122,7 +121,7 @@ private:
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
 
-    std::weak_ptr<Task> saveTask_;
+    asio::steady_timer saveTask_;
 
     void setHeaderFields(dht::http::Request& request);
 

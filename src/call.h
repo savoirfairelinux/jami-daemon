@@ -36,6 +36,7 @@
 #include "media/media_attribute.h"
 
 #include <dhtnet/ip_utils.h>
+#include <asio/steady_timer.hpp>
 
 #include <atomic>
 #include <mutex>
@@ -127,8 +128,6 @@ public:
     enum class CallType : unsigned { INCOMING, OUTGOING, MISSED };
 
     virtual ~Call();
-
-    std::weak_ptr<Call> weak() { return std::static_pointer_cast<Call>(shared_from_this()); }
 
     virtual LinkType getLinkType() const { return LinkType::GENERIC; }
 
@@ -545,6 +544,8 @@ protected:
     /// Supported conference protocol version
     int peerConfProtocol_ {0};
     std::string toUsername_ {};
+
+    asio::steady_timer timeoutTimer_;
 };
 
 // Helpers

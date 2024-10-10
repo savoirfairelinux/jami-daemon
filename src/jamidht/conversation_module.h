@@ -20,7 +20,6 @@
 
 #pragma once
 
-#include "scheduled_executor.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
