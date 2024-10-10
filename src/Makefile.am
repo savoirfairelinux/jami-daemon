@@ -110,8 +110,6 @@ libjami_la_SOURCES = \
 		base64.cpp \
 		data_transfer.cpp \
 		data_transfer.h \
-		scheduled_executor.h \
-		scheduled_executor.cpp \
 		string_utils.cpp \
 		string_utils.h \
 		uri.h \

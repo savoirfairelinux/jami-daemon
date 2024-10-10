@@ -326,18 +326,6 @@ test('revoke', ut_revoke,
     workdir: ut_workdir, is_parallel: false, timeout: 1800
 )
 
-
-ut_scheduler = executable('ut_scheduler',
-    sources: files('unitTest/scheduler.cpp'),
-    include_directories: ut_includedirs,
-    dependencies: ut_dependencies,
-    link_with: ut_library
-)
-test('scheduler', ut_scheduler,
-    workdir: ut_workdir, is_parallel: false, timeout: 1800
-)
-
-
 ut_sip_basic_calls = executable('ut_sip_basic_calls',
     sources: files('unitTest/sip_account/sip_basic_calls.cpp'),
     include_directories: ut_includedirs,

@@ -897,10 +897,6 @@ else()
         target_link_libraries(ut_namedirectory ut_library)
         add_test(NAME namedirectory COMMAND ut_namedirectory)
 
-        add_executable(ut_scheduler test/unitTest/scheduler.cpp)
-        target_link_libraries(ut_scheduler ut_library)
-        add_test(NAME scheduler COMMAND ut_scheduler)
-
         add_executable(ut_account_factory test/unitTest/account_factory/testAccount_factory.cpp)
         target_link_libraries(ut_account_factory ut_library)
         add_test(NAME account_factory COMMAND ut_account_factory)
