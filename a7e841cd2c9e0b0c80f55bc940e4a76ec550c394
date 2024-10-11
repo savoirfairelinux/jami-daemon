@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1067ef32_07c31058",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1083,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-10-11T19:01:09Z",
+      "side": 1,
+      "message": "reference was lost, causing unnecessary copy",
+      "range": {
+        "startLine": 1083,
+        "startChar": 14,
+        "endLine": 1083,
+        "endChar": 18
+      },
+      "revId": "a7e841cd2c9e0b0c80f55bc940e4a76ec550c394",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
