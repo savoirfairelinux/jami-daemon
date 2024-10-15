@@ -20,6 +20,6 @@ opus: opus-$(OPUS_VERSION).tar.gz .sum-opus
 	$(MOVE)
 
 .opus: opus toolchain.cmake
-	cd $< && $(CMAKE) . && $(MAKE)
+	cd $< && $(HOSTVARS) $(CMAKE) ${JSONCPP_CMAKECONF}
 	cd $< && $(MAKE) install
 	touch $@
