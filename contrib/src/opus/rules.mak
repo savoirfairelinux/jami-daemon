@@ -20,6 +20,6 @@ opus: opus-$(OPUS_VERSION).tar.gz .sum-opus
 	$(MOVE)
 
 .opus: opus toolchain.cmake
-	cd $< && $(CMAKE) . && $(MAKE)
+	cd $< && $(CMAKE) -DCMAKE_C_FLAGS="-fPIC" . && $(MAKE)
 	cd $< && $(MAKE) install
 	touch $@

@@ -34,7 +34,7 @@ ifdef USE_NVIDIA
 	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_shared.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_shared.so
 	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_cuda.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_cuda.so
 else
-	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --allow_running_as_root
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.so
