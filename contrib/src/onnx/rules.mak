@@ -17,7 +17,7 @@ onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 
 .onnx:  onnx
 ifdef HAVE_ANDROID
-	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --use_nnapi --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended
+	cd $< && sh build.sh --parallel --android --android_sdk_path $(ANDROID_SDK) --android_ndk_path $(ANDROID_NDK) --android_abi $(ANDROID_ABI) --android_api 29 --use_nnapi --config Release --build_shared_lib --skip_tests --android_cpp_shared --minimal_build extended --allow_running_as_root
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/
 else
 ifdef HAVE_MACOSX
@@ -34,7 +34,7 @@ ifdef USE_NVIDIA
 	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_shared.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_shared.so
 	cd $< && cp ./build/Linux/Release/libonnxruntime_providers_cuda.so $(PREFIX)/lib/onnxruntime/nvidia-gpu/libonnxruntime_providers_cuda.so
 else
-	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests
+	cd $< && sh ./build.sh --config Release --build_shared_lib --parallel --skip_tests --allow_running_as_root
 	if [ ! -d "$(PREFIX)/lib/onnxruntime" ] ; then (mkdir $(PREFIX)/lib/onnxruntime) fi
 	if [ ! -d "$(PREFIX)/lib/onnxruntime/cpu" ] ; then (mkdir $(PREFIX)/lib/onnxruntime/cpu) fi
 	cd $< && cp ./build/Linux/Release/libonnxruntime.so $(PREFIX)/lib/onnxruntime/cpu/libonnxruntime.so
