@@ -1075,13 +1075,17 @@ Conversation::Impl::handleMessage(History& history,
 void Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
                                        History& history) const
 {
-
+     if (!message) {
+        return;
+    }
     auto parentIt = history.quickAccess.find(message->linearizedParent);
     auto currentMessage = message;
-
     while(parentIt != history.quickAccess.end()){
         const auto& parent = parentIt->second;
-        for (const auto& [peer, value] : message->status) {
+        if (!parent) {
+            break;
+        }
+        for (const auto& [peer, value] : currentMessage->status) {
             auto parentStatusIt = parent->status.find(peer);
             if (parentStatusIt == parent->status.end() || parentStatusIt->second < value) {
                 parent->status[peer] = value;
@@ -1120,6 +1124,9 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
     auto addCommit = [&](const auto& commit) {
         auto* history = optHistory ? optHistory : &loadedHistory_;
         auto commitId = commit.at("id");
+        auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
+        sharedCommit->fromMapStringString(commit);
+        rectifyStatus(sharedCommit, *history);
         if (history->quickAccess.find(commitId) != history->quickAccess.end())
             return; // Already present
         auto typeIt = commit.find("type");
@@ -1128,9 +1135,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == "merge")
             return;
-
-        auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
-        sharedCommit->fromMapStringString(commit);
+        
         // Set message status based on cache (only on history for client)
         if (!commitFromSelf && optHistory == nullptr) {
             std::lock_guard lk(messageStatusMtx_);
@@ -1203,7 +1208,6 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         } else if (handleMessage(*history, sharedCommit, messageReceived)) {
             messages.emplace_back(sharedCommit);
         }
-        rectifyStatus(sharedCommit, *history);
     };
     std::for_each(commits.begin(), commits.end(), addCommit);
 
