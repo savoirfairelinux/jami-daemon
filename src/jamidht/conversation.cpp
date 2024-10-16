@@ -638,8 +638,6 @@ public:
     bool handleMessage(History& history,
                        const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                        bool messageReceived) const;
-    void rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
-                       History& history) const;
     /**
      * {uri, {
      *          {"fetch", "commitId"},
@@ -664,6 +662,7 @@ public:
     // Note: lastSwarmMessageIdLoaded stores an interactionId and is used to prevent clearing
     // the memberToStatus in case messages are not from the beginning
     mutable std::string lastSwarmMessageIdLoaded;
+    mutable std::string lastSwarmMessageIdVerified;
 
     // futureStatus is used to store the status for receiving messages
     // (because we're not sure to fetch the commit before receiving a status change for this)
@@ -1065,40 +1064,15 @@ Conversation::Impl::handleMessage(History& history,
         history.pendingEditions.erase(peditIt);
     }
     // Announce to client
+    std::cerr << "\n\nAnnounce message: " << sharedCommit->id << std::endl;
+    //std::cerr << "Announce Body: " << sharedCommit->body << std::endl;
+    //std::cerr << "Announce status: " << sharedCommit->status << std::endl;
+
     if (messageReceived)
         emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_,
                                                                       repository_->id(),
                                                                       *sharedCommit);
     return !messageReceived;
-}
-
-void Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessage>& message,
-                                       History& history) const
-{
-
-    auto parentIt = history.quickAccess.find(message->linearizedParent);
-    auto currentMessage = message;
-
-    while(parentIt != history.quickAccess.end()){
-        const auto& parent = parentIt->second;
-        for (const auto& [peer, value] : message->status) {
-            auto parentStatusIt = parent->status.find(peer);
-            if (parentStatusIt == parent->status.end() || parentStatusIt->second < value) {
-                parent->status[peer] = value;
-                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
-                    accountId_,
-                    repository_->id(),
-                    peer,
-                    parent->id,
-                    value);
-            }
-            else if(parentStatusIt->second >= value){
-                break;
-            }
-        }
-        currentMessage = parent;
-        parentIt = history.quickAccess.find(parent->linearizedParent);
-    }
 }
 
 
@@ -1120,6 +1094,8 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
     auto addCommit = [&](const auto& commit) {
         auto* history = optHistory ? optHistory : &loadedHistory_;
         auto commitId = commit.at("id");
+        auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
+        sharedCommit->fromMapStringString(commit);
         if (history->quickAccess.find(commitId) != history->quickAccess.end())
             return; // Already present
         auto typeIt = commit.find("type");
@@ -1129,8 +1105,6 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         if (typeIt != commit.end() && typeIt->second == "merge")
             return;
 
-        auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
-        sharedCommit->fromMapStringString(commit);
         // Set message status based on cache (only on history for client)
         if (!commitFromSelf && optHistory == nullptr) {
             std::lock_guard lk(messageStatusMtx_);
@@ -1203,7 +1177,6 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         } else if (handleMessage(*history, sharedCommit, messageReceived)) {
             messages.emplace_back(sharedCommit);
         }
-        rectifyStatus(sharedCommit, *history);
     };
     std::for_each(commits.begin(), commits.end(), addCommit);
 
@@ -2220,13 +2193,58 @@ Conversation::messageStatus() const
     return pimpl_->messagesStatus_;
 }
 
+
+void
+Conversation::changeStatusBetween(const std::map<std::string, std::string>& status, const std::map<std::string, std::string>& newStatus, const std::string& uri)
+{
+
+    std::uint32_t maxStatus = 2;
+    std::lock_guard lk(pimpl_->pullcbsMtx_);
+    // wait for the messages to be added to history
+    auto itMessage = pimpl_->loadedHistory_.quickAccess.find(newStatus.at("fetched"));
+    auto itEnd = pimpl_->loadedHistory_.quickAccess.find(status.at("fetched"));
+
+    if (itMessage == pimpl_->loadedHistory_.quickAccess.end() || itEnd == pimpl_->loadedHistory_.quickAccess.end()) {
+        std::cerr << "Error: Invalid commit ID provided." << std::endl;
+        std::cerr << "Fetched: " << newStatus.at("fetched") << std::endl;
+        return;
+    }
+
+    while(itMessage != itEnd) {
+        if(itMessage->first == status.at("read")){
+            maxStatus = 3;
+        }
+        if(itMessage->second->status[uri] >= maxStatus){
+           continue;
+        }else{
+           itMessage->second->status[uri] = maxStatus;
+        }
+        emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
+                    pimpl_->accountId_,
+                    pimpl_->repository_->id(),
+                    uri,
+                    itMessage->first,
+                    itMessage->second->status[uri]);
+        auto itNext = pimpl_->loadedHistory_.quickAccess.find(itMessage->second->linearizedParent);
+        if (itNext == pimpl_->loadedHistory_.quickAccess.end()) {
+            std::cerr << "Error: Linearized parent commit ID not found." << std::endl;
+            break;
+        }
+        itMessage = itNext;
+    }
+}
+
 void
 Conversation::updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus)
 {
     std::unique_lock lk(pimpl_->messageStatusMtx_);
     std::vector<std::tuple<libjami::Account::MessageStates, std::string, std::string, std::string>> stVec;
+
     for (const auto& [uri, status] : messageStatus) {
         auto& oldMs = pimpl_->messagesStatus_[uri];
+
+        changeStatusBetween(oldMs, messageStatus.at(uri), uri);
+
         if (status.find("fetched_ts") != status.end() && status.at("fetched") != oldMs["fetched"]) {
             if (oldMs["fetched_ts"].empty() || std::stol(oldMs["fetched_ts"]) <= std::stol(status.at("fetched_ts"))) {
                 stVec.emplace_back(libjami::Account::MessageStates::SENT, uri, status.at("fetched"), status.at("fetched_ts"));

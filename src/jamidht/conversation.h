@@ -482,6 +482,7 @@ public:
      *       }
      * }
      */
+    void changeStatusBetween(const libjami::MediaMap& status, const libjami::MediaMap& newStatus, const std::string& uri);
     void updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus);
     void onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb);
     /**
