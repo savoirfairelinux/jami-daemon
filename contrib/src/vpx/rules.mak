@@ -92,7 +92,9 @@ VPX_CONF := \
 	--disable-webm-io
 
 ifdef HAVE_IOS
-	VPX_CONF += --disable-runtime-cpu-detect
+    VPX_CONF += \
+        --disable-runtime-cpu-detect \
+        --disable-neon # Disable NEON to prevent crashes on iOS devices A11 and prior
 endif
 
 ifndef HAVE_WIN32
