@@ -140,6 +140,54 @@
       },
       "revId": "a34eba7118ffb6897e4b0eb440dcbdea20a90404",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6c8049ac_4a0f91ab",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2024-10-16T17:49:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f08be402_e1d99d93",
+      "range": {
+        "startLine": 1254,
+        "startChar": 12,
+        "endLine": 1261,
+        "endChar": 25
+      },
+      "revId": "a34eba7118ffb6897e4b0eb440dcbdea20a90404",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "88f5ba37_d0e9e11f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1261,
+      "author": {
+        "id": 1110
+      },
+      "writtenOn": "2024-10-16T17:49:08Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9b4eb5fa_a6079e8e",
+      "range": {
+        "startLine": 1261,
+        "startChar": 12,
+        "endLine": 1261,
+        "endChar": 25
+      },
+      "revId": "a34eba7118ffb6897e4b0eb440dcbdea20a90404",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
