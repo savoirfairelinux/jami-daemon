@@ -22,6 +22,7 @@
 #include "config/account_config_utils.h"
 
 #include <fmt/compile.h>
+#include <fmt/ranges.h>
 
 namespace jami {
 
