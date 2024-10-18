@@ -3001,7 +3001,8 @@ ConversationModule::call(const std::string& url,
         confId = ac.at("id");
         uri = ac.at("uri");
         deviceId = ac.at("device");
-    } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
+    } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()
+               && itRdvAccount->second != "") {
         // Else, creates "to" (accountId/deviceId/conversationId/confId) and ask remote host
         sendCallRequest = true;
         uri = itRdvAccount->second;
