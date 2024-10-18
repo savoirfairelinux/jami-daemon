@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5245b137_24637e4a",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3005,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-10-18T17:25:50Z",
+      "side": 1,
+      "message": "!itRdvAccount-\u003esecond.empty()",
+      "range": {
+        "startLine": 3005,
+        "startChar": 18,
+        "endLine": 3005,
+        "endChar": 44
+      },
+      "revId": "08fd7a3aa495025047509c3ef13908ecc9fb73a7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
