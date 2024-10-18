@@ -2991,7 +2991,7 @@ ConversationModule::call(const std::string& url,
     auto itRdvAccount = infos.find("rdvAccount");
     auto itRdvDevice = infos.find("rdvDevice");
     auto sendCallRequest = false;
-    if (confId != "") {
+    if (!confId.empty()) {
         sendCallRequest = true;
         JAMI_DEBUG("Calling self, join conference");
     } else if (!activeCalls.empty()) {
@@ -3001,7 +3001,8 @@ ConversationModule::call(const std::string& url,
         confId = ac.at("id");
         uri = ac.at("uri");
         deviceId = ac.at("device");
-    } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()) {
+    } else if (itRdvAccount != infos.end() && itRdvDevice != infos.end()
+               && !itRdvAccount->second.empty()) {
         // Else, creates "to" (accountId/deviceId/conversationId/confId) and ask remote host
         sendCallRequest = true;
         uri = itRdvAccount->second;
