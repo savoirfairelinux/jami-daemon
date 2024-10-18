@@ -27,6 +27,7 @@
 #include "jami/plugin_manager_interface.h"
 #include "store_ca_crt.cpp"
 
+#include <pluglog.h>
 #include <fstream>
 #include <stdexcept>
 #include <msgpack.hpp>
@@ -67,9 +68,11 @@ JamiPluginManager::JamiPluginManager()
 std::string
 JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::string& pluginId)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugin author");
     auto cert = PluginUtils::readPluginCertificate(rootPath, pluginId);
     if (!cert) {
         JAMI_ERROR("Unable to read plugin certificate");
+        Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", "Unable to read plugin certificate");
         return {};
     }
     return cert->getIssuerName();
@@ -78,16 +81,20 @@ JamiPluginManager::getPluginAuthor(const std::string& rootPath, const std::strin
 std::map<std::string, std::string>
 JamiPluginManager::getPluginDetails(const std::string& rootPath, bool reset)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugin details");
     auto detailsIt = pluginDetailsMap_.find(rootPath);
     if (detailsIt != pluginDetailsMap_.end()) {
         if (!reset)
             return detailsIt->second;
         pluginDetailsMap_.erase(detailsIt);
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugin details reset");
     }
 
     std::map<std::string, std::string> details = PluginUtils::parseManifestFile(
         PluginUtils::manifestPath(rootPath), rootPath);
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Manifest file parsed");
     if (!details.empty()) {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Manifest file not empty");
         auto itIcon = details.find("iconPath");
         itIcon->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
 
@@ -96,7 +103,9 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath, bool reset)
 
         details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["id"] + LIB_TYPE;
         details["author"] = getPluginAuthor(rootPath, details["id"]);
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugin author added to details");
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugin details added to map");
         return detailsIt->second;
     }
     return {};
@@ -105,11 +114,14 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath, bool reset)
 std::vector<std::string>
 JamiPluginManager::getInstalledPlugins()
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting installed plugins");
     // Gets all plugins in standard path
     auto pluginsPath = fileutils::get_data_dir() / "plugins";
     std::vector<std::string> pluginsPaths;
     std::error_code ec;
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugins in standard path");
     for (const auto& entry : std::filesystem::directory_iterator(pluginsPath, ec)) {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Iterating over plugins");
         const auto& p = entry.path();
         if (PluginUtils::checkPluginValidity(p))
             pluginsPaths.emplace_back(p.string());
@@ -122,13 +134,14 @@ JamiPluginManager::getInstalledPlugins()
         if (PluginUtils::checkPluginValidity(path))
             pluginsPaths.emplace_back(path);
     }
-
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Returning installed plugins");
     return pluginsPaths;
 }
 
 bool
 JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath, const std::string& newJplPath)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin certificate public key");
     std::map<std::string, std::string> oldDetails = PluginUtils::parseManifestFile(PluginUtils::manifestPath(oldJplPath), oldJplPath);
     if (
         oldDetails.empty() ||
@@ -153,6 +166,7 @@ JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath
 bool
 JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin certificate validity");
     trust_.add(crypto::Certificate(store_ca_crt, sizeof(store_ca_crt)));
     return cert && *cert && trust_.verify(*cert);
 }
@@ -160,12 +174,14 @@ JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert
 std::map<std::string, std::string>
 JamiPluginManager::getPlatformInfo()
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting platform info");
     return PluginUtils::getPlatformInfo();
 }
 
 bool
 JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin signature file");
     // check if the file exists
     if (!std::filesystem::is_regular_file(jplPath)){
         return false;
@@ -196,6 +212,7 @@ JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 bool
 JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin signature validity");
     if (!std::filesystem::is_regular_file(jplPath))
         return false;
     try{
@@ -222,6 +239,7 @@ JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht:
 bool
 JamiPluginManager::checkPluginSignature(const std::string& jplPath, dht::crypto::Certificate* cert)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin signature");
     if (!std::filesystem::is_regular_file(jplPath) || !cert || !*cert)
         return false;
     try {
@@ -235,6 +253,7 @@ JamiPluginManager::checkPluginSignature(const std::string& jplPath, dht::crypto:
 std::unique_ptr<dht::crypto::Certificate>
 JamiPluginManager::checkPluginCertificate(const std::string& jplPath, bool force)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin certificate");
     if (!std::filesystem::is_regular_file(jplPath))
         return {};
     try {
@@ -251,18 +270,22 @@ JamiPluginManager::checkPluginCertificate(const std::string& jplPath, bool force
 int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Installing plugin");
     int r {SUCCESS};
     if (std::filesystem::is_regular_file(jplPath)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
             const std::string& name = manifestMap["id"];
-            if (name.empty())
-                return INVALID_PLUGIN;
+            if (name.empty()){
+                Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", "Plugin name is empty");
+                return INVALID_PLUGIN;}
             auto cert = checkPluginCertificate(jplPath, force);
-            if (!cert)
-                return CERTIFICATE_VERIFICATION_FAILED;
+            if (!cert){
+                Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", "Plugin certificate is invalid");
+                return CERTIFICATE_VERIFICATION_FAILED;}
             if(!checkPluginSignature(jplPath, cert.get()))
-                return SIGNATURE_VERIFICATION_FAILED;
+                {Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", "Plugin signature is invalid");
+                return SIGNATURE_VERIFICATION_FAILED;}
             const std::string& version = manifestMap["version"];
             auto destinationDir = (fileutils::get_data_dir() / "plugins" / name).string();
             // Find if there is an existing version of this plugin
@@ -270,20 +293,24 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                 PluginUtils::manifestPath(destinationDir), destinationDir);
 
             if (!alreadyInstalledManifestMap.empty()) {
+                Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugin already installed");
                 if (force) {
                     r = uninstallPlugin(destinationDir);
                     if (r == SUCCESS) {
+                        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Uninstalling plugin");
                         archiver::uncompressArchive(jplPath,
                                                     destinationDir,
                                                     PluginUtils::uncompressJplFunction);
                     }
                 } else {
+                    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Checking plugin version");
                     std::string installedVersion = alreadyInstalledManifestMap.at("version");
                     if (version > installedVersion) {
                         if(!checkPluginCertificatePublicKey(destinationDir, jplPath))
                             return CERTIFICATE_VERIFICATION_FAILED;
                         r = uninstallPlugin(destinationDir);
                         if (r == SUCCESS) {
+                            Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Uninstalling plugin");
                             archiver::uncompressArchive(jplPath,
                                                         destinationDir,
                                                         PluginUtils::uncompressJplFunction);
@@ -300,14 +327,17 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                                             PluginUtils::uncompressJplFunction);
             }
             if (!libjami::getPluginsEnabled()) {
+                Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Enabling plugins");
                 libjami::setPluginsEnabled(true);
                 Manager::instance().saveConfig();
                 loadPlugins();
+                Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugins enabled");
                 return r;
             }
             libjami::loadPlugin(destinationDir);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
+            Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", e.what());
         }
     }
     return r;
@@ -346,12 +376,14 @@ JamiPluginManager::loadPlugin(const std::string& rootPath)
 {
 #ifdef ENABLE_PLUGIN
     try {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Loading plugin");
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: load status - " << status;
 
         return status;
 
     } catch (const std::exception& e) {
+        Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", e.what());
         JAMI_ERR() << e.what();
         return false;
     }
@@ -363,6 +395,7 @@ bool
 JamiPluginManager::loadPlugins()
 {
 #ifdef ENABLE_PLUGIN
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Loading plugins");
     bool status = true;
     auto loadedPlugins = jami::Manager::instance().pluginPreferences.getLoadedPlugins();
     for (const auto& pluginPath : loadedPlugins) {
@@ -370,6 +403,7 @@ JamiPluginManager::loadPlugins()
     }
     return status;
 #endif
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugins not enabled");
     return false;
 }
 
@@ -377,6 +411,7 @@ bool
 JamiPluginManager::unloadPlugin(const std::string& rootPath)
 {
 #ifdef ENABLE_PLUGIN
+Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Unloading plugin");
     try {
         bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: unload status - " << status;
@@ -393,6 +428,7 @@ JamiPluginManager::unloadPlugin(const std::string& rootPath)
 std::vector<std::string>
 JamiPluginManager::getLoadedPlugins() const
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting loaded plugins");
     std::vector<std::string> loadedSoPlugins = pm_.getLoadedPlugins();
     std::vector<std::string> loadedPlugins {};
     loadedPlugins.reserve(loadedSoPlugins.size());
@@ -408,6 +444,7 @@ JamiPluginManager::getLoadedPlugins() const
 std::vector<std::map<std::string, std::string>>
 JamiPluginManager::getPluginPreferences(const std::string& rootPath, const std::string& accountId)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugin preferences");
     return PluginPreferencesUtils::getPreferences(rootPath, accountId);
 }
 
@@ -417,6 +454,7 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
                                        const std::string& key,
                                        const std::string& value)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Setting plugin preference");
     std::string acc = accountId;
 
     // If we try to change a preference value linked to an account
@@ -455,12 +493,14 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
     // Save preferences.msgpack with modified preferences values
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Preference found");
         pluginUserPreferencesMap[key] = value;
         auto preferencesValuesFilePath
             = PluginPreferencesUtils::valuesFilePath(rootPath, acc);
         std::lock_guard guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
+            Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", "Unable to open preferences file");
             if (force) {
                 loadPlugin(rootPath.string());
             }
@@ -469,14 +509,17 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
         try {
             msgpack::pack(fs, pluginUserPreferencesMap);
         } catch (const std::exception& e) {
+            Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", e.what());
             JAMI_ERR() << e.what();
             if (force) {
+                Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", e.what());
                 loadPlugin(rootPath.string());
             }
             return false;
         }
     }
     if (force) {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Reloading plugin");
         loadPlugin(rootPath.string());
     }
     return true;
@@ -486,6 +529,7 @@ std::map<std::string, std::string>
 JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath,
                                                  const std::string& accountId)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugin preferences values map");
     return PluginPreferencesUtils::getPreferencesValuesMap(rootPath, accountId);
 }
 
@@ -493,6 +537,7 @@ bool
 JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath,
                                                    const std::string& accountId)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Resetting plugin preferences values map");
     bool acc {accountId.empty()};
     bool loaded {pm_.checkLoadedPlugin(rootPath)};
     if (loaded && acc)
@@ -508,6 +553,7 @@ JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath,
 void
 JamiPluginManager::registerServices()
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Registering services");
     // Register getPluginPreferences so that plugin's can receive it's preferences
     pm_.registerService("getPluginPreferences", [](const DLPlugin* plugin, void* data) {
         auto ppp = static_cast<std::map<std::string, std::string>*>(data);
@@ -518,6 +564,7 @@ JamiPluginManager::registerServices()
 
     // Register getPluginDataPath so that plugin's can receive the path to it's data folder
     pm_.registerService("getPluginDataPath", [](const DLPlugin* plugin, void* data) {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugin data path");
         auto dataPath = static_cast<std::string*>(data);
         dataPath->assign(PluginUtils::dataPath(plugin->getPath()).string());
         return SUCCESS;
@@ -525,10 +572,12 @@ JamiPluginManager::registerServices()
 
     // getPluginAccPreferences is a service that allows plugins to load saved per account preferences.
     auto getPluginAccPreferences = [](const DLPlugin* plugin, void* data) {
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Getting plugin account preferences");
         const auto path = PluginUtils::getRootPathFromSoPath(plugin->getPath());
         auto preferencesPtr {(static_cast<PreferencesMap*>(data))};
         if (!preferencesPtr)
-            return FAILURE;
+        {Plog::log(Plog::LogPriority::ERROR, "JamiPluginManager", "Preferences pointer is null");
+            return FAILURE;}
 
         preferencesPtr->emplace("default",
                                 PluginPreferencesUtils::getPreferencesValuesMap(path, "default"));
@@ -536,6 +585,7 @@ JamiPluginManager::registerServices()
         for (const auto& accId : jami::Manager::instance().getAccountList())
             preferencesPtr->emplace(accId,
                                     PluginPreferencesUtils::getPreferencesValuesMap(path, accId));
+        Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Plugin account preferences loaded");
         return SUCCESS;
     };
 
@@ -545,6 +595,7 @@ JamiPluginManager::registerServices()
 void
 JamiPluginManager::addPluginAuthority(const dht::crypto::Certificate& cert)
 {
+    Plog::log(Plog::LogPriority::INFO, "JamiPluginManager", "Adding plugin authority");
     trust_.add(cert);
 }
 } // namespace jami
