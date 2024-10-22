@@ -937,6 +937,8 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             return CallbackResult::Ok; // Continue
         },
         [&](auto&& cc) {
+            if(msgList.size() == options.nbOfCommits)
+                return;
             auto optMessage = repository_->convCommitToMap(cc);
             if (!optMessage.has_value())
                 return;
