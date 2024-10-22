@@ -1,0 +1,291 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f8944e7a_be15c3ee",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 59
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "The current code quality is insufficient for production. There are too many TODOs, significant clean-up needed, and missing documentation. These issues should be addressed to improve maintainability and ensure the code is production-ready.",
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffba09c1_5d7e6a90",
+        "filename": "bin/nodejs/configurationmanager.i",
+        "patchSetId": 59
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "What about that ?",
+      "range": {
+        "startLine": 117,
+        "startChar": 0,
+        "endLine": 117,
+        "endChar": 2
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5aff59da_d5234def",
+        "filename": "bin/nodejs/configurationmanager.i",
+        "patchSetId": 59
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Resolve conflict",
+      "range": {
+        "startLine": 125,
+        "startChar": 0,
+        "endLine": 136,
+        "endChar": 68
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c4f0d120_7c266790",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 349,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Looks like importants Todo.",
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bc6f53c7_9b4ed289",
+        "filename": "src/jami/configurationmanager_interface.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 490,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 486,
+        "startChar": 11,
+        "endLine": 490,
+        "endChar": 9
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c9de8e2_b8890942",
+        "filename": "src/jamidht/accountarchive.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 37,
+        "startChar": 0,
+        "endLine": 37,
+        "endChar": 2
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "44ed0807_2794a638",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented imports. Remove?",
+      "range": {
+        "startLine": 39,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 25
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ad9d10c_36b1770c",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 470,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 449,
+        "startChar": 2,
+        "endLine": 470,
+        "endChar": 10
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6616e045_b3af6347",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 46,
+        "startChar": 22,
+        "endLine": 47,
+        "endChar": 23
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a79a4bcf_90d59017",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 115,
+        "startChar": 0,
+        "endLine": 117,
+        "endChar": 219
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a144987d_fd2d2441",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 139,
+        "startChar": 0,
+        "endLine": 141,
+        "endChar": 61
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4ac9c587_90b7a3c1",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 165,
+        "startChar": 0,
+        "endLine": 165,
+        "endChar": 147
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1271cbfb_9d4272d6",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-22T13:01:07Z",
+      "side": 1,
+      "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 168,
+        "startChar": 0,
+        "endLine": 168,
+        "endChar": 132
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
