@@ -238,6 +238,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "3e3f0356_d4cd7fa5",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-23T18:01:54Z",
+      "side": 1,
+      "message": "From my understanding:\n\nWhen `addAccount` is called with `details[\"Account.archiveURL\"]\u003d\"jami-auth\"`, it will trigger the `deviceAuthStateChanged` signal.\n\nThis signal has two states (I know there is more, but useless in this example):\n`None`: Active from the moment the process starts\n`TOKEN_AVAIL`: Active from the moment the account is exposed on the DHT, and the token is ready to be displayed.\n\nThe flow is as follows:\n1- The user clicks \"Connect from another device.\"\n2- `addAccount` is called, triggering the `deviceAuthStateChanged` signal with the None state.\n3- A loading screen is displayed while waiting for the token.\n4- The  `deviceAuthStateChanged` signal is triggered with the TokenAvail state.\n5- The QR code with the token is displayed.\n\nHowever, during testing, I noticed that the None state arrives too slowly to reliably trigger the loading screen.\n\nIn other words:\n1- The None state should ideally arrive faster.\n2- Since it doesn’t, it’s more efficient to assume that TokenAvail will arrive as soon as possible, making the None state essentially redundant.",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 138,
+        "endChar": 6
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "a144987d_fd2d2441",
         "filename": "src/jamidht/archive_account_manager.h",
         "patchSetId": 59
