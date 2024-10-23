@@ -20,6 +20,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "61481c94_808577dd",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 59
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-23T17:33:24Z",
+      "side": 1,
+      "message": "`deviceAuthStateChanged` emits state\u003d0(None state) providing the `jami-auth:://token`. I think it shouldn\u0027t.",
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ffba09c1_5d7e6a90",
         "filename": "bin/nodejs/configurationmanager.i",
         "patchSetId": 59
