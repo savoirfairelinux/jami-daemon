@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "84a44866_ecdff174",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-10-24T23:55:40Z",
+      "side": 1,
+      "message": "`unblock`",
+      "range": {
+        "startLine": 296,
+        "startChar": 70,
+        "endLine": 296,
+        "endChar": 75
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72e616d4_dfc832e8",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-10-24T23:55:40Z",
+      "side": 1,
+      "message": "`block`",
+      "range": {
+        "startLine": 296,
+        "startChar": 63,
+        "endLine": 296,
+        "endChar": 66
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "162fa796_e70211bb",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-10-24T23:55:40Z",
+      "side": 1,
+      "message": "`unblocked`",
+      "range": {
+        "startLine": 302,
+        "startChar": 34,
+        "endLine": 302,
+        "endChar": 42
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a71f8718_7586c2cd",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-10-24T23:55:40Z",
+      "side": 1,
+      "message": "`blocked`",
+      "range": {
+        "startLine": 302,
+        "startChar": 69,
+        "endLine": 302,
+        "endChar": 75
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
