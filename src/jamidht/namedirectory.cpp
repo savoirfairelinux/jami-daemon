@@ -486,7 +486,7 @@ NameDirectory::loadCache()
         std::lock_guard lock(dhtnet::fileutils::getFileLock(cachePath_));
         std::ifstream file(cachePath_);
         if (!file.is_open()) {
-            JAMI_DEBUG("Unable to load %s", cachePath_);
+            JAMI_DEBUG("Unable to load {}", cachePath_);
             return;
         }
         std::string line;
