@@ -22,8 +22,6 @@
 #include <dhtnet/multiplexed_socket.h>
 #include <opendht/thread_pool.h>
 
-constexpr const std::chrono::minutes FIND_PERIOD {10};
-
 namespace jami {
 
 using namespace swarm_protocol;

@@ -39,6 +39,7 @@ public:
         GIT,           // Start with "git:"
         DATA_TRANSFER, // Start with "data-transfer://"
         SYNC,          // Start with "sync:"
+        AUTH,          // Start with "auth:"
         UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 
