@@ -213,6 +213,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7ce8e116_5289fd0f",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 989
+      },
+      "writtenOn": "2024-10-25T14:19:01Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6616e045_b3af6347",
+      "range": {
+        "startLine": 46,
+        "startChar": 22,
+        "endLine": 47,
+        "endChar": 23
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a79a4bcf_90d59017",
