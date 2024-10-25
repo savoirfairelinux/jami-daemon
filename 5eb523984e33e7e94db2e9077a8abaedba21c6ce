@@ -47,6 +47,54 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c8a486fc_4c43243a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-10-25T21:18:47Z",
+      "side": 1,
+      "message": "The five strings I mention in this sentence, including `\"ban\"` and `\"unban\"`, are used in the code (see for example lines 2724-2771 of `conversationrepository.cpp`), so I can\u0027t make the edits you suggest without also changing the code. Unfortunately, that\u0027s out of the question in this case because these strings are also used in the conversation history stored on disk, so changing them would break backwards compatibility.",
+      "parentUuid": "72e616d4_dfc832e8",
+      "range": {
+        "startLine": 296,
+        "startChar": 63,
+        "endLine": 296,
+        "endChar": 66
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d242325_81c1b9f8",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 296,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-10-25T21:18:47Z",
+      "side": 1,
+      "message": "Can\u0027t make this change.",
+      "parentUuid": "84a44866_ecdff174",
+      "range": {
+        "startLine": 296,
+        "startChar": 70,
+        "endLine": 296,
+        "endChar": 75
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "162fa796_e70211bb",
@@ -88,6 +136,54 @@
         "startChar": 69,
         "endLine": 302,
         "endChar": 75
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f63ef97f_33dd2120",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-10-25T21:18:47Z",
+      "side": 1,
+      "message": "Can\u0027t make this change.",
+      "parentUuid": "a71f8718_7586c2cd",
+      "range": {
+        "startLine": 302,
+        "startChar": 69,
+        "endLine": 302,
+        "endChar": 75
+      },
+      "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3646159a_107e438a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 302,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-10-25T21:18:47Z",
+      "side": 1,
+      "message": "Can\u0027t make this change.",
+      "parentUuid": "162fa796_e70211bb",
+      "range": {
+        "startLine": 302,
+        "startChar": 34,
+        "endLine": 302,
+        "endChar": 42
       },
       "revId": "5eb523984e33e7e94db2e9077a8abaedba21c6ce",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
