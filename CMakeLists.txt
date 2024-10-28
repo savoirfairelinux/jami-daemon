@@ -126,6 +126,7 @@ if (BUILD_CONTRIB)
             set(ENV{LD} $ENV{TOOLCHAIN}/bin/ld)
         endif()
 
+        file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${TARGET}
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
@@ -133,6 +134,7 @@ if (BUILD_CONTRIB)
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
         execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
             WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+        file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
     else()
         set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
         execute_process(
