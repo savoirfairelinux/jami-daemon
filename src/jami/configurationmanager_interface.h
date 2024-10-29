@@ -73,8 +73,12 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConnectionList
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelList(
     const std::string& accountId, const std::string& connectionId);
 
-LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountId, const std::string& password);
-LIBJAMI_PUBLIC bool exportToFile(const std::string& accountId,
+// sends credentials to the daemon for account transfer
+LIBJAMI_PUBLIC bool provideAccountAuthentication(const std::string& accountId, const std::string& credentialsFromUser, const std::string_view scheme);
+
+LIBJAMI_PUBLIC uint32_t exportToPeer(const std::string& accountId, const std::string& uri);
+
+LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
                                  const std::string& scheme = {},
                                  const std::string& password = {});
@@ -368,6 +372,23 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         using cb_type = void(int /*alert*/);
     };
 
+    // used for client awareness of available link device jami-auth uri
+    struct LIBJAMI_PUBLIC AddDeviceStateChanged
+    {
+        constexpr static const char* name = "AddDeviceStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             uint32_t /*op_id */,
+                             int /*state*/,
+                             const std::string& /*detail*/);
+    };
+    // used for link device authentication (password, error, etc.)
+    struct LIBJAMI_PUBLIC DeviceAuthStateChanged
+    {
+        constexpr static const char* name = "DeviceAuthStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             int /*state*/,
+                             const std::string& /*detail*/);
+    };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged
     {
@@ -462,11 +483,11 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*uri*/,
                              bool banned);
     };
-    struct LIBJAMI_PUBLIC ExportOnRingEnded
-    {
-        constexpr static const char* name = "ExportOnRingEnded";
-        using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
-    };
+    // struct LIBJAMI_PUBLIC ExportToPeer
+    // {
+    //     constexpr static const char* name = "ExportToPeer";
+    //     using cb_type = void(const std::string& /*account_id*/, const std::string& uri);
+    // };
     struct LIBJAMI_PUBLIC NameRegistrationEnded
     {
         constexpr static const char* name = "NameRegistrationEnded";
