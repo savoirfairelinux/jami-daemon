@@ -1807,7 +1807,7 @@ ConversationModule::loadSingleConversation(const std::string& convId)
         if (itConv == pimpl_->conversations_.end()) {
             // convInfos_ can contain a conversation that is not yet cloned
             // so we need to add it there.
-            pimpl_->conversations_.emplace(info.id, std::make_shared<SyncedConversation>(info)).first;
+            pimpl_->conversations_.emplace(info.id, std::make_shared<SyncedConversation>(info));
         }
         ++itInfo;
     }
@@ -2233,7 +2233,7 @@ ConversationModule::loadConversationMessages(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
@@ -2271,7 +2271,7 @@ ConversationModule::loadConversation(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
@@ -2298,7 +2298,7 @@ ConversationModule::loadConversationUntil(const std::string& conversationId,
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {}(acc->rand);
+            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
             LogOptions options;
             options.from = fromMessage;
             options.to = toMessage;
