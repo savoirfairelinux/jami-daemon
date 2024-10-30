@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 8fc165b833eea6e3c88d67a541385424b129fd3f
+PJPROJECT_VERSION := f8c75ccec4f6546ced608d6487321a6b29ac8d35
 PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
@@ -58,7 +58,7 @@ ifdef HAVE_IOS
 else ifdef HAVE_MACOSX
 	cd $< && ARCH="-arch $(ARCH)" $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
-	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
+	cd $< && $(HOSTVARS) CFLAGS="-g -Og" CXXFLAGS="-g -Og" EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS) --enable-debug CFLAGS="-g -Og" CXXFLAGS="-g -Og"
 endif
 	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
 	touch $@

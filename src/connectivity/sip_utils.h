@@ -31,6 +31,7 @@
 
 #include <dhtnet/ip_utils.h>
 
+#include <pj/config.h>
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
 #include <pj/pool.h>
