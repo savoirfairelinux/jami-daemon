@@ -79,6 +79,22 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
         buffer.clear();
+        auto convModule = acc->convModule(true);
+        if (!convModule)
+            return;
+        // Sync read's status
+        auto ms = convModule->convMessageStatus();
+        if (!ms.empty()) {
+            SyncMsg msg;
+            msg.ms = std::move(ms);
+            msgpack::pack(buffer, msg);
+            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            if (ec) {
+                JAMI_ERROR("{:s}", ec.message());
+                return;
+            }
+        }
+        buffer.clear();
         // Sync conversations
         auto c = ConversationModule::convInfos(acc->getAccountID());
         if (!c.empty()) {
@@ -104,28 +120,11 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
                 return;
             }
         }
-
-        auto convModule = acc->convModule(true);
-        if (!convModule)
-            return;
         // Sync conversation's preferences
         auto p = convModule->convPreferences();
         if (!p.empty()) {
             SyncMsg msg;
             msg.p = std::move(p);
-            msgpack::pack(buffer, msg);
-            socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-            if (ec) {
-                JAMI_ERROR("{:s}", ec.message());
-                return;
-            }
-        }
-        buffer.clear();
-        // Sync read's status
-        auto ms = convModule->convMessageStatus();
-        if (!ms.empty()) {
-            SyncMsg msg;
-            msg.ms = std::move(ms);
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
