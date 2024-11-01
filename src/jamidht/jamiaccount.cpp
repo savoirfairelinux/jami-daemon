@@ -3331,6 +3331,28 @@ JamiAccount::getNearbyPeers() const
     return discoveredPeerMap_;
 }
 
+
+void
+JamiAccount::updateProfile(const std::string& displayName, const std::string& avatarPath){
+
+    // Here we need to create the VCard and place at the right place
+    // ~/.local/share/jami/<accountId>/profile.vcf
+
+    //verify that the path is correct
+    std::cerr << "Avatar path: " << avatarPath << std::endl;
+    std::cerr << "Display name: " << displayName << std::endl;
+
+    return;
+    // then we need to send the VCard to other peers using
+    /* void
+        JamiAccount::sendProfile(const std::string& convId,
+                                const std::string& peerUri,
+                                const std::string& deviceId)
+        {
+    */
+}
+
+
 void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {

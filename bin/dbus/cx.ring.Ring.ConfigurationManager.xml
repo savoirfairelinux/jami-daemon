@@ -575,6 +575,15 @@
             </tp:docstring>
         </method>
 
+        <method name="updateProfile" tp:name-for-bindings="updateProfile">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="displayName" direction="in"/>
+            <arg type="s" name="avatarPath" direction="in"/>
+            <tp:docstring>
+               Update the profile avatar
+            </tp:docstring>
+        </method>
+
         <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
             <arg type="t" name="id" direction="in"/>
             <arg type="i" name="status" direction="out">
