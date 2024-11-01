@@ -300,6 +300,12 @@ getNearbyPeers(const std::string& accountId)
     return jami::Manager::instance().getNearbyPeers(accountId);
 }
 
+void
+updateProfileAvatar(const std::string& accountId,const std::string avatarPath)
+{
+    jami::Manager::instance().updateProfileAvatar(accountId, avatarPath);
+}
+
 int
 getMessageStatus(uint64_t messageId)
 {
