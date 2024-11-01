@@ -213,6 +213,8 @@ public:
 
     virtual std::map<std::string, std::string> getNearbyPeers() const { return {}; }
 
+    virtual void updateProfileAvatar(std::string /*avatarPath*/) {}
+
     /**
      * Return the status corresponding to the token.
      */
