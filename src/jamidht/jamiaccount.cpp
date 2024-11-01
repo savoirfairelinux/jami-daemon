@@ -3331,6 +3331,49 @@ JamiAccount::getNearbyPeers() const
     return discoveredPeerMap_;
 }
 
+
+void
+JamiAccount::updateProfile(const std::string& displayName, const std::string& avatarPath){
+    
+    // vcard cache path
+    const auto& path = cachePath_ / "profile.vcf";
+    std::string userDisplayName = displayName;
+
+    if(displayName.empty() && avatarPath.empty()){
+        // if both are empty nothing has changed we can return
+        return;
+    }
+
+    if(displayName.empty() || displayName == ""){
+        if(!std::filesystem::exists(avatarPath)){
+            std::cerr << "Avatar file does not exist" << std::endl;
+            return;
+        }
+        // if the display name is empty we need to replace it with the previous one
+        userDisplayName = config().displayName;
+    }
+    // from here displayName is not empty 
+    // and is correct 
+
+    // get all peers and devicesIds :
+    auto peers = getKnownDevices();
+    for (const auto& [peer, deviceId] : peers) {
+        // send the VCard to all peers
+        std::cerr << "peer " << peer << " deviceId " << deviceId << std::endl;
+        sendProfile("",peer, deviceId);
+    }
+
+    return;
+    // then we need to send the VCard to other peers using
+    /* void
+        JamiAccount::sendProfile(const std::string& convId,
+                                const std::string& peerUri,
+                                const std::string& deviceId)
+        {
+    */
+}
+
+
 void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {
