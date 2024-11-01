@@ -39,6 +39,23 @@
       "message": "!build",
       "revId": "042f809fb1bc9f4c80e1766331254c5f6fa43a6e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4342e67d_f005b8cc",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-11-01T20:58:51Z",
+      "side": 1,
+      "message": "Once this is fixed, will invites that have not been sent be automatically re-sent? Or how do you invite a member to a group if they are greyed out with the label \"Invited\" in Members tab in the Details panel? Thank you",
+      "revId": "042f809fb1bc9f4c80e1766331254c5f6fa43a6e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
