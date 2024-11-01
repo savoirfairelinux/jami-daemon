@@ -94,6 +94,7 @@ std::vector<std::map<std::string, std::string>> getConnectionList(const std::str
 std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId, const std::string& connectionId);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accountId);
+void updateProfileAvatar(const std::string& accountId, const std::string& avatarPath);
 std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountId, bool enable);
 void registerAllAccounts(void);

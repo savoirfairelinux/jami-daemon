@@ -427,6 +427,8 @@ public:
      */
     std::map<std::string, std::string> getNearbyPeers() const override;
 
+    void updateProfileAvatar(const std::string avatarPath) override;
+
 #ifdef LIBJAMI_TESTABLE
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 

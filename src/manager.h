@@ -331,6 +331,8 @@ public:
      */
     void playTone();
 
+    void syncProfileAvatar(const std::string& accountId);
+
     /**
      * Play a special ringtone ( BUSY ) if there's at least one message on the voice mail
      */
@@ -821,6 +823,8 @@ public:
                                          uint32_t linum = CURRENT_LINE());
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
+
+    void updateProfileAvatar(const std::string& accountID, std::string avatarPath);
 
 #ifdef ENABLE_VIDEO
     /**

@@ -2746,7 +2746,6 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
         return {};
     }
 }
-
 void
 Manager::setAccountDetails(const std::string& accountID,
                            const std::map<std::string, std::string>& details)
@@ -3276,6 +3275,14 @@ Manager::getNearbyPeers(const std::string& accountID)
         return acc->getNearbyPeers();
     return {};
 }
+
+void
+Manager::updateProfileAvatar(const std::string& accountID,const  std::string avatarPath)
+{
+    if (const auto acc = getAccount<JamiAccount>(accountID))
+        acc->updateProfileAvatar(avatarPath);
+}
+
 
 void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)

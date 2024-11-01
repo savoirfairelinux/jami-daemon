@@ -221,6 +221,12 @@ public:
         return libjami::getNearbyPeers(accountID);
     }
 
+    void
+    updateProfileAvatar(const std::string& accountID, const std::string& avatarPath)
+    {
+        libjami::updateProfileAvatar(accountID, avatarPath);
+    }
+
     auto
     getMessageStatus(const uint64_t& id)
         -> decltype(libjami::getMessageStatus(id))
