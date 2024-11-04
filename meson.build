@@ -55,9 +55,9 @@ progpod2man = find_program('pod2man', native: true, required: false)
 
 conf = configuration_data()
 conf.set_quoted('PACKAGE', 'jami')
-conf.set_quoted('PACKAGE_NAME', 'Jami Daemon')
+conf.set_quoted('PACKAGE_NAME', 'Jami Core')
 conf.set_quoted('PACKAGE_VERSION', meson.project_version())
-conf.set_quoted('PACKAGE_STRING', 'Jami Daemon ' + meson.project_version())
+conf.set_quoted('PACKAGE_STRING', 'Jami Core ' + meson.project_version())
 conf.set_quoted('JAMI_DATADIR', get_option('datadir') / 'jami')
 
 depopensl = meson.get_compiler('cpp').find_library('OpenSLES', has_headers: 'SLES/OpenSLES.h', required: get_option('opensl'))
