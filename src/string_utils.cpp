@@ -42,6 +42,13 @@
 
 namespace jami {
 
+std::string_view
+userAgent()
+{
+    static const std::string USER_AGENT = fmt::format("{:s} ({:s}/{:s})", PACKAGE_NAME, platform(), arch());
+    return USER_AGENT;
+}
+
 #ifdef _WIN32
 std::wstring
 to_wstring(const std::string& str, int codePage)

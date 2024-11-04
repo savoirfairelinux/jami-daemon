@@ -56,7 +56,12 @@ LIBJAMI_PUBLIC const char* version() noexcept;
 /**
  * Return the target platform (OS) as a string.
  */
-LIBJAMI_PUBLIC const char* platform() noexcept;
+LIBJAMI_PUBLIC std::string_view platform() noexcept;
+
+/**
+ * Return the target architecture as a string.
+ */
+LIBJAMI_PUBLIC std::string_view arch() noexcept;
 
 /**
  * Initialize globals, create underlaying daemon.

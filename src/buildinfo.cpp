@@ -23,6 +23,7 @@
 #endif
 
 #include "jami.h"
+#include "string_utils.h"
 #include <string>
 
 #include <ciso646> // fix windows compiler bug
@@ -49,25 +50,16 @@ version() noexcept
                : (JAMI_REVISION[0] ? PACKAGE_VERSION "-" JAMI_REVISION : PACKAGE_VERSION);
 }
 
-const char*
+std::string_view
 platform() noexcept
 {
-#ifdef __linux__
-    #if defined(__ANDROID__)
-        return "android";
-    #else
-        return "linux";
-    #endif
-#elif defined(_WIN32)
-    return "win32";
-#elif defined(__APPLE__)
-    #ifdef TARGET_OS_IOS
-        return "iOS";
-    #else
-        return "macOS";
-    #endif
-#else
-    #error "Unknown OS"
-#endif
+    return jami::platform();
 }
+
+std::string_view
+arch() noexcept
+{
+    return jami::arch();
+}
+
 } // namespace libjami
