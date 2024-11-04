@@ -3349,6 +3349,77 @@ JamiAccount::getNearbyPeers() const
 }
 
 void
+JamiAccount::sendProfileToPeers()
+{
+    if (!connectionManager_)
+        return;
+    for (const auto& connection : connectionManager_->getConnectionList()) {
+        const auto& device = connection.at("device");
+        const auto& peer = connection.at("peer");
+        sendProfile("", peer, device);
+    }
+}
+
+std::map<std::string, std::string>
+JamiAccount::getProfileVcard() const {
+    const auto& path = idPath_ / "profile.vcf";
+
+    if (!std::filesystem::exists(path)) {
+        return {};
+    }
+
+    return vCard::utils::toMap(fileutils::loadTextFile(path));
+}
+
+void
+JamiAccount::updateProfile(const std::string& displayName, const std::filesystem::path& avatarPath){
+
+    const auto& accountUri = accountManager_->getInfo()->accountId;
+    const auto& path = profilePath();
+    const auto& vCardPath = idPath_ / "profiles" / fmt::format("{}.vcf", base64::encode(accountUri));
+    const std::filesystem::path& tmpPath = vCardPath.string() + ".tmp";
+
+    auto profile = getProfileVcard();
+    if(profile.empty()){
+        profile = vCard::utils::initVcard();
+    }
+
+    profile["FN"] = displayName;
+    editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
+    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
+                                                                    getAccountDetails());
+    if(std::filesystem::exists(avatarPath)){
+        try {
+            const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
+            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Failed to load avatar: {}", e.what());
+        }
+    }else if(avatarPath.empty()){
+        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
+    }
+
+    const std::string& vCard = vCard::utils::toString(profile);
+
+    try {
+        std::ofstream file(tmpPath);
+        if (file.is_open()) {
+            file << vCard;
+            file.close();
+            std::filesystem::rename(tmpPath, vCardPath);
+            fileutils::createFileLink(path,vCardPath);
+            sendProfileToPeers();
+            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(), accountUri, path.string());
+        } else {
+            JAMI_ERROR("Unable to open file for writing: {}", tmpPath.string());
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Error writing profile: {}", e.what());
+    }
+}
+
+
+void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {
     Account::setActiveCodecs(list);
@@ -3646,6 +3717,7 @@ JamiAccount::sendProfile(const std::string& convId,
         JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
         return;
     }
+    std::cerr << "\n\n\n called" << std::endl;
     // We need a new channel
     transferFile(convId,
                  accProfilePath.string(),
