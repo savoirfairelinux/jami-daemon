@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(jami-core
     VERSION 15.3.0
     LANGUAGES C CXX)
-set(PACKAGE_NAME "Jami Daemon")
+set(PACKAGE_NAME "Jami Core")
 set (CMAKE_CXX_STANDARD 17)
 
 set(PROJECT_LABEL "libjami")
