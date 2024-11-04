@@ -1,27 +1,19 @@
 /*
  *  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
  *
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *  Author: Simon Zeni <simon.zeni@savoirfairelinux.com>
- *  Author: Vladimir Stoiakin <vstoiakin@lavabit.com>
- *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
+ *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -49,14 +41,14 @@
 bool persistent = false;
 std::unique_ptr<sdbus::IConnection> connection;
 
-static int ringFlags = 0;
+static int initFlags = 0;
 
 static void
 print_title()
 {
     std::cout
-        << "Jami Daemon " << libjami::version()
-        << ", by Savoir-faire Linux Inc. 2004-2023" << std::endl
+        << "Jami Core " << libjami::version()
+        << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2024" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl
@@ -149,13 +141,13 @@ parse_args(int argc, char *argv[])
     }
 
     if (consoleFlag)
-        ringFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
+        initFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
 
     if (debugFlag)
-        ringFlags |= libjami::LIBJAMI_FLAG_DEBUG;
+        initFlags |= libjami::LIBJAMI_FLAG_DEBUG;
 
     if (autoAnswer)
-        ringFlags |= libjami::LIBJAMI_FLAG_AUTOANSWER;
+        initFlags |= libjami::LIBJAMI_FLAG_AUTOANSWER;
 
     return false;
 }
@@ -182,7 +174,7 @@ main(int argc, char *argv [])
     if (parse_args(argc, argv))
         return 0;
 
-    if (!libjami::init(static_cast<libjami::InitFlag>(ringFlags))) {
+    if (!libjami::init(static_cast<libjami::InitFlag>(initFlags))) {
         std::cerr << "libjami::init() failed" << std::endl;
         return 1;
     }
