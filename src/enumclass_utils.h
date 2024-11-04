@@ -51,7 +51,7 @@ enum_class_size()
 template<class Row, typename Value, typename A = Value>
 struct Matrix1D
 {
-    Matrix1D(std::initializer_list<std::initializer_list<Value>> s);
+    constexpr Matrix1D(std::initializer_list<std::initializer_list<Value>> s);
 
     // Row is a built-in type ("int" by default)
     Value operator[](Row v);
@@ -136,7 +136,7 @@ struct Matrix0D
  * A helper to type to match serializable string to enum elements
  */
 template<class Row>
-using EnumClassNames = Matrix1D<Row, const char*>;
+using EnumClassNames = Matrix1D<Row, std::string_view>;
 
 /**
  * Create a matrix type with 2 enum class dimensions M[I,J] = V
@@ -171,14 +171,14 @@ using CallbackMatrix2D = Matrix2D<Row, Column, void (Class::*)(Args... args)>;
  */
 
 template<class Row, typename Value, typename Accessor>
-Matrix1D<Row, Value, Accessor>::Matrix1D(std::initializer_list<std::initializer_list<Value>> s)
+constexpr Matrix1D<Row, Value, Accessor>::Matrix1D(std::initializer_list<std::initializer_list<Value>> s)
     : data_(*std::begin(s))
 {
     static_assert(std::is_enum<Row>(), "Row has to be an enum class");
     static_assert((int) Row::COUNT__ > 0, "Row need a COUNT__ element");
 
     // FIXME C++14, use static_assert and make the ctor constexpr
-    assert(std::begin(s)->size()
+    assert(s.begin()->size()
            == enum_class_size<Row>()); //,"Matrix row have to match the enum class size");
 }
 
