@@ -40,6 +40,42 @@ toMap(std::string_view content)
     }
     return vCard;
 }
+
+std::map<std::string, std::string>
+initVcard()
+{
+    return {
+        {Property::VCARD_VERSION, "2.1"},
+        {Property::FORMATTED_NAME, ""},
+        {Property::PHOTO_PNG, ""},
+    };
+}
+
+
+std::string
+toString(const std::map<std::string, std::string>& vCard)
+{
+    std::string result;
+
+    result += Delimiter::BEGIN_TOKEN;
+    result += Delimiter::END_LINE_TOKEN;
+
+    result += Property::VCARD_VERSION;
+    result += ":2.1";
+    result += Delimiter::END_LINE_TOKEN;
+
+    for (const auto& [key, value] : vCard) {
+        if (std::string(Delimiter::END_TOKEN).find(key) != std::string::npos || std::string(Delimiter::BEGIN_TOKEN).find(key) != std::string::npos || key == Property::VCARD_VERSION)
+            continue;
+        result += key + ':' + value + '\n';
+    }
+
+    result += Delimiter::END_TOKEN;
+    result += Delimiter::END_LINE_TOKEN;
+
+    return result;
+}
+
 } // namespace utils
 
 } // namespace vCard
