@@ -3332,6 +3332,76 @@ JamiAccount::getNearbyPeers() const
 }
 
 void
+JamiAccount::sendProfileToPeers(){
+    const auto& connections = sipConns_;
+    for (const auto& [key, value] : connections) {
+        const auto& conversationId = key.first;
+        const auto& deviceId = key.second.toString();
+        const auto& peerId = convModule()->getOneToOneConversation(conversationId);
+        if(peerId.empty()){
+            continue;
+        }
+        std::cerr << "Sending profile to peer: " << peerId << std::endl;
+        sendProfile("", peerId, deviceId);
+    }
+}
+
+std::map<std::string, std::string>
+JamiAccount::getProfileVcard() const {
+    const auto& path = idPath_ / "profile.vcf";
+
+    if (!std::filesystem::exists(path)) {
+        return {};
+    }
+
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        return {};
+    }
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string fileContent = buffer.str();
+    std::string_view fileContentView(fileContent);
+
+    const auto info = vCard::utils::toMap(fileContentView);
+    return info;
+}
+
+void
+JamiAccount::updateProfile(const std::string& displayName, const std::string& avatarPath){
+
+    const auto& path = idPath_ / "profile.vcf";
+    auto profile = getProfileVcard();
+
+    if(profile.empty()){
+        profile = vCard::utils::initVcard();
+    }
+
+    profile["FN"] = displayName;
+
+    const auto& avatar = std::filesystem::path(avatarPath);
+
+    if(std::filesystem::exists(avatar)){
+        const auto& base64 = jami::base64::encode(avatar);
+        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
+    }
+
+    const std::string& vCard = vCard::utils::toString(profile);
+
+    std::ofstream file(path);
+    if (file.is_open()) {
+        file.flush();
+        file << vCard;
+        file.close();
+        sendProfileToPeers();
+    } else {
+        JAMI_ERROR("Unable to open file for writing: {}", path.string());
+    }
+}
+
+
+void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {
     Account::setActiveCodecs(list);
@@ -3626,6 +3696,7 @@ JamiAccount::sendProfile(const std::string& convId,
     auto currentSha3 = fileutils::sha3File(accProfilePath);
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
+        std::cerr << "Peer " << peerUri << " already got an up-to-date vcard" << std::endl;
         JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
         return;
     }

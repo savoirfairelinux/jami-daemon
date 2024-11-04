@@ -3278,6 +3278,14 @@ Manager::getNearbyPeers(const std::string& accountID)
 }
 
 void
+Manager::updateProfile(const std::string& accountID,const std::string& displayName, const  std::string& avatarPath)
+{
+    if (const auto acc = getAccount<JamiAccount>(accountID))
+        acc->updateProfile(displayName,avatarPath);
+}
+
+
+void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
 {
     auto acc = getAccount(accountID);

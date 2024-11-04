@@ -37,6 +37,8 @@ inline std::string encode(const std::vector<uint8_t>& data) {
     return encode(std::string_view((const char*)data.data(), data.size()));
 }
 
+std::string encode(const std::string& path);
+
 std::vector<uint8_t> decode(std::string_view);
 
 } // namespace base64
