@@ -21,6 +21,7 @@
 
 #include <pjlib.h>
 #include <pjlib-util/base64.h>
+#include <fstream>
 
 namespace jami {
 namespace base64 {
@@ -63,6 +64,7 @@ decode(std::string_view str)
     out.resize(output_length);
     return out;
 }
+
 
 } // namespace base64
 } // namespace jami
