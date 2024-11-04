@@ -3903,7 +3903,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     }
 
     auto addKey = [&](auto property, auto key) {
-        auto it = infosMap.find(key);
+        auto it = infosMap.find(std::string(key));
         if (it != infosMap.end()) {
             file << property;
             file << ":";
@@ -3922,7 +3922,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
     file << vCard::Property::PHOTO;
     file << vCard::Delimiter::SEPARATOR_TOKEN;
     file << vCard::Property::BASE64;
-    auto avatarIt = infosMap.find(vCard::Value::AVATAR);
+    auto avatarIt = infosMap.find(std::string(vCard::Value::AVATAR));
     if (avatarIt != infosMap.end()) {
         // TODO type=png? store another way?
         file << ":";

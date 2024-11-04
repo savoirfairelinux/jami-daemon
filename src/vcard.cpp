@@ -37,6 +37,45 @@ toMap(std::string_view content)
     }
     return vCard;
 }
+
+std::map<std::string, std::string>
+initVcard()
+{
+    return {
+        {std::string(Property::VCARD_VERSION), "2.1"},
+        {std::string(Property::FORMATTED_NAME), ""},
+        {std::string(Property::PHOTO_PNG), ""},
+    };
+}
+
+
+std::string
+toString(const std::map<std::string, std::string>& vCard)
+{
+    size_t estimatedSize = 0;
+    for (const auto& [key, value] : vCard) {
+        if (Delimiter::BEGIN_TOKEN_KEY == key || Delimiter::END_TOKEN_KEY == key)
+            continue;
+        estimatedSize += key.size() + value.size() + 2;
+    }
+    std::string result;
+    result.reserve(estimatedSize + Delimiter::BEGIN_TOKEN.size() + Delimiter::END_LINE_TOKEN.size() + Delimiter::END_TOKEN.size() + Delimiter::END_LINE_TOKEN.size());
+
+    result += Delimiter::BEGIN_TOKEN;
+    result += Delimiter::END_LINE_TOKEN;
+
+    for (const auto& [key, value] : vCard) {
+        if (Delimiter::BEGIN_TOKEN_KEY == key || Delimiter::END_TOKEN_KEY == key)
+            continue;
+        result += key + ':' + value + '\n';
+    }
+
+    result += Delimiter::END_TOKEN;
+    result += Delimiter::END_LINE_TOKEN;
+
+    return result;
+}
+
 } // namespace utils
 
 } // namespace vCard
