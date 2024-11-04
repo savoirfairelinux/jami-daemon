@@ -88,6 +88,9 @@ namespace utils {
  * @return the vCard representation
  */
 std::map<std::string, std::string> toMap(std::string_view content);
+std::map<std::string, std::string> initVcard();
+std::string toString(const std::map<std::string, std::string>& vCard);
+
 } // namespace utils
 
 } // namespace vCard

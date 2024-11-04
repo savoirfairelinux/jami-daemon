@@ -427,6 +427,10 @@ public:
      */
     std::map<std::string, std::string> getNearbyPeers() const override;
 
+    std::map<std::string, std::string> getProfileVcard() const;
+    void sendProfileToPeers();
+    void updateProfile(const std::string& displayName, const std::filesystem::path& avatarPath);
+
 #ifdef LIBJAMI_TESTABLE
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 
