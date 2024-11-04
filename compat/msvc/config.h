@@ -149,10 +149,10 @@ systems. This function is required for `alloca.c' support on those systems.
 #define PACKAGE_BUGREPORT "jami@lists.savoirfairelinux.net"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "Jami Daemon"
+#define PACKAGE_NAME "Jami Core"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Jami Daemon 10.0.2"
+#define PACKAGE_STRING "Jami Core 10.0.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "jami"
