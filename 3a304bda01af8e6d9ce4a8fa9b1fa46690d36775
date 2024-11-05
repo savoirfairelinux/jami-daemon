@@ -36,6 +36,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ebf4f771_ff46bbf6",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-05T20:04:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ebf001d2_262cc9d0",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "309e4e46_5b2f1f28",
@@ -53,6 +71,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "545fa912_1342927c",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-05T20:04:23Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "309e4e46_5b2f1f28",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5ef44bdb_1bc41675",
@@ -66,6 +102,24 @@
       "writtenOn": "2024-11-05T19:12:16Z",
       "side": 1,
       "message": "not used",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "37341bc5_b8b21236",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-05T20:04:23Z",
+      "side": 1,
+      "message": "To be used by another commit",
+      "parentUuid": "5ef44bdb_1bc41675",
       "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
