@@ -2572,13 +2572,13 @@ JamiAccount::loadCachedUrl(const std::string& url,
 {
     dht::ThreadPool::io().run([cb, url, cachePath, cacheDuration, w = weak()]() {
         try {
-            std::vector<uint8_t> data;
+            std::string data;
             {
                 std::lock_guard lk(dhtnet::fileutils::getFileLock(cachePath));
-                data = fileutils::loadCacheFile(cachePath, cacheDuration);
+                data = fileutils::loadCacheTextFile(cachePath, cacheDuration);
             }
             dht::http::Response ret;
-            ret.body = {data.begin(), data.end()};
+            ret.body = std::move(data);
             ret.status_code = 200;
             cb(ret);
         } catch (const std::exception& e) {
@@ -2603,7 +2603,15 @@ JamiAccount::loadCachedUrl(const std::string& url,
                                              ex.what());
                             }
                         } else {
-                            JAMI_WARN("Failed to download url");
+                            std::error_code ec;
+                            if (std::filesystem::exists(cachePath, ec) && !ec) {
+                                JAMI_WARNING("Failed to download url, using cached data");
+                                data = fileutils::loadTextFile(cachePath);
+                                response.body = std::move(data);
+                                response.status_code = 200;
+                            } else {
+                                JAMI_WARNING("Failed to download url, no cached data");
+                            }
                         }
                         cb(response);
                         if (auto req = response.request.lock())
