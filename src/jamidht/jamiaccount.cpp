@@ -926,7 +926,7 @@ JamiAccount::loadConfig()
     if (config().proxyEnabled) {
         try {
             auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy",
-                                                    std::chrono::hours(24 * 7));
+                                                    std::chrono::hours(24 * 14));
             Json::Value root;
             if (json::parse(str, root)) {
                 proxyServerCached_ = root[getProxyConfigKey()].asString();
