@@ -18,6 +18,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include "string_utils.h"
 
@@ -41,6 +44,13 @@
 #include <ciso646> // fix windows compiler bug
 
 namespace jami {
+
+std::string_view
+userAgent()
+{
+    static const std::string USER_AGENT = fmt::format("{:s} ({:s}/{:s})", PACKAGE_NAME, platform(), arch());
+    return USER_AGENT;
+}
 
 #ifdef _WIN32
 std::wstring

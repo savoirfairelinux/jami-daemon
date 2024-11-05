@@ -29,9 +29,13 @@
 #include <regex>
 #include <iterator>
 #include <charconv>
+#include <string_view>
 
 #ifdef _WIN32
 #include <WTypes.h>
+#endif
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
 #endif
 
 namespace jami {
@@ -45,21 +49,25 @@ bool_to_str(bool b) noexcept
     return b ? TRUE_STR : FALSE_STR;
 }
 
+std::string_view userAgent();
+
 constexpr inline std::string_view
 platform() {
     using namespace std::literals;
-#if defined(__ANDROID__)
-    return "android"sv;
-#elif defined(__linux__)
-    return "linux"sv;
-#elif defined(__APPLE__)
-#    if TARGET_OS_IPHONE
-    return "ios"sv;
-#    else
-    return "macos"sv;
-#    endif
+#ifdef __linux__
+    #if defined(__ANDROID__)
+        return "Android"sv;
+    #else
+        return "Linux"sv;
+    #endif
 #elif defined(_WIN32)
-    return "windows"sv;
+    return "Windows"sv;
+#elif defined(__APPLE__)
+    #if TARGET_OS_IOS
+        return "iOS"sv;
+    #else
+        return "macOS"sv;
+    #endif
 #else
     return "unknown"sv;
 #endif
@@ -72,14 +80,16 @@ arch() {
     return "x86_64"sv;
 #elif defined(__i386__) || defined(_M_IX86)
     return "x86"sv;
-#elif defined(__aarch64__)
+#elif defined(__aarch64__) || defined(_M_ARM64)
     return "arm64"sv;
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(_M_ARM)
     return "arm"sv;
 #else
     return "unknown"sv;
 #endif
 }
+
+std::string user_agent();
 
 std::string to_string(double value);
 
