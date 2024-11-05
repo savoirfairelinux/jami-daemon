@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "ebf001d2_262cc9d0",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-05T19:14:12Z",
+      "side": 1,
+      "message": "```defined(__APPLE__)```",
+      "parentUuid": "69013a9b_a0734fcc",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "309e4e46_5b2f1f28",
         "filename": "src/string_utils.h",
         "patchSetId": 3
