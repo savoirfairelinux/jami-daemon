@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69013a9b_a0734fcc",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-05T19:12:16Z",
+      "side": 1,
+      "message": "#if defined(__APPLE__)\n#include \u003cTargetConditionals.h\u003e\n#endif. Otherwise TARGET_OS_IOS is not defined in this file",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "309e4e46_5b2f1f28",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-05T19:12:16Z",
+      "side": 1,
+      "message": "#if TARGET_OS_IOS",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5ef44bdb_1bc41675",
+        "filename": "src/string_utils.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-05T19:12:16Z",
+      "side": 1,
+      "message": "not used",
+      "revId": "3a304bda01af8e6d9ce4a8fa9b1fa46690d36775",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
