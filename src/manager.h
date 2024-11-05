@@ -877,9 +877,9 @@ public:
      * @param conversationId    Related conversation
      * @return std::optional<std::weak_ptr<ChannelSocket>> the related socket
      */
-    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const std::string_view accountId,
-                                                     const std::string_view deviceId,
-                                                     const std::string_view conversationId);
+    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view accountId,
+                                                     std::string_view deviceId,
+                                                     std::string_view conversationId);
 
     void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
@@ -917,13 +917,9 @@ private:
 // Helper to install a callback to be called once by the main event loop
 template<typename Callback>
 static void
-runOnMainThread(Callback&& cb,
-                const char* filename = CURRENT_FILENAME(),
-                uint32_t linum = CURRENT_LINE())
+runOnMainThread(Callback&& cb)
 {
-    Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable { cb(); },
-                                        filename,
-                                        linum);
+    Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable { cb(); });
 }
 
 } // namespace jami
