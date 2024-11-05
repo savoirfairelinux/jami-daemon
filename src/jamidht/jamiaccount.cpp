@@ -1877,6 +1877,7 @@ JamiAccount::doRegister_()
         config.push_token = conf.deviceKey;
         config.push_topic = conf.notificationTopic;
         config.push_platform = conf.platform;
+        config.proxy_user_agent = jami::userAgent();
         config.threaded = true;
         config.peer_discovery = conf.dhtPeerDiscovery;
         config.peer_publish = conf.dhtPeerDiscovery;
