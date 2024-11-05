@@ -2572,13 +2572,13 @@ JamiAccount::loadCachedUrl(const std::string& url,
 {
     dht::ThreadPool::io().run([cb, url, cachePath, cacheDuration, w = weak()]() {
         try {
-            std::vector<uint8_t> data;
+            std::string data;
             {
                 std::lock_guard lk(dhtnet::fileutils::getFileLock(cachePath));
-                data = fileutils::loadCacheFile(cachePath, cacheDuration);
+                data = fileutils::loadCacheTextFile(cachePath, cacheDuration);
             }
             dht::http::Response ret;
-            ret.body = {data.begin(), data.end()};
+            ret.body = std::move(data);
             ret.status_code = 200;
             cb(ret);
         } catch (const std::exception& e) {
@@ -2602,10 +2602,26 @@ JamiAccount::loadCachedUrl(const std::string& url,
                                              cachePath,
                                              ex.what());
                             }
+                            cb(response);
                         } else {
-                            JAMI_WARN("Failed to download url");
+                            try {
+                                if (std::filesystem::exists(cachePath)) {
+                                    JAMI_WARNING("Failed to download url, using cached data");
+                                    std::string data;
+                                    {
+                                        std::lock_guard lk(dhtnet::fileutils::getFileLock(cachePath));
+                                        data = fileutils::loadTextFile(cachePath);
+                                    }
+                                    dht::http::Response ret;
+                                    ret.body = std::move(data);
+                                    ret.status_code = 200;
+                                    cb(ret);
+                                } else
+                                    throw std::runtime_error("No cached data");
+                            } catch (...) {
+                                cb(response);
+                            }
                         }
-                        cb(response);
                         if (auto req = response.request.lock())
                             if (auto sthis = w.lock())
                                 sthis->requests_.erase(req);
