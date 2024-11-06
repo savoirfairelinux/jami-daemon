@@ -1,0 +1,211 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ce284a1_c8ec329e",
+        "filename": "src/base64.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "Or simply\n\n  ```return encode(readFile(path));```\n  \nDoesn\u0027t really need to be a separate function.",
+      "range": {
+        "startLine": 70,
+        "startChar": 4,
+        "endLine": 76,
+        "endChar": 18
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69146314_a46c2035",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3384,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "return vCard::utils::toMap(fileutils::readTextFile(path));",
+      "range": {
+        "startLine": 3373,
+        "startChar": 4,
+        "endLine": 3384,
+        "endChar": 16
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "bd926a0a_3b6c4a84",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3388,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "std::filesystem::path",
+      "range": {
+        "startLine": 3388,
+        "startChar": 65,
+        "endLine": 3388,
+        "endChar": 76
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "134bf7ab_bbcb5d26",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3403,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "one-line or std::move to avoid copy",
+      "range": {
+        "startLine": 3402,
+        "startChar": 0,
+        "endLine": 3403,
+        "endChar": 2
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "30128530_e61644f5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3408,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "don\u0027t write directly to the file, write to another file and then rename to the final path",
+      "range": {
+        "startLine": 3408,
+        "startChar": 23,
+        "endLine": 3408,
+        "endChar": 27
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea724bbc_36069ac2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3410,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "not needed (and doesn\u0027t do what you think), use std::ios::trunc as  ofstream argument.",
+      "range": {
+        "startLine": 3410,
+        "startChar": 8,
+        "endLine": 3410,
+        "endChar": 21
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d10e2440_062d8e43",
+        "filename": "src/vcard.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "not reading version from map. Either hard-code it here and don\u0027t put it in the init map or read it from the map.",
+      "range": {
+        "startLine": 64,
+        "startChar": 15,
+        "endLine": 64,
+        "endChar": 21
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46b0868b_23a45c93",
+        "filename": "src/vcard.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "could be something like\n```c++\nauto result \u003d fmt::format(\"{}{}{}:2.1{}\", Delimiter::BEGIN_TOKEN, Delimiter::END_LINE_TOKEN, Property::VCARD_VERSION, Delimiter::END_LINE_TOKEN);\n```",
+      "range": {
+        "startLine": 58,
+        "startChar": 4,
+        "endLine": 65,
+        "endChar": 40
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "31332040_4ca79886",
+        "filename": "src/vcard.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-06T16:57:54Z",
+      "side": 1,
+      "message": "use string_view apis",
+      "range": {
+        "startLine": 68,
+        "startChar": 12,
+        "endLine": 68,
+        "endChar": 77
+      },
+      "revId": "b7c2ca89efc6ce4c99e87ba65089f0065c5929ec",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
