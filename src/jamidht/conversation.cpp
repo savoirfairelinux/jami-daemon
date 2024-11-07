@@ -894,12 +894,17 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
         memberToStatus.clear();
     }
 
+    // By convention, if options.nbOfCommits is zero, then we
+    // don't impose a limit on the number of commits returned.
+    bool limitNbOfCommits = options.nbOfCommits > 0;
+
     auto startLogging = options.from == "";
     auto breakLogging = false;
     auto currentHistorySize = loadedHistory_.messageList.size();
     std::vector<std::string> replies;
     std::vector<std::shared_ptr<libjami::SwarmMessage>> msgList;
     repository_->log(
+        /* preCondition */
         [&](const auto& id, const auto& author, const auto& commit) {
             if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
                 return CallbackResult::Skip;
@@ -907,7 +912,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if (replies.empty()) { // This avoid load until
                 // NOTE: in the future, we may want to add "Reply-Body" in commit to avoid to load
                 // until this commit
-                if ((options.nbOfCommits != 0
+                if ((limitNbOfCommits
                      && (loadedHistory_.messageList.size() - currentHistorySize)
                             == options.nbOfCommits))
                     return CallbackResult::Break; // Stop logging
@@ -936,8 +941,9 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
 
             return CallbackResult::Ok; // Continue
         },
+        /* emplaceCb */
         [&](auto&& cc) {
-            if(msgList.size() == options.nbOfCommits)
+            if(limitNbOfCommits && (msgList.size() == options.nbOfCommits))
                 return;
             auto optMessage = repository_->convCommitToMap(cc);
             if (!optMessage.has_value())
@@ -962,7 +968,15 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             }
             msgList.insert(msgList.end(), added.begin(), added.end());
         },
-        [](auto, auto, auto) { return false; },
+        /* postCondition */
+        [&](auto, auto, auto) {
+            // Stop logging if there was a limit set on the number of commits
+            // to return and we reached it. This isn't strictly necessary since
+            // the check at the beginning of `emplaceCb` ensures that we won't
+            // return too many messages, but it prevents us from needlessly
+            // iterating over a (potentially) large number of commits.
+            return limitNbOfCommits && (msgList.size() == options.nbOfCommits);
+        },
         options.from,
         options.logIfNotFound);
 
