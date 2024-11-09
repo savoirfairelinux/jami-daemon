@@ -1140,7 +1140,8 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
 {
     auto path = fileutils::get_config_dir() / "encoder.json";
     std::string name = encoderCtx->codec->name;
-    if (std::filesystem::is_regular_file(path)) {
+    std::error_code ec;
+    if (std::filesystem::is_regular_file(path, ec)) {
         JAMI_WARN("encoder.json file found, default settings will be erased");
         try {
             Json::Value root;

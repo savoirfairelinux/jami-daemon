@@ -127,10 +127,11 @@ bool
 JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath, const std::string& newJplPath)
 {
     std::map<std::string, std::string> oldDetails = PluginUtils::parseManifestFile(PluginUtils::manifestPath(oldJplPath), oldJplPath);
+    std::error_code ec;
     if (
         oldDetails.empty() ||
-        !std::filesystem::is_regular_file(oldJplPath + DIR_SEPARATOR_CH + oldDetails["id"] + ".crt") ||
-        !std::filesystem::is_regular_file(newJplPath)
+        !std::filesystem::is_regular_file(oldJplPath + DIR_SEPARATOR_CH + oldDetails["id"] + ".crt", ec) ||
+        !std::filesystem::is_regular_file(newJplPath, ec)
     )
         return false;
     try {
@@ -170,7 +171,8 @@ bool
 JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 {
     // check if the file exists
-    if (!std::filesystem::is_regular_file(jplPath)){
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(jplPath, ec)){
         return false;
     }
     try {
@@ -255,7 +257,8 @@ int
 JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
 {
     int r {SUCCESS};
-    if (std::filesystem::is_regular_file(jplPath)) {
+    std::error_code ec;
+    if (std::filesystem::is_regular_file(jplPath, ec)) {
         try {
             auto manifestMap = PluginUtils::readPluginManifestFromArchive(jplPath);
             const std::string& name = manifestMap["id"];

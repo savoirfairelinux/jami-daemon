@@ -351,7 +351,8 @@ getLocales(const std::string& rootPath, const std::string& lang)
 std::map<std::string, std::string>
 processLocaleFile(const std::string& preferenceLocaleFilePath)
 {
-    if (!std::filesystem::is_regular_file(preferenceLocaleFilePath)) {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(preferenceLocaleFilePath, ec)) {
         return {};
     }
     std::ifstream file(preferenceLocaleFilePath);
