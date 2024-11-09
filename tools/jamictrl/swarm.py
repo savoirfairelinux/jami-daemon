@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-#  Copyright (C) 2020-2024 Savoir-faire Linux Inc.
+#  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
 #
 # Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
 #

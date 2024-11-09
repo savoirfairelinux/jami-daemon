@@ -1,4 +1,4 @@
-;; Copyright (C) 2021-2024 Savoir-faire Linux Inc.
+;; Copyright (C) 2004-2024 Savoir-faire Linux Inc.
 
 ;; Author: Olivier Dion <olivier.dion@savoirfairelinux.com>
 
