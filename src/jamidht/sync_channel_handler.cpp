@@ -19,10 +19,9 @@
  */
 
 #include "jamidht/sync_channel_handler.h"
-
 #include <opendht/thread_pool.h>
 
-static constexpr const char SYNC_URI[] {"sync://"};
+static constexpr const char SYNC_SCHEME[] {"sync://"};
 
 namespace jami {
 
@@ -38,7 +37,7 @@ SyncChannelHandler::~SyncChannelHandler() {}
 void
 SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
 {
-    auto channelName = SYNC_URI + deviceId.toString();
+    auto channelName = SYNC_SCHEME + deviceId.toString();
     if (connectionManager_.isConnecting(deviceId, channelName)) {
         JAMI_INFO("Already connecting to %s", deviceId.to_c_str());
         return;
