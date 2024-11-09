@@ -327,8 +327,9 @@ loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::
     // last_write_time throws exception if file doesn't exist
     std::error_code ec;
     auto writeTime = std::filesystem::last_write_time(path);
-    if (ec || decltype(writeTime)::clock::now() - writeTime > maxAge)
-        throw std::runtime_error("file too old");
+    auto now = decltype(writeTime)::clock::now();
+    if (ec || now - writeTime > maxAge)
+        throw std::runtime_error("file too old " + dht::print_time_relative(now, writeTime));
 
     JAMI_LOG("Loading cache file '{}'", path);
     return loadTextFile(path);
