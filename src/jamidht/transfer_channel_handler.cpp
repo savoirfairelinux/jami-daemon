@@ -158,7 +158,6 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     // convId/fileHost/fileId or convId/profile/fileId
     auto conversationId = std::string(splitted_id[0]);
-    auto fileHost = std::string(splitted_id[1]);
     auto isContactProfile = splitted_id[1] == "profile";
     auto fileId = std::string(splitted_id[splitted_id.size() - 1]);
     if (channel->isInitiator())
