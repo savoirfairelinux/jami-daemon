@@ -322,9 +322,13 @@ std::vector<uint8_t>
 loadCacheFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge)
 {
     // last_write_time throws exception if file doesn't exist
-    auto writeTime = std::filesystem::last_write_time(path);
-    if (decltype(writeTime)::clock::now() - writeTime > maxAge)
-        throw std::runtime_error("file too old");
+    std::error_code ec;
+    auto writeTime = std::filesystem::last_write_time(path, ec);
+    if (ec)
+        throw std::runtime_error("unable to get last write time of file");
+    auto now = decltype(writeTime)::clock::now();
+    if (now - writeTime > maxAge)
+        throw std::runtime_error("file too old " + dht::print_time_relative(now, writeTime));
 
     JAMI_LOG("Loading cache file '{}'", path);
     return dhtnet::fileutils::loadFile(path);
@@ -334,9 +338,13 @@ std::string
 loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge)
 {
     // last_write_time throws exception if file doesn't exist
-    auto writeTime = std::filesystem::last_write_time(path);
-    if (decltype(writeTime)::clock::now() - writeTime > maxAge)
-        throw std::runtime_error("file too old");
+    std::error_code ec;
+    auto writeTime = std::filesystem::last_write_time(path, ec);
+    if (ec)
+        throw std::runtime_error("unable to get last write time of file");
+    auto now = decltype(writeTime)::clock::now();
+    if (now - writeTime > maxAge)
+        throw std::runtime_error("file too old " + dht::print_time_relative(now, writeTime));
 
     JAMI_LOG("Loading cache file '{}'", path);
     return loadTextFile(path);

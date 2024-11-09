@@ -4239,7 +4239,9 @@ JamiAccount::sendFile(const std::string& conversationId,
                                 "Unable to create symlink for file transfer {} - {}. Copy file",
                                 filelinkPath,
                                 path);
-                            if (!std::filesystem::copy_file(path, filelinkPath)) {
+                            std::error_code ec;
+                            auto success = std::filesystem::copy_file(path, filelinkPath, ec);
+                            if (ec || !success) {
                                 JAMI_ERROR("Unable to copy file for file transfer {} - {}",
                                            filelinkPath,
                                            path);
