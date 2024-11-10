@@ -33,6 +33,7 @@ libjami_sources = files(
     'jamidht/conversation_channel_handler.cpp',
     'jamidht/conversation_module.cpp',
     'jamidht/conversationrepository.cpp',
+    'jamidht/message_channel_chandler.cpp',
     'jamidht/gitserver.cpp',
     'jamidht/jamiaccount.cpp',
     'jamidht/jamiaccount_config.cpp',
