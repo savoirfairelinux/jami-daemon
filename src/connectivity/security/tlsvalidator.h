@@ -122,7 +122,9 @@ public:
         SERIAL_NUMBER,
         ISSUER,
         SUBJECT_KEY_ALGORITHM,
+        SUBJECT_KEY,
         CN,
+        UID,
         N,
         O,
         SIGNATURE_ALGORITHM,
@@ -130,6 +132,10 @@ public:
         SHA1_FINGERPRINT,
         PUBLIC_KEY_ID,
         ISSUER_DN,
+        ISSUER_CN,
+        ISSUER_UID,
+        ISSUER_N,
+        ISSUER_O,
         NEXT_EXPECTED_UPDATE_DATE,
         OUTGOING_SERVER, /** The hostname/outgoing server used for this certificate               */
         IS_CA,
@@ -233,7 +239,9 @@ public:
     CheckResult getSerialNumber();
     CheckResult getIssuer();
     CheckResult getSubjectKeyAlgorithm();
+    CheckResult getSubjectKey();
     CheckResult getCN();
+    CheckResult getUID();
     CheckResult getN();
     CheckResult getO();
     CheckResult getSignatureAlgorithm();
@@ -241,6 +249,10 @@ public:
     CheckResult getSha1Fingerprint();
     CheckResult getPublicKeyId();
     CheckResult getIssuerDN();
+    CheckResult getIssuerCN();
+    CheckResult getIssuerUID();
+    CheckResult getIssuerN();
+    CheckResult getIssuerO();
     CheckResult outgoingServer();
     CheckResult isCA();
 
