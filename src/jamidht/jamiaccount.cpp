@@ -649,8 +649,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 pendingCalls_[deviceId].emplace_back(dev_call);
             }
 
-            JAMI_WARN("[call %s] No channeled socket with this peer. Send request",
-                      call->getCallId().c_str());
+            JAMI_WARNING("[call {}] No channeled socket with this peer. Send request",
+                      call->getCallId());
             // Else, ask for a channel (for future calls/text messages)
             auto type = call->hasVideo() ? "videoCall" : "audioCall";
             requestSIPConnection(toUri, deviceId, type, true, dev_call);
@@ -665,7 +665,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         auto& sipConn = value.back();
 
         if (!sipConn.channel) {
-            JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
+            JAMI_WARNING("A SIP transport exists without Channel, this is a bug. Please report");
             continue;
         }
 
@@ -676,8 +676,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         channels.emplace_back(sipConn.channel);
 
-        JAMI_WARN("[call %s] A channeled socket is detected with this peer.",
-                  call->getCallId().c_str());
+        JAMI_WARNING("[call {}] A channeled socket is detected with this peer.",
+                  call->getCallId());
 
         auto dev_call = createSubCall(call);
         dev_call->setPeerNumber(call->getPeerNumber());
@@ -744,7 +744,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         [wCall](bool ok) {
             if (not ok) {
                 if (auto call = wCall.lock()) {
-                    JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
+                    JAMI_WARNING("[call:{}] no devices found", call->getCallId());
                     // Note: if a p2p connection exists, the call will be at least in CONNECTING
                     if (call->getConnectionState() == Call::ConnectionState::TRYING)
                         call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
@@ -760,7 +760,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 {
     if (!call)
         return;
-    JAMI_DBG("[call:%s] outgoing call connected to %s", call->getCallId().c_str(), to_id.c_str());
+    JAMI_LOG("[call:{}] outgoing call connected to {}", call->getCallId(), to_id);
 
     const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(),
                                                                  target.getFamily());
@@ -777,7 +777,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
     if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-        JAMI_WARN("Unable to instantiate codec for early media");
+        JAMI_WARNING("[call:{}] Unable to instantiate codec for early media", call->getCallId());
 
     // Building the local SDP offer
     auto& sdp = call->getSDP();
@@ -787,12 +787,12 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     auto mediaAttrList = call->getMediaAttributeList();
 
     if (mediaAttrList.empty()) {
-        JAMI_ERR("Call [%s] has no media. Abort!", call->getCallId().c_str());
+        JAMI_ERROR("[call:{}] no media. Abort!", call->getCallId());
         return;
     }
 
     if (not sdp.createOffer(mediaAttrList)) {
-        JAMI_ERR("Unable to send outgoing INVITE request for new call");
+        JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
         return;
     }
 
@@ -808,7 +808,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
             return;
 
         if (not account->SIPStartCall(*call, target)) {
-            JAMI_ERR("Unable to send outgoing INVITE request for new call");
+            JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
         }
     });
 }
@@ -816,7 +816,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 bool
 JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
 {
-    JAMI_DBG("Start SIP call [%s]", call.getCallId().c_str());
+    JAMI_LOG("[call:{}] Start SIP call", call.getCallId());
 
     if (call.isIceEnabled())
         call.addLocalIceAttributes();
@@ -836,11 +836,8 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
     auto contact = call.getContactHeader();
     auto pjContact = sip_utils::CONST_PJ_STR(contact);
 
-    JAMI_DBG("contact header: %s / %s -> %s / %s",
-             contact.c_str(),
-             from.c_str(),
-             toUri.c_str(),
-             targetStr.c_str());
+    JAMI_LOG("[call:{}] contact header: {} / {} -> {} / {}",
+             call.getCallId(), contact, from, toUri, targetStr);
 
     auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
@@ -854,34 +851,33 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
     pjsip_tx_data* tdata;
 
     if (pjsip_inv_invite(call.inviteSession_.get(), &tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Unable to initialize invite messager for this call");
+        JAMI_ERROR("[call:{}] Unable to initialize invite", call.getCallId());
         return false;
     }
 
     pjsip_tpselector tp_sel;
     tp_sel.type = PJSIP_TPSELECTOR_TRANSPORT;
     if (!call.getTransport()) {
-        JAMI_ERR("Unable to get transport for this call");
+        JAMI_ERROR("[call:{}] Unable to get transport", call.getCallId());
         return false;
     }
     tp_sel.u.transport = call.getTransport()->get();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        JAMI_ERR("Unable to associate transport for invite session dialog");
+        JAMI_ERROR("[call:{}] Unable to associate transport for invite session dialog", call.getCallId());
         return false;
     }
 
-    JAMI_DBG("[call:%s] Sending SIP invite", call.getCallId().c_str());
+    JAMI_LOG("[call:{}] Sending SIP invite", call.getCallId());
 
     // Add user-agent header
     sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call.inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("Unable to send invite message for this call");
+        JAMI_ERROR("[call:{}] Unable to send invite message", call.getCallId());
         return false;
     }
 
     call.setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
-
     return true;
 }
 
@@ -895,9 +891,9 @@ JamiAccount::saveConfig() const
         std::lock_guard lock(dhtnet::fileutils::getFileLock(accountConfig));
         std::ofstream fout(accountConfig);
         fout.write(accountOut.c_str(), accountOut.size());
-        JAMI_DBG("Saved account config to %s", accountConfig.c_str());
+        JAMI_LOG("Saved account config to {}", accountConfig);
     } catch (const std::exception& e) {
-        JAMI_ERR("Error saving account config: %s", e.what());
+        JAMI_ERROR("Error saving account config: {}", e.what());
     }
 }
 
@@ -950,16 +946,15 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
 {
     try {
         if (!accountManager_->changePassword(password_old, password_new)) {
-            JAMI_ERR("[Account %s] Unable to change archive password", getAccountID().c_str());
+            JAMI_ERROR("[Account {}] Unable to change archive password", getAccountID());
             return false;
         }
         editConfig([&](JamiAccountConfig& config) {
             config.archiveHasPassword = not password_new.empty();
         });
     } catch (const std::exception& ex) {
-        JAMI_ERR("[Account %s] Unable to change archive password: %s",
-                 getAccountID().c_str(),
-                 ex.what());
+        JAMI_ERROR("[Account {}] Unable to change archive password: {}",
+                 getAccountID(), ex.what());
         if (password_old.empty()) {
             editConfig([&](JamiAccountConfig& config) { config.archiveHasPassword = true; });
             emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
@@ -3031,15 +3026,13 @@ JamiAccount::sendMessage(const std::string& to,
     try {
         toUri = parseJamiUri(to);
     } catch (...) {
-        JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        JAMI_ERROR("[Account {}] Failed to send a text message due to an invalid URI {}", getAccountID(), to);
         if (!onlyConnected)
             messageEngine_.onMessageSent(to, token, false, deviceId);
         return;
     }
     if (payloads.size() != 1) {
-        // Multi-part message
-        // TODO: not supported yet
-        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
+        JAMI_ERROR("Multi-part im is not supported");
         if (!onlyConnected)
             messageEngine_.onMessageSent(toUri, token, false, deviceId);
         return;
