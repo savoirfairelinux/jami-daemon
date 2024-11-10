@@ -30,6 +30,8 @@ libjamiacc_la_SOURCES = \
 	./jamidht/contact_list.cpp \
 	./jamidht/account_manager.h \
 	./jamidht/account_manager.cpp \
+	./jamidht/message_channel_handler.h \
+	./jamidht/message_channel_handler.cpp \
 	./jamidht/archive_account_manager.h \
 	./jamidht/archive_account_manager.cpp \
 	./jamidht/server_account_manager.h \
