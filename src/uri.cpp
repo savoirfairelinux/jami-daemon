@@ -19,6 +19,9 @@
  */
 #include "uri.h"
 
+#include <fmt/format.h>
+#include <fmt/compile.h>
+
 namespace jami {
 
 Uri::Uri(std::string_view uri)
@@ -43,6 +46,8 @@ Uri::Uri(std::string_view uri)
             scheme_ = Uri::Scheme::RENDEZVOUS;
         else if (scheme_str == "sync")
             scheme_ = Uri::Scheme::SYNC;
+        else if (scheme_str == "msg")
+            scheme_ = Uri::Scheme::MESSAGE;
         else
             scheme_ = Uri::Scheme::UNRECOGNIZED;
         authority_ = uri.substr(posSep + 1);
@@ -70,27 +75,29 @@ Uri::scheme() const
 std::string
 Uri::toString() const
 {
-    return schemeToString() + ":" + authority_;
+    return fmt::format(FMT_COMPILE("{}:{}"), schemeToString(), authority_);
 }
 
-std::string
+constexpr std::string_view
 Uri::schemeToString() const
 {
     switch (scheme_) {
     case Uri::Scheme::SIP:
-        return "sip";
+        return "sip"sv;
     case Uri::Scheme::SWARM:
-        return "swarm";
+        return "swarm"sv;
     case Uri::Scheme::RENDEZVOUS:
-        return "rdv";
+        return "rdv"sv;
     case Uri::Scheme::GIT:
-        return "git";
+        return "git"sv;
     case Uri::Scheme::SYNC:
-        return "sync";
+        return "sync"sv;
+    case Uri::Scheme::MESSAGE:
+        return "msg"sv;
     case Uri::Scheme::JAMI:
     case Uri::Scheme::UNRECOGNIZED:
     default:
-        return "jami";
+        return "jami"sv;
     }
 }
 
