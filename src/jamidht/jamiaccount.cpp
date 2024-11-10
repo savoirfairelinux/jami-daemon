@@ -32,6 +32,7 @@
 #include "jamidht/channeled_transport.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "message_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
 #include "jami/media_const.h"
@@ -3052,9 +3053,39 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
-    std::unique_lock lk(sipConnsMtx_);
+    auto devices = std::make_shared<std::set<DeviceId>>();
 
+    // Use the Message channel if available
+    auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    const auto& payload = *payloads.begin();
+    MessageChannelHandler::Message msg;
+    msg.t = payload.first;
+    msg.c = payload.second;
+    bool sent = false;
+    if (deviceId.empty()) {
+        for (const auto &conn: handler->getChannels(toUri)) {
+            if (MessageChannelHandler::sendMessage(conn, msg)) {
+                devices->emplace(conn->deviceId());
+                sent = true;
+            }
+        }
+    } else {
+        if (const auto &conn = handler->getChannel(toUri, DeviceId(deviceId))) {
+            // pack message and send it
+            if (MessageChannelHandler::sendMessage(conn, msg)) {
+                devices->emplace(conn->deviceId());
+                sent = true;
+            }
+        }
+    }
+    if (sent && !onlyConnected) {
+        runOnMainThread([w = weak(), to, token, deviceId]() {
+            if (auto acc = w.lock())
+                acc->messageEngine_.onMessageSent(to, token, true, deviceId);
+        });
+    }
+
+    std::unique_lock lk(sipConnsMtx_);
     for (auto it = sipConns_.begin(); it != sipConns_.end();) {
         auto& [key, value] = *it;
         if (key.first != to or value.empty()) {
@@ -3065,6 +3096,9 @@ JamiAccount::sendMessage(const std::string& to,
             ++it;
             continue;
         }
+        if (!devices->emplace(key.second).second)
+            continue;
+
         auto& conn = value.back();
         auto& channel = conn.channel;
 
@@ -3098,20 +3132,21 @@ JamiAccount::sendMessage(const std::string& to,
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false, deviceId);
+                devices->erase(key.second);
                 ++it;
                 continue;
             }
         } catch (const std::runtime_error& ex) {
-            JAMI_WARN("%s", ex.what());
+            JAMI_WARNING("{}", ex.what());
             if (!onlyConnected)
                 messageEngine_.onMessageSent(to, token, false, deviceId);
+            devices->erase(key.second);
             ++it;
             // Remove connection in incorrect state
             shutdownSIPConnection(channel, to, key.second);
             continue;
         }
 
-        devices->emplace(key.second);
         ++it;
         if (key.second.toString() == deviceId) {
             return;
@@ -3144,10 +3179,9 @@ JamiAccount::sendMessage(const std::string& to,
     };
 
     // get request type
-    auto payload_type = payloads.cbegin()->first;
+    auto payload_type = msg.t;
     if (payload_type == MIME_TYPE_GIT) {
-        auto payload_data = payloads.cbegin()->second;
-        std::string id = extractIdFromJson(payload_data);
+        std::string id = extractIdFromJson(msg.c);
         if (!id.empty()) {
             payload_type += "/" + id;
         }
@@ -3544,25 +3578,48 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 }
 
 void
+JamiAccount::requestMessageConnection(const std::string& peerId,
+                                  const DeviceId& deviceId,
+                                  const std::string& connectionType,
+                                  bool forceNewConnection) {
+    auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    if (deviceId) {
+        if (auto connected = handler->getChannel(peerId, deviceId)) {
+            return;
+        }
+    } else {
+        auto connected = handler->getChannels(peerId);
+        if (!connected.empty()) {
+            return;
+        }
+    }
+    handler->connect(deviceId, "", [w = weak(), peerId](
+            std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& deviceId) {
+        //messageEngine_.onPeerOnline(peerId);
+        //messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
+    });
+}
+
+
+void
 JamiAccount::requestSIPConnection(const std::string& peerId,
                                   const DeviceId& deviceId,
                                   const std::string& connectionType,
                                   bool forceNewConnection,
                                   const std::shared_ptr<SIPCall>& pc)
 {
-    JAMI_DBG("[Account %s] Request SIP connection to peer %s on device %s",
-             getAccountID().c_str(),
-             peerId.c_str(),
-             deviceId.to_c_str());
+    requestMessageConnection(peerId, deviceId, connectionType, forceNewConnection);
+
+    JAMI_LOG("[Account {}] Request SIP connection to peer {} on device {}",
+             getAccountID(), peerId, deviceId);
 
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard lk(sipConnsMtx_);
     auto id = std::make_pair(peerId, deviceId);
 
     if (sipConns_.find(id) != sipConns_.end()) {
-        JAMI_DBG("[Account %s] A SIP connection with %s already exists",
-                 getAccountID().c_str(),
-                 deviceId.to_c_str());
+        JAMI_LOG("[Account {}] A SIP connection with {} already exists",
+                 getAccountID(), deviceId);
         return;
     }
     // If not present, create it
@@ -4271,6 +4328,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::MESSAGE]
+            = std::make_unique<MessageChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
