@@ -40,15 +40,7 @@ public:
                              const std::string& peerId,
                              const DeviceId& deviceId);
 
-    /**
-     * Send sync information to connected device
-     * @param deviceId      Connected device
-     * @param socket        Related socket
-     * @param syncMsg       Default message
-     */
-    void syncWith(const DeviceId& deviceId,
-                  const std::shared_ptr<dhtnet::ChannelSocket>& socket,
-                  const std::shared_ptr<SyncMsg>& syncMsg = nullptr);
+    bool isConnected(const DeviceId& deviceId) const;
 
     /**
      * Send sync to all connected devices
