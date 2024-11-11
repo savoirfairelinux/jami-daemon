@@ -35,10 +35,11 @@ public:
         JAMI,          // Start with "jami:" and 45 ASCII chars OR 40 ASCII chars
         SIP,           // Start with "sip:"
         SWARM,         // Start with "swarm:" and 40 ASCII chars
-        RENDEZVOUS,    // Start wutg "rdv" and used for call in swarms
+        RENDEZVOUS,    // Start with "rdv" and used for call in swarms
         GIT,           // Start with "git:"
         DATA_TRANSFER, // Start with "data-transfer://"
         SYNC,          // Start with "sync:"
+        MESSAGE,       // Start with "msg:"
         UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 
@@ -50,7 +51,7 @@ public:
     // TODO hostname, transport, handle sip:
 
 private:
-    std::string schemeToString() const;
+    constexpr std::string_view schemeToString() const;
     Scheme scheme_;
     std::string authority_;
 };

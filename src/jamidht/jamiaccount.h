@@ -842,7 +842,12 @@ private:
                                const std::string& peerId,
                                const DeviceId& deviceId);
 
-    // File transfers
+    void requestMessageConnection(const std::string& peerId,
+                                          const DeviceId& deviceId,
+                                          const std::string& connectionType,
+                                          bool forceNewConnection);
+
+            // File transfers
     std::mutex transfersMtx_ {};
     std::set<std::string> incomingFileTransfers_ {};
 
