@@ -16,6 +16,24 @@
       "message": "Is it necesary to call connect here if it could be called subsequently in requestSIPConnection on line 1971?",
       "revId": "dbd105a12d01f4356b11f60c696ff3ac72c78d75",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22dd8cc2_f7ed4d2b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1967,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-11T19:56:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7cb8929e_8c1382e1",
+      "revId": "dbd105a12d01f4356b11f60c696ff3ac72c78d75",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
