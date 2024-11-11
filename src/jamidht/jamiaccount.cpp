@@ -32,6 +32,7 @@
 #include "jamidht/channeled_transport.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
+#include "message_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
 #include "jami/media_const.h"
@@ -2025,9 +2026,7 @@ JamiAccount::doRegister_()
         });
         connectionManager_->onChannelRequest(
             [this](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
-                JAMI_WARN("[Account %s] New channel asked with name %s",
-                          getAccountID().c_str(),
-                          name.c_str());
+                JAMI_WARNING("[Account {}] New channel asked with name {} from {}", getAccountID(), name, cert->issuer->getId());
 
                 if (this->config().turnEnabled && turnCache_) {
                     auto addr = turnCache_->getResolvedTurn();
@@ -3052,19 +3051,51 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    std::shared_ptr<std::set<DeviceId>> devices = std::make_shared<std::set<DeviceId>>();
-    std::unique_lock lk(sipConnsMtx_);
+    auto devices = std::make_shared<std::set<DeviceId>>();
 
-    for (auto it = sipConns_.begin(); it != sipConns_.end();) {
-        auto& [key, value] = *it;
-        if (key.first != to or value.empty()) {
-            ++it;
-            continue;
+    // Use the Message channel if available
+    auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    const auto& payload = *payloads.begin();
+    MessageChannelHandler::Message msg;
+    msg.t = payload.first;
+    msg.c = payload.second;
+    auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
+    if (deviceId.empty()) {
+        bool sent = false;
+        for (const auto &conn: handler->getChannels(toUri)) {
+            if (MessageChannelHandler::sendMessage(conn, msg)) {
+                devices->emplace(conn->deviceId());
+                sent = true;
+            }
         }
-        if (!deviceId.empty() && key.second.toString() != deviceId) {
-            ++it;
-            continue;
+        if (sent && !onlyConnected) {
+            runOnMainThread([w = weak(), to, token, deviceId]() {
+                if (auto acc = w.lock())
+                    acc->messageEngine_.onMessageSent(to, token, true, deviceId);
+            });
         }
+    } else {
+        if (const auto &conn = handler->getChannel(toUri, device)) {
+            if (MessageChannelHandler::sendMessage(conn, msg)) {
+                if (!onlyConnected)
+                    runOnMainThread([w = weak(), to, token, deviceId]() {
+                        if (auto acc = w.lock())
+                            acc->messageEngine_.onMessageSent(to, token, true, deviceId);
+                    });
+                return;
+            }
+        }
+    }
+
+    std::unique_lock lk(sipConnsMtx_);
+    for (auto& [key, value]: sipConns_) {
+        if (key.first != to or value.empty())
+            continue;
+        if (!deviceId.empty() && key.second != device)
+            continue;
+        if (!devices->emplace(key.second).second)
+            continue;
+
         auto& conn = value.back();
         auto& channel = conn.channel;
 
@@ -3072,7 +3103,7 @@ JamiAccount::sendMessage(const std::string& to,
         auto ctx = std::make_unique<TextMessageCtx>();
         ctx->acc = weak();
         ctx->to = to;
-        ctx->deviceId = DeviceId(deviceId);
+        ctx->deviceId = device;
         ctx->id = token;
         ctx->onlyConnected = onlyConnected;
         ctx->retryOnTimeout = retryOnTimeout;
@@ -3086,7 +3117,7 @@ JamiAccount::sendMessage(const std::string& to,
                                       payloads,
                                       [](void* token, pjsip_event* event) {
                                           std::shared_ptr<TextMessageCtx> c {
-                                              (TextMessageCtx*) token};
+                                                  (TextMessageCtx*) token};
                                           auto code = event->body.tsx_state.tsx->status_code;
                                           runOnMainThread([c = std::move(c), code]() {
                                               if (c) {
@@ -3098,22 +3129,20 @@ JamiAccount::sendMessage(const std::string& to,
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false, deviceId);
-                ++it;
+                devices->erase(key.second);
                 continue;
             }
         } catch (const std::runtime_error& ex) {
-            JAMI_WARN("%s", ex.what());
+            JAMI_WARNING("{}", ex.what());
             if (!onlyConnected)
                 messageEngine_.onMessageSent(to, token, false, deviceId);
-            ++it;
+            devices->erase(key.second);
             // Remove connection in incorrect state
             shutdownSIPConnection(channel, to, key.second);
             continue;
         }
 
-        devices->emplace(key.second);
-        ++it;
-        if (key.second.toString() == deviceId) {
+        if (key.second == device) {
             return;
         }
     }
@@ -3144,10 +3173,9 @@ JamiAccount::sendMessage(const std::string& to,
     };
 
     // get request type
-    auto payload_type = payloads.cbegin()->first;
+    auto payload_type = msg.t;
     if (payload_type == MIME_TYPE_GIT) {
-        auto payload_data = payloads.cbegin()->second;
-        std::string id = extractIdFromJson(payload_data);
+        std::string id = extractIdFromJson(msg.c);
         if (!id.empty()) {
             payload_type += "/" + id;
         }
@@ -3157,12 +3185,12 @@ JamiAccount::sendMessage(const std::string& to,
         auto toH = dht::InfoHash(toUri);
         // Find listening devices for this account
         accountManager_->forEachDevice(toH,
-                                       [this, to, devices, payload_type](
-                                           const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+                                       [this, to, devices, payload_type, currentDevice = DeviceId(currentDeviceId())](
+                                               const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                                            // Test if already sent
                                            auto deviceId = dev->getLongId();
                                            if (!devices->emplace(deviceId).second
-                                               || deviceId.toString() == currentDeviceId()) {
+                                               || deviceId == currentDevice) {
                                                return;
                                            }
 
@@ -3170,7 +3198,7 @@ JamiAccount::sendMessage(const std::string& to,
                                            requestSIPConnection(to, deviceId, payload_type);
                                        });
     } else {
-        requestSIPConnection(to, DeviceId(deviceId), payload_type);
+        requestSIPConnection(to, device, payload_type);
     }
 }
 
@@ -3544,25 +3572,51 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 }
 
 void
+JamiAccount::requestMessageConnection(const std::string& peerId,
+                                  const DeviceId& deviceId,
+                                  const std::string& connectionType,
+                                  bool forceNewConnection) {
+    auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    if (deviceId) {
+        if (auto connected = handler->getChannel(peerId, deviceId)) {
+            return;
+        }
+    } else {
+        auto connected = handler->getChannels(peerId);
+        if (!connected.empty()) {
+            return;
+        }
+    }
+    handler->connect(deviceId, "", [w = weak(), peerId](
+            std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& deviceId) {
+        if (socket)
+            if (auto acc = w.lock()) {
+                acc->messageEngine_.onPeerOnline(peerId);
+                acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
+            }
+    });
+}
+
+
+void
 JamiAccount::requestSIPConnection(const std::string& peerId,
                                   const DeviceId& deviceId,
                                   const std::string& connectionType,
                                   bool forceNewConnection,
                                   const std::shared_ptr<SIPCall>& pc)
 {
-    JAMI_DBG("[Account %s] Request SIP connection to peer %s on device %s",
-             getAccountID().c_str(),
-             peerId.c_str(),
-             deviceId.to_c_str());
+    requestMessageConnection(peerId, deviceId, connectionType, forceNewConnection);
+
+    JAMI_LOG("[Account {}] Request SIP connection to peer {} on device {}",
+             getAccountID(), peerId, deviceId);
 
     // If a connection already exists or is in progress, no need to do this
     std::lock_guard lk(sipConnsMtx_);
     auto id = std::make_pair(peerId, deviceId);
 
     if (sipConns_.find(id) != sipConns_.end()) {
-        JAMI_DBG("[Account %s] A SIP connection with %s already exists",
-                 getAccountID().c_str(),
-                 deviceId.to_c_str());
+        JAMI_LOG("[Account {}] A SIP connection with {} already exists",
+                 getAccountID(), deviceId);
         return;
     }
     // If not present, create it
@@ -4271,6 +4325,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::MESSAGE]
+            = std::make_unique<MessageChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
