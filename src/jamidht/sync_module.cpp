@@ -215,22 +215,14 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     pimpl_->syncInfos(socket, nullptr);
 }
 
-void
-SyncModule::syncWith(const DeviceId& deviceId,
-                     const std::shared_ptr<dhtnet::ChannelSocket>& socket,
-                     const std::shared_ptr<SyncMsg>& syncMsg)
+bool
+SyncModule::isConnected(const DeviceId& deviceId) const
 {
-    if (!socket)
-        return;
-    {
-        std::lock_guard lk(pimpl_->syncConnectionsMtx_);
-        socket->onShutdown([w = pimpl_->weak_from_this(), deviceId, s=std::weak_ptr(socket)] {
-            if (auto shared = w.lock())
-                shared->onChannelShutdown(s.lock(), deviceId);
-        });
-        pimpl_->syncConnections_[deviceId].emplace_back(socket);
-    }
-    pimpl_->syncInfos(socket, syncMsg);
+    std::lock_guard lk(pimpl_->syncConnectionsMtx_);
+    auto it = pimpl_->syncConnections_.find(deviceId);
+    if (it == pimpl_->syncConnections_.end())
+        return false;
+    return !it->second.empty();
 }
 
 void

@@ -1966,11 +1966,7 @@ JamiAccount::doRegister_()
                         channelHandlers_[Uri::Scheme::SYNC]
                             ->connect(crt->getLongId(),
                                       "",
-                                      [this](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                             const DeviceId& deviceId) {
-                                          if (socket)
-                                              syncModule()->syncWith(deviceId, socket);
-                                      });
+                                      [](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& deviceId) {});
                         lk.unlock();
                         requestSIPConnection(
                             getUsername(),
@@ -3606,6 +3602,13 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
                                   const std::shared_ptr<SIPCall>& pc)
 {
     requestMessageConnection(peerId, deviceId, connectionType, forceNewConnection);
+    if (peerId == getUsername()) {
+        if (!syncModule()->isConnected(deviceId))
+            channelHandlers_[Uri::Scheme::SYNC]
+                    ->connect(deviceId,
+                              "",
+                              [](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId& deviceId) {});
+    }
 
     JAMI_LOG("[Account {}] Request SIP connection to peer {} on device {}",
              getAccountID(), peerId, deviceId);
