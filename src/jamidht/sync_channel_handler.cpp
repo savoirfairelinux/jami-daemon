@@ -39,7 +39,7 @@ SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, Connec
 {
     auto channelName = SYNC_SCHEME + deviceId.toString();
     if (connectionManager_.isConnecting(deviceId, channelName)) {
-        JAMI_INFO("Already connecting to %s", deviceId.to_c_str());
+        JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
     connectionManager_.connectDevice(deviceId,
