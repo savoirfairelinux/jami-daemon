@@ -3046,7 +3046,13 @@ JamiAccount::sendMessage(const std::string& to,
     auto devices = std::make_shared<std::set<DeviceId>>();
 
     // Use the Message channel if available
-    auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    std::unique_lock lk(channelHandlersMtx_);
+    auto* handler =static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
+    if (!handler) {
+        if (!onlyConnected)
+            messageEngine_.onMessageSent(to, token, false, deviceId);
+        return;
+    }
     const auto& payload = *payloads.begin();
     MessageChannelHandler::Message msg;
     msg.t = payload.first;
@@ -3054,7 +3060,9 @@ JamiAccount::sendMessage(const std::string& to,
     auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
     if (deviceId.empty()) {
         bool sent = false;
-        for (const auto &conn: handler->getChannels(toUri)) {
+        auto conns = handler->getChannels(toUri);
+        lk.unlock();
+        for (const auto &conn: conns) {
             if (MessageChannelHandler::sendMessage(conn, msg)) {
                 devices->emplace(conn->deviceId());
                 sent = true;
@@ -3067,7 +3075,8 @@ JamiAccount::sendMessage(const std::string& to,
             });
         }
     } else {
-        if (const auto &conn = handler->getChannel(toUri, device)) {
+        if (auto conn = handler->getChannel(toUri, device)) {
+            lk.unlock();
             if (MessageChannelHandler::sendMessage(conn, msg)) {
                 if (!onlyConnected)
                     runOnMainThread([w = weak(), to, token, deviceId]() {
@@ -3078,6 +3087,8 @@ JamiAccount::sendMessage(const std::string& to,
             }
         }
     }
+    if (lk)
+        lk.unlock();
 
     std::unique_lock lk(sipConnsMtx_);
     for (auto& [key, value]: sipConns_) {
