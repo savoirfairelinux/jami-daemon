@@ -619,6 +619,7 @@ public:
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited,
                                                                bool includeLeft) const;
 
+    std::mutex membersMtx_ {};
     std::set<std::string> checkedMembers_; // Store members we tried
     std::function<void()> bootstrapCb_;
 #ifdef LIBJAMI_TESTABLE
@@ -1381,6 +1382,7 @@ Conversation::shutdownConnections()
     pimpl_->gitSocketList_.clear();
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->shutdown();
+    std::lock_guard(pimpl_->membersMtx_);
     pimpl_->checkedMembers_.clear();
 }
 
@@ -2334,11 +2336,13 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
     // We bootstrap the DRT with devices who already wrote in the repository.
     // However, in a conversation, a large number of devices may just watch
     // the conversation, but never write any message.
+    std::unique_lock lock(pimpl_->membersMtx_);
+
     std::string uri;
     while (!members.empty()) {
-        auto member = members.back();
+        auto member = std::move(members.back());
         members.pop_back();
-        uri = member.at("uri");
+        uri = std::move(member.at("uri"));
         if (uri != pimpl_->userId_
             && pimpl_->checkedMembers_.find(uri) == pimpl_->checkedMembers_.end())
             break;
@@ -2354,6 +2358,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
     };
     // If members is empty, we finished the fallback un-successfully
     if (members.empty() && uri.empty()) {
+        lock.unlock();
         fallbackFailed(this);
         return;
     }
@@ -2454,7 +2459,10 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
                 return;
             if (ok) {
                 // Bootstrap succeeded!
-                sthis->pimpl_->checkedMembers_.clear();
+                {
+                    std::lock_guard lock(sthis->pimpl_->membersMtx_);
+                    sthis->pimpl_->checkedMembers_.clear();
+                }
                 if (sthis->pimpl_->bootstrapCb_)
                     sthis->pimpl_->bootstrapCb_();
 #ifdef LIBJAMI_TESTABLE
@@ -2466,7 +2474,10 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
             fallback(sthis);
         });
     });
-    pimpl_->checkedMembers_.clear();
+    {
+        std::lock_guard lock(pimpl_->membersMtx_);
+        pimpl_->checkedMembers_.clear();
+    }
     // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic connectivity change
     if (pimpl_->swarmManager_->isShutdown()) {
         pimpl_->swarmManager_->restart();
