@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "eff58990_970579f7",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-11-12T17:03:37Z",
+      "side": 1,
+      "message": "GitLab: #1076",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 9,
+        "endChar": 52
+      },
+      "revId": "5f0311457177281d27da3a96d4eec65f68657ac7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bf6f707_437f8535",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3049,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2024-11-12T17:03:37Z",
+      "side": 1,
+      "message": "Undeclared variable",
+      "range": {
+        "startLine": 3049,
+        "startChar": 24,
+        "endLine": 3049,
+        "endChar": 43
+      },
+      "revId": "5f0311457177281d27da3a96d4eec65f68657ac7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
