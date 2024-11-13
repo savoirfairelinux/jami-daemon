@@ -282,8 +282,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
         auto fileformat = fileToPlay->getFormat();
         bool resample = format != fileformat;
 
-        size_t readableSamples = resample ? (rational<size_t>(writableSamples, format.sample_rate)
-                                             * (size_t) fileformat.sample_rate)
+        size_t readableSamples = resample ? rational<size_t>(writableSamples * (size_t)fileformat.sample_rate, format.sample_rate)
                                                 .real<size_t>()
                                           : writableSamples;
 

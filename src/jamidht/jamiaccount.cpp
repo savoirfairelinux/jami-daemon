@@ -260,7 +260,6 @@ dhtStatusStr(dht::NodeStatus status)
 
 JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
-    , idPath_(fileutils::get_data_dir() / accountId)
     , cachePath_(fileutils::get_cache_dir() / accountId)
     , dataPath_(cachePath_ / "values")
     , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
@@ -3391,18 +3390,6 @@ JamiAccount::sendProfileToPeers()
             sendProfile(conversationId, peer, device);
         }
     }
-}
-
-std::map<std::string, std::string>
-JamiAccount::getProfileVcard() const
-{
-    const auto& path = idPath_ / "profile.vcf";
-
-    if (!std::filesystem::exists(path)) {
-        return {};
-    }
-
-    return vCard::utils::toMap(fileutils::loadTextFile(path));
 }
 
 void

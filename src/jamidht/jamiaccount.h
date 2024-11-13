@@ -119,8 +119,6 @@ public:
         return std::static_pointer_cast<JamiAccount const>(shared_from_this());
     }
 
-    const std::filesystem::path& getPath() const { return idPath_; }
-
     const JamiAccountConfig& config() const
     {
         return *static_cast<const JamiAccountConfig*>(&Account::config());
@@ -420,7 +418,6 @@ public:
      */
     std::map<std::string, std::string> getNearbyPeers() const override;
 
-    std::map<std::string, std::string> getProfileVcard() const;
     void sendProfileToPeers();
 
     /**
@@ -708,7 +705,6 @@ private:
         const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
-    std::filesystem::path idPath_ {};
     std::filesystem::path cachePath_ {};
     std::filesystem::path dataPath_ {};
 

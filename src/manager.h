@@ -811,8 +811,6 @@ public:
 
     std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
-    void updateProfile(const std::string& accountID,const std::string& displayName,const std::string& avatar,const uint64_t& flag);
-
 #ifdef ENABLE_VIDEO
     /**
      * Create a new SinkClient instance, store it in an internal cache as a weak_ptr

@@ -23,6 +23,10 @@
 
 #include "compiler_intrinsics.h"
 
+#include "vcard.h"
+#include "base64.h"
+#include "fileutils.h"
+
 #include "sdp.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
@@ -139,6 +143,56 @@ SIPAccount::~SIPAccount() noexcept
     }
 
     delete presence_;
+}
+
+void
+SIPAccount::updateProfile(const std::string& displayName,
+                          const std::string& avatar,
+                          const uint64_t& flag)
+{
+    auto vCardPath = idPath_ / "profile.vcf";
+
+    auto profile = getProfileVcard();
+    if (profile.empty()) {
+        profile = vCard::utils::initVcard();
+    }
+    profile["FN"] = displayName;
+
+    if (flag == 0) {
+        const auto& avatarPath = std::filesystem::path(avatar);
+        if (std::filesystem::exists(avatarPath)) {
+            try {
+                const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
+                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Failed to load avatar: {}", e.what());
+            }
+        } else if (avatarPath.empty()) {
+            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
+        }
+    } else if (flag == 1) {
+        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = avatar;
+    }
+
+    // nothing happens to the profile photo if the avatarPath is invalid
+    // and not empty. So far it seems to be the best default behavior.
+
+    const std::string& vCard = vCard::utils::toString(profile);
+
+    try {
+        auto tmpPath = vCardPath;
+        tmpPath += ".tmp";
+        std::ofstream file(tmpPath);
+        if (file.is_open()) {
+            file << vCard;
+            file.close();
+            std::filesystem::rename(tmpPath, vCardPath);
+        } else {
+            JAMI_ERROR("Unable to open file for writing: {}", tmpPath);
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Error writing profile: {}", e.what());
+    }
 }
 
 std::shared_ptr<SIPCall>

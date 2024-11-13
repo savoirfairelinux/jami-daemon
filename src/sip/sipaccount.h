@@ -128,6 +128,11 @@ public:
     void loadConfig() override;
 
     /**
+     * updates SIP account profile
+     */
+    void updateProfile(const std::string& displayName, const std::string& avatar, const uint64_t& flag) override;
+
+    /**
      * Initialize the SIP voip link with the account parameters and send registration
      */
     void doRegister() override;

@@ -149,6 +149,8 @@ public:
 
     virtual std::string_view getAccountType() const = 0;
 
+    const std::filesystem::path& getPath() const { return idPath_; }
+
     /**
      * Returns true if this is the IP2IP account
      */
@@ -208,7 +210,9 @@ public:
 
     virtual std::map<std::string, std::string> getNearbyPeers() const { return {}; }
 
-    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/,const uint64_t& /*flag*/) {}
+    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/,const uint64_t& /*flag*/) = 0;
+
+    std::map<std::string, std::string> getProfileVcard() const;
 
     /**
      * Return the status corresponding to the token.
@@ -478,6 +482,11 @@ protected:
      * Vector containing all account codecs (set of system codecs with custom parameters)
      */
     std::vector<std::shared_ptr<SystemCodecInfo>> accountCodecInfoList_;
+
+    /**
+     * path to account
+     */
+    std::filesystem::path idPath_ {};
 
     /**
      * Ringtone .au file used for this account

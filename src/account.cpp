@@ -41,6 +41,7 @@
 #include "fileutils.h"
 #include "config/yamlparser.h"
 #include "system_codec_container.h"
+#include "vcard.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -65,10 +66,11 @@ namespace jami {
 // the data directory prefix that must be set at build time.
 const std::string Account::DEFAULT_USER_AGENT = Account::getDefaultUserAgent();
 
-Account::Account(const std::string& accountID)
+Account::Account(const std::string& accountId)
     : rand(Manager::instance().getSeededRandomEngine())
-    , accountID_(accountID)
+    , accountID_(accountId)
     , systemCodecContainer_(getSystemCodecContainer())
+    , idPath_(fileutils::get_data_dir() / accountId)
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
@@ -178,6 +180,20 @@ Account::getVolatileAccountDetails() const
 {
     return {{Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)},
             {libjami::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
+}
+
+std::map<std::string, std::string>
+Account::getProfileVcard() const
+{
+    try {
+        auto path = idPath_ / "profile.vcf";
+        if (!std::filesystem::exists(path))
+            return {};
+        return vCard::utils::toMap(fileutils::loadTextFile(path));
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Error reading profile: {}", e.what());
+        return {};
+    }
 }
 
 bool
