@@ -208,7 +208,7 @@ public:
 
     virtual std::map<std::string, std::string> getNearbyPeers() const { return {}; }
 
-    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/,const uint64_t& /*flag*/) {}
+    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/,const uint64_t& /*flag*/) = 0;
 
     /**
      * Return the status corresponding to the token.
