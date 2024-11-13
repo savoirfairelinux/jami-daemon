@@ -30,6 +30,7 @@
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
+#include "sip/sipaccount.h"
 #include "account.h"
 #include <opendht/rng.h>
 
@@ -3263,14 +3264,6 @@ Manager::getNearbyPeers(const std::string& accountID)
         return acc->getNearbyPeers();
     return {};
 }
-
-void
-Manager::updateProfile(const std::string& accountID,const std::string& displayName, const std::string& avatar,const uint64_t& flag)
-{
-    if (const auto acc = getAccount<JamiAccount>(accountID))
-        acc->updateProfile(displayName,avatar,flag);
-}
-
 
 void
 Manager::setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state)
