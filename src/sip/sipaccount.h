@@ -128,6 +128,16 @@ public:
     void loadConfig() override;
 
     /**
+     * Returns the current vcard of the user
+     */
+    std::map<std::string, std::string> getProfileVcard() const;
+
+    /**
+     * updates SIP account profile
+     */
+    void updateProfile(const std::string& displayName, const std::filesystem::path& avatarPath);
+
+    /**
      * Initialize the SIP voip link with the account parameters and send registration
      */
     void doRegister() override;
@@ -619,6 +629,11 @@ private:
      * Presence data structure
      */
     SIPPresence* presence_;
+
+    /**
+     * path to account
+     */
+    std::filesystem::path idPath_ {};
 
     /**
      * SIP port actually used,

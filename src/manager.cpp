@@ -30,6 +30,7 @@
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
+#include "sip/sipaccount.h"
 #include "account.h"
 #include <opendht/rng.h>
 
@@ -3267,8 +3268,16 @@ Manager::getNearbyPeers(const std::string& accountID)
 void
 Manager::updateProfile(const std::string& accountID,const std::string& displayName, const std::string& avatar,const uint64_t& flag)
 {
+<<<<<<< PATCH SET (abd10e updateProfile: Added Support for SIP Account)
+    if (const auto acc = getAccount<JamiAccount>(accountID)){
+        acc->updateProfile(displayName,avatarPath);
+    }else if (const auto sipacc = getAccount<SIPAccount>(accountID)){
+        sipacc->updateProfile(displayName,avatarPath);
+    }
+=======
     if (const auto acc = getAccount<JamiAccount>(accountID))
         acc->updateProfile(displayName,avatar,flag);
+>>>>>>> BASE      (d04564 build: fix DBUS build issue)
 }
 
 
