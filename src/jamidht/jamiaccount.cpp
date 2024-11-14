@@ -3382,7 +3382,7 @@ JamiAccount::sendProfileToPeers()
     for (const auto& connection : connectionManager_->getConnectionList()) {
         const auto& device = connection.at("device");
         const auto& peer = connection.at("peer");
-        if(peer == accountUri){
+        if (peer == accountUri) {
             sendProfile("", accountUri, device);
             continue;
         }
@@ -3394,7 +3394,8 @@ JamiAccount::sendProfileToPeers()
 }
 
 std::map<std::string, std::string>
-JamiAccount::getProfileVcard() const {
+JamiAccount::getProfileVcard() const
+{
     const auto& path = idPath_ / "profile.vcf";
 
     if (!std::filesystem::exists(path)) {
@@ -3405,15 +3406,28 @@ JamiAccount::getProfileVcard() const {
 }
 
 void
-JamiAccount::updateProfile(const std::string& displayName, const std::filesystem::path& avatarPath){
-
+JamiAccount::updateProfile(const std::string& displayName,
+                           const std::string& avatar,
+                           const uint64_t& flag)
+{
     const auto& accountUri = accountManager_->getInfo()->accountId;
     const auto& path = profilePath();
-    const auto& vCardPath = idPath_ / "profiles" / fmt::format("{}.vcf", base64::encode(accountUri));
+    const auto& profiles = idPath_ / "profiles";
+
+    try {
+        if (!std::filesystem::exists(profiles)) {
+            std::filesystem::create_directories(profiles);
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Failed to create profiles directory: {}", e.what());
+        return;
+    }
+
+    const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(accountUri));
     const std::filesystem::path& tmpPath = vCardPath.string() + ".tmp";
 
     auto profile = getProfileVcard();
-    if(profile.empty()){
+    if (profile.empty()) {
         profile = vCard::utils::initVcard();
     }
 
@@ -3421,16 +3435,22 @@ JamiAccount::updateProfile(const std::string& displayName, const std::filesystem
     editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
     emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                     getAccountDetails());
-    if(std::filesystem::exists(avatarPath)){
-        try {
-            const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
-            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
-        } catch (const std::exception& e) {
-            JAMI_ERROR("Failed to load avatar: {}", e.what());
+    if (flag == 0) {
+        const auto& avatarPath = std::filesystem::path(avatar);
+        if (std::filesystem::exists(avatarPath)) {
+            try {
+                const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
+                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Failed to load avatar: {}", e.what());
+            }
+        } else if (avatarPath.empty()) {
+            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
         }
-    }else if(avatarPath.empty()){
-        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
+    } else if (flag == 1) {
+        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = avatar;
     }
+
     // nothing happens to the profile photo if the avatarPath is invalid
     // and not empty. So far it seems to be the best default behavior.
 
@@ -3442,9 +3462,11 @@ JamiAccount::updateProfile(const std::string& displayName, const std::filesystem
             file << vCard;
             file.close();
             std::filesystem::rename(tmpPath, vCardPath);
-            fileutils::createFileLink(path,vCardPath);
+            fileutils::createFileLink(path, vCardPath);
             sendProfileToPeers();
-            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(), accountUri, path.string());
+            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
+                                                                      accountUri,
+                                                                      path.string());
         } else {
             JAMI_ERROR("Unable to open file for writing: {}", tmpPath.string());
         }
@@ -3452,7 +3474,6 @@ JamiAccount::updateProfile(const std::string& displayName, const std::filesystem
         JAMI_ERROR("Error writing profile: {}", e.what());
     }
 }
-
 
 void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
