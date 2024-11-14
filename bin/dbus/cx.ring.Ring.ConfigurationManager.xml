@@ -578,9 +578,16 @@
         <method name="updateProfile" tp:name-for-bindings="updateProfile">
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="displayName" direction="in"/>
-            <arg type="s" name="avatarPath" direction="in"/>
+            <arg type="s" name="avatar" direction="in"/>
+            <arg type="i" name="flag" direction="in">
             <tp:docstring>
                Update the profile of the account and send it to peers.
+                Flag options : 
+                    <ul>
+                        <li>0 = modify avatar from path</li>
+                        <li>1 = modify avatar from base64 img</li>
+                    </ul>
+
             </tp:docstring>
         </method>
 

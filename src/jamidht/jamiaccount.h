@@ -422,7 +422,14 @@ public:
 
     std::map<std::string, std::string> getProfileVcard() const;
     void sendProfileToPeers();
-    void updateProfile(const std::string& displayName, const std::filesystem::path& avatarPath);
+
+    /**
+     * Update the profile vcard and send it to peers
+     * @param displayName Current or new display name
+     * @param avatar Current or new avatar
+     * @param flag  0 for path to avatar, 1 for base64 avatar
+     */
+    void updateProfile(const std::string& displayName, const std::string& avatar, const uint64_t& flag);
 
 #ifdef LIBJAMI_TESTABLE
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
