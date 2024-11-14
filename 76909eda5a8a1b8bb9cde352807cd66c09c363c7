@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "695d9f87_d0225a59",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3414,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-14T22:20:36Z",
+      "side": 1,
+      "message": "Use clang-format to fix spacing",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ad41ab49_2fddf8f3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3415,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-14T22:20:36Z",
+      "side": 1,
+      "message": "Potential exceptions not handled.",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "858be995_cf40e145",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3444,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-14T22:20:36Z",
+      "side": 1,
+      "message": "Maybe JAMI_INFO instead of JAMI_ERROR? It is normal if we just set a name without avatar.",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
