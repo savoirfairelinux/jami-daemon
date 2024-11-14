@@ -3405,7 +3405,7 @@ JamiAccount::getProfileVcard() const {
 }
 
 void
-JamiAccount::updateProfile(const std::string& displayName, const std::filesystem::path& avatarPath){
+JamiAccount::updateProfile(const std::string& displayName, const std::string& avatar, const uint64_t& flag){
 
     const auto& accountUri = accountManager_->getInfo()->accountId;
     const auto& path = profilePath();
@@ -3421,16 +3421,26 @@ JamiAccount::updateProfile(const std::string& displayName, const std::filesystem
     editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
     emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                     getAccountDetails());
-    if(std::filesystem::exists(avatarPath)){
-        try {
-            const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
-            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
-        } catch (const std::exception& e) {
-            JAMI_ERROR("Failed to load avatar: {}", e.what());
+    if(flag==0){
+        const auto& avatarPath = std::filesystem::path(avatar);
+        if(std::filesystem::exists(avatarPath)){
+            try {
+                const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
+                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
+            } catch (const std::exception& e) {
+                JAMI_ERROR("Failed to load avatar: {}", e.what());
+            }
+        }else if(avatarPath.empty()){
+            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
         }
-    }else if(avatarPath.empty()){
-        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
+    }else if(flag==1){
+        if(avatar.empty()){
+            JAMI_ERROR("Avatar is empty");
+        }else{
+            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = avatar;
+        }
     }
+
     // nothing happens to the profile photo if the avatarPath is invalid
     // and not empty. So far it seems to be the best default behavior.
 
