@@ -16,6 +16,23 @@
       "message": "* could simply be a prefix/scheme like on the web: https://jsfiddle.net/hpP45/\n* if we add a new argument it should be a \"type\" string \"base64\" or \"file\"",
       "revId": "24da65974fbe0799110710b614e9dc434d4352bf",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4aafec76_a6c4372c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2024-11-15T20:33:18Z",
+      "side": 1,
+      "message": "!build",
+      "revId": "24da65974fbe0799110710b614e9dc434d4352bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
