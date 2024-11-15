@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1253e48a_8badbfb7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 4
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-15T14:19:52Z",
+      "side": 1,
+      "message": "* could simply be a prefix/scheme like on the web: https://jsfiddle.net/hpP45/\n* if we add a new argument it should be a \"type\" string \"base64\" or \"file\"",
+      "revId": "24da65974fbe0799110710b614e9dc434d4352bf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
