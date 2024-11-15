@@ -54,8 +54,11 @@ MessageChannelHandler::connect(const DeviceId& deviceId, const std::string&, Con
         return;
     }
     pimpl_->connectionManager_.connectDevice(deviceId,
-                                     channelName,
-                                     std::move(cb));
+                                             channelName,
+                                             std::move(cb),
+                                             false,
+                                             false,
+                                             MIME_TYPE_GIT);
 }
 
 void
