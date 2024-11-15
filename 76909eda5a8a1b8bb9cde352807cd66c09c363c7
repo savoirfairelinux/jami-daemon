@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "29bc20ab_bad2ad43",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3414,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2024-11-15T13:24:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "695d9f87_d0225a59",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ad41ab49_2fddf8f3",
@@ -35,6 +53,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d07514e_ee92e455",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3415,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2024-11-15T13:24:14Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ad41ab49_2fddf8f3",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "858be995_cf40e145",
@@ -48,6 +84,24 @@
       "writtenOn": "2024-11-14T22:20:36Z",
       "side": 1,
       "message": "Maybe JAMI_INFO instead of JAMI_ERROR? It is normal if we just set a name without avatar.",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2689034b_7fbeab66",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3444,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2024-11-15T13:24:14Z",
+      "side": 1,
+      "message": "Yes, I removed it. Additionally, note that using any flag other than 0 or 1 will result in modifying only the displayName without modifying the avatar. This way clients don\u0027t need to resend the avatar when they only want to update the displayName.",
+      "parentUuid": "858be995_cf40e145",
       "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
