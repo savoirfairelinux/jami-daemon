@@ -104,6 +104,24 @@
       "parentUuid": "858be995_cf40e145",
       "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2174fd55_0af69171",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3444,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2024-11-15T20:22:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2689034b_7fbeab66",
+      "revId": "76909eda5a8a1b8bb9cde352807cd66c09c363c7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
