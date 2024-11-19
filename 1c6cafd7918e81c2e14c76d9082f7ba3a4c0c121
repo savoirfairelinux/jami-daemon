@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e4544710_4f297fb8",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3270,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-19T15:30:00Z",
+      "side": 1,
+      "message": "* should be all in configurationmanager\n* just:\n\n\n    if (const auto acc \u003d getAccount(accountID)) {\n        acc-\u003eupdateProfile(displayName, avatar, flag);\n    }",
+      "revId": "1c6cafd7918e81c2e14c76d9082f7ba3a4c0c121",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
