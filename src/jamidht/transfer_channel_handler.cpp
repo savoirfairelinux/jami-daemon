@@ -38,7 +38,9 @@ TransferChannelHandler::~TransferChannelHandler() {}
 void
 TransferChannelHandler::connect(const DeviceId& deviceId,
                                 const std::string& channelName,
-                                ConnectCb&& cb)
+                                ConnectCb&& cb,
+                                const std::string& connectionType,
+                                bool forceNewConnection)
 {}
 
 bool
@@ -80,10 +82,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
         return uri == acc->getUsername();
     }
 
-    return cm->onFileChannelRequest(conversationId,
-                                                   uri,
-                                                   std::string(fileId),
-                                                   acc->sha3SumVerify());
+    return cm->onFileChannelRequest(conversationId, uri, std::string(fileId), acc->sha3SumVerify());
 }
 
 void
@@ -122,7 +121,8 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                     lastModified = jami::to_int<uint64_t>(keyVal[1]);
                 } catch (const std::exception& e) {
                     JAMI_WARNING("TransferChannel: Unable to parse modified date: {}: {}",
-                                 keyVal[1], e.what());
+                                 keyVal[1],
+                                 e.what());
                 }
             }
         }
