@@ -37,8 +37,14 @@ public:
      * @param deviceId      The device to connect
      * @param channelName   The name of the channel
      * @param cb            The callback to call when connected (can be immediate if already connected)
+     * @param connectionType  The connection type used by iOS notifications (not used)
+     * @param forceNewConnection  If we want a new SIP connection (not used)
      */
-    void connect(const DeviceId& deviceId, const std::string& channelName, ConnectCb&& cb) override;
+    void connect(const DeviceId& deviceId,
+                 const std::string& channelName,
+                 ConnectCb&& cb,
+                 const std::string& connectionType = "",
+                 bool forceNewConnection = false) override;
 
     /**
      * Determine if we accept or not the request
@@ -46,7 +52,8 @@ public:
      * @param name          name asked
      * @return if we accept or not
      */
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
+                   const std::string& name) override;
 
     /**
      * Handle socket ready

@@ -28,7 +28,8 @@ namespace jami {
 class ConversationChannelHandler : public ChannelHandlerInterface
 {
 public:
-    ConversationChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm);
+    ConversationChannelHandler(const std::shared_ptr<JamiAccount>& acc,
+                               dhtnet::ConnectionManager& cm);
     ~ConversationChannelHandler();
 
     /**
@@ -36,8 +37,14 @@ public:
      * @param deviceId      The device to connect
      * @param name          The name of the channel
      * @param cb            The callback to call when connected (can be immediate if already connected)
+     * @param connectionType  The connection type used by iOS notifications (not used)
+     * @param forceNewConnection  If we want a new SIP connection (not used)
      */
-    void connect(const DeviceId& deviceId, const std::string& name, ConnectCb&& cb) override;
+    void connect(const DeviceId& deviceId,
+                 const std::string& name,
+                 ConnectCb&& cb,
+                 const std::string& connectionType = "",
+                 bool forceNewConnection = false) override;
 
     /**
      * Determine if we accept or not the git request
@@ -45,7 +52,8 @@ public:
      * @param name          name asked
      * @return if the channel is for a valid conversation and device not banned
      */
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
+                   const std::string& name) override;
 
     /**
      * TODO, this needs to extract gitservers from JamiAccount

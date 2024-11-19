@@ -31,16 +31,18 @@ SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc,
 SyncChannelHandler::~SyncChannelHandler() {}
 
 void
-SyncChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
+SyncChannelHandler::connect(const DeviceId& deviceId,
+                            const std::string&,
+                            ConnectCb&& cb,
+                            const std::string& connectionType,
+                            bool forceNewConnection)
 {
     auto channelName = SYNC_SCHEME + deviceId.toString();
     if (connectionManager_.isConnecting(deviceId, channelName)) {
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
-    connectionManager_.connectDevice(deviceId,
-                                     channelName,
-                                     std::move(cb));
+    connectionManager_.connectDevice(deviceId, channelName, std::move(cb));
 }
 
 bool
@@ -65,7 +67,7 @@ SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cer
         sm->cacheSyncConnection(std::move(channel),
                                 cert->issuer->getId().toString(),
                                 cert->getLongId());
-    dht::ThreadPool::io().run([account=account_, channel]() {
+    dht::ThreadPool::io().run([account = account_, channel]() {
         if (auto acc = account.lock())
             acc->sendProfile("", acc->getUsername(), channel->deviceId().toString());
     });
