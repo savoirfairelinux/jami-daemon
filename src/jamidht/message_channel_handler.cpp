@@ -22,7 +22,7 @@ namespace jami {
 
 using Key = std::pair<std::string, DeviceId>;
 
-struct MessageChannelHandler::Impl: public std::enable_shared_from_this<Impl>
+struct MessageChannelHandler::Impl : public std::enable_shared_from_this<Impl>
 {
     std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
@@ -34,11 +34,13 @@ struct MessageChannelHandler::Impl: public std::enable_shared_from_this<Impl>
         , connectionManager_(cm)
     {}
 
-    void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const std::string& peerId, const DeviceId& device);
+    void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                           const std::string& peerId,
+                           const DeviceId& device);
 };
 
 MessageChannelHandler::MessageChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                       dhtnet::ConnectionManager& cm)
+                                             dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , pimpl_(std::make_shared<Impl>(acc, cm))
 {}
@@ -46,7 +48,11 @@ MessageChannelHandler::MessageChannelHandler(const std::shared_ptr<JamiAccount>&
 MessageChannelHandler::~MessageChannelHandler() {}
 
 void
-MessageChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
+MessageChannelHandler::connectDevice(const DeviceId& deviceId,
+                                     const std::string&,
+                                     const std::string& connectionType,
+                                     ConnectCb&& cb,
+                                     bool forceNewConnection)
 {
     auto channelName = MESSAGE_SCHEME + deviceId.toString();
     if (pimpl_->connectionManager_.isConnecting(deviceId, channelName)) {
@@ -57,12 +63,25 @@ MessageChannelHandler::connect(const DeviceId& deviceId, const std::string&, Con
                                              channelName,
                                              std::move(cb),
                                              false,
-                                             false,
-                                             MIME_TYPE_GIT);
+                                             forceNewConnection,
+                                             connectionType);
 }
 
 void
-MessageChannelHandler::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const std::string& peerId, const DeviceId& device)
+MessageChannelHandler::connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb)
+{
+    auto channelName = MESSAGE_SCHEME + deviceId.toString();
+    if (pimpl_->connectionManager_.isConnecting(deviceId, channelName)) {
+        JAMI_INFO("Already connecting to %s", deviceId.to_c_str());
+        return;
+    }
+    pimpl_->connectionManager_.connectDevice(deviceId, channelName, std::move(cb));
+}
+
+void
+MessageChannelHandler::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                               const std::string& peerId,
+                                               const DeviceId& device)
 {
     std::lock_guard lk(connectionsMtx_);
     auto connectionsIt = connections_.find({peerId, device});
@@ -101,19 +120,19 @@ MessageChannelHandler::getChannels(const std::string& peer) const
 
 bool
 MessageChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                              const std::string& /* name */)
+                                 const std::string& /* name */)
 {
     auto acc = pimpl_->account_.lock();
     if (!cert || !cert->issuer || !acc)
         return false;
     return true;
-    //return cert->issuer->getId().toString() == acc->getUsername();
+    // return cert->issuer->getId().toString() == acc->getUsername();
 }
 
 void
 MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                            const std::string&,
-                            std::shared_ptr<dhtnet::ChannelSocket> socket)
+                               const std::string&,
+                               std::shared_ptr<dhtnet::ChannelSocket> socket)
 {
     auto acc = pimpl_->account_.lock();
     if (!cert || !cert->issuer || !acc)
@@ -123,7 +142,7 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     std::lock_guard lk(pimpl_->connectionsMtx_);
     pimpl_->connections_[{peerId, device}].emplace_back(socket);
 
-    socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s=std::weak_ptr(socket)]() {
+    socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)]() {
         if (auto shared = w.lock())
             shared->onChannelShutdown(s.lock(), peerId, device);
     });
@@ -135,9 +154,9 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
                                1500};
     };
 
-    socket->setOnRecv([acc = pimpl_->account_.lock(), peerId,
-                       ctx = std::make_shared<DecodingContext>()
-    ](const uint8_t* buf, size_t len) {
+    socket->setOnRecv([acc = pimpl_->account_.lock(),
+                       peerId,
+                       ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
         if (!buf || !acc)
             return len;
 
@@ -161,7 +180,8 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
 }
 
 bool
-MessageChannelHandler::sendMessage(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const Message& message)
+MessageChannelHandler::sendMessage(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                   const Message& message)
 {
     if (!socket)
         return false;

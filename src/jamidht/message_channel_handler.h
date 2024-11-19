@@ -35,11 +35,18 @@ public:
      * Ask for a new message channel
      * @param deviceId      The device to connect
      * @param name          (Unused, generated from deviceId)
+     * @param forceNewConnection If we want a new SIP connection
      * @param cb            The callback to call when connected (can be immediate if already connected)
      */
+    void connectDevice(const DeviceId& deviceId,
+                       const std::string&,
+                       const std::string& connectionType,
+                       ConnectCb&& cb,
+                       bool forceNewConnection = false);
     void connect(const DeviceId& deviceId, const std::string&, ConnectCb&& cb) override;
 
-    std::shared_ptr<dhtnet::ChannelSocket> getChannel(const std::string& peer, const DeviceId& deviceId) const;
+    std::shared_ptr<dhtnet::ChannelSocket> getChannel(const std::string& peer,
+                                                      const DeviceId& deviceId) const;
     std::vector<std::shared_ptr<dhtnet::ChannelSocket>> getChannels(const std::string& peer) const;
 
     /**
@@ -48,7 +55,8 @@ public:
      * @param name          Name asked
      * @return if the channel is for a valid conversation and device not banned
      */
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
+                   const std::string& name) override;
 
     /**
      * Launch message process
@@ -60,10 +68,11 @@ public:
                  const std::string& name,
                  std::shared_ptr<dhtnet::ChannelSocket> channel) override;
 
-    struct Message {
-        std::string t;                                   /* Message type */
-        std::string c;                                   /* Message content */
-        std::unique_ptr<ConversationRequest> req;        /* Conversation request */
+    struct Message
+    {
+        std::string t;                            /* Message type */
+        std::string c;                            /* Message content */
+        std::unique_ptr<ConversationRequest> req; /* Conversation request */
         MSGPACK_DEFINE_MAP(t, c, req)
     };
 
