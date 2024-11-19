@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7b378ec4_992ed233",
+        "filename": "src/manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3277,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-19T16:05:08Z",
+      "side": 1,
+      "message": "move to configurationmanager",
+      "range": {
+        "startLine": 3268,
+        "startChar": 0,
+        "endLine": 3277,
+        "endChar": 1
+      },
+      "revId": "ef5a9d0449a00f5ce8aa184b6eea2742e3972b11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
