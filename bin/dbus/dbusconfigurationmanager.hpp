@@ -217,7 +217,7 @@ public:
     }
 
     void
-    updateProfile(const std::string& accountID,const std::string& displayName, const std::string& avatar, const uint64_t& flag)
+    updateProfile(const std::string& accountID,const std::string& displayName, const std::string& avatar, const int32_t& flag)
     {
         libjami::updateProfile(accountID, displayName, avatar, flag);
     }
