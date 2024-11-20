@@ -3395,7 +3395,7 @@ JamiAccount::sendProfileToPeers()
 void
 JamiAccount::updateProfile(const std::string& displayName,
                            const std::string& avatar,
-                           const uint64_t& flag)
+                           int32_t flag)
 {
     const auto& accountUri = accountManager_->getInfo()->accountId;
     const auto& path = profilePath();
@@ -3411,7 +3411,6 @@ JamiAccount::updateProfile(const std::string& displayName,
     }
 
     const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(accountUri));
-    const std::filesystem::path& tmpPath = vCardPath.string() + ".tmp";
 
     auto profile = getProfileVcard();
     if (profile.empty()) {
@@ -3440,13 +3439,11 @@ JamiAccount::updateProfile(const std::string& displayName,
 
     // nothing happens to the profile photo if the avatarPath is invalid
     // and not empty. So far it seems to be the best default behavior.
-
-    const std::string& vCard = vCard::utils::toString(profile);
-
     try {
+        std::filesystem::path tmpPath = vCardPath.string() + ".tmp";
         std::ofstream file(tmpPath);
         if (file.is_open()) {
-            file << vCard;
+            file << vCard::utils::toString(profile);
             file.close();
             std::filesystem::rename(tmpPath, vCardPath);
             fileutils::createFileLink(path, vCardPath);
