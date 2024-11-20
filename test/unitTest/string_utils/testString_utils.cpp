@@ -42,6 +42,7 @@ private:
     void to_string_test();
     void to_number_test();
     void split_string_test();
+    void starts_with_test();
     void version_test();
 
     CPPUNIT_TEST_SUITE(StringUtilsTest);
@@ -49,6 +50,7 @@ private:
     CPPUNIT_TEST(to_string_test);
     CPPUNIT_TEST(to_number_test);
     CPPUNIT_TEST(split_string_test);
+    CPPUNIT_TEST(starts_with_test);
     CPPUNIT_TEST(version_test);
     CPPUNIT_TEST_SUITE_END();
 
@@ -140,6 +142,15 @@ StringUtilsTest::version_test()
     CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion(
         split_string_to_unsigned("1.2.3.4", '.'),
         split_string_to_unsigned("1.2.3.5", '.')));
+}
+
+void
+StringUtilsTest::starts_with_test()
+{
+    CPPUNIT_ASSERT(starts_with("test", "te"));
+    CPPUNIT_ASSERT(starts_with("test", "test"));
+    CPPUNIT_ASSERT(!starts_with("test", "testt"));
+    CPPUNIT_ASSERT(!starts_with("test", "es"));
 }
 
 } // namespace test
