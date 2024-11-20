@@ -86,11 +86,11 @@ std::vector<std::map<std::string, std::string>> getConnectionList(const std::str
 std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId, const std::string& connectionId);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accountId);
-void updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar, const uint64_t& flag);
+void updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar, int32_t flag);
 std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountId, bool enable);
 void registerAllAccounts(void);
-uint64_t sendAccountTextMessage(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& message, const int32_t& flag);
+uint64_t sendAccountTextMessage(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& message, int32_t flag);
 std::vector<libjami::Message> getLastMessages(const std::string& accountId, uint64_t base_timestamp);
 int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountId, uint64_t id);

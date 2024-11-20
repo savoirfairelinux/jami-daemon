@@ -148,7 +148,7 @@ SIPAccount::~SIPAccount() noexcept
 void
 SIPAccount::updateProfile(const std::string& displayName,
                           const std::string& avatar,
-                          const uint64_t& flag)
+                          int32_t flag)
 {
     auto vCardPath = idPath_ / "profile.vcf";
 
@@ -162,8 +162,7 @@ SIPAccount::updateProfile(const std::string& displayName,
         const auto& avatarPath = std::filesystem::path(avatar);
         if (std::filesystem::exists(avatarPath)) {
             try {
-                const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
-                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
+                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64::encode(fileutils::loadFile(avatarPath));
             } catch (const std::exception& e) {
                 JAMI_ERROR("Failed to load avatar: {}", e.what());
             }
@@ -176,15 +175,12 @@ SIPAccount::updateProfile(const std::string& displayName,
 
     // nothing happens to the profile photo if the avatarPath is invalid
     // and not empty. So far it seems to be the best default behavior.
-
-    const std::string& vCard = vCard::utils::toString(profile);
-
     try {
         auto tmpPath = vCardPath;
         tmpPath += ".tmp";
         std::ofstream file(tmpPath);
         if (file.is_open()) {
-            file << vCard;
+            file << vCard::utils::toString(profile);
             file.close();
             std::filesystem::rename(tmpPath, vCardPath);
         } else {
