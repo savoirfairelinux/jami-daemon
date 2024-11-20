@@ -3422,6 +3422,7 @@ JamiAccount::updateProfile(const std::string& displayName,
     emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                     getAccountDetails());
     if (flag == 0) {
+        vCard::utils::removeByKey(profile, "PHOTO");
         const auto& avatarPath = std::filesystem::path(avatar);
         if (std::filesystem::exists(avatarPath)) {
             try {
@@ -3434,6 +3435,7 @@ JamiAccount::updateProfile(const std::string& displayName,
             profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
         }
     } else if (flag == 1) {
+        vCard::utils::removeByKey(profile, "PHOTO");
         profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = avatar;
     }
 

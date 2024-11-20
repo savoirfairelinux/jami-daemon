@@ -76,6 +76,16 @@ toString(const std::map<std::string, std::string>& vCard)
     return result;
 }
 
-} // namespace utils
+void
+removeByKey(std::map<std::string, std::string>& vCard, std::string_view key) {
+    for (auto it = vCard.begin(); it != vCard.end(); ) {
+        if ( it->first.find(key) != std::string::npos) {
+            it = vCard.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
 
+} // namespace utils
 } // namespace vCard

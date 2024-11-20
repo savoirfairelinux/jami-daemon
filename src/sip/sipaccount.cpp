@@ -159,6 +159,7 @@ SIPAccount::updateProfile(const std::string& displayName,
     profile["FN"] = displayName;
 
     if (flag == 0) {
+        vCard::utils::removeByKey(profile, "PHOTO");
         const auto& avatarPath = std::filesystem::path(avatar);
         if (std::filesystem::exists(avatarPath)) {
             try {
@@ -167,6 +168,7 @@ SIPAccount::updateProfile(const std::string& displayName,
                 JAMI_ERROR("Failed to load avatar: {}", e.what());
             }
         } else if (avatarPath.empty()) {
+            vCard::utils::removeByKey(profile, "PHOTO");
             profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
         }
     } else if (flag == 1) {
