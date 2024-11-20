@@ -133,6 +133,12 @@ stod(const std::string& str)
     return std::stod(str);
 }
 
+static inline bool
+starts_with(std::string_view str, std::string_view prefix)
+{
+    return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+}
+
 template<typename... Args>
 std::string concat(Args &&... args){
     static_assert((std::is_constructible_v<std::string_view, Args&&> && ...));
