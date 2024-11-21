@@ -582,13 +582,18 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
     auto conv = getConversation(conversationId);
     if (!conv) {
-        JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
-                     accountId_,
-                     conversationId);
-        sendMsgCb_(peer,
-                   {},
-                   std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}},
-                   0);
+        if (oldReq == std::nullopt) {
+            // We didn't find a conversation or a request with the given ID.
+            // This suggests that someone tried to send us an invitation but
+            // that we didn't receive it, so we ask for a new one.
+            JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
+                         accountId_,
+                         conversationId);
+            sendMsgCb_(peer,
+                       {},
+                       std::map<std::string, std::string> {{MIME_TYPE_INVITE, conversationId}},
+                       0);
+        }
         return;
     }
     std::unique_lock lk(conv->mtx);
