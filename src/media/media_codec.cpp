@@ -116,10 +116,10 @@ SystemAudioCodecInfo::isPCMG722() const
 void
 SystemAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
-    decltype(bitrate) tmp_bitrate = jami::stoi(
+    decltype(bitrate) tmp_bitrate = std::stoi(
         details.at(libjami::Account::ConfProperties::CodecInfo::BITRATE));
     decltype(audioformat) tmp_audioformat = audioformat;
-    tmp_audioformat.sample_rate = jami::stoi(
+    tmp_audioformat.sample_rate = std::stoi(
         details.at(libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
 
     // copy back if no exception was raised
@@ -180,15 +180,15 @@ SystemVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::st
 
     auto it = details.find(libjami::Account::ConfProperties::CodecInfo::BITRATE);
     if (it != details.end())
-        copy.bitrate = jami::stoi(it->second);
+        copy.bitrate = std::stoi(it->second);
 
     it = details.find(libjami::Account::ConfProperties::CodecInfo::FRAME_RATE);
     if (it != details.end())
-        copy.frameRate = jami::stoi(it->second);
+        copy.frameRate = std::stoi(it->second);
 
     it = details.find(libjami::Account::ConfProperties::CodecInfo::QUALITY);
     if (it != details.end())
-        copy.quality = jami::stoi(it->second);
+        copy.quality = std::stoi(it->second);
 
     it = details.find(libjami::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
