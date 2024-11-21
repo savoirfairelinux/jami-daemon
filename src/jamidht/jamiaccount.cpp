@@ -3459,6 +3459,9 @@ JamiAccount::updateProfile(const std::string& displayName,
             profile[key] = avatar;
         }
     }
+    if (flag == 2) {
+        vCard::utils::removeByKey(profile, "PHOTO");
+    }
     try {
         std::filesystem::path tmpPath = vCardPath.string() + ".tmp";
         std::ofstream file(tmpPath);
