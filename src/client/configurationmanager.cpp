@@ -294,10 +294,10 @@ getNearbyPeers(const std::string& accountId)
 }
 
 void
-updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar, int32_t flag)
+updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar, const std::string& fileType, int32_t flag)
 {
     if (const auto acc = jami::Manager::instance().getAccount(accountId)){
-        acc->updateProfile(displayName, avatar, flag);
+        acc->updateProfile(displayName, avatar, fileType, flag);
     }
 }
 

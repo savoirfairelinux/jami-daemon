@@ -426,7 +426,7 @@ public:
      * @param avatar Current or new avatar
      * @param flag  0 for path to avatar, 1 for base64 avatar
      */
-    void updateProfile(const std::string& displayName, const std::string& avatar, int32_t flag) override;
+    void updateProfile(const std::string& displayName, const std::string& avatar, const std::string& fileType, int32_t flag) override;
 
 #ifdef LIBJAMI_TESTABLE
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }

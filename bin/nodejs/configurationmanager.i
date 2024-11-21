@@ -86,7 +86,7 @@ std::vector<std::map<std::string, std::string>> getConnectionList(const std::str
 std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId, const std::string& connectionId);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accountId);
-void updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar, int32_t flag);
+void updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar,const std::string& fileType, int32_t flag);
 std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountId, bool enable);
 void registerAllAccounts(void);
