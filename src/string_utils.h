@@ -121,18 +121,6 @@ to_int(std::string_view str)
     throw std::system_error(std::make_error_code(ec));
 }
 
-static inline int
-stoi(const std::string& str)
-{
-    return std::stoi(str);
-}
-
-static inline double
-stod(const std::string& str)
-{
-    return std::stod(str);
-}
-
 static inline bool
 starts_with(std::string_view str, std::string_view prefix)
 {
