@@ -204,7 +204,7 @@ private:
         FrameRate closest {0};
         double rate_val = 0;
         try {
-            rate_val = rate.empty() ? 0 : jami::stod(rate);
+            rate_val = rate.empty() ? 0 : std::stod(rate);
         } catch (...) {
             JAMI_WARN("Unable to read framerate \"%s\"", rate.c_str());
         }
