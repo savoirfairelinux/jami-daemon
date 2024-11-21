@@ -331,6 +331,8 @@ public:
      */
     void reportMediaNegotiationStatus();
 
+    const std::vector<RtpStream>& getRtpStreams() const { return rtpStreams_; }
+
 private:
     void generateMediaPorts();
 
