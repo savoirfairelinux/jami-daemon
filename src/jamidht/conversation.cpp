@@ -1382,7 +1382,7 @@ Conversation::shutdownConnections()
     pimpl_->gitSocketList_.clear();
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->shutdown();
-    std::lock_guard(pimpl_->membersMtx_);
+    std::lock_guard lk(pimpl_->membersMtx_);
     pimpl_->checkedMembers_.clear();
 }
 
