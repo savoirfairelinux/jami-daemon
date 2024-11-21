@@ -532,7 +532,13 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         Manager::instance().hangupCall(getAccountID(), callId);
         return;
     }
-
+    // Due to the fact that in a conference, the host is not the one who
+    // provides the initial sdp offer, the following block of code is responsible
+    // for handling the medialist that the host will form his response with.
+    // We always want the hosts response to be the same length as that of the
+    // peer who is asking to join (providing the offer). A priori though the peer
+    // doesn't know what active media streams the host will have so we deal with the
+    // possible cases here.
     std::shared_ptr<Conference> conf;
     std::vector<libjami::MediaMap> currentMediaList;
     if (!isNotHosting) {
@@ -541,18 +547,43 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             JAMI_ERROR("Conference {} not found", confId);
             return;
         }
-        for (const auto& m : conf->currentMediaList()) {
-            if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
-                    == libjami::Media::MediaAttributeValue::VIDEO
-                && !call->hasVideo()) {
-                continue;
+        auto hostMedias = conf->currentMediaList();
+        auto sipCall = std::dynamic_pointer_cast<SIPCall>(call);
+        if (hostMedias.empty()) {
+            currentMediaList = MediaAttribute::mediaAttributesToMediaMaps(
+                createDefaultMediaList(call->hasVideo(), true));
+        } else if (hostMedias.size() < sipCall->getRtpSessionList().size()) {
+            // First case: host has less media streams than the other person is joining
+            // with. We need to add video media to the host before accepting the offer
+            // This can happen if we host an audio call and someone joins with video
+            currentMediaList = hostMedias;
+            currentMediaList.push_back({{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                                         libjami::Media::MediaAttributeValue::VIDEO},
+                                        {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                                        {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
+                                        {libjami::Media::MediaAttributeKey::SOURCE, ""},
+                                        {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
+        } else {
+            // The second case is that the host has the same or more media
+            // streams than the person joining. In this case we match all their
+            // medias to form our offer. They will then potentially join the call without seeing
+            // seeing all of our medias. For now we deal with this by calling a
+            // requestmediachange once they've joined.
+            for (const auto& m : conf->currentMediaList()) {
+                // We only expect to have 1 audio stream, add it.
+                if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
+                    == libjami::Media::MediaAttributeValue::AUDIO) {
+                    currentMediaList.emplace_back(m);
+                } else if (call->hasVideo()
+                           && m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
+                                  == libjami::Media::MediaAttributeValue::VIDEO) {
+                    // Add the first video media and break the loop
+                    // other video medias will be requested when joined.
+                    currentMediaList.emplace_back(m);
+                    break;
+                }
             }
-            currentMediaList.emplace_back(m);
         }
-    }
-    if (currentMediaList.empty()) {
-        currentMediaList = MediaAttribute::mediaAttributesToMediaMaps(
-            createDefaultMediaList(call->hasVideo(), true));
     }
     Manager::instance().answerCall(*call, currentMediaList);
 

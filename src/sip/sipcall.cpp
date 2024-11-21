@@ -884,7 +884,8 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     if (newMediaAttrList.empty()) {
         JAMI_DBG("[call:%s] Media list is empty, using current media", getCallId().c_str());
     } else if (newMediaAttrList.size() != rtpStreams_.size()) {
-        // Media count is not expected to change
+        // This should never happen, as we make sure that the sizes match earlier
+        // in handleIncomingConversationCall.
         JAMI_ERROR("[call:{:s}] Media list size {:d} in answer does not match. Expected {:d}",
                    getCallId(),
                    newMediaAttrList.size(),
