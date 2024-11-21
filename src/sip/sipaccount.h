@@ -130,7 +130,7 @@ public:
     /**
      * updates SIP account profile
      */
-    void updateProfile(const std::string& displayName, const std::string& avatar, int32_t flag) override;
+    void updateProfile(const std::string& displayName, const std::string& avatar, const std::string& fileType, int32_t flag) override;
 
     /**
      * Initialize the SIP voip link with the account parameters and send registration

@@ -579,6 +579,11 @@
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="displayName" direction="in"/>
             <arg type="s" name="avatar" direction="in"/>
+            <arg type="s" name="fileType" direction="in">
+                <tp:docstring>
+                The file type of the avatar, for now JPEG or PNG
+                </tp:docstring>
+            </arg>
             <arg type="i" name="flag" direction="in"/>
             <tp:docstring>
                Update the profile of the account and send it to peers.

@@ -210,7 +210,7 @@ public:
 
     virtual std::map<std::string, std::string> getNearbyPeers() const { return {}; }
 
-    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/, int32_t /*flag*/) = 0;
+    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/, const std::string& /*fileType*/, int32_t /*flag*/) = 0;
 
     std::map<std::string, std::string> getProfileVcard() const;
 

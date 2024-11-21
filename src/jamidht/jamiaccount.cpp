@@ -3411,8 +3411,11 @@ JamiAccount::sendProfileToPeers()
 void
 JamiAccount::updateProfile(const std::string& displayName,
                            const std::string& avatar,
+                           const std::string& fileType,
                            int32_t flag)
 {
+    // if the fileType is empty then only the display name will be upated
+
     const auto& accountUri = accountManager_->getInfo()->accountId;
     const auto& path = profilePath();
     const auto& profiles = idPath_ / "profiles";
@@ -3437,24 +3440,25 @@ JamiAccount::updateProfile(const std::string& displayName,
     editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
     emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                     getAccountDetails());
-    if (flag == 0) {
-        vCard::utils::removeByKey(profile, "PHOTO");
-        const auto& avatarPath = std::filesystem::path(avatar);
-        if (std::filesystem::exists(avatarPath)) {
-            try {
-                const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
-                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64;
-            } catch (const std::exception& e) {
-                JAMI_ERROR("Failed to load avatar: {}", e.what());
-            }
-        }
-    } else if (flag == 1) {
-        vCard::utils::removeByKey(profile, "PHOTO");
-        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = avatar;
-    }
 
-    // nothing happens to the profile photo if the avatarPath is invalid
-    // and not empty. So far it seems to be the best default behavior.
+    if (!fileType.empty()) {
+        const std::string& key = "PHOTO;ENCODING=BASE64;TYPE=" + fileType;
+        if (flag == 0) {
+            vCard::utils::removeByKey(profile, "PHOTO");
+            const auto& avatarPath = std::filesystem::path(avatar);
+            if (std::filesystem::exists(avatarPath)) {
+                try {
+                    const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
+                    profile[key] = base64;
+                } catch (const std::exception& e) {
+                    JAMI_ERROR("Failed to load avatar: {}", e.what());
+                }
+            }
+        } else if (flag == 1) {
+            vCard::utils::removeByKey(profile, "PHOTO");
+            profile[key] = avatar;
+        }
+    }
     try {
         std::filesystem::path tmpPath = vCardPath.string() + ".tmp";
         std::ofstream file(tmpPath);
