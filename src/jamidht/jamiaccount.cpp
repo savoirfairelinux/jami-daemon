@@ -3073,11 +3073,13 @@ JamiAccount::sendMessage(const std::string& to,
                 sent = true;
             }
         }
-        if (sent && !onlyConnected) {
-            runOnMainThread([w = weak(), to, token, deviceId]() {
-                if (auto acc = w.lock())
-                    acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-            });
+        if (sent) {
+            if (!onlyConnected)
+                runOnMainThread([w = weak(), to, token, deviceId]() {
+                    if (auto acc = w.lock())
+                        acc->messageEngine_.onMessageSent(to, token, true, deviceId);
+                });
+            return;
         }
     } else {
         if (auto conn = handler->getChannel(toUri, device)) {
