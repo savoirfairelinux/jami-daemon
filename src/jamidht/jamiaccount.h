@@ -328,8 +328,13 @@ public:
     void getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const noexcept;
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
-    /* Devices */
-    void addDevice(const std::string& password);
+    /* Devices - existing device */
+    uint32_t addDevice(const std::string& uriProvided);
+    bool cancelAddDevice(uint32_t op_token);
+    bool confirmAddDevice(uint32_t op_token);
+    /* Devices - new device */
+    bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& scheme);
+
     /**
      * Export the archive to a file
      * @param destinationPath
@@ -624,9 +629,10 @@ private:
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
      */
-    static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
+    /* static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
                                                                       const std::string& pin,
                                                                       bool previous = false);
+								      */
 
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
