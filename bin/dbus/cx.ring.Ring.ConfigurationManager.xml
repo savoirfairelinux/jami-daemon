@@ -580,6 +580,11 @@
             <arg type="s" name="displayName" direction="in"/>
             <arg type="s" name="avatar" direction="in"/>
             <arg type="i" name="flag" direction="in"/>
+            <arg type="s" name="fileType" direction="in">
+                <tp:docstring>
+                The file type of the avatar, for now JPEG or PNG
+                </tp:docstring>
+            </arg>
             <tp:docstring>
                Update the profile of the account and send it to peers.
                 Flag options :

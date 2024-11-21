@@ -148,7 +148,8 @@ SIPAccount::~SIPAccount() noexcept
 void
 SIPAccount::updateProfile(const std::string& displayName,
                           const std::string& avatar,
-                          int32_t flag)
+                          int32_t flag,
+                          const std::string& fileType)
 {
     auto vCardPath = idPath_ / "profile.vcf";
 
@@ -158,21 +159,24 @@ SIPAccount::updateProfile(const std::string& displayName,
     }
     profile["FN"] = displayName;
 
-    if (flag == 0) {
-        vCard::utils::removeByKey(profile, "PHOTO");
-        const auto& avatarPath = std::filesystem::path(avatar);
-        if (std::filesystem::exists(avatarPath)) {
-            try {
-                profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = base64::encode(fileutils::loadFile(avatarPath));
-            } catch (const std::exception& e) {
-                JAMI_ERROR("Failed to load avatar: {}", e.what());
-            }
-        } else if (avatarPath.empty()) {
+    if (!fileType.empty()) {
+        const std::string& key = "PHOTO;ENCODING=BASE64;TYPE=" + fileType;
+        if (flag == 0) {
             vCard::utils::removeByKey(profile, "PHOTO");
-            profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = "";
+            const auto& avatarPath = std::filesystem::path(avatar);
+            if (std::filesystem::exists(avatarPath)) {
+                try {
+                    profile[key] = base64::encode(fileutils::loadFile(avatarPath));
+                } catch (const std::exception& e) {
+                    JAMI_ERROR("Failed to load avatar: {}", e.what());
+                }
+            } else if (avatarPath.empty()) {
+                vCard::utils::removeByKey(profile, "PHOTO");
+                profile[key] = "";
+            }
+        } else if (flag == 1) {
+            profile[key] = avatar;
         }
-    } else if (flag == 1) {
-        profile["PHOTO;ENCODING=BASE64;TYPE=PNG"] = avatar;
     }
 
     // nothing happens to the profile photo if the avatarPath is invalid
