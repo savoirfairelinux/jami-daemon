@@ -185,6 +185,9 @@ SIPAccount::updateProfile(const std::string& displayName,
             file << vCard::utils::toString(profile);
             file.close();
             std::filesystem::rename(tmpPath, vCardPath);
+            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
+                                                                      getAccountID(),
+                                                                      vCardPath.string());
         } else {
             JAMI_ERROR("Unable to open file for writing: {}", tmpPath);
         }
