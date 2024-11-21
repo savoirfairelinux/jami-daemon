@@ -40,6 +40,9 @@
 #include <dhtnet/upnp/upnp_context.h>
 #include <dhtnet/certstore.h>
 
+
+#include <regex>
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -57,6 +60,8 @@
 #ifdef _WIN32
 #undef interface
 #endif
+
+#include <string_view>
 
 namespace libjami {
 
@@ -337,11 +342,42 @@ setMessageDisplayed(const std::string& accountId,
     return false;
 }
 
+// TODO make this function and JamiAccount::addDevice unified in return type either void or uint64_t... and also add the appropriate callback listeners to unitTest/linkdevice
+// TODO change uint8_t to error code and cast it where needed for java/qt bindings
+uint32_t
+addDevice(const std::string& accountId, const std::string& uri)
+{
+    JAMI_DEBUG("[LinkDevice {}] exportToPeer called.", accountId);
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return account->addDevice(uri);
+    }
+    return 0;
+}
+
 bool
-exportOnRing(const std::string& accountId, const std::string& password)
+confirmAddDevice(const std::string& accountId, uint32_t op_id, uint32_t action)
 {
     if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        account->addDevice(password);
+        return account->confirmAddDevice(op_id);
+    }
+    return false;
+}
+
+bool
+cancelAddDevice(const std::string& accountId, uint32_t op_id)
+{
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return account->cancelAddDevice(op_id);
+    }
+    return false;
+}
+
+bool
+provideAccountAuthentication(const std::string& accountId, const std::string &credentialsFromUser, const std::string& scheme)
+{
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        // send the password to the channel for communicationg with the old device
+        account->provideAccountAuthentication(credentialsFromUser, scheme);
         return true;
     }
     return false;
@@ -459,7 +495,7 @@ sendTrustRequest(const std::string& accountId,
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
-    if (accountType == Account::ProtocolNames::JAMI || accountType == Account::ProtocolNames::RING)
+    if (accountType == Account::ProtocolNames::RING)
         return jami::JamiAccountConfig().toMap();
     else if (accountType == Account::ProtocolNames::SIP)
         return jami::SipAccountConfig().toMap();
