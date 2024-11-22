@@ -110,6 +110,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ce3d233f_34b6316a",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-22T18:43:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2da470bf_43acdb4b",
+      "range": {
+        "startLine": 290,
+        "startChar": 0,
+        "endLine": 303,
+        "endChar": 5
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b5dd7548_1bbdfd30",
@@ -156,6 +180,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e1e2907_c034b003",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 795,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-22T18:43:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1c9d1758_d22cdfab",
+      "range": {
+        "startLine": 795,
+        "startChar": 1,
+        "endLine": 795,
+        "endChar": 5
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a3fc2d10_230878f5",
@@ -169,6 +217,30 @@
       "writtenOn": "2024-06-05T13:19:55Z",
       "side": 1,
       "message": "cleanup",
+      "range": {
+        "startLine": 893,
+        "startChar": 0,
+        "endLine": 899,
+        "endChar": 2
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6539933d_2663f052",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 899,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-22T18:43:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a3fc2d10_230878f5",
       "range": {
         "startLine": 893,
         "startChar": 0,
