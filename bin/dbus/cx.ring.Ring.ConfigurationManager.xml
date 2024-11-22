@@ -591,6 +591,7 @@
                     <ul>
                         <li>0 = modify avatar from path</li>
                         <li>1 = modify avatar from base64 img</li>
+                        <li>2 = remove avatar from profile</li>
                     </ul>
 
             </tp:docstring>
