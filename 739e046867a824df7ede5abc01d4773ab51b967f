@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b72cc2a_7237f7b5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2024-11-22T13:51:52Z",
+      "side": 1,
+      "message": "It would be great to include this option in `cx.rin.Ring.ConfigurationManager.xml` alongside the others, and to update the comment in `jamiaccount.h`:\n```\n/**\n * Update the profile vCard and send it to peers\n * @param displayName Current or new display name\n * @param avatar Current or new avatar\n * @param flag  0 for path to avatar, 1 for base64 avatar\n */\n```\n\nAdditionally, do you think it would be logical to implement this for sipaccount as well, to maintain consistency in options, even though SIP accounts do not synchronize profiles?",
+      "revId": "739e046867a824df7ede5abc01d4773ab51b967f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
