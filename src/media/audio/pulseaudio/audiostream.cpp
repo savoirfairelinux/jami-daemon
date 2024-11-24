@@ -251,11 +251,11 @@ AudioStream::stateChanged(pa_stream* s)
 
     switch (pa_stream_get_state(s)) {
     case PA_STREAM_CREATING:
-        JAMI_DBG("Stream is creating...");
+        JAMI_DBG("Stream is creating…");
         break;
 
     case PA_STREAM_TERMINATED:
-        JAMI_DBG("Stream is terminating...");
+        JAMI_DBG("Stream is terminating…");
         break;
 
     case PA_STREAM_READY:

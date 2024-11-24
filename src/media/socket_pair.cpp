@@ -527,7 +527,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         }
     }
 
-    // No RTCP... try RTP
+    // No RTCP… attempt RTP
     if (!len and (datatype & static_cast<int>(DataType::RTP))) {
         len = readRtpData(buf, buf_size);
         fromRTCP = false;

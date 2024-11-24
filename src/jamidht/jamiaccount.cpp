@@ -1831,7 +1831,7 @@ JamiAccount::doRegister_()
         return;
     }
 
-    JAMI_DEBUG("[Account {}] Starting account...", getAccountID());
+    JAMI_DEBUG("[Account {}] Starting account…", getAccountID());
     const auto& conf = config();
 
     try {
@@ -1900,7 +1900,7 @@ JamiAccount::doRegister_()
         if (conf.accountPeerDiscovery or conf.accountPublish) {
             peerDiscovery_ = std::make_shared<dht::PeerDiscovery>();
             if (conf.accountPeerDiscovery) {
-                JAMI_LOG("[Account {}] starting Jami account discovery...", getAccountID());
+                JAMI_LOG("[Account {}] starting Jami account discovery…", getAccountID());
                 startAccountDiscovery();
             }
             if (conf.accountPublish)

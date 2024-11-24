@@ -137,7 +137,7 @@ PulseLayer::contextStateChanged(pa_context* c)
     case PA_CONTEXT_CONNECTING:
     case PA_CONTEXT_AUTHORIZING:
     case PA_CONTEXT_SETTING_NAME:
-        JAMI_DBG("Waiting....");
+        JAMI_DBG("Waiting…");
         break;
 
     case PA_CONTEXT_READY:
@@ -205,7 +205,7 @@ PulseLayer::updateServerInfo()
 {
     std::unique_lock lk(readyMtx_);
     if (not gettingServerInfo_) {
-        JAMI_DBG("Updating PulseAudio server infos");
+        JAMI_DBG("Updating PulseAudio server info");
         gettingServerInfo_ = true;
         if (auto op = pa_context_get_server_info(context_, server_info_callback, this))
             pa_operation_unref(op);

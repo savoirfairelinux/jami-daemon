@@ -64,7 +64,7 @@ VideoReceiveThread::~VideoReceiveThread()
 void
 VideoReceiveThread::startLoop()
 {
-    JAMI_DBG("[%p] Starting receiver's loop", this);
+    JAMI_DBG("[%p] Starting receiver’s loop", this);
     loop_.start();
 }
 
@@ -73,10 +73,10 @@ VideoReceiveThread::stopLoop()
 {
     if (loop_.isStopping())
         return;
-    JAMI_DBG("[%p] Stopping receiver's loop and waiting for the thread to exit ...", this);
+    JAMI_DBG("[%p] Stopping receiver’s loop and waiting for the thread to exit…", this);
     loop_.stop();
     loop_.join();
-    JAMI_DBG("[%p] Receiver's thread exited", this);
+    JAMI_DBG("[%p] Receiver’s thread exited", this);
 }
 
 // We do this setup here instead of the constructor because we don't want the
@@ -84,7 +84,7 @@ VideoReceiveThread::stopLoop()
 bool
 VideoReceiveThread::setup()
 {
-    JAMI_DBG("[%p] Setupping video receiver", this);
+    JAMI_DBG("[%p] Setting up video receiver", this);
 
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         libav_utils::AVBufferPtr displayMatrix;
@@ -241,7 +241,7 @@ VideoReceiveThread::configureVideoOutput()
     }
 
     if (videoDecoder_->setupVideo() < 0) {
-        JAMI_ERR("decoder IO startup failed");
+        JAMI_ERR("Decoder IO startup failed");
         stopLoop();
         return false;
     }
