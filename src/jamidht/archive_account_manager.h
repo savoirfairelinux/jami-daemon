@@ -17,8 +17,22 @@
 #pragma once
 
 #include "account_manager.h"
+#include "jamidht/auth_channel_handler.h"
+
+#include <dhtnet/multiplexed_socket.h>
+#include <memory>
 
 namespace jami {
+
+// used for status codes on DeviceAuthStateChanged
+enum class DeviceAuthState : uint8_t {
+    INIT = 0,
+    TOKEN_AVAILABLE = 1,
+    CONNECTING = 2,
+    AUTHENTICATING = 3,
+    IN_PROGRESS = 4,
+    DONE = 5,
+};
 
 class ArchiveAccountManager : public AccountManager
 {
@@ -55,12 +69,18 @@ public:
 
     void syncDevices() override;
 
-    void addDevice(const std::string& password, AddDeviceCallback) override;
+    uint32_t addDevice(const std::string& uri, std::string_view auth_scheme, AuthChannelHandler*) override;
+    bool cancelAddDevice(uint32_t token) override;
+    bool confirmAddDevice(uint32_t token) override;
+
     bool revokeDevice(const std::string& device,
                       std::string_view scheme, const std::string& password,
                       RevokeDeviceCallback) override;
     bool exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password);
     bool isPasswordValid(const std::string& password) override;
+
+    // link device: NEW: for authenticating exporting account to another device but can be used for any sort of authentication in the future
+    bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& scheme);
 
 #if HAVE_RINGNS
     /*void lookupName(const std::string& name, LookupCallback cb) override;
@@ -78,19 +98,33 @@ public:
                      const dht::InfoHash& id,
                      int64_t validity);
 
+    // for linking devices
+    void onAuthReady(const std::string& deviceId, std::shared_ptr<dhtnet::ChannelSocket> channel);
+
 private:
     struct DhtLoadContext;
+    struct AddDeviceContext;
+    struct LinkDeviceContext;
     struct AuthContext
     {
+        std::mutex mutex;
         std::string accountId;
+        uint32_t token;
         PrivateKey key;
         CertRequest request;
         std::string deviceName;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
         std::unique_ptr<DhtLoadContext> dhtContext;
+        std::shared_ptr<LinkDeviceContext> linkDevCtx; // data for NEW dev
+        std::unique_ptr<AddDeviceContext> addDeviceCtx;  // data for OLD dev
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
+        std::unique_ptr<asio::steady_timer> timeout;
+        bool canceled {false};
     };
+    struct DecodingContext;
+    struct AuthMsg;
+    std::shared_ptr<AuthContext> authCtx_;
 
     void createAccount(AuthContext& ctx);
     void migrateAccount(AuthContext& ctx);
@@ -109,9 +143,15 @@ private:
     static bool needsMigration(const dht::crypto::Identity& id);
 
     void loadFromFile(AuthContext& ctx);
+
+    // for linking devices
+    void startLoadArchiveFromDevice(const std::shared_ptr<AuthContext>& ctx);
+
+    bool doAddDevice(std::string_view scheme, const std::shared_ptr<AuthContext>& ctx, const std::shared_ptr<dhtnet::ChannelSocket>& channel);
+
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
     void onArchiveLoaded(AuthContext& ctx,
-                         AccountArchive&& a);
+                         AccountArchive&& a, bool isLinkDevProtocol);
 
     OnExportConfig onExportConfig_;
     std::string archivePath_;
