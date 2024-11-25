@@ -52,6 +52,8 @@ getSignalHandlers()
         /* Configuration */
         exported_callback<libjami::ConfigurationSignal::VolumeChanged>(),
         exported_callback<libjami::ConfigurationSignal::AccountsChanged>(),
+        exported_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(),
+        exported_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(),
         exported_callback<libjami::ConfigurationSignal::AccountDetailsChanged>(),
         exported_callback<libjami::ConfigurationSignal::StunStatusFailed>(),
         exported_callback<libjami::ConfigurationSignal::RegistrationStateChanged>(),
@@ -69,7 +71,6 @@ getSignalHandlers()
         exported_callback<libjami::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<libjami::ConfigurationSignal::ContactAdded>(),
         exported_callback<libjami::ConfigurationSignal::ContactRemoved>(),
-        exported_callback<libjami::ConfigurationSignal::ExportOnRingEnded>(),
         exported_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(),
         exported_callback<libjami::ConfigurationSignal::NameRegistrationEnded>(),
         exported_callback<libjami::ConfigurationSignal::RegisteredNameFound>(),
