@@ -579,14 +579,19 @@ MediaDecoder::setupStream()
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
+    AVDictionary* options = nullptr;
+    av_dict_set(&options, "analyzeduration", std::to_string(180 * 1000000).c_str(), 0); // wait 30s, instead of default 5
+    av_dict_set(&options, "probesize", std::to_string(20000 * 1000000).c_str(), 0); // instead of default 5
+
 #ifdef RING_ACCEL
     if (!accel_) {
         JAMI_WARN("Not using hardware decoding for %s", avcodec_get_name(decoderCtx_->codec_id));
-        ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+        ret = avcodec_open2(decoderCtx_, inputDecoder_, &options);
     }
 #else
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, &options);
 #endif
+    av_dict_free(&options);
     if (ret < 0) {
         JAMI_ERR() << "Unable to open codec: " << libav_utils::getError(ret);
         return -1;
