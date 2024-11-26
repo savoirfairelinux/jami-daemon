@@ -723,7 +723,7 @@ AccountManager::sendTrustRequest(const std::string& to,
     forEachDevice(toH,
                   [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                       auto to = toH.toString();
-                      JAMI_WARNING("sending trust request to: {:s} / {:s}",
+                      JAMI_WARNING("Sending trust request to: {:s} / {:s}",
                                    to,
                                    dev->getLongId().toString());
                       dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
@@ -798,7 +798,7 @@ AccountManager::forEachDevice(
         void ended()
         {
             if (remaining == 0 && onEnd) {
-                JAMI_DEBUG("Found {:d} devices", treatedDevices.size());
+                JAMI_DEBUG("Found {:d} device(s)", treatedDevices.size());
                 onEnd(not treatedDevices.empty());
                 onDevice = {};
                 onEnd = {};
