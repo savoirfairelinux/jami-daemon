@@ -1,0 +1,11 @@
+{
+    "name": "llhttp",
+    "version": "9.2.0",
+    "cpe": "cpe:2.3:a:llhttp:llhttp:9.2.0:*:*:*:*:*:*:*",
+    "url": "https://github.com/nodejs/llhttp/archive/release/v__VERSION__.tar.gz",
+    "use_cmake": true,
+    "defines": [
+        "BUILD_SHARED_LIBS=Off",
+        "BUILD_STATIC_LIBS=On"
+    ]
+}
