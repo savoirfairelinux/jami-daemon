@@ -216,7 +216,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
                              const MediaDescription& localMedia,
                              const MediaDescription& remoteMedia)
 {
-    JAMI_DBG("[call:%s] Configuring [%s] rtp session",
+    JAMI_DBG("[call:%s] Configuring [%s] RTP session",
              getCallId().c_str(),
              MediaAttribute::mediaTypeToString(mediaAttr->type_));
 
@@ -2019,7 +2019,7 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
                    stream.mediaAttribute_->toString(true));
     }
 
-    JAMI_DEBUG("[call:{:s}] Created {:d} Media streams", getCallId(), rtpStreams_.size());
+    JAMI_DEBUG("[call:{:s}] Created {:d} media stream(s)", getCallId(), rtpStreams_.size());
 
     return rtpStreams_.size();
 }
@@ -3047,7 +3047,7 @@ SIPCall::openPortsUPnP()
      * No need to request mappings for specfic port numbers. Set the port to '0' to
      * request the first available port (faster and more likely to succeed).
      */
-    JAMI_DBG("[call:%s] Opening ports via UPNP for SDP session", getCallId().c_str());
+    JAMI_DBG("[call:%s] Opening ports via UPnP for SDP session", getCallId().c_str());
 
     // RTP port.
     upnp_->reserveMapping(sdp_->getLocalAudioPort(), dhtnet::upnp::PortType::UDP);
@@ -3647,7 +3647,7 @@ SIPCall::setupIceResponse(bool isReinvite)
     // Media transport changed, must restart the media.
     mediaRestartRequired_ = true;
 
-    // WARNING: This call blocks! (need ice init done)
+    // WARNING: This call blocks! (need ICE init done)
     addLocalIceAttributes();
 }
 
