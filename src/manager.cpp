@@ -1090,7 +1090,7 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
                       const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_DBG() << "try outgoing call to '" << to << "'"
+    JAMI_DBG() << "Attempt outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
 
     std::shared_ptr<Call> call;
@@ -1230,7 +1230,7 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
         try {
             result = call->onhold([=](bool ok) {
                 if (!ok) {
-                    JAMI_ERR("hold failed for call %s", callId.c_str());
+                    JAMI_ERR("Hold failed for call %s", callId.c_str());
                     return;
                 }
                 removeAudio(*call); // Unbind calls in main buffer
@@ -1269,7 +1269,7 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
     try {
         result = call->offhold([=](bool ok) {
             if (!ok) {
-                JAMI_ERR("off hold failed for call %s", callId.c_str());
+                JAMI_ERR("Off hold failed for call %s", callId.c_str());
                 return;
             }
 
@@ -1356,7 +1356,7 @@ Manager::holdConference(const std::string& accountId, const std::string& confId)
 bool
 Manager::unHoldConference(const std::string& accountId, const std::string& confId)
 {
-    JAMI_DBG("[conf:%s] un-holding conference", confId.c_str());
+    JAMI_DBG("[conf:%s] Unholding conference", confId.c_str());
 
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
