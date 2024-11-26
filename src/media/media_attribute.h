@@ -86,9 +86,9 @@ public:
     bool onHold_ {false};
 
     // NOTE: the hold and mute attributes are related but not
-    // tightly coupled. A hold/un-hold operation should always
+    // tightly coupled. A hold/unhold operation should always
     // trigger a new re-invite to notify the change in media
-    // direction.For instance, on an active call, the hold action
+    // direction. For instance, on an active call, the hold action
     // would change the media direction attribute from "sendrecv"
     // to "sendonly". A new SDP with the new media direction will
     // be generated and sent to the peer in the re-invite.
