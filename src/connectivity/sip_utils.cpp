@@ -175,7 +175,7 @@ void
 addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
 {
     if (contactHdr.empty()) {
-        JAMI_WARN("Contact header won't be added (empty string)");
+        JAMI_WARN("Contact header is unable to be added (empty string)");
         return;
     }
 

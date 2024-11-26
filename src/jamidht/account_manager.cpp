@@ -312,7 +312,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         });
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
             if (crl.isSignedBy(*info_->identity.second->issuer)) {
-                JAMI_DEBUG("found CRL for account.");
+                JAMI_DEBUG("Ffound CRL for account.");
                 certStore()
                     .pinRevocationList(info_->accountId,
                                        std::make_shared<dht::crypto::RevocationList>(
@@ -723,7 +723,7 @@ AccountManager::sendTrustRequest(const std::string& to,
     forEachDevice(toH,
                   [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                       auto to = toH.toString();
-                      JAMI_WARNING("sending trust request to: {:s} / {:s}",
+                      JAMI_WARNING("Sending trust request to: {:s} / {:s}",
                                    to,
                                    dev->getLongId().toString());
                       dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
@@ -798,7 +798,7 @@ AccountManager::forEachDevice(
         void ended()
         {
             if (remaining == 0 && onEnd) {
-                JAMI_DEBUG("Found {:d} devices", treatedDevices.size());
+                JAMI_DEBUG("Found {:d} device(s)", treatedDevices.size());
                 onEnd(not treatedDevices.empty());
                 onDevice = {};
                 onEnd = {};
