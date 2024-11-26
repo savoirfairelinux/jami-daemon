@@ -3395,10 +3395,14 @@ JamiAccount::sendProfileToPeers()
 {
     if (!connectionManager_)
         return;
+    std::set<std::string> peers;
     const auto& accountUri = accountManager_->getInfo()->accountId;
+    // TODO: avoid using getConnectionList
     for (const auto& connection : connectionManager_->getConnectionList()) {
         const auto& device = connection.at("device");
         const auto& peer = connection.at("peer");
+        if (!peers.emplace(peer).second)
+            continue;
         if (peer == accountUri) {
             sendProfile("", accountUri, device);
             continue;
@@ -3450,8 +3454,7 @@ JamiAccount::updateProfile(const std::string& displayName,
             const auto& avatarPath = std::filesystem::path(avatar);
             if (std::filesystem::exists(avatarPath)) {
                 try {
-                    const auto& base64 = jami::base64::encode(fileutils::loadFile(avatarPath));
-                    profile[key] = base64;
+                    profile[key] = base64::encode(fileutils::loadFile(avatarPath));
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Failed to load avatar: {}", e.what());
                 }
@@ -3472,10 +3475,10 @@ JamiAccount::updateProfile(const std::string& displayName,
             file.close();
             std::filesystem::rename(tmpPath, vCardPath);
             fileutils::createFileLink(path, vCardPath);
-            sendProfileToPeers();
             emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
                                                                       accountUri,
                                                                       path.string());
+            sendProfileToPeers();
         } else {
             JAMI_ERROR("Unable to open file for writing: {}", tmpPath.string());
         }
