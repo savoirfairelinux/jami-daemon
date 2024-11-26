@@ -393,7 +393,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/restinio/dev;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/llhttp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/include;"
@@ -517,7 +517,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/lib/pjlib-x86_64-x64-vc15-Release.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser/x64/Release/http-parser.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/llhttp/build/Release/llhttp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libcrypto.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
