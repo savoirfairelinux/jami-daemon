@@ -3685,8 +3685,7 @@ JamiAccount::callConnectionClosed(const DeviceId& deviceId, bool eraseDummy)
 void
 JamiAccount::requestMessageConnection(const std::string& peerId,
                                       const DeviceId& deviceId,
-                                      const std::string& connectionType,
-                                      bool forceNewConnection)
+                                      const std::string& connectionType)
 {
     auto* handler = static_cast<MessageChannelHandler*>(
         channelHandlers_[Uri::Scheme::MESSAGE].get());
@@ -3711,8 +3710,7 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
                     acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
                 }
         },
-        connectionType,
-        forceNewConnection);
+        connectionType);
 }
 
 void
@@ -3722,7 +3720,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
                                   bool forceNewConnection,
                                   const std::shared_ptr<SIPCall>& pc)
 {
-    requestMessageConnection(peerId, deviceId, connectionType, forceNewConnection);
+    requestMessageConnection(peerId, deviceId, connectionType);
     if (peerId == getUsername()) {
         if (!syncModule()->isConnected(deviceId))
             channelHandlers_[Uri::Scheme::SYNC]

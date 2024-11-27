@@ -843,9 +843,8 @@ private:
                                const DeviceId& deviceId);
 
     void requestMessageConnection(const std::string& peerId,
-                                          const DeviceId& deviceId,
-                                          const std::string& connectionType,
-                                          bool forceNewConnection);
+                                  const DeviceId& deviceId,
+                                  const std::string& connectionType);
 
             // File transfers
     std::mutex transfersMtx_ {};
