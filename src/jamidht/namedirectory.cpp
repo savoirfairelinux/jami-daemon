@@ -173,8 +173,8 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                     else
                         cb("", Response::notFound);
                 } else if (response.status_code != 200) {
-                    JAMI_ERROR("Address lookup for {} failed with code={}",
-                             addr, response.status_code);
+                    JAMI_ERROR("Address lookup for {} on {} failed with code={}",
+                               addr, serverUrl_, response.status_code);
                     cb("", Response::error);
                 } else {
                     try {
@@ -260,9 +260,11 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                                           const dht::http::Response& response) {
             if (response.status_code >= 400 && response.status_code < 500)
                 cb("", Response::notFound);
-            else if (response.status_code < 200 || response.status_code > 299)
+            else if (response.status_code < 200 || response.status_code > 299) {
+                JAMI_ERROR("Name lookup for {} on {} failed with code={}",
+                           name, serverUrl_, response.status_code);
                 cb("", Response::error);
-            else {
+            } else {
                 try {
                     Json::Value json;
                     std::string err;
