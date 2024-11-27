@@ -3878,12 +3878,12 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         }
     }
     if (!valid) {
-        JAMI_ERROR("Not enough authorization for updating infos");
+        JAMI_ERROR("Insufficient permission to update information");
         emitSignal<libjami::ConversationSignal::OnConversationError>(
             pimpl_->accountId_,
             pimpl_->id_,
             EUNAUTHORIZED,
-            "Not enough authorization for updating infos");
+            "Insufficient permission to update information");
         return {};
     }
 
