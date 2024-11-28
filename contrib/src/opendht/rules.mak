@@ -8,7 +8,7 @@ PKGS_FOUND += opendht
 endif
 
 # Avoid building distro-provided dependencies in case opendht was built manually
-DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio
+DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio llhttp
 
 OPENDHT_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_TESTING=Off \
