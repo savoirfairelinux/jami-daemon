@@ -1,5 +1,5 @@
-FFMPEG_HASH := 6.0.1
-PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:6.0.1:*:*:*:*:*:*:*
+FFMPEG_HASH := 7.1
+PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:7.1:*:*:*:*:*:*:*
 FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_HASH).tar.xz
 
 PKGS+=ffmpeg
@@ -141,7 +141,7 @@ FFMPEGCONF += \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
-	--enable-decoder=libopus
+	--enable-decoder=opus
 
 # decoders for ringtones and audio streaming
 FFMPEGCONF += \
@@ -436,7 +436,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	$(APPLY) $(SRC)/ffmpeg/libopusenc-reload-packet-loss-at-encode.patch
 	$(APPLY) $(SRC)/ffmpeg/ios-disable-b-frames.patch
 	$(APPLY) $(SRC)/ffmpeg/screen-sharing-x11-fix.patch
-	$(APPLY) $(SRC)/ffmpeg/pipewiregrab-source-filter.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

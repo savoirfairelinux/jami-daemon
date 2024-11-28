@@ -372,7 +372,7 @@ MediaDemuxer::setIOContext(MediaIOHandle* ioctx)
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
-    if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
+    /*if (inputParams_.format == "x11grab" || inputParams_.format == "dxgigrab") {
         auto ret = inputCtx_->iformat->read_header(inputCtx_);
         if (ret == AVERROR_EXTERNAL) {
             JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
@@ -386,7 +386,7 @@ MediaDemuxer::decode()
             inputParams_.width = ((baseWidth_ >> 3) << 3);
             return Status::RestartRequired;
         }
-    }
+    }*/
 
     libjami::PacketBuffer packet(av_packet_alloc());
     int ret = av_read_frame(inputCtx_, packet.get());
