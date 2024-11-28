@@ -1,7 +1,7 @@
 """
 This tool is designed to facilitate downloading, patching, and building
-of library dependencies for the Jami daemon project on windows. MSBuild
-toolset and sdk versions can be supplied as parameters and will be sedded
+of library dependencies for the Jami daemon project on Windows. MSBuild
+toolset and SDK versions can be supplied as parameters and will be sedded
 into vcxproj files accordingly.
 
 A package can be defined with a json like this:
@@ -83,7 +83,7 @@ def getLatestVSVersion():
     else:
         return
 
-# vs help
+# Visual Studio help
 win_sdk_default = '10.0.18362.0'
 VSVersion = getLatestVSVersion()
 if VSVersion == '17':
@@ -157,7 +157,7 @@ def getCMakeGenerator(vs_version):
     elif vs_version == '16':
         return '\"Visual Studio 16 2019\" -A x64'
     else:
-        root_logger.critical("Unable to return CMake generator for VS " + vs_version)
+        root_logger.critical("Unable to return CMake generator for Visual Studio " + vs_version)
         return ''
 
 
@@ -207,7 +207,7 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
         cmake_defines += " -D" + define + " "
     if not pkg_up_to_date or current_version is None or force:
         root_logger.warning(
-            "Building plugin with preferred sdk version %s and toolset %s", sdk_version, toolset)
+            "Building plugin with preferred SDK version %s and toolset %s", sdk_version, toolset)
         env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
         sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
             'with_env', '')
@@ -215,7 +215,7 @@ def make_plugin(pkg_info, force, sdk_version, toolset):
             " -G " + getCMakeGenerator(getLatestVSVersion()) + cmake_defines + \
             " -T " + toolset + \
             " -S " + plugin_path + " -B " + plugin_path + "/msvc"
-        root_logger.warning("Cmake generating vcxproj files")
+        root_logger.warning("CMake generating vcxproj files")
         _ = getSHrunner().exec_batch(cmake_script)
         build(pkg_name,
               plugin_path,
@@ -234,12 +234,12 @@ def make_daemon(pkg_info, force, sdk_version, toolset):
     root_logger.warning("Cmake generating vcxproj files")
     result = getSHrunner().exec_batch(cmake_script)
     if result[0] != 0:
-        sys.exit("Cmake Errors")
+        sys.exit("CMake errors")
 
     for dep in pkg_info.get('deps', []):
         resolve(dep, False, sdk_version, toolset)
     root_logger.warning(
-        "Building daemon with preferred sdk version %s and toolset %s", sdk_version, toolset)
+        "Building daemon with preferred SDK version %s and toolset %s", sdk_version, toolset)
     env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
     sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
         'with_env', '')
@@ -302,7 +302,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
         sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get(
             'with_env', '')
 
-        # configure with cmake ?
+        # configure with CMake
         use_cmake = pkg_info.get('use_cmake', False)
         if use_cmake:
             cmake_defines = ""
@@ -311,7 +311,7 @@ def make(pkg_info, force, sdk_version, toolset, isPlugin):
             if not pkg_up_to_date or current_version is None or force:
                 cmake_conf_script = "cmake -G " + getCMakeGenerator(getLatestVSVersion(
                 )) + cmake_defines + " -S '" + pkg_build_path + "' -B '" + pkg_build_path + "\\build'"
-                log.debug("Configuring with Cmake")
+                log.debug("Configuring with CMake")
                 result = getSHrunner().exec_batch(cmake_conf_script)
                 if result[0] != 0:
                     log.error("Error configuring with CMake")
@@ -340,7 +340,7 @@ def fetch_pkg(pkg_name, version, url, force):
     version_replace = re.compile(re.escape('__VERSION__'))
     full_url = version_replace.sub(version, url)
     if not full_url:
-        log.error(pkg_name + ' missing url in package configuration')
+        log.error(pkg_name + ' missing URL in package configuration')
         return False
     archive_name = full_url[full_url.rfind("/") + 1:]
     archive_path = contrib_tmp_dir + '\\' + pkg_name + '_' + archive_name
@@ -351,7 +351,7 @@ def fetch_pkg(pkg_name, version, url, force):
         dl_result = getSHrunner().exec_batch('wget', args)
         if dl_result[0] != 0:
             log.warning(
-                'wget failure. Using powershell Invoke-WebRequest instead')
+                'wget failure. Using PowerShell Invoke-WebRequest instead')
             args = ['-Uri', full_url, '-OutFile', archive_path]
             dl_result = getSHrunner().exec_ps1('Invoke-WebRequest', args)
         return extract_archive(pkg_name, archive_name, archive_path)
@@ -418,7 +418,7 @@ def extract_archive(pkg_name, name, path):
 
 
 def apply_linux(patch_path):
-    log.debug('applying linux patch ' + patch_path)
+    log.debug('Applying Linux patch ' + patch_path)
     args = []
     args.extend(patch_args)
     args.append(patch_path)
@@ -426,7 +426,7 @@ def apply_linux(patch_path):
 
 
 def apply_windows(patch_path):
-    log.debug('applying windows patch ' + patch_path)
+    log.debug('Applying Windows patch ' + patch_path)
     args = []
     args.extend(git_apply_args)
     args.append(patch_path)
@@ -434,7 +434,7 @@ def apply_windows(patch_path):
 
 
 def apply(pkg_name, patches, win_patches):
-    log.debug('patching ' + pkg_name + '...')
+    log.debug('Patching ' + pkg_name + '…')
     tmp_dir = os.getcwd()
     pkg_build_path = contrib_build_dir + '\\' + pkg_name
     if not os.path.exists(pkg_build_path):
@@ -446,15 +446,15 @@ def apply(pkg_name, patches, win_patches):
         patch_path = base_sh_src_path + '/' + pkg_name + '/' + p
         result = apply_linux(patch_path)
         if result[0]:
-            log.error('Couldn\'t apply patch: ' + patch_path)
+            log.error('Unable to apply patch: ' + patch_path)
             exit(1)
 
-    # 2. windows git patches (CR/LF)
+    # 2. Windows git patches (CR/LF)
     for wp in win_patches:
         patch_path = contrib_src_dir + '\\' + pkg_name + '\\' + wp
         result = apply_windows(patch_path)
         if result[0]:
-            log.error('Couldn\'t apply patch: ' + patch_path)
+            log.error('Unable to apply patch: ' + patch_path)
             exit(1)
 
     os.chdir(tmp_dir)
@@ -507,7 +507,7 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
     tmp_dir = os.getcwd()
     os.chdir(pkg_dir)
 
-    # pre_build custom step (CMake...)
+    # pre_build custom step (CMake…)
     pre_build_scripts = custom_scripts.get("pre_build", [])
     if pre_build_scripts:
         log.debug('Pre-build phase')
@@ -516,7 +516,7 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
             success &= not result[0]
             build_operations += 1
 
-    # build custom step (nmake...)
+    # build custom step (NMAKE…)
     build_scripts = custom_scripts.get("build", [])
     if build_scripts:
         log.debug('Custom Build phase')
@@ -527,15 +527,15 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
 
     # vcxproj files
     if project_paths:
-        log.debug('Msbuild phase')
+        log.debug('MSBuild phase')
         for pp in project_paths:
             project_full_path = pkg_dir + '\\' + pp
-            log.debug('Building: ' + pkg_name + " with sdk version " +
+            log.debug('Building: ' + pkg_name + " with SDK version " +
                       sdk + " and toolset " + toolset)
             getMSbuilder().build(pkg_name, project_full_path, sdk, toolset)
             build_operations += 1
     else:
-        # build directly with cmake
+        # build directly with CMake
         if use_cmake is True:
             log.debug('CMake build phase')
             cmake_build_script = "cmake --build '" + pkg_dir + \
@@ -555,7 +555,7 @@ def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
 
     os.chdir(tmp_dir)
 
-    # should cover header only, no cmake, etc
+    # should cover header only, no CMake, etc
     ops = len(build_scripts) + len(project_paths) + \
         len(pre_build_scripts) + len(post_build_scripts)
     return success and build_operations == ops
@@ -591,13 +591,13 @@ class SHrunner():
         sys_path = (r'\Sysnative', r'\system32')[python_is_64bit]
         full_sys_path = os.path.expandvars('%systemroot%') + sys_path
 
-        # powershell
+        # PowerShell
         self.ps_path = full_sys_path + r'\WindowsPowerShell\v1.0\powershell.exe'
         if not os.path.exists(self.ps_path):
-            log.error('Powershell not found at %s.' % self.ps_path)
+            log.error('PowerShell not found at %s.' % self.ps_path)
             sys.exit(1)
 
-        # bash
+        # Bash
         if not os.environ.get('JENKINS_URL'):
             self.sh_path = full_sys_path + r'\bash.exe'
         else:
@@ -607,11 +607,11 @@ class SHrunner():
             log.warning('Bash not found at ' + self.sh_path)
             self.sh_path = shutil.which('bash.exe')
             if not os.path.exists(self.sh_path):
-                log.error('No bash found')
+                log.error('No Bash found')
                 sys.exit(1)
             else:
                 self.sh_path = shellquote(self.sh_path, windows=True)
-                log.debug('Using alternate bash found at ' + self.sh_path)
+                log.debug('Using alternate Bash found at ' + self.sh_path)
 
         self.project_env_vars = {
             'DAEMON_DIR': daemon_dir,
@@ -708,7 +708,7 @@ class MSbuilder:
             self.__class__.replace_vs_prop(proj_path,
                                            'DebugInformationFormat',
                                            'None')
-        # force chosen sdk
+        # force chosen SDK
         self.__class__.replace_vs_prop(proj_path,
                                        'WindowsTargetPlatformVersion',
                                        sdk_version)
@@ -727,9 +727,9 @@ class MSbuilder:
 
     def setup_vs_env(self, env_target):
         if self.vsenv_done:
-            log.debug('vs environment already initialized')
+            log.debug('Visual Studio environment already initialized')
             return
-        log.debug('Setting up vs environment')
+        log.debug('Setting up Visual Studio environment')
         getSHrunner().set_vs_env_vars(env_target)
         self.vsenv_done = True
 
@@ -763,7 +763,7 @@ def parse_args():
         help='Cleans out contrib tarball directory')
     ap.add_argument(
         '-s', '--sdk', default=win_sdk_default, type=str,
-        help='Use specified windows sdk version')
+        help='Use specified Windows SDK version')
     ap.add_argument(
         '-t', '--toolset', default=win_toolset_default, type=str,
         help='Use specified platform toolset version')
