@@ -181,7 +181,7 @@ public:
     }
     void setRtpDelayCallback(std::function<void(int, int)> cb);
 
-    int writeData(uint8_t* buf, int buf_size);
+    int writeData(const uint8_t* buf, int buf_size);
 
     uint16_t lastSeqValOut();
 
@@ -191,7 +191,7 @@ private:
     using time_point = clock::time_point;
 
     int readCallback(uint8_t* buf, int buf_size);
-    int writeCallback(uint8_t* buf, int buf_size);
+    int writeCallback(const uint8_t* buf, int buf_size);
 
     int waitForData();
     int readRtpData(void* buf, int buf_size);
