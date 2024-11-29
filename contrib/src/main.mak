@@ -287,14 +287,28 @@ else
 ZCAT ?= $(error Gunzip client (zcat) not found!)
 endif
 
-ifeq ($(shell sha512sum --version >/dev/null 2>&1 || echo FAIL),)
-SHA512SUM = sha512sum --check
-else ifeq ($(shell shasum --version >/dev/null 2>&1 || echo FAIL),)
-SHA512SUM = shasum -a 512 --check
-else ifeq ($(shell openssl version >/dev/null 2>&1 || echo FAIL),)
-SHA512SUM = openssl dgst -sha512
+ifeq ($(shell uname),Darwin)
+  # On macOS, do not use sha512sum because the macOS implementation
+  # does not support reading piped input (STDIN) with the --check option.
+  # Instead, fallback to shasum or openssl if available.
+  ifeq ($(shell shasum --version >/dev/null 2>&1 || echo FAIL),)
+    SHA512SUM = shasum -a 512 --check
+  else ifeq ($(shell openssl version >/dev/null 2>&1 || echo FAIL),)
+    SHA512SUM = openssl dgst -sha512
+  else
+    SHA512SUM = $(error SHA-512 checksumming not found!)
+  endif
 else
-SHA512SUM = $(error SHA-512 checksumming not found!)
+  # On other systems, prefer sha512sum if available
+  ifeq ($(shell sha512sum --version >/dev/null 2>&1 || echo FAIL),)
+    SHA512SUM = sha512sum --check
+  else ifeq ($(shell shasum --version >/dev/null 2>&1 || echo FAIL),)
+    SHA512SUM = shasum -a 512 --check
+  else ifeq ($(shell openssl version >/dev/null 2>&1 || echo FAIL),)
+    SHA512SUM = openssl dgst -sha512
+  else
+    SHA512SUM = $(error SHA-512 checksumming not found!)
+  endif
 endif
 
 #
