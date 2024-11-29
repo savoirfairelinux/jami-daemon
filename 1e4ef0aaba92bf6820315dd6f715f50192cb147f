@@ -76,6 +76,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "40abf486_4c549e59",
+        "filename": "bin/nodejs/configurationmanager.i",
+        "patchSetId": 59
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ffba09c1_5d7e6a90",
+      "range": {
+        "startLine": 117,
+        "startChar": 0,
+        "endLine": 117,
+        "endChar": 2
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5aff59da_d5234def",
@@ -89,6 +113,30 @@
       "writtenOn": "2024-10-22T13:01:07Z",
       "side": 1,
       "message": "Resolve conflict",
+      "range": {
+        "startLine": 125,
+        "startChar": 0,
+        "endLine": 136,
+        "endChar": 68
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c075fb93_5198e4fe",
+        "filename": "bin/nodejs/configurationmanager.i",
+        "patchSetId": 59
+      },
+      "lineNbr": 136,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aff59da_d5234def",
       "range": {
         "startLine": 125,
         "startChar": 0,
@@ -185,6 +233,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "82a5d22a_06b6d4b8",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 41,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "44ed0807_2794a638",
+      "range": {
+        "startLine": 39,
+        "startChar": 0,
+        "endLine": 41,
+        "endChar": 25
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1ad9d10c_36b1770c",
@@ -198,6 +270,30 @@
       "writtenOn": "2024-10-22T13:01:07Z",
       "side": 1,
       "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 449,
+        "startChar": 2,
+        "endLine": 470,
+        "endChar": 10
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7101bdb7_43d9e38e",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 59
+      },
+      "lineNbr": 470,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1ad9d10c_36b1770c",
       "range": {
         "startLine": 449,
         "startChar": 2,
@@ -278,6 +374,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "23a38079_1a3f172c",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a79a4bcf_90d59017",
+      "range": {
+        "startLine": 115,
+        "startChar": 0,
+        "endLine": 117,
+        "endChar": 219
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3e3f0356_d4cd7fa5",
@@ -291,6 +411,30 @@
       "writtenOn": "2024-10-23T18:01:54Z",
       "side": 1,
       "message": "From my understanding:\n\nWhen `addAccount` is called with `details[\"Account.archiveURL\"]\u003d\"jami-auth\"`, it will trigger the `deviceAuthStateChanged` signal.\n\nThis signal has two states (I know there is more, but useless in this example):\n`None`: Active from the moment the process starts\n`TOKEN_AVAIL`: Active from the moment the account is exposed on the DHT, and the token is ready to be displayed.\n\nThe flow is as follows:\n1- The user clicks \"Connect from another device.\"\n2- `addAccount` is called, triggering the `deviceAuthStateChanged` signal with the None state.\n3- A loading screen is displayed while waiting for the token.\n4- The  `deviceAuthStateChanged` signal is triggered with the TokenAvail state.\n5- The QR code with the token is displayed.\n\nHowever, during testing, I noticed that the None state arrives too slowly to reliably trigger the loading screen.\n\nIn other words:\n1- The None state should ideally arrive faster.\n2- Since it doesn’t, it’s more efficient to assume that TokenAvail will arrive as soon as possible, making the None state essentially redundant.",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 138,
+        "endChar": 6
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "45b3b6b1_748e7e87",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3e3f0356_d4cd7fa5",
       "range": {
         "startLine": 131,
         "startChar": 0,
@@ -324,6 +468,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "84043a0f_2e7f89bb",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 141,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a144987d_fd2d2441",
+      "range": {
+        "startLine": 139,
+        "startChar": 0,
+        "endLine": 141,
+        "endChar": 61
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "4ac9c587_90b7a3c1",
@@ -347,6 +515,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "36a5b07c_36a1df13",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4ac9c587_90b7a3c1",
+      "range": {
+        "startLine": 165,
+        "startChar": 0,
+        "endLine": 165,
+        "endChar": 147
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "1271cbfb_9d4272d6",
@@ -360,6 +552,30 @@
       "writtenOn": "2024-10-22T13:01:07Z",
       "side": 1,
       "message": "Commented code. Remove?",
+      "range": {
+        "startLine": 168,
+        "startChar": 0,
+        "endLine": 168,
+        "endChar": 132
+      },
+      "revId": "1e4ef0aaba92bf6820315dd6f715f50192cb147f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f93da720_623a44a1",
+        "filename": "src/jamidht/archive_account_manager.h",
+        "patchSetId": 59
+      },
+      "lineNbr": 168,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1271cbfb_9d4272d6",
       "range": {
         "startLine": 168,
         "startChar": 0,

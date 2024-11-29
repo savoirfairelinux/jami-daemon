@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "9cc396ae_dd0ccfa8",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 34
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f6c3cbc3_f6757169",
+      "range": {
+        "startLine": 2,
+        "startChar": 12,
+        "endLine": 2,
+        "endChar": 25
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "885075cb_d7c16b1f",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-06-05T13:19:55Z",
       "side": 1,
       "message": "remove wip",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 6
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f45aeb6a_089fdeaf",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 34
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "885075cb_d7c16b1f",
       "range": {
         "startLine": 7,
         "startChar": 0,
@@ -147,6 +195,30 @@
       "writtenOn": "2024-06-05T13:19:55Z",
       "side": 1,
       "message": "duplicated",
+      "range": {
+        "startLine": 388,
+        "startChar": 4,
+        "endLine": 406,
+        "endChar": 5
+      },
+      "revId": "13740246b100643ef359f663ec313bf7e0806d32",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "35adceb7_851d6d93",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b5dd7548_1bbdfd30",
       "range": {
         "startLine": 388,
         "startChar": 4,

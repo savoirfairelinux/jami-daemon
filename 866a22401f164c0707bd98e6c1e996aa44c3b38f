@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0c23f862_50f5193c",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 337,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 0,
+      "message": "Done",
+      "parentUuid": "4645ff02_497b2613",
+      "range": {
+        "startLine": 337,
+        "startChar": 0,
+        "endLine": 337,
+        "endChar": 12
+      },
+      "revId": "866a22401f164c0707bd98e6c1e996aa44c3b38f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "60ae388b_1ede1a94",

@@ -16,6 +16,24 @@
       "message": "Here, you probably want to do a findCertificate from the accountManager to compare it to the certificate given. Cf jamiaccount (onChannelRequest). else for futher operation if no findCertificate is done, it will be not found",
       "revId": "20ee413993254778bbf08b10cc2d1fa4ea6cbb80",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "53801fec_36a509ba",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 30
+      },
+      "lineNbr": 695,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2024-11-29T16:00:00Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8c45b32f_accce75e",
+      "revId": "20ee413993254778bbf08b10cc2d1fa4ea6cbb80",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
