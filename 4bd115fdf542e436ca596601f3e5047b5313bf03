@@ -22,6 +22,30 @@
       },
       "revId": "4bd115fdf542e436ca596601f3e5047b5313bf03",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8f4214a_4b8eeaa1",
+        "filename": "src/sip/sipaccount.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2024-11-29T16:33:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b0c2ccbb_1a26e54b",
+      "range": {
+        "startLine": 193,
+        "startChar": 70,
+        "endLine": 193,
+        "endChar": 84
+      },
+      "revId": "4bd115fdf542e436ca596601f3e5047b5313bf03",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
