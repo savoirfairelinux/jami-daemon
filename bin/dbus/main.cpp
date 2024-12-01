@@ -180,7 +180,7 @@ main(int argc, char *argv [])
     }
 
     try {
-        connection = sdbus::createSessionBusConnection("cx.ring.Ring");
+        connection = sdbus::createSessionBusConnection(sdbus::ServiceName{"cx.ring.Ring"});
         DBusCallManager callManager(*connection);
         DBusConfigurationManager configurationManager(*connection);
         DBusInstance instanceManager(*connection);
