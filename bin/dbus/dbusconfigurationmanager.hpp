@@ -26,7 +26,7 @@ class DBusConfigurationManager : public sdbus::AdaptorInterfaces<cx::ring::Ring:
 public:
     using DBusSwarmMessage = sdbus::Struct<std::string, std::string, std::string, std::map<std::string, std::string>, std::vector<std::map<std::string, std::string>>, std::vector<std::map<std::string, std::string>>, std::map<std::string, int32_t>>;
     DBusConfigurationManager(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/ConfigurationManager")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath{"/cx/ring/Ring/ConfigurationManager"})
     {
         registerAdaptor();
         registerSignalHandlers();
