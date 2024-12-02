@@ -91,7 +91,7 @@ public:
     void testMemberCannotBanOther();
     void testMemberCannotUnBanOther();
     void testCheckAdminFakeAVoteIsDetected();
-    void testAdminCannotKickTheirself();
+    void testAdminCannotKickThemselves();
     void testCommitUnauthorizedUser();
     void testMemberJoinsNoBadFile();
     void testMemberAddedNoCertificate();
@@ -145,7 +145,7 @@ private:
     CPPUNIT_TEST(testMemberCannotBanOther);
     CPPUNIT_TEST(testMemberCannotUnBanOther);
     CPPUNIT_TEST(testCheckAdminFakeAVoteIsDetected);
-    CPPUNIT_TEST(testAdminCannotKickTheirself);
+    CPPUNIT_TEST(testAdminCannotKickThemselves);
     CPPUNIT_TEST(testCommitUnauthorizedUser);
     CPPUNIT_TEST(testMemberJoinsNoBadFile);
     CPPUNIT_TEST(testMemberAddedNoCertificate);
@@ -1097,7 +1097,7 @@ ConversationMembersEventTest::testCheckAdminFakeAVoteIsDetected()
 }
 
 void
-ConversationMembersEventTest::testAdminCannotKickTheirself()
+ConversationMembersEventTest::testAdminCannotKickThemselves()
 {
     connectSignals();
 

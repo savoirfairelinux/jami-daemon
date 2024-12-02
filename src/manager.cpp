@@ -657,7 +657,7 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
         try {
             auto call = base_.getCallFromCallID(callId);
             if (not call)
-                throw std::runtime_error("no associated call");
+                throw std::runtime_error("No associated call");
             call->sendTextMessage(messages, from);
         } catch (const std::exception& e) {
             JAMI_ERR("Failed to send message to conference participant %s: %s",
@@ -684,7 +684,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     if (call.isConferenceParticipant())
         base_.detachParticipant(callId);
 
-    JAMI_DEBUG("[call:{}] bind to conference {} (callState={})", callId, confId, state);
+    JAMI_DEBUG("[call:{}] Bind to conference {} (callState={})", callId, confId, state);
 
     auto medias = call.getAudioStreams();
     for (const auto& media : medias) {
@@ -702,7 +702,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     } else if (state == "INACTIVE") {
         base_.answerCall(call);
     } else
-        JAMI_WARNING("[call:{}] call state {} not recognized for conference", callId, state);
+        JAMI_WARNING("[call:{}] Call state {} unrecognized for conference", callId, state);
 }
 
 //==============================================================================
@@ -714,7 +714,7 @@ Manager::instance()
     static Manager instance;
 
     // This will give a warning that can be ignored the first time instance()
-    // is called...subsequent warnings are more serious
+    // is called… subsequent warnings are more serious
     if (not Manager::initialized)
         JAMI_DBG("Not initialized");
 
@@ -887,8 +887,8 @@ Manager::finish() noexcept
         // Forbid call creation
         callFactory.forbid();
 
-        // Hangup all remaining active calls
-        JAMI_DBG("Hangup %zu remaining call(s)", callFactory.callCount());
+        // End all remaining active calls
+        JAMI_DBG("End %zu remaining call(s)", callFactory.callCount());
         for (const auto& call : callFactory.getAllCalls())
             hangupCall(call->getAccountId(), call->getCallId());
         callFactory.clear();
@@ -1178,7 +1178,7 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
     /* We often get here when the call was hungup before being created */
     auto call = account->getCall(callId);
     if (not call) {
-        JAMI_WARN("Unable to hang up non-existant call %s", callId.c_str());
+        JAMI_WARN("Unable to hang up nonexistent call %s", callId.c_str());
         return false;
     }
 
@@ -1269,7 +1269,7 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
     try {
         result = call->offhold([=](bool ok) {
             if (!ok) {
-                JAMI_ERR("Off hold failed for call %s", callId.c_str());
+                JAMI_ERR("offHold failed for call %s", callId.c_str());
                 return;
             }
 
@@ -1437,7 +1437,7 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 bool
 Manager::ManagerPimpl::hangupConference(Conference& conference)
 {
-    JAMI_DEBUG("Hangup conference {}", conference.getConfId());
+    JAMI_DEBUG("hangupConference {}", conference.getConfId());
     CallIdSet subcalls(conference.getSubCalls());
     conference.detachHost();
     if (subcalls.empty()) {
@@ -1834,7 +1834,7 @@ Manager::playDtmf(char code)
     stopTone();
 
     if (not voipPreferences.getPlayDtmf()) {
-        JAMI_DBG("Do not have to play a tone...");
+        JAMI_DBG("Do not have to play a tone…");
         return;
     }
 
@@ -1842,7 +1842,7 @@ Manager::playDtmf(char code)
     int pulselen = voipPreferences.getPulseLength();
 
     if (pulselen == 0) {
-        JAMI_DBG("Pulse length is not set...");
+        JAMI_DBG("Pulse length is not set…");
         return;
     }
 
@@ -1850,13 +1850,13 @@ Manager::playDtmf(char code)
 
     // fast return, no sound, so no dtmf
     if (not pimpl_->audiodriver_ or not pimpl_->dtmfKey_) {
-        JAMI_DBG("No audio layer...");
+        JAMI_DBG("No audio layer…");
         return;
     }
 
     std::shared_ptr<AudioDeviceGuard> audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
     if (not pimpl_->audiodriver_->waitForStart(std::chrono::seconds(1))) {
-        JAMI_ERR("Failed to start audio layer...");
+        JAMI_ERR("Failed to start audio layer…");
         return;
     }
 
@@ -1874,7 +1874,7 @@ Manager::playDtmf(char code)
     // copy the sound
     if (pimpl_->dtmfKey_->generateDTMF(pimpl_->dtmfBuf_->pointer())) {
         // Put buffer to urgentRingBuffer
-        // put the size in bytes...
+        // put the size in bytes…
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
 
@@ -1977,7 +1977,7 @@ Manager::sendCallTextMessage(const std::string& accountId,
                 JAMI_DBG("Call is participant in a conference, send instant message to everyone");
                 pimpl_->sendTextMessageToConference(*conf, messages, from);
             } else {
-                JAMI_ERR("no conference associated to call ID %s", callID.c_str());
+                JAMI_ERR("No conference associated to call ID %s", callID.c_str());
             }
         } else {
             try {
@@ -1989,7 +1989,7 @@ Manager::sendCallTextMessage(const std::string& accountId,
             }
         }
     } else {
-        JAMI_ERR("Failed to send message to %s: inexistent call ID", callID.c_str());
+        JAMI_ERR("Failed to send message to %s: nonexistent call ID", callID.c_str());
     }
 }
 
@@ -2161,7 +2161,7 @@ Manager::playRingtone(const std::string& accountID)
         std::lock_guard lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
-            JAMI_ERR("no audio layer in ringtone");
+            JAMI_ERR("No audio layer in ringtone");
             return;
         }
         // start audio if not started AND flush all buffers (main and urgent)
@@ -2216,7 +2216,7 @@ Manager::setAudioDevice(int index, AudioDeviceType type)
         return;
     }
     if (pimpl_->getCurrentDeviceIndex(type) == index) {
-        JAMI_WARN("Audio device already selected ; doing nothing.");
+        JAMI_WARN("Audio device already selected, doing nothing.");
         return;
     }
 
@@ -2332,10 +2332,10 @@ Manager::toggleRecordingCall(const std::string& accountId, const std::string& id
     if (auto account = getAccount(accountId)) {
         std::shared_ptr<Recordable> rec;
         if (auto conf = account->getConference(id)) {
-            JAMI_DBG("toggle recording for conference %s", id.c_str());
+            JAMI_DBG("Toggle recording for conference %s", id.c_str());
             rec = conf;
         } else if (auto call = account->getCall(id)) {
-            JAMI_DBG("toggle recording for call %s", id.c_str());
+            JAMI_DBG("Toggle recording for call %s", id.c_str());
             rec = call;
         } else {
             JAMI_ERR("Unable to find recordable instance %s", id.c_str());
@@ -2423,7 +2423,7 @@ Manager::setAudioManager(const std::string& api)
             return false;
 
         if (api == audioPreference.getAudioApi()) {
-            JAMI_DBG("Audio manager chosen already in use. No changes made. ");
+            JAMI_DBG("Audio manager chosen already in use. No changes made.");
             return true;
         }
     }
@@ -2714,7 +2714,7 @@ Manager::getAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getAccountDetails();
     } else {
-        JAMI_ERR("Unable to get account details on a non-existing accountID %s", accountID.c_str());
+        JAMI_ERR("Unable to get account details on a nonexistent accountID %s", accountID.c_str());
         // return an empty map since unable to throw an exception to D-Bus
         return {};
     }
@@ -2728,7 +2728,7 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getVolatileAccountDetails();
     } else {
-        JAMI_ERR("Unable to get volatile account details on a non-existing accountID %s",
+        JAMI_ERR("Unable to get volatile account details on a nonexistent accountID %s",
                  accountID.c_str());
         return {};
     }
@@ -3269,7 +3269,7 @@ Manager::setDefaultModerator(const std::string& accountID, const std::string& pe
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Fail to change default moderator, account %s not found", accountID.c_str());
+        JAMI_ERR("Failed to change default moderator, account %s not found", accountID.c_str());
         return;
     }
 
@@ -3285,7 +3285,7 @@ Manager::getDefaultModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Fail to get default moderators, account %s not found", accountID.c_str());
+        JAMI_ERR("Failed to get default moderators, account %s not found", accountID.c_str());
         return {};
     }
 
@@ -3306,7 +3306,7 @@ Manager::isLocalModeratorsEnabled(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Fail to get local moderators, account %s not found", accountID.c_str());
+        JAMI_ERR("Failed to get local moderators, account %s not found", accountID.c_str());
         return true; // Default value
     }
     return acc->isLocalModeratorsEnabled();
@@ -3324,7 +3324,7 @@ Manager::isAllModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Fail to get all moderators, account %s not found", accountID.c_str());
+        JAMI_ERR("Failed to get all moderators, account %s not found", accountID.c_str());
         return true; // Default value
     }
     return acc->isAllModerators();

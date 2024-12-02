@@ -1949,7 +1949,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 ConversationMode
 ConversationRepository::Impl::mode() const
 {
-    // If already retrieven, return it, else get it from first commit
+    // If already retrieved, return it, else get it from first commit
     if (mode_ != std::nullopt)
         return *mode_;
 
