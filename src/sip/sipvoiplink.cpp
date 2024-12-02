@@ -1525,7 +1525,7 @@ SIPVoIPLink::resolveSrvName(const std::string& name,
         token, [=, cb = std::move(cb)](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
-                    JAMI_WARN("Unable to resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.",
+                    JAMI_WARN("Unable to resolve \"%s\" using pjsip_endpt_resolve, attempting getaddrinfo.",
                               name.c_str());
                     dht::ThreadPool::io().run([=, cb = std::move(cb)]() {
                         auto ips = dhtnet::ip_utils::getAddrList(name.c_str());

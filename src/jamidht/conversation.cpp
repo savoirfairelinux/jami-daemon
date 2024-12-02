@@ -1880,7 +1880,7 @@ Conversation::Impl::pull(const std::string& deviceId)
 
         bool commitFound = false;
         if (commitId != "") {
-            // If `commitId` is non-empty, then we were trying to pull a specific commit.
+            // If `commitId` is non-empty, then we were attempting to pull a specific commit.
             // We need to check if we actually got it; the fact that the fetch above was
             // successful doesn't guarantee that we did.
             for (const auto& commit : commits) {
@@ -1895,11 +1895,11 @@ Conversation::Impl::pull(const std::string& deviceId)
         if (!commitFound)
             JAMI_WARNING("Successfully fetched from device {} but didn't receive expected commit {}",
                          deviceId, commitId);
-        // WARNING: If its argument is `true`, this callback will try to send a message notification
+        // WARNING: If its argument is `true`, this callback will attempt to send a message notification
         //          for commit `commitId` to other members of the swarm. It's important that we only
         //          send these notifications if we actually have the commit. Otherwise, we can end up
         //          in a situation where the members of the swarm keep sending notifications to each
-        //          other for a commit that none of them have (note that we cannot rule this out, as
+        //          other for a commit that none of them have (note that we are unable to rule this out, as
         //          nothing prevents a malicious user from intentionally sending a notification with
         //          a fake commit ID).
         if (cb)
@@ -2414,7 +2414,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
         return;
     // Here, we bootstrap the DRT with devices who already wrote in the conversation
-    // If this doesn't work, it will try to fallback with checkBootstrapMember
+    // If this doesn't work, it will attempt to fallback with checkBootstrapMember
     // If it works, the callback onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstraped);
     std::vector<DeviceId> devices = knownDevices;
