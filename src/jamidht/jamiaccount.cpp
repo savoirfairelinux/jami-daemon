@@ -112,7 +112,7 @@ static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
 static constexpr auto TREATED_PATH = "treatedImMessages"sv;
 
-// Used to pass infos to a pjsip callback (pjsip_endpt_send_request)
+// Used to pass info to a pjsip callback (pjsip_endpt_send_request)
 struct TextMessageCtx
 {
     std::weak_ptr<JamiAccount> acc;
@@ -459,7 +459,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri,
                 } catch (const VoipLinkException&) {
                     // In this case, the main scenario is that SIPStartCall failed because
                     // the ICE is dead and the TLS session didn't send any packet on that dead
-                    // link (connectivity change, killed by the os, etc)
+                    // link (connectivity change, killed by the operating system, etc)
                     // Here, we don't need to do anything, the TLS will fail and will delete
                     // the cached transport
                     continue;
@@ -741,8 +741,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         [wCall](bool ok) {
             if (not ok) {
                 if (auto call = wCall.lock()) {
-                    JAMI_WARNING("[call:{}] no devices found", call->getCallId());
-                    // Note: if a p2p connection exists, the call will be at least in CONNECTING
+                    JAMI_WARNING("[call:{}] No devices found", call->getCallId());
+                    // Note: if a P2P connection exists, the call will be at least in CONNECTING
                     if (call->getConnectionState() == Call::ConnectionState::TRYING)
                         call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
                 }
@@ -757,7 +757,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 {
     if (!call)
         return;
-    JAMI_LOG("[call:{}] outgoing call connected to {}", call->getCallId(), to_id);
+    JAMI_LOG("[call:{}] Outgoing call connected to {}", call->getCallId(), to_id);
 
     const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(),
                                                                  target.getFamily());
@@ -784,7 +784,7 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     auto mediaAttrList = call->getMediaAttributeList();
 
     if (mediaAttrList.empty()) {
-        JAMI_ERROR("[call:{}] no media. Abort!", call->getCallId());
+        JAMI_ERROR("[call:{}] No media. Abort!", call->getCallId());
         return;
     }
 
@@ -835,7 +835,7 @@ JamiAccount::SIPStartCall(SIPCall& call, const dhtnet::IpAddr& target)
     auto contact = call.getContactHeader();
     auto pjContact = sip_utils::CONST_PJ_STR(contact);
 
-    JAMI_LOG("[call:{}] contact header: {} / {} -> {} / {}",
+    JAMI_LOG("[call:{}] Contact header: {} / {} -> {} / {}",
              call.getCallId(),
              contact,
              from,
@@ -1116,7 +1116,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    JAMI_DEBUG("[Account {:s}] loading account", getAccountID());
+    JAMI_DEBUG("[Account {:s}] Loading account", getAccountID());
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
             if (!id_.first)
@@ -1253,9 +1253,9 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             // normal loading path
             id_ = std::move(id);
             config_->username = info->accountId;
-            JAMI_WARNING("[Account {:s}] loaded account identity", getAccountID());
+            JAMI_WARNING("[Account {:s}] Loaded account identity", getAccountID());
             if (info->identity.first->getPublicKey().getLongId() != oldIdentity) {
-                JAMI_WARNING("[Account {:s}] identity changed", getAccountID());
+                JAMI_WARNING("[Account {:s}] Identity changed", getAccountID());
                 {
                     std::lock_guard lk(moduleMtx_);
                     convModule_.reset();
@@ -1405,7 +1405,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 callbacks);
         }
     } catch (const std::exception& e) {
-        JAMI_WARNING("[Account {}] error loading account: {}", getAccountID(), e.what());
+        JAMI_WARNING("[Account {}] Error loading account: {}", getAccountID(), e.what());
         accountManager_.reset();
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
@@ -1558,7 +1558,7 @@ JamiAccount::registerAsyncOps()
                 auto& dhtMap = accPtr->dhtUpnpMapping_;
                 const auto& accId = accPtr->getAccountID();
 
-                JAMI_LOG("[Account {:s}] DHT UPNP mapping changed to {:s}",
+                JAMI_LOG("[Account {:s}] DHT UPnP mapping changed to {:s}",
                          accId,
                          mapRes->toString(true));
 
@@ -1634,7 +1634,7 @@ JamiAccount::doRegister()
         return;
     }
 
-    JAMI_LOG("[Account {:s}] Starting account..", getAccountID());
+    JAMI_LOG("[Account {:s}] Starting account…", getAccountID());
 
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, unable to register
@@ -1812,7 +1812,7 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
     auto& state = presenceState_[id];
     if (state > PresenceState::DISCONNECTED) {
         if (state == PresenceState::CONNECTED) {
-            JAMI_WARNING("Buddy {} is not present on the DHT, but p2p connected", id);
+            JAMI_WARNING("Buddy {} is not present on the DHT, but P2P connected", id);
         }
         state = PresenceState::DISCONNECTED;
         emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
@@ -1827,7 +1827,7 @@ void
 JamiAccount::doRegister_()
 {
     if (registrationState_ != RegistrationState::TRYING) {
-        JAMI_ERROR("[Account {}] already registered", getAccountID());
+        JAMI_ERROR("[Account {}] Already registered", getAccountID());
         return;
     }
 
@@ -1885,7 +1885,7 @@ JamiAccount::doRegister_()
             config.proxy_server = proxyServerCached_;
 
         if (not config.proxy_server.empty()) {
-            JAMI_LOG("[Account {}] using proxy server {}", getAccountID(), config.proxy_server);
+            JAMI_LOG("[Account {}] Using proxy server {}", getAccountID(), config.proxy_server);
             if (not config.push_token.empty()) {
                 JAMI_LOG(
                     "[Account {}] using push notifications with platform: {}, topic: {}, token: {}",
@@ -1900,7 +1900,7 @@ JamiAccount::doRegister_()
         if (conf.accountPeerDiscovery or conf.accountPublish) {
             peerDiscovery_ = std::make_shared<dht::PeerDiscovery>();
             if (conf.accountPeerDiscovery) {
-                JAMI_LOG("[Account {}] starting Jami account discovery…", getAccountID());
+                JAMI_LOG("[Account {}] Starting Jami account discovery…", getAccountID());
                 startAccountDiscovery();
             }
             if (conf.accountPublish)
@@ -2061,7 +2061,7 @@ JamiAccount::doRegister_()
                     auto remoteDevice = name.substr(6, sep - 6);
 
                     if (channel->isInitiator()) {
-                        // Check if wanted remote it's our side (git://remoteDevice/conversationId)
+                        // Check if wanted remote is our side (git://remoteDevice/conversationId)
                         return;
                     }
 
@@ -2366,7 +2366,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
     }
 
-    JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
+    JAMI_WARN("[Account %s] Unregistering account %p", getAccountID().c_str(), this);
     dht_->shutdown(
         [&] {
             JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
@@ -2381,13 +2381,13 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         pendingCalls_.clear();
     }
 
-    // Stop all current p2p connections if account is disabled
+    // Stop all current P2P connections if account is disabled
     // Else, we let the system managing if the co is down or not
     // NOTE: this is used for changing account's config.
     if (not isEnabled())
         shutdownConnections();
 
-    // Release current upnp mapping if any.
+    // Release current UPnP mapping if any.
     if (upnpCtrl_ and dhtUpnpMapping_.isValid()) {
         upnpCtrl_->releaseMapping(dhtUpnpMapping_);
     }
@@ -2416,15 +2416,15 @@ JamiAccount::setRegistrationState(RegistrationState state,
 {
     if (registrationState_ != state) {
         if (state == RegistrationState::REGISTERED) {
-            JAMI_WARNING("[Account {}] connected", getAccountID());
+            JAMI_WARNING("[Account {}] Connected", getAccountID());
             turnCache_->refresh();
             if (connectionManager_)
                 connectionManager_->storeActiveIpAddress();
         } else if (state == RegistrationState::TRYING) {
-            JAMI_WARNING("[Account {}] connecting…", getAccountID());
+            JAMI_WARNING("[Account {}] Connecting…", getAccountID());
         } else {
             deviceAnnounced_ = false;
-            JAMI_WARNING("[Account {}] disconnected", getAccountID());
+            JAMI_WARNING("[Account {}] Disconnected", getAccountID());
         }
     }
     // Update registrationState_ & emit signals
@@ -2600,7 +2600,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
                         } else {
                             try {
                                 if (std::filesystem::exists(cachePath)) {
-                                    JAMI_WARNING("Failed to download url, using cached data");
+                                    JAMI_WARNING("Failed to download URL, using cached data");
                                     std::string data;
                                     {
                                         std::lock_guard lk(
