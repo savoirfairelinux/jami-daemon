@@ -915,7 +915,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 
     if (not inviteSession_->neg) {
         // We are answering to an INVITE that did not include a media offer (SDP).
-        // The SIP specification (RFCs 3261/6337) requires that if a UA wishes to
+        // The SIP specification (RFCs 3261/6337) requires that if a UA wants to
         // proceed with the call, it must provide a media offer (SDP) if the initial
         // INVITE did not offer one. In this case, the SDP offer will be included in
         // the SIP OK (200) answer. The peer UA will then include its SDP answer in
