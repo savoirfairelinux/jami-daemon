@@ -26,14 +26,14 @@
 namespace jami {
 
 void
-AccountArchive::deserialize(const std::vector<uint8_t>& dat, const std::vector<uint8_t>& salt)
+AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& salt)
 {
     JAMI_DEBUG("Loading account archive ({:d} bytes)", dat.size());
 
     password_salt = salt;
 
     // Decode string
-    auto* char_data = reinterpret_cast<const char*>(&dat[0]);
+    auto* char_data = dat.data(); // reinterpret_cast<const char*>(&dat[0]);
     std::string err;
     Json::Value value;
     Json::CharReaderBuilder rbuilder;
@@ -52,8 +52,10 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat, const std::vector<u
                 if (key.empty())
                     continue;
                 if (key.compare(libjami::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
-                } else if (key.compare(libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
-                } else if (key.compare(libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::TLS::PRIVATE_KEY_FILE)
+                           == 0) {
+                } else if (key.compare(libjami::Account::ConfProperties::TLS::CERTIFICATE_FILE)
+                           == 0) {
                 } else if (key.compare(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL) == 0) {
                 } else if (key.compare(libjami::Account::ConfProperties::AUTOANSWER) == 0) {
                 } else if (key.compare(libjami::Account::ConfProperties::PROXY_ENABLED) == 0) {

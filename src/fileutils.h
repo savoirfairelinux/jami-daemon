@@ -55,8 +55,9 @@ const std::filesystem::path& get_data_dir();
 const std::filesystem::path& get_cache_dir();
 
 /**
- * Set the program's resource directory path. This is used for clients that may be installed in different
- * locations and are deployed with ringtones and other resources in an application relative directory.
+ * Set the program's resource directory path. This is used for clients that may be installed in
+ * different locations and are deployed with ringtones and other resources in an application
+ * relative directory.
  * @param resource_dir_path The path to the ringtone directory.
  */
 LIBJAMI_PUBLIC void set_resource_dir_path(const std::filesystem::path& resourceDirPath);
@@ -88,7 +89,9 @@ std::string getCleanPath(const std::string& base, const std::string& path);
 std::filesystem::path getFullPath(const std::filesystem::path& base,
                                   const std::filesystem::path& path);
 
-bool createFileLink(const std::filesystem::path& src, const std::filesystem::path& dest, bool hard = false);
+bool createFileLink(const std::filesystem::path& src,
+                    const std::filesystem::path& dest,
+                    bool hard = false);
 
 std::string_view getFileExtension(std::string_view filename);
 
@@ -103,7 +106,10 @@ std::vector<uint8_t> loadFile(const std::filesystem::path& path,
 std::string loadTextFile(const std::filesystem::path& path,
                          const std::filesystem::path& default_dir = {});
 
-void saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t mode = 0644);
+void saveFile(const std::filesystem::path& path,
+              const uint8_t* data,
+              size_t data_size,
+              mode_t mode = 0644);
 inline void
 saveFile(const std::filesystem::path& path, const std::vector<uint8_t>& data, mode_t mode = 0644)
 {
@@ -112,22 +118,27 @@ saveFile(const std::filesystem::path& path, const std::vector<uint8_t>& data, mo
 
 std::vector<uint8_t> loadCacheFile(const std::filesystem::path& path,
                                    std::chrono::system_clock::duration maxAge);
-std::string loadCacheTextFile(const std::filesystem::path& path, std::chrono::system_clock::duration maxAge);
+std::string loadCacheTextFile(const std::filesystem::path& path,
+                              std::chrono::system_clock::duration maxAge);
 
 static constexpr auto ARCHIVE_AUTH_SCHEME_NONE = ""sv;
 static constexpr auto ARCHIVE_AUTH_SCHEME_PASSWORD = "password"sv;
 static constexpr auto ARCHIVE_AUTH_SCHEME_KEY = "key"sv;
 
-struct ArchiveStorageData {
-    std::vector<uint8_t> data;
+struct ArchiveStorageData
+{
+    std::string data;
     std::vector<uint8_t> salt;
 };
-ArchiveStorageData readArchive(const std::filesystem::path& path, std::string_view scheme, const std::string& pwd);
+ArchiveStorageData readArchive(const std::filesystem::path& path,
+                               std::string_view scheme,
+                               const std::string& pwd);
 
 void writeArchive(const std::string& data,
                   const std::filesystem::path& path,
                   std::string_view scheme,
-                  const std::string& password = {}, const std::vector<uint8_t>& password_salt = {});
+                  const std::string& password = {},
+                  const std::vector<uint8_t>& password_salt = {});
 
 int64_t size(const std::filesystem::path& path);
 
