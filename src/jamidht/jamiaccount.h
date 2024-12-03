@@ -328,8 +328,22 @@ public:
     void getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const noexcept;
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
-    /* Devices */
-    void addDevice(const std::string& password);
+    /* Devices - existing device */
+    /**
+     * Initiates the process of adding a new device to this account
+     * @param uriProvided The URI provided by the new device to be added
+     * @return A positive operation ID if successful, or a negative value indicating an AddDeviceError:
+     *         - INVALID_URI (-1): The provided URI is invalid
+     *         - ALREADY_LINKING (-2): A device linking operation is already in progress
+     *         - GENERIC (-3): A generic error occurred during the process
+     */
+    int32_t addDevice(const std::string& uriProvided);
+    bool cancelAddDevice(uint32_t op_token);
+    bool confirmAddDevice(uint32_t op_token);
+    /* Devices - new device */
+    bool provideAccountAuthentication(const std::string& credentialsFromUser,
+                                      const std::string& scheme);
+
     /**
      * Export the archive to a file
      * @param destinationPath
@@ -426,7 +440,10 @@ public:
      * @param avatar Current or new avatar
      * @param flag  0 for path to avatar, 1 for base64 avatar
      */
-    void updateProfile(const std::string& displayName, const std::string& avatar, const std::string& fileType, int32_t flag) override;
+    void updateProfile(const std::string& displayName,
+                       const std::string& avatar,
+                       const std::string& fileType,
+                       int32_t flag) override;
 
 #ifdef LIBJAMI_TESTABLE
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
@@ -624,9 +641,9 @@ private:
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
      */
-    static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
-                                                                      const std::string& pin,
-                                                                      bool previous = false);
+    /* static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string&
+       password, const std::string& pin, bool previous = false);
+                                      */
 
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
@@ -846,7 +863,7 @@ private:
                                   const DeviceId& deviceId,
                                   const std::string& connectionType);
 
-            // File transfers
+    // File transfers
     std::mutex transfersMtx_ {};
     std::set<std::string> incomingFileTransfers_ {};
 

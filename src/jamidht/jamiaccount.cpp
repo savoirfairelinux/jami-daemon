@@ -33,6 +33,7 @@
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
 #include "message_channel_handler.h"
+#include "auth_channel_handler.h"
 #include "transfer_channel_handler.h"
 #include "swarm/swarm_channel_handler.h"
 #include "jami/media_const.h"
@@ -986,27 +987,50 @@ JamiAccount::getPasswordKey(const std::string& password)
     return accountManager_ ? accountManager_->getPasswordKey(password) : std::vector<uint8_t>();
 }
 
-void
-JamiAccount::addDevice(const std::string& password)
+bool
+JamiAccount::provideAccountAuthentication(const std::string& credentialsFromUser,
+                                          const std::string& scheme)
 {
-    if (not accountManager_) {
-        emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-        return;
+    if (auto manager = std::dynamic_pointer_cast<ArchiveAccountManager>(accountManager_)) {
+        return manager->provideAccountAuthentication(credentialsFromUser, scheme);
     }
-    accountManager_
-        ->addDevice(password, [this](AccountManager::AddDeviceResult result, std::string pin) {
-            switch (result) {
-            case AccountManager::AddDeviceResult::SUCCESS_SHOW_PIN:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 0, pin);
-                break;
-            case AccountManager::AddDeviceResult::ERROR_CREDENTIALS:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 1, "");
-                break;
-            case AccountManager::AddDeviceResult::ERROR_NETWORK:
-                emitSignal<libjami::ConfigurationSignal::ExportOnRingEnded>(getAccountID(), 2, "");
-                break;
-            }
-        });
+    JAMI_ERR("[LinkDevice] Invalid AccountManager instance while providing current account "
+             "authentication.");
+    return false;
+}
+
+int32_t
+JamiAccount::addDevice(const std::string& uriProvided)
+{
+    JAMI_LOG("[LinkDevice] JamiAccount::addDevice({}, {})", getAccountID(), uriProvided);
+    if (not accountManager_) {
+        JAMI_ERR("[LinkDevice] Invalid AccountManager instance while adding a device.");
+        return static_cast<int32_t>(AccountManager::AddDeviceError::GENERIC);
+    }
+    auto authHandler = channelHandlers_.find(Uri::Scheme::AUTH);
+    if (authHandler == channelHandlers_.end())
+        return static_cast<int32_t>(AccountManager::AddDeviceError::GENERIC);
+    return accountManager_->addDevice(uriProvided,
+                                      config().archiveHasPassword
+                                          ? fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD
+                                          : fileutils::ARCHIVE_AUTH_SCHEME_NONE,
+                                      (AuthChannelHandler*) authHandler->second.get());
+}
+
+bool
+JamiAccount::cancelAddDevice(uint32_t op_token)
+{
+    if (!accountManager_)
+        return false;
+    return accountManager_->cancelAddDevice(op_token);
+}
+
+bool
+JamiAccount::confirmAddDevice(uint32_t op_token)
+{
+    if (!accountManager_)
+        return false;
+    return accountManager_->confirmAddDevice(op_token);
 }
 
 bool
@@ -1269,6 +1293,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
+            convModule()->loadConversations();
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
@@ -1289,22 +1314,27 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (conf.managerUri.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
                 auto archivePath = fileutils::getFullPath(idPath_, conf.archivePath);
-                bool hasArchive = std::filesystem::is_regular_file(archivePath);
+                // bool hasArchive = std::filesystem::is_regular_file(archivePath);
 
-                if (not archive_path.empty()) {
+                if (!archive_path.empty()) {
                     // Importing external archive
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
-                } else if (not archive_pin.empty()) {
+                } else if (!conf.archive_url.empty() && conf.archive_url == "jami-auth") {
+                    // Importing over a Peer2Peer TLS connection with DHT as DNS
+                    JAMI_DEBUG("[JamiAccount] [LinkDevice] scheme p2p & uri {}", conf.archive_url);
+                    acreds->scheme = "p2p";
+                    acreds->uri = conf.archive_url;
+                } else if (!archive_pin.empty()) {
                     // Importing from DHT
                     acreds->scheme = "dht";
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
                     acreds->dhtPort = dhtPortUsed();
-                } else if (hasArchive) {
+                } else if (std::filesystem::is_regular_file(archivePath)) {
                     // Migrating local account
                     acreds->scheme = "local";
-                    acreds->uri = std::move(archivePath).string();
+                    acreds->uri = archivePath.string();
                     acreds->updateIdentity = id;
                     migrating = true;
                 }
@@ -1320,6 +1350,11 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 creds->password_scheme = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
             else
                 creds->password_scheme = archive_password_scheme;
+
+            JAMI_WARNING("[Account {}] initAuthentication {} {}",
+                         getAccountID(),
+                         fmt::ptr(this),
+                         fmt::ptr(accountManager_));
 
             accountManager_->initAuthentication(
                 getAccountID(),
@@ -1673,7 +1708,8 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
         buddyUri = parseJamiUri(buddy_id);
     } catch (...) {
         JAMI_ERROR("[Account {:s}] Failed to track presence: invalid URI {:s}",
-                 getAccountID(), buddy_id);
+                   getAccountID(),
+                   buddy_id);
         return;
     }
     JAMI_LOG("[Account {:s}] {:s} presence for {:s}",
@@ -1794,7 +1830,10 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
             }
 
             if (payload.size() >= 64000) {
-                JAMI_WARNING("[Account {:s}] Trust request for contact {:s} is too big, reset payload", getAccountID(), id);
+                JAMI_WARNING(
+                    "[Account {:s}] Trust request for contact {:s} is too big, reset payload",
+                    getAccountID(),
+                    id);
                 payload.clear();
             }
 
@@ -1811,7 +1850,9 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
     auto& state = presenceState_[id];
     if (state > PresenceState::DISCONNECTED) {
         if (state == PresenceState::CONNECTED) {
-            JAMI_WARNING("[Account {:s}] Buddy {} is not present on the DHT, but P2P connected", getAccountID(), id);
+            JAMI_WARNING("[Account {:s}] Buddy {} is not present on the DHT, but P2P connected",
+                         getAccountID(),
+                         id);
         }
         state = PresenceState::DISCONNECTED;
         emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
@@ -4443,6 +4484,8 @@ JamiAccount::initConnectionManager()
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::MESSAGE]
             = std::make_unique<MessageChannelHandler>(shared(), *connectionManager_.get());
+        channelHandlers_[Uri::Scheme::AUTH]
+            = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
 #if TARGET_OS_IOS
         connectionManager_->oniOSConnected([&](const std::string& connType, dht::InfoHash peer_h) {
