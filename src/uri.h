@@ -37,6 +37,7 @@ public:
         DATA_TRANSFER, // Start with "data-transfer://"
         SYNC,          // Start with "sync:"
         MESSAGE,       // Start with "msg:"
+        AUTH,          // Start with "auth:"
         UNRECOGNIZED   // Anything that doesn't fit in other categories
     };
 

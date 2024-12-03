@@ -21,7 +21,6 @@ Persistent<Function> activeCallsChangedCb;
 Persistent<Function> incomingTrustRequestCb;
 Persistent<Function> contactAddedCb;
 Persistent<Function> contactRemovedCb;
-Persistent<Function> exportOnRingEndedCb;
 Persistent<Function> nameRegistrationEndedCb;
 Persistent<Function> knownDevicesChangedCb;
 Persistent<Function> registeredNameFoundCb;
@@ -56,6 +55,8 @@ Persistent<Function> accountProfileReceivedCb;
 Persistent<Function> profileReceivedCb;
 Persistent<Function> userSearchEndedCb;
 Persistent<Function> deviceRevocationEndedCb;
+Persistent<Function> deviceAuthStateChangedCb;
+Persistent<Function> addDeviceStateChangedCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -89,8 +90,6 @@ getPresistentCb(std::string_view signal)
         return &contactAddedCb;
     else if (signal == "ContactRemoved")
         return &contactRemovedCb;
-    else if (signal == "ExportOnRingEnded")
-        return &exportOnRingEndedCb;
     else if (signal == "NameRegistrationEnded")
         return &nameRegistrationEndedCb;
     else if (signal == "KnownDevicesChanged")
@@ -159,6 +158,10 @@ getPresistentCb(std::string_view signal)
         return &userSearchEndedCb;
     else if (signal == "DeviceRevocationEnded")
         return &deviceRevocationEndedCb;
+    else if (signal == "DeviceAuthStateChanged")
+        return &deviceAuthStateChangedCb;
+    else if (signal == "AddDeviceStateChanged")
+        return &addDeviceStateChangedCb;
     else
         return nullptr;
 }
@@ -413,23 +416,6 @@ contactRemoved(const std::string& accountId, const std::string& uri, bool banned
 }
 
 void
-exportOnRingEnded(const std::string& accountId, int state, const std::string& pin)
-{
-    std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, state, pin]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), exportOnRingEndedCb);
-        if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
-                                            SWIGV8_INTEGER_NEW(state),
-                                            V8_STRING_NEW_LOCAL(pin)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
-        }
-    });
-
-    uv_async_send(&signalAsync);
-}
-
-void
 nameRegistrationEnded(const std::string& accountId, int state, const std::string& name)
 {
     std::lock_guard lock(pendingSignalsLock);
@@ -596,6 +582,41 @@ deviceRevocationEnded(const std::string& accountId,const std::string& device, in
         }
     });
 
+    uv_async_send(&signalAsync);
+}
+
+deviceAuthStateChanged(const std::string& accountId, int state, const std::map<std::string, std::string>& details)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, state, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), deviceAuthStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_OBJECT jsMap = stringMapToJsMap(details);
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
+addDeviceStateChanged(const std::string& accountId, uint32_t opId, int state, const std::map<std::string, std::string>& details)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, opId, state, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), addDeviceStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_OBJECT jsMap = stringMapToJsMap(details);
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW_UNS(opId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
     uv_async_send(&signalAsync);
 }
 
