@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(jami-core
-    VERSION 15.3.0
+    VERSION 16.0.0
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 set (CMAKE_CXX_STANDARD 17)
@@ -851,6 +851,10 @@ else()
         target_link_libraries(ut_base64 ut_library)
         add_test(NAME base64 COMMAND ut_base64)
 
+        add_executable(ut_linkdevice test/unitTest/linkdevice/linkdevice.cpp)
+        target_link_libraries(ut_linkdevice ut_library)
+        add_test(NAME linkdevice COMMAND ut_linkdevice)
+
         if (JAMI_VIDEO)
             add_executable(ut_ice_sdp_parser test/unitTest/ice/ice_sdp_parser.cpp)
             target_link_libraries(ut_ice_sdp_parser ut_library)
@@ -992,6 +996,14 @@ else()
         add_executable(ut_test_audio_frame_resizer test/unitTest/media/audio/test_audio_frame_resizer.cpp)
         target_link_libraries(ut_test_audio_frame_resizer ut_library)
         add_test(NAME test_audio_frame_resizer COMMAND ut_test_audio_frame_resizer)
+
+        # add_executable(ut_test_media_filter test/unitTest/media/test_media_filter.cpp)
+        # target_link_libraries(ut_test_media_filter ut_library)
+        # add_test(NAME test_media_filter COMMAND ut_test_media_filter)
+
+        # add_executable(ut_test_media_player test/unitTest/media/test_media_player.cpp)
+        # target_link_libraries(ut_test_media_player ut_library)
+        # add_test(NAME test_media_player COMMAND ut_test_media_player)
 
         if (JAMI_PLUGIN)
             add_executable(ut_plugins test/unitTest/plugins/plugins.cpp)

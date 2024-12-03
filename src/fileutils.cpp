@@ -123,7 +123,7 @@ namespace fileutils {
 static std::filesystem::path resource_dir_path;
 
 void
-set_resource_dir_path(const std::filesystem::path&  resourceDirPath)
+set_resource_dir_path(const std::filesystem::path& resourceDirPath)
 {
     resource_dir_path = resourceDirPath;
 }
@@ -219,7 +219,8 @@ createFileLink(const std::filesystem::path& linkFile, const std::filesystem::pat
         return true;
     std::error_code ec;
     if (std::filesystem::exists(linkFile, ec)) {
-        if (std::filesystem::is_symlink(linkFile, ec) && std::filesystem::read_symlink(linkFile, ec) == target)
+        if (std::filesystem::is_symlink(linkFile, ec)
+            && std::filesystem::read_symlink(linkFile, ec) == target)
             return true;
         std::filesystem::remove(linkFile, ec);
     }
@@ -364,46 +365,51 @@ readArchive(const std::filesystem::path& path, std::string_view scheme, const st
         }
     };
 
-    ArchiveStorageData ret;
+    std::vector<uint8_t> fileContent;
 
     // Read file
     try {
-        ret.data = dhtnet::fileutils::loadFile(path);
+        fileContent = dhtnet::fileutils::loadFile(path);
     } catch (const std::exception& e) {
         JAMI_ERR("Error loading archive: %s", e.what());
         throw e;
     }
 
-    if (isUnencryptedGzip(ret.data)) {
+    if (isUnencryptedGzip(fileContent)) {
         if (!pwd.empty())
             JAMI_WARNING("A gunzip in a gunzip is detected. A webserver may have a bad config");
-        decompress(ret.data);
+        decompress(fileContent);
     }
+
+    ArchiveStorageData ret;
+    // ret.data = {fileContent.data(), fileContent.data()+fileContent.size()};
 
     if (!pwd.empty()) {
         // Decrypt
         if (scheme == ARCHIVE_AUTH_SCHEME_KEY) {
             try {
-                ret.salt = dht::crypto::aesGetSalt(ret.data);
-                ret.data = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(ret.data), base64::decode(pwd));
+                ret.salt = dht::crypto::aesGetSalt(fileContent);
+                fileContent = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(fileContent),
+                                                      base64::decode(pwd));
             } catch (const std::exception& e) {
                 JAMI_ERROR("Error decrypting archive: {}", e.what());
                 throw e;
             }
         } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD) {
             try {
-                ret.salt = dht::crypto::aesGetSalt(ret.data);
-                ret.data = dht::crypto::aesDecrypt(ret.data, pwd);
+                ret.salt = dht::crypto::aesGetSalt(fileContent);
+                fileContent = dht::crypto::aesDecrypt(fileContent, pwd);
             } catch (const std::exception& e) {
                 JAMI_ERROR("Error decrypting archive: {}", e.what());
                 throw e;
             }
         }
-        decompress(ret.data);
-    } else if (isUnencryptedGzip(ret.data)) {
+        decompress(fileContent);
+    } else if (isUnencryptedGzip(fileContent)) {
         JAMI_WARNING("A gunzip in a gunzip is detected. A webserver may have a bad config");
-        decompress(ret.data);
+        decompress(fileContent);
     }
+    ret.data = {fileContent.data(), fileContent.data() + fileContent.size()};
     return ret;
 }
 
@@ -429,7 +435,10 @@ writeArchive(const std::string& archive_str,
     } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD and not password.empty()) {
         // Encrypt using provided password
         try {
-            saveFile(path, dht::crypto::aesEncrypt(archiver::compress(archive_str), password, password_salt));
+            saveFile(path,
+                     dht::crypto::aesEncrypt(archiver::compress(archive_str),
+                                             password,
+                                             password_salt));
         } catch (const std::runtime_error& ex) {
             JAMI_ERROR("Export failed: {}", ex.what());
             return;
