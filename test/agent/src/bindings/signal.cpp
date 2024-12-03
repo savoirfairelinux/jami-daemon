@@ -208,8 +208,10 @@ install_signal_primitives(void*)
     add_handler<libjami::CallSignal::RecordPlaybackFilepath, const std::string&, const std::string&>(
         handlers, "record-playback-filepath");
 
-    add_handler<libjami::CallSignal::ConferenceCreated, const std::string&, const std::string&, const std::string&>(
-        handlers, "conference-created");
+    add_handler<libjami::CallSignal::ConferenceCreated,
+                const std::string&,
+                const std::string&,
+                const std::string&>(handlers, "conference-created");
 
     add_handler<libjami::CallSignal::ConferenceChanged,
                 const std::string&,
@@ -322,11 +324,6 @@ install_signal_primitives(void*)
                 const std::string&,
                 const std::string&,
                 bool>(handlers, "contact-removed");
-
-    add_handler<libjami::ConfigurationSignal::ExportOnRingEnded,
-                const std::string&,
-                int,
-                const std::string&>(handlers, "export-on-ring-ended");
 
     add_handler<libjami::ConfigurationSignal::NameRegistrationEnded,
                 const std::string&,
