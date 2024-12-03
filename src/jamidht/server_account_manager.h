@@ -98,7 +98,6 @@ private:
     TokenScope tokenScope_ {};
     std::chrono::steady_clock::time_point tokenExpire_ {
         std::chrono::steady_clock::time_point::min()};
-    unsigned authErrorCount {0};
 
     using RequestQueue = std::queue<std::shared_ptr<dht::http::Request>>;
     RequestQueue pendingDeviceRequests_;
