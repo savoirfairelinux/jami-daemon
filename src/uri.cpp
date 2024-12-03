@@ -45,6 +45,8 @@ Uri::Uri(std::string_view uri)
             scheme_ = Uri::Scheme::SYNC;
         else if (scheme_str == "msg")
             scheme_ = Uri::Scheme::MESSAGE;
+        else if (scheme_str == "auth")
+            scheme_ = Uri::Scheme::AUTH;
         else
             scheme_ = Uri::Scheme::UNRECOGNIZED;
         authority_ = uri.substr(posSep + 1);
@@ -91,6 +93,8 @@ Uri::schemeToString() const
         return "sync"sv;
     case Uri::Scheme::MESSAGE:
         return "msg"sv;
+    case Uri::Scheme::AUTH:
+        return "auth"sv;
     case Uri::Scheme::JAMI:
     case Uri::Scheme::UNRECOGNIZED:
     default:
