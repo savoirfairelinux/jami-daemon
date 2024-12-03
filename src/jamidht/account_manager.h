@@ -33,6 +33,8 @@
 #include <string>
 #include <filesystem>
 
+#include <dhtnet/multiplexed_socket.h>
+
 namespace dht {
 class DhtRunner;
 }
@@ -41,6 +43,7 @@ namespace jami {
 
 using DeviceId = dht::PkId;
 struct AccountArchive;
+class AuthChannelHandler;
 
 struct AccountInfo
 {
@@ -67,7 +70,7 @@ dynamic_unique_cast(std::unique_ptr<From>&& p)
     return {};
 }
 
-class AccountManager: public std::enable_shared_from_this<AccountManager>
+class AccountManager : public std::enable_shared_from_this<AccountManager>
 {
 public:
     using OnChangeCallback = ContactList::OnChangeCallback;
@@ -76,7 +79,9 @@ public:
     using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
     using OnDeviceAnnouncedCb = std::function<void()>;
 
-    AccountManager(const std::string& accountId, const std::filesystem::path& path, const std::string& nameServer)
+    AccountManager(const std::string& accountId,
+                   const std::filesystem::path& path,
+                   const std::string& nameServer)
         : accountId_(accountId)
         , path_(path)
         , nameDir_(NameDirectory::instance(nameServer)) {};
@@ -138,7 +143,9 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence = true);
+    virtual void startSync(const OnNewDeviceCb& cb,
+                           const OnDeviceAnnouncedCb& dcb,
+                           bool publishPresence = true);
 
     const AccountInfo* getInfo() const { return info_.get(); }
 
@@ -146,21 +153,34 @@ public:
 
     // Device management
 
-    enum class AddDeviceResult {
-        SUCCESS_SHOW_PIN = 0,
-        ERROR_CREDENTIALS,
-        ERROR_NETWORK,
-    };
-    using AddDeviceCallback = std::function<void(AddDeviceResult, std::string pin)>;
+    enum class AddDeviceError { INVALID_URI = -1, ALREADY_LINKING = -2, GENERIC = -3 };
 
     enum class RevokeDeviceResult {
         SUCCESS = 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
     };
+
     using RevokeDeviceCallback = std::function<void(RevokeDeviceResult)>;
 
-    virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
+    /**
+     * Initiates the process of adding a new device to the account
+     * @param uri The URI provided by the new device to be added
+     * @param auth_scheme The auth scheme (currently only "password" is expected)
+     * @param chanel
+     * @return A positive operation ID if successful, or a negative value indicating an AddDeviceError:
+     *         - INVALID_URI (-1): The provided URI is invalid
+     *         - ALREADY_LINKING (-2): A device linking operation is already in progress
+     *         - GENERIC (-3): A generic error occurred during the process
+     */
+    virtual int32_t addDevice(const std::string& /*uri*/,
+                              std::string_view /*auth_scheme*/,
+                              AuthChannelHandler*)
+    {
+        return 0;
+    };
+    virtual bool cancelAddDevice(uint32_t /*token*/) { return false; };
+    virtual bool confirmAddDevice(uint32_t /*token*/) { return false; };
     virtual bool revokeDevice(const std::string& /*device*/,
                               std::string_view /*scheme*/,
                               const std::string& /*password*/,
@@ -195,7 +215,8 @@ public:
      * Returns true only if the device certificate is a valid device certificate.
      * In that case (true is returned) the account_id parameter is set to the peer account ID.
      */
-    static bool foundPeerDevice(const std::string& accoundId, const std::shared_ptr<dht::crypto::Certificate>& crt,
+    static bool foundPeerDevice(const std::string& accoundId,
+                                const std::shared_ptr<dht::crypto::Certificate>& crt,
                                 dht::InfoHash& account_id);
 
     // Contact requests
@@ -236,11 +257,13 @@ public:
         const dht::PkId& h,
         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
-    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id,
+                              dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                               dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(
+        dhtnet::tls::TrustStore::PermissionStatus status);
     dhtnet::tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;
     bool isAllowed(const crypto::Certificate& crt, bool allowPublic = false);
 

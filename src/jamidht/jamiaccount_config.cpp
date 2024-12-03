@@ -104,7 +104,9 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    parseValueOptional(node, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
+    parseValueOptional(node,
+                       libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS,
+                       dhtPublicInCalls);
 
     parsePathOptional(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath, path);
     parseValueOptional(node,
@@ -160,12 +162,14 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
               allowPeersFromTrusted ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::PROXY_LIST_ENABLED,
+              proxyListEnabled ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
     a.emplace(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS,
+              dhtPublicInCalls ? TRUE_STR : FALSE_STR);
 #if HAVE_RINGNS
     a.emplace(libjami::Account::ConfProperties::RingNS::URI, nameServer);
 #endif
@@ -207,12 +211,20 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseBool(details, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
     // parseString(details, libjami::Account::ConfProperties::USERNAME, username);
 
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, credentials.archive_password);
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME, credentials.archive_password_scheme);
+    parseString(details,
+                libjami::Account::ConfProperties::ARCHIVE_PASSWORD,
+                credentials.archive_password);
+    parseString(details,
+                libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME,
+                credentials.archive_password_scheme);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PIN, credentials.archive_pin);
-    std::transform(credentials.archive_pin.begin(), credentials.archive_pin.end(), credentials.archive_pin.begin(), ::toupper);
+    std::transform(credentials.archive_pin.begin(),
+                   credentials.archive_pin.end(),
+                   credentials.archive_pin.begin(),
+                   ::toupper);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, credentials.archive_path);
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_URL, archive_url);
 
     auto oldProxyServer = proxyServer, oldProxyServerList = proxyListUrl;
     parseString(details, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);

@@ -32,7 +32,8 @@ public:
 
     // Sync connections
     std::recursive_mutex syncConnectionsMtx_;
-    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> syncConnections_;
+    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>>
+        syncConnections_;
 
     /**
      * Build SyncMsg and send it on socket
@@ -40,7 +41,8 @@ public:
      */
     void syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                    const std::shared_ptr<SyncMsg>& syncMsg);
-    void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& device);
+    void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                           const DeviceId& device);
 };
 
 SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
@@ -146,7 +148,8 @@ SyncModule::SyncModule(std::weak_ptr<JamiAccount>&& account)
 {}
 
 void
-SyncModule::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& device)
+SyncModule::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                    const DeviceId& device)
 {
     std::lock_guard lk(syncConnectionsMtx_);
     auto connectionsIt = syncConnections_.find(device);
@@ -168,7 +171,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     std::lock_guard lk(pimpl_->syncConnectionsMtx_);
     pimpl_->syncConnections_[device].emplace_back(socket);
 
-    socket->onShutdown([w = pimpl_->weak_from_this(), device, s=std::weak_ptr(socket)]() {
+    socket->onShutdown([w = pimpl_->weak_from_this(), device, s = std::weak_ptr(socket)]() {
         if (auto shared = w.lock())
             shared->onChannelShutdown(s.lock(), device);
     });
@@ -180,9 +183,10 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                                512};
     };
 
-    socket->setOnRecv([acc = pimpl_->account_.lock(), device, peerId,
-                       ctx = std::make_shared<DecodingContext>()
-    ](const uint8_t* buf, size_t len) {
+    socket->setOnRecv([acc = pimpl_->account_.lock(),
+                       device,
+                       peerId,
+                       ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
         if (!buf || !acc)
             return len;
 
@@ -198,7 +202,8 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 if (auto manager = acc->accountManager())
                     manager->onSyncData(std::move(msg.ds), false);
 
-                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
+                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty()
+                    || !msg.ms.empty())
                     if (auto cm = acc->convModule(true))
                         cm->onSyncData(msg, peerId, device.toString());
             }

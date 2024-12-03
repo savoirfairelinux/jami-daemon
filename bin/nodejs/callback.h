@@ -21,7 +21,6 @@ Persistent<Function> activeCallsChangedCb;
 Persistent<Function> incomingTrustRequestCb;
 Persistent<Function> contactAddedCb;
 Persistent<Function> contactRemovedCb;
-Persistent<Function> exportOnRingEndedCb;
 Persistent<Function> nameRegistrationEndedCb;
 Persistent<Function> knownDevicesChangedCb;
 Persistent<Function> registeredNameFoundCb;
@@ -61,6 +60,8 @@ Persistent<Function> nearbyPeerNotificationCb;
 Persistent<Function> newBuddyNotificationCb;
 Persistent<Function> serverErrorCb;
 Persistent<Function> newServerSubscriptionRequestCb;
+Persistent<Function> deviceAuthStateChangedCb;
+Persistent<Function> addDeviceStateChangedCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -94,8 +95,6 @@ getPresistentCb(std::string_view signal)
         return &contactAddedCb;
     else if (signal == "ContactRemoved")
         return &contactRemovedCb;
-    else if (signal == "ExportOnRingEnded")
-        return &exportOnRingEndedCb;
     else if (signal == "NameRegistrationEnded")
         return &nameRegistrationEndedCb;
     else if (signal == "KnownDevicesChanged")
@@ -174,12 +173,15 @@ getPresistentCb(std::string_view signal)
         return &serverErrorCb;
     else if (signal == "NewServerSubscriptionRequest")
         return &newServerSubscriptionRequestCb;
+    else if (signal == "DeviceAuthStateChanged")
+        return &deviceAuthStateChangedCb;
+    else if (signal == "AddDeviceStateChanged")
+        return &addDeviceStateChangedCb;
     else
         return nullptr;
 }
 
-#define V8_STRING_LITERAL(str) \
-    v8::String::NewFromUtf8Literal(v8::Isolate::GetCurrent(), str)
+#define V8_STRING_LITERAL(str) v8::String::NewFromUtf8Literal(v8::Isolate::GetCurrent(), str)
 
 #define V8_STRING_NEW(str) \
     v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), \
@@ -241,12 +243,22 @@ swarmMessageToJs(const libjami::SwarmMessage& message)
 {
     SWIGV8_OBJECT jsMap = SWIGV8_OBJECT_NEW();
     jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("id"), V8_STRING_NEW_LOCAL(message.id));
-    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("type"), V8_STRING_NEW_LOCAL(message.type));
-    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("linearizedParent"), V8_STRING_NEW_LOCAL(message.linearizedParent));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(),
+               V8_STRING_LITERAL("type"),
+               V8_STRING_NEW_LOCAL(message.type));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(),
+               V8_STRING_LITERAL("linearizedParent"),
+               V8_STRING_NEW_LOCAL(message.linearizedParent));
     jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("body"), stringMapToJsMap(message.body));
-    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("reactions"), stringMapVecToJsMapArray(message.reactions));
-    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("editions"), stringMapVecToJsMapArray(message.editions));
-    jsMap->Set(SWIGV8_CURRENT_CONTEXT(), V8_STRING_LITERAL("status"), stringIntMapToJsMap(message.status));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(),
+               V8_STRING_LITERAL("reactions"),
+               stringMapVecToJsMapArray(message.reactions));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(),
+               V8_STRING_LITERAL("editions"),
+               stringMapVecToJsMapArray(message.editions));
+    jsMap->Set(SWIGV8_CURRENT_CONTEXT(),
+               V8_STRING_LITERAL("status"),
+               stringIntMapToJsMap(message.status));
     return jsMap;
 }
 
@@ -255,7 +267,9 @@ swarmMessagesToJsArray(const std::vector<libjami::SwarmMessage>& messages)
 {
     SWIGV8_ARRAY jsArray = SWIGV8_ARRAY_NEW(messages.size());
     for (unsigned int i = 0; i < messages.size(); i++)
-        jsArray->Set(SWIGV8_CURRENT_CONTEXT(), SWIGV8_INTEGER_NEW_UNS(i), swarmMessageToJs(messages[i]));
+        jsArray->Set(SWIGV8_CURRENT_CONTEXT(),
+                     SWIGV8_INTEGER_NEW_UNS(i),
+                     swarmMessageToJs(messages[i]));
     return jsArray;
 }
 
@@ -428,23 +442,6 @@ contactRemoved(const std::string& accountId, const std::string& uri, bool banned
 }
 
 void
-exportOnRingEnded(const std::string& accountId, int state, const std::string& pin)
-{
-    std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, state, pin]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), exportOnRingEndedCb);
-        if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
-                                            SWIGV8_INTEGER_NEW(state),
-                                            V8_STRING_NEW_LOCAL(pin)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
-        }
-    });
-
-    uv_async_send(&signalAsync);
-}
-
-void
 nameRegistrationEnded(const std::string& accountId, int state, const std::string& name)
 {
     std::lock_guard lock(pendingSignalsLock);
@@ -580,10 +577,13 @@ knownDevicesChanged(const std::string& accountId, const std::map<std::string, st
 }
 
 void
-userSearchEnded(const std::string& accountId,int state, const std::string& query,  const std::vector<std::map<std::string, std::string>>& results)
+userSearchEnded(const std::string& accountId,
+                int state,
+                const std::string& query,
+                const std::vector<std::map<std::string, std::string>>& results)
 {
     std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId,state,query, results]() {
+    pendingSignals.emplace([accountId, state, query, results]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), userSearchEndedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
@@ -598,10 +598,10 @@ userSearchEnded(const std::string& accountId,int state, const std::string& query
 }
 
 void
-deviceRevocationEnded(const std::string& accountId,const std::string& device, int status)
+deviceRevocationEnded(const std::string& accountId, const std::string& device, int status)
 {
     std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId,device, status]() {
+    pendingSignals.emplace([accountId, device, status]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), deviceRevocationEndedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
@@ -611,6 +611,47 @@ deviceRevocationEnded(const std::string& accountId,const std::string& device, in
         }
     });
 
+    uv_async_send(&signalAsync);
+}
+
+void
+deviceAuthStateChanged(const std::string& accountId,
+                       int state,
+                       const std::map<std::string, std::string>& details)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, state, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), deviceAuthStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_OBJECT jsMap = stringMapToJsMap(details);
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
+addDeviceStateChanged(const std::string& accountId,
+                      uint32_t opId,
+                      int state,
+                      const std::map<std::string, std::string>& details)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, opId, state, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), addDeviceStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_OBJECT jsMap = stringMapToJsMap(details);
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW_UNS(opId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
     uv_async_send(&signalAsync);
 }
 
@@ -782,9 +823,9 @@ conversationLoaded(uint32_t id,
 
 void
 swarmLoaded(uint32_t id,
-              const std::string& accountId,
-              const std::string& conversationId,
-              const std::vector<libjami::SwarmMessage>& messages)
+            const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<libjami::SwarmMessage>& messages)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([id, accountId, conversationId, messages]() {
@@ -1044,7 +1085,9 @@ onConversationError(const std::string& accountId,
 }
 
 void
-conferenceCreated(const std::string& accountId, const std::string& conversationId, const std::string& confId)
+conferenceCreated(const std::string& accountId,
+                  const std::string& conversationId,
+                  const std::string& confId)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, confId, conversationId]() {
@@ -1144,8 +1187,8 @@ logMessage(const std::string& message)
 
 void
 accountProfileReceived(const std::string& accountId,
-                     const std::string& displayName,
-                     const std::string& photo)
+                       const std::string& displayName,
+                       const std::string& photo)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, displayName, photo]() {
@@ -1161,9 +1204,7 @@ accountProfileReceived(const std::string& accountId,
 }
 
 void
-profileReceived(const std::string& accountId,
-                     const std::string& from,
-                     const std::string& path)
+profileReceived(const std::string& accountId, const std::string& from, const std::string& path)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, from, path]() {
@@ -1183,7 +1224,8 @@ subscriptionStateChanged(const std::string& accountId, const std::string& buddy_
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, buddy_uri, state]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), subscriptionStateChangedCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    subscriptionStateChangedCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(buddy_uri),
@@ -1195,7 +1237,11 @@ subscriptionStateChanged(const std::string& accountId, const std::string& buddy_
 }
 
 void
-nearbyPeerNotification(const std::string& accountId, const std::string& buddy_uri, int state, const std::string& displayName){
+nearbyPeerNotification(const std::string& accountId,
+                       const std::string& buddy_uri,
+                       int state,
+                       const std::string& displayName)
+{
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, buddy_uri, state, displayName]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), nearbyPeerNotificationCb);
@@ -1211,7 +1257,11 @@ nearbyPeerNotification(const std::string& accountId, const std::string& buddy_ur
 }
 
 void
-newBuddyNotification(const std::string& accountId, const std::string& buddy_uri, int status, const std::string& line_status){
+newBuddyNotification(const std::string& accountId,
+                     const std::string& buddy_uri,
+                     int status,
+                     const std::string& line_status)
+{
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, buddy_uri, status, line_status]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), newBuddyNotificationCb);
@@ -1227,10 +1277,12 @@ newBuddyNotification(const std::string& accountId, const std::string& buddy_uri,
 }
 
 void
-newServerSubscriptionRequest(const std::string& remote){
+newServerSubscriptionRequest(const std::string& remote)
+{
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([remote]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), newServerSubscriptionRequestCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(),
+                                                    newServerSubscriptionRequestCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(remote)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 1, callback_args);
@@ -1240,7 +1292,8 @@ newServerSubscriptionRequest(const std::string& remote){
 }
 
 void
-serverError(const std::string& accountId, const std::string& error, const std::string& msg){
+serverError(const std::string& accountId, const std::string& error, const std::string& msg)
+{
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, error, msg]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), serverErrorCb);
