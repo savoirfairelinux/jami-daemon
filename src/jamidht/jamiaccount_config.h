@@ -25,7 +25,8 @@ constexpr static const char* DEFAULT_TURN_USERNAME = "ring";
 constexpr static const char* DEFAULT_TURN_PWD = "ring";
 constexpr static const char* DEFAULT_TURN_REALM = "ring";
 
-struct JamiAccountConfig : public SipAccountBaseConfig {
+struct JamiAccountConfig : public SipAccountBaseConfig
+{
     JamiAccountConfig(const std::string& id = {}, const std::filesystem::path& path = {})
         : SipAccountBaseConfig(std::string(ACCOUNT_TYPE_JAMI), id, path)
     {
@@ -68,13 +69,16 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
 
     std::string archivePath {"archive.gz"};
     bool archiveHasPassword {true};
+
     // not saved, only used client->daemon
-    struct Credentials {
+    struct Credentials
+    {
         std::string archive_password_scheme;
         std::string archive_password;
         std::string archive_pin;
         std::string archive_path;
     } credentials;
+    std::string archive_url; // TODO discuss removal or impl. This is currently unused.
 
     std::string receipt {};
     std::vector<uint8_t> receiptSignature {};
@@ -82,4 +86,4 @@ struct JamiAccountConfig : public SipAccountBaseConfig {
     bool dhtPublicInCalls {true};
 };
 
-}
+} // namespace jami
