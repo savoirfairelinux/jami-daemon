@@ -85,13 +85,6 @@ public:
     }
 
     auto
-    exportOnRing(const std::string& accountID, const std::string& password)
-        -> decltype(libjami::exportOnRing(accountID, password))
-    {
-        return libjami::exportOnRing(accountID, password);
-    }
-
-    auto
     exportToFile(const std::string& accountID,
                  const std::string& destinationPath,
                  const std::string& scheme,
@@ -99,6 +92,36 @@ public:
         -> decltype(libjami::exportToFile(accountID, destinationPath, scheme, password))
     {
         return libjami::exportToFile(accountID, destinationPath, scheme, password);
+    }
+
+    auto
+    provideAccountAuthentication(const std::string& accountID,
+                                const std::string& credentialsFromUser,
+                                const std::string& scheme)
+        -> decltype(libjami::provideAccountAuthentication(accountID, credentialsFromUser, scheme))
+    {
+        return libjami::provideAccountAuthentication(accountID, credentialsFromUser, scheme);
+    }
+
+    auto
+    addDevice(const std::string& accountID, const std::string& uri)
+        -> decltype(libjami::addDevice(accountID, uri))
+    {
+        return libjami::addDevice(accountID, uri);
+    }
+
+    auto
+    confirmAddDevice(const std::string& accountId, const uint32_t& op_id)
+        -> decltype(libjami::confirmAddDevice(accountId, op_id))
+    {
+        return libjami::confirmAddDevice(accountId, op_id);
+    }
+
+    auto
+    cancelAddDevice(const std::string& accountId, const uint32_t& op_id)
+        -> decltype(libjami::cancelAddDevice(accountId, op_id))
+    {
+        return libjami::cancelAddDevice(accountId, op_id);
     }
 
     auto
@@ -1102,8 +1125,10 @@ private:
                 std::bind(&DBusConfigurationManager::emitContactAdded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::ContactRemoved>(
                 std::bind(&DBusConfigurationManager::emitContactRemoved, this, _1, _2, _3)),
-            exportable_serialized_callback<ConfigurationSignal::ExportOnRingEnded>(
-                std::bind(&DBusConfigurationManager::emitExportOnRingEnded, this, _1, _2, _3)),
+            exportable_serialized_callback<ConfigurationSignal::DeviceAuthStateChanged>(
+                std::bind(&DBusConfigurationManager::emitDeviceAuthStateChanged, this, _1, _2, _3)),
+            exportable_serialized_callback<ConfigurationSignal::AddDeviceStateChanged>(
+                std::bind(&DBusConfigurationManager::emitAddDeviceStateChanged, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::KnownDevicesChanged>(
                 std::bind(&DBusConfigurationManager::emitKnownDevicesChanged, this, _1, _2)),
             exportable_serialized_callback<ConfigurationSignal::NameRegistrationEnded>(
