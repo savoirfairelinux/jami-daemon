@@ -19,8 +19,6 @@
 #include <dhtnet/multiplexed_socket.h>
 #include <opendht/thread_pool.h>
 
-constexpr const std::chrono::minutes FIND_PERIOD {10};
-
 namespace jami {
 
 using namespace swarm_protocol;
@@ -56,7 +54,7 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
     if (newNodes.empty())
         return false;
 
-    dht::ThreadPool::io().run([w=weak(), newNodes=std::move(newNodes)] {
+    dht::ThreadPool::io().run([w = weak(), newNodes = std::move(newNodes)] {
         auto shared = w.lock();
         if (!shared)
             return;
@@ -64,7 +62,7 @@ SwarmManager::setKnownNodes(const std::vector<NodeId>& known_nodes)
         // we can use it to speed-up the bootstrap (because opening
         // a new channel will be easy)
         std::set<NodeId> toConnect;
-        for (const auto& nodeId: newNodes) {
+        for (const auto& nodeId : newNodes) {
             if (shared->toConnectCb_ && shared->toConnectCb_(nodeId))
                 toConnect.emplace(nodeId);
         }
@@ -214,7 +212,8 @@ SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>&
 }
 
 void
-SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const Message& msg_)
+SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
+                         const Message& msg_)
 {
     std::lock_guard lock(mutex);
 
@@ -340,7 +339,8 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 {
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
-                      [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
+                      [w = weak(),
+                       nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                           auto shared = w.lock();
                           if (!shared || shared->isShutdown_)
                               return true;
@@ -353,8 +353,8 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           bucket->removeConnectingNode(nodeId);
                           bucket->addKnownNode(nodeId);
                           bucket = shared->routing_table.findBucket(shared->getId());
-                          if (bucket->getConnectingNodesSize() == 0
-                              && bucket->isEmpty() && shared->onConnectionChanged_) {
+                          if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty()
+                              && shared->onConnectionChanged_) {
                               lk.unlock();
                               JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
                                            fmt::ptr(shared.get()));

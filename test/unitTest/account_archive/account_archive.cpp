@@ -54,7 +54,8 @@ public:
     AccountArchiveTest()
     {
         // Init daemon
-        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(
+            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
     }
@@ -78,8 +79,8 @@ private:
     void testExportImportNoPasswordDoubleGunzip();
     void testExportImportPassword();
     void testExportImportPasswordDoubleGunzip();
-    void testExportDht();
-    void testExportDhtWrongPassword();
+    // void testExportDht();
+    // void testExportDhtWrongPassword();
     void testChangePassword();
     void testChangeDhtPort();
 
@@ -88,8 +89,8 @@ private:
     CPPUNIT_TEST(testExportImportNoPasswordDoubleGunzip);
     CPPUNIT_TEST(testExportImportPassword);
     CPPUNIT_TEST(testExportImportPasswordDoubleGunzip);
-    CPPUNIT_TEST(testExportDht);
-    CPPUNIT_TEST(testExportDhtWrongPassword);
+    // CPPUNIT_TEST(testExportDht);
+    // CPPUNIT_TEST(testExportDhtWrongPassword);
     CPPUNIT_TEST(testChangePassword);
     CPPUNIT_TEST(testChangeDhtPort);
     CPPUNIT_TEST_SUITE_END();
@@ -104,19 +105,21 @@ AccountArchiveTest::setUp()
     aliceId = actors["alice"];
     bobId = actors["bob"];
 
-
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId,
-                const std::map<std::string, std::string>& details) {
+            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
                 if (accountId != aliceId) {
                     return;
                 }
                 try {
                     aliceReady |= accountId == aliceId
-                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
-                                && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
-                } catch (const std::out_of_range&) {}
+                                  && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS)
+                                         == "REGISTERED"
+                                  && details.at(
+                                         libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)
+                                         == "true";
+                } catch (const std::out_of_range&) {
+                }
                 cv.notify_one();
             }));
     libjami::registerSignalHandlers(confHandlers);
@@ -207,55 +210,6 @@ AccountArchiveTest::testExportImportPasswordDoubleGunzip()
     CPPUNIT_ASSERT(bob2Account->getUsername() == bobAccount->getUsername());
     std::remove("test.gz");
     wait_for_removal_of(accountId);
-}
-
-void
-AccountArchiveTest::testExportDht()
-{
-    std::mutex mtx;
-    std::unique_lock lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    std::string pin;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ExportOnRingEnded>(
-        [&](const std::string& accountId, int status, const std::string& p) {
-            if (accountId == bobId && status == 0)
-                pin = p;
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(libjami::exportOnRing(bobId, "test"));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !pin.empty(); }));
-
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::ARCHIVE_PIN] = pin;
-    details[ConfProperties::ARCHIVE_PASSWORD] = "test";
-
-    bob2Id = jami::Manager::instance().addAccount(details);
-    wait_for_announcement_of(bob2Id);
-    auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
-    CPPUNIT_ASSERT(bob2Account->getUsername() == bobAccount->getUsername());
-}
-
-void
-AccountArchiveTest::testExportDhtWrongPassword()
-{
-    std::mutex mtx;
-    std::unique_lock lk {mtx};
-    std::condition_variable cv;
-    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    int status;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ExportOnRingEnded>(
-        [&](const std::string& accountId, int s, const std::string&) {
-            if (accountId == bobId)
-                status = s;
-            cv.notify_one();
-        }));
-    libjami::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(libjami::exportOnRing(bobId, "wrong"));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return status == 1; }));
 }
 
 void

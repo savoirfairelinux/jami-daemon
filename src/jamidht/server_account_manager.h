@@ -53,22 +53,23 @@ public:
 
     void syncDevices() override;
 
-    using SyncBlueprintCallback = std::function<void(const std::map<std::string, std::string>& config)>;
+    using SyncBlueprintCallback
+        = std::function<void(const std::map<std::string, std::string>& config)>;
 
     void syncBlueprintConfig(SyncBlueprintCallback onSuccess);
 
     bool revokeDevice(const std::string& device,
-                      std::string_view scheme, const std::string& password,
+                      std::string_view scheme,
+                      const std::string& password,
                       RevokeDeviceCallback cb) override;
 
     bool searchUser(const std::string& query, SearchCallback cb) override;
     void registerName(const std::string& name,
-                      std::string_view scheme, const std::string& password,
+                      std::string_view scheme,
+                      const std::string& password,
                       RegistrationCallback cb) override;
 
-    void onNeedsMigration(std::function<void()> cb) {
-        onNeedsMigration_ = std::move(cb);
-    }
+    void onNeedsMigration(std::function<void()> cb) { onNeedsMigration_ = std::move(cb); }
 
 private:
     struct AuthContext
@@ -98,7 +99,6 @@ private:
     TokenScope tokenScope_ {};
     std::chrono::steady_clock::time_point tokenExpire_ {
         std::chrono::steady_clock::time_point::min()};
-    unsigned authErrorCount {0};
 
     using RequestQueue = std::queue<std::shared_ptr<dht::http::Request>>;
     RequestQueue pendingDeviceRequests_;
@@ -115,7 +115,8 @@ private:
     void setAuthHeaderFields(dht::http::Request& request) const;
 
     void sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req);
-    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req, const std::string& password);
+    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req,
+                            const std::string& password);
 
     void authenticateDevice();
     void authenticateAccount(const std::string& username, const std::string& password);
