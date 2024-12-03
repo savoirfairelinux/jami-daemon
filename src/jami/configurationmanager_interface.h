@@ -63,8 +63,15 @@ LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConnectionList
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelList(
     const std::string& accountId, const std::string& connectionId);
 
-LIBJAMI_PUBLIC bool exportOnRing(const std::string& accountId, const std::string& password);
-LIBJAMI_PUBLIC bool exportToFile(const std::string& accountId,
+LIBJAMI_PUBLIC bool provideAccountAuthentication(const std::string& accountId,
+                                                 const std::string& credentialsFromUser,
+                                                 const std::string& scheme);
+
+LIBJAMI_PUBLIC int32_t addDevice(const std::string& accountId, const std::string& uri);
+LIBJAMI_PUBLIC bool confirmAddDevice(const std::string& accountId, uint32_t op_id);
+LIBJAMI_PUBLIC bool cancelAddDevice(const std::string& accountId, uint32_t op_id);
+
+LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
                                  const std::string& scheme = {},
                                  const std::string& password = {});
@@ -104,7 +111,11 @@ LIBJAMI_PUBLIC bool cancelMessage(const std::string& accountId, uint64_t message
 LIBJAMI_PUBLIC std::vector<Message> getLastMessages(const std::string& accountId,
                                                     const uint64_t& base_timestamp);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountId);
-LIBJAMI_PUBLIC void updateProfile(const std::string& accountId,const std::string& displayName, const std::string& avatar,const std::string& fileType, int32_t flag);
+LIBJAMI_PUBLIC void updateProfile(const std::string& accountId,
+                                  const std::string& displayName,
+                                  const std::string& avatar,
+                                  const std::string& fileType,
+                                  int32_t flag);
 LIBJAMI_PUBLIC int getMessageStatus(uint64_t id);
 LIBJAMI_PUBLIC int getMessageStatus(const std::string& accountId, uint64_t id);
 LIBJAMI_PUBLIC void setIsComposing(const std::string& accountId,
@@ -359,6 +370,23 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         using cb_type = void(int /*alert*/);
     };
 
+    // used for client awareness of available link device jami-auth uri
+    struct LIBJAMI_PUBLIC AddDeviceStateChanged
+    {
+        constexpr static const char* name = "AddDeviceStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             uint32_t /*op_id */,
+                             int /*state*/,
+                             const std::map<std::string, std::string>& /*detail*/);
+    };
+    // used for link device authentication (password, error, etc.)
+    struct LIBJAMI_PUBLIC DeviceAuthStateChanged
+    {
+        constexpr static const char* name = "DeviceAuthStateChanged";
+        using cb_type = void(const std::string& /*account_id*/,
+                             int /*state*/,
+                             const std::map<std::string, std::string>& /*detail*/);
+    };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged
     {
@@ -453,11 +481,11 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              const std::string& /*uri*/,
                              bool banned);
     };
-    struct LIBJAMI_PUBLIC ExportOnRingEnded
-    {
-        constexpr static const char* name = "ExportOnRingEnded";
-        using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
-    };
+    // struct LIBJAMI_PUBLIC ExportToPeer
+    // {
+    //     constexpr static const char* name = "ExportToPeer";
+    //     using cb_type = void(const std::string& /*account_id*/, const std::string& uri);
+    // };
     struct LIBJAMI_PUBLIC NameRegistrationEnded
     {
         constexpr static const char* name = "NameRegistrationEnded";
