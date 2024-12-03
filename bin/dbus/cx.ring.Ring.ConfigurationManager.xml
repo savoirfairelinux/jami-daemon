@@ -158,21 +158,6 @@
             </arg>
         </method>
 
-        <method name="exportOnRing" tp:name-for-bindings="exportOnRing">
-            <tp:docstring>
-               Export account on the DHT using the given password and generated PIN (returned through exportOnRingEnded signal).
-            </tp:docstring>
-            <arg type="s" name="accountId" direction="in">
-            </arg>
-            <arg type="s" name="password" direction="in">
-            </arg>
-            <arg type="b" name="success" direction="out">
-                <tp:docstring>
-                   True if the operation was initialized successfully. exportOnRingEnded will be trigered on completion.
-                </tp:docstring>
-            </arg>
-        </method>
-
         <method name="exportToFile" tp:name-for-bindings="exportToFile">
             <tp:added version="15.0.0"/>
             <tp:docstring>
@@ -201,28 +186,119 @@
             </arg>
         </method>
 
-        <signal name="exportOnRingEnded" tp:name-for-bindings="exportOnRingEnded">
+        <signal name="deviceAuthStateChanged" tp:name-for-bindings="deviceAuthStateChanged">
             <tp:docstring>
-               Notify clients when the exportOnRing operation ended.
+               Notify clients when the device authentication state changed. During the import-account process.
             </tp:docstring>
             <arg type="s" name="accountId">
             </arg>
-            <arg type="i" name="status">
-                <tp:docstring>
-                   Status code: 0 for success
-                    <ul>
-                        <li>SUCCESS = 0         everything went fine. PIN is set.</li>
-                        <li>WRONG_PASSWORD = 1  incorrect password provided.</li>
-                        <li>NETWORK_ERROR = 2   unable to publish archive on the network.</li>
-                    </ul>
-                </tp:docstring>
+            <arg type="i" name="state">
             </arg>
-            <arg type="s" name="PIN">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="MapStringString"/>
+            <arg type="a{ss}" name="detail" tp:type="String_String_Map">
                 <tp:docstring>
-                   A PIN to show to the user to import the account from somewhere else.
+                   TODO: add docstring for this map
                 </tp:docstring>
             </arg>
         </signal>
+
+        <method name="provideAccountAuthentication" tp:name-for-bindings="provideAccountAuthentication">
+            <tp:added version="15.0.0"/>
+            <tp:docstring>
+               Provide account authentication credentials to the core.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="credentialsFromUser" direction="in">
+            </arg>
+            <arg type="s" name="scheme" direction="in">
+                <tp:docstring>
+                   The password scheme. Accepted values:
+                    <ul>
+                         <li>(empty string): no encryption.</li>
+                         <li>password: plain-text password string.</li>
+                         <li>key: base64-encoded binary key.</li>
+                    </ul>
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="success" direction="out">
+                <tp:docstring>
+                   True if the operation was performed successfully.
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <signal name="addDeviceStateChanged" tp:name-for-bindings="addDeviceStateChanged">
+            <tp:docstring>
+               Notify clients when the addDevice operation state changed.
+            </tp:docstring>
+            <arg type="s" name="accountId">
+            </arg>
+            <arg type="u" name="op_id">
+            </arg>
+            <arg type="i" name="state">
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out3" value="MapStringString"/>
+            <arg type="a{ss}" name="detail" tp:type="String_String_Map">
+                <tp:docstring>
+                   TODO: add docstring for this map
+                </tp:docstring>
+            </arg>
+        </signal>
+
+        <method name="addDevice" tp:name-for-bindings="addDevice">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Add a new device to the account.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="s" name="uri" direction="in">
+            </arg>
+            <arg type="i" name="op_id" direction="out">
+                <tp:docstring>
+                   The operation ID.
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="confirmAddDevice" tp:name-for-bindings="confirmAddDevice">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Confirm the addition of a new device to the account.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="u" name="op_id" direction="in">
+                <tp:docstring>
+                   The operation ID.
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="success" direction="out">
+                <tp:docstring>
+                   True if the operation was performed successfully.
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="cancelAddDevice" tp:name-for-bindings="cancelAddDevice">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Cancel the addition of a new device to the account.
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in">
+            </arg>
+            <arg type="u" name="op_id" direction="in">
+                <tp:docstring>
+                   The operation ID.
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="success" direction="out">
+                <tp:docstring>
+                   True if the operation was performed successfully.
+                </tp:docstring>
+            </arg>
+        </method>
 
         <method name="revokeDevice" tp:name-for-bindings="revokeDevice">
             <tp:added version="15.0.0"/>
