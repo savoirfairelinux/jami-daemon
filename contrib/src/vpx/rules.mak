@@ -55,7 +55,7 @@ else ifdef HAVE_LINUX
 VPX_OS := linux
 else ifdef HAVE_DARWIN_OS
 ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
-VPX_OS := iphonesimulator
+VPX_OS := darwin
 else ifdef HAVE_IOS
 VPX_OS := darwin
 else
@@ -76,6 +76,14 @@ VPX_TARGET := generic-gnu
 ifdef VPX_ARCH
 ifdef VPX_OS
 VPX_TARGET := $(VPX_ARCH)-$(VPX_OS)-gcc
+endif
+endif
+
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+ifeq ($(ARCH),arm64)
+VPX_TARGET := arm64-darwin-gcc
+else
+VPX_TARGET := x86_64
 endif
 endif
 
