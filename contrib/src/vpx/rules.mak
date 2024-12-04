@@ -55,7 +55,11 @@ else ifdef HAVE_LINUX
 VPX_OS := linux
 else ifdef HAVE_DARWIN_OS
 ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
-VPX_OS := iphonesimulator
+    ifeq ($(ARCH),arm64)
+        VPX_OS := iphonesimulator
+    else ifeq ($(ARCH),x86_64)
+        VPX_OS := iphonesimulator
+    endif
 else ifdef HAVE_IOS
 VPX_OS := darwin
 else
@@ -75,7 +79,15 @@ endif
 VPX_TARGET := generic-gnu
 ifdef VPX_ARCH
 ifdef VPX_OS
-VPX_TARGET := $(VPX_ARCH)-$(VPX_OS)-gcc
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+    ifeq ($(ARCH),arm64)
+        VPX_TARGET := arm64-iphonesimulator-gcc
+    else ifeq ($(ARCH),x86_64)
+        VPX_TARGET := x86_64-iphonesimulator-gcc
+    endif
+else
+    VPX_TARGET := $(VPX_ARCH)-$(VPX_OS)-gcc
+endif
 endif
 endif
 
@@ -111,7 +123,7 @@ VPX_CONF += --extra-cflags="-mstackrealign"
 endif
 endif
 .vpx: libvpx
-	cd $< && CROSS=$(VPX_CROSS) $(LOCAL_HOSTVARS) ./configure --target=$(VPX_TARGET) \
+	cd $< && CROSS=$(VPX_CROSS) $(LOCAL_HOSTVARS) CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" ./configure --force-target=$(VPX_TARGET) \
 		$(VPX_CONF) --prefix=$(PREFIX)
 	cd $< && $(MAKE)
 	cd $< && ../../../contrib/src/pkg-static.sh vpx.pc

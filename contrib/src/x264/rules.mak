@@ -37,6 +37,10 @@ X264CONF += --disable-asm
 endif
 endif
 
+ifeq ($(ARCH),x86_64)
+X264CONF += --disable-asm
+endif
+
 $(TARBALLS)/x264-$(X264_HASH).tar.bz2:
 	$(call download,$(X264_URL),master,$(X264_HASH))
 
@@ -55,11 +59,7 @@ x264: x264-$(X264_HASH).tar.bz2 .sum-x264
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) AS="$(CC)" ./configure $(X264CONF)
 else
-ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
 	cd $< && $(HOSTVARS) ASFLAGS="$(CFLAGS)" ./configure $(X264CONF)
-else
-	cd $< && $(HOSTVARS) ./configure $(X264CONF)
-endif
 endif
 	cd $< && $(MAKE) install
 	touch $@
