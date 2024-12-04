@@ -52,10 +52,16 @@ ifdef HAVE_IOS
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
-
+$(info IOS_TARGET_PLATFORM=$(IOS_TARGET_PLATFORM))
 .pjproject: pjproject
 ifdef HAVE_IOS
-	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+	export DEVPATH=$(shell xcrun --sdk iphonesimulator --show-sdk-platform-path)
+	export MIN_IOS="-mios-simulator-version-min=14.5"
+	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 DEVPATH="/Applications/XCode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer" MIN_IOS="-mios-simulator-version-min=14.5" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
+else
+	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
+endif
 else ifdef HAVE_MACOSX
 	cd $< && ARCH="-arch $(ARCH)" $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
