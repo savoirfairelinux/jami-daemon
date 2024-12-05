@@ -23,7 +23,7 @@ class DBusVideoManager : public sdbus::AdaptorInterfaces<cx::ring::Ring::VideoMa
 {
 public:
     DBusVideoManager(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/VideoManager")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath{"/cx/ring/Ring/VideoManager"})
     {
         registerAdaptor();
         registerSignalHandlers();
