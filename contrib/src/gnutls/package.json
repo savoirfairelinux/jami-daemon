@@ -12,7 +12,8 @@
     "patches": [
         "gnutls-3.6.7-win32-compat.patch",
         "gnutls-3.6.7-win32-vs-support.patch",
-        "read-file-limits.h.patch"
+        "read-file-limits.h.patch",
+        "mkdir_permissions.patch"
     ],
     "win_patches": [],
     "project_paths": [
