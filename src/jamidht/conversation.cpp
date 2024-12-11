@@ -885,13 +885,6 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
         isLoadingHistory_ = true;
     }
 
-    // Reset variables if needed to get the correct status.
-    // options.from stores a swarmMessageId; this option is used
-    // to load the messages of a conversation from a specific message
-    if (options.from.empty()) {
-        memberToStatus.clear();
-    }
-
     // By convention, if options.nbOfCommits is zero, then we
     // don't impose a limit on the number of commits returned.
     bool limitNbOfCommits = options.nbOfCommits > 0;
@@ -1719,6 +1712,7 @@ Conversation::clearCache()
     pimpl_->loadedHistory_.quickAccess.clear();
     pimpl_->loadedHistory_.pendingEditions.clear();
     pimpl_->loadedHistory_.pendingReactions.clear();
+    pimpl_->memberToStatus.clear();
 }
 
 std::string
