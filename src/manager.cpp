@@ -467,7 +467,7 @@ Manager::ManagerPimpl::parseConfiguration()
         const int error_count = base_.loadAccountMap(parsedFile);
 
         if (error_count > 0) {
-            JAMI_WARN("Errors while parsing %s", path_.c_str());
+            JAMI_WARN("Error while parsing %s", path_.c_str());
             result = false;
         }
     } catch (const YAML::BadFile& e) {
@@ -796,7 +796,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     JAMI_LOG("Using FFmpeg version {:s}", av_version_info());
     int git2_major = 0, git2_minor = 0, git2_rev = 0;
     if (git_libgit2_version(&git2_major, &git2_minor, &git2_rev) == 0) {
-        JAMI_LOG("Using Libgit2 version {:d}.{:d}.{:d}", git2_major, git2_minor, git2_rev);
+        JAMI_LOG("Using libgit2 version {:d}.{:d}.{:d}", git2_major, git2_minor, git2_rev);
     }
 
     setDhtLogLevel();
@@ -1360,7 +1360,7 @@ Manager::unHoldConference(const std::string& accountId, const std::string& confI
 
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            // Unhold conf only if it was in hold state otherwise...
+            // Unhold conf only if it was in hold state otherwise…
             // all participants are restarted
             if (conf->getState() == Conference::State::HOLD) {
                 for (const auto& item : conf->getSubCalls())
@@ -1413,7 +1413,7 @@ Manager::addSubCall(Call& call, Conference& conference)
         return true;
     }
 
-    // TODO: remove this ugly hack => There should be different calls when double clicking
+    // TODO: remove this ugly hack → There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
     // to conference
     pimpl_->unsetCurrentCall();
@@ -1550,7 +1550,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
 
     // we must at least have 2 participant for a conference
     if (participantList.size() <= 1) {
-        JAMI_ERR("Participant number must be higher or equal to 2");
+        JAMI_ERR("Participant number must be greater than or equal to 2");
         return;
     }
 
@@ -1777,7 +1777,7 @@ Manager::saveConfig(const std::shared_ptr<Account>& acc)
 void
 Manager::saveConfig()
 {
-    JAMI_DBG("Saving Configuration to XDG directory %s", pimpl_->path_.c_str());
+    JAMI_DBG("Saving configuration to XDG directory %s", pimpl_->path_.c_str());
 
     if (pimpl_->audiodriver_) {
         audioPreference.setVolumemic(pimpl_->audiodriver_->getCaptureGain());
@@ -1948,7 +1948,7 @@ Manager::incomingMessage(const std::string& accountId,
                                                                  from,
                                                                  messages);
             } else {
-                JAMI_ERR("no conference associated to ID %s", callId.c_str());
+                JAMI_ERR("No conference associated to ID %s", callId.c_str());
             }
         } else {
             emitSignal<libjami::CallSignal::IncomingMessage>(accountId, callId, from, messages);
@@ -2522,7 +2522,7 @@ Manager::ManagerPimpl::initAudioDriver()
 void
 Manager::ManagerPimpl::stripSipPrefix(Call& incomCall)
 {
-    // strip sip: which is not required and bring confusion with ip to ip calls
+    // strip sip: which is not required and causes confusion with IP-to-IP calls
     // when placing new call from history.
     std::string peerNumber(incomCall.getPeerNumber());
 
@@ -2671,7 +2671,7 @@ Manager::audioFormatUsed(AudioFormat format)
     if (currentFormat == format)
         return format;
 
-    JAMI_DEBUG("Audio format changed: {} -> {}", currentFormat.toString(), format.toString());
+    JAMI_DEBUG("Audio format changed: {} → {}", currentFormat.toString(), format.toString());
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
     pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
@@ -3062,7 +3062,7 @@ Manager::loadAccountAndConversation(const std::string& accountId,
                 account->setConfig(std::move(config));
             }
         } catch (const std::runtime_error& e) {
-            JAMI_WARN("Account loading failed: %s", e.what());
+            JAMI_WARN("Failed to load account: %s", e.what());
             return;
         }
     }
