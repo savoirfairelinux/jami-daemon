@@ -2416,7 +2416,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
         if (!isBanned(member))
             devices.insert(devices.end(), memberDevices.begin(), memberDevices.end());
     }
-    JAMI_DEBUG("{}[SwarmManager {}] Bootstrap with {} devices",
+    JAMI_DEBUG("{}[SwarmManager {}] Bootstrap with {} device(s)",
                pimpl_->toString(),
                fmt::ptr(pimpl_->swarmManager_),
                devices.size());
