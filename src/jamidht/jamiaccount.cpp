@@ -242,11 +242,11 @@ parseJamiUri(std::string_view toUrl)
 {
     auto sufix = stripPrefix(toUrl);
     if (sufix.length() < 40)
-        throw std::invalid_argument("id must be a Jami infohash");
+        throw std::invalid_argument("ID must be a Jami infohash");
 
     const std::string_view toUri = sufix.substr(0, 40);
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
-        throw std::invalid_argument("id must be a Jami infohash");
+        throw std::invalid_argument("ID must be a Jami infohash");
     return toUri;
 }
 
@@ -554,11 +554,11 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     Manager::instance().answerCall(*call, currentMediaList);
 
     if (isNotHosting) {
-        JAMI_DEBUG("Creating conference for swarm {} with id {}", conversationId, confId);
+        JAMI_DEBUG("Creating conference for swarm {} with ID {}", conversationId, confId);
         // Create conference and host it.
         convModule()->hostConference(conversationId, confId, callId);
     } else {
-        JAMI_DEBUG("Adding participant {} for swarm {} with id {}", callId, conversationId, confId);
+        JAMI_DEBUG("Adding participant {} for swarm {} with ID {}", callId, conversationId, confId);
         Manager::instance().addAudio(*call);
         conf->addSubCall(callId);
         emitSignal<libjami::CallSignal::ConferenceChanged>(getAccountID(),
@@ -1925,7 +1925,7 @@ JamiAccount::doRegister_()
         };
 
         context.statusChangedCallback = [this](dht::NodeStatus s4, dht::NodeStatus s6) {
-            JAMI_DBG("[Account %s] Dht status: IPv4 %s; IPv6 %s",
+            JAMI_DBG("[Account %s] DHT status: IPv4 %s; IPv6 %s",
                      getAccountID().c_str(),
                      dhtStatusStr(s4),
                      dhtStatusStr(s6));
@@ -2369,7 +2369,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     JAMI_WARN("[Account %s] Unregistering account %p", getAccountID().c_str(), this);
     dht_->shutdown(
         [&] {
-            JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
+            JAMI_WARN("[Account %s] DHT shutdown complete", getAccountID().c_str());
             std::lock_guard lock(mtx);
             shutdown_complete = true;
             cv.notify_all();
@@ -2633,7 +2633,7 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
 {
     const auto& conf = config();
     if (conf.proxyEnabled and proxyServerCached_.empty()) {
-        JAMI_DEBUG("[Account {:s}] loading DHT proxy URL: {:s}", getAccountID(), conf.proxyListUrl);
+        JAMI_DEBUG("[Account {:s}] Loading DHT proxy URL: {:s}", getAccountID(), conf.proxyListUrl);
         if (conf.proxyListUrl.empty() or not conf.proxyListEnabled) {
             cb(getDhtProxyServer(conf.proxyServer));
         } else {
@@ -2709,7 +2709,7 @@ JamiAccount::matches(std::string_view userName, std::string_view server) const
     if (userName == accountManager_->getInfo()->accountId
         || server == accountManager_->getInfo()->accountId
         || userName == accountManager_->getInfo()->deviceId) {
-        JAMI_DBG("Matching account id in request with username %.*s",
+        JAMI_DBG("Matching account ID in request with username %.*s",
                  (int) userName.size(),
                  userName.data());
         return MatchRank::FULL;
@@ -2935,7 +2935,7 @@ JamiAccount::declineConversationRequest(const std::string& conversationId)
             if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
                 && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == conversationId) {
                 accountManager_->discardTrustRequest(peerId);
-                JAMI_DEBUG("[Account {:s}] declined trust request with {:s}",
+                JAMI_DEBUG("[Account {:s}] Declined trust request with {:s}",
                            getAccountID(),
                            peerId);
             }
@@ -3177,7 +3177,7 @@ JamiAccount::sendMessage(const std::string& to,
                 return value.asString();
             }
         } else {
-            JAMI_WARNING("Unable to parse jsonData to get conversation id");
+            JAMI_WARNING("Unable to parse jsonData to get conversation ID");
         }
         return "";
     };
@@ -3226,7 +3226,7 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
                                          true,
                                          ctx->deviceId ? ctx->deviceId.toString() : "");
     } else {
-        // Note: This can be called from pjsip's eventloop while
+        // Note: This can be called from PJSIP's eventloop while
         // sipConnsMtx_ is locked. So we should retrigger the shutdown.
         auto acc = ctx->acc.lock();
         if (not acc)
@@ -3349,14 +3349,14 @@ JamiAccount::startAccountDiscovery()
             std::lock_guard lc(discoveryMapMtx_);
             // Make sure that account itself will not be recorded
             if (v.accountId != id) {
-                // Create or Find the old one
+                // Create or find the old one
                 auto& dp = discoveredPeers_[v.accountId];
                 dp.displayName = v.displayName;
                 discoveredPeerMap_[v.accountId.toString()] = v.displayName;
                 if (dp.cleanupTask) {
                     dp.cleanupTask->cancel();
                 } else {
-                    // Avoid Repeat Reception of Same peer
+                    // Avoid repeat reception of same peer
                     JAMI_LOG("Account discovered: {}: {}", v.displayName, v.accountId.to_c_str());
                     // Send Added Peer and corrsponding accoundID
                     emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(getAccountID(),
@@ -3373,7 +3373,7 @@ JamiAccount::startAccountDiscovery()
                                 this_->discoveredPeers_.erase(p);
                                 this_->discoveredPeerMap_.erase(p.toString());
                             }
-                            // Send Deleted Peer
+                            // Send deleted peer
                             emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(
                                 this_->getAccountID(), p.toString(), 1, a);
                         }
@@ -3821,7 +3821,7 @@ JamiAccount::sendProfile(const std::string& convId,
     auto currentSha3 = fileutils::sha3File(accProfilePath);
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
-        JAMI_DEBUG("Peer {} already got an up-to-date vcard", peerUri);
+        JAMI_DEBUG("Peer {} already got an up-to-date vCard", peerUri);
         return;
     }
     // We need a new channel
@@ -4340,7 +4340,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
             channelName += fmt::format("?start={}&end={}", start, end);
         }
         // We can avoid to negotiate new sessions, as the file notif
-        // probably come from an online device or last connected device.
+        // probably came from an online device or last connected device.
         connectionManager_->connectDevice(
             did,
             channelName,
@@ -4370,8 +4370,8 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         // Only ask for device
         tryDevice(DeviceId(deviceId));
     } else {
-        // Only ask for connected devices. For others we will try
-        // on new peer online
+        // Only ask for connected devices. For others we will attempt
+        // with new peer online
         for (const auto& m : convModule()->getConversationMembers(conversationId)) {
             accountManager_->forEachDevice(dht::InfoHash(m.at("uri")),
                                            [tryDevice = std::move(tryDevice)](
@@ -4396,7 +4396,7 @@ JamiAccount::askForProfile(const std::string& conversationId,
                                    conversationId,
                                    memberUri);
     // We can avoid to negotiate new sessions, as the file notif
-    // probably come from an online device or last connected device.
+    // probably came from an online device or last connected device.
     connectionManager_->connectDevice(
         DeviceId(deviceId),
         channelName,
