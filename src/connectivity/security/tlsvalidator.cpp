@@ -1048,7 +1048,7 @@ TlsValidator::valid()
 TlsValidator::CheckResult
 TlsValidator::validAuthority()
 {
-    // TODO Merge with either above or bellow
+    // TODO Merge with either above or below
     return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND)
                                          ? CheckValues::FAILED
                                          : CheckValues::PASSED,
