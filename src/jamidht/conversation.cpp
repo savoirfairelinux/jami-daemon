@@ -900,6 +900,10 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
                 return CallbackResult::Skip;
             }
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+            }
             if (replies.empty()) { // This avoid load until
                 // NOTE: in the future, we may want to add "Reply-Body" in commit to avoid to load
                 // until this commit
@@ -909,10 +913,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
                     return CallbackResult::Break; // Stop logging
                 if (breakLogging)
                     return CallbackResult::Break; // Stop logging
-                if (id == options.to) {
-                    if (options.includeTo)
-                        breakLogging = true; // For the next commit
-                    else
+                if (id == options.to && !options.includeTo) {
                         return CallbackResult::Break; // Stop logging
                 }
             }
@@ -941,7 +942,10 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
                 return;
             auto message = optMessage.value();
             if (message.find("reply-to") != message.end()) {
-                replies.emplace_back(message.at("reply-to"));
+                auto it = std::find(replies.begin(), replies.end(), message.at("reply-to"));
+                if(it == replies.end()) {
+                    replies.emplace_back(message.at("reply-to"));
+                }
             }
             auto it = std::find(replies.begin(), replies.end(), message.at("id"));
             if (it != replies.end()) {
@@ -958,7 +962,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
                                                                              *firstMsg);
             }
             msgList.insert(msgList.end(), added.begin(), added.end());
-        },
+            },
         /* postCondition */
         [&](auto, auto, auto) {
             // Stop logging if there was a limit set on the number of commits
