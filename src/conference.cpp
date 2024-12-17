@@ -1759,6 +1759,7 @@ Conference::bindHostAudio()
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     for (const auto& item : getSubCalls()) {
+        if (participantsMuted_.find(item) != participantsMuted_.end()) continue;
         if (auto call = getCall(item)) {
             auto medias = call->getAudioStreams();
             for (const auto& [id, muted] : medias) {
