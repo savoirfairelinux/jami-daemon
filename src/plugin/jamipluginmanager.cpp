@@ -151,7 +151,11 @@ bool
 JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
 {
     trust_.add(crypto::Certificate(store_ca_crt, sizeof(store_ca_crt)));
-    return cert && *cert && trust_.verify(*cert);
+    auto result = trust_.verify(*cert);
+    if (!result) {
+        JAMI_ERROR("Certificate verification failed: {}", result.toString());
+    }
+    return cert && *cert && result;
 }
 
 std::map<std::string, std::string>
