@@ -150,8 +150,14 @@ JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath
 bool
 JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert)
 {
+    if (!cert || !*cert)
+        return false;
     trust_.add(crypto::Certificate(store_ca_crt, sizeof(store_ca_crt)));
-    return cert && *cert && trust_.verify(*cert);
+    auto result = trust_.verify(*cert);
+    if (!result) {
+        JAMI_ERROR("Certificate verification failed: {}", result.toString());
+    }
+    return result;
 }
 
 std::map<std::string, std::string>
