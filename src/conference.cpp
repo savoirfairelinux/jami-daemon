@@ -1777,7 +1777,11 @@ Conference::bindHostAudio()
                         }
                         // Bind audio
                         if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                            rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
+                            bool isParticipantMuted = isMuted(call->getCallId());
+                            if (isParticipantMuted)
+                                rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
+                            else
+                                rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
                         } else {
                             auto buffer = source.sourceUri_;
                             static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
@@ -1852,10 +1856,10 @@ Conference::bindSubCallAudio(const std::string& callId)
             // Bind local participant to other participants only if the
             // local is attached to the conference.
             if (getState() == State::ACTIVE_ATTACHED) {
-                if (isMediaSourceMuted(MediaType::MEDIA_AUDIO))
+                bool isHostMuted = isMuted("host"sv);
+                if (isMediaSourceMuted(MediaType::MEDIA_AUDIO) or isHostMuted)
                     rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
-                else
-                    rbPool.bindRingbuffers(stream.first, RingBufferPool::DEFAULT_ID);
+                else rbPool.bindRingbuffers(stream.first, RingBufferPool::DEFAULT_ID);
                 rbPool.flush(RingBufferPool::DEFAULT_ID);
             }
         }
