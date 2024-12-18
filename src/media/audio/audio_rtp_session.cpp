@@ -54,9 +54,6 @@ AudioRtpSession::AudioRtpSession(const std::string& callId,
 {
     recorder_ = rec;
     JAMI_DEBUG("Created Audio RTP session: {} - stream id {}", fmt::ptr(this), streamId_);
-
-    // don't move this into the initializer list or Cthulus will emerge
-    ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(streamId_);
 }
 
 AudioRtpSession::~AudioRtpSession()
