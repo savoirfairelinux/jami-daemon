@@ -899,12 +899,13 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
         return;
 
     if (param->status != PJ_SUCCESS) {
-        JAMI_ERROR("SIP registration error {:d}", param->status);
+        JAMI_ERROR("[Account {}] SIP registration error {:d}",
+                    accountID_, param->status);
         destroyRegistrationInfo();
         setRegistrationState(RegistrationState::ERROR_GENERIC, param->code);
     } else if (param->code < 0 || param->code >= 300) {
-        JAMI_ERR("SIP registration failed, status={:d} ({:s})",
-                 param->code,
+        JAMI_ERROR("[Account {}] SIP registration failed, status={:d} ({:s})",
+                 accountID_, param->code,
                  sip_utils::as_view(param->reason));
         destroyRegistrationInfo();
         switch (param->code) {
