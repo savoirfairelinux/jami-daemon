@@ -191,7 +191,7 @@ public:
     void clearIce();
 
     SdpDirection getSdpDirection() const { return sdpDirection_; };
-    static const char* getSdpDirectionStr(SdpDirection direction);
+    static constexpr std::string_view getSdpDirectionStr(SdpDirection direction);
 
     /// \brief Log the given session
     /// \note crypto lines with are removed for security

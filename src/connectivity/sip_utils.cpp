@@ -273,7 +273,7 @@ logMessageHeaders(const pjsip_hdr* hdr_list)
         }
     }
 
-    JAMI_INFO("%.*s", (int) msgHdrStr.size(), msgHdrStr.c_str());
+    JAMI_LOG("{}", msgHdrStr);
 }
 
 std::string

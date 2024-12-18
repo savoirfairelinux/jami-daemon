@@ -767,13 +767,10 @@ SIPVoIPLink::guessAccount(std::string_view userName,
                           std::string_view server,
                           std::string_view fromUri) const
 {
-    JAMI_DBG("username = %.*s, server = %.*s, from = %.*s",
-             (int) userName.size(),
-             userName.data(),
-             (int) server.size(),
-             server.data(),
-             (int) fromUri.size(),
-             fromUri.data());
+    JAMI_LOG("username = {}, server = {}, from = {}",
+             userName,
+             server,
+             fromUri);
     // Attempt to find the account id from username and server name by full match
 
     std::shared_ptr<SIPAccountBase> result;
@@ -882,23 +879,22 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         status_code = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
         const pj_str_t* description = pjsip_get_status_text(status_code);
 
-        JAMI_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d, tsx@%p status %d (%.*s)",
-                 call->getCallId().c_str(),
-                 inv,
-                 inv->state,
+        JAMI_LOG("[call:{}] INVITE@{:p} state changed to {:d} ({}): cause={:d}, tsx@{:p} status {:d} ({:s})",
+                 call->getCallId(),
+                 fmt::ptr(inv),
+                 (int)inv->state,
                  pjsip_inv_state_name(inv->state),
-                 inv->cause,
-                 tsx,
+                 (int)inv->cause,
+                 fmt::ptr(tsx),
                  status_code,
-                 (int) description->slen,
-                 description->ptr);
+                 sip_utils::as_view(*description));
     } else if (ev->type == PJSIP_EVENT_TX_MSG) {
-        JAMI_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d (TX_MSG)",
-                 call->getCallId().c_str(),
-                 inv,
-                 inv->state,
+        JAMI_LOG("[call:{}] INVITE@{:p} state changed to {:d} ({:s}): cause={:d} (TX_MSG)",
+                 call->getCallId(),
+                 fmt::ptr(inv),
+                 (int)inv->state,
                  pjsip_inv_state_name(inv->state),
-                 inv->cause);
+                 (int)inv->cause);
     }
     pjsip_rx_data* rdata {nullptr};
     if (ev->type == PJSIP_EVENT_RX_MSG) {
@@ -1354,29 +1350,29 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     const auto rdata = event->body.tsx_state.src.rdata;
     if (!rdata) {
-        JAMI_ERR("[INVITE:%p] SIP RX request without rx data", inv);
+        JAMI_ERROR("[INVITE:{:p}] SIP RX request without rx data", fmt::ptr(inv));
         return;
     }
 
     const auto msg = rdata->msg_info.msg;
     if (msg->type != PJSIP_REQUEST_MSG) {
-        JAMI_ERR("[INVITE:%p] SIP RX request without msg", inv);
+        JAMI_ERROR("[INVITE:{:p}] SIP RX request without msg", fmt::ptr(inv));
         return;
     }
 
     // Using method name to dispatch
     auto methodName = sip_utils::as_view(msg->line.req.method.name);
-    JAMI_DBG("[INVITE:%p] RX SIP method %d (%.*s)",
-             inv,
-             msg->line.req.method.id,
-             (int) methodName.size(),
-             methodName.data());
+    JAMI_LOG("[INVITE:{:p}] RX SIP method {:d} ({:s})",
+             fmt::ptr(inv),
+             (int)msg->line.req.method.id,
+             methodName);
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
-    pjsip_msg_print(msg, msgbuf, sizeof msgbuf);
-    JAMI_DBG("%s", msgbuf);
-#endif // DEBUG_SIP_MESSAGE
+    auto msgsize = pjsip_msg_print(msg, msgbuf, sizeof msgbuf);
+    if (msgsize > 0)
+        JAMI_LOG("{:s}", std::string_view(msgbuf, msgsize));
+#endif // DEBUG_SIP_REQUEST_MSG
 
     if (methodName == sip_utils::SIP_METHODS::REFER)
         onRequestRefer(inv, rdata, msg, *call);
@@ -1419,11 +1415,11 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
         return;
     }
 
-    JAMI_INFO("[INVITE:%p] SIP RX response: reason %.*s, status code %i",
-              inv,
-              (int) msg->line.status.reason.slen,
-              msg->line.status.reason.ptr,
-              msg->line.status.code);
+    JAMI_LOG("[INVITE:{:p}] SIP RX response: reason {:s}, status code {:d} {:s}",
+              fmt::ptr(inv),
+              sip_utils::as_view(msg->line.status.reason),
+              msg->line.status.code,
+              sip_utils::as_view(*pjsip_get_status_text(msg->line.status.code)));
 
     sip_utils::logMessageHeaders(&msg->hdr);
 }

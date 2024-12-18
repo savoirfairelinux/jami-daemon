@@ -57,7 +57,7 @@ createMessageBody(pj_pool_t* pool,
     // split mime type to type and subtype
     sep = mimeType.find('/');
     if (std::string::npos == sep) {
-        JAMI_DBG("bad mime type: '%.*s'", (int) mimeType.size(), mimeType.data());
+        JAMI_WARNING("bad mime type: '{}'", mimeType);
         throw im::InstantMessageException("invalid mime type");
     }
 
@@ -81,7 +81,7 @@ createMessageBody(pj_pool_t* pool,
         // split paramPair into arg and value by '='
         auto paramSplit = paramPair.find('=');
         if (std::string::npos == paramSplit) {
-            JAMI_DBG("bad parameter: '%.*s'", (int) paramPair.size(), paramPair.data());
+            JAMI_WARNING("bad parameter: '{}'", paramPair);
             throw im::InstantMessageException("invalid parameter");
         }
 
