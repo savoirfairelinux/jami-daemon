@@ -2709,9 +2709,7 @@ JamiAccount::matches(std::string_view userName, std::string_view server) const
     if (userName == accountManager_->getInfo()->accountId
         || server == accountManager_->getInfo()->accountId
         || userName == accountManager_->getInfo()->deviceId) {
-        JAMI_DBG("Matching account ID in request with username %.*s",
-                 (int) userName.size(),
-                 userName.data());
+        JAMI_LOG("Matching account ID in request with username {}", userName);
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;
