@@ -448,14 +448,14 @@ Sdp::setLocalMediaCapabilities(MediaType type,
     }
 }
 
-const char*
+constexpr std::string_view
 Sdp::getSdpDirectionStr(SdpDirection direction)
 {
     if (direction == SdpDirection::OFFER)
-        return "OFFER";
+        return "OFFER"sv;
     if (direction == SdpDirection::ANSWER)
-        return "ANSWER";
-    return "NONE";
+        return "ANSWER"sv;
+    return "NONE"sv;
 }
 
 void
@@ -472,7 +472,7 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDir
 
     auto cloned_session = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned_session) {
-        JAMI_ERR("Unable to clone SDP for printing");
+        JAMI_ERROR("Unable to clone SDP for printing");
         return;
     }
 
@@ -484,11 +484,12 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDir
     std::array<char, BUF_SZ + 1> buffer;
     auto size = pjmedia_sdp_print(cloned_session, buffer.data(), BUF_SZ);
     if (size < 0) {
-        JAMI_ERR("%s SDP too big for dump", header);
+        JAMI_ERROR("SDP too big for dump: {}", header);
         return;
     }
 
-    JAMI_DBG("[SDP %s] %s\n%.*s", getSdpDirectionStr(direction), header, size, buffer.data());
+    JAMI_LOG("[SDP {}] {}\n{:s}", getSdpDirectionStr(direction), header,
+        std::string_view(buffer.data(), size));
 }
 
 void
@@ -827,9 +828,8 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             pjmedia_sdp_rtpmap rtpmap;
             if (pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap) != PJ_SUCCESS
                 || rtpmap.enc_name.slen == 0) {
-                JAMI_ERR("Unable to find payload type %.*s in SDP",
-                         (int) media->desc.fmt[j].slen,
-                         media->desc.fmt[j].ptr);
+                JAMI_ERROR("Unable to find payload type {} in SDP",
+                    sip_utils::as_view(media->desc.fmt[j]));
                 descr.enabled = false;
                 continue;
             }
@@ -837,7 +837,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             descr.rtp_clockrate = rtpmap.clock_rate;
             descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
-                JAMI_ERR("Unable to find codec %.*s", (int) codec_raw.size(), codec_raw.data());
+                JAMI_ERROR("Unable to find codec {}", codec_raw);
                 descr.enabled = false;
                 continue;
             }

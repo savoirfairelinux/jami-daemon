@@ -495,7 +495,7 @@ muteParticipant(const std::string& accountId,
                 const std::string& peerId,
                 const bool& state)
 {
-    JAMI_ERR() << "muteParticipant is deprecated, please use muteStream";
+    JAMI_ERROR("muteParticipant is deprecated, please use muteStream");
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->muteParticipant(peerId, state);

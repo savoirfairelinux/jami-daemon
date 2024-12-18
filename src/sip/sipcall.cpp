@@ -1794,8 +1794,8 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     peerSupportReuseIceInReinv_
         = Account::meetMinimumRequiredVersion(peerVersion, REUSE_ICE_IN_REINVITE_REQUIRED_VERSION);
     if (not peerSupportReuseIceInReinv_) {
-        JAMI_DEBUG("Peer's version [%.*s] does not support re-invite without ICE renegotiation. Min "
-                   "required version: [%.*s]",
+        JAMI_LOG("Peer's version [{:s}] does not support re-invite without ICE renegotiation. Min "
+                   "required version: [{:s}]",
                    version,
                    REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR);
     }
