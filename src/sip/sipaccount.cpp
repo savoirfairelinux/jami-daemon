@@ -259,7 +259,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         // Use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
-        JAMI_DBG("UserAgent: New registered account call to %.*s", (int) toUrl.size(), toUrl.data());
+        JAMI_LOG("UserAgent: New registered account call to {}", toUrl);
     }
 
     auto toUri = getToUri(to);
@@ -785,7 +785,7 @@ void
 SIPAccount::sendRegister()
 {
     if (not isUsable()) {
-        JAMI_WARN("Account must be enabled and active to register, ignoring");
+        JAMI_WARNING("[Account {}] Must be enabled and active to register, ignoring", accountID_);
         return;
     }
 
@@ -808,15 +808,14 @@ SIPAccount::sendRegister()
 
     std::string contact = getContactHeader();
 
-    JAMI_DBG("Using contact header %s in registration", contact.c_str());
+    JAMI_LOG("[Account {}] Using contact header {} in registration", accountID_, contact);
 
     if (transport_) {
         if (getUPnPActive() or not getPublishedSameasLocal()
             or (not received.empty() and received != getPublishedAddress())) {
             pjsip_host_port* via = getViaAddr();
-            JAMI_DBG("Setting VIA sent-by to %.*s:%d",
-                     (int) via->host.slen,
-                     via->host.ptr,
+            JAMI_LOG("Setting VIA sent-by to {:s}:{:d}",
+                     sip_utils::as_view(via->host),
                      via->port);
 
             if (pjsip_regc_set_via_sent_by(regc, via, transport_->get()) != PJ_SUCCESS)
@@ -870,9 +869,9 @@ SIPAccount::sendRegister()
 
     // pjsip_regc_send increment the transport ref count by one,
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        JAMI_ERR("pjsip_regc_send failed with error %d: %s",
+        JAMI_ERROR("pjsip_regc_send failed with error {:d}: {}",
                  status,
-                 sip_utils::sip_strerror(status).c_str());
+                 sip_utils::sip_strerror(status));
         throw VoipLinkException("Unable to send account registration request");
     }
 
@@ -900,14 +899,14 @@ SIPAccount::onRegister(pjsip_regc_cbparam* param)
         return;
 
     if (param->status != PJ_SUCCESS) {
-        JAMI_ERR("SIP registration error %d", param->status);
+        JAMI_ERROR("[Account {}] SIP registration error {:d}",
+                    accountID_, param->status);
         destroyRegistrationInfo();
         setRegistrationState(RegistrationState::ERROR_GENERIC, param->code);
     } else if (param->code < 0 || param->code >= 300) {
-        JAMI_ERR("SIP registration failed, status=%d (%.*s)",
-                 param->code,
-                 (int) param->reason.slen,
-                 param->reason.ptr);
+        JAMI_ERROR("[Account {}] SIP registration failed, status={:d} ({:s})",
+                 accountID_, param->code,
+                 sip_utils::as_view(param->reason));
         destroyRegistrationInfo();
         switch (param->code) {
         case PJSIP_SC_FORBIDDEN:
@@ -1527,7 +1526,7 @@ SIPAccount::enablePresence(const bool& enabled)
         return;
     }
 
-    JAMI_DBG("Presence enabled for %s : %s.", accountID_.c_str(), enabled ? TRUE_STR : FALSE_STR);
+    JAMI_LOG("[Account {}] Presence enabled: {}.", accountID_, enabled ? TRUE_STR : FALSE_STR);
 
     presence_->enable(enabled);
 }
@@ -1547,8 +1546,8 @@ SIPAccount::supportPresence(int function, bool enabled)
     if (presence_->isSupported(function) == enabled)
         return;
 
-    JAMI_DBG("Presence support for %s (%s: %s).",
-             accountID_.c_str(),
+    JAMI_LOG("[Account {}] Presence support ({}: {}).",
+             accountID_,
              function == PRESENCE_FUNCTION_PUBLISH ? "publish" : "subscribe",
              enabled ? TRUE_STR : FALSE_STR);
     presence_->support(function, enabled);
@@ -1567,26 +1566,18 @@ MatchRank
 SIPAccount::matches(std::string_view userName, std::string_view server) const
 {
     if (fullMatch(userName, server)) {
-        JAMI_DBG("Matching account id in request is a fullmatch %.*s@%.*s",
-                 (int) userName.size(),
-                 userName.data(),
-                 (int) server.size(),
-                 server.data());
+        JAMI_LOG("Matching account id in request is a fullmatch {:s}@{:s}",
+                 userName,
+                 server);
         return MatchRank::FULL;
     } else if (hostnameMatch(server)) {
-        JAMI_DBG("Matching account id in request with hostname %.*s",
-                 (int) server.size(),
-                 server.data());
+        JAMI_LOG("Matching account id in request with hostname {:s}", server);
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
-        JAMI_DBG("Matching account id in request with username %.*s",
-                 (int) userName.size(),
-                 userName.data());
+        JAMI_LOG("Matching account id in request with username {:s}", userName);
         return MatchRank::PARTIAL;
     } else if (proxyMatch(server)) {
-        JAMI_DBG("Matching account id in request with proxy %.*s",
-                 (int) server.size(),
-                 server.data());
+        JAMI_LOG("Matching account id in request with proxy {:s}", server);
         return MatchRank::PARTIAL;
     } else {
         return MatchRank::NONE;
@@ -1616,7 +1607,7 @@ SIPAccount::resetAutoRegistration()
 bool
 SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
 {
-    JAMI_DBG("[Account %s] Checking IP route after the registration", accountID_.c_str());
+    JAMI_LOG("[Account {}] Checking IP route after the registration", accountID_);
 
     pjsip_transport* tp = param->rdata->tp_info.transport;
 
