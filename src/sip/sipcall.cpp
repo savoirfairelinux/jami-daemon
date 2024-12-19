@@ -206,7 +206,7 @@ SIPCall::createRtpSession(RtpStream& stream)
 
     // Must be valid at this point.
     if (not stream.rtpSession_)
-        throw std::runtime_error("Failed to create RTP Session");
+        throw std::runtime_error("Failed to create RTP session");
     ;
 }
 
@@ -221,7 +221,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
              MediaAttribute::mediaTypeToString(mediaAttr->type_));
 
     if (not rtpSession)
-        throw std::runtime_error("Must have a valid RTP Session");
+        throw std::runtime_error("Must have a valid RTP session");
 
     // Configure the media stream
     auto new_mtu = sipTransport_->getTlsMtu();
@@ -257,14 +257,14 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
         assert(videoRtp && mediaAttr);
         auto streamIdx = findRtpStreamIndex(mediaAttr->label_);
         videoRtp->setRequestKeyFrameCallback([w = weak(), streamIdx] {
-            // This sends SIP messages on socket, so move to io
+            // This sends SIP messages on socket, so move to I/O
             dht::ThreadPool::io().run([w = std::move(w), streamIdx] {
                 if (auto thisPtr = w.lock())
                     thisPtr->requestKeyframe(streamIdx);
             });
         });
         videoRtp->setChangeOrientationCallback([w = weak(), streamIdx](int angle) {
-            // This sends SIP messages on socket, so move to io
+            // This sends SIP messages on socket, so move to I/O
             dht::ThreadPool::io().run([w, angle, streamIdx] {
                 if (auto thisPtr = w.lock())
                     thisPtr->setVideoOrientation(streamIdx, angle);
@@ -312,7 +312,7 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                     // TODO: maybe emit signal here for local voice activity
                 }
             } else {
-                JAMI_ERR("voice activity callback unable to lock weak ptr to SIPCall");
+                JAMI_ERR("Voice activity callback unable to lock weak ptr to SIPCall");
             }
         });
     });
@@ -478,19 +478,19 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport,
     }
 
     if (isSrtpEnabled() and not sipTransport_->isSecure()) {
-        JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an un-encrypted signaling channel",
+        JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an unencrypted signaling channel",
                   getCallId().c_str());
     }
 
     if (not isSrtpEnabled() and sipTransport_->isSecure()) {
-        JAMI_WARN("[call:%s] The signaling channel is encrypted but the media is not encrypted",
+        JAMI_WARN("[call:%s] The signaling channel is encrypted but the media is unencrypted",
                   getCallId().c_str());
     }
 
     const auto list_id = reinterpret_cast<uintptr_t>(this);
     sipTransport_->removeStateListener(list_id);
 
-    // listen for transport destruction
+    // Listen for transport destruction
     sipTransport_->addStateListener(
         list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
             if (auto this_ = wthis_.lock()) {
@@ -812,7 +812,7 @@ SIPCall::answer()
                                 + "] Answer: no invite session for this call");
 
     if (!inviteSession_->neg) {
-        JAMI_WARN("[call:%s] Negotiator is NULL, we've received an INVITE without an SDP",
+        JAMI_WARN("[call:%s] Negotiator is NULL, INVITE received without an SDP",
                   getCallId().c_str());
 
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
@@ -1254,10 +1254,10 @@ SIPCall::transferCommon(const pj_str_t* dst)
     if (pjsip_xfer_create_uac(inviteSession_->dlg, &xfer_cb, &sub) != PJ_SUCCESS)
         return false;
 
-    /* Associate this voiplink of call with the client subscription
+    /* Associate this VoIPLink of call with the client subscription
      * We are unable to just associate call with the client subscription
      * because after this function, we are unable to find the corresponding
-     * voiplink from the call any more. But the voiplink is useful!
+     * VoIPLink from the call any more. But the VoIPLink is useful!
      */
     pjsip_evsub_set_mod_data(sub, Manager::instance().sipVoIPLink().getModId(), this);
 
@@ -1469,7 +1469,7 @@ SIPCall::switchInput(const std::string& source)
     }
 
     // Check if the call is being recorded in order to continue
-    // ... the recording after the switch
+    // … the recording after the switch
     bool isRec = Call::isRecording();
 
     if (isWaitingForIceAndMedia_) {
@@ -1677,12 +1677,12 @@ SIPCall::sendKeyframe(int streamIdx)
 #ifdef ENABLE_VIDEO
     dht::ThreadPool::computation().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
-            JAMI_DBG("handling picture fast update request");
+            JAMI_DBG("Handling picture fast update request");
             if (streamIdx == -1) {
                 for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
                     std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
             } else if (streamIdx > -1 && streamIdx < static_cast<int>(sthis->rtpStreams_.size())) {
-                // Apply request for wanted stream
+                // Apply request for requested stream
                 auto& stream = sthis->rtpStreams_[streamIdx];
                 if (stream.rtpSession_
                     && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
@@ -1713,8 +1713,8 @@ SIPCall::setPeerUaVersion(std::string_view ua)
                    getCallId(),
                    ua);
     } else if (not peerUserAgent_.empty()) {
-        // Unlikely, but should be handled since we dont have control over the peer.
-        // Even if it's unexpected, we still try to parse the UA version.
+        // Unlikely, but should be handled since we don't have control over the peer.
+        // Even if it's unexpected, we still attempt to parse the UA version.
         JAMI_WARNING("[call:{}] Peer's User-Agent unexpectedly changed from [{}] to [{}]",
                      getCallId(),
                      peerUserAgent_,
@@ -1735,8 +1735,8 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     ua = ua.substr(pos + PACK_NAME.length());
 
     std::string_view version;
-    // Unstable (un-released) versions has a hiphen + commit Id after
-    // the version number. Find the commit Id if any, and ignore it.
+    // Unstable (un-released) versions has a hyphen + commit ID after
+    // the version number. Find the commit ID if any, and ignore it.
     pos = ua.find('-');
     if (pos != std::string_view::npos) {
         // Get the version and ignore the commit ID.
@@ -1764,28 +1764,28 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     peerSupportMultiStream_ = Account::meetMinimumRequiredVersion(peerVersion,
                                                                   MULTISTREAM_REQUIRED_VERSION);
     if (not peerSupportMultiStream_) {
-        JAMI_DEBUG(
-            "Peer's version [{}] does not support multi-stream. Min required version: [{}]",
-            version,
-            MULTISTREAM_REQUIRED_VERSION_STR);
+        JAMI_DEBUG("Peer's version [{}] does not support multi-stream. "
+                   "Min required version: [{}]",
+                   version,
+                   MULTISTREAM_REQUIRED_VERSION_STR);
     }
 
     // Check if peer's version is at least 13.11.0 to enable multi-audio-stream.
     peerSupportMultiAudioStream_ = Account::meetMinimumRequiredVersion(peerVersion,
                                                                        MULTIAUDIO_REQUIRED_VERSION);
     if (not peerSupportMultiAudioStream_) {
-        JAMI_DEBUG(
-            "Peer's version [{}] does not support multi-audio-stream. Min required version: [{}]",
-            version,
-            MULTIAUDIO_REQUIRED_VERSION_STR);
+        JAMI_DEBUG("Peer's version [{}] does not support multi-audio-stream. "
+                   "Min required version: [{}]",
+                   version,
+                   MULTIAUDIO_REQUIRED_VERSION_STR);
     }
 
     // Check if peer's version is at least 13.3.0 to enable multi-ICE.
     peerSupportMultiIce_ = Account::meetMinimumRequiredVersion(peerVersion,
                                                                MULTIICE_REQUIRED_VERSION);
     if (not peerSupportMultiIce_) {
-        JAMI_DEBUG("Peer's version [{}] does not support more than 2 ICE medias. Min required "
-                   "version: [{}]",
+        JAMI_DEBUG("Peer's version [{}] does not support more than 2 ICE media streams. "
+                   "Min required version: [{}]",
                    version,
                    MULTIICE_REQUIRED_VERSION_STR);
     }
@@ -1794,10 +1794,10 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     peerSupportReuseIceInReinv_
         = Account::meetMinimumRequiredVersion(peerVersion, REUSE_ICE_IN_REINVITE_REQUIRED_VERSION);
     if (not peerSupportReuseIceInReinv_) {
-        JAMI_LOG("Peer's version [{:s}] does not support re-invite without ICE renegotiation. Min "
-                   "required version: [{:s}]",
-                   version,
-                   REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR);
+        JAMI_LOG("Peer's version [{:s}] does not support re-invite without ICE renegotiation. "
+                 "Min required version: [{:s}]",
+                 version,
+                 REUSE_ICE_IN_REINVITE_REQUIRED_VERSION_STR);
     }
 }
 
@@ -1859,7 +1859,7 @@ SIPCall::addLocalIceAttributes()
 
     // Check the state of ICE instance, the initialization may have failed.
     if (not iceMedia->isInitialized()) {
-        JAMI_ERR("[call:%s] ICE session is not initialized", getCallId().c_str());
+        JAMI_ERR("[call:%s] ICE session is uninitialized", getCallId().c_str());
         return;
     }
 
@@ -1892,7 +1892,7 @@ SIPCall::addLocalIceAttributes()
         for (auto const& stream : rtpStreams_) {
             if (not stream.mediaAttribute_->enabled_) {
                 // Dont add ICE candidates if the media is disabled
-                JAMI_DBG("[call:%s] Media [%s] @ %u is disabled, dont add local candidates",
+                JAMI_DBG("[call:%s] Media [%s] @ %u is disabled, don't add local candidates",
                          getCallId().c_str(),
                          stream.mediaAttribute_->toString().c_str(),
                          streamIdx);
@@ -2097,7 +2097,7 @@ SIPCall::setupNegotiatedMedia()
         rtpStream.mediaAttribute_->enabled_ = local.enabled and remote.enabled;
 
         if (not rtpStream.rtpSession_)
-            throw std::runtime_error("Must have a valid RTP Session");
+            throw std::runtime_error("Must have a valid RTP session");
 
         if (local.type != MEDIA_AUDIO && local.type != MEDIA_VIDEO) {
             JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), local.type);
@@ -2302,12 +2302,12 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
     if (type == MediaType::MEDIA_AUDIO) {
         JAMI_WARN("[call:%s] %s all audio media",
                   getCallId().c_str(),
-                  mute ? "muting " : "un-muting ");
+                  mute ? "muting " : "unmuting ");
 
     } else if (type == MediaType::MEDIA_VIDEO) {
         JAMI_WARN("[call:%s] %s all video media",
                   getCallId().c_str(),
-                  mute ? "muting" : "un-muting");
+                  mute ? "muting" : "unmuting");
     } else {
         JAMI_ERR("[call:%s] Invalid media type %s", getCallId().c_str(), mediaType.c_str());
         assert(false);
@@ -2316,7 +2316,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
     // Get the current media attributes.
     auto mediaList = getMediaAttributeList();
 
-    // Mute/Un-mute all medias with matching type.
+    // Mute/Unmute all medias with matching type.
     for (auto& mediaAttr : mediaList) {
         if (mediaAttr.type_ == type) {
             mediaAttr.muted_ = mute;
@@ -2345,7 +2345,7 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
         JAMI_DEBUG("[call:{}] [{}] already {}",
                  getCallId(),
                  mediaAttr->label_,
-                 mediaAttr->muted_ ? "muted " : "un-muted ");
+                 mediaAttr->muted_ ? "muted " : "unmuted ");
 
     } else {
         // Update
@@ -2353,7 +2353,7 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
         notifyMute = true;
         JAMI_DEBUG("[call:{}] {} [{}]",
                  getCallId(),
-                 mediaAttr->muted_ ? "muting" : "un-muting",
+                 mediaAttr->muted_ ? "muting" : "unmuting",
                  mediaAttr->label_);
     }
 
@@ -2387,7 +2387,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
     JAMI_DBG("[call:%s] New local media", getCallId().c_str());
 
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
-        JAMI_DEBUG("[call:{:s}] Too many medias, limit it ({:d} vs {:d})",
+        JAMI_DEBUG("[call:{:s}] Too many media streams, limit it ({:d} vs {:d})",
                    getCallId().c_str(),
                    mediaAttrList.size(),
                    PJ_ICE_MAX_COMP);
@@ -2425,7 +2425,7 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
 
     if (mediaAttrList.size() < rtpStreams_.size()) {
 #ifdef ENABLE_VIDEO
-        // If new medias list got more medias than current size, we can remove old medias from conference
+        // If new media stream list got more media streams than current size, we can remove old media streams from conference
         for (auto i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
             auto& stream = rtpStreams_[i];
             if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
@@ -2585,8 +2585,8 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
     if (!peerSupportMultiIce_) {
         if (mediaList.size() > 2)
-            JAMI_WARNING("[call:{}] Peer does not support more than 2 ICE medias. Media change "
-                         "request modified",
+            JAMI_WARNING("[call:{}] Peer does not support more than 2 ICE medias. "
+                         "Media change request modified",
                          getCallId());
         MediaAttribute audioAttr;
         MediaAttribute videoAttr;
@@ -2756,7 +2756,7 @@ SIPCall::startIceMedia()
     }
 
     if (iceMedia->isStarted()) {
-        // NOTE: for incoming calls, the ice is already there and running
+        // NOTE: for incoming calls, the ICE is already there and running
         if (iceMedia->isRunning())
             onIceNegoSucceed();
         return;
@@ -3039,7 +3039,7 @@ SIPCall::openPortsUPnP()
     }
 
     /**
-     * Try to open the desired ports with UPnP,
+     * Attempt to open the desired ports with UPnP,
      * if they are used, use the alternative port and update the SDP session with the newly
      * chosen port(s)
      *
@@ -3092,7 +3092,7 @@ SIPCall::getDetails() const
                         = std::static_pointer_cast<video::VideoRtpSession>(rtpSession)) {
                         details.emplace(libjami::Call::Details::VIDEO_BITRATE,
                                         std::to_string(curvideoRtpSession->getVideoBitrateInfo()
-                                                           .videoBitrateCurrent));
+                                                       .videoBitrateCurrent));
                     }
                 } else
                     details.emplace(libjami::Call::Details::VIDEO_CODEC, "");
@@ -3157,8 +3157,8 @@ void
 SIPCall::enterConference(std::shared_ptr<Conference> conference)
 {
     JAMI_DEBUG("[call:{}] Entering conference [{}]",
-             getCallId(),
-             conference->getConfId());
+               getCallId(),
+               conference->getConfId());
     conf_ = conference;
     // Unbind audio. It will be rebinded in the conference if needed
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
@@ -3252,7 +3252,7 @@ SIPCall::setActiveMediaStream(const std::string& accountUri,
 void
 SIPCall::setRotation(int streamIdx, int rotation)
 {
-    // Retrigger on another thread to avoid to lock pjsip
+    // Retrigger on another thread to avoid to lock PJSIP
     dht::ThreadPool::io().run([w = weak(), streamIdx, rotation] {
         if (auto shared = w.lock()) {
             std::lock_guard lk {shared->callMutex_};
@@ -3261,7 +3261,7 @@ SIPCall::setRotation(int streamIdx, int rotation)
                 for (const auto& videoRtp : shared->getRtpSessionList(MediaType::MEDIA_VIDEO))
                     std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->setRotation(rotation);
             } else if (streamIdx > -1 && streamIdx < static_cast<int>(shared->rtpStreams_.size())) {
-                // Apply request for wanted stream
+                // Apply request for requested stream
                 auto& stream = shared->rtpStreams_[streamIdx];
                 if (stream.rtpSession_ && stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
                     std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)
@@ -3355,7 +3355,7 @@ SIPCall::monitor() const
 #endif
     if (auto transport = getIceMedia()) {
         if (transport->isRunning())
-            JAMI_DBG("\t- Medias: %s", transport->link().c_str());
+            JAMI_DBG("\t- Media stream(s): %s", transport->link().c_str());
     }
 }
 
@@ -3488,8 +3488,8 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
     iceOptions.qosType.reserve(rtpStreams_.size() * ICE_COMP_COUNT_PER_STREAM);
     for (const auto& stream : rtpStreams_) {
         iceOptions.qosType.push_back(stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO
-                                        ? dhtnet::QosType::VOICE
-                                        : dhtnet::QosType::VIDEO);
+                                     ? dhtnet::QosType::VOICE
+                                     : dhtnet::QosType::VIDEO);
         iceOptions.qosType.push_back(dhtnet::QosType::CONTROL);
     }
 
@@ -3616,7 +3616,7 @@ SIPCall::setupIceResponse(bool isReinvite)
 
     auto opt = account->getIceOptions();
 
-    // Try to use the discovered public address. If not available,
+    // Attempt to use the discovered public address. If not available,
     // fallback on local address.
     opt.accountPublicAddr = account->getPublishedIpAddress();
     if (opt.accountPublicAddr) {

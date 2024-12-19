@@ -109,13 +109,13 @@ static void
 registration_cb(pjsip_regc_cbparam* param)
 {
     if (!param) {
-        JAMI_ERR("registration callback parameter is null");
+        JAMI_ERR("Registration callback parameter is null");
         return;
     }
 
     auto account = static_cast<SIPAccount*>(param->token);
     if (!account) {
-        JAMI_ERR("account doesn't exist in registration callback");
+        JAMI_ERR("Account doesn't exist in registration callback");
         return;
     }
 
@@ -218,7 +218,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
     std::string to;
     int family;
 
-    JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
+    JAMI_DBG() << *this << "Calling SIP peer" << toUrl;
 
     auto& manager = Manager::instance();
     std::shared_ptr<SIPCall> call;
@@ -286,7 +286,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
                                                                      : localAddress;
     }
 
-    /* fallback on local address */
+    /* Fallback on local address */
     if (not addrSdp)
         addrSdp = localAddress;
 
@@ -334,7 +334,7 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state,
             transportError_ = sip_utils::sip_strerror(info->status);
             JAMI_ERROR("Transport disconnected: {:s}", transportError_);
         } else {
-            // This is already the generic error used by pjsip.
+            // This is already the generic error used by PJSIP.
             transportStatus_ = PJSIP_SC_SERVICE_UNAVAILABLE;
             transportError_ = "";
         }
@@ -412,7 +412,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     }
 
     std::string contact = getContactHeader();
-    JAMI_DEBUG("contact header: {:s} / {:s} -> {:s}", contact, from, toUri);
+    JAMI_DEBUG("Contact header: {:s} / {:s} -> {:s}", contact, from, toUri);
 
     pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
     auto local_sdp = isEmptyOffersEnabled() ? nullptr : call->getSDP().getLocalSdpSession();
@@ -739,7 +739,7 @@ SIPAccount::doRegister2_()
 
     if (presence_ and presence_->isEnabled()) {
         presence_->subscribeClient(getFromUri(), true); // self presence subscription
-        presence_->sendPresence(true, "");              // try to publish whatever the status is.
+        presence_->sendPresence(true, "");              // attempt to publish whatever the status is.
     }
 }
 
@@ -771,7 +771,7 @@ void
 SIPAccount::connectivityChanged()
 {
     if (not isUsable()) {
-        // nothing to do
+        // Nothing to do
         return;
     }
 
@@ -995,7 +995,7 @@ SIPAccount::sendUnregister()
 
     pjsip_tx_data* tdata = nullptr;
     if (pjsip_regc_unregister(regc, &tdata) != PJ_SUCCESS)
-        throw VoipLinkException("Unable to unregister sip account");
+        throw VoipLinkException("Unable to unregister SIP account");
 
     const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
@@ -1009,7 +1009,7 @@ SIPAccount::sendUnregister()
         JAMI_ERR("pjsip_regc_send failed with error %d: %s",
                  status,
                  sip_utils::sip_strerror(status).c_str());
-        throw VoipLinkException("Unable to send request to unregister sip account");
+        throw VoipLinkException("Unable to send request to unregister SIP account");
     }
 }
 
@@ -1315,7 +1315,7 @@ SIPAccount::initContactAddress()
 {
     // This method tries to determine the address to be used in the
     // contact header using the available information (current transport,
-    // UPNP, STUN, ...). The contact address may be updated after the
+    // UPNP, STUN, …). The contact address may be updated after the
     // registration using information sent by the registrar in the SIP
     // messages (see checkNATAddress).
 
@@ -1565,18 +1565,18 @@ MatchRank
 SIPAccount::matches(std::string_view userName, std::string_view server) const
 {
     if (fullMatch(userName, server)) {
-        JAMI_LOG("Matching account id in request is a fullmatch {:s}@{:s}",
+        JAMI_LOG("Matching account ID in request is a fullmatch {:s}@{:s}",
                  userName,
                  server);
         return MatchRank::FULL;
     } else if (hostnameMatch(server)) {
-        JAMI_LOG("Matching account id in request with hostname {:s}", server);
+        JAMI_LOG("Matching account ID in request with hostname {:s}", server);
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
-        JAMI_LOG("Matching account id in request with username {:s}", userName);
+        JAMI_LOG("Matching account ID in request with username {:s}", userName);
         return MatchRank::PARTIAL;
     } else if (proxyMatch(server)) {
-        JAMI_LOG("Matching account id in request with proxy {:s}", server);
+        JAMI_LOG("Matching account ID in request with proxy {:s}", server);
         return MatchRank::PARTIAL;
     } else {
         return MatchRank::NONE;
@@ -1649,7 +1649,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     /* Compare received and rport with the URI in our registration */
     dhtnet::IpAddr contact_addr = getContactAddress();
 
-    // TODO. Why note save the port in contact uri/header?
+    // TODO. Why note save the port in contact URI/header?
     if (contact_addr.getPort() == 0) {
         pjsip_transport_type_e tp_type;
         tp_type = (pjsip_transport_type_e) tp->key.type;
@@ -1677,7 +1677,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
         return false;
     }
 
-    /* Get server IP */
+    /* Get server IP address */
     dhtnet::IpAddr srv_ip = {std::string_view(param->rdata->pkt_info.src_name)};
 
     /* At this point we've detected that the address as seen by registrar.
@@ -1708,7 +1708,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam* param, pj_pool_t* pool)
     }
 
     JAMI_WARN("[account %s] Contact address changed: "
-              "(%s --> %s:%d). Updating registration.",
+              "(%s → %s:%d). Updating registration.",
               accountID_.c_str(),
               contact_addr.toString(true).c_str(),
               via_addrstr.data(),
@@ -1804,7 +1804,7 @@ SIPAccount::scheduleReregistration()
                                         : REGISTRATION_FIRST_RETRY_INTERVAL;
     delay.msec = 0;
 
-    /* Randomize interval by +/- 10 secs */
+    /* Randomize interval by ±10 secs */
     if (delay.sec >= 10) {
         delay.msec = delay10ZeroDist_(rand);
     } else {
@@ -1814,7 +1814,7 @@ SIPAccount::scheduleReregistration()
 
     pj_time_val_normalize(&delay);
 
-    JAMI_WARNING("Scheduling re-registration retry in {:d} seconds..", delay.sec);
+    JAMI_WARNING("Scheduling re-registration attempt in {:d} second(s)…", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
     if (pjsip_endpt_schedule_timer(link_.getEndpoint(), &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;
@@ -1891,7 +1891,7 @@ SIPAccount::sendMessage(const std::string& to,
     pjsip_hdr* hdr;
     auto time = std::time(nullptr);
     auto date = std::ctime(&time);
-    // the erase-remove idiom for a cstring, removes _all_ new lines with in date
+    // the erase-remove idiom for a Cstring, removes _all_ new lines with in date
     *std::remove(date, date + strlen(date), '\n') = '\0';
 
     // Add Header
