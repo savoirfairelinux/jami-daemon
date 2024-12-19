@@ -52,12 +52,22 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
 
-    if (auto acc = account_.lock())
+    if (auto acc = account_.lock()) {
         if (auto convModule = acc->convModule(true)) {
             auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
-            res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
+            if (!res) {
+                JAMI_WARNING("Received ConversationChannel request for '{}' but user {} is banned", name, cert->issuer->getId().toString());
+            } else {
+                res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
+                if (!res) {
+                    JAMI_WARNING("Received ConversationChannel request for '{}' but device {} is banned", name, cert->getLongId().toString());
+                }
+            }
             return res;
+        } else {
+            JAMI_ERROR("Received ConversationChannel request but conversation module is not available");
         }
+    }
     return false;
 }
 
