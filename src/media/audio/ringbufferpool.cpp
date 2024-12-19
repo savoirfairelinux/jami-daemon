@@ -232,23 +232,35 @@ RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::st
 }
 
 void
-RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
-{
-    const auto& rb = getRingBuffer(ringbufferId);
-    if (not rb) {
-        JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
-        return;
-    }
+RingBufferPool::unBindAllHalfDuplexOut(const std::string &audioToDelete) {
+    JAMI_LOG("Unbind `{}` from all RingBuffers", audioToDelete);
 
     std::lock_guard lk(stateLock_);
 
-    auto bindings = getReadBindings(ringbufferId);
-    if (not bindings)
-        return;
+    auto bindingsToRemove = std::vector<std::pair<
+            const std::string, // Biding to delete
+            std::shared_ptr<RingBuffer>>>(); // From ring buffer
 
-    const auto bindings_copy = *bindings; // temporary copy
-    for (const auto& rbuf : bindings_copy) {
-        removeReaderFromRingBuffer(rb, rbuf->getId());
+    // Iterate over the map of ring buffers and their associated bindings
+    for (const auto &[ringBufferId, bindings]: readBindingsMap_) {
+        // Skip the specific ring buffer we want to delete
+        if (ringBufferId == audioToDelete) {
+            continue;
+        }
+
+        // Check each read binding in the list
+        for (const auto &binding: bindings) {
+            // If the binding's ID matches the audio to delete, add it to the removal list
+            if (binding->getId() == audioToDelete) {
+                bindingsToRemove.emplace_back(ringBufferId, binding);
+            }
+        }
+    }
+
+    // Process the bindings marked for removal
+    for (const auto &[ringBufferId, binding]: bindingsToRemove) {
+        // Remove the reader from the ring buffer
+        removeReaderFromRingBuffer(binding, ringBufferId);
     }
 }
 
