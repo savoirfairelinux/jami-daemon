@@ -61,6 +61,12 @@ public:
 
     void flushAll();
 
+    /**
+     * Return the list of subscribers (Ring buffers Id that are reading this ring buffer).
+     */
+    std::vector<std::string>
+    getSubscribers();
+
     inline AudioFormat getFormat() const { return format_; }
 
     inline void setFormat(const AudioFormat& format)

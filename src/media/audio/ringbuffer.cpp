@@ -65,6 +65,14 @@ RingBuffer::flushAll()
         offset.second.offset = endPos_;
 }
 
+std::vector<std::string> RingBuffer::getSubscribers() {
+    std::vector<std::string> subscribers;
+    for (const auto &offset: readoffsets_) {
+        subscribers.push_back(offset.first);
+    }
+    return subscribers;
+}
+
 size_t
 RingBuffer::putLength() const
 {

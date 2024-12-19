@@ -69,6 +69,7 @@ public:
     void unBindHalfDuplexOut(const std::string& process_id, const std::string& ringbufferId);
 
     void unBindAllHalfDuplexOut(const std::string& ringbufferId);
+    void unBindAllHalfDuplexIn(const std::string& ringbufferId);
 
     void unBindAll(const std::string& ringbufferId);
 
