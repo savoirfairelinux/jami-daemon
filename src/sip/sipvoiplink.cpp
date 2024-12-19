@@ -242,7 +242,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
     if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
-        JAMI_ERR("NULL uri");
+        JAMI_ERR("NULL URI");
         return PJ_FALSE;
     }
 
@@ -655,7 +655,7 @@ SIPVoIPLink::SIPVoIPLink()
                 JAMI_WARN("Error setting SIP DNS servers: %s", sip_utils::sip_strerror(ret).c_str());
             } else {
                 if (auto ret = pjsip_endpt_set_resolver(endpt_, resv)) {
-                    JAMI_WARN("Error setting pjsip DNS resolver: %s",
+                    JAMI_WARN("Error setting PJSIP DNS resolver: %s",
                               sip_utils::sip_strerror(ret).c_str());
                 }
             }
@@ -809,7 +809,7 @@ SIPVoIPLink::handleEvents()
 void
 SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay)
 {
-    JAMI_DEBUG("Register new keep alive timer {:d} with delay {:d}", timer.id, delay.sec);
+    JAMI_DEBUG("Register new keepalive timer {:d} with delay {:d}", timer.id, delay.sec);
 
     if (timer.id == -1)
         JAMI_WARN("Timer already scheduled");
@@ -1032,7 +1032,7 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
 
     dhtnet::IpAddr address;
     if (account->getUPnPActive()) {
-        /* use UPnP addr, or published addr if its set */
+        /* use UPnP addr, or published addr if it's set */
         address = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
                                                      : account->getPublishedIpAddress();
     } else {
@@ -1167,8 +1167,8 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
         int streamIdx = -1;
         if (body_msg.find(STREAM_ID) != std::string_view::npos) {
-            // Note: here we use the index of the RTP stream, not it's label!
-            // Indeed, both side will have different labels as they have different call ids
+            // Note: here we use the index of the RTP stream, not its label!
+            // Indeed, both sides will have different labels as they have different call IDs
             static const std::regex STREAMID_REGEX("<stream_id>([0-9]+)</stream_id>");
             std::svmatch matched_pattern;
             std::regex_search(body_msg, matched_pattern, STREAMID_REGEX);
@@ -1508,7 +1508,7 @@ SIPVoIPLink::resolveSrvName(const std::string& name,
         port = 0;
         name_size = name.size();
     }
-    JAMI_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
+    JAMI_DBG("Attempt to resolve '%s' (port: %u)", name.c_str(), port);
 
     pjsip_host_info host_info {
         /*.flag = */ 0,
@@ -1562,10 +1562,10 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
                                            std::string& addr,
                                            pj_uint16_t& port) const
 {
-    // Initialize the sip port with the default SIP port
+    // Initialize the SIP port with the default SIP port
     port = pjsip_transport_get_default_port_for_type(transportType);
 
-    // Initialize the sip address with the hostname
+    // Initialize the SIP address with the hostname
     addr = sip_utils::as_view(*pj_gethostname());
 
     // Update address and port with active transport

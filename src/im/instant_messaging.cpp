@@ -27,13 +27,13 @@ namespace jami {
 using sip_utils::CONST_PJ_STR;
 
 /**
- * the pair<string, string> we receive is expected to be in the format <mime type, payload>
- * the mime type is in the format "type/subtype"
+ * the pair<string, string> we receive is expected to be in the format <MIME type, payload>
+ * the MIME type is in the format "type/subtype"
  * in the header it will be presented as "Content-Type: type/subtype"
  * following the RFC spec, this header line can also contain other parameters in the format:
- *     Content-Type: type/subtype; arg=value; arg=value; ...
+ *     Content-Type: type/subtype; arg=value; arg=value; …
  * thus we also accept the key of the map to be in such a format:
- *     type/subtype; arg=value; arg=value; ...
+ *     type/subtype; arg=value; arg=value; …
  */
 static void
 createMessageBody(pj_pool_t* pool,
@@ -54,11 +54,11 @@ createMessageBody(pj_pool_t* pool,
         parameters = std::string_view(payload.first).substr(sep + 1);
     }
 
-    // split mime type to type and subtype
+    // split MIME type to type and subtype
     sep = mimeType.find('/');
     if (std::string::npos == sep) {
-        JAMI_WARNING("bad mime type: '{}'", mimeType);
-        throw im::InstantMessageException("invalid mime type");
+        JAMI_WARNING("Bad MIME type: '{}'", mimeType);
+        throw im::InstantMessageException("Invalid MIME type");
     }
 
     auto type = sip_utils::CONST_PJ_STR(mimeType.substr(0, sep));
@@ -71,7 +71,7 @@ createMessageBody(pj_pool_t* pool,
     if (not parameters.size())
         return;
 
-    // now try to add parameters one by one
+    // now attempt to add parameters one by one
     do {
         sep = parameters.find(';');
         auto paramPair = parameters.substr(0, sep);
@@ -81,8 +81,8 @@ createMessageBody(pj_pool_t* pool,
         // split paramPair into arg and value by '='
         auto paramSplit = paramPair.find('=');
         if (std::string::npos == paramSplit) {
-            JAMI_WARNING("bad parameter: '{}'", paramPair);
-            throw im::InstantMessageException("invalid parameter");
+            JAMI_WARNING("Bad parameter: '{}'", paramPair);
+            throw im::InstantMessageException("Invalid parameter");
         }
 
         auto arg = sip_utils::CONST_PJ_STR(paramPair.substr(0, paramSplit));
@@ -110,7 +110,7 @@ im::fillPJSIPMessageBody(pjsip_tx_data& tdata, const std::map<std::string, std::
         return;
     }
 
-    /* if ctype is not specified "multipart/mixed" will be used
+    /* if Ctype is not specified "multipart/mixed" will be used
      * if the boundary is not specified, a random one will be generateAudioPort
      * FIXME: generate boundary and check that none of the message parts contain it before
      *        calling this function; however the probability of this happenings if quite low as
@@ -139,7 +139,7 @@ void
 im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::string>& payloads)
 {
     if (payloads.empty()) {
-        JAMI_WARN("the payloads argument is empty; ignoring message");
+        JAMI_WARN("The payloads argument is empty; ignoring message");
         return;
     }
 
@@ -206,7 +206,7 @@ im::parseSipMessage(const pjsip_msg* msg)
     std::map<std::string, std::string> ret;
 
     if (!msg->body) {
-        JAMI_WARN("message body is empty");
+        JAMI_WARN("Message body is empty");
         return ret;
     }
 
