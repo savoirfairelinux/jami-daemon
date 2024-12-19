@@ -327,7 +327,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &STR_MESSAGE_ID, nullptr);
                 std::string id = {};
                 if (!msgId) {
-                    // Supports imdn message format https://tools.ietf.org/html/rfc5438#section-7.1.1.3
+                    // Supports IMDN message format https://tools.ietf.org/html/rfc5438#section-7.1.1.3
                     constexpr pj_str_t STR_IMDN_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR(
                         "imdn.Message-ID");
                     msgId = (pjsip_generic_string_hdr*)
@@ -413,7 +413,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     // The username can be used to join specific calls in conversations
     call->toUsername(std::string(toUsername));
 
-    // FIXME : for now, use the same address family as the SIP transport
+    // FIXME: for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(
         pjsip_transport_get_type_from_flag(transport->get()->flag));
 
@@ -457,7 +457,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     pjsip_dialog* dialog = nullptr;
     if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog)
         != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create uas");
+        JAMI_ERR("Unable to create UAS");
         call.reset();
         try_respond_stateless(endpt_,
                               rdata,
@@ -741,7 +741,7 @@ SIPVoIPLink::~SIPVoIPLink() {}
 void
 SIPVoIPLink::shutdown()
 {
-    JAMI_DBG("Shutdown SIPVoIPLink@%p...", this);
+    JAMI_DBG("Shutting down SIPVoIPLink@%p…", this);
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!
 
@@ -759,7 +759,7 @@ SIPVoIPLink::shutdown()
     pj_caching_pool_destroy(&cp_);
     sipTransportBroker.reset();
 
-    JAMI_DBG("SIPVoIPLink@%p is shutdown", this);
+    JAMI_DBG("SIPVoIPLink@%p shutdown successfully completed", this);
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -774,7 +774,7 @@ SIPVoIPLink::guessAccount(std::string_view userName,
              server.data(),
              (int) fromUri.size(),
              fromUri.data());
-    // Try to find the account id from username and server name by full match
+    // Attempt to find the account id from username and server name by full match
 
     std::shared_ptr<SIPAccountBase> result;
     std::shared_ptr<SIPAccountBase> IP2IPAccount;
@@ -857,7 +857,7 @@ static void
 invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
 {
     if (inv == nullptr or ev == nullptr) {
-        throw VoipLinkException("unexpected null pointer");
+        throw VoipLinkException("Unexpected null pointer");
     }
 
     auto call = getCallFromInvite(inv);
@@ -1022,7 +1022,7 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     }
 
     auto family = pj_AF_INET();
-    // FIXME : for now, use the same address family as the SIP transport
+    // FIXME: for now, use the same address family as the SIP transport
     if (auto dlg = inv->dlg) {
         if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
             if (auto tr = dlg->tp_sel.u.transport)

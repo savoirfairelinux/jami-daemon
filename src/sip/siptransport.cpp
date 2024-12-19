@@ -68,7 +68,7 @@ SipTransport::SipTransport(pjsip_transport* t)
     : transport_(nullptr, deleteTransport)
 {
     if (not t or pjsip_transport_add_ref(t) != PJ_SUCCESS)
-        throw std::runtime_error("invalid transport");
+        throw std::runtime_error("Invalid transport");
 
     // Set pointer here, right after the successful pjsip_transport_add_ref
     transport_.reset(t);
@@ -180,7 +180,7 @@ SipTransport::getTlsMtu()
                   * This method is broken by definition.
                   * A MTU should not be defined at this layer.
                   * And a correct value should come from the underlying transport itself,
-                  * not from a constant...
+                  * not from a constant…
                   */
 }
 
@@ -195,7 +195,7 @@ SipTransportBroker::~SipTransportBroker()
     udpTransports_.clear();
     transports_.clear();
 
-    JAMI_DBG("destroying SipTransportBroker@%p", this);
+    JAMI_DBG("Destroying SipTransportBroker@%p…", this);
 }
 
 void
@@ -203,9 +203,9 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
                                           pjsip_transport_state state,
                                           const pjsip_transport_state_info* info)
 {
-    JAMI_DBG("pjsip transport@%p %s -> %s", tp, tp->info, SipTransport::stateToStr(state));
+    JAMI_DBG("pjsip transport@%p %s → %s", tp, tp->info, SipTransport::stateToStr(state));
 
-    // First make sure that this transport is handled by us
+    // First ensure that this transport is handled by us
     // and remove it from any mapping if destroy pending or done.
 
     std::shared_ptr<SipTransport> sipTransport;
@@ -334,13 +334,13 @@ SipTransportBroker::getTlsListener(const dhtnet::IpAddr& ipAddress, const pjsip_
 {
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
     RETURN_IF_FAIL(ipAddress, nullptr, "Unable to determine IP address for this transport");
-    JAMI_DEBUG("Creating TLS listener on {:s}...", ipAddress.toString(true));
+    JAMI_DEBUG("Creating TLS listener on {:s}…", ipAddress.toString(true));
 #if 0
     JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
     JAMI_DBG(" cert_file    : %s", settings->cert_file.ptr);
-    JAMI_DBG(" ciphers_num    : %d", settings->ciphers_num);
+    JAMI_DBG(" ciphers_num  : %d", settings->ciphers_num);
     JAMI_DBG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
-    JAMI_DBG(" reuse_addr    : %d", settings->reuse_addr);
+    JAMI_DBG(" reuse_addr   : %d", settings->reuse_addr);
 #endif
 
     pjsip_tpfactory* listener = nullptr;

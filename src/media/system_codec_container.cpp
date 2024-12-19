@@ -245,8 +245,8 @@ SystemCodecContainer::checkInstalledCodecs()
                 codecIt->codecType = (CodecType)((unsigned) codecType & ~CODEC_DECODER);
         }
     }
-    JAMI_INFO("Encoders found: %s", enc_ss.str().c_str());
-    JAMI_INFO("Decoders found: %s", dec_ss.str().c_str());
+    JAMI_INFO("Encoder(s) found: %s", enc_ss.str().c_str());
+    JAMI_INFO("Decoder(s) found: %s", dec_ss.str().c_str());
 }
 
 std::vector<std::shared_ptr<SystemCodecInfo>>
@@ -256,7 +256,7 @@ SystemCodecContainer::getSystemCodecInfoList(MediaType mediaType)
         return availableCodecList_;
 
     // otherwise we have to instantiate a new list containing filtered objects
-    // must be destroyed by the caller...
+    // must be destroyed by the caller…
     std::vector<std::shared_ptr<SystemCodecInfo>> systemCodecList;
     for (const auto& codecIt : availableCodecList_) {
         if (codecIt->mediaType & mediaType)
