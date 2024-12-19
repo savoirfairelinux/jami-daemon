@@ -228,9 +228,11 @@ void
 AudioInput::setPaused(bool paused)
 {
     if (paused) {
+        // On debind le fichier de l'utilisateur (p1 ne lit plus le stream de p2)
         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
         deviceGuard_.reset();
     } else {
+        // on bind le fichier a l'utilisateur (p1 lit le stream de p2)
         Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
         deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
     }

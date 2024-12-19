@@ -139,7 +139,9 @@ RingBufferPool::removeReadBindings(const std::string& ringbufferId)
 /**
  * Make given ringbuffer a reader of given ring buffer
  */
-void
+// p1 est le binding de p2 (p2 lit le stream de p1)
+
+    void
 RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                       const std::string& ringbufferId)
 {
@@ -151,6 +153,7 @@ RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
     JAMI_DEBUG("Bind rbuf '{}' to ringbuffer '{}'", rbuf->getId(), ringbufferId);
 }
 
+// p2 ne veut plus lire le stream de p1
 void
 RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                            const std::string& ringbufferId)
@@ -187,6 +190,14 @@ RingBufferPool::bindRingbuffers(const std::string& ringbufferId1, const std::str
     addReaderToRingBuffer(rb2, ringbufferId1);
 }
 
+/**
+ * Add a new ringbufferId to unidirectional outgoing stream
+ * \param ringbufferId New ringbufferId to be added for this stream
+ * \param processId Process that require this stream
+ */
+
+// a comprendre ringbufferId est le binding de processId (processid lit le stream de ringbufferId)
+// a comprendre p2 est le binding de p1 (p1 lit le stream de p2)
 void
 RingBufferPool::bindHalfDuplexOut(const std::string& processId, const std::string& ringbufferId)
 {
@@ -195,6 +206,7 @@ RingBufferPool::bindHalfDuplexOut(const std::string& processId, const std::strin
     if (const auto& rb = getRingBuffer(ringbufferId)) {
         std::lock_guard lk(stateLock_);
 
+        // p1 est le binding de p2 (p2 lit le stream de p1)
         addReaderToRingBuffer(rb, processId);
     }
 }
@@ -222,33 +234,63 @@ RingBufferPool::unbindRingbuffers(const std::string& ringbufferId1, const std::s
     removeReaderFromRingBuffer(rb2, ringbufferId1);
 }
 
+// (p1 ne veut plus lire plus le stream de p2)
 void
 RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::string& ringbufferId)
 {
     std::lock_guard lk(stateLock_);
 
     if (const auto& rb = getRingBuffer(ringbufferId))
+
+        // p2 ne veut plus lire le stream de p1
         removeReaderFromRingBuffer(rb, process_id);
 }
 
-void
-RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
-{
-    const auto& rb = getRingBuffer(ringbufferId);
+// Je pense que cette focntion fait ce qu'elle est censé faire mais qu'elle est utilisé de travers
+// il faudrait que l'on cree une nouvelle fonction pour retirer les subscribers d'un ringbuffer donné
+void // p1 ne veut plus lire aucun stream;
+RingBufferPool::unBindAllHalfDuplexOut(const std::string &ringbufferId) {
+    const auto &rb = getRingBuffer(ringbufferId);
     if (not rb) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
     }
-
+    // p1 ne veut plus lire aucun stream
     std::lock_guard lk(stateLock_);
-
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
-
     const auto bindings_copy = *bindings; // temporary copy
-    for (const auto& rbuf : bindings_copy) {
+    for (const auto &rbuf: bindings_copy) {
         removeReaderFromRingBuffer(rb, rbuf->getId());
+    }
+}
+
+void // p1 ne veut plus lire aucun stream;
+RingBufferPool::unBindAllHalfDuplexIn(const std::string &audioToDelete) {
+    JAMI_LOG("Unbind `{}` from all RingBuffers", audioToDelete);
+    std::lock_guard lk(stateLock_);
+    auto bindingsToRemove = std::vector<std::pair<
+            const std::string, // Biding to delete
+            std::shared_ptr<RingBuffer>>>(); // From ring buffer
+    // Iterate over the map of ring buffers and their associated bindings
+    for (const auto &[ringBufferId, bindings]: readBindingsMap_) {
+        // Skip the specific ring buffer we want to delete
+        if (ringBufferId == audioToDelete) {
+            continue;
+        }
+        // Check each read binding in the list
+        for (const auto &binding: bindings) {
+            // If the binding's ID matches the audio to delete, add it to the removal list
+            if (binding->getId() == audioToDelete) {
+                bindingsToRemove.emplace_back(ringBufferId, binding);
+            }
+        }
+    }
+    // Process the bindings marked for removal
+    for (const auto &[ringBufferId, binding]: bindingsToRemove) {
+        // Remove the reader from the ring buffer
+        removeReaderFromRingBuffer(binding, ringBufferId);
     }
 }
 
