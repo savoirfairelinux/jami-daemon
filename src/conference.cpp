@@ -1813,7 +1813,7 @@ Conference::unbindHostAudio()
             }
             // Unbind audio
             if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(RingBufferPool::DEFAULT_ID);
+                Manager::instance().getRingBufferPool().unBindAllHalfDuplexIn(RingBufferPool::DEFAULT_ID);
             } else {
                 auto buffer = source.sourceUri_;
                 static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
@@ -1821,7 +1821,7 @@ Conference::unbindHostAudio()
                 if (pos != std::string::npos)
                     buffer = source.sourceUri_.substr(pos + sep.size());
 
-                Manager::instance().getRingBufferPool().unBindAllHalfDuplexOut(buffer);
+                Manager::instance().getRingBufferPool().unBindAllHalfDuplexIn(buffer);
             }
         }
     }
@@ -1874,7 +1874,7 @@ Conference::unbindSubCallAudio(const std::string& callId)
         auto medias = call->getAudioStreams();
         auto& rbPool = Manager::instance().getRingBufferPool();
         for (const auto& [id, muted] : medias) {
-            rbPool.unBindAllHalfDuplexOut(id);
+            rbPool.unBindAllHalfDuplexIn(id);
         }
     }
 }

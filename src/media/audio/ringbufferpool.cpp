@@ -253,6 +253,17 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
 }
 
 void
+RingBufferPool::unBindAllHalfDuplexIn(const std::string &audioToDelete) {
+
+    std::lock_guard lk(stateLock_);
+    const std::shared_ptr<RingBuffer> &ringBuffer = getRingBuffer(audioToDelete);
+    const std::vector<std::string> &subscribers = ringBuffer->getSubscribers();
+    for (const auto &subscriber: subscribers) {
+        removeReaderFromRingBuffer(ringBuffer, subscriber);
+    }
+}
+
+void
 RingBufferPool::unBindAll(const std::string& ringbufferId)
 {
     JAMI_LOG("Unbind ringbuffer {} from all bound ringbuffers", ringbufferId);
