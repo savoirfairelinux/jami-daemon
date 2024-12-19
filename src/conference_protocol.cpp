@@ -84,7 +84,7 @@ ConfProtocolParser::parseV0()
         }
     }
     if (!isPeerModerator) {
-        JAMI_WARNING("Received conference order from a non moderator ({})", peerId_);
+        JAMI_WARNING("Received conference order from a non-moderator ({})", peerId_);
         return;
     }
     if (data_.isMember(ProtocolKeys::LAYOUT)) {
