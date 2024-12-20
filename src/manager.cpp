@@ -790,13 +790,13 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     setGnuTlsLogLevel();
 
-    JAMI_LOG("Using PJSIP version {:s} for {:s}", pj_get_version(), PJ_OS_NAME);
-    JAMI_LOG("Using GnuTLS version {:s}", gnutls_check_version(nullptr));
-    JAMI_LOG("Using OpenDHT version {:s}", dht::version());
-    JAMI_LOG("Using FFmpeg version {:s}", av_version_info());
+    JAMI_LOG("Using PJSIP version: {:s} for {:s}", pj_get_version(), PJ_OS_NAME);
+    JAMI_LOG("Using GnuTLS version: {:s}", gnutls_check_version(nullptr));
+    JAMI_LOG("Using OpenDHT version: {:s}", dht::version());
+    JAMI_LOG("Using FFmpeg version: {:s}", av_version_info());
     int git2_major = 0, git2_minor = 0, git2_rev = 0;
     if (git_libgit2_version(&git2_major, &git2_minor, &git2_rev) == 0) {
-        JAMI_LOG("Using libgit2 version {:d}.{:d}.{:d}", git2_major, git2_minor, git2_rev);
+        JAMI_LOG("Using libgit2 version: {:d}.{:d}.{:d}", git2_major, git2_minor, git2_rev);
     }
 
     setDhtLogLevel();
