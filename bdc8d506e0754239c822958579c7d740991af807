@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9185f05c_6c07ee60",
+        "filename": "src/media/audio/pulseaudio/pulselayer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 685,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2024-12-20T00:35:25Z",
+      "side": 0,
+      "message": "Is it easier/better for the developers to align the colons? Please advise either way. If so, the patch will be updated as shown below.\n\n```\n             \"\\n    Server name                 : %s\"\n             \"\\n    Server version              : %s\"\n             \"\\n    Default sink                : %s\"\n             \"\\n    Default source              : %s\"\n             \"\\n    Default sample specification: %s\"\n             \"\\n    Default channel map         : %s\",\n```\n\nThank you",
+      "range": {
+        "startLine": 680,
+        "startChar": 0,
+        "endLine": 685,
+        "endChar": 45
+      },
+      "revId": "bdc8d506e0754239c822958579c7d740991af807",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
