@@ -676,13 +676,13 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
     if (!i)
         return;
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    JAMI_DBG("PulseAudio server info:\n"
-             "    Server name: %s\n"
-             "    Server version: %s\n"
-             "    Default Sink %s\n"
-             "    Default Source %s\n"
-             "    Default Sample Specification: %s\n"
-             "    Default Channel Map: %s\n",
+    JAMI_DBG("PulseAudio server info:"
+             "\n    Server name: %s"
+             "\n    Server version: %s"
+             "\n    Default sink: %s"
+             "\n    Default source: %s"
+             "\n    Default sample specification: %s"
+             "\n    Default channel map: %s",
              i->server_name,
              i->server_version,
              i->default_sink_name,

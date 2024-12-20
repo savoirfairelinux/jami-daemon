@@ -203,7 +203,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
                                           pjsip_transport_state state,
                                           const pjsip_transport_state_info* info)
 {
-    JAMI_DBG("pjsip transport@%p %s → %s", tp, tp->info, SipTransport::stateToStr(state));
+    JAMI_DBG("PJSIP transport@%p %s → %s", tp, tp->info, SipTransport::stateToStr(state));
 
     // First ensure that this transport is handled by us
     // and remove it from any mapping if destroy pending or done.
@@ -218,7 +218,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
     if (!isDestroying_ && state == PJSIP_TP_STATE_DESTROY) {
         // maps cleanup
-        JAMI_DBG("unmap pjsip transport@%p {SipTransport@%p}", tp, sipTransport.get());
+        JAMI_DBG("Unmap PJSIP transport@%p {SipTransport@%p}", tp, sipTransport.get());
         transports_.erase(key);
 
         // If UDP
