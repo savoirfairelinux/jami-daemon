@@ -2381,7 +2381,7 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
     while (git_index_conflict_next(&ancestor_out, &our_out, &their_out, ci.get()) != GIT_ITEROVER) {
         if (ancestor_out && ancestor_out->path && our_out && our_out->path && their_out
             && their_out->path) {
-            if (std::string(ancestor_out->path) == "profile.vcf") {
+            if (std::string_view(ancestor_out->path) == "profile.vcf"sv) {
                 // Checkout wanted version. copy the index_entry
                 git_index_entry resolution = useRemote ? *their_out : *our_out;
                 resolution.flags &= GIT_INDEX_STAGE_NORMAL;
@@ -2424,6 +2424,7 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
 void
 ConversationRepository::Impl::initMembers()
 {
+    using std::filesystem::path;
     auto repo = repository();
     if (!repo)
         throw std::logic_error("Invalid git repository");
@@ -2431,38 +2432,35 @@ ConversationRepository::Impl::initMembers()
     std::vector<std::string> uris;
     std::lock_guard lk(membersMtx_);
     members_.clear();
-    std::filesystem::path repoPath = git_repository_workdir(repo.get());
-    std::vector<std::filesystem::path> paths = {repoPath / "admins",
-                                                repoPath / "members",
-                                                repoPath / "invited",
-                                                repoPath / "banned" / "members",
-                                                repoPath / "banned" / "invited"};
-    std::vector<MemberRole> roles = {
-        MemberRole::ADMIN,
-        MemberRole::MEMBER,
-        MemberRole::INVITED,
-        MemberRole::BANNED,
-        MemberRole::BANNED,
+    path repoPath = git_repository_workdir(repo.get());
+
+    static const std::vector<std::pair<MemberRole, path>> paths = {
+        {MemberRole::ADMIN, "admins"},
+        {MemberRole::MEMBER, "members"},
+        {MemberRole::INVITED, "invited"},
+        {MemberRole::BANNED, path("banned") / "members"},
+        {MemberRole::BANNED, path("banned") / "invited"}
     };
 
-    auto i = 0;
-    for (const auto& p : paths) {
-        for (const auto& f : dhtnet::fileutils::readDirectory(p)) {
-            auto pos = f.find(".crt");
-            auto uri = f.substr(0, pos);
-            auto it = std::find(uris.begin(), uris.end(), uri);
-            if (it == uris.end()) {
-                members_.emplace_back(ConversationMember {uri, roles[i]});
+    std::error_code ec;
+    for (const auto& [role, p] : paths) {
+        for (const auto& f : std::filesystem::directory_iterator(repoPath / p, ec)) {
+            if (f.path().extension() != ".crt")
+                continue;
+            auto uri = f.path().stem().string();
+            if (std::find(uris.begin(), uris.end(), uri) == uris.end()) {
+                members_.emplace_back(ConversationMember {uri, role});
                 uris.emplace_back(uri);
             }
         }
-        ++i;
+        if (ec) {
+            JAMI_ERROR("[conv {}] Unable to read directory {}: {}", id_, p, ec.message());
+        }
     }
 
     if (mode() == ConversationMode::ONE_TO_ONE) {
         for (const auto& member : getInitialMembers()) {
-            auto it = std::find(uris.begin(), uris.end(), member);
-            if (it == uris.end()) {
+            if (std::find(uris.begin(), uris.end(), member) == uris.end()) {
                 // If member is in initial commit, but not in invited, this means that user left.
                 members_.emplace_back(ConversationMember {member, MemberRole::LEFT});
             }
