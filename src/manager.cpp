@@ -756,6 +756,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     initialized = true;
 
     git_libgit2_init();
+    git_libgit2_opts(GIT_OPT_ENABLE_FSYNC_GITDIR, 1);
     auto res = git_transport_register("git", p2p_transport_cb, nullptr);
     if (res < 0) {
         const git_error* error = giterr_last();
