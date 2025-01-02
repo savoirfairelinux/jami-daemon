@@ -70,9 +70,52 @@ public:
         conversationDataPath_ = fileutils::get_data_dir() / accountId_
                                 / "conversation_data" / id_;
         membersCache_ = conversationDataPath_ / "members";
+        checkLocks();
         loadMembers();
         if (members_.empty()) {
             initMembers();
+        }
+    }
+
+    void checkLocks()
+    {
+        auto repo = repository();
+        if (!repo)
+            throw std::logic_error("Invalid git repository");
+        
+        std::filesystem::path repoPath = git_repository_path(repo.get());
+        std::error_code ec;
+
+        auto indexPath = std::filesystem::path(repoPath / "index.lock");
+        if (std::filesystem::exists(indexPath, ec)) {
+            JAMI_WARNING("[conv {}] Conversation is locked, removing lock {}", id_, indexPath);
+            std::filesystem::remove(indexPath, ec);
+            if (ec)
+                JAMI_ERROR("[conv {}] Unable to remove lock {}: {}", id_, indexPath, ec.message());
+        }
+
+        auto refPath = std::filesystem::path(repoPath / "refs" / "heads" / "main.lock");
+        if (std::filesystem::exists(refPath)) {
+            JAMI_WARNING("[conv {}] Conversation is locked, removing lock {}", id_, refPath);
+            std::filesystem::remove(refPath, ec);
+            if (ec)
+                JAMI_ERROR("[conv {}] Unable to remove lock {}: {}", id_, refPath, ec.message());
+        }
+
+        auto remotePath = std::filesystem::path(repoPath / "refs" / "remotes");
+        for (const auto& fileIt : std::filesystem::directory_iterator(remotePath, ec)) {
+            auto refPath = fileIt.path() / "main.lock";
+            if (std::filesystem::exists(refPath, ec)) {
+                JAMI_WARNING("[conv {}] Conversation is locked for remote {}, removing lock", id_, fileIt.path().filename());
+                std::filesystem::remove(refPath, ec);
+                if (ec)
+                    JAMI_ERROR("[conv {}] Unable to remove lock {}: {}", id_, refPath, ec.message());
+            }
+        }
+
+        auto err = git_repository_state_cleanup(repo.get());
+        if (err < 0) {
+            JAMI_ERROR("[conv {}] Unable to cleanup repository: {}", id_, git_error_last()->message);
         }
     }
 
