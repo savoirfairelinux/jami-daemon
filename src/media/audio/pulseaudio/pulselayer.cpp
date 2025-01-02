@@ -34,7 +34,7 @@
 
 #include <regex>
 
-// uncomment to log pulseaudio sink and sources
+// uncomment to log PulseAudio sink and sources
 //#define PA_LOG_SINK_SOURCES
 
 namespace jami {
@@ -60,12 +60,12 @@ PulseLayer::PulseLayer(AudioPreference& pref)
     , mainloop_(pa_threaded_mainloop_new(), pa_threaded_mainloop_free)
     , preference_(pref)
 {
-    JAMI_INFO("[audiolayer] created pulseaudio layer");
+    JAMI_INFO("[audiolayer] Created PulseAudio layer");
     if (!mainloop_)
-        throw std::runtime_error("Unable to create pulseaudio mainloop");
+        throw std::runtime_error("Unable to create PulseAudio mainloop");
 
     if (pa_threaded_mainloop_start(mainloop_.get()) < 0)
-        throw std::runtime_error("Failed to start pulseaudio mainloop");
+        throw std::runtime_error("Failed to start PulseAudio mainloop");
 
     setHasNativeNS(false);
 
@@ -79,12 +79,12 @@ PulseLayer::PulseLayer(AudioPreference& pref)
                                             PACKAGE_NAME,
                                             pl.get());
     if (!context_)
-        throw std::runtime_error("Unable to create pulseaudio context");
+        throw std::runtime_error("Unable to create PulseAudio context");
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
     if (pa_context_connect(context_, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0)
-        throw std::runtime_error("Unable to connect pulseaudio context to the server");
+        throw std::runtime_error("Unable to connect PulseAudio context to the server");
 
     // wait until context is ready
     for (;;) {
@@ -493,7 +493,7 @@ PulseLayer::writeToSpeaker()
     if (!playback_ or !playback_->isReady())
         return;
 
-    // available bytes to be written in pulseaudio internal buffer
+    // available bytes to be written in PulseAudio internal buffer
     void* data = nullptr;
     size_t writableBytes = (size_t) -1;
     int ret = pa_stream_begin_write(playback_->stream(), &data, &writableBytes);
