@@ -1704,7 +1704,7 @@ Manager::addAudio(Call& call)
     auto medias = call.getAudioStreams();
     for (const auto& media : medias) {
         JAMI_DEBUG("[call:{}] Attach audio", media.first);
-        getRingBufferPool().bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().bindRingBuffers(media.first, RingBufferPool::DEFAULT_ID);
     }
     auto oldGuard = std::move(call.audioGuard);
     call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);

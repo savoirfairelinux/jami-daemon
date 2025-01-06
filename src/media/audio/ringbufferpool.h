@@ -47,29 +47,45 @@ public:
     void setInternalAudioFormat(AudioFormat format);
 
     /**
-     * Bind together two audio streams
-     */
-    void bindRingbuffers(const std::string& ringbufferId1, const std::string& ringbufferId2);
+    * Bind two RingBuffer together (full duplex).
+    * @param ringbufferId1
+    * @param ringbufferId2
+    */
+    void bindRingBuffers(const std::string &ringbufferId1, const std::string &ringbufferId2);
 
     /**
-     * Add a new ringbufferId to unidirectional outgoing stream
-     * \param ringbufferId New ringbufferId to be added for this stream
-     * \param processId Process that require this stream
-     */
-    void bindHalfDuplexOut(const std::string& processId, const std::string& ringbufferId);
+    * Unbind two RingBuffer (full duplex).
+    */
+    void unbindRingBuffers(const std::string &ringbufferId1, const std::string &ringbufferId2);
 
     /**
-     * Unbind two ringbuffers
-     */
-    void unbindRingbuffers(const std::string& ringbufferId1, const std::string& ringbufferId2);
+    * Attaches a reader the specified source.
+    * @param readerBufferId The ID of the RingBuffer that will act as the reader of the
+    * sourceBuffer.
+    * @param sourceBufferId The iID of the RingBuffer that will be the source (to be read from).
+    */
+    void bindHalfDuplexOut(const std::string &readerBufferId, const std::string &sourceBufferId);
 
     /**
-     * Unbind a unidirectional stream
-     */
-    void unBindHalfDuplexOut(const std::string& process_id, const std::string& ringbufferId);
+    * Detaches a reader from the specified source.
+    * @param readerBufferId The ID of the RingBuffer that acts as the reader to be detached from the
+    * sourceBuffer.
+    * @param sourceBufferId The RingBuffer that serves as the source (being read from).
+    */
+    void unBindHalfDuplexOut(const std::string &readerBufferId, const std::string &sourceBufferId);
 
-    void unBindAllHalfDuplexOut(const std::string& ringbufferId);
-    void unBindAllHalfDuplexIn(const std::string& ringbufferId);
+    /**
+    * Detaches a reader from all his sources.
+    * @param readerBufferId The ID of the RingBuffer that acts as the reader to be detached from the
+    * sources.
+    */
+    void unBindAllHalfDuplexOut(const std::string &ringbufferId);
+
+    /**
+     * Detaches a source from all its readers.
+     * @param sourceBufferId The ID of the RingBuffer that serves as the source (being read from).
+     */
+    void unBindAllHalfDuplexIn(const std::string &sourceBufferId);
 
     void unBindAll(const std::string& ringbufferId);
 
@@ -123,10 +139,23 @@ private:
 
     void removeReadBindings(const std::string& ringbufferId);
 
-    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf, const std::string& ringbufferId);
+    /**
+    * Attaches a reader to the specified source.
+    * @param sourceBuffer The RingBuffer that will be the source (to be read from).
+    * @param readerBufferId The ID of the RingBuffer that will act as the reader of the
+    * sourceBuffer.
+    */
+    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer> &sourceBuffer,
+                               const std::string &readerBufferId);
 
-    void removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                    const std::string& ringbufferId);
+    /**
+    * Detaches a reader from the specified source.
+    * @param sourceBuffer The RingBuffer that serves as the source (being read from).
+    * @param readerBufferId The ID of the RingBuffer that acts as the reader to be detached from the
+    * sourceBuffer.
+    */
+    void removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer> &sourceBuffer,
+                                    const std::string &readerBufferId);
 
     // A cache of created RingBuffers listed by IDs.
     std::map<std::string, std::weak_ptr<RingBuffer>> ringBufferMap_ {};

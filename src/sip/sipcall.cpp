@@ -3166,7 +3166,7 @@ SIPCall::enterConference(std::shared_ptr<Conference> conference)
         auto& rbPool = Manager::instance().getRingBufferPool();
         auto medias = getAudioStreams();
         for (const auto& media : medias) {
-            rbPool.unbindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
+            rbPool.unbindRingBuffers(media.first, RingBufferPool::DEFAULT_ID);
         }
         rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
@@ -3194,7 +3194,7 @@ SIPCall::exitConference()
         auto medias = getAudioStreams();
         for (const auto& media : medias) {
             if (!media.second) {
-                rbPool.bindRingbuffers(media.first, RingBufferPool::DEFAULT_ID);
+                rbPool.bindRingBuffers(media.first, RingBufferPool::DEFAULT_ID);
             }
         }
         rbPool.flush(RingBufferPool::DEFAULT_ID);

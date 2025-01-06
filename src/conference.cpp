@@ -1781,7 +1781,7 @@ Conference::bindHostAudio()
                             if (isParticipantMuted)
                                 rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
                             else
-                                rbPool.bindRingbuffers(id, RingBufferPool::DEFAULT_ID);
+                                rbPool.bindRingBuffers(id, RingBufferPool::DEFAULT_ID);
                         } else {
                             auto buffer = source.sourceUri_;
                             static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
@@ -1789,7 +1789,7 @@ Conference::bindHostAudio()
                             if (pos != std::string::npos)
                                 buffer = source.sourceUri_.substr(pos + sep.size());
 
-                            rbPool.bindRingbuffers(id, buffer);
+                            rbPool.bindRingBuffers(id, buffer);
                         }
                     }
                 }
@@ -1846,7 +1846,7 @@ Conference::bindSubCallAudio(const std::string& callId)
                         if (isMuted(other))
                             rbPool.bindHalfDuplexOut(otherStream.first, stream.first);
                         else
-                            rbPool.bindRingbuffers(stream.first, otherStream.first);
+                            rbPool.bindRingBuffers(stream.first, otherStream.first);
 
                         rbPool.flush(otherStream.first);
                     }
@@ -1859,7 +1859,7 @@ Conference::bindSubCallAudio(const std::string& callId)
                 bool isHostMuted = isMuted("host"sv);
                 if (isMediaSourceMuted(MediaType::MEDIA_AUDIO) or isHostMuted)
                     rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
-                else rbPool.bindRingbuffers(stream.first, RingBufferPool::DEFAULT_ID);
+                else rbPool.bindRingBuffers(stream.first, RingBufferPool::DEFAULT_ID);
                 rbPool.flush(RingBufferPool::DEFAULT_ID);
             }
         }
