@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "129e77d8_7f7f43ba",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-01-06T21:34:21Z",
+      "side": 1,
+      "message": "Did you measure the performance impacts of this change? I did some quick tests which suggest a ~20x slowdown in `ConversationRepository::Impl::commit`, a ~3x slowdown in the call to `git_remote_fetch` in `ConversationRepository::fetch`, and a ~15x slowdown in `ConversationRepository::Impl::mergeFastforward`. This isn\u0027t necessarily a problem given that the absolute execution times are still relatively low, but maybe it\u0027d be worth doing more rigorous benchmarks before merging this?",
+      "revId": "f030c2132f53fc6ae81daa12e7bc3fc271813a70",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
