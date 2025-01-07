@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "76d12bf5_76b86213",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2449,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-01-07T16:52:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2a44eac4_57619f95",
+      "range": {
+        "startLine": 2448,
+        "startChar": 12,
+        "endLine": 2449,
+        "endChar": 25
+      },
+      "revId": "ad1f6acd2691af7a11586cce70370a3a2a11c92c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de397564_8226f3e3",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-01-07T16:35:16Z",
       "side": 1,
       "message": "It\u0027s not necessarily an error if a directory doesn\u0027t exist; many conversations don\u0027t have any \"invited\" or \"banned\" members.",
+      "range": {
+        "startLine": 2457,
+        "startChar": 12,
+        "endLine": 2457,
+        "endChar": 90
+      },
+      "revId": "ad1f6acd2691af7a11586cce70370a3a2a11c92c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f3a2d7ba_b1fe5013",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2457,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-01-07T16:52:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de397564_8226f3e3",
       "range": {
         "startLine": 2457,
         "startChar": 12,
