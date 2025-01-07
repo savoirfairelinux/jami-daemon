@@ -122,10 +122,19 @@ NameDirectory::load()
     loadCache();
 }
 
+std::string
+canonicalName(const std::string& url) {
+    std::string name = url;
+    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    if (name.find("://") == std::string::npos)
+        name = "https://" + name;
+    return name;
+}
+
 NameDirectory&
 NameDirectory::instance(const std::string& serverUrl, std::shared_ptr<dht::Logger> l)
 {
-    const std::string& s = serverUrl.empty() ? DEFAULT_SERVER_HOST : serverUrl;
+    const std::string& s = serverUrl.empty() ? DEFAULT_SERVER_HOST : canonicalName(serverUrl);
     static std::mutex instanceMtx {};
 
     std::lock_guard lock(instanceMtx);
