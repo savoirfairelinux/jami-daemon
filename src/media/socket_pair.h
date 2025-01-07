@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *  Copyright (C) 2012 VLC authors and VideoLAN
  *
  *  This program is free software: you can redistribute it and/or modify
