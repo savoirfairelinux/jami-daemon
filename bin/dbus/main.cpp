@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2024 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ print_title()
 {
     std::cout
         << "Jami Core " << libjami::version()
-        << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2024" << std::endl
+        << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2025" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl
