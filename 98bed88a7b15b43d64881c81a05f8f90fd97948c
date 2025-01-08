@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "66d7b455_f02e0378",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 749,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-01-08T22:04:00Z",
+      "side": 1,
+      "message": "This line is no longer needed.",
+      "range": {
+        "startLine": 749,
+        "startChar": 4,
+        "endLine": 749,
+        "endChar": 35
+      },
+      "revId": "98bed88a7b15b43d64881c81a05f8f90fd97948c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
