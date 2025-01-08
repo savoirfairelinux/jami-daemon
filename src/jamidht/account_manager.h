@@ -198,7 +198,7 @@ public:
      * Returns true only if the device certificate is a valid device certificate.
      * In that case (true is returned) the account_id parameter is set to the peer account ID.
      */
-    static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+    static bool foundPeerDevice(const std::string& accoundId, const std::shared_ptr<dht::crypto::Certificate>& crt,
                                 dht::InfoHash& account_id);
 
     // Contact requests

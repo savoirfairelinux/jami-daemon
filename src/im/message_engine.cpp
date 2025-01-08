@@ -114,7 +114,7 @@ MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, b
     }
     // avoid locking while calling callback
     for (const auto& p : pending) {
-        JAMI_DEBUG("[message {:d}] Reattempt sending", p.token);
+        JAMI_DEBUG("[Account {:s}] [message {:d}] Reattempt sending", account_.getAccountID(), p.token);
         if (p.payloads.find("application/im-gitmessage-id") == p.payloads.end())
             emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                 account_.getAccountID(),
@@ -145,13 +145,13 @@ MessageEngine::onMessageSent(const std::string& peer,
                              bool ok,
                              const std::string& deviceId)
 {
-    JAMI_DEBUG("[message {:d}] Message sent: {:s}", token, ok ? "success"sv : "failure"sv);
+    JAMI_DEBUG("[Account {:s}] [message {:d}] Message sent: {:s}", account_.getAccountID(), token, ok ? "success"sv : "failure"sv);
     std::lock_guard lock(messagesMutex_);
     auto& m = deviceId.empty() ? messages_ : messagesDevices_;
 
     auto p = m.find(deviceId.empty() ? peer : deviceId);
     if (p == m.end()) {
-        JAMI_WARNING("onMessageSent: Peer not found: id:{} device:{}", peer, deviceId);
+        JAMI_WARNING("[Account {:s}] onMessageSent: Peer not found: id:{} device:{}", account_.getAccountID(), peer, deviceId);
         return;
     }
 
@@ -164,7 +164,7 @@ MessageEngine::onMessageSent(const std::string& peer,
         if (f->status == MessageStatus::SENDING) {
             if (ok) {
                 f->status = MessageStatus::SENT;
-                JAMI_LOG("[message {:d}] Status changed to SENT", token);
+                JAMI_LOG("[Account {:s}] [message {:d}] Status changed to SENT", account_.getAccountID(), token);
                 if (emit)
                     emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         account_.getAccountID(),
@@ -176,7 +176,7 @@ MessageEngine::onMessageSent(const std::string& peer,
                 scheduleSave();
             } else if (f->retried >= MAX_RETRIES) {
                 f->status = MessageStatus::FAILURE;
-                JAMI_WARNING("[message {:d}] Status changed to FAILURE", token);
+                JAMI_WARNING("[Account {:s}] [message {:d}] Status changed to FAILURE", account_.getAccountID(), token);
                 if (emit)
                     emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(
                         account_.getAccountID(),
@@ -188,13 +188,13 @@ MessageEngine::onMessageSent(const std::string& peer,
                 scheduleSave();
             } else {
                 f->status = MessageStatus::IDLE;
-                JAMI_DEBUG("[message {:d}] Status changed to IDLE", token);
+                JAMI_DEBUG("[Account {:s}] [message {:d}] Status changed to IDLE", account_.getAccountID(), token);
             }
         } else {
-            JAMI_DEBUG("[message {:d}] State is not SENDING", token);
+            JAMI_DEBUG("[Account {:s}] [message {:d}] State is not SENDING", account_.getAccountID(), token);
         }
     } else {
-        JAMI_DEBUG("[message {:d}] Unable to find message", token);
+        JAMI_DEBUG("[Account {:s}] [message {:d}] Unable to find message", account_.getAccountID(), token);
     }
 }
 

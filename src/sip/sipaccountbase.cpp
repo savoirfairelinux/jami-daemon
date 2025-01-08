@@ -277,12 +277,12 @@ SIPAccountBase::onTextMessage(const std::string& id,
                               const std::string& /* deviceId */,
                               const std::map<std::string, std::string>& payloads)
 {
-    JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
+    JAMI_LOG("[Account {}] Text message received from {}, {:d} part(s)", accountID_, from, payloads.size());
     for (const auto& m : payloads) {
         if (!utf8_validate(m.first))
             return;
         if (!utf8_validate(m.second)) {
-            JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
+            JAMI_WARNING("[Account {}] Dropping invalid message with MIME type {}", accountID_, m.first);
             return;
         }
         if (handleMessage(from, m))
