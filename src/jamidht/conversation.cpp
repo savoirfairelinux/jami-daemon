@@ -228,9 +228,9 @@ public:
                         peer = member;
                     }
                 }
-                fmtStr_ = fmt::format("[Conversation (1:1) {}]", peer);
+                fmtStr_ = fmt::format("[Account {}] [Conversation (1:1) {}]", accountId_, peer);
             } else {
-                fmtStr_ = fmt::format("[Conversation {}]", repository_->id());
+                fmtStr_ = fmt::format("[Account {}] [Conversation {}]", accountId_, repository_->id());
             }
         }
         return fmtStr_;
@@ -243,7 +243,7 @@ public:
             if (fallbackTimer_)
                 fallbackTimer_->cancel();
         } catch (const std::exception& e) {
-            JAMI_ERROR("[Conversation {:s}] {:s}", toString(), e.what());
+            JAMI_ERROR("{:s} {:s}", toString(), e.what());
         }
     }
 
