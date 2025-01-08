@@ -145,7 +145,7 @@ public:
      * Get the account ID
      * @return constant account id
      */
-    const std::string& getAccountID() const { return accountID_; }
+    inline const std::string& getAccountID() const { return accountID_; }
 
     virtual std::string_view getAccountType() const = 0;
 

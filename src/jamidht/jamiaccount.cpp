@@ -1672,15 +1672,14 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     try {
         buddyUri = parseJamiUri(buddy_id);
     } catch (...) {
-        JAMI_ERR("[Account %s] Failed to track presence: invalid URI %s",
-                 getAccountID().c_str(),
-                 buddy_id.c_str());
+        JAMI_ERROR("[Account {:s}] Failed to track presence: invalid URI {:s}",
+                 getAccountID(), buddy_id);
         return;
     }
-    JAMI_DBG("[Account %s] %s presence for %s",
-             getAccountID().c_str(),
+    JAMI_LOG("[Account {:s}] {:s} presence for {:s}",
+             getAccountID(),
              track ? "Track" : "Untrack",
-             buddy_id.c_str());
+             buddy_id);
 
     auto h = dht::InfoHash(buddyUri);
     std::unique_lock lock(buddyInfoMtx);
@@ -1765,7 +1764,7 @@ void
 JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 {
     std::string id(contactId.toString());
-    JAMI_DEBUG("Buddy {} online", id);
+    JAMI_DEBUG("[Account {:s}] Buddy {} online", getAccountID(), id);
     auto& state = presenceState_[id];
     if (state < PresenceState::AVAILABLE) {
         state = PresenceState::AVAILABLE;
@@ -1795,7 +1794,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
             }
 
             if (payload.size() >= 64000) {
-                JAMI_WARN() << "Trust request is too big, reset payload";
+                JAMI_WARNING("[Account {:s}] Trust request for contact {:s} is too big, reset payload", getAccountID(), id);
                 payload.clear();
             }
 
@@ -1808,11 +1807,11 @@ void
 JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 {
     auto id = contactId.toString();
-    JAMI_DEBUG("Buddy {} offline", id);
+    JAMI_DEBUG("[Account {:s}] Buddy {} offline", getAccountID(), id);
     auto& state = presenceState_[id];
     if (state > PresenceState::DISCONNECTED) {
         if (state == PresenceState::CONNECTED) {
-            JAMI_WARNING("Buddy {} is not present on the DHT, but P2P connected", id);
+            JAMI_WARNING("[Account {:s}] Buddy {} is not present on the DHT, but P2P connected", getAccountID(), id);
         }
         state = PresenceState::DISCONNECTED;
         emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
