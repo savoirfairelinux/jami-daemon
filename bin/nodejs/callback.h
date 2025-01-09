@@ -54,6 +54,9 @@ Persistent<Function> conversationPreferencesUpdatedCb;
 Persistent<Function> messageSendCb;
 Persistent<Function> accountProfileReceivedCb;
 Persistent<Function> profileReceivedCb;
+Persistent<Function> deviceAuthStateChangedCb;
+Persistent<Function> addDeviceStateChangedCb;
+Persistent<Function> userSearchEndedCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -153,6 +156,12 @@ getPresistentCb(std::string_view signal)
         return &accountProfileReceivedCb;
     else if (signal == "ProfileReceived")
         return &profileReceivedCb;
+    else if (signal == "DeviceAuthStateChanged")
+        return &deviceAuthStateChangedCb;
+    else if (signal == "AddDeviceStateChanged")
+        return &addDeviceStateChangedCb;
+    else if (signal == "UserSearchEnded")
+        return &userSearchEndedCb;
     else
         return nullptr;
 }
@@ -550,6 +559,60 @@ knownDevicesChanged(const std::string& accountId, const std::map<std::string, st
             SWIGV8_OBJECT jsMap = stringMapToJsMap(devices);
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId), jsMap};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 2, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
+deviceAuthStateChanged(const std::string& accountId, int state, const std::map<std::string, std::string>& details)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, state, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), deviceAuthStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_OBJECT jsMap = stringMapToJsMap(details);
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+
+    uv_async_send(&signalAsync);
+}
+
+void
+addDeviceStateChanged(const std::string& accountId, uint32_t opId, int state, const std::map<std::string, std::string>& details)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, opId, state, details]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), addDeviceStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_OBJECT jsMap = stringMapToJsMap(details);
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW_UNS(opId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            jsMap};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+userSearchEnded(const std::string& accountId,int state, const std::string& query,  const std::vector<std::map<std::string, std::string>>& results)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId,state,query, results]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), userSearchEndedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            V8_STRING_NEW_LOCAL(query),
+                                            stringMapVecToJsMapArray(results)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
