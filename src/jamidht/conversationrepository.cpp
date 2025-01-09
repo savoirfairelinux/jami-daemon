@@ -24,6 +24,7 @@
 #include "string_utils.h"
 #include "client/ring_signal.h"
 #include "vcard.h"
+#include "role.h"
 
 #include <ctime>
 #include <fstream>
@@ -71,6 +72,7 @@ public:
                                 / "conversation_data" / id_;
         membersCache_ = conversationDataPath_ / "members";
         checkLocks();
+        readRoles();
         loadMembers();
         if (members_.empty()) {
             initMembers();
@@ -186,6 +188,11 @@ public:
                    const std::string& commitId,
                    const std::string& parentId) const;
     bool checkEdit(const std::string& userDevice, const ConversationCommit& commit) const;
+    bool checkRoleAddition(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const;
+    bool checkRoleDeletion(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const;
+    bool checkRoleModification(const std::string& userDevice, const jami::ConversationCommit& commit) const;
+    bool hasPermissionAtCommit(const std::string& commitId, const std::string& memberUri, const Permission& p) const;
+    std::string roleAtCommit(const std::string& commitId, const std::string& memberUri) const;
     bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
     bool checkInitialCommit(const std::string& userDevice,
                             const std::string& commitId,
@@ -213,7 +220,15 @@ public:
 
     bool add(const std::string& path);
     void addUserDevice();
-    void resetHard();
+    void resetHard(); // TODO say that opMtx must be locked
+    /**
+     * Write the roles in the repository
+     */
+    bool writeRoles();
+    /**
+     * Read the roles from the repository
+     */
+    void readRoles();
     // Verify that the device in the repository is still valid
     bool validateDevice();
     std::string commit(const std::string& msg, bool verifyDevice = true);
@@ -328,7 +343,7 @@ public:
     bool resolveConflicts(git_index* index, const std::string& other_id);
 
     std::set<std::string> memberUris(std::string_view filter,
-                                        const std::set<MemberRole>& filteredRoles) const
+                                        const std::set<MemberRoleEnum>& filteredRoles) const
     {
         std::lock_guard lk(membersMtx_);
         std::set<std::string> ret;
@@ -345,9 +360,6 @@ public:
 
     std::optional<std::map<std::string, std::string>> convCommitToMap(
         const ConversationCommit& commit) const;
-
-    // Permissions
-    MemberRole updateProfilePermLvl_ {MemberRole::ADMIN};
 
     /**
      * Retrieve the user related to a device using the account's certificate store.
@@ -481,6 +493,12 @@ public:
     }
 
     std::mutex opMtx_; // Mutex for operations
+
+    std::map<std::string, std::shared_ptr<Role>> roles_ {
+        { "Admin", std::make_shared<AdminRole>()},
+        { "Member", std::make_shared<MemberRole>()},
+        { "Banned", std::make_shared<BannedRole>()}
+    };
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -1030,12 +1048,14 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
 
     std::string userDeviceFile = fmt::format("devices/{}.crt", userDevice);
     std::string adminsFile = fmt::format("admins/{}.crt", userUri);
-    std::string membersFile = fmt::format("members/{}.crt", userUri);
+    std::string role = roleAtCommit(commitId, userUri);
+    std::string certPath = fmt::format("{}/{}.crt", role, userUri);
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeNew or not treeOld)
         return false;
     for (const auto& changedFile : changedFiles) {
-        if (changedFile == adminsFile || changedFile == membersFile) {
+        if (changedFile == adminsFile || changedFile == certPath) {
+
             // In this case, we should verify it's not added (normal commit, not a member change)
             // but only updated
             auto oldFile = fileAtTree(changedFile, treeOld);
@@ -1079,6 +1099,10 @@ ConversationRepository::Impl::checkEdit(const std::string& userDevice,
     auto userUri = uriFromDevice(userDevice, commit.id);
     if (userUri.empty())
         return false;
+    if (!hasPermissionAtCommit(commit.id, userUri, Permission::Edit)) {
+        JAMI_ERROR("User {} doesn't have the permission to edit", userUri);
+        return false;
+    }
     // Check that edited commit is found, for the same author, and editable (plain/text)
     auto commitMap = convCommitToMap(commit);
     if (commitMap == std::nullopt) {
@@ -1105,6 +1129,261 @@ ConversationRepository::Impl::checkEdit(const std::string& userDevice,
             return true;
     }
     JAMI_ERROR("Edited commit {:s} is not valid!", editedId);
+    return false;
+}
+
+
+bool
+ConversationRepository::Impl::checkRoleAddition(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const
+{
+    auto userUri = uriFromDevice(userDevice, commitId);
+    if (userUri.empty())
+        return false;
+    // Check that user got permissions to change role
+    if (!hasPermissionAtCommit(commitId, userUri, Permission::CreateRole)) {
+        JAMI_ERROR("User {} doesn't have the permission to create a role", userUri);
+        return false;
+    }
+    // Check that diff is only roles.json
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() == 0) {
+        return true;
+    } else if (changedFiles.size() > 2) {
+        return false;
+    }
+    // If modified, it's the first commit of a device, we check
+    // that the file wasn't there previously. And the vote MUST be added
+    std::string deviceFile = "";
+    std::string rolesFile = "";
+    for (const auto& changedFile : changedFiles) {
+        // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+        if (changedFile == fmt::format("devices/{}.crt", userDevice)) {
+            deviceFile = changedFile;
+        } else if (changedFile.find("roles.json") == 0) {
+            rolesFile = changedFile;
+        } else {
+            // Invalid file detected
+            JAMI_ERROR("Invalid vote file detected: {}", changedFile);
+            return false;
+        }
+    }
+
+    if (rolesFile.empty()) {
+        JAMI_WARNING("No roles changed for this commit {}", commitId);
+        return false;
+    }
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkRoleDeletion(const std::string& userDevice, const std::string& commitId, const std::string& parentId) const
+{
+    auto userUri = uriFromDevice(userDevice, commitId);
+    if (userUri.empty())
+        return false;
+    // Check that user got permissions to change role
+    if (!hasPermissionAtCommit(commitId, userUri, Permission::RemoveRole)) {
+        JAMI_ERROR("User {} doesn't have the permission to remove a role", userUri);
+        return false;
+    }
+    // Check that diff is only roles.json
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
+    if (changedFiles.size() == 0) {
+        return true;
+    } else if (changedFiles.size() > 2) {
+        return false;
+    }
+    // If modified, it's the first commit of a device, we check
+    // that the file wasn't there previously. And the vote MUST be added
+    std::string deviceFile = "";
+    std::string rolesFile = "";
+    for (const auto& changedFile : changedFiles) {
+        // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+        if (changedFile == fmt::format("devices/{}.crt", userDevice)) {
+            deviceFile = changedFile;
+        } else if (changedFile.find("roles.json") == 0) {
+            rolesFile = changedFile;
+        } else {
+            // Invalid file detected
+            JAMI_ERROR("Invalid vote file detected: {}", changedFile);
+            return false;
+        }
+    }
+
+    if (rolesFile.empty()) {
+        JAMI_WARNING("No roles changed for this commit {}", commitId);
+        return false;
+    }
+    return true;
+}
+
+bool
+ConversationRepository::Impl::checkRoleModification(const std::string& userDevice, const jami::ConversationCommit& commit) const
+{
+    auto userUri = uriFromDevice(userDevice, commit.id);
+    if (userUri.empty())
+        return false;
+    // Check that user got permissions to change role
+    if (!hasPermissionAtCommit(commit.id, userUri, Permission::ChangeMemberRole)) {
+        JAMI_ERROR("User {} doesn't have the permission to remove a role", userUri);
+        return false;
+    }
+
+    // Check that diff is only roles.json
+    std::string err;
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(commit.commit_msg.data(),
+                        commit.commit_msg.data() + commit.commit_msg.size(),
+                        &root,
+                        &err)) {
+        JAMI_ERROR("Cannot parse commit message");
+        return false;
+    }
+
+    auto p = root["from"].asString();
+    if (p == "Banned") {
+        JAMI_ERROR("Cannot change role from banned");
+        return false;
+    }
+    if (p == "Admin")
+        p = "admins";
+    else if (p == "Member")
+        p = "members";
+
+    auto fromPath = p + "/" + root["uri"].asString() + ".crt";
+
+    p = root["to"].asString();
+    if (p == "Banned") {
+        JAMI_ERROR("Cannot change role to banned");
+        return false;
+    }
+    if (p == "Admin")
+        p = "admins";
+    else if (p == "Member")
+        p = "members";
+    auto toPath = p + "/" + root["uri"].asString() + ".crt";
+
+    auto changedFiles = ConversationRepository::changedFiles(diffStats(commit.id, commit.parents[0]));
+    if (changedFiles.size() == 0) {
+        return true;
+    } else if (changedFiles.size() > 3) {
+        return false;
+    }
+    // If modified, it's the first commit of a device, we check
+    // that the file wasn't there previously. And the vote MUST be added
+    std::string deviceFile = "";
+    std::string fromPathDiff = "";
+    std::string toPathDiff = "";
+    for (const auto& changedFile : changedFiles) {
+        // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
+        if (changedFile == fmt::format("devices/{}.crt", userDevice)) {
+            deviceFile = changedFile;
+        } else if (changedFile.find(fromPath) == 0) {
+            fromPathDiff = changedFile;
+        } else if (changedFile.find(toPath) == 0) {
+            toPathDiff = changedFile;
+        } else {
+            // Invalid file detected
+            JAMI_ERROR("Invalid file detected: {}", changedFile);
+            return false;
+        }
+    }
+
+    if (fromPath.empty() || toPath.empty()) {
+        JAMI_WARNING("No roles changed for this commit {}", commit.id);
+        return false;
+    }
+
+
+    return true;
+}
+
+std::string
+ConversationRepository::Impl::roleAtCommit(const std::string& commitId, const std::string& memberUri) const
+{
+    auto repo = repository();
+    if (!repo) {
+        JAMI_ERROR("No repository found");
+        return {};
+    }
+    auto tree = treeAtCommit(repo.get(), commitId);
+    std::vector<std::string> r = {"admins", "members"};
+
+    // Else get roles.json
+    auto blob_roles = fileAtTree("roles.json", tree);
+    Json::Value root;
+    if (blob_roles) {
+        // Parse the JSON file
+        try {
+            Json::Reader reader;
+            // Check if permission exists
+            if (reader.parse(std::string { as_view(blob_roles) }, root)) {
+                for (const auto& member: root.getMemberNames()) {
+                    r.emplace_back(member);
+                }
+            }
+        } catch (const std::exception& e) {
+            JAMI_ERROR("Error when parsing roles.json: {}", e.what());
+        }
+    }
+
+    // Get member's role at commit
+    for (const auto& path: r) {
+        if (fileAtTree(path + "/" + memberUri + ".crt", tree)) {
+            return path;
+        }
+    }
+    return {};
+}
+
+bool
+ConversationRepository::Impl::hasPermissionAtCommit(const std::string& commitId, const std::string& memberUri, const Permission& p) const
+{
+    auto repo = repository();
+    if (!repo)
+        return {};
+    auto tree = treeAtCommit(repo.get(), commitId);
+    std::vector<std::string> r = {"admins", "members"};
+
+    // Else get roles.json
+    auto blob_roles = fileAtTree("roles.json", tree);
+    Json::Value root;
+    if (blob_roles) {
+        // Parse the JSON file
+        Json::Reader reader;
+        // Check if permission exists
+        if (reader.parse(std::string { as_view(blob_roles) }, root)) {
+            for (const auto& member: root.getMemberNames()) {
+                r.emplace_back(member);
+            }
+        }
+    }
+
+    // Get member's role at commit
+    std::string memberRole = "";
+    for (const auto& path: r) {
+        if (fileAtTree(path + "/" + memberUri + ".crt", tree)) {
+            memberRole = path;
+            break;
+        }
+    }
+
+    // If role is reserved, use it
+    if (memberRole == "admins") {
+        return true;
+    } else if (memberRole == "members") {
+        auto perms = roles_.at("Member")->permissions();
+        return perms.find(p) != perms.end();
+    } else if (root.isMember(memberRole)) {
+        for (const auto& k: root[memberRole]["permissions"]) {
+            if (k.asString() == permissionToString(p)) {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -1253,6 +1532,12 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     auto userUri = uriFromDevice(userDevice, commitId);
     if (userUri.empty())
         return false;
+
+    // Check that user got permissions to add
+    if (!hasPermissionAtCommit(commitId, userUri, Permission::AddMember)) {
+        JAMI_ERROR("User {} doesn't have the permission to add", userUri);
+        return false;
+    }
 
     // Check that only /invited/uri.crt is added & deviceFile & CRLs
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
@@ -1406,8 +1691,8 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
     std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
-    std::string adminFile = fmt::format("admins/{}.crt", uriMember);
-    std::string memberFile = fmt::format("members/{}.crt", uriMember);
+    std::string role = roleAtCommit(parentId, uriMember);
+    std::string certFile = fmt::format("{}/{}.crt", role, uriMember);
     std::string crlFile = fmt::format("CRLs/{}", uriMember);
     std::string invitedFile = fmt::format("invited/{}", uriMember);
     std::vector<std::string> devicesRemoved;
@@ -1416,8 +1701,7 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
     static const std::regex regex_devices("devices.(\\w+)\\.crt");
     std::smatch base_match;
     for (const auto& f : changedFiles) {
-        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile
-            || f == invitedFile) {
+        if (f == deviceFile || f == certFile || f == crlFile || f == invitedFile) {
             // Ignore
             continue;
         } else if (std::regex_match(f, base_match, regex_devices)) {
@@ -1467,8 +1751,8 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     auto changedFiles = ConversationRepository::changedFiles(diffStats(commitId, parentId));
     // NOTE: libgit2 return a diff with /, not DIR_SEPARATOR_DIR
     std::string deviceFile = fmt::format("devices/{}.crt", userDevice);
-    std::string adminFile = fmt::format("admins/{}.crt", uriMember);
-    std::string memberFile = fmt::format("members/{}.crt", uriMember);
+    std::string role = roleAtCommit(parentId, uriMember);
+    std::string certFile = fmt::format("{}/{}.crt", role, uriMember);
     std::string crlFile = fmt::format("CRLs/{}", uriMember);
     std::string invitedFile = fmt::format("invited/{}", uriMember);
     std::vector<std::string> voters;
@@ -1477,14 +1761,13 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     // Check that no weird file is added nor removed
 
     const std::regex regex_votes("votes." + voteType
-                                 + ".(members|devices|admins|invited).(\\w+).(\\w+)");
+                                 + ".(\\w+).(\\w+).(\\w+)");
     static const std::regex regex_devices("devices.(\\w+)\\.crt");
-    static const std::regex regex_banned("banned.(members|devices|admins).(\\w+)\\.crt");
+    static const std::regex regex_banned("banned.(\\w+).(\\w+)\\.crt");
     static const std::regex regex_banned_invited("banned.(invited).(\\w+)");
     std::smatch base_match;
     for (const auto& f : changedFiles) {
-        if (f == deviceFile || f == adminFile || f == memberFile || f == crlFile
-            || f == invitedFile) {
+        if (f == deviceFile || f == certFile || f == crlFile || f == invitedFile) {
             // Ignore
             continue;
         } else if (std::regex_match(f, base_match, regex_votes)) {
@@ -1541,30 +1824,42 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
     if (userUri.empty())
         return false;
 
-    // Check that voters are admins
-    adminFile = fmt::format("admins/{}.crt", userUri);
-    if (!fileAtTree(adminFile, treeOld)) {
-        JAMI_ERROR("admin file ({}) not found", adminFile);
+
+    // Check that user got permissions to ban/unban
+    if (!hasPermissionAtCommit(commitId, userUri, Permission::BanUnBanMember)) {
+        JAMI_ERROR("User {} doesn't have the permission to ban/unban", userUri);
         return false;
     }
 
-    // If not for self check that vote is valid and not added
-    auto nbAdmins = 0;
-    auto nbVotes = 0;
-    std::string repoPath = git_repository_workdir(repo.get());
-    for (const auto& certificate : dhtnet::fileutils::readDirectory(repoPath + "admins")) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARNING("Incorrect file found: {}", certificate);
-            continue;
-        }
-        nbAdmins += 1;
-        auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        if (std::find(voters.begin(), voters.end(), adminUri) != voters.end()) {
-            nbVotes += 1;
+    // Fix voters numbers (should be permissions with roles)
+    std::vector<std::string> rolesWithPermission = {"admins"};
+    for (const auto& r: roles_) {
+        if (r.first != "Admin"
+        && r.second->permissions().find(Permission::BanUnBanMember) != r.second->permissions().end()) {
+            rolesWithPermission.emplace_back(r.first);
         }
     }
 
-    if (nbAdmins == 0 or (static_cast<double>(nbVotes) / static_cast<double>(nbAdmins)) < .5) {
+    // If not for self check that vote is valid and not added
+    auto nvVoters = 0;
+    auto nbVotes = 0;
+    std::string repoPath = git_repository_workdir(repo.get());
+
+    for (const auto& p: rolesWithPermission) {
+        for (const auto& certificate : dhtnet::fileutils::readDirectory(repoPath + p)) {
+            if (certificate.find(".crt") == std::string::npos) {
+                JAMI_WARNING("Incorrect file found: {}", certificate);
+                continue;
+            }
+            nvVoters += 1;
+            auto voterUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+            if (std::find(voters.begin(), voters.end(), voterUri) != voters.end()) {
+                nbVotes += 1;
+            }
+        }
+    }
+
+    if (nvVoters == 0 or (static_cast<double>(nbVotes) / static_cast<double>(nvVoters)) < .5) {
         JAMI_ERROR("Incomplete vote detected (commit: {})", commitId);
         return false;
     }
@@ -1591,20 +1886,7 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
     if (userUri.empty())
         return false;
 
-    // Check if profile is changed by an user with correct privilege
-    auto valid = false;
-    if (updateProfilePermLvl_ == MemberRole::ADMIN) {
-        std::string adminFile = fmt::format("admins/{}.crt", userUri);
-        auto adminCert = fileAtTree(adminFile, treeNew);
-        valid |= adminCert != nullptr;
-    }
-    if (updateProfilePermLvl_ >= MemberRole::MEMBER) {
-        std::string memberFile = fmt::format("members/{}.crt", userUri);
-        auto memberCert = fileAtTree(memberFile, treeNew);
-        valid |= memberCert != nullptr;
-    }
-
-    if (!valid) {
+    if (!hasPermissionAtCommit(commitId, userUri, Permission::ChangeProfile)) {
         JAMI_ERROR("Profile changed from unauthorized user: {} ({})", userDevice, userUri);
         return false;
     }
@@ -1836,17 +2118,26 @@ ConversationRepository::Impl::validateDevice()
     }
 
     // Check account cert (a new device can be added but account certifcate can be the old one!)
-    auto adminPath = fmt::format("admins/{}.crt", userId_);
-    auto memberPath = fmt::format("members/{}.crt", userId_);
+    // Get member's role at commit
+    std::string memberRole = "";
     std::filesystem::path parentPath = git_repository_workdir(repo.get());
     std::filesystem::path relativeParentPath;
-    if (std::filesystem::is_regular_file(parentPath / adminPath))
-        relativeParentPath = adminPath;
-    else if (std::filesystem::is_regular_file(parentPath / memberPath))
-        relativeParentPath = memberPath;
-    parentPath /= relativeParentPath;
+    for (const auto& [role, _]: roles_) {
+        relativeParentPath = role;
+        if (role == "Admin")
+            relativeParentPath = "admins";
+        else if (role == "Member")
+            relativeParentPath = "members";
+        relativeParentPath /= (userId_ + ".crt");
+
+         if (std::filesystem::is_regular_file(parentPath / relativeParentPath)) {
+            parentPath = parentPath / relativeParentPath;
+            break;
+        }
+    }
+
     if (relativeParentPath.empty()) {
-        JAMI_ERROR("[conv {}] Invalid parent path (not in members or admins)", id_);
+        JAMI_ERROR("[conv {}] Invalid parent path", id_);
         return false;
     }
     wrongDeviceFile = false;
@@ -2339,10 +2630,29 @@ GitObject
 ConversationRepository::Impl::memberCertificate(std::string_view memberUri,
                                                 const GitTree& tree) const
 {
-    auto blob = fileAtTree(fmt::format("members/{}.crt", memberUri), tree);
-    if (not blob)
-        blob = fileAtTree(fmt::format("admins/{}.crt", memberUri), tree);
-    return blob;
+    std::vector<std::string> r = {"admins", "members"};
+
+    // Else get roles.json
+    auto blob_roles = fileAtTree("roles.json", tree);
+    Json::Value root;
+    if (blob_roles) {
+        // Parse the JSON file
+        Json::Reader reader;
+        // Check if permission exists
+        if (reader.parse(std::string { as_view(blob_roles) }, root)) {
+            for (const auto& member: root.getMemberNames()) {
+                r.emplace_back(member);
+            }
+        }
+    }
+
+    // Get member's role at commit
+    for (const auto& path: r) {
+        if (auto blob = fileAtTree(path + "/" + memberUri + ".crt", tree)) {
+            return blob;
+        }
+    }
+    return {nullptr, git_object_free};
 }
 
 GitTree
@@ -2475,25 +2785,38 @@ ConversationRepository::Impl::initMembers()
     if (!repo)
         throw std::logic_error("Invalid git repository");
 
+    readRoles();
+
     std::vector<std::string> uris;
     std::lock_guard lk(membersMtx_);
     members_.clear();
     path repoPath = git_repository_workdir(repo.get());
 
-    static const std::vector<std::pair<MemberRole, path>> paths = {
-        {MemberRole::ADMIN, "admins"},
-        {MemberRole::MEMBER, "members"},
-        {MemberRole::INVITED, "invited"},
-        {MemberRole::BANNED, path("banned") / "members"},
-        {MemberRole::BANNED, path("banned") / "invited"}
-    };
-
     std::error_code ec;
+    for (const auto& [r, _]: roles_) {
+        if (r == "Banned") {
+            continue;
+        }
+        auto p = r == "Admin" ? "admins" : r == "Member" ? "members" : r;
+        for (const auto& f : std::filesystem::directory_iterator(repoPath / p, ec)) {
+            auto uri = f.path().stem().string();
+            if (std::find(uris.begin(), uris.end(), uri) == uris.end()) {
+                members_.emplace_back(ConversationMember {uri, r == "Admin" ? MemberRoleEnum::ADMIN : MemberRoleEnum::MEMBER, r});
+                uris.emplace_back(uri);
+            }
+        }
+    }
+
+    static const std::vector<std::pair<MemberRoleEnum, path>> paths = {
+        {MemberRoleEnum::INVITED, "invited"},
+        {MemberRoleEnum::BANNED, path("banned") / "members"},
+        {MemberRoleEnum::BANNED, path("banned") / "invited"}
+    };
     for (const auto& [role, p] : paths) {
         for (const auto& f : std::filesystem::directory_iterator(repoPath / p, ec)) {
             auto uri = f.path().stem().string();
             if (std::find(uris.begin(), uris.end(), uri) == uris.end()) {
-                members_.emplace_back(ConversationMember {uri, role});
+                members_.emplace_back(ConversationMember {uri, role, "Member"});
                 uris.emplace_back(uri);
             }
         }
@@ -2502,8 +2825,7 @@ ConversationRepository::Impl::initMembers()
     if (mode() == ConversationMode::ONE_TO_ONE) {
         for (const auto& member : getInitialMembers()) {
             if (std::find(uris.begin(), uris.end(), member) == uris.end()) {
-                // If member is in initial commit, but not in invited, this means that user left.
-                members_.emplace_back(ConversationMember {member, MemberRole::LEFT});
+                members_.emplace_back(ConversationMember {member, MemberRoleEnum::LEFT, "Member"});
             }
         }
     }
@@ -2859,7 +3181,94 @@ ConversationRepository::Impl::validCommits(
                         accountId_, id_, EVALIDFETCH, "Malformed edit commit");
                     return false;
                 }
+            } else if (type == "application/role-creation") {
+                if (!checkRoleAddition(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_ERROR("Commit {:s} malformed", commit.id);
+
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        accountId_, id_, EVALIDFETCH, "Malformed role addition commit");
+                    return false;
+                }
+            } else if (type == "application/role-deletion") {
+                if (!checkRoleDeletion(userDevice, commit.id, commit.parents[0])) {
+                    JAMI_ERROR("Commit {:s} malformed", commit.id);
+
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        accountId_, id_, EVALIDFETCH, "Malformed role addition commit");
+                    return false;
+                }
+            } else if (type == "application/role-change") {
+                if (!checkRoleModification(userDevice, commit)) {
+                    JAMI_ERROR("Commit {:s} malformed", commit.id);
+
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        accountId_, id_, EVALIDFETCH, "Malformed commit for role change");
+                    return false;
+                }
             } else {
+
+                auto userUri = uriFromDevice(userDevice, commit.id);
+                if (userUri.empty()) {
+                    JAMI_WARNING(
+                        "[conv {}] Malformed commit {}. Please check you use the latest version of "
+                        "Jami, or that your contact is not doing unwanted stuff.",
+                        id_, commit.id);
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                        accountId_, id_, EVALIDFETCH, "Malformed commit");
+                    return false;
+                }
+                if (type == "application/data-transfer+json") {
+                    if (!hasPermissionAtCommit(commit.id, userUri, Permission::SendFile)) {
+                        JAMI_WARNING(
+                            "[conv {}] Malformed data-transfer commit {}. Please check you use the latest "
+                            "version of Jami, or that your contact is not doing unwanted stuff.",
+                            id_, commit.id);
+
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
+                            accountId_, id_, EVALIDFETCH, "Malformed data-transfer commit");
+                        return false;
+                    }
+                } else if (type == "application/call-history+json") {
+                    if (!hasPermissionAtCommit(commit.id, userUri, Permission::Call)) {
+                        JAMI_WARNING(
+                            "[conv {}] Malformed call-history commit {}. Please check you use the latest "
+                            "version of Jami, or that your contact is not doing unwanted stuff.",
+                            id_, commit.id);
+
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
+                            accountId_, id_, EVALIDFETCH, "Malformed call-history commit");
+                        return false;
+                    }
+                } else {
+                    if (cm.isMember("react-to") && !hasPermissionAtCommit(commit.id, userUri, Permission::React)) {
+                        JAMI_WARNING(
+                            "[conv {}]  Malformed reaction commit {}. Please check you use the latest "
+                            "version of Jami, or that your contact is not doing unwanted stuff.",
+                            id_, commit.id);
+
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
+                            accountId_, id_, EVALIDFETCH, "Malformed reaction commit");
+                        return false;
+                    } else if (cm.isMember("reply-to") && !hasPermissionAtCommit(commit.id, userUri, Permission::Reply)) {
+                        JAMI_WARNING(
+                            "[conv {}]  Malformed reply commit {}. Please check you use the latest "
+                            "version of Jami, or that your contact is not doing unwanted stuff.",
+                            id_, commit.id);
+
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
+                            accountId_, id_, EVALIDFETCH, "Malformed reaction commit");
+                        return false;
+                    } else if (!hasPermissionAtCommit(commit.id, userUri, Permission::SendTextMessage)) {
+                        JAMI_WARNING(
+                            "[conv {}] Malformed text-transfer commit {}. Please check you use the latest "
+                            "version of Jami, or that your contact is not doing unwanted stuff.",
+                            id_, commit.id);
+
+                        emitSignal<libjami::ConversationSignal::OnConversationError>(
+                            accountId_, id_, EVALIDFETCH, "Malformed text-transfer commit");
+                        return false;
+                    }
+                }
                 // Note: accept all mimetype here, as we can have new mimetypes
                 // Just avoid to add weird files
                 // Check that no weird file is added outside device cert nor removed
@@ -2904,6 +3313,7 @@ ConversationRepository::Impl::validCommits(
         }
         JAMI_DEBUG("[conv {}] Validate commit {}", id_, commit.id);
     }
+
     return true;
 }
 
@@ -2956,7 +3366,7 @@ ConversationRepository::addMember(const std::string& uri)
 
     {
         std::lock_guard lk(pimpl_->membersMtx_);
-        pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::INVITED});
+        pimpl_->members_.emplace_back(ConversationMember {uri, MemberRoleEnum::INVITED, "Member"});
         pimpl_->saveMembers();
     }
 
@@ -2968,6 +3378,171 @@ ConversationRepository::addMember(const std::string& uri)
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+std::string
+ConversationRepository::addRole(const std::string& roleName, const std::unordered_set<Permission>& permissions)
+{
+    if (roleName == "Admin" || roleName == "Member" || roleName == "Banned") {
+        JAMI_WARN("Trying to add reserved role");
+        return {};
+    }
+    // Add role to current roles
+    JAMI_DEBUG("[Conversation {}]Adding role {}", pimpl_->id_, roleName);
+    pimpl_->roles_[roleName] = std::make_shared<CustomRole>(roleName, permissions);
+    // Create roles.json or modify it
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    if (!pimpl_->writeRoles())
+        return {};
+
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    Json::Value json;
+    json["type"] = "application/role-creation";
+    json["roleName"] = roleName;
+    return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+std::string
+ConversationRepository::removeRole(const std::string& roleName)
+{
+    if (roleName == "Admin" || roleName == "Member" || roleName == "Banned") {
+        JAMI_WARN("Trying to remove reserved role");
+        return {};
+    }
+    // Check if path dedicated to role is empty
+    auto repo = pimpl_->repository();
+    if (not repo)
+        return {};
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+    std::filesystem::path rolePath = repoPath / roleName;
+    if (std::filesystem::exists(rolePath) && !std::filesystem::is_empty(rolePath)) {
+        JAMI_ERROR("{} directory is not empty, cannot remove role", roleName);
+        return {};
+    }
+
+    // Add role to current roles
+    JAMI_DEBUG("[Conversation {}]Removing role {}", pimpl_->id_, roleName);
+    pimpl_->roles_.erase(roleName);
+    // Create roles.json or modify it
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    if (!pimpl_->writeRoles())
+        return {};
+
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    Json::Value json;
+    json["type"] = "application/role-deletion";
+    json["roleName"] = roleName;
+    return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
+std::string
+ConversationRepository::changeMemberRole(const std::string& memberUri, const std::string& roleName)
+{
+    // Check that role exists
+    if (roleName == "Banned") {
+        JAMI_ERROR("Cannot change role to Banned, use voteKick");
+        return {};
+    }
+    if (pimpl_->roles_.find(roleName) == pimpl_->roles_.end()) {
+        JAMI_WARNING("{} doesn't exist", roleName);
+        return {};
+    }
+    // Find member
+    std::string previousRoleName = "";
+
+    {
+        // Change members_
+        std::lock_guard lk(pimpl_->membersMtx_);
+        for (auto& m: pimpl_->members_) {
+            if (m.uri == memberUri) {
+                previousRoleName = m.roleName;
+                m.roleName = roleName;
+                pimpl_->saveMembers();
+                break;
+            }
+        }
+    }
+    if (previousRoleName.empty()) {
+        JAMI_ERROR("{} not found", memberUri);
+        return {};
+    }
+
+    // Change certificate location
+    std::string fromPath = previousRoleName;
+    if (previousRoleName == "Admin")
+        fromPath = "admins";
+    else if (previousRoleName == "Member")
+        fromPath = "members";
+    std::string toPath = roleName;
+    if (roleName == "Admin")
+        toPath = "admins";
+    else if (roleName == "Member")
+        toPath = "members";
+
+
+    std::lock_guard lkOp(pimpl_->opMtx_);
+    pimpl_->resetHard();
+    auto repo = pimpl_->repository();
+    if (not repo)
+        return {};
+
+    // First, we need to add the member file to the repository if not present
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+
+
+    std::filesystem::path toDir = repoPath / toPath;
+    if (!dhtnet::fileutils::recursive_mkdir(toDir, 0700)) {
+        JAMI_ERROR("Error when creating {}.", toDir);
+        return {};
+    }
+
+    try {
+        std::filesystem::rename(repoPath / fromPath / (memberUri + ".crt"),
+                                repoPath / toPath / (memberUri + ".crt"));
+    } catch (std::filesystem::filesystem_error& e) {
+        JAMI_ERROR("{}", e.what());
+    }
+
+    // git add -A
+    if (!git_add_all(repo.get())) {
+        return {};
+    }
+
+    Json::Value json;
+    json["from"] = previousRoleName;
+    json["to"] = roleName;
+    json["uri"] = memberUri;
+    json["type"] = "application/role-change";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+
+    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
+}
+
+std::vector<std::shared_ptr<Role>>
+ConversationRepository::roles() const
+{
+    std::vector<std::shared_ptr<Role>> r;
+    r.reserve(pimpl_->roles_.size());
+    for (const auto& [_, role]: pimpl_->roles_)
+        r.emplace_back(role);
+    return r;
+}
+
+bool
+ConversationRepository::hasPermission(const std::string& roleName, const Permission& p) const
+{
+    try {
+        return pimpl_->roles_[roleName]->hasPermission(p);
+    } catch (...) {}
+    return false;
 }
 
 void
@@ -3148,6 +3723,92 @@ ConversationRepository::Impl::addUserDevice()
 
         if (!add(path))
             JAMI_WARNING("Unable to add file {}", devicePath);
+    }
+}
+
+bool
+ConversationRepository::Impl::writeRoles()
+{
+    auto repo = repository();
+    if (not repo)
+        return false;
+
+    // First, we need to add the member file to the repository if not present
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+
+    std::filesystem::path rolesFile = repoPath / "roles.json";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    Json::Value rolesValue;
+    for (const auto& [roleName, role]: roles_) {
+        // Admin & Member are reserved (all permissions, basic permissions). Only store custom ones
+        if (roleName == "Admin" || roleName == "Member" || roleName == "Banned") {
+            continue;
+        }
+        Json::Value r;
+        r["name"] = roleName;
+        auto i = 0u;
+        Json::Value permissions;
+        for (const auto& p: role->permissions()) {
+            permissions[i] = permissionToString(p);
+            i++;
+        }
+        r["permissions"] = permissions;
+        rolesValue[roleName] = r;
+    }
+    {
+        std::ofstream file(rolesFile, std::ios::trunc | std::ios::binary);
+        file << Json::writeString(wbuilder, rolesValue);
+        file.close();
+        if (!add("roles.json"))
+            return false;
+    }
+    return true;
+}
+
+void
+ConversationRepository::Impl::readRoles()
+{
+    auto repo = repository();
+    if (not repo)
+        return;
+
+    // First, we need to add the member file to the repository if not present
+    std::filesystem::path repoPath = git_repository_workdir(repo.get());
+
+    std::filesystem::path rolesPath = repoPath / "roles.json";
+
+    // Open the roles.json file
+    std::ifstream rolesFile(rolesPath, std::ifstream::binary);
+    if (!rolesFile.is_open()) {
+        return;
+    }
+
+    // Parse the JSON file
+    Json::Value root;
+    Json::CharReaderBuilder readerBuilder;
+    std::string errs;
+    if (!Json::parseFromStream(readerBuilder, rolesFile, &root, &errs)) {
+        return;
+    }
+
+    // Iterate through the roles in the JSON
+    for (const auto& roleName : root.getMemberNames()) {
+        const Json::Value& roleValue = root[roleName];
+        std::unordered_set<Permission> p;
+
+        const Json::Value& permissionsValue = roleValue["permissions"];
+        for (const auto& permission : permissionsValue) {
+            try {
+                p.emplace(stringToPermission(permission.asString()));
+            } catch (...) {
+                JAMI_ERROR("Invalid permission {}", permission.asString());
+            }
+        }
+
+        // Store in roles map
+        roles_[roleName] = std::make_shared<CustomRole>(roleName, p);
     }
 }
 
@@ -3441,12 +4102,12 @@ ConversationRepository::join()
         for (auto& member : pimpl_->members_) {
             if (member.uri == uri) {
                 updated = true;
-                member.role = MemberRole::MEMBER;
+                member.role = MemberRoleEnum::MEMBER;
                 break;
             }
         }
         if (!updated)
-            pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::MEMBER});
+            pimpl_->members_.emplace_back(ConversationMember {uri, MemberRoleEnum::MEMBER, "Member"});
         pimpl_->saveMembers();
     }
 
@@ -3458,7 +4119,6 @@ ConversationRepository::leave()
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
-    // TODO simplify
     auto account = pimpl_->account_.lock();
     auto repo = pimpl_->repository();
     if (!account || !repo)
@@ -3467,17 +4127,30 @@ ConversationRepository::leave()
     // Remove related files
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto crt = fmt::format("{}.crt", pimpl_->userId_);
-    auto adminFile = repoPath / "admins" / crt;
-    auto memberFile = repoPath / "members" / crt;
+    std::string roleName = "";
+    for (const auto &m: pimpl_->members_) {
+        if (m.uri == pimpl_->userId_) {
+            if (m.roleName == "Admin") {
+                roleName = "admins";
+            } else if (m.roleName == "Member") {
+                roleName = "members";
+            } else {
+                roleName = m.roleName;
+            }
+            break;
+        }
+    }
+    if (roleName.empty()) {
+        JAMI_ERROR("Role not found for {}", pimpl_->userId_);
+        return {};
+    }
+
+    auto certPath = repoPath / roleName / crt;
     auto crlsPath = repoPath / "CRLs";
     std::error_code ec;
 
-    if (std::filesystem::is_regular_file(adminFile, ec)) {
-        std::filesystem::remove(adminFile, ec);
-    }
-
-    if (std::filesystem::is_regular_file(memberFile, ec)) {
-        std::filesystem::remove(memberFile, ec);
+    if (std::filesystem::is_regular_file(certPath, ec)) {
+        std::filesystem::remove(certPath, ec);
     }
 
     // /CRLs
@@ -3556,8 +4229,8 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     auto cert = account->identity().second;
     if (!cert || !cert->issuer)
         return {};
-    auto adminUri = cert->issuer->getId().toString();
-    if (adminUri == uri) {
+    auto voterUri = cert->issuer->getId().toString();
+    if (voterUri == uri) {
         JAMI_WARNING("Admin tried to ban theirself");
         return {};
     }
@@ -3574,7 +4247,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
         JAMI_ERROR("Error when creating {}. Abort vote", voteDirectory);
         return {};
     }
-    auto votePath = fileutils::getFullPath(voteDirectory, adminUri);
+    auto votePath = fileutils::getFullPath(voteDirectory, voterUri);
     std::ofstream voteFile(votePath, std::ios::trunc | std::ios::binary);
     if (!voteFile.is_open()) {
         JAMI_ERROR("Unable to write data to {}", votePath);
@@ -3582,7 +4255,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     }
     voteFile.close();
 
-    auto toAdd = fmt::format("{}/{}", relativeVotePath, adminUri);
+    auto toAdd = fmt::format("{}/{}", relativeVotePath, voterUri);
     if (!pimpl_->add(toAdd))
         return {};
 
@@ -3682,12 +4355,12 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
         for (auto& member : members_) {
             if (member.uri == uri) {
                 updated = true;
-                member.role = MemberRole::BANNED;
+                member.role = MemberRoleEnum::BANNED;
                 break;
             }
         }
         if (!updated)
-            members_.emplace_back(ConversationMember {uri, MemberRole::BANNED});
+            members_.emplace_back(ConversationMember {uri, MemberRoleEnum::BANNED, "Banned"});
         saveMembers();
     }
     return true;
@@ -3717,21 +4390,28 @@ ConversationRepository::Impl::resolveUnban(const std::string_view type, const st
     std::lock_guard lk(membersMtx_);
     auto updated = false;
 
-    auto role = MemberRole::MEMBER;
-    if (type == "invited")
-        role = MemberRole::INVITED;
-    else if (type == "admins")
-        role = MemberRole::ADMIN;
+    auto role = MemberRoleEnum::MEMBER;
+    std::string memberRole = std::string(type);
+    if (type == "invited") {
+        memberRole = "Member";
+        role = MemberRoleEnum::INVITED;
+    } else if (type == "admins") {
+        role = MemberRoleEnum::ADMIN;
+        memberRole = "Admin";
+    } else if (type == "members") {
+        memberRole = "Member";
+    }
 
     for (auto& member : members_) {
         if (member.uri == uri) {
             updated = true;
             member.role = role;
+            member.roleName = memberRole;
             break;
         }
     }
     if (!updated)
-        members_.emplace_back(ConversationMember {uri, role});
+        members_.emplace_back(ConversationMember {uri, role, memberRole});
     saveMembers();
     return true;
 }
@@ -3743,28 +4423,31 @@ ConversationRepository::resolveVote(const std::string& uri,
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
-    // Count ratio admin/votes
-    auto nbAdmins = 0, nbVotes = 0;
-    // For each admin, check if voted
+    // Count ratio voters/votes
+    auto nvVoters = 0, nbVotes = 0;
+    // For each voters, check if voted
     auto repo = pimpl_->repository();
     if (!repo)
         return {};
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
-    auto adminsPath = repoPath / "admins";
     auto voteDirectory = repoPath / "votes" / voteType / type / uri;
-    for (const auto& certificate : dhtnet::fileutils::readDirectory(adminsPath)) {
-        if (certificate.find(".crt") == std::string::npos) {
-            JAMI_WARNING("Incorrect file found: {}/{}", adminsPath, certificate);
-            continue;
+    for (const auto& r: pimpl_->roles_) {
+        auto roleStr = r.first == "Admin" ? "admins" : r.first;
+        auto voterPath = repoPath / roleStr;
+        for (const auto& certificate : dhtnet::fileutils::readDirectory(voterPath)) {
+            if (certificate.find(".crt") == std::string::npos) {
+                JAMI_WARNING("Incorrect file found: {}/{}", voterPath, certificate);
+                continue;
+            }
+            auto voterUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
+            nvVoters += 1;
+            if (std::filesystem::is_regular_file(fileutils::getFullPath(voteDirectory, voterUri)))
+                nbVotes += 1;
         }
-        auto adminUri = certificate.substr(0, certificate.size() - std::string(".crt").size());
-        nbAdmins += 1;
-        if (std::filesystem::is_regular_file(fileutils::getFullPath(voteDirectory, adminUri)))
-            nbVotes += 1;
     }
 
-    if (nbAdmins > 0 && (static_cast<double>(nbVotes) / static_cast<double>(nbAdmins)) > .5) {
-        JAMI_WARNING("More than half of the admins voted to ban {}, apply the ban", uri);
+    if (nvVoters > 0 && (static_cast<double>(nbVotes) / static_cast<double>(nvVoters)) > .5) {
+        JAMI_WARNING("More than half of the voters voted to ban {}, apply the ban", uri);
 
         // Remove vote directory
         dhtnet::fileutils::removeAll(voteDirectory, true);
@@ -3850,7 +4533,7 @@ ConversationRepository::members() const
 
 std::set<std::string>
 ConversationRepository::memberUris(std::string_view filter,
-                                   const std::set<MemberRole>& filteredRoles) const
+                                   const std::set<MemberRoleEnum>& filteredRoles) const
 {
     return pimpl_->memberUris(filter, filteredRoles);
 }
@@ -3883,14 +4566,17 @@ ConversationRepository::pinCertificates(bool blocking)
                                       repoPath + "members",
                                       repoPath + "devices"};
 
-    for (const auto& path : paths) {
+    for (const auto& path : dhtnet::fileutils::readDirectory(repoPath)) {
+        if (!dhtnet::fileutils::isDirectory(repoPath + path) || path == ".git")
+            continue;
+        auto dirPath = repoPath + path;
         if (blocking) {
             std::promise<bool> p;
             std::future<bool> f = p.get_future();
-            acc->certStore().pinCertificatePath(path, [&](auto /* certs */) { p.set_value(true); });
+            acc->certStore().pinCertificatePath(dirPath, [&](auto /* certs */) { p.set_value(true); });
             f.wait();
         } else {
-            acc->certStore().pinCertificatePath(path, {});
+            acc->certStore().pinCertificatePath(dirPath, {});
         }
     }
 }
@@ -3906,17 +4592,17 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
 {
     std::lock_guard lkOp(pimpl_->opMtx_);
     pimpl_->resetHard();
-    auto valid = false;
+    std::string roleName = "";
     {
         std::lock_guard lk(pimpl_->membersMtx_);
         for (const auto& member : pimpl_->members_) {
             if (member.uri == pimpl_->userId_) {
-                valid = member.role <= pimpl_->updateProfilePermLvl_;
+                roleName = member.roleName;
                 break;
             }
         }
     }
-    if (!valid) {
+    if (!hasPermission(roleName, Permission::ChangeProfile)) {
         JAMI_ERROR("Insufficient permission to update information");
         emitSignal<libjami::ConversationSignal::OnConversationError>(
             pimpl_->accountId_,

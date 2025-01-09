@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(jami-core
-    VERSION 15.3.0
+    VERSION 16.0.0
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 set (CMAKE_CXX_STANDARD 17)
@@ -917,7 +917,7 @@ else()
         target_link_libraries(ut_sipSrtp ut_library)
         add_test(NAME sipSrtp COMMAND ut_sipSrtp)
 
-        add_executable(ut_fileTransfer test/unitTest/fileTransfer/fileTransfer.cpp)
+        add_executable(ut_fileTransfer test/unitTest/fileTransfer/fileTransfer.cpp test/unitTest/conversation/conversationcommon.cpp)
         target_link_libraries(ut_fileTransfer ut_library)
         add_test(NAME fileTransfer COMMAND ut_fileTransfer)
 

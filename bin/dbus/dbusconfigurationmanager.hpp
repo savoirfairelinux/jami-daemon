@@ -918,6 +918,44 @@ public:
     }
 
     void
+    addRole(const std::string& accountId,
+            const std::string& conversationId,
+            const std::string& roleName,
+            const std::vector<std::string>& permissions)
+    {
+        return libjami::addRole(accountId, conversationId, roleName, permissions);
+    }
+
+    void
+    removeRole(const std::string& accountId,
+                const std::string& conversationId,
+                const std::string& roleName)
+    {
+        return libjami::removeRole(accountId, conversationId, roleName);
+    }
+
+    void
+    changeMemberRole(const std::string& accountId,
+                     const std::string& conversationId,
+                     const std::string& memberUri,
+                     const std::string& roleName)
+    {
+        return libjami::changeMemberRole(accountId, conversationId, memberUri, roleName);
+    }
+
+    std::vector<std::string>
+    permissions()
+    {
+        return libjami::permissions();
+    }
+
+    std::map<std::string, std::vector<std::string>>
+    roles(const std::string& accountId, const std::string& conversationId)
+    {
+        return libjami::roles(accountId, conversationId);
+    }
+
+    void
     sendMessage(const std::string& accountId,
                 const std::string& conversationId,
                 const std::string& message,

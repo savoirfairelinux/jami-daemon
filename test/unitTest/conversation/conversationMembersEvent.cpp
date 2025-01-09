@@ -109,6 +109,9 @@ public:
     void testBanHostWhileHosting();
     void testAddContactTwice();
     void testBanFromNewDevice();
+    void testKickWith3Admins();
+    void testKickWithSecondRole();
+    void testKickRemoveBeforeResolve();
 
     std::string aliceId;
     UserData aliceData;
@@ -163,6 +166,9 @@ private:
     CPPUNIT_TEST(testBanHostWhileHosting);
     CPPUNIT_TEST(testAddContactTwice);
     CPPUNIT_TEST(testBanFromNewDevice);
+    CPPUNIT_TEST(testKickWith3Admins);
+    CPPUNIT_TEST(testKickWithSecondRole);
+    CPPUNIT_TEST(testKickRemoveBeforeResolve);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -764,6 +770,7 @@ ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromPeer()
         return false;
     };
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(aliceData, "join", bobUri); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(aliceData, "join", carlaUri); }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return messageReceived(carlaData, "join", bobUri); }));
 
     // Alice bans Bob
@@ -1597,6 +1604,7 @@ ConversationMembersEventTest::testBanUnbanMultiDevice()
 
     // Alice re-add Bob while invited
     aliceMsgSize = aliceData.messages.size();
+    JAMI_ERROR("@@@@@@@@@@@@@@@@");
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
@@ -1807,6 +1815,179 @@ ConversationMembersEventTest::testBanFromNewDevice()
     // Should sync!
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return carlaData.messages.size() > carlaMsgSize; }));
+}
+
+
+void
+ConversationMembersEventTest::testKickWith3Admins()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+    Manager::instance().sendRegister(carlaId, true);
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+    libjami::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size() && bobMsgSize + 2 == bobData.messages.size(); }));
+
+    // Add 2 Admin
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "Admin");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3; }));
+    libjami::changeMemberRole(aliceId, convId,  carlaUri, "Admin");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 4; }));
+
+    // Check all admins
+    ConversationRepository bobrepo(bobAccount, convId);
+    bool allAdmin = true;
+    auto membersSize = bobrepo.memberUris({}, {MemberRoleEnum::BANNED}).size();
+    for (const auto& m: bobrepo.members()) {
+        allAdmin &= m.roleName == "Admin";
+    }
+    CPPUNIT_ASSERT(allAdmin);
+
+    bobMsgSize = bobData.messages.size();
+    // 1/3 votes => non banned
+    libjami::removeConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        ConversationRepository bobrepo2(bobAccount, convId);
+        return bobrepo2.memberUris({}, {MemberRoleEnum::BANNED}).size() == 1 + membersSize; }));
+    // 2/3 vote => Ban
+    libjami::removeConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        ConversationRepository bobrepo2(bobAccount, convId);
+        return bobrepo2.memberUris({}, {MemberRoleEnum::BANNED}).size() == 1 + membersSize; }));
+
+}
+
+void
+ConversationMembersEventTest::testKickWithSecondRole()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+    Manager::instance().sendRegister(carlaId, true);
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+    libjami::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size() && bobMsgSize + 2 == bobData.messages.size(); }));
+
+    libjami::addRole(aliceId, convId, "Banner", {"BanUnBanMember"});
+
+    // Add 2 Banner
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "Banner");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3; }));
+    libjami::changeMemberRole(aliceId, convId,  carlaUri, "Banner");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 4; }));
+
+    ConversationRepository bobrepo(bobAccount, convId);
+    auto membersSize = bobrepo.memberUris({}, {MemberRoleEnum::BANNED}).size();
+
+    bobMsgSize = bobData.messages.size();
+    // 1/3 votes => non banned
+    libjami::removeConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        ConversationRepository bobrepo2(bobAccount, convId);
+        return bobrepo2.memberUris({}, {MemberRoleEnum::BANNED}).size() == 1 + membersSize; }));
+    // 2/3 vote => Ban
+    libjami::removeConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        ConversationRepository bobrepo2(bobAccount, convId);
+        return bobrepo2.memberUris({}, {MemberRoleEnum::BANNED}).size() == 1 + membersSize; }));
+
+}
+
+void
+ConversationMembersEventTest::testKickRemoveBeforeResolve()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+    Manager::instance().sendRegister(carlaId, true);
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return carlaData.requestReceived; }));
+    libjami::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size() && bobMsgSize + 2 == bobData.messages.size(); }));
+
+    libjami::addRole(aliceId, convId, "Banner", {"BanUnBanMember"});
+
+    // Add 2 Banner
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "Banner");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3; }));
+
+    ConversationRepository bobrepo(bobAccount, convId);
+    auto membersSize = bobrepo.memberUris({}, {MemberRoleEnum::BANNED}).size();
+
+    // 1/2 votes => non banned
+    libjami::removeConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        ConversationRepository bobrepo2(bobAccount, convId);
+        return bobrepo2.memberUris({}, {MemberRoleEnum::BANNED}).size() == 1 + membersSize; }));
+
+    bobMsgSize = bobData.messages.size();
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "Member");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+
+    // 1/1 vote => banned
+    libjami::removeConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        ConversationRepository bobrepo2(bobAccount, convId);
+        return bobrepo2.memberUris({}, {MemberRoleEnum::BANNED}).size() == 1 + membersSize; }));
+
 }
 
 } // namespace test

@@ -84,6 +84,13 @@ LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
     const std::string& accountId, const std::string& conversationId);
 
+// Permission and role management
+LIBJAMI_PUBLIC void addRole(const std::string& accountId, const std::string& conversationId, const std::string& roleName, const std::vector<std::string>& permissions);
+LIBJAMI_PUBLIC void removeRole(const std::string& accountId, const std::string& conversationId, const std::string& roleName);
+LIBJAMI_PUBLIC void changeMemberRole(const std::string& accountId, const std::string& conversationId, const std::string& memberUri, const std::string& roleName);
+LIBJAMI_PUBLIC std::vector<std::string> permissions();
+LIBJAMI_PUBLIC std::map<std::string, std::vector<std::string>> roles(const std::string& accountId, const std::string& conversationId);
+
 // Message send/load
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
                                 const std::string& conversationId,

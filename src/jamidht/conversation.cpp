@@ -253,7 +253,7 @@ public:
      * To avoid to keep active calls forever.
      */
     std::vector<std::string> commitsEndedCalls();
-    bool isAdmin() const;
+    bool hasPermission(const Permission& p, const std::string& memberUri = "") const;
     std::filesystem::path repoPath() const;
 
     void announce(const std::string& commitId, bool commitFromSelf = false) const
@@ -573,22 +573,21 @@ public:
                                                                bool includeLeft,
                                                                bool includeBanned) const;
 
-    std::string_view bannedType(const std::string& uri) const
+    std::string bannedType(const std::string& uri) const
     {
         auto repo = repoPath();
         auto crt = fmt::format("{}.crt", uri);
-        auto bannedMember = repo / "banned" / "members" / crt;
-        if (std::filesystem::is_regular_file(bannedMember))
-            return "members"sv;
-        auto bannedAdmin = repo / "banned" / "admins" / crt;
-        if (std::filesystem::is_regular_file(bannedAdmin))
-            return "admins"sv;
         auto bannedInvited = repo / "banned" / "invited" / uri;
         if (std::filesystem::is_regular_file(bannedInvited))
-            return "invited"sv;
+            return "invited";
         auto bannedDevice = repo / "banned" / "devices" / crt;
         if (std::filesystem::is_regular_file(bannedDevice))
-            return "devices"sv;
+            return "devices";
+        for (const auto& type : dhtnet::fileutils::readDirectory(repo / "banned")) {
+            if (std::filesystem::is_regular_file(repo / "banned" / type / crt))
+                return type;
+        }
+
         return {};
     }
 
@@ -730,10 +729,16 @@ public:
 };
 
 bool
-Conversation::Impl::isAdmin() const
+Conversation::Impl::hasPermission(const Permission& p, const std::string& memberUri) const
 {
-    auto adminsPath = repoPath() / "admins";
-    return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, userId_ + ".crt"));
+    auto uriToCheck = memberUri.empty() ? userId_ : memberUri;
+    auto members = repository_->members();
+    for (const auto& m: members) {
+        if (m.uri == uriToCheck) {
+            return repository_->hasPermission(m.roleName, p);
+        }
+    }
+    return false;
 }
 
 void
@@ -763,12 +768,12 @@ Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool inclu
     auto members = repository_->members();
     std::lock_guard lk(messageStatusMtx_);
     for (const auto& member : members) {
-        if (member.role == MemberRole::BANNED && !includeBanned) {
+        if (member.role == MemberRoleEnum::BANNED && !includeBanned) {
             continue;
         }
-        if (member.role == MemberRole::INVITED && !includeInvited)
+        if (member.role == MemberRoleEnum::INVITED && !includeInvited)
             continue;
-        if (member.role == MemberRole::LEFT && !includeLeft)
+        if (member.role == MemberRoleEnum::LEFT && !includeLeft)
             continue;
         auto mm = member.map();
         mm[ConversationMapKeys::LAST_DISPLAYED] = messagesStatus_[member.uri]["read"];
@@ -1298,6 +1303,12 @@ Conversation::id() const
 void
 Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
 {
+    if (!pimpl_->hasPermission(Permission::AddMember)) {
+        JAMI_ERROR("[Conversation {}]Cannot add member {}. Not enough permissions", id(), contactUri);
+        cb(false, "");
+        return;
+    }
+
     try {
         if (mode() == ConversationMode::ONE_TO_ONE) {
             // Only authorize to add left members
@@ -1320,7 +1331,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
         return;
     }
     if (isBanned(contactUri)) {
-        if (pimpl_->isAdmin()) {
+        if (pimpl_->hasPermission(Permission::BanUnBanMember)) {
             dht::ThreadPool::io().run(
                 [w = weak(), contactUri = std::move(contactUri), cb = std::move(cb)] {
                     if (auto sthis = w.lock()) {
@@ -1334,7 +1345,7 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                     }
                 });
         } else {
-            JAMI_WARN("Unable to add member %s because this member is blocked", contactUri.c_str());
+            JAMI_WARNING("Unable to add member {} because this member is blocked", contactUri);
             cb(false, "");
         }
         return;
@@ -1351,6 +1362,83 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
                 cb(!commit.empty(), commit);
         }
     });
+}
+
+void
+Conversation::addRole(const std::string& roleName, const std::unordered_set<Permission>& permissions, const OnDoneCb& cb)
+{
+    if (!pimpl_->hasPermission(Permission::CreateRole)) {
+        JAMI_ERROR("[Conversation {}]Cannot create role {}. Not enough permissions", id(), roleName);
+        cb(false, "");
+        return;
+    }
+
+    dht::ThreadPool::io().run(
+        [w = weak(), roleName = std::move(roleName), p = std::move(permissions), cb = std::move(cb)] {
+            if (auto sthis = w.lock()) {
+                std::unique_lock lk(sthis->pimpl_->writeMtx_);
+                auto commit = sthis->pimpl_->repository_->addRole(roleName, p);
+                lk.unlock();
+                if (cb)
+                    cb(!commit.empty(), commit);
+            }
+        });
+}
+
+void
+Conversation::changeMemberRole(const std::string& memberUri, const std::string& roleName, const OnDoneCb& cb)
+{
+    if (!pimpl_->hasPermission(Permission::ChangeMemberRole)) {
+        JAMI_ERROR("[Conversation {}]Cannot change member {} role {}. Not enough permissions", id(), memberUri, roleName);
+        cb(false, "");
+        return;
+    }
+
+    dht::ThreadPool::io().run(
+        [w = weak(), roleName = std::move(roleName), memberUri = std::move(memberUri), cb = std::move(cb)] {
+            if (auto sthis = w.lock()) {
+                std::unique_lock lk(sthis->pimpl_->writeMtx_);
+                auto commit = sthis->pimpl_->repository_->changeMemberRole(memberUri, roleName);
+                lk.unlock();
+                if (cb)
+                    cb(!commit.empty(), commit);
+            }
+        });
+}
+
+
+void
+Conversation::removeRole(const std::string& roleName, const OnDoneCb& cb)
+{
+    if (!pimpl_->hasPermission(Permission::RemoveRole)) {
+        JAMI_ERROR("[Conversation {}]Cannot remove role {}. Not enough permissions", id(), roleName);
+        cb(false, "");
+        return;
+    }
+
+    dht::ThreadPool::io().run(
+        [w = weak(), roleName = std::move(roleName), cb = std::move(cb)] {
+            if (auto sthis = w.lock()) {
+                std::unique_lock lk(sthis->pimpl_->writeMtx_);
+                auto commit = sthis->pimpl_->repository_->removeRole(roleName);
+                lk.unlock();
+                if (cb)
+                    cb(!commit.empty(), commit);
+            }
+        });
+
+}
+
+bool
+Conversation::hasPermission(const std::string& memberUri, const Permission& p) const
+{
+    return pimpl_->hasPermission(p, memberUri);
+}
+
+std::vector<std::shared_ptr<Role>>
+Conversation::roles() const
+{
+    return pimpl_->repository_->roles();
 }
 
 std::shared_ptr<dhtnet::ChannelSocket>
@@ -1416,7 +1504,7 @@ Conversation::Impl::voteUnban(const std::string& contactUri,
                               const OnDoneCb& cb)
 {
     // Check if admin
-    if (!isAdmin()) {
+    if (!hasPermission(Permission::BanUnBanMember)) {
         JAMI_WARN("You're not an admin of this repo. Unable to unblock %s", contactUri.c_str());
         cb(false, {});
         return;
@@ -1456,9 +1544,9 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                                isDevice = std::move(isDevice),
                                cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
-            // Check if admin
-            if (!sthis->pimpl_->isAdmin()) {
-                JAMI_WARN("You're not an admin of this repo. Unable to block %s", contactUri.c_str());
+            // Check if has permission
+            if (!sthis->pimpl_->hasPermission(Permission::BanUnBanMember)) {
+                JAMI_WARNING("You're not an admin of this repo. Unable to block {}", contactUri);
                 cb(false, {});
                 return;
             }
@@ -1471,11 +1559,12 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
                 auto members = sthis->pimpl_->repository_->members();
                 for (const auto& member : members) {
                     if (member.uri == contactUri) {
-                        if (member.role == MemberRole::INVITED) {
+                        type = member.roleName;
+                        if (member.role == MemberRoleEnum::INVITED) {
                             type = "invited";
-                        } else if (member.role == MemberRole::ADMIN) {
+                        } else if (type == "Admin") {
                             type = "admins";
-                        } else if (member.role == MemberRole::MEMBER) {
+                        } else if (type == "Member") {
                             type = "members";
                         }
                         break;
@@ -1491,7 +1580,7 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
             std::unique_lock lk(sthis->pimpl_->writeMtx_);
             auto voteCommit = sthis->pimpl_->repository_->voteKick(contactUri, type);
             if (voteCommit.empty()) {
-                JAMI_WARN("Kicking %s failed", contactUri.c_str());
+                JAMI_WARNING("Kicking {} failed", contactUri);
                 cb(false, "");
                 return;
             }
@@ -1505,8 +1594,8 @@ Conversation::removeMember(const std::string& contactUri, bool isDevice, const O
             if (!resolveCommit.empty()) {
                 commits.emplace_back(resolveCommit);
                 lastId = resolveCommit;
-                JAMI_WARN("Vote solved for %s. %s banned",
-                          contactUri.c_str(),
+                JAMI_WARNING("Vote solved for {}. {} banned",
+                          contactUri,
                           isDevice ? "Device" : "Member");
                 sthis->pimpl_->disconnectFromPeer(contactUri);
             }
@@ -1525,7 +1614,7 @@ Conversation::getMembers(bool includeInvited, bool includeLeft, bool includeBann
 }
 
 std::set<std::string>
-Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const
+Conversation::memberUris(std::string_view filter, const std::set<MemberRoleEnum>& filteredRoles) const
 {
     return pimpl_->repository_->memberUris(filter, filteredRoles);
 }
@@ -1579,6 +1668,9 @@ Conversation::isMember(const std::string& uri, bool includeInvited) const
     auto adminsPath = repoPath / "admins";
     auto membersPath = repoPath / "members";
     std::vector<std::filesystem::path> pathsToCheck = {adminsPath, membersPath};
+    for (const auto& role: pimpl_->repository_->roles()) {
+        pathsToCheck.emplace_back(std::filesystem::path {repoPath / role->name()});
+    }
     if (includeInvited)
         pathsToCheck.emplace_back(invitedPath);
     for (const auto& path : pathsToCheck) {
@@ -1631,14 +1723,45 @@ Conversation::sendMessage(Json::Value&& value,
                           OnCommitCb&& onCommit,
                           OnDoneCb&& cb)
 {
-    if (!replyTo.empty()) {
+    // Check permissions
+    if (value.isMember("edit")) {
+        if (!pimpl_->hasPermission(Permission::Edit)) {
+            JAMI_ERROR("[Conversation {}]Cannot edit message. Not enough permissions", id());
+            cb(false, "");
+            return;
+        }
+    } else if (value.isMember("react-to")) {
+        if (!pimpl_->hasPermission(Permission::React)) {
+            JAMI_ERROR("[Conversation {}]Cannot send reaction. Not enough permissions", id());
+            cb(false, "");
+            return;
+        }
+    } else if (!replyTo.empty()) {
+        if (!pimpl_->hasPermission(Permission::Reply)) {
+            JAMI_ERROR("[Conversation {}]Cannot send reply. Not enough permissions", id());
+            cb(false, "");
+            return;
+        }
         auto commit = pimpl_->repository_->getCommit(replyTo);
         if (commit == std::nullopt) {
-            JAMI_ERR("Replying to invalid commit %s", replyTo.c_str());
+            JAMI_ERROR("Replying to invalid commit {}", replyTo);
             return;
         }
         value["reply-to"] = replyTo;
+    } else if (value.isMember("type")) {
+        auto type = value["type"].asString();
+        if (type == "application/data-transfer+json" && !pimpl_->hasPermission(Permission::SendFile)) {
+            JAMI_ERROR("[Conversation {}]Cannot send file. Not enough permissions", id());
+            cb(false, "");
+            return;
+        } else if (type == "text/plain" && !pimpl_->hasPermission(Permission::SendTextMessage)) {
+            JAMI_ERROR("[Conversation {}]Cannot send text message. Not enough permissions", id());
+            cb(false, "");
+            return;
+        }
     }
+
+    // Commit
     dht::ThreadPool::io().run(
         [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
             if (auto sthis = w.lock()) {
@@ -1779,7 +1902,11 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     auto result = repository_->convCommitsToMap(newCommits);
     for (auto& commit : result) {
         auto it = commit.find("type");
-        if (it != commit.end() && it->second == "member") {
+        if (it != commit.end() &&
+            (it->second == "member"
+                || it->second == "application/role-change"
+                || it->second == "application/role-creation"
+                || it->second == "application/role-deletion")) {
             repository_->refreshMembers();
 
             if (commit["action"] == "ban")
@@ -2006,6 +2133,11 @@ Conversation::isInitialMember(const std::string& uri) const
 void
 Conversation::updateInfos(const std::map<std::string, std::string>& map, const OnDoneCb& cb)
 {
+    if (!pimpl_->hasPermission(Permission::ChangeProfile)) {
+        JAMI_ERROR("[Conversation {}]Cannot update profile. Not enough permissions", id());
+        cb(false, "");
+    }
+
     dht::ThreadPool::io().run([w = weak(), map = std::move(map), cb = std::move(cb)] {
         if (auto sthis = w.lock()) {
             auto& repo = sthis->pimpl_->repository_;

@@ -48,6 +48,9 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/sync_module.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/typers.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/typers.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/role.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/permissions.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/permissions.cpp"
 )
 
 set (Source_Files__jamidht ${Source_Files__jamidht} PARENT_SCOPE)

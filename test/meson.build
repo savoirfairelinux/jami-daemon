@@ -163,7 +163,8 @@ test('conversation_request', ut_conversation_request,
 
 
 ut_file_transfer = executable('ut_file_transfer',
-    sources: files('unitTest/fileTransfer/fileTransfer.cpp'),
+    sources: files('unitTest/fileTransfer/fileTransfer.cpp',
+        'unitTest/conversation/conversationcommon.cpp'),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
     link_with: ut_library

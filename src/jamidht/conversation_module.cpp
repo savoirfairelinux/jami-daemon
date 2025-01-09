@@ -29,6 +29,7 @@
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
+#include "permissions.h"
 #include "sip/sipcall.h"
 #include "vcard.h"
 
@@ -1112,7 +1113,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     {
         std::lock_guard lk(notSyncedNotificationMtx_);
         devices = conversation.peersToSyncWith();
-        auto members = conversation.memberUris(username_, {MemberRole::BANNED});
+        auto members = conversation.memberUris(username_, {MemberRoleEnum::BANNED});
         std::vector<std::string> connectedMembers;
         // print all members
         for (const auto& device : devices) {
@@ -2654,6 +2655,95 @@ ConversationModule::removeConversationMember(const std::string& conversationId,
     }
 }
 
+void
+ConversationModule::addRole(const std::string& conversationId,
+                            const std::string& roleName,
+                            const std::vector<std::string>& permissions)
+{
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation) {
+            std::unordered_set<Permission> p;
+            for (const auto& pstr: permissions) {
+                try {
+                    p.emplace(stringToPermission(pstr));
+                } catch (...) {}
+            }
+            return conv->conversation->addRole(roleName, p, [this, conversationId](bool ok, const std::string& commitId) {
+                    if (ok) {
+                        pimpl_->sendMessageNotification(conversationId, true, commitId);
+                    }
+                });
+        }
+    }
+}
+
+void
+ConversationModule::changeMemberRole(const std::string& conversationId,
+                                     const std::string& memberUri,
+                                     const std::string& roleName)
+{
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation) {
+            return conv->conversation->changeMemberRole(memberUri, roleName, [this, conversationId](bool ok, const std::string& commitId) {
+                    if (ok) {
+                        pimpl_->sendMessageNotification(conversationId, true, commitId);
+                    }
+                });
+        }
+    }
+}
+
+std::map<std::string, std::vector<std::string>>
+ConversationModule::roles(const std::string& conversationId) const
+{
+    std::map<std::string, std::vector<std::string>> roles;
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation) {
+            for (const auto& r: conv->conversation->roles()) {
+                std::vector<std::string> perms;
+                perms.reserve(r->permissions().size());
+                for (const auto& p: r->permissions()) {
+                    perms.emplace_back(permissionToString(p));
+                }
+                roles[r->name()] = perms;
+            }
+        }
+    }
+    return roles;
+}
+
+
+void
+ConversationModule::removeRole(const std::string& conversationId,
+                                const std::string& roleName)
+{
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation) {
+            return conv->conversation->removeRole(roleName, [this, conversationId](bool ok, const std::string& commitId) {
+                    if (ok) {
+                        pimpl_->sendMessageNotification(conversationId, true, commitId);
+                    }
+                });
+        }
+    }
+}
+
+bool
+ConversationModule::hasCallPermission(const std::string& conversationId, const std::string& memberUri) const
+{
+    if (auto conv = pimpl_->getConversation(conversationId)) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation) {
+            return conv->conversation->hasPermission(memberUri, Permission::Call);
+        }
+    }
+    return false;
+}
+
 std::vector<std::map<std::string, std::string>>
 ConversationModule::getConversationMembers(const std::string& conversationId,
                                            bool includeBanned) const
@@ -2975,6 +3065,10 @@ ConversationModule::call(const std::string& url,
         confId = parameters[3];
     }
 
+    if (!hasCallPermission(conversationId, pimpl_->username_)) {
+        JAMI_ERROR("No call permission for conversation {:s}", conversationId);
+        return {};
+    }
 
     auto conv = pimpl_->getConversation(conversationId);
     if (!conv)
@@ -2984,7 +3078,6 @@ ConversationModule::call(const std::string& url,
         JAMI_ERROR("Conversation {:s} not found", conversationId);
         return {};
     }
-
     // Check if we want to join a specific conference
     // So, if confId is specified or if there is some activeCalls
     // or if we are the default host.

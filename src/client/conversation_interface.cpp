@@ -29,6 +29,7 @@
 #include "manager.h"
 #include "jamidht/jamiaccount.h"
 #include "jamidht/conversation_module.h"
+#include "jamidht/permissions.h"
 
 namespace libjami {
 
@@ -170,6 +171,52 @@ getConversationMembers(const std::string& accountId, const std::string& conversa
         if (auto convModule = acc->convModule(true))
             return convModule->getConversationMembers(conversationId, true);
     return {};
+}
+
+void
+addRole(const std::string& accountId, const std::string& conversationId, const std::string& roleName, const std::vector<std::string>& permissions)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule(true))
+            convModule->addRole(conversationId, roleName, permissions);
+}
+
+
+void changeMemberRole(const std::string& accountId,
+                      const std::string& conversationId,
+                      const std::string& memberUri,
+                      const std::string& roleName)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule(true))
+            convModule->changeMemberRole(conversationId, memberUri, roleName);
+}
+
+std::vector<std::string>
+permissions()
+{
+    std::vector<std::string> perms;
+    for (const auto& perm : jami::permissions)
+        perms.emplace_back(perm.second);
+    return perms;
+}
+
+std::map<std::string, std::vector<std::string>>
+roles(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule(true)) {
+            return convModule->roles(conversationId);
+        }
+    return {};
+}
+
+void
+removeRole(const std::string& accountId, const std::string& conversationId, const std::string& roleName)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        if (auto convModule = acc->convModule(true))
+            convModule->removeRole(conversationId, roleName);
 }
 
 // Message send/load

@@ -213,6 +213,13 @@ public:
      */
     void addMember(const std::string& contactUri, const OnDoneCb& cb = {});
     void removeMember(const std::string& contactUri, bool isDevice, const OnDoneCb& cb = {});
+
+    void addRole(const std::string& roleName, const std::unordered_set<Permission>& permissions, const OnDoneCb& cb = {});
+    void removeRole(const std::string& roleName, const OnDoneCb& cb = {});
+    void changeMemberRole(const std::string& memberUri, const std::string& roleName, const OnDoneCb& cb = {});
+    bool hasPermission(const std::string& memberUri, const Permission& p) const;
+    std::vector<std::shared_ptr<Role>> roles() const;
+
     /**
      * @param includeInvited        If we want invited members
      * @param includeLeft           If we want left members
@@ -236,9 +243,9 @@ public:
      */
     std::set<std::string> memberUris(
         std::string_view filter = {},
-        const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
-                                                     MemberRole::LEFT,
-                                                     MemberRole::BANNED}) const;
+        const std::set<MemberRoleEnum>& filteredRoles = {MemberRoleEnum::INVITED,
+                                                     MemberRoleEnum::LEFT,
+                                                     MemberRoleEnum::BANNED}) const;
 
     /**
      * Get peers to sync with. This is mostly managed by the DRT

@@ -74,6 +74,14 @@ struct SwarmMessage
   void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   void removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
   std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
+  void addRole(const std::string& accountId, const std::string& conversationId, const std::string& roleName, const std::vector<std::string>& permissions);
+  void removeRole(const std::string& accountId, const std::string& conversationId, const std::string& roleName);
+  void changeMemberRole(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::string& memberUri,
+                        const std::string& roleName);
+  std::vector<std::string> permissions();
+  std::map<std::string, std::vector<std::string>> roles(const std::string& accountId, const std::string& conversationId);
 
   // Message send/load
   void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& replyTo, const int32_t& flag);

@@ -23,6 +23,10 @@
 #include <string>
 #include <vector>
 
+#include "role.h"
+#include "permissions.h"
+#include <unordered_set>
+
 #include "def.h"
 
 using GitPackBuilder = std::unique_ptr<git_packbuilder, decltype(&git_packbuilder_free)>;
@@ -100,31 +104,35 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
-enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
+// NOTE: This is more a status than a role. Can be splitted.
+// For now this is needed for compatibility with the old code
+// but c.f. permissions introduction
+enum class MemberRoleEnum { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
 
 struct ConversationMember
 {
     std::string uri;
-    MemberRole role;
+    MemberRoleEnum role;
+    std::string roleName;
 
     std::map<std::string, std::string> map() const
     {
         std::string rolestr;
-        if (role == MemberRole::ADMIN) {
+        if (role == MemberRoleEnum::ADMIN) {
             rolestr = "admin";
-        } else if (role == MemberRole::MEMBER) {
+        } else if (role == MemberRoleEnum::MEMBER) {
             rolestr = "member";
-        } else if (role == MemberRole::INVITED) {
+        } else if (role == MemberRoleEnum::INVITED) {
             rolestr = "invited";
-        } else if (role == MemberRole::BANNED) {
+        } else if (role == MemberRoleEnum::BANNED) {
             rolestr = "banned";
-        } else if (role == MemberRole::LEFT) {
+        } else if (role == MemberRoleEnum::LEFT) {
             rolestr = "left"; // For one to one
         }
 
-        return {{"uri", uri}, {"role", rolestr}};
+        return {{"uri", uri}, {"role", rolestr}, {"roleName", roleName}};
     }
-    MSGPACK_DEFINE(uri, role)
+    MSGPACK_DEFINE(uri, role, roleName)
 };
 
 enum class CallbackResult { Skip, Break, Ok };
@@ -184,6 +192,39 @@ public:
      * @return the commit id if successful
      */
     std::string addMember(const std::string& uri);
+
+    // Role management
+    /**
+     * Add a role to the conversation
+     * @param roleName      The role name
+     * @param permissions   The permissions
+     * @return the commit id if successful
+     */
+    std::string addRole(const std::string& roleName, const std::unordered_set<Permission>& permissions);
+    /**
+     * Remove a role from the conversation
+     * @param roleName      The role name
+     * @note cannot remove rove if somebody is in it
+     * @return the commit id if successful
+     */
+    std::string removeRole(const std::string& roleName);
+    /**
+     * Return the roles of the conversation
+     */
+    std::vector<std::shared_ptr<Role>> roles() const;
+    /**
+     * Check if a role has a permission
+     * @param roleName      The role name
+     * @param p             The permission to check
+     */
+    bool hasPermission(const std::string& roleName, const Permission& p) const;
+    /**
+     * Change a member's role
+     * @param memberUri     The member uri
+     * @param roleName      The role name
+     * @return the commit id if successful
+     */
+    std::string changeMemberRole(const std::string& memberUri, const std::string& roleName);
 
     /**
      * Fetch a remote repository via the given socket
@@ -372,7 +413,7 @@ public:
      * @return members' uris
      */
     std::set<std::string> memberUris(std::string_view filter,
-                                        const std::set<MemberRole>& filteredRoles) const;
+                                    const std::set<MemberRoleEnum>& filteredRoles) const;
 
     /**
      * To use after a merge with member's events, refresh members knowledge
@@ -430,4 +471,4 @@ private:
 };
 
 } // namespace jami
-MSGPACK_ADD_ENUM(jami::MemberRole);
+MSGPACK_ADD_ENUM(jami::MemberRoleEnum);

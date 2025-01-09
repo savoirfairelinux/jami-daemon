@@ -17,6 +17,7 @@
 
 #include "manager.h"
 #include "jamidht/conversationrepository.h"
+#include "jamidht/permissions.h"
 #include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
@@ -72,7 +73,9 @@ private:
     void testMerge();
     void testFFMerge();
     void testDiff();
-
+    void testPermissionsToString();
+    void testAddRole();
+    void testAddRmRole();
     void testMergeProfileWithConflict();
 
     std::string addCommit(git_repository* repo,
@@ -91,6 +94,9 @@ private:
     CPPUNIT_TEST(testMerge);
     CPPUNIT_TEST(testFFMerge);
     CPPUNIT_TEST(testDiff);
+    CPPUNIT_TEST(testPermissionsToString);
+    CPPUNIT_TEST(testAddRole);
+    CPPUNIT_TEST(testAddRmRole);
     CPPUNIT_TEST(testMergeProfileWithConflict);
 
     CPPUNIT_TEST_SUITE_END();
@@ -445,6 +451,50 @@ ConversationRepositoryTest::testDiff()
     CPPUNIT_ASSERT(!changedFiles.empty());
     CPPUNIT_ASSERT(changedFiles[0] == "admins/" + uri + ".crt");
     CPPUNIT_ASSERT(changedFiles[1] == "devices/" + aliceDeviceId.toString() + ".crt");
+}
+
+void
+ConversationRepositoryTest::testPermissionsToString()
+{
+    auto perm = Permission::AddMember;
+    CPPUNIT_ASSERT(permissionToString(perm) == "AddMember");
+    CPPUNIT_ASSERT(stringToPermission("AddMember") == perm);
+}
+
+void
+ConversationRepositoryTest::testAddRole()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto uri = aliceAccount->getUsername();
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+
+    auto commitId = repository->addRole("ReactOnly", {Permission::React, Permission::Reply, Permission::Edit, Permission::DeleteMessage});
+
+    CPPUNIT_ASSERT(repository->roles().size() == 3);
+    CPPUNIT_ASSERT(repository->roles()[2]->permissions().size() == 4);
+    CPPUNIT_ASSERT(repository->roles()[2]->name() == "ReactOnly");
+
+    auto diff = repository->diffStats(repository->id(), commitId);
+    auto changedFiles = ConversationRepository::changedFiles(diff);
+    CPPUNIT_ASSERT(changedFiles[0] == "roles.json");
+}
+
+void
+ConversationRepositoryTest::testAddRmRole()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto uri = aliceAccount->getUsername();
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+
+    auto commitId = repository->addRole("ReactOnly", {Permission::React, Permission::Reply, Permission::Edit, Permission::DeleteMessage});
+
+    CPPUNIT_ASSERT(repository->roles().size() == 3);
+
+    repository->removeRole("ReactOnly");
+    CPPUNIT_ASSERT(repository->roles().size() == 2);
+    // Should not work
+    repository->removeRole("Admin");
+    CPPUNIT_ASSERT(repository->roles().size() == 2);
 }
 
 void

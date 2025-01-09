@@ -131,6 +131,7 @@ private:
     void testETooBigFetch();
     void testUnknownModeDetected();
     void testUpdateProfile();
+    void testUpdateProfilePermission();
     void testGetProfileRequest();
     void testCheckProfileInConversationRequest();
     void testCheckProfileInTrustRequest();
@@ -144,6 +145,7 @@ private:
     void testImportMalformedContacts();
     void testCloneFromMultipleDevice();
     void testSendReply();
+    void testSendReplyPermission();
     void testSearchInConv();
     void testConversationPreferences();
     void testConversationPreferencesBeforeClone();
@@ -151,11 +153,21 @@ private:
     void testFixContactDetails();
     void testRemoveOneToOneNotInDetails();
     void testMessageEdition();
+    void testMessageEditionPermission();
+    void testSendMessagePermission();
     void testMessageReaction();
+    void testMessageReactionPermission();
     void testMessageEditionWithReaction();
     void testLoadPartiallyRemovedConversation();
     void testReactionsOnEditedMessage();
     void testUpdateProfileMultiDevice();
+    void testAddMemberPermission();
+    void testAddRolePermission();
+    void testChangeRolePermission();
+    void testInvalidAddRole();
+    void testRemoveRolePermission();
+    void testChangeMemberRole();
+    void testRemoveRoleWithSomeone();
 
     CPPUNIT_TEST_SUITE(ConversationTest);
     CPPUNIT_TEST(testCreateConversation);
@@ -184,6 +196,7 @@ private:
     CPPUNIT_TEST(testETooBigFetch);
     CPPUNIT_TEST(testUnknownModeDetected);
     CPPUNIT_TEST(testUpdateProfile);
+    CPPUNIT_TEST(testUpdateProfilePermission);
     CPPUNIT_TEST(testGetProfileRequest);
     CPPUNIT_TEST(testCheckProfileInConversationRequest);
     CPPUNIT_TEST(testCheckProfileInTrustRequest);
@@ -197,6 +210,7 @@ private:
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testCloneFromMultipleDevice);
     CPPUNIT_TEST(testSendReply);
+    CPPUNIT_TEST(testSendReplyPermission);
     CPPUNIT_TEST(testSearchInConv);
     CPPUNIT_TEST(testConversationPreferences);
     CPPUNIT_TEST(testConversationPreferencesBeforeClone);
@@ -204,11 +218,21 @@ private:
     CPPUNIT_TEST(testFixContactDetails);
     CPPUNIT_TEST(testRemoveOneToOneNotInDetails);
     CPPUNIT_TEST(testMessageEdition);
+    CPPUNIT_TEST(testMessageEditionPermission);
+    CPPUNIT_TEST(testSendMessagePermission);
     CPPUNIT_TEST(testMessageReaction);
+    CPPUNIT_TEST(testMessageReactionPermission);
     CPPUNIT_TEST(testMessageEditionWithReaction);
     CPPUNIT_TEST(testLoadPartiallyRemovedConversation);
     CPPUNIT_TEST(testReactionsOnEditedMessage);
     CPPUNIT_TEST(testUpdateProfileMultiDevice);
+    CPPUNIT_TEST(testAddMemberPermission);
+    CPPUNIT_TEST(testAddRolePermission);
+    CPPUNIT_TEST(testChangeRolePermission);
+    CPPUNIT_TEST(testInvalidAddRole);
+    CPPUNIT_TEST(testRemoveRolePermission);
+    CPPUNIT_TEST(testChangeMemberRole);
+    CPPUNIT_TEST(testRemoveRoleWithSomeone);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -1569,6 +1593,46 @@ ConversationTest::testUpdateProfile()
 }
 
 void
+ConversationTest::testUpdateProfilePermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size() && !bobData.conversationId.empty(); }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "Profiler", {"ChangeProfile", "SendTextMessage"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "Profiler");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // By default members cannot change profile, but Profile can
+    aliceMsgSize = aliceData.messages.size();
+    bobAccount->convModule()->updateConversationInfos(convId, {{"title", "My awesome swarm"}});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceMsgSize + 1 == aliceData.messages.size() && !aliceData.profile.empty() && !bobData.profile.empty();
+    }));
+
+    // Verify that we have the same profile everywhere
+    CPPUNIT_ASSERT(aliceData.profile["title"] == "My awesome swarm");
+    CPPUNIT_ASSERT(bobData.profile["title"] == "My awesome swarm");
+    CPPUNIT_ASSERT(aliceData.profile["description"].empty());
+    CPPUNIT_ASSERT(bobData.profile["description"].empty());
+}
+
+void
 ConversationTest::testGetProfileRequest()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
@@ -1980,6 +2044,53 @@ ConversationTest::testSendReply()
 }
 
 void
+ConversationTest::testSendReplyPermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
+    auto parentId = aliceData.messages.rbegin()->id;
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "TextSender", {"SendTextMessage"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "TextSender");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Should trigger MessageUpdated
+    aliceMsgSize = aliceData.messagesUpdated.size();
+    libjami::sendMessage(bobId, convId, "👋"s, parentId);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.messagesUpdated.size() == aliceMsgSize + 1; }));
+
+    // Bad commit
+    Json::Value root;
+    root["type"] = "text/plain";
+    root["body"] = "👋";
+    root["reply-to"] = parentId;
+    commit(bobAccount, convId, root);
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
 ConversationTest::testSearchInConv()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
@@ -2243,6 +2354,98 @@ ConversationTest::testMessageEdition()
 }
 
 void
+ConversationTest::testMessageEditionPermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
+    auto editedId = aliceData.messages.rbegin()->id;
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "NonEditor", {"SendTextMessage"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "NonEditor");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Should trigger MessageUpdated
+    aliceMsgSize = aliceData.messagesUpdated.size();
+    libjami::sendMessage(bobId, convId, "New body"s, editedId, 1);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.messagesUpdated.size() == aliceMsgSize + 1; }));
+
+    // Bad commit
+    Json::Value root;
+    root["type"] = "text/plain";
+    root["body"] = "👋";
+    root["edit"] = convId;
+    commit(bobAccount, convId, root);
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
+ConversationTest::testSendMessagePermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "ReactOnly", {"React"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "ReactOnly");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Should trigger MessageUpdated
+    aliceMsgSize = aliceData.messagesUpdated.size();
+    libjami::sendMessage(bobId, convId, "new"s, "");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.messagesUpdated.size() == aliceMsgSize + 1; }));
+
+    // Bad commit
+    Json::Value root;
+    root["type"] = "text/plain";
+    root["body"] = "👋";
+    commit(bobAccount, convId, root);
+    libjami::sendMessage(bobId, convId, "hi"s, convId, 2);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
 ConversationTest::testMessageReaction()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
@@ -2269,6 +2472,53 @@ ConversationTest::testMessageReaction()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 10s, [&]() { return aliceData.reactionRemoved.size() == 1; }));
     CPPUNIT_ASSERT(emojiId == aliceData.reactionRemoved[0]);
+}
+
+void
+ConversationTest::testMessageReactionPermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
+    auto reactId = aliceData.messages.rbegin()->id;
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "TextSender", {"SendTextMessage"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "TextSender");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Should trigger MessageUpdated
+    aliceMsgSize = aliceData.messagesUpdated.size();
+    libjami::sendMessage(bobId, convId, "👋"s, reactId, 2);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.messagesUpdated.size() == aliceMsgSize + 1; }));
+
+    // Bad commit
+    Json::Value root;
+    root["type"] = "text/plain";
+    root["body"] = "👋";
+    root["react-to"] = reactId;
+    commit(bobAccount, convId, root);
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
 }
 
 void
@@ -2399,7 +2649,276 @@ ConversationTest::testUpdateProfileMultiDevice()
     auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Id);
     bob2Account->convModule()->updateConversationInfos(bob2Data.conversationId, {{"title", "My awesome swarm"}});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+}
 
+void
+ConversationTest::testAddMemberPermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "SerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "SerialEditor");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Should fail
+    aliceMsgSize = aliceData.messages.size();
+    libjami::addConversationMember(bobId, convId, carlaUri);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    // Bad commit
+    ConversationRepository repo(bobAccount, convId);
+    repo.addMember(carlaUri);
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
+ConversationTest::testAddRolePermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "SerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Bob cannot add a new role
+    libjami::addRole(bobId, convId, "BadSerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    ConversationRepository repo(bobAccount, convId);
+    CPPUNIT_ASSERT(repo.roles().size() == 4);
+    CPPUNIT_ASSERT(repo.roles()[3]->name() == "SerialEditor");
+    CPPUNIT_ASSERT(repo.roles()[3]->permissions().size() == 2);
+
+    CPPUNIT_ASSERT(libjami::roles(bobId, convId).size() == 4);
+    auto pstr = libjami::permissions();
+    CPPUNIT_ASSERT(std::find(pstr.begin(), pstr.end(), "SendTextMessage") != pstr.end());
+
+    // Bad commit
+    repo.addRole("BadSerialEditor", std::unordered_set<Permission> {Permission::SendTextMessage, Permission::Edit});
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
+ConversationTest::testChangeRolePermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "SerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Alice update permissions
+    libjami::addRole(aliceId, convId, "SerialEditor", {"Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    ConversationRepository repo(bobAccount, convId);
+    CPPUNIT_ASSERT(repo.roles().size() == 4);
+    CPPUNIT_ASSERT(repo.roles()[3]->name() == "SerialEditor");
+    CPPUNIT_ASSERT(repo.roles()[3]->permissions().size() == 1);
+}
+
+void
+ConversationTest::testInvalidAddRole()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Bob force add Role
+    Json::Value fakeRole;
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    fakeRole["name"] = "Texter";
+    Json::Value permissions;
+    permissions[0] = "SendTextMessage";
+    fakeRole["permissions"] = permissions;
+    Json::Value fakeRoles;
+    fakeRoles[0] = fakeRole;
+
+    addFile(bobAccount, convId, "role.json", Json::writeString(wbuilder, fakeRoles));
+    Json::Value root;
+    root["type"] = "application/role-creation";
+    root["roleName"] = "Texter";
+    commit(bobAccount, convId, root);
+    libjami::sendMessage(bobId, convId, "hi"s, "");
+    // Check not received due to the unwanted file
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
+}
+
+void
+ConversationTest::testRemoveRolePermission()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "SerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+    libjami::addRole(aliceId, convId, "SerialReactor", {"React"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Alice can remove a role
+    libjami::removeRole(aliceId, convId, "SerialEditor");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3; }));
+    // Bob cannot remove a role
+    libjami::removeRole(bobId, convId, "SerialReactor");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 4; }));
+
+    ConversationRepository repo(bobAccount, convId);
+    CPPUNIT_ASSERT(repo.roles().size() == 4);
+    CPPUNIT_ASSERT(repo.roles()[3]->name() == "SerialReactor");
+    CPPUNIT_ASSERT(repo.roles()[3]->permissions().size() == 1);
+}
+
+void
+ConversationTest::testChangeMemberRole()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "SerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "SerialEditor");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Change Bob Role will fail if Bob do this
+    libjami::changeMemberRole(bobId, convId,  bobUri, "Member");
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3; }));
+
+    ConversationRepository repo(aliceAccount, convId);
+    auto bobIsSerialEditor = false;
+    for (const auto& m: repo.members()) {
+        if (m.uri == bobUri) {
+            bobIsSerialEditor = m.roleName == "SerialEditor";
+        }
+    }
+    CPPUNIT_ASSERT(bobIsSerialEditor);
+    ConversationRepository bobrepo(bobAccount, convId);
+    bobIsSerialEditor = false;
+    for (const auto& m: bobrepo.members()) {
+        if (m.uri == bobUri) {
+            bobIsSerialEditor = m.roleName == "SerialEditor";
+        }
+    }
+    CPPUNIT_ASSERT(bobIsSerialEditor);
+}
+
+void
+ConversationTest::testRemoveRoleWithSomeone()
+{
+    std::cout << "\nRunning test: " << __func__ << std::endl;
+    connectSignals();
+
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobUri = bobAccount->getUsername();
+
+    auto convId = libjami::startConversation(aliceId);
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData.messages.size();
+    libjami::addRole(aliceId, convId, "SerialEditor", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "SerialEditor");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2; }));
+
+    // Alice can remove a role, but Bob inside
+    libjami::removeRole(aliceId, convId, "SerialEditor");
+    // Should fail
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3; }));
 }
 
 } // namespace test

@@ -494,6 +494,11 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
     if (getUsername() != accountUri || currentDeviceId() != deviceId)
         return;
 
+    if (!convModule()->hasCallPermission(conversationId, accountUri)) {
+        JAMI_WARNING("No permission to call conversation {}", conversationId);
+        return;
+    }
+
     // Avoid concurrent checks in this part
     std::lock_guard lk(rdvMtx_);
     auto isNotHosting = !convModule()->isHosting(conversationId, confId);

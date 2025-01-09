@@ -51,7 +51,11 @@ libjamiacc_la_SOURCES = \
 	./jamidht/swarm/swarm_manager.h \
 	./jamidht/swarm/swarm_manager.cpp \
 	./jamidht/typers.h \
-	./jamidht/typers.cpp
+	./jamidht/typers.cpp \
+	./jamidht/role.h \
+	./jamidht/permissions.h \
+	./jamidht/permissions.cpp
+
 
 
 if RINGNS

@@ -43,6 +43,7 @@ struct ConvData
     std::string confId {};
     bool requestReceived {false};
     bool needsHost {false};
+    bool errorDetected {false};
     bool conferenceChanged {false};
     bool conferenceRemoved {false};
     std::string hostState {};
@@ -91,6 +92,7 @@ private:
     void testBusy();
     void testDecline();
     void testNoDevice();
+    void testCallPermission();
 
     CPPUNIT_TEST_SUITE(ConversationCallTest);
     CPPUNIT_TEST(testActiveCalls);
@@ -108,6 +110,7 @@ private:
     CPPUNIT_TEST(testBusy);
     CPPUNIT_TEST(testDecline);
     CPPUNIT_TEST(testNoDevice);
+    CPPUNIT_TEST(testCallPermission);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -178,6 +181,20 @@ ConversationCallTest::connectSignals()
                 carlaData_.messages.emplace_back(message);
             cv.notify_one();
         }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& /* conversationId */,
+                int /*code*/,
+                const std::string& /* what */) {
+                if (accountId == aliceId)
+                    aliceData_.errorDetected = true;
+                else if (accountId == bobId)
+                    bobData_.errorDetected = true;
+                else if (accountId == carlaId)
+                    carlaData_.errorDetected = true;
+                cv.notify_one();
+            }));
     confHandlers.insert(
         libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
             [&](const std::string& accountId,
@@ -1229,6 +1246,120 @@ ConversationCallTest::testNoDevice()
     }));
     auto reason = aliceData_.messages.rbegin()->body.at("reason");
     CPPUNIT_ASSERT(reason == "no_device");
+}
+
+void
+ConversationCallTest::testCallPermission()
+{
+    enableCarla();
+    connectSignals();
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    // Start conversation
+    libjami::startConversation(aliceId);
+    cv.wait_for(lk, 30s, [&]() { return !aliceData_.id.empty(); });
+
+    libjami::addConversationMember(aliceId, aliceData_.id, bobUri);
+    libjami::addConversationMember(aliceId, aliceData_.id, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
+        return bobData_.requestReceived && carlaData_.requestReceived;
+    }));
+
+    aliceData_.messages.clear();
+    libjami::acceptConversationRequest(bobId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !bobData_.id.empty() && !aliceData_.messages.empty();
+    }));
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    libjami::acceptConversationRequest(carlaId, aliceData_.id);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !carlaData_.id.empty() && !aliceData_.messages.empty() && !bobData_.messages.empty();
+    }));
+
+    // Alice can add a new role
+    auto bobMsgSize = bobData_.messages.size();
+    auto carlaMsgSize = carlaData_.messages.size();
+    libjami::addRole(aliceId, aliceData_.id, "Texter", {"SendTextMessage"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData_.messages.size() == bobMsgSize + 1 && carlaData_.messages.size() == carlaMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, aliceData_.id,  bobUri, "Texter");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData_.messages.size() == bobMsgSize + 2 && carlaData_.messages.size() == carlaMsgSize + 2; }));
+
+    // Bob start call => Should fail as no permissions
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
+    auto lastCommitIsCall = [&](const auto& data) {
+        return !data.messages.empty()
+               && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+    };
+    // should not get message
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        return lastCommitIsCall(aliceData_) || lastCommitIsCall(bobData_)
+               || lastCommitIsCall(carlaData_);
+    }));
+
+    // Bad Commit
+    Json::Value root;
+    root["uri"] = bobUri;
+    root["device"] = std::string(bobAccount->currentDeviceId());
+    root["confId"] = "foo";
+    root["type"] = "application/call-history+json";
+    commit(bobAccount, aliceData_.id, root);
+    libjami::sendMessage(bobId, aliceData_.id, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData_.errorDetected; }));
+
+    // Alice start call
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    // should get message
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() {
+        return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_)
+               && lastCommitIsCall(carlaData_);
+    }));
+
+
+    // Bob cannot join due to permissions
+    auto confId = bobData_.messages.rbegin()->body.at("confId");
+    auto destination = fmt::format("rdv:{}/{}/{}/{}",
+                                   bobData_.id,
+                                   bobData_.messages.rbegin()->body.at("uri"),
+                                   bobData_.messages.rbegin()->body.at("device"),
+                                   confId);
+
+    aliceData_.conferenceChanged = false;
+    libjami::placeCallWithMedia(bobId, destination, {});
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
+        return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT";
+    }));
+
+    // hangup
+    aliceData_.messages.clear();
+    bobData_.messages.clear();
+    carlaData_.messages.clear();
+    Manager::instance().hangupConference(aliceId, confId);
+
+    // should get message
+    cv.wait_for(lk, 30s, [&]() {
+        return !aliceData_.messages.empty() && !bobData_.messages.empty()
+               && !carlaData_.messages.empty();
+    });
+    CPPUNIT_ASSERT(aliceData_.messages[0].body.find("duration") != aliceData_.messages[0].body.end());
+    CPPUNIT_ASSERT(bobData_.messages[0].body.find("duration") != bobData_.messages[0].body.end());
+    CPPUNIT_ASSERT(carlaData_.messages[0].body.find("duration") != carlaData_.messages[0].body.end());
+
+    // get active calls = 0
+    CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 0);
 }
 
 } // namespace test

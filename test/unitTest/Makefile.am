@@ -149,7 +149,7 @@ ut_conference_SOURCES = call/conference.cpp common.cpp
 # fileTransfer
 #
 check_PROGRAMS += ut_fileTransfer
-ut_fileTransfer_SOURCES = fileTransfer/fileTransfer.cpp common.cpp
+ut_fileTransfer_SOURCES = conversation/conversationcommon.cpp fileTransfer/fileTransfer.cpp common.cpp
 
 # conversationRepository
 #

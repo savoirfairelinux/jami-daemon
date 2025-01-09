@@ -1865,6 +1865,56 @@
             <arg type="s" name="conversationId" direction="in"/>
         </method>
 
+        <method name="addRole" tp:name-for-bindings="addRole">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Add a custom role to a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="roleName" direction="in"/>
+            <arg type="as" name="permissions" direction="in"/>
+        </method>
+
+        <method name="removeRole" tp:name-for-bindings="removeRole">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Remove a role from a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="roleName" direction="in"/>
+        </method>
+
+        <method name="changeMemberRole" tp:name-for-bindings="changeMemberRole">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Change a member role in a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="s" name="memberUri" direction="in"/>
+            <arg type="s" name="roleName" direction="in"/>
+        </method>
+
+        <method name="permissions" tp:name-for-bindings="permissions">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Return the list of permissions
+            </tp:docstring>
+            <arg type="as" name="permissions" direction="out"/>
+        </method>
+
+        <method name="roles" tp:name-for-bindings="roles">
+            <tp:added version="16.0.0"/>
+            <tp:docstring>
+               Get roles in a conversation
+            </tp:docstring>
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="conversationId" direction="in"/>
+            <arg type="a{sas}" name="roles" direction="out"/>
+        </method>
+
         <method name="sendMessage" tp:name-for-bindings="sendMessage">
             <tp:added version="13.6.0"/>
             <tp:docstring>

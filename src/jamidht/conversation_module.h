@@ -226,6 +226,48 @@ public:
                         const std::string& newBody,
                         const std::string& reactToId);
 
+    // Permissions and role management
+    /**
+     * Add a role to the conversation
+     * @param conversationId    The conversation id
+     * @param roleName          The role name
+     * @param permissions       The permissions (cf permissions.h)
+     * @note trigger a new commit if successful
+     */
+    void addRole(const std::string& conversationId, const std::string& roleName, const std::vector<std::string>& permissions);
+    /**
+     * Remove a role from the conversation
+     * @param conversationId    The conversation id
+     * @param roleName          The role name
+     * @note cannot remove role if somebody is in it
+     * @note trigger a new commit if successful
+     */
+    void removeRole(const std::string& conversationId, const std::string& roleName);
+    /**
+     * Check if a role has a permission
+     * @param conversationId    The conversation id
+     * @param roleName          The role name
+     * @param p                 The permission to check
+     */
+    bool hasCallPermission(const std::string& conversationId, const std::string& memberUri) const;
+
+    /**
+     * Change a member's role
+     * @param conversationId    The conversation id
+     * @param memberUri         The member uri
+     * @param roleName          The role name
+     * @note trigger a new commit if successful
+     */
+    void changeMemberRole(const std::string& conversationId,
+                          const std::string& memberUri,
+                          const std::string& roleName);
+    /**
+     * Get conversation's roles
+     * @param conversationId    The conversation id
+     * @return roles [{name, {permissions}}]
+     */
+    std::map<std::string, std::vector<std::string>> roles(const std::string& conversationId) const;
+
     /**
      * Add to the related conversation the call history message
      * @param uri           Peer number

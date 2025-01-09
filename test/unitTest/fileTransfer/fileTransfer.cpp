@@ -24,6 +24,7 @@
 #include "data_transfer.h"
 #include "jami/datatransfer_interface.h"
 #include "account_const.h"
+#include "conversation/conversationcommon.h"
 #include "common.h"
 
 #include <dhtnet/connectionmanager.h>
@@ -47,6 +48,7 @@ struct UserData {
     std::string conversationId;
     bool removed {false};
     bool requestReceived {false};
+    bool errorDetected {false};
     bool registered {false};
     bool stopped {false};
     bool deviceAnnounced {false};
@@ -102,6 +104,7 @@ private:
     void testRemoveHardLink();
     void testTooLarge();
     void testDeleteFile();
+    void testFilePermissions();
 
     CPPUNIT_TEST_SUITE(FileTransferTest);
     CPPUNIT_TEST(testConversationFileTransfer);
@@ -115,6 +118,7 @@ private:
     CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST(testTooLarge);
     CPPUNIT_TEST(testDeleteFile);
+    CPPUNIT_TEST(testFilePermissions);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -155,7 +159,7 @@ FileTransferTest::tearDown()
     std::filesystem::remove(sendPath);
     std::filesystem::remove(recvPath);
     std::filesystem::remove(recv2Path);
-    wait_for_removal_of({aliceId, bobId, carlaId});
+   ///// wait_for_removal_of({aliceId, bobId, carlaId});
 }
 
 void
@@ -185,6 +189,20 @@ FileTransferTest::connectSignals()
                 } else if (accountId == carlaId) {
                     carlaData.requestReceived = true;
                 }
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& /* conversationId */,
+                int /*code*/,
+                const std::string& /* what */) {
+                if (accountId == aliceId)
+                    aliceData.errorDetected = true;
+                else if (accountId == bobId)
+                    bobData.errorDetected = true;
+                else if (accountId == carlaId)
+                    carlaData.errorDetected = true;
                 cv.notify_one();
             }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
@@ -707,6 +725,81 @@ FileTransferTest::testDeleteFile()
 
     libjami::unregisterSignalHandlers();
     std::this_thread::sleep_for(5s);
+}
+
+void
+FileTransferTest::testFilePermissions()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
+    auto carlaUri = carlaAccount->getUsername();
+    aliceAccount->trackBuddyPresence(carlaUri, true);
+
+    // Enable carla
+    Manager::instance().sendRegister(carlaId, true);
+    wait_for_announcement_of(carlaId);
+
+    connectSignals();
+
+    auto convId = libjami::startConversation(aliceId);
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    libjami::addConversationMember(aliceId, convId, carlaUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData.requestReceived && carlaData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size() && !bobData.conversationId.empty(); }));
+    aliceMsgSize = aliceData.messages.size();
+    auto bobMsgSize = bobData.messages.size();
+    libjami::acceptConversationRequest(carlaId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size() && bobMsgSize + 1 == bobData.messages.size() && !carlaData.conversationId.empty(); }));
+
+    // Alice can add a new role
+    bobMsgSize = bobData.messages.size();
+    auto carlaMsgSize = carlaData.messages.size();
+    libjami::addRole(aliceId, convId, "NotSender", {"SendTextMessage", "Edit"});
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1
+        && carlaData.messages.size() == carlaMsgSize + 1; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  bobUri, "NotSender");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 2
+        && carlaData.messages.size() == carlaMsgSize + 2; }));
+
+    // Change Bob Role
+    libjami::changeMemberRole(aliceId, convId,  carlaUri, "NotSender");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 3
+        && carlaData.messages.size() == carlaMsgSize + 3; }));
+
+    // Send file should fail for bob and carla
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(64000, 'A');
+    sendFile.close();
+
+    // Commit should fails
+    libjami::sendFile(bobId, convId, sendPath, "SEND", "");
+
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.messages.size() == bobMsgSize + 1 && carlaData.messages.size() == carlaMsgSize + 1; }));
+
+    aliceMsgSize = aliceData.messages.size();
+    libjami::sendMessage(carlaId, convId, "hi"s, "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return  aliceData.messages.size() == aliceMsgSize + 1; }));
+
+    // Validation should fails
+    Json::Value value;
+    value["type"] = "application/data-transfer+json";
+    value["tid"] = "foo";
+    value["displayName"] = "foo";
+    value["totalSize"] = std::to_string(fileutils::size(sendPath));
+    value["sha3sum"] = fileutils::sha3File(sendPath);
+    commit(carlaAccount, convId, value);
+    libjami::sendMessage(carlaId, convId, "hi"s, "");
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData.errorDetected; }));
 }
 
 } // namespace test
