@@ -82,7 +82,7 @@ VideoDeviceImpl::selectFormat()
 {
     /*
      * formats_ contains camera parameters as returned by the GetCameraInfo
-     * signal, find the matching V4L2 formats
+     * signal, find the matching Android formats
      */
     unsigned best = UINT_MAX;
     for (auto fmt : formats_) {
