@@ -962,7 +962,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
                                                                              *firstMsg);
             }
             msgList.insert(msgList.end(), added.begin(), added.end());
-            },
+        },
         /* postCondition */
         [&](auto, auto, auto) {
             // Stop logging if there was a limit set on the number of commits
@@ -2491,7 +2491,8 @@ Conversation::commitsEndedCalls()
     pimpl_->loadActiveCalls();
     pimpl_->loadHostedCalls();
     auto commits = pimpl_->commitsEndedCalls();
-    if (!commits.empty()) {
+    std::lock_guard lk(pimpl_->historyMtx_);
+    if (!commits.empty() && pimpl_->repository_ && !pimpl_->isLoadingHistory_ && !pimpl_->loadedHistory_.messageList.empty()) {
         // Announce to client
         dht::ThreadPool::io().run([w = weak(), commits] {
             if (auto sthis = w.lock())
