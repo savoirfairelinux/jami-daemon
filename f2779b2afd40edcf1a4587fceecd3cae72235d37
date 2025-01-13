@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ffefb0e7_d51c3c5b",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 86
+      },
+      "lineNbr": 594,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-01-13T18:07:32Z",
+      "side": 1,
+      "message": "Password verification is performed during the authentication state, not during the handshake.",
+      "revId": "f2779b2afd40edcf1a4587fceecd3cae72235d37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "080070f2_25e80ffa",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 86
+      },
+      "lineNbr": 595,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-01-13T18:07:32Z",
+      "side": 1,
+      "message": "passwordCorrectIt-\u003esecond \u003d\u003d \"false\"",
+      "revId": "f2779b2afd40edcf1a4587fceecd3cae72235d37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
