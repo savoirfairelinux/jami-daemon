@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "9b38876f_f9f8c28a",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 86
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-01-13T18:24:49Z",
+      "side": 1,
+      "message": "We could check the state at this point to provide a more accurate error, such as an authentication error when a wrong password is provided.",
+      "revId": "f2779b2afd40edcf1a4587fceecd3cae72235d37",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "ffefb0e7_d51c3c5b",
         "filename": "src/jamidht/archive_account_manager.cpp",
         "patchSetId": 86
