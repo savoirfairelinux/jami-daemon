@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc5ab680_c3df9c68",
+        "filename": "NewLinkDevImpl--transfer_account_archive_over_channel_expanded_v3r2_OTP.md",
+        "patchSetId": 17
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-01-14T20:08:13Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e6907b3f_519b8e9b",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 1
+      },
+      "revId": "5d6f0223196c683fc636dea095eebe7b01bb6630",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "02220ef4_29ad64ac",
