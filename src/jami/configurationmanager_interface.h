@@ -473,6 +473,7 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
     {
         constexpr static const char* name = "RegisteredNameFound";
         using cb_type = void(const std::string& /*account_id*/,
+                             const std::string& /*request_name*/,
                              int state,
                              const std::string& /*address*/,
                              const std::string& /*name*/);
