@@ -170,4 +170,33 @@ string_split_set(std::string& str, std::string_view separator)
     return output;
 }
 
+std::string urlEncode(std::string_view input)
+{
+    if (input.empty()) {
+        return {};
+    }
+
+    auto isAsciiAlnum = [](unsigned char c) {
+        return (c >= '0' && c <= '9')
+        || (c >= 'A' && c <= 'Z')
+        || (c >= 'a' && c <= 'z');
+    };
+
+    std::ostringstream encoded;
+    // Use uppercase for hex digits
+    encoded << std::uppercase << std::hex;
+
+    for (unsigned char c : input) {
+        // If character is unreserved per RFC 3986, keep it as-is
+        if (isAsciiAlnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            encoded << c;
+        } else {
+            // Otherwise, percent-encode
+            encoded << '%' << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+        }
+    }
+
+    return encoded.str();
+}
+
 } // namespace jami
