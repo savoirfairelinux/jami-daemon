@@ -621,7 +621,7 @@ ServerAccountManager::revokeDevice(const std::string& device,
         logger_);
     request->set_method(restinio::http_method_delete());
     sendAccountRequest(request, password);
-    return false;
+    return true;
 }
 
 void
