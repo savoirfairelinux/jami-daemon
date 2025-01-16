@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y \
     sip-tester
 
 # Install Node
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g node-gyp
 
