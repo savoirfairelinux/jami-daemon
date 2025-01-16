@@ -448,19 +448,21 @@ nameRegistrationEnded(const std::string& accountId, int state, const std::string
 
 void
 registeredNameFound(const std::string& accountId,
+                    const std::string& requestName,
                     int state,
                     const std::string& address,
                     const std::string& name)
 {
     std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, state, address, name]() {
+    pendingSignals.emplace([accountId, requestName, state, address, name]() {
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), registeredNameFoundCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(requestName),
                                             SWIGV8_INTEGER_NEW(state),
                                             V8_STRING_NEW_LOCAL(address),
                                             V8_STRING_NEW_LOCAL(name)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 5, callback_args);
         }
     });
 

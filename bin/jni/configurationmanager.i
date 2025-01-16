@@ -53,7 +53,7 @@ public:
     virtual void getDeviceName(std::vector<std::string>* /*name_ret*/){}
 
     virtual void nameRegistrationEnded(const std::string& /*account_id*/, int state, const std::string& /*name*/){}
-    virtual void registeredNameFound(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/){}
+    virtual void registeredNameFound(const std::string& /*account_id*/, const std::string& /*query*/, int state, const std::string& /*address*/, const std::string& /*name*/){}
     virtual void userSearchEnded(const std::string& /*account_id*/, int state, const std::string& /*query*/, const std::vector<std::map<std::string, std::string>>& /*results*/){}
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
@@ -275,7 +275,7 @@ public:
     virtual void getDeviceName(std::vector<std::string>* /*name_ret*/){}
 
     virtual void nameRegistrationEnded(const std::string& /*account_id*/, int state, const std::string& /*name*/){}
-    virtual void registeredNameFound(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/){}
+    virtual void registeredNameFound(const std::string& /*account_id*/, const std::string& /*query*/, int state, const std::string& /*address*/, const std::string& /*name*/){}
     virtual void userSearchEnded(const std::string& /*account_id*/, int state, const std::string& /*query*/, const std::vector<std::map<std::string, std::string>>& /*results*/){}
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
