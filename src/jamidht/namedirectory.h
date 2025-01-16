@@ -64,7 +64,7 @@ public:
         unsupported
     };
 
-    using LookupCallback = std::function<void(const std::string& result, Response response)>;
+    using LookupCallback = std::function<void(const std::string& name, const std::string& address, Response response)>;
     using SearchResult = std::vector<std::map<std::string, std::string>>;
     using SearchCallback = std::function<void(const SearchResult& result, Response response)>;
     using RegistrationCallback = std::function<void(RegistrationResponse response, const std::string& name)>;
@@ -117,27 +117,26 @@ private:
 
     std::map<std::string, std::string> pendingRegistrations_ {};
 
-    std::map<std::string, std::string> nameCache_ {};
-    std::map<std::string, std::string> addrCache_ {};
+    std::map<std::string, std::pair<std::string, std::string>> nameCache_ {};
+    std::map<std::string, std::pair<std::string, std::string>> addrCache_ {};
 
     std::weak_ptr<Task> saveTask_;
 
     void setHeaderFields(dht::http::Request& request);
 
-    std::string nameCache(const std::string& addr)
+    std::pair<std::string, std::string> nameCache(const std::string& addr)
     {
         std::lock_guard l(cacheLock_);
         auto cacheRes = nameCache_.find(addr);
-        return cacheRes != nameCache_.end() ? cacheRes->second : std::string {};
+        return cacheRes != nameCache_.end() ? cacheRes->second : std::pair<std::string, std::string> {};
     }
-    std::string addrCache(const std::string& name)
+    std::pair<std::string, std::string> addrCache(const std::string& name)
     {
         std::lock_guard l(cacheLock_);
         auto cacheRes = addrCache_.find(name);
-        return cacheRes != addrCache_.end() ? cacheRes->second : std::string {};
+        return cacheRes != addrCache_.end() ? cacheRes->second : std::pair<std::string, std::string> {};
     }
 
-    bool validateName(const std::string& name) const;
     static bool verify(const std::string& name,
                        const dht::crypto::PublicKey& publickey,
                        const std::string& signature);

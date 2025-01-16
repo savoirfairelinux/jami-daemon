@@ -367,6 +367,8 @@
             </tp:docstring>
             <arg type="s" name="accountId">
             </arg>
+            <arg type="s" name="requestName">
+            </arg>
             <arg type="i" name="status">
                 <tp:docstring>
                   Status code: 0 for success
