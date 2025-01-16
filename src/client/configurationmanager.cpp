@@ -1003,11 +1003,12 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
 {
 #if HAVE_RINGNS
     if (account.empty()) {
-        auto cb = [name](const std::string& result, jami::NameDirectory::Response response) {
+        auto cb = [name](const std::string& regName, const std::string& address, jami::NameDirectory::Response response) {
             jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>("",
+                                                                                name,
                                                                                 (int) response,
-                                                                                result,
-                                                                                name);
+                                                                                address,
+                                                                                regName);
         };
         if (nameserver.empty())
             jami::NameDirectory::lookupUri(name, "", cb);
@@ -1029,10 +1030,10 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
     if (account.empty()) {
         jami::NameDirectory::instance(nameserver)
             .lookupAddress(address,
-                           [address](const std::string& result,
+                           [address](const std::string& regName, const std::string& address,
                                      jami::NameDirectory::Response response) {
                                jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
-                                   "", (int) response, address, result);
+                                   "", address, (int) response, address, result);
                            });
         return true;
     } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {

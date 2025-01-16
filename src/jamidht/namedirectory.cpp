@@ -58,7 +58,6 @@ constexpr std::chrono::seconds SAVE_INTERVAL {5};
 /** Parser for URIs.         ( protocol        )    ( username         ) ( hostname ) */
 const std::regex URI_VALIDATOR {
     "^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
-const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 
 constexpr size_t MAX_RESPONSE_SIZE {1024ul * 1024};
 
@@ -91,7 +90,7 @@ NameDirectory::lookupUri(std::string_view uri, const std::string& default_server
         }
     }
     JAMI_ERROR("Unable to parse URI: {}", uri);
-    cb("", Response::invalidResponse);
+    cb("", "", Response::invalidResponse);
 }
 
 NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::Logger> l)
@@ -163,8 +162,8 @@ void
 NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 {
     auto cacheResult = nameCache(addr);
-    if (not cacheResult.empty()) {
-        cb(cacheResult, Response::found);
+    if (not cacheResult.first.empty()) {
+        cb(cacheResult.first, cacheResult.second, Response::found);
         return;
     }
     auto request = std::make_shared<Request>(*httpContext_,
@@ -178,13 +177,13 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 if (response.status_code >= 400 && response.status_code < 500) {
                     auto cacheResult = nameCache(addr);
                     if (not cacheResult.empty())
-                        cb(cacheResult, Response::found);
+                        cb(cacheResult.first, cacheResult.second, Response::found);
                     else
-                        cb("", Response::notFound);
+                        cb("", "", Response::notFound);
                 } else if (response.status_code != 200) {
                     JAMI_ERROR("Address lookup for {} on {} failed with code={}",
                                addr, serverUrl_, response.status_code);
-                    cb("", Response::error);
+                    cb("", "", Response::error);
                 } else {
                     try {
                         Json::Value json;
@@ -198,12 +197,12 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                             JAMI_DBG("Address lookup for %s: Unable to parse server response: %s",
                                      addr.c_str(),
                                      response.body.c_str());
-                            cb("", Response::error);
+                            cb("", "", Response::error);
                             return;
                         }
                         auto name = json["name"].asString();
                         if (name.empty()) {
-                            cb(name, Response::notFound);
+                            cb(name, addr, Response::notFound);
                             return;
                         }
                         JAMI_DEBUG("Found name for {}: {}", addr, name);
@@ -212,11 +211,11 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                             addrCache_.emplace(name, addr);
                             nameCache_.emplace(addr, name);
                         }
-                        cb(name, Response::found);
+                        cb(name, addr, Response::found);
                         scheduleCacheSave();
                     } catch (const std::exception& e) {
                         JAMI_ERROR("Error when performing address lookup: {}", e.what());
-                        cb("", Response::error);
+                        cb("", "", Response::error);
                     }
                 }
                 std::lock_guard lk(requestsMtx_);
@@ -250,13 +249,13 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
     std::string name {n};
     if (not validateName(name)) {
-        cb("", Response::invalidResponse);
+        cb(n, "", Response::invalidResponse);
         return;
     }
     toLower(name);
     std::string cacheResult = addrCache(name);
     if (not cacheResult.empty()) {
-        cb(cacheResult, Response::found);
+        cb(n, cacheResult, Response::found);
         return;
     }
     auto request = std::make_shared<Request>(*httpContext_,
@@ -265,14 +264,14 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, name, cb = std::move(cb)](
+        request->add_on_done_callback([this, n, name, cb = std::move(cb)](
                                           const dht::http::Response& response) {
             if (response.status_code >= 400 && response.status_code < 500)
-                cb("", Response::notFound);
+                cb("", "", Response::notFound);
             else if (response.status_code < 200 || response.status_code > 299) {
                 JAMI_ERROR("Name lookup for {} on {} failed with code={}",
                            name, serverUrl_, response.status_code);
-                cb("", Response::error);
+                cb("", "", Response::error);
             } else {
                 try {
                     Json::Value json;
@@ -285,9 +284,10 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                                        &err)) {
                         JAMI_ERROR("Name lookup for {}: Unable to parse server response: {}",
                                  name, response.body);
-                        cb("", Response::error);
+                        cb("", "", Response::error);
                         return;
                     }
+                    auto nameResult = json["name"].asString();
                     auto addr = json["addr"].asString();
                     auto publickey = json["publickey"].asString();
                     auto signature = json["signature"].asString();
@@ -295,18 +295,18 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     if (!addr.compare(0, HEX_PREFIX.size(), HEX_PREFIX))
                         addr = addr.substr(HEX_PREFIX.size());
                     if (addr.empty()) {
-                        cb("", Response::notFound);
+                        cb("", "", Response::notFound);
                         return;
                     }
                     if (not publickey.empty() and not signature.empty()) {
                         try {
                             auto pk = dht::crypto::PublicKey(base64::decode(publickey));
                             if (pk.getId().toString() != addr or not verify(name, pk, signature)) {
-                                cb("", Response::invalidResponse);
+                                cb("", "", Response::invalidResponse);
                                 return;
                             }
                         } catch (const std::exception& e) {
-                            cb("", Response::invalidResponse);
+                            cb("", "", Response::invalidResponse);
                             return;
                         }
                     }
@@ -316,11 +316,11 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                         addrCache_.emplace(name, addr);
                         nameCache_.emplace(addr, name);
                     }
-                    cb(addr, Response::found);
+                    cb(nameResult, addr, Response::found);
                     scheduleCacheSave();
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Error when performing name lookup: {}", e.what());
-                    cb("", Response::error);
+                    cb("", "", Response::error);
                 }
             }
             if (auto req = response.request.lock())
@@ -339,12 +339,6 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
     }
 }
 
-bool
-NameDirectory::validateName(const std::string& name) const
-{
-    return std::regex_match(name, NAME_VALIDATOR);
-}
-
 using Blob = std::vector<uint8_t>;
 void
 NameDirectory::registerName(const std::string& addr,
@@ -355,10 +349,6 @@ NameDirectory::registerName(const std::string& addr,
                             const std::string& publickey)
 {
     std::string name {n};
-    if (not validateName(name)) {
-        cb(RegistrationResponse::invalidName, name);
-        return;
-    }
     toLower(name);
     auto cacheResult = addrCache(name);
     if (not cacheResult.empty()) {
