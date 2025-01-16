@@ -396,18 +396,18 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
         auto suffix = stripPrefix(uri.toString());
         NameDirectory::lookupUri(suffix,
                                  config().nameServer,
-                                 [wthis_ = weak(), call](const std::string& result,
+                                 [wthis_ = weak(), call](const std::string& regName, const std::string& address,
                                                          NameDirectory::Response response) {
                                      // we may run inside an unknown thread, but following code must
                                      // be called in main thread
-                                     runOnMainThread([wthis_, result, response, call]() {
+                                     runOnMainThread([wthis_, regName, address, response, call]() {
                                          if (response != NameDirectory::Response::found) {
                                              call->onFailure(EINVAL);
                                              return;
                                          }
                                          if (auto sthis = wthis_.lock()) {
                                              try {
-                                                 sthis->startOutgoingCall(call, result);
+                                                 sthis->startOutgoingCall(call, regName);
                                              } catch (...) {
                                                  call->onFailure(ENOENT);
                                              }
@@ -590,11 +590,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
 #if HAVE_RINGNS
     accountManager_->lookupAddress(toUri,
-                                   [wCall](const std::string& result,
+                                   [wCall](const std::string& regName, const std::string& address,
                                            const NameDirectory::Response& response) {
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wCall.lock()) {
-                                               call->setPeerRegisteredName(result);
+                                               call->setPeerRegisteredName(regName);
                                            }
                                    });
 #endif
@@ -1441,10 +1441,11 @@ JamiAccount::lookupName(const std::string& name)
     if (accountManager_)
         accountManager_->lookupUri(name,
                                    config().nameServer,
-                                   [acc = getAccountID(), name](const std::string& result,
+                                   [acc = getAccountID(), name](const std::string& regName,
+                                                                const std::string& address,
                                                                 NameDirectory::Response response) {
                                        emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
-                                           acc, (int) response, result, name);
+                                           acc, name, (int) response, address, regName);
                                    });
 }
 
@@ -1455,11 +1456,11 @@ JamiAccount::lookupAddress(const std::string& addr)
     auto acc = getAccountID();
     if (accountManager_)
         accountManager_->lookupAddress(
-            addr, [acc, addr](const std::string& result, NameDirectory::Response response) {
-                emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
+            addr, [acc, addr](const std::string& regName, const std::string& address, NameDirectory::Response response) {
+                emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc, regName,
                                                                               (int) response,
-                                                                              addr,
-                                                                              result);
+                                                                              address,
+                                                                              regName);
             });
 }
 
@@ -1848,11 +1849,11 @@ JamiAccount::doRegister_()
         // Look for registered name
         accountManager_->lookupAddress(
             accountManager_->getInfo()->accountId,
-            [w = weak()](const std::string& result, const NameDirectory::Response& response) {
+            [w = weak()](const std::string& regName, const std::string& address, const NameDirectory::Response& response) {
                 if (auto this_ = w.lock()) {
                     if (response == NameDirectory::Response::found
                         or response == NameDirectory::Response::notFound) {
-                        const auto& nameResult = response == NameDirectory::Response::found ? result
+                        const auto& nameResult = response == NameDirectory::Response::found ? regName
                                                                                             : "";
                         if (this_->setRegisteredName(nameResult)) {
                             this_->editConfig([&](JamiAccountConfig& config) {
