@@ -207,6 +207,14 @@ std::string string_join(const std::set<std::string>& set, std::string_view separ
 
 std::set<std::string> string_split_set(std::string& str, std::string_view separator = "/");
 
+/**
+ * Percent-encode a string according to RFC 3986 unreserved characters.
+ *
+ * Only [0-9A-Za-z], '-' , '_' , '.' , '~' remain unencoded.
+ * Everything else (including non-ASCII) becomes '%XX'.
+ */
+std::string urlEncode(std::string_view input);
+
 } // namespace jami
 
 // Add string operators crucially missing from standard

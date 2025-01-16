@@ -190,6 +190,7 @@ NameDirectoryTest::testRegisterName()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::NameRegistrationEnded>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&) {
             nameRegistered = status == 0;
@@ -211,6 +212,7 @@ NameDirectoryTest::testLookupName()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&,
             const std::string&) {
@@ -233,6 +235,7 @@ NameDirectoryTest::testLookupNameInvalid()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&,
             const std::string&) {
@@ -255,6 +258,7 @@ NameDirectoryTest::testLookupNameNotFound()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&,
             const std::string&) {
@@ -277,6 +281,7 @@ NameDirectoryTest::testLookupAddr()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&,
             const std::string&) {
@@ -299,6 +304,7 @@ NameDirectoryTest::testLookupAddrInvalid()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&,
             const std::string&) {
@@ -321,6 +327,7 @@ NameDirectoryTest::testLookupAddrNotFound()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
         [&](const std::string&,
+            const std::string&,
             int status,
             const std::string&,
             const std::string&) {
