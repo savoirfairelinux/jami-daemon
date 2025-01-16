@@ -1111,7 +1111,7 @@ private:
             exportable_serialized_callback<ConfigurationSignal::UserSearchEnded>(
                 std::bind(&DBusConfigurationManager::emitUserSearchEnded, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::RegisteredNameFound>(
-                std::bind(&DBusConfigurationManager::emitRegisteredNameFound, this, _1, _2, _3, _4)),
+                std::bind(&DBusConfigurationManager::emitRegisteredNameFound, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::DeviceRevocationEnded>(
                 std::bind(&DBusConfigurationManager::emitDeviceRevocationEnded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::AccountProfileReceived>(
