@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "40c40c6e_07dd9b4e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-01-20T20:18:34Z",
+      "side": 1,
+      "message": "urlEncode does not works for macOS. URI_VALIDATOR does not parse correctly.",
+      "revId": "1956638dd7865bf68fcd7ebf9fea617a54fc91e0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
