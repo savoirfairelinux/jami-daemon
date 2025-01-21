@@ -8,8 +8,7 @@ ifeq ($(call need_pkg,"harfbuzz >= $(HARFBUZZ_VERSION)"),)
 PKGS_FOUND += harfbuzz
 endif
 
-HARFBUZZ_CONF := --prefix="$(PREFIX)" \
-	--default-library=static \
+HARFBUZZ_CONF := \
 	-Dtests=disabled \
 	-Ddocs=disabled \
 	-Dcairo=disabled \
@@ -26,8 +25,4 @@ harfbuzz: harfbuzz-$(HARFBUZZ_VERSION).tar.xz .sum-harfbuzz
 	$(UNPACK)
 	$(MOVE)
 
-.harfbuzz: harfbuzz
-	cd $< && $(HOSTVARS) meson setup build $(HARFBUZZ_CONF)
-	cd $< && meson compile -C build
-	cd $< && meson install -C build
-	touch $@
+MESON_PKGS += harfbuzz
