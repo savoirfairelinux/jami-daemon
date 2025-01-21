@@ -1,9 +1,20 @@
 {
     "name": "webrtc-audio-processing",
-    "version": "v0.3.1",
+    "version": "d0569cfa50c1858ee279d77b3fc8870be6902441",
     "url": "https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing/-/archive/__VERSION__/webrtc-audio-processing-__VERSION__.tar.gz",
-    "use_cmake": true,
-    "win_patches": [
-        "0001-provide-cmake-for-windows.patch"
-    ]
+    "use_cmake": false,
+    "patches": [
+        "0001-install-vad-header.patch"
+    ],
+    "custom_scripts": {
+        "pre_build": [
+            "meson setup build-meson --backend=ninja --buildtype=release --default-library=static --wrap-mode=forcefallback --prefix=\"%CD%\\install\" --libdir=lib -Db_vscrt=md -Dcpp_std=c++20 -Dabseil-cpp:cpp_std=c++20"
+        ],
+        "build": [
+            "meson compile -C build-meson"
+        ],
+        "post_build": [
+            "meson install -C build-meson"
+        ]
+    }
 }
