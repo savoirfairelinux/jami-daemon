@@ -18,7 +18,16 @@
 #include "webrtc.h"
 #include "logger.h"
 
-#include <webrtc/modules/audio_processing/include/audio_processing.h>
+#if __has_include(<common_audio/vad/include/webrtc_vad.h>)
+#include <common_audio/vad/include/webrtc_vad.h>
+#define HAVE_WEBRTC_VAD 1
+#else
+// Only installed by the Jami contrib build (see contrib/src/webrtc-audio-processing)
+#define HAVE_WEBRTC_VAD 0
+#endif
+
+#include <algorithm>
+#include <cmath>
 
 namespace jami {
 
@@ -30,6 +39,16 @@ webrtcFrameSize(AudioFormat format)
 
 constexpr int webrtcNoError = webrtc::AudioProcessing::kNoError;
 
+void
+WebRTCAudioProcessor::VadDeleter::operator()(VadInst* vad) const
+{
+#if HAVE_WEBRTC_VAD
+    WebRtcVad_Free(vad);
+#else
+    (void) vad;
+#endif
+}
+
 WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned /* frameSize */)
     : AudioProcessor(format.withSampleFormat(AV_SAMPLE_FMT_FLTP), webrtcFrameSize(format))
 {
@@ -37,11 +56,8 @@ WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned /* frame
              frameSize_,
              frameDurationMs_,
              format_.nb_channels);
-    webrtc::Config config;
-    config.Set<webrtc::ExtendedFilter>(new webrtc::ExtendedFilter(true));
-    config.Set<webrtc::DelayAgnostic>(new webrtc::DelayAgnostic(true));
 
-    apm.reset(webrtc::AudioProcessing::Create(config));
+    apm = webrtc::AudioProcessingBuilder().Create();
 
     webrtc::StreamConfig streamConfig((int) format_.sample_rate, (int) format_.nb_channels);
     webrtc::ProcessingConfig pconfig = {
@@ -54,69 +70,75 @@ WebRTCAudioProcessor::WebRTCAudioProcessor(AudioFormat format, unsigned /* frame
     if (apm->Initialize(pconfig) != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] Error initialising audio processing module");
     }
+
+    // The APM dropped its voice detector in 1.0; use the standalone WebRTC VAD
+    // (what the old VoiceDetection component wrapped) on the first channel.
+#if HAVE_WEBRTC_VAD
+    if (WebRtcVad_ValidRateAndFrameLength((int) format_.sample_rate, frameSize_) == 0) {
+        vad_.reset(WebRtcVad_Create());
+        if (WebRtcVad_Init(vad_.get()) != 0) {
+            JAMI_ERROR("[webrtc-ap] Error initialising voice activity detection");
+            vad_.reset();
+        }
+        vadBuffer_.resize(frameSize_);
+    } else {
+        JAMI_WARNING("[webrtc-ap] {:d} Hz unsupported by the WebRTC VAD, voice activity disabled", format_.sample_rate);
+    }
+#else
+    JAMI_WARNING("[webrtc-ap] Built without the WebRTC VAD, voice activity disabled");
+#endif
+}
+
+void
+WebRTCAudioProcessor::applyConfig()
+{
+    apm->ApplyConfig(config_);
 }
 
 void
 WebRTCAudioProcessor::enableNoiseSuppression(bool enabled)
 {
     JAMI_LOG("[webrtc-ap] enableNoiseSuppression {}", enabled);
-    if (apm->noise_suppression()->Enable(enabled) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error enabling noise suppression");
-    }
-    if (apm->noise_suppression()->set_level(webrtc::NoiseSuppression::kVeryHigh) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error setting noise suppression level");
-    }
-    if (apm->high_pass_filter()->Enable(enabled) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error enabling high pass filter");
-    }
+    config_.noise_suppression.enabled = enabled;
+    config_.noise_suppression.level = webrtc::AudioProcessing::Config::NoiseSuppression::kVeryHigh;
+    config_.high_pass_filter.enabled = enabled;
+    applyConfig();
 }
 
 void
 WebRTCAudioProcessor::enableAutomaticGainControl(bool enabled)
 {
     JAMI_LOG("[webrtc-ap] enableAutomaticGainControl {}", enabled);
-    if (apm->gain_control()->Enable(enabled) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error enabling automatic gain control");
-    }
-    if (apm->gain_control()->set_analog_level_limits(0, 255) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error setting automatic gain control analog level limits");
-    }
-    if (apm->gain_control()->set_mode(webrtc::GainControl::kAdaptiveAnalog) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error setting automatic gain control mode");
-    }
+    config_.gain_controller1.enabled = enabled;
+    config_.gain_controller1.mode = webrtc::AudioProcessing::Config::GainController1::kAdaptiveAnalog;
+    applyConfig();
 }
 
 void
 WebRTCAudioProcessor::enableEchoCancel(bool enabled)
 {
     JAMI_LOG("[webrtc-ap] enableEchoCancel {}", enabled);
-
-    if (apm->echo_cancellation()->Enable(enabled) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error enabling echo cancellation");
-    }
-    if (apm->echo_cancellation()->set_suppression_level(webrtc::EchoCancellation::SuppressionLevel::kHighSuppression)
-        != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error setting echo cancellation level");
-    }
-    if (apm->echo_cancellation()->enable_drift_compensation(true) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error enabling echo cancellation drift compensation");
-    }
+    config_.echo_canceller.enabled = enabled;
+    config_.echo_canceller.mobile_mode = false;
+    applyConfig();
 }
 
 void
 WebRTCAudioProcessor::enableVoiceActivityDetection(bool enabled)
 {
     JAMI_LOG("[webrtc-ap] enableVoiceActivityDetection {}", enabled);
-    if (apm->voice_detection()->Enable(enabled) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error enabling voice activation detection");
+    if (!vad_) {
+        if (enabled)
+            JAMI_ERROR("[webrtc-ap] Voice activity detection unavailable");
+        return;
     }
-    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error setting voice detection likelihood");
+#if HAVE_WEBRTC_VAD
+    // Mode 3 is what VoiceDetection::kVeryLowLikelihood mapped to.
+    if (WebRtcVad_set_mode(vad_.get(), enabled ? 3 : 0) != 0) {
+        JAMI_ERROR("[webrtc-ap] Error setting voice detection mode");
     }
-    // asserted to be 10 in voice_detection_impl.cc
-    if (apm->voice_detection()->set_frame_size_ms(10) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] Error setting voice detection frame size");
-    }
+#endif
+    detectVoice_ = enabled;
 }
 
 std::shared_ptr<AudioFrame>
@@ -125,8 +147,6 @@ WebRTCAudioProcessor::getProcessed()
     if (tidyQueues()) {
         return {};
     }
-
-    int driftSamples = playbackQueue_.samples() - recordQueue_.samples();
 
     auto playback = playbackQueue_.dequeue();
     auto record = recordQueue_.dequeue();
@@ -141,28 +161,34 @@ WebRTCAudioProcessor::getProcessed()
         JAMI_ERROR("[webrtc-ap] ProcessReverseStream failed");
     }
 
-    // process deinterleaved float recorded data
-    // TODO: maybe implement this to see if it's better than automatic drift compensation
-    // (it MUST be called prior to ProcessStream)
-    // delay = (t_render - t_analyze) + (t_process - t_capture)
+    // AEC3 estimates the delay itself; 0 keeps the API contract satisfied.
     if (apm->set_stream_delay_ms(0) != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] set_stream_delay_ms failed");
     }
-
-    if (apm->gain_control()->set_stream_analog_level(analogLevel_) != webrtcNoError) {
-        JAMI_ERROR("[webrtc-ap] set_stream_analog_level failed");
+    if (config_.gain_controller1.enabled) {
+        apm->set_stream_analog_level(analogLevel_);
     }
-    apm->echo_cancellation()->set_stream_drift_samples(driftSamples);
 
-    // process in place
+    // process deinterleaved float recorded data in place
     float** recData = (float**) record->pointer()->extended_data;
     if (apm->ProcessStream(recData, sc, sc, recData) != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] ProcessStream failed");
     }
 
-    analogLevel_ = apm->gain_control()->stream_analog_level();
-    record->has_voice = apm->voice_detection()->is_enabled()
-                        && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
+    if (config_.gain_controller1.enabled) {
+        analogLevel_ = apm->recommended_stream_analog_level();
+    }
+
+    bool hasVoice = false;
+#if HAVE_WEBRTC_VAD
+    if (detectVoice_ && vad_) {
+        std::transform(recData[0], recData[0] + frameSize_, vadBuffer_.begin(), [](float s) {
+            return (int16_t) std::lround(std::clamp(s, -1.f, 1.f) * 32767.f);
+        });
+        hasVoice = WebRtcVad_Process(vad_.get(), (int) format_.sample_rate, vadBuffer_.data(), vadBuffer_.size()) == 1;
+    }
+#endif
+    record->has_voice = detectVoice_ && getStabilizedVoiceActivity(hasVoice);
     return record;
 }
 
