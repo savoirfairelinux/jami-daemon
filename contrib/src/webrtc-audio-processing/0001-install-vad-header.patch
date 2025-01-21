@@ -1,0 +1,13 @@
+--- a/webrtc/common_audio/meson.build
++++ b/webrtc/common_audio/meson.build
+@@ -55,6 +55,10 @@
+   'vad/webrtc_vad.c',
+ ]
+ 
++install_headers('vad/include/webrtc_vad.h',
++  subdir: join_paths(include_subdir, 'common_audio', 'vad', 'include')
++)
++
+ arch_libs = []
+ if have_x86
+   arch_libs += [
