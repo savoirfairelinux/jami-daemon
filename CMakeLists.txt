@@ -539,7 +539,12 @@ else()
     find_package (yaml-cpp CONFIG REQUIRED)
     pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
+
     pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
+    if (NOT webrtcap_FOUND)
+        pkg_search_module (webrtcap REQUIRED IMPORTED_TARGET webrtc-audio-processing-2)
+    endif()
+
     pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
     pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)

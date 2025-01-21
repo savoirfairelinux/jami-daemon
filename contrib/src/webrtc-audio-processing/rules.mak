@@ -1,6 +1,6 @@
 # webrtc-audio-processing
 
-WEBRTCAP_VER := v0.3.1
+WEBRTCAP_VER := 845e79a2a79966609a8009631bce7da71a8c9de7
 WEBRTCAP_URL := https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing/-/archive/$(WEBRTCAP_VER)/webrtc-audio-processing-$(WEBRTCAP_VER).tar.gz
 
 ifndef HAVE_DARWIN_OS
@@ -20,7 +20,7 @@ webrtc-audio-processing: webrtc-audio-processing-$(WEBRTCAP_VER).tar.gz .sum-web
 	$(MOVE)
 
 .webrtc-audio-processing: webrtc-audio-processing
-	$(RECONF)
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) --enable-neon=no
-	cd $< && $(MAKE) install
+	cd $< && $(HOSTVARS) meson setup build --prefix="$(PREFIX)" --libdir="$(PREFIX)/lib"
+	cd $< && meson compile -C build
+	cd $< && meson install -C build
 	touch $@
