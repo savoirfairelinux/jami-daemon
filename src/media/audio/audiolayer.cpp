@@ -66,7 +66,7 @@ AudioLayer::~AudioLayer() {}
 void
 AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 {
-    JAMI_LOG("Hardware audio format available : {:s} {}", playback.toString(), bufSize);
+    JAMI_LOG("Hardware audio format available: {:s} {}", playback.toString(), bufSize);
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     audioInputFormat_.sampleFormat = audioFormat_.sampleFormat;
     urgentRingBuffer_.setFormat(audioFormat_);
@@ -76,7 +76,7 @@ AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 void
 AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
-    JAMI_LOG("Hardware input audio format available : {:s}", capture.toString());
+    JAMI_LOG("Hardware input audio format available: {:s}", capture.toString());
 }
 
 void
@@ -185,7 +185,7 @@ AudioLayer::createAudioProcessor()
 
     unsigned int frame_size;
     if (pref_.getAudioProcessor() == "speex") {
-        // TODO: maybe force this to be equivalent to 20ms? as expected by speex
+        // TODO: maybe force this to be equivalent to 20ms? as expected by Speex
         frame_size = sample_rate / 50u;
     } else {
         frame_size = sample_rate / 100u;
@@ -212,7 +212,7 @@ AudioLayer::createAudioProcessor()
         JAMI_WARN("[audiolayer] using SpeexAudioProcessor");
         audioProcessor.reset(new SpeexAudioProcessor(formatForProcessor, frame_size));
 #else
-        JAMI_ERR("[audiolayer] audioProcessor preference is speex, but library not linked! "
+        JAMI_ERR("[audiolayer] audioProcessor preference is Speex, but library not linked! "
                  "using null AudioProcessor instead");
         audioProcessor.reset();
 #endif
