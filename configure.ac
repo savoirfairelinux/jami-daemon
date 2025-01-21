@@ -270,7 +270,7 @@ AS_IF([test -n "${CONTRIB_DIR}"],
     [CONTRIB_DIR=`cd "${CONTRIB_DIR}" && pwd`],
     [echo "${CONTRIB_DIR}/lib not found" >&AS_MESSAGE_LOG_FD
      CONTRIB_DIR=""
-     AC_MSG_RESULT([not usable])])])
+     AC_MSG_RESULT([unusable])])])
 
 AS_IF([test -n "${CONTRIB_DIR}"],
   [AC_MSG_RESULT([${CONTRIB_DIR}])
