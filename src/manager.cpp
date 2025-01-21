@@ -294,8 +294,8 @@ struct Manager::ManagerPimpl
     int getCurrentDeviceIndex(AudioDeviceType type);
 
     /**
-     * Process remaining participant given a conference and the current call id.
-     * Mainly called when a participant is detached or hagned up
+     * Process remaining participant given a conference and the current call ID.
+     * Mainly called when a participant is detached or call ended (hang up).
      * @param current call id
      * @param conference pointer
      */
@@ -393,7 +393,7 @@ struct Manager::ManagerPimpl
     CallIDSet waitingCalls_;
 
     /**
-     * Protect waiting call list, access by many voip/audio threads
+     * Protect waiting call list, access by many VoIP/audio threads
      */
     std::mutex waitingCallsMutex_;
 
@@ -489,7 +489,7 @@ Manager::ManagerPimpl::playATone(Tone::ToneId toneId)
 
     std::lock_guard lock(audioLayerMutex_);
     if (not audiodriver_) {
-        JAMI_ERR("Audio layer not initialized");
+        JAMI_ERR("Uninitialized audio layer");
         return;
     }
 
@@ -599,7 +599,7 @@ void
 Manager::ManagerPimpl::switchCall(const std::string& id)
 {
     std::lock_guard m(currentCallMutex_);
-    JAMI_DBG("----- Switch current call id to '%s' -----", not id.empty() ? id.c_str() : "none");
+    JAMI_DBG("----- Switch current call ID to '%s' -----", not id.empty() ? id.c_str() : "none");
     currentCall_ = id;
 }
 
@@ -716,7 +716,7 @@ Manager::instance()
     // This will give a warning that can be ignored the first time instance()
     // is called… subsequent warnings are more serious
     if (not Manager::initialized)
-        JAMI_DBG("Not initialized");
+        JAMI_DBG("Uninitialized");
 
     return instance;
 }
@@ -954,9 +954,9 @@ Manager::monitor(bool continuous)
 {
     Logger::setMonitorLog(true);
     JAMI_DBG("############## START MONITORING ##############");
-    JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
-    JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
-    JAMI_DBG("Using OpenDHT version %s", dht::version());
+    JAMI_DBG("Using PJSIP version: %s for %s", pj_get_version(), PJ_OS_NAME);
+    JAMI_DBG("Using GnuTLS version: %s", gnutls_check_version(nullptr));
+    JAMI_DBG("Using OpenDHT version: %s", dht::version());
 
 #ifdef __linux__
 #if defined(__ANDROID__)
@@ -1548,7 +1548,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
         return;
     }
 
-    // we must at least have 2 participant for a conference
+    // we must have at least 2 participant for a conference
     if (participantList.size() <= 1) {
         JAMI_ERR("Participant number must be greater than or equal to 2");
         return;
@@ -1656,13 +1656,13 @@ Manager::joinConference(const std::string& accountId,
 
     auto conf = account->getConference(confId1);
     if (not conf) {
-        JAMI_ERR("Not a valid conference ID: %s", confId1.c_str());
+        JAMI_ERR("Invalid conference ID: %s", confId1.c_str());
         return false;
     }
 
     auto conf2 = account2->getConference(confId2);
     if (not conf2) {
-        JAMI_ERR("Not a valid conference ID: %s", confId2.c_str());
+        JAMI_ERR("Invalid conference ID: %s", confId2.c_str());
         return false;
     }
 
@@ -1711,7 +1711,7 @@ Manager::addAudio(Call& call)
 
     std::lock_guard lock(pimpl_->audioLayerMutex_);
     if (!pimpl_->audiodriver_) {
-        JAMI_ERROR("Audio driver not initialized");
+        JAMI_ERROR("Uninitialized audio driver");
         return;
     }
     pimpl_->audiodriver_->flushUrgent();
@@ -2212,7 +2212,7 @@ Manager::setAudioDevice(int index, AudioDeviceType type)
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Audio driver not initialized");
+        JAMI_ERR("Uninitialized audio driver");
         return;
     }
     if (pimpl_->getCurrentDeviceIndex(type) == index) {
@@ -2237,7 +2237,7 @@ Manager::getAudioOutputDeviceList()
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Audio layer not initialized");
+        JAMI_ERR("Uninitialized audio layer");
         return {};
     }
 
@@ -2253,7 +2253,7 @@ Manager::getAudioInputDeviceList()
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Audio layer not initialized");
+        JAMI_ERR("Uninitialized audio layer");
         return {};
     }
 
@@ -2268,7 +2268,7 @@ Manager::getCurrentAudioDevicesIndex()
 {
     std::lock_guard lock(pimpl_->audioLayerMutex_);
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Audio layer not initialized");
+        JAMI_ERR("Uninitialized audio layer");
         return {};
     }
 
@@ -2453,7 +2453,7 @@ Manager::getAudioInputDeviceIndex(const std::string& name)
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Audio layer not initialized");
+        JAMI_ERR("Uninitialized audio layer");
         return 0;
     }
 
@@ -2466,7 +2466,7 @@ Manager::getAudioOutputDeviceIndex(const std::string& name)
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Audio layer not initialized");
+        JAMI_ERR("Uninitialized audio layer");
         return 0;
     }
 
@@ -2683,7 +2683,7 @@ Manager::audioFormatUsed(AudioFormat format)
 void
 Manager::setAccountsOrder(const std::string& order)
 {
-    JAMI_DBG("Set accounts order : %s", order.c_str());
+    JAMI_DBG("Set accounts order: %s", order.c_str());
     // Set the new config
 
     preferences.setAccountOrder(order);
@@ -3105,7 +3105,7 @@ Manager::newOutgoingCall(std::string_view toUrl,
     }
 
     if (not account->isUsable()) {
-        JAMI_WARN("Account %s is not usable", accountId.c_str());
+        JAMI_WARN("Account %s is unusable", accountId.c_str());
         return {};
     }
 
@@ -3175,7 +3175,7 @@ Manager::createSinkClients(
         }
     }
 
-    // remove any non used video sink
+    // remove unused video sinks
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
         if (sinkIdsList.find(it->first) == sinkIdsList.end()) {
             for (auto& videoStream : videoStreams)
