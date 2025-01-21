@@ -18,9 +18,12 @@
 
 #include "audio_processor.h"
 
-namespace webrtc {
-class AudioProcessing;
-}
+#include <api/audio/audio_processing.h>
+#include <api/scoped_refptr.h>
+
+#include <vector>
+
+typedef struct WebRtcVadInst VadInst;
 
 namespace jami {
 
@@ -39,7 +42,17 @@ public:
     void enableVoiceActivityDetection(bool enabled) override;
 
 private:
-    std::unique_ptr<webrtc::AudioProcessing> apm;
+    void applyConfig();
+
+    rtc::scoped_refptr<webrtc::AudioProcessing> apm;
+    webrtc::AudioProcessing::Config config_;
+    struct VadDeleter
+    {
+        void operator()(VadInst*) const;
+    };
+    std::unique_ptr<VadInst, VadDeleter> vad_;
+    std::vector<int16_t> vadBuffer_;
+    bool detectVoice_ {false};
     int analogLevel_ {0};
 };
 } // namespace jami
