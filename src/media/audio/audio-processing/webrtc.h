@@ -24,6 +24,8 @@ class AudioProcessing;
 
 namespace jami {
 
+struct ConfigImpl;
+
 class WebRTCAudioProcessor final : public AudioProcessor
 {
 public:
@@ -39,6 +41,7 @@ public:
     void enableVoiceActivityDetection(bool enabled) override;
 
 private:
+    std::unique_ptr<ConfigImpl> config;
     std::unique_ptr<webrtc::AudioProcessing> apm;
     int analogLevel_ {0};
 };
