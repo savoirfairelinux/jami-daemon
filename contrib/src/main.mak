@@ -443,6 +443,19 @@ build_cmake = cd $< && mkdir -p build && cd build && \
 
 BUILD_CMAKE = $(call build_cmake,$($(shell echo $* | tr a-z- A-Z_)_CONF))
 
+ifdef HAVE_CROSS_COMPILE
+MESON = meson setup --prefix="$(PREFIX)" --libdir="$(PREFIX)/lib" --default-library=static --cross-file $(abspath crossfile.meson)
+else
+MESON = meson setup --prefix="$(PREFIX)" --libdir="$(PREFIX)/lib" --default-library=static
+endif
+
+build_meson = cd $< && rm -rf build && \
+		$(HOSTVARS) $(MESON) build $(1) && \
+		meson compile -C build && \
+		meson install -C build
+
+BUILD_MESON = $(call build_meson,$($(shell echo $* | tr a-z- A-Z_)_CONF))
+
 #
 # Per-package build rules
 #
@@ -475,6 +488,11 @@ PKGS := $(PKGS_MANUAL) $(PKGS_DEPS)
 # Generic CMake rule
 $(foreach p,$(CMAKE_PKGS),.$(p)): .%: % toolchain.cmake .sum-%
 	$(BUILD_CMAKE)
+	touch $@
+
+# Generic Meson rule
+$(foreach p,$(MESON_PKGS),.$(p)): .%: % crossfile.meson .sum-%
+	$(BUILD_MESON)
 	touch $@
 
 convert-static:
@@ -520,7 +538,7 @@ endif
 
 mostlyclean:
 	-$(RM) $(foreach p,$(PKGS_ALL),.$(p) .sum-$(p) .dep-$(p))
-	-$(RM) toolchain.cmake
+	-$(RM) toolchain.cmake crossfile.meson
 	-$(RM) -R "$(PREFIX)"
 	-$(RM) -R */
 
@@ -614,6 +632,64 @@ endif
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)" >> $@
+
+# Meson cross file
+crossfile.meson:
+	$(RM) $@
+	echo "[binaries]" >> $@
+	echo "c = '$(CC)'" >> $@
+	echo "cpp = '$(CXX)'" >> $@
+	echo "ar = '$(AR)'" >> $@
+	echo "strip = '$(STRIP)'" >> $@
+	echo "pkg-config = 'pkg-config'" >> $@
+	echo "[host_machine]" >> $@
+ifdef HAVE_ANDROID
+	echo "system = 'android'" >> $@
+else
+ifdef HAVE_DARWIN_OS
+ifdef HAVE_IOS
+	echo "system = 'ios'" >> $@
+else
+	echo "system = 'darwin'" >> $@
+endif
+else
+ifdef HAVE_WIN32
+	echo "system = 'windows'" >> $@
+else
+	echo "system = 'linux'" >> $@
+endif
+endif
+endif
+ifeq ($(ARCH),arm64)
+	echo "cpu_family = 'aarch64'" >> $@
+	echo "cpu = 'aarch64'" >> $@
+else
+ifeq ($(ARCH),aarch64)
+	echo "cpu_family = 'aarch64'" >> $@
+	echo "cpu = 'aarch64'" >> $@
+else
+ifeq ($(ARCH),arm)
+	echo "cpu_family = 'arm'" >> $@
+	echo "cpu = 'arm'" >> $@
+else
+ifeq ($(ARCH),armv7a)
+	echo "cpu_family = 'arm'" >> $@
+	echo "cpu = 'armv7-a'" >> $@
+else
+ifeq ($(ARCH),i386)
+	echo "cpu_family = 'x86'" >> $@
+	echo "cpu = 'i686'" >> $@
+else
+	echo "cpu_family = '$(ARCH)'" >> $@
+	echo "cpu = '$(ARCH)'" >> $@
+endif
+endif
+endif
+endif
+endif
+	echo "endian = 'little'" >> $@
+	echo "[properties]" >> $@
+	echo "pkg_config_libdir = '$(PREFIX)/lib/pkgconfig'" >> $@
 
 # Default pattern rules
 .sum-%: $(SRC)/%/SHA512SUMS
