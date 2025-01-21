@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "401134c9_946499d2",
+        "filename": "src/jamidht/namedirectory.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-01-21T15:54:59Z",
+      "side": 1,
+      "message": "Should a 400 response, corresponding to an invalid name, trigger a callback to Response::error?",
+      "revId": "8c21b40df44e9dfbc7ddb0ccf33533ca4211c778",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
