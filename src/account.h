@@ -166,7 +166,7 @@ public:
      * Unregister the account.
      * This should update the getRegistrationState() return value.
      */
-    virtual void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
+    virtual void doUnregister(bool forceShutdownConnections = false) = 0;
 
     RegistrationState getRegistrationState() const { return registrationState_; }
 

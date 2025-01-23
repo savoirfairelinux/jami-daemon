@@ -583,8 +583,10 @@ SIPAccount::setPushNotificationToken(const std::string& pushDeviceToken)
 {
     JAMI_WARNING("[SIP Account {}] setPushNotificationToken: {}", getAccountID(), pushDeviceToken);
     if (SIPAccountBase::setPushNotificationToken(pushDeviceToken)) {
-        if (config().enabled)
-            doUnregister([&](bool /* transport_free */) { doRegister(); });
+        if (config().enabled) {
+            doUnregister();
+            doRegister();
+        }
         return true;
     }
     return false;
@@ -594,8 +596,10 @@ bool
 SIPAccount::setPushNotificationConfig(const std::map<std::string, std::string>& data)
 {
     if (SIPAccountBase::setPushNotificationConfig(data)) {
-        if (config().enabled)
-            doUnregister([&](bool /* transport_free */) { doRegister(); });
+        if (config().enabled) {
+            doUnregister();
+            doRegister();
+        }
         return true;
     }
     return false;
@@ -607,8 +611,10 @@ SIPAccount::pushNotificationReceived(const std::string& from,
 {
     JAMI_WARNING("[SIP Account {:s}] pushNotificationReceived: {:s}", getAccountID(), from);
 
-    if (config().enabled)
-        doUnregister([&](bool /* transport_free */) { doRegister(); });
+    if (config().enabled) {
+        doUnregister();
+        doRegister();
+    }
 }
 
 void
@@ -744,7 +750,7 @@ SIPAccount::doRegister2_()
 }
 
 void
-SIPAccount::doUnregister(std::function<void(bool)> released_cb)
+SIPAccount::doUnregister(bool /* forceShutdownConnections */)
 {
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
 
@@ -761,10 +767,6 @@ SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     if (transport_)
         setTransport();
     resetAutoRegistration();
-
-    lock.unlock();
-    if (released_cb)
-        released_cb(not isIP2IP());
 }
 
 void
@@ -775,10 +777,9 @@ SIPAccount::connectivityChanged()
         return;
     }
 
-    doUnregister([acc = shared()](bool /* transport_free */) {
-        if (acc->isUsable())
-            acc->doRegister();
-    });
+    doUnregister();
+    if (isUsable())
+        doRegister();
 }
 
 void

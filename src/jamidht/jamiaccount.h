@@ -177,7 +177,7 @@ public:
     /**
      * Disconnect from the DHT.
      */
-    void doUnregister(std::function<void(bool)> cb = {}) override;
+    void doUnregister(bool forceShutdownConnections = false) override;
 
     /**
      * Set the registration state of the specified link

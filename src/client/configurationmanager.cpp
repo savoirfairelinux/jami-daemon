@@ -968,13 +968,12 @@ setCredentials(const std::string& accountId,
                const std::vector<std::map<std::string, std::string>>& details)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
-        sipaccount->doUnregister([&](bool /* transport_free */) {
-            sipaccount->editConfig(
-                [&](jami::SipAccountConfig& config) { config.setCredentials(details); });
-            sipaccount->loadConfig();
-            if (sipaccount->isEnabled())
-                sipaccount->doRegister();
-        });
+        sipaccount->doUnregister();
+        sipaccount->editConfig(
+            [&](jami::SipAccountConfig& config) { config.setCredentials(details); });
+        sipaccount->loadConfig();
+        if (sipaccount->isEnabled())
+            sipaccount->doRegister();
         jami::Manager::instance().saveConfig(sipaccount);
     }
 }

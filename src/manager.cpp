@@ -1070,12 +1070,7 @@ Manager::unregisterAccounts()
 {
     for (const auto& account : getAllAccounts()) {
         if (account->isEnabled()) {
-            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account)) {
-                // Note: shutdown the connections as doUnregister will not do it (because the
-                // account is enabled)
-                acc->shutdownConnections();
-            }
-            account->doUnregister();
+            account->doUnregister(true);
         }
     }
 }
@@ -2751,17 +2746,17 @@ Manager::setAccountDetails(const std::string& accountID,
         return;
 
     // Unregister before modifying any account information
-    account->doUnregister([&](bool /* transport_free */) {
-        account->setAccountDetails(details);
+    account->doUnregister();
 
-        if (account->isUsable())
-            account->doRegister();
-        else
-            account->doUnregister();
+    account->setAccountDetails(details);
 
-        // Update account details to the client side
-        emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(accountID, details);
-    });
+    if (account->isUsable())
+        account->doRegister();
+    else
+        account->doUnregister();
+
+    // Update account details to the client side
+    emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(accountID, details);
 }
 
 std::mt19937_64
@@ -2821,13 +2816,10 @@ Manager::removeAccount(const std::string& accountID, bool flush)
 {
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
-        // Force stopping connection before doUnregister as it will
-        // wait for dht threads to finish
         if (auto acc = std::dynamic_pointer_cast<JamiAccount>(remAccount)) {
             acc->hangupCalls();
-            acc->shutdownConnections();
         }
-        remAccount->doUnregister();
+        remAccount->doUnregister(true);
         if (flush)
             remAccount->flush();
         accountFactory.removeAccount(*remAccount);
@@ -3025,12 +3017,7 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
         if (active) {
             acc->doRegister();
         } else {
-            acc->doUnregister();
-            if (shutdownConnections) {
-                if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(acc)) {
-                    jamiAcc->shutdownConnections();
-                }
-            }
+            acc->doUnregister(shutdownConnections);
         }
     }
     emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(

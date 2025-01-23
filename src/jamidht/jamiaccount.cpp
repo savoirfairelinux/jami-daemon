@@ -2346,13 +2346,10 @@ JamiAccount::loadConversation(const std::string& convId)
 }
 
 void
-JamiAccount::doUnregister(std::function<void(bool)> released_cb)
+JamiAccount::doUnregister(bool forceShutdownConnections)
 {
     std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
     if (registrationState_ >= RegistrationState::ERROR_GENERIC) {
-        lock.unlock();
-        if (released_cb)
-            released_cb(false);
         return;
     }
 
@@ -2381,9 +2378,9 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     // Stop all current P2P connections if account is disabled
-    // Else, we let the system managing if the co is down or not
-    // NOTE: this is used for changing account's config.
-    if (not isEnabled())
+    // or if explicitly requested by the caller.
+    // NOTE: Leaving the connections open is useful when changing an account's config.
+    if (not isEnabled() || forceShutdownConnections)
         shutdownConnections();
 
     // Release current UPnP mapping if any.
@@ -2400,8 +2397,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     lock.unlock();
 
-    if (released_cb)
-        released_cb(false);
 #ifdef ENABLE_PLUGIN
     jami::Manager::instance().getJamiPluginManager().getChatServicesManager().cleanChatSubjects(
         getAccountID());

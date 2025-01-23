@@ -140,7 +140,7 @@ public:
     /**
      * Send unregistration.
      */
-    void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
+    void doUnregister(bool forceShutdownConnections = false) override;
 
     /**
      * Build and send SIP registration request
