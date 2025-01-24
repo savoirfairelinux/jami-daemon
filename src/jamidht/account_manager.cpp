@@ -114,7 +114,8 @@ AccountManager::loadIdentity(const std::string& crt_path,
     if (crt_path.empty() or key_path.empty())
         return {};
 
-    JAMI_DEBUG("Loading certificate from '{}' and key from '{}' at {}",
+    JAMI_DEBUG("[Account {}] [Auth] Loading certificate from '{}' and key from '{}' at {}",
+             accountId_,
              crt_path,
              key_path,
              path_);
@@ -123,12 +124,12 @@ AccountManager::loadIdentity(const std::string& crt_path,
         dht::crypto::PrivateKey dht_key(fileutils::loadFile(key_path, path_), key_pwd);
         auto crt_id = dht_cert.getLongId();
         if (!crt_id or crt_id != dht_key.getPublicKey().getLongId()) {
-            JAMI_ERR("Device certificate not matching public key!");
+            JAMI_ERROR("[Account {}] [Auth] Device certificate not matching public key!", accountId_);
             return {};
         }
         auto& issuer = dht_cert.issuer;
         if (not issuer) {
-            JAMI_ERROR("Device certificate {:s} has no issuer", dht_cert.getId().toString());
+            JAMI_ERROR("[Account {}] [Auth] Device certificate {:s} has no issuer", accountId_, dht_cert.getId().to_view());
             return {};
         }
         // load revocation lists for device authority (account certificate).
@@ -137,7 +138,7 @@ AccountManager::loadIdentity(const std::string& crt_path,
         return {std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
                 std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))};
     } catch (const std::exception& e) {
-        JAMI_ERR("Error loading identity: %s", e.what());
+        JAMI_ERROR("[Account {}] [Auth] Error loading identity: {}", accountId_, e.what());
     }
     return {};
 }
@@ -145,7 +146,7 @@ AccountManager::loadIdentity(const std::string& crt_path,
 std::shared_ptr<dht::Value>
 AccountManager::parseAnnounce(const std::string& announceBase64,
                               const std::string& accountId,
-                              const std::string& deviceSha1)
+                              const std::string& deviceSha256)
 {
     auto announce_val = std::make_shared<dht::Value>();
     try {
@@ -154,17 +155,21 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
                                                               announce.size());
         announce_val->msgpack_unpack(announce_msg.get());
         if (not announce_val->checkSignature()) {
-            JAMI_ERR("[Auth] announce signature check failed");
+            JAMI_ERROR("[Auth] announce signature check failed");
             return {};
         }
         DeviceAnnouncement da;
         da.unpackValue(*announce_val);
-        if (da.from.toString() != accountId or da.dev.toString() != deviceSha1) {
-            JAMI_ERR("[Auth] device ID mismatch in announce");
+        if (da.from.toString() != accountId) {
+            JAMI_ERROR("[Auth] Account ID mismatch in announce (account: {}, in announce: {})", accountId, da.from.toString());
+            return {};
+        }
+        if (da.pk->getLongId().to_view() != deviceSha256) {
+            JAMI_ERROR("[Auth] Device ID mismatch in announce (device: {}, in announce: {})", deviceSha256, da.dev.toString());
             return {};
         }
     } catch (const std::exception& e) {
-        JAMI_ERR("[Auth] unable to read announce: %s", e.what());
+        JAMI_ERROR("[Auth] unable to read announce: {}", e.what());
         return {};
     }
     return announce_val;
@@ -201,7 +206,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     }
 
     auto pk = accountCertificate->getSharedPublicKey();
-    JAMI_LOG("[Account {}] [Auth] checking device receipt for {}", accountId_, pk->getId().toString());
+    JAMI_LOG("[Account {}] [Auth] checking device receipt for account:{} device:{}", accountId_, pk->getId().toString(), identity.second->getLongId().toString());
     if (!pk->checkSignature({receipt.begin(), receipt.end()}, receiptSignature)) {
         JAMI_ERROR("[Account {}] [Auth] device receipt signature check failed", accountId_);
         return nullptr;
@@ -230,7 +235,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
         return nullptr;
     }
 
-    auto announce = parseAnnounce(root["announce"].asString(), id, devicePk->getId().toString());
+    auto announce = parseAnnounce(root["announce"].asString(), id, devicePk->getLongId().toString());
     if (not announce) {
         return nullptr;
     }

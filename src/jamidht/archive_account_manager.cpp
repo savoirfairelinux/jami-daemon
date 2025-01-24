@@ -43,6 +43,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                                           AuthFailureCallback onFailure,
                                           const OnChangeCallback& onChange)
 {
+    JAMI_WARNING("[Account {}] [Auth] starting authentication with scheme '{}'", accountId_, credentials->scheme);
     auto ctx = std::make_shared<AuthContext>();
     ctx->accountId = accountId_;
     ctx->key = key;
@@ -79,7 +80,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                     // Create/migrate from local archive
                     if (ctx->credentials->updateIdentity.first
                         //and ctx->credentials->updateIdentity.second
-                        and needsMigration(ctx->credentials->updateIdentity)) {
+                        and needsMigration(this_->accountId_, ctx->credentials->updateIdentity)) {
                         this_->migrateAccount(*ctx);
                     } else {
                         this_->loadFromFile(*ctx);
@@ -113,7 +114,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
 bool
 ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
 {
-    JAMI_WARN("Updating certificates");
+    JAMI_WARNING("[Account {}] [Auth] Updating certificates", accountId_);
     using Certificate = dht::crypto::Certificate;
 
     // We need the CA key to resign certificates
@@ -131,7 +132,7 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
         ca = std::make_shared<Certificate>(
             Certificate::generate(*archive.ca_key, "Jami CA", {}, true));
         updated = true;
-        JAMI_DBG("CA CRT re-generated");
+        JAMI_LOG("[Account {}] [Auth] CA certificate re-generated", accountId_);
     }
 
     // Update certificate
@@ -142,14 +143,14 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
                                   dht::crypto::Identity {archive.ca_key, ca},
                                   true));
         updated = true;
-        JAMI_DBG("Jami CRT re-generated");
+        JAMI_LOG("[Account {}] [Auth] Account certificate for {} re-generated", accountId_, cert->getId());
     }
 
     if (updated and device.first and *device.first) {
         // update device certificate
         device.second = std::make_shared<Certificate>(
             Certificate::generate(*device.first, "Jami device", archive.id));
-        JAMI_DBG("device CRT re-generated");
+        JAMI_LOG("[Account {}] [Auth] Device certificate re-generated", accountId_);
     }
 
     return updated;
@@ -170,9 +171,9 @@ ArchiveAccountManager::setValidity(std::string_view scheme, const std::string& p
     auto updated = false;
 
     if (id)
-        JAMI_WARN("Updating validity for certificate with id: %s", id.to_c_str());
+        JAMI_WARNING("[Account {}] [Auth] Updating validity for certificate with id: {}", accountId_, id);
     else
-        JAMI_WARN("Updating validity for certificates");
+        JAMI_WARNING("[Account {}] [Auth] Updating validity for certificates", accountId_);
 
     auto& cert = archive.id.second;
     auto ca = cert->issuer;
@@ -184,7 +185,7 @@ ArchiveAccountManager::setValidity(std::string_view scheme, const std::string& p
     if (not id or ca->getId() == id) {
         ca->setValidity(*archive.ca_key, validity);
         updated = true;
-        JAMI_DBG("CA CRT re-generated");
+        JAMI_LOG("[Account {}] [Auth] CA certificate re-generated", accountId_);
     }
 
     // Update certificate
@@ -192,7 +193,7 @@ ArchiveAccountManager::setValidity(std::string_view scheme, const std::string& p
         cert->setValidity(dht::crypto::Identity {archive.ca_key, ca}, validity);
         device.second->issuer = cert;
         updated = true;
-        JAMI_DBG("Jami CRT re-generated");
+        JAMI_LOG("[Account {}] [Auth] Jami certificate re-generated", accountId_);
     }
 
     if (updated) {
@@ -220,9 +221,10 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
     if (!a.id.first || !a.id.second) {
         throw std::runtime_error("Unable to generate identity for this account.");
     }
-    JAMI_WARN("[Auth] New account: CA: %s, ID: %s",
-              ca.second->getId().toString().c_str(),
-              a.id.second->getId().toString().c_str());
+    JAMI_WARNING("[Account {}] [Auth] New account: CA: {}, ID: {}",
+              accountId_,
+              ca.second->getId(),
+              a.id.second->getId());
     a.ca_key = ca.first;
     auto keypair = dev::KeyPair::create();
     a.eth_key = keypair.secret().makeInsecure().asBytes();
@@ -232,12 +234,12 @@ ArchiveAccountManager::createAccount(AuthContext& ctx)
 void
 ArchiveAccountManager::loadFromFile(AuthContext& ctx)
 {
-    JAMI_WARN("[Auth] Loading archive from: %s", ctx.credentials->uri.c_str());
+    JAMI_WARNING("[Account {}] [Auth] Loading archive from: {}", accountId_, ctx.credentials->uri.c_str());
     AccountArchive archive;
     try {
         archive = AccountArchive(ctx.credentials->uri, ctx.credentials->password_scheme, ctx.credentials->password);
     } catch (const std::exception& ex) {
-        JAMI_WARN("[Auth] Unable to read file: %s", ex.what());
+        JAMI_WARNING("[Account {}] [Auth] Unable to read archive file: {}", accountId_, ex.what());
         ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
@@ -259,17 +261,17 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
     ctx->dhtContext->dht.run(ctx->credentials->dhtPort, {}, true);
     for (const auto& bootstrap : ctx->credentials->dhtBootstrap)
         ctx->dhtContext->dht.bootstrap(bootstrap);
-    auto searchEnded = [ctx]() {
+    auto searchEnded = [ctx, accountId=accountId_]() {
         if (not ctx->dhtContext or ctx->dhtContext->found) {
             return;
         }
         auto& s = *ctx->dhtContext;
         if (s.stateOld.first && s.stateNew.first) {
             dht::ThreadPool::computation().run(
-                [ctx, network_error = !s.stateOld.second && !s.stateNew.second] {
+                [ctx, network_error = !s.stateOld.second && !s.stateNew.second, accountId=std::move(accountId)] {
                     ctx->dhtContext.reset();
-                    JAMI_WARN("[Auth] Failure looking for archive on DHT: %s",
-                              /**/ network_error ? "network error" : "not found");
+                    JAMI_WARNING("[Account {}] [Auth] Failure looking for archive on DHT: {}",
+                                 accountId,  network_error ? "network error" : "not found");
                     ctx->onFailure(network_error ? AuthError::NETWORK : AuthError::UNKNOWN, "");
                 });
         }
@@ -371,7 +373,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
     a.save(fileutils::getFullPath(path_, archivePath_), ctx.credentials ? ctx.credentials->password_scheme : "", ctx.credentials ? ctx.credentials->password : "");
 
     if (not a.id.second->isCA()) {
-        JAMI_ERR("[Auth] Attempting to sign a certificate with a non-CA.");
+        JAMI_ERROR("[Account {}] [Auth] Attempting to sign a certificate with a non-CA.", accountId_);
     }
 
     std::shared_ptr<dht::crypto::Certificate> deviceCertificate;
@@ -383,8 +385,9 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
         if (contacts->isValidAccountDevice(*oldId) && ctx.credentials->updateIdentity.first) {
             deviceCertificate = oldId;
             usePreviousIdentity = true;
-            JAMI_WARN("[Auth] Using previously generated certificate %s",
-                                          deviceCertificate->getLongId().toString().c_str());
+            JAMI_WARNING("[Account {}] [Auth] Using previously generated device certificate {}",
+                                          accountId_,
+                                          deviceCertificate->getLongId());
         } else {
             contacts.reset();
         }
@@ -392,16 +395,16 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
 
     // Generate a new device if needed
     if (!deviceCertificate) {
-        JAMI_WARN("[Auth] Creating new device certificate");
+        JAMI_WARNING("[Account {}] [Auth] Creating new device certificate", accountId_);
         auto request = ctx.request.get();
         if (not request->verify()) {
-            JAMI_ERR("[Auth] Invalid certificate request.");
+            JAMI_ERROR("[Account {}] [Auth] Invalid certificate request.", accountId_);
             ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
             return;
         }
         deviceCertificate = std::make_shared<dht::crypto::Certificate>(
             dht::crypto::Certificate::generate(*request, a.id));
-        JAMI_WARNING("[Auth] Created new device: {}",
+        JAMI_WARNING("[Account {}] [Auth] Created new device: {}", accountId_,
                   deviceCertificate->getLongId());
     }
 
@@ -468,7 +471,7 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
                                    const dht::crypto::Certificate& device,
                                    const std::string& ethAccount)
 {
-    JAMI_DBG("[Auth] Signing device receipt");
+    JAMI_LOG("[Account {}] [Auth] Signing receipt for device {}", accountId_, device.getLongId());
     auto devId = device.getId();
     DeviceAnnouncement announcement;
     announcement.dev = devId;
@@ -477,7 +480,7 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
     ann_val.sign(*id.first);
 
     auto packedAnnoucement = ann_val.getPacked();
-    JAMI_DBG("[Auth] Device announcement size: %zu", packedAnnoucement.size());
+    JAMI_LOG("[Account {}] [Auth] Device announcement size: {}", accountId_, packedAnnoucement.size());
 
     std::ostringstream is;
     is << "{\"id\":\"" << id.second->getId() << "\",\"dev\":\"" << devId << "\",\"eth\":\""
@@ -488,18 +491,18 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id,
 }
 
 bool
-ArchiveAccountManager::needsMigration(const dht::crypto::Identity& id)
+ArchiveAccountManager::needsMigration(const std::string& accountId, const dht::crypto::Identity& id)
 {
     if (not id.second)
         return true;
     auto cert = id.second->issuer;
     while (cert) {
         if (not cert->isCA()) {
-            JAMI_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
+            JAMI_WARNING("[Account {}] [Auth] certificate {} is not a CA, needs update.", accountId, cert->getId());
             return true;
         }
         if (cert->getExpiration() < clock::now()) {
-            JAMI_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
+            JAMI_WARNING("[Account {}] [Auth] certificate {} is expired, needs update.", accountId, cert->getId());
             return true;
         }
         cert = cert->issuer;
@@ -511,10 +514,10 @@ void
 ArchiveAccountManager::syncDevices()
 {
     if (not dht_ or not dht_->isRunning()) {
-        JAMI_WARN("Not syncing devices: DHT is not running");
+        JAMI_WARNING("[Account {}] Not syncing devices: DHT is not running", accountId_);
         return;
     }
-    JAMI_DBG("Building device sync from %s", info_->deviceId.c_str());
+    JAMI_LOG("[Account {}] Building device sync from {}", accountId_, info_->deviceId);
     auto sync_data = info_->contacts->getSyncData();
 
     for (const auto& dev : getKnownDevices()) {
@@ -522,13 +525,14 @@ ArchiveAccountManager::syncDevices()
         if (dev.first.toString() == info_->deviceId)
             continue;
         if (!dev.second.certificate) {
-            JAMI_WARNING("Unable to find certificate for {}", dev.first);
+            JAMI_WARNING("[Account {}] Unable to find certificate for {}", accountId_, dev.first);
             continue;
         }
         auto pk = dev.second.certificate->getSharedPublicKey();
-        JAMI_DBG("sending device sync to %s %s",
-                 dev.second.name.c_str(),
-                 dev.first.toString().c_str());
+        JAMI_LOG("[Account {}] Sending device sync to {} {}",
+                 accountId_,
+                 dev.second.name,
+                 dev.first.toString());
         auto syncDeviceKey = dht::InfoHash::get("inbox:" + pk->getId().toString());
         dht_->putEncrypted(syncDeviceKey, pk, sync_data);
     }
@@ -548,8 +552,9 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
                             [this,
                              sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                                 if (!cert or cert->getId() != sync.from) {
-                                    JAMI_WARN("Unable to find certificate for device %s",
-                                              sync.from.toString().c_str());
+                                    JAMI_WARNING("[Account {}] Unable to find certificate for device {}",
+                                              accountId_,
+                                              sync.from.toString());
                                     return;
                                 }
                                 if (not foundAccountDevice(cert))
@@ -564,7 +569,7 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnounce
 AccountArchive
 ArchiveAccountManager::readArchive(std::string_view scheme, const std::string& pwd) const
 {
-    JAMI_DBG("[Auth] Reading account archive");
+    JAMI_LOG("[Account {}] [Auth] Reading account archive", accountId_);
     return AccountArchive(fileutils::getFullPath(path_, archivePath_), scheme, pwd);
 }
 
@@ -590,7 +595,7 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                       TLS::CERTIFICATE_FILE,
                                       TLS::PRIVATE_KEY_FILE};
 
-    JAMI_DBG("[Auth] Building account archive");
+    JAMI_LOG("[Account {}] [Auth] Building account archive", accountId_);
     for (const auto& it : onExportConfig_()) {
         // filter-out?
         if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys), [&](const auto& key) {
@@ -627,7 +632,7 @@ ArchiveAccountManager::saveArchive(AccountArchive& archive, std::string_view sch
             archivePath_ = "export.gz";
         archive.save(fileutils::getFullPath(path_, archivePath_), scheme, pwd);
     } catch (const std::runtime_error& ex) {
-        JAMI_ERR("[Auth] Unable to export archive: %s", ex.what());
+        JAMI_ERROR("[Account {}] [Auth] Unable to export archive: {}", accountId_, ex.what());
         return;
     }
 }
@@ -656,7 +661,7 @@ ArchiveAccountManager::getPasswordKey(const std::string& password)
         auto decrypted = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(data), key);
         return key;
     } catch (const std::exception& e) {
-        JAMI_ERR("Error loading archive: %s", e.what());
+        JAMI_ERROR("[Account {}] Error loading archive: {}", accountId_, e.what());
     }
     return {};
 }
