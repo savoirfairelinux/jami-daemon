@@ -1229,23 +1229,23 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
         auto oldIdentity = id_.first ? id_.first->getPublicKey().getLongId() : DeviceId();
         if (conf.managerUri.empty()) {
             accountManager_ = std::make_shared<ArchiveAccountManager>(
+                getAccountID(),
                 getPath(),
                 [this]() { return getAccountDetails(); },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
                 conf.nameServer);
         } else {
-            accountManager_ = std::make_shared<ServerAccountManager>(getPath(),
+            accountManager_ = std::make_shared<ServerAccountManager>(getAccountID(),
+                                                                     getPath(),
                                                                      conf.managerUri,
                                                                      conf.nameServer);
         }
 
-        auto id = accountManager_->loadIdentity(getAccountID(),
-                                                conf.tlsCertificateFile,
+        auto id = accountManager_->loadIdentity(conf.tlsCertificateFile,
                                                 conf.tlsPrivateKeyFile,
                                                 conf.tlsPassword);
 
-        if (auto info = accountManager_->useIdentity(getAccountID(),
-                                                     id,
+        if (auto info = accountManager_->useIdentity(id,
                                                      conf.receipt,
                                                      conf.receiptSignature,
                                                      conf.managerUsername,
@@ -1304,7 +1304,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 } else if (hasArchive) {
                     // Migrating local account
                     acreds->scheme = "local";
-                    acreds->uri = std::move(archivePath).string();
+                    acreds->uri = archivePath.string();
                     acreds->updateIdentity = id;
                     migrating = true;
                 }
@@ -1322,7 +1322,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 creds->password_scheme = archive_password_scheme;
 
             accountManager_->initAuthentication(
-                getAccountID(),
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),

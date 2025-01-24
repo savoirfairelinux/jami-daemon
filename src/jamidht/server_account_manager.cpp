@@ -46,10 +46,11 @@ constexpr std::string_view PATH_CONVERSATIONS = JAMI_PATH_AUTH "/conversations";
 constexpr std::string_view PATH_CONVERSATIONS_REQUESTS = JAMI_PATH_AUTH "/conversationRequests";
 constexpr std::string_view PATH_BLUEPRINT = JAMI_PATH_AUTH "/policyData";
 
-ServerAccountManager::ServerAccountManager(const std::filesystem::path& path,
+ServerAccountManager::ServerAccountManager(const std::string& accountId,
+                                           const std::filesystem::path& path,
                                            const std::string& managerHostname,
                                            const std::string& nameServer)
-    : AccountManager(path, nameServer)
+    : AccountManager(accountId, path, nameServer)
     , managerHostname_(managerHostname)
     , logger_(Logger::dhtLogger()) {}
 
@@ -60,8 +61,7 @@ ServerAccountManager::setAuthHeaderFields(Request& request) const
 }
 
 void
-ServerAccountManager::initAuthentication(const std::string& accountId,
-                                         PrivateKey key,
+ServerAccountManager::initAuthentication(PrivateKey key,
                                          std::string deviceName,
                                          std::unique_ptr<AccountCredentials> credentials,
                                          AuthSuccessCallback onSuccess,
@@ -69,7 +69,7 @@ ServerAccountManager::initAuthentication(const std::string& accountId,
                                          const OnChangeCallback& onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
-    ctx->accountId = accountId;
+    ctx->accountId = accountId_;
     ctx->key = key;
     ctx->request = buildRequest(key);
     ctx->deviceName = std::move(deviceName);
