@@ -36,8 +36,7 @@ namespace jami {
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 void
-ArchiveAccountManager::initAuthentication(const std::string& accountId,
-                                          PrivateKey key,
+ArchiveAccountManager::initAuthentication(PrivateKey key,
                                           std::string deviceName,
                                           std::unique_ptr<AccountCredentials> credentials,
                                           AuthSuccessCallback onSuccess,
@@ -45,7 +44,7 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
                                           const OnChangeCallback& onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
-    ctx->accountId = accountId;
+    ctx->accountId = accountId_;
     ctx->key = key;
     ctx->request = buildRequest(key);
     ctx->deviceName = std::move(deviceName);
@@ -79,7 +78,7 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
                 if (hasArchive) {
                     // Create/migrate from local archive
                     if (ctx->credentials->updateIdentity.first
-                        and ctx->credentials->updateIdentity.second
+                        //and ctx->credentials->updateIdentity.second
                         and needsMigration(ctx->credentials->updateIdentity)) {
                         this_->migrateAccount(*ctx);
                     } else {
@@ -90,11 +89,8 @@ ArchiveAccountManager::initAuthentication(const std::string& accountId,
                     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(
                         &dev::KeyPair::create);
                     AccountArchive a;
-                    JAMI_WARN("[Auth] Converting certificate from old account %s",
-                                ctx->credentials->updateIdentity.first->getPublicKey()
-                                    .getId()
-                                    .toString()
-                                    .c_str());
+                    JAMI_WARNING("[Account {}] [Auth] Converting certificate from old account {}",
+                                 this_->accountId_, ctx->credentials->updateIdentity.first->getPublicKey().getId().to_view());
                     a.id = std::move(ctx->credentials->updateIdentity);
                     try {
                         a.ca_key = std::make_shared<dht::crypto::PrivateKey>(
@@ -495,7 +491,7 @@ bool
 ArchiveAccountManager::needsMigration(const dht::crypto::Identity& id)
 {
     if (not id.second)
-        return false;
+        return true;
     auto cert = id.second->issuer;
     while (cert) {
         if (not cert->isCA()) {
