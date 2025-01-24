@@ -105,8 +105,7 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 }
 
 dht::crypto::Identity
-AccountManager::loadIdentity(const std::string& accountId,
-                             const std::string& crt_path,
+AccountManager::loadIdentity(const std::string& crt_path,
                              const std::string& key_path,
                              const std::string& key_pwd) const
 {
@@ -133,7 +132,7 @@ AccountManager::loadIdentity(const std::string& accountId,
             return {};
         }
         // load revocation lists for device authority (account certificate).
-        Manager::instance().certStore(accountId).loadRevocations(*issuer);
+        Manager::instance().certStore(accountId_).loadRevocations(*issuer);
 
         return {std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
                 std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))};
@@ -172,64 +171,62 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
 }
 
 const AccountInfo*
-AccountManager::useIdentity(const std::string& accountId,
-                            const dht::crypto::Identity& identity,
+AccountManager::useIdentity(const dht::crypto::Identity& identity,
                             const std::string& receipt,
                             const std::vector<uint8_t>& receiptSignature,
                             const std::string& username,
                             const OnChangeCallback& onChange)
 {
-    accountId_ = accountId;
     if (receipt.empty() or receiptSignature.empty())
         return nullptr;
 
     if (not identity.first or not identity.second) {
-        JAMI_ERROR("[Account {}] [Auth] no identity provided", accountId);
+        JAMI_ERROR("[Account {}] [Auth] no identity provided", accountId_);
         return nullptr;
     }
 
     auto accountCertificate = identity.second->issuer;
     if (not accountCertificate) {
-        JAMI_ERROR("[Account {}] [Auth] device certificate must be issued by the account certificate", accountId);
+        JAMI_ERROR("[Account {}] [Auth] device certificate must be issued by the account certificate", accountId_);
         return nullptr;
     }
 
     // match certificate chain
-    auto contactList = std::make_unique<ContactList>(accountId, accountCertificate, path_, onChange);
+    auto contactList = std::make_unique<ContactList>(accountId_, accountCertificate, path_, onChange);
     auto result = contactList->isValidAccountDevice(*identity.second);
     if (not result) {
-        JAMI_ERROR("[Account {}] [Auth] unable to use identity: device certificate chain is unable to be verified: {}", accountId,
+        JAMI_ERROR("[Account {}] [Auth] unable to use identity: device certificate chain is unable to be verified: {}", accountId_,
                  result.toString());
         return nullptr;
     }
 
     auto pk = accountCertificate->getSharedPublicKey();
-    JAMI_LOG("[Account {}] [Auth] checking device receipt for {}", accountId, pk->getId().toString());
+    JAMI_LOG("[Account {}] [Auth] checking device receipt for {}", accountId_, pk->getId().toString());
     if (!pk->checkSignature({receipt.begin(), receipt.end()}, receiptSignature)) {
-        JAMI_ERROR("[Auth] device receipt signature check failed");
+        JAMI_ERROR("[Account {}] [Auth] device receipt signature check failed", accountId_);
         return nullptr;
     }
 
     auto root = announceFromReceipt(receipt);
     if (!root.isMember("announce")) {
-        JAMI_ERROR("[Account {}] [Auth] device receipt parsing error", accountId);
+        JAMI_ERROR("[Account {}] [Auth] device receipt parsing error", accountId_);
         return nullptr;
     }
 
     auto dev_id = root["dev"].asString();
     if (dev_id != identity.second->getId().toString()) {
-        JAMI_ERROR("[Account {}] [Auth] device ID mismatch between receipt and certificate", accountId);
+        JAMI_ERROR("[Account {}] [Auth] device ID mismatch between receipt and certificate", accountId_);
         return nullptr;
     }
     auto id = root["id"].asString();
     if (id != pk->getId().toString()) {
-        JAMI_ERROR("[Account {}] [Auth] account ID mismatch between receipt and certificate", accountId);
+        JAMI_ERROR("[Account {}] [Auth] account ID mismatch between receipt and certificate", accountId_);
         return nullptr;
     }
 
     auto devicePk = identity.first->getSharedPublicKey();
     if (!devicePk) {
-        JAMI_ERROR("[Account {}] [Auth] No device pk found", accountId);
+        JAMI_ERROR("[Account {}] [Auth] No device pk found", accountId_);
         return nullptr;
     }
 
@@ -252,7 +249,7 @@ AccountManager::useIdentity(const std::string& accountId,
     info->username = username;
     info_ = std::move(info);
 
-    JAMI_LOG("[Account {}] [Auth] Device {} receipt checked successfully for user {}", accountId,
+    JAMI_LOG("[Account {}] [Auth] Device {} receipt checked successfully for user {}", accountId_,
              info_->deviceId, id);
     return info_.get();
 }

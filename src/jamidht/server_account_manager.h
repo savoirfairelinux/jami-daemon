@@ -27,7 +27,8 @@ namespace jami {
 class ServerAccountManager : public AccountManager
 {
 public:
-    ServerAccountManager(const std::filesystem::path& path,
+    ServerAccountManager(const std::string& accountId,
+                         const std::filesystem::path& path,
                          const std::string& managerHostname,
                          const std::string& nameServer);
 
@@ -37,8 +38,7 @@ public:
         std::shared_ptr<dht::crypto::Certificate> ca;
     };
 
-    void initAuthentication(const std::string& accountId,
-                            PrivateKey request,
+    void initAuthentication(PrivateKey request,
                             std::string deviceName,
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,

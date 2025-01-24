@@ -76,8 +76,9 @@ public:
     using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
     using OnDeviceAnnouncedCb = std::function<void()>;
 
-    AccountManager(const std::filesystem::path& path, const std::string& nameServer)
-        : path_(path)
+    AccountManager(const std::string& accountId, const std::filesystem::path& path, const std::string& nameServer)
+        : accountId_(accountId)
+        , path_(path)
         , nameDir_(NameDirectory::instance(nameServer)) {};
 
     virtual ~AccountManager();
@@ -109,8 +110,7 @@ public:
         virtual ~AccountCredentials() {};
     };
 
-    virtual void initAuthentication(const std::string& accountId,
-                                    PrivateKey request,
+    virtual void initAuthentication(PrivateKey request,
                                     std::string deviceName,
                                     std::unique_ptr<AccountCredentials> credentials,
                                     AuthSuccessCallback onSuccess,
@@ -126,13 +126,11 @@ public:
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
     virtual std::vector<uint8_t> getPasswordKey(const std::string& /*password*/) { return {}; };
 
-    dht::crypto::Identity loadIdentity(const std::string& accountId,
-                                       const std::string& crt_path,
+    dht::crypto::Identity loadIdentity(const std::string& crt_path,
                                        const std::string& key_path,
                                        const std::string& key_pwd) const;
 
-    const AccountInfo* useIdentity(const std::string& accountId,
-                                   const dht::crypto::Identity& id,
+    const AccountInfo* useIdentity(const dht::crypto::Identity& id,
                                    const std::string& receipt,
                                    const std::vector<uint8_t>& receiptSignature,
                                    const std::string& username,
@@ -272,10 +270,10 @@ public:
     dhtnet::tls::CertificateStore& certStore() const;
 
 protected:
-    std::filesystem::path path_;
+    const std::string accountId_;
+    const std::filesystem::path path_;
     OnChangeCallback onChange_;
     std::unique_ptr<AccountInfo> info_;
-    std::string accountId_;
     std::shared_ptr<dht::DhtRunner> dht_;
     std::reference_wrapper<NameDirectory> nameDir_;
 };

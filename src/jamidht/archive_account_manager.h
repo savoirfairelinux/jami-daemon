@@ -25,11 +25,12 @@ class ArchiveAccountManager : public AccountManager
 public:
     using OnExportConfig = std::function<std::map<std::string, std::string>()>;
 
-    ArchiveAccountManager(const std::filesystem::path& path,
+    ArchiveAccountManager(const std::string& accountId,
+                          const std::filesystem::path& path,
                           OnExportConfig&& onExportConfig,
                           std::string archivePath,
                           const std::string& nameServer)
-        : AccountManager(path, nameServer)
+        : AccountManager(accountId, path, nameServer)
         , onExportConfig_(std::move(onExportConfig))
         , archivePath_(std::move(archivePath)) {}
 
@@ -40,8 +41,7 @@ public:
         dht::crypto::Identity updateIdentity;
     };
 
-    void initAuthentication(const std::string& accountId,
-                            PrivateKey request,
+    void initAuthentication(PrivateKey request,
                             std::string deviceName,
                             std::unique_ptr<AccountCredentials> credentials,
                             AuthSuccessCallback onSuccess,
