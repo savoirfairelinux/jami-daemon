@@ -1252,8 +1252,8 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             id_ = std::move(id);
             config_->username = info->accountId;
             JAMI_WARNING("[Account {:s}] Loaded account identity", getAccountID());
-            if (info->identity.first->getPublicKey().getLongId() != oldIdentity) {
-                JAMI_WARNING("[Account {:s}] Identity changed", getAccountID());
+            if (oldIdentity && info->identity.first->getPublicKey().getLongId() != oldIdentity) {
+                JAMI_WARNING("[Account {:s}] Identity changed from {} to {}", getAccountID(), oldIdentity, info->identity.first->getPublicKey().getLongId());
                 {
                     std::lock_guard lk(moduleMtx_);
                     convModule_.reset();
@@ -1339,6 +1339,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
                     auto id = info.identity;
                     editConfig([&](JamiAccountConfig& conf) {
+                        conf.fromMap(config);
                         std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile)
                             = saveIdentity(id, idPath_, DEVICE_ID_PATH);
                         conf.tlsPassword = {};
@@ -1362,7 +1363,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         }
                         conf.receipt = std::move(receipt);
                         conf.receiptSignature = std::move(receipt_signature);
-                        conf.fromMap(config);
                     });
                     id_ = std::move(id);
                     {
