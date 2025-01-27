@@ -711,14 +711,14 @@ AccountManager::sendTrustRequest(const std::string& to,
                                  const std::string& convId,
                                  const std::vector<uint8_t>& payload)
 {
-    JAMI_WARN("AccountManager::sendTrustRequest");
+    JAMI_WARNING("[Account {}] AccountManager::sendTrustRequest", accountId_);
     auto toH = dht::InfoHash(to);
     if (not toH) {
-        JAMI_ERR("Unable to send trust request to invalid hash: %s", to.c_str());
+        JAMI_ERROR("[Account {}] Unable to send trust request to invalid hash: {}", accountId_, to);
         return;
     }
     if (not info_) {
-        JAMI_ERR("sendTrustRequest(): account not loaded");
+        JAMI_ERROR("[Account {}] sendTrustRequest(): account not loaded", accountId_);
         return;
     }
     if (info_->contacts->addContact(toH, false, convId)) {
@@ -727,9 +727,8 @@ AccountManager::sendTrustRequest(const std::string& to,
     forEachDevice(toH,
                   [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                       auto to = toH.toString();
-                      JAMI_WARNING("Sending trust request to: {:s} / {:s} of size {:d}",
-                                   to,
-                                   dev->getLongId().toString(), payload.size());
+                      JAMI_WARNING("[Account {}] Sending trust request to: {:s} / {:s} of size {:d}",
+                                   accountId_, to, dev->getLongId(), payload.size());
                       dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
                                          dev,
                                          dht::TrustRequest(DHT_TYPE_NS, convId, payload),
@@ -746,7 +745,7 @@ AccountManager::sendTrustRequest(const std::string& to,
 void
 AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::string& convId)
 {
-    JAMI_WARN("AccountManager::sendTrustRequestConfirm");
+    JAMI_WARNING("[Account {}] AccountManager::sendTrustRequestConfirm to {} (conversation {})", accountId_, toH, convId);
     dht::TrustRequest answer {DHT_TYPE_NS, convId};
     answer.confirm = true;
 
@@ -754,9 +753,8 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
         info_->contacts->acceptConversation(convId);
 
     forEachDevice(toH, [this, toH, answer](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-        JAMI_WARN("sending trust request reply: %s / %s",
-                  toH.toString().c_str(),
-                  dev->getLongId().toString().c_str());
+        JAMI_WARNING("[Account {}] sending trust request reply: {} / {}",
+                     accountId_, toH, dev->getLongId());
         dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()), dev, answer);
     });
 }
@@ -768,7 +766,7 @@ AccountManager::forEachDevice(
     std::function<void(bool)>&& end)
 {
     if (not dht_) {
-        JAMI_ERR("forEachDevice: no dht");
+        JAMI_ERROR("[Account {}] forEachDevice: no dht", accountId_);
         if (end)
             end(false);
         return;
@@ -780,13 +778,18 @@ AccountManager::forEachDevice(
 
     struct State
     {
+        const dht::InfoHash to;
+        const std::string accountId;
         // Note: state is initialized to 1, because we need to wait that the get is finished
         unsigned remaining {1};
         std::set<dht::PkId> treatedDevices {};
         std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)> onDevice;
         std::function<void(bool)> onEnd;
 
-        void found(std::shared_ptr<dht::crypto::PublicKey> pk)
+        State(dht::InfoHash to, std::string accountId)
+            : to(std::move(to)), accountId(std::move(accountId)) {}
+
+        void found(const std::shared_ptr<dht::crypto::PublicKey>& pk)
         {
             remaining--;
             if (pk && *pk) {
@@ -801,14 +804,14 @@ AccountManager::forEachDevice(
         void ended()
         {
             if (remaining == 0 && onEnd) {
-                JAMI_DEBUG("Found {:d} device(s)", treatedDevices.size());
+                JAMI_LOG("[Account {}] Found {:d} device(s) for {}", accountId, treatedDevices.size(), to);
                 onEnd(not treatedDevices.empty());
                 onDevice = {};
                 onEnd = {};
             }
         }
     };
-    auto state = std::make_shared<State>();
+    auto state = std::make_shared<State>(to, accountId_);
     state->onDevice = std::move(op);
     state->onEnd = std::move(end);
 
