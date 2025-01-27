@@ -523,7 +523,7 @@ NameDirectory::loadCache()
         JAMI_ERROR("Error when loading cache: {}", e.what());
     }
 
-    JAMI_DEBUG("Loaded {:d} name-address mappings", nameCache_.size());
+    JAMI_DEBUG("Loaded {:d} name-address mappings from cache", nameCache_.size());
 }
 
 } // namespace jami
