@@ -513,7 +513,7 @@ NameDirectory::loadCache()
         oh.get().convert(nameCache_);
     for (const auto& m : nameCache_)
         addrCache_.emplace(m.second, m.first);
-    JAMI_DEBUG("Loaded {:d} name-address mappings", nameCache_.size());
+    JAMI_DEBUG("Loaded {:d} name-address mappings from cache", nameCache_.size());
 }
 
 } // namespace jami

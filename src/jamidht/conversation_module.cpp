@@ -1283,7 +1283,7 @@ ConversationModule::Impl::fixStructures(
         updateConvForContact(uri, oldConv, newConv);
     }
     ////////////////////////////////////////////////////////////////
-    // Note: This is only to homogeneize trust and convRequests
+    // Note: This is only to homogenize trust and convRequests
     std::vector<std::string> invalidPendingRequests;
     {
         auto requests = acc->getTrustRequests();
