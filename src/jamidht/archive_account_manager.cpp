@@ -353,8 +353,6 @@ ArchiveAccountManager::migrateAccount(AuthContext& ctx)
         return;
     }
 
-    updateArchive(archive);
-
     if (updateCertificates(archive, ctx.credentials->updateIdentity)) {
         // because updateCertificates already regenerate a device, we do not need to
         // regenerate one in onArchiveLoaded
@@ -369,8 +367,6 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
 {
     auto ethAccount = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
     dhtnet::fileutils::check_dir(path_, 0700);
-
-    a.save(fileutils::getFullPath(path_, archivePath_), ctx.credentials ? ctx.credentials->password_scheme : "", ctx.credentials ? ctx.credentials->password : "");
 
     if (not a.id.second->isCA()) {
         JAMI_ERROR("[Account {}] [Auth] Attempting to sign a certificate with a non-CA.", accountId_);
@@ -425,13 +421,24 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx,
     if (!contacts)
         contacts = std::make_unique<ContactList>(ctx.accountId, a.id.second, path_, onChange_);
     info->contacts = std::move(contacts);
-    info->contacts->setContacts(a.contacts);
+    if (ctx.credentials->updateIdentity.first) {
+        info->contacts->load();
+    } else
+        info->contacts->setContacts(a.contacts);
     info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
+    if (!usePreviousIdentity && ctx.credentials->updateIdentity.first && deviceCertificate->getLongId() != ctx.credentials->updateIdentity.first->getPublicKey().getLongId()) {
+        JAMI_WARNING("[Account {}] [Auth] Removing previous known device for this account", accountId_, ctx.credentials->updateIdentity.first->getPublicKey().getLongId());
+        info->contacts->removeAccountDevice(ctx.credentials->updateIdentity.first->getPublicKey().getLongId());
+    }
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
-    ConversationModule::saveConvInfosToPath(path_, a.conversations);
-    ConversationModule::saveConvRequestsToPath(path_, a.conversationsRequests);
+    if (!ctx.credentials->updateIdentity.first) {
+        ConversationModule::saveConvInfosToPath(path_, a.conversations);
+        ConversationModule::saveConvRequestsToPath(path_, a.conversationsRequests);
+    }
     info_ = std::move(info);
+
+    saveArchive(a, ctx.credentials ? ctx.credentials->password_scheme : "", ctx.credentials ? ctx.credentials->password : "");
 
     ctx.onSuccess(*info_,
                   std::move(a.config),
