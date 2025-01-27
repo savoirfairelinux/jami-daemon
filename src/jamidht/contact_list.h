@@ -142,6 +142,8 @@ public:
     bool syncDevice(const dht::PkId& device, const time_point& syncDate);
 
 private:
+    const std::string accountId_;
+    const std::filesystem::path path_;
     mutable std::mutex mutex_;
     std::map<dht::InfoHash, Contact> contacts_;
     std::map<dht::InfoHash, TrustRequest> trustRequests_;
@@ -153,11 +155,9 @@ private:
     dht::crypto::TrustList accountTrust_;
     // Trust store for to match peer certificates
     std::unique_ptr<dhtnet::tls::TrustStore> trust_;
-    std::filesystem::path path_;
     std::string accountUri_;
 
     OnChangeCallback callbacks_;
-    std::string accountId_;
 
     void loadContacts();
     void loadTrustRequests();
