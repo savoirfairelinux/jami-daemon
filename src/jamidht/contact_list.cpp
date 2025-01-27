@@ -41,7 +41,7 @@ ContactList::ContactList(const std::string& accountId,
 {
     if (cert) {
         trust_ = std::make_unique<dhtnet::tls::TrustStore>(jami::Manager::instance().certStore(accountId_));
-        accountTrust_.add(*cert);
+        accountTrust_.add(*cert->issuer);
     }
 }
 
