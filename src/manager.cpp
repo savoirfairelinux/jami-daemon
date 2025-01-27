@@ -2936,16 +2936,7 @@ Manager::getCallList() const
 void
 Manager::registerAccounts()
 {
-    auto allAccounts(getAccountList());
-
-    for (auto& item : allAccounts) {
-        const auto a = getAccount(item);
-
-        if (!a)
-            continue;
-
-        a->loadConfig();
-
+    for (auto& a : getAllAccounts()) {
         if (a->isUsable())
             a->doRegister();
     }
