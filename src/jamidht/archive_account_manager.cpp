@@ -595,12 +595,12 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                                        AUTOANSWER,
                                        PROXY_ENABLED,
                                        PROXY_SERVER,
-                                       PROXY_PUSH_TOKEN};
+                                       PROXY_PUSH_TOKEN,
+                                       TLS::CERTIFICATE_FILE,
+                                       TLS::PRIVATE_KEY_FILE};
 
     // Keys with meaning of file path where the contents has to be exported in base64
-    static const auto encoded_keys = {TLS::CA_LIST_FILE,
-                                      TLS::CERTIFICATE_FILE,
-                                      TLS::PRIVATE_KEY_FILE};
+    static const auto encoded_keys = {TLS::CA_LIST_FILE};
 
     JAMI_LOG("[Account {}] [Auth] Building account archive", accountId_);
     for (const auto& it : onExportConfig_()) {
