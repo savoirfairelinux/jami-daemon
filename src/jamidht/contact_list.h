@@ -132,7 +132,8 @@ public:
                             const time_point& last_sync = time_point::min());
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
                             const std::string& name = {},
-                            const time_point& last_sync = time_point::min());
+                            const time_point& last_sync = time_point::min(),
+                            bool notify = true);
     bool removeAccountDevice(const dht::PkId& device);
     void setAccountDeviceName(const dht::PkId& device, const std::string& name);
     std::string getAccountDeviceName(const dht::PkId& device) const;

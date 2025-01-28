@@ -430,6 +430,7 @@ ContactList::discardTrustRequest(const dht::InfoHash& from)
 void
 ContactList::loadKnownDevices()
 {
+    auto& certStore = jami::Manager::instance().certStore(accountId_);
     try {
         // read file
         auto file = fileutils::loadFile("knownDevices", path_);
@@ -439,32 +440,20 @@ ContactList::loadKnownDevices()
         std::map<dht::PkId, std::pair<std::string, uint64_t>> knownDevices;
         oh.get().convert(knownDevices);
         for (const auto& d : knownDevices) {
-            if (auto crt = jami::Manager::instance().certStore(accountId_).getCertificate(d.first.toString())) {
-                if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
+            JAMI_WARNING("[Contacts] Loading known device: {} {}", d.second.first, d.first);
+            if (auto crt = certStore.getCertificate(d.first.toString())) {
+                if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second), false))
                     JAMI_WARNING("[Account {}] [Contacts] Unable to add device {}", accountId_, d.first);
             } else {
                 JAMI_WARNING("[Account {}] [Contacts] Unable to find certificate for device {}", accountId_,
                           d.first);
             }
         }
-    } catch (const std::exception& e) {
-        // Legacy fallback
-        try {
-            auto file = fileutils::loadFile("knownDevicesNames", path_);
-            msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
-            std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
-            oh.get().convert(knownDevices);
-            for (const auto& d : knownDevices) {
-                if (auto crt = jami::Manager::instance().certStore(accountId_).getCertificate(d.first.toString())) {
-                    if (not foundAccountDevice(crt,
-                                               d.second.first,
-                                               clock::from_time_t(d.second.second)))
-                        JAMI_WARNING("[Account {}] [Contacts] Unable to add device {}", accountId_, d.first);
-                }
-            }
-        } catch (const std::exception& e) {
-            JAMI_WARNING("[Account {}] [Contacts] Error loading devices: {}", accountId_, e.what());
+        if (not knownDevices.empty()) {
+            callbacks_.devicesChanged(knownDevices_);
         }
+    } catch (const std::exception& e) {
+        JAMI_WARN("[Contacts] Error loading devices: %s", e.what());
         return;
     }
 }
@@ -475,9 +464,11 @@ ContactList::saveKnownDevices() const
     std::ofstream file(path_ / "knownDevices", std::ios::trunc | std::ios::binary);
 
     std::map<dht::PkId, std::pair<std::string, uint64_t>> devices;
-    for (const auto& id : knownDevices_)
+    for (const auto& id : knownDevices_) {
+        JAMI_LOG("[Account {}] [Contacts] Saving device: {} {}", accountId_, id.second.name, id.first);
         devices.emplace(id.first,
                         std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
+    }
 
     msgpack::pack(file, devices);
 }
@@ -508,7 +499,8 @@ ContactList::foundAccountDevice(const dht::PkId& device,
 bool
 ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
                                 const std::string& name,
-                                const time_point& updated)
+                                const time_point& updated,
+                                bool notify)
 {
     if (not crt)
         return false;
@@ -535,15 +527,19 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
                 trust_->setCertificateStatus(crt, dhtnet::tls::TrustStore::PermissionStatus::BANNED, false);
             }
         }
-        saveKnownDevices();
-        callbacks_.devicesChanged(knownDevices_);
+        if (notify) {
+            saveKnownDevices();
+            callbacks_.devicesChanged(knownDevices_);
+        }
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
             JAMI_LOG("[Account {}] [Contacts] updating device name: {} {}", accountId_, name, id);
             it.first->second.name = name;
-            saveKnownDevices();
-            callbacks_.devicesChanged(knownDevices_);
+            if (notify) {
+                saveKnownDevices();
+                callbacks_.devicesChanged(knownDevices_);
+            }
         }
     }
     return true;
