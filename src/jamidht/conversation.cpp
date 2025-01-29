@@ -670,6 +670,7 @@ public:
     /**
      * Loaded history represents the linearized history to show for clients
      */
+    mutable std::mutex loadingMtx_;
     mutable History loadedHistory_ {};
     std::vector<std::shared_ptr<libjami::SwarmMessage>> addToHistory(
         const std::vector<std::map<std::string, std::string>>& commits,
@@ -878,6 +879,8 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 std::vector<libjami::SwarmMessage>
 Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
 {
+
+    std::unique_lock lk(loadingMtx_);
     if (!optHistory) {
         std::lock_guard lock(historyMtx_);
         if (!repository_ || isLoadingHistory_)
@@ -1712,11 +1715,15 @@ Conversation::loadMessages2(const OnLoadMessages2& cb, const LogOptions& options
 void
 Conversation::clearCache()
 {
+    {
+        std::lock_guard lk(pimpl_->messageStatusMtx_);
+        pimpl_->memberToStatus.clear();
+    }
+    std::unique_lock lk(pimpl_->loadingMtx_);
     pimpl_->loadedHistory_.messageList.clear();
     pimpl_->loadedHistory_.quickAccess.clear();
     pimpl_->loadedHistory_.pendingEditions.clear();
     pimpl_->loadedHistory_.pendingReactions.clear();
-    pimpl_->memberToStatus.clear();
 }
 
 std::string
