@@ -161,7 +161,8 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                             info->announce
                                 = parseAnnounce(receiptJson["announce"].asString(),
                                                 info->accountId,
-                                                info->devicePk->getId().toString());
+                                                info->devicePk->getId().toString(),
+                                                info->devicePk->getLongId().toString());
                             if (not info->announce) {
                                 ctx->onFailure(AuthError::SERVER_ERROR,
                                                 "Unable to parse announce from server");
