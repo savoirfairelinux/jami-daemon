@@ -247,7 +247,8 @@ public:
 
     static std::shared_ptr<dht::Value> parseAnnounce(const std::string& announceBase64,
                                                      const std::string& accountId,
-                                                     const std::string& deviceSha1);
+                                                     const std::string& deviceSha1,
+                                                     const std::string& deviceSha256);
 
     // Name resolver
     using LookupCallback = NameDirectory::LookupCallback;
