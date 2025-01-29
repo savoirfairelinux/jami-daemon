@@ -2893,17 +2893,23 @@ Manager::loadAccountMap(const YAML::Node& node)
         }
         remaining++;
         dht::ThreadPool::computation().run(
-            [this, dir, &cv, &remaining, &lock, configFile = accountBaseDir / dir / "config.yml"] {
-                if (std::filesystem::is_regular_file(configFile)) {
-                    try {
-                        auto configNode = YAML::LoadFile(configFile.string());
-                        if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                            auto config = a->buildConfig();
-                            config->unserialize(configNode);
-                            a->setConfig(std::move(config));
+            [this, dir, &cv, &remaining, &lock, accountDir = accountBaseDir / dir] {
+                std::error_code ec;
+                if (std::filesystem::is_regular_file(accountDir / "INITIALIZING", ec)) {
+                    std::filesystem::remove_all(accountDir, ec);
+                } else {
+                    auto configFile = accountDir / "config.yml";
+                    if (std::filesystem::is_regular_file(configFile, ec)) {
+                        try {
+                            auto configNode = YAML::LoadFile(configFile.string());
+                            if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
+                                auto config = a->buildConfig();
+                                config->unserialize(configNode);
+                                a->setConfig(std::move(config));
+                            }
+                        } catch (const std::exception& e) {
+                            JAMI_ERR("Unable to import account %s: %s", dir.c_str(), e.what());
                         }
-                    } catch (const std::exception& e) {
-                        JAMI_ERR("Unable to import account %s: %s", dir.c_str(), e.what());
                     }
                 }
                 std::lock_guard l(lock);
