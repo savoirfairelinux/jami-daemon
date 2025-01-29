@@ -1277,6 +1277,12 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
             bool migrating = registrationState_ == RegistrationState::ERROR_NEED_MIGRATION;
             setRegistrationState(RegistrationState::INITIALIZING);
+            auto lockFlagPath = idPath_ / "INITIALIZING";
+            {
+                // touch lock file using raw std::filesystem APIs to handle authentication failure if the process is killed
+                std::ofstream lockFlag(lockFlagPath);
+            }
+
             auto fDeviceKey = dht::ThreadPool::computation()
                                   .getShared<std::shared_ptr<dht::crypto::PrivateKey>>([]() {
                                       return std::make_shared<dht::crypto::PrivateKey>(
@@ -1326,7 +1332,8 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 [w = weak(),
                  this,
                  migrating,
-                 hasPassword](const AccountInfo& info,
+                 hasPassword,
+                 lockFlagPath](const AccountInfo& info,
                               const std::map<std::string, std::string>& config,
                               std::string&& receipt,
                               std::vector<uint8_t>&& receipt_signature) {
@@ -1365,6 +1372,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         conf.receiptSignature = std::move(receipt_signature);
                     });
                     id_ = std::move(id);
+                    std::filesystem::remove(lockFlagPath);
                     {
                         std::lock_guard lk(moduleMtx_);
                         convModule_.reset();
@@ -1381,8 +1389,10 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 [w = weak(),
                  id,
                  accountId = getAccountID(),
+                 lockFlagPath,
                  migrating](AccountManager::AuthError error, const std::string& message) {
                     JAMI_WARNING("[Account {}] Auth error: {} {}", accountId, (int) error, message);
+                    std::filesystem::remove(lockFlagPath);
                     if ((id.first || migrating)
                         && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
                         // In cast of a migration or manager connexion failure stop the migration
