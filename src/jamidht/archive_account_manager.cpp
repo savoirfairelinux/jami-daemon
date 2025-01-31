@@ -78,7 +78,7 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                 if (hasArchive) {
                     // Create/migrate from local archive
                     if (ctx->credentials->updateIdentity.first
-                        //and ctx->credentials->updateIdentity.second
+                        and ctx->credentials->updateIdentity.second
                         and needsMigration(ctx->credentials->updateIdentity)) {
                         this_->migrateAccount(*ctx);
                     } else {
