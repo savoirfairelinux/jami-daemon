@@ -476,6 +476,10 @@ NameDirectory::saveCache()
     dhtnet::fileutils::recursive_mkdir(fileutils::get_cache_dir() / CACHE_DIRECTORY);
     std::lock_guard lock(dhtnet::fileutils::getFileLock(cachePath_));
     std::ofstream file(cachePath_, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERROR("Unable to save cache to {}", cachePath_);
+        return;
+    }
     {
         std::lock_guard l(cacheLock_);
         msgpack::pack(file, nameCache_);
@@ -505,13 +509,20 @@ NameDirectory::loadCache()
         }
     }
 
-    // load values
-    std::lock_guard l(cacheLock_);
-    msgpack::object_handle oh;
-    if (pac.next(oh))
-        oh.get().convert(nameCache_);
-    for (const auto& m : nameCache_)
-        addrCache_.emplace(m.second.second, m.second);
+    try {
+        // load values
+        std::lock_guard l(cacheLock_);
+        msgpack::object_handle oh;
+        if (pac.next(oh))
+            oh.get().convert(nameCache_);
+        for (const auto& m : nameCache_)
+            addrCache_.emplace(m.second.second, m.second);
+    } catch (const msgpack::parse_error& e) {
+        JAMI_ERROR("Error when parsing msgpack object: {}", e.what());
+    } catch (const std::bad_cast& e) {
+        JAMI_ERROR("Error when loading cache: {}", e.what());
+    }
+
     JAMI_DEBUG("Loaded {:d} name-address mappings", nameCache_.size());
 }
 
