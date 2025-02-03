@@ -2181,7 +2181,8 @@ JamiAccount::convModule(bool noCreation)
                     if (auto shared = w.lock()) {
                         auto& config = shared->config();
                         // For JAMS account, we must update the server
-                        if (!config.managerUri.empty())
+                        // for now, only sync with the JAMS server for changes to the conversation list
+                        if (!config.managerUri.empty() && syncMsg->isEmpty())
                             if (auto am = shared->accountManager())
                                 am->syncDevices();
                         if (auto sm = shared->syncModule())
