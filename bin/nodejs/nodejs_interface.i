@@ -145,6 +145,7 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConfigurationSignal::AccountProfileReceived>(bind(&accountProfileReceived, _1, _2, _3)),
         //exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4, _5 )),
         exportable_callback<ConfigurationSignal::UserSearchEnded>(bind(&userSearchEnded, _1, _2, _3, _4 )),
+        exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&deviceRevocationEnded, _1, _2, _3)),
     };
 
     const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
