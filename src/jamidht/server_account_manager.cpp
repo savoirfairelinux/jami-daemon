@@ -534,11 +534,18 @@ ServerAccountManager::syncDevices()
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
+                            const bool revoked = e["revoked"].asBool();
                             dht::PkId deviceId(e["deviceId"].asString());
-                            if (deviceId) {
+                            if(!deviceId){
+                                continue;
+                            }
+                            if (!revoked) {
                                 this_->info_->contacts->foundAccountDevice(deviceId,
                                                                             e["alias"].asString(),
                                                                             clock::now());
+                            }
+                            else {
+                                this_->info_->contacts->removeAccountDevice(deviceId);
                             }
                         }
                     }
@@ -609,7 +616,7 @@ ServerAccountManager::revokeDevice(const std::string& device,
                     if (json["errorDetails"].empty()) {
                         if (cb)
                             cb(RevokeDeviceResult::SUCCESS);
-                        this_->syncDevices();
+                        this_->syncDevices(); // this will remove the devices from the known devices
                     }
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Error when loading device list: {}", e.what());
