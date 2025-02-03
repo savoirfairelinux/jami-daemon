@@ -363,20 +363,20 @@ public:
             md["syncing"] = "true";
             md["created"] = std::to_string(it->second.received);
         }
-        saveMetadatas();
+        saveMetadata();
         conversationsRequests_.erase(id);
         saveConvRequests();
     }
 
     std::weak_ptr<JamiAccount> account_;
     std::shared_ptr<AccountManager> accountManager_;
+    const std::string accountId_ {};
     NeedsSyncingCb needsSyncingCb_;
     SengMsgCb sendMsgCb_;
     NeedSocketCb onNeedSocket_;
     NeedSocketCb onNeedSwarmSocket_;
     OneToOneRecvCb oneToOneRecvCb_;
 
-    std::string accountId_ {};
     std::string deviceId_ {};
     std::string username_ {};
 
@@ -427,14 +427,14 @@ public:
 
     // While syncing, we do not want to lose metadata (avatar/title and mode)
     std::map<std::string, std::map<std::string, std::string>> syncingMetadatas_;
-    void saveMetadatas()
+    void saveMetadata()
     {
         auto path = fileutils::get_data_dir() / accountId_;
         std::ofstream file(path / "syncingMetadatas", std::ios::trunc | std::ios::binary);
         msgpack::pack(file, syncingMetadatas_);
     }
 
-    void loadMetadatas()
+    void loadMetadata()
     {
         try {
             // read file
@@ -446,7 +446,7 @@ public:
             msgpack::unpack(result, (const char*) file.data(), file.size(), 0);
             result.get().convert(syncingMetadatas_);
         } catch (const std::exception& e) {
-            JAMI_WARNING("[ConversationModule] error loading syncingMetadatas_: {}", e.what());
+            JAMI_WARNING("[Account {}] [ConversationModule] unable to load syncing metadata: {}", accountId_, e.what());
         }
     }
 };
@@ -460,12 +460,12 @@ ConversationModule::Impl::Impl(std::shared_ptr<JamiAccount>&& account,
                                OneToOneRecvCb&& oneToOneRecvCb)
     : account_(account)
     , accountManager_(accountManager)
+    , accountId_(account->getAccountID())
     , needsSyncingCb_(needsSyncingCb)
     , sendMsgCb_(sendMsgCb)
     , onNeedSocket_(onNeedSocket)
     , onNeedSwarmSocket_(onNeedSwarmSocket)
     , oneToOneRecvCb_(oneToOneRecvCb)
-    , accountId_(account->getAccountID())
 {
     if (auto accm = account->accountManager())
         if (const auto* info = accm->getInfo()) {
@@ -473,7 +473,7 @@ ConversationModule::Impl::Impl(std::shared_ptr<JamiAccount>&& account,
             username_ = info->accountId;
         }
     conversationsRequests_ = convRequests(accountId_);
-    loadMetadatas();
+    loadMetadata();
 }
 
 void
@@ -826,7 +826,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         if (!status.empty())
             conversation->updateMessageStatus(status);
         syncingMetadatas_.erase(conversationId);
-        saveMetadatas();
+        saveMetadata();
 
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
@@ -945,7 +945,7 @@ ConversationModule::Impl::declineOtherConversationWith(const std::string& uri) n
             JAMI_WARNING("Decline conversation request ({}) from {}", id, uri);
             request.declined = std::time(nullptr);
             syncingMetadatas_.erase(id);
-            saveMetadatas();
+            saveMetadata();
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(accountId_, id);
         }
     }
@@ -2055,7 +2055,7 @@ ConversationModule::declineConversationRequest(const std::string& conversationId
         pimpl_->saveConvRequests();
     }
     pimpl_->syncingMetadatas_.erase(conversationId);
-    pimpl_->saveMetadatas();
+    pimpl_->saveMetadata();
     emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                          conversationId);
     pimpl_->needsSyncingCb_({});
@@ -2506,7 +2506,7 @@ ConversationModule::onSyncData(const SyncMsg& msg,
                      convId,
                      deviceId);
             pimpl_->syncingMetadatas_.erase(convId);
-            pimpl_->saveMetadatas();
+            pimpl_->saveMetadata();
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_,
                                                                                  convId);
             continue;
@@ -2736,7 +2736,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
             if (syncingMetadatasIt != pimpl_->syncingMetadatas_.end()) {
                 if (conv->conversation) {
                     pimpl_->syncingMetadatas_.erase(syncingMetadatasIt);
-                    pimpl_->saveMetadatas();
+                    pimpl_->saveMetadata();
                 } else {
                     md = syncingMetadatasIt->second;
                 }
@@ -2834,7 +2834,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
             if (it->second.from == uri && !it->second.declined) {
                 JAMI_DEBUG("Declining conversation request {:s} from {:s}", it->first, uri);
                 pimpl_->syncingMetadatas_.erase(it->first);
-                pimpl_->saveMetadatas();
+                pimpl_->saveMetadata();
                 emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(
                     pimpl_->accountId_, it->first);
                 update = true;
