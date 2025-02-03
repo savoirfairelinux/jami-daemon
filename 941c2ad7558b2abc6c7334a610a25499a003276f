@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "96b3d010_9fe0df98",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 546,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-02-03T16:29:22Z",
+      "side": 1,
+      "message": "space between } and else {\n```suggestion\n                            } else {\n```",
+      "range": {
+        "startLine": 546,
+        "startChar": 28,
+        "endLine": 546,
+        "endChar": 30
+      },
+      "revId": "941c2ad7558b2abc6c7334a610a25499a003276f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
