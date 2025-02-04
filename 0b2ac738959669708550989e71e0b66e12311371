@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4c065330_028e1c4b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2025-02-04T20:59:33Z",
+      "side": 1,
+      "message": "breaks message status on my end (both web client and Qt client)",
+      "revId": "0b2ac738959669708550989e71e0b66e12311371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
