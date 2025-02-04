@@ -53,6 +53,7 @@ struct SyncMsg
      * }}
      */
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+
     MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
 };
 
