@@ -83,9 +83,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
 
     onChange_ = std::move(onChange);
     const std::string url = managerHostname_ + PATH_DEVICE;
-    JAMI_WARN("[Auth] Authentication with: %s to %s",
-              ctx->credentials->username.c_str(),
-              url.c_str());
+    JAMI_WARNING("[Account {}] [Auth] Authentication with: {} to {}", accountId_, ctx->credentials->username, url);
 
     dht::ThreadPool::computation().run([ctx, url, w=weak_from_this()] {
         auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
@@ -393,7 +391,7 @@ ServerAccountManager::syncDevices()
     const std::string urlConversations = managerHostname_ + PATH_CONVERSATIONS;
     const std::string urlConversationsRequests = managerHostname_ + PATH_CONVERSATIONS_REQUESTS;
 
-    JAMI_WARNING("[Auth] Sync conversations {}", urlConversations);
+    JAMI_WARNING("[Account {}] [Auth] Sync conversations {}", accountId_, urlConversations);
     Json::Value jsonConversations(Json::arrayValue);
     for (const auto& [key, convInfo] : ConversationModule::convInfos(accountId_)) {
         jsonConversations.append(convInfo.toJson());
@@ -403,15 +401,16 @@ ServerAccountManager::syncDevices()
         urlConversations,
         jsonConversations,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-                JAMI_DEBUG("[Auth] Got conversation sync request callback with status code={}",
-                         response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
+            JAMI_DEBUG("[Account {}] [Auth] Got conversation sync request callback with status code={}",
+                         this_->accountId_,
+                         response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    JAMI_WARNING("[Account {}] [Auth] Got server response: {}", this_->accountId_, response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Auth] Unable to parse server response: not an array");
+                        JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array", this_->accountId_);
                     } else {
                         SyncMsg convs;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
@@ -426,7 +425,7 @@ ServerAccountManager::syncDevices()
                         });
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERROR("Error when iterating conversation list: {}", e.what());
+                    JAMI_ERROR("[Account {}] Error when iterating conversation list: {}", this_->accountId_, e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);
@@ -435,7 +434,7 @@ ServerAccountManager::syncDevices()
         },
         logger_));
 
-    JAMI_WARNING("[Auth] Sync conversations requests {}", urlConversationsRequests);
+    JAMI_WARNING("[Account {}] [Auth] Sync conversations requests {}", accountId_, urlConversationsRequests);
     Json::Value jsonConversationsRequests(Json::arrayValue);
     for (const auto& [key, convRequest] : ConversationModule::convRequests(accountId_)) {
         auto jsonConversation = convRequest.toJson();
@@ -446,15 +445,15 @@ ServerAccountManager::syncDevices()
         urlConversationsRequests,
         jsonConversationsRequests,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-                JAMI_DEBUG("[Auth] Got conversations requests sync request callback with status code={}",
-                         response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
+            JAMI_DEBUG("[Account {}] [Auth] Got conversations requests sync request callback with status code={}",
+                            this_->accountId_, response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    JAMI_WARNING("[Account {}] [Auth] Got server response: {}", this_->accountId_, response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Auth] Unable to parse server response: not an array");
+                        JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array", this_->accountId_);
                     } else {
                         SyncMsg convReqs;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
@@ -469,7 +468,7 @@ ServerAccountManager::syncDevices()
                         });
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERROR("Error when iterating conversations requests list: {}", e.what());
+                    JAMI_ERROR("[Account {}] Error when iterating conversations requests list: {}", this_->accountId_, e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);
@@ -478,7 +477,7 @@ ServerAccountManager::syncDevices()
         },
         logger_));
 
-    JAMI_WARNING("[Auth] syncContacts {}", urlContacts);
+    JAMI_WARNING("[Account {}] [Auth] syncContacts {}", accountId_, urlContacts);
     Json::Value jsonContacts(Json::arrayValue);
     for (const auto& contact : info_->contacts->getContacts()) {
         auto jsonContact = contact.second.toJson();
@@ -518,14 +517,14 @@ ServerAccountManager::syncDevices()
         },
         logger_));
 
-    JAMI_WARNING("[Auth] syncDevices {}", urlDevices);
+    JAMI_WARNING("[Account {}] [Auth] syncDevices {}", accountId_, urlDevices);
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlDevices,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-            JAMI_DEBUG("[Auth] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
+            JAMI_DEBUG("[Account {}] [Auth] Got request callback with status code={}", this_->accountId_, response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARNING("[Auth] Got server response: {}", response.body);
