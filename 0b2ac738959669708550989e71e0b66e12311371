@@ -16,6 +16,24 @@
       "message": "breaks message status on my end (both web client and Qt client)",
       "revId": "0b2ac738959669708550989e71e0b66e12311371",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "397b21a0_05cd0b0b",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-02-04T21:44:18Z",
+      "side": 1,
+      "message": "should work now",
+      "parentUuid": "4c065330_028e1c4b",
+      "revId": "0b2ac738959669708550989e71e0b66e12311371",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
