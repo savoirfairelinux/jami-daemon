@@ -122,6 +122,9 @@ using MessageList = std::list<std::shared_ptr<libjami::SwarmMessage>>;
 
 struct History
 {
+    std::mutex mutex {};
+    std::condition_variable cv {};
+    bool loading {false};
     MessageList messageList {};
     std::map<std::string, std::shared_ptr<libjami::SwarmMessage>> quickAccess {};
     std::map<std::string, std::list<std::shared_ptr<libjami::SwarmMessage>>> pendingEditions {};
@@ -677,12 +680,13 @@ public:
         bool messageReceived = false,
         bool commitFromSelf = false,
         History* history = nullptr) const;
+
     // While loading the history, we need to avoid:
     // - reloading history (can just be ignored)
     // - adding new commits (should wait for history to be loaded)
-    bool isLoadingHistory_ {false};
-    mutable std::mutex historyMtx_ {};
-    mutable std::condition_variable historyCv_ {};
+    //bool isLoadingHistory_ {false};
+    //mutable std::mutex historyMtx_ {};
+    //mutable std::condition_variable historyCv_ {};
 
     void handleReaction(History& history,
                         const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
@@ -879,15 +883,13 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 std::vector<libjami::SwarmMessage>
 Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
 {
+    auto history = optHistory ? optHistory : &loadedHistory_;
 
-    std::lock_guard lk(loadingMtx_);
-
-    if (!optHistory) {
-        std::lock_guard lock(historyMtx_);
-        if (!repository_ || isLoadingHistory_)
-            return {};
-        isLoadingHistory_ = true;
+    // history->mutex is locked by the caller
+    if (!repository_ || history->loading) {
+        return {};
     }
+    history->loading = true;
 
     // By convention, if options.nbOfCommits is zero, then we
     // don't impose a limit on the number of commits returned.
@@ -959,14 +961,14 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if (!optHistory && msgList.empty() && !loadedHistory_.messageList.empty()) {
                 firstMsg = *loadedHistory_.messageList.rbegin();
             }
-            auto added = addToHistory({message}, false, false, optHistory);
+            auto added = addToHistory({message}, false, false, history);
             if (!added.empty() && firstMsg) {
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                              repository_->id(),
                                                                              *firstMsg);
             }
             msgList.insert(msgList.end(), added.begin(), added.end());
-            },
+        },
         /* postCondition */
         [&](auto, auto, auto) {
             // Stop logging if there was a limit set on the number of commits
@@ -979,18 +981,15 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
         options.from,
         options.logIfNotFound);
 
+    history->loading = false;
+    history->cv.notify_all();
+
     // Convert for client (remove ptr)
     std::vector<libjami::SwarmMessage> ret;
     ret.reserve(msgList.size());
     for (const auto& msg: msgList) {
         ret.emplace_back(*msg);
     }
-    if (!optHistory) {
-        std::lock_guard lock(historyMtx_);
-        isLoadingHistory_ = false;
-        historyCv_.notify_all();
-    }
-
     return ret;
 }
 
@@ -1180,9 +1179,9 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
     if (!acc)
         return {};
     auto username = acc->getUsername();
-    if (messageReceived && (!optHistory && isLoadingHistory_)) {
-        std::unique_lock lk(historyMtx_);
-        historyCv_.wait(lk, [&] { return !isLoadingHistory_; });
+    if (messageReceived && (optHistory == &loadedHistory_ && optHistory->loading)) {
+        std::unique_lock lk(optHistory->mutex);
+        optHistory->cv.wait(lk, [&] { return !optHistory->loading; });
     }
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
     auto addCommit = [&](const auto& commit) {
@@ -1708,6 +1707,7 @@ Conversation::loadMessages2(const OnLoadMessages2& cb, const LogOptions& options
         return;
     dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), options] {
         if (auto sthis = w.lock()) {
+            std::lock_guard lk(sthis->pimpl_->loadedHistory_.mutex);
             cb(sthis->pimpl_->loadMessages2(options));
         }
     });
@@ -1716,7 +1716,7 @@ Conversation::loadMessages2(const OnLoadMessages2& cb, const LogOptions& options
 void
 Conversation::clearCache()
 {
-    std::lock_guard lk(pimpl_->loadingMtx_);
+    std::lock_guard lk(pimpl_->loadedHistory_.mutex);
     pimpl_->loadedHistory_.messageList.clear();
     pimpl_->loadedHistory_.quickAccess.clear();
     pimpl_->loadedHistory_.pendingEditions.clear();
@@ -1730,16 +1730,15 @@ Conversation::clearCache()
 std::string
 Conversation::lastCommitId() const
 {
+    {
+        std::lock_guard lk(pimpl_->loadedHistory_.mutex);
+        if (!pimpl_->loadedHistory_.messageList.empty())
+            return (*pimpl_->loadedHistory_.messageList.begin())->id;
+    }
     LogOptions options;
     options.nbOfCommits = 1;
     options.skipMerge = true;
     History optHistory;
-    {
-        std::lock_guard lk(pimpl_->historyMtx_);
-        if (!pimpl_->loadedHistory_.messageList.empty())
-            return (*pimpl_->loadedHistory_.messageList.begin())->id;
-    }
-
     std::lock_guard lk(pimpl_->writeMtx_);
     auto res = pimpl_->loadMessages2(options, &optHistory);
     if (res.empty())
@@ -2241,7 +2240,7 @@ Conversation::Impl::updateStatus(const std::string& uri,
     options.logIfNotFound = false;
     options.fastLog = true;
     History optHistory;
-    std::lock_guard lk(historyMtx_); // Avoid to announce messages while updating status.
+    std::lock_guard lk(optHistory.mutex); // Avoid to announce messages while updating status.
     auto res = loadMessages2(options, &optHistory);
     if (res.size() == 0) {
         // In this case, commit is not received yet, so we cache it
