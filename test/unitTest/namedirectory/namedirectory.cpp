@@ -190,7 +190,6 @@ NameDirectoryTest::testRegisterName()
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::NameRegistrationEnded>(
         [&](const std::string&,
-            const std::string&,
             int status,
             const std::string&) {
             nameRegistered = status == 0;
