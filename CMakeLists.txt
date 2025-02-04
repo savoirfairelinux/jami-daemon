@@ -881,6 +881,10 @@ else()
             add_test(NAME test_media_player COMMAND ut_test_media_player)
         endif()
 
+        add_executable(ut_namedirectory test/unitTest/namedirectory/namedirectory.cpp)
+        target_link_libraries(ut_namedirectory ut_library)
+        add_test(NAME namedirectory COMMAND ut_namedirectory)
+
         add_executable(ut_scheduler test/unitTest/scheduler.cpp)
         target_link_libraries(ut_scheduler ut_library)
         add_test(NAME scheduler COMMAND ut_scheduler)
