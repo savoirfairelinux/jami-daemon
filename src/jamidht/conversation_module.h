@@ -53,6 +53,11 @@ struct SyncMsg
      * }}
      */
     std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> ms;
+
+    bool isEmpty() const {
+        return ds.date == 0 and c.empty() and cr.empty() and p.empty() and ld.empty() and ms.empty();
+    }
+
     MSGPACK_DEFINE(ds, c, cr, p, ld, ms)
 };
 
