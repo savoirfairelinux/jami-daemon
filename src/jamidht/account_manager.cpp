@@ -520,11 +520,11 @@ AccountManager::removeContactConversation(const std::string& uri)
 {
     dht::InfoHash h(uri);
     if (not h) {
-        JAMI_ERR("removeContact: invalid contact URI");
+        JAMI_ERROR("[Account {}] removeContactConversation: invalid contact URI", accountId_);
         return;
     }
     if (not info_) {
-        JAMI_ERR("addContact(): account not loaded");
+        JAMI_ERROR("[Account {}] removeContactConversation: account not loaded", accountId_);
         return;
     }
     if (info_->contacts->removeContactConversation(h))
@@ -536,11 +536,11 @@ AccountManager::updateContactConversation(const std::string& uri, const std::str
 {
     dht::InfoHash h(uri);
     if (not h) {
-        JAMI_ERR("removeContact: invalid contact URI");
+        JAMI_ERROR("[Account {}] updateContactConversation: invalid contact URI", accountId_);
         return;
     }
     if (not info_) {
-        JAMI_ERR("addContact(): account not loaded");
+        JAMI_ERROR("[Account {}] updateContactConversation: account not loaded", accountId_);
         return;
     }
     info_->contacts->updateConversation(h, convId);
@@ -557,7 +557,7 @@ std::vector<std::map<std::string, std::string>>
 AccountManager::getContacts(bool includeRemoved) const
 {
     if (not info_) {
-        JAMI_ERR("getContacts(): account not loaded");
+        JAMI_ERROR("[Account {}] getContacts(): account not loaded", accountId_);
         return {};
     }
     const auto& contacts = info_->contacts->getContacts();
@@ -581,12 +581,12 @@ std::map<std::string, std::string>
 AccountManager::getContactDetails(const std::string& uri) const
 {
     if (!info_) {
-        JAMI_ERR("getContactDetails(): account not loaded");
+        JAMI_ERROR("[Account {}] getContactDetails(): account not loaded", accountId_);
         return {};
     }
     dht::InfoHash h(uri);
     if (not h) {
-        JAMI_ERR("getContactDetails: invalid contact URI");
+        JAMI_ERROR("[Account {}] getContactDetails: invalid contact URI", accountId_);
         return {};
     }
     return info_->contacts->getContactDetails(h);
@@ -668,7 +668,7 @@ std::vector<std::map<std::string, std::string>>
 AccountManager::getTrustRequests() const
 {
     if (not info_) {
-        JAMI_ERR("getTrustRequests(): account not loaded");
+        JAMI_ERROR("[Account {}] getTrustRequests(): account not loaded", accountId_);
         return {};
     }
     return info_->contacts->getTrustRequests();
