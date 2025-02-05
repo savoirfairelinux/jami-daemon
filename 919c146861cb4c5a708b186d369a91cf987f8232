@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8a1c3750_2f9b9638",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-02-05T21:55:59Z",
+      "side": 1,
+      "message": "Probably need to make sure this is non-null before calling `getLongId`?",
+      "range": {
+        "startLine": 169,
+        "startChar": 108,
+        "endLine": 169,
+        "endChar": 113
+      },
+      "revId": "919c146861cb4c5a708b186d369a91cf987f8232",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
