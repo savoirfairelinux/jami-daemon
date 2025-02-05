@@ -262,7 +262,7 @@ public:
     bool isAdmin() const;
     std::filesystem::path repoPath() const;
 
-    void announce(const std::string& commitId, bool commitFromSelf = false) const
+    void announce(const std::string& commitId, bool commitFromSelf = false)
     {
         std::vector<std::string> vec;
         if (!commitId.empty())
@@ -270,7 +270,7 @@ public:
         announce(vec, commitFromSelf);
     }
 
-    void announce(const std::vector<std::string>& commits, bool commitFromSelf = false) const
+    void announce(const std::vector<std::string>& commits, bool commitFromSelf = false)
     {
         std::vector<ConversationCommit> convcommits;
         convcommits.reserve(commits.size());
@@ -451,7 +451,7 @@ public:
         }
     }
 
-    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false) const
+    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false)
     {
         if (!repository_)
             return;
@@ -676,12 +676,12 @@ public:
     /**
      * Loaded history represents the linearized history to show for clients
      */
-    mutable History loadedHistory_ {};
+    History loadedHistory_ {};
     std::vector<std::shared_ptr<libjami::SwarmMessage>> addToHistory(
         const std::vector<std::map<std::string, std::string>>& commits,
         bool messageReceived = false,
         bool commitFromSelf = false,
-        History* history = nullptr) const;
+        History* history = nullptr);
 
     void handleReaction(History& history,
                         const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
@@ -1168,7 +1168,7 @@ std::vector<std::shared_ptr<libjami::SwarmMessage>>
 Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
                                  bool commitFromSelf,
-                                 History* optHistory) const
+                                 History* optHistory)
 {
     auto acc = account_.lock();
     if (!acc)
