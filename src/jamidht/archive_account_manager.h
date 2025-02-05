@@ -106,7 +106,7 @@ private:
                                                                       const std::string& pin,
                                                                       bool previous = false);
     bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
-    static bool needsMigration(const dht::crypto::Identity& id);
+    static bool needsMigration(const std::string& accountId, const dht::crypto::Identity& id);
 
     void loadFromFile(AuthContext& ctx);
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
