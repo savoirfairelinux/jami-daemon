@@ -43,6 +43,7 @@
 #include "jami/media_const.h"
 #include "audio/ringbufferpool.h"
 #include "sip/sipcall.h"
+#include "json_utils.h"
 
 #include <opendht/thread_pool.h>
 
@@ -1119,12 +1120,9 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
     // Check if the peer is a master
     if (auto call = getCall(callId)) {
         const auto& peerId = getRemoteId(call);
-        std::string err;
         Json::Value root;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (!reader->parse(confOrder.c_str(), confOrder.c_str() + confOrder.size(), &root, &err)) {
-            JAMI_WARN("Unable to parse conference order from %s", peerId.c_str());
+        if (!parseJson(confOrder, root)) {
+            JAMI_WARNING("Unable to parse conference order from {}", peerId);
             return;
         }
 
