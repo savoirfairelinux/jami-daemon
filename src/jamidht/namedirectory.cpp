@@ -201,7 +201,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                     try {
                         Json::Value json;
                         if (!parseJson(response.body, json)) {
-                            cb("", Response::error);
+                            cb("", "", Response::error);
                             return;
                         }
                         auto name = json["name"].asString();
@@ -277,7 +277,7 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                 try {
                     Json::Value json;
                     if (!parseJson(response.body, json)) {
-                        cb("", Response::error);
+                        cb("", "", Response::error);
                         return;
                     }
                     auto nameResult = json["name"].asString();
