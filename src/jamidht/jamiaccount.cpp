@@ -68,6 +68,7 @@
 #include "string_utils.h"
 #include "archiver.h"
 #include "data_transfer.h"
+#include "json_utils.h"
 
 #include "libdevcrypto/Common.h"
 #include "base64.h"
@@ -923,11 +924,8 @@ JamiAccount::loadConfig()
         try {
             auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy",
                                                     std::chrono::hours(24 * 7));
-            std::string err;
             Json::Value root;
-            Json::CharReaderBuilder rbuilder;
-            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-            if (reader->parse(str.data(), str.data() + str.size(), &root, &err)) {
+            if (parseJson(str, root)) {
                 proxyServerCached_ = root[getProxyConfigKey()].asString();
             }
         } catch (const std::exception& e) {
@@ -3161,11 +3159,7 @@ JamiAccount::sendMessage(const std::string& to,
     // to load the conversation.
     auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
         Json::Value parsed;
-        Json::CharReaderBuilder readerBuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(readerBuilder.newCharReader());
-        std::string errors;
-
-        if (reader->parse(jsonData.c_str(), jsonData.c_str() + jsonData.size(), &parsed, &errors)) {
+        if (parseJson(jsonData, parsed)) {
             auto value = parsed.get("id", Json::nullValue);
             if (value && value.isString()) {
                 return value.asString();
@@ -3518,11 +3512,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
 {
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
-        std::string err;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERROR("Unable to parse server response: {}", err);
+        if (!parseJson(m.second, json)) {
             return false;
         }
 
@@ -3542,11 +3532,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         return true;
     } else if (m.first == MIME_TYPE_INVITE_JSON) {
         Json::Value json;
-        std::string err;
-        Json::CharReaderBuilder rbuilder;
-        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-        if (!reader->parse(m.second.data(), m.second.data() + m.second.size(), &json, &err)) {
-            JAMI_ERROR("Unable to parse server response: {}", err);
+        if (!parseJson(m.second, json)) {
             return false;
         }
         convModule()->onConversationRequest(from, json);

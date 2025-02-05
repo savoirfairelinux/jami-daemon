@@ -37,7 +37,7 @@
 
 #include <cstddef>
 #include <msgpack.hpp>
-#include <json/json.h>
+#include "json_utils.h"
 
 /* for visual studio */
 #include <ciso646>
@@ -200,16 +200,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 } else {
                     try {
                         Json::Value json;
-                        std::string err;
-                        Json::CharReaderBuilder rbuilder;
-                        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                        if (!reader->parse(response.body.data(),
-                                           response.body.data() + response.body.size(),
-                                           &json,
-                                           &err)) {
-                            JAMI_DBG("Address lookup for %s: Unable to parse server response: %s",
-                                     addr.c_str(),
-                                     response.body.c_str());
+                        if (!parseJson(response.body, json)) {
                             cb("", "", Response::error);
                             return;
                         }
@@ -285,15 +276,7 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
             } else {
                 try {
                     Json::Value json;
-                    std::string err;
-                    Json::CharReaderBuilder rbuilder;
-                    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                    if (!reader->parse(response.body.data(),
-                                       response.body.data() + response.body.size(),
-                                       &json,
-                                       &err)) {
-                        JAMI_ERROR("Name lookup for {}: Unable to parse server response: {}",
-                                 name, response.body);
+                    if (!parseJson(response.body, json)) {
                         cb("", "", Response::error);
                         return;
                     }

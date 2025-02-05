@@ -135,7 +135,6 @@ public:
                                    const std::vector<uint8_t>& receiptSignature,
                                    const std::string& username,
                                    const OnChangeCallback& onChange);
-    Json::Value announceFromReceipt(const std::string& receipt);
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 

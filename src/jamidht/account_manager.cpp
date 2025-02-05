@@ -24,6 +24,7 @@
 #include "manager.h"
 
 #include "libdevcrypto/Common.h"
+#include "json_utils.h"
 
 #include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
@@ -213,8 +214,8 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
         return nullptr;
     }
 
-    auto root = announceFromReceipt(receipt);
-    if (!root.isMember("announce")) {
+    Json::Value root;
+    if (!parseJson(receipt, root) || !root.isMember("announce")) {
         JAMI_ERROR("[Account {}] [Auth] device receipt parsing error", accountId_);
         return nullptr;
     }
@@ -266,18 +267,6 @@ AccountManager::reloadContacts()
     if (info_) {
         info_->contacts->load();
     }
-}
-
-Json::Value
-AccountManager::announceFromReceipt(const std::string& receipt)
-{
-    Json::Value root;
-    Json::CharReaderBuilder rbuilder;
-    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-    if (!reader->parse(&receipt[0], &receipt[receipt.size()], &root, nullptr)) {
-        JAMI_ERROR("[Account {}] error parsing device receipt", accountId_);
-    }
-    return root;
 }
 
 void
