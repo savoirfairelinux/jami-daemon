@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b9e94c9_fc728ae7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 1738,
+      "author": {
+        "id": 1105
+      },
+      "writtenOn": "2025-02-05T18:56:33Z",
+      "side": 1,
+      "message": "build fails due to lk declaration",
+      "revId": "a28273cc732cc3f5e886c97c282cce3eda86ae02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
