@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b81432f4_148c083c",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 883,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-02-05T16:48:09Z",
+      "side": 1,
+      "message": "Not always true currently, `Impl::loadMessages2` is called from `Conversation::lastCommitId` and `Conversation::countInteractions` without locking this mutex.",
+      "range": {
+        "startLine": 883,
+        "startChar": 7,
+        "endLine": 883,
+        "endChar": 45
+      },
+      "revId": "db92cb573eb59e6a1f3e027f80c742cb4f8b16e5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
