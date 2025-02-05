@@ -39,7 +39,18 @@
 
 #include <ciso646> // fix windows compiler bug
 
+#include "json_utils.h"
+
 namespace jami {
+
+Json::CharReaderBuilder getJsonReaderBuilder()
+{
+    Json::CharReaderBuilder builder;
+    builder["collectComments"] = false;
+    return builder;
+}
+
+const Json::CharReaderBuilder rbuilder = getJsonReaderBuilder();
 
 std::string_view
 userAgent()
