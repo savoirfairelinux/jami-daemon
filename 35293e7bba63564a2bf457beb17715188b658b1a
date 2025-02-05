@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b8ff3dcd_fcf114c3",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-02-05T20:18:19Z",
+      "side": 1,
+      "message": "The log isn\u0027t consistent with the check in the if statement (`da.dev` is compared to `deviceSha1` but is printed alongside `deviceSha256`).",
+      "range": {
+        "startLine": 169,
+        "startChar": 108,
+        "endLine": 169,
+        "endChar": 126
+      },
+      "revId": "35293e7bba63564a2bf457beb17715188b658b1a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
