@@ -274,6 +274,8 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                                           const dht::http::Response& response) {
             if (response.status_code > 400 && response.status_code < 500)
                 cb("", "", Response::notFound);
+            else if (response.status_code == 400)
+                cb("", "", Response::invalidName);
             else if (response.status_code < 200 || response.status_code > 299) {
                 JAMI_ERROR("Name lookup for {} on {} failed with code={}",
                            name, serverUrl_, response.status_code);
