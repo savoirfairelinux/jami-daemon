@@ -71,7 +71,15 @@ public:
                     R"(/name/:name)",
                     [](auto req, auto params) {
                         const auto qp = parse_query(req->header().query());
-                        if (params["name"] == "taken") {
+                        const auto& name = params["name"];
+                        if (name.find('%') != std::string::npos) {
+                            return req->create_response(restinio::status_bad_request())
+                                    .set_body(
+                                            fmt::format("{{\"error\":\"invalid name\"}}")
+                                    )
+                                    .done();
+                        }
+                        else if (name == "taken") {
                             return req->create_response()
                                     .set_body(
                                             fmt::format("{{\"name\":\"taken\",\"addr\":\"c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de\"}}")
@@ -88,7 +96,15 @@ public:
                     R"(/addr/:addr)",
                     [](auto req, auto params) {
                         const auto qp = parse_query(req->header().query());
-                        if (params["addr"] == "c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de") {
+                        const auto& addr = params["addr"];
+                        if (addr.find_first_not_of("0123456789abcdefABCDEF") != std::string::npos) {
+                            return req->create_response(restinio::status_bad_request())
+                                    .set_body(
+                                            fmt::format("{{\"error\":\"invalid address\"}}")
+                                    )
+                                    .done();
+                        }
+                        else if (addr == "c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de") {
                             return req->create_response()
                                     .set_body(
                                             fmt::format("{{\"name\":\"taken\",\"addr\":\"c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de\"}}")
@@ -183,7 +199,6 @@ void
 NameDirectoryTest::testRegisterName()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameRegistered {false};
@@ -192,11 +207,13 @@ NameDirectoryTest::testRegisterName()
         [&](const std::string&,
             int status,
             const std::string&) {
+            std::lock_guard lk {mtx};
             nameRegistered = status == 0;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(libjami::registerName(aliceId, "foo"));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return nameRegistered; }));
 }
 
@@ -204,7 +221,6 @@ void
 NameDirectoryTest::testLookupName()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameFound {false};
@@ -215,11 +231,13 @@ NameDirectoryTest::testLookupName()
             int status,
             const std::string&,
             const std::string&) {
+            std::lock_guard lk {mtx};
             nameFound = status == 0;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(libjami::lookupName(aliceId, "", "taken"));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return nameFound; }));
 }
 
@@ -227,7 +245,6 @@ void
 NameDirectoryTest::testLookupNameInvalid()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameInvalid {false};
@@ -238,11 +255,13 @@ NameDirectoryTest::testLookupNameInvalid()
             int status,
             const std::string&,
             const std::string&) {
+            std::lock_guard lk {mtx};
             nameInvalid = status == 1;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(libjami::lookupName(aliceId, "", "===="));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return nameInvalid; }));
 }
 
@@ -250,7 +269,6 @@ void
 NameDirectoryTest::testLookupNameNotFound()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool nameNotFound {false};
@@ -261,11 +279,13 @@ NameDirectoryTest::testLookupNameNotFound()
             int status,
             const std::string&,
             const std::string&) {
+            std::lock_guard lk {mtx};
             nameNotFound = status == 2;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(libjami::lookupName(aliceId, "", "nottaken"));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return nameNotFound; }));
 }
 
@@ -273,7 +293,6 @@ void
 NameDirectoryTest::testLookupAddr()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool addrFound {false};
@@ -284,11 +303,13 @@ NameDirectoryTest::testLookupAddr()
             int status,
             const std::string&,
             const std::string&) {
+            std::lock_guard lk {mtx};
             addrFound = status == 0;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(libjami::lookupAddress(aliceId, "", "c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de"));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return addrFound; }));
 }
 
@@ -296,7 +317,6 @@ void
 NameDirectoryTest::testLookupAddrInvalid()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool addrInvalid {false};
@@ -307,11 +327,13 @@ NameDirectoryTest::testLookupAddrInvalid()
             int status,
             const std::string&,
             const std::string&) {
+            std::lock_guard lk {mtx};
             addrInvalid = status == 1;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
-    CPPUNIT_ASSERT(libjami::lookupName(aliceId, "", "===="));
+    CPPUNIT_ASSERT(libjami::lookupAddress(aliceId, "", "===="));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return addrInvalid; }));
 }
 
@@ -319,7 +341,6 @@ void
 NameDirectoryTest::testLookupAddrNotFound()
 {
     std::mutex mtx;
-    std::unique_lock lk {mtx};
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool addrNotFound {false};
@@ -330,11 +351,13 @@ NameDirectoryTest::testLookupAddrNotFound()
             int status,
             const std::string&,
             const std::string&) {
+            std::lock_guard lk {mtx};
             addrNotFound = status == 2;
             cv.notify_one();
         }));
     libjami::registerSignalHandlers(confHandlers);
     CPPUNIT_ASSERT(libjami::lookupAddress(aliceId, "", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return addrNotFound; }));
 }
 
