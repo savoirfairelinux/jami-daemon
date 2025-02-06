@@ -1335,7 +1335,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                     auto sthis = w.lock();
                     if (not sthis)
                         return;
-                    JAMI_LOG("[Account {}] Auth success!", getAccountID());
+                    JAMI_LOG("[Account {}] Auth success! Device: {}", getAccountID(), info.deviceId);
 
                     dhtnet::fileutils::check_dir(idPath_, 0700);
 
