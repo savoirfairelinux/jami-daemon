@@ -458,7 +458,7 @@ public:
         auto convId = repository_->id();
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
-        addToHistory(commits, true, commitFromSelf);
+        addToHistory(loadedHistory_, commits, true, commitFromSelf);
         if (ok) {
             bool announceMember = false;
             for (const auto& c : commits) {
@@ -678,10 +678,10 @@ public:
      */
     History loadedHistory_ {};
     std::vector<std::shared_ptr<libjami::SwarmMessage>> addToHistory(
+        History& history,
         const std::vector<std::map<std::string, std::string>>& commits,
         bool messageReceived = false,
-        bool commitFromSelf = false,
-        History* history = nullptr);
+        bool commitFromSelf = false);
 
     void handleReaction(History& history,
                         const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
@@ -956,7 +956,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if ((history == &loadedHistory_) && msgList.empty() && !loadedHistory_.messageList.empty()) {
                 firstMsg = *loadedHistory_.messageList.rbegin();
             }
-            auto added = addToHistory({message}, false, false, history);
+            auto added = addToHistory(*history, {message}, false, false);
             if (!added.empty() && firstMsg) {
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                              repository_->id(),
@@ -1165,24 +1165,23 @@ void Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessa
 
 
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
-Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
+Conversation::Impl::addToHistory(History& history,
+                                 const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
-                                 bool commitFromSelf,
-                                 History* optHistory)
+                                 bool commitFromSelf)
 {
     auto acc = account_.lock();
     if (!acc)
         return {};
     auto username = acc->getUsername();
-    if (messageReceived && (optHistory == &loadedHistory_ && optHistory->loading)) {
-        std::unique_lock lk(optHistory->mutex);
-        optHistory->cv.wait(lk, [&] { return !optHistory->loading; });
+    if (messageReceived && (&history == &loadedHistory_ && history.loading)) {
+        std::unique_lock lk(history.mutex);
+        history.cv.wait(lk, [&] { return !history.loading; });
     }
     std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
     auto addCommit = [&](const auto& commit) {
-        auto* history = optHistory ? optHistory : &loadedHistory_;
         auto commitId = commit.at("id");
-        if (history->quickAccess.find(commitId) != history->quickAccess.end())
+        if (history.quickAccess.find(commitId) != history.quickAccess.end())
             return; // Already present
         auto typeIt = commit.find("type");
         auto reactToIt = commit.find("react-to");
@@ -1194,7 +1193,7 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
         // Set message status based on cache (only on history for client)
-        if (!commitFromSelf && optHistory == &loadedHistory_) {
+        if (!commitFromSelf && &history == &loadedHistory_) {
             std::lock_guard lk(messageStatusMtx_);
             for (const auto& member: repository_->members()) {
                 // If we have a status cached, use it
@@ -1252,16 +1251,16 @@ Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::st
                 }
             }
         }
-        history->quickAccess[commitId] = sharedCommit;
+        history.quickAccess[commitId] = sharedCommit;
 
         if (reactToIt != commit.end() && !reactToIt->second.empty()) {
-            handleReaction(*history, sharedCommit);
+            handleReaction(history, sharedCommit);
         } else if (editIt != commit.end() && !editIt->second.empty()) {
-            handleEdition(*history, sharedCommit, messageReceived);
-        } else if (handleMessage(*history, sharedCommit, messageReceived)) {
+            handleEdition(history, sharedCommit, messageReceived);
+        } else if (handleMessage(history, sharedCommit, messageReceived)) {
             messages.emplace_back(sharedCommit);
         }
-        rectifyStatus(sharedCommit, *history);
+        rectifyStatus(sharedCommit, history);
     };
     std::for_each(commits.begin(), commits.end(), addCommit);
 
@@ -2601,7 +2600,7 @@ Conversation::search(uint32_t req,
                 },
                 [&](auto&& cc) {
                     if (auto optMessage = sthis->pimpl_->repository_->convCommitToMap(cc))
-                        sthis->pimpl_->addToHistory({optMessage.value()}, false, false, &history);
+                        sthis->pimpl_->addToHistory(history, {optMessage.value()}, false, false);
                 },
                 [&](auto id, auto, auto) {
                     if (id == filter.lastId)
