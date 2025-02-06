@@ -2094,16 +2094,17 @@ JamiAccount::doRegister_()
                     syncCnt_.fetch_add(1);
                     gs->setOnFetched(
                         [w = weak(), conversationId, deviceId](const std::string& commit) {
-                            if (auto shared = w.lock()) {
-                                shared->convModule()->setFetched(conversationId,
-                                                                 deviceId.toString(),
-                                                                 commit);
-                                shared->syncCnt_.fetch_sub(1);
-                                if (shared->syncCnt_.load() == 0) {
-                                    emitSignal<libjami::ConversationSignal::ConversationCloned>(
-                                        shared->getAccountID().c_str());
+                            dht::ThreadPool::computation().run([w, conversationId, deviceId, commit]() {
+                                if (auto shared = w.lock()) {
+                                    shared->convModule()->setFetched(conversationId,
+                                                                    deviceId.toString(),
+                                                                    commit);
+                                    if (shared->syncCnt_.fetch_sub(1) == 1) {
+                                        emitSignal<libjami::ConversationSignal::ConversationCloned>(
+                                            shared->getAccountID().c_str());
+                                    }
                                 }
-                            }
+                            });
                         });
                     const dht::Value::Id serverId = ValueIdDist()(rand);
                     {
