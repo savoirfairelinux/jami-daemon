@@ -283,10 +283,14 @@ ServerAccountManager::sendRequest(const std::shared_ptr<dht::http::Request>& req
 void
 ServerAccountManager::clearRequest(const std::weak_ptr<dht::http::Request>& request)
 {
-    if (auto req = request.lock()) {
-        std::lock_guard lock(requestLock_);
-        requests_.erase(req);
-    }
+    Manager::instance().ioContext()->post([w=weak_from_this(), request] {
+        if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock())) {
+            if (auto req = request.lock()) {
+                std::lock_guard lock(this_->requestLock_);
+                this_->requests_.erase(req);
+            }
+        }
+    });
 }
 
 void
