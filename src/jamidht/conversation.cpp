@@ -458,7 +458,7 @@ public:
         auto convId = repository_->id();
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
-        addToHistory(commits, true, commitFromSelf);
+        addToHistory(&loadedHistory_, commits, true, commitFromSelf);
         if (ok) {
             bool announceMember = false;
             for (const auto& c : commits) {
@@ -678,10 +678,10 @@ public:
      */
     History loadedHistory_ {};
     std::vector<std::shared_ptr<libjami::SwarmMessage>> addToHistory(
+        History* history,
         const std::vector<std::map<std::string, std::string>>& commits,
         bool messageReceived = false,
-        bool commitFromSelf = false,
-        History* history = nullptr);
+        bool commitFromSelf = false);
 
     void handleReaction(History& history,
                         const std::shared_ptr<libjami::SwarmMessage>& sharedCommit) const;
@@ -956,7 +956,7 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
             if ((history == &loadedHistory_) && msgList.empty() && !loadedHistory_.messageList.empty()) {
                 firstMsg = *loadedHistory_.messageList.rbegin();
             }
-            auto added = addToHistory({message}, false, false, history);
+            auto added = addToHistory(history, {message}, false, false);
             if (!added.empty() && firstMsg) {
                 emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_,
                                                                              repository_->id(),
@@ -1165,10 +1165,10 @@ void Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessa
 
 
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
-Conversation::Impl::addToHistory(const std::vector<std::map<std::string, std::string>>& commits,
+Conversation::Impl::addToHistory(History* optHistory,
+                                 const std::vector<std::map<std::string, std::string>>& commits,
                                  bool messageReceived,
-                                 bool commitFromSelf,
-                                 History* optHistory)
+                                 bool commitFromSelf)
 {
     auto acc = account_.lock();
     if (!acc)
@@ -2601,7 +2601,7 @@ Conversation::search(uint32_t req,
                 },
                 [&](auto&& cc) {
                     if (auto optMessage = sthis->pimpl_->repository_->convCommitToMap(cc))
-                        sthis->pimpl_->addToHistory({optMessage.value()}, false, false, &history);
+                        sthis->pimpl_->addToHistory(&history, {optMessage.value()}, false, false);
                 },
                 [&](auto id, auto, auto) {
                     if (id == filter.lastId)
