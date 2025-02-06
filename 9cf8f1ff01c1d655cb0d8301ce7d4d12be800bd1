@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "98e3173d_3c4f1b7b",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1168,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-02-06T19:12:53Z",
+      "side": 1,
+      "message": "if optHistory is required to be non-null it should:\n* be a reference (History\u0026)\n* be simply called `history` since it\u0027s not optional anymore",
+      "range": {
+        "startLine": 1168,
+        "startChar": 32,
+        "endLine": 1168,
+        "endChar": 42
+      },
+      "revId": "9cf8f1ff01c1d655cb0d8301ce7d4d12be800bd1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
