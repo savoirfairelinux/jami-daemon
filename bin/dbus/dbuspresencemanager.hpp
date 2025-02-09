@@ -23,7 +23,7 @@ class DBusPresenceManager : public sdbus::AdaptorInterfaces<cx::ring::Ring::Pres
 {
 public:
     DBusPresenceManager(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/PresenceManager")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath{"/cx/ring/Ring/PresenceManager"})
     {
         registerAdaptor();
         registerSignalHandlers();

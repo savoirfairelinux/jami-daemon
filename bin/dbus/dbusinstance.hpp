@@ -28,7 +28,7 @@ class DBusInstance : public sdbus::AdaptorInterfaces<cx::ring::Ring::Instance_ad
 {
 public:
     DBusInstance(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/Instance")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath{"/cx/ring/Ring/Instance"})
     {
         registerAdaptor();
     }
