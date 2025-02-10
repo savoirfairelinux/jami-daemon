@@ -573,9 +573,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     for (auto const& mediaAttr : mediaAttrList) {
         // Find media
         auto oldIdx = std::find_if(hostSources_.begin(), hostSources_.end(), [&](auto oldAttr) {
-            return oldAttr.sourceUri_ == mediaAttr.sourceUri_
-                   && oldAttr.type_ == mediaAttr.type_
-                   && oldAttr.label_ == mediaAttr.label_;
+            bool ret = oldAttr.label_ == mediaAttr.label_;
         });
         // If video, add to newVideoInputs
 #ifdef ENABLE_VIDEO
