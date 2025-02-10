@@ -83,17 +83,6 @@ public:
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 
-#if VIDEO_CLIENT_INPUT
-    /*
-     * these functions are used to pass buffer from/to the daemon
-     * on the Android and UWP builds
-     */
-    void* obtainFrame(int length);
-    void releaseFrame(void* frame);
-#else
-    void stopInput();
-#endif
-
     void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
     {
         onSuccessfulSetup_ = cb;
