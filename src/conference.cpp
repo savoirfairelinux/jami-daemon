@@ -580,7 +580,8 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 #ifdef ENABLE_VIDEO
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
             auto srcUri = mediaAttr.sourceUri_.empty() ? Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice() : mediaAttr.sourceUri_;
-            newVideoInputs.emplace_back(srcUri);
+            if (!mediaAttr.muted_)
+                newVideoInputs.emplace_back(srcUri);
         } else {
 #endif
             hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
