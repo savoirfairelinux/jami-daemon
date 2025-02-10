@@ -388,13 +388,6 @@ VideoInput::deleteDecoder()
 }
 
 void
-VideoInput::stopInput()
-{
-    clearOptions();
-    loop_.stop();
-}
-
-void
 VideoInput::clearOptions()
 {
     decOpts_ = {};
