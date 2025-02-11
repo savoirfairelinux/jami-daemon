@@ -2812,7 +2812,7 @@ ConversationModule::isBanned(const std::string& convId, const std::string& uri) 
     if (auto conv = pimpl_->getConversation(convId)) {
         std::lock_guard lk(conv->mtx);
         if (!conv->conversation)
-            return true;
+            return false;
         if (conv->conversation->mode() != ConversationMode::ONE_TO_ONE)
             return conv->conversation->isBanned(uri);
     }
