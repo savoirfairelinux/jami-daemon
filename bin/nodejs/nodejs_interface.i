@@ -115,6 +115,7 @@ void init(const SWIGV8_VALUE& funcMap){
     using libjami::ConfigurationSignal;
     using libjami::CallSignal;
     using libjami::ConversationSignal;
+    using libjami::PresenceSignal;
     using SharedCallback = std::shared_ptr<libjami::CallbackWrapperBase>;
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3, _4)),
@@ -171,6 +172,16 @@ void init(const SWIGV8_VALUE& funcMap){
         exportable_callback<ConversationSignal::ConversationPreferencesUpdated>(bind(&conversationPreferencesUpdated, _1, _2, _3))
     };
 
+    // Presence event handlers
+    const std::map<std::string, SharedCallback> presenceEvHandlers = {
+        exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(bind(&newServerSubscriptionRequest, _1 )),
+        exportable_callback<PresenceSignal::ServerError>(bind(&serverError, _1, _2, _3 )),
+        exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&newBuddyNotification, _1, _2, _3, _4 )),
+        exportable_callback<PresenceSignal::NearbyPeerNotification>(bind(&nearbyPeerNotification, _1, _2, _3, _4)),
+        exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&subscriptionStateChanged, _1, _2, _3 ))
+    };
+    
+
     if (!libjami::init(static_cast<libjami::InitFlag>(libjami::LIBJAMI_FLAG_DEBUG)))
         return;
 
@@ -178,6 +189,7 @@ void init(const SWIGV8_VALUE& funcMap){
     registerSignalHandlers(callEvHandlers);
     registerSignalHandlers(conversationHandlers);
     registerSignalHandlers(dataTransferEvHandlers);
+    registerSignalHandlers(presenceEvHandlers);
     libjami::start();
 }
 %}

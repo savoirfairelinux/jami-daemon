@@ -56,6 +56,11 @@ Persistent<Function> accountProfileReceivedCb;
 Persistent<Function> profileReceivedCb;
 Persistent<Function> userSearchEndedCb;
 Persistent<Function> deviceRevocationEndedCb;
+Persistent<Function> subscriptionStateChangedCb;
+Persistent<Function> nearbyPeerNotificationCb;
+Persistent<Function> newBuddyNotificationCb;
+Persistent<Function> serverErrorCb;
+Persistent<Function> newServerSubscriptionRequestCb;
 
 std::queue<std::function<void()>> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -159,6 +164,16 @@ getPresistentCb(std::string_view signal)
         return &userSearchEndedCb;
     else if (signal == "DeviceRevocationEnded")
         return &deviceRevocationEndedCb;
+    else if (signal == "SubscriptionStateChanged")
+        return &subscriptionStateChangedCb;
+    else if (signal == "NearbyPeerNotification")
+        return &nearbyPeerNotificationCb;
+    else if (signal == "NewBuddyNotification")
+        return &newBuddyNotificationCb;
+    else if (signal == "ServerError")
+        return &serverErrorCb;
+    else if (signal == "NewServerSubscriptionRequest")
+        return &newServerSubscriptionRequestCb;
     else
         return nullptr;
 }
@@ -1163,3 +1178,78 @@ profileReceived(const std::string& accountId,
     uv_async_send(&signalAsync);
 }
 
+void
+subscriptionStateChanged(const std::string& accountId, const std::string& buddy_uri, int state)
+{
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, buddy_uri, state]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), subscriptionStateChangedCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(buddy_uri),
+                                            SWIGV8_INTEGER_NEW(state)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+nearbyPeerNotification(const std::string& accountId, const std::string& buddy_uri, int state, const std::string& displayName){
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, buddy_uri, state, displayName]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), nearbyPeerNotificationCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(buddy_uri),
+                                            SWIGV8_INTEGER_NEW(state),
+                                            V8_STRING_NEW_LOCAL(displayName)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+newBuddyNotification(const std::string& accountId, const std::string& buddy_uri, int status, const std::string& line_status){
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, buddy_uri, status, line_status]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), newBuddyNotificationCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(buddy_uri),
+                                            SWIGV8_INTEGER_NEW(status),
+                                            V8_STRING_NEW_LOCAL(line_status)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+newServerSubscriptionRequest(const std::string& remote){
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([remote]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), newServerSubscriptionRequestCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(remote)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 1, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
+
+void
+serverError(const std::string& accountId, const std::string& error, const std::string& msg){
+    std::lock_guard lock(pendingSignalsLock);
+    pendingSignals.emplace([accountId, error, msg]() {
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), serverErrorCb);
+        if (!func.IsEmpty()) {
+            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
+                                            V8_STRING_NEW_LOCAL(error),
+                                            V8_STRING_NEW_LOCAL(msg)};
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+        }
+    });
+    uv_async_send(&signalAsync);
+}
