@@ -6,11 +6,9 @@ PKGS += dhtnet
 DEPS_dhtnet += opendht pjproject asio upnp
 
 ifndef HAVE_WIN32
-ifndef HAVE_ANDROID
 ifndef HAVE_IOS
 ifndef HAVE_MACOSX
 DEPS_dhtnet += natpmp
-endif
 endif
 endif
 endif
