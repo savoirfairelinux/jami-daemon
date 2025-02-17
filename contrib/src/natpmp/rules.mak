@@ -3,10 +3,8 @@ NATPMP_VERSION := 007c3a53165a0551c877130eea4d966885ce19ae
 NATPMP_URL := https://github.com/miniupnp/libnatpmp/archive/${NATPMP_VERSION}.tar.gz
 
 ifndef HAVE_WIN32
-ifndef HAVE_ANDROID
 ifndef HAVE_IOS
 PKGS += natpmp
-endif
 endif
 endif
 
