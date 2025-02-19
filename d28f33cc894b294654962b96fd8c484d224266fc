@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b89ac51a_08bb3791",
+        "filename": "src/manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 2899,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-02-19T20:20:00Z",
+      "side": 1,
+      "message": "Doesn\u0027t this risk deleting a valid account in some cases? For example if Jami crashes or gets killed during a migration?",
+      "range": {
+        "startLine": 2899,
+        "startChar": 20,
+        "endLine": 2899,
+        "endChar": 64
+      },
+      "revId": "d28f33cc894b294654962b96fd8c484d224266fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
