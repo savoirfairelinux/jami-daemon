@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5b71b04_000ca887",
+        "filename": "src/json_utils.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-02-20T15:35:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c19ae57b_2459c4cf",
+      "range": {
+        "startLine": 17,
+        "startChar": 12,
+        "endLine": 17,
+        "endChar": 36
+      },
+      "revId": "e8f2315a8583842f9e97f77c32e2cdad9dcff314",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "12f697ad_676ff733",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-11-22T16:45:31Z",
       "side": 1,
       "message": "Inconsistent indentation",
+      "range": {
+        "startLine": 30,
+        "startChar": 23,
+        "endLine": 33,
+        "endChar": 28
+      },
+      "revId": "e8f2315a8583842f9e97f77c32e2cdad9dcff314",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "237d43d3_8c45119b",
+        "filename": "src/json_utils.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-02-20T15:35:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "12f697ad_676ff733",
       "range": {
         "startLine": 30,
         "startChar": 23,
