@@ -3299,8 +3299,10 @@ void
 JamiAccount::pushNotificationReceived(const std::string& from,
                                       const std::map<std::string, std::string>& data)
 {
-    JAMI_WARNING("[Account {:s}] pushNotificationReceived: {:s}", getAccountID(), from);
-    dht_->pushNotificationReceived(data);
+    auto ret_future = dht_->pushNotificationReceived(data);
+    dht::ThreadPool::computation().run([id = getAccountID(), ret_future = ret_future.share()] {
+        JAMI_WARNING("[Account {:s}] pushNotificationReceived: {}", id, (uint8_t)ret_future.get());
+    });
 }
 
 std::string
