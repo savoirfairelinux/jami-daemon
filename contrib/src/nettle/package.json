@@ -1,19 +1,11 @@
 {
     "name": "nettle",
-    "version": "c180b4d7afbda4049ad265d1366567f62a7a4a3a",
-    "cpe": "cpe:2.3:a:nettle_project:nettle:3.9.1:*:*:*:*:*:*:*",
+    "version": "0ba2d5c6a73d7c95327ed52e7326d49e3fb6d283",
+    "cpe": "cpe:2.3:a:nettle_project:nettle:3.10.0:*:*:*:*:*:*:*",
     "url": "https://github.com/ShiftMediaProject/nettle/archive/__VERSION__.tar.gz",
     "deps": ["gmp"],
-    "patches": [],
-    "win_patches": [],
     "project_paths": [
         "SMP/libnettle.vcxproj",
         "SMP/libhogweed.vcxproj"
-    ],
-    "with_env" : "",
-    "custom_scripts": {
-        "pre_build": [],
-        "build": [],
-        "post_build": []
-    }
+    ]
 }
