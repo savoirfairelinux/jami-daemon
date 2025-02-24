@@ -1,10 +1,11 @@
 # PJPROJECT
-PJPROJECT_VERSION := 8fc165b833eea6e3c88d67a541385424b129fd3f
+PJPROJECT_VERSION := 37130c943d59f25a71935803ea2d84515074a237
 PJPROJECT_URL := https://github.com/savoirfairelinux/pjproject/archive/${PJPROJECT_VERSION}.tar.gz
 
 PJPROJECT_OPTIONS := --disable-sound        \
                      --enable-video         \
                      --enable-ext-sound     \
+                     --disable-android-mediacodec \
                      --disable-speex-aec    \
                      --disable-g711-codec   \
                      --disable-l16-codec    \
