@@ -1,28 +1,23 @@
 {
     "name": "gnutls",
-    "version": "3.6.7",
-    "cpe": "cpe:2.3:a:gnu:gnutls:3.6.7:*:*:*:*:*:*:*",
-    "url": "https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-__VERSION__.tar.xz",
+    "version": "3.8.3",
+    "cpe": "cpe:2.3:a:gnu:gnutls:3.8.3:*:*:*:*:*:*:*",
+    "url": "https://github.com/ShiftMediaProject/gnutls/archive/refs/tags/__VERSION__.tar.gz",
     "deps": [
         "iconv",
         "nettle",
         "zlib",
         "gmp"
     ],
-    "patches": [
-        "gnutls-3.6.7-win32-compat.patch",
-        "gnutls-3.6.7-win32-vs-support.patch",
-        "read-file-limits.h.patch",
-        "mkdir_permissions.patch"
-    ],
-    "win_patches": [],
     "project_paths": [
         "SMP/libgnutls.vcxproj"
     ],
-    "with_env" : "",
     "custom_scripts": {
-        "pre_build": [],
-        "build": [],
-        "post_build": []
+        "pre_build": [
+            "git init",
+            "git remote add origin https://github.com/ShiftMediaProject/gnutls.git || true",
+            "git fetch origin --depth=1 --tags && git checkout 3.8.3",
+            "git submodule update --init --recursive --depth=1 gnulib devel/libtasn1"
+        ]
     }
 }
