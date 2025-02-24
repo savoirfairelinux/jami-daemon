@@ -1,8 +1,8 @@
 {
     "name": "openssl",
-    "version": "OpenSSL_1_1_1-stable",
-    "cpe": "cpe:2.3:a:openssl:openssl:1.1.1:*:*:*:*:*:*:*",
-    "url": "https://github.com/openssl/openssl/archive/__VERSION__.tar.gz",
+    "version": "openssl-3.4.0",
+    "cpe": "cpe:2.3:a:openssl:openssl:3.4.0:*:*:*:*:*:*:*",
+    "url": "https://github.com/openssl/openssl/archive/refs/tags/__VERSION__.tar.gz",
     "custom_scripts": {
         "build": [
             "call perl Configure no-asm no-hw no-tests /Z7 /FS VC-WIN64A",
