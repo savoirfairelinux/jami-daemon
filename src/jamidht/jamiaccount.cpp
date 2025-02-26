@@ -3464,7 +3464,7 @@ JamiAccount::updateProfile(const std::string& displayName,
             file << vCard::utils::toString(profile);
             file.close();
             std::filesystem::rename(tmpPath, vCardPath);
-            fileutils::createFileLink(path, vCardPath);
+            fileutils::createFileLink(path, vCardPath, true);
             emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
                                                                       accountUri,
                                                                       path.string());
