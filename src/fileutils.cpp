@@ -275,9 +275,18 @@ std::string
 loadTextFile(const std::filesystem::path& path, const std::filesystem::path& default_dir)
 {
     std::string buffer;
-    std::ifstream file(getFullPath(default_dir, path));
+    auto fullPath = getFullPath(default_dir, path);
+
+    // Open with explicit share mode to allow reading even if file is opened elsewhere
+#ifdef _WIN32
+    std::ifstream file(fullPath, std::ios::in | std::ios::binary, _SH_DENYNO);
+#else
+    std::ifstream file(fullPath);
+#endif
+
     if (!file)
         throw std::runtime_error("Unable to read file: " + path.string());
+
     file.seekg(0, std::ios::end);
     auto size = file.tellg();
     if (size > std::numeric_limits<unsigned>::max())
