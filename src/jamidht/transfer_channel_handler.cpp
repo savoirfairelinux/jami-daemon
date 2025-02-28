@@ -17,6 +17,7 @@
 
 #include "jamidht/transfer_channel_handler.h"
 
+#include <opendht/thread_pool.h>
 #include <charconv>
 
 #include "fileutils.h"
@@ -118,7 +119,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 sha3Sum = keyVal[1];
             } else if (keyVal[0] == "modified") {
                 try {
-                    lastModified = jami::to_int<uint64_t>(keyVal[1]);
+                    lastModified = to_int<uint64_t>(keyVal[1]);
                 } catch (const std::exception& e) {
                     JAMI_WARNING("TransferChannel: Unable to parse modified date: {}: {}",
                                  keyVal[1],
@@ -130,24 +131,27 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     // Check if profile
     if (idstr == "profile.vcf") {
-        if (!channel->isInitiator()) {
-            // Only accept newest profiles
-            if (lastModified == 0
-                || lastModified > fileutils::lastWriteTimeInSeconds(acc->profilePath()))
-                acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
-            else
-                channel->shutdown();
-        } else {
-            // If it's a profile from sync
-            auto path = idPath_ / "profile.vcf";
-            acc->dataTransfer()->transferFile(channel, idstr, "", path.string());
-        }
+        dht::ThreadPool::io().run([wacc = acc->weak(), path = idPath_ / "profile.vcf", channel, idstr, lastModified, sha3Sum] {
+            if (auto acc = wacc.lock()) {
+                if (!channel->isInitiator()) {
+                    // Only accept newest profiles
+                    if (lastModified == 0
+                        || lastModified > fileutils::lastWriteTimeInSeconds(acc->profilePath()))
+                        acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
+                    else
+                        channel->shutdown();
+                } else {
+                    // If it's a profile from sync
+                    acc->dataTransfer()->transferFile(channel, idstr, "", path.string());
+                }
+            }
+        });
         return;
     }
 
     auto splitted_id = split_string(idstr, '/');
     if (splitted_id.size() < 3) {
-        JAMI_ERR() << "Unsupported ID detected " << name;
+        JAMI_ERROR("Unsupported ID detected {}", name);
         channel->shutdown();
         return;
     }
@@ -161,28 +165,31 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         return;
 
     // Profile for a member in the conversation
-    if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
-        auto path = idPath_ / "profile.vcf";
-        acc->dataTransfer()->transferFile(channel, fileId, "", path.string());
-        return;
-    } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
-        auto path = acc->dataTransfer()->profilePath(fileId.substr(0, fileId.size() - 4));
-        acc->dataTransfer()->transferFile(channel, fileId, "", path.string());
-        return;
-    } else if (fileId == "profile.vcf") {
-        acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
-        return;
-    }
-    // Check if it's a file in a conversation
-    auto dt = acc->dataTransfer(conversationId);
-    sep = fileId.find('_');
-    if (!dt or sep == std::string::npos) {
-        channel->shutdown();
-        return;
-    }
-    auto interactionId = fileId.substr(0, sep);
-    auto path = dt->path(fileId);
-    dt->transferFile(channel, fileId, interactionId, path.string(), start, end);
+    dht::ThreadPool::io().run([wacc = acc->weak(), profilePath = idPath_ / "profile.vcf", channel, conversationId, fileId, isContactProfile, idstr, start, end, sha3Sum] {
+        if (auto acc = wacc.lock()) {
+            if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
+                acc->dataTransfer()->transferFile(channel, fileId, "", profilePath.string());
+                return;
+            } else if (isContactProfile && fileId.find(".vcf") != std::string::npos) {
+                auto path = acc->dataTransfer()->profilePath(fileId.substr(0, fileId.size() - 4));
+                acc->dataTransfer()->transferFile(channel, fileId, "", path.string());
+                return;
+            } else if (fileId == "profile.vcf") {
+                acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
+                return;
+            }
+            // Check if it's a file in a conversation
+            auto dt = acc->dataTransfer(conversationId);
+            auto sep = fileId.find('_');
+            if (!dt or sep == std::string::npos) {
+                channel->shutdown();
+                return;
+            }
+            auto interactionId = fileId.substr(0, sep);
+            auto path = dt->path(fileId);
+            dt->transferFile(channel, fileId, interactionId, path.string(), start, end);
+        }
+    });
 }
 
 } // namespace jami
