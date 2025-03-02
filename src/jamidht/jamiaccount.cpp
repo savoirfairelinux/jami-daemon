@@ -2030,7 +2030,7 @@ JamiAccount::doRegister_()
                 }
 
                 auto uri = Uri(name);
-                std::lock_guard lk(connManagerMtx_);
+                std::shared_lock lk(connManagerMtx_);
                 auto itHandler = channelHandlers_.find(uri.scheme());
                 if (itHandler != channelHandlers_.end() && itHandler->second)
                     return itHandler->second->onRequest(cert, name);
@@ -2121,7 +2121,7 @@ JamiAccount::doRegister_()
                     });
                 } else {
                     // TODO move git://
-                    std::lock_guard lk(connManagerMtx_);
+                    std::shared_lock lk(connManagerMtx_);
                     auto uri = Uri(name);
                     auto itHandler = channelHandlers_.find(uri.scheme());
                     if (itHandler != channelHandlers_.end() && itHandler->second)
@@ -2208,7 +2208,7 @@ JamiAccount::convModule(bool noCreation)
                             cb({});
                         return;
                     }
-                    std::unique_lock lkCM(shared->connManagerMtx_);
+                    std::shared_lock lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_) {
                         lkCM.unlock();
                         cb({});
@@ -2254,7 +2254,7 @@ JamiAccount::convModule(bool noCreation)
                     if (!shared)
                         return;
                     auto cm = shared->convModule();
-                    std::lock_guard lkCM(shared->connManagerMtx_);
+                    std::shared_lock lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
                         Manager::instance().ioContext()->post([cb] { cb({}); });
                         return;
@@ -2444,7 +2444,7 @@ JamiAccount::connectivityChanged()
         cm->connectivityChanged();
     dht_->connectivityChanged();
     {
-        std::lock_guard lkCM(connManagerMtx_);
+        std::shared_lock lkCM(connManagerMtx_);
         if (connectionManager_) {
             connectionManager_->connectivityChanged();
             // reset cache
@@ -3041,7 +3041,7 @@ JamiAccount::sendMessage(const std::string& to,
     auto devices = std::make_shared<std::set<DeviceId>>();
 
     // Use the Message channel if available
-    std::unique_lock clk(connManagerMtx_);
+    std::shared_lock clk(connManagerMtx_);
     auto* handler = static_cast<MessageChannelHandler*>(
         channelHandlers_[Uri::Scheme::MESSAGE].get());
     if (!handler) {
@@ -3726,7 +3726,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         return;
     }
     // If not present, create it
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
     // Note, Even if we send 50 "sip" request, the connectionManager_ will only use one socket.
@@ -3763,7 +3763,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
 bool
 JamiAccount::isConnectedWith(const DeviceId& deviceId) const
 {
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (connectionManager_)
         return connectionManager_->isConnected(deviceId);
     return false;
@@ -4118,7 +4118,7 @@ JamiAccount::monitor()
 
     if (auto cm = convModule())
         cm->monitor();
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (connectionManager_)
         connectionManager_->monitor();
 }
@@ -4126,7 +4126,7 @@ JamiAccount::monitor()
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getConnectionList(const std::string& conversationId)
 {
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (connectionManager_ && conversationId.empty()) {
         return connectionManager_->getConnectionList();
     } else if (connectionManager_ && convModule_) {
@@ -4149,7 +4149,7 @@ JamiAccount::getConnectionList(const std::string& conversationId)
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getChannelList(const std::string& connectionId)
 {
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (!connectionManager_)
         return {};
     return connectionManager_->getChannelList(connectionId);
@@ -4260,7 +4260,7 @@ JamiAccount::transferFile(const std::string& conversationId,
                                                             conversationId,
                                                             currentDeviceId(),
                                                             fid);
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
     connectionManager_
@@ -4309,7 +4309,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                                size_t end)
 {
     auto tryDevice = [=](const auto& did) {
-        std::lock_guard lkCM(connManagerMtx_);
+        std::shared_lock lkCM(connManagerMtx_);
         if (!connectionManager_)
             return;
 
@@ -4369,7 +4369,7 @@ JamiAccount::askForProfile(const std::string& conversationId,
                            const std::string& deviceId,
                            const std::string& memberUri)
 {
-    std::lock_guard lkCM(connManagerMtx_);
+    std::shared_lock lkCM(connManagerMtx_);
     if (!connectionManager_)
         return;
 
