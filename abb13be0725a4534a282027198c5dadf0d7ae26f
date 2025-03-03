@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f0441a6_df46918b",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-03-03T18:14:20Z",
+      "side": 1,
+      "message": "I think it\u0027d be good to add a comment to explain why we use a `shared_mutex` for the connection manager.",
+      "range": {
+        "startLine": 776,
+        "startChar": 4,
+        "endLine": 776,
+        "endChar": 49
+      },
+      "revId": "abb13be0725a4534a282027198c5dadf0d7ae26f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
