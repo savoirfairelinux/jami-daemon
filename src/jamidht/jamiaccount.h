@@ -60,6 +60,7 @@
 #include <optional>
 #include <vector>
 #include <filesystem>
+#include <shared_mutex>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -789,7 +790,7 @@ private:
 
     pjsip_transport* via_tp_ {nullptr};
 
-    mutable std::mutex connManagerMtx_ {};
+    mutable std::shared_mutex connManagerMtx_ {};
     std::unique_ptr<dhtnet::ConnectionManager> connectionManager_;
 
     virtual void updateUpnpController() override;
