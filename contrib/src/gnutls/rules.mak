@@ -1,6 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.8.9
+GNUTLS_VERSION := 3.8.8
 PKG_CPE += cpe:2.3:a:gnu:gnutls:$(GNUTLS_VERSION):*:*:*:*:*:*:*
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-$(GNUTLS_VERSION).tar.xz
 
