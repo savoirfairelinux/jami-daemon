@@ -86,9 +86,11 @@ check gettext
 CPUS=
 CC=
 CXX=
+HAVE_LINUX=
 case `uname` in
     Linux)
         CPUS=`grep -c ^processor /proc/cpuinfo`
+        HAVE_LINUX=1
      ;;
     Darwin)
         CPUS=`sysctl hw.ncpu|cut -d: -f2`
@@ -108,6 +110,7 @@ cat > Makefile << EOF
 MAKEFLAGS += -j$CPUS
 $CC
 $CXX
+HAVE_LINUX=$HAVE_LINUX
 PREFIX=\$(abspath ./build)
 
 all: $NEEDED

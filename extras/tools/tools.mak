@@ -197,6 +197,10 @@ DISTCLEAN_PKG += m4-$(M4_VERSION).tar.gz
 
 # pkg-config
 
+ifdef HAVE_LINUX
+.pkg-config:
+	touch $@
+else
 pkg-config-$(PKGCFG_VERSION).tar.gz:
 	$(call download,$(PKGCFG_URL))
 
@@ -208,6 +212,7 @@ pkgconfig: pkg-config-$(PKGCFG_VERSION).tar.gz
 .pkg-config: pkgconfig
 	(cd pkgconfig; ./configure --prefix=$(PREFIX) --disable-shared --enable-static && $(MAKE) && $(MAKE) install)
 	touch $@
+endif
 
 CLEAN_FILE += .pkg-config
 CLEAN_PKG += pkgconfig
