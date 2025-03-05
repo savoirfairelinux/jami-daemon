@@ -22,6 +22,30 @@
       },
       "revId": "abb13be0725a4534a282027198c5dadf0d7ae26f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ade1f115_9c606106",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 776,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-03-05T18:50:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4f0441a6_df46918b",
+      "range": {
+        "startLine": 776,
+        "startChar": 4,
+        "endLine": 776,
+        "endChar": 49
+      },
+      "revId": "abb13be0725a4534a282027198c5dadf0d7ae26f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
