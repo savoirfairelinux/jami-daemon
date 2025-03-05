@@ -1,0 +1,50 @@
+From 1e092f5d294630607f7962f7a6c4d0f8dfc99605 Mon Sep 17 00:00:00 2001
+From: fsimonfc <francois-simon_f-c@hotmail.com>
+Date: Wed, 5 Mar 2025 23:04:54 -0500
+Subject: [PATCH] fix autotools build errors
+
+---
+ configure.ac | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 4838ce2c8..af27b9112 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -18,7 +18,7 @@ dnl Process this file with autoconf to produce a configure script.
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ 
+-AC_PREREQ([2.71])
++AC_PREREQ([2.64])
+ 
+ dnl when updating version also update LT_REVISION in m4/hooks.m4
+ AC_INIT([GnuTLS],[3.8.9],[bugs@gnutls.org])
+@@ -136,11 +136,6 @@ AC_SUBST(NUMBER_VERSION, `printf "0x%02x%02x%02x" $MAJOR_VERSION $MINOR_VERSION
+ 
+ dnl C and C++ capabilities
+ AC_C_INLINE
+-# Autoupdate added the next two lines to ensure that your configure
+-# script's behavior did not change.  They are probably safe to remove.
+-AC_CHECK_INCLUDES_DEFAULT
+-AC_PROG_EGREP
+-
+ 
+ # For the C++ code
+ AC_ARG_ENABLE(cxx,
+@@ -408,12 +403,6 @@ dnl check for gtk-doc
+ dnl
+ GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+ 
+-AM_GNU_GETTEXT([external])
+-AM_GNU_GETTEXT_VERSION([0.19])
+-m4_ifdef([AM_GNU_GETTEXT_REQUIRE_VERSION],[
+-AM_GNU_GETTEXT_REQUIRE_VERSION([0.19])
+-])
+-
+ AC_C_BIGENDIAN
+ 
+ dnl No fork on MinGW, disable some self-tests until we fix them.
+-- 
+2.47.0
+
