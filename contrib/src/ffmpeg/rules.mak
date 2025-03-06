@@ -413,6 +413,14 @@ FFMPEGCONF += --target-os=mingw32 \
 	--enable-encoder=hevc_nvenc
 endif
 
+ifdef HAVE_IOS
+# If building for iPhoneSimulator, remove vpx from DEPS and disable libvpx
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+    DEPS_ffmpeg := $(filter-out vpx, $(DEPS_ffmpeg))
+    FFMPEGCONF += --disable-libvpx
+endif
+endif
+
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
 	$(call download,$(FFMPEG_URL))
 
