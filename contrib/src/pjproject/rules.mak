@@ -52,10 +52,11 @@ ifdef HAVE_IOS
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
-
 .pjproject: pjproject
+
 ifdef HAVE_IOS
-	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
+    # provide DEVPATH and MIN_IOS to build arm64 simulator
+	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 DEVPATH="$(DEVPATH)" MIN_IOS="$(MIN_IOS)" ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else ifdef HAVE_MACOSX
 	cd $< && ARCH="-arch $(ARCH)" $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else

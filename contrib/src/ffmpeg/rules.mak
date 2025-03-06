@@ -352,6 +352,13 @@ FFMPEGCONF += \
 	--target-os=darwin \
 	--enable-cross-compile \
 	--enable-pic
+# vpx not supported on iPhoneSimulator on arm64
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+ifeq ($(ARCH),arm64)
+    DEPS_ffmpeg := $(filter-out vpx, $(DEPS_ffmpeg))
+    FFMPEGCONF += --disable-libvpx
+endif
+endif
 endif
 
 ifndef HAVE_IOS
