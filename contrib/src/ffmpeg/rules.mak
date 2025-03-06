@@ -352,6 +352,13 @@ FFMPEGCONF += \
 	--target-os=darwin \
 	--enable-cross-compile \
 	--enable-pic
+# If building for iPhoneSimulator on arm64, remove vpx from DEPS and disable libvpx
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+ifeq ($(ARCH),arm64)
+    DEPS_ffmpeg := $(filter-out vpx, $(DEPS_ffmpeg))
+    FFMPEGCONF += --disable-libvpx
+endif
+endif
 endif
 
 ifndef HAVE_IOS
