@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "7f98e12c_458223e5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-03-07T19:15:18Z",
+      "side": 1,
+      "message": "other possible fix:\nhttps://review.jami.net/c/jami-daemon/+/26871",
+      "revId": "033638e97d1dad02b258b9e28fe66b03c6f37d30",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
