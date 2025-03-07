@@ -18,7 +18,7 @@
 #include "sip/sipaccountbase_config.h"
 
 namespace jami {
-constexpr static std::string_view ACCOUNT_TYPE_JAMI = "RING";
+constexpr static std::string_view ACCOUNT_TYPE_JAMI = "JAMI";
 constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
 constexpr static const char* DEFAULT_TURN_SERVER = "turn.jami.net";
 constexpr static const char* DEFAULT_TURN_USERNAME = "ring";

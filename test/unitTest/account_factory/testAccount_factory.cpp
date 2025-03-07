@@ -182,7 +182,7 @@ Account_factoryTest::testClear()
     const int nbrAccount = 5;
 
     for(int i = 0; i < nbrAccount ; ++i) {
-        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, JAMI_ID+std::to_string(i));
+        accountFactory.createAccount(libjami::Account::ProtocolNames::JAMI, JAMI_ID+std::to_string(i));
     }
 
     CPPUNIT_ASSERT(accountFactory.accountCount()==nbrAccount);
