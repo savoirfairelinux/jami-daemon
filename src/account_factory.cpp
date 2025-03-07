@@ -20,6 +20,7 @@
 #endif
 
 #include "account_factory.h"
+#include "jami/account_const.h"
 
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
@@ -36,6 +37,9 @@ AccountFactory::AccountFactory()
         return std::make_shared<SIPAccount>(id, true);
     });
     generators_.emplace(JamiAccount::ACCOUNT_TYPE, [](const std::string& id) {
+        return std::make_shared<JamiAccount>(id);
+    });
+    generators_.emplace(libjami::Account::ProtocolNames::RING, [](const std::string& id) {
         return std::make_shared<JamiAccount>(id);
     });
 }
