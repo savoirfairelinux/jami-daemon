@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "754d90a8_b7ae2203",
+        "filename": "src/account_factory.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 42,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-03-07T23:30:22Z",
+      "side": 1,
+      "message": "Should `RING` be `JAMI`?",
+      "range": {
+        "startLine": 42,
+        "startChar": 57,
+        "endLine": 42,
+        "endChar": 61
+      },
+      "revId": "40505e407a8d80ab12758a16ad99e27927092ddd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
