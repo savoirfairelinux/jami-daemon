@@ -76,12 +76,16 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
 {
     std::filesystem::path fpath(info_.path);
     if (!std::filesystem::is_regular_file(fpath)) {
-        channel_->shutdown();
+        dht::ThreadPool::io().run([channel = std::move(channel_)] {
+            channel->shutdown();
+        });
         return;
     }
     stream_.open(fpath, std::ios::binary | std::ios::in);
     if (!stream_ || !stream_.is_open()) {
-        channel_->shutdown();
+        dht::ThreadPool::io().run([channel = std::move(channel_)] {
+            channel->shutdown();
+        });
         return;
     }
 }
@@ -90,8 +94,11 @@ OutgoingFile::~OutgoingFile()
 {
     if (stream_ && stream_.is_open())
         stream_.close();
-    if (channel_)
-        channel_->shutdown();
+    if (channel_) {
+        dht::ThreadPool::io().run([channel = std::move(channel_)] {
+            channel->shutdown();
+        });
+    }
 }
 
 void
@@ -447,7 +454,9 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     }
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW == pimpl_->waitingIds_.end()) {
-        channel->shutdown();
+        dht::ThreadPool().io().run([channel] {
+            channel->shutdown();
+        });
         return;
     }
 
