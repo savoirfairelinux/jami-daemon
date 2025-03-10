@@ -90,10 +90,12 @@ struct ConversationRequest
         return m.size() == om.size() && std::equal(m.begin(), m.end(), om.begin());
     }
 
-    bool isOneToOne() const {
+    bool isOneToOne() const
+    {
         try {
             return metadatas.at("mode") == "0";
-        } catch (...) {}
+        } catch (...) {
+        }
         return true;
     }
 
@@ -112,7 +114,8 @@ struct ConvInfo
     ConvInfo() = default;
     ConvInfo(const ConvInfo&) = default;
     ConvInfo(ConvInfo&&) = default;
-    ConvInfo(const std::string& id) : id(id) {};
+    ConvInfo(const std::string& id)
+        : id(id) {};
     explicit ConvInfo(const Json::Value& json);
 
     bool isRemoved() const { return removed >= created; }
@@ -133,8 +136,7 @@ enum class ConversationMode;
 using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages
     = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
-using OnLoadMessages2
-    = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
+using OnLoadMessages2 = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
@@ -417,6 +419,8 @@ public:
      */
     bool onFileChannelRequest(const std::string& member,
                               const std::string& fileId,
+                              std::filesystem::path& path,
+                              std::string& sha3sum,
                               bool verifyShaSum = true) const;
     /**
      * Adds a file to the waiting list and ask members
@@ -479,8 +483,11 @@ public:
      *       }
      * }
      */
-    void updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus);
-    void onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb);
+    void updateMessageStatus(
+        const std::map<std::string, std::map<std::string, std::string>>& messageStatus);
+    void onMessageStatusChanged(
+        const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>&
+            cb);
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param toId      "" for getting the whole history
@@ -535,7 +542,8 @@ public:
      * and the GitTransport will inject to libgit2 whenever needed
      */
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const;
-    void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket);
+    void addGitSocket(const DeviceId& deviceId,
+                      const std::shared_ptr<dhtnet::ChannelSocket>& socket);
     void removeGitSocket(const DeviceId& deviceId);
 
     /**
@@ -556,7 +564,7 @@ public:
 
     /**
      * @return getAllNodes()    Nodes that are linked to the conversation
-    */
+     */
     std::vector<jami::DeviceId> getDeviceIdList() const;
 
     /**
