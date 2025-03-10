@@ -45,8 +45,7 @@ init(enum InitFlag flags) noexcept
 {
     initFlags = flags;
     jami::Logger::setDebugMode(LIBJAMI_FLAG_DEBUG == (flags & LIBJAMI_FLAG_DEBUG));
-
-    jami::Logger::setSysLog(true);
+    jami::Logger::setSysLog(LIBJAMI_FLAG_SYSLOG == (flags & LIBJAMI_FLAG_SYSLOG));
     jami::Logger::setConsoleLog(LIBJAMI_FLAG_CONSOLE_LOG == (flags & LIBJAMI_FLAG_CONSOLE_LOG));
 
     const char* log_file = getenv("JAMI_LOG_FILE");
