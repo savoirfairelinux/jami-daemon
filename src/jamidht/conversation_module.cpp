@@ -2362,9 +2362,40 @@ ConversationModule::onFileChannelRequest(const std::string& conversationId,
                                          bool verifyShaSum) const
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard lk(conv->mtx);
-        if (conv->conversation)
-            return conv->conversation->onFileChannelRequest(member, fileId, verifyShaSum);
+        std::filesystem::path path;
+        std::string sha3sum;
+        std::unique_lock lk(conv->mtx);
+        if (!conv->conversation)
+            return false;
+        if (!conv->conversation->onFileChannelRequest(member, fileId, path, sha3sum, verifyShaSum))
+            return false;
+
+        // We release here the lock created in ConversationModule::onFileChannelRequest.
+        // It's useful to avoid cases where the sha3sum calculation blocks other threads.
+        lk.unlock();
+        if (!std::filesystem::is_regular_file(path)) {
+            // Check if dangling symlink
+            if (std::filesystem::is_symlink(path)) {
+                dhtnet::fileutils::remove(path, true);
+            }
+            JAMI_WARNING("[Account {:s}] {:s} asked for non existing file {} in {:s}",
+                         pimpl_->accountId_,
+                         member,
+                         fileId,
+                         conversationId);
+            return false;
+        }
+        // Check that our file is correct before sending
+        if (verifyShaSum && sha3sum != fileutils::sha3File(path)) {
+            JAMI_WARNING("[Account {:s}] {:s} asked for file {:s} in {:s}, but our version is not "
+                         "complete or corrupted",
+                         pimpl_->accountId_,
+                         member,
+                         fileId,
+                         conversationId);
+            return false;
+        }
+        return true;
     }
     return false;
 }

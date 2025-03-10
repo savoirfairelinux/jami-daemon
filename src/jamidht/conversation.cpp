@@ -2090,6 +2090,8 @@ Conversation::dataTransfer() const
 bool
 Conversation::onFileChannelRequest(const std::string& member,
                                    const std::string& fileId,
+                                   std::filesystem::path& path,
+                                   std::string& sha3sum,
                                    bool verifyShaSum) const
 {
     if (!isMember(member))
@@ -2104,34 +2106,16 @@ Conversation::onFileChannelRequest(const std::string& member,
     if (commit == std::nullopt || commit->find("type") == commit->end()
         || commit->find("tid") == commit->end() || commit->find("sha3sum") == commit->end()
         || commit->at("type") != "application/data-transfer+json") {
-        JAMI_WARNING("[Account {:s}] {} requested invalid file transfer commit {}", pimpl_->accountId_, member, interactionId);
+        JAMI_WARNING("[Account {:s}] {} requested invalid file transfer commit {}",
+                     pimpl_->accountId_,
+                     member,
+                     interactionId);
         return false;
     }
 
-    auto path = dataTransfer()->path(fileId);
+    path = dataTransfer()->path(fileId);
+    sha3sum = commit->at("sha3sum");
 
-    if (!std::filesystem::is_regular_file(path)) {
-        // Check if dangling symlink
-        if (std::filesystem::is_symlink(path)) {
-            dhtnet::fileutils::remove(path, true);
-        }
-        JAMI_WARNING("[Account {:s}] {:s} asked for non existing file {} in {:s}",
-                   pimpl_->accountId_,
-                   member,
-                   fileId,
-                   id());
-        return false;
-    }
-    // Check that our file is correct before sending
-    if (verifyShaSum && commit->at("sha3sum") != fileutils::sha3File(path)) {
-        JAMI_WARNING(
-            "[Account {:s}] {:s} asked for file {:s} in {:s}, but our version is not complete or corrupted",
-            pimpl_->accountId_,
-            member,
-            fileId,
-            id());
-        return false;
-    }
     return true;
 }
 
