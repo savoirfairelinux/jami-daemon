@@ -35,6 +35,7 @@ namespace libjami {
 enum InitFlag {
     LIBJAMI_FLAG_DEBUG = 1 << 0,
     LIBJAMI_FLAG_CONSOLE_LOG = 1 << 1,
+    LIBJAMI_FLAG_SYSLOG = 1 << 3,
     LIBJAMI_FLAG_AUTOANSWER = 1 << 2,
     LIBJAMI_FLAG_IOS_EXTENSION = 1 << 4,
     LIBJAMI_FLAG_NO_LOCAL_AUDIO = 1 << 6,
