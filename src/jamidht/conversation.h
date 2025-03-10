@@ -417,7 +417,8 @@ public:
      */
     bool onFileChannelRequest(const std::string& member,
                               const std::string& fileId,
-                              bool verifyShaSum = true) const;
+                              std::filesystem::path& path,
+                              std::string& sha3sum) const;
     /**
      * Adds a file to the waiting list and ask members
      * @param interactionId     Related interaction id
