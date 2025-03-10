@@ -233,13 +233,16 @@ public:
      * @param duration_ms   The call duration in ms
      * @param reason
      */
-    void addCallHistoryMessage(const std::string& uri, uint64_t duration_ms, const std::string& reason);
+    void addCallHistoryMessage(const std::string& uri,
+                               uint64_t duration_ms,
+                               const std::string& reason);
 
     // Received that a peer displayed a message
     bool onMessageDisplayed(const std::string& peer,
                             const std::string& conversationId,
                             const std::string& interactionId);
-    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>> convMessageStatus() const;
+    std::map<std::string, std::map<std::string, std::map<std::string, std::string>>>
+    convMessageStatus() const;
 
     /**
      * Load conversation's messages
@@ -463,9 +466,11 @@ public:
      * @param cb        Callback to pass which device to call (called in the same thread)
      * @return call if a call is started, else nullptr
      */
-    std::shared_ptr<SIPCall> call(const std::string& url,
-                                const std::vector<libjami::MediaMap>& mediaList,
-                                std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&& cb);
+    std::shared_ptr<SIPCall> call(
+        const std::string& url,
+        const std::vector<libjami::MediaMap>& mediaList,
+        std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&&
+            cb);
     void hostConference(const std::string& conversationId,
                         const std::string& confId,
                         const std::string& callId,
