@@ -790,6 +790,9 @@ private:
 
     pjsip_transport* via_tp_ {nullptr};
 
+    /** ConnectionManager is thread-safe.
+     * The shared mutex protects the pointer while allowing
+     * multiple threads to access the ConnectionManager concurrently  */
     mutable std::shared_mutex connManagerMtx_ {};
     std::unique_ptr<dhtnet::ConnectionManager> connectionManager_;
 
