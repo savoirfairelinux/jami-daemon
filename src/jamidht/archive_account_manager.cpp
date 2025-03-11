@@ -40,6 +40,8 @@ namespace jami {
 
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 constexpr auto AUTH_URI_SCHEME = "jami-auth://"sv;
+constexpr auto CHANNEL_SCHEME = "auth:"sv;
+constexpr auto OP_TIMEOUT = 5min;
 
 void
 ArchiveAccountManager::initAuthentication(PrivateKey key,
@@ -73,8 +75,8 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
         return;
     }
 
-    dht::ThreadPool::computation().run([ctx = std::move(ctx), wthis = weak_from_this()] {
-        auto this_ = std::static_pointer_cast<ArchiveAccountManager>(wthis.lock());
+    dht::ThreadPool::computation().run([ctx = std::move(ctx), wthis = weak()] {
+        auto this_ = wthis.lock();
         if (not this_)
             return;
         try {
@@ -315,16 +317,15 @@ toString(AuthDecodingState state)
     }
 }
 
-struct ArchiveAccountManager::PayloadKey
-{
-    static constexpr auto passwordCorrect = "passwordCorrect"sv;
-    static constexpr auto canRetry = "canRetry"sv;
-    static constexpr auto archiveTransferredWithoutFailure = "archiveTransferredWithoutFailure"sv;
-    static constexpr auto accData = "accData"sv;
-    static constexpr auto authScheme = "authScheme"sv;
-    static constexpr auto password = "password"sv;
-    static constexpr auto stateMsg = "stateMsg"sv;
-};
+namespace PayloadKey {
+static constexpr auto passwordCorrect = "passwordCorrect"sv;
+static constexpr auto canRetry = "canRetry"sv;
+static constexpr auto archiveTransferredWithoutFailure = "archiveTransferredWithoutFailure"sv;
+static constexpr auto accData = "accData"sv;
+static constexpr auto authScheme = "authScheme"sv;
+static constexpr auto password = "password"sv;
+static constexpr auto stateMsg = "stateMsg"sv;
+}
 
 struct ArchiveAccountManager::AuthMsg
 {
@@ -332,8 +333,7 @@ struct ArchiveAccountManager::AuthMsg
     std::map<std::string, std::string> payload;
     MSGPACK_DEFINE_MAP(schemeId, payload)
 
-    void set(std::string_view key, std::string_view value)
-    {
+    void set(std::string_view key, std::string_view value) {
         payload.emplace(std::string(key), std::string(value));
     }
 
@@ -343,8 +343,7 @@ struct ArchiveAccountManager::AuthMsg
 
     void logMsg() { JAMI_DEBUG("[LinkDevice]\nLinkDevice::logMsg:\n{}", formatMsg()); }
 
-    std::string formatMsg()
-    {
+    std::string formatMsg() {
         std::string logStr = "=========\n";
         logStr += fmt::format("scheme: {}\n", schemeId);
         for (const auto& [msgKey, msgVal] : payload) {
@@ -352,6 +351,12 @@ struct ArchiveAccountManager::AuthMsg
         }
         logStr += "=========";
         return logStr;
+    }
+
+    static AuthMsg timeout() {
+        AuthMsg timeoutMsg;
+        timeoutMsg.set(PayloadKey::stateMsg, toString(AuthDecodingState::TIMEOUT));
+        return timeoutMsg;
     }
 };
 
@@ -362,7 +367,6 @@ struct ArchiveAccountManager::DeviceAuthInfo : public std::map<std::string, std:
     static constexpr auto error = "error"sv;
     static constexpr auto auth_scheme = "auth_scheme"sv;
     static constexpr auto peer_id = "peer_id"sv;
-    static constexpr auto peer_device_id = "peer_device_id"sv;
     static constexpr auto auth_error = "auth_error"sv;
     static constexpr auto peer_address = "peer_address"sv;
 
@@ -375,9 +379,11 @@ struct ArchiveAccountManager::DeviceAuthInfo : public std::map<std::string, std:
     DeviceAuthInfo(const Map& map)
         : Map(map)
     {}
+    DeviceAuthInfo(Map&& map)
+        : Map(std::move(map))
+    {}
 
-    void set(std::string_view key, std::string_view value)
-    {
+    void set(std::string_view key, std::string_view value) {
         emplace(std::string(key), std::string(value));
     }
 
@@ -424,18 +430,11 @@ struct ArchiveAccountManager::DeviceContextBase
 
     constexpr std::string_view formattedAuthState() const { return toString(state); }
 
-    AuthMsg createTimeoutMsg() const
-    {
-        AuthMsg timeoutMsg;
-        timeoutMsg.set(PayloadKey::stateMsg, std::string(toString(AuthDecodingState::TIMEOUT)));
-        return timeoutMsg;
-    }
-
     bool handleTimeoutMessage(const AuthMsg& msg)
     {
         auto stateMsgIt = msg.find(PayloadKey::stateMsg);
         if (stateMsgIt != msg.payload.end()) {
-            if (stateMsgIt->second == std::string(toString(AuthDecodingState::TIMEOUT))) {
+            if (stateMsgIt->second == toString(AuthDecodingState::TIMEOUT)) {
                 this->state = AuthDecodingState::TIMEOUT;
                 return true;
             }
@@ -447,7 +446,7 @@ struct ArchiveAccountManager::DeviceContextBase
     {
         auto stateMsgIt = msg.find(PayloadKey::stateMsg);
         if (stateMsgIt != msg.payload.end()) {
-            if (stateMsgIt->second == std::string(toString(AuthDecodingState::CANCELED))) {
+            if (stateMsgIt->second == toString(AuthDecodingState::CANCELED)) {
                 this->state = AuthDecodingState::CANCELED;
                 return true;
             }
@@ -515,7 +514,7 @@ struct ArchiveAccountManager::AddDeviceContext : public DeviceContextBase
     AuthMsg createCanceledMsg() const
     {
         AuthMsg timeoutMsg;
-        timeoutMsg.set(PayloadKey::stateMsg, std::string(toString(AuthDecodingState::CANCELED)));
+        timeoutMsg.set(PayloadKey::stateMsg, toString(AuthDecodingState::CANCELED));
         return timeoutMsg;
     }
 };
@@ -645,7 +644,6 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
         ctx->linkDevCtx->tempConnMgr.onChannelRequest(
             [wthis, ctx](const std::shared_ptr<dht::crypto::Certificate>& cert,
                          const std::string& name) {
-                constexpr auto CHANNEL_SCHEME = "auth:"sv;
                 std::string_view url(name);
                 if (!starts_with(url, CHANNEL_SCHEME)) {
                     JAMI_WARNING(
@@ -677,7 +675,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             ctx->linkDevCtx->channel = socket;
 
             ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
-            ctx->timeout->expires_from_now(5min);
+            ctx->timeout->expires_from_now(OP_TIMEOUT);
             ctx->timeout->async_wait([c = std::weak_ptr(ctx), socket](const std::error_code& ec) {
                 if (ec) {
                     return;
@@ -688,9 +686,8 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                         JAMI_WARNING("[LinkDevice] timeout: {}", socket->name());
 
                         // Create and send timeout message
-                        auto timeoutMsg = ctx->linkDevCtx->createTimeoutMsg();
                         msgpack::sbuffer buffer(UINT16_MAX);
-                        msgpack::pack(buffer, timeoutMsg);
+                        msgpack::pack(buffer, AuthMsg::timeout());
                         std::error_code ec;
                         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()),
                                       buffer.size(),
@@ -764,7 +761,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                     return len;
                 }
                 AuthMsg toSend;
-                bool shouldShutDown = false;
+                bool shouldShutdown = false;
                 auto accDataIt = toRecv.find(PayloadKey::accData);
                 bool shouldLoadArchive = accDataIt != toRecv.payload.end();
 
@@ -821,7 +818,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                         // at this point we suppose to have archive. If not, export failed.
                         // Update state and signal will be handeled onShutdown
                         ctx->linkDevCtx->state = AuthDecodingState::ERR;
-                        shouldShutDown = true;
+                        shouldShutdown = true;
                     }
                 }
 
@@ -848,10 +845,10 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                         ctx->linkDevCtx->archiveTransferredWithoutFailure = false;
                         JAMI_WARNING("[LinkDevice] NEW: Error reading archive.");
                     }
-                    shouldShutDown = true;
+                    shouldShutdown = true;
                 }
 
-                if (shouldShutDown) {
+                if (shouldShutdown) {
                     ctx->linkDevCtx->channel->shutdown();
                 }
 
@@ -915,22 +912,24 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
 
         channelHandler->connect(
             dht::InfoHash(peerTempAcc),
-            fmt::format("auth:{}", peerCodeS),
-            [this, auth_scheme, ctx](std::shared_ptr<dhtnet::ChannelSocket> socket,
+            fmt::format("{}{}", CHANNEL_SCHEME, peerCodeS),
+            [wthis = weak(), auth_scheme, ctx, accountId=accountId_](std::shared_ptr<dhtnet::ChannelSocket> socket,
                                      const dht::InfoHash& infoHash) {
-                if (!socket) {
+                auto this_ = wthis.lock();
+                if (!socket || !this_) {
                     JAMI_WARNING(
                         "[LinkDevice] Invalid socket event while AccountManager connecting.");
-                    authCtx_.reset();
+                    if (this_)
+                        this_->authCtx_.reset();
                     emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-                        accountId_,
+                        accountId,
                         ctx->token,
                         static_cast<uint8_t>(DeviceAuthState::DONE),
                         DeviceAuthInfo::createError(DeviceAuthInfo::Error::NETWORK));
                 } else {
-                    if (!doAddDevice(auth_scheme, ctx, socket))
+                    if (!this_->doAddDevice(auth_scheme, ctx, socket))
                         emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-                            accountId_,
+                            accountId,
                             ctx->token,
                             static_cast<uint8_t>(DeviceAuthState::DONE),
                             DeviceAuthInfo::createError(DeviceAuthInfo::Error::UNKNOWN));
@@ -964,9 +963,9 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     ctx->addDeviceCtx->state = AuthDecodingState::HANDSHAKE;
 
     ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
-    ctx->timeout->expires_from_now(5min);
+    ctx->timeout->expires_from_now(OP_TIMEOUT);
     ctx->timeout->async_wait(
-        [wthis = weak_from_this(), wctx = std::weak_ptr(ctx)](const std::error_code& ec) {
+        [wthis = weak(), wctx = std::weak_ptr(ctx)](const std::error_code& ec) {
             if (ec) {
                 return;
             }
@@ -977,9 +976,8 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                         JAMI_WARNING("[LinkDevice] Timeout for addDevice.");
 
                         // Create and send timeout message
-                        auto timeoutMsg = ctx->linkDevCtx->createTimeoutMsg();
                         msgpack::sbuffer buffer(UINT16_MAX);
-                        msgpack::pack(buffer, timeoutMsg);
+                        msgpack::pack(buffer, AuthMsg::timeout());
                         std::error_code ec;
                         ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(
                                                               buffer.data()),
@@ -1085,7 +1083,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         }
         AuthMsg toSend;
         bool shouldSendMsg = false;
-        bool shouldShutDown = false;
+        bool shouldShutdown = false;
         bool shouldSendArchive = false;
 
         // we expect to be receiving credentials in this state and we know the archive is encrypted
@@ -1095,27 +1093,19 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             JAMI_DEBUG("[LinkDevice] EXPORTING: addDevice: setOnRecv: verifying sent "
                        "credentials from NEW");
             shouldSendMsg = true;
-            // check if the password is valid... if so then send the unencrypyted archive data
-            // over the tls channel as a compressed file this will involve (EXPORTING:) unzip,
-            // unencrypt, send, (NEW:) recv, encrypt w new salt, compress, write to system file
-            // (ONLY DO EXPORTING HERE) check if password is valid
+            
             const auto& passwordIt = toRecv.find(PayloadKey::password);
-
-            bool passValid = this_->isPasswordValid(toRecv.at(PayloadKey::password));
-            JAMI_DEBUG("[LinkDevice] EXPORTING: {} password received for authentication.",
-                       passValid ? "Valid" : "Invalid");
-            if (passValid) {
+            if (passwordIt != toRecv.payload.end()) {
                 // try and decompress archive for xfer
-                shouldSendArchive = true;
                 try {
                     JAMI_DEBUG("[LinkDevice] Injecting account archive into outbound message.");
 
                     ctx->addDeviceCtx->accData
                         = this_
                               ->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD,
-                                            toRecv.at(PayloadKey::password))
+                                            passwordIt->second)
                               .serialize();
-
+                    shouldSendArchive = true;
                     JAMI_DEBUG("[LinkDevice] Injected account archive into outbound message.\n{}",
                                ctx->addDeviceCtx->accData);
                 } catch (...) {
@@ -1123,7 +1113,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                     JAMI_DEBUG("[LinkDevice] Finished reading archive: FAILURE");
                     shouldSendArchive = false;
                 }
-                shouldShutDown = true;
+                shouldShutdown = true;
             } else { // pass is not valid
                 if (ctx->addDeviceCtx->numTries < ctx->addDeviceCtx->maxTries) {
                     // can retry auth
@@ -1139,7 +1129,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                                "NOT allowing a retry because threshold already reached!");
                     toSend.set(PayloadKey::canRetry, "false");
                     ctx->addDeviceCtx->state = AuthDecodingState::AUTH_ERROR;
-                    shouldShutDown = true;
+                    shouldShutdown = true;
                 }
             }
         }
@@ -1152,7 +1142,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                 ctx->token,
                 static_cast<uint8_t>(DeviceAuthState::IN_PROGRESS),
                 DeviceAuthInfo {});
-            shouldShutDown = true;
+            shouldShutdown = true;
             shouldSendMsg = true;
             ctx->addDeviceCtx->archiveTransferredWithoutFailure = true;
             try {
@@ -1177,7 +1167,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                                               ec);
         }
 
-        if (shouldShutDown) {
+        if (shouldShutdown) {
             ctx->addDeviceCtx->channel->shutdown();
         }
 
@@ -1278,7 +1268,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
             }
         };
 
-        auto search = [ctx, searchEnded, w = weak_from_this()](bool previous) {
+        auto search = [ctx, searchEnded, w = weak()](bool previous) {
             std::vector<uint8_t> key;
             dht::InfoHash loc;
             auto& s = previous ? ctx->dhtContext->stateOld : ctx->dhtContext->stateNew;
@@ -1310,8 +1300,7 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
                             [ctx, decrypted = std::move(decrypted), w] {
                                 try {
                                     auto archive = AccountArchive(decrypted);
-                                    if (auto sthis = std::static_pointer_cast<ArchiveAccountManager>(
-                                            w.lock())) {
+                                    if (auto sthis = w.lock()) {
                                         if (ctx->dhtContext) {
                                             ctx->dhtContext->dht.join();
                                             ctx->dhtContext.reset();
@@ -1705,13 +1694,13 @@ ArchiveAccountManager::revokeDevice(const std::string& device,
                      password,
                      device,
                      cb,
-                     w = weak_from_this()](
+                     w = weak()](
                         const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
                         if (not crt) {
                             cb(RevokeDeviceResult::ERROR_NETWORK);
                             return;
                         }
-                        auto this_ = std::static_pointer_cast<ArchiveAccountManager>(w.lock());
+                        auto this_ = w.lock();
                         if (not this_)
                             return;
                         this_->info_->contacts->foundAccountDevice(crt);
