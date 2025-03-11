@@ -87,14 +87,10 @@ public:
                        const std::string& password);
     bool isPasswordValid(const std::string& password) override;
 
-    // link device: NEW: for authenticating exporting account to another device but can be used for
-    // any sort of authentication in the future
     bool provideAccountAuthentication(const std::string& credentialsFromUser,
                                       const std::string& scheme);
 
 #if HAVE_RINGNS
-    /*void lookupName(const std::string& name, LookupCallback cb) override;
-    void lookupAddress(const std::string& address, LookupCallback cb) override;*/
     void registerName(const std::string& name,
                       std::string_view scheme,
                       const std::string& password,
@@ -138,7 +134,6 @@ private:
     struct DecodingContext;
     struct AuthMsg;
     struct DeviceAuthInfo;
-    struct PayloadKey;
     std::shared_ptr<AuthContext> authCtx_;
 
     void createAccount(AuthContext& ctx);
