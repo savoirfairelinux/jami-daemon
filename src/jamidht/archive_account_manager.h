@@ -138,7 +138,6 @@ private:
     struct DecodingContext;
     struct AuthMsg;
     struct DeviceAuthInfo;
-    struct PayloadKey;
     std::shared_ptr<AuthContext> authCtx_;
 
     void createAccount(AuthContext& ctx);
