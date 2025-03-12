@@ -48,6 +48,7 @@ enum class LIBJAMI_PUBLIC DataTransferEventCode : uint32_t {
     invalid_pathname,
     unjoinable_peer,
     timeout_expired,
+    waiting_for_sha3sum,
 };
 
 enum class LIBJAMI_PUBLIC DataTransferError : uint32_t {
