@@ -1,0 +1,25 @@
+From bad7151d1ae625a87e0ed05a2a7f5af25417bab2 Mon Sep 17 00:00:00 2001
+From: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Date: Wed, 12 Mar 2025 14:47:10 -0400
+Subject: [PATCH] fix mkdir permissions on Windows
+
+---
+ SMP/unistd.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/SMP/unistd.h b/SMP/unistd.h
+index b54d4be1..eb712c95 100644
+--- a/SMP/unistd.h
++++ b/SMP/unistd.h
+@@ -27,6 +27,8 @@
+ #   include_next <unistd.h>
+ #else
+ 
++#define mkdir(path, mode) mkdir(path)
++
+ #include <stdlib.h>
+ #include <process.h>
+ #include <direct.h>
+-- 
+2.34.1
+
