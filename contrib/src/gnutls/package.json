@@ -17,6 +17,7 @@
             "git init",
             "git remote add origin https://github.com/ShiftMediaProject/gnutls.git || true",
             "git fetch origin --depth=1 --tags && git reset --hard 3.8.3",
+            "git apply ../../src/gnutls/0001-fix-mkdir-permissions-on-Windows.patch",
             "git submodule update --init --recursive --depth=1 gnulib devel/libtasn1"
         ]
     }
