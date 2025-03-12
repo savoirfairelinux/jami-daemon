@@ -4225,6 +4225,15 @@ JamiAccount::sendFile(const std::string& conversationId,
             value["tid"] = std::to_string(tid);
             value["displayName"] = name.empty() ? path.filename().string() : name;
             value["totalSize"] = std::to_string(fileutils::size(path));
+            // Notify the client that the file is being processed
+            // It's useful to show the file in chat before it's actually sent
+            // This is needed because of the time that sha3sum computation can take
+            emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
+                accId,
+                conversationId,
+                commitId,
+                path.u8string(),
+                uint32_t(libjami::DataTransferEventCode::waiting_for_sha3sum));
             value["sha3sum"] = fileutils::sha3File(path);
             value["type"] = "application/data-transfer+json";
 
