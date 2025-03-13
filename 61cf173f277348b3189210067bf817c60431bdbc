@@ -22,6 +22,30 @@
       },
       "revId": "61cf173f277348b3189210067bf817c60431bdbc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1bc74ea5_907b1e6c",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-03-13T13:27:40Z",
+      "side": 1,
+      "message": "No this doesn\u0027t. The UI freeze was caused by a mutex issue, another commit currently in review fixes it. This is just a draft of a way to make file messages appear directly in the chat.",
+      "parentUuid": "5158193d_45c350fc",
+      "range": {
+        "startLine": 12,
+        "startChar": 0,
+        "endLine": 12,
+        "endChar": 52
+      },
+      "revId": "61cf173f277348b3189210067bf817c60431bdbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
