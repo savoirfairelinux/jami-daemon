@@ -320,7 +320,6 @@ toString(AuthDecodingState state)
 namespace PayloadKey {
 static constexpr auto passwordCorrect = "passwordCorrect"sv;
 static constexpr auto canRetry = "canRetry"sv;
-static constexpr auto archiveTransferredWithoutFailure = "archiveTransferredWithoutFailure"sv;
 static constexpr auto accData = "accData"sv;
 static constexpr auto authScheme = "authScheme"sv;
 static constexpr auto password = "password"sv;
@@ -721,25 +720,25 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                     return len;
                 }
 
-                // decode msg
                 decodingCtx->pac.reserve_buffer(len);
                 std::copy_n(buf, len, decodingCtx->pac.buffer());
                 decodingCtx->pac.buffer_consumed(len);
-                msgpack::object_handle oh;
                 AuthMsg toRecv;
                 try {
-                    JAMI_DEBUG("[LinkDevice] NEW: Unpacking message.");
-                    decodingCtx->pac.next(oh);
-                    oh.get().convert(toRecv);
+                    msgpack::object_handle oh;
+                    if (decodingCtx->pac.next(oh)) {
+                        JAMI_DEBUG("[LinkDevice] NEW: Unpacking message.");
+                        oh.get().convert(toRecv);
+                    } else {
+                        return len;
+                    }
                 } catch (const std::exception& e) {
-                    ctx->linkDevCtx->state
-                        = AuthDecodingState::ERR; // set the generic error state in the context
-                    JAMI_ERROR("[LinkDevice] Error unpacking message from Old Device.");
-                    // TODO: shutdown?
+                    ctx->linkDevCtx->state = AuthDecodingState::ERR;
+                    JAMI_ERROR("[LinkDevice] Error unpacking message from source device: {}", e.what());
                     return len;
                 }
 
-                JAMI_DEBUG("[LinkDevice] NEW: Successfully unpacked message from EXPORTING\n{}",
+                JAMI_DEBUG("[LinkDevice] NEW: Successfully unpacked message from source\n{}",
                            toRecv.formatMsg());
                 JAMI_DEBUG("[LinkDevice] NEW: State is {}:{}",
                            ctx->linkDevCtx->scheme,
@@ -747,11 +746,8 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
 
                 // check if scheme is supported
                 if (toRecv.schemeId != 0) {
-                    JAMI_WARNING(
-                        "[LinkDevice] NEW: Unsupported scheme received from a connection.");
-                    ctx->linkDevCtx->state
-                        = AuthDecodingState::ERR; // set the generic error state in the context
-                    // TODO: shutdown?
+                    JAMI_WARNING("[LinkDevice] NEW: Unsupported scheme received from source");
+                    ctx->linkDevCtx->state = AuthDecodingState::ERR;
                     return len;
                 }
 
@@ -815,6 +811,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                     }
 
                     if (!shouldLoadArchive) {
+                        JAMI_DEBUG("[LinkDevice] NEW: no archive received.");
                         // at this point we suppose to have archive. If not, export failed.
                         // Update state and signal will be handeled onShutdown
                         ctx->linkDevCtx->state = AuthDecodingState::ERR;
@@ -859,7 +856,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             // send first message to establish scheme
             AuthMsg toSend;
             toSend.schemeId = 0; // set latest scheme here
-            JAMI_DEBUG("[LinkDevice] NEW: Packing first message for EXPORTING.\nCurrent state is: "
+            JAMI_DEBUG("[LinkDevice] NEW: Packing first message for SOURCE.\nCurrent state is: "
                        "\n\tauth "
                        "state = {}:{}",
                        toSend.schemeId,
@@ -903,7 +900,7 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
         auto gen = Manager::instance().getSeededRandomEngine();
         std::uniform_int_distribution<int32_t> dist(1, INT32_MAX);
         auto token = dist(gen);
-        JAMI_WARNING("[LinkDevice] EXPORTING: Creating auth context, token: {}.", token);
+        JAMI_WARNING("[LinkDevice] SOURCE: Creating auth context, token: {}.", token);
         auto ctx = std::make_shared<AuthContext>();
         ctx->accountId = accountId_;
         ctx->token = token;
@@ -952,12 +949,12 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                                    const std::shared_ptr<dhtnet::ChannelSocket>& channel)
 {
     if (ctx->canceled) {
-        JAMI_WARNING("[LinkDevice] EXPORTING: addDevice canceled.");
+        JAMI_WARNING("[LinkDevice] SOURCE: addDevice canceled.");
         channel->shutdown();
         return false;
     }
-    JAMI_DEBUG("[LinkDevice] Setting up addDevice logic on EXPORTING device.");
-    JAMI_DEBUG("[LinkDevice] EXPORTING: Creating addDeviceCtx.");
+    JAMI_DEBUG("[LinkDevice] Setting up addDevice logic on SOURCE device.");
+    JAMI_DEBUG("[LinkDevice] SOURCE: Creating addDeviceCtx.");
     ctx->addDeviceCtx = std::make_unique<AddDeviceContext>(channel);
     ctx->addDeviceCtx->authScheme = scheme;
     ctx->addDeviceCtx->state = AuthDecodingState::HANDSHAKE;
@@ -989,9 +986,9 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             }
         });
 
-    JAMI_DEBUG("[LinkDevice] EXPORTING: Creating callbacks.");
+    JAMI_DEBUG("[LinkDevice] SOURCE: Creating callbacks.");
     channel->onShutdown([ctx, w = weak()]() {
-        JAMI_DEBUG("[LinkDevice] EXPORTING: Shutdown with state {}... xfer {}uccessful",
+        JAMI_DEBUG("[LinkDevice] SOURCE: Shutdown with state {}... xfer {}uccessful",
                    ctx->addDeviceCtx->formattedAuthState(),
                    ctx->addDeviceCtx->archiveTransferredWithoutFailure ? "s" : "uns");
         // check if the archive was successfully loaded and emitSignal
@@ -1019,7 +1016,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                         wthis = weak(),
                         decodeCtx = std::make_shared<ArchiveAccountManager::DecodingContext>()](
                            const uint8_t* buf, size_t len) {
-        JAMI_DEBUG("[LinkDevice] Setting up receiver callback for communication logic on EXPORTING "
+        JAMI_DEBUG("[LinkDevice] Setting up receiver callback for communication logic on SOURCE "
                    "device.");
         // when archive is sent to newDev we will get back a success or fail response before the
         // connection closes and we need to handle this and pass it to the shutdown callback
@@ -1044,30 +1041,30 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         decodeCtx->pac.buffer_consumed(len);
 
         // handle unpacking the data from the peer
-        JAMI_DEBUG("[LinkDevice] EXPORTING: addDevice: setOnRecv: handling msg from NEW");
+        JAMI_DEBUG("[LinkDevice] SOURCE: addDevice: setOnRecv: handling msg from NEW");
         msgpack::object_handle oh;
         AuthMsg toRecv;
         try {
-            decodeCtx->pac.next(oh);
-            oh.get().convert(toRecv);
-            // print out contents of the protocol message for debugging purposes
-            JAMI_DEBUG("[LinkDevice] EXPORTING: Successfully unpacked message from NEW "
-                       "(NEW->EXPORTING)\n{}",
-                       toRecv.formatMsg());
+            if (decodeCtx->pac.next(oh)) {
+                oh.get().convert(toRecv);
+                JAMI_DEBUG("[LinkDevice] SOURCE: Successfully unpacked message from NEW "
+                           "(NEW->SOURCE)\n{}",
+                           toRecv.formatMsg());
+            } else {
+                return len;
+            }
         } catch (const std::exception& e) {
             // set the generic error state in the context
             ctx->addDeviceCtx->state = AuthDecodingState::ERR;
-            JAMI_ERROR("[LinkDevice] error unpacking message from msgpack"); // also warn in logs
+            JAMI_ERROR("[LinkDevice] error unpacking message from new device: {}", e.what()); // also warn in logs
         }
 
-        // TODO add n:STATE to handle higher scheme versioning
-        JAMI_DEBUG("[LinkDevice] EXPORTING: State is '{}'", ctx->addDeviceCtx->formattedAuthState());
+        JAMI_DEBUG("[LinkDevice] SOURCE: State is '{}'", ctx->addDeviceCtx->formattedAuthState());
 
         // It's possible to start handling different protocol scheme numbers here
         // one possibility is for multi-account xfer in the future
         // validate the scheme
         if (toRecv.schemeId != 0) {
-            // set the generic error state in the context
             ctx->addDeviceCtx->state = AuthDecodingState::ERR;
             JAMI_WARNING("[LinkDevice] Unsupported scheme received from a connection.");
         }
@@ -1090,7 +1087,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         if (ctx->addDeviceCtx->state == AuthDecodingState::AUTH) {
             // receive the incoming password, check if the password is right, and send back the
             // archive if it is correct
-            JAMI_DEBUG("[LinkDevice] EXPORTING: addDevice: setOnRecv: verifying sent "
+            JAMI_DEBUG("[LinkDevice] SOURCE: addDevice: setOnRecv: verifying sent "
                        "credentials from NEW");
             shouldSendMsg = true;
             const auto& passwordIt = toRecv.find(PayloadKey::password);
@@ -1098,7 +1095,6 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                 // try and decompress archive for xfer
                 try {
                     JAMI_DEBUG("[LinkDevice] Injecting account archive into outbound message.");
-
                     ctx->addDeviceCtx->accData
                         = this_
                               ->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD,
@@ -1106,9 +1102,9 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                               .serialize();
                     shouldSendArchive = true;
                     JAMI_DEBUG("[LinkDevice] Sending account archive.");
-                } catch (...) {
+                } catch (const std::exception& e) {
                     ctx->addDeviceCtx->state = AuthDecodingState::ERR;
-                    JAMI_DEBUG("[LinkDevice] Finished reading archive: FAILURE");
+                    JAMI_DEBUG("[LinkDevice] Finished reading archive: FAILURE: {}", e.what());
                     shouldSendArchive = false;
                 }
             }
@@ -1134,7 +1130,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         }
 
         if (shouldSendArchive) {
-            JAMI_DEBUG("[LinkDevice] EXPORTING: Archive in message has encryption scheme '{}'",
+            JAMI_DEBUG("[LinkDevice] SOURCE: Archive in message has encryption scheme '{}'",
                        ctx->addDeviceCtx->authScheme);
             emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
                 ctx->accountId,
@@ -1144,20 +1140,10 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             shouldShutdown = true;
             shouldSendMsg = true;
             ctx->addDeviceCtx->archiveTransferredWithoutFailure = true;
-            try {
-                JAMI_DEBUG("[LinkDevice] EXPORTING: Trying to send archive to NEW.");
-                toSend.set(PayloadKey::accData, ctx->addDeviceCtx->accData);
-                JAMI_DEBUG("[LinkDevice] EXPORTING: Sending archive to NEW.");
-            } catch (const std::exception& e) {
-                JAMI_ERROR("[LinkDevice] EXPORTING: Error preparing archive for xfer: {}", e.what());
-                ctx->addDeviceCtx->state = AuthDecodingState::ERR;
-                ctx->addDeviceCtx->archiveTransferredWithoutFailure = false;
-                toSend.payload.clear();
-                toSend.set(PayloadKey::archiveTransferredWithoutFailure, "false");
-            }
+            toSend.set(PayloadKey::accData, ctx->addDeviceCtx->accData);
         }
         if (shouldSendMsg) {
-            JAMI_DEBUG("[LinkDevice] EXPORTING: Sending msg to NEW:\n{}", toSend.formatMsg());
+            JAMI_DEBUG("[LinkDevice] SOURCE: Sending msg to NEW:\n{}", toSend.formatMsg());
             msgpack::sbuffer buffer(UINT16_MAX);
             msgpack::pack(buffer, toSend);
             std::error_code ec;
@@ -1223,7 +1209,7 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
             dht::ThreadPool::io().run([ctx] {
                 ctx->addDeviceCtx->state = AuthDecodingState::AUTH;
                 AuthMsg toSend;
-                JAMI_DEBUG("[LinkDevice] EXPORTING: Packing first message for NEW and switching to "
+                JAMI_DEBUG("[LinkDevice] SOURCE: Packing first message for NEW and switching to "
                            "state: {}",
                            ctx->addDeviceCtx->formattedAuthState());
                 toSend.set(PayloadKey::authScheme, ctx->addDeviceCtx->authScheme);
