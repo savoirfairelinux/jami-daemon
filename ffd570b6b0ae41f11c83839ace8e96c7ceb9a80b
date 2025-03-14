@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba060df4_31b433c7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2095,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-03-14T19:11:10Z",
+      "side": 1,
+      "message": "This parameter is no longer needed.",
+      "range": {
+        "startLine": 2095,
+        "startChar": 35,
+        "endLine": 2095,
+        "endChar": 52
+      },
+      "revId": "ffd570b6b0ae41f11c83839ace8e96c7ceb9a80b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
