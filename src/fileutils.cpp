@@ -187,6 +187,7 @@ isDirectoryWritable(const std::string& directory)
 bool
 createSymlink(const std::filesystem::path& linkFile, const std::filesystem::path& target)
 {
+    JAMI_WARNING("createSymlink from {} to {}", linkFile, target);
     std::error_code ec;
     std::filesystem::create_symlink(target, linkFile, ec);
     if (ec) {
@@ -201,6 +202,7 @@ createSymlink(const std::filesystem::path& linkFile, const std::filesystem::path
 bool
 createHardlink(const std::filesystem::path& linkFile, const std::filesystem::path& target)
 {
+    JAMI_WARNING("createHardlink from {} to {}", linkFile, target);
     std::error_code ec;
     std::filesystem::create_hard_link(target, linkFile, ec);
     if (ec) {

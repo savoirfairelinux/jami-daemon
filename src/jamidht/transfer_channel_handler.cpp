@@ -132,6 +132,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
     // Check if profile
     if (idstr == "profile.vcf") {
         dht::ThreadPool::io().run([wacc = acc->weak(), path = idPath_ / "profile.vcf", channel, idstr, lastModified, sha3Sum] {
+            JAMI_WARNING("TransferChannel: Incoming profile detected {} - {} - {}", idstr, lastModified, sha3Sum);
             if (auto acc = wacc.lock()) {
                 if (!channel->isInitiator()) {
                     // Only accept newest profiles
