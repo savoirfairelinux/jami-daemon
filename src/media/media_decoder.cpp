@@ -641,17 +641,28 @@ MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
-    if (ret < 0 && ret != AVERROR(EAGAIN)) {
-#ifdef RING_ACCEL
-        if (accel_) {
-            JAMI_WARN("Decoding error falling back to software");
-            fallback_ = true;
-            accel_.reset();
-            avcodec_flush_buffers(decoderCtx_);
-            setupStream();
-            return DecodeStatus::FallBack;
+    if (ret < 0) {
+        // In a case caught on Windows, avcodec_send_packet returns AVERROR_INVALIDDATA when
+        // the size information in the packet is incorrect. This is a workaround to handle this
+        // case which was observed with Logitech C920 camera, and presented similar symptoms when
+        // the camera was opened with other applications like Chrome, Windows Camera app, etc.
+        // Experimentally, every second packet was affected.
+        if (ret == AVERROR_INVALIDDATA) {
+            JAMI_DEBUG("Invalid data in packet");
+            return DecodeStatus::DecodeError;
         }
+        if (ret != AVERROR(EAGAIN)) {
+#ifdef RING_ACCEL
+            if (accel_) {
+                JAMI_WARN("Decoding error falling back to software");
+                fallback_ = true;
+                accel_.reset();
+                avcodec_flush_buffers(decoderCtx_);
+                setupStream();
+                return DecodeStatus::FallBack;
+            }
 #endif
+        }
         avcodec_flush_buffers(decoderCtx_);
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
     }
