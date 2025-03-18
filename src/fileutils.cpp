@@ -811,9 +811,13 @@ accessFile(const std::string& file, int mode)
 uint64_t
 lastWriteTimeInSeconds(const std::filesystem::path& filePath)
 {
-    return std::chrono::duration_cast<std::chrono::seconds>(
-               std::filesystem::last_write_time(filePath).time_since_epoch())
-        .count();
+    std::error_code ec;
+    auto lastWrite = std::filesystem::last_write_time(filePath, ec);
+    if (ec) {
+        JAMI_WARNING("Unable to get last write time of {}: {}", filePath, ec.message());
+        return 0;
+    }
+    return std::chrono::duration_cast<std::chrono::seconds>(lastWrite.time_since_epoch()).count();
 }
 
 } // namespace fileutils
