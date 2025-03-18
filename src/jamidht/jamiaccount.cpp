@@ -3466,6 +3466,11 @@ JamiAccount::updateProfile(const std::string& displayName,
                            const std::string& fileType,
                            int32_t flag)
 {
+    JAMI_WARNING("updateProfile: displayName: {}, avatar: {}, fileType: {}, flag: {}",
+                 displayName,
+                 std::string_view(avatar).substr(0, 20),
+                 fileType,
+                 flag);
     // if the fileType is empty then only the display name will be upated
 
     const auto& accountUri = accountManager_->getInfo()->accountId;
