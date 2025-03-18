@@ -521,6 +521,7 @@ void
 TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
                                    const std::string& sha3Sum)
 {
+    JAMI_WARNING("TransferChannel: onIncomingProfile {}", sha3Sum);
     if (!channel)
         return;
 
@@ -576,14 +577,16 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                                                  code] {
                 if (auto sthis_ = w.lock()) {
                     auto& pimpl = sthis_->pimpl_;
-
                     auto destPath = sthis_->profilePath(uri);
                     try {
                         // Move profile to destination path
                         std::lock_guard lock(dhtnet::fileutils::getFileLock(destPath));
                         dhtnet::fileutils::recursive_mkdir(destPath.parent_path());
+                        std::error_code ec;
+                        JAMI_WARNING("TransferChannel: Incoming profile link {} - {} - {} {}", pimpl->accountProfilePath_, destPath, std::filesystem::file_size(path, ec), std::filesystem::file_size(destPath, ec));
                         std::filesystem::rename(path, destPath);
                         if (!pimpl->accountUri_.empty() && uri == pimpl->accountUri_) {
+
                             // If this is the account profile, link or copy it to the account profile path
                             if (!fileutils::createFileLink(pimpl->accountProfilePath_, destPath)) {
                                 std::error_code ec;
