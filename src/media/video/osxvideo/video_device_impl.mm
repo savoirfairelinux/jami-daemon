@@ -59,7 +59,8 @@ class VideoDeviceImpl {
         FrameRate rate_ {};
         std::map<VideoSize, std::vector<FrameRate>> available_rates_;
         FrameRate desktopFrameRate_ = {30};
-        std::vector<FrameRate> desktopFrameRates_ = {FrameRate(5),
+        std::vector<FrameRate> desktopFrameRates_ = {FrameRate(1),
+                                                     FrameRate(5),
                                                      FrameRate(10),
                                                      FrameRate(15),
                                                      FrameRate(20),

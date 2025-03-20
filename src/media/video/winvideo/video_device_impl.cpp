@@ -80,7 +80,8 @@ VideoDeviceImpl::setup()
         name = DEVICE_DESKTOP;
         VideoSize size {0, 0};
         sizeList_.emplace_back(size);
-        rateList_[size] = {FrameRate(5),
+        rateList_[size] = {FrameRate(1),
+                           FrameRate(5),
                            FrameRate(10),
                            FrameRate(15),
                            FrameRate(20),
