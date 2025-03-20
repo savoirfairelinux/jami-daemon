@@ -537,7 +537,8 @@ vector<FrameRate>
 VideoDeviceImpl::getRateList(const string& channel, VideoSize size) const
 {
     if (unique_id == DEVICE_DESKTOP) {
-        return {FrameRate(5),
+        return {FrameRate(1),
+                FrameRate(5),
                 FrameRate(10),
                 FrameRate(15),
                 FrameRate(20),
