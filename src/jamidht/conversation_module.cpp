@@ -896,22 +896,17 @@ ConversationModule::Impl::getRequest(const std::string& id) const
 std::string
 ConversationModule::Impl::getOneToOneConversation(const std::string& uri) const noexcept
 {
-    auto details = accountManager_->getContactDetails(uri);
-    auto itRemoved = details.find("removed");
-    // If contact is removed there is no conversation
-    if (itRemoved != details.end() && itRemoved->second != "0") {
-        auto itBanned = details.find("banned");
+    auto details = accountManager_->getContactInfo(uri);
+    if (details) {
+        // If contact is removed there is no conversation
         // If banned, conversation is still on disk
-        if (itBanned == details.end() || itBanned->second == "0") {
+        if (details->removed != 0 && details->banned == 0) {
             // Check if contact is removed
-            auto itAdded = details.find("added");
-            if (std::stoi(itRemoved->second) > std::stoi(itAdded->second))
+            if (details->removed > details->added)
                 return {};
         }
+        return details->conversationId;
     }
-    auto it = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
-    if (it != details.end())
-        return it->second;
     return {};
 }
 
