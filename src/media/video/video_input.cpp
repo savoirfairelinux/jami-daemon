@@ -433,8 +433,17 @@ VideoInput::initLinuxGrab(const std::string& display)
 
     DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
     if (winIdPos != std::string::npos) {
-        p.window_id = display.substr(winIdPos + windowIdStr.size()); // "0x0340021e";
+        size_t endPos = display.find(' ', winIdPos + windowIdStr.size());
+        p.window_id = display.substr(winIdPos + windowIdStr.size(),
+                                     endPos - (winIdPos + windowIdStr.size())); // "0x0340021e";
         p.is_area = 0;
+    }
+    std::string fpsStr = "fps:";
+    if (display.find(fpsStr) != std::string::npos) {
+        size_t fpsPos = display.find(fpsStr) + fpsStr.size();
+        int fps = std::stoi(display.substr(fpsPos));
+        p.framerate = fps;
+        JAMI_LOG("Custom framerate set to {} fps", fps);
     }
     if (display.find("pipewire") != std::string::npos) {
         std::string pidStr = "pid:";
@@ -534,8 +543,11 @@ VideoInput::initWindowsGrab(const std::string& display)
 
     DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
     if (winHandlePos != std::string::npos) {
-        p.input = display.substr(winHandlePos + windowIdStr.size()); // "HANDLE";
-        p.name = display.substr(winHandlePos + windowIdStr.size());  // "HANDLE";
+        size_t endPos = display.find(' ', winHandlePos + windowIdStr.size());
+        p.input = display.substr(winHandlePos + windowIdStr.size(),
+                                 endPos - (winHandlePos + windowIdStr.size())); // "HANDLE";
+        p.name = display.substr(winHandlePos + windowIdStr.size(),
+                                endPos - (winHandlePos + windowIdStr.size())); // "HANDLE";
         p.is_area = 0;
     } else {
         p.input = display.substr(1);
@@ -561,6 +573,13 @@ VideoInput::initWindowsGrab(const std::string& display)
             p.width = default_grab_width;
             p.height = default_grab_height;
         }
+    }
+    std::string fpsStr = "fps:";
+    if (display.find(fpsStr) != std::string::npos) {
+        size_t fpsPos = display.find(fpsStr) + fpsStr.size();
+        int fps = std::stoi(display.substr(fpsPos));
+        p.framerate = fps;
+        JAMI_LOG("Custom framerate set to {} fps", fps);
     }
 
     auto dec = std::make_unique<MediaDecoder>();
