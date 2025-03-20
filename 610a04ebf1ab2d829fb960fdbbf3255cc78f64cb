@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "748c5f71_c7f5277f",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 451,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-03-20T20:01:43Z",
+      "side": 1,
+      "message": "JAMI_LOG",
+      "range": {
+        "startLine": 451,
+        "startChar": 8,
+        "endLine": 451,
+        "endChar": 16
+      },
+      "revId": "610a04ebf1ab2d829fb960fdbbf3255cc78f64cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0dcbb222_d74072f1",
+        "filename": "src/media/video/video_input.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 452,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-03-20T20:01:43Z",
+      "side": 1,
+      "message": "could be just fps:1",
+      "range": {
+        "startLine": 446,
+        "startChar": 4,
+        "endLine": 452,
+        "endChar": 5
+      },
+      "revId": "610a04ebf1ab2d829fb960fdbbf3255cc78f64cb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
