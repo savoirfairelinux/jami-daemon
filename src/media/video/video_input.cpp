@@ -51,7 +51,9 @@ namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput(VideoInputMode inputMode, const std::string& resource, const std::string& sink)
+VideoInput::VideoInput(VideoInputMode inputMode,
+                       const std::string& resource,
+                       const std::string& sink)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
@@ -305,7 +307,9 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
-    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab") && !decOpts_.is_area) {
+    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab"
+         || decOpts_.format == "pipewiregrab")
+        && !decOpts_.is_area) {
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
@@ -421,9 +425,10 @@ bool
 VideoInput::initLinuxGrab(const std::string& display)
 {
     // Patterns (all platforms except Linux with Wayland)
-    // full screen sharing:            :1+0,0 2560x1440                (SCREEN 1, POSITION 0X0, RESOLUTION 2560X1440)
-    // area sharing:                   :1+882,211 1532x779             (SCREEN 1, POSITION 882x211, RESOLUTION 1532x779)
-    // window sharing:                 :+1,0 0x0 window-id:0x0340021e  (POSITION 0X0)
+    // full screen sharing:            :1+0,0 2560x1440                (SCREEN 1, POSITION 0X0,
+    // RESOLUTION 2560X1440) area sharing:                   :1+882,211 1532x779             (SCREEN
+    // 1, POSITION 882x211, RESOLUTION 1532x779) window sharing:                 :+1,0 0x0
+    // window-id:0x0340021e  (POSITION 0X0)
     //
     // Pattern (Linux with Wayland)
     // full screen or window sharing:  pipewire pid:2861 fd:23 node:68
@@ -433,8 +438,17 @@ VideoInput::initLinuxGrab(const std::string& display)
 
     DeviceParams p = jami::getVideoDeviceMonitor().getDeviceParams(DEVICE_DESKTOP);
     if (winIdPos != std::string::npos) {
-        p.window_id = display.substr(winIdPos + windowIdStr.size()); // "0x0340021e";
+        size_t endPos = display.find(' ', winIdPos + windowIdStr.size());
+        p.window_id = display.substr(winIdPos + windowIdStr.size(),
+                                     endPos - (winIdPos + windowIdStr.size())); // "0x0340021e";
         p.is_area = 0;
+    }
+    std::string fpsStr = "fps:";
+    if (display.find(fpsStr) != std::string::npos) {
+        size_t fpsPos = display.find(fpsStr) + fpsStr.size();
+        int fps = std::stoi(display.substr(fpsPos));
+        p.framerate = fps;
+        JAMI_LOG("Custom framerate set to {} fps", fps);
     }
     if (display.find("pipewire") != std::string::npos) {
         std::string pidStr = "pid:";
@@ -453,12 +467,16 @@ VideoInput::initLinuxGrab(const std::string& display)
             // process, so we try to duplicate it in the current process.
             int pidfd = syscall(SYS_pidfd_open, pid, 0);
             if (pidfd < 0) {
-                JAMI_ERROR("Unable to duplicate PipeWire fd: call to pidfd_open failed (errno = {})", errno);
+                JAMI_ERROR(
+                    "Unable to duplicate PipeWire fd: call to pidfd_open failed (errno = {})",
+                    errno);
                 return false;
             }
             fd = syscall(SYS_pidfd_getfd, pidfd, fd, 0);
             if (fd < 0) {
-                JAMI_ERROR("Unable to duplicate PipeWire fd: call to pidfd_getfd failed (errno = {})", errno);
+                JAMI_ERROR(
+                    "Unable to duplicate PipeWire fd: call to pidfd_getfd failed (errno = {})",
+                    errno);
                 return false;
             }
 #else
