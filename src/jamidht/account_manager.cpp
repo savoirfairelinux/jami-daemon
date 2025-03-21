@@ -345,19 +345,19 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
                             return;
                         auto conversationId = v.conversationId;
                         // Check if there was an old active conversation.
-                        auto details = info_->contacts->getContactDetails(peer_account);
-                        auto oldConvIt = details.find(libjami::Account::TrustRequest::CONVERSATIONID);
-                        if (oldConvIt != details.end() && oldConvIt->second != "") {
-                            if (conversationId == oldConvIt->second) {
-                                // Here, it's possible that we already have accepted the conversation
-                                // but contact were offline and sync failed.
-                                // So, retrigger the callback so upper layer will clone conversation if needed
-                                // instead of getting stuck in sync.
-                                info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
-                                return;
+                        if (auto details = info_->contacts->getContactInfo(peer_account)) {
+                            if (!details->conversationId.empty()) {
+                                if (details->conversationId == conversationId) {
+                                    // Here, it's possible that we already have accepted the conversation
+                                    // but contact were offline and sync failed.
+                                    // So, retrigger the callback so upper layer will clone conversation if needed
+                                    // instead of getting stuck in sync.
+                                    info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
+                                    return;
+                                }
+                                conversationId = details->conversationId;
+                                JAMI_WARNING("Accept with old convId: {}", conversationId);
                             }
-                            conversationId = oldConvIt->second;
-                            JAMI_WARNING("Accept with old convId: {}", conversationId);
                         }
                         sendTrustRequestConfirm(peer_account, conversationId);
                     }
@@ -586,6 +586,21 @@ AccountManager::getContactDetails(const std::string& uri) const
         return {};
     }
     return info_->contacts->getContactDetails(h);
+}
+
+std::optional<Contact>
+AccountManager::getContactInfo(const std::string& uri) const
+{
+    if (!info_) {
+        JAMI_ERROR("[Account {}] getContactInfo(): account not loaded", accountId_);
+        return {};
+    }
+    dht::InfoHash h(uri);
+    if (not h) {
+        JAMI_ERROR("[Account {}] getContactInfo: invalid contact URI", accountId_);
+        return {};
+    }
+    return info_->contacts->getContactInfo(h);
 }
 
 bool
