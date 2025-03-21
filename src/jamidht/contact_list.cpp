@@ -172,6 +172,17 @@ ContactList::getContactDetails(const dht::InfoHash& h) const
     return details;
 }
 
+std::optional<Contact>
+ContactList::getContactInfo(const dht::InfoHash& h) const
+{
+    const auto c = contacts_.find(h);
+    if (c == std::end(contacts_)) {
+        JAMI_WARNING("[Account {}] [Contacts] Contact '{}' not found", accountId_, h.to_view());
+        return {};
+    }
+    return c->second;
+}
+
 const std::map<dht::InfoHash, Contact>&
 ContactList::getContacts() const
 {
