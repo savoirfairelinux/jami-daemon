@@ -305,6 +305,7 @@ public:
     /// Obtain details about one account contact in serializable form.
     ///
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
+    std::optional<Contact> getContactInfo(const std::string& uri) const;
 
     void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
     void sendMessage(const std::string& to,
