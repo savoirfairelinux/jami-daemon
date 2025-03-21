@@ -1815,33 +1815,31 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
                                                                   "");
     }
 
-    auto details = getContactDetails(id);
-    auto it = details.find("confirmed");
-    if (it == details.end() or it->second == "false") {
-        auto convId = convModule()->getOneToOneConversation(id);
-        if (convId.empty())
-            return;
-        // In this case, the TrustRequest was sent but never confirmed (cause the contact was
-        // offline maybe) To avoid the contact to never receive the conv request, retry there
-        std::lock_guard lock(configurationMutex_);
-        if (accountManager_) {
-            // Retrieve cached payload for trust request.
-            auto requestPath = cachePath_ / "requests" / id;
-            std::vector<uint8_t> payload;
-            try {
-                payload = fileutils::loadFile(requestPath);
-            } catch (...) {
+    if (auto details = getContactInfo(id)) {
+        if (!details->confirmed) {
+            auto convId = convModule()->getOneToOneConversation(id);
+            if (convId.empty())
+                return;
+            // In this case, the TrustRequest was sent but never confirmed (cause the contact was
+            // offline maybe) To avoid the contact to never receive the conv request, retry there
+            std::lock_guard lock(configurationMutex_);
+            if (accountManager_) {
+                // Retrieve cached payload for trust request.
+                auto requestPath = cachePath_ / "requests" / id;
+                std::vector<uint8_t> payload;
+                try {
+                    payload = fileutils::loadFile(requestPath);
+                } catch (...) {
+                }
+                if (payload.size() >= 64000) {
+                    JAMI_WARNING(
+                        "[Account {:s}] Trust request for contact {:s} is too big, reset payload",
+                        getAccountID(),
+                        id);
+                    payload.clear();
+                }
+                accountManager_->sendTrustRequest(id, convId, payload);
             }
-
-            if (payload.size() >= 64000) {
-                JAMI_WARNING(
-                    "[Account {:s}] Trust request for contact {:s} is too big, reset payload",
-                    getAccountID(),
-                    id);
-                payload.clear();
-            }
-
-            accountManager_->sendTrustRequest(id, convId, payload);
         }
     }
 }
@@ -2906,6 +2904,13 @@ JamiAccount::getContactDetails(const std::string& uri) const
     std::lock_guard lock(configurationMutex_);
     return accountManager_ ? accountManager_->getContactDetails(uri)
                            : std::map<std::string, std::string> {};
+}
+
+std::optional<Contact>
+JamiAccount::getContactInfo(const std::string& uri) const
+{
+    std::lock_guard lock(configurationMutex_);
+    return accountManager_ ? accountManager_->getContactInfo(uri) : std::nullopt;
 }
 
 std::vector<std::map<std::string, std::string>>

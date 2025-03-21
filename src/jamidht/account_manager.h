@@ -248,6 +248,7 @@ public:
 
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
+    std::optional<Contact> getContactInfo(const std::string& uri) const;
 
     virtual bool findCertificate(
         const dht::InfoHash& h,
