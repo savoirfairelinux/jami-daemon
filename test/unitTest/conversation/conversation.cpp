@@ -747,10 +747,7 @@ ConversationTest::testReplaceWithBadCertificate()
     Json::Value root;
     root["type"] = "text/plain";
     root["body"] = "hi";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    auto message = Json::writeString(wbuilder, root);
+    auto message = json::toString(root);
     commitInRepo(repoPath, aliceAccount, message);
     // now we need to sync!
     bobData.errorDetected = false;
@@ -1242,16 +1239,13 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     Json::Value json;
     json["mode"] = 1;
     json["type"] = "initial";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
 
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 Json::writeString(wbuilder, json).c_str(),
+                                 json::toString(json).c_str(),
                                  tree.get(),
                                  0,
                                  nullptr)
@@ -1560,10 +1554,7 @@ ConversationTest::testUnknownModeDetected()
     Json::Value json;
     json["mode"] = 1412;
     json["type"] = "initial";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    repo.amend(convId, Json::writeString(wbuilder, json));
+    repo.amend(convId, json::toString(json));
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
@@ -2311,11 +2302,8 @@ ConversationTest::testMessageEdition()
     root["type"] = "text/plain";
     root["edit"] = convId;
     root["body"] = "new";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
     auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
-    auto message = Json::writeString(wbuilder, root);
+    auto message = json::toString(root);
     commitInRepo(repoPath, aliceAccount, message);
     bobData.errorDetected = false;
     libjami::sendMessage(aliceId, convId, "trigger"s, "");

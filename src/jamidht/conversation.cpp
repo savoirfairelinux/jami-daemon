@@ -17,16 +17,8 @@
 #include "conversation.h"
 
 #include "account_const.h"
-#include "fileutils.h"
 #include "jamiaccount.h"
 #include "client/ring_signal.h"
-
-#include <charconv>
-#include <json/json.h>
-#include <string_view>
-#include <opendht/thread_pool.h>
-#include <tuple>
-#include <optional>
 #include "swarm/swarm_manager.h"
 #ifdef ENABLE_PLUGIN
 #include "manager.h"
@@ -35,15 +27,19 @@
 #endif
 #include "jami/conversation_interface.h"
 
+#include "fileutils.h"
+#include "json_utils.h"
+
+#include <opendht/thread_pool.h>
+
+#include <charconv>
+#include <string_view>
+#include <tuple>
+#include <optional>
+
 namespace jami {
 
 static const char* const LAST_MODIFIED = "lastModified";
-static const auto jsonBuilder = [] {
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    return wbuilder;
-}();
 
 ConvInfo::ConvInfo(const Json::Value& json)
 {
@@ -806,7 +802,7 @@ Conversation::Impl::commitsEndedCalls()
                                      });
         if (itActive != activeCalls_.end())
             activeCalls_.erase(itActive);
-        commits.emplace_back(repository_->commitMessage(Json::writeString(jsonBuilder, value)));
+        commits.emplace_back(repository_->commitMessage(json::toString(value)));
 
         JAMI_DEBUG("Removing hosted conference... {:s}", hostedCall.first);
     }
@@ -1640,8 +1636,7 @@ Conversation::sendMessage(Json::Value&& value,
         [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
             if (auto sthis = w.lock()) {
                 std::unique_lock lk(sthis->pimpl_->writeMtx_);
-                auto commit = sthis->pimpl_->repository_->commitMessage(
-                    Json::writeString(jsonBuilder, value));
+                auto commit = sthis->pimpl_->repository_->commitMessage(json::toString(value));
                 lk.unlock();
                 if (onCommit)
                     onCommit(commit);
@@ -1661,8 +1656,7 @@ Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& 
             commits.reserve(messages.size());
             std::unique_lock lk(sthis->pimpl_->writeMtx_);
             for (const auto& message : messages) {
-                auto commit = sthis->pimpl_->repository_->commitMessage(
-                    Json::writeString(jsonBuilder, message));
+                auto commit = sthis->pimpl_->repository_->commitMessage(json::toString(message));
                 commits.emplace_back(std::move(commit));
             }
             lk.unlock();
@@ -1951,7 +1945,7 @@ Conversation::generateInvitation() const
         metadata[k] = v;
     }
     root[ConversationMapKeys::CONVERSATIONID] = id();
-    return {{"application/invite+json", Json::writeString(jsonBuilder, root)}};
+    return {{"application/invite+json", json::toString(root)}};
 }
 
 std::string

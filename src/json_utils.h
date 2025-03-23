@@ -21,15 +21,17 @@
 #include <logger.h>
 
 namespace jami {
+namespace json {
 
 extern const Json::CharReaderBuilder rbuilder;
+extern const Json::StreamWriterBuilder wbuilder;
 
-inline bool parseJson(std::string_view jsonStr, Json::Value& json) {
+inline bool parse(std::string_view jsonStr, Json::Value& jsonVal) {
     std::string err;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(jsonStr.data(),
                        jsonStr.data() + jsonStr.size(),
-                       &json,
+                       &jsonVal,
                        &err)) {
         JAMI_WARNING("Can't parse JSON: {}\n{}", err, jsonStr);
         return false;
@@ -37,4 +39,9 @@ inline bool parseJson(std::string_view jsonStr, Json::Value& json) {
     return true;
 }
 
+inline std::string toString(const Json::Value& jsonVal) {
+    return Json::writeString(wbuilder, jsonVal);
+}
+
+}
 }
