@@ -134,7 +134,7 @@ ArchiveStorageData readArchive(const std::filesystem::path& path,
                                std::string_view scheme,
                                const std::string& pwd);
 
-void writeArchive(const std::string& data,
+bool writeArchive(const std::string& data,
                   const std::filesystem::path& path,
                   std::string_view scheme,
                   const std::string& password = {},

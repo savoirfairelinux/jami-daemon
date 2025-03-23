@@ -1728,7 +1728,8 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath,
         AccountArchive archive = readArchive(scheme, password);
         updateArchive(archive);
         auto archivePath = fileutils::getFullPath(path_, archivePath_);
-        archive.save(archivePath, scheme, password);
+        if (!archive.save(archivePath, scheme, password))
+            return false;
 
         // Export the file
         std::error_code ec;

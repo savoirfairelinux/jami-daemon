@@ -371,8 +371,8 @@ readArchive(const std::filesystem::path& path, std::string_view scheme, const st
     try {
         fileContent = dhtnet::fileutils::loadFile(path);
     } catch (const std::exception& e) {
-        JAMI_ERR("Error loading archive: %s", e.what());
-        throw e;
+        JAMI_ERROR("Error loading archive: {}", e.what());
+        throw;
     }
 
     if (isUnencryptedGzip(fileContent)) {
@@ -393,7 +393,7 @@ readArchive(const std::filesystem::path& path, std::string_view scheme, const st
                                                       base64::decode(pwd));
             } catch (const std::exception& e) {
                 JAMI_ERROR("Error decrypting archive: {}", e.what());
-                throw e;
+                throw;
             }
         } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD) {
             try {
@@ -401,7 +401,7 @@ readArchive(const std::filesystem::path& path, std::string_view scheme, const st
                 fileContent = dht::crypto::aesDecrypt(fileContent, pwd);
             } catch (const std::exception& e) {
                 JAMI_ERROR("Error decrypting archive: {}", e.what());
-                throw e;
+                throw;
             }
         }
         decompress(fileContent);
@@ -413,14 +413,14 @@ readArchive(const std::filesystem::path& path, std::string_view scheme, const st
     return ret;
 }
 
-void
+bool
 writeArchive(const std::string& archive_str,
              const std::filesystem::path& path,
              std::string_view scheme,
              const std::string& password,
              const std::vector<uint8_t>& password_salt)
 {
-    JAMI_LOG("Writing archive to {}", path);
+    JAMI_LOG("Writing archive to {} using scheme '{}'", path, scheme);
 
     if (scheme == ARCHIVE_AUTH_SCHEME_KEY) {
         // Encrypt using provided key
@@ -430,7 +430,7 @@ writeArchive(const std::string& archive_str,
             saveFile(path, dht::crypto::aesBuildEncrypted(newArchive, password_salt));
         } catch (const std::runtime_error& ex) {
             JAMI_ERROR("Export failed: {}", ex.what());
-            return;
+            return false;
         }
     } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD and not password.empty()) {
         // Encrypt using provided password
@@ -441,12 +441,16 @@ writeArchive(const std::string& archive_str,
                                              password_salt));
         } catch (const std::runtime_error& ex) {
             JAMI_ERROR("Export failed: {}", ex.what());
-            return;
+            return false;
         }
-    } else {
+    } else if (scheme == ARCHIVE_AUTH_SCHEME_NONE || (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD && password.empty())) {
         JAMI_WARNING("Unsecured archiving (no password)");
         archiver::compressGzip(archive_str, path.string());
+    } else {
+        JAMI_ERROR("Unsupported scheme: {}", scheme);
+        return false;
     }
+    return true;
 }
 
 std::filesystem::path
