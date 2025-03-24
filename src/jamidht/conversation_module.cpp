@@ -348,7 +348,7 @@ public:
             // NOTE: If a new one to one request is received, we can decline the previous one.
             declineOtherConversationWith(req.from);
         }
-        JAMI_DEBUG("Adding conversation request from {} ({})", req.from, id);
+        JAMI_DEBUG("[Account {}] [Conversation {}] Adding conversation request from {}", accountId_, id, req.from);
         conversationsRequests_[id] = req;
         saveConvRequests();
         return true;
@@ -483,7 +483,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
                                             const std::string& peerUri,
                                             const std::string& convId)
 {
-    JAMI_DEBUG("[Account {}] Clone conversation on device {}", accountId_, deviceId);
+    JAMI_DEBUG("[Account {}] [Conversation {}] [device {}] Cloning conversation", accountId_, convId, deviceId);
 
     auto conv = startConversation(convId);
     std::unique_lock lk(conv->mtx);
@@ -503,7 +503,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         // This avoid the case when we try to clone from convInfos + sync message
         // at the same time.
         if (!conv->startFetch(deviceId, true)) {
-            JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conv->info.id);
+            JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Already fetching conversation", accountId_, conv->info.id, deviceId);
             addConvInfo(conv->info);
             return;
         }
@@ -534,7 +534,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
             },
             MIME_TYPE_GIT);
 
-        JAMI_LOG("[Account {}] New conversation detected: {}. Ask device {} to clone it",
+        JAMI_LOG("[Account {}] [Conversation {}] [device {}] Requesting device",
                  accountId_,
                  conv->info.id,
                  deviceId);
@@ -542,7 +542,7 @@ ConversationModule::Impl::cloneConversation(const std::string& deviceId,
         conv->info.members.emplace(peerUri);
         addConvInfo(conv->info);
     } else {
-        JAMI_DEBUG("[Account {}] Already have conversation {}", accountId_, conv->info.id);
+        JAMI_DEBUG("[Account {}] [Conversation {}] Conversation already cloned", accountId_, conv->info.id);
     }
 }
 
@@ -559,7 +559,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             // If the conversation is removed and we receives a new commit,
             // it means that the contact was removed but not banned.
             // If he wants a new conversation, they must removes/re-add the contact who declined.
-            JAMI_WARNING("[Account {:s}] Received a commit for {}, but conversation is removed",
+            JAMI_WARNING("[Account {:s}] [Conversation {}] Received a commit, but conversation is removed",
                          accountId_,
                          conversationId);
             return;
@@ -570,15 +570,15 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
         std::lock_guard lk(conversationsRequestsMtx_);
         oldReq = getRequest(conversationId);
         if (oldReq != std::nullopt && oldReq->declined) {
-            JAMI_DEBUG("[Account {}] Received a request for a conversation already declined.",
-                       accountId_);
+            JAMI_DEBUG("[Account {}] [Conversation {}] Received a request for a conversation already declined.",
+                       accountId_, conversationId);
             return;
         }
     }
-    JAMI_DEBUG("[Account {:s}] fetch commits from {:s}, for {:s}, commit {:s}",
+    JAMI_DEBUG("[Account {:s}] [Conversation {}] [device {}] fetching '{:s}'",
                accountId_,
-               peer,
                conversationId,
+               deviceId,
                commitId);
 
     auto conv = getConversation(conversationId);
@@ -587,7 +587,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             // We didn't find a conversation or a request with the given ID.
             // This suggests that someone tried to send us an invitation but
             // that we didn't receive it, so we ask for a new one.
-            JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
+            JAMI_WARNING("[Account {}] [Conversation {}] Unable to find conversation, asking for an invite",
                          accountId_,
                          conversationId);
             sendMsgCb_(peer,
@@ -605,32 +605,32 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
         if (conv->conversation->isRemoving()) {
-            JAMI_WARNING("[Account {}] Conversation {} is being removed",
+            JAMI_WARNING("[Account {}] [Conversation {}] conversaton is being removed",
                          accountId_,
                          conversationId);
             return;
         }
         if (!conv->conversation->isMember(peer, true)) {
-            JAMI_WARNING("[Account {}] {} is not a member of {}", accountId_, peer, conversationId);
+            JAMI_WARNING("[Account {}] [Conversation {}] {} is not a membe", accountId_, conversationId, peer);
             return;
         }
         if (conv->conversation->isBanned(deviceId)) {
-            JAMI_WARNING("[Account {}] {} is a banned device in conversation {}",
+            JAMI_WARNING("[Account {}] [Conversation {}] device {} is banned",
                          accountId_,
-                         deviceId,
-                         conversationId);
+                         conversationId,
+                         deviceId);
             return;
         }
 
         // Retrieve current last message
         auto lastMessageId = conv->conversation->lastCommitId();
         if (lastMessageId.empty()) {
-            JAMI_ERROR("[Account {}] No message detected. This is a bug", accountId_);
+            JAMI_ERROR("[Account {}] [Conversation {}] No message detected. This is a bug", accountId_, conversationId);
             return;
         }
 
         if (!conv->startFetch(deviceId)) {
-            JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conversationId);
+            JAMI_WARNING("[Account {}] [Conversation {}] Already fetching", accountId_, conversationId);
             return;
         }
 
@@ -669,16 +669,15 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                         if (!shared)
                             return;
                         if (!ok) {
-                            JAMI_WARNING("[Account {}] Unable to fetch new commit from "
-                                         "{} for {}, other "
-                                         "peer may be disconnected",
+                            JAMI_WARNING("[Account {}] [Conversation {}] Unable to fetch new commit from "
+                                         "{}, other peer may be disconnected",
                                          shared->accountId_,
-                                         deviceId,
-                                         conversationId);
-                            JAMI_LOG("[Account {}] Relaunch sync with {} for {}",
+                                         conversationId,
+                                         deviceId);
+                            JAMI_LOG("[Account {}] [Conversation {}] Relaunch sync with {}",
                                      shared->accountId_,
-                                     deviceId,
-                                     conversationId);
+                                     conversationId,
+                                     deviceId);
                         }
 
                         {
@@ -712,7 +711,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
         lk.unlock();
-        JAMI_WARNING("[Account {}] Unable to find conversation {}, ask for an invite",
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to find conversation, asking for an invite",
                      accountId_,
                      conversationId);
         sendMsgCb_(peer,
@@ -767,7 +766,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         });
         conversation->onNeedSocket(onNeedSwarmSocket_);
         if (!conversation->isMember(username_, true)) {
-            JAMI_ERR("Conversation cloned but does not seems to be a valid member");
+            JAMI_ERROR("[Account {}] [Conversation {}] Conversation cloned but we do not seem to be a valid member",
+                accountId_,
+                conversationId);
             conversation->erase();
             lk.lock();
             erasePending();
@@ -868,7 +869,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             }
         }
     } catch (const std::exception& e) {
-        JAMI_WARNING("Something went wrong when cloning conversation: {}. Re-clone in {}s",
+        JAMI_WARNING("[Account {}] [Conversation {}] Something went wrong when cloning conversation: {}. Re-clone in {}s",
+                     accountId_, 
+                     conversationId,
                      e.what(),
                      conv->fallbackTimer.count());
         conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
@@ -924,7 +927,9 @@ ConversationModule::Impl::updateConvForContact(const std::string& uri,
     if (newConv != oldConv) {
         auto conversation = getOneToOneConversation(uri);
         if (conversation != oldConv) {
-            JAMI_DEBUG("Old conversation is not found in details {} - found: {}",
+            JAMI_DEBUG("[Account {}] [Conversation {}] Old conversation is not found in details {} - found: {}",
+                        accountId_,
+                        newConv,
                        oldConv,
                        conversation);
             return false;
@@ -943,7 +948,8 @@ ConversationModule::Impl::declineOtherConversationWith(const std::string& uri) n
         if (request.declined)
             continue; // Ignore already declined requests
         if (request.isOneToOne() && request.from == uri) {
-            JAMI_WARNING("Decline conversation request ({}) from {}", id, uri);
+            JAMI_WARNING("[Account {}] [Conversation {}] Decline conversation request from {}",
+                            accountId_, id, uri);
             request.declined = std::time(nullptr);
             syncingMetadatas_.erase(id);
             saveMetadata();
@@ -977,7 +983,7 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
         // Stop fetch!
         conv.pending.reset();
 
-        JAMI_LOG("Remove conversation: {}", conv.info.id);
+        JAMI_LOG("[Account {}] [Conversation {}] Remove conversation", accountId_, conv.info.id);
         try {
             if (conv.conversation->mode() == ConversationMode::ONE_TO_ONE) {
                 for (const auto& member : conv.conversation->getInitialMembers()) {
@@ -1265,7 +1271,7 @@ ConversationModule::Impl::bootstrapCb(std::string convId)
             notSyncedNotification_.erase(it);
         }
     }
-    JAMI_DEBUG("[Conversation {}] Resend last message notification", convId);
+    JAMI_DEBUG("[Account {}] [Conversation {}] Resend last message notification", accountId_, convId);
     dht::ThreadPool::io().run([w = weak(), convId, commitId = std::move(commitId)] {
         if (auto sthis = w.lock())
             sthis->sendMessageNotification(convId, true, commitId);
@@ -1319,7 +1325,7 @@ ConversationModule::Impl::fixStructures(
 
     ////////////////////////////////////////////////////////////////
     for (const auto& conv : toRm) {
-        JAMI_ERROR("Remove conversation ({})", conv);
+        JAMI_ERROR("[Account {}] Remove conversation ({})", accountId_, conv);
         removeConversation(conv);
     }
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
@@ -1333,7 +1339,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
     std::lock_guard lk(conv->mtx);
     const auto& conversationId = conv->info.id;
     if (!conv->startFetch(deviceId, true)) {
-        JAMI_WARNING("[Account {}] Already fetching {}", accountId_, conversationId);
+        JAMI_WARNING("[Account {}] [Conversation {}] Already fetching", accountId_, conversationId);
         return;
     }
 
@@ -1359,7 +1365,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     return true;
                 } else if (auto sthis = wthis.lock()) {
                     conv->stopFetch(deviceId);
-                    JAMI_WARNING("Clone failed. Re-clone in {}s", conv->fallbackTimer.count());
+                    JAMI_WARNING("[Account {}] [Conversation {}] Clone failed. Re-clone in {}s", sthis->accountId_, conversationId, conv->fallbackTimer.count());
                     conv->fallbackClone->expires_at(std::chrono::steady_clock::now()
                                                     + conv->fallbackTimer);
                     conv->fallbackTimer *= 2;
@@ -2377,21 +2383,21 @@ ConversationModule::onFileChannelRequest(const std::string& conversationId,
             if (std::filesystem::is_symlink(path)) {
                 dhtnet::fileutils::remove(path, true);
             }
-            JAMI_WARNING("[Account {:s}] {:s} asked for non existing file {} in {:s}",
+            JAMI_WARNING("[Account {:s}] [Conversation {}] {:s} asked for non existing file {}",
                          pimpl_->accountId_,
+                         conversationId,
                          member,
-                         fileId,
-                         conversationId);
+                         fileId);
             return false;
         }
         // Check that our file is correct before sending
         if (verifyShaSum && sha3sum != fileutils::sha3File(path)) {
-            JAMI_WARNING("[Account {:s}] {:s} asked for file {:s} in {:s}, but our version is not "
+            JAMI_WARNING("[Account {:s}] [Conversation {}] {:s} asked for file {:s}, but our version is not "
                          "complete or corrupted",
                          pimpl_->accountId_,
+                         conversationId,
                          member,
-                         fileId,
-                         conversationId);
+                         fileId);
             return false;
         }
         return true;

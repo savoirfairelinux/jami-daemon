@@ -356,7 +356,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty()
                               && shared->onConnectionChanged_) {
                               lk.unlock();
-                              JAMI_WARNING("[SwarmManager {:p}] Bootstrap: all connections failed",
+                              JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed",
                                            fmt::ptr(shared.get()));
                               shared->onConnectionChanged_(false);
                           }

@@ -2053,11 +2053,17 @@ JamiAccount::doRegister_()
             std::future<bool> fut = accept.get_future();
             accountManager_->findCertificate(
                 deviceId, [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                    if (!cert) {
+                        accept.set_value(false);
+                        return;
+                    }
                     dht::InfoHash peer_account_id;
                     auto res = accountManager_->onPeerCertificate(cert,
                                                                   this->config().dhtPublicInCalls,
                                                                   peer_account_id);
-                    JAMI_LOG("{} ICE request from {}",
+                    JAMI_LOG("[Account {}] [device {}] {} ICE request from {}",
+                             getAccountID(),
+                             cert->getLongId(),
                              res ? "Accepting" : "Discarding",
                              peer_account_id);
                     accept.set_value(res);
@@ -2068,10 +2074,10 @@ JamiAccount::doRegister_()
         });
         connectionManager_->onChannelRequest(
             [this](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
-                JAMI_LOG("[Account {}] New channel requested with name {} from {}",
+                JAMI_LOG("[Account {}] [device {}] New channel requested: '{}'",
                              getAccountID(),
-                             name,
-                             cert->issuer->getId());
+                             cert->getLongId(),
+                             name);
 
                 if (this->config().turnEnabled && turnCache_) {
                     auto addr = turnCache_->getResolvedTurn();
@@ -2119,9 +2125,8 @@ JamiAccount::doRegister_()
                     // Check if pull from banned device
                     if (convModule()->isBanned(conversationId, remoteDevice)) {
                         JAMI_WARNING(
-                            "[Account {:s}] Git server requested for conversation {:s}, but the "
-                            "device is "
-                            "unauthorized ({:s}) ",
+                            "[Account {:s}] [Conversation {}] Git server requested, but the "
+                            "device is unauthorized ({:s}) ",
                             getAccountID(),
                             conversationId,
                             remoteDevice);
@@ -2135,13 +2140,11 @@ JamiAccount::doRegister_()
                         // So it's not the server socket
                         return;
                     }
-                    JAMI_WARNING(
-                        "[Account {:s}] Git server requested for conversation {:s}, device {:s}, "
-                        "channel {}",
+                    JAMI_LOG(
+                        "[Account {:s}] [Conversation {}] [device {}] Git server requested",
                         accountID_,
                         conversationId,
-                        deviceId.toString(),
-                        channel->channel());
+                        deviceId.toString());
                     auto gs = std::make_unique<GitServer>(accountID_, conversationId, channel);
                     syncCnt_.fetch_add(1);
                     gs->setOnFetched([w = weak(), conversationId, deviceId](
@@ -2166,11 +2169,10 @@ JamiAccount::doRegister_()
                     channel->onShutdown([w = weak(), serverId]() {
                         // Run on main thread to avoid to be in mxSock's eventLoop
                         runOnMainThread([serverId, w]() {
-                            auto shared = w.lock();
-                            if (!shared)
-                                return;
-                            std::lock_guard lk(shared->gitServersMtx_);
-                            shared->gitServers_.erase(serverId);
+                            if (auto sthis = w.lock()) {
+                                std::lock_guard lk(sthis->gitServersMtx_);
+                                sthis->gitServers_.erase(serverId);
+                            }
                         });
                     });
                 } else {
@@ -3857,7 +3859,7 @@ JamiAccount::sendProfile(const std::string& convId,
     auto currentSha3 = fileutils::sha3File(accProfilePath);
     // VCard sync for peerUri
     if (not needToSendProfile(peerUri, deviceId, currentSha3)) {
-        JAMI_DEBUG("Peer {} already got an up-to-date vCard", peerUri);
+        JAMI_DEBUG("[Account {}] [device {}] Peer {} already got an up-to-date vCard", getAccountID(), deviceId, peerUri);
         return;
     }
     // We need a new channel
@@ -4051,7 +4053,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     }
     // Store the connection
     connections.emplace_back(SipConnection {sip_tr, socket});
-    JAMI_WARNING("[Account {:s}] New SIP channel opened with {:s}", getAccountID(), deviceId);
+    JAMI_WARNING("[Account {:s}] [device {}] New SIP channel opened", getAccountID(), deviceId);
     lk.unlock();
 
     dht::ThreadPool::io().run([w = weak(), peerId, deviceId] {
