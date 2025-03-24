@@ -782,7 +782,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
     check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
 
-    pimpl_->ice_tf_ = std::make_shared<dhtnet::IceTransportFactory>(Logger::dhtLogger());
+    pimpl_->ice_tf_ = std::make_shared<dhtnet::IceTransportFactory>();
 
     pimpl_->path_ = config_file.empty() ? pimpl_->retrieveConfigPath() : config_file;
     JAMI_LOG("Configuration file path: {}", pimpl_->path_);
