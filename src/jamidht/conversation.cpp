@@ -31,6 +31,7 @@
 #include "json_utils.h"
 
 #include <opendht/thread_pool.h>
+#include <fmt/compile.h>
 
 #include <charconv>
 #include <string_view>
@@ -220,22 +221,8 @@ public:
         typers_ = std::make_shared<Typers>(account, repository_->id());
     }
 
-    const std::string& toString() const
-    {
-        if (fmtStr_.empty()) {
-            if (repository_->mode() == ConversationMode::ONE_TO_ONE) {
-                auto peer = userId_;
-                for (const auto& member : repository_->getInitialMembers()) {
-                    if (member != userId_) {
-                        peer = member;
-                    }
-                }
-                fmtStr_ = fmt::format("[Account {}] [Conversation (1:1) {}]", accountId_, peer);
-            } else {
-                fmtStr_ = fmt::format("[Account {}] [Conversation {}]", accountId_, repository_->id());
-            }
-        }
-        return fmtStr_;
+    std::string toString() const {
+        return fmt::format(FMT_COMPILE("[Account {}] [Conversation {}]"), accountId_, repository_->id());
     }
     mutable std::string fmtStr_;
 
@@ -1738,12 +1725,12 @@ std::vector<std::map<std::string, std::string>>
 Conversation::Impl::mergeHistory(const std::string& uri)
 {
     if (not repository_) {
-        JAMI_WARN("Invalid repo. Abort merge");
+        JAMI_WARNING("{} Invalid repo. Abort merge", toString());
         return {};
     }
     auto remoteHead = repository_->remoteHead(uri);
     if (remoteHead.empty()) {
-        JAMI_WARN("Unable to get HEAD of %s", uri.c_str());
+        JAMI_WARNING("{} Unable to get HEAD of {}", toString(), uri);
         return {};
     }
 
@@ -1751,7 +1738,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     auto [newCommits, err] = repository_->validFetch(uri);
     if (newCommits.empty()) {
         if (err)
-            JAMI_ERR("Unable to validate history with %s", uri.c_str());
+            JAMI_ERROR("{} Unable to validate history with {}", toString(), uri);
         repository_->removeBranchWith(uri);
         return {};
     }
@@ -1759,7 +1746,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     // If validated, merge
     auto [ok, cid] = repository_->merge(remoteHead);
     if (!ok) {
-        JAMI_ERR("Unable to merge history with %s", uri.c_str());
+        JAMI_ERROR("{} Unable to merge history with {}", toString(), uri);
         repository_->removeBranchWith(uri);
         return {};
     }
@@ -1770,7 +1757,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
             newCommits.emplace_back(*commit);
     }
 
-    JAMI_DEBUG("Successfully merge history with {:s}", uri);
+    JAMI_LOG("{} Successfully merged history with {:s}", toString(), uri);
     auto result = repository_->convCommitsToMap(newCommits);
     for (auto& commit : result) {
         auto it = commit.find("type");
@@ -1794,11 +1781,11 @@ Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commi
                                pullcbs.end(),
                                [&](const auto& elem) { return std::get<0>(elem) == commitId; });
     if (itPull != pullcbs.end()) {
-        JAMI_DEBUG("Ignoring request to pull from {:s} with commit {:s}: pull already in progress", deviceId, commitId);
+        JAMI_DEBUG("{} Ignoring request to pull from {:s} with commit {:s}: pull already in progress", pimpl_->toString(), deviceId, commitId);
         cb(false);
         return false;
     }
-    JAMI_DEBUG("Pulling from {:s} with commit {:s}", deviceId, commitId);
+    JAMI_DEBUG("{} [device {}] Pulling '{:s}'", pimpl_->toString(), deviceId, commitId);
     pullcbs.emplace_back(std::move(commitId), std::move(cb));
     if (notInProgress)
         dht::ThreadPool::io().run([w = weak(), deviceId] {
@@ -2324,9 +2311,8 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
             break;
     }
     auto fallbackFailed = [](auto sthis) {
-        JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback failed. Wait for remote connections.",
-                    sthis->pimpl_->toString(),
-                    fmt::ptr(sthis->pimpl_->swarmManager_.get()));
+        JAMI_LOG("{} Bootstrap: Fallback failed. Wait for remote connections.",
+                    sthis->pimpl_->toString());
 #ifdef LIBJAMI_TEST
         if (sthis->pimpl_->bootstrapCbTest_)
             sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FAILED);
@@ -2361,9 +2347,8 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                 if (sthis->pimpl_->bootstrapCbTest_)
                     sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FALLBACK);
 #endif
-                JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback with member: {}",
+                JAMI_LOG("{} Bootstrap: Fallback with member: {}",
                              sthis->pimpl_->toString(),
-                             fmt::ptr(sthis->pimpl_->swarmManager_),
                              uri);
                 if (sthis->pimpl_->swarmManager_->setKnownNodes(*devices))
                     checkNext = false;
@@ -2398,9 +2383,8 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
         if (!isBanned(member))
             devices.insert(devices.end(), memberDevices.begin(), memberDevices.end());
     }
-    JAMI_DEBUG("{}[SwarmManager {}] Bootstrap with {} device(s)",
+    JAMI_DEBUG("{} Bootstrap with {} device(s)",
                pimpl_->toString(),
-               fmt::ptr(pimpl_->swarmManager_),
                devices.size());
     // set callback
     auto fallback = [](auto sthis, bool now = false) {
@@ -2416,9 +2400,8 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
             auto timeForBootstrap = std::min(static_cast<size_t>(8), members.size());
             sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
                                                         - std::chrono::seconds(timeForBootstrap));
-            JAMI_DEBUG("{}[SwarmManager {}] Fallback in {} seconds",
+            JAMI_DEBUG("{} Fallback in {} seconds",
                         sthis->pimpl_->toString(),
-                        fmt::ptr(sthis->pimpl_->swarmManager_.get()),
                         (20 - timeForBootstrap));
         }
         sthis->pimpl_->fallbackTimer_->async_wait(std::bind(&Conversation::checkBootstrapMember,
@@ -2637,7 +2620,7 @@ void
 Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
 {
     if (!message.isMember("confId")) {
-        JAMI_ERR() << "Malformed commit";
+        JAMI_ERROR("{}Malformed commit: no confId", pimpl_->toString());
         return;
     }
 
@@ -2666,7 +2649,7 @@ void
 Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
 {
     if (!message.isMember("confId")) {
-        JAMI_ERR() << "Malformed commit";
+        JAMI_ERROR("{}Malformed commit: no confId", pimpl_->toString());
         return;
     }
 

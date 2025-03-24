@@ -42,7 +42,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     remote_ = socket->getRemoteAddress();
     int tp_type = local_.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
 
-    JAMI_DBG("ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
+    JAMI_LOG("ChanneledSIPTransport@{} tr={}", fmt::ptr(this), fmt::ptr(&trData_.base));
 
     // Init memory
     trData_.self = this; // up-link for PJSIP callbacks
@@ -67,11 +67,11 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         throw std::runtime_error("Unable to create PJSIP mutex.");
 
     if (not local_) {
-        JAMI_ERR("Invalid local address");
+        JAMI_ERROR("Invalid local address");
         throw std::runtime_error("Invalid local address");
     }
     if (not remote_) {
-        JAMI_ERR("Invalid remote address");
+        JAMI_ERROR("Invalid remote address");
         throw std::runtime_error("Invalid remote address");
     }
 
@@ -111,7 +111,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     base.do_shutdown = [](pjsip_transport* transport) -> pj_status_t {
         auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
             reinterpret_cast<TransportData*>(transport)->self);
-        JAMI_DEBUG("ChanneledSIPTransport@{} tr={} rc={:d}: shutdown",
+        JAMI_LOG("ChanneledSIPTransport@{} tr={} rc={:d}: shutdown",
                  fmt::ptr(this_),
                  fmt::ptr(transport),
                  pj_atomic_get(transport->ref_cnt));
@@ -122,7 +122,6 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     base.destroy = [](pjsip_transport* transport) -> pj_status_t {
         auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
             reinterpret_cast<TransportData*>(transport)->self);
-        JAMI_DEBUG("ChanneledSIPTransport@{}: destroying", fmt::ptr(this_));
         delete this_;
         return PJ_SUCCESS;
     };
@@ -180,7 +179,7 @@ ChanneledSIPTransport::start()
     socket_->onShutdown([this] {
         disconnected_ = true;
         if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
-            JAMI_WARN("[SIPS] process disconnect event");
+            //JAMI_LOG("[SIPS] process disconnect event");
             pjsip_transport_state_info state_info;
             std::memset(&state_info, 0, sizeof(state_info));
             state_info.status = PJ_SUCCESS;
@@ -192,7 +191,6 @@ ChanneledSIPTransport::start()
 
 ChanneledSIPTransport::~ChanneledSIPTransport()
 {
-    JAMI_DBG("~ChanneledSIPTransport@%p {tr=%p}", this, &trData_.base);
     auto base = getTransportBase();
 
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
@@ -209,7 +207,7 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
 
     pj_lock_destroy(base->lock);
     pj_atomic_destroy(base->ref_cnt);
-    JAMI_DBG("~ChanneledSIPTransport@%p {tr=%p} bye", this, &trData_.base);
+    JAMI_LOG("~ChanneledSIPTransport@{} tr={}", fmt::ptr(this), fmt::ptr(&trData_.base));
 }
 
 pj_status_t

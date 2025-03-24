@@ -67,7 +67,8 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     }
 
     // Sync known devices
-    JAMI_DEBUG("[Contacts] received device sync data ({:d} devices, {:d} contacts)",
+    JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts)",
+             accountId_,
              sync.devices_known.size() + sync.devices.size(),
              sync.peers.size());
     for (const auto& d : sync.devices_known) {
@@ -427,7 +428,7 @@ AccountManager::foundPeerDevice(const std::string& accountId, const std::shared_
     }
 
     peer_id = crt->issuer->getId();
-    JAMI_WARNING("[Account {}] Found peer device: {} account:{} CA:{}",
+    JAMI_LOG("[Account {}] Found peer device: {} account:{} CA:{}",
               accountId,
               crt->getLongId().toString(),
               peer_id.toString(),
