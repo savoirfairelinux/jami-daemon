@@ -2230,6 +2230,10 @@ ConversationTest::testFixContactDetails()
 
     aliceAccount->convModule()->loadConversations();
 
+    // loadConversations doesn't fix the contact details synchronously, so the
+    // test will fail if we don't wait for a little bit here.
+    std::this_thread::sleep_for(1s);
+
     details = aliceAccount->getContactDetails(bobUri);
     CPPUNIT_ASSERT(details["conversationId"] == aliceData.conversationId);
 }
@@ -2410,6 +2414,9 @@ ConversationTest::testLoadPartiallyRemovedConversation()
     // Reloading conversation should remove directory
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPathAlice));
     aliceAccount->convModule()->loadConversations();
+    // loadConversations doesn't remove the directory synchronously, so the
+    // test will fail if we don't wait for a little bit here.
+    std::this_thread::sleep_for(1s);
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPathAlice));
 }
 
