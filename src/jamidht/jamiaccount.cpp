@@ -1957,7 +1957,7 @@ JamiAccount::doRegister_()
         context.peerDiscovery = peerDiscovery_;
         context.rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
 
-        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        auto dht_log_level = Manager::instance().dhtLogLevel;
         if (dht_log_level > 0) {
             context.logger = Logger::dhtLogger();
         }
