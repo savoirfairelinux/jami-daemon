@@ -190,91 +190,65 @@ check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& 
 }
 
 /**
- * Set OpenDHT's log level based on the DHTLOGLEVEL environment variable.
- * DHTLOGLEVEL = 0 minimum logging (=disable)
- * DHTLOGLEVEL = 1 (=ERROR only)
- * DHTLOGLEVEL = 2 (+=WARN)
- * DHTLOGLEVEL = 3 maximum logging (+=DEBUG)
+ * Set OpenDHT's log level based on the JAMI_LOG_DHT environment variable.
+ * JAMI_LOG_DHT = 0 minimum logging (=disable)
+ * JAMI_LOG_DHT = 1 logging enabled
  */
-
-/** Environment variable used to set OpenDHT's logging level */
-static constexpr const char* DHTLOGLEVEL = "DHTLOGLEVEL";
-
-static void
+static unsigned
 setDhtLogLevel()
 {
-    int level = 0;
-    if (auto envvar = getenv(DHTLOGLEVEL)) {
-        level = to_int<int>(envvar, 0);
-        level = std::clamp(level, 0, 3);
-        JAMI_DBG("DHTLOGLEVEL=%u", level);
+    unsigned level = 0;
+    if (auto envvar = getenv("JAMI_LOG_DHT")) {
+        level = to_int<unsigned>(envvar, 0);
+        level = std::clamp(level, 0u, 3u);
     }
-    Manager::instance().dhtLogLevel = level;
+    return level;
 }
 
 /**
- * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
- * SIPLOGLEVEL = 0 minimum logging
- * SIPLOGLEVEL = 6 maximum logging
+ * Set pjsip's log level based on the JAMI_LOG_SIP environment variable.
+ * JAMI_LOG_SIP = 0 minimum logging
+ * JAMI_LOG_SIP = 6 maximum logging
  */
-
-/** Environment variable used to set pjsip's logging level */
-static constexpr const char* SIPLOGLEVEL = "SIPLOGLEVEL";
-
 static void
 setSipLogLevel()
 {
-    char* envvar = getenv(SIPLOGLEVEL);
-
     int level = 0;
-
-    if (envvar != nullptr) {
+    if (auto envvar = getenv("JAMI_LOG_SIP")) {
         level = to_int<int>(envvar, 0);
-
-        // From 0 (min) to 6 (max)
-        level = std::max(0, std::min(level, 6));
+        level = std::clamp(level, 0, 6);
     }
 
     pj_log_set_level(level);
-    pj_log_set_log_func([](int level, const char* data, int /*len*/) {
+    pj_log_set_log_func([](int level, const char* data, int len) {
+        auto msg = std::string_view(data, len);
         if (level < 2)
-            JAMI_ERR() << data;
+            JAMI_ERROR("{}", msg);
         else if (level < 4)
-            JAMI_WARN() << data;
+            JAMI_WARNING("{}", msg);
         else
-            JAMI_DBG() << data;
+            JAMI_LOG("{}", msg);
     });
 }
 
 /**
- * Set gnutls's log level based on the RING_TLS_LOGLEVEL environment variable.
- * RING_TLS_LOGLEVEL = 0 minimum logging (default)
- * RING_TLS_LOGLEVEL = 9 maximum logging
+ * Set gnutls's log level based on the JAMI_LOG_TLS environment variable.
+ * JAMI_LOG_TLS = 0 minimum logging (default)
+ * JAMI_LOG_TLS = 9 maximum logging
  */
-
-static constexpr int RING_TLS_LOGLEVEL = 0;
-
-static void
-tls_print_logs(int level, const char* msg)
-{
-    JAMI_XDBG("[%d]GnuTLS: %s", level, msg);
-}
-
 static void
 setGnuTlsLogLevel()
 {
-    char* envvar = getenv("RING_TLS_LOGLEVEL");
-    int level = RING_TLS_LOGLEVEL;
-
-    if (envvar != nullptr) {
-        level = to_int<int>(envvar);
-
-        // From 0 (min) to 9 (max)
-        level = std::max(0, std::min(level, 9));
+    int level = 0;
+    if (auto envvar = getenv("JAMI_LOG_TLS")) {
+        level = to_int<int>(envvar, 0);
+        level = std::clamp(level, 0, 9);
     }
 
     gnutls_global_set_log_level(level);
-    gnutls_global_set_log_function(tls_print_logs);
+    gnutls_global_set_log_function([](int level, const char* msg) {
+        JAMI_XDBG("[%d]GnuTLS: %s", level, msg);
+    });
 }
 
 //==============================================================================
@@ -789,6 +763,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 #undef PJSIP_TRY
 
     setGnuTlsLogLevel();
+    dhtLogLevel = setDhtLogLevel();
 
     JAMI_LOG("Using PJSIP version: {:s} for {:s}", pj_get_version(), PJ_OS_NAME);
     JAMI_LOG("Using GnuTLS version: {:s}", gnutls_check_version(nullptr));
@@ -798,8 +773,6 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     if (git_libgit2_version(&git2_major, &git2_minor, &git2_rev) == 0) {
         JAMI_LOG("Using libgit2 version: {:d}.{:d}.{:d}", git2_major, git2_minor, git2_rev);
     }
-
-    setDhtLogLevel();
 
     // Manager can restart without being recreated (Unit tests)
     // So only create the SipLink once
