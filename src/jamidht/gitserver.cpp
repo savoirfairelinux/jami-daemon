@@ -44,13 +44,19 @@ namespace jami {
 class GitServer::Impl
 {
 public:
-    Impl(const std::string& repositoryId,
+    Impl(const std::string& accountId,
+         const std::string& repositoryId,
          const std::string& repository,
          const std::shared_ptr<dhtnet::ChannelSocket>& socket)
-        : repositoryId_(repositoryId)
+        : accountId_(accountId)
+        , repositoryId_(repositoryId)
         , repository_(repository)
         , socket_(socket)
     {
+        JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] created",
+            accountId_,
+            repositoryId_,
+            fmt::ptr(this));
         // Check at least if repository is correct
         git_repository* repo;
         if (git_repository_open(&repo, repository_.c_str()) != 0) {
@@ -68,7 +74,13 @@ public:
             return len;
         });
     }
-    ~Impl() { stop(); }
+    ~Impl() {
+        stop();
+        JAMI_DEBUG("[Account {}] [Conversation {}] [GitServer {}] destroyed",
+            accountId_,
+            repositoryId_,
+            fmt::ptr(this));
+    }
     void stop()
     {
         std::lock_guard lk(destroyMtx_);
@@ -86,6 +98,7 @@ public:
     void sendPackData();
     std::map<std::string, std::string> getParameters(std::string_view pkt_line);
 
+    std::string accountId_ {};
     std::string repositoryId_ {};
     std::string repository_ {};
     std::shared_ptr<dhtnet::ChannelSocket> socket_ {};
@@ -228,7 +241,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // **** with a version number (if "version=1" is sent as an Extra Parameter),
     std::error_code ec;
     if (sendVersion) {
-        auto toSend = "000eversion 1\0"sv;
+        constexpr auto toSend = "000eversion 1\0"sv;
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()),
                        toSend.size(),
                        ec);
@@ -479,14 +492,13 @@ GitServer::GitServer(const std::string& accountId,
                      const std::shared_ptr<dhtnet::ChannelSocket>& client)
 {
     auto path = (fileutils::get_data_dir() / accountId / "conversations" / conversationId).string();
-    pimpl_ = std::make_unique<GitServer::Impl>(conversationId, path, client);
+    pimpl_ = std::make_unique<GitServer::Impl>(accountId, conversationId, path, client);
 }
 
 GitServer::~GitServer()
 {
     stop();
     pimpl_.reset();
-    JAMI_INFO("GitServer destroyed");
 }
 
 void
