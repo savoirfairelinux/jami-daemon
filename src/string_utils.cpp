@@ -63,7 +63,7 @@ const Json::CharReaderBuilder rbuilder = getJsonReaderBuilder();
 const Json::StreamWriterBuilder wbuilder = getJsonWriterBuilder();
 }
 
-std::string_view
+const std::string&
 userAgent()
 {
     static const std::string USER_AGENT = fmt::format("{:s} ({:s}/{:s})", PACKAGE_NAME, platform(), arch());
