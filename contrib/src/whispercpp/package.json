@@ -1,0 +1,17 @@
+{
+    "name": "whispercpp",
+    "version": "v1.2.1",
+    "url": "https://github.com/ggerganov/whisper.cpp/archive/refs/tags/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": ["project.patch"],
+    "win_patches": [],
+    "project_paths": ["whisper.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [
+            "wget --no-check-certificate --quiet --show-progress -O ggml-base.bin https://ggml.ggerganov.com/ggml-model-whisper-base.bin"
+        ],
+        "build": [],
+        "post_build": []
+    }
+}
