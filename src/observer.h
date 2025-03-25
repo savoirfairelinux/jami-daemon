@@ -26,7 +26,7 @@
 #include <mutex>
 #include <functional>
 #include <ciso646> // fix windows compiler bug
-#ifndef __DEBUG__ // this is only defined on plugins build for debugging
+#ifdef __DEBUG__ // this is only defined on plugins build for debugging
 #include "logger.h"
 #endif
 
@@ -124,7 +124,7 @@ protected:
                 try {
                     so->update(this, data);
                 } catch (std::exception& e) {
-#ifndef __DEBUG__
+#ifdef __DEBUG__
                     JAMI_ERR() << e.what();
 #endif
                 }
