@@ -855,7 +855,7 @@ ConfInfo::toString() const
     val["h"] = h;
     val["v"] = v;
     val["layout"] = layout;
-    return Json::writeString(Json::StreamWriterBuilder {}, val);
+    return json::toString(val);
 }
 
 void
@@ -1120,7 +1120,7 @@ Conference::onConfOrder(const std::string& callId, const std::string& confOrder)
     if (auto call = getCall(callId)) {
         const auto& peerId = getRemoteId(call);
         Json::Value root;
-        if (!parseJson(confOrder, root)) {
+        if (!json::parse(confOrder, root)) {
             JAMI_WARNING("Unable to parse conference order from {}", peerId);
             return;
         }

@@ -43,6 +43,7 @@
 
 namespace jami {
 
+namespace json {
 Json::CharReaderBuilder getJsonReaderBuilder()
 {
     Json::CharReaderBuilder builder;
@@ -50,7 +51,17 @@ Json::CharReaderBuilder getJsonReaderBuilder()
     return builder;
 }
 
+Json::StreamWriterBuilder getJsonWriterBuilder()
+{
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "";
+    return builder;
+}
+
 const Json::CharReaderBuilder rbuilder = getJsonReaderBuilder();
+const Json::StreamWriterBuilder wbuilder = getJsonWriterBuilder();
+}
 
 std::string_view
 userAgent()

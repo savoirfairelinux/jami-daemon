@@ -928,7 +928,7 @@ JamiAccount::loadConfig()
             auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy",
                                                     std::chrono::hours(24 * 7));
             Json::Value root;
-            if (parseJson(str, root)) {
+            if (json::parse(str, root)) {
                 proxyServerCached_ = root[getProxyConfigKey()].asString();
             }
         } catch (const std::exception& e) {
@@ -2068,7 +2068,7 @@ JamiAccount::doRegister_()
         });
         connectionManager_->onChannelRequest(
             [this](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
-                JAMI_WARNING("[Account {}] New channel asked with name {} from {}",
+                JAMI_LOG("[Account {}] New channel requested with name {} from {}",
                              getAccountID(),
                              name,
                              cert->issuer->getId());
@@ -3213,7 +3213,7 @@ JamiAccount::sendMessage(const std::string& to,
     // to load the conversation.
     auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
         Json::Value parsed;
-        if (parseJson(jsonData, parsed)) {
+        if (json::parse(jsonData, parsed)) {
             auto value = parsed.get("id", Json::nullValue);
             if (value && value.isString()) {
                 return value.asString();
@@ -3568,7 +3568,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
 {
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
-        if (!parseJson(m.second, json)) {
+        if (!json::parse(m.second, json)) {
             return false;
         }
 
@@ -3588,7 +3588,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
         return true;
     } else if (m.first == MIME_TYPE_INVITE_JSON) {
         Json::Value json;
-        if (!parseJson(m.second, json)) {
+        if (!json::parse(m.second, json)) {
             return false;
         }
         convModule()->onConversationRequest(from, json);

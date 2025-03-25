@@ -19,24 +19,27 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include "../../test_runner.h"
+#include "common.h"
+#include "conversation/conversationcommon.h"
+
+#include "jami.h"
+#include "account_const.h"
+#include "archiver.h"
+#include "base64.h"
+#include "fileutils.h"
+#include "json_utils.h"
+#include "manager.h"
+
+#include <dhtnet/certstore.h>
+#include <msgpack.hpp>
+#include <git2.h>
+
 #include <condition_variable>
 #include <string>
 #include <fstream>
 #include <streambuf>
-#include <git2.h>
 #include <filesystem>
-#include <msgpack.hpp>
-
-#include "../../test_runner.h"
-#include "account_const.h"
-#include "archiver.h"
-#include "base64.h"
-#include "common.h"
-#include "conversation/conversationcommon.h"
-#include "fileutils.h"
-#include "jami.h"
-#include "manager.h"
-#include <dhtnet/certstore.h>
 
 using namespace std::string_literals;
 using namespace std::literals::chrono_literals;
@@ -747,10 +750,7 @@ ConversationTest::testReplaceWithBadCertificate()
     Json::Value root;
     root["type"] = "text/plain";
     root["body"] = "hi";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    auto message = Json::writeString(wbuilder, root);
+    auto message = json::toString(root);
     commitInRepo(repoPath, aliceAccount, message);
     // now we need to sync!
     bobData.errorDetected = false;
@@ -1242,16 +1242,13 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account,
     Json::Value json;
     json["mode"] = 1;
     json["type"] = "initial";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
 
     if (git_commit_create_buffer(&to_sign,
                                  repo.get(),
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 Json::writeString(wbuilder, json).c_str(),
+                                 json::toString(json).c_str(),
                                  tree.get(),
                                  0,
                                  nullptr)
@@ -1560,10 +1557,7 @@ ConversationTest::testUnknownModeDetected()
     Json::Value json;
     json["mode"] = 1412;
     json["type"] = "initial";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    repo.amend(convId, Json::writeString(wbuilder, json));
+    repo.amend(convId, json::toString(json));
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
     libjami::acceptConversationRequest(bobId, convId);
@@ -2315,11 +2309,8 @@ ConversationTest::testMessageEdition()
     root["type"] = "text/plain";
     root["edit"] = convId;
     root["body"] = "new";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
     auto repoPath = fileutils::get_data_dir() / aliceId / "conversations" / convId;
-    auto message = Json::writeString(wbuilder, root);
+    auto message = json::toString(root);
     commitInRepo(repoPath, aliceAccount, message);
     bobData.errorDetected = false;
     libjami::sendMessage(aliceId, convId, "trigger"s, "");
