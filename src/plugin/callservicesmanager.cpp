@@ -237,7 +237,28 @@ CallServicesManager::setPreference(const std::string& key,
 void
 CallServicesManager::clearCallHandlerMaps(const std::string& callId)
 {
-    mediaHandlerToggled_.erase(callId);
+    // We release the plugins handlers
+    const auto& it = mediaHandlerToggled_.find(callId);
+    if (it != mediaHandlerToggled_.end()) {
+        for (const auto& mediaHandlerId : it->second) {
+            auto handlerIt = std::find_if(callMediaHandlers_.begin(),
+                                            callMediaHandlers_.end(),
+                                            [mediaHandlerId](CallMediaHandlerPtr& handler) {
+                                                return ((uintptr_t) handler.get() == mediaHandlerId.first);
+                                            });
+
+            if (handlerIt != callMediaHandlers_.end()) {
+                (*handlerIt)->detach();
+            } else {
+                JAMI_WARNING("Media handler not found for id: {}", mediaHandlerId.first);
+            }
+        }
+
+        mediaHandlerToggled_.erase(it);
+    } else {
+        JAMI_WARNING("No media handlers found for callId: {}", callId);
+    }
+    JAMI_LOG("Cleared mediaHandlerToggled_ for callId: {}", callId);
 }
 
 void
