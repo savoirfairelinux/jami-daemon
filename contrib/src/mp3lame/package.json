@@ -1,0 +1,15 @@
+{
+    "name": "mp3lame",
+    "version": "b8d31e1d07b851208ad413ee82deca875d8a1c80",
+    "url": "https://github.com/ShiftMediaProject/lame/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": ["SMP/libmp3lame.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
