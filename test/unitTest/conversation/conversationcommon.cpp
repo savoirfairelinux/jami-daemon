@@ -33,6 +33,7 @@
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
 #include "conversation/conversationcommon.h"
+#include "json_utils.h"
 
 using namespace std::string_literals;
 
@@ -66,11 +67,8 @@ addVote(std::shared_ptr<JamiAccount> account,
     Json::Value json;
     json["uri"] = votedUri;
     json["type"] = "vote";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
     ConversationRepository cr(account, convId);
-    cr.commitMessage(Json::writeString(wbuilder, json), false);
+    cr.commitMessage(json::toString(json), false);
 }
 
 void
@@ -107,10 +105,7 @@ simulateRemoval(std::shared_ptr<JamiAccount> account,
     json["action"] = "ban";
     json["uri"] = votedUri;
     json["type"] = "member";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    cr.commitMessage(Json::writeString(wbuilder, json));
+    cr.commitMessage(json::toString(json));
 
     libjami::sendMessage(account->getAccountID(),
                        convId,
@@ -180,11 +175,7 @@ commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Va
 {
     ConversationRepository::DISABLE_RESET = true;
     ConversationRepository cr(account, convId);
-
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    cr.commitMessage(Json::writeString(wbuilder, message));
+    cr.commitMessage(json::toString(message));
 }
 
 std::string

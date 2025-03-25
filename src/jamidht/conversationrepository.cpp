@@ -688,9 +688,6 @@ initial_commit(GitRepository& repo,
         json["invited"] = otherMember;
     }
     json["type"] = "initial";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
 
     git_buf to_sign = {};
     if (git_commit_create_buffer(&to_sign,
@@ -698,7 +695,7 @@ initial_commit(GitRepository& repo,
                                  sig.get(),
                                  sig.get(),
                                  nullptr,
-                                 Json::writeString(wbuilder, json).c_str(),
+                                 json::toString(json).c_str(),
                                  tree.get(),
                                  0,
                                  nullptr)
@@ -1742,7 +1739,7 @@ ConversationRepository::Impl::checkInitialCommit(const std::string& userDevice,
     std::string invited = {};
     if (mode_ == ConversationMode::ONE_TO_ONE) {
         Json::Value cm;
-        if (parseJson(commitMsg, cm)) {
+        if (json::parse(commitMsg, cm)) {
             invited = cm["invited"].asString();
         }
     }
@@ -2009,7 +2006,7 @@ ConversationRepository::Impl::mode() const
     auto commitMsg = lastMsg[0].commit_msg;
 
     Json::Value root;
-    if (!parseJson(commitMsg, root)) {
+    if (!json::parse(commitMsg, root)) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                         id_,
                                                                         EINVALIDMODE,
@@ -2378,7 +2375,7 @@ ConversationRepository::Impl::getInitialMembers() const
     auto authorId = cert->issuer->getId().toString();
     if (mode() == ConversationMode::ONE_TO_ONE) {
         Json::Value root;
-        if (!parseJson(commit.commit_msg, root)) {
+        if (!json::parse(commit.commit_msg, root)) {
             return {authorId};
         }
         if (root.isMember("invited") && root["invited"].asString() != authorId)
@@ -2519,7 +2516,7 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     std::map<std::string, std::string> message;
     if (type.empty()) {
         Json::Value cm;
-        if (parseJson(commit.commit_msg, cm)) {
+        if (json::parse(commit.commit_msg, cm)) {
             for (auto const& id : cm.getMemberNames()) {
                 if (id == "type") {
                     type = cm[id].asString();
@@ -2712,7 +2709,7 @@ ConversationRepository::Impl::validCommits(
         } else if (commit.parents.size() == 1) {
             std::string type = {}, editId = {};
             Json::Value cm;
-            if (parseJson(commit.commit_msg, cm)) {
+            if (json::parse(commit.commit_msg, cm)) {
                 type = cm["type"].asString();
                 editId = cm["edit"].asString();
             } else {
@@ -2939,10 +2936,7 @@ ConversationRepository::addMember(const std::string& uri)
     json["action"] = "add";
     json["uri"] = uri;
     json["type"] = "member";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    return pimpl_->commit(Json::writeString(wbuilder, json));
+    return pimpl_->commit(json::toString(json));
 }
 
 void
@@ -3405,9 +3399,6 @@ ConversationRepository::join()
     json["action"] = "join";
     json["uri"] = uri;
     json["type"] = "member";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
 
     {
         std::lock_guard lk(pimpl_->membersMtx_);
@@ -3425,7 +3416,7 @@ ConversationRepository::join()
         pimpl_->saveMembers();
     }
 
-    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(json::toString(json));
 }
 
 std::string
@@ -3486,9 +3477,6 @@ ConversationRepository::leave()
     json["action"] = "remove";
     json["uri"] = pimpl_->userId_;
     json["type"] = "member";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
 
     {
         std::lock_guard lk(pimpl_->membersMtx_);
@@ -3498,7 +3486,7 @@ ConversationRepository::leave()
         pimpl_->saveMembers();
     }
 
-    return pimpl_->commit(Json::writeString(wbuilder, json), false);
+    return pimpl_->commit(json::toString(json), false);
 }
 
 void
@@ -3564,10 +3552,7 @@ ConversationRepository::voteKick(const std::string& uri, const std::string& type
     Json::Value json;
     json["uri"] = uri;
     json["type"] = "vote";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(json::toString(json));
 }
 
 std::string
@@ -3606,10 +3591,7 @@ ConversationRepository::voteUnban(const std::string& uri, const std::string_view
     Json::Value json;
     json["uri"] = uri;
     json["type"] = "vote";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(json::toString(json));
 }
 
 bool
@@ -3760,10 +3742,7 @@ ConversationRepository::resolveVote(const std::string& uri,
         json["action"] = voteType;
         json["uri"] = uri;
         json["type"] = "member";
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        return pimpl_->commitMessage(Json::writeString(wbuilder, json));
+        return pimpl_->commitMessage(json::toString(json));
     }
 
     // If vote nok
@@ -3954,11 +3933,7 @@ ConversationRepository::updateInfos(const std::map<std::string, std::string>& pr
         return {};
     Json::Value json;
     json["type"] = "application/update-profile";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-
-    return pimpl_->commitMessage(Json::writeString(wbuilder, json));
+    return pimpl_->commitMessage(json::toString(json));
 }
 
 std::map<std::string, std::string>

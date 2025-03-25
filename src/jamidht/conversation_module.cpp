@@ -31,6 +31,7 @@
 #include "manager.h"
 #include "sip/sipcall.h"
 #include "vcard.h"
+#include "json_utils.h"
 
 namespace jami {
 
@@ -1089,8 +1090,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     message["id"] = conversation.id();
     message["commit"] = commit;
     message["deviceId"] = deviceId_;
-    Json::StreamWriterBuilder builder;
-    const auto text = Json::writeString(builder, message);
+    const auto text = json::toString(message);
 
     // Send message notification will announce the new commit in 3 steps.
 

@@ -21,7 +21,7 @@
 #include "base64.h"
 #include "logger.h"
 
-#include <json/json.h>
+#include <json_utils.h>
 
 namespace jami {
 
@@ -147,10 +147,7 @@ AccountArchive::serialize() const
         }
     }
 
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    return Json::writeString(wbuilder, root);
+    return json::toString(root);
 }
 
 } // namespace jami

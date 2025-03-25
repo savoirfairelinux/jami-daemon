@@ -215,7 +215,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     }
 
     Json::Value root;
-    if (!parseJson(receipt, root) || !root.isMember("announce")) {
+    if (!json::parse(receipt, root) || !root.isMember("announce")) {
         JAMI_ERROR("[Account {}] [Auth] device receipt parsing error", accountId_);
         return nullptr;
     }

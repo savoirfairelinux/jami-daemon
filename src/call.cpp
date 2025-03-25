@@ -637,7 +637,7 @@ Call::setConferenceInfo(const std::string& msg)
 {
     ConfInfo newInfo;
     Json::Value json;
-    if (parseJson(msg, json)) {
+    if (json::parse(msg, json)) {
         if (json.isObject()) {
             // new confInfo
             if (json.isMember("p")) {
@@ -692,10 +692,7 @@ void
 Call::sendConfOrder(const Json::Value& root)
 {
     std::map<std::string, std::string> messages;
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    messages["application/confOrder+json"] = Json::writeString(wbuilder, root);
+    messages["application/confOrder+json"] = json::toString(root);
 
     auto w = getAccount();
     auto account = w.lock();
@@ -707,9 +704,6 @@ void
 Call::sendConfInfo(const std::string& json)
 {
     std::map<std::string, std::string> messages;
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
     messages["application/confInfo+json"] = json;
 
     auto w = getAccount();
