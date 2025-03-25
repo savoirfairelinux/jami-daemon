@@ -99,9 +99,9 @@ ServerAccountManager::initAuthentication(PrivateKey key,
             url,
             body,
             [ctx, w](Json::Value json, const dht::http::Response& response) {
-                JAMI_DEBUG("[Auth] Got request callback with status code={} {}",
-                            response.status_code, response.body);
                 auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+                JAMI_DEBUG("[Auth] Got request callback with status code={}",
+                            response.status_code);
                 if (response.status_code == 0 || this_ == nullptr)
                     ctx->onFailure(AuthError::SERVER_ERROR, "Unable to connect to server");
                 else if (response.status_code >= 400 && response.status_code < 500)
@@ -111,7 +111,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                 else {
                     do {
                         try {
-                            JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                            JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
                             auto cert = std::make_shared<dht::crypto::Certificate>(
                                 json["certificateChain"].asString());
                             auto accountCert = cert->issuer;
@@ -193,7 +193,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                             std::move(receipt),
                                             std::move(receiptSignature));
                         } catch (const std::exception& e) {
-                            JAMI_ERR("Error when loading account: %s", e.what());
+                            JAMI_ERROR("[Account {}] [Auth] Error when loading account: {}", this_->accountId_, e.what());
                             ctx->onFailure(AuthError::NETWORK, "");
                         }
                     } while (false);
@@ -220,10 +220,10 @@ ServerAccountManager::onAuthEnded(const Json::Value& json,
                          : (scopeStr == "USER"sv ? TokenScope::User : TokenScope::None);
         auto expires_in = json["expires_in"].asLargestUInt();
         auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
-        JAMI_WARNING("[Auth] Got server response: {} {}", response.status_code, response.body);
+        JAMI_WARNING("[Account {}] [Auth] Got server response: {} ({} bytes)", accountId_, response.status_code, response.body.size());
         setToken(json["access_token"].asString(), scope, expiration);
     } else {
-        JAMI_WARNING("[Auth] Got server response: {} {}", response.status_code, response.body);
+        JAMI_WARNING("[Account {}] [Auth] Got server response: {} ({} bytes)", accountId_, response.status_code, response.body.size());
         authFailed(expectedScope, response.status_code);
     }
     clearRequest(response.request);
@@ -236,7 +236,7 @@ ServerAccountManager::authenticateDevice()
         authFailed(TokenScope::Device, 0);
     }
     const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
-    JAMI_WARN("[Auth] Getting a device token: %s", url.c_str());
+    JAMI_WARNING("[Account {}] [Auth] Getting a device token: {}", accountId_, url);
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
@@ -255,7 +255,7 @@ void
 ServerAccountManager::authenticateAccount(const std::string& username, const std::string& password)
 {
     const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
-    JAMI_WARN("[Auth] Getting a device token: %s", url.c_str());
+    JAMI_WARNING("[Account {}] [Auth] Getting a user token: {}", accountId_, url);
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
@@ -272,7 +272,7 @@ ServerAccountManager::authenticateAccount(const std::string& username, const std
 void
 ServerAccountManager::sendRequest(const std::shared_ptr<dht::http::Request>& request)
 {
-    request->set_header_field(restinio::http_field_t::user_agent, "Jami");
+    request->set_header_field(restinio::http_field_t::user_agent, userAgent());
     {
         std::lock_guard lock(requestLock_);
         requests_.emplace(request);
@@ -345,7 +345,8 @@ ServerAccountManager::setToken(std::string token,
     nameDir_.get().setToken(token_);
     if (not token_.empty() and scope != TokenScope::None) {
         auto& reqQueue = getRequestQueue(scope);
-        JAMI_DBG("[Auth] Got token with scope %d, handling %zu pending requests",
+        JAMI_DEBUG("[Account {}] [Auth] Got token with scope {}, handling {} pending requests",
+                 accountId_,
                  (int) scope,
                  reqQueue.size());
         while (not reqQueue.empty()) {
@@ -413,7 +414,7 @@ ServerAccountManager::syncDevices()
                          response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Account {}] [Auth] Got server response: {}", this_->accountId_, response.body);
+                    JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
                     if (not json.isArray()) {
                         JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array", this_->accountId_);
                     } else {
@@ -494,13 +495,13 @@ ServerAccountManager::syncDevices()
         urlContacts,
         jsonContacts,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-                JAMI_DEBUG("[Auth] Got contact sync request callback with status code={}",
-                         response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+            JAMI_DEBUG("[Account {}] [Auth] Got contact sync request callback with status code={}",
+                this_->accountId_, response.status_code);
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
                     if (not json.isArray()) {
                         JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
@@ -532,7 +533,7 @@ ServerAccountManager::syncDevices()
             JAMI_DEBUG("[Account {}] [Auth] Got request callback with status code={}", this_->accountId_, response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Auth] Got server response: {}", response.body);
+                    JAMI_LOG("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
                     if (not json.isArray()) {
                         JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
@@ -650,7 +651,7 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
         *Manager::instance().ioContext(),
         url,
         [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
-            JAMI_DBG("[Search] Got request callback with status code=%u", response.status_code);
+            JAMI_DEBUG("[Search] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
             if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
@@ -659,7 +660,7 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
                     Json::Value::ArrayIndex rcount = profiles.size();
                     std::vector<std::map<std::string, std::string>> results;
                     results.reserve(rcount);
-                    JAMI_WARNING("[Search] Got server response: {}", response.body);
+                    JAMI_WARNING("[Search] Got server response: {} bytes", response.body.size());
                     for (Json::Value::ArrayIndex i = 0; i < rcount; i++) {
                         const auto& ruser = profiles[i];
                         std::map<std::string, std::string> user;
