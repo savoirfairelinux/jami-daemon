@@ -37,7 +37,7 @@ public:
     SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm);
     ~SwarmChannelHandler();
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     std::atomic_bool disableSwarmManager {false};
 #endif
 

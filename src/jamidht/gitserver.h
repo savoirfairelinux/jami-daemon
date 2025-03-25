@@ -34,7 +34,7 @@ using onFetchedCb = std::function<void(const std::string&)>;
 /**
  * This class offers to a ChannelSocket the possibility to interact with a Git repository
  */
-class LIBJAMI_TESTABLE GitServer
+class LIBJAMI_TEST_EXPORT GitServer
 {
 public:
     /**

@@ -87,7 +87,7 @@ public:
 
     void loadSingleConversation(const std::string& convId);
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     void onBootstrapStatus(const std::function<void(std::string, Conversation::BootstrapStatus)>& cb);
 #endif
 

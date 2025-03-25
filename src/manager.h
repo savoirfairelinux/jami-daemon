@@ -63,14 +63,14 @@ class JamiPluginManager;
 
 /** Manager (controller) of daemon */
 // TODO LIBJAMI_PUBLIC only if tests
-class LIBJAMI_TESTABLE Manager
+class LIBJAMI_TEST_EXPORT Manager
 {
 private:
     std::mt19937_64 rand_;
 
 public:
     // TODO LIBJAMI_PUBLIC only if tests
-    static LIBJAMI_TESTABLE Manager& instance();
+    static LIBJAMI_TEST_EXPORT Manager& instance();
 
     void setAutoAnswer(bool enable);
 

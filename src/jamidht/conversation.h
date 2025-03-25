@@ -163,7 +163,7 @@ public:
      */
     void monitor();
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     enum class BootstrapStatus { FAILED, FALLBACK, SUCCESS };
     /**
      * Used by the tests to get whenever the DRT is connected/disconnected

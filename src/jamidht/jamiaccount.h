@@ -446,7 +446,7 @@ public:
                        const std::string& fileType,
                        int32_t flag) override;
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 
     /**
@@ -598,7 +598,7 @@ public:
      */
     bool isMobile() const { return config().proxyEnabled and not config().deviceKey.empty(); }
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
     {
         return channelHandlers_;

@@ -545,9 +545,12 @@ JamiPluginManager::registerServices()
     pm_.registerService("getPluginAccPreferences", getPluginAccPreferences);
 }
 
+#ifdef LIBJAMI_TEST
 void
 JamiPluginManager::addPluginAuthority(const dht::crypto::Certificate& cert)
 {
     trust_.add(cert);
 }
+#endif
+
 } // namespace jami

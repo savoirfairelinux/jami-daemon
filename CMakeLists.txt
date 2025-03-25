@@ -598,7 +598,7 @@ else()
         PJ_AUTOCONF=1
     )
     if (BUILD_TESTING)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE LIBJAMI_TEST)
     endif()
     if (ANDROID)
         target_link_libraries(${PROJECT_NAME} PRIVATE OpenSLES log)
@@ -822,7 +822,7 @@ else()
             HAVE_RINGNS=1
             ASIO_STANDALONE
             MSGPACK_NO_BOOST
-            DEBUG
+            LIBJAMI_TEST
         )
         if (JAMI_PLUGIN)
             target_compile_definitions(ut_library PUBLIC ENABLE_PLUGIN)

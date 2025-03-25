@@ -628,7 +628,7 @@ public:
     std::mutex membersMtx_ {};
     std::set<std::string> checkedMembers_; // Store members we tried
     std::function<void()> bootstrapCb_;
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     std::function<void(std::string, BootstrapStatus)> bootstrapCbTest_;
 #endif
 
@@ -2298,7 +2298,7 @@ Conversation::onMessageStatusChanged(const std::function<void(const std::map<std
     pimpl_->messageStatusCb_ = cb;
 }
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
 void
 Conversation::onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb)
 {
@@ -2333,7 +2333,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
         JAMI_WARNING("{}[SwarmManager {}] Bootstrap: Fallback failed. Wait for remote connections.",
                     sthis->pimpl_->toString(),
                     fmt::ptr(sthis->pimpl_->swarmManager_.get()));
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
         if (sthis->pimpl_->bootstrapCbTest_)
             sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FAILED);
 #endif
@@ -2363,7 +2363,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
                 return;
             auto checkNext = true;
             if (ok && devices->size() != 0) {
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
                 if (sthis->pimpl_->bootstrapCbTest_)
                     sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FALLBACK);
 #endif
@@ -2447,7 +2447,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
                 }
                 if (sthis->pimpl_->bootstrapCb_)
                     sthis->pimpl_->bootstrapCb_();
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
                 if (sthis->pimpl_->bootstrapCbTest_)
                     sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::SUCCESS);
 #endif

@@ -208,7 +208,7 @@ public:
 
     PreferenceServicesManager& getPreferenceServicesManager() { return preferencesm_; }
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     void addPluginAuthority(const dht::crypto::Certificate& cert);
 #endif
 

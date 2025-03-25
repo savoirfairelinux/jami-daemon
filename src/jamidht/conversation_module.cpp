@@ -406,7 +406,7 @@ public:
     std::map<std::string, uint64_t> refreshMessage;
     std::atomic_int syncCnt {0};
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
 
@@ -814,9 +814,9 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
             sendMessageNotification(*conversation, false, commitId);
         erasePending(); // Will unlock
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(bootstrapCbTest_);
-#endif // LIBJAMI_TESTABLE
+#endif
         conversation->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
                                           this,
                                           conversation->id()),
@@ -1405,9 +1405,9 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
     }
     auto bootstrap = [&](auto& conv) {
         if (conv) {
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
             conv->onBootstrapStatus(bootstrapCbTest_);
-#endif // LIBJAMI_TESTABLE
+#endif
             conv->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb, this, conv->id()), kd);
         }
     };
@@ -1537,7 +1537,7 @@ ConversationModule::setAccountManager(std::shared_ptr<AccountManager> accountMan
     pimpl_->accountManager_ = accountManager;
 }
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
 void
 ConversationModule::onBootstrapStatus(
     const std::function<void(std::string, Conversation::BootstrapStatus)>& cb)
@@ -2088,9 +2088,9 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
                 });
             });
         conversation->onNeedSocket(pimpl_->onNeedSwarmSocket_);
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
-#endif // LIBJAMI_TESTABLE
+#endif
         conversation->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
                                           pimpl_.get(),
                                           conversationId),

@@ -40,7 +40,7 @@ constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
 
 namespace jami {
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
 bool ConversationRepository::DISABLE_RESET = false;
 #endif
 
@@ -3129,7 +3129,7 @@ ConversationRepository::Impl::addUserDevice()
 void
 ConversationRepository::Impl::resetHard()
 {
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     if (DISABLE_RESET)
         return;
 #endif

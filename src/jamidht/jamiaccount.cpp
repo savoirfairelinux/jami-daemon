@@ -2583,7 +2583,7 @@ JamiAccount::sha3SumVerify() const
     return !noSha3sumVerification_;
 }
 
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
 void
 JamiAccount::noSha3sumVerification(bool newValue)
 {

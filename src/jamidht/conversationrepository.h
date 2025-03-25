@@ -138,10 +138,10 @@ using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 /**
  * This class gives access to the git repository that represents the conversation
  */
-class LIBJAMI_TESTABLE ConversationRepository
+class LIBJAMI_TEST_EXPORT ConversationRepository
 {
 public:
-    #ifdef LIBJAMI_TESTABLE
+    #ifdef LIBJAMI_TEST
     static bool DISABLE_RESET; // Some tests inject bad files so resetHard() will break the test
     #endif
     /**
@@ -151,7 +151,7 @@ public:
      * @param otherMember   The other uri
      * @return  the conversation repository object
      */
-    static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
+    static LIBJAMI_TEST_EXPORT std::unique_ptr<ConversationRepository> createConversation(
         const std::shared_ptr<JamiAccount>& account,
         ConversationMode mode = ConversationMode::INVITES_ONLY,
         const std::string& otherMember = "");
@@ -164,7 +164,7 @@ public:
      * @param conversationId    Conversation to clone
      * @param checkCommitCb     Used if commits should be treated
      */
-    static LIBJAMI_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
+    static LIBJAMI_TEST_EXPORT std::unique_ptr<ConversationRepository> cloneConversation(
         const std::shared_ptr<JamiAccount>& account,
         const std::string& deviceId,
         const std::string& conversationId,

@@ -35,7 +35,7 @@ SwarmChannelHandler::connect(const DeviceId& deviceId,
                              const std::string& connectionType,
                              bool forceNewConnection)
 {
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     if (disableSwarmManager)
         return;
 #endif
@@ -46,7 +46,7 @@ bool
 SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                const std::string& name)
 {
-#ifdef LIBJAMI_TESTABLE
+#ifdef LIBJAMI_TEST
     if (disableSwarmManager)
         return false;
 #endif
