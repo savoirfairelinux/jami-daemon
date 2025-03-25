@@ -10,7 +10,7 @@ PKGS_FOUND += ffmpeg
 endif
 endif
 
-DEPS_ffmpeg = iconv zlib vpx opus speex x264
+DEPS_ffmpeg = iconv zlib
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -22,10 +22,14 @@ FFMPEGCONF += \
 	--enable-zlib \
 	--enable-gpl \
 	--enable-swscale \
-	--enable-bsfs \
 	--disable-filters \
 	--disable-programs \
 	--disable-postproc
+
+ifndef FFMPEG_MINIMAL
+
+DEPS_ffmpeg += vpx opus speex x264
+FFMPEGCONF += --enable-bsfs
 
 ifdef HAVE_LINUX
 ifndef HAVE_ANDROID
@@ -143,6 +147,11 @@ FFMPEGCONF += \
 	--enable-encoder=libopus \
 	--enable-decoder=libopus
 
+ifdef __DEBUG__
+DEPS_ffmpeg += rav1e
+DEPS_ffmpeg += mp3lame
+endif
+
 # decoders for ringtones and audio streaming
 FFMPEGCONF += \
 	--enable-decoder=flac \
@@ -169,43 +178,7 @@ FFMPEGCONF += \
 	--enable-encoder=pcm_s32le \
 	--enable-encoder=pcm_s64le
 
-#encoders/decoders for images
-FFMPEGCONF += \
-	--enable-encoder=gif \
-	--enable-decoder=gif \
-	--enable-encoder=jpegls \
-	--enable-decoder=jpegls \
-	--enable-encoder=ljpeg \
-	--enable-decoder=jpeg2000 \
-	--enable-encoder=png \
-	--enable-decoder=png \
-	--enable-encoder=bmp \
-	--enable-decoder=bmp \
-	--enable-encoder=tiff \
-	--enable-decoder=tiff
-
-#filters
-FFMPEGCONF += \
-	--enable-filter=scale \
-	--enable-filter=overlay \
-	--enable-filter=amix \
-	--enable-filter=amerge \
-	--enable-filter=aresample \
-	--enable-filter=format \
-	--enable-filter=aformat \
-	--enable-filter=fps \
-	--enable-filter=transpose \
-	--enable-filter=pad
-
-#plugins
-
-ifdef __DEBUG__
-DEPS_ffmpeg += rav1e
-DEPS_ffmpeg += mp3lame
-endif
-
 # decoders for ringtones and audio streaming
-
 FFMPEGCONF += \
 	--enable-decoder=pcm_s16be \
 	--enable-decoder=pcm_s16be_planar \
@@ -225,6 +198,39 @@ FFMPEGCONF += \
 	--enable-encoder=libmp3lame \
 	--enable-muxer=mp3
 endif
+
+#encoders/decoders for images
+FFMPEGCONF += \
+	--enable-encoder=gif \
+	--enable-decoder=gif \
+	--enable-encoder=jpegls \
+	--enable-decoder=jpegls \
+	--enable-encoder=ljpeg \
+	--enable-decoder=jpeg2000 \
+	--enable-encoder=png \
+	--enable-decoder=png \
+	--enable-encoder=bmp \
+	--enable-decoder=bmp \
+	--enable-encoder=tiff \
+	--enable-decoder=tiff
+
+endif #FFMPEG_MINIMAL
+
+#filters
+FFMPEGCONF += \
+	--enable-filter=scale \
+	--enable-filter=overlay \
+	--enable-filter=amix \
+	--enable-filter=amerge \
+	--enable-filter=aresample \
+	--enable-filter=format \
+	--enable-filter=aformat \
+	--enable-filter=fps \
+	--enable-filter=transpose \
+	--enable-filter=pad
+
+#plugins
+
 
 #filters
 FFMPEGCONF += \
@@ -249,6 +255,7 @@ DEPS_ffmpeg += freetype
 endif
 
 #platform specific options
+ifndef FFMPEG_MINIMAL
 
 ifdef HAVE_WIN32
 FFMPEGCONF += \
@@ -360,6 +367,8 @@ ifeq ($(ARCH),arm64)
 endif
 endif
 endif
+
+endif #FFMPEG_MINIMAL
 
 ifndef HAVE_IOS
 ifndef HAVE_ANDROID
