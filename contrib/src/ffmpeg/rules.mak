@@ -10,7 +10,7 @@ PKGS_FOUND += ffmpeg
 endif
 endif
 
-DEPS_ffmpeg = iconv zlib vpx opus speex x264
+DEPS_ffmpeg = iconv zlib
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -22,10 +22,15 @@ FFMPEGCONF += \
 	--enable-zlib \
 	--enable-gpl \
 	--enable-swscale \
-	--enable-bsfs \
 	--disable-filters \
 	--disable-programs \
-	--disable-postproc
+	--disable-postproc \
+	--disable-hwaccels
+
+ifndef FFMPEG_MINIMAL
+
+DEPS_ffmpeg += vpx opus speex x264
+FFMPEGCONF += --enable-bsfs
 
 ifdef HAVE_LINUX
 ifndef HAVE_ANDROID
@@ -64,6 +69,8 @@ FFMPEGCONF += \
 	--enable-muxer=matroska \
 	--enable-muxer=webm \
 	--enable-muxer=ogg \
+#https://stackoverflow.com/questions/12408526/enabling-mp4-demuxer-in-ffmpeg-configure-command
+	--enable-muxer=mp4 \
 	--enable-muxer=pcm_s16be \
 	--enable-muxer=pcm_s16le \
 	--enable-muxer=wav \
@@ -143,6 +150,11 @@ FFMPEGCONF += \
 	--enable-encoder=libopus \
 	--enable-decoder=libopus
 
+ifdef __DEBUG__
+DEPS_ffmpeg += rav1e
+DEPS_ffmpeg += mp3lame
+endif
+
 # decoders for ringtones and audio streaming
 FFMPEGCONF += \
 	--enable-decoder=flac \
@@ -169,43 +181,7 @@ FFMPEGCONF += \
 	--enable-encoder=pcm_s32le \
 	--enable-encoder=pcm_s64le
 
-#encoders/decoders for images
-FFMPEGCONF += \
-	--enable-encoder=gif \
-	--enable-decoder=gif \
-	--enable-encoder=jpegls \
-	--enable-decoder=jpegls \
-	--enable-encoder=ljpeg \
-	--enable-decoder=jpeg2000 \
-	--enable-encoder=png \
-	--enable-decoder=png \
-	--enable-encoder=bmp \
-	--enable-decoder=bmp \
-	--enable-encoder=tiff \
-	--enable-decoder=tiff
-
-#filters
-FFMPEGCONF += \
-	--enable-filter=scale \
-	--enable-filter=overlay \
-	--enable-filter=amix \
-	--enable-filter=amerge \
-	--enable-filter=aresample \
-	--enable-filter=format \
-	--enable-filter=aformat \
-	--enable-filter=fps \
-	--enable-filter=transpose \
-	--enable-filter=pad
-
-#plugins
-
-ifdef __DEBUG__
-DEPS_ffmpeg += rav1e
-DEPS_ffmpeg += mp3lame
-endif
-
 # decoders for ringtones and audio streaming
-
 FFMPEGCONF += \
 	--enable-decoder=pcm_s16be \
 	--enable-decoder=pcm_s16be_planar \
@@ -225,6 +201,39 @@ FFMPEGCONF += \
 	--enable-encoder=libmp3lame \
 	--enable-muxer=mp3
 endif
+
+#encoders/decoders for images
+FFMPEGCONF += \
+	--enable-encoder=gif \
+	--enable-decoder=gif \
+	--enable-encoder=jpegls \
+	--enable-decoder=jpegls \
+	--enable-encoder=ljpeg \
+	--enable-decoder=jpeg2000 \
+	--enable-encoder=png \
+	--enable-decoder=png \
+	--enable-encoder=bmp \
+	--enable-decoder=bmp \
+	--enable-encoder=tiff \
+	--enable-decoder=tiff
+
+endif #!FFMPEG_MINIMAL
+
+#filters
+FFMPEGCONF += \
+	--enable-filter=scale \
+	--enable-filter=overlay \
+	--enable-filter=amix \
+	--enable-filter=amerge \
+	--enable-filter=aresample \
+	--enable-filter=format \
+	--enable-filter=aformat \
+	--enable-filter=fps \
+	--enable-filter=transpose \
+	--enable-filter=pad
+
+#plugins
+
 
 #filters
 FFMPEGCONF += \
@@ -249,6 +258,7 @@ DEPS_ffmpeg += freetype
 endif
 
 #platform specific options
+ifndef FFMPEG_MINIMAL
 
 ifdef HAVE_WIN32
 FFMPEGCONF += \
@@ -361,6 +371,26 @@ endif
 endif
 endif
 
+# Windows
+ifdef HAVE_WIN32
+DEPS_ffmpeg += ffnvcodec
+FFMPEGCONF += --target-os=mingw32 \
+    --enable-w32threads \
+    --disable-decoder=dca \
+	--enable-cuvid \
+	--enable-ffnvcodec \
+	--enable-nvdec \
+	--enable-nvenc \
+	--enable-hwaccel=h264_nvdec \
+	--enable-hwaccel=hevc_nvdec \
+	--enable-hwaccel=vp8_nvdec \
+	--enable-hwaccel=mjpeg_nvdec \
+	--enable-encoder=h264_nvenc \
+	--enable-encoder=hevc_nvenc
+endif
+
+endif #FFMPEG_MINIMAL
+
 ifndef HAVE_IOS
 ifndef HAVE_ANDROID
 ifndef HAVE_MACOSX
@@ -400,24 +430,6 @@ FFMPEGCONF += --arch=aarch64
 endif
 ifeq ($(ARCH),armv7a)
 FFMPEGCONF += --arch=arm --enable-neon --enable-armv6 --enable-vfpv3
-endif
-
-# Windows
-ifdef HAVE_WIN32
-DEPS_ffmpeg += ffnvcodec
-FFMPEGCONF += --target-os=mingw32 \
-    --enable-w32threads \
-    --disable-decoder=dca \
-	--enable-cuvid \
-	--enable-ffnvcodec \
-	--enable-nvdec \
-	--enable-nvenc \
-	--enable-hwaccel=h264_nvdec \
-	--enable-hwaccel=hevc_nvdec \
-	--enable-hwaccel=vp8_nvdec \
-	--enable-hwaccel=mjpeg_nvdec \
-	--enable-encoder=h264_nvenc \
-	--enable-encoder=hevc_nvenc
 endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
