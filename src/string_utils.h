@@ -44,7 +44,7 @@ bool_to_str(bool b) noexcept
     return b ? TRUE_STR : FALSE_STR;
 }
 
-std::string_view userAgent();
+const std::string& userAgent();
 
 constexpr inline std::string_view
 platform() {
