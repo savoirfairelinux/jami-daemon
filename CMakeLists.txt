@@ -822,7 +822,7 @@ else()
             HAVE_RINGNS=1
             ASIO_STANDALONE
             MSGPACK_NO_BOOST
-            DEBUG
+            LIBJAMI_TEST
         )
         if (JAMI_PLUGIN)
             target_compile_definitions(ut_library PUBLIC ENABLE_PLUGIN)
