@@ -34,6 +34,24 @@
       "parentUuid": "5e0c0ec2_b2b9a44f",
       "revId": "e3a60d9c2bbe3780f0f2277fec04fea17c1e0b42",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f4976c59_d3e7e84e",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-03-27T19:24:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6c0764b4_7bc35c8e",
+      "revId": "e3a60d9c2bbe3780f0f2277fec04fea17c1e0b42",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
