@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e0c0ec2_b2b9a44f",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-03-27T19:05:03Z",
+      "side": 1,
+      "message": "commented code",
+      "revId": "e3a60d9c2bbe3780f0f2277fec04fea17c1e0b42",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
