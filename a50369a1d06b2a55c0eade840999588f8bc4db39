@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "049b8044_fba6edc7",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-03-28T14:27:45Z",
+      "side": 1,
+      "message": "We\u0027ll need to update https://docs.jami.net/en_US/developer/new-developers/debugging-tools.html#loggers once this patch is merged.",
+      "revId": "a50369a1d06b2a55c0eade840999588f8bc4db39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5882adbe_26649b1d",
+        "filename": "src/manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-03-28T14:27:45Z",
+      "side": 1,
+      "message": "Should be `1u`?",
+      "range": {
+        "startLine": 203,
+        "startChar": 38,
+        "endLine": 203,
+        "endChar": 40
+      },
+      "revId": "a50369a1d06b2a55c0eade840999588f8bc4db39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
