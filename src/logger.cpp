@@ -585,10 +585,10 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 }
 
 void
-Logger::write(int level, const char* file, int line, std::string&& message)
+Logger::write(int level, const char* file, int line, bool linefeed, std::string&& message)
 {
     /* Timestamp is generated here. */
-    Msg msg(level, file, line, true, std::move(message));
+    Msg msg(level, file, line, linefeed, std::move(message));
 
     log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(SysLog::instance(), msg);
