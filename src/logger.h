@@ -22,12 +22,14 @@
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/chrono.h>
+#include <fmt/compile.h>
 #include <fmt/printf.h>
 #if __has_include(<fmt/std.h>)
 #include <fmt/std.h>
 #else
 #include <fmt/ostream.h>
 #endif
+
 #include <opendht/logger.h>
 #include <cinttypes> // for PRIx64
 #include <cstdarg>
@@ -117,10 +119,10 @@ public:
     }
 
     LIBJAMI_PUBLIC
-    static void write(int level, const char* file, int line, std::string&& message);
+    static void write(int level, const char* file, int line, bool linefeed, std::string&& message);
 
     static inline void writeDht(dht::log::LogLevel level, std::string&& message) {
-        write(dhtLevel(level), nullptr, 0, std::move(message));
+        write(dhtLevel(level), nullptr, 0, true, std::move(message));
     }
     static inline std::shared_ptr<dht::log::Logger> dhtLogger() {
         return std::make_shared<dht::Logger>(&Logger::writeDht);
@@ -175,22 +177,36 @@ namespace log {
 
 template<typename S, typename... Args>
 void info(const char* file, int line, S&& format, Args&&... args) {
-    Logger::write(LOG_INFO, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_INFO, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
-
 template<typename S, typename... Args>
 void dbg(const char* file, int line, S&& format, Args&&... args) {
-    Logger::write(LOG_DEBUG, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_DEBUG, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
-
 template<typename S, typename... Args>
 void warn(const char* file, int line, S&& format, Args&&... args) {
-    Logger::write(LOG_WARNING, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_WARNING, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+template<typename S, typename... Args>
+void error(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_ERR, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
 template<typename S, typename... Args>
-void error(const char* file, int line, S&& format, Args&&... args) {
-    Logger::write(LOG_ERR, file, line, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+void xinfo(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_INFO, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+template<typename S, typename... Args>
+void xdbg(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_DEBUG, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+template<typename S, typename... Args>
+void xwarn(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_WARNING, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+}
+template<typename S, typename... Args>
+void xerror(const char* file, int line, S&& format, Args&&... args) {
+    Logger::write(LOG_ERR, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
 }
@@ -201,10 +217,10 @@ void error(const char* file, int line, S&& format, Args&&... args) {
 #define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ##__VA_ARGS__)
 #define JAMI_ERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ##__VA_ARGS__)
 
-#define JAMI_XINFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
-#define JAMI_XDBG(...)  ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ##__VA_ARGS__)
-#define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ##__VA_ARGS__)
-#define JAMI_XERR(...)  ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define JAMI_XINFO(formatstr, ...) ::jami::log::xinfo(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
+#define JAMI_XDBG(formatstr, ...)  ::jami::log::xdbg(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
+#define JAMI_XWARN(formatstr, ...) ::jami::log::xwarn(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
+#define JAMI_XERR(formatstr, ...)  ::jami::log::xerror(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
 
 #define JAMI_LOG(formatstr, ...) ::jami::log::info(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
 #define JAMI_DEBUG(formatstr, ...) if(::jami::Logger::debugEnabled()) { ::jami::log::dbg(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__); }
