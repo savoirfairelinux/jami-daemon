@@ -223,11 +223,11 @@ setSipLogLevel()
     pj_log_set_log_func([](int level, const char* data, int len) {
         auto msg = std::string_view(data, len);
         if (level < 2)
-            JAMI_ERROR("{}", msg);
+            JAMI_XERR("{}", msg);
         else if (level < 4)
-            JAMI_WARNING("{}", msg);
+            JAMI_XWARN("{}", msg);
         else
-            JAMI_LOG("{}", msg);
+            JAMI_XDBG("{}", msg);
     });
 }
 
@@ -247,7 +247,7 @@ setGnuTlsLogLevel()
 
     gnutls_global_set_log_level(level);
     gnutls_global_set_log_function([](int level, const char* msg) {
-        JAMI_XDBG("[%d]GnuTLS: %s", level, msg);
+        JAMI_XDBG("[{:d}]GnuTLS: {:s}", level, msg);
     });
 }
 
