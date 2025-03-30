@@ -33,7 +33,7 @@ public:
                                            std::vector<std::map<std::string, std::string>>,
                                            std::map<std::string, int32_t>>;
     DBusConfigurationManager(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/ConfigurationManager")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath{"/cx/ring/Ring/ConfigurationManager"})
     {
         registerAdaptor();
         registerSignalHandlers();
