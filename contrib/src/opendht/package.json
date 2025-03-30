@@ -14,6 +14,7 @@
     "defines": [
         "BUILD_SHARED_LIBS=0",
         "BUILD_TESTING=0",
+        "OPENDHT_DOCUMENTATION=0",
         "OPENDHT_SHARED=0",
         "OPENDHT_PROXY_CLIENT=1",
         "OPENDHT_PROXY_SERVER=1",
