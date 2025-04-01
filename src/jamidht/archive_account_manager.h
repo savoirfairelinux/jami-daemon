@@ -110,12 +110,10 @@ public:
     void onAuthReady(const std::string& deviceId, std::shared_ptr<dhtnet::ChannelSocket> channel);
 
 private:
-    struct DhtLoadContext;
     struct DeviceContextBase;
     struct AddDeviceContext;
     struct LinkDeviceContext;
-    struct AuthContext
-    {
+    struct AuthContext {
         std::mutex mutex;
         std::string accountId;
         uint32_t token;
@@ -123,9 +121,8 @@ private:
         CertRequest request;
         std::string deviceName;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
-        std::unique_ptr<DhtLoadContext> dhtContext;
-        std::shared_ptr<LinkDeviceContext> linkDevCtx;  // data for NEW dev
-        std::unique_ptr<AddDeviceContext> addDeviceCtx; // data for OLD dev
+        std::shared_ptr<LinkDeviceContext> linkDevCtx;  // New device
+        std::unique_ptr<AddDeviceContext> addDeviceCtx; // Source device
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
         std::unique_ptr<asio::steady_timer> timeout;
@@ -161,7 +158,6 @@ private:
                      const std::shared_ptr<AuthContext>& ctx,
                      const std::shared_ptr<dhtnet::ChannelSocket>& channel);
 
-    void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
     void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool isLinkDevProtocol);
 
     inline std::weak_ptr<ArchiveAccountManager> weak()
