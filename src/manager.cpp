@@ -1745,7 +1745,7 @@ Manager::saveConfig(const std::shared_ptr<Account>& acc)
 void
 Manager::saveConfig()
 {
-    JAMI_DBG("Saving configuration to XDG directory %s", pimpl_->path_.c_str());
+    JAMI_LOG("Saving configuration to '{}'", pimpl_->path_);
 
     if (pimpl_->audiodriver_) {
         audioPreference.setVolumemic(pimpl_->audiodriver_->getCaptureGain());
@@ -1870,13 +1870,11 @@ Manager::incomingCall(const std::string& accountId, Call& call)
         pimpl_->stripSipPrefix(call);
     }
 
-    std::string from("<" + call.getPeerNumber() + ">");
-
     auto const& account = getAccount(accountId);
     if (not account) {
-        JAMI_ERR("Incoming call %s on unknown account %s",
-                 call.getCallId().c_str(),
-                 accountId.c_str());
+        JAMI_ERROR("Incoming call {} on unknown account {}",
+                 call.getCallId(),
+                 accountId);
         return;
     }
 
@@ -1991,8 +1989,7 @@ Manager::peerAnsweredCall(Call& call)
 void
 Manager::peerRingingCall(Call& call)
 {
-    JAMI_DBG("[call:%s] Peer ringing", call.getCallId().c_str());
-
+    JAMI_LOG("[call:{}] Peer ringing", call.getCallId());
     if (!hasCurrentCall())
         ringback();
 }
@@ -2002,7 +1999,7 @@ void
 Manager::peerHungupCall(Call& call)
 {
     const auto& callId = call.getCallId();
-    JAMI_DBG("[call:%s] Peer hung up", callId.c_str());
+    JAMI_LOG("[call:{}] Peer hung up", callId);
 
     if (call.isConferenceParticipant()) {
         removeParticipant(call);
@@ -2024,7 +2021,7 @@ Manager::peerHungupCall(Call& call)
 void
 Manager::callBusy(Call& call)
 {
-    JAMI_DBG("[call:%s] Busy", call.getCallId().c_str());
+    JAMI_LOG("[call:{}] Busy", call.getCallId());
 
     if (isCurrentCall(call)) {
         pimpl_->unsetCurrentCall();
@@ -2039,8 +2036,8 @@ Manager::callBusy(Call& call)
 void
 Manager::callFailure(Call& call)
 {
-    JAMI_DBG("[call:%s] %s failed",
-             call.getCallId().c_str(),
+    JAMI_LOG("[call:{}] {} failed",
+             call.getCallId(),
              call.isSubcall() ? "Sub-call" : "Parent call");
 
     if (isCurrentCall(call)) {
@@ -2048,7 +2045,7 @@ Manager::callFailure(Call& call)
     }
 
     if (call.isConferenceParticipant()) {
-        JAMI_DBG("[call %s] Participating in a conference. Remove", call.getCallId().c_str());
+        JAMI_LOG("[call {}] Participating in a conference. Remove", call.getCallId());
         // remove this participant
         removeParticipant(call);
     }
@@ -2651,13 +2648,9 @@ Manager::audioFormatUsed(AudioFormat format)
 void
 Manager::setAccountsOrder(const std::string& order)
 {
-    JAMI_DBG("Set accounts order: %s", order.c_str());
-    // Set the new config
-
+    JAMI_LOG("Set accounts order: {}", order);
     preferences.setAccountOrder(order);
-
     saveConfig();
-
     emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 }
 
