@@ -2507,15 +2507,14 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
     auto incomCallId = incomCall.getCallId();
     auto currentCall = base_.getCurrentCall();
 
-    auto w = incomCall.getAccount();
-    auto account = w.lock();
+    auto account = incomCall.getAccount().lock();
     if (!account) {
         JAMI_ERR("No account detected");
         return;
     }
 
     auto username = incomCall.toUsername();
-    if (username.find('/') != std::string::npos) {
+    if (account->getAccountType() == ACCOUNT_TYPE_JAMI && username.find('/') != std::string::npos) {
         // Avoid to do heavy stuff in SIPVoIPLink's transaction_request_cb
         dht::ThreadPool::io().run([account, incomCallId, username]() {
             if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(account))
