@@ -961,8 +961,8 @@ Conference::detachHost()
         return;
     }
 
-    initSourcesForHost();
     setState(State::ACTIVE_DETACHED);
+    initSourcesForHost();
 }
 
 CallIdSet
@@ -1560,7 +1560,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
     } else if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef ENABLE_VIDEO
         if (not isVideoEnabled()) {
-            JAMI_ERR("Unable to stop camera, the camera is disabled!");
+            JAMI_ERROR("Unable to stop camera, the camera is disabled!");
             return;
         }
 
@@ -1828,7 +1828,6 @@ void
 Conference::bindSubCallAudio(const std::string& callId)
 {
     JAMI_LOG("Bind participant {} to conference {}", callId, id_);
-
     auto& rbPool = Manager::instance().getRingBufferPool();
 
     // Bind each of the new participant's audio streams to each of the other participants audio streams
