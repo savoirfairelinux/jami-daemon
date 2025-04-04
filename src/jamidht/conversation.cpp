@@ -1146,7 +1146,6 @@ void Conversation::Impl::rectifyStatus(const std::shared_ptr<libjami::SwarmMessa
     }
 }
 
-
 std::vector<std::shared_ptr<libjami::SwarmMessage>>
 Conversation::Impl::addToHistory(History& history,
                                  const std::vector<std::map<std::string, std::string>>& commits,
@@ -1161,22 +1160,25 @@ Conversation::Impl::addToHistory(History& history,
         std::unique_lock lk(history.mutex);
         history.cv.wait(lk, [&] { return !history.loading; });
     }
-    std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
-    auto addCommit = [&](const auto& commit) {
+
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> sharedCommits;
+    for (const auto& commit : commits) {
         auto commitId = commit.at("id");
         if (history.quickAccess.find(commitId) != history.quickAccess.end())
-            return; // Already present
+            continue; // Already present
         auto typeIt = commit.find("type");
-        auto reactToIt = commit.find("react-to");
-        auto editIt = commit.find("edit");
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == "merge")
-            return;
+            continue;
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
-        // Set message status based on cache (only on history for client)
-        if (!commitFromSelf && &history == &loadedHistory_) {
+        sharedCommits.emplace_back(sharedCommit);
+    }
+
+    // Set message status based on cache (only on history for client)
+    if (!commitFromSelf && &history == &loadedHistory_) {
+        for (const auto& sharedCommit : sharedCommits) {
             std::lock_guard lk(messageStatusMtx_);
             for (const auto& member: repository_->members()) {
                 // If we have a status cached, use it
@@ -1213,11 +1215,12 @@ Conversation::Impl::addToHistory(History& history,
                     }
                 } else {
                     // If member is author of the message received, they already saw it
-                    if (member.uri == commit.at("author")) {
+                    auto author = sharedCommit->body.at("author");
+                    if (member.uri == author) {
                         // If member is the author of the commit, they are considered as displayed (same for all previous commits)
                         messagesStatus_[member.uri]["read"] = sharedCommit->id;
                         messagesStatus_[member.uri]["fetched"] = sharedCommit->id;
-                        sharedCommit->status[commit.at("author")] = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
+                        sharedCommit->status[author] = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
                         cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
                         continue;
                     }
@@ -1234,18 +1237,23 @@ Conversation::Impl::addToHistory(History& history,
                 }
             }
         }
-        history.quickAccess[commitId] = sharedCommit;
+    }
 
-        if (reactToIt != commit.end() && !reactToIt->second.empty()) {
+    std::vector<std::shared_ptr<libjami::SwarmMessage>> messages;
+    for (const auto& sharedCommit : sharedCommits) {
+        history.quickAccess[sharedCommit->id] = sharedCommit;
+
+        auto reactToIt = sharedCommit->body.find("react-to");
+        auto editIt = sharedCommit->body.find("edit");
+        if (reactToIt != sharedCommit->body.end() && !reactToIt->second.empty()) {
             handleReaction(history, sharedCommit);
-        } else if (editIt != commit.end() && !editIt->second.empty()) {
+        } else if (editIt != sharedCommit->body.end() && !editIt->second.empty()) {
             handleEdition(history, sharedCommit, messageReceived);
         } else if (handleMessage(history, sharedCommit, messageReceived)) {
             messages.emplace_back(sharedCommit);
         }
         rectifyStatus(sharedCommit, history);
-    };
-    std::for_each(commits.begin(), commits.end(), addCommit);
+    }
 
     return messages;
 }
