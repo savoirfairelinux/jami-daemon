@@ -1173,68 +1173,67 @@ Conversation::Impl::addToHistory(History& history,
 
         auto sharedCommit = std::make_shared<libjami::SwarmMessage>();
         sharedCommit->fromMapStringString(commit);
+
+        // TODO Comment
+        auto itFuture = futureStatus.find(sharedCommit->id);
+        if (itFuture != futureStatus.end()) {
+            sharedCommit->status = std::move(itFuture->second);
+            futureStatus.erase(itFuture);
+        }
+
         sharedCommits.emplace_back(sharedCommit);
     }
 
     // Set message status based on cache (only on history for client)
     if (!commitFromSelf && &history == &loadedHistory_) {
-        for (const auto& sharedCommit : sharedCommits) {
-            std::lock_guard lk(messageStatusMtx_);
-            for (const auto& member: repository_->members()) {
-                // If we have a status cached, use it
-                auto itFuture = futureStatus.find(sharedCommit->id);
-                if (itFuture != futureStatus.end()) {
-                    sharedCommit->status = std::move(itFuture->second);
-                    futureStatus.erase(itFuture);
-                    continue;
+        constexpr int32_t SENDING = static_cast<int32_t>(libjami::Account::MessageStates::SENDING);
+        constexpr int32_t SENT = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
+        constexpr int32_t DISPLAYED = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
+
+        std::lock_guard lk(messageStatusMtx_);
+        for (const auto& member: repository_->members()) {
+            // TODO Comment
+            auto status = SENDING;
+
+            // TODO Does it make sense to use memberToStatus when messageReceived is true?
+            if (!messageReceived) {
+                auto cache = memberToStatus[member.uri];
+                if (cache > status)
+                    status = cache;
+            }
+ 
+            for (auto it = sharedCommits.rbegin(); it != sharedCommits.rend(); it++) {
+                auto sharedCommit = *it;
+                auto previousStatus = status;
+
+                // Compute status for the current commit
+                if (status < SENT && messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
+                    status = SENT;
                 }
-                // Else we need to compute the status.
-                auto& cache = memberToStatus[member.uri];
-                if (cache == 0) {
-                    // Message is sending, sent or displayed
-                    cache = static_cast<int32_t>(libjami::Account::MessageStates::SENDING);
+                if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
+                    status = DISPLAYED;
                 }
-                if (!messageReceived) {
-                    // For loading previous messages, there is 3 cases. Last value cached is displayed, so is every previous commits
-                    // Else, if last value is sent, we can compare to the last read commit to update the cache
-                    // Finally if it's sending, we check last fetched commit
-                    if (cache == static_cast<int32_t>(libjami::Account::MessageStates::SENT)) {
-                        if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
-                            cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
-                        }
-                    } else if (cache <= static_cast<int32_t>(libjami::Account::MessageStates::SENDING)) { // SENDING or UNKNOWN
-                        // cache can be upgraded to displayed or sent
-                        if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
-                            cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
-                        } else if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
-                            cache = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
-                        }
-                    }
-                    if(static_cast<int32_t>(cache) > sharedCommit->status[member.uri]){
-                        sharedCommit->status[member.uri] = static_cast<int32_t>(cache);
-                    }
-                } else {
+                if (member.uri == sharedCommit->body.at("author")) {
                     // If member is author of the message received, they already saw it
-                    auto author = sharedCommit->body.at("author");
-                    if (member.uri == author) {
-                        // If member is the author of the commit, they are considered as displayed (same for all previous commits)
-                        messagesStatus_[member.uri]["read"] = sharedCommit->id;
-                        messagesStatus_[member.uri]["fetched"] = sharedCommit->id;
-                        sharedCommit->status[author] = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
-                        cache = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
-                        continue;
-                    }
-                    // For receiving messages, every commit is considered as SENDING, unless we got a update
-                    auto status = static_cast<int32_t>(libjami::Account::MessageStates::SENDING);
-                    if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
-                        status = static_cast<int32_t>(libjami::Account::MessageStates::DISPLAYED);
-                    } else if (messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
-                        status = static_cast<int32_t>(libjami::Account::MessageStates::SENT);
-                    }
-                    if(static_cast<int32_t>(status) > sharedCommit->status[member.uri]){
-                        sharedCommit->status[member.uri] = static_cast<int32_t>(status);
-                    }
+                    status = DISPLAYED;
                 }
+                if(status < sharedCommit->status[member.uri]){
+                    status = sharedCommit->status[member.uri];
+                } else {
+                    sharedCommit->status[member.uri] = status;
+                }
+ 
+                // Update messagesStatus_ if needed
+                if (previousStatus == SENDING && status >= SENT) {
+                    messagesStatus_[member.uri]["fetched"] = sharedCommit->id;
+                }
+                if (previousStatus <= SENT && status == DISPLAYED) {
+                    messagesStatus_[member.uri]["read"] = sharedCommit->id;
+                }
+            }
+
+            if (!messageReceived) {
+                memberToStatus[member.uri] = status;
             }
         }
     }
