@@ -1,5 +1,5 @@
 # RESTINIO
-RESTINIO_VERSION := 0.7.2
+RESTINIO_VERSION := 0.7.4
 PKG_CPE += cpe:2.3:a:*:restinio:$(RESTINIO_VERSION):*:*:*:*:*:*:*
 RESTINIO_URL := https://github.com/Stiffstream/restinio/releases/download/v.$(RESTINIO_VERSION)/restinio-$(RESTINIO_VERSION).tar.bz2
 EXPECTED_LITE_URL := https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp
