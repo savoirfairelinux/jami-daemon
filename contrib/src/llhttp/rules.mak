@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-LLHTTP_VERSION := 9.2.0
+LLHTTP_VERSION := 9.2.1
 PKG_CPE += cpe:2.3:a:llhttp:llhttp:$(LLHTTP_VERSION):*:*:*:*:*:*:*
 LLHTTP_URL := https://github.com/nodejs/llhttp/archive/refs/tags/release/v$(LLHTTP_VERSION).tar.gz
 
