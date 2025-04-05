@@ -161,7 +161,7 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     {
         msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
                                nullptr,
-                               1500};
+                               16 * 1024};
     };
 
     socket->setOnRecv([onMessage = pimpl_->onMessage_,
