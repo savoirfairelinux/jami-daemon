@@ -1,6 +1,7 @@
 # MSGPACK
-MSGPACK_VERSION := cpp-6.1.0
-PKG_CPE += cpe:2.3:a:*:msgpack:6.1.0:*:*:*:*:*:*:*
+MSGPACK_VERSION_NUMBER := 7.0.0
+MSGPACK_VERSION := cpp-$(MSGPACK_VERSION_NUMBER)
+PKG_CPE += cpe:2.3:a:*:msgpack:$(MSGPACK_VERSION_NUMBER):*:*:*:*:*:*:*
 MSGPACK_URL := https://github.com/msgpack/msgpack-c/archive/$(MSGPACK_VERSION).tar.gz
 
 PKGS += msgpack
