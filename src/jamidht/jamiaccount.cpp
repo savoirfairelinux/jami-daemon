@@ -2013,10 +2013,19 @@ JamiAccount::doRegister_()
                             std::unique_lock lk(shared->connManagerMtx_);
                             shared->initConnectionManager();
                             lk.unlock();
-                            shared->requestSIPConnection(
+                            shared->requestMessageConnection(shared->getUsername(), crt->getLongId(), "sync");
+                            //if (peerId == getUsername()) {
+                            if (!shared->syncModule()->isConnected(crt->getLongId()))
+                                shared->channelHandlers_[Uri::Scheme::SYNC]
+                                    ->connect(crt->getLongId(),
+                                                "",
+                                                [](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                    const DeviceId& deviceId) {});
+                            //}                        
+                            /*shared->requestSIPConnection(
                                     shared->getUsername(),
                                     crt->getLongId(),
-                                    "sync"); // For git notifications, will use the same socket as sync
+                                    "sync");*/ // For git notifications, will use the same socket as sync
                         });
                     }
                 },
@@ -2338,8 +2347,7 @@ JamiAccount::convModule(bool noCreation)
                                             cb(nullptr);
                                             return;
                                         }
-
-                                        shared->requestSIPConnection(uri, deviceId, "");
+                                        shared->requestMessageConnection(uri, deviceId, "");
                                     }
                                     cb(socket);
                                 });
@@ -3253,10 +3261,12 @@ JamiAccount::sendMessage(const std::string& to,
                                            }
 
                                            // Else, ask for a channel to send the message
-                                           requestSIPConnection(to, deviceId, payload_type);
+                                           requestMessageConnection(to, deviceId, payload_type);
+                                           //requestSIPConnection(to, deviceId, payload_type);
                                        });
     } else {
-        requestSIPConnection(to, device, payload_type);
+        requestMessageConnection(to, device, payload_type);
+        //requestSIPConnection(to, device, payload_type);
     }
 }
 
@@ -3758,7 +3768,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
                                   bool forceNewConnection,
                                   const std::shared_ptr<SIPCall>& pc)
 {
-    requestMessageConnection(peerId, deviceId, connectionType);
+    //requestMessageConnection(peerId, deviceId, connectionType);
     if (peerId == getUsername()) {
         if (!syncModule()->isConnected(deviceId))
             channelHandlers_[Uri::Scheme::SYNC]
