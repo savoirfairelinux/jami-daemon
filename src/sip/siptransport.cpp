@@ -45,7 +45,7 @@
 
 #define RETURN_IF_FAIL(A, VAL, ...) \
     if (!(A)) { \
-        JAMI_ERR(__VA_ARGS__); \
+        JAMI_ERROR(__VA_ARGS__); \
         return (VAL); \
     }
 
@@ -195,7 +195,7 @@ SipTransportBroker::~SipTransportBroker()
     udpTransports_.clear();
     transports_.clear();
 
-    JAMI_DBG("Destroying SipTransportBroker@%p…", this);
+    JAMI_DEBUG("Destroying SipTransportBroker@{}…", fmt::ptr(this));
 }
 
 void
@@ -203,7 +203,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
                                           pjsip_transport_state state,
                                           const pjsip_transport_state_info* info)
 {
-    JAMI_DBG("PJSIP transport@%p %s → %s", tp, tp->info, SipTransport::stateToStr(state));
+    JAMI_DEBUG("PJSIP transport@{} {} → {}", fmt::ptr(tp), tp->info, SipTransport::stateToStr(state));
 
     // First ensure that this transport is handled by us
     // and remove it from any mapping if destroy pending or done.
@@ -218,8 +218,8 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
     if (!isDestroying_ && state == PJSIP_TP_STATE_DESTROY) {
         // maps cleanup
-        JAMI_DBG("Unmap PJSIP transport@%p {SipTransport@%p}", tp, sipTransport.get());
-        transports_.erase(key);
+        JAMI_DEBUG("Unmap PJSIP transport@{} {{SipTransport@{}}}", fmt::ptr(tp), fmt::ptr(sipTransport.get()));
+      transports_.erase(key);
 
         // If UDP
         const auto type = tp->key.type;
@@ -284,17 +284,17 @@ SipTransportBroker::getUdpTransport(const dhtnet::IpAddr& ipAddress)
         auto it = transports_.find(itp->second);
         if (it != transports_.end()) {
             if (auto spt = it->second.lock()) {
-                JAMI_DBG("Reusing transport %s", ipAddress.toString(true).c_str());
+                JAMI_DEBUG("Reusing transport {}", ipAddress.toString(true));
                 return spt;
             } else {
                 // Transport still exists but have not been destroyed yet.
-                JAMI_WARN("Recycling transport %s", ipAddress.toString(true).c_str());
+              JAMI_WARNING("Recycling transport {}", ipAddress.toString(true));
                 auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
         } else {
-            JAMI_WARN("Cleaning up UDP transport %s", ipAddress.toString(true).c_str());
+          JAMI_WARNING("Cleaning up UDP transport {}", ipAddress.toString(true));
             udpTransports_.erase(itp);
         }
     }
@@ -316,16 +316,15 @@ SipTransportBroker::createUdpTransport(const dhtnet::IpAddr& ipAddress)
     pj_cfg.bind_addr = ipAddress;
     pjsip_transport* transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
-        JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s",
-                 status,
-                 sip_utils::sip_strerror(status).c_str());
-        JAMI_ERR("UDP IPv%s Transport did not start on %s",
-                 ipAddress.isIpv4() ? "4" : "6",
-                 ipAddress.toString(true).c_str());
+        JAMI_ERROR("pjsip_udp_transport_start2 failed with error {:d}: {:s}",
+                status, sip_utils::sip_strerror(status));
+        JAMI_ERROR("UDP IPv{} Transport did not start on {}",
+                ipAddress.isIpv4() ? "4" : "6",
+                ipAddress.toString(true));
         return nullptr;
     }
 
-    JAMI_DBG("Created UDP transport on address %s", ipAddress.toString(true).c_str());
+    JAMI_DEBUG("Created UDP transport on address {}", ipAddress.toString(true));
     return std::make_shared<SipTransport>(transport);
 }
 
@@ -335,19 +334,12 @@ SipTransportBroker::getTlsListener(const dhtnet::IpAddr& ipAddress, const pjsip_
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
     RETURN_IF_FAIL(ipAddress, nullptr, "Unable to determine IP address for this transport");
     JAMI_DEBUG("Creating TLS listener on {:s}…", ipAddress.toString(true));
-#if 0
-    JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
-    JAMI_DBG(" cert_file    : %s", settings->cert_file.ptr);
-    JAMI_DBG(" ciphers_num  : %d", settings->ciphers_num);
-    JAMI_DBG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
-    JAMI_DBG(" reuse_addr   : %d", settings->reuse_addr);
-#endif
 
     pjsip_tpfactory* listener = nullptr;
     const pj_status_t status
         = pjsip_tls_transport_start2(endpt_, settings, ipAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("TLS listener did not start: %s", sip_utils::sip_strerror(status).c_str());
+      JAMI_ERROR("TLS listener did not start: {}", sip_utils::sip_strerror(status));
         return nullptr;
     }
     return std::make_shared<TlsListener>(listener);
@@ -364,7 +356,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
     if (remoteAddr.getPort() == 0)
         remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
-    JAMI_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
+    JAMI_DEBUG("Get new TLS transport to {}", remoteAddr.toString(true));
     pjsip_tpselector sel;
     sel.type = PJSIP_TPSELECTOR_LISTENER;
     sel.u.listener = l->get();
@@ -383,7 +375,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
                                                         &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to get new TLS transport: %s", sip_utils::sip_strerror(status).c_str());
+      JAMI_ERROR("Unable to get new TLS transport: {}", sip_utils::sip_strerror(status));
         return nullptr;
     }
     auto ret = std::make_shared<SipTransport>(transport, l);
