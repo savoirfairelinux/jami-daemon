@@ -1,5 +1,5 @@
 # JSONCPP
-JSONCPP_VERSION := 1.9.3
+JSONCPP_VERSION := 1.9.6
 PKG_CPE += cpe:2.3:a:jsoncpp_project:jsoncpp:$(JSONCPP_VERSION):*:*:*:*:*:*:*
 
 JSONCPP_URL := https://github.com/open-source-parsers/jsoncpp/archive/$(JSONCPP_VERSION).tar.gz
@@ -24,6 +24,7 @@ jsoncpp: jsoncpp-$(JSONCPP_VERSION).tar.gz .sum-jsoncpp
 	$(MOVE)
 
 .jsoncpp: jsoncpp toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE) ${JSONCPP_CMAKECONF}
-	cd $< && $(MAKE) install
+	cd $< && mkdir -p build
+	cd $< && cd build && $(HOSTVARS) $(CMAKE) .. ${JSONCPP_CMAKECONF}
+	cd $< && cd build && $(MAKE) install
 	touch $@
