@@ -28,7 +28,7 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
 
-.opendht: opendht .sum-opendht
+.opendht: opendht toolchain.cmake .sum-opendht
 	cd $< && mkdir -p build
 	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(OPENDHT_CONF) ..
 	cd $< && cd build && $(MAKE) install

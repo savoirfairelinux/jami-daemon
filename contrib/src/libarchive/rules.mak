@@ -28,7 +28,7 @@ libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz .sum-libarchive
 	$(UNPACK)
 	$(MOVE)
 
-.libarchive: libarchive toolchain.cmake
+.libarchive: libarchive toolchain.cmake .sum-libarchive
 	cd $< && mkdir -p buildlib
 ifdef HAVE_ANDROID
 	cd $< && cp -R contrib/android/include/* $(PREFIX)/include

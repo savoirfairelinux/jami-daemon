@@ -30,9 +30,9 @@ llhttp: llhttp-$(LLHTTP_VERSION).tar.gz
 	$(UNPACK)
 	mv llhttp-release-v$(LLHTTP_VERSION) $@
 
-.llhttp: llhttp .sum-llhttp
+.sum-llhttp: llhttp-$(LLHTTP_VERSION).tar.gz
+
+.llhttp: llhttp toolchain.cmake .sum-llhttp
 	cd $< && mkdir -p build && cd build && $(HOSTVARS) $(CMAKE) $(LLHTTP_CMAKECONF) ..
 	cd $</build && $(MAKE) && $(MAKE) install
 	touch $@
-
-.sum-llhttp: llhttp-$(LLHTTP_VERSION).tar.gz

@@ -41,7 +41,7 @@ restinio: restinio-$(RESTINIO_VERSION).tar.bz2 expected.hpp
 	mkdir -p $(PREFIX)/include/nonstd
 	cp $(TARBALLS)/expected.hpp $(PREFIX)/include/nonstd/expected.hpp
 
-.restinio: restinio .sum-restinio
+.restinio: restinio toolchain.cmake .sum-restinio
 	cd $</dev && $(HOSTVARS) $(CMAKE) $(RESTINIO_CMAKECONF) .
 	cd $</dev && $(MAKE) install
 	touch $@
