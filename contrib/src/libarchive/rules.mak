@@ -1,5 +1,5 @@
 # LIBARCHIVE
-LIBARCHIVE_VERSION := 3.6.0
+LIBARCHIVE_VERSION := 3.7.9
 PKG_CPE += cpe:2.3:a:libarchive:libarchive:$(LIBARCHIVE_VERSION):*:*:*:*:*:*:*
 LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
@@ -26,7 +26,6 @@ $(TARBALLS)/libarchive-$(LIBARCHIVE_VERSION).tar.xz:
 
 libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz .sum-libarchive
 	$(UNPACK)
-	$(APPLY) $(SRC)/libarchive/0001-disable-shared-library.patch
 	$(MOVE)
 
 .libarchive: libarchive toolchain.cmake
