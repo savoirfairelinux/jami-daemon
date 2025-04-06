@@ -580,11 +580,11 @@ else()
         PkgConfig::fmt
         PkgConfig::avutil
     )
-    if (TARGET yaml-cpp)
-        target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
-    else()
+    #if (TARGET yaml-cpp)
+    #    target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp)
+    #else()
         target_link_libraries(${PROJECT_NAME} PRIVATE yaml-cpp::yaml-cpp)
-    endif()
+    #endif()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden
         -Wall -Wextra
