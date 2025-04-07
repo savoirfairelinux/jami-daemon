@@ -145,6 +145,7 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
 
     socket->setOnRecv([acc = pimpl_->account_.lock(),
                        peerId,
+                       deviceId = device.toString(),
                        ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
         if (!buf || !acc)
             return len;
@@ -158,12 +159,11 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
             while (ctx->pac.next(oh)) {
                 Message msg;
                 oh.get().convert(msg);
-                acc->handleMessage(peerId, {msg.t, msg.c});
+                acc->onTextMessage("", peerId, deviceId, {{msg.t, msg.c}});
             }
         } catch (const std::exception& e) {
-            JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
+            JAMI_WARNING("[convInfo] Error parsing message: {:s}", e.what());
         }
-
         return len;
     });
 }
