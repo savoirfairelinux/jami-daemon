@@ -33,7 +33,7 @@ using ssize_t = SSIZE_T;
  * the compiler about the expected result of an expression. Some compilers
  * can use this information for optimizations.
  */
-#if defined(__GNUC__) && (__GNUC__ > 2) && defined(__OPTIMIZE__)
+#if defined(__GNUC__) && (__GNUC__ > 2) || defined(__clang__)
 #define LIKELY(expr)   (__builtin_expect(expr, 1))
 #define UNLIKELY(expr) (__builtin_expect(expr, 0))
 #else
