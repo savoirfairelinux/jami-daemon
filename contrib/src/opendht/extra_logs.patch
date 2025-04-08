@@ -1,0 +1,230 @@
+diff --git a/src/http.cpp b/src/http.cpp
+index 930eea19..e3e40f93 100644
+--- a/src/http.cpp
++++ b/src/http.cpp
+@@ -47,6 +47,11 @@
+ namespace dht {
+ namespace http {
+ 
++static void log_error(const std::string& err)
++{
++    fputs(err.c_str(), stderr);
++}
++
+ constexpr const char HTTP_HEADER_CONTENT_TYPE_JSON[] = "application/json";
+ constexpr const char HTTP_HEADER_DELIM[] = "\r\n\r\n";
+ constexpr const char HTTP_PROTOCOL[] = "http://";
+@@ -591,12 +596,22 @@ Connection::async_write(BytesHandlerCb cb)
+ {
+     std::lock_guard<std::mutex> lock(mutex_);
+     if (!is_open()) {
++        log_error(fmt::format("@@@     Connection::async_write error: connection not open\n"));
+         if (cb) ctx_.post([cb](){ cb(asio::error::broken_pipe, 0); });
+         return;
+     }
+-    if (ssl_socket_)  asio::async_write(*ssl_socket_, write_buf_, wrapCallback(std::move(cb)));
+-    else if (socket_) asio::async_write(*socket_, write_buf_, wrapCallback(std::move(cb)));
+-    else if (cb)      ctx_.post([cb](){ cb(asio::error::operation_aborted, 0); });
++    if (ssl_socket_)  {
++        log_error(fmt::format("@@@     Connection::async_write: using ssl_socket_\n"));
++        asio::async_write(*ssl_socket_, write_buf_, wrapCallback(std::move(cb)));
++    }
++    else if (socket_) {
++        log_error(fmt::format("@@@     Connection::async_write: using socket_\n"));
++        asio::async_write(*socket_, write_buf_, wrapCallback(std::move(cb)));
++    }
++    else if (cb) {
++        log_error(fmt::format("@@@     Connection::async_write error: no socket\n"));
++        ctx_.post([cb](){ cb(asio::error::operation_aborted, 0); });
++    }
+ }
+ 
+ void
+@@ -604,12 +619,22 @@ Connection::async_read_until(const char* delim, BytesHandlerCb cb)
+ {
+     std::lock_guard<std::mutex> lock(mutex_);
+     if (!is_open()) {
++        log_error(fmt::format("@@@     Connection::async_read_until error: connection not open\n"));
+         if (cb) ctx_.post([cb](){ cb(asio::error::broken_pipe, 0); });
+         return;
+     }
+-    if (ssl_socket_)  asio::async_read_until(*ssl_socket_, read_buf_, delim, wrapCallback(std::move(cb)));
+-    else if (socket_) asio::async_read_until(*socket_, read_buf_, delim, wrapCallback(std::move(cb)));
+-    else if (cb)      ctx_.post([cb](){ cb(asio::error::operation_aborted, 0); });
++    if (ssl_socket_) {
++        log_error(fmt::format("@@@     Connection::async_read_until: using ssl_socket_\n"));
++        asio::async_read_until(*ssl_socket_, read_buf_, delim, wrapCallback(std::move(cb)));
++    }
++    else if (socket_) {
++        log_error(fmt::format("@@@     Connection::async_read_until: using socket_\n"));
++        asio::async_read_until(*socket_, read_buf_, delim, wrapCallback(std::move(cb)));
++    }
++    else if (cb) {
++        log_error(fmt::format("@@@     Connection::async_read_until error: no socket\n"));
++        ctx_.post([cb](){ cb(asio::error::operation_aborted, 0); });
++    }
+ }
+ 
+ void
+@@ -806,15 +831,18 @@ void
+ Resolver::add_callback(ResolverCb cb, sa_family_t family)
+ {
+     std::lock_guard<std::mutex> lock(mutex_);
+-    if (!completed_)
++    if (!completed_) {
++        log_error(fmt::format("@@@[ 4] Resolver::add_callback: adding callback to cbs_ [previous size: {}]\n", cbs_.size()));
+         cbs_.emplace(family == AF_UNSPEC ? std::move(cb) : [cb, family](const asio::error_code& ec, const std::vector<asio::ip::tcp::endpoint>& endpoints){
+             if (ec)
+                 cb(ec, endpoints);
+             else
+                 cb(ec, filter(endpoints, family));
+         });
+-    else
++    } else {
++        log_error(fmt::format("@@@[ 4] Resolver::add_callback: calling callback directly\n"));
+         cb(ec_, family == AF_UNSPEC ? endpoints_ : filter(endpoints_, family));
++    }
+ }
+ 
+ void
+@@ -1268,28 +1296,34 @@ Request::send()
+     notify_state_change(State::CREATED);
+ 
+     std::weak_ptr<Request> wthis = shared_from_this();
++    log_error(fmt::format("@@@[ 3] [request: {}] Adding callback to resolver (host: '{}', target: '{}')\n",
++               id_, headers_[restinio::http_field_t::host], header_.request_target()));
+     resolver_->add_callback([wthis](const asio::error_code& ec,
+                                    std::vector<asio::ip::tcp::endpoint> endpoints) {
+         if (auto sthis = wthis.lock()) {
+             auto& this_ = *sthis;
++            log_error(fmt::format("@@@[ 5] [request: {}] Resolver callback (#endpoints: {})\n", this_.id_, endpoints.size()));
+             std::lock_guard<std::mutex> lock(this_.mutex_);
+             if (ec){
+-                if (this_.logger_)
+-                    this_.logger_->error("[http:request:{:d}] resolve error: {:s}", this_.id_, ec.message());
++                log_error(fmt::format("@@@ [request: {}] resolve error: {:s}\n", this_.id_, ec.message()));
+                 this_.terminate(asio::error::connection_aborted);
+             }
+             else if (!this_.conn_ or !this_.conn_->is_open()) {
++                log_error(fmt::format("@@@     [request: {}] Resolver callback: opening connection\n", this_.id_));
+                 this_.connect(std::move(endpoints), [wthis](const asio::error_code &ec) {
+                     if (auto sthis = wthis.lock()) {
+-                        if (ec)
++                        if (ec) {
++                            log_error(fmt::format("@@@ [request: {}] Error in connect callback\n", sthis->id_));
+                             sthis->terminate(asio::error::not_connected);
+-                        else
++                        } else
+                             sthis->post();
+                     }
+                 });
+             }
+             else
+                 this_.post();
++        } else {
++            log_error(fmt::format("@@@[ 5] Resolver callback: unable to lock weak pointer\n"));
+         }
+     }, family_);
+ }
+@@ -1298,15 +1332,16 @@ void
+ Request::post()
+ {
+     if (!conn_ or !conn_->is_open()){
++        log_error(fmt::format("@@@ [request: {}] Error in Request::post: no open connection\n", id_));
+         terminate(asio::error::not_connected);
+         return;
+     }
++    log_error(fmt::format("@@@[ 6] [request: {}] build\n", id_));
+     build();
++    log_error(fmt::format("@@@[ 7] [request: {}] init_parser\n", id_));
+     init_parser();
+ 
+-    if (logger_)
+-        logger_->debug("[http:request:{}] sending {} bytes", id_, request_.size());
+-
++    log_error(fmt::format("@@@[ 8] [request: {}] writing {} bytes to request_stream\n", id_, request_.size()));
+     // write the request to buffer
+     std::ostream request_stream(&conn_->input());
+     request_stream << request_;
+@@ -1328,19 +1363,21 @@ Request::terminate(const asio::error_code& ec)
+         return;
+ 
+     response_.aborted = ec == asio::error::operation_aborted;
+-    if (ec == asio::error::basic_errors::broken_pipe)
++    if (ec == asio::error::basic_errors::broken_pipe) {
++        log_error(fmt::format("@@@     [request: {}] Request::terminate broken_pipe error: setting response status {} -> 0\n",
++                   id_, response_.status_code, 0));
+         response_.status_code = 0U; // Avoid to give a successful answer (happen with a broken pipe, takes the last status)
+-
+-    if (logger_) {
+-        if (ec and ec != asio::error::eof and !response_.aborted)
+-            logger_->error("[http:request:{:d}] end with error: {:s}", id_, ec.message());
+-        else
+-            logger_->debug("[http:request:{:d}] done with status code {:d}", id_, response_.status_code);
+     }
+ 
++    if (ec and ec != asio::error::eof and !response_.aborted)
++        log_error(fmt::format("@@@[12] [request: {}] end with error: {:s}\n", id_, ec.message()));
++    else
++        log_error(fmt::format("@@@[12] [request: {}] done with status code {:d}\n", id_, response_.status_code));
++
+     if (!parser_ or !llhttp_should_keep_alive(parser_.get()))
+         if (auto c = conn_)
+             c->close();
++    log_error(fmt::format("@@@[13] [request: {}] changing state to DONE\n", id_));
+     notify_state_change(State::DONE);
+ }
+ 
+@@ -1349,16 +1386,19 @@ Request::handle_request(const asio::error_code& ec)
+ {
+     std::lock_guard<std::mutex> lock(mutex_);
+     if (ec and ec != asio::error::eof){
++        log_error(fmt::format("@@@[ 9] [request: {}] asio error -> terminate\n", id_));
+         terminate(ec);
+         return;
+     }
+     if (!conn_->is_open()){
++        log_error(fmt::format("@@@[ 9] [request: {}] no open connection -> terminate\n", id_));
+         terminate(asio::error::not_connected);
+         return;
+     }
+     // if (logger_)
+     //    logger_->d("[http:request:%i] send success", id_);
+     // read response
++    log_error(fmt::format("@@@[ 9] [request: {}] send success, changing state to RECEIVING\n", id_));
+     notify_state_change(State::RECEIVING);
+ 
+     std::weak_ptr<Request> wthis = shared_from_this();
+@@ -1373,20 +1413,22 @@ Request::handle_response(const asio::error_code& ec, size_t /* n_bytes */)
+ {
+     std::lock_guard<std::mutex> lock(mutex_);
+     if (ec && ec != asio::error::eof){
++        log_error(fmt::format("@@@[10] [request: {}] asio error -> terminate\n", id_));
+         terminate(ec);
+         return;
+     }
+     auto request = (ec == asio::error::eof) ? std::string{} : conn_->read_bytes();
++    log_error(fmt::format("@@@[10] [request: {}] calling llhttp_execute:  size: {}  request:\n{}\n", id_, request.size(), request));
+     enum llhttp_errno ret = llhttp_execute(parser_.get(), request.c_str(), request.size());
+     if (ret != HPE_OK && ret != HPE_PAUSED) {
+-        if (logger_)
+-            logger_->e("Error parsing HTTP: %zu %s %d", (int)ret, llhttp_errno_name(ret), llhttp_get_error_reason(parser_.get()));
++        log_error(fmt::format("@@@    [request: {}] error while parsing HTTP: {} {} {}\n", id_, (int)ret, llhttp_errno_name(ret), llhttp_get_error_reason(parser_.get())));
+         terminate(asio::error::basic_errors::broken_pipe);
+         return;
+     }
+ 
+     if (state_ != State::DONE and parser_ and not llhttp_message_needs_eof(parser_.get())) {
+         auto toRead = parser_->content_length ? std::min<uint64_t>(parser_->content_length, 64 * 1024) : 64 * 1024;
++        log_error(fmt::format("@@@[10] [request: {}] calling async_read_some (toRead: {})\n", id_, toRead));
+         std::weak_ptr<Request> wthis = shared_from_this();
+         conn_->async_read_some(toRead, [wthis](const asio::error_code& ec, size_t bytes){
+             if (auto sthis = wthis.lock())
+@@ -1406,6 +1448,7 @@ Request::onBody(const char* at, size_t length)
+ 
+ void
+ Request::onComplete() {
++    log_error(fmt::format("@@@[11] [request: {}] Request::onComplete\n", id_));
+     terminate(asio::error::eof);
+ }
+ 

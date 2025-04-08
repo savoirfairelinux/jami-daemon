@@ -21,7 +21,7 @@
         "OPENDHT_PUSH_NOTIFICATIONS=1",
         "OPENDHT_TOOLS=0"
     ],
-    "patches": [],
+    "patches": [ "extra_logs.patch" ],
     "win_patches": [],
     "project_paths": [],
     "with_env" : "",
