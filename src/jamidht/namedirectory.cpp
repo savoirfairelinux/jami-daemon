@@ -260,6 +260,9 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
     auto request = std::make_shared<Request>(*httpContext_,
                                              resolver_,
                                              serverUrl_ + QUERY_NAME + encodedName);
+    request->set_error_log_cb([](const std::string& err){
+        JAMI_ERROR("{}", err);
+    });
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
@@ -320,10 +323,12 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
             if (auto req = response.request.lock())
                 requests_.erase(req);
         });
+        JAMI_ERROR("@@@[ 1] NameDirectory::requests_: adding request for {} on {}", name, serverUrl_);
         {
             std::lock_guard lk(requestsMtx_);
             requests_.emplace(request);
         }
+        JAMI_ERROR("@@@[ 2] Sending request for {} on {}", name, serverUrl_);
         request->send();
     } catch (const std::exception& e) {
         JAMI_ERROR("Name lookup for {} failed: {}", name, e.what());
