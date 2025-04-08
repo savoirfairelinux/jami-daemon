@@ -204,6 +204,7 @@ EXTRA_COMMON += -g -fno-omit-frame-pointer
 else
 EXTRA_COMMON += -DNDEBUG=1 -O3
 endif
+EXTRA_COMMON += -D_FILE_OFFSET_BITS=64
 
 cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
 
@@ -416,7 +417,9 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchai
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_FIND_ROOT_PATH=$(PREFIX) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
-		-DBUILD_SHARED_LIBS=OFF
+		-DBUILD_SHARED_LIBS=OFF \
+		-DCMAKE_C_FLAGS="$(CFLAGS)" \
+		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)" 
 else
 CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
