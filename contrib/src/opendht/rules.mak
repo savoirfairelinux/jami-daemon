@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := b0fa19d6f8a5f6af884b278f4351e5733c6a99e2
+OPENDHT_VERSION := 36a0aed4966ecc0b4a52edf58b15390dbaa77901
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -26,6 +26,7 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+#	$(APPLY) $(SRC)/opendht/extra_logs.patch
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
