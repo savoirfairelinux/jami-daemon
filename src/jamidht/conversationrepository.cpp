@@ -2635,6 +2635,12 @@ ConversationRepository::cloneConversation(
     const std::string& conversationId,
     std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb)
 {
+    // Verify conversationId is not empty to avoid deleting the entire conversations directory
+    if (conversationId.empty()) {
+        JAMI_ERROR("[Account {}] Clone conversation with empty conversationId", account->getAccountID());
+        return nullptr;
+    }
+
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
     auto path = conversationsPath / conversationId;
