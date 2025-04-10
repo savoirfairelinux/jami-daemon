@@ -3049,6 +3049,11 @@ Manager::loadAccountAndConversation(const std::string& accountId,
         JAMI_WARN("Unable to load account %s", accountId.c_str());
         return;
     }
+
+    if (convId.empty() && !loadAll) {
+        // Nothing to load. Only need to start account
+        return;
+    }
     if (auto jamiAcc = std::dynamic_pointer_cast<JamiAccount>(account)) {
         jamiAcc->setActive(true);
         jamiAcc->reloadContacts();
