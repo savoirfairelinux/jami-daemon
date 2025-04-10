@@ -1797,7 +1797,7 @@ ConversationModule::loadSingleConversation(const std::string& convId)
         fileutils::get_data_dir() / pimpl_->accountId_ / "conversations");
     for (auto repositoryId : conversationsRepositoryIds) {
         if (repositoryId != convId) {
-            auto conv = std::make_shared<SyncedConversation>(convId);
+            auto conv = std::make_shared<SyncedConversation>(repositoryId);
             pimpl_->conversations_.emplace(repositoryId, conv);
         }
     }
