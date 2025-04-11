@@ -40,17 +40,24 @@ public:
 
     /**
      * Start the capture stream and prepare the playback stream.
-     * The playback starts accordingly to its threshold
+     * The playback starts accordingly to its threshold.
+     * If a ringtone device is specified, it will be initialized as well.
      */
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     /**
      * Stop the playback and capture streams.
-     * Drops the pending frames and put the capture and playback handles to PREPARED state
+     * Drops the pending frames and put the capture and playback handles to PREPARED state.
+     * If a ringtone stream is active, it will be stopped as well.
      */
     void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     void updatePreference(AudioPreference& pref, int index, AudioDeviceType type) override;
+
+    /**
+     * Access to urgent buffer method for ringtone handling
+     */
+    std::shared_ptr<AudioFrame> getUrgent(AudioFormat format, size_t samples);
 
 private:
     NON_COPYABLE(PortAudioLayer);
