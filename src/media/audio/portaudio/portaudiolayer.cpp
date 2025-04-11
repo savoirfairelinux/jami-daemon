@@ -16,16 +16,13 @@
  */
 
 #include "portaudiolayer.h"
-#include "manager.h"
-#include "noncopyable.h"
 #include "audio/resampler.h"
-#include "audio/ringbufferpool.h"
-#include "audio/ringbuffer.h"
-#include "audio/audioloop.h"
+#include "audio/portaudio/audio_device_monitor.h"
+#include "preferences.h"
 
 #include <portaudio.h>
 #include <algorithm>
-#include <cmath>
+#include <windows.h>
 
 namespace jami {
 
@@ -62,6 +59,8 @@ struct PortAudioLayer::PortAudioLayerImpl
 
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
 
+    std::vector<std::string> currentlyStreamingDevices_;
+
     int paOutputCallback(PortAudioLayer& parent,
                          const int16_t* inputBuffer,
                          int16_t* outputBuffer,
@@ -82,9 +81,12 @@ struct PortAudioLayer::PortAudioLayerImpl
                      unsigned long framesPerBuffer,
                      const PaStreamCallbackTimeInfo* timeInfo,
                      PaStreamCallbackFlags statusFlags);
+
+    IMMDeviceEnumerator* deviceEnumerator_ {nullptr};
+    AudioDeviceNotificationClient* audioDeviceNotificationClient_ {nullptr};
 };
 
-//##################################################################################################
+// ##################################################################################################
 
 PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
     : AudioLayer {pref}
@@ -92,6 +94,40 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
 {
     setHasNativeAEC(false);
     setHasNativeNS(false);
+
+    pimpl_->audioDeviceNotificationClient_->setDeviceEventCallback(
+        [this](const std::string& deviceName, const DeviceEventType event) {
+            // Some specific scenarios we want to handle are:
+            // - The device is in use and was just plugged in. In this case, we want to
+            //   reinitialize the stream with the new device.
+            // - The device is in use and was just unplugged. In this case, we want to stop the
+            //   stream and fallback to the current default device.
+
+            // We have the name, so let's check if it's in the list of currently streaming devices.
+            auto it = std::find(pimpl_->currentlyStreamingDevices_.cbegin(),
+                                pimpl_->currentlyStreamingDevices_.cend(),
+                                deviceName);
+            bool deviceInUse = it != pimpl_->currentlyStreamingDevices_.cend();
+            if (deviceInUse) {
+                if (event == DeviceEventType::BecameActive) {
+                    JAMI_DBG("PortAudio in-use device added: %s", deviceName.c_str());
+                    // Here we want to restart the stream
+                    // TODO: Just for this device.
+                    stopStream();
+                    startStream();
+                } else if (event == DeviceEventType::BecameInactive) {
+                    JAMI_DBG("PortAudio in-use device removed: %s", deviceName.c_str());
+                    // Here we want to stop the stream
+                    // TODO: Just for this device.
+                    stopStream();
+                }
+            } else {
+                JAMI_DBG("PortAudio device not in use: %s", deviceName.c_str());
+            }
+
+            // In any case, we should broadcast the device change event.
+            devicesChanged();
+        });
 
     auto numDevices = Pa_GetDeviceCount();
     if (numDevices < 0) {
@@ -103,6 +139,9 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
         deviceInfo = Pa_GetDeviceInfo(i);
         JAMI_DBG("PortAudio device: %d, %s", i, deviceInfo->name);
     }
+
+    // Notify of device changes in case this layer was reset based on a hotplug event.
+    devicesChanged();
 }
 
 PortAudioLayer::~PortAudioLayer()
@@ -113,7 +152,12 @@ PortAudioLayer::~PortAudioLayer()
 std::vector<std::string>
 PortAudioLayer::getCaptureDeviceList() const
 {
-    return pimpl_->getDevicesByType(AudioDeviceType::CAPTURE);
+    auto devices = pimpl_->getDevicesByType(AudioDeviceType::CAPTURE);
+    // Print them all
+    for (const auto& device : devices) {
+        JAMI_DBG("PortAudio capture device: %s", device.c_str());
+    }
+    return devices;
 }
 
 std::vector<std::string>
@@ -167,33 +211,51 @@ PortAudioLayer::startStream(AudioDeviceType stream)
         return;
     }
 
+    // @param fullDuplexMode If true, initializes full duplex (input+output) stream
+    //                       If false, initializes output-only stream
+    // @return true if stream started successfully, false otherwise
     auto startPlayback = [this](bool fullDuplexMode = false) -> bool {
         std::unique_lock lock(mutex_);
+        // Return if stream is already running
         if (status_.load() != Status::Idle)
             return false;
-        bool ret {false};
-        if (fullDuplexMode)
-            ret = pimpl_->initFullDuplexStream(*this);
-        else
-            ret = pimpl_->initOutputStream(*this);
-        if (ret) {
+        bool success {false};
+        // Initialize either full duplex or output-only stream
+        if (fullDuplexMode) {
+            success = pimpl_->initFullDuplexStream(*this);
+        } else {
+            success = pimpl_->initOutputStream(*this);
+            // If we successfully initialized the output stream, we need to update the
+            // currently streaming devices list to reflect the new device.
+            if (success) {
+                pimpl_->currentlyStreamingDevices_.push_back(
+                    pimpl_->getDeviceNameByType(pimpl_->getIndexByType(AudioDeviceType::PLAYBACK),
+                                                AudioDeviceType::PLAYBACK));
+            }
+        }
+        // If stream started successfully
+        if (success) {
             status_.store(Status::Started);
             lock.unlock();
+            // Flush audio buffers
             flushUrgent();
             flushMain();
         }
-        return ret;
+        return success;
     };
 
     switch (stream) {
     case AudioDeviceType::ALL:
+        // First try to start the full duplex stream
         if (!startPlayback(true)) {
-            pimpl_->initInputStream(*this);
+            // If that fails, try to start the input stream
+            std::ignore = pimpl_->initInputStream(*this);
+            // Then try to start the output stream alone
             startPlayback();
         }
         break;
     case AudioDeviceType::CAPTURE:
-        pimpl_->initInputStream(*this);
+        std::ignore = pimpl_->initInputStream(*this);
         break;
     case AudioDeviceType::PLAYBACK:
     case AudioDeviceType::RINGTONE:
@@ -205,6 +267,8 @@ PortAudioLayer::startStream(AudioDeviceType stream)
 void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
+    // @param stream: The PortAudio stream to stop and close
+    // @return true if stream was successfully stopped and closed, false otherwise
     auto stopPaStream = [](PaStream* stream) -> bool {
         if (!stream || Pa_IsStreamStopped(stream) != paNoError)
             return false;
@@ -221,6 +285,8 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
         return true;
     };
 
+    // @param fullDuplexMode: if true, stops the full duplex stream, otherwise stops output stream
+    // @return true if stream was successfully stopped, false otherwise
     auto stopPlayback = [this, &stopPaStream](bool fullDuplexMode = false) -> bool {
         std::lock_guard lock(mutex_);
         if (status_.load() != Status::Started)
@@ -235,7 +301,7 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
         return stopped;
     };
 
-    bool stopped = false;
+    bool stopped {false};
     switch (stream) {
     case AudioDeviceType::ALL:
         if (pimpl_->streams_[Direction::IO]) {
@@ -244,6 +310,24 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
             stopped = stopPaStream(pimpl_->streams_[Direction::Input]) && stopPlayback();
         }
         if (stopped) {
+            // Remove both devices from the currently streaming devices list
+            auto playbackDeviceName = pimpl_->getDeviceNameByType(pimpl_->getIndexByType(
+                                                                      AudioDeviceType::PLAYBACK),
+                                                                  AudioDeviceType::PLAYBACK);
+            auto recordDeviceName = pimpl_->getDeviceNameByType(pimpl_->getIndexByType(
+                                                                    AudioDeviceType::CAPTURE),
+                                                                AudioDeviceType::CAPTURE);
+            pimpl_->currentlyStreamingDevices_
+                .erase(std::remove(pimpl_->currentlyStreamingDevices_.begin(),
+                                   pimpl_->currentlyStreamingDevices_.end(),
+                                   playbackDeviceName),
+                       pimpl_->currentlyStreamingDevices_.end());
+            pimpl_->currentlyStreamingDevices_
+                .erase(std::remove(pimpl_->currentlyStreamingDevices_.begin(),
+                                   pimpl_->currentlyStreamingDevices_.end(),
+                                   recordDeviceName),
+                       pimpl_->currentlyStreamingDevices_.end());
+
             recordChanged(false);
             playbackChanged(false);
             JAMI_DBG("PortAudioLayer I/O streams stopped");
@@ -252,6 +336,14 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
         break;
     case AudioDeviceType::CAPTURE:
         if (stopPaStream(pimpl_->streams_[Direction::Input])) {
+            auto recordDeviceName = pimpl_->getDeviceNameByType(pimpl_->getIndexByType(
+                                                                    AudioDeviceType::CAPTURE),
+                                                                AudioDeviceType::CAPTURE);
+            pimpl_->currentlyStreamingDevices_
+                .erase(std::remove(pimpl_->currentlyStreamingDevices_.begin(),
+                                   pimpl_->currentlyStreamingDevices_.end(),
+                                   recordDeviceName),
+                       pimpl_->currentlyStreamingDevices_.end());
             recordChanged(false);
             JAMI_DBG("PortAudioLayer input stream stopped");
         } else
@@ -260,6 +352,14 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
     case AudioDeviceType::PLAYBACK:
     case AudioDeviceType::RINGTONE:
         if (stopPlayback()) {
+            auto playbackDeviceName = pimpl_->getDeviceNameByType(pimpl_->getIndexByType(
+                                                                      AudioDeviceType::PLAYBACK),
+                                                                  AudioDeviceType::PLAYBACK);
+            pimpl_->currentlyStreamingDevices_
+                .erase(std::remove(pimpl_->currentlyStreamingDevices_.begin(),
+                                   pimpl_->currentlyStreamingDevices_.end(),
+                                   playbackDeviceName),
+                       pimpl_->currentlyStreamingDevices_.end());
             playbackChanged(false);
             JAMI_DBG("PortAudioLayer output stream stopped");
         } else
@@ -291,19 +391,58 @@ PortAudioLayer::updatePreference(AudioPreference& preference, int index, AudioDe
     }
 }
 
-//##################################################################################################
+// ##################################################################################################
 
 PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent,
                                                        const AudioPreference& pref)
     : deviceRecord_ {pref.getPortAudioDeviceRecord()}
     , devicePlayback_ {pref.getPortAudioDevicePlayback()}
     , deviceRingtone_ {pref.getPortAudioDeviceRingtone()}
+    , audioDeviceNotificationClient_ {new AudioDeviceNotificationClient()}
 {
+    // IMMNotificationClient: Here we set up the listener for audio device events.
+    // In any failure case here, the impact is limited to not being able to detect
+    // hotplug events for audio devices, and thus, the initially enumerated devices
+    // will be used throughout the session.
+    HRESULT hr = CoInitialize(nullptr);
+    if (SUCCEEDED(hr)) {
+        hr = CoCreateInstance(__uuidof(MMDeviceEnumerator),
+                              nullptr,
+                              CLSCTX_ALL,
+                              __uuidof(IMMDeviceEnumerator),
+                              (void**) &deviceEnumerator_);
+
+        if (FAILED(hr)) {
+            JAMI_ERR() << "Failed to create MMDeviceEnumerator: " << std::hex << hr;
+            CoUninitialize();
+        } else {
+            hr = deviceEnumerator_->RegisterEndpointNotificationCallback(
+                audioDeviceNotificationClient_);
+            if (FAILED(hr)) {
+                JAMI_ERR() << "Failed to register notification callback: " << std::hex << hr;
+                deviceEnumerator_->Release();
+                audioDeviceNotificationClient_->Release();
+                CoUninitialize();
+            }
+        }
+    } else {
+        JAMI_ERR() << "CoInitialize failed: " << std::hex << hr;
+        CoUninitialize();
+    }
+
     init(parent);
 }
 
 PortAudioLayer::PortAudioLayerImpl::~PortAudioLayerImpl()
 {
+    if (deviceEnumerator_) {
+        deviceEnumerator_->UnregisterEndpointNotificationCallback(audioDeviceNotificationClient_);
+        audioDeviceNotificationClient_->Release();
+        deviceEnumerator_->Release();
+    }
+    // We can call this even if CoInitializeEx failed
+    CoUninitialize();
+
     terminate();
 }
 
@@ -620,6 +759,10 @@ PortAudioLayer::PortAudioLayerImpl::initInputStream(PortAudioLayer& parent)
         return false;
     }
 
+    // Update the currently streaming devices list to reflect the new device.
+    currentlyStreamingDevices_.push_back(
+        getDeviceNameByType(getIndexByType(AudioDeviceType::CAPTURE), AudioDeviceType::CAPTURE));
+
     parent.recordChanged(true);
     return true;
 }
@@ -661,6 +804,10 @@ PortAudioLayer::PortAudioLayerImpl::initOutputStream(PortAudioLayer& parent)
         JAMI_ERR("PortAudioLayer error: %s", Pa_GetErrorText(err));
         return false;
     }
+
+    // Update the currently streaming devices list to reflect the new device.
+    currentlyStreamingDevices_.push_back(
+        getDeviceNameByType(getIndexByType(AudioDeviceType::PLAYBACK), AudioDeviceType::PLAYBACK));
 
     parent.playbackChanged(true);
     return true;
@@ -704,6 +851,12 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
         JAMI_ERR("PortAudioLayer error: %s", Pa_GetErrorText(err));
         return false;
     }
+
+    // Update the currently streaming devices list to reflect the new device.
+    currentlyStreamingDevices_.push_back(
+        getDeviceNameByType(getIndexByType(AudioDeviceType::PLAYBACK), AudioDeviceType::PLAYBACK));
+    currentlyStreamingDevices_.push_back(
+        getDeviceNameByType(getIndexByType(AudioDeviceType::CAPTURE), AudioDeviceType::CAPTURE));
 
     parent.recordChanged(true);
     parent.playbackChanged(true);
