@@ -16,16 +16,16 @@
  */
 
 #include "portaudiolayer.h"
-#include "manager.h"
-#include "noncopyable.h"
+
 #include "audio/resampler.h"
-#include "audio/ringbufferpool.h"
-#include "audio/ringbuffer.h"
-#include "audio/audioloop.h"
+#include "audio/portaudio/audio_device_monitor.h"
+#include "manager.h"
+#include "preferences.h"
 
 #include <portaudio.h>
+
 #include <algorithm>
-#include <cmath>
+#include <windows.h>
 
 namespace jami {
 
@@ -62,6 +62,9 @@ struct PortAudioLayer::PortAudioLayerImpl
 
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
 
+    CComPtr<IMMDeviceEnumerator> deviceEnumerator_;
+    CComPtr<AudioDeviceNotificationClient> audioDeviceNotificationClient_;
+
     int paOutputCallback(PortAudioLayer& parent,
                          const int16_t* inputBuffer,
                          int16_t* outputBuffer,
@@ -84,7 +87,7 @@ struct PortAudioLayer::PortAudioLayerImpl
                      PaStreamCallbackFlags statusFlags);
 };
 
-//##################################################################################################
+// ##################################################################################################
 
 PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
     : AudioLayer {pref}
@@ -103,6 +106,9 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
         deviceInfo = Pa_GetDeviceInfo(i);
         JAMI_DBG("PortAudio device: %d, %s", i, deviceInfo->name);
     }
+
+    // Notify of device changes in case this layer was reset based on a hotplug event.
+    devicesChanged();
 }
 
 PortAudioLayer::~PortAudioLayer()
@@ -291,14 +297,48 @@ PortAudioLayer::updatePreference(AudioPreference& preference, int index, AudioDe
     }
 }
 
-//##################################################################################################
+// ##################################################################################################
 
 PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent,
                                                        const AudioPreference& pref)
     : deviceRecord_ {pref.getPortAudioDeviceRecord()}
     , devicePlayback_ {pref.getPortAudioDevicePlayback()}
     , deviceRingtone_ {pref.getPortAudioDeviceRingtone()}
+    , audioDeviceNotificationClient_ {new AudioDeviceNotificationClient()}
 {
+    // Set up the audio device notification client
+    HRESULT hr = CoInitialize(nullptr);
+    if (FAILED(hr)) {
+        JAMI_ERR() << "CoInitialize failed: " << std::hex << hr;
+        return;
+    }
+
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator),
+                          nullptr,
+                          CLSCTX_ALL,
+                          __uuidof(IMMDeviceEnumerator),
+                          (void**) &deviceEnumerator_);
+    if (FAILED(hr)) {
+        JAMI_ERR() << "Failed to create MMDeviceEnumerator: " << std::hex << hr;
+        return;
+    }
+
+    hr = deviceEnumerator_->RegisterEndpointNotificationCallback(audioDeviceNotificationClient_);
+
+    if (FAILED(hr)) {
+        JAMI_ERR() << "Failed to register notification callback: " << std::hex << hr;
+        return;
+    }
+
+    audioDeviceNotificationClient_->setDeviceEventCallback(
+        [this, &parent](const std::string& deviceName, const DeviceEventType event) {
+            JAMI_DBG("PortAudio device event for device: %s, event: %s",
+                     deviceName.c_str(),
+                     (event == DeviceEventType::BecameActive) ? "BecameActive" : "BecameInactive");
+            // Restart the layer
+            Manager::instance().setAudioPlugin(Manager::instance().getAudioManager());
+        });
+
     init(parent);
 }
 
@@ -484,7 +524,8 @@ PortAudioLayer::PortAudioLayerImpl::getApiIndexByType(AudioDeviceType type)
             }
         }
     }
-    return paNoDevice;
+    return type == AudioDeviceType::CAPTURE ? Pa_GetDefaultCommInputDevice()
+                                            : Pa_GetDefaultCommOutputDevice();
 }
 
 std::string
@@ -511,6 +552,9 @@ PortAudioLayer::PortAudioLayerImpl::terminate() const
     auto err = Pa_Terminate();
     if (err != paNoError)
         JAMI_ERR("PortAudioLayer error: %s", Pa_GetErrorText(err));
+    if (deviceEnumerator_) {
+        deviceEnumerator_->UnregisterEndpointNotificationCallback(audioDeviceNotificationClient_);
+    }
 }
 
 static void
