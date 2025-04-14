@@ -49,13 +49,37 @@ def build_contrib(args, paths):
                 "CONTRIB_SRC_DIR": os.path.join(paths.contrib_dir, "src"),
             }
         )
-        # Find JOM if it is installed. (default C:/Qt/Tools/QtCreator/bin/jom)
-        # Used to accelerate the build process when normally using nmake.
-        qt_tools_dir = os.path.join(os.getenv("QTDIR", "C:\Qt"), "Tools")
-        jom_path = os.path.join(qt_tools_dir, "QtCreator", "bin", "jom", "jom.exe")
-        if os.path.exists(jom_path):
-            log.info("Found JOM at " + jom_path)
-            sh_exec.append_extra_env_vars({"MAKE_TOOL": jom_path})
+        # Allow supplying the path to the jom executable via the environment variable JOM_PATH.
+        # It is used to accelerate the build processes that use nmake.
+        jom_path = os.getenv("JOM_PATH")
+        if jom_path and os.path.exists(jom_path):
+            log.info(f"Using JOM from environment: {jom_path}")
+        else:
+            # Try to find JOM in the default Qt installation path
+            qt_tools_dir = os.path.join(os.getenv("QTDIR", "C:\\Qt"), "Tools")
+            jom_path = os.path.join(qt_tools_dir, "QtCreator", "bin", "jom", "jom.exe")
+
+            if not os.path.exists(jom_path):
+                # Fallback to looking in other common Qt Creator paths
+                qt_creator_paths = [
+                    os.path.join(qt_tools_dir, "QtCreator"),
+                    os.path.join(os.getenv("ProgramFiles", "C:\\Program Files"), "Qt Creator"),
+                    os.path.join(os.getenv("ProgramFiles(x86)", "C:\\Program Files (x86)"), "Qt Creator")
+                ]
+
+                for path in qt_creator_paths:
+                    test_path = os.path.join(path, "bin", "jom", "jom.exe")
+                    if os.path.exists(test_path):
+                        jom_path = test_path
+                        break
+
+            if os.path.exists(jom_path):
+                log.info(f"Found JOM at: {jom_path}")
+            else:
+                log.warning("JOM not found. Build performance may be reduced.")
+                return
+
+        sh_exec.append_extra_env_vars({"MAKE_TOOL": jom_path})
 
     versioner.builder.set_vs_env_init_cb(vs_env_init_cb)
 
