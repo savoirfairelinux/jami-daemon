@@ -348,7 +348,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     } catch (...) {
                     }
                 }
-                account->onTextMessage(id, peerNumber, std::string(transport->deviceId()), payloads);
+                account->onTextMessage(id, peerNumber, transport->getTlsInfos().peerCert, payloads);
             }
             return PJ_FALSE;
         }

@@ -274,10 +274,10 @@ SIPAccountBase::getIceOptions() const noexcept
 void
 SIPAccountBase::onTextMessage(const std::string& id,
                               const std::string& from,
-                              const std::string& /* deviceId */,
+                              const std::shared_ptr<dht::crypto::Certificate>& peerCert,
                               const std::map<std::string, std::string>& payloads)
 {
-    JAMI_LOG("[Account {}] Text message received from {}, {:d} part(s)", accountID_, from, payloads.size());
+    JAMI_LOG("[Account {}] [peer {}] Text message received from {}, {:d} part(s)", accountID_, peerCert ? peerCert->getLongId().to_view() : ""sv, from, payloads.size());
     for (const auto& m : payloads) {
         if (!utf8_validate(m.first))
             return;
@@ -285,7 +285,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
             JAMI_WARNING("[Account {}] Dropping invalid message with MIME type {}", accountID_, m.first);
             return;
         }
-        if (handleMessage(from, m))
+        if (handleMessage(peerCert, from, m))
             return;
     }
 
