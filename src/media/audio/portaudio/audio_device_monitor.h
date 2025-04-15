@@ -30,7 +30,7 @@ enum class DeviceEventType { BecameActive, BecameInactive };
 using DeviceEventCallback
     = std::function<void(const std::string& deviceName, const DeviceEventType event)>;
 
-std::wstring
+std::string
 GetFriendlyNameFromIMMDeviceId(LPCWSTR deviceId)
 {
     CComPtr<IMMDeviceEnumerator> deviceEnumerator;
@@ -42,23 +42,23 @@ GetFriendlyNameFromIMMDeviceId(LPCWSTR deviceId)
                                 CLSCTX_ALL,
                                 __uuidof(IMMDeviceEnumerator),
                                 (void**) &deviceEnumerator)))
-        return L"";
+        return {};
 
     if (FAILED(deviceEnumerator->GetDevice(deviceId, &device)))
-        return L"";
+        return {};
 
     if (FAILED(device->OpenPropertyStore(STGM_READ, &props)))
-        return L"";
+        return {};
 
     PROPVARIANT varName;
     PropVariantInit(&varName);
     if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName))) {
         std::wstring name = varName.pwszVal;
         PropVariantClear(&varName);
-        return name;
+        return jami::to_string(name);
     }
 
-    return L"";
+    return {};
 }
 
 class AudioDeviceNotificationClient : public IMMNotificationClient
@@ -78,7 +78,7 @@ public:
     void enumerateDevices()
     {
         CComPtr<IMMDeviceEnumerator> enumerator;
-        CComPtr<IMMDeviceCollection> deviceCollection;
+        CComPtr<IMMDeviceCollection> devices;
         CComPtr<IMMDevice> device;
         UINT count = 0;
 
@@ -90,25 +90,24 @@ public:
             return;
         }
 
-        if (FAILED(
-                enumerator->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &deviceCollection))) {
+        if (FAILED(enumerator->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &devices))) {
             return;
         }
 
-        if (FAILED(deviceCollection->GetCount(&count))) {
+        if (FAILED(devices->GetCount(&count))) {
             return;
         }
 
         for (UINT i = 0; i < count; ++i) {
-            if (FAILED(deviceCollection->Item(i, &device))) {
+            if (FAILED(devices->Item(i, &device))) {
                 continue;
             }
             LPWSTR deviceId = nullptr;
             if (FAILED(device->GetId(&deviceId))) {
                 continue;
             }
-            std::wstring friendlyName = GetFriendlyNameFromIMMDeviceId(deviceId);
-            activeDevices_.push_back(jami::to_string(friendlyName));
+            auto deviceName = GetFriendlyNameFromIMMDeviceId(deviceId);
+            activeDevices_.push_back(deviceName);
             CoTaskMemFree(deviceId);
         }
     }
@@ -116,7 +115,7 @@ public:
     void handleStateChanged(LPCWSTR deviceId, DWORD newState)
     {
         auto active = static_cast<int>(newState) == DEVICE_STATE_ACTIVE;
-        auto deviceName = jami::to_string(GetFriendlyNameFromIMMDeviceId(deviceId));
+        auto deviceName = GetFriendlyNameFromIMMDeviceId(deviceId);
         // Check if this device has changed state
         auto it = std::find(activeDevices_.begin(), activeDevices_.end(), deviceName);
         if (active && it == activeDevices_.end()) {
@@ -188,7 +187,7 @@ public:
         // If the default communication device changes, we need to restart the layer
         // to ensure the new device is used.
         if (role == eCommunications) {
-            deviceEventCallback_(jami::to_string(GetFriendlyNameFromIMMDeviceId(deviceId)),
+            deviceEventCallback_(GetFriendlyNameFromIMMDeviceId(deviceId),
                                  DeviceEventType::BecameActive);
         }
         return S_OK;
