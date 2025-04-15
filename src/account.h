@@ -52,6 +52,12 @@ namespace Json {
 class Value;
 }
 
+namespace dht {
+namespace crypto {
+struct Certificate;
+}
+}
+
 namespace jami {
 static constexpr uint64_t JAMI_ID_MAX_VAL = 9007199254740992;
 constexpr static const char RINGDIR[] = "ringtones";
@@ -343,7 +349,8 @@ public:
      */
     virtual void connectivityChanged() {};
 
-    virtual bool handleMessage(const std::string& /*from*/,
+    virtual bool handleMessage(const std::shared_ptr<dht::crypto::Certificate>& /*cert*/,
+                               const std::string& /*from*/,
                                const std::pair<std::string, std::string>& /*message*/)
     {
         return false;
