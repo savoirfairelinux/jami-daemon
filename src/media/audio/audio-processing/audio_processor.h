@@ -25,6 +25,7 @@
 
 #include <atomic>
 #include <memory>
+#include <cmath>
 
 namespace jami {
 
@@ -110,30 +111,63 @@ protected:
 
     /**
      * @brief Helper method for audio processors, should be called at start of getProcessed()
-     *        Pops frames from audio queues if there's overflow
-     * @returns True if there is underflow, false otherwise. An AudioProcessor should
-     *          return a blank AudioFrame if there is underflow.
+     *        Pops frames from audio queues if there's overflow. The objective is to ensure
+     *        that the ratio between the record and playback queues is as close to 1 as possible.
+     * @returns True if there is underflow, false otherwise
      */
     bool tidyQueues()
     {
-        auto recordFrameSize = recordQueue_.frameSize();
-        auto playbackFrameSize = playbackQueue_.frameSize();
-        while (recordQueue_.samples() > recordFrameSize * 10
-            && 2 * playbackQueue_.samples() * recordFrameSize < recordQueue_.samples() * playbackFrameSize) {
-            JAMI_LOG("record overflow {:d} / {:d} - playback: {:d}", recordQueue_.samples(), frameSize_, playbackQueue_.samples());
-            recordQueue_.dequeue();
+        // With a frame size typically being 10-20ms, 10x multiplication means we allow up
+        // to 100-200ms of buffering. This is generally considered acceptable for real-time
+        // audio communication, as latencies under 200ms are not very noticeable to users
+        static constexpr size_t maxQueueMultiple = 10;
+
+        // Some reasonable limit to prevent infinite loops
+        static constexpr size_t maxIterations = 100;
+        size_t iterations = 0;
+
+        // Calculate target ratio based on frame sizes
+        float targetRatio = static_cast<float>(recordQueue_.frameSize())
+                            / playbackQueue_.frameSize();
+
+        while (iterations++ < maxIterations) {
+            size_t recordSamples = recordQueue_.samples();
+            size_t playbackSamples = playbackQueue_.samples();
+
+            // Check for underflow first
+            if (recordSamples < recordQueue_.frameSize()
+                || playbackSamples < playbackQueue_.frameSize()) {
+                return true;
+            }
+            // Check for overflow (with respect to the max queue size) in either queue
+            bool recordOverflow = recordSamples > recordQueue_.frameSize() * maxQueueMultiple;
+            bool playbackOverflow = playbackSamples > playbackQueue_.frameSize() * maxQueueMultiple;
+
+            // Check queue ratio
+            float currentRatio = static_cast<float>(recordSamples) / playbackSamples;
+            bool ratioImbalance = std::abs(currentRatio - targetRatio) > targetRatio * 0.5f;
+
+            // If there is no overflow and the ratio is close to the target, we can stop
+            if (!recordOverflow && !playbackOverflow && !ratioImbalance) {
+                break;
+            }
+
+            // Dequeue from the queue that has overflow
+            if (currentRatio > targetRatio) {
+                JAMI_DEBUG("record overflow {:d} / {:d} - playback: {:d}",
+                           recordSamples,
+                           frameSize_,
+                           playbackSamples);
+                recordQueue_.dequeue();
+            } else {
+                JAMI_DEBUG("playback overflow {:d} / {:d} - record: {:d}",
+                           playbackSamples,
+                           frameSize_,
+                           recordSamples);
+                playbackQueue_.dequeue();
+            }
         }
-        while (playbackQueue_.samples() > playbackFrameSize * 10
-            && 2 * recordQueue_.samples() * playbackFrameSize < playbackQueue_.samples() * recordFrameSize) {
-            JAMI_LOG("playback overflow {:d} / {:d} - record: {:d}", playbackQueue_.samples(), frameSize_, recordQueue_.samples());
-            playbackQueue_.dequeue();
-        }
-        if (recordQueue_.samples() < recordFrameSize
-            || playbackQueue_.samples() < playbackFrameSize) {
-            // If there are not enough samples in either queue, we are unable to
-            // process anything.
-            return true;
-        }
+
         return false;
     }
 
