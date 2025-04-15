@@ -28,7 +28,9 @@ namespace jami {
 class MessageChannelHandler : public ChannelHandlerInterface
 {
 public:
-    MessageChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm);
+    using OnMessage = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&, std::string&, const std::string&)>;
+    using OnPeerStateChanged = std::function<void(const std::string&, bool)>;
+    MessageChannelHandler(dhtnet::ConnectionManager& cm, OnMessage onMessage, OnPeerStateChanged onPeer);
     ~MessageChannelHandler();
 
     /**
@@ -70,10 +72,11 @@ public:
 
     struct Message
     {
+        uint64_t id {0};                          /* Message ID */
         std::string t;                            /* Message type */
         std::string c;                            /* Message content */
         std::unique_ptr<ConversationRequest> req; /* Conversation request */
-        MSGPACK_DEFINE_MAP(t, c, req)
+        MSGPACK_DEFINE_MAP(id, t, c, req)
     };
 
     static bool sendMessage(const std::shared_ptr<dhtnet::ChannelSocket>&, const Message& message);
