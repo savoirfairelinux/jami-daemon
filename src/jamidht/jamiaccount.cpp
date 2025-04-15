@@ -1322,7 +1322,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                     acreds->uri = archive_path;
                 } else if (!conf.archive_url.empty() && conf.archive_url == "jami-auth") {
                     // Importing over a Peer2Peer TLS connection with DHT as DNS
-                    JAMI_DEBUG("[JamiAccount] [LinkDevice] scheme p2p & uri {}", conf.archive_url);
+                    JAMI_DEBUG("[Account {}] [LinkDevice] scheme p2p & uri {}", getAccountID(), conf.archive_url);
                     acreds->scheme = "p2p";
                     acreds->uri = conf.archive_url;
                 } else if (!archive_pin.empty()) {
@@ -1382,7 +1382,9 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         conf.archiveHasPassword = hasPassword;
                         if (not conf.managerUri.empty()) {
                             conf.registeredName = conf.managerUsername;
+#if HAVE_RINGNS
                             registeredName_ = conf.managerUsername;
+#endif
                         }
                         conf.username = info.accountId;
                         conf.deviceName = accountManager_->getAccountDeviceName();
