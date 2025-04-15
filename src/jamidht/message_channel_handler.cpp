@@ -24,14 +24,16 @@ using Key = std::pair<std::string, DeviceId>;
 
 struct MessageChannelHandler::Impl : public std::enable_shared_from_this<Impl>
 {
-    std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
+    OnMessage onMessage_;
+    OnPeerStateChanged onPeerStateChanged_;
     std::recursive_mutex connectionsMtx_;
-    std::map<Key, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> connections_;
+    std::map<std::string, std::map<DeviceId, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>>> connections_;
 
-    Impl(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm)
-        : account_(acc)
-        , connectionManager_(cm)
+    Impl(dhtnet::ConnectionManager& cm, OnMessage onMessage, OnPeerStateChanged onPeer)
+        : connectionManager_(cm)
+        , onMessage_(std::move(onMessage))
+        , onPeerStateChanged_(std::move(onPeer))
     {}
 
     void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
@@ -39,10 +41,10 @@ struct MessageChannelHandler::Impl : public std::enable_shared_from_this<Impl>
                            const DeviceId& device);
 };
 
-MessageChannelHandler::MessageChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                             dhtnet::ConnectionManager& cm)
+MessageChannelHandler::MessageChannelHandler(dhtnet::ConnectionManager& cm,
+                                             OnMessage onMessage, OnPeerStateChanged onPeer)
     : ChannelHandlerInterface()
-    , pimpl_(std::make_shared<Impl>(acc, cm))
+    , pimpl_(std::make_shared<Impl>(cm, std::move(onMessage), std::move(onPeer)))
 {}
 
 MessageChannelHandler::~MessageChannelHandler() {}
@@ -56,7 +58,7 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
 {
     auto channelName = MESSAGE_SCHEME + deviceId.toString();
     if (pimpl_->connectionManager_.isConnecting(deviceId, channelName)) {
-        JAMI_INFO("Already connecting to %s", deviceId.to_c_str());
+        JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
     pimpl_->connectionManager_.connectDevice(deviceId,
@@ -73,27 +75,38 @@ MessageChannelHandler::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::Cha
                                                const DeviceId& device)
 {
     std::lock_guard lk(connectionsMtx_);
-    auto connectionsIt = connections_.find({peerId, device});
-    if (connectionsIt == connections_.end())
+    auto peerIt = connections_.find(peerId);
+    if (peerIt == connections_.end())
+        return;
+    auto connectionsIt = peerIt->second.find(device);
+    if (connectionsIt == peerIt->second.end())
         return;
     auto& connections = connectionsIt->second;
     auto conn = std::find(connections.begin(), connections.end(), socket);
     if (conn != connections.end())
         connections.erase(conn);
-    if (connections.empty())
-        connections_.erase(connectionsIt);
+    if (connections.empty()) {
+        peerIt->second.erase(connectionsIt);
+    }
+    if (peerIt->second.empty()) {
+        connections_.erase(peerIt);
+        onPeerStateChanged_(peerId, false);
+    }
 }
 
 std::shared_ptr<dhtnet::ChannelSocket>
 MessageChannelHandler::getChannel(const std::string& peer, const DeviceId& deviceId) const
 {
     std::lock_guard lk(pimpl_->connectionsMtx_);
-    auto it = pimpl_->connections_.find({peer, deviceId});
+    auto it = pimpl_->connections_.find(peer);
     if (it == pimpl_->connections_.end())
         return nullptr;
-    if (it->second.empty())
+    auto deviceIt = it->second.find(deviceId);
+    if (deviceIt == it->second.end())
         return nullptr;
-    return it->second.front();
+    if (deviceIt->second.empty())
+        return nullptr;
+    return deviceIt->second.back();
 }
 
 std::vector<std::shared_ptr<dhtnet::ChannelSocket>>
@@ -101,9 +114,15 @@ MessageChannelHandler::getChannels(const std::string& peer) const
 {
     std::vector<std::shared_ptr<dhtnet::ChannelSocket>> sockets;
     std::lock_guard lk(pimpl_->connectionsMtx_);
-    auto lower = pimpl_->connections_.lower_bound({peer, DeviceId()});
-    for (auto it = lower; it != pimpl_->connections_.end() && it->first.first == peer; ++it)
-        sockets.insert(sockets.end(), it->second.begin(), it->second.end());
+    auto it = pimpl_->connections_.find(peer);
+    if (it == pimpl_->connections_.end())
+        return sockets;
+    sockets.reserve(it->second.size());
+    for (auto& [deviceId, channels] : it->second) {
+        for (auto& channel : channels) {
+            sockets.push_back(channel);
+        }
+    }
     return sockets;
 }
 
@@ -111,11 +130,9 @@ bool
 MessageChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
                                  const std::string& /* name */)
 {
-    auto acc = pimpl_->account_.lock();
-    if (!cert || !cert->issuer || !acc)
+    if (!cert || !cert->issuer)
         return false;
     return true;
-    // return cert->issuer->getId().toString() == acc->getUsername();
 }
 
 void
@@ -123,13 +140,17 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
                                const std::string&,
                                std::shared_ptr<dhtnet::ChannelSocket> socket)
 {
-    auto acc = pimpl_->account_.lock();
-    if (!cert || !cert->issuer || !acc)
+    if (!cert || !cert->issuer)
         return;
     auto peerId = cert->issuer->getId().toString();
     auto device = cert->getLongId();
     std::lock_guard lk(pimpl_->connectionsMtx_);
-    pimpl_->connections_[{peerId, device}].emplace_back(socket);
+    auto& connections = pimpl_->connections_[peerId];
+    bool newPeerConnection = connections.empty();
+    auto& deviceConnections = connections[device];
+    deviceConnections.insert(deviceConnections.begin(), socket);
+    if (newPeerConnection)
+        pimpl_->onPeerStateChanged_(peerId, true);
 
     socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)]() {
         if (auto shared = w.lock())
@@ -143,11 +164,11 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
                                1500};
     };
 
-    socket->setOnRecv([acc = pimpl_->account_.lock(),
+    socket->setOnRecv([onMessage = pimpl_->onMessage_,
                        peerId,
                        cert,
                        ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
-        if (!buf || !acc)
+        if (!buf)
             return len;
 
         ctx->pac.reserve_buffer(len);
@@ -159,7 +180,7 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
             while (ctx->pac.next(oh)) {
                 Message msg;
                 oh.get().convert(msg);
-                acc->onTextMessage("", peerId, cert, {{msg.t, msg.c}});
+                onMessage(cert, msg.t, msg.c);
             }
         } catch (const std::exception& e) {
             JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
