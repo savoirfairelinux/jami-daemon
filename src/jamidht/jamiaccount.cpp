@@ -2387,12 +2387,12 @@ JamiAccount::syncModule()
 void
 JamiAccount::onTextMessage(const std::string& id,
                            const std::string& from,
-                           const std::string& deviceId,
+                           const std::shared_ptr<dht::crypto::Certificate>& device,
                            const std::map<std::string, std::string>& payloads)
 {
     try {
         const std::string fromUri {parseJamiUri(from)};
-        SIPAccountBase::onTextMessage(id, fromUri, deviceId, payloads);
+        SIPAccountBase::onTextMessage(id, fromUri, device, payloads);
     } catch (...) {
     }
 }
@@ -3569,19 +3569,30 @@ JamiAccount::sendInstantMessage(const std::string& convId,
 }
 
 bool
-JamiAccount::handleMessage(const std::string& from, const std::pair<std::string, std::string>& m)
+JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& from, const std::pair<std::string, std::string>& m)
 {
+    if (not cert or not cert->issuer)
+        return true; // stop processing message
+
+    JAMI_WARNING("[Account {}] [device {}] handleMessage: {} {}", getAccountID(), cert->getLongId(), cert->issuer->getId(), from);
+    if (cert->issuer->getId().to_view() != from) {
+        JAMI_WARNING("[Account {}] handleMessage: invalid certificate", getAccountID());
+        return true;
+    }
     if (m.first == MIME_TYPE_GIT) {
         Json::Value json;
         if (!json::parse(m.second, json)) {
-            return false;
+            return true;
         }
 
-        std::string deviceId = json["deviceId"].asString();
-        std::string id = json["id"].asString();
-        std::string commit = json["commit"].asString();
         // fetchNewCommits will do heavy stuff like fetching, avoid to block SIP socket
-        dht::ThreadPool::io().run([w = weak(), from, deviceId, id, commit] {
+        dht::ThreadPool::io().run([
+            w = weak(), 
+            from, 
+            deviceId = json["deviceId"].asString(),
+            id = json["id"].asString(),
+            commit = json["commit"].asString()
+        ] {
             if (auto shared = w.lock()) {
                 if (auto cm = shared->convModule())
                     cm->fetchNewCommits(from, deviceId, id, commit);
@@ -3594,7 +3605,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
     } else if (m.first == MIME_TYPE_INVITE_JSON) {
         Json::Value json;
         if (!json::parse(m.second, json)) {
-            return false;
+            return true;
         }
         convModule()->onConversationRequest(from, json);
         return true;
@@ -3638,7 +3649,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                 messageId = matched_pattern[1];
             } else {
                 JAMI_WARNING("Message displayed: unable to parse message ID");
-                return false;
+                return true;
             }
 
             static const std::regex STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
@@ -3648,7 +3659,7 @@ JamiAccount::handleMessage(const std::string& from, const std::pair<std::string,
                 isDisplayed = matched_pattern[1] == "displayed";
             } else {
                 JAMI_WARNING("Message displayed: unable to parse status");
-                return false;
+                return true;
             }
 
             static const std::regex CONVID_REGEX("<conversation>\\s*(\\w+)\\s*<\\/conversation>");
