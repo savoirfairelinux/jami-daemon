@@ -648,6 +648,7 @@ private:
                                       */
 
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
+    void onPeerConnected(const std::string& peerId, bool connected);
 
     void doRegister_();
 

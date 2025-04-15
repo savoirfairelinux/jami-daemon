@@ -1857,6 +1857,7 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
             JAMI_WARNING("[Account {:s}] Buddy {} is not present on the DHT, but P2P connected",
                          getAccountID(),
                          id);
+            return;
         }
         state = PresenceState::DISCONNECTED;
         emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
@@ -3111,6 +3112,7 @@ JamiAccount::sendMessage(const std::string& to,
     }
     const auto& payload = *payloads.begin();
     MessageChannelHandler::Message msg;
+    msg.id = token;
     msg.t = payload.first;
     msg.c = payload.second;
     auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
@@ -3757,10 +3759,21 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
         [w = weak(), peerId](std::shared_ptr<dhtnet::ChannelSocket> socket,
                              const DeviceId& deviceId) {
             if (socket)
-                if (auto acc = w.lock()) {
-                    acc->messageEngine_.onPeerOnline(peerId);
-                    acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
-                }
+                dht::ThreadPool::io().run([w, peerId, deviceId] {
+                    if (auto acc = w.lock()) {
+                        acc->messageEngine_.onPeerOnline(peerId);
+                        acc->messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
+                        if (!acc->presenceNote_.empty()) {
+                            // If a presence note is set, send it to this device.
+                            auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
+                            std::map<std::string, std::string> msg = {
+                                {MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}
+                            };
+                            acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
+                        }
+                        acc->convModule()->syncConversations(peerId, deviceId.toString());
+                    }
+                });
         },
         connectionType);
 }
@@ -4069,20 +4082,6 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     JAMI_WARNING("[Account {:s}] [device {}] New SIP channel opened", getAccountID(), deviceId);
     lk.unlock();
 
-    dht::ThreadPool::io().run([w = weak(), peerId, deviceId] {
-        if (auto shared = w.lock()) {
-            if (shared->presenceNote_ != "") {
-                // If a presence note is set, send it to this device.
-                auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(
-                    shared->rand);
-                std::map<std::string, std::string> msg = {
-                    {MIME_TYPE_PIDF, getPIDF(shared->presenceNote_)}};
-                shared->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
-            }
-            shared->convModule()->syncConversations(peerId, deviceId.toString());
-        }
-    });
-
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
     messageEngine_.onPeerOnline(peerId, deviceId.toString(), true);
@@ -4106,16 +4105,6 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
             }
         }
     });
-
-    auto& state = presenceState_[peerId];
-    if (state != PresenceState::CONNECTED) {
-        state = PresenceState::CONNECTED;
-        emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                                  peerId,
-                                                                  static_cast<int>(
-                                                                      PresenceState::CONNECTED),
-                                                                  "");
-    }
 }
 
 void
@@ -4134,27 +4123,6 @@ JamiAccount::shutdownSIPConnection(const std::shared_ptr<dhtnet::ChannelSocket>&
                     conns.end());
         if (conns.empty()) {
             sipConns_.erase(it);
-            // If all devices of an account are disconnected, we need to update the presence state
-            auto it = std::find_if(sipConns_.begin(), sipConns_.end(), [&](const auto& v) {
-                return v.first.first == peerId;
-            });
-            if (it == sipConns_.end()) {
-                auto& state = presenceState_[peerId];
-                if (state == PresenceState::CONNECTED) {
-                    std::lock_guard lock(buddyInfoMtx);
-                    auto buddy = trackedBuddies_.find(dht::InfoHash(peerId));
-                    if (buddy == trackedBuddies_.end())
-                        state = PresenceState::DISCONNECTED;
-                    else
-                        state = buddy->second.devices_cnt > 0 ? PresenceState::AVAILABLE
-                                                              : PresenceState::DISCONNECTED;
-                    emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
-                                                                              peerId,
-                                                                              static_cast<int>(
-                                                                                  state),
-                                                                              "");
-                }
-            }
         }
     }
     lk.unlock();
@@ -4464,6 +4432,24 @@ JamiAccount::askForProfile(const std::string& conversationId,
 }
 
 void
+JamiAccount::onPeerConnected(const std::string& peerId, bool connected)
+{
+    std::unique_lock lock(buddyInfoMtx);
+    auto& state = presenceState_[peerId];
+    auto it = trackedBuddies_.find(dht::InfoHash(peerId));
+    auto isOnline = it != trackedBuddies_.end() && it->second.devices_cnt > 0;
+    auto newState = connected ? PresenceState::CONNECTED : (isOnline ? PresenceState::AVAILABLE : PresenceState::DISCONNECTED);
+    if (state != newState) {
+        state = newState;
+        lock.unlock();
+        emitSignal<libjami::PresenceSignal::NewBuddyNotification>(getAccountID(),
+                                                                peerId,
+                                                                static_cast<int>(newState),
+                                                                "");
+    }
+}
+
+void
 JamiAccount::initConnectionManager()
 {
     if (!nonSwarmTransferManager_)
@@ -4501,7 +4487,16 @@ JamiAccount::initConnectionManager()
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::MESSAGE]
-            = std::make_unique<MessageChannelHandler>(shared(), *connectionManager_.get());
+            = std::make_unique<MessageChannelHandler>(*connectionManager_.get(),
+                                                     [this](const auto& cert, std::string& type, const std::string& content) {
+                                                         onTextMessage("", cert->issuer->getId().toString(), cert, {{type, content}});
+                                                     },
+                                                     [w = weak()](const std::string& peer, bool connected) {
+                                                        Manager::instance().ioContext()->post([w, peer, connected] {
+                                                            if (auto acc = w.lock())
+                                                                acc->onPeerConnected(peer, connected);
+                                                        });
+                                                    });
         channelHandlers_[Uri::Scheme::AUTH]
             = std::make_unique<AuthChannelHandler>(shared(), *connectionManager_.get());
 
