@@ -1,23 +1,20 @@
 # ffnvcodec
 FFNVCODEC_VERSION := n11.1.5.2
 PKG_CPE += cpe:2.3:a:videolan:ffnvcodec:11.1.5.2:*:*:*:*:*:*:*
-FFNVCODEC_GITURL := https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+FFNVCODEC_URL := https://github.com/FFmpeg/nv-codec-headers/archive/$(FFNVCODEC_VERSION).tar.gz
 
 ifeq ($(call need_pkg,"ffnvcodec >= 8"),)
 PKGS_FOUND += ffnvcodec
 endif
 
-$(TARBALLS)/ffnvcodec-$(FFNVCODEC_VERSION).tar.xz:
-	$(call download_git,$(FFNVCODEC_GITURL),master,$(FFNVCODEC_VERSION))
+$(TARBALLS)/ffnvcodec-$(FFNVCODEC_VERSION).tar.gz:
+	$(call download,$(FFNVCODEC_URL))
 
-.sum-ffnvcodec: ffnvcodec-$(FFNVCODEC_VERSION).tar.xz
-	$(warning $@ not implemented)
-	touch $@
+.sum-ffnvcodec: ffnvcodec-$(FFNVCODEC_VERSION).tar.gz
 
-.sum-ffnvcodec: ffnvcodec-$(FFNVCODEC_VERSION).tar.xz
-
-ffnvcodec: ffnvcodec-$(FFNVCODEC_VERSION).tar.xz .sum-ffnvcodec
+ffnvcodec: ffnvcodec-$(FFNVCODEC_VERSION).tar.gz .sum-ffnvcodec
 	$(UNPACK)
+	mv nv-codec-headers-* ffnvcodec-$(FFNVCODEC_VERSION)
 	$(MOVE)
 
 .ffnvcodec: ffnvcodec
