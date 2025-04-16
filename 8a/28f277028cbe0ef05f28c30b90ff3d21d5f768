@@ -1,0 +1,7 @@
+Code-Review+2: Kateryna Kostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Submitted-at: Wed, 16 Apr 2025 11:51:25 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/30966
+Project: jami-daemon
+Branch: refs/heads/master
