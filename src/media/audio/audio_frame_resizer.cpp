@@ -143,4 +143,30 @@ AudioFrameResizer::dequeue()
     return frame;
 }
 
+std::shared_ptr<AudioFrame>
+AudioFrameResizer::peek()
+{
+    if (samples() < frameSize_)
+        return {};
+
+    auto frame = std::make_shared<AudioFrame>(format_, frameSize_);
+    int ret;
+
+    // Save current fifo state
+    auto oldSamples = samples();
+
+    // Read from the queue without advancing the read pointer
+    if ((ret = av_audio_fifo_peek(queue_,
+                                  reinterpret_cast<void**>(frame->pointer()->data),
+                                  frameSize_))
+        < 0) {
+        JAMI_ERR() << "Unable to peek samples from queue: " << libav_utils::getError(ret);
+        return {};
+    }
+
+    frame->pointer()->pts = nextOutputPts_;
+    frame->has_voice = hasVoice_;
+    return frame;
+}
+
 } // namespace jami

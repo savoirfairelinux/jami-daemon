@@ -50,7 +50,8 @@ SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
                                          (int) format_.nb_channels,
                                          (int) format_.nb_channels),
                 &speex_echo_state_destroy)
-    , procBuffer(std::make_unique<AudioFrame>(format.withSampleFormat(AV_SAMPLE_FMT_S16P), frameSize_))
+    , procBuffer(
+          std::make_unique<AudioFrame>(format.withSampleFormat(AV_SAMPLE_FMT_S16P), frameSize_))
 {
     JAMI_DBG("[speex-dsp] SpeexAudioProcessor, frame size = %d (=%d ms), channels = %d",
              frameSize,
@@ -182,8 +183,29 @@ SpeexAudioProcessor::enableVoiceActivityDetection(bool enabled)
 std::shared_ptr<AudioFrame>
 SpeexAudioProcessor::getProcessed()
 {
-    if (tidyQueues()) {
+    if (synchronizeBuffers()) {
         return {};
+    }
+
+    // Compensate for persistent drift
+    compensatePersistentDrift();
+
+    // Get current drift metrics
+    float currentDrift = getDriftRatio();
+    static float lastReportedDrift = 1.0f;
+
+    // Get delay and drift information using utility methods
+    int delayMs = getStreamDelayMs();
+    int driftSamples = getDriftSamplesPerFrame();
+
+    // Log significant changes in drift
+    if (std::abs(currentDrift - lastReportedDrift) > 0.01f) {
+        JAMI_DEBUG(
+            "[speex-dsp] Drift detected: ratio={:.4f}, drift={:d} samples/frame, delay={:d}ms",
+            currentDrift,
+            driftSamples,
+            delayMs);
+        lastReportedDrift = currentDrift;
     }
 
     auto playback = playbackQueue_.dequeue();
@@ -218,7 +240,8 @@ SpeexAudioProcessor::getProcessed()
     int channel = 0;
     for (auto& channelPreprocessorState : preprocessorStates) {
         // preprocesses in place, returns voice activity boolean
-        channelVad = speex_preprocess_run(channelPreprocessorState.get(), (int16_t*)procBuffer->pointer()->data[channel]);
+        channelVad = speex_preprocess_run(channelPreprocessorState.get(),
+                                          (int16_t*) procBuffer->pointer()->data[channel]);
 
         // boolean OR
         overallVad |= channelVad;

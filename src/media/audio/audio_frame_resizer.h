@@ -77,6 +77,12 @@ public:
      */
     std::shared_ptr<AudioFrame> dequeue();
 
+    /**
+     * Peek at the next frame without removing it from the queue
+     * @return Next frame or nullptr if not enough samples
+     */
+    std::shared_ptr<AudioFrame> peek();
+
 private:
     NON_COPYABLE(AudioFrameResizer);
 

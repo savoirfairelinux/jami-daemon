@@ -33,9 +33,12 @@ NullAudioProcessor::NullAudioProcessor(AudioFormat format, unsigned frameSize)
 std::shared_ptr<AudioFrame>
 NullAudioProcessor::getProcessed()
 {
-    if (tidyQueues()) {
+    if (synchronizeBuffers()) {
         return {};
     }
+
+    // Compensate for persistent drift
+    compensatePersistentDrift();
 
     playbackQueue_.dequeue();
     return recordQueue_.dequeue();

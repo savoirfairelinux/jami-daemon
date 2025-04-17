@@ -124,11 +124,49 @@ WebRTCAudioProcessor::enableVoiceActivityDetection(bool enabled)
 std::shared_ptr<AudioFrame>
 WebRTCAudioProcessor::getProcessed()
 {
-    if (tidyQueues()) {
+    if (synchronizeBuffers()) {
+        // Add detailed logging when synchronization fails
+        size_t recordSamples = recordQueue_.samples();
+        size_t playbackSamples = playbackQueue_.samples();
+        JAMI_DEBUG("[webrtc-ap] Buffer synchronization failed - record: {:d}, playback: {:d}",
+                   recordSamples,
+                   playbackSamples);
         return {};
     }
 
-    int driftSamples = playbackQueue_.samples() - recordQueue_.samples();
+    // Compensate for persistent drift
+    compensatePersistentDrift();
+
+    // For significant long-term drift, we can adjust WebRTC's internal parameters
+    float currentDrift = getDriftRatio();
+    static float lastReportedDrift = 1.0f;
+
+    // Get delay and drift metrics using the utility methods
+    int delayMs = getStreamDelayMs();
+    int driftSamples = getDriftSamplesPerFrame();
+
+    // Log significant changes in drift or delay
+    if (std::abs(currentDrift - lastReportedDrift) > 0.01f) {
+        JAMI_DEBUG(
+            "[webrtc-ap] Drift detected: ratio={:.4f}, drift={:d} samples/frame, delay={:d}ms",
+            currentDrift,
+            driftSamples,
+            delayMs);
+        lastReportedDrift = currentDrift;
+    }
+
+    // Add detailed buffer stats periodically
+    static int logCounter = 0;
+    if (++logCounter % 100 == 0) {
+        size_t recordSamples = recordQueue_.samples();
+        size_t playbackSamples = playbackQueue_.samples();
+        JAMI_DEBUG("[webrtc-ap] Buffer stats - record: {:d} samples ({:.1f} frames), playback: "
+                   "{:d} samples ({:.1f} frames)",
+                   recordSamples,
+                   static_cast<float>(recordSamples) / recordQueue_.frameSize(),
+                   playbackSamples,
+                   static_cast<float>(playbackSamples) / playbackQueue_.frameSize());
+    }
 
     auto playback = playbackQueue_.dequeue();
     auto record = recordQueue_.dequeue();
@@ -143,18 +181,34 @@ WebRTCAudioProcessor::getProcessed()
         JAMI_ERR("[webrtc-ap] ProcessReverseStream failed");
     }
 
-    // process deinterleaved float recorded data
-    // TODO: maybe implement this to see if it's better than automatic drift compensation
-    // (it MUST be called prior to ProcessStream)
-    // delay = (t_render - t_analyze) + (t_process - t_capture)
-    if (apm->set_stream_delay_ms(0) != webrtcNoError) {
-        JAMI_ERR("[webrtc-ap] set_stream_delay_ms failed");
+    // Set stream delay for WebRTC's internal echo cancellation
+    // This is the time difference between render and capture
+    int errCode = apm->set_stream_delay_ms(delayMs);
+    if (errCode != webrtcNoError) {
+        // Only log errors that aren't just parameter validation errors
+        // WebRTC error -1 is just a parameter validation error for delay being too large
+        // which can happen during extreme drift - not worth logging as an error
+        if (errCode != -1 || delayMs < 300) {
+            JAMI_ERR("[webrtc-ap] set_stream_delay_ms({:d}) failed with code {:d}",
+                     delayMs,
+                     errCode);
+        }
     }
 
     if (apm->gain_control()->set_stream_analog_level(analogLevel_) != webrtcNoError) {
         JAMI_ERR("[webrtc-ap] set_stream_analog_level failed");
     }
-    apm->echo_cancellation()->set_stream_drift_samples(driftSamples);
+
+    // Pass drift information to WebRTC for better AEC
+    // Limit extreme drift values to prevent WebRTC from misbehaving
+    // Use a more conservative approach - limit to very small values
+    int limitedDriftSamples = std::clamp(driftSamples, -10, 10);
+    if (driftSamples != limitedDriftSamples) {
+        JAMI_DEBUG("[webrtc-ap] Limiting drift samples from {:d} to {:d}",
+                   driftSamples,
+                   limitedDriftSamples);
+    }
+    apm->echo_cancellation()->set_stream_drift_samples(limitedDriftSamples);
 
     // process in place
     float** recData = (float**) record->pointer()->extended_data;
@@ -164,7 +218,7 @@ WebRTCAudioProcessor::getProcessed()
 
     analogLevel_ = apm->gain_control()->stream_analog_level();
     record->has_voice = apm->voice_detection()->is_enabled()
-                           && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
+                        && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
     return record;
 }
 
