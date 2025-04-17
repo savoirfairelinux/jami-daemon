@@ -998,6 +998,26 @@ else()
         target_link_libraries(ut_audio_frame_resizer ut_library)
         add_test(NAME audio_frame_resizer COMMAND ut_audio_frame_resizer)
 
+        add_executable(ut_routing_table test/unitTest/swarm/routing_table.cpp)
+        target_link_libraries(ut_routing_table ut_library)
+        add_test(NAME routing_table COMMAND ut_routing_table)
+
+        add_executable(ut_sipcall test/unitTest/call/sipcall.cpp)
+        target_link_libraries(ut_sipcall ut_library)
+        add_test(NAME sipcall COMMAND ut_sipcall)
+
+        add_executable(ut_swarm_conversation test/unitTest/swarm/swarm_conversation.cpp)
+        target_link_libraries(ut_swarm_conversation ut_library)
+        add_test(NAME swarm_conversation COMMAND ut_swarm_conversation)
+
+        add_executable(ut_swarm_spread test/unitTest/swarm/swarm_spread.cpp)
+        target_link_libraries(ut_swarm_spread ut_library)
+        add_test(NAME swarm_spread COMMAND ut_swarm_spread)
+
+        add_executable(ut_sip test/sip/sip.cpp test/sip/test_SIP.cpp)
+        target_link_libraries(ut_sip ut_library)
+        add_test(NAME sip COMMAND ut_sip)
+
         if (JAMI_PLUGIN)
             add_executable(ut_plugins test/unitTest/plugins/plugins.cpp)
             target_link_libraries(ut_plugins ut_library)
