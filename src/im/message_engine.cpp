@@ -86,8 +86,6 @@ MessageEngine::onPeerOnline(const std::string& peer,
 void
 MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
-    if (account_.getRegistrationState() != RegistrationState::REGISTERED)
-        return;
     struct PendingMsg {
         MessageToken token;
         std::string to;
