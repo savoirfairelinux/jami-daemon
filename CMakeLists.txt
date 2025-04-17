@@ -778,6 +778,7 @@ else()
         pkg_search_module(Cppunit REQUIRED IMPORTED_TARGET cppunit)
 
         file(COPY test/unitTest/actors DESTINATION ${CMAKE_BINARY_DIR})
+        file(COPY test/unitTest/conversation/rsc DESTINATION ${CMAKE_BINARY_DIR}/conversation)
 
         add_library(ut_library STATIC test/unitTest/common.cpp)
         target_link_libraries(ut_library
