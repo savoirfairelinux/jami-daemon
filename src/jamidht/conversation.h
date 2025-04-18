@@ -426,17 +426,13 @@ public:
      * @param path              Destination
      * @param member            Member if we know from who to pull file
      * @param deviceId          Device if we know from who to pull file
-     * @param start             Offset (unused for now)
-     * @param end               Offset (unused)
      * @return id of the file
      */
     bool downloadFile(const std::string& interactionId,
                       const std::string& fileId,
                       const std::string& path,
                       const std::string& member = "",
-                      const std::string& deviceId = "",
-                      std::size_t start = 0,
-                      std::size_t end = 0);
+                      const std::string& deviceId = "");
 
     /**
      * Reset fetched information
