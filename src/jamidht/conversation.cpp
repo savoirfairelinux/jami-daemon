@@ -1943,12 +1943,7 @@ Conversation::sync(const std::string& member,
         auto sthis = w.lock();
         // For waiting request, downloadFile
         for (const auto& wr : sthis->dataTransfer()->waitingRequests()) {
-            auto path = fileutils::get_data_dir() / sthis->pimpl_->accountId_
-                        / "conversation_data" / sthis->id() / wr.fileId;
-            auto start = fileutils::size(path);
-            if (start < 0)
-                start = 0;
-            sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId, start);
+            sthis->downloadFile(wr.interactionId, wr.fileId, wr.path, member, deviceId);
         }
     });
 }
@@ -2139,9 +2134,7 @@ Conversation::downloadFile(const std::string& interactionId,
                            const std::string& fileId,
                            const std::string& path,
                            const std::string&,
-                           const std::string& deviceId,
-                           std::size_t start,
-                           std::size_t end)
+                           const std::string& deviceId)
 {
     auto commit = getCommit(interactionId);
     if (commit == std::nullopt || commit->at("type") != "application/data-transfer+json") {
@@ -2170,10 +2163,26 @@ Conversation::downloadFile(const std::string& interactionId,
                                 interactionId,
                                 sha3sum = sha3sum->second,
                                 path,
-                                totalSize,
-                                start,
-                                end] {
+                                totalSize] {
         if (auto shared = w.lock()) {
+            std::filesystem::path filePath(path);
+            if (filePath.empty()) {
+                filePath = shared->dataTransfer()->path(fileId);
+            }
+
+            if (fileutils::size(filePath) == totalSize) {
+                if (fileutils::sha3File(filePath) == sha3sum) {
+                    JAMI_WARNING("Ignoring request to download existing file: {}", filePath);
+                    return;
+                }
+            }
+
+            auto tempFilePath = filePath + std::string(".tmp");
+            auto start = fileutils::size(tempFilePath);
+            if (start < 0)
+                start = 0;
+            size_t end = 0;
+
             auto acc = shared->pimpl_->account_.lock();
             if (!acc)
                 return;

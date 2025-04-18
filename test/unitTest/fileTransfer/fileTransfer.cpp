@@ -97,7 +97,8 @@ private:
     void testBadSha3sumIn();
     void testAskToMultipleParticipants();
     void testCancelInTransfer();
-    void testCancelOutTransfer();
+    void testResumeTransferAfterInterruption();
+    void testDontDownloadExistingFile();
     void testTransferInfo();
     void testRemoveHardLink();
     void testTooLarge();
@@ -111,6 +112,8 @@ private:
     CPPUNIT_TEST(testBadSha3sumIn);
     CPPUNIT_TEST(testAskToMultipleParticipants);
     CPPUNIT_TEST(testCancelInTransfer);
+    CPPUNIT_TEST(testResumeTransferAfterInterruption);
+    CPPUNIT_TEST(testDontDownloadExistingFile);
     CPPUNIT_TEST(testTransferInfo);
     CPPUNIT_TEST(testRemoveHardLink);
     CPPUNIT_TEST(testTooLarge);
@@ -530,6 +533,95 @@ FileTransferTest::testCancelInTransfer()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::closed_by_peer); }));
     CPPUNIT_ASSERT(!dhtnet::fileutils::isFile(recvPath));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+}
+
+void
+FileTransferTest::testResumeTransferAfterInterruption()
+{
+    // Create conversation
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
+    auto convId = libjami::startConversation(aliceId);
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Create file to send
+    constexpr int64_t totalSize = 12800000;
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(totalSize, 'A');
+    sendFile.close();
+
+    // Send file info
+    auto bobMsgSize = bobData.messages.size();
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
+
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::ongoing); }));
+
+    Manager::instance().sendRegister(aliceId, false);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::closed_by_host); }));
+
+    int64_t receivedSize = fileutils::size(recvPath + std::string(".tmp"));
+    CPPUNIT_ASSERT(receivedSize < totalSize);
+    CPPUNIT_ASSERT(0 < receivedSize);
+    CPPUNIT_ASSERT(bobAccount->dataTransfer(convId)->isWaiting(fileId));
+
+    Manager::instance().sendRegister(aliceId, true);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
+    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+}
+
+void
+FileTransferTest::testDontDownloadExistingFile()
+{
+    // Create conversation
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    connectSignals();
+    auto convId = libjami::startConversation(aliceId);
+
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
+
+    auto aliceMsgSize = aliceData.messages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
+
+    // Create file to send
+    constexpr int64_t totalSize = 128000;
+    std::ofstream sendFile(sendPath);
+    CPPUNIT_ASSERT(sendFile.is_open());
+    sendFile << std::string(totalSize, 'A');
+    sendFile.close();
+
+    std::filesystem::copy(sendPath, recvPath);
+
+    // Send file info
+    auto bobMsgSize = bobData.messages.size();
+    libjami::sendFile(aliceId, convId, sendPath, "SEND", "");
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobMsgSize + 1 == bobData.messages.size(); }));
+    auto id = bobData.messages.rbegin()->id;
+    auto fileId = bobData.messages.rbegin()->body["fileId"];
+
+    libjami::downloadFile(bobId, convId, id, fileId, recvPath);
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.code > 0; }));
+    CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
+    CPPUNIT_ASSERT(fileutils::size(recvPath) == totalSize);
 }
 
 void

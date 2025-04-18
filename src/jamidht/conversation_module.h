@@ -296,9 +296,7 @@ public:
     bool downloadFile(const std::string& conversationId,
                       const std::string& interactionId,
                       const std::string& fileId,
-                      const std::string& path,
-                      size_t start = 0,
-                      size_t end = 0);
+                      const std::string& path);
 
     // Sync
     /**

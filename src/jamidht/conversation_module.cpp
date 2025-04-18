@@ -2409,14 +2409,12 @@ bool
 ConversationModule::downloadFile(const std::string& conversationId,
                                  const std::string& interactionId,
                                  const std::string& fileId,
-                                 const std::string& path,
-                                 size_t start,
-                                 size_t end)
+                                 const std::string& path)
 {
     if (auto conv = pimpl_->getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
-            return conv->conversation->downloadFile(interactionId, fileId, path, "", "", start, end);
+            return conv->conversation->downloadFile(interactionId, fileId, path, "", "");
     }
     return false;
 }
