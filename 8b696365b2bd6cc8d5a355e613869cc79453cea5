@@ -16,6 +16,52 @@
       "message": "!build",
       "revId": "8b696365b2bd6cc8d5a355e613869cc79453cea5",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "202e3a9b_9fadaeae",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 313,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-04-18T15:29:02Z",
+      "side": 1,
+      "message": "JAMI_LOG",
+      "range": {
+        "startLine": 313,
+        "startChar": 12,
+        "endLine": 313,
+        "endChar": 20
+      },
+      "revId": "8b696365b2bd6cc8d5a355e613869cc79453cea5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "714394fe_7e9002a6",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 323,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-04-18T15:29:02Z",
+      "side": 1,
+      "message": "* avoid `std::thread::detach()`, especially when capturing `this`, to avoid use-after-free\n* might use `Manager::instance().ioContext()` to schedule/debounce restarting the audio layer",
+      "range": {
+        "startLine": 318,
+        "startChar": 12,
+        "endLine": 323,
+        "endChar": 28
+      },
+      "revId": "8b696365b2bd6cc8d5a355e613869cc79453cea5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
