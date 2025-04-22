@@ -2177,7 +2177,8 @@ Conversation::downloadFile(const std::string& interactionId,
                 }
             }
 
-            auto tempFilePath = filePath + std::string(".tmp");
+            std::filesystem::path tempFilePath(filePath);
+            tempFilePath += ".tmp";
             auto start = fileutils::size(tempFilePath);
             if (start < 0)
                 start = 0;
