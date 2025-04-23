@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd34ccef_9fabfa4e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2390,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-04-23T20:16:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d21b8d4e_ef05abdc",
+      "range": {
+        "startLine": 2390,
+        "startChar": 76,
+        "endLine": 2390,
+        "endChar": 82
+      },
+      "revId": "183901e8aef51c3c4ec1f9f5e90f3c367e7cf6a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dd1bcf59_cf7d1833",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7b91f11c_46f47af5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 3578,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-04-23T20:16:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dd1bcf59_cf7d1833",
+      "range": {
+        "startLine": 3578,
+        "startChar": 22,
+        "endLine": 3578,
+        "endChar": 87
+      },
+      "revId": "183901e8aef51c3c4ec1f9f5e90f3c367e7cf6a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e07aed44_41e9ad0b",
@@ -60,6 +108,30 @@
       "writtenOn": "2025-04-16T21:36:16Z",
       "side": 1,
       "message": "`deviceId` -\u003e `peerCert`",
+      "range": {
+        "startLine": 264,
+        "startChar": 72,
+        "endLine": 264,
+        "endChar": 80
+      },
+      "revId": "183901e8aef51c3c4ec1f9f5e90f3c367e7cf6a8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "93035ce2_bae8a9a2",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-04-23T20:16:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e07aed44_41e9ad0b",
       "range": {
         "startLine": 264,
         "startChar": 72,
