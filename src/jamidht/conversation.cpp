@@ -2184,6 +2184,57 @@ Conversation::downloadFile(const std::string& interactionId,
                 start = 0;
             size_t end = 0;
 
+            if(start == 0 && filePath.filename().string() == fileId &&
+                shared->pimpl_->conversationDataPath_ == filePath.parent_path()
+            ){
+                // Check if we have the same file.
+                std::error_code ec;
+                for(
+                    const auto& file_iterator :
+                    std::filesystem::directory_iterator(shared->pimpl_->conversationDataPath_, ec)
+                ){
+                    const auto path = file_iterator.path();
+                    const auto name = path.filename().string();
+                    if(name.size() > 41 && name.at(40) == '_'){
+                        auto commit = shared->getCommit(name.substr(0,40));
+                        if(commit != std::nullopt && commit->at("type") == "application/data-transfer+json"){
+                            auto old_sha3sum = commit->find("sha3sum");
+                            auto old_size_str = commit->find("totalSize");
+                            if(old_sha3sum == commit->end() || old_size_str == commit->end()){
+                                continue;
+                            }
+                            auto size_int = to_int<ssize_t>(old_size_str->second, (ssize_t) -1);
+                            if(size_int == totalSize && old_sha3sum->second == sha3sum){
+                                bool s = fileutils::createFileLink(
+                                    filePath,
+                                    path,
+                                    true
+                                );
+                                if(s){
+                                    runOnMainThread([shared, interactionId, fileId]() {
+                                        emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
+                                            shared->pimpl_->accountId_,
+                                            shared->id(),
+                                            interactionId,
+                                            fileId,
+                                            uint32_t(libjami::DataTransferEventCode::ongoing)
+                                        );
+                                        emitSignal<libjami::DataTransferSignal::DataTransferEvent>(
+                                            shared->pimpl_->accountId_,
+                                            shared->id(),
+                                            interactionId,
+                                            fileId,
+                                            uint32_t(libjami::DataTransferEventCode::finished)
+                                        );
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             auto acc = shared->pimpl_->account_.lock();
             if (!acc)
                 return;
