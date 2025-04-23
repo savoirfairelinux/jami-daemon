@@ -261,7 +261,7 @@ public:
 
     void onTextMessage(const std::string& id,
                        const std::string& from,
-                       const std::string& deviceId,
+                       const std::shared_ptr<dht::crypto::Certificate>& peerCert,
                        const std::map<std::string, std::string>& payloads) override;
     void loadConversation(const std::string& convId);
 
@@ -468,7 +468,8 @@ public:
 
     // Received a new commit notification
 
-    bool handleMessage(const std::string& from,
+    bool handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                       const std::string& from,
                        const std::pair<std::string, std::string>& message) override;
 
     void monitor();
