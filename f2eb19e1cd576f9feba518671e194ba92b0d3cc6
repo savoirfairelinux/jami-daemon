@@ -16,6 +16,24 @@
       "message": "1)Is this the same / a similar issue: Can you also implement a feature that allows a custom FPS if you choose to share your screen (using the option of Jami itself and no virtual webcam): https://git.jami.net/savoirfairelinux/jami-client-qt/-/issues/614\n\n2) what if a user chooses a too high frame rate (if technically possible)? For example like 9999 or infinite? Should / can you prevent such settings?",
       "revId": "f2eb19e1cd576f9feba518671e194ba92b0d3cc6",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4b6ae624_bbafe127",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-04-24T20:40:04Z",
+      "side": 1,
+      "message": "Hi, I believe my commit description was not clear. It doesn\u0027t allow the user to set a custom FPS count per window, it allows us developers to choose the frame rate of a video stream when creating it. This is useful to save performance on previews without the need of the user interaction.",
+      "parentUuid": "11cf9b35_d9619a3f",
+      "revId": "f2eb19e1cd576f9feba518671e194ba92b0d3cc6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
