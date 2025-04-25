@@ -1,5 +1,5 @@
 jplDirectory:
-  "plugins"
+  "plugins/data"
 plugin:
   "TestSuite"
 pluginCertNotFound:

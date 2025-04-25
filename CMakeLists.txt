@@ -780,6 +780,8 @@ else()
         file(COPY test/unitTest/actors DESTINATION ${CMAKE_BINARY_DIR})
         file(COPY test/unitTest/conversation/rsc DESTINATION ${CMAKE_BINARY_DIR}/conversation)
         file(COPY test/unitTest/media/data DESTINATION ${CMAKE_BINARY_DIR}/media)
+        file(COPY test/unitTest/plugins/plugin.yml DESTINATION ${CMAKE_BINARY_DIR}/plugins)
+        file(COPY test/unitTest/plugins/data DESTINATION ${CMAKE_BINARY_DIR}/plugins)
 
         add_library(ut_library STATIC test/unitTest/common.cpp)
         target_link_libraries(ut_library
