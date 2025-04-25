@@ -86,7 +86,7 @@ public:
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
-    std::string videoPath = "file://" + std::filesystem::absolute("media/test_video_file.mp4").string();
+    std::string videoPath = "file://" + std::filesystem::absolute("media/data/test_video_file.mp4").string();
 
 private:
     void registerSignalHandlers();

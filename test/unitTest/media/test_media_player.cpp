@@ -101,7 +101,7 @@ void
 MediaPlayerTest::testCreate()
 {
     JAMI_INFO("Start testCreate");
-    playerId1_ = jami::createMediaPlayer("./media/test_video_file.mp4");
+    playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
     CPPUNIT_ASSERT(playerId1_ == playerId2_);
@@ -118,7 +118,7 @@ void
 MediaPlayerTest::testJPG()
 {
     JAMI_INFO("Start testJpg");
-    playerId1_ = jami::createMediaPlayer("./media/jami.jpg");
+    playerId1_ = jami::createMediaPlayer("./media/data/jami.jpg");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
     CPPUNIT_ASSERT(playerId1_ == playerId2_);
@@ -134,7 +134,7 @@ void
 MediaPlayerTest::testAudioFile()
 {
     JAMI_INFO("Start testAudioFile");
-    playerId1_ = jami::createMediaPlayer("./media/test.mp3");
+    playerId1_ = jami::createMediaPlayer("./media/data/test.mp3");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
     CPPUNIT_ASSERT(playerId1_ == playerId2_);
@@ -149,7 +149,7 @@ MediaPlayerTest::testAudioFile()
 void
 MediaPlayerTest::testPause()
 {
-    playerId1_ = jami::createMediaPlayer("./media/test_video_file.mp4");
+    playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
     JAMI_INFO("Start testPause");
@@ -170,7 +170,7 @@ void
 MediaPlayerTest::testSeekWhilePaused()
 {
     JAMI_INFO("Start testSeekWhilePaused");
-    playerId1_ = jami::createMediaPlayer("./media/test_video_file.mp4");
+    playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
 
@@ -199,7 +199,7 @@ void
 MediaPlayerTest::testSeekWhilePlaying()
 {
     JAMI_INFO("Start testSeekWhilePlaying");
-    playerId1_ = jami::createMediaPlayer("./media/test_video_file.mp4");
+    playerId1_ = jami::createMediaPlayer("./media/data/test_video_file.mp4");
     mediaPlayer = jami::getMediaPlayer(playerId1_);
     cv.wait_for(lk, 5s);
     mediaPlayer->pause(false);
