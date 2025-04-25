@@ -341,12 +341,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hooks;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/im;"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
     PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/src;"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/jami;"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/media;"
 )
 
 if(MSVC)
@@ -831,6 +831,9 @@ else()
         endif()
         if (JAMI_VIDEO)
             target_compile_definitions(ut_library PUBLIC ENABLE_VIDEO)
+            if (JAMI_VIDEO_ACCEL)
+                target_compile_definitions(${PROJECT_NAME} PUBLIC RING_ACCEL)
+            endif()
         endif()
 
         add_executable(ut_bootstrap test/unitTest/swarm/bootstrap.cpp)
