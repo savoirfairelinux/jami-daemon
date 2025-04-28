@@ -39,6 +39,23 @@
       "message": "1) Will this work for 1:1 swarm and group swarm? - And  I think 1:1 calls will be a conference call if you add one or multiple peer(s)? - And a user can switch from a group call to a 1:1 call and vice versa (so a switch won’t matter)?\n\n2) I think a non-admin peer should also have the possibilty to disable calls (audio and/or video) for both 1:1 and group swarm calls / conference calls: https://git.jami.net/savoirfairelinux/jami-client-qt/-/issues/1733 \nAnd admins should therefore not be able to enable calls from peers that have disabled that feature by themselves?\n- But the admin should be able to disable calls from peers that suddenly enable calls (even during a call - so that peers that suddenly enable calls by themselves can now join a group call)?\n\n3) What will happen if one or multiple peer(s) use clients that don’t have this patch (because they use an old version of Jami or a custom / modified client)? Or even if such peer(s) use a client that has included this patch but then uninstall(s) the new version and use(s) an old version?\n\n4) What will happen if one or multiple peer(s) leave(s) the group and join again and/or a network switch occurs?\nWill the permission be stored? - Or if the admin’s device will change the network or if the Internet randomly disiconnects?\n\n5) Not sure if related / this issue still persists: https://git.jami.net/savoirfairelinux/jami-client-android/-/issues/1175 \n\n6) If one peer gets blocked and unblocked will the permissions be saved / can Jami still handle the permissions? Also -if a peer gets blocked during an active call the call should immediately be quit.\n\n7) I guess if a member blocks the admin the member can’t join the group and/or a 1:1 chat / video call?",
       "revId": "3233e09e4445a62ea0c2e32dd13fd2165b09f193",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "76a8fb66_dc224995",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2025-04-28T12:24:35Z",
+      "side": 1,
+      "message": "And not sure if there should be an option that a user can send voice and/or video messages but no (other) attachments",
+      "revId": "3233e09e4445a62ea0c2e32dd13fd2165b09f193",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
