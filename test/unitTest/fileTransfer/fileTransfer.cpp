@@ -155,9 +155,11 @@ FileTransferTest::setUp()
 void
 FileTransferTest::tearDown()
 {
-    std::filesystem::remove(sendPath);
-    std::filesystem::remove(recvPath);
-    std::filesystem::remove(recv2Path);
+    for (auto path : {sendPath, recvPath, recv2Path}) {
+        std::filesystem::remove(path);
+        path += ".tmp";
+        std::filesystem::remove(path);
+    }
     wait_for_removal_of({aliceId, bobId, carlaId});
 }
 
@@ -446,8 +448,6 @@ FileTransferTest::testBadSha3sumIn()
     // The file transfer will be sent but refused by bob
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
     CPPUNIT_ASSERT(!cv.wait_for(lk, 30s, [&]() { return bobData.code == static_cast<int>(libjami::DataTransferEventCode::finished); }));
-
-    std::filesystem::remove(sendPath);
 }
 
 void
