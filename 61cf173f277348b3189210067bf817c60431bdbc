@@ -46,6 +46,52 @@
       },
       "revId": "61cf173f277348b3189210067bf817c60431bdbc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80d5a2c2_1663584a",
+        "filename": "src/jami/datatransfer_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-04-30T17:35:58Z",
+      "side": 1,
+      "message": "computing_checksum",
+      "range": {
+        "startLine": 51,
+        "startChar": 4,
+        "endLine": 51,
+        "endChar": 23
+      },
+      "revId": "61cf173f277348b3189210067bf817c60431bdbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ba2490f_b14ec3d6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 4240,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-04-30T17:35:58Z",
+      "side": 1,
+      "message": "computing_checksum",
+      "range": {
+        "startLine": 4240,
+        "startChar": 57,
+        "endLine": 4240,
+        "endChar": 76
+      },
+      "revId": "61cf173f277348b3189210067bf817c60431bdbc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
