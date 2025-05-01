@@ -160,7 +160,6 @@ SwarmConversationTest::testSendMessage()
 
     std::mutex mtx;
     std::unique_lock lk {mtx};
-    std::condition_variable cv;
 
     connectSignals();
 
@@ -179,7 +178,7 @@ SwarmConversationTest::testSendMessage()
         }));
 
         libjami::acceptConversationRequest(it->first, convId);
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
     std::cout << "waiting for conversation ready" << std::endl;
