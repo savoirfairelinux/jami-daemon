@@ -271,6 +271,10 @@ PresenceTest::testPresenceStatusNote()
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaId);
     auto carlaUri = carlaAccount->getUsername();
 
+    // NOTE: Presence status notes are only sent to contacts.
+    aliceAccount->addContact(bobUri);
+    aliceAccount->addContact(carlaUri);
+
     // Track Presence
     aliceAccount->trackBuddyPresence(bobUri, true);
     bobAccount->trackBuddyPresence(aliceUri, true);
