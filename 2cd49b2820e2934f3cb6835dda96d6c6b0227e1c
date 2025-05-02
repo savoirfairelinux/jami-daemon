@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "808a0c27_6c2bfd7d",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-02T15:25:02Z",
+      "side": 0,
+      "message": "There\u0027s already a `cv` in the `SwarmConversationTest` class (see line 68 in the file). If that wasn\u0027t the case then the code wouldn\u0027t compile after removing this line...",
+      "parentUuid": "eba540cf_381a66f6",
+      "range": {
+        "startLine": 163,
+        "startChar": 28,
+        "endLine": 163,
+        "endChar": 30
+      },
+      "revId": "2cd49b2820e2934f3cb6835dda96d6c6b0227e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "21251d58_9c717b8a",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-05-02T14:56:52Z",
       "side": 0,
       "message": ".",
+      "range": {
+        "startLine": 177,
+        "startChar": 52,
+        "endLine": 177,
+        "endChar": 54
+      },
+      "revId": "2cd49b2820e2934f3cb6835dda96d6c6b0227e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "549ff029_17c4db8c",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 177,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-02T15:25:02Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "21251d58_9c717b8a",
       "range": {
         "startLine": 177,
         "startChar": 52,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "45695b12_83654e16",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-02T15:25:02Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "2b6e5a6b_f6fc8d6d",
+      "range": {
+        "startLine": 188,
+        "startChar": 12,
+        "endLine": 188,
+        "endChar": 14
+      },
+      "revId": "2cd49b2820e2934f3cb6835dda96d6c6b0227e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3860127b_77c202d2",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d37a8d93_e155be70",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-02T15:25:02Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "3860127b_77c202d2",
+      "range": {
+        "startLine": 193,
+        "startChar": 8,
+        "endLine": 193,
+        "endChar": 10
+      },
+      "revId": "2cd49b2820e2934f3cb6835dda96d6c6b0227e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "ceff0cd6_cce21955",
@@ -106,6 +202,30 @@
       "writtenOn": "2025-05-02T14:56:52Z",
       "side": 0,
       "message": ".",
+      "range": {
+        "startLine": 208,
+        "startChar": 23,
+        "endLine": 208,
+        "endChar": 25
+      },
+      "revId": "2cd49b2820e2934f3cb6835dda96d6c6b0227e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2a8206fe_77405acd",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-02T15:25:02Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "ceff0cd6_cce21955",
       "range": {
         "startLine": 208,
         "startChar": 23,
