@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cd89eee1_3c8eda72",
+        "filename": "test/unitTest/swarm/swarm_conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 948
+      },
+      "writtenOn": "2025-05-02T15:31:17Z",
+      "side": 0,
+      "message": "Then good for me.",
+      "parentUuid": "808a0c27_6c2bfd7d",
+      "range": {
+        "startLine": 163,
+        "startChar": 28,
+        "endLine": 163,
+        "endChar": 30
+      },
+      "revId": "2cd49b2820e2934f3cb6835dda96d6c6b0227e1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "21251d58_9c717b8a",
