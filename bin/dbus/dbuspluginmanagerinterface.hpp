@@ -23,7 +23,7 @@ class DBusPluginManagerInterface : public sdbus::AdaptorInterfaces<cx::ring::Rin
 {
 public:
     DBusPluginManagerInterface(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/PluginManagerInterface")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath{"/cx/ring/Ring/PluginManagerInterface"})
     {
         registerAdaptor();
         registerSignalHandlers();
