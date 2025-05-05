@@ -33,6 +33,7 @@ static const char* const CONFIG_ACCOUNT_DISPLAYNAME = "Account.displayName";
 static const char* const CONFIG_ACCOUNT_MAILBOX = "Account.mailbox";
 static const char* const CONFIG_ACCOUNT_ENABLE = "Account.enable";
 static const char* const CONFIG_ACCOUNT_AUTOANSWER = "Account.autoAnswer";
+static const char* const CONFIG_ACCOUNT_DENY_NEW_CALLS_AUTO_ANSWER = "Account.denyNewCallsAutoAnswer";
 static const char* const CONFIG_ACCOUNT_SENDREADRECEIPT = "Account.sendReadReceipt";
 static const char* const CONFIG_ACCOUNT_SENDCOMPOSING = "Account.sendComposing";
 static const char* const CONFIG_ACCOUNT_ISRENDEZVOUS = "Account.rendezVous";
