@@ -2513,6 +2513,8 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         JAMI_ERR("No account detected");
         return;
     }
+    bool accountautoanswer = account->isAutoAnswerEnabled();
+    bool autoAnswer2 = autoAnswer_;
 
     auto username = incomCall.toUsername();
     if (username.find('/') != std::string::npos) {
@@ -2546,6 +2548,10 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         if (not account->isRendezVous())
             base_.playRingtone(accountId);
 #endif
+    }else{
+        if (account->isdenySecondCallsEnabled()) {
+            base_.refuseCall(account->getAccountID(), incomCallId);
+        }
     }
 
     addWaitingCall(incomCallId);
@@ -2586,7 +2592,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                                                conf->getConfId(),
                                                                conf->getStateStr());
         });
-    } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
+    } else if ((autoAnswer_ || account->isAutoAnswerEnabled()) && !(base_.hasCurrentCall() && account->isdenySecondCallsEnabled())) {
         dht::ThreadPool::io().run(
             [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(*incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {

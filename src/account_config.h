@@ -71,6 +71,9 @@ struct AccountConfig : public Serializable
     /** If true, automatically answer calls to this account */
     bool autoAnswerEnabled {false};
 
+    /** If true, automatically deny new calls when already in one call to this account */
+    bool denySecondCallsEnabled {false};
+
     /** If true, send displayed status (and emit to the client) */
     bool sendReadReceipt {true};
 

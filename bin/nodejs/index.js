@@ -50,6 +50,8 @@ class JamiDaemon {
             params.set("Account.enable", this.boolToStr(account.enable));
         if (account.autoAnswer)
             params.set("Account.autoAnswer", this.boolToStr(account.autoAnswer));
+        if (account.denySecondCalls)
+            params.set("Account.denySecondCalls", this.boolToStr(account.denySecondCalls));
         if (account.ringtonePath)
             params.set("Account.ringtonePath", account.ringtonePath);
         if (account.ringtoneEnabled)
