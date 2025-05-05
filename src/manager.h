@@ -73,6 +73,7 @@ public:
     static LIBJAMI_TEST_EXPORT Manager& instance();
 
     void setAutoAnswer(bool enable);
+    void setAutoDenyNewCalls(bool enable);
 
     /**
      * General preferences configuration

@@ -323,6 +323,10 @@ public:
 
     bool isRendezVous() const { return config().isRendezVous; }
     bool isAutoAnswerEnabled() const { return config().autoAnswerEnabled; }
+    bool isdenySecondCallEnabled() const
+    {
+        return config().denySecondCallEnabled;
+    }
     bool isReadReceiptEnabled() const { return config().sendReadReceipt; }
     bool isComposingEnabled() const { return config().sendComposing; }
 
