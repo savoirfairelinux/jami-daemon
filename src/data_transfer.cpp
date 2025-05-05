@@ -443,7 +443,8 @@ TransferManager::waitForTransfer(const std::string& fileId,
 
 void
 TransferManager::onIncomingFileTransfer(const std::string& fileId,
-                                        const std::shared_ptr<dhtnet::ChannelSocket>& channel)
+                                        const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                                        size_t start)
 {
     std::lock_guard lk(pimpl_->mapMutex_);
     // Check if not already an incoming file for this id and that we are waiting this file
@@ -465,6 +466,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     info.conversationId = pimpl_->to_;
     info.path = itW->second.path;
     info.totalSize = itW->second.totalSize;
+    info.bytesProgress = start;
 
     // Generate the file path within the conversation data directory
     // using the file id if no path has been specified, otherwise create
@@ -477,9 +479,6 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
         // the attempt to create one should report the error string correctly.
         fileutils::createFileLink(filePath, info.path);
     }
-    info.bytesProgress = fileutils::size(info.path);
-    if (info.bytesProgress < 0)
-        info.bytesProgress = 0;
 
     auto ifile = std::make_shared<IncomingFile>(std::move(channel),
                                                 info,

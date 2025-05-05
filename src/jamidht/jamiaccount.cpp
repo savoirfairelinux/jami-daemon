@@ -4373,10 +4373,11 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
             [w = weak(),
              conversationId,
              fileId,
-             interactionId](std::shared_ptr<dhtnet::ChannelSocket> channel, const DeviceId&) {
+             interactionId,
+             start](std::shared_ptr<dhtnet::ChannelSocket> channel, const DeviceId&) {
                 if (!channel)
                     return;
-                dht::ThreadPool::io().run([w, conversationId, channel, fileId, interactionId] {
+                dht::ThreadPool::io().run([w, conversationId, channel, fileId, interactionId, start] {
                     auto shared = w.lock();
                     if (!shared)
                         return;
@@ -4386,7 +4387,7 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
                     if (interactionId.empty())
                         dt->onIncomingProfile(channel);
                     else
-                        dt->onIncomingFileTransfer(fileId, channel);
+                        dt->onIncomingFileTransfer(fileId, channel, start);
                 });
             },
             false);

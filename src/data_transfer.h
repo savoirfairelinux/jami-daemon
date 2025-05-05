@@ -174,9 +174,11 @@ public:
      * Handle incoming transfer
      * @param id        Related id
      * @param channel   Related channel
+     * @param start     Offset in the file from which the transfer will start.
      */
     void onIncomingFileTransfer(const std::string& fileId,
-                                const std::shared_ptr<dhtnet::ChannelSocket>& channel);
+                                const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                                size_t start);
 
     /**
      * Retrieve path of a file
