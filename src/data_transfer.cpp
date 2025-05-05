@@ -216,19 +216,19 @@ IncomingFile::process()
         if (!correct) {
             if (shared->isUserCancelled_) {
                 std::filesystem::remove(shared->path_, ec);
+            } else if (shared->info_.bytesProgress < shared->info_.totalSize) {
+                JAMI_WARNING("Channel for {} shut down before transfer was complete (progress: {}/{})", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
+            } else if (shared->info_.bytesProgress > shared->info_.totalSize) {
+                JAMI_WARNING("Removing {} larger than announced: {}/{}", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
+                std::filesystem::remove(shared->path_, ec);
             } else {
                 auto sha3Sum = fileutils::sha3File(shared->path_);
                 if (shared->sha3Sum_ == sha3Sum) {
                     JAMI_LOG("New file received: {}", shared->info_.path);
                     correct = true;
                 } else {
-                    if (shared->info_.totalSize != 0
-                        && shared->info_.totalSize < shared->info_.bytesProgress) {
-                        JAMI_WARNING("Removing {} larger than announced: {}/{}", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
-                        std::filesystem::remove(shared->path_, ec);
-                    } else {
-                        JAMI_WARNING("Invalid sha3sum detected for {}, incomplete file: {}/{}", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
-                    }
+                    JAMI_WARNING("Removing {} with expected size ({} bytes) but invalid sha3sum", shared->info_.path, shared->info_.totalSize);
+                    std::filesystem::remove(shared->path_, ec);
                 }
             }
             if (ec) {
