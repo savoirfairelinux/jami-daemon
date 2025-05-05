@@ -38,6 +38,7 @@ constexpr const char* PASSWORD_KEY = "password";
 constexpr const char* HOSTNAME_KEY = "hostname";
 constexpr const char* ACCOUNT_ENABLE_KEY = "enable";
 constexpr const char* ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
+constexpr const char* DENY_NEW_CALLS_AUTO_ANSWER_KEY = "denyNewCallsAutoAnswer";
 constexpr const char* ACCOUNT_READRECEIPT_KEY = "sendReadReceipt";
 constexpr const char* ACCOUNT_COMPOSING_KEY = "sendComposing";
 constexpr const char* ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
@@ -69,6 +70,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value
         << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
     SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
+    SERIALIZE_CONFIG(DENY_NEW_CALLS_AUTO_ANSWER_KEY, denyNewCallsAutoAnswerEnabled);
     SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
     SERIALIZE_CONFIG(ACCOUNT_COMPOSING_KEY, sendComposing);
     SERIALIZE_CONFIG(ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
@@ -97,6 +99,7 @@ AccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, ACCOUNT_ENABLE_KEY, enabled);
     parseValueOptional(node, HOSTNAME_KEY, hostname);
     parseValueOptional(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
+    parseValueOptional(node, DENY_NEW_CALLS_AUTO_ANSWER_KEY, denyNewCallsAutoAnswerEnabled);
     parseValueOptional(node, ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
     parseValueOptional(node, ACCOUNT_COMPOSING_KEY, sendComposing);
     parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous);
@@ -139,6 +142,7 @@ AccountConfig::toMap() const
             {Conf::CONFIG_ACCOUNT_MAILBOX, mailbox},
             {Conf::CONFIG_ACCOUNT_USERAGENT, customUserAgent},
             {Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled ? TRUE_STR : FALSE_STR},
+            {Conf::CONFIG_ACCOUNT_DENY_NEW_CALLS_AUTO_ANSWER, denyNewCallsAutoAnswerEnabled ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_SENDCOMPOSING, sendComposing ? TRUE_STR : FALSE_STR},
             {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous ? TRUE_STR : FALSE_STR},
@@ -163,6 +167,7 @@ AccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname);
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailbox);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled);
+    parseBool(details, Conf::CONFIG_ACCOUNT_DENY_NEW_CALLS_AUTO_ANSWER, denyNewCallsAutoAnswerEnabled);
     parseBool(details, Conf::CONFIG_ACCOUNT_SENDREADRECEIPT, sendReadReceipt);
     parseBool(details, Conf::CONFIG_ACCOUNT_SENDCOMPOSING, sendComposing);
     parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous);

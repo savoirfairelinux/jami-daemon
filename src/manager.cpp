@@ -328,6 +328,8 @@ struct Manager::ManagerPimpl
 
     std::atomic_bool autoAnswer_ {false};
 
+    std::atomic_bool autoDenyNewCalls_ {false};
+
     /** Application wide tone controller */
     ToneControl toneCtrl_;
     std::unique_ptr<AudioDeviceGuard> toneDeviceGuard_;
@@ -721,6 +723,11 @@ void
 Manager::setAutoAnswer(bool enable)
 {
     pimpl_->autoAnswer_ = enable;
+}
+
+void Manager::setAutoDenyNewCalls(bool enable)
+{
+    pimpl_->autoDenyNewCalls_ = enable;
 }
 
 void
@@ -2513,6 +2520,10 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         JAMI_ERR("No account detected");
         return;
     }
+    bool accountautoanswer = account->isAutoAnswerEnabled();
+    bool autoAnswer2 = autoAnswer_;
+    JAMI_WARNING("---------------------------------------------------------------------------------------------------------------------------Process incoming call");
+    JAMI_WARNING("AutoAnswer: {} account->autoAnswer {}",autoAnswer2, accountautoanswer);
 
     auto username = incomCall.toUsername();
     if (username.find('/') != std::string::npos) {
@@ -2546,6 +2557,11 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         if (not account->isRendezVous())
             base_.playRingtone(accountId);
 #endif
+    }else{
+        if ((autoAnswer_ || account->isAutoAnswerEnabled()) && account->isDenyNewCallsAutoAnswerEnabled()) {
+            JAMI_WARNING("---------------------------------------------------------------------------------------------------------------------------Auto-answer: hangup current call");
+            base_.refuseCall(account->getAccountID(), incomCallId);
+        }
     }
 
     addWaitingCall(incomCallId);
@@ -2586,7 +2602,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                                                conf->getConfId(),
                                                                conf->getStateStr());
         });
-    } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
+    } else if ((autoAnswer_ || account->isAutoAnswerEnabled()) && !(base_.hasCurrentCall())) {
         dht::ThreadPool::io().run(
             [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(*incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
