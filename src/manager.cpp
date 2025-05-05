@@ -2546,6 +2546,11 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         if (not account->isRendezVous())
             base_.playRingtone(accountId);
 #endif
+    } else {
+        if (account->isDenySecondCallEnabled()) {
+            base_.refuseCall(account->getAccountID(), incomCallId);
+            return;
+        }
     }
 
     addWaitingCall(incomCallId);
