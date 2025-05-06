@@ -2379,10 +2379,6 @@ ConversationModule::onFileChannelRequest(const std::string& conversationId,
         // Release the lock here to prevent the sha3 calculation from blocking other threads.
         lk.unlock();
         if (!std::filesystem::is_regular_file(path)) {
-            // Check if dangling symlink
-            if (std::filesystem::is_symlink(path)) {
-                dhtnet::fileutils::remove(path, true);
-            }
             JAMI_WARNING("[Account {:s}] [Conversation {}] {:s} asked for non existing file {}",
                          pimpl_->accountId_,
                          conversationId,
