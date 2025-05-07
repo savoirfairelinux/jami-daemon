@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a9e649c5_51e8ecf2",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-07T20:41:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "356976ac_42fd9fe1",
+      "range": {
+        "startLine": 329,
+        "startChar": 54,
+        "endLine": 329,
+        "endChar": 58
+      },
+      "revId": "17bbeecbac4f3ffb33346f64ee26c69965c2474b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d711f9ad_6c86a0bc",
@@ -37,6 +61,30 @@
       "writtenOn": "2024-11-22T17:04:12Z",
       "side": 1,
       "message": "This will print a nonsensical value if `filesystem::last_write_time` failed.",
+      "range": {
+        "startLine": 332,
+        "startChar": 51,
+        "endLine": 332,
+        "endChar": 91
+      },
+      "revId": "17bbeecbac4f3ffb33346f64ee26c69965c2474b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5fdb1d26_940ceb51",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 332,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-07T20:41:24Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d711f9ad_6c86a0bc",
       "range": {
         "startLine": 332,
         "startChar": 51,
