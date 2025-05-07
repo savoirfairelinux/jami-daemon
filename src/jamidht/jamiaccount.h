@@ -890,7 +890,7 @@ private:
                         uint64_t token,
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
-    void onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code);
+    void onMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, bool success);
 
     std::mutex gitServersMtx_ {};
     std::map<dht::Value::Id, std::unique_ptr<GitServer>> gitServers_ {};

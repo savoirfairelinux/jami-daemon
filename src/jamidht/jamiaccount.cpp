@@ -122,7 +122,9 @@ struct TextMessageCtx
     DeviceId deviceId;
     uint64_t id;
     bool retryOnTimeout;
-    std::shared_ptr<dhtnet::ChannelSocket> channel;
+    std::shared_ptr<dhtnet::ChannelSocket> messageChannel;
+    // TODO remove when we stop supporting SIP for sending messages
+    std::shared_ptr<dhtnet::ChannelSocket> sipChannel;
     bool onlyConnected;
 };
 
@@ -3111,40 +3113,45 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
     const auto& payload = *payloads.begin();
-    MessageChannelHandler::Message msg;
-    msg.id = token;
-    msg.t = payload.first;
-    msg.c = payload.second;
+    auto msg = std::make_shared<MessageChannelHandler::Message>();
+    msg->id = token;
+    msg->t = payload.first;
+    msg->c = payload.second;
     auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
     if (deviceId.empty()) {
-        bool sent = false;
         auto conns = handler->getChannels(toUri);
         clk.unlock();
         for (const auto& conn : conns) {
-            if (MessageChannelHandler::sendMessage(conn, msg)) {
-                devices->emplace(conn->deviceId());
-                sent = true;
-            }
-        }
-        if (sent) {
-            if (!onlyConnected)
-                runOnMainThread([w = weak(), to, token, deviceId]() {
-                    if (auto acc = w.lock())
-                        acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-                });
-            return;
+            if (!devices->insert(conn->deviceId()).second)
+                continue;
+
+            auto ctx = std::make_shared<TextMessageCtx>();
+            ctx->acc = weak();
+            ctx->to = to;
+            ctx->deviceId = device;
+            ctx->id = token;
+            ctx->onlyConnected = onlyConnected;
+            ctx->retryOnTimeout = retryOnTimeout;
+            ctx->messageChannel = conn;
+
+            dht::ThreadPool::io().run([w=weak(), ctx, msg] {
+                auto sent = MessageChannelHandler::sendMessage(ctx->messageChannel, *msg);
+                if (auto acc = w.lock())
+                    acc->onMessageSent(ctx, sent);
+            });
         }
     } else {
         if (auto conn = handler->getChannel(toUri, device)) {
             clk.unlock();
-            if (MessageChannelHandler::sendMessage(conn, msg)) {
-                if (!onlyConnected)
-                    runOnMainThread([w = weak(), to, token, deviceId]() {
-                        if (auto acc = w.lock())
-                            acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-                    });
-                return;
-            }
+            devices->insert(device);
+            dht::ThreadPool::io().run([w = weak(), to, token, deviceId, conn, msg, onlyConnected] {
+                auto sent = MessageChannelHandler::sendMessage(conn, *msg);
+                if (!onlyConnected) {
+                    if (auto acc = w.lock())
+                        acc->messageEngine_.onMessageSent(to, token, sent, deviceId);
+                }
+            });
+            return;
         }
     }
     if (clk)
@@ -3156,7 +3163,7 @@ JamiAccount::sendMessage(const std::string& to,
             continue;
         if (!deviceId.empty() && key.second != device)
             continue;
-        if (!devices->emplace(key.second).second)
+        if (!devices->insert(key.second).second)
             continue;
 
         auto& conn = value.back();
@@ -3170,7 +3177,7 @@ JamiAccount::sendMessage(const std::string& to,
         ctx->id = token;
         ctx->onlyConnected = onlyConnected;
         ctx->retryOnTimeout = retryOnTimeout;
-        ctx->channel = channel;
+        ctx->sipChannel = channel;
 
         try {
             auto res = sendSIPMessage(conn,
@@ -3185,7 +3192,7 @@ JamiAccount::sendMessage(const std::string& to,
                                           runOnMainThread([c = std::move(c), code]() {
                                               if (c) {
                                                   if (auto acc = c->acc.lock())
-                                                      acc->onSIPMessageSent(std::move(c), code);
+                                                      acc->onMessageSent(std::move(c), code == PJSIP_SC_OK);
                                               }
                                           });
                                       });
@@ -3232,9 +3239,9 @@ JamiAccount::sendMessage(const std::string& to,
     };
 
     // get request type
-    auto payload_type = msg.t;
+    auto payload_type = msg->t;
     if (payload_type == MIME_TYPE_GIT) {
-        std::string id = extractIdFromJson(msg.c);
+        std::string id = extractIdFromJson(msg->c);
         if (!id.empty()) {
             payload_type += "/" + id;
         }
@@ -3252,8 +3259,8 @@ JamiAccount::sendMessage(const std::string& to,
                                            const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                                            // Test if already sent
                                            auto deviceId = dev->getLongId();
-                                           if (!devices->emplace(deviceId).second
-                                               || deviceId == currentDevice) {
+                                           if (deviceId == currentDevice
+                                               || !devices->insert(deviceId).second) {
                                                return;
                                            }
 
@@ -3266,9 +3273,9 @@ JamiAccount::sendMessage(const std::string& to,
 }
 
 void
-JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code)
+JamiAccount::onMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, bool success)
 {
-    if (code == PJSIP_SC_OK) {
+    if (success) {
         if (!ctx->onlyConnected)
             messageEngine_.onMessageSent(ctx->to,
                                          ctx->id,
@@ -3281,7 +3288,8 @@ JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int co
         if (not acc)
             return;
         JAMI_WARN("Timeout when send a message, close current connection");
-        shutdownSIPConnection(ctx->channel, ctx->to, ctx->deviceId);
+        if (ctx->sipChannel)
+            shutdownSIPConnection(ctx->sipChannel, ctx->to, ctx->deviceId);
         // This MUST be done after closing the connection to avoid race condition
         // with messageEngine_
         if (!ctx->onlyConnected)
