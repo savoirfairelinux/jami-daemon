@@ -3,7 +3,7 @@
 
 GMP_VERSION := 6.3.0
 PKG_CPE += cpe:2.3:a:gmplib:gmp:$(GMP_VERSION):*:*:*:*:*:*:*
-GMP_URL := https://gmplib.org/download/gmp/gmp-$(GMP_VERSION).tar.xz
+GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.xz
 
 ifeq ($(call need_pkg,'gmp >= 6.2.0'),)
 PKGS_FOUND += gmp
