@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "383a2a05_eafaa0c0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-07T19:45:23Z",
+      "side": 1,
+      "message": "no return value if no videomon",
+      "range": {
+        "startLine": 78,
+        "startChar": 8,
+        "endLine": 78,
+        "endChar": 14
+      },
+      "revId": "7c972b882d87f825efe6dd9f682fd2aff3b39f11",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
