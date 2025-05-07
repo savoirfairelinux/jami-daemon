@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d8d2d63d_06e5e418",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2519,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-07T15:00:22Z",
+      "side": 1,
+      "message": "remove/cleanup debug logs",
+      "range": {
+        "startLine": 2518,
+        "startChar": 0,
+        "endLine": 2519,
+        "endChar": 2
+      },
+      "revId": "ecdfe8d8c3ec9d6fdf37ffb6f99235b12334dc35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b1a4b68e_f2b1a8c5",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2555,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-07T15:00:22Z",
+      "side": 1,
+      "message": "remove/cleanup debug logs",
+      "range": {
+        "startLine": 2555,
+        "startChar": 0,
+        "endLine": 2555,
+        "endChar": 2
+      },
+      "revId": "ecdfe8d8c3ec9d6fdf37ffb6f99235b12334dc35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfaa6424_70d83097",
+        "filename": "src/manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2557,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-07T15:00:22Z",
+      "side": 1,
+      "message": "if isDenyNewCallsAutoAnswerEnabled is active, should we simply behave as if autoanswer was disabled and show an incoming call screen ?\n\nWe could have a different option to customize the behavior if we get an incoming call while already in a call (ring or refuse), which would be independent of autoanswer.",
+      "range": {
+        "startLine": 2554,
+        "startChar": 0,
+        "endLine": 2557,
+        "endChar": 2
+      },
+      "revId": "ecdfe8d8c3ec9d6fdf37ffb6f99235b12334dc35",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
