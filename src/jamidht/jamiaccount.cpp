@@ -3098,7 +3098,21 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    auto devices = std::make_shared<std::set<DeviceId>>();
+    class DeviceSet {
+    public:
+        bool add(const DeviceId& deviceId) {
+            std::lock_guard<std::mutex> lock(mtx);
+            return devices.insert(deviceId).second;
+        }
+        bool remove(const DeviceId& deviceId) {
+            std::lock_guard<std::mutex> lock(mtx);
+            return devices.erase(deviceId) > 0;
+        }
+    private:
+        std::mutex mtx;
+        std::set<DeviceId> devices;
+    };
+    auto devices = std::make_shared<DeviceSet>();
 
     // Use the Message channel if available
     std::shared_lock clk(connManagerMtx_);
@@ -3111,40 +3125,44 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
     const auto& payload = *payloads.begin();
-    MessageChannelHandler::Message msg;
-    msg.id = token;
-    msg.t = payload.first;
-    msg.c = payload.second;
+    auto msg = std::make_shared<MessageChannelHandler::Message>();
+    msg->id = token;
+    msg->t = payload.first;
+    msg->c = payload.second;
     auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
     if (deviceId.empty()) {
         bool sent = false;
         auto conns = handler->getChannels(toUri);
         clk.unlock();
         for (const auto& conn : conns) {
-            if (MessageChannelHandler::sendMessage(conn, msg)) {
-                devices->emplace(conn->deviceId());
-                sent = true;
-            }
+            devices->add(conn->deviceId());
+            sent = true;
+            dht::ThreadPool::io().run([conn, msg, devices]() {
+                if (!MessageChannelHandler::sendMessage(conn, *msg)) {
+                    // allows to try connecting if sending fails before the device is found on the dht
+                    devices->remove(conn->deviceId());
+                }
+            });
         }
-        if (sent) {
-            if (!onlyConnected)
-                runOnMainThread([w = weak(), to, token, deviceId]() {
-                    if (auto acc = w.lock())
-                        acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-                });
-            return;
-        }
+        if (sent && !onlyConnected)
+            runOnMainThread([w = weak(), to, token, deviceId]() {
+                if (auto acc = w.lock())
+                    acc->messageEngine_.onMessageSent(to, token, true, deviceId);
+            });
     } else {
         if (auto conn = handler->getChannel(toUri, device)) {
             clk.unlock();
-            if (MessageChannelHandler::sendMessage(conn, msg)) {
-                if (!onlyConnected)
-                    runOnMainThread([w = weak(), to, token, deviceId]() {
-                        if (auto acc = w.lock())
-                            acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-                    });
-                return;
-            }
+            dht::ThreadPool::io().run([w = weak(), to, token, deviceId, conn, msg, onlyConnected] {
+                auto sent = MessageChannelHandler::sendMessage(conn, *msg);
+                if (!sent) {
+                    JAMI_WARNING("Failed to send message to device {}", deviceId);
+                }
+                if (onlyConnected) {
+                    if (auto acc = w.lock())
+                        acc->messageEngine_.onMessageSent(to, token, sent, deviceId);
+                }
+            });
+            return;
         }
     }
     if (clk)
@@ -3156,7 +3174,7 @@ JamiAccount::sendMessage(const std::string& to,
             continue;
         if (!deviceId.empty() && key.second != device)
             continue;
-        if (!devices->emplace(key.second).second)
+        if (!devices->add(key.second))
             continue;
 
         auto& conn = value.back();
@@ -3192,14 +3210,14 @@ JamiAccount::sendMessage(const std::string& to,
             if (!res) {
                 if (!onlyConnected)
                     messageEngine_.onMessageSent(to, token, false, deviceId);
-                devices->erase(key.second);
+                devices->remove(key.second);
                 continue;
             }
         } catch (const std::runtime_error& ex) {
             JAMI_WARNING("{}", ex.what());
             if (!onlyConnected)
                 messageEngine_.onMessageSent(to, token, false, deviceId);
-            devices->erase(key.second);
+            devices->remove(key.second);
             // Remove connection in incorrect state
             shutdownSIPConnection(channel, to, key.second);
             continue;
@@ -3252,7 +3270,7 @@ JamiAccount::sendMessage(const std::string& to,
                                            const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                                            // Test if already sent
                                            auto deviceId = dev->getLongId();
-                                           if (!devices->emplace(deviceId).second
+                                           if (!devices->add(deviceId)
                                                || deviceId == currentDevice) {
                                                return;
                                            }
