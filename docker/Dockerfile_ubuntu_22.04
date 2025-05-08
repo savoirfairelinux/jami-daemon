@@ -25,11 +25,9 @@ RUN add-apt-repository universe && \
         libupnp-dev \
         libgnutls28-dev \
         libargon2-dev \
-        libcanberra-gtk3-dev \
         libclutter-gtk-1.0-dev \
         libclutter-1.0-dev \
         libglib2.0-dev \
-        libgtk-3-dev \
         libnotify-dev \
         yasm \
         nasm \
@@ -54,6 +52,7 @@ RUN add-apt-repository universe && \
         libswscale-dev \
         libavdevice-dev \
         libopus-dev \
+        libx264-dev \
         libpipewire-0.3-dev \
         libudev-dev \
         libjsoncpp-dev \
@@ -62,7 +61,6 @@ RUN add-apt-repository universe && \
         libayatana-appindicator3-dev \
         libqrencode-dev \
         libnm-dev \
-        libwebkit2gtk-4.0-dev \
         libcrypto++-dev \
         libva-dev \
         libvdpau-dev \
@@ -73,6 +71,9 @@ RUN add-apt-repository universe && \
         libexpat1 libexpat1-dev \
         lcov gcovr \
         libxcb-shape0-dev \
+        libwebrtc-audio-processing-dev \
+        libcppunit-dev \
+        libarchive-dev \
         ninja-build
 
 RUN apt-get install -y python3 python3-pip python3-setuptools \
