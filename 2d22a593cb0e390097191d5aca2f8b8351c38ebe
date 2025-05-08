@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "567612f1_2e63f585",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-05-08T17:23:42Z",
+      "side": 1,
+      "message": "In the current state, these contribs will be built for all jami-daemon builds. Should, for instance, whispercpp, only be built when jami-daemon is a dependency of jami-plugins?",
+      "revId": "2d22a593cb0e390097191d5aca2f8b8351c38ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1ab1aed3_3956c77d",
+        "filename": "contrib/src/mp3lame/package.json",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-05-08T17:23:42Z",
+      "side": 1,
+      "message": "this is not currently used on Windows. Check the ffmpeg contrib src folder for Windows specific build scripts/makefiles",
+      "revId": "2d22a593cb0e390097191d5aca2f8b8351c38ebe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
