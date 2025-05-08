@@ -765,18 +765,23 @@ sha3File(const std::filesystem::path& path)
     sha3_512_init(&ctx);
 
     try {
-        if (not std::filesystem::is_regular_file(path))
+        if (not std::filesystem::is_regular_file(path)) {
+            JAMI_ERROR("Unable to compute sha3sum of {}: not a regular file", path);
             return {};
+        }
         std::ifstream file(path, std::ios::binary | std::ios::in);
-        if (!file)
+        if (!file) {
+            JAMI_ERROR("Unable to compute sha3sum of {}: failed to open file", path);
             return {};
+        }
         std::vector<char> buffer(8192, 0);
         while (!file.eof()) {
             file.read(buffer.data(), buffer.size());
             std::streamsize readSize = file.gcount();
             sha3_512_update(&ctx, readSize, (const uint8_t*) buffer.data());
         }
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_ERROR("Unable to compute sha3sum of {}: {}", path, e.what());
         return {};
     }
 
