@@ -148,7 +148,7 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     auto& connections = pimpl_->connections_[peerId];
     bool newPeerConnection = connections.empty();
     auto& deviceConnections = connections[device];
-    deviceConnections.insert(deviceConnections.begin(), socket);
+    deviceConnections.push_back(socket);
     if (newPeerConnection)
         pimpl_->onPeerStateChanged_(peerId, true);
 
