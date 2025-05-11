@@ -207,7 +207,7 @@ const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
-static std::string_view
+std::string_view
 stripPrefix(std::string_view toUrl)
 {
     auto dhtf = toUrl.find(RING_URI_PREFIX);
@@ -227,7 +227,7 @@ stripPrefix(std::string_view toUrl)
     return toUrl.substr(dhtf);
 }
 
-static std::string_view
+std::string_view
 parseJamiUri(std::string_view toUrl)
 {
     auto sufix = stripPrefix(toUrl);
@@ -240,7 +240,7 @@ parseJamiUri(std::string_view toUrl)
     return toUri;
 }
 
-static constexpr const char*
+constexpr const char*
 dhtStatusStr(dht::NodeStatus status)
 {
     return status == dht::NodeStatus::Connected
@@ -3759,10 +3759,10 @@ JamiAccount::handleMessage(const std::shared_ptr<dht::crypto::Certificate>& cert
                                                                       static_cast<int>(
                                                                           PresenceState::CONNECTED),
                                                                       customStatus);
-            return true;
         } else {
             JAMI_WARNING("Presence: unable to parse status");
         }
+        return true;
     }
 
     return false;
