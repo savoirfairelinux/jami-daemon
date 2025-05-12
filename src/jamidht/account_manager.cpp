@@ -67,10 +67,11 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     }
 
     // Sync known devices
-    JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts)",
+    JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts, {:d} requests)",
              accountId_,
              sync.devices_known.size() + sync.devices.size(),
-             sync.peers.size());
+             sync.peers.size(),
+             sync.trust_requests.size());
     for (const auto& d : sync.devices_known) {
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
@@ -91,10 +92,12 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     // saveKnownDevices();
 
     // Sync contacts
-    for (const auto& peer : sync.peers) {
-        info_->contacts->updateContact(peer.first, peer.second);
+    if (!sync.peers.empty()) {
+        for (const auto &peer: sync.peers) {
+            info_->contacts->updateContact(peer.first, peer.second);
+        }
+        info_->contacts->saveContacts();
     }
-    info_->contacts->saveContacts();
 
     // Sync trust requests
     for (const auto& tr : sync.trust_requests)
