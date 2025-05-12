@@ -114,18 +114,6 @@ static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
 static constexpr const char DEVICE_ID_PATH[] {"ring_device"};
 static constexpr auto TREATED_PATH = "treatedImMessages"sv;
 
-// Used to pass info to a pjsip callback (pjsip_endpt_send_request)
-struct TextMessageCtx
-{
-    std::weak_ptr<JamiAccount> acc;
-    std::string to;
-    DeviceId deviceId;
-    uint64_t id;
-    bool retryOnTimeout;
-    std::shared_ptr<dhtnet::ChannelSocket> channel;
-    bool onlyConnected;
-};
-
 struct VCardMessageCtx
 {
     std::shared_ptr<std::atomic_int> success;
@@ -3098,8 +3086,6 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    auto devices = std::make_shared<std::set<DeviceId>>();
-
     // Use the Message channel if available
     std::shared_lock clk(connManagerMtx_);
     auto* handler = static_cast<MessageChannelHandler*>(
@@ -3110,41 +3096,103 @@ JamiAccount::sendMessage(const std::string& to,
             messageEngine_.onMessageSent(to, token, false, deviceId);
         return;
     }
+
+    /**
+     * Track sending state for a single message to one or more devices.
+     */
+    class SendMessageContext {
+    public:
+        using OnComplete = std::function<void(bool, bool)>;
+        SendMessageContext(OnComplete onComplete) : onComplete(std::move(onComplete)) {
+            devices.insert(DeviceId());
+        }
+        /** Track new pending message for device */
+        bool add(const DeviceId& device) {
+            std::lock_guard lk(mtx);
+            return devices.insert(device).second;
+        }
+        /** Call after all messages are sent */
+        void start() {
+            complete(DeviceId(), false);
+        }
+        /** Complete pending message for device */
+        bool complete(const DeviceId& device, bool success) {
+            std::unique_lock lk(mtx);
+            if (devices.erase(device) == 0)
+                return false;
+            ++completeCount;
+            if (success)
+                ++successCount;
+            if (devices.empty() || (successCount && completeCount > 1)) {
+                if (onComplete) {
+                    auto cb = std::move(onComplete);
+                    onComplete = {};
+                    lk.unlock();
+                    cb(successCount != 0, completeCount > 1);
+                }
+            }
+            return true;
+        }
+        bool empty() const {
+            std::lock_guard lk(mtx);
+            return devices.empty();
+        }
+        bool pending(const DeviceId& device) const {
+            std::lock_guard lk(mtx);
+            return devices.find(device) != devices.end();
+        }
+    private:
+        mutable std::mutex mtx;
+        OnComplete onComplete;
+        std::set<DeviceId> devices;
+        unsigned completeCount = 0;
+        unsigned successCount = 0;
+    };
+    auto devices = std::make_shared<SendMessageContext>([
+        w= weak(),
+        to,
+        token,
+        deviceId,
+        onlyConnected,
+        retryOnTimeout
+    ](bool success, bool sent) {
+        if (auto acc = w.lock())
+            acc->onMessageSent(to, token, deviceId, success, onlyConnected, sent && retryOnTimeout);
+    });
+
+    struct TextMessageCtx {
+        std::weak_ptr<JamiAccount> acc;
+        std::string peerId;
+        DeviceId deviceId;
+        std::shared_ptr<SendMessageContext> devices;
+        std::shared_ptr<dhtnet::ChannelSocket> sipChannel;
+    };
+
     const auto& payload = *payloads.begin();
-    MessageChannelHandler::Message msg;
-    msg.id = token;
-    msg.t = payload.first;
-    msg.c = payload.second;
+    auto msg = std::make_shared<MessageChannelHandler::Message>();
+    msg->id = token;
+    msg->t = payload.first;
+    msg->c = payload.second;
     auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
     if (deviceId.empty()) {
-        bool sent = false;
         auto conns = handler->getChannels(toUri);
         clk.unlock();
         for (const auto& conn : conns) {
-            if (MessageChannelHandler::sendMessage(conn, msg)) {
-                devices->emplace(conn->deviceId());
-                sent = true;
-            }
-        }
-        if (sent) {
-            if (!onlyConnected)
-                runOnMainThread([w = weak(), to, token, deviceId]() {
-                    if (auto acc = w.lock())
-                        acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-                });
-            return;
+            if (!devices->add(conn->deviceId()))
+                continue;
+            dht::ThreadPool::io().run([conn, msg, devices] {
+                devices->complete(conn->deviceId(), MessageChannelHandler::sendMessage(conn, *msg));
+            });
         }
     } else {
         if (auto conn = handler->getChannel(toUri, device)) {
             clk.unlock();
-            if (MessageChannelHandler::sendMessage(conn, msg)) {
-                if (!onlyConnected)
-                    runOnMainThread([w = weak(), to, token, deviceId]() {
-                        if (auto acc = w.lock())
-                            acc->messageEngine_.onMessageSent(to, token, true, deviceId);
-                    });
-                return;
-            }
+            devices->add(device);
+            dht::ThreadPool::io().run([device, conn, msg, devices] {
+                devices->complete(device, MessageChannelHandler::sendMessage(conn, *msg));
+            });
+            devices->start();
+            return;
         }
     }
     if (clk)
@@ -3156,7 +3204,7 @@ JamiAccount::sendMessage(const std::string& to,
             continue;
         if (!deviceId.empty() && key.second != device)
             continue;
-        if (!devices->emplace(key.second).second)
+        if (!devices->add(key.second))
             continue;
 
         auto& conn = value.back();
@@ -3165,12 +3213,10 @@ JamiAccount::sendMessage(const std::string& to,
         // Set input token into callback
         auto ctx = std::make_unique<TextMessageCtx>();
         ctx->acc = weak();
-        ctx->to = to;
-        ctx->deviceId = device;
-        ctx->id = token;
-        ctx->onlyConnected = onlyConnected;
-        ctx->retryOnTimeout = retryOnTimeout;
-        ctx->channel = channel;
+        ctx->peerId = to;
+        ctx->deviceId = key.second;
+        ctx->devices = devices;
+        ctx->sipChannel = channel;
 
         try {
             auto res = sendSIPMessage(conn,
@@ -3179,42 +3225,41 @@ JamiAccount::sendMessage(const std::string& to,
                                       token,
                                       payloads,
                                       [](void* token, pjsip_event* event) {
-                                          std::shared_ptr<TextMessageCtx> c {
-                                              (TextMessageCtx*) token};
-                                          auto code = event->body.tsx_state.tsx->status_code;
-                                          runOnMainThread([c = std::move(c), code]() {
-                                              if (c) {
-                                                  if (auto acc = c->acc.lock())
-                                                      acc->onSIPMessageSent(std::move(c), code);
-                                              }
-                                          });
+                                          if (auto c = std::shared_ptr<TextMessageCtx>{(TextMessageCtx*) token})
+                                              runOnMainThread([
+                                                  c = std::move(c),
+                                                  code = event->body.tsx_state.tsx->status_code
+                                              ] {
+                                                  bool success = code == PJSIP_SC_OK;
+                                                  if (!success)
+                                                    if (auto acc = c->acc.lock())
+                                                        acc->shutdownSIPConnection(c->sipChannel, c->peerId, c->deviceId);
+                                                  c->devices->complete(c->deviceId, code == PJSIP_SC_OK);
+                                              });
                                       });
             if (!res) {
-                if (!onlyConnected)
-                    messageEngine_.onMessageSent(to, token, false, deviceId);
-                devices->erase(key.second);
+                devices->complete(key.second, false);
                 continue;
             }
         } catch (const std::runtime_error& ex) {
             JAMI_WARNING("{}", ex.what());
-            if (!onlyConnected)
-                messageEngine_.onMessageSent(to, token, false, deviceId);
-            devices->erase(key.second);
             // Remove connection in incorrect state
             shutdownSIPConnection(channel, to, key.second);
+            devices->complete(key.second, false);
             continue;
         }
 
         if (key.second == device) {
+            devices->start();
             return;
         }
     }
     lk.unlock();
+    devices->start();
 
     if (onlyConnected)
         return;
     // We are unable to send the message directly, try connecting
-    messageEngine_.onMessageSent(to, token, false, deviceId);
 
     // Get conversation id, which will be used by the iOS notification extension
     // to load the conversation.
@@ -3232,9 +3277,9 @@ JamiAccount::sendMessage(const std::string& to,
     };
 
     // get request type
-    auto payload_type = msg.t;
+    auto payload_type = msg->t;
     if (payload_type == MIME_TYPE_GIT) {
-        std::string id = extractIdFromJson(msg.c);
+        std::string id = extractIdFromJson(msg->c);
         if (!id.empty()) {
             payload_type += "/" + id;
         }
@@ -3252,8 +3297,8 @@ JamiAccount::sendMessage(const std::string& to,
                                            const std::shared_ptr<dht::crypto::PublicKey>& dev) {
                                            // Test if already sent
                                            auto deviceId = dev->getLongId();
-                                           if (!devices->emplace(deviceId).second
-                                               || deviceId == currentDevice) {
+                                           if (deviceId == currentDevice
+                                               || devices->pending(deviceId)) {
                                                return;
                                            }
 
@@ -3266,35 +3311,36 @@ JamiAccount::sendMessage(const std::string& to,
 }
 
 void
-JamiAccount::onSIPMessageSent(const std::shared_ptr<TextMessageCtx>& ctx, int code)
+JamiAccount::onMessageSent(const std::string& to, uint64_t id, const std::string& deviceId, bool success, bool onlyConnected, bool retry)
 {
-    if (code == PJSIP_SC_OK) {
-        if (!ctx->onlyConnected)
-            messageEngine_.onMessageSent(ctx->to,
-                                         ctx->id,
-                                         true,
-                                         ctx->deviceId ? ctx->deviceId.toString() : "");
-    } else {
+    if (!onlyConnected)
+        messageEngine_.onMessageSent(to,
+                                     id,
+                                     success,
+                                     deviceId);
+
+    if (!success) {
         // Note: This can be called from PJSIP's eventloop while
         // sipConnsMtx_ is locked. So we should retrigger the shutdown.
-        auto acc = ctx->acc.lock();
-        if (not acc)
-            return;
         JAMI_WARN("Timeout when send a message, close current connection");
-        shutdownSIPConnection(ctx->channel, ctx->to, ctx->deviceId);
+        /*if (ctx->sipChannel)
+            shutdownSIPConnection(ctx->sipChannel, ctx->to, ctx->deviceId);
+        else if (ctx->messageChannel)
+            ctx->messageChannel->stop();*/
+        //channelHandlers_[Uri::Scheme::SYNC]->closeChannel(ctx->messageChannel);
         // This MUST be done after closing the connection to avoid race condition
         // with messageEngine_
-        if (!ctx->onlyConnected)
+        /*if (!ctx->onlyConnected)
             messageEngine_.onMessageSent(ctx->to,
                                          ctx->id,
                                          false,
-                                         ctx->deviceId ? ctx->deviceId.toString() : "");
+                                         ctx->deviceId ? ctx->deviceId.toString() : "");*/
 
         // In that case, the peer typically changed its connectivity.
         // After closing sockets with that peer, we try to re-connect to
         // that peer one time.
-        if (ctx->retryOnTimeout)
-            messageEngine_.onPeerOnline(ctx->to, ctx->deviceId ? ctx->deviceId.toString() : "");
+        if (retry)
+            messageEngine_.onPeerOnline(to, deviceId);
     }
 }
 
