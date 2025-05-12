@@ -102,7 +102,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
                 return;
             }
         }
-
+        buffer.clear();
         auto convModule = acc->convModule(true);
         if (!convModule)
             return;
