@@ -218,7 +218,7 @@ IncomingFile::process()
                 std::filesystem::remove(shared->path_, ec);
             } else if (shared->info_.bytesProgress < shared->info_.totalSize) {
                 JAMI_WARNING("Channel for {} shut down before transfer was complete (progress: {}/{})", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
-            } else if (shared->info_.bytesProgress > shared->info_.totalSize) {
+            } else if (shared->info_.totalSize != 0 && shared->info_.bytesProgress > shared->info_.totalSize) {
                 JAMI_WARNING("Removing {} larger than announced: {}/{}", shared->path_, shared->info_.bytesProgress, shared->info_.totalSize);
                 std::filesystem::remove(shared->path_, ec);
             } else {
