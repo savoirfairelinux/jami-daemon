@@ -3,6 +3,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d1667f23_6e6f4947",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3337,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-13T18:56:12Z",
+      "side": 1,
+      "message": "No longer relevant?",
+      "range": {
+        "startLine": 3336,
+        "startChar": 8,
+        "endLine": 3337,
+        "endChar": 71
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95271802_1e05e68e",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3354,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-13T18:56:12Z",
+      "side": 1,
+      "message": "Need some cleanup here.",
+      "range": {
+        "startLine": 3339,
+        "startChar": 8,
+        "endLine": 3354,
+        "endChar": 30
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "6bebe4aa_685c235e",
         "filename": "src/jamidht/message_channel_handler.cpp",
         "patchSetId": 7
