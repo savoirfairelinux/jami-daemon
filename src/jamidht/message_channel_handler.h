@@ -69,6 +69,8 @@ public:
     void onReady(const std::shared_ptr<dht::crypto::Certificate>& peer,
                  const std::string& name,
                  std::shared_ptr<dhtnet::ChannelSocket> channel) override;
+    
+    void closeChannel(const std::string& peer, const DeviceId& device, std::shared_ptr<dhtnet::ChannelSocket> conn);
 
     struct Message
     {
