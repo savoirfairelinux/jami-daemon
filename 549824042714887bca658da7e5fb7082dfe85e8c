@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6bebe4aa_685c235e",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-13T18:27:20Z",
+      "side": 1,
+      "message": "whitespace",
+      "range": {
+        "startLine": 199,
+        "startChar": 0,
+        "endLine": 199,
+        "endChar": 4
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "17082e19_db0559d1",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-13T18:27:20Z",
+      "side": 1,
+      "message": "`JAMI_LOG`",
+      "range": {
+        "startLine": 211,
+        "startChar": 20,
+        "endLine": 211,
+        "endChar": 29
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "dfcae426_001120e2",
+        "filename": "src/jamidht/message_channel_handler.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-05-13T18:27:20Z",
+      "side": 1,
+      "message": "whitespace",
+      "range": {
+        "startLine": 72,
+        "startChar": 0,
+        "endLine": 72,
+        "endChar": 4
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
