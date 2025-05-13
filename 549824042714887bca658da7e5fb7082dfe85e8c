@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8a427e05_38f3f987",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3337,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-13T19:05:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d1667f23_6e6f4947",
+      "range": {
+        "startLine": 3336,
+        "startChar": 8,
+        "endLine": 3337,
+        "endChar": 71
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "95271802_1e05e68e",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-05-13T18:56:12Z",
       "side": 1,
       "message": "Need some cleanup here.",
+      "range": {
+        "startLine": 3339,
+        "startChar": 8,
+        "endLine": 3354,
+        "endChar": 30
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "475e0895_170ee4d2",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3354,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-13T19:05:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "95271802_1e05e68e",
       "range": {
         "startLine": 3339,
         "startChar": 8,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bed51956_9170833a",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 199,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-13T19:05:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6bebe4aa_685c235e",
+      "range": {
+        "startLine": 199,
+        "startChar": 0,
+        "endLine": 199,
+        "endChar": 4
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "17082e19_db0559d1",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "de363a3c_bbfde99f",
+        "filename": "src/jamidht/message_channel_handler.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 211,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-13T19:05:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "17082e19_db0559d1",
+      "range": {
+        "startLine": 211,
+        "startChar": 20,
+        "endLine": 211,
+        "endChar": 29
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "dfcae426_001120e2",
@@ -106,6 +202,30 @@
       "writtenOn": "2025-05-13T18:27:20Z",
       "side": 1,
       "message": "whitespace",
+      "range": {
+        "startLine": 72,
+        "startChar": 0,
+        "endLine": 72,
+        "endChar": 4
+      },
+      "revId": "549824042714887bca658da7e5fb7082dfe85e8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "72b8a8c9_0f17a98f",
+        "filename": "src/jamidht/message_channel_handler.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-05-13T19:05:12Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dfcae426_001120e2",
       "range": {
         "startLine": 72,
         "startChar": 0,
