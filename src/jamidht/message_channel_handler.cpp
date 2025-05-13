@@ -189,6 +189,30 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     });
 }
 
+void
+MessageChannelHandler::closeChannel(const std::string& peer, const DeviceId& device, const std::shared_ptr<dhtnet::ChannelSocket>& conn)
+{
+    if (!conn)
+        return;
+    std::unique_lock lk(pimpl_->connectionsMtx_);
+    auto it = pimpl_->connections_.find(peer);
+    if (it != pimpl_->connections_.end()) {
+        auto deviceIt = it->second.find(device);
+        if (deviceIt != it->second.end()) {
+            auto& channels = deviceIt->second;
+            channels.erase(std::remove(channels.begin(), channels.end(), conn), channels.end());
+            if (channels.empty()) {
+                it->second.erase(deviceIt);
+                if (it->second.empty()) {
+                    pimpl_->connections_.erase(it);
+                }
+            }
+        }
+    }
+    lk.unlock();
+    conn->stop();
+}
+
 bool
 MessageChannelHandler::sendMessage(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
                                    const Message& message)
