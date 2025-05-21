@@ -669,8 +669,22 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                                                         accountScheme,
                                                         wthis](const DeviceId& deviceId,
                                                                const std::string& name,
-                                                               std::shared_ptr<dhtnet::ChannelSocket>
-                                                                   socket) {
+                                                               std::shared_ptr<dhtnet::ChannelSocket> socket) {
+            if (!socket) {
+                JAMI_WARNING("[LinkDevice] Temporary connection manager received invalid socket.");
+                if (ctx->timeout)
+                    ctx->timeout->cancel();
+                ctx->timeout.reset();
+                ctx->linkDevCtx->numOpenChannels--;
+                if (auto sthis = wthis.lock())
+                    sthis->authCtx_.reset();
+                ctx->linkDevCtx->state = AuthDecodingState::ERR;
+                emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+                    ctx->accountId,
+                    static_cast<uint8_t>(DeviceAuthState::DONE),
+                    DeviceAuthInfo::Error::NETWORK);
+                return;
+            }
             ctx->linkDevCtx->channel = socket;
 
             ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
