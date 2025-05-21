@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "db7b832a_6be6a0e5",
+        "filename": "src/account.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 326,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-05-21T21:19:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3f6d9e33_35b37034",
+      "range": {
+        "startLine": 326,
+        "startChar": 9,
+        "endLine": 326,
+        "endChar": 32
+      },
+      "revId": "96b5a63bede46f60f25c47f69b05cc8d488e6172",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "02597d2b_6872f15f",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-05-21T15:58:39Z",
       "side": 1,
       "message": "Unused variables",
+      "range": {
+        "startLine": 2516,
+        "startChar": 4,
+        "endLine": 2517,
+        "endChar": 35
+      },
+      "revId": "96b5a63bede46f60f25c47f69b05cc8d488e6172",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "eeed20ce_596fb982",
+        "filename": "src/manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2517,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-05-21T21:19:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "02597d2b_6872f15f",
       "range": {
         "startLine": 2516,
         "startChar": 4,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "bf820087_e5c821e0",
+        "filename": "src/manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2551,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-05-21T21:19:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "36ffd956_f89ad4a6",
+      "range": {
+        "startLine": 2551,
+        "startChar": 4,
+        "endLine": 2551,
+        "endChar": 10
+      },
+      "revId": "96b5a63bede46f60f25c47f69b05cc8d488e6172",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "cdeae277_f7afbff1",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0ef5fbd2_458099f0",
+        "filename": "src/manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2557,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-05-21T21:19:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cdeae277_f7afbff1",
+      "range": {
+        "startLine": 2557,
+        "startChar": 4,
+        "endLine": 2557,
+        "endChar": 32
+      },
+      "revId": "96b5a63bede46f60f25c47f69b05cc8d488e6172",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c927b731_66f241d7",
@@ -106,6 +202,30 @@
       "writtenOn": "2025-05-21T15:58:39Z",
       "side": 1,
       "message": "This function isn\u0027t defined (and doesn\u0027t seem to be needed anyway, so just delete?).",
+      "range": {
+        "startLine": 76,
+        "startChar": 4,
+        "endLine": 76,
+        "endChar": 42
+      },
+      "revId": "96b5a63bede46f60f25c47f69b05cc8d488e6172",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1e9f62a_932f8e90",
+        "filename": "src/manager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 76,
+      "author": {
+        "id": 1116
+      },
+      "writtenOn": "2025-05-21T21:19:04Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c927b731_66f241d7",
       "range": {
         "startLine": 76,
         "startChar": 4,
