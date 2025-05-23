@@ -2252,7 +2252,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         git_buf_dispose(&signed_data);
         cc.timestamp = git_commit_time(commit.get());
 
-        auto post = postCondition(id, author, cc);
+        auto post = postCondition(id, cc.author, cc);
         emplaceCb(std::move(cc));
 
         if (post)
