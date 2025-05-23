@@ -170,7 +170,7 @@ public:
 #endif
     static void releasePort(uint16_t port) noexcept;
 
-    virtual dhtnet::IceTransportOptions getIceOptions() const noexcept;
+    virtual dhtnet::IceTransportOptions getIceOptions() const;
 
     virtual void sendMessage(const std::string& to,
                              const std::string& deviceId,

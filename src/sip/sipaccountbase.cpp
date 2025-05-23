@@ -242,7 +242,7 @@ SIPAccountBase::generateVideoPort() const
 #endif
 
 dhtnet::IceTransportOptions
-SIPAccountBase::getIceOptions() const noexcept
+SIPAccountBase::getIceOptions() const
 {
     dhtnet::IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();

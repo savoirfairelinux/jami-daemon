@@ -325,8 +325,8 @@ public:
     /**
      * Create and return ICE options.
      */
-    dhtnet::IceTransportOptions getIceOptions() const noexcept override;
-    void getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const noexcept;
+    dhtnet::IceTransportOptions getIceOptions() const override;
+    void getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const;
     dhtnet::IpAddr getPublishedIpAddress(uint16_t family = PF_UNSPEC) const override;
 
     /* Devices - existing device */

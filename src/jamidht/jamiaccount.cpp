@@ -3355,13 +3355,13 @@ JamiAccount::onMessageSent(const std::string& to, uint64_t id, const std::string
 }
 
 dhtnet::IceTransportOptions
-JamiAccount::getIceOptions() const noexcept
+JamiAccount::getIceOptions() const
 {
     return connectionManager_->getIceOptions();
 }
 
 void
-JamiAccount::getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const noexcept
+JamiAccount::getIceOptions(std::function<void(dhtnet::IceTransportOptions&&)> cb) const
 {
     return connectionManager_->getIceOptions(std::move(cb));
 }
