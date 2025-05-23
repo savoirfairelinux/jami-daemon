@@ -332,7 +332,7 @@ public:
     {
         ConversationModule::saveConvRequests(accountId_, conversationsRequests_);
     }
-    void declineOtherConversationWith(const std::string& uri) noexcept;
+    void declineOtherConversationWith(const std::string& uri);
     bool addConversationRequest(const std::string& id, const ConversationRequest& req)
     {
         // conversationsRequestsMtx_ MUST BE LOCKED
@@ -640,9 +640,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             deviceId,
             [w = weak(),
              conv,
-             conversationId = std::move(conversationId),
+             conversationId,
              peer = std::move(peer),
-             deviceId = std::move(deviceId),
+             deviceId,
              commitId = std::move(commitId)](const auto& channel) {
                 auto sthis = w.lock();
                 auto acc = sthis ? sthis->account_.lock() : nullptr;
@@ -662,9 +662,9 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                     [w,
                      conv,
                      conversationId = std::move(conversationId),
-                     peer = std::move(peer),
-                     deviceId = std::move(deviceId),
-                     commitId = std::move(commitId)](bool ok) {
+                     peer,
+                     deviceId,
+                     commitId](bool ok) {
                         auto shared = w.lock();
                         if (!shared)
                             return;
@@ -935,7 +935,7 @@ ConversationModule::Impl::updateConvForContact(const std::string& uri,
 }
 
 void
-ConversationModule::Impl::declineOtherConversationWith(const std::string& uri) noexcept
+ConversationModule::Impl::declineOtherConversationWith(const std::string& uri)
 {
     // conversationsRequestsMtx_ MUST BE LOCKED
     for (auto& [id, request] : conversationsRequests_) {
