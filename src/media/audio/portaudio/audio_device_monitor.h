@@ -69,13 +69,14 @@ GetFriendlyNameFromIMMDeviceId(CComPtr<IMMDeviceEnumerator> enumerator, LPCWSTR 
 
     PROPVARIANT varName;
     PropVariantInit(&varName);
-    if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName))) {
-        std::wstring name = varName.pwszVal;
-        PropVariantClear(&varName);
-        return jami::to_string(name);
-    }
+    HRESULT hr = props->GetValue(PKEY_Device_FriendlyName, &varName);
 
-    return {};
+    std::string result;
+    if (SUCCEEDED(hr) && varName.vt == VT_LPWSTR && varName.pwszVal) {
+        result = jami::to_string(varName.pwszVal);
+    }
+    PropVariantClear(&varName);
+    return result;
 }
 
 class AudioDeviceNotificationClient : public IMMNotificationClient
