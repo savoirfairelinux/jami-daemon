@@ -757,10 +757,20 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
 
     const auto localAddress = dhtnet::ip_utils::getInterfaceAddr(getLocalInterface(),
                                                                  target.getFamily());
+    dhtnet::IpAddr publishedIpAddress;
+    {
+        std::shared_lock lkCM(connManagerMtx_);
+        if (connectionManager_) {
+            publishedIpAddress = connectionManager_->getPublishedIpAddress(target.getFamily());
+        } else {
+            JAMI_ERROR("[call:{}] Connection manager is not initialized", call->getCallId());
+            return;
+        }
+    }
 
     dhtnet::IpAddr addrSdp = getPublishedSameasLocal()
                                  ? localAddress
-                                 : connectionManager_->getPublishedIpAddress(target.getFamily());
+                                 : publishedIpAddress;
 
     // fallback on local address
     if (not addrSdp)
@@ -904,17 +914,22 @@ JamiAccount::loadConfig()
     registeredName_ = config().registeredName;
     if (accountManager_)
         accountManager_->setAccountDeviceName(config().deviceName);
-    if (connectionManager_) {
-        if (auto c = connectionManager_->getConfig()) {
-            // Update connectionManager's config
-            c->upnpEnabled = config().upnpEnabled;
-            c->turnEnabled = config().turnEnabled;
-            c->turnServer = config().turnServer;
-            c->turnServerUserName = config().turnServerUserName;
-            c->turnServerPwd = config().turnServerPwd;
-            c->turnServerRealm = config().turnServerRealm;
+
+    // Try to update the connection manager with the new config
+    {
+        std::lock_guard lk(connManagerMtx_);
+        if (connectionManager_) {
+             if (auto c = connectionManager_->getConfig()) {
+                c->upnpEnabled = config().upnpEnabled;
+                c->turnEnabled = config().turnEnabled;
+                c->turnServer = config().turnServer;
+                c->turnServerUserName = config().turnServerUserName;
+                c->turnServerPwd = config().turnServerPwd;
+                c->turnServerRealm = config().turnServerRealm;
+            }
         }
     }
+
     if (config().proxyEnabled) {
         try {
             auto str = fileutils::loadCacheTextFile(cachePath_ / "dhtproxy",
@@ -2462,6 +2477,7 @@ JamiAccount::setRegistrationState(RegistrationState state,
         if (state == RegistrationState::REGISTERED) {
             JAMI_WARNING("[Account {}] Connected", getAccountID());
             turnCache_->refresh();
+            std::shared_lock lkCM(connManagerMtx_);
             if (connectionManager_)
                 connectionManager_->storeActiveIpAddress();
         } else if (state == RegistrationState::TRYING) {
@@ -4590,6 +4606,8 @@ void
 JamiAccount::updateUpnpController()
 {
     Account::updateUpnpController();
+    // This method is only called from Account::loadConfig which is synchronized using the
+    // configuration mutex already, so we don't currently need to lock the connection manager's.
     if (connectionManager_) {
         auto config = connectionManager_->getConfig();
         if (config)
