@@ -797,19 +797,12 @@ JamiAccount::onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
     if (not addrSdp)
         addrSdp = localAddress;
 
-    // Initialize the session using ULAW as default codec in case of early media
-    // The session should be ready to receive media once the first INVITE is sent, before
-    // the session initialization is completed
-    if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-        JAMI_WARNING("[call:{}] Unable to instantiate codec for early media", call->getCallId());
-
     // Building the local SDP offer
     auto& sdp = call->getSDP();
 
     sdp.setPublishedIP(addrSdp);
 
     auto mediaAttrList = call->getMediaAttributeList();
-
     if (mediaAttrList.empty()) {
         JAMI_ERROR("[call:{}] No media. Abort!", call->getCallId());
         return;
