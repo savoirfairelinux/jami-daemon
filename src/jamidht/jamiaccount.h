@@ -761,6 +761,9 @@ private:
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
+    
+    /* presence state protection - protects presenceState_ and presenceNote_ */
+    mutable std::mutex presenceStateMtx_;
 
     mutable std::mutex dhtValuesMtx_;
 
