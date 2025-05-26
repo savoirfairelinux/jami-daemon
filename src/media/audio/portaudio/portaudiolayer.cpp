@@ -61,6 +61,7 @@ struct PortAudioLayer::PortAudioLayerImpl
     bool outputInitialized_ {false};
 
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
+    bool paStopStream(Direction streamDirection);
 
     AudioDeviceNotificationClientPtr audioDeviceNotificationClient_;
     // The following flag used to debounce the device state changes,
@@ -213,31 +214,15 @@ PortAudioLayer::startStream(AudioDeviceType stream)
 void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
-    auto stopPaStream = [](PaStream* stream) -> bool {
-        if (!stream || Pa_IsStreamStopped(stream) != paNoError)
-            return false;
-        auto err = Pa_StopStream(stream);
-        if (err != paNoError) {
-            JAMI_ERR("Pa_StopStream error: %s", Pa_GetErrorText(err));
-            return false;
-        }
-        err = Pa_CloseStream(stream);
-        if (err != paNoError) {
-            JAMI_ERR("Pa_CloseStream error: %s", Pa_GetErrorText(err));
-            return false;
-        }
-        return true;
-    };
-
-    auto stopPlayback = [this, &stopPaStream](bool fullDuplexMode = false) -> bool {
+    auto stopPlayback = [this](bool fullDuplexMode = false) -> bool {
         std::lock_guard lock(mutex_);
         if (status_.load() != Status::Started)
             return false;
         bool stopped = false;
         if (fullDuplexMode)
-            stopped = stopPaStream(pimpl_->streams_[Direction::IO]);
+            stopped = pimpl_->paStopStream(Direction::IO);
         else
-            stopped = stopPaStream(pimpl_->streams_[Direction::Output]);
+            stopped = pimpl_->paStopStream(Direction::Output);
         if (stopped)
             status_.store(Status::Idle);
         return stopped;
@@ -249,7 +234,7 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
         if (pimpl_->streams_[Direction::IO]) {
             stopped = stopPlayback(true);
         } else {
-            stopped = stopPaStream(pimpl_->streams_[Direction::Input]) && stopPlayback();
+            stopped = pimpl_->paStopStream(Direction::Input) && stopPlayback();
         }
         if (stopped) {
             recordChanged(false);
@@ -259,7 +244,7 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
             return;
         break;
     case AudioDeviceType::CAPTURE:
-        if (stopPaStream(pimpl_->streams_[Direction::Input])) {
+        if (pimpl_->paStopStream(Direction::Input)) {
             recordChanged(false);
             JAMI_DBG("PortAudioLayer input stream stopped");
         } else
@@ -739,6 +724,35 @@ PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
     parent.playbackChanged(true);
     return true;
 }
+
+bool
+PortAudioLayer::PortAudioLayerImpl::paStopStream(Direction streamDirection)
+{
+    PaStream* paStream = streams_[streamDirection];
+    if (!paStream)
+        return false;
+    auto ret = Pa_IsStreamStopped(paStream);
+    if (ret == 1) {
+        JAMI_DBG("PortAudioLayer stream %d already stopped", streamDirection);
+        return true;
+    } else if (ret < 0) {
+        JAMI_ERR("Pa_IsStreamStopped error: %s", Pa_GetErrorText(ret));
+        return false;
+    }
+    auto err = Pa_StopStream(paStream);
+    if (err != paNoError) {
+        JAMI_ERR("Pa_StopStream error: %s", Pa_GetErrorText(err));
+        return false;
+    }
+    err = Pa_CloseStream(paStream);
+    if (err != paNoError) {
+        JAMI_ERR("Pa_CloseStream error: %s", Pa_GetErrorText(err));
+        return false;
+    }
+    JAMI_DBG("PortAudioLayer stream %d stopped", streamDirection);
+    streams_[streamDirection] = nullptr;
+    return true;
+};
 
 int
 PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
