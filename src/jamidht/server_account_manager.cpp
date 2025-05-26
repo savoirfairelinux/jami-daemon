@@ -496,9 +496,9 @@ ServerAccountManager::syncDevices()
         jsonContacts,
         [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
+            if (!this_) return;
             JAMI_DEBUG("[Account {}] [Auth] Got contact sync request callback with status code={}",
                 this_->accountId_, response.status_code);
-            if (!this_) return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
