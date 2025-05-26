@@ -354,6 +354,10 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
     if (not call)
         return {};
 
+    std::shared_lock lkCM(connManagerMtx_);
+    if (!connectionManager_)
+        return {};
+
     connectionManager_->getIceOptions([call, w = weak(), uri = std::move(uri)](auto&& opts) {
         if (call->isIceEnabled()) {
             if (not call->createIceMediaTransport(false)
