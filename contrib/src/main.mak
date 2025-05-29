@@ -56,7 +56,7 @@ SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= https://downloads.videolan.org/pub/contrib
 
 # CPE ID list for generating SBOM
-PKG_CPE := 
+PKG_CPE :=
 
 #
 # Machine-dependent variables
@@ -419,7 +419,7 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchai
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DCMAKE_C_FLAGS="$(CFLAGS)" \
-		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)" 
+		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)"
 else
 CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
@@ -455,6 +455,7 @@ PKGS := $(PKGS_MANUAL) $(PKGS_DEPS)
 convert-static:
 	for p in $(PREFIX)/lib/pkgconfig/*.pc; do $(SRC)/pkg-static.sh $$p; done
 fetch: $(PKGS:%=.sum-%)
+	@echo "Tarballsss = $(TARBALLS) "
 fetch-all: $(PKGS_ALL:%=.sum-%)
 
 ifdef CACHE_BUILD
