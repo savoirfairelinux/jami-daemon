@@ -67,6 +67,8 @@ do
 		--cache-dir=*)
 			CACHE_DIR="${1#--cache-dir=}"
 			CONF_TARBALLS="${CACHE}"
+			@echo "Setting cache directory to ${CACHE_DIR}"
+			@echo "Setting tarballs to ${CONF_TARBALLS}"
 			;;
 		--cache-builds)
 			CACHE_BUILD=1
