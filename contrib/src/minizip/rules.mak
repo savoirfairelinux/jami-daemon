@@ -18,6 +18,7 @@ LIBMINIZIP_CMAKECONF := \
 		-DMZ_FETCH_LIBS=ON
 
 $(TARBALLS)/minizip-ng-$(LIBMINIZIP_VERSION).tar.gz:
+	@echo "Downloading minizip-ng $(LIBMINIZIP_VERSION) from $(LIBMINIZIP_URL)"
 	$(call download,$(LIBMINIZIP_URL))
 
 .sum-minizip: minizip-ng-$(LIBMINIZIP_VERSION).tar.gz

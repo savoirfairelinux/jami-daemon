@@ -24,6 +24,7 @@ ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 # Pure dependency of restinio: do not add to PKGS.
 
 $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
+	@echo "Downloading asio $(ASIO_VERSION) from $(ASIO_URL)"
 	$(call download,$(ASIO_URL))
 
 asio: asio-$(ASIO_VERSION).tar.gz
