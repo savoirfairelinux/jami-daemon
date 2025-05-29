@@ -56,7 +56,7 @@ SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= https://downloads.videolan.org/pub/contrib
 
 # CPE ID list for generating SBOM
-PKG_CPE := 
+PKG_CPE :=
 
 #
 # Machine-dependent variables
@@ -419,7 +419,7 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchai
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DCMAKE_C_FLAGS="$(CFLAGS)" \
-		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)" 
+		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)"
 else
 CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
@@ -529,6 +529,8 @@ cyclonedx:
 	@$(SRC)/cyclonedx.sh "$(PKG_CPE)" "$(SRC)"
 
 list:
+	@echo "Tarballsss = $(TARBALLS)"
+	ls -l $(TARBALLS)
 	@echo All packages:
 	$(call pprint,$(PKGS_ALL))
 	@echo Distribution-provided packages:
