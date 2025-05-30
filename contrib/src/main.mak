@@ -56,7 +56,7 @@ SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= https://downloads.videolan.org/pub/contrib
 
 # CPE ID list for generating SBOM
-PKG_CPE := 
+PKG_CPE :=
 
 #
 # Machine-dependent variables
@@ -64,6 +64,7 @@ PKG_CPE :=
 
 PREFIX ?= $(TOPDST)/$(HOST)
 PREFIX := $(abspath $(PREFIX))
+export PREFIX
 ifneq ($(HOST),$(BUILD))
 HAVE_CROSS_COMPILE = 1
 endif
@@ -256,19 +257,19 @@ FLOCK = flock
 endif
 endif
 ifneq ($(TARBALLS_DEFAULT),$(TARBALLS))
-FLOCK ?= $(error custom TARBALLS location requires flock)
+# FLOCK ?= $(error custom TARBALLS location requires flock)
 endif
 
-FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
+# FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
 
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download = $(error Attempting to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
-download = $(FLOCK_PREFIX) wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
+download = wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = $(FLOCK_PREFIX) curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
+download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
-download = $(FLOCK_PREFIX) sh -c \
+download = sh -c \
   'rm -f "$@.tmp" && fetch -p -o "$@.tmp" "$(1)" && touch "$@.tmp" && mv "$@.tmp" "$@"'
 else
 download = $(error Neither wget nor curl found!)
@@ -368,7 +369,7 @@ HOSTVARS := $(HOSTTOOLS) \
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download_git = $(error Attempting to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
-download_git = $(FLOCK_PREFIX) sh -c "\
+download_git = sh -c "\
   rm -Rf '$(@:.tar.xz=)' && \
   $(GIT) clone $(2:%=--branch '%') '$(1)' '$(@:.tar.xz=)' && \
   (cd '$(@:.tar.xz=)' && $(GIT) checkout $(3:%= '%')) && \
@@ -419,7 +420,7 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchai
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DCMAKE_C_FLAGS="$(CFLAGS)" \
-		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)" 
+		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)"
 else
 CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
@@ -462,21 +463,31 @@ ifdef CACHE_BUILD
 ENTRY=$(CACHE_DIR)/contrib/$(shell cat $(MAKEFILE_LIST) | sha256sum | cut -d ' ' -f 1)
 CACHE_PREFIX=$(ENTRY)/$(shell basename $(PREFIX))
 
+.cache-%: $(PREFIX) .dep-% .%
+	@echo "Building package $* with caching..."
+	ls -l $(CACHE_PREFIX)
+	touch $@
+
 install: $(PREFIX)
 
 ifneq ($(PREFIX),$(CACHE_PREFIX))
 $(PREFIX): $(CACHE_PREFIX)
-	ln --symbolic $^ $@
+	unlink $(PREFIX) || true
+	ln -s $^ $@
+	ls -l $(PREFIX)
+	@echo "Using cached prefix: $(CACHE_PREFIX)"
+	@echo "Using prefix: $(PREFIX)"
 endif
 
 $(CACHE_PREFIX): $(ENTRY)/.build
 
 ifeq ($(MAKELEVEL), 0)
 $(ENTRY)/.build:
+	@echo "PREFIX: $(PREFIX), CACHE PREFIX: $(CACHE_PREFIX)"
 	unlink $(PREFIX) || true
-	mkdir --parents $(CACHE_PREFIX)
-	$(FLOCK) $(ENTRY) $(MAKE) PREFIX=$(CACHE_PREFIX)
+	mkdir -p $(CACHE_PREFIX)
 	touch $@
+
 else
 $(ENTRY)/.build: $(PKGS:%=.%) convert-static
 $(PKGS:%=.%): FORCE
@@ -529,6 +540,8 @@ cyclonedx:
 	@$(SRC)/cyclonedx.sh "$(PKG_CPE)" "$(SRC)"
 
 list:
+	@echo "Tarballsss = $(TARBALLS)"
+	ls -l $(TARBALLS)
 	@echo All packages:
 	$(call pprint,$(PKGS_ALL))
 	@echo Distribution-provided packages:
