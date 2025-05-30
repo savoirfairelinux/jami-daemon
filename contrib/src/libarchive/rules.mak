@@ -9,7 +9,7 @@ ifeq ($(call need_pkg,"libarchive >= 3.4.0"),)
 PKGS_FOUND += libarchive
 endif
 endif
-DEPS_libarchive += nettle gmp zlib
+DEPS_libarchive += nettle gmp zlib minizip
 
 LIBARCHIVE_CMAKECONF := \
 		-DCMAKE_INSTALL_LIBDIR=lib \
