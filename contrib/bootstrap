@@ -143,6 +143,7 @@ CACHE_BUILD := $CACHE_BUILD
 ENABLE_DEBUG := $ENABLE_DEBUG
 ENABLE_ASAN := $ENABLE_ASAN
 EOF
+cat config.mak
 
 add_make()
 {
