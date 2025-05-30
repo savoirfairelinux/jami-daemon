@@ -56,7 +56,10 @@ SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= https://downloads.videolan.org/pub/contrib
 
 # CPE ID list for generating SBOM
-PKG_CPE := 
+PKG_CPE :=
+
+# Helper: path to a package's rules.mak
+pkg_rules = $(SRC)/$1/rules.mak
 
 #
 # Machine-dependent variables
@@ -64,6 +67,7 @@ PKG_CPE :=
 
 PREFIX ?= $(TOPDST)/$(HOST)
 PREFIX := $(abspath $(PREFIX))
+export PREFIX
 ifneq ($(HOST),$(BUILD))
 HAVE_CROSS_COMPILE = 1
 endif
@@ -72,6 +76,18 @@ ARCH := $(shell $(SRC)/get-arch.sh $(HOST))
 ifeq ($(ARCH)-$(HAVE_WIN32),x86_64-1)
 HAVE_WIN64 := 1
 endif
+
+# Raw hash tool (no --check) for signature generation
+ifeq ($(shell sha512sum --version >/dev/null 2>&1 || echo FAIL),)
+HASH512 = sha512sum
+else ifeq ($(shell shasum --version >/dev/null 2>&1 || echo FAIL),)
+HASH512 = shasum -a 512
+else ifeq ($(shell openssl version >/dev/null 2>&1 || echo FAIL),)
+HASH512 = openssl dgst -sha512 | sed 's/^.*= //'
+else
+HASH512 = $(error No raw SHA-512 hashing tool found)
+endif
+
 
 ifdef HAVE_CROSS_COMPILE
 ifdef HAVE_WIN32
@@ -256,19 +272,19 @@ FLOCK = flock
 endif
 endif
 ifneq ($(TARBALLS_DEFAULT),$(TARBALLS))
-FLOCK ?= $(error custom TARBALLS location requires flock)
+# FLOCK ?= $(error custom TARBALLS location requires flock)
 endif
 
-FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
+# FLOCK_PREFIX := $(and $(FLOCK),$(FLOCK) "$@.lock")
 
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download = $(error Attempting to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
-download = $(FLOCK_PREFIX) wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
+download = wget $(if ${BATCH_MODE},-nv) -t 4 --waitretry 10 -O "$@" "$(1)"
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = $(FLOCK_PREFIX) curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
+download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 4 -- "$(1)" > "$@"
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
-download = $(FLOCK_PREFIX) sh -c \
+download = sh -c \
   'rm -f "$@.tmp" && fetch -p -o "$@.tmp" "$(1)" && touch "$@.tmp" && mv "$@.tmp" "$@"'
 else
 download = $(error Neither wget nor curl found!)
@@ -368,7 +384,7 @@ HOSTVARS := $(HOSTTOOLS) \
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download_git = $(error Attempting to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else
-download_git = $(FLOCK_PREFIX) sh -c "\
+download_git = sh -c "\
   rm -Rf '$(@:.tar.xz=)' && \
   $(GIT) clone $(2:%=--branch '%') '$(1)' '$(@:.tar.xz=)' && \
   (cd '$(@:.tar.xz=)' && $(GIT) checkout $(3:%= '%')) && \
@@ -419,7 +435,7 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchai
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 		-DBUILD_SHARED_LIBS=OFF \
 		-DCMAKE_C_FLAGS="$(CFLAGS)" \
-		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)" 
+		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)"
 else
 CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
@@ -465,12 +481,52 @@ ifdef CACHE_BUILD
 
 ENTRY=$(CACHE_DIR)/contrib/$(shell cat $(MAKEFILE_LIST) | sha256sum | cut -d ' ' -f 1)
 CACHE_PREFIX=$(ENTRY)/$(shell basename $(PREFIX))
+STAMP_DIR := $(CACHE_PREFIX)/.stamps
+CACHE_FORCE ?= 0
+# List (comma or space) of packages to force clean: make CACHE_CLEAN="libarchive zlib"
+CACHE_CLEAN_LIST := $(subst ,, ,$(CACHE_CLEAN))
+
+$(STAMP_DIR):
+	@mkdir -p $(STAMP_DIR)
+
+$(STAMP_DIR)/%.sig: | $(STAMP_DIR) $(PREFIX)
+	@pkg="$*"; \
+	sig_before=""; [ -f $@ ] && sig_before=$$(cat $@); \
+	rules_file="$(call pkg_rules,$*)"; \
+	rules_hash=$$( if [ -f $$rules_file ]; then $(HASH512) $$rules_file | awk '{print $$1}'; else echo none; fi ); \
+	flags_hash=$$( printf '%s\n' "$(CFLAGS) $(CXXFLAGS) $(LDFLAGS)" | $(HASH512) | awk '{print $$1}' ); \
+	if [ ! -f "$$rules_file" ]; then echo "(warn) missing rules.mak for $$pkg (skipping tar hash)"; fi; \
+	tar_spec=$$( [ -f "$$rules_file" ] && sed -n 's|^\($(TARBALLS)/[^:]*tar[^:]*\):.*|\1|p' "$$rules_file" | head -n1 ); \
+	tar_hash=none; if [ -n "$$tar_spec" ]; then [ -f "$$tar_spec" ] && tar_hash=$$( $(HASH512) "$$tar_spec" | awk '{print $$1}' ); fi; \
+	new_sig="rules=$$rules_hash flags=$$flags_hash tar=$$tar_hash"; \
+	force_pkg=0; for p in $(CACHE_CLEAN_LIST); do [ "$$p" = "$$pkg" ] && force_pkg=1; done; \
+	marker=."$$pkg"; \
+	need_build=0; \
+	echo "new sig: $$new_sig"; \
+	if [ ! -f "$$marker" ]; then need_build=1; fi; \
+	if [ "$(CACHE_FORCE)" = "1" ] || [ "$$force_pkg" = "1" ] || [ "$$new_sig" != "$$sig_before" ] || [ "$$need_build" = "1" ]; then \
+		echo "==> (re)building $$pkg (cache update)"; \
+		$(MAKE) ".$$pkg" || exit 1; \
+		echo "$$new_sig" > $@; \
+		echo "new sig: $$new_sig"; \
+
+	else \
+		echo "==> cache hit $$pkg (no rebuild)"; \
+	fi; \
+	touch $@
+
+.cache-%: $(PREFIX) $(STAMP_DIR)/%.sig
+	@echo "Building package $* with cache enabled..."
+	touch $@
 
 install: $(PREFIX)
 
 ifneq ($(PREFIX),$(CACHE_PREFIX))
 $(PREFIX): $(CACHE_PREFIX)
-	ln --symbolic $^ $@
+	ln -s $^ $@
+	ls -l $(PREFIX)
+	@echo "Using cached prefix: $(CACHE_PREFIX)"
+	@echo "Using prefix: $(PREFIX)"
 endif
 
 $(CACHE_PREFIX): $(ENTRY)/.build
@@ -478,9 +534,9 @@ $(CACHE_PREFIX): $(ENTRY)/.build
 ifeq ($(MAKELEVEL), 0)
 $(ENTRY)/.build:
 	unlink $(PREFIX) || true
-	mkdir --parents $(CACHE_PREFIX)
-	$(FLOCK) $(ENTRY) $(MAKE) PREFIX=$(CACHE_PREFIX)
+	mkdir -p $(CACHE_PREFIX)
 	touch $@
+
 else
 $(ENTRY)/.build: $(PKGS:%=.%) convert-static
 $(PKGS:%=.%): FORCE
@@ -533,6 +589,8 @@ cyclonedx:
 	@$(SRC)/cyclonedx.sh "$(PKG_CPE)" "$(SRC)"
 
 list:
+	@echo "Tarballsss = $(TARBALLS)"
+	ls -l $(TARBALLS)
 	@echo All packages:
 	$(call pprint,$(PKGS_ALL))
 	@echo Distribution-provided packages:
