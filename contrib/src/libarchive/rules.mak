@@ -12,7 +12,6 @@ endif
 DEPS_libarchive += nettle gmp zlib
 
 LIBARCHIVE_CMAKECONF := \
-		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DENABLE_TEST=OFF \
 		-DENABLE_TAR=OFF \
 		-DENABLE_CPIO=OFF \
