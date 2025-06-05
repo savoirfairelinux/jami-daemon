@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-SSL_VERSION := 3.9.2
+SSL_VERSION := 4.1.0
 PKG_CPE += cpe:2.3:a:openbsd:libressl:$(SSL_VERSION):*:*:*:*:*:*:*
 LIBRESSL_VERSION := libressl-$(SSL_VERSION)
 LIBRESSL_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/$(LIBRESSL_VERSION).tar.gz
@@ -41,29 +41,6 @@ LIBRESSL_CONF := \
 	-DBUILD_SHARED_LIBS=Off \
 	-DLIBRESSL_TESTS=Off \
 	-DLIBRESSL_APPS=Off
-
-ifdef HAVE_ANDROID
-ifeq ($(ARCH),x86_64)
-LIBRESSL_CONF += -DENABLE_ASM=Off
-endif
-endif
-
-ifeq ($(HOST_ARCH),arm-linux-gnueabihf)
-LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=arm -DENABLE_ASM=Off -DCMAKE_C_FLAGS='-march=armv7-a -mfpu=neon-vfpv4 -mfloat-abi=hard'
-endif
-
-ifdef HAVE_IOS
-LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DENABLE_ASM=Off
-endif
-
-ifdef HAVE_MACOSX
-ifeq ($(ARCH),arm64)
-LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DENABLE_ASM=Off
-endif
-ifeq ($(ARCH),x86_64)
-LIBRESSL_CONF += -DCMAKE_SYSTEM_PROCESSOR=x86_64
-endif
-endif
 
 .libressl: libressl .sum-libressl
 	mkdir -p "$(PREFIX)/include"
