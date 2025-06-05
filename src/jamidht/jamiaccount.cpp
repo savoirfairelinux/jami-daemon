@@ -4458,11 +4458,11 @@ JamiAccount::askForFileChannel(const std::string& conversationId,
         // Only ask for connected devices. For others we will attempt
         // with new peer online
         for (const auto& m : convModule()->getConversationMembers(conversationId)) {
-            accountManager_->forEachDevice(dht::InfoHash(m.at("uri")),
-                                           [tryDevice = std::move(tryDevice)](
-                                               const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-                                               tryDevice(dev->getLongId());
-                                           });
+            accountManager_->forEachDevice(dht::InfoHash(m.at("uri")), [
+                tryDevice
+            ](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+                tryDevice(dev->getLongId());
+            });
         }
     }
 }
