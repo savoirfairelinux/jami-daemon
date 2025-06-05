@@ -112,7 +112,7 @@ LinkDeviceTest::tearDown()
         // try and cleanup the devices if the test fails or succeeds... this should usually fail due
         // to newDeviceId already being destroyed and same with oldDeviceId
         wait_for_removal_of({oldDeviceId, newDeviceId});
-    } catch (std::exception e) {
+    } catch (const std::exception& e) {
         JAMI_WARNING("[ut_linkdevice] Error during account cleanup... this should be ok.");
     }
 }

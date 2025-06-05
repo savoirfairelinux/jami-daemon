@@ -304,8 +304,6 @@ toString(AuthDecodingState state)
         return "AUTH"sv;
     case AuthDecodingState::DATA:
         return "DATA"sv;
-    case AuthDecodingState::ERR:
-        return "ERR"sv;
     case AuthDecodingState::AUTH_ERROR:
         return "AUTH_ERROR"sv;
     case AuthDecodingState::DONE:
@@ -314,6 +312,9 @@ toString(AuthDecodingState state)
         return "TIMEOUT"sv;
     case AuthDecodingState::CANCELED:
         return "CANCELED"sv;
+    case AuthDecodingState::ERR:
+    default:
+        return "ERR"sv;
     }
 }
 

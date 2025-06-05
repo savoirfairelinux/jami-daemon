@@ -53,10 +53,9 @@ public:
                          bool forceNewConnection = false)
         = 0;
 
-    virtual void connect(const dht::InfoHash& infoHash,
-                         const std::string& name,
-                         ConnectCallbackLegacy&& cb)
-    {}
+    virtual void connect(const dht::InfoHash& /*infoHash*/,
+                         const std::string& /*name*/,
+                         ConnectCallbackLegacy&& /*cb*/) {}
 
     /**
      * Determine if we accept or not the request. Called when ConnectionManager receives a request
