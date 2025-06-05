@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f62c6eb1_eb8eecb0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-06-05T18:13:16Z",
+      "side": 1,
+      "message": "Need",
+      "revId": "e4de7922166ad02a57951c341dd55ec4d6d391b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abda1f6c_f3387c6d",
+        "filename": "contrib/src/dhtnet/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-06-05T18:13:16Z",
+      "side": 1,
+      "message": "Need to update on Windows too.",
+      "range": {
+        "startLine": 2,
+        "startChar": 18,
+        "endLine": 2,
+        "endChar": 58
+      },
+      "revId": "e4de7922166ad02a57951c341dd55ec4d6d391b8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
