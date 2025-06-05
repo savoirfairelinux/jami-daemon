@@ -17,7 +17,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
-SSL_VERSION := 3.9.2
+SSL_VERSION := 4.1.0
 PKG_CPE += cpe:2.3:a:openbsd:libressl:$(SSL_VERSION):*:*:*:*:*:*:*
 LIBRESSL_VERSION := libressl-$(SSL_VERSION)
 LIBRESSL_URL := https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/$(LIBRESSL_VERSION).tar.gz
