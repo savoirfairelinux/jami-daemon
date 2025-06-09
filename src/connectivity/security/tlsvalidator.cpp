@@ -309,7 +309,7 @@ TlsValidator::~TlsValidator() {}
  * @todo The date should be validated, this is currently not an issue
  */
 std::string
-TlsValidator::getStringValue(const TlsValidator::CertificateCheck check,
+TlsValidator::getStringValue([[maybe_unused]]const TlsValidator::CertificateCheck check,
                              const TlsValidator::CheckResult result)
 {
     assert(acceptedCheckValuesResult[enforcedCheckType[check]][result.first]);

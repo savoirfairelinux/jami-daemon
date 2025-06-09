@@ -293,8 +293,8 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     GitTree tree = {tree_ptr, git_tree_free};
 
     git_buf to_sign = {};
-#if( LIBGIT2_VER_MAJOR > 1 ) || ( LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR >= 8 )
-    // For libgit2 version 1.8.0 and above
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 && \
+    (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
     git_commit* const head_ref[1] = {head_commit.get()};
 #else
     const git_commit* head_ref[1] = {head_commit.get()};
