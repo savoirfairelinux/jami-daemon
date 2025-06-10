@@ -1074,7 +1074,7 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
                                      const std::string& addr,
                                      jami::NameDirectory::Response response) {
                                jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
-                                   "", address, (int) response, addr, regName);
+                                   "", address, (int) response, address, regName);
                            });
         return true;
     } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {

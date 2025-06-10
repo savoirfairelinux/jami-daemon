@@ -1513,7 +1513,7 @@ JamiAccount::lookupAddress(const std::string& addr)
                 emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(acc,
                                                                               addr,
                                                                               (int) response,
-                                                                              address,
+                                                                              addr,
                                                                               regName);
             });
 }
