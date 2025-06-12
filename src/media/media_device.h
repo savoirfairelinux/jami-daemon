@@ -52,6 +52,8 @@ struct DeviceParams
     int fd {}; // file descriptor for PipeWire (only relevant on Wayland)
     std::string node {}; // node id for PipeWire
     int is_area {};
+    // Skip DTS delay while finding stream info when PTS is sufficient
+    bool disable_dts_probe_delay = false;
 };
 
 } // namespace jami
