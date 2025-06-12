@@ -175,11 +175,14 @@ MediaDemuxer::openInput(const DeviceParams& params)
     }
 
     // Ask FFmpeg to open the input using the options set above
-    av_opt_set_int(
-        inputCtx_,
-        "fpsprobesize",
-        1,
-        AV_OPT_SEARCH_CHILDREN); // Don't waste time fetching framerate when finding stream info
+    if (params.disable_dts_probe_delay && params.format == "sdp") {
+        av_opt_set_int(inputCtx_, "max_ts_probe", 0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(inputCtx_, "fpsprobesize", 0, AV_OPT_SEARCH_CHILDREN);
+    } else {
+        // Don't waste time fetching framerate when finding stream info
+        av_opt_set_int(inputCtx_, "fpsprobesize", 1, AV_OPT_SEARCH_CHILDREN);
+    }
+
     int ret = avformat_open_input(&inputCtx_, input.c_str(), iformat, options_ ? &options_ : NULL);
 
     if (ret) {
