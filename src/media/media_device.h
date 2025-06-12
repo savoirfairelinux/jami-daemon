@@ -27,6 +27,8 @@ namespace jami {
 
 constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 
+enum class InputMediaType { Unknown, Audio, Video };
+
 /**
  * DeviceParams
  * Parameters used by MediaDecoder and MediaEncoder
@@ -52,6 +54,7 @@ struct DeviceParams
     int fd {}; // file descriptor for PipeWire (only relevant on Wayland)
     std::string node {}; // node id for PipeWire
     int is_area {};
+    InputMediaType input_type {InputMediaType::Unknown};
 };
 
 } // namespace jami
