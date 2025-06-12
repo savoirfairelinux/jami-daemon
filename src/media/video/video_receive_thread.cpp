@@ -138,6 +138,8 @@ VideoReceiveThread::setup()
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
+    args_.input_type = InputMediaType::Video;
+
     if (videoDecoder_->openInput(args_)) {
         JAMI_ERR("Unable to open input \"%s\"", args_.input.c_str());
         return false;
