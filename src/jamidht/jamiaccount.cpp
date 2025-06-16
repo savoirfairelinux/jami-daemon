@@ -2028,6 +2028,12 @@ JamiAccount::doRegister_()
                             std::unique_lock lk(shared->connManagerMtx_);
                             shared->initConnectionManager();
                             lk.unlock();
+                            std::shared_lock slk(shared->connManagerMtx_);
+                            // NOTE: connectionManager_ and channelHandlers_ get initialized at the
+                            // same time and are both protected by connManagerMtx_, so this check
+                            // ensures that the access to channelHandlers_ below is valid.
+                            if (!shared->connectionManager_)
+                                return;
                             shared->requestMessageConnection(shared->getUsername(), crt->getLongId(), "sync");
                             if (!shared->syncModule()->isConnected(crt->getLongId())) {
                                 shared->channelHandlers_[Uri::Scheme::SYNC]
@@ -3824,8 +3830,11 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
                                       const DeviceId& deviceId,
                                       const std::string& connectionType)
 {
+    std::shared_lock lk(connManagerMtx_);
     auto* handler = static_cast<MessageChannelHandler*>(
         channelHandlers_[Uri::Scheme::MESSAGE].get());
+    if (!handler)
+        return;
     if (deviceId) {
         if (auto connected = handler->getChannel(peerId, deviceId)) {
             return;
