@@ -361,7 +361,7 @@ getNewFrame(std::string_view id)
     if (auto vm = jami::Manager::instance().getVideoManager())
         if (auto input = vm->getVideoInput(id))
             return &input->getNewFrame();
-    JAMI_WARNING("getNewFrame: Unable to find input {}", id);
+    //JAMI_WARNING("getNewFrame: Unable to find input {}", id);
     return nullptr;
 }
 
@@ -371,7 +371,7 @@ publishFrame(std::string_view id)
     if (auto vm = jami::Manager::instance().getVideoManager())
         if (auto input = vm->getVideoInput(id))
             input->publishFrame();
-    JAMI_WARNING("publishFrame: Unable to find input {}", id);
+   // JAMI_WARNING("publishFrame: Unable to find input {}", id);
 }
 
 void

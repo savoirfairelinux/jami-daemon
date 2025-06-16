@@ -29,6 +29,7 @@
 #include "accel.h"
 #endif
 #include "connectivity/sip_utils.h"
+#include "string_utils.h"
 
 #include <cmath>
 #include <unistd.h>
@@ -174,9 +175,6 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
                         const std::string& callId,
                         const std::string& streamId)
 {
-    if (!frame)
-        return;
-    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
     {
         std::lock_guard lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
@@ -187,30 +185,13 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
 void
 VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
 {
-    if (!frame)
-        return;
-    bool detach = false;
-    std::unique_lock lk(videoToStreamInfoMtx_);
-    auto it = videoToStreamInfo_.find(frame);
-    if (it != videoToStreamInfo_.end()) {
-        JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());
-        detach = true;
-        // Handle the case where the current shown source leave the conference
-        // Note, do not call resetActiveStream() to avoid multiple updates
-        if (verifyActive(it->second.streamId))
-            activeStream_ = {};
-        videoToStreamInfo_.erase(it);
-    }
-    lk.unlock();
-    if (detach)
-        frame->detach(this);
+    frame->detach(this);
 }
 
 void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     std::unique_lock lock(rwMutex_);
-
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->render_frame = std::make_shared<VideoFrame>();
     src->source = ob;
@@ -224,16 +205,34 @@ void
 VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     std::unique_lock lock(rwMutex_);
+    
+    // Look up stream info before removing anything
+    {
+        std::lock_guard lk(videoToStreamInfoMtx_);
+        auto it = videoToStreamInfo_.find(ob);
+        if (it != videoToStreamInfo_.end()) {
+            // Handle the case where the current shown source leave the conference
+            if (verifyActive(it->second.streamId))
+                activeStream_ = {};
+            videoToStreamInfo_.erase(it);
+        }
+    }
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
             JAMI_DBG("Remove source [%p]", x.get());
-            sources_.remove(x);
-            JAMI_DEBUG("Total sources: {:d}", sources_.size());
-            updateLayout();
             break;
         }
     }
+
+    sources_.erase(std::remove_if(sources_.begin(),
+                                  sources_.end(),
+                                  [ob](const std::unique_ptr<VideoMixerSource>& x) {
+                                      return x->source == ob;
+                                  }),
+                   sources_.end());
+    JAMI_DEBUG("Total sources: {:d}", sources_.size());
+    updateLayout();
 }
 
 void

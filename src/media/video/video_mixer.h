@@ -133,6 +133,12 @@ public:
         }
     }
 
+    bool isAudioOnlySource(const std::string& callId, const std::string& streamId) const
+    {
+        std::lock_guard lk(audioOnlySourcesMtx_);
+        return audioOnlySources_.find({callId, streamId}) != audioOnlySources_.end();
+    }
+
     void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
                      const std::string& callId,
                      const std::string& streamId);
@@ -188,7 +194,7 @@ private:
     mutable std::mutex videoToStreamInfoMtx_ {};
     std::map<Observable<std::shared_ptr<MediaFrame>>*, StreamInfo> videoToStreamInfo_ {};
 
-    std::mutex audioOnlySourcesMtx_;
+    mutable std::mutex audioOnlySourcesMtx_;
     std::set<std::pair<std::string, std::string>> audioOnlySources_;
     std::string activeStream_ {};
 
