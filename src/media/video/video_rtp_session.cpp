@@ -409,7 +409,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         if (send_.enabled and not send_.onHold) {
             setupConferenceVideoPipeline(*conference_, Direction::SEND);
         }
-        if (receive_.enabled and not receive_.onHold) {
+        if (receive_.enabled) {
             setupConferenceVideoPipeline(*conference_, Direction::RECV);
         }
     } else {
@@ -483,6 +483,21 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
             }
         }
         stopReceiver();
+        
+        // Handle muted video in conference mode
+        if (conference_ && videoMixer_) {
+            auto audioId = streamId_;
+            string_replace(audioId, "video", "audio");
+            videoMixer_->addAudioOnlySource(callId_, audioId);
+            
+            // Update conference info to reflect muted state
+            if (auto conf = conference_) {
+                auto activeStream = videoMixer_->verifyActive(streamId_);
+                if (activeStream) {
+                    videoMixer_->setActiveStream(audioId);
+                }
+            }
+        }
     } else {
         startReceiver();
         if (conference_ and not receive_.onHold) {
@@ -574,7 +589,14 @@ VideoRtpSession::enterConference(Conference& conference)
         // from HW decoder.
         restartSender();
         if (conference_) {
-            setupConferenceVideoPipeline(conference, Direction::RECV);
+            // If video is muted, add to audio-only sources and don't setup video pipeline
+            if (receive_.onHold) {
+                auto audioId = streamId_;
+                string_replace(audioId, "video", "audio");
+                videoMixer_->addAudioOnlySource(callId_, audioId);
+            } else {
+                setupConferenceVideoPipeline(conference, Direction::RECV);
+            }
         }
     }
 }

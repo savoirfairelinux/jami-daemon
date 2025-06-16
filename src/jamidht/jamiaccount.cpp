@@ -541,38 +541,68 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
         }
         auto hostMedias = conf->currentMediaList();
         auto sipCall = std::dynamic_pointer_cast<SIPCall>(call);
+        auto peerRtpSessions = sipCall->getRtpSessionList();
+        
+        // Analyze what media types the peer is offering
+        bool peerHasAudio = false;
+        bool peerHasVideo = false;
+        for (const auto& rtpSession : peerRtpSessions) {
+            if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO) {
+                peerHasAudio = true;
+            } else if (rtpSession->getMediaType() == MediaType::MEDIA_VIDEO) {
+                peerHasVideo = true;
+            }
+        }
+        
         if (hostMedias.empty()) {
+            // Host has no existing media, create default media list matching peer's offer
             currentMediaList = MediaAttribute::mediaAttributesToMediaMaps(
-                createDefaultMediaList(call->hasVideo(), true));
-        } else if (hostMedias.size() < sipCall->getRtpSessionList().size()) {
-            // First case: host has less media streams than the other person is joining
-            // with. We need to add video media to the host before accepting the offer
-            // This can happen if we host an audio call and someone joins with video
-            currentMediaList = hostMedias;
-            currentMediaList.push_back({{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                         libjami::Media::MediaAttributeValue::VIDEO},
-                                        {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                        {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
-                                        {libjami::Media::MediaAttributeKey::SOURCE, ""},
-                                        {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
+                createDefaultMediaList(peerHasVideo, true));
         } else {
-            // The second case is that the host has the same or more media
-            // streams than the person joining. In this case we match all their
-            // medias to form our offer. They will then potentially join the call without seeing
-            // seeing all of our medias. For now we deal with this by calling a
-            // requestmediachange once they've joined.
-            for (const auto& m : conf->currentMediaList()) {
-                // We only expect to have 1 audio stream, add it.
-                if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
-                    == libjami::Media::MediaAttributeValue::AUDIO) {
-                    currentMediaList.emplace_back(m);
-                } else if (call->hasVideo()
-                           && m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
-                                  == libjami::Media::MediaAttributeValue::VIDEO) {
-                    // Add the first video media and break the loop
-                    // other video medias will be requested when joined.
-                    currentMediaList.emplace_back(m);
-                    break;
+            
+            // First, add audio if peer has audio
+            if (peerHasAudio) {
+                // Find host's audio stream or create default
+                bool foundAudio = false;
+                for (const auto& m : hostMedias) {
+                    if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
+                        == libjami::Media::MediaAttributeValue::AUDIO) {
+                        currentMediaList.emplace_back(m);
+                        foundAudio = true;
+                        break;
+                    }
+                }
+                if (!foundAudio) {
+                    // Create default audio media
+                    currentMediaList.push_back({{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                                                 libjami::Media::MediaAttributeValue::AUDIO},
+                                                {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                                                {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+                                                {libjami::Media::MediaAttributeKey::SOURCE, ""},
+                                                {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}});
+                }
+            }
+            
+            // Then, add video if peer has video
+            if (peerHasVideo) {
+                // Find host's video stream or create default
+                bool foundVideo = false;
+                for (const auto& m : hostMedias) {
+                    if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
+                        == libjami::Media::MediaAttributeValue::VIDEO) {
+                        currentMediaList.emplace_back(m);
+                        foundVideo = true;
+                        break;
+                    }
+                }
+                if (!foundVideo) {
+                    // Create default video media (muted by default for host)
+                    currentMediaList.push_back({{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                                                 libjami::Media::MediaAttributeValue::VIDEO},
+                                                {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                                                {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
+                                                {libjami::Media::MediaAttributeKey::SOURCE, ""},
+                                                {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
                 }
             }
         }

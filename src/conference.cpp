@@ -636,15 +636,28 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
-    // If the new media list has video, remove the participant from audioonlylist.
-    auto remoteHasVideo
-        = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
-                                                                                false),
-                                       MediaType::MEDIA_VIDEO);
-    if (videoMixer_ && remoteHasVideo) {
-        auto callId = call->getCallId();
-        videoMixer_->removeAudioOnlySource(
-            callId, std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+    // Check if peer has video and if it's muted
+    auto mediaAttrList = MediaAttribute::buildMediaAttributesList(remoteMediaList, false);
+    bool peerHasVideo = false;
+    bool peerVideoMuted = false;
+    for (const auto& media : mediaAttrList) {
+        if (media.type_ == MediaType::MEDIA_VIDEO) {
+            peerHasVideo = true;
+            peerVideoMuted = media.muted_;
+            break;
+        }
+    }
+
+    if (videoMixer_) {
+        if (peerHasVideo && !peerVideoMuted) {
+            auto callId = call->getCallId();
+            videoMixer_->removeAudioOnlySource(
+                callId, std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+        } else if (peerHasVideo && peerVideoMuted) {
+            auto callId = call->getCallId();
+            videoMixer_->addAudioOnlySource(callId,
+                                           sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID));
+        }
     }
 #endif
 
@@ -660,6 +673,18 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // Create minimum media list (ignore muted and disabled medias)
     std::vector<libjami::MediaMap> newMediaList;
     newMediaList.reserve(remoteMediaList.size());
+
+    // Update conference info to reflect muted state
+    {
+        std::lock_guard lk(confInfoMutex_);
+        for (auto& info : confInfo_) {
+            if (info.sinkId == call->getCallId()) {
+                info.videoMuted = peerVideoMuted;
+                break;
+            }
+        }
+    }
+
     for (auto const& media : currentMediaList) {
         if (media.enabled_ and not media.muted_)
             newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
@@ -725,8 +750,11 @@ Conference::addSubCall(const std::string& callId)
         // In conference, if a participant joins with an audio only
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
-        if (call->peerUri().find("swarm:") != 0) { // We're hosting so it's already ourself.
-            if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+        JAMI_DEBUG("Peer URI: {}", call->peerUri());
+        if (call->peerUri().find("swarm:") != 0) { // For regular calls, check if video is muted and add as audio-only source to video mixer
+            if (videoMixer_ && std::any_of(mediaList.begin(), mediaList.end(), [](const MediaAttribute& media) {
+                return media.type_ == MediaType::MEDIA_VIDEO && media.muted_;
+            })) {
                 videoMixer_->addAudioOnlySource(call->getCallId(),
                                                 sip_utils::streamId(call->getCallId(),
                                                                     sip_utils::DEFAULT_AUDIO_STREAMID));
