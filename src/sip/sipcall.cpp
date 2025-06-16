@@ -2176,19 +2176,43 @@ SIPCall::startAllMedia()
     // reset
     readyToRecord_ = false;
 
-    for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
-        if (not iter->mediaAttribute_) {
-            throw std::runtime_error("Missing media attribute");
-        }
-
-        // Not restarting media loop on hold as it's a huge waste of CPU ressources
-        // because of the audio loop
-        if (getState() != CallState::HOLD) {
-            if (isIceRunning()) {
-                iter->rtpSession_->start(std::move(iter->rtpSocket_), std::move(iter->rtcpSocket_));
-            } else {
-                iter->rtpSession_->start(nullptr, nullptr);
+    // Not restarting media loop on hold as it's a huge waste of CPU resources
+    if (getState() != CallState::HOLD) {
+        bool iceRunning = isIceRunning();
+        auto remoteMediaList = Sdp::getMediaAttributeListFromSdp(sdp_->getActiveRemoteSdpSession());
+        size_t idx = 0;
+        for (auto& rtpStream : rtpStreams_) {
+            if (not rtpStream.mediaAttribute_) {
+                throw std::runtime_error("Missing media attribute");
             }
+            rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(remoteMediaList[idx]);
+            if (rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
+                rtpStream.rtpSession_->setMuted(rtpStream.remoteMediaAttribute_->muted_, RtpSession::Direction::RECV);
+            }
+            dht::ThreadPool::io().run([
+                w = weak(),
+                idx,
+                isVideo = rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO,
+                iceRunning,
+                rtpSession = rtpStream.rtpSession_,
+                rtpSocketPair = std::make_shared<std::pair<std::unique_ptr<dhtnet::IceSocket>, std::unique_ptr<dhtnet::IceSocket>>>(std::move(rtpStream.rtpSocket_), std::move(rtpStream.rtcpSocket_))
+            ]() mutable {
+                try {
+                    if (iceRunning) {
+                        rtpSession->start(std::move(rtpSocketPair->first), std::move(rtpSocketPair->second));
+                    } else {
+                        rtpSession->start(nullptr, nullptr);
+                    }
+                    if (isVideo) {
+                        if (auto call = w.lock())
+                            call->requestKeyframe(idx);
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_ERR("[call:%s] Failed to start RTP session %zu: %s",
+                            w.lock() ? w.lock()->getCallId().c_str() : "unknown", idx, e.what());
+                }
+            });
+            idx++;
         }
     }
 
@@ -2258,8 +2282,31 @@ SIPCall::stopAllMedia()
         }
     }
 #endif
-    for (const auto& rtpSession : getRtpSessionList())
-        rtpSession->stop();
+    // Stop all RTP sessions in parallel
+    std::mutex mtx;
+    std::condition_variable cv;
+    unsigned int stoppedCount = 0;
+    unsigned int totalStreams = rtpStreams_.size();
+
+    for (const auto& rtpSession : getRtpSessionList()) {
+        dht::ThreadPool::io().run([&, rtpSession]() {
+            try {
+                rtpSession->stop();
+            } catch (const std::exception& e) {
+                JAMI_ERR("Failed to stop RTP session: %s", e.what());
+            }
+
+            std::lock_guard lk(mtx);
+            stoppedCount++;
+            cv.notify_one();
+        });
+    }
+
+    // Wait for all streams to be stopped
+    std::unique_lock lk(mtx);
+    cv.wait(lk, [&] {
+        return stoppedCount == totalStreams;
+    });
 
 #ifdef ENABLE_PLUGIN
     {
@@ -2269,35 +2316,6 @@ SIPCall::stopAllMedia()
             getCallId());
     }
 #endif
-}
-
-void
-SIPCall::updateRemoteMedia()
-{
-    JAMI_DBG("[call:%s] Updating remote media", getCallId().c_str());
-
-    auto remoteMediaList = Sdp::getMediaAttributeListFromSdp(sdp_->getActiveRemoteSdpSession());
-
-    if (remoteMediaList.size() != rtpStreams_.size()) {
-        JAMI_ERR("[call:%s] Media size mismatch!", getCallId().c_str());
-        return;
-    }
-
-    for (size_t idx = 0; idx < remoteMediaList.size(); idx++) {
-        auto& rtpStream = rtpStreams_[idx];
-        auto const& remoteMedia = rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(
-            remoteMediaList[idx]);
-        if (remoteMedia->type_ == MediaType::MEDIA_VIDEO) {
-            rtpStream.rtpSession_->setMuted(remoteMedia->muted_, RtpSession::Direction::RECV);
-            JAMI_DEBUG("[call:{:s}] Remote media @ {:d}: {:s}",
-                       getCallId(),
-                       idx,
-                       remoteMedia->toString());
-            // Request a key-frame if we are un-muting the video
-            if (not remoteMedia->muted_)
-                requestKeyframe(findRtpStreamIndex(remoteMedia->label_));
-        }
-    }
 }
 
 void
@@ -2719,7 +2737,7 @@ SIPCall::onMediaNegotiationComplete()
                     this_->startAllMedia();
                 }
 
-                this_->updateRemoteMedia();
+                //this_->updateRemoteMedia();
                 this_->reportMediaNegotiationStatus();
             }
         }
@@ -2826,7 +2844,6 @@ SIPCall::onIceNegoSucceed()
     // Start/Restart the media using the new transport
     stopAllMedia();
     startAllMedia();
-    updateRemoteMedia();
     reportMediaNegotiationStatus();
 }
 
