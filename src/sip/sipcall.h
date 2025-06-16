@@ -400,7 +400,6 @@ private:
     void setupNegotiatedMedia();
     void startAllMedia();
     void stopAllMedia();
-    void updateRemoteMedia();
 
     /**
      * Transfer method used for both type of transfer
