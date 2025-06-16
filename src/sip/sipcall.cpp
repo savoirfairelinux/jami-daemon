@@ -2176,20 +2176,39 @@ SIPCall::startAllMedia()
     // reset
     readyToRecord_ = false;
 
-    for (auto iter = rtpStreams_.begin(); iter != rtpStreams_.end(); iter++) {
-        if (not iter->mediaAttribute_) {
-            throw std::runtime_error("Missing media attribute");
+    // Not restarting media loop on hold as it's a huge waste of CPU resources
+    if (getState() != CallState::HOLD) {
+        bool iceRunning = isIceRunning();
+        std::mutex mtx;
+        std::condition_variable cv;
+        unsigned int readyCount = 0;
+        unsigned int totalStreams = rtpStreams_.size();
+
+        for (auto& iter : rtpStreams_) {
+            if (not iter.mediaAttribute_) {
+                throw std::runtime_error("Missing media attribute");
+            }
+            dht::ThreadPool::io().run([
+                &,
+                rtpSession = iter.rtpSession_,
+                rtpSocketPair = std::make_shared<std::pair<std::unique_ptr<dhtnet::IceSocket>, std::unique_ptr<dhtnet::IceSocket>>>(std::move(iter.rtpSocket_), std::move(iter.rtcpSocket_))
+            ]() mutable {
+                if (iceRunning) {
+                    rtpSession->start(std::move(rtpSocketPair->first), std::move(rtpSocketPair->second));
+                } else {
+                    rtpSession->start(nullptr, nullptr);
+                }
+                std::lock_guard lk(mtx);
+                readyCount++;
+                cv.notify_one();
+            });
         }
 
-        // Not restarting media loop on hold as it's a huge waste of CPU ressources
-        // because of the audio loop
-        if (getState() != CallState::HOLD) {
-            if (isIceRunning()) {
-                iter->rtpSession_->start(std::move(iter->rtpSocket_), std::move(iter->rtcpSocket_));
-            } else {
-                iter->rtpSession_->start(nullptr, nullptr);
-            }
-        }
+        // Wait for all streams to be ready
+        std::unique_lock lk(mtx);
+        cv.wait(lk, [&] {
+            return readyCount == totalStreams;
+        });
     }
 
     // Media is restarted, we can process the last holding request.
@@ -2258,8 +2277,26 @@ SIPCall::stopAllMedia()
         }
     }
 #endif
-    for (const auto& rtpSession : getRtpSessionList())
-        rtpSession->stop();
+    // Stop all RTP sessions in parallel
+    std::mutex mtx;
+    std::condition_variable cv;
+    unsigned int stoppedCount = 0;
+    unsigned int totalStreams = rtpStreams_.size();
+
+    for (const auto& rtpSession : getRtpSessionList()) {
+        dht::ThreadPool::io().run([&, rtpSession]() {
+            rtpSession->stop();
+            std::lock_guard lk(mtx);
+            stoppedCount++;
+            cv.notify_one();
+        });
+    }
+
+    // Wait for all streams to be stopped
+    std::unique_lock lk(mtx);
+    cv.wait(lk, [&] {
+        return stoppedCount == totalStreams;
+    });
 
 #ifdef ENABLE_PLUGIN
     {
