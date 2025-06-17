@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99715eb6_c64a4af9",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2288,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-06-17T14:23:28Z",
+      "side": 1,
+      "message": "Can try-catch block be added for safety?",
+      "range": {
+        "startLine": 2288,
+        "startChar": 12,
+        "endLine": 2288,
+        "endChar": 31
+      },
+      "revId": "ae77e4e3c2e6c19c90dea8b93f794700a5075846",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "74dbcfd0_2b13984d",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2299,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-06-17T14:23:28Z",
+      "side": 1,
+      "message": "Can we have a timeout to unblock the main thread?",
+      "range": {
+        "startLine": 2297,
+        "startChar": 4,
+        "endLine": 2299,
+        "endChar": 7
+      },
+      "revId": "ae77e4e3c2e6c19c90dea8b93f794700a5075846",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
