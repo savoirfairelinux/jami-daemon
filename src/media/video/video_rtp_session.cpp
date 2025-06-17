@@ -402,8 +402,8 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         return;
     }
 
-    startSender();
     startReceiver();
+    startSender();
 
     if (conference_) {
         if (send_.enabled and not send_.onHold) {
