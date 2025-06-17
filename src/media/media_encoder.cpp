@@ -834,6 +834,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
         forcePresetX2645(encoderCtx);
+        encoderCtx->flags2 |= AV_CODEC_FLAG2_LOCAL_HEADER;
         initH264(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_HEVC) {
         encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
