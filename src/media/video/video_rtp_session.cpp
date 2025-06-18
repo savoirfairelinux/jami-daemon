@@ -303,15 +303,19 @@ VideoRtpSession::startReceiver()
         });
     } else {
         JAMI_DBG("[%p] Video receiver disabled", this);
-        if (receiveThread_ and videoMixer_ and conference_) {
+        if (videoMixer_ and conference_) {
             // Note, this should be managed differently, this is a bit hacky
             auto audioId_ = streamId_;
             string_replace(audioId_, "video", "audio");
-            auto activeStream = videoMixer_->verifyActive(streamId_);
-            videoMixer_->addAudioOnlySource(callId_, audioId_);
-            receiveThread_->detach(videoMixer_.get());
-            if (activeStream)
-                videoMixer_->setActiveStream(audioId_);
+            if (receiveThread_) {
+                auto activeStream = videoMixer_->verifyActive(streamId_);
+                videoMixer_->addAudioOnlySource(callId_, audioId_);
+                receiveThread_->detach(videoMixer_.get());
+                if (activeStream)
+                    videoMixer_->setActiveStream(audioId_);
+            } else {
+                videoMixer_->addAudioOnlySource(callId_, audioId_);
+            }
         }
     }
     if (socketPair_)

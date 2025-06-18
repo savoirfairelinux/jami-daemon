@@ -726,7 +726,11 @@ Conference::addSubCall(const std::string& callId)
         // call, it must be listed in the audioonlylist.
         auto mediaList = call->getMediaAttributeList();
         if (call->peerUri().find("swarm:") != 0) { // We're hosting so it's already ourself.
-            if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+            if (videoMixer_ && std::none_of(mediaList.begin(), mediaList.end(), 
+                                           [](const auto& media) { 
+                                               return media.type_ == MediaType::MEDIA_VIDEO 
+                                                      && media.enabled_ && !media.muted_ && !media.onHold_; 
+                                           })) {
                 videoMixer_->addAudioOnlySource(call->getCallId(),
                                                 sip_utils::streamId(call->getCallId(),
                                                                     sip_utils::DEFAULT_AUDIO_STREAMID));
