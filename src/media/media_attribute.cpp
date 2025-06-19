@@ -136,7 +136,9 @@ MediaAttribute::mediaTypeToString(MediaType type)
         return libjami::Media::MediaAttributeValue::AUDIO;
     if (type == MediaType::MEDIA_VIDEO)
         return libjami::Media::MediaAttributeValue::VIDEO;
-    return nullptr;
+    if (type == MediaType::MEDIA_NONE)
+        return libjami::Media::MediaAttributeValue::SRC_TYPE_NONE;
+    return "UNKNOWN";
 }
 
 bool
