@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "7e5bb3da_b6e8d30e",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2288,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-06-20T19:27:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "99715eb6_c64a4af9",
+      "range": {
+        "startLine": 2288,
+        "startChar": 12,
+        "endLine": 2288,
+        "endChar": 31
+      },
+      "revId": "ae77e4e3c2e6c19c90dea8b93f794700a5075846",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "74dbcfd0_2b13984d",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-06-17T14:23:28Z",
       "side": 1,
       "message": "Can we have a timeout to unblock the main thread?",
+      "range": {
+        "startLine": 2297,
+        "startChar": 4,
+        "endLine": 2299,
+        "endChar": 7
+      },
+      "revId": "ae77e4e3c2e6c19c90dea8b93f794700a5075846",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2f08c7f8_02a11bfd",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2299,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-06-20T19:27:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "74dbcfd0_2b13984d",
       "range": {
         "startLine": 2297,
         "startChar": 4,
