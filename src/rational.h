@@ -22,6 +22,7 @@
 #include <cmath>      // std::fmod
 #include <functional> // std::modulus
 #include <ciso646>    // and, or ...
+#include <fmt/format.h>
 
 extern "C" {
 #include <libavutil/rational.h> // specify conversions for AVRational
@@ -31,28 +32,36 @@ namespace jami {
 
 /**
  * Naive implementation of the boost::rational interface, described here:
- * http://www.boost.org/doc/libs/1_57_0/libs/rational/rational.html
+ * https://www.boost.org/doc/libs/latest/libs/rational/rational.html
  */
 template<typename I>
 class rational
 {
 public:
-    // Constructors
-    constexpr rational() {} // Zero
+    // Zero
+    constexpr rational() {}
+
+    // Equal to n/1
     constexpr rational(I n)
-        : num_(n) {} // Equal to n/1
+        : num_(n) {}
+
+    // General case (n/d)
     constexpr rational(I n, I d)
         : num_(n)
         , den_(d)
     {
         reduce();
-    } // General case (n/d)
+    }
 
     // Define conversions to and from AVRational (equivalent)
     constexpr rational(AVRational r)
         : num_(r.num)
         , den_(r.den) {};
     constexpr operator AVRational() const { return AVRational {(int) num_, (int) den_}; }
+
+    std::string to_string() const {
+        return fmt::format("{}/{}", num_, den_);
+    }
 
     // Normal copy constructors and assignment operators
 
@@ -83,9 +92,6 @@ public:
         return num_ / (R) den_;
     }
 
-    // In addition to the following operators, all of the "obvious" derived
-    // operators are available - see operators.hpp
-
     // Arithmetic operators
     constexpr rational operator+(const rational& r) const
     {
@@ -98,24 +104,24 @@ public:
     constexpr rational operator*(const rational& r) const { return {num_ * r.num_, den_ * r.den_}; }
     constexpr rational operator/(const rational& r) const { return {num_ * r.den_, den_ * r.num_}; }
 
-    rational& operator+=(const rational& r)
+    constexpr rational& operator+=(const rational& r)
     {
         std::swap(*this, *this + r);
         return *this;
     }
-    rational& operator-=(const rational& r)
+    constexpr rational& operator-=(const rational& r)
     {
         std::swap(*this, *this - r);
         return *this;
     }
-    rational& operator*=(const rational& r)
+    constexpr rational& operator*=(const rational& r)
     {
         num_ *= r.num_;
         den_ *= r.den_;
         reduce();
         return *this;
     }
-    rational& operator/=(const rational& r)
+    constexpr rational& operator/=(const rational& r)
     {
         num_ *= r.den_;
         den_ *= r.num_;
@@ -124,23 +130,23 @@ public:
     }
 
     // Arithmetic with integers
-    rational& operator+=(I i)
+    constexpr rational& operator+=(I i)
     {
         num_ += i * den_;
         return *this;
     }
-    rational& operator-=(I i)
+    constexpr rational& operator-=(I i)
     {
         num_ -= i * den_;
         return *this;
     }
-    rational& operator*=(I i)
+    constexpr rational& operator*=(I i)
     {
         num_ *= i;
         reduce();
         return *this;
     }
-    rational& operator/=(I i)
+    constexpr rational& operator/=(I i)
     {
         den_ *= i;
         reduce();
@@ -148,12 +154,12 @@ public:
     }
 
     // Increment and decrement
-    const rational& operator++()
+    constexpr const rational& operator++()
     {
         num_ += den_;
         return *this;
     }
-    const rational& operator--()
+    constexpr const rational& operator--()
     {
         num_ -= den_;
         return *this;
@@ -190,9 +196,9 @@ private:
     I den_ {1};
 
     static constexpr I gcd(I a, I b) { return b == (I) 0 ? a : gcd(b, std::modulus<I>()(a, b)); }
-    void reduce()
+    constexpr void reduce()
     {
-        if (std::is_integral<I>::value) {
+        if constexpr (std::is_integral<I>::value) {
             if (num_ and den_) {
                 auto g = gcd(num_ >= 0 ? num_ : -num_, den_ >= 0 ? den_ : -den_);
                 if (g > (I) 1) {
@@ -216,7 +222,7 @@ rational<I>
 operator-(const rational<I>& r)
 {
     return {-r.numerator(), r.denominator()};
-};
+}
 
 // Reversed order operators for - and / between (types convertible to) I and rational
 template<typename I, typename II>
@@ -267,3 +273,11 @@ struct modulus<double>
     double operator()(const double& lhs, const double& rhs) const { return std::fmod(lhs, rhs); }
 };
 } // namespace std
+
+template<typename I>
+struct fmt::formatter<jami::rational<I>> : fmt::formatter<std::string_view> {
+    template<typename FormatContext>
+    auto format(const jami::rational<I>& r, FormatContext& ctx) const -> decltype(ctx.out()) {
+        return fmt::formatter<std::string_view>::format(r.to_string(), ctx);
+    }
+};

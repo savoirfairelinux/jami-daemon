@@ -424,14 +424,11 @@ std::map<std::string, std::string>
 getDeviceParams(const std::string& deviceId)
 {
     if (auto vm = jami::Manager::instance().getVideoManager()) {
-        auto params = vm->videoDeviceMonitor.getDeviceParams(
-            deviceId);
-        std::ostringstream rate;
-        rate << params.framerate;
+        auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
         return {{"format", params.format},
                 {"width", std::to_string(params.width)},
                 {"height", std::to_string(params.height)},
-                {"rate", rate.str()}};
+                {"rate", params.framerate.to_string()}};
     }
     return {};
 }
