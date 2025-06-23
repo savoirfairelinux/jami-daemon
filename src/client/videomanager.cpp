@@ -408,8 +408,8 @@ setDefaultDevice(const std::string& deviceId)
 {
     JAMI_DBG("Setting default device to %s", deviceId.c_str());
     if (auto vm = jami::Manager::instance().getVideoManager()) {
-        vm->videoDeviceMonitor.setDefaultDevice(deviceId);
-        jami::Manager::instance().saveConfig();
+        if (vm->videoDeviceMonitor.setDefaultDevice(deviceId))
+            jami::Manager::instance().saveConfig();
     }
 }
 
