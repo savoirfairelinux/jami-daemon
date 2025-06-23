@@ -194,7 +194,7 @@ RoutingTableTest::generateSwarmManagers()
     auto total = nNodes + mNodes;
     for (size_t i = 0; i < total; i++) {
         const NodeId& node = randomNodeIds.at(i);
-        auto sm = std::make_shared<SwarmManager>(node, rd, std::move([](auto) {return false;}));
+        auto sm = std::make_shared<SwarmManager>(node, rd, [](auto) {return false;});
         i >= nNodes ? sm->setMobility(true) : sm->setMobility(false);
         swarmManagers[node] = sm;
     }
@@ -504,12 +504,12 @@ RoutingTableTest::testSwarmManagerConnectingNodes_1b()
     std::vector<std::string> needSocketNodes;
     std::condition_variable cv;
     std::mutex mutex;
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, std::move([&](auto n) {
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, [&](auto n) {
         std::lock_guard<std::mutex> lk(mutex);
         tryConnect.emplace_back(n);
         cv.notify_one();
         return false;
-    }));
+    });
     sm1->needSocketCb_ = [&](const auto& n, auto) {
         std::lock_guard<std::mutex> lk(mutex);
         needSocketNodes.emplace_back(n);
@@ -536,8 +536,8 @@ RoutingTableTest::testClosestNodes_1b()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds2.at(0), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds2.at(0), rd, [](auto) {return false;});
 
     auto& rt1 = sm1->getRoutingTable();
     auto& rt2 = sm2->getRoutingTable();
@@ -580,8 +580,8 @@ RoutingTableTest::testClosestNodes_multipleb()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(2), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds1.at(6), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(2), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds1.at(6), rd, [](auto) {return false;});
 
     for (size_t i = 0; i < nodeTestChannels1.size(); i++) {
         sm1->addChannel(nodeTestChannels1.at(i));
@@ -610,9 +610,9 @@ RoutingTableTest::testBucketSplit_1n()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    SwarmManager sm1(nodeTestIds2.at(0), rd, std::move([](auto) {return false;}));
-    SwarmManager sm2(nodeTestIds2.at(nodeTestIds2.size() - 1), rd, std::move([](auto) {return false;}));
-    SwarmManager sm3(nodeTestIds2.at(nodeTestIds2.size() / 2), rd, std::move([](auto) {return false;}));
+    SwarmManager sm1(nodeTestIds2.at(0), rd, [](auto) {return false;});
+    SwarmManager sm2(nodeTestIds2.at(nodeTestIds2.size() - 1), rd, [](auto) {return false;});
+    SwarmManager sm3(nodeTestIds2.at(nodeTestIds2.size() / 2), rd, [](auto) {return false;});
 
     auto& rt1 = sm1.getRoutingTable();
     auto& rt2 = sm2.getRoutingTable();
@@ -765,8 +765,8 @@ RoutingTableTest::testSendKnownNodes_1b()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(0), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(0), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, [](auto) {return false;});
 
     swarmManagers.insert({sm1->getId(), sm1});
     swarmManagers.insert({sm2->getId(), sm2});
@@ -813,8 +813,8 @@ RoutingTableTest::testSendKnownNodes_multipleb()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(8), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(8), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, [](auto) {return false;});
 
     swarmManagers.insert({sm1->getId(), sm1});
     swarmManagers.insert({sm2->getId(), sm2});
@@ -890,8 +890,8 @@ RoutingTableTest::testMobileNodeAnnouncement()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds2.at(1), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(0), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds2.at(1), rd, [](auto) {return false;});
 
     swarmManagers.insert({sm1->getId(), sm1});
     swarmManagers.insert({sm2->getId(), sm2});
@@ -927,7 +927,7 @@ RoutingTableTest::testMobileNodeSplit()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    SwarmManager sm1(nodeTestIds1.at(0), rd, std::move([](auto) {return false;}));
+    SwarmManager sm1(nodeTestIds1.at(0), rd, [](auto) {return false;});
 
     auto& rt1 = sm1.getRoutingTable();
 
@@ -983,8 +983,8 @@ RoutingTableTest::testSendMobileNodes()
 {
     std::cout << "\nRunning test: " << __func__ << std::endl;
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(8), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds2.at(8), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, [](auto) {return false;});
 
     std::cout << sm1->getId() << std::endl;
 
@@ -1108,8 +1108,8 @@ RoutingTableTest::testRoutingTableForConnectingNode()
     }
     counter.wait();
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, std::move([](auto) {return false;}));
-    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(1), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, [](auto) {return false;});
+    auto sm2 = std::make_shared<SwarmManager>(nodeTestIds3.at(1), rd, [](auto) {return false;});
 
     swarmManagers.insert({sm1->getId(), sm1});
     swarmManagers.insert({sm2->getId(), sm2});
@@ -1153,7 +1153,7 @@ RoutingTableTest::testRoutingTableForShuttingNode()
 
     counter.wait();
 
-    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, std::move([](auto) {return false;}));
+    auto sm1 = std::make_shared<SwarmManager>(nodeTestIds3.at(0), rd, [](auto) {return false;});
     auto sm1Id = sm1->getId();
 
     swarmManagers.emplace(sm1->getId(), sm1);
@@ -1223,7 +1223,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
 
     // ADDING NEW NODES TO NETWORK
     for (size_t i = 0; i < nodeTestIds1.size(); i++) {
-        auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(i), rd, std::move([](auto) {return false;}));
+        auto sm = std::make_shared<SwarmManager>(nodeTestIds1.at(i), rd, [](auto) {return false;});
         auto smId = sm->getId();
         swarmManagers.emplace(smId, sm);
         needSocketCallBack(sm);
