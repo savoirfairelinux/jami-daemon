@@ -542,6 +542,7 @@ else()
     pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
     pkg_search_module (webrtcap IMPORTED_TARGET webrtc-audio-processing)
     pkg_search_module (gnutls REQUIRED IMPORTED_TARGET gnutls)
+    pkg_search_module (nettle REQUIRED IMPORTED_TARGET nettle)
     pkg_search_module (opendht REQUIRED IMPORTED_TARGET opendht)
     pkg_search_module (dhtnet REQUIRED IMPORTED_TARGET dhtnet)
     pkg_search_module (git2 REQUIRED IMPORTED_TARGET libgit2)
@@ -569,6 +570,7 @@ else()
         PkgConfig::pjproject
         PkgConfig::git2
         PkgConfig::gnutls
+        PkgConfig::nettle
         PkgConfig::avformat
         PkgConfig::avdevice
         PkgConfig::avfilter
