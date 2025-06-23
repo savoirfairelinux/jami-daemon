@@ -778,6 +778,7 @@ else()
 
     if (BUILD_TESTING)
         pkg_search_module(Cppunit REQUIRED IMPORTED_TARGET cppunit)
+        find_package(Restinio REQUIRED) # for namedirectory tests
 
         file(COPY test/unitTest/actors DESTINATION ${CMAKE_BINARY_DIR})
         file(COPY test/unitTest/conversation/rsc DESTINATION ${CMAKE_BINARY_DIR}/conversation)
@@ -896,7 +897,7 @@ else()
         endif()
 
         add_executable(ut_namedirectory test/unitTest/namedirectory/namedirectory.cpp)
-        target_link_libraries(ut_namedirectory ut_library)
+        target_link_libraries(ut_namedirectory ut_library restinio::restinio)
         add_test(NAME namedirectory COMMAND ut_namedirectory)
 
         add_executable(ut_scheduler test/unitTest/scheduler.cpp)
