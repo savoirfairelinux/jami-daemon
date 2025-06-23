@@ -52,7 +52,7 @@ constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr auto CACHE_DIRECTORY {"namecache"sv};
 constexpr const char DEFAULT_SERVER_HOST[] = "https://ns.jami.net";
 
-const std::string HEX_PREFIX = "0x";
+constexpr std::string_view HEX_PREFIX = "0x"sv;
 constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
 /*
@@ -284,7 +284,7 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                     auto publickey = json["publickey"].asString();
                     auto signature = json["signature"].asString();
 
-                    if (!addr.compare(0, HEX_PREFIX.size(), HEX_PREFIX))
+                    if (starts_with(addr, HEX_PREFIX))
                         addr = addr.substr(HEX_PREFIX.size());
                     if (addr.empty()) {
                         cb("", "", Response::notFound);
