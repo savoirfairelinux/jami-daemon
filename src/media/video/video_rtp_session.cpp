@@ -282,7 +282,15 @@ VideoRtpSession::startReceiver()
 
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
-        receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
+        receiveThread_->setSuccessfulSetupCb([this](MediaType type, bool success) {
+            if (onSuccessfulSetup_)
+                onSuccessfulSetup_(type, success);
+
+            // Set up conference video pipeline once the receiver is ready
+            if (success && conference_ && !receive_.onHold) {
+                setupConferenceVideoPipeline(*conference_, Direction::RECV);
+            }
+        });
         receiveThread_->startLoop();
         receiveThread_->setRequestKeyFrameCallback([this]() { cbKeyFrameRequest_(); });
         receiveThread_->setRotation(rotation_.load());
@@ -485,9 +493,10 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
         stopReceiver();
     } else {
         startReceiver();
-        if (conference_ and not receive_.onHold) {
-            setupConferenceVideoPipeline(*conference_, Direction::RECV);
-        }
+        // NOTE: Don't call setupConferenceVideoPipeline right after startReceiver.
+        // The receiveThread needs to be fully initialized first.
+        // The setupConferenceVideoPipeline will be called in the onSuccessfulSetup callback
+        // when the video receiver is ready.
     }
 }
 
