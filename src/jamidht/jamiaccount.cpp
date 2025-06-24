@@ -4595,7 +4595,7 @@ JamiAccount::initConnectionManager()
                                                          onTextMessage("", cert->issuer->getId().toString(), cert, {{type, content}});
                                                      },
                                                      [w = weak()](const std::string& peer, bool connected) {
-                                                        Manager::instance().ioContext()->post([w, peer, connected] {
+                                                        asio::post(*Manager::instance().ioContext(), [w, peer, connected] {
                                                             if (auto acc = w.lock())
                                                                 acc->onPeerConnected(peer, connected);
                                                         });

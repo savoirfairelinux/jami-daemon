@@ -137,7 +137,7 @@ VideoRtpSession::startSender()
             if (videoLocal_) {
                 videoLocal_->setRecorderCallback(
                     [w=weak_from_this()](const MediaStream& ms) {
-                        Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                        asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                             if (auto shared = w.lock())
                                 shared->attachLocalRecorder(ms);
                         });
@@ -296,7 +296,7 @@ VideoRtpSession::startReceiver()
                 videoMixer_->setActiveStream(streamId_);
         }
         receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-            Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+            asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                 if (auto shared = w.lock())
                     shared->attachRemoteRecorder(ms);
             });
@@ -823,7 +823,7 @@ VideoRtpSession::initRecorder()
         return;
     if (receiveThread_) {
         receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-            Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+            asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                 if (auto shared = w.lock())
                     shared->attachRemoteRecorder(ms);
             });
@@ -831,7 +831,7 @@ VideoRtpSession::initRecorder()
     }
     if (videoLocal_ && !send_.onHold) {
         videoLocal_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-            Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+            asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                 if (auto shared = w.lock())
                     shared->attachLocalRecorder(ms);
             });

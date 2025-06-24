@@ -107,7 +107,7 @@ AudioRtpSession::startSender()
     audioInput_ = jami::getAudioInput(audioInputId);
     audioInput_->setRecorderCallback(
             [w=weak_from_this()](const MediaStream& ms) {
-                Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                     if (auto shared = w.lock())
                         shared->attachLocalRecorder(ms);
                 });
@@ -193,7 +193,7 @@ AudioRtpSession::startReceiver()
                                                 mtu_));
 
     receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-        Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+        asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
             if (auto shared = w.lock())
                 shared->attachRemoteRecorder(ms);
         });
@@ -276,7 +276,7 @@ AudioRtpSession::stop()
 void
 AudioRtpSession::setMuted(bool muted, Direction dir)
 {
-    Manager::instance().ioContext()->post([w=weak_from_this(), muted, dir]() {
+    asio::post(*Manager::instance().ioContext(), [w=weak_from_this(), muted, dir]() {
         if (auto shared = w.lock()) {
             std::lock_guard lock(shared->mutex_);
             if (dir == Direction::SEND) {
@@ -427,7 +427,7 @@ AudioRtpSession::initRecorder()
     if (receiveThread_)
         receiveThread_->setRecorderCallback(
             [w=weak_from_this()](const MediaStream& ms) {
-                Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                     if (auto shared = w.lock())
                         shared->attachRemoteRecorder(ms);
                 });
@@ -435,7 +435,7 @@ AudioRtpSession::initRecorder()
     if (audioInput_)
         audioInput_->setRecorderCallback(
             [w=weak_from_this()](const MediaStream& ms) {
-                Manager::instance().ioContext()->post([w=std::move(w), ms]() {
+                asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
                     if (auto shared = w.lock())
                         shared->attachLocalRecorder(ms);
                 });
