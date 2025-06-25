@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a101ee97_4311bbc1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4598,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-06-25T17:14:58Z",
+      "side": 1,
+      "message": "There\u0027s another instance of `Manager::instance().ioContext()-\u003epost` on line 2340.",
+      "range": {
+        "startLine": 4598,
+        "startChar": 56,
+        "endLine": 4598,
+        "endChar": 123
+      },
+      "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
