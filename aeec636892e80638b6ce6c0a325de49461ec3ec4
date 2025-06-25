@@ -22,6 +22,52 @@
       },
       "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5a120c6_d67a1c1a",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-06-25T17:57:31Z",
+      "side": 1,
+      "message": "I get compilation errors in this file (`‘post’ is not a member of ‘asio’`), I think we need to include `\u003casio/post.hpp\u003e`.",
+      "range": {
+        "startLine": 110,
+        "startChar": 16,
+        "endLine": 110,
+        "endChar": 26
+      },
+      "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "942a6a10_0be85ba3",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-06-25T17:57:31Z",
+      "side": 1,
+      "message": "Same comment as for `audio_rtp_session.cpp`.",
+      "range": {
+        "startLine": 140,
+        "startChar": 24,
+        "endLine": 140,
+        "endChar": 34
+      },
+      "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
