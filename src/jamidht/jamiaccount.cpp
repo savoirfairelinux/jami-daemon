@@ -556,6 +556,15 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
                                         {libjami::Media::MediaAttributeKey::SOURCE, ""},
                                         {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
         } else {
+            bool hasVideo = false;
+            if (sipCall) {
+                const auto rtpSessions = sipCall->getRtpSessionList();
+                hasVideo = std::any_of(rtpSessions.begin(),
+                                     rtpSessions.end(),
+                                     [](const auto& session) {
+                                         return session && session->getMediaType() == MediaType::MEDIA_VIDEO;
+                                     });
+            }
             // The second case is that the host has the same or more media
             // streams than the person joining. In this case we match all their
             // medias to form our offer. They will then potentially join the call without seeing
@@ -566,11 +575,8 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
                 if (m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
                     == libjami::Media::MediaAttributeValue::AUDIO) {
                     currentMediaList.emplace_back(m);
-                } else if (call->hasVideo()
-                           && m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
-                                  == libjami::Media::MediaAttributeValue::VIDEO) {
-                    // Add the first video media and break the loop
-                    // other video medias will be requested when joined.
+                } else if (hasVideo && m.at(libjami::Media::MediaAttributeKey::MEDIA_TYPE)
+                              == libjami::Media::MediaAttributeValue::VIDEO) {
                     currentMediaList.emplace_back(m);
                     break;
                 }
