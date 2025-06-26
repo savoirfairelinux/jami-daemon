@@ -727,6 +727,9 @@ Conference::addSubCall(const std::string& callId)
         auto mediaList = call->getMediaAttributeList();
         if (call->peerUri().find("swarm:") != 0) { // We're hosting so it's already ourself.
             if (videoMixer_ && not MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO)) {
+                // Normally not called, as video stream is added for audio-only answers.
+                // The audio-only source will be added in VideoRtpSession startReceiver,
+                // after ICE negotiation, when peers can properly create video sinks.
                 videoMixer_->addAudioOnlySource(call->getCallId(),
                                                 sip_utils::streamId(call->getCallId(),
                                                                     sip_utils::DEFAULT_AUDIO_STREAMID));
