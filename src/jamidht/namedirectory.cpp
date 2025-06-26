@@ -39,7 +39,7 @@
 #include <msgpack.hpp>
 #include "json_utils.h"
 
-/* for visual studio */
+/* for Visual Studio */
 #include <ciso646>
 #include <sstream>
 #include <regex>
@@ -55,16 +55,15 @@ constexpr const char DEFAULT_SERVER_HOST[] = "https://ns.jami.net";
 const std::string HEX_PREFIX = "0x";
 constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
-/**
- Parser for URIs.         ( protocol        )    ( username         ) ( hostname )
- - Requires "@" if a username is present (e.g., "user@domain.com").
- - Allows common URL-safe special characters in usernames and domains.
-
- Regex breakdown:
- 1. `([a-zA-Z]+:(?://)?)?` → Optional scheme ("http://", "ftp://").
- 2. `(?:([^\s@]{1,64})@)?` → Optional username (max 64 chars, Unicode allowed).
- 3. `([^\s@]+)` → Domain or standalone name (Unicode allowed, no spaces or "@").
-
+/*
+ *  Parser for URIs.         ( protocol        )    ( username         ) ( hostname )
+ *  - Requires "@" if a username is present (e.g., "user@domain.com").
+ *  - Allows common URL-safe special characters in usernames and domains.
+ *
+ *  Regex breakdown:
+ *  1. `([a-zA-Z]+:(?://)?)?` → Optional scheme ("http://", "ftp://").
+ *  2. `(?:([^\s@]{1,64})@)?` → Optional username (max 64 chars, Unicode allowed).
+ *  3. `([^\s@]+)` → Domain or standalone name (Unicode allowed, no spaces or "@").
  */
 const std::regex URI_VALIDATOR {
     R"(^([a-zA-Z]+:(?://)?)?(?:([\w\-.~%!$&'()*+,;=]{1,64}|[^\s@]{1,64})@)?([^\s@]+)$)"
@@ -471,7 +470,7 @@ NameDirectory::saveCache()
         std::lock_guard l(cacheLock_);
         msgpack::pack(file, nameCache_);
     }
-    JAMI_DEBUG("Saved {:d} name-address mappings to {}",
+    JAMI_DEBUG("Saved {:d} name-address mapping(s) to {}",
              nameCache_.size(), cachePath_);
 }
 
@@ -510,7 +509,7 @@ NameDirectory::loadCache()
         JAMI_ERROR("Error when loading cache: {}", e.what());
     }
 
-    JAMI_DEBUG("Loaded {:d} name-address mappings from cache", nameCache_.size());
+    JAMI_DEBUG("Loaded {:d} name-address mapping(s) from cache", nameCache_.size());
 }
 
 } // namespace jami
