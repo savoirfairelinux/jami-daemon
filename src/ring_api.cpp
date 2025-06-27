@@ -121,7 +121,7 @@ void
 CallbackWrapperBase::post(std::function<void()> cb)
 {
     if (auto io = jami::Manager::instance().ioContext())
-        io->post(std::move(cb));
+        asio::post(*io, std::move(cb));
 }
 
 } // namespace libjami
