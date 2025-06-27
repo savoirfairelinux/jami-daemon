@@ -72,13 +72,9 @@ private:
     void testMerge();
     void testFFMerge();
     void testDiff();
-
+    void testLogClosestCommitReachable();
     void testMergeProfileWithConflict();
 
-    std::string addCommit(git_repository* repo,
-                          const std::shared_ptr<JamiAccount> account,
-                          const std::string& branch,
-                          const std::string& commit_msg);
     void addAll(git_repository* repo);
     bool merge_in_main(const std::shared_ptr<JamiAccount> account,
                        git_repository* repo,
@@ -92,6 +88,7 @@ private:
     CPPUNIT_TEST(testFFMerge);
     CPPUNIT_TEST(testDiff);
     CPPUNIT_TEST(testMergeProfileWithConflict);
+    CPPUNIT_TEST(testLogClosestCommitReachable);
 
     CPPUNIT_TEST_SUITE_END();
 };
@@ -236,110 +233,6 @@ ConversationRepositoryTest::testLogMessages()
     messages = repository->log(options);
     CPPUNIT_ASSERT(messages.size() == 1);
     CPPUNIT_ASSERT(messages[0].id == repository->id());
-}
-
-std::string
-ConversationRepositoryTest::addCommit(git_repository* repo,
-                                      const std::shared_ptr<JamiAccount> account,
-                                      const std::string& branch,
-                                      const std::string& commit_msg)
-{
-    auto deviceId = DeviceId(std::string(account->currentDeviceId()));
-    auto name = account->getDisplayName();
-    if (name.empty())
-        name = deviceId.toString();
-
-    git_signature* sig_ptr = nullptr;
-    // Sign commit's buffer
-    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.to_c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERR("Unable to create a commit signature.");
-        return {};
-    }
-    GitSignature sig {sig_ptr, git_signature_free};
-
-    // Retrieve current HEAD
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
-        JAMI_ERR("Unable to get reference for HEAD");
-        return {};
-    }
-
-    git_commit* head_ptr = nullptr;
-    if (git_commit_lookup(&head_ptr, repo, &commit_id) < 0) {
-        JAMI_ERR("Unable to look up HEAD commit");
-        return {};
-    }
-    GitCommit head_commit {head_ptr, git_commit_free};
-
-    // Retrieve current index
-    git_index* index_ptr = nullptr;
-    if (git_repository_index(&index_ptr, repo) < 0) {
-        JAMI_ERR("Unable to open repository index");
-        return {};
-    }
-    GitIndex index {index_ptr, git_index_free};
-
-    git_oid tree_id;
-    if (git_index_write_tree(&tree_id, index.get()) < 0) {
-        JAMI_ERR("Unable to write initial tree from index");
-        return {};
-    }
-
-    git_tree* tree_ptr = nullptr;
-    if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
-        JAMI_ERR("Unable to look up initial tree");
-        return {};
-    }
-    GitTree tree = {tree_ptr, git_tree_free};
-
-    git_buf to_sign = {};
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 && \
-    (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
-    git_commit* const head_ref[1] = {head_commit.get()};
-#else
-    const git_commit* head_ref[1] = {head_commit.get()};
-#endif
-    if (git_commit_create_buffer(&to_sign,
-                                 repo,
-                                 sig.get(),
-                                 sig.get(),
-                                 nullptr,
-                                 commit_msg.c_str(),
-                                 tree.get(),
-                                 1,
-                                 &head_ref[0])
-        < 0) {
-        JAMI_ERR("Unable to create commit buffer");
-        return {};
-    }
-
-    // git commit -S
-    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf);
-    if (git_commit_create_with_signature(&commit_id,
-                                         repo,
-                                         to_sign.ptr,
-                                         signed_str.c_str(),
-                                         "signature")
-        < 0) {
-        JAMI_ERR("Unable to sign commit");
-        return {};
-    }
-
-    auto commit_str = git_oid_tostr_s(&commit_id);
-    if (commit_str) {
-        JAMI_INFO("New commit added with id: %s", commit_str);
-        // Move commit to main branch
-        git_reference* ref_ptr = nullptr;
-        std::string branch_name = "refs/heads/" + branch;
-        if (git_reference_create(&ref_ptr, repo, branch_name.c_str(), &commit_id, true, nullptr)
-            < 0) {
-            JAMI_WARN("Unable to move commit to main");
-        }
-        git_reference_free(ref_ptr);
-    }
-    return commit_str ? commit_str : "";
 }
 
 void
@@ -506,6 +399,111 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
     CPPUNIT_ASSERT(repository->log().size() == 5 /* Initial, add, modify 1, modify 2, merge */);
 }
 
+void
+ConversationRepositoryTest::testLogClosestCommitReachable()
+{
+    // Setup account and repository
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+
+    // Determine repo path
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / repository->id();
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::string displayName = aliceAccount->getDisplayName();
+    std::string deviceId = std::string(aliceAccount->currentDeviceId()); // "email"
+
+    // Add initial commits to repo
+    std::string id_clear = addCommit(repo, aliceAccount, "main", "{\"body\":\"CLEAR\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_clear != "");
+    std::string id_2 = addCommit(repo, aliceAccount, "main", "{\"body\":\"2\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_2 != "");
+    std::string id_3 = addCommit(repo, aliceAccount, "main", "{\"body\":\"3\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_3 != "");
+
+    // Create new branch beginning from id_clear
+    git_reference* to_merge_ref;
+    git_oid msgclear_oid;
+    git_commit* msgclear_commit;
+    git_oid_fromstr(&msgclear_oid, id_clear.c_str());
+    git_commit_lookup(&msgclear_commit, repo, &msgclear_oid);
+    int to_merge_creation = git_branch_create(&to_merge_ref, repo, "to_merge", msgclear_commit, false);
+    CPPUNIT_ASSERT(to_merge_creation == 0);
+
+    // Add missing message '1' to the "to_merge" branch
+    git_repository_set_head(repo, "refs/heads/to_merge");
+    std::string id_1 = addCommit(repo, aliceAccount, "to_merge", "{\"body\":\"1\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_1 != "");
+
+    git_repository_set_head(repo, "refs/heads/to_merge");
+
+    // Manually create merge of messages '1' and '3' for "main" and "to_merge" branches
+    // Get parents
+    git_oid msg1_oid, msg3_oid;
+    git_oid_fromstr(&msg1_oid, id_1.c_str());
+    git_oid_fromstr(&msg3_oid, id_3.c_str());
+    git_commit* msg1_commit = nullptr;
+    git_commit* msg3_commit = nullptr;
+    git_commit_lookup(&msg1_commit, repo, &msg1_oid);
+    git_commit_lookup(&msg3_commit, repo, &msg3_oid);
+
+    // Merge onto "to_merge" branch
+    git_oid msgmerge_oid1;
+    git_signature* msgmerge_sig1 = nullptr;
+    git_signature_now(&msgmerge_sig1, displayName.c_str(), deviceId.c_str());
+    std::string msgmerge_commit_message1 = "Merge commit '" + id_1 + "'";
+    git_tree* tree1 = nullptr;
+    git_commit_tree(&tree1, msg1_commit);
+    git_commit* const msgmerge_parents[2] = {msg1_commit, msg3_commit};
+    int create_first_merge = git_commit_create(&msgmerge_oid1, repo, "refs/heads/to_merge", msgmerge_sig1, msgmerge_sig1, nullptr, msgmerge_commit_message1.c_str(), tree1, 2, msgmerge_parents);
+    CPPUNIT_ASSERT(create_first_merge == 0);
+
+    // Merge onto "main" branch
+    git_oid msgmerge_oid2;
+    git_signature* msgmerge_sig2 = nullptr;
+    git_signature_now(&msgmerge_sig2, displayName.c_str(), deviceId.c_str());
+    std::string msgmerge_commit_message2 = "Merge commit '" + id_3 + "'";
+    git_tree* tree2 = nullptr;
+    git_commit_tree(&tree2, msg3_commit);
+    git_commit* const msgmerge_parents2[2] = {msg3_commit, msg1_commit};
+    int create_second_merge = git_commit_create(&msgmerge_oid2, repo, "refs/heads/main", msgmerge_sig2, msgmerge_sig2, nullptr, msgmerge_commit_message2.c_str(), tree2, 2, msgmerge_parents2);
+    CPPUNIT_ASSERT(create_second_merge == 0);
+
+    // Add commit message '4' to the "to_merge" branch
+    git_repository_set_head(repo, "refs/heads/to_merge");
+    std::string id_4 = addCommit(repo, aliceAccount, "to_merge", "{\"body\":\"4\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_4 != "");
+
+    // Merge "to_merge" branch onto "main" branch
+    std::pair<bool, std::string> to_merge_onto_main = repository->merge(id_4);
+    CPPUNIT_ASSERT(to_merge_onto_main.first);
+
+    // Continue with commit message '5' on "main" branch
+    git_repository_set_head(repo, "refs/heads/main");
+    std::string id_5 = addCommit(repo, aliceAccount, "main", "{\"body\":\"5\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_5 != "");
+
+    // Determine if proper iteration took place
+    std::string from = id_5;
+    std::string to = id_3;
+    std::vector<jami::ConversationCommit> conversation_items = repository->log(LogOptions {from, to});
+    CPPUNIT_ASSERT(conversation_items.size() == 6);
+
+    // Free resources
+    git_reference_free(to_merge_ref);
+    git_commit_free(msgclear_commit);
+    git_commit_free(msg1_commit);
+    git_commit_free(msg3_commit);
+    git_signature_free(msgmerge_sig1);
+    git_signature_free(msgmerge_sig2);
+    git_tree_free(tree1);
+    git_tree_free(tree2);
+    git_repository_free(repo);
+}
 } // namespace test
 } // namespace jami
 

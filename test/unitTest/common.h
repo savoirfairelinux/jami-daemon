@@ -21,6 +21,8 @@
 #include <map>
 #include <string>
 #include <filesystem>
+#include <git2.h>
+#include "jamidht/jamiaccount.h"
 
 constexpr size_t WAIT_FOR_ANNOUNCEMENT_TIMEOUT = 30;
 constexpr size_t WAIT_FOR_REMOVAL_TIMEOUT = 30;
@@ -46,3 +48,9 @@ load_actors(const std::filesystem::path& from_yaml);
 
 extern std::map<std::string, std::string>
 load_actors_and_wait_for_announcement(const std::string& from_yaml);
+
+extern std::string
+addCommit(git_repository* repo,
+            const std::shared_ptr<jami::JamiAccount> account,
+            const std::string& branch,
+            const std::string& commit_msg);

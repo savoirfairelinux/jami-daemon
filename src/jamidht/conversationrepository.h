@@ -333,12 +333,12 @@ public:
                             const std::string& voteType);
 
     /**
-     * Validate a fetch with remote device
-     * @param remotedevice
-     * @return the validated commits and if an error occurs
+     * Validate a fetch from a remote device
+     * @param remoteHead Commit hash of the remote HEAD
+     * @return the validated commits and whether an error occurred
      */
     std::pair<std::vector<ConversationCommit>, bool> validFetch(
-        const std::string& remoteDevice) const;
+        const std::string& remoteHead) const;
     bool validClone(std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb) const;
 
     /**
