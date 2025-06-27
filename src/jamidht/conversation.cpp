@@ -1770,7 +1770,7 @@ Conversation::Impl::mergeHistory(const std::string& uri)
     }
 
     // Validate commit
-    auto [newCommits, err] = repository_->validFetch(uri);
+    auto [newCommits, err] = repository_->validFetch(remoteHead);
     if (newCommits.empty()) {
         if (err)
             JAMI_ERROR("{} Unable to validate history with {}", toString(), uri);
@@ -1870,26 +1870,15 @@ Conversation::Impl::pull(const std::string& deviceId)
         std::string newHead = oldHead;
         std::unique_lock lk(writeMtx_);
         auto commits = mergeHistory(deviceId);
+
+        std::string log = "\n@@@ Commits returned by mergeHistory:\n";
+        for (const auto& commit : commits) {
+            log += fmt::format("@@@     {}\n", commit.at("id"));
+        }
+        JAMI_WARNING("{}", log);
+
         if (!commits.empty()) {
-            newHead = commits.rbegin()->at("id");
-            // Note: Because clients needs to linearize the history, they need to know all commits
-            // that can be updated.
-            // In this case, all commits until the common merge base should be announced.
-            // The client ill need to update it's model after this.
-            std::string mergeBase = oldHead; // If fast-forward, the merge base is the previous head
-            auto newHeadCommit = repo->getCommit(newHead);
-            if (newHeadCommit != std::nullopt && newHeadCommit->parents.size() > 1) {
-                mergeBase = repo->mergeBase(newHeadCommit->parents[0], newHeadCommit->parents[1]);
-                LogOptions options;
-                options.to = mergeBase;
-                auto updatedCommits = loadMessages(options);
-                // We announce commits from oldest to update to newest. This generally avoid
-                // to get detached commits until they are all announced.
-                std::reverse(std::begin(updatedCommits), std::end(updatedCommits));
-                announce(updatedCommits);
-            } else {
-                announce(commits);
-            }
+            announce(commits);
         }
         lk.unlock();
 

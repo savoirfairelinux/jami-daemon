@@ -85,11 +85,12 @@ private:
     void testSyncFetch();
     void testSyncAfterDisconnection();
     void testDisplayedOnLoad();
-
+    void testMissingMessagesOnLoad();
     CPPUNIT_TEST_SUITE(ConversationFetchSentTest);
     CPPUNIT_TEST(testSyncFetch);
     CPPUNIT_TEST(testSyncAfterDisconnection);
     CPPUNIT_TEST(testDisplayedOnLoad);
+    CPPUNIT_TEST(testMissingMessagesOnLoad);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -538,6 +539,150 @@ ConversationFetchSentTest::testDisplayedOnLoad()
 
 }
 
+void
+ConversationFetchSentTest::testMissingMessagesOnLoad()
+{
+    // Setup account and repository
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    CPPUNIT_ASSERT(repository != nullptr);
+
+    // Determine repo path
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
+                    / "conversations" / repository->id();
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::string displayName = aliceAccount->getDisplayName();
+    std::string deviceId = std::string(aliceAccount->currentDeviceId()); // "email"
+
+    // Add initial commits to repo
+    std::string id_clear = addCommit(repo, aliceAccount, "main", "{\"body\":\"CLEAR\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_clear != "");
+    std::string id_20 = addCommit(repo, aliceAccount, "main", "{\"body\":\"20\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_20 != "");
+    std::string id_21 = addCommit(repo, aliceAccount, "main", "{\"body\":\"21\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_21 != "");
+
+    // Create new branch beginning from id_clear
+    git_reference* to_merge_ref;
+    git_oid msgclear_oid;
+    git_commit* msgclear_commit;
+    git_oid_fromstr(&msgclear_oid, id_clear.c_str());
+    git_commit_lookup(&msgclear_commit, repo, &msgclear_oid);
+    int to_merge_creation = git_branch_create(&to_merge_ref, repo, "to_merge", msgclear_commit, false);
+    CPPUNIT_ASSERT(to_merge_creation == 0);
+
+    // Add multiple missing messages '1' - '19' to the "to_merge" branch
+    git_repository_set_head(repo, "refs/heads/to_merge");
+    std::string latest_id = "";
+    for (int i = 1; i < 20; i++)
+    {
+        latest_id = addCommit(repo, aliceAccount, "to_merge", "{\"body\":\"" + std::to_string(i) + "\",\"type\":\"text/plain\"}");
+        CPPUNIT_ASSERT(latest_id != "");
+    }
+
+    git_repository_set_head(repo, "refs/heads/to_merge");
+
+    // Manually create merge of messages '19' and '21' for "main" and "to_merge" branches
+    // Get parents
+    git_oid msg19_oid, msg21_oid;
+    git_oid_fromstr(&msg19_oid, latest_id.c_str());
+    git_oid_fromstr(&msg21_oid, id_21.c_str());
+    git_commit* msg19_commit = nullptr;
+    git_commit* msg21_commit = nullptr;
+    git_commit_lookup(&msg19_commit, repo, &msg19_oid);
+    git_commit_lookup(&msg21_commit, repo, &msg21_oid);
+
+    // Merge onto "to_merge" branch
+    git_oid msgmerge_oid1;
+    git_signature* msgmerge_sig1 = nullptr;
+    git_signature_now(&msgmerge_sig1, displayName.c_str(), deviceId.c_str());
+    std::string msgmerge_commit_message1 = "Merge commit '" + latest_id + "'";
+    git_tree* tree1 = nullptr;
+    git_commit_tree(&tree1, msg19_commit);
+    git_commit* const msgmerge_parents[2] = {msg19_commit, msg21_commit};
+    int create_first_merge = git_commit_create(&msgmerge_oid1, repo, "refs/heads/to_merge", msgmerge_sig1, msgmerge_sig1, nullptr, msgmerge_commit_message1.c_str(), tree1, 2, msgmerge_parents);
+    CPPUNIT_ASSERT(create_first_merge == 0);
+
+    // Merge onto "main" branch
+    git_oid msgmerge_oid2;
+    git_signature* msgmerge_sig2 = nullptr;
+    git_signature_now(&msgmerge_sig2, displayName.c_str(), deviceId.c_str());
+    std::string msgmerge_commit_message2 = "Merge commit '" + id_21 + "'";
+    git_tree* tree2 = nullptr;
+    git_commit_tree(&tree2, msg21_commit);
+    git_commit* const msgmerge_parents2[2] = {msg21_commit, msg19_commit};
+    int create_second_merge = git_commit_create(&msgmerge_oid2, repo, "refs/heads/main", msgmerge_sig2, msgmerge_sig2, nullptr, msgmerge_commit_message2.c_str(), tree2, 2, msgmerge_parents2);
+    CPPUNIT_ASSERT(create_second_merge == 0);
+
+    // Add commit message '22' to the "to_merge" branch
+    git_repository_set_head(repo, "refs/heads/to_merge");
+    std::string id_22 = addCommit(repo, aliceAccount, "to_merge", "{\"body\":\"22\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_22 != "");
+
+    // Merge "to_merge" branch onto "main" branch
+    std::pair<bool, std::string> to_merge_onto_main = repository->merge(id_22);
+    CPPUNIT_ASSERT(to_merge_onto_main.first);
+
+    // Continue with commit '23' on main
+    git_repository_set_head(repo, "refs/heads/main");
+    std::string id_23 = addCommit(repo, aliceAccount, "main", "{\"body\":\"23\",\"type\":\"text/plain\"}");
+    CPPUNIT_ASSERT(id_23 != "");
+
+    // Free resources
+    git_reference_free(to_merge_ref);
+    git_commit_free(msgclear_commit);
+    git_commit_free(msg19_commit);
+    git_commit_free(msg21_commit);
+    git_signature_free(msgmerge_sig1);
+    git_signature_free(msgmerge_sig2);
+    git_tree_free(tree1);
+    git_tree_free(tree2);
+
+
+    auto getMsgStatus = [&](const auto& data, const auto& id, const auto& peer) {
+        for (const auto& msg : data.messages) {
+            if (msg.id == id && msg.status.find(peer) != msg.status.end()) {
+                return static_cast<libjami::Account::MessageStates>(msg.status.at(peer));
+            }
+        }
+        return libjami::Account::MessageStates::UNKNOWN;
+    };
+
+    connectSignals();
+    aliceAccount->convModule()->loadConversations(); // Load conversation information
+    aliceData.conversationId = repository->id();
+
+    std::vector<std::string> displayedCommits = {};
+    libjami::SwarmMessage oldestMessage;
+
+    /* Load 9 messages at a time from the conversation.
+    Want to ensure that travelling through the missing branch
+    and stopping midway does not cause further disappearances
+    upon continuation */
+
+    do {
+        // Need to clear array each time, otherwise HEAD gets reused for each grouping
+        aliceData.messages.clear();
+        // Load 9 messages from the conversation and
+        // check that they're all displaying appropriately
+        libjami::loadConversation(aliceId, aliceData.conversationId, "", 9);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData.messages.empty(); }));
+        for (const auto& msg : aliceData.messages) {
+            CPPUNIT_ASSERT(getMsgStatus(aliceData, msg.id, aliceUri) == libjami::Account::MessageStates::DISPLAYED);
+            displayedCommits.emplace_back(msg.id);
+            oldestMessage = msg;
+        }
+    } while (oldestMessage.type != "initial");
+
+    // A total of 25 messages should have been sent a display signal
+    CPPUNIT_ASSERT(displayedCommits.size() == 25);
+
+    git_repository_free(repo);
+}
 
 } // namespace test
 } // namespace jami
