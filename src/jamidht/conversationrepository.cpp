@@ -231,6 +231,8 @@ public:
                        std::function<void(ConversationCommit&&)>&& emplaceCb,
                        PostConditionCb&& postCondition,
                        const std::string& from = "",
+                       const std::string& to = "",
+                       bool includeTo = false,
                        bool logIfNotFound = true) const;
     std::vector<ConversationCommit> log(const LogOptions& options) const;
 
@@ -2169,9 +2171,11 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
                                             std::function<void(ConversationCommit&&)>&& emplaceCb,
                                             PostConditionCb&& postCondition,
                                             const std::string& from,
+                                            const std::string& to,
+                                            bool includeTo,
                                             bool logIfNotFound) const
 {
-    git_oid oid, oidFrom, oidMerge;
+    git_oid oid, oidFrom, oidTo, oidMerge;
 
     // Note: Start from head to get all merge possibilities and correct linearized parent.
     auto repo = repository();
@@ -2190,7 +2194,8 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     }
 
     git_revwalk* walker_ptr = nullptr;
-    if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push(walker_ptr, &oid) < 0) {
+    std::string rng = to + ".." + from;
+    if (git_revwalk_new(&walker_ptr, repo.get()) < 0 || git_revwalk_push_range(walker_ptr, rng.c_str()) < 0) {
         GitRevWalker walker {walker_ptr, git_revwalk_free};
         // This fail can be ok in the case we check if a commit exists before pulling (so can fail
         // there). only log if the fail is unwanted.
@@ -2199,12 +2204,22 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         return;
     }
 
+    if (!includeTo) {
+        if (git_oid_fromstr(&oidTo, to.c_str()) == 0) {
+            if (git_revwalk_hide(walker_ptr, &oidTo) < 0)
+                JAMI_ERROR("[Account {}] [Conversation {}] Failed to hide commit {}", accountId_, id_, to);
+        }
+    }
+
     GitRevWalker walker {walker_ptr, git_revwalk_free};
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+    if (git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME) < 0) {
+        JAMI_ERROR("Revwalk NOT SORTED!");
+    }
 
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
+        JAMI_LOG("ID: {}", id);
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, id);
             break;
@@ -2265,7 +2280,6 @@ ConversationRepository::Impl::log(const LogOptions& options) const
 {
     std::vector<ConversationCommit> commits {};
     auto startLogging = options.from == "";
-    auto breakLogging = false;
     forEachCommit(
         [&](const auto& id, const auto& author, const auto& commit) {
             if (!commits.empty()) {
@@ -2277,14 +2291,6 @@ ConversationRepository::Impl::log(const LogOptions& options) const
             }
             if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
                 return CallbackResult::Break; // Stop logging
-            if (breakLogging)
-                return CallbackResult::Break; // Stop logging
-            if (id == options.to) {
-                if (options.includeTo)
-                    breakLogging = true; // For the next commit
-                else
-                    return CallbackResult::Break; // Stop logging
-            }
 
             if (!startLogging && options.from != "" && options.from == id)
                 startLogging = true;
@@ -2307,6 +2313,8 @@ ConversationRepository::Impl::log(const LogOptions& options) const
         [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
         [](auto, auto, auto) { return false; },
         options.from,
+        options.to,
+        options.includeTo,
         options.logIfNotFound);
     return commits;
 }
@@ -3188,6 +3196,8 @@ ConversationRepository::log(PreConditionCb&& preCondition,
                           std::move(emplaceCb),
                           std::move(postCondition),
                           from,
+                          "",
+                          false,
                           logIfNotFound);
 }
 
