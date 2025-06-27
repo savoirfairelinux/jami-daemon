@@ -71,7 +71,9 @@ MessageEngine::sendMessage(const std::string& to,
         }
         scheduleSave();
     }
-    ioContext_->post([this, to, deviceId]() { retrySend(to, deviceId, true); });
+    asio::post(*ioContext_, [this, to, deviceId]() {
+        retrySend(to, deviceId, true);
+    });
     return token;
 }
 

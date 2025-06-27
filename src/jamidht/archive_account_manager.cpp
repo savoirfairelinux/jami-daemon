@@ -692,7 +692,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             ctx->linkDevCtx->channel = socket;
 
             ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
-            ctx->timeout->expires_from_now(OP_TIMEOUT);
+            ctx->timeout->expires_after(OP_TIMEOUT);
             ctx->timeout->async_wait([c = std::weak_ptr(ctx), socket](const std::error_code& ec) {
                 if (ec) {
                     return;
@@ -978,7 +978,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     ctx->addDeviceCtx->state = AuthDecodingState::HANDSHAKE;
 
     ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
-    ctx->timeout->expires_from_now(OP_TIMEOUT);
+    ctx->timeout->expires_after(OP_TIMEOUT);
     ctx->timeout->async_wait(
         [wthis = weak(), wctx = std::weak_ptr(ctx)](const std::error_code& ec) {
             if (ec) {

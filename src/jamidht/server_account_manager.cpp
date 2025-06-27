@@ -283,7 +283,7 @@ ServerAccountManager::sendRequest(const std::shared_ptr<dht::http::Request>& req
 void
 ServerAccountManager::clearRequest(const std::weak_ptr<dht::http::Request>& request)
 {
-    Manager::instance().ioContext()->post([w=weak_from_this(), request] {
+    asio::post(*Manager::instance().ioContext(), [w=weak_from_this(), request] {
         if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock())) {
             if (auto req = request.lock()) {
                 std::lock_guard lock(this_->requestLock_);

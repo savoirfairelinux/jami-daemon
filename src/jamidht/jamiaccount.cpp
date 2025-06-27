@@ -2344,7 +2344,7 @@ JamiAccount::convModule(bool noCreation)
                     auto cm = shared->convModule();
                     std::shared_lock lkCM(shared->connManagerMtx_);
                     if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
-                        Manager::instance().ioContext()->post([cb] { cb({}); });
+                        asio::post(*Manager::instance().ioContext(), [cb = std::move(cb)] { cb({}); });
                         return;
                     }
                     if (!shared->connectionManager_->isConnecting(DeviceId(deviceId),
@@ -4602,7 +4602,7 @@ JamiAccount::initConnectionManager()
                                                          onTextMessage("", cert->issuer->getId().toString(), cert, {{type, content}});
                                                      },
                                                      [w = weak()](const std::string& peer, bool connected) {
-                                                        Manager::instance().ioContext()->post([w, peer, connected] {
+                                                        asio::post(*Manager::instance().ioContext(), [w, peer, connected] {
                                                             if (auto acc = w.lock())
                                                                 acc->onPeerConnected(peer, connected);
                                                         });
