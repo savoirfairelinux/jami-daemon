@@ -231,6 +231,8 @@ public:
                        std::function<void(ConversationCommit&&)>&& emplaceCb,
                        PostConditionCb&& postCondition,
                        const std::string& from = "",
+                       const std::string& to = "",
+                       bool includeTo = false,
                        bool logIfNotFound = true) const;
     std::vector<ConversationCommit> log(const LogOptions& options) const;
 
@@ -2130,35 +2132,17 @@ ConversationRepository::Impl::diff(git_repository* repo,
 std::vector<ConversationCommit>
 ConversationRepository::Impl::behind(const std::string& from) const
 {
-    git_oid oid_local, oid_head, oid_remote;
     auto repo = repository();
     if (!repo)
         return {};
+
+    git_oid oid_local;
     if (git_reference_name_to_id(&oid_local, repo.get(), "HEAD") < 0) {
         JAMI_ERROR("Unable to get reference for HEAD");
         return {};
     }
-    oid_head = oid_local;
-    std::string head = git_oid_tostr_s(&oid_head);
-    if (git_oid_fromstr(&oid_remote, from.c_str()) < 0) {
-        JAMI_ERROR("Unable to get reference for commit {}", from);
-        return {};
-    }
-
-    git_oidarray bases;
-    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERROR("Unable to get any merge base for commit {} and {}", from, head);
-        return {};
-    }
-    for (std::size_t i = 0; i < bases.count; ++i) {
-        std::string oid = git_oid_tostr_s(&bases.ids[i]);
-        if (oid != head) {
-            oid_local = bases.ids[i];
-            break;
-        }
-    }
-    git_oidarray_free(&bases);
     std::string to = git_oid_tostr_s(&oid_local);
+
     if (to == from)
         return {};
     return log(LogOptions {from, to});
@@ -2169,9 +2153,13 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
                                             std::function<void(ConversationCommit&&)>&& emplaceCb,
                                             PostConditionCb&& postCondition,
                                             const std::string& from,
+                                            const std::string& to,
+                                            bool includeTo,
                                             bool logIfNotFound) const
 {
-    git_oid oid, oidFrom, oidMerge;
+    JAMI_LOG("@@@ forEachCommit from: {}, to: {}, includeTo: {}, logIfNotFound: {}",
+             from, to, includeTo, logIfNotFound);
+    git_oid oid, oidFrom, oidTo, oidMerge;
 
     // Note: Start from head to get all merge possibilities and correct linearized parent.
     auto repo = repository();
@@ -2199,14 +2187,50 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         return;
     }
 
+    if (!to.empty()) {
+        if (git_oid_fromstr(&oidTo, to.c_str()) < 0) {
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to get git_oid from {}", accountId_, id_, to);
+            return;
+        }
+        if (!includeTo) {
+            if (git_revwalk_hide(walker_ptr, &oidTo) < 0) {
+                JAMI_ERROR("[Account {}] [Conversation {}] Failed to hide commit {}", accountId_, id_, to);
+                return;
+            }
+        } else {
+            git_commit* commitPtr = nullptr;
+            if (git_commit_lookup(&commitPtr, repo.get(), &oidTo) < 0) {
+                JAMI_ERROR("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, to);
+                return;
+            }
+            GitCommit toCommit {commitPtr, git_commit_free};
+            auto parentsCount = git_commit_parentcount(toCommit.get());
+            for (unsigned int i = 0; i < parentsCount; i++) {
+                std::string parent {};
+                const git_oid* parentId = git_commit_parent_id(toCommit.get(), i);
+                if (!parentId) {
+                    JAMI_ERROR("[Account {}] [Conversation {}] Failed to get id for parent#{} of commit {}", accountId_, id_, i, to);
+                    return;
+                }
+                if (git_revwalk_hide(walker_ptr, parentId) < 0) {
+                    JAMI_ERROR("[Account {}] [Conversation {}] Failed to hide parent#{} of commit {}", accountId_, id_, i, to);
+                    return;
+                }
+            }
+        }
+    }
+
     GitRevWalker walker {walker_ptr, git_revwalk_free};
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+    if (git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME) < 0) {
+        JAMI_ERROR("Revwalk NOT SORTED!");
+    }
 
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
+        JAMI_LOG("@@@    ID: {}", id);
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, id);
+            JAMI_WARNING("@@@      [Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, id);
             break;
         }
         GitCommit commit {commit_ptr, git_commit_free};
@@ -2228,10 +2252,13 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         }
 
         auto result = preCondition(id, author, commit);
-        if (result == CallbackResult::Skip)
+        if (result == CallbackResult::Skip) {
+            JAMI_WARNING("@@@      Skipping due to preCondition");
             continue;
-        else if (result == CallbackResult::Break)
+        } else if (result == CallbackResult::Break) {
+            JAMI_WARNING("@@@      Breaking due to preCondition");
             break;
+        }
 
         ConversationCommit cc;
         cc.id = id;
@@ -2255,8 +2282,10 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         auto post = postCondition(id, cc.author, cc);
         emplaceCb(std::move(cc));
 
-        if (post)
+        if (post) {
+            JAMI_WARNING("@@@      Breaking due to postCondition");
             break;
+        }
     }
 }
 
@@ -2265,7 +2294,6 @@ ConversationRepository::Impl::log(const LogOptions& options) const
 {
     std::vector<ConversationCommit> commits {};
     auto startLogging = options.from == "";
-    auto breakLogging = false;
     forEachCommit(
         [&](const auto& id, const auto& author, const auto& commit) {
             if (!commits.empty()) {
@@ -2277,14 +2305,6 @@ ConversationRepository::Impl::log(const LogOptions& options) const
             }
             if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
                 return CallbackResult::Break; // Stop logging
-            if (breakLogging)
-                return CallbackResult::Break; // Stop logging
-            if (id == options.to) {
-                if (options.includeTo)
-                    breakLogging = true; // For the next commit
-                else
-                    return CallbackResult::Break; // Stop logging
-            }
 
             if (!startLogging && options.from != "" && options.from == id)
                 startLogging = true;
@@ -2307,6 +2327,8 @@ ConversationRepository::Impl::log(const LogOptions& options) const
         [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
         [](auto, auto, auto) { return false; },
         options.from,
+        options.to,
+        options.includeTo,
         options.logIfNotFound);
     return commits;
 }
@@ -3188,6 +3210,8 @@ ConversationRepository::log(PreConditionCb&& preCondition,
                           std::move(emplaceCb),
                           std::move(postCondition),
                           from,
+                          "",
+                          false,
                           logIfNotFound);
 }
 
@@ -3755,12 +3779,11 @@ ConversationRepository::resolveVote(const std::string& uri,
 }
 
 std::pair<std::vector<ConversationCommit>, bool>
-ConversationRepository::validFetch(const std::string& remoteDevice) const
+ConversationRepository::validFetch(const std::string& remoteHead) const
 {
-    auto newCommit = remoteHead(remoteDevice);
-    if (not pimpl_ or newCommit.empty())
+    if (not pimpl_)
         return {{}, false};
-    auto commitsToValidate = pimpl_->behind(newCommit);
+    auto commitsToValidate = pimpl_->behind(remoteHead);
     std::reverse(std::begin(commitsToValidate), std::end(commitsToValidate));
     auto isValid = pimpl_->validCommits(commitsToValidate);
     if (isValid)
