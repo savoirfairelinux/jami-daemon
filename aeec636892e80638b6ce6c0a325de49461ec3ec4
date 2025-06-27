@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f46cae00_98fb4cc5",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4598,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-06-27T23:54:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a101ee97_4311bbc1",
+      "range": {
+        "startLine": 4598,
+        "startChar": 56,
+        "endLine": 4598,
+        "endChar": 123
+      },
+      "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b5a120c6_d67a1c1a",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "80a8597e_e240bbf1",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-06-27T23:54:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b5a120c6_d67a1c1a",
+      "range": {
+        "startLine": 110,
+        "startChar": 16,
+        "endLine": 110,
+        "endChar": 26
+      },
+      "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "942a6a10_0be85ba3",
@@ -60,6 +108,30 @@
       "writtenOn": "2025-06-25T17:57:31Z",
       "side": 1,
       "message": "Same comment as for `audio_rtp_session.cpp`.",
+      "range": {
+        "startLine": 140,
+        "startChar": 24,
+        "endLine": 140,
+        "endChar": 34
+      },
+      "revId": "aeec636892e80638b6ce6c0a325de49461ec3ec4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3197bc7_2b658d05",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-06-27T23:54:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "942a6a10_0be85ba3",
       "range": {
         "startLine": 140,
         "startChar": 24,
