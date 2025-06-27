@@ -912,7 +912,6 @@ Manager::finish() noexcept
         git_libgit2_shutdown();
 
         if (!pimpl_->ioContext_->stopped()) {
-            pimpl_->ioContext_->reset(); // allow to finish
             pimpl_->ioContext_->stop();  // make thread stop
         }
         if (pimpl_->ioContextRunner_.joinable())
