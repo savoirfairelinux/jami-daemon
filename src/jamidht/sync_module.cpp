@@ -19,7 +19,9 @@
 
 #include "jamidht/conversation_module.h"
 #include "jamidht/archive_account_manager.h"
+
 #include <dhtnet/multiplexed_socket.h>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 
@@ -214,7 +216,10 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         return len;
     });
 
-    pimpl_->syncInfos(socket, nullptr);
+    dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket]() {
+        if (auto s = w.lock())
+            s->syncInfos(socket, nullptr);
+    });
 }
 
 bool
