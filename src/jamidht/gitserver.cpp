@@ -125,7 +125,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
     unsigned int pkt_len = 0;
     auto [p, ec] = std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
     if (ec != std::errc()) {
-        JAMI_ERROR("Unable to parse packet size");
+        JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to parse packet size", accountId_, repositoryId_, fmt::ptr(this));
     }
     if (pkt_len != pkt.size()) {
         // Store next packet part
@@ -142,7 +142,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
         // not do multi-ack, just send ACK + pack file
         // In case of no common base, send NAK
-        JAMI_INFO("Peer negotiation is done. Answering to want order");
+        JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer negotiation is done. Answering to want order", accountId_, repositoryId_, fmt::ptr(this));
         bool sendData;
         if (common_.empty())
             sendData = NAK();
@@ -168,30 +168,32 @@ GitServer::Impl::parseOrder(std::string_view buf)
     if (cmd == UPLOAD_PACK_CMD) {
         // Cf: https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
         // References discovery
-        JAMI_INFO("Upload pack command detected.");
+        JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Upload pack command detected.", accountId_, repositoryId_, fmt::ptr(this));
         auto version = 1;
         auto parameters = getParameters(dat);
         auto versionIt = parameters.find("version");
         bool sendVersion = false;
         if (versionIt != parameters.end()) {
-            try {
-                version = std::stoi(versionIt->second);
+            auto [p, ec] = std::from_chars(versionIt->second.data(),
+                                           versionIt->second.data() + versionIt->second.size(),
+                                           version);
+            if (ec == std::errc()) {
                 sendVersion = true;
-            } catch (...) {
-                JAMI_WARNING("Invalid version detected: {}", versionIt->second);
+            } else {
+                JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Invalid version detected: {}", accountId_, repositoryId_, fmt::ptr(this), versionIt->second);
             }
         }
         if (version == 1) {
             sendReferenceCapabilities(sendVersion);
         } else {
-            JAMI_ERR("That protocol version is not yet supported (version: %u)", version);
+            JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] That protocol version is not yet supported (version: {:d})", accountId_, repositoryId_, fmt::ptr(this), version);
         }
     } else if (cmd == WANT_CMD) {
         // Reference:
         // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L229
         // TODO can have more want
         wantedReference_ = dat.substr(0, 40);
-        JAMI_INFO("Peer want ref: %s", wantedReference_.c_str());
+        JAMI_LOG("[Account {}] [Conversation {}] [GitServer {}] Peer want ref: {}", accountId_, repositoryId_, fmt::ptr(this), wantedReference_);
     } else if (cmd == HAVE_CMD) {
         const auto& commit = haveRefs_.emplace_back(dat.substr(0, 40));
         if (common_.empty()) {
@@ -201,7 +203,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
             // TODO do not open repository every time
             git_repository* repo;
             if (git_repository_open(&repo, repository_.c_str()) != 0) {
-                JAMI_WARN("Unable to open %s", repository_.c_str());
+                JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open {}", accountId_, repositoryId_, fmt::ptr(this), repository_);
                 return !cachedPkt_.empty();
             }
             GitRepository rep {repo, git_repository_free};
@@ -212,7 +214,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
             }
         }
     } else {
-        JAMI_WARNING("Unwanted packet received: {}", pkt);
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unwanted packet received: {}", accountId_, repositoryId_, fmt::ptr(this), pkt);
     }
     return !cachedPkt_.empty();
 }
@@ -230,7 +232,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
     git_repository* repo;
     if (git_repository_open(&repo, repository_.c_str()) != 0) {
-        JAMI_WARNING("Unable to open {}", repository_);
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open {}", accountId_, repositoryId_, fmt::ptr(this), repository_);
         socket_->shutdown();
         return;
     }
@@ -246,7 +248,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                        toSend.size(),
                        ec);
         if (ec) {
-            JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
             socket_->shutdown();
             return;
         }
@@ -254,11 +256,11 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, rep.get(), "HEAD") < 0) {
-        JAMI_ERROR("Unable to get reference for HEAD");
+        JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for HEAD", accountId_, repositoryId_, fmt::ptr(this));
         socket_->shutdown();
         return;
     }
-    std::string currentHead = git_oid_tostr_s(&commit_id);
+    std::string_view currentHead = git_oid_tostr_s(&commit_id);
 
     // Send references
     std::ostringstream packet;
@@ -271,7 +273,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         for (std::size_t i = 0; i < refs.count; ++i) {
             std::string_view ref = refs.strings[i];
             if (git_reference_name_to_id(&commit_id, rep.get(), ref.data()) < 0) {
-                JAMI_WARNING("Unable to get reference for {}", ref);
+                JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for {}", accountId_, repositoryId_, fmt::ptr(this), ref);
                 continue;
             }
             currentHead = git_oid_tostr_s(&commit_id);
@@ -287,7 +289,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
     auto toSend = packet.str();
     socket_->write(reinterpret_cast<const unsigned char*>(toSend.data()), toSend.size(), ec);
     if (ec) {
-        JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
         socket_->shutdown();
     }
 }
@@ -302,7 +304,7 @@ GitServer::Impl::ACKCommon()
             18 + common_.size() /* size + ACK + space * 2 + continue + \n */, common_);
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
-            JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
             socket_->shutdown();
         }
     }
@@ -318,7 +320,7 @@ GitServer::Impl::ACKFirst()
             9 + common_.size() /* size + ACK + space + \n */, common_);
         socket_->write(reinterpret_cast<const unsigned char*>(toSend.c_str()), toSend.size(), ec);
         if (ec) {
-            JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
             socket_->shutdown();
             return false;
         }
@@ -333,7 +335,7 @@ GitServer::Impl::NAK()
     // NAK
     socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
     if (ec) {
-        JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
         socket_->shutdown();
         return false;
     }
@@ -345,14 +347,14 @@ GitServer::Impl::sendPackData()
 {
     git_repository* repo_ptr;
     if (git_repository_open(&repo_ptr, repository_.c_str()) != 0) {
-        JAMI_WARN("Unable to open %s", repository_.c_str());
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open {}", accountId_, repositoryId_, fmt::ptr(this), repository_);
         return;
     }
     GitRepository repo {repo_ptr, git_repository_free};
 
     git_packbuilder* pb_ptr;
     if (git_packbuilder_new(&pb_ptr, repo.get()) != 0) {
-        JAMI_WARNING("Unable to open packbuilder for {}", repository_);
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open packbuilder for {}", accountId_, repositoryId_, fmt::ptr(this), repository_);
         return;
     }
     GitPackBuilder pb {pb_ptr, git_packbuilder_free};
@@ -360,7 +362,7 @@ GitServer::Impl::sendPackData()
     std::string fetched = wantedReference_;
     git_oid oid;
     if (git_oid_fromstr(&oid, fetched.c_str()) < 0) {
-        JAMI_ERROR("Unable to get reference for commit {}", fetched);
+        JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to get reference for commit {}", accountId_, repositoryId_, fmt::ptr(this), fetched);
         return;
     }
 
@@ -386,16 +388,14 @@ GitServer::Impl::sendPackData()
         if (haveCommit && parents.size() == 0 /* We are sure that all commits are there */)
             break;
         if (git_packbuilder_insert_commit(pb.get(), &oid) != 0) {
-            JAMI_WARN("Unable to open insert commit %s for %s",
-                      git_oid_tostr_s(&oid),
-                      repository_.c_str());
+            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to open insert commit {} for {}", accountId_, repositoryId_, fmt::ptr(this), git_oid_tostr_s(&oid), repository_);
             return;
         }
 
         // Get next commit to pack
         git_commit* commit_ptr;
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_ERR("Unable to look up current commit");
+            JAMI_ERROR("[Account {}] [Conversation {}] [GitServer {}] Unable to look up current commit", accountId_, repositoryId_, fmt::ptr(this));
             return;
         }
         GitCommit commit {commit_ptr, git_commit_free};
@@ -410,7 +410,7 @@ GitServer::Impl::sendPackData()
 
     git_buf data = {};
     if (git_packbuilder_write_buf(&data, pb.get()) != 0) {
-        JAMI_WARN("Unable to write pack data for %s", repository_.c_str());
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to write pack data for {}", accountId_, repositoryId_, fmt::ptr(this), repository_);
         return;
     }
 
@@ -434,7 +434,7 @@ GitServer::Impl::sendPackData()
                        toSendData.size(),
                        ec);
         if (ec) {
-            JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+            JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
             git_buf_dispose(&data);
             return;
         }
@@ -446,7 +446,7 @@ GitServer::Impl::sendPackData()
     // And finish by a little FLUSH
     socket_->write(reinterpret_cast<const uint8_t*>(FLUSH_PKT.data()), FLUSH_PKT.size(), ec);
     if (ec) {
-        JAMI_WARNING("Unable to send data for {}: {}", repository_, ec.message());
+        JAMI_WARNING("[Account {}] [Conversation {}] [GitServer {}] Unable to send data for {}: {}", accountId_, repositoryId_, fmt::ptr(this), repository_, ec.message());
     }
 
     // Clear sent data
@@ -468,7 +468,7 @@ GitServer::Impl::getParameters(std::string_view pkt_line)
         if (letter == '\0') {
             // parameters such as host or version are after the first \0
             if (nullChar != 0 && !key.empty()) {
-                parameters[std::move(key)] = std::move(value);
+                parameters.try_emplace(std::move(key), std::move(value));
             }
             nullChar += 1;
             isKey = true;
