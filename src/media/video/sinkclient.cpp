@@ -67,9 +67,7 @@ public:
     {
         auto ret = ::sem_wait(&m_);
         if (ret < 0) {
-            std::ostringstream msg;
-            msg << "SHM mutex@" << &m_ << " lock failed (" << ret << ")";
-            throw std::logic_error {msg.str()};
+            throw std::logic_error {fmt::format("SHM mutex@{} lock failed ({})", fmt::ptr(&m_), ret)};
         }
     }
 
@@ -115,9 +113,7 @@ ShmHolder::ShmHolder(const std::string& name)
     static constexpr int perms = S_IRUSR | S_IWUSR;
 
     static auto shmFailedWithErrno = [this](const std::string& what) {
-        std::ostringstream msg;
-        msg << "ShmHolder[" << openedName_ << "]: " << what << " failed, errno=" << errno;
-        throw std::runtime_error {msg.str()};
+        throw std::runtime_error {fmt::format("ShmHolder[{}]: {} failed, errno={}", openedName_, what, errno)};
     };
 
     if (not name.empty()) {
@@ -127,9 +123,7 @@ ShmHolder::ShmHolder(const std::string& name)
             shmFailedWithErrno("shm_open");
     } else {
         for (int i = 0; fd_ < 0; ++i) {
-            std::ostringstream tmpName;
-            tmpName << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
-            openedName_ = tmpName.str();
+            openedName_ = fmt::format(PACKAGE_NAME "_shm_{}_{}", getpid(), i);
             fd_ = ::shm_open(openedName_.c_str(), flags, perms);
             if (fd_ < 0 and errno != EEXIST)
                 shmFailedWithErrno("shm_open");

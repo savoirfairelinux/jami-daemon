@@ -779,10 +779,7 @@ SIPCall::terminateSipSession(int status)
                     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
                     JAMI_ERR("No account detected");
-                    std::ostringstream msg;
-                    msg << "[call:" << getCallId().c_str() << "] "
-                        << "The account owning this call is invalid";
-                    throw std::runtime_error(msg.str());
+                    throw std::runtime_error(fmt::format("[call:{}] The account owning this call is invalid", getCallId()));
                 }
 
                 ret = pjsip_inv_send_msg(inviteSession_.get(), tdata);

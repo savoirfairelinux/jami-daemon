@@ -64,9 +64,7 @@ compress(const std::string& str)
     outbuffer.resize(destSize);
 
     if (ret != Z_OK) {
-        std::ostringstream oss;
-        oss << "Exception during zlib compression: (" << ret << ") ";
-        throw std::runtime_error(oss.str());
+        throw std::runtime_error(fmt::format("Exception during zlib compression: ({})", ret));
     }
 
     return outbuffer;
@@ -142,9 +140,7 @@ decompress(const std::vector<uint8_t>& str)
 
     // an error occurred that was not EOF
     if (ret != Z_STREAM_END) {
-        std::ostringstream oss;
-        oss << "Exception during zlib decompression: (" << ret << ") " << zs.msg;
-        throw(std::runtime_error(oss.str()));
+        throw(std::runtime_error(fmt::format("Exception during zlib decompression: ({})", ret)));
     }
 
     return out;
