@@ -192,7 +192,7 @@ private:
      * @param numberNodes
      */
     void sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
-                     NodeId& nodeId,
+                     const NodeId& nodeId,
                      Query q,
                      int numberNodes = Bucket::BUCKET_MAX_SIZE);
 
