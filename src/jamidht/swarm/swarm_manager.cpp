@@ -188,27 +188,24 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
 
 void
 SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
-                          NodeId& nodeId,
+                          const NodeId& nodeId,
                           Query q,
                           int numberNodes)
 {
-    msgpack::sbuffer buffer;
-    msgpack::packer<msgpack::sbuffer> pk(&buffer);
-    std::error_code ec;
-
-    Request toRequest {q, numberNodes, nodeId};
-    Message msg;
-    msg.is_mobile = isMobile_;
-    msg.request = std::move(toRequest);
-
-    pk.pack(msg);
-
-    socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
-
-    if (ec) {
-        JAMI_ERROR("{}", ec.message());
-        return;
-    }
+    dht::ThreadPool::io().run([socket, isMobile=isMobile_, nodeId, q, numberNodes] {
+        msgpack::sbuffer buffer;
+        msgpack::packer<msgpack::sbuffer> pk(&buffer);
+        Message msg;
+        msg.is_mobile = isMobile;
+        msg.request = Request {q, numberNodes, nodeId};
+        pk.pack(msg);
+        
+        std::error_code ec;
+        socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+        if (ec) {
+            JAMI_ERROR("{}", ec.message());
+        }
+    });
 }
 
 void
@@ -232,15 +229,11 @@ SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
         pk.pack(msg);
 
         std::error_code ec;
-
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
         if (ec) {
             JAMI_ERROR("{}", ec.message());
             return;
         }
-    }
-
-    else {
     }
 }
 
