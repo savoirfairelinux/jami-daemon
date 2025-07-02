@@ -25,8 +25,17 @@ using namespace std::string_view_literals;
 
 // NOTE: THIS MUST BE IN THE ROOT NAMESPACE FOR LIBGIT2
 
+/*
+ * Create a git protocol request.
+ *
+ * For example: 0029git-upload-pack conversation\0host=device\0
+ * @param buf       The buffer to fill
+ * @param cmd       The wanted command
+ * @param url       The repository's URL
+ * @return 0 on success, - 1 on error
+ */
 int
-generateRequest(git_buf* request, const std::string& cmd, const std::string_view& url)
+generateRequest(git_buf* request, const std::string& cmd, std::string_view url)
 {
     if (cmd.empty()) {
         giterr_set_str(GITERR_NET, "empty command");
@@ -42,21 +51,28 @@ generateRequest(git_buf* request, const std::string& cmd, const std::string_view
     auto deviceId = url.substr(0, delim);
     auto conversationId = url.substr(delim, url.size());
 
-    auto nullSeparator = "\0"sv;
+    constexpr auto nullSeparator = "\0"sv;
     auto total = 4                                   /* 4 bytes for the len len */
                  + cmd.size()                        /* followed by the command */
                  + 1                                 /* space */
                  + conversationId.size()             /* conversation */
                  + 1                                 /* \0 */
                  + HOST_TAG.size() + deviceId.size() /* device */
-                 + nullSeparator.size() /* \0 */;
+                 + nullSeparator.size()              /* \0 */;
 
-    std::ostringstream streamed;
-    streamed << std::setw(4) << std::setfill('0') << std::hex << (total & 0x0FFFF) << cmd;
-    streamed << " " << conversationId;
-    streamed << nullSeparator << HOST_TAG << deviceId << nullSeparator;
-    auto str = streamed.str();
-    git_buf_set(request, str.c_str(), str.size());
+    std::string str;
+    str.reserve(total);
+    str.append("0000"sv);
+    fmt::format_to_n(str.begin(), 4, "{:04x}", total);
+    str.append(cmd)
+        .append(" "sv)
+        .append(conversationId)
+        .append(nullSeparator)
+        .append(HOST_TAG)
+        .append(deviceId)
+        .append(nullSeparator);
+
+    git_buf_set(request, str.data(), str.size());
     return 0;
 }
 

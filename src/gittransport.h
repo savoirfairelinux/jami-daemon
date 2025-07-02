@@ -56,17 +56,6 @@ using namespace std::string_view_literals;
 constexpr auto UPLOAD_PACK_CMD = "git-upload-pack"sv;
 constexpr auto HOST_TAG = "host="sv;
 
-/*
- * Create a git protocol request.
- *
- * For example: 0029git-upload-pack conversation\0host=device\0
- * @param buf       The buffer to fill
- * @param cmd       The wanted command
- * @param url       The repository's URL
- * @return 0 on success, - 1 on error
- */
-int generateRequest(git_buf* request, const std::string& cmd, const std::string_view& url);
-
 /**
  * Send a git command on the linked socket
  * @param s     Related stream
