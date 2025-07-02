@@ -240,12 +240,12 @@ parseJamiUri(std::string_view toUrl)
     return toUri;
 }
 
-constexpr const char*
+static constexpr std::string_view
 dhtStatusStr(dht::NodeStatus status)
 {
     return status == dht::NodeStatus::Connected
-               ? "connected"
-               : (status == dht::NodeStatus::Connecting ? "connecting" : "disconnected");
+               ? "connected"sv
+               : (status == dht::NodeStatus::Connecting ? "connecting"sv : "disconnected"sv);
 }
 
 JamiAccount::JamiAccount(const std::string& accountId)
@@ -1994,8 +1994,8 @@ JamiAccount::doRegister_()
         };
 
         context.statusChangedCallback = [this](dht::NodeStatus s4, dht::NodeStatus s6) {
-            JAMI_DBG("[Account %s] DHT status: IPv4 %s; IPv6 %s",
-                     getAccountID().c_str(),
+            JAMI_LOG("[Account {}] DHT status: IPv4 {}; IPv6 {}",
+                     getAccountID(),
                      dhtStatusStr(s4),
                      dhtStatusStr(s6));
             RegistrationState state;
@@ -2257,7 +2257,7 @@ JamiAccount::convModule(bool noCreation)
                    getAccountID());
         return nullptr;
     }
-    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
+    std::unique_lock lock(configurationMutex_);
     std::lock_guard lk(moduleMtx_);
     if (!convModule_) {
         convModule_ = std::make_unique<ConversationModule>(
@@ -2435,7 +2435,7 @@ JamiAccount::loadConversation(const std::string& convId)
 void
 JamiAccount::doUnregister(bool forceShutdownConnections)
 {
-    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
+    std::unique_lock lock(configurationMutex_);
     if (registrationState_ >= RegistrationState::ERROR_GENERIC) {
         return;
     }
@@ -2916,7 +2916,7 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
     auto conversation = convModule()->getOneToOneConversation(uri);
     if (!confirmed && conversation.empty())
         conversation = convModule()->startConversation(ConversationMode::ONE_TO_ONE, h);
-    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
+    std::unique_lock lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(h, confirmed, conversation);
     else
@@ -2975,7 +2975,7 @@ JamiAccount::acceptTrustRequest(const std::string& from, bool includeConversatio
         JAMI_ERROR("addContact: invalid contact URI");
         return false;
     }
-    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
+    std::unique_lock lock(configurationMutex_);
     if (accountManager_) {
         if (!accountManager_->acceptTrustRequest(from, includeConversation)) {
             // Note: unused for swarm
