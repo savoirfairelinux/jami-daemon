@@ -1395,7 +1395,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile)
                             = saveIdentity(id, idPath_, DEVICE_ID_PATH);
                         conf.tlsPassword = {};
-                        conf.archiveHasPassword = hasPassword;
                         if (not conf.managerUri.empty()) {
                             conf.registeredName = conf.managerUsername;
                             registeredName_ = conf.managerUsername;
