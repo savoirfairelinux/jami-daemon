@@ -836,6 +836,14 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
 
                 // check if an account archive is ready to be loaded
                 if (shouldLoadArchive) {
+                    const auto& passwordIt = toRecv.find(PayloadKey::password);
+                    if (passwordIt != toRecv.payload.end()) {
+                        ctx->linkDevCtx->authScheme = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
+                        ctx->linkDevCtx->credentialsFromUser = passwordIt->second;
+                    } else {
+                        ctx->linkDevCtx->authScheme = fileutils::ARCHIVE_AUTH_SCHEME_NONE;
+                        ctx->linkDevCtx->credentialsFromUser.clear();
+                    }
                     emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
                         ctx->accountId,
                         static_cast<uint8_t>(DeviceAuthState::IN_PROGRESS),
@@ -1097,7 +1105,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         bool shouldSendMsg = false;
         bool shouldShutdown = false;
         bool shouldSendArchive = false;
-
+        const auto& passwordIt = toRecv.find(PayloadKey::password);
         // we expect to be receiving credentials in this state and we know the archive is encrypted
         if (ctx->addDeviceCtx->state == AuthDecodingState::AUTH) {
             // receive the incoming password, check if the password is right, and send back the
@@ -1105,7 +1113,6 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             JAMI_DEBUG("[LinkDevice] SOURCE: addDevice: setOnRecv: verifying sent "
                        "credentials from NEW");
             shouldSendMsg = true;
-            const auto& passwordIt = toRecv.find(PayloadKey::password);
             if (passwordIt != toRecv.payload.end()) {
                 // try and decompress archive for xfer
                 try {
@@ -1156,6 +1163,10 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             shouldSendMsg = true;
             ctx->addDeviceCtx->archiveTransferredWithoutFailure = true;
             toSend.set(PayloadKey::accData, ctx->addDeviceCtx->accData);
+            if (ctx->addDeviceCtx->authScheme == fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD &&
+                passwordIt != toRecv.payload.end()) {
+                toSend.set(PayloadKey::password, passwordIt->second);
+            }
         }
         if (shouldSendMsg) {
             JAMI_DEBUG("[LinkDevice] SOURCE: Sending msg to NEW:\n{}", toSend.formatMsg());
@@ -1363,10 +1374,16 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, boo
     dhtnet::fileutils::check_dir(path_, 0700);
 
     if (isLinkDevProtocol) {
+        if (not ctx.linkDevCtx->authScheme.empty()) {
+            a.config[libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
+        }
         a.save(fileutils::getFullPath(path_, archivePath_),
                ctx.linkDevCtx->authScheme,
                ctx.linkDevCtx->credentialsFromUser);
     } else {
+        if (not ctx.credentials->password_scheme.empty()) {
+            a.config[libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
+        }
         a.save(fileutils::getFullPath(path_, archivePath_),
                ctx.credentials ? ctx.credentials->password_scheme : "",
                ctx.credentials ? ctx.credentials->password : "");
