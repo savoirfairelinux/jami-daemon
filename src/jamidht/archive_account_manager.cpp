@@ -537,6 +537,9 @@ ArchiveAccountManager::provideAccountAuthentication(const std::string& key,
         JAMI_WARNING("[LinkDevice] Invalid state for providing account authentication.");
         return false;
     }
+
+    ctx->linkDevCtx->authScheme = scheme;
+    ctx->linkDevCtx->credentialsFromUser = key;
     // After authentication, the next step is to receive the account archive from the exporting device
     ctx->linkDevCtx->state = AuthDecodingState::DATA;
     emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
@@ -1363,10 +1366,16 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, boo
     dhtnet::fileutils::check_dir(path_, 0700);
 
     if (isLinkDevProtocol) {
+        a.config[libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD] =
+            ctx.linkDevCtx->authScheme.empty() ? FALSE_STR : TRUE_STR;
+
         a.save(fileutils::getFullPath(path_, archivePath_),
                ctx.linkDevCtx->authScheme,
                ctx.linkDevCtx->credentialsFromUser);
     } else {
+        a.config[libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD] =
+            ctx.credentials->password_scheme.empty() ? FALSE_STR : TRUE_STR;
+
         a.save(fileutils::getFullPath(path_, archivePath_),
                ctx.credentials ? ctx.credentials->password_scheme : "",
                ctx.credentials ? ctx.credentials->password : "");

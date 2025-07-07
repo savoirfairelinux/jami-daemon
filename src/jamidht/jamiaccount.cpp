@@ -1395,7 +1395,14 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile)
                             = saveIdentity(id, idPath_, DEVICE_ID_PATH);
                         conf.tlsPassword = {};
-                        conf.archiveHasPassword = hasPassword;
+                        auto passwordIt = config.find(
+                            libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD);
+                        if (passwordIt != config.end() && !passwordIt->second.empty()) {
+                            conf.archiveHasPassword = passwordIt->second == "true";
+                        } else {
+                            conf.archiveHasPassword = hasPassword;
+                        }
+
                         if (not conf.managerUri.empty()) {
                             conf.registeredName = conf.managerUsername;
                             registeredName_ = conf.managerUsername;
