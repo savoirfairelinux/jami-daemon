@@ -2868,7 +2868,8 @@ Manager::loadAccountMap(const YAML::Node& node)
         remaining++;
         dht::ThreadPool::computation().run(
             [this, dir, &cv, &remaining, &lock, configFile = accountBaseDir / dir / "config.yml"] {
-                if (std::filesystem::is_regular_file(configFile)) {
+                std::error_code ec;
+                if (std::filesystem::is_regular_file(configFile, ec)) {
                     try {
                         auto configNode = YAML::LoadFile(configFile.string());
                         if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
