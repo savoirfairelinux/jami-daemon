@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe683779_5587420e",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-08T19:11:44Z",
+      "side": 1,
+      "message": "Trailing whitespace",
+      "range": {
+        "startLine": 202,
+        "startChar": 0,
+        "endLine": 202,
+        "endChar": 8
+      },
+      "revId": "3bc1b93b2a9ef306b018eb6d45bc90689f149e88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
