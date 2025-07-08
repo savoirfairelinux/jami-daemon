@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "30a87169_30f11c9e",
+        "filename": "src/jamidht/gitserver.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-08T19:30:33Z",
+      "side": 1,
+      "message": "The `pkt` argument should come last.",
+      "range": {
+        "startLine": 217,
+        "startChar": 99,
+        "endLine": 217,
+        "endChar": 145
+      },
+      "revId": "00f9de2684eb88bb2ded970241e1c12db40c4135",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
