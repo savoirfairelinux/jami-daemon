@@ -22,6 +22,30 @@
       },
       "revId": "3bc1b93b2a9ef306b018eb6d45bc90689f149e88",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c5deb5d2_c332480e",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-07-08T19:24:27Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fe683779_5587420e",
+      "range": {
+        "startLine": 202,
+        "startChar": 0,
+        "endLine": 202,
+        "endChar": 8
+      },
+      "revId": "3bc1b93b2a9ef306b018eb6d45bc90689f149e88",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
