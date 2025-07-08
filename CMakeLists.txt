@@ -812,6 +812,7 @@ else()
         else()
           target_link_libraries(ut_library PRIVATE yaml-cpp::yaml-cpp)
         endif()
+        target_link_directories(ut_library PUBLIC ${CONTRIB_PATH}/lib)
         target_include_directories(ut_library PUBLIC
             "${CMAKE_CURRENT_SOURCE_DIR}/test;"
             "${CMAKE_CURRENT_SOURCE_DIR}/test/unitTest;"
