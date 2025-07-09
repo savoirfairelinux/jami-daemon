@@ -2517,6 +2517,16 @@ SIPCall::isNewIceMediaRequired(const std::vector<MediaAttribute>& mediaAttrList)
             // correctly handles dynamic media properties changes.
             return true;
         }
+
+#ifdef ENABLE_VIDEO
+        if (newAttr.type_ == MediaType::MEDIA_VIDEO) {
+            // Video mute/unmute changes trigger a reinvite, and reinvites always clear ICE.
+            // Therefore, we need recreate ICE transport.
+            if (newAttr.muted_ != currAttr->muted_) {
+                return true;
+            }
+        }
+#endif
     }
 
     return false;
