@@ -56,6 +56,9 @@ struct JamiAccountConfig : public SipAccountBaseConfig
     std::string proxyServer {"dhtproxy.jami.net:[80-95]"};
     std::string proxyListUrl {"https://config.jami.net/proxyList"};
 
+    bool dhtProxyServerEnabled {false};
+    uint16_t dhtProxyServerPort {42443};
+
     std::string nameServer {};
     std::string registeredName {};
 
