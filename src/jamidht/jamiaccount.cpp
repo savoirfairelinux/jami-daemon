@@ -958,6 +958,9 @@ JamiAccount::loadConfig()
         std::error_code ec;
         std::filesystem::remove(cachePath_ / "dhtproxy", ec);
     }
+    if (not config().dhtProxyServerEnabled) {
+        dhtProxyServer_.reset();
+    }
     auto credentials = consumeConfigCredentials();
     loadAccount(credentials.archive_password_scheme,
                 credentials.archive_password,
@@ -2076,6 +2079,15 @@ JamiAccount::doRegister_()
         dhtBoundPort_ = dht_->getBoundPort();
 
         accountManager_->setDht(dht_);
+
+        if (conf.dhtProxyServerEnabled) {
+            dht::ProxyServerConfig proxyConfig;
+            proxyConfig.port = conf.dhtProxyServerPort;
+            proxyConfig.identity = id_;
+            dhtProxyServer_ = std::make_shared<dht::DhtProxyServer>(dht_, proxyConfig);
+        } else {
+            dhtProxyServer_.reset();
+        }
 
         std::unique_lock lkCM(connManagerMtx_);
         initConnectionManager();

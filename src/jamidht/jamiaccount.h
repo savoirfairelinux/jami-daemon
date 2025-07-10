@@ -48,6 +48,7 @@
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
+#include <opendht/dht_proxy_server.h>
 
 #include <pjsip/sip_types.h>
 #include <json/json.h>
@@ -754,6 +755,8 @@ private:
     std::shared_ptr<AccountManager> accountManager_;
     dht::crypto::Identity id_ {};
 
+    std::shared_ptr<dht::DhtProxyServer> dhtProxyServer_;
+
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
     dhtnet::fileutils::IdList treatedMessages_;
@@ -761,8 +764,6 @@ private:
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
-
-    mutable std::mutex dhtValuesMtx_;
 
     std::atomic_int syncCnt_ {0};
 
