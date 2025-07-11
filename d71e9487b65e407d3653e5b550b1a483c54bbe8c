@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7c7a4821_04595efe",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-07-11T21:44:34Z",
+      "side": 1,
+      "message": "Remove trailing space? Thank you",
+      "range": {
+        "startLine": 52,
+        "startChar": 18,
+        "endLine": 52,
+        "endChar": 19
+      },
+      "revId": "d71e9487b65e407d3653e5b550b1a483c54bbe8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46e4f2d8_38c4a8ca",
+        "filename": "test/unitTest/conversation/conversationFetchSent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 586,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-07-11T21:44:34Z",
+      "side": 1,
+      "message": "Remove spaces? Thank you",
+      "range": {
+        "startLine": 586,
+        "startChar": 0,
+        "endLine": 586,
+        "endChar": 4
+      },
+      "revId": "d71e9487b65e407d3653e5b550b1a483c54bbe8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
