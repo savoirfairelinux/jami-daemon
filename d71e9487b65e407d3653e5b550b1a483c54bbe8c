@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "cd7638d8_e852df3e",
+        "filename": "test/unitTest/common.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-14T20:52:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7c7a4821_04595efe",
+      "range": {
+        "startLine": 52,
+        "startChar": 18,
+        "endLine": 52,
+        "endChar": 19
+      },
+      "revId": "d71e9487b65e407d3653e5b550b1a483c54bbe8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "46e4f2d8_38c4a8ca",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-07-11T21:44:34Z",
       "side": 1,
       "message": "Remove spaces? Thank you",
+      "range": {
+        "startLine": 586,
+        "startChar": 0,
+        "endLine": 586,
+        "endChar": 4
+      },
+      "revId": "d71e9487b65e407d3653e5b550b1a483c54bbe8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "bc99b974_dc6d64de",
+        "filename": "test/unitTest/conversation/conversationFetchSent.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 586,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-14T20:52:09Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "46e4f2d8_38c4a8ca",
       "range": {
         "startLine": 586,
         "startChar": 0,
