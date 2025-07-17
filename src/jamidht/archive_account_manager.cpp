@@ -269,15 +269,6 @@ ArchiveAccountManager::loadFromFile(AuthContext& ctx)
     onArchiveLoaded(ctx, std::move(archive), false);
 }
 
-// TODO remove?
-struct ArchiveAccountManager::DhtLoadContext
-{
-    dht::DhtRunner dht;
-    std::pair<bool, bool> stateOld {false, true};
-    std::pair<bool, bool> stateNew {false, true};
-    bool found {false};
-};
-
 // this enum is for the states of add device TLS protocol
 // used for LinkDeviceProtocolStateChanged = AddDeviceStateChanged
 enum class AuthDecodingState : uint8_t {
@@ -344,8 +335,7 @@ struct ArchiveAccountManager::AuthMsg
     void logMsg() { JAMI_DEBUG("[LinkDevice]\nLinkDevice::logMsg:\n{}", formatMsg()); }
 
     std::string formatMsg() {
-        std::string logStr = "=========\n";
-        logStr += fmt::format("scheme: {}\n", schemeId);
+        std::string logStr = fmt::format("=========\nscheme: {}\n", schemeId);
         for (const auto& [msgKey, msgVal] : payload) {
             logStr += fmt::format(" - {}: {}\n", msgKey, msgVal);
         }
@@ -932,8 +922,7 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
                                      const dht::InfoHash& infoHash) {
                 auto this_ = wthis.lock();
                 if (!socket || !this_) {
-                    JAMI_WARNING(
-                        "[LinkDevice] Invalid socket event while AccountManager connecting.");
+                    JAMI_WARNING("[LinkDevice] Invalid socket event while AccountManager connecting.");
                     if (this_)
                         this_->authCtx_.reset();
                     emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
@@ -1243,96 +1232,6 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
         }
     }
     return false;
-}
-
-void
-ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
-{
-    ctx->dhtContext = std::make_unique<DhtLoadContext>();
-    ctx->dhtContext->dht.run(ctx->credentials->dhtPort, {}, true);
-    for (const auto& bootstrap : ctx->credentials->dhtBootstrap) {
-        ctx->dhtContext->dht.bootstrap(bootstrap);
-        auto searchEnded = [ctx, accountId = accountId_]() {
-            if (not ctx->dhtContext or ctx->dhtContext->found) {
-                return;
-            }
-            auto& s = *ctx->dhtContext;
-            if (s.stateOld.first && s.stateNew.first) {
-                dht::ThreadPool::computation().run(
-                    [ctx,
-                     network_error = !s.stateOld.second && !s.stateNew.second,
-                     accountId = std::move(accountId)] {
-                        ctx->dhtContext.reset();
-                        JAMI_WARNING("[Account {}] [Auth] Failure looking for archive on DHT: {}",
-                                     accountId,
-                                     network_error ? "network error" : "not found");
-                        ctx->onFailure(network_error ? AuthError::NETWORK : AuthError::UNKNOWN, "");
-                    });
-            }
-        };
-
-        auto search = [ctx, searchEnded, w = weak()](bool previous) {
-            std::vector<uint8_t> key;
-            dht::InfoHash loc;
-            auto& s = previous ? ctx->dhtContext->stateOld : ctx->dhtContext->stateNew;
-
-            // compute archive location and decryption keys
-            try {
-                std::tie(key, loc) = computeKeys(ctx->credentials->password,
-                                                 ctx->credentials->uri,
-                                                 previous);
-                JAMI_LOG("[Auth] Attempting to load account from DHT with {:s} at {:s}",
-                         ctx->credentials->uri,
-                         loc.toString());
-                if (not ctx->dhtContext or ctx->dhtContext->found) {
-                    return;
-                }
-                ctx->dhtContext->dht.get(
-                    loc,
-                    [ctx, key = std::move(key), w](const std::shared_ptr<dht::Value>& val) {
-                        std::vector<uint8_t> decrypted;
-                        try {
-                            decrypted = archiver::decompress(
-                                dht::crypto::aesDecrypt(val->data, key));
-                        } catch (const std::exception& ex) {
-                            return true;
-                        }
-                        JAMI_DBG("[Auth] Found archive on the DHT");
-                        ctx->dhtContext->found = true;
-                        dht::ThreadPool::computation().run(
-                            [ctx, decrypted = std::move(decrypted), w] {
-                                try {
-                                    auto archive = AccountArchive(decrypted);
-                                    if (auto sthis = w.lock()) {
-                                        if (ctx->dhtContext) {
-                                            ctx->dhtContext->dht.join();
-                                            ctx->dhtContext.reset();
-                                        }
-                                        sthis->onArchiveLoaded(*ctx, std::move(archive), false);
-                                    }
-                                } catch (const std::exception& e) {
-                                    ctx->onFailure(AuthError::UNKNOWN, "");
-                                }
-                            });
-                        return not ctx->dhtContext->found;
-                    },
-                    [=, &s](bool ok) {
-                        JAMI_LOG("[Auth] DHT archive search ended at {}", loc.toString());
-                        s.first = true;
-                        s.second = ok;
-                        searchEnded();
-                    });
-            } catch (const std::exception& e) {
-                // JAMI_ERROR("Error computing keys: {}", e.what());
-                s.first = true;
-                s.second = true;
-                searchEnded();
-                return;
-            }
-        };
-        dht::ThreadPool::computation().run(std::bind(search, true));
-        dht::ThreadPool::computation().run(std::bind(search, false));
-    }
 }
 
 void
