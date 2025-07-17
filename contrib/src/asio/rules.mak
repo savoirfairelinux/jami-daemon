@@ -17,8 +17,8 @@
 #  along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 
-ASIO_VERSION := asio-1-28-1
-PKG_CPE += cpe:2.3:a:*:asio:1.28.1:*:*:*:*:*:*:*
+ASIO_VERSION := asio-1-34-2
+PKG_CPE += cpe:2.3:a:*:asio:1.34.2:*:*:*:*:*:*:*
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 # Pure dependency of restinio: do not add to PKGS.
