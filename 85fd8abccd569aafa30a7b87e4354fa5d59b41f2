@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "46f0745c_41a994e1",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 925,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-07-17T19:10:20Z",
+      "side": 1,
+      "message": "should it be more informative?",
+      "revId": "85fd8abccd569aafa30a7b87e4354fa5d59b41f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
