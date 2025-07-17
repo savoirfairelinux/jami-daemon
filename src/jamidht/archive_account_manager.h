@@ -171,6 +171,7 @@ private:
 
     OnExportConfig onExportConfig_;
     std::string archivePath_;
+    dhtnet::fileutils::IdList treatedMessages_;
 };
 
 } // namespace jami

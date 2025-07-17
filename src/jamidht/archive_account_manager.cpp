@@ -1584,6 +1584,8 @@ ArchiveAccountManager::startSync(const OnNewDeviceCb& cb,
                 });
 
             return true;
+        }, [this](const dht::Value& val) {
+            return treatedMessages_.add(val.id);
         });
 }
 
