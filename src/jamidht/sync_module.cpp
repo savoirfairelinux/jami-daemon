@@ -239,7 +239,12 @@ SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const Dev
     for (auto& [did, sockets] : pimpl_->syncConnections_) {
         if (not sockets.empty()) {
             if (!deviceId || deviceId == did) {
-                pimpl_->syncInfos(sockets[0], syncMsg);
+                auto lastSock = sockets.back();
+                dht::ThreadPool::io().run(
+                    [w = pimpl_->weak_from_this(), s=std::move(lastSock), syncMsg]() {
+                        if (auto sthis = w.lock())
+                            sthis->pimpl_->syncInfos(s, syncMsg);
+                    });
             }
         }
     }

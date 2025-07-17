@@ -2264,7 +2264,7 @@ JamiAccount::convModule(bool noCreation)
             shared(),
             accountManager_,
             [this](auto&& syncMsg) {
-                dht::ThreadPool::io().run([w = weak(), syncMsg] {
+                dht::ThreadPool::computation().run([w = weak(), syncMsg] {
                     if (auto shared = w.lock()) {
                         auto& config = shared->config();
                         // For JAMS account, we must update the server
