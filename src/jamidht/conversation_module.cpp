@@ -581,9 +581,10 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                deviceId,
                commitId);
 
+    const bool shouldRequestInvite = username_ != peer;
     auto conv = getConversation(conversationId);
     if (!conv) {
-        if (oldReq == std::nullopt) {
+        if (oldReq == std::nullopt && shouldRequestInvite) {
             // We didn't find a conversation or a request with the given ID.
             // This suggests that someone tried to send us an invitation but
             // that we didn't receive it, so we ask for a new one.
@@ -710,6 +711,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             cloneConversation(deviceId, peer, conv);
             return;
         }
+        if (!shouldRequestInvite)
+            return;
         lk.unlock();
         JAMI_WARNING("[Account {}] [Conversation {}] Unable to find conversation, asking for an invite",
                      accountId_,
