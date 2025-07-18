@@ -1430,30 +1430,8 @@ ArchiveAccountManager::needsMigration(const std::string& accountId, const dht::c
 void
 ArchiveAccountManager::syncDevices()
 {
-    if (not dht_ or not dht_->isRunning()) {
-        JAMI_WARNING("[Account {}] Not syncing devices: DHT is not running", accountId_);
-        return;
-    }
     JAMI_LOG("[Account {}] Building device sync from {}", accountId_, info_->deviceId);
-    auto sync_data = info_->contacts->getSyncData();
-
-    for (const auto& dev : getKnownDevices()) {
-        // don't send sync data to ourself
-        if (dev.first.toString() == info_->deviceId) {
-            continue;
-        }
-        if (!dev.second.certificate) {
-            JAMI_WARNING("[Account {}] Unable to find certificate for {}", accountId_, dev.first);
-            continue;
-        }
-        auto pk = dev.second.certificate->getSharedPublicKey();
-        JAMI_LOG("[Account {}] Sending device sync to {} {}",
-                 accountId_,
-                 dev.second.name,
-                 dev.first.toString());
-        auto syncDeviceKey = dht::InfoHash::get("inbox:" + pk->getId().toString());
-        dht_->putEncrypted(syncDeviceKey, pk, sync_data);
-    }
+    onSyncData_(info_->contacts->getSyncData());
 }
 
 void
@@ -1701,8 +1679,7 @@ ArchiveAccountManager::registerName(const std::string& name,
         const auto& pk = privateKey->getPublicKey();
         publickey = pk.toString();
         accountId = pk.getId().toString();
-        signedName = base64::encode(
-            privateKey->sign(std::vector<uint8_t>(nameLowercase.begin(), nameLowercase.end())));
+        signedName = base64::encode(privateKey->sign(std::vector<uint8_t>(nameLowercase.begin(), nameLowercase.end())));
         ethAccount = dev::KeyPair(dev::Secret(archive.eth_key)).address().hex();
     } catch (const std::exception& e) {
         // JAMI_ERR("[Auth] Unable to export account: %s", e.what());
