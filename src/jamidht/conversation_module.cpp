@@ -2848,11 +2848,10 @@ ConversationModule::isBanned(const std::string& convId, const std::string& uri) 
             return true;
         if (conv->conversation->mode() != ConversationMode::ONE_TO_ONE)
             return conv->conversation->isBanned(uri);
+        return pimpl_->accountManager_->getCertificateStatus(uri)
+                == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
     }
-    // If 1:1 we check the certificate status
-    std::lock_guard lk(pimpl_->conversationsMtx_);
-    return pimpl_->accountManager_->getCertificateStatus(uri)
-           == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
+    return true;
 }
 
 void
