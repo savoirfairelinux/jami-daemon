@@ -236,11 +236,16 @@ void
 SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const DeviceId& deviceId)
 {
     std::lock_guard lk(pimpl_->syncConnectionsMtx_);
-    for (auto& [did, sockets] : pimpl_->syncConnections_) {
-        if (not sockets.empty()) {
-            if (!deviceId || deviceId == did) {
-                pimpl_->syncInfos(sockets[0], syncMsg);
-            }
+    for (const auto& [did, sockets] : pimpl_->syncConnections_) {
+        if (not sockets.empty() and (!deviceId || deviceId == did)) {
+            dht::ThreadPool::io().run([
+                w = pimpl_->weak_from_this(),
+                s = sockets.back(),
+                syncMsg
+            ] {
+                if (auto sthis = w.lock())
+                    sthis->syncInfos(s, syncMsg);
+            });
         }
     }
 }
