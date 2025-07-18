@@ -1717,8 +1717,10 @@ Conversation::loadMessages2(const OnLoadMessages2& cb, const LogOptions& options
         return;
     dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), options] {
         if (auto sthis = w.lock()) {
-            std::lock_guard lk(sthis->pimpl_->loadedHistory_.mutex);
-            cb(sthis->pimpl_->loadMessages2(options));
+            std::unique_lock lk(sthis->pimpl_->loadedHistory_.mutex);
+            auto result = sthis->pimpl_->loadMessages2(options);
+            lk.unlock();
+            cb(std::move(result));
         }
     });
 }
