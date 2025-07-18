@@ -581,9 +581,11 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                deviceId,
                commitId);
 
+    const auto* info = accountManager_ ? accountManager_->getInfo() : nullptr;
+    const bool shouldRequestInvite = info && info->accountId != peer;
     auto conv = getConversation(conversationId);
     if (!conv) {
-        if (oldReq == std::nullopt) {
+        if (oldReq == std::nullopt && shouldRequestInvite) {
             // We didn't find a conversation or a request with the given ID.
             // This suggests that someone tried to send us an invitation but
             // that we didn't receive it, so we ask for a new one.
@@ -701,13 +703,16 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             },
             "");
     } else {
-        if (oldReq != std::nullopt)
+        if (oldReq != std::nullopt) {
             return;
         if (conv->pending)
             return;
         bool clone = !conv->info.isRemoved();
         if (clone) {
             cloneConversation(deviceId, peer, conv);
+            return;
+        }
+        if (!shouldRequestInvite){
             return;
         }
         lk.unlock();
