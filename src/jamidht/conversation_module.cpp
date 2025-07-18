@@ -17,11 +17,6 @@
 
 #include "conversation_module.h"
 
-#include <algorithm>
-#include <fstream>
-
-#include <opendht/thread_pool.h>
-
 #include "account_const.h"
 #include "call.h"
 #include "client/ring_signal.h"
@@ -32,6 +27,12 @@
 #include "sip/sipcall.h"
 #include "vcard.h"
 #include "json_utils.h"
+
+#include <opendht/thread_pool.h>
+#include <dhtnet/certstore.h>
+
+#include <algorithm>
+#include <fstream>
 
 namespace jami {
 
@@ -2845,17 +2846,21 @@ ConversationModule::conversationVCard(const std::string& conversationId) const
 bool
 ConversationModule::isBanned(const std::string& convId, const std::string& uri) const
 {
+    dhtnet::tls::TrustStore::PermissionStatus status;
+    {
+        std::lock_guard lk(pimpl_->conversationsMtx_);
+        status = pimpl_->accountManager_->getCertificateStatus(uri);
+    }
     if (auto conv = pimpl_->getConversation(convId)) {
         std::lock_guard lk(conv->mtx);
         if (!conv->conversation)
             return true;
         if (conv->conversation->mode() != ConversationMode::ONE_TO_ONE)
             return conv->conversation->isBanned(uri);
+        // If 1:1 we check the certificate status
+        return status == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
     }
-    // If 1:1 we check the certificate status
-    std::lock_guard lk(pimpl_->conversationsMtx_);
-    return pimpl_->accountManager_->getCertificateStatus(uri)
-           == dhtnet::tls::TrustStore::PermissionStatus::BANNED;
+    return true;
 }
 
 void
