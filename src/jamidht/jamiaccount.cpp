@@ -1272,6 +1272,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 getAccountID(),
                 getPath(),
                 [this]() { return getAccountDetails(); },
+                [this](DeviceSync&& syncData) {
+                    if (auto sm = syncModule()) {
+                        auto syncDataPtr = std::make_shared<SyncMsg>();
+                        syncDataPtr->ds = std::move(syncData);
+                        sm->syncWithConnected(syncDataPtr);
+                    }
+                },
                 conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
                 conf.nameServer);
         } else {
