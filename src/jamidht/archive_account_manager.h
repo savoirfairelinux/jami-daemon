@@ -38,14 +38,17 @@ class ArchiveAccountManager : public AccountManager
 {
 public:
     using OnExportConfig = std::function<std::map<std::string, std::string>()>;
+    using OnSyncData = std::function<void(DeviceSync&&)>;
 
     ArchiveAccountManager(const std::string& accountId,
                           const std::filesystem::path& path,
                           OnExportConfig&& onExportConfig,
+                          OnSyncData&& onSyncData,
                           std::string archivePath,
                           const std::string& nameServer)
         : AccountManager(accountId, path, nameServer)
         , onExportConfig_(std::move(onExportConfig))
+        , onSyncData_(std::move(onSyncData))
         , archivePath_(std::move(archivePath))
         , treatedMessages_(path / "sync_messages")
     {}
@@ -167,6 +170,7 @@ private:
     }
 
     OnExportConfig onExportConfig_;
+    OnSyncData onSyncData_;
     std::string archivePath_;
     dhtnet::fileutils::IdList treatedMessages_;
 };
