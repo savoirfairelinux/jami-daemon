@@ -47,6 +47,7 @@ public:
         : AccountManager(accountId, path, nameServer)
         , onExportConfig_(std::move(onExportConfig))
         , archivePath_(std::move(archivePath))
+        , treatedMessages_(path / "sync_messages")
     {}
 
     struct ArchiveAccountCredentials : AccountCredentials
@@ -167,6 +168,7 @@ private:
 
     OnExportConfig onExportConfig_;
     std::string archivePath_;
+    dhtnet::fileutils::IdList treatedMessages_;
 };
 
 } // namespace jami
