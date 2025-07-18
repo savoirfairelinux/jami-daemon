@@ -3362,20 +3362,20 @@ SIPCall::monitor() const
         return;
     auto acc = getSIPAccount();
     if (!acc) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("No account detected");
         return;
     }
-    JAMI_DBG("- Call %s with %s:", getCallId().c_str(), getPeerNumber().c_str());
-    JAMI_DBG("\t- Duration: %s", dht::print_duration(getCallDuration()).c_str());
+    JAMI_LOG("- Call {} with {}:", getCallId(), getPeerNumber());
+    JAMI_LOG("\t- Duration: {}", dht::print_duration(getCallDuration()));
     for (const auto& stream : rtpStreams_)
-        JAMI_DBG("\t- Media: %s", stream.mediaAttribute_->toString(true).c_str());
+        JAMI_LOG("\t- Media: {}", stream.mediaAttribute_->toString(true));
 #ifdef ENABLE_VIDEO
     if (auto codec = getVideoCodec())
-        JAMI_DBG("\t- Video codec: %s", codec->name.c_str());
+        JAMI_LOG("\t- Video codec: {}", codec->name);
 #endif
     if (auto transport = getIceMedia()) {
         if (transport->isRunning())
-            JAMI_DBG("\t- Media stream(s): %s", transport->link().c_str());
+            JAMI_LOG("\t- Media stream(s): {}", transport->link());
     }
 }
 
