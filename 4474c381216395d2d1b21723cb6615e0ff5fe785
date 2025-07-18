@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e86ecbe2_2a45e559",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2845,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-07-18T20:16:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "49ae1f97_ffbe27c4",
+      "revId": "4474c381216395d2d1b21723cb6615e0ff5fe785",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "965b1b0e_fc29ef74",
@@ -32,6 +50,30 @@
       "writtenOn": "2025-07-18T19:57:48Z",
       "side": 1,
       "message": "accMgr not required",
+      "range": {
+        "startLine": 2850,
+        "startChar": 4,
+        "endLine": 2850,
+        "endChar": 42
+      },
+      "revId": "4474c381216395d2d1b21723cb6615e0ff5fe785",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "98930fff_f32637e9",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2850,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-07-18T20:16:54Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "965b1b0e_fc29ef74",
       "range": {
         "startLine": 2850,
         "startChar": 4,
