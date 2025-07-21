@@ -33,7 +33,7 @@ ifdef HAVE_MACOSX
 	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure --without-clock-gettime --enable-static --disable-shared $(HOSTCONF)
 else
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -std=gnu17" ./configure $(HOSTCONF)
 endif
 endif
 	cd $< && $(MAKE) install
