@@ -276,6 +276,8 @@ AS_IF([test -n "${CONTRIB_DIR}"],
   [AC_MSG_RESULT([${CONTRIB_DIR}])
    export PATH=${CONTRIB_DIR}/bin:$PATH
 
+   CPPFLAGS_SAVE="$CPPFLAGS"
+   CPPFLAGS+=" -I${CONTRIB_DIR}/include" dnl for AC_CHECK_HEADER
    DAEMONCPPFLAGS+=" -I${CONTRIB_DIR}/include  -DPJ_AUTOCONF=1"
 
    AS_IF([test "${HAVE_WIN64}" = "1"],
@@ -289,6 +291,8 @@ ${CONTRIB_DIR}/lib64/pkgconfig"
 
    export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:\
 ${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
+   LDFLAGS_SAVE="$LDFLAGS"
+   LDFLAGS+=" -L${CONTRIB_DIR}/lib" dnl for AC_CHECK_LIB
    DAEMONLDFLAGS+=" -L${CONTRIB_DIR}/lib"
 
    AS_IF([test "${SYS}" = "darwin"],
@@ -619,10 +623,10 @@ AC_ARG_WITH([natpmp], [AS_HELP_STRING([--without-natpmp],
 AS_IF([test "x$with_natpmp" != xno],
   [AC_CHECK_HEADER([natpmp.h],
      AC_CHECK_LIB([natpmp], [initnatpmp], [], [with_natpmp=no]),
-       [AC_MSG_WARN([Unable to find the libnatpmp headers
-          (you may need to install the dev package). You may use
-          --without-natpmp to compile without NAT-PMP support.]);
-        with_natpmp=no])],
+     [AC_MSG_WARN([Unable to find the libnatpmp headers
+       (you may need to install the dev package). You may use
+       --without-natpmp to compile without NAT-PMP support.]);
+       with_natpmp=no])],
   [])
 
 AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP],
@@ -661,6 +665,10 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 
 # Actually perform the doxygen check
 BB_ENABLE_DOXYGEN
+
+dnl Reset the *user* variables to their initial values.
+CPPFLAGS="$CPPFLAGS_SAVE"
+LDFLAGS="$LDFLAGS_SAVE"
 
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
