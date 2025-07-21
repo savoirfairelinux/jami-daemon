@@ -523,7 +523,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/libssl.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio_static_x64.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
         /ignore:4006"
