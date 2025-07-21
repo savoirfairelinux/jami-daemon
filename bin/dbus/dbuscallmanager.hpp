@@ -23,7 +23,7 @@ class DBusCallManager : public sdbus::AdaptorInterfaces<cx::ring::Ring::CallMana
 {
 public:
     DBusCallManager(sdbus::IConnection& connection)
-        : AdaptorInterfaces(connection, "/cx/ring/Ring/CallManager")
+        : AdaptorInterfaces(connection, sdbus::ObjectPath("/cx/ring/Ring/CallManager"))
     {
         registerAdaptor();
         registerSignalHandlers();
