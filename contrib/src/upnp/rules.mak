@@ -19,7 +19,7 @@ ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
 	$(APPLY) $(SRC)/upnp/poll.patch
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv -f config.guess config.sub
 	$(MOVE)
 
 PUPNP_OPTIONS=--disable-blocking_tcp_connections --disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation
