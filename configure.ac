@@ -425,8 +425,9 @@ AS_IF([test "x$with_dbus" = "xyes"],
 
    AC_CONFIG_FILES([bin/dbus/Makefile])
 
-   AC_PATH_PROG([SDBUSCPP_XML2CPP], [sdbus-c++-xml2cpp],
-     [AC_MSG_ERROR([dbusxx-xml2cpp not found])])
+   AC_PATH_PROG([SDBUSCPP_XML2CPP], [sdbus-c++-xml2cpp])
+   AS_IF([test -z "$SDBUSCPP_XML2CPP"],
+     [AC_MSG_ERROR([sdbus-c++-xml2cpp not found])])
 
    AM_CONDITIONAL(RING_DBUS, true)],
   [TESTS= $(check_PROGRAMS)
