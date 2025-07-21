@@ -61,11 +61,11 @@ AC_ARG_ENABLE([agent],
     [Build agent]))
 AM_CONDITIONAL([ENABLE_AGENT], [test "x$enable_agent" = "xyes"])
 AM_COND_IF([ENABLE_AGENT],
-           [AC_CONFIG_FILES([test/agent/Makefile
-                             test/agent/pre-inst-env:test/agent/build-aux/pre-inst-env.in
-                             test/agent/scenarios/bulk-calls/run-scenario],
-                            [chmod +x test/agent/pre-inst-env
-                             chmod +x test/agent/scenarios/bulk-calls/run-scenario])])
+  [AC_CONFIG_FILES([test/agent/Makefile])
+   AC_CONFIG_FILES([test/agent/pre-inst-env:test/agent/build-aux/pre-inst-env.in],
+                   [chmod +x test/agent/pre-inst-env])
+   AC_CONFIG_FILES([test/agent/scenarios/bulk-calls/run-scenario],
+                   [chmod +x test/agent/scenarios/bulk-calls/run-scenario])])
 
 AC_ARG_ENABLE([tracepoints], AS_HELP_STRING([--enable-tracepoints], [Enable tracepoints]))
 
