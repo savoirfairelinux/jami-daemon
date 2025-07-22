@@ -85,14 +85,6 @@ getDeviceString(struct udev_device* udev_device)
     throw std::invalid_argument("No ID_SERIAL detected");
 }
 
-static int
-is_v4l2(struct udev_device* dev)
-{
-    const char* version = udev_device_get_property_value(dev, "ID_V4L_VERSION");
-    /* we do not support video4linux 1 */
-    return version and strcmp(version, "1");
-}
-
 VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
     : monitor_(monitor)
     , thread_()
@@ -134,23 +126,20 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
     {
         const char* path = udev_list_entry_get_name(deventry);
         struct udev_device* dev = udev_device_new_from_syspath(udev_, path);
-
-        if (is_v4l2(dev)) {
-            const char* path = udev_device_get_devnode(dev);
-            if (path && std::string(path).find("/dev") != 0) {
-                // udev_device_get_devnode will fail
-                continue;
-            }
-            try {
-                auto unique_name = getDeviceString(dev);
-                JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
-                if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
-                    currentPathToId_.emplace(path, unique_name);
-            } catch (const std::exception& e) {
-                JAMI_WARN("udev: %s, fallback on path (your camera may be a fake camera)", e.what());
-                if (monitor_->addDevice(path, {{{"devPath", path}}}))
-                    currentPathToId_.emplace(path, path);
-            }
+        path = udev_device_get_devnode(dev);
+        if (path && !starts_with(path, "/dev")) {
+            // udev_device_get_devnode will fail
+            continue;
+        }
+        try {
+            auto unique_name = getDeviceString(dev);
+            JAMI_LOG("udev: adding device with id {}", unique_name);
+            if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
+                currentPathToId_.emplace(path, unique_name);
+        } catch (const std::exception& e) {
+            JAMI_WARNING("udev: {}, fallback on path (your camera may be a fake camera)", e.what());
+            if (monitor_->addDevice(path, {{{"devPath", path}}}))
+                currentPathToId_.emplace(path, path);
         }
         udev_device_unref(dev);
     }
@@ -220,35 +209,33 @@ VideoDeviceMonitorImpl::run()
             break;
         case 1: {
             udev_device* dev = udev_monitor_receive_device(udev_mon_);
-            if (is_v4l2(dev)) {
-                const char* path = udev_device_get_devnode(dev);
-                if (path && std::string(path).find("/dev") != 0) {
-                    // udev_device_get_devnode will fail
-                    break;
-                }
-                try {
-                    auto unique_name = getDeviceString(dev);
+            const char* path = udev_device_get_devnode(dev);
+            if (path && std::string(path).find("/dev") != 0) {
+                // udev_device_get_devnode will fail
+                break;
+            }
+            try {
+                auto unique_name = getDeviceString(dev);
 
-                    const char* action = udev_device_get_action(dev);
-                    if (!strcmp(action, "add")) {
-                        JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
-                        if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
-                            currentPathToId_.emplace(path, unique_name);
-                    } else if (!strcmp(action, "remove")) {
-                        auto it = currentPathToId_.find(path);
-                        if (it != currentPathToId_.end()) {
-                            JAMI_DBG("udev: removing %s", it->second.c_str());
-                            monitor_->removeDevice(it->second);
-                            currentPathToId_.erase(it);
-                        } else {
-                            // In case of fallback
-                            JAMI_DBG("udev: removing %s", path);
-                            monitor_->removeDevice(path);
-                        }
+                const char* action = udev_device_get_action(dev);
+                if (!strcmp(action, "add")) {
+                    JAMI_LOG("udev: adding device with id {}", unique_name);
+                    if (monitor_->addDevice(unique_name, {{{"devPath", path}}}))
+                        currentPathToId_.emplace(path, unique_name);
+                } else if (!strcmp(action, "remove")) {
+                    auto it = currentPathToId_.find(path);
+                    if (it != currentPathToId_.end()) {
+                        JAMI_LOG("udev: removing {}", it->second);
+                        monitor_->removeDevice(it->second);
+                        currentPathToId_.erase(it);
+                    } else {
+                        // In case of fallback
+                        JAMI_LOG("udev: removing {}", path);
+                        monitor_->removeDevice(path);
                     }
-                } catch (const std::exception& e) {
-                    JAMI_ERR("%s", e.what());
                 }
+            } catch (const std::exception& e) {
+                JAMI_ERROR("{}", e.what());
             }
             udev_device_unref(dev);
             break;
@@ -257,12 +244,12 @@ VideoDeviceMonitorImpl::run()
         case -1:
             if (errno == EAGAIN)
                 continue;
-            JAMI_ERR("udev monitoring thread: select failed (%m)");
+            JAMI_ERROR("udev monitoring thread: select failed ({})", strerror(errno));
             probing_ = false;
             return;
 
         default:
-            JAMI_ERR("select() returned %d (%m)", ret);
+            JAMI_ERROR("select() returned {:d} ({})", ret, strerror(errno));
             probing_ = false;
             return;
         }
