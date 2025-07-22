@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc9d81a7_b0611d97",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2025-07-22T06:04:34Z",
+      "side": 1,
+      "message": "I guess the sdbus version used by the CI needs to be updated, if it\u0027s not building the contrib one.",
+      "revId": "d781950d23a8358294fb158a9be0ac84c5f3e353",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
