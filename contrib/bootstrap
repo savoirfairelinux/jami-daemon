@@ -29,6 +29,7 @@ usage()
     echo "  --cache-dir=DIR     the directory where contrib tarballs are cached"
 	echo "  --enable-debug      build with debug symbol and extra checks (disabled by default)"
 	echo "  --enable-asan       build with address sanitizer (disabled by default)"
+	echo "  --ignore_system_libs  build packages regardless of system detection (disabled by default)"
 	echo "  --disable-FOO       configure to not build package FOO"
 	echo "  --enable-FOO        configure to build package FOO"
 }
@@ -41,6 +42,7 @@ PKGS_DISABLE=
 CACHE_BUILD=
 CONF_TARBALLS=
 ENABLE_ASAN=
+IGNORE_SYSTEM_LIBS=
 
 if test ! -f "../src/main.mak"
 then
@@ -76,6 +78,9 @@ do
 			;;
 		--enable-asan)
 			ENABLE_ASAN=1
+			;;
+		--ignore_system_libs)
+			IGNORE_SYSTEM_LIBS=1
 			;;
 		--host=*)
 			HOST="${1#--host=}"
@@ -142,6 +147,7 @@ CACHE_DIR := $CACHE_DIR
 CACHE_BUILD := $CACHE_BUILD
 ENABLE_DEBUG := $ENABLE_DEBUG
 ENABLE_ASAN := $ENABLE_ASAN
+IGNORE_SYSTEM_LIBS := $IGNORE_SYSTEM_LIBS
 EOF
 
 add_make()
