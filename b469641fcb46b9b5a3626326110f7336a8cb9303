@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1cf9d5ad_e5096624",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 137,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-07-29T17:57:43Z",
+      "side": 1,
+      "message": "is it used?",
+      "revId": "b469641fcb46b9b5a3626326110f7336a8cb9303",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b09d77bc_fdd8a35b",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-07-29T17:57:43Z",
+      "side": 1,
+      "message": "If the architecture matches the build machine and the dependency is already present, it may be skipped during the build.",
+      "revId": "b469641fcb46b9b5a3626326110f7336a8cb9303",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a34a83e1_3a98e1cb",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 5
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-07-29T17:57:43Z",
+      "side": 1,
+      "message": "We should check if the file exists and fail early if it not.",
+      "revId": "b469641fcb46b9b5a3626326110f7336a8cb9303",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
