@@ -141,8 +141,12 @@ if (BUILD_CONTRIB)
                 set(CC_CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${CC_TARGET})
                 file(MAKE_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
                 file(MAKE_DIRECTORY ${CC_CONTRIB_PATH})
+                set(BOOTSTRAP_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${CC_TARGET})
+                if (IGNORE_SYSTEM_LIBS)
+                    list(APPEND BOOTSTRAP_COMMAND --ignore-system-libs)
+                endif()
                 execute_process(
-                    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${CC_TARGET}
+                    COMMAND ${BOOTSTRAP_COMMAND}
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
                 execute_process(COMMAND make list
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
@@ -188,8 +192,12 @@ if (BUILD_CONTRIB)
             set(CONTRIB_PATH ${FAT_CONTRIB_PATH})
         else()
             message(STATUS "Building contrib for ${TARGET}")
+            set(BOOTSTRAP_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${TARGET})
+            if (IGNORE_SYSTEM_LIBS)
+                list(APPEND BOOTSTRAP_COMMAND --ignore-system-libs)
+            endif()
             execute_process(
-                COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/contrib/bootstrap --host=${TARGET}
+                COMMAND ${BOOTSTRAP_COMMAND}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
             execute_process(COMMAND make list
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
