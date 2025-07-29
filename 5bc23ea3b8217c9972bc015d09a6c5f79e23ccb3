@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "708bf1da_1c58097a",
+        "filename": "CMake/coverage.cmake",
+        "patchSetId": 3
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-29T19:31:07Z",
+      "side": 1,
+      "message": "Redundant with `COMMENT` on line 104.",
+      "range": {
+        "startLine": 83,
+        "startChar": 12,
+        "endLine": 83,
+        "endChar": 81
+      },
+      "revId": "5bc23ea3b8217c9972bc015d09a6c5f79e23ccb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c54ae337_c961cdad",
+        "filename": "CMake/coverage.cmake",
+        "patchSetId": 3
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-29T19:31:07Z",
+      "side": 1,
+      "message": "This line must be removed, it deletes the coverage data (*.gcda files).",
+      "range": {
+        "startLine": 84,
+        "startChar": 12,
+        "endLine": 85,
+        "endChar": 87
+      },
+      "revId": "5bc23ea3b8217c9972bc015d09a6c5f79e23ccb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "86472198_54730ebd",
+        "filename": "CMake/coverage.cmake",
+        "patchSetId": 3
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-29T19:31:07Z",
+      "side": 1,
+      "message": "Can be removed (the command on line 91 will fail if `jami-coverage-base.info` is empty).",
+      "range": {
+        "startLine": 87,
+        "startChar": 137,
+        "endLine": 87,
+        "endChar": 189
+      },
+      "revId": "5bc23ea3b8217c9972bc015d09a6c5f79e23ccb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c423a716_dfc4998e",
+        "filename": "CMake/coverage.cmake",
+        "patchSetId": 3
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-29T19:31:07Z",
+      "side": 1,
+      "message": "When testing locally, the `--no-external` option causes the trace files to be empty.",
+      "range": {
+        "startLine": 87,
+        "startChar": 33,
+        "endLine": 87,
+        "endChar": 46
+      },
+      "revId": "5bc23ea3b8217c9972bc015d09a6c5f79e23ccb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9c2904a_b2e61958",
+        "filename": "CMake/coverage.cmake",
+        "patchSetId": 3
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-29T19:31:07Z",
+      "side": 1,
+      "message": "Same comment as for line 87.",
+      "range": {
+        "startLine": 89,
+        "startChar": 33,
+        "endLine": 89,
+        "endChar": 46
+      },
+      "revId": "5bc23ea3b8217c9972bc015d09a6c5f79e23ccb3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
