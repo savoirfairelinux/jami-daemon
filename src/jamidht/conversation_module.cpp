@@ -1647,13 +1647,6 @@ ConversationModule::loadConversations()
                                 ctx->updateContactConv.emplace_back(
                                     std::make_tuple(otherUri, convFromDetails, repository));
                             }
-                        } else {
-                            JAMI_ERROR("Multiple conversation detected for {} but ({} & {})",
-                                       otherUri,
-                                       repository,
-                                       convFromDetails);
-                            std::lock_guard lkMtx {ctx->toRmMtx};
-                            ctx->toRm.insert(repository);
                         }
                     }
                 }
