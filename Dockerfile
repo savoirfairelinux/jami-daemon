@@ -30,7 +30,6 @@ RUN apt-get update && apt-get install -y \
     libspeexdsp-dev \
     libssl-dev \
     libsystemd-dev \
-    libsdbus-c++-bin \
     libtool \
     libudev-dev \
     libupnp-dev \
