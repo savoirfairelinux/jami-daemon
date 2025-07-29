@@ -441,8 +441,12 @@ endif
 ifneq ($(filter $(PKGS_DISABLE),$(PKGS_ENABLE)),)
 $(error Same package(s) disabled and enabled at the same time)
 endif
-# Apply automatic selection (= remove distro packages):
+ifdef IGNORE_SYSTEM_LIBS
+PKGS_AUTOMATIC := $(PKGS)
+PKGS_FOUND :=
+else
 PKGS_AUTOMATIC := $(filter-out $(PKGS_FOUND),$(PKGS))
+endif
 # Apply manual selection (from bootstrap):
 PKGS_MANUAL := $(sort $(PKGS_ENABLE) $(filter-out $(PKGS_DISABLE),$(PKGS_AUTOMATIC)))
 # Resolve dependencies:
