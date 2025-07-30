@@ -420,6 +420,12 @@ FFMPEGCONF += --target-os=mingw32 \
 	--enable-encoder=hevc_nvenc
 endif
 
+# Prevent the daemon from exposing FFmpeg symbols.
+# This matters for Jami's Qt client because Qt links against FFmpeg and
+# we want to avoid ABI compatibility issues in case the version of FFmpeg
+# expected by Qt is not the same as the one used by the daemon.
+CFLAGS += -fvisibility=hidden
+
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
 	$(call download,$(FFMPEG_URL))
 
