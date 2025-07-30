@@ -29,7 +29,6 @@ RUN apt-get update && apt-get install -y \
     libspeex-dev \
     libspeexdsp-dev \
     libssl-dev \
-    libsystemd-dev \
     libtool \
     libudev-dev \
     libupnp-dev \
