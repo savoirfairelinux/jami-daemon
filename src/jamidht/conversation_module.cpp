@@ -1783,7 +1783,6 @@ ConversationModule::loadConversations()
         if (auto shared = w.lock())
             shared->fixStructures(acc, updateContactConv, toRm);
     });
-
 }
 
 void
@@ -1932,14 +1931,6 @@ ConversationModule::onTrustRequest(const std::string& uri,
                                    time_t received)
 {
     auto oldConv = getOneToOneConversation(uri);
-    if (!oldConv.empty() && pimpl_->isConversation(oldConv)) {
-        // If there is already an active one to one conversation here, it's an active
-        // contact and the contact will reclone this activeConv, so ignore the request
-        JAMI_WARNING(
-            "Contact is sending a request for a non active conversation. Ignore. They will "
-            "clone the old one");
-        return;
-    }
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     ConversationRequest req;
     req.from = uri;
@@ -1991,17 +1982,6 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                    "Ignore. Declined: {}",
                    pimpl_->accountId_,
                    static_cast<int>(oldReq->declined));
-        return;
-    }
-
-    if (!oldConv.empty()) {
-        lk.unlock();
-        // Already a conversation with the contact.
-        // If there is already an active one to one conversation here, it's an active
-        // contact and the contact will reclone this activeConv, so ignore the request
-        JAMI_WARNING(
-            "Contact is sending a request for a non active conversation. Ignore. They will "
-            "clone the old one");
         return;
     }
 
