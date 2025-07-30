@@ -1246,7 +1246,9 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                     // Remove cached payload if there is one
                     auto requestPath = shared->cachePath_ / "requests" / uri;
                     dhtnet::fileutils::remove(requestPath);
-                    if (!convFromReq.empty()) {
+                    // Following replay logic could incorrectly be triggered for conversations
+                    // already fetched and used by other devices, so it is disabled for now.
+                    /*if (!convFromReq.empty()) {
                         auto oldConv = cm->getOneToOneConversation(uri);
                         // If we previously removed the contact, and re-add it, we may
                         // receive a convId different from the request. In that case,
@@ -1259,7 +1261,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                             cm->initReplay(oldConv, convFromReq);
                             cm->cloneConversationFrom(convFromReq, uri, oldConv);
                         }
-                    }
+                    }*/
                 }
             });
         }};
