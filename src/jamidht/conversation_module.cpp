@@ -1903,15 +1903,6 @@ ConversationModule::onTrustRequest(const std::string& uri,
                                    const std::vector<uint8_t>& payload,
                                    time_t received)
 {
-    auto oldConv = getOneToOneConversation(uri);
-    if (!oldConv.empty() && pimpl_->isConversation(oldConv)) {
-        // If there is already an active one to one conversation here, it's an active
-        // contact and the contact will reclone this activeConv, so ignore the request
-        JAMI_WARNING(
-            "Contact is sending a request for a non active conversation. Ignore. They will "
-            "clone the old one");
-        return;
-    }
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     ConversationRequest req;
     req.from = uri;
@@ -1943,10 +1934,6 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
 {
     ConversationRequest req(value);
     auto isOneToOne = req.isOneToOne();
-    std::string oldConv;
-    if (isOneToOne) {
-        oldConv = pimpl_->getOneToOneConversation(from);
-    }
     std::unique_lock lk(pimpl_->conversationsRequestsMtx_);
     JAMI_DEBUG("[Account {}] Receive a new conversation request for conversation {} from {}",
                pimpl_->accountId_,
@@ -1963,17 +1950,6 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                    "Ignore. Declined: {}",
                    pimpl_->accountId_,
                    static_cast<int>(oldReq->declined));
-        return;
-    }
-
-    if (!oldConv.empty()) {
-        lk.unlock();
-        // Already a conversation with the contact.
-        // If there is already an active one to one conversation here, it's an active
-        // contact and the contact will reclone this activeConv, so ignore the request
-        JAMI_WARNING(
-            "Contact is sending a request for a non active conversation. Ignore. They will "
-            "clone the old one");
         return;
     }
 
