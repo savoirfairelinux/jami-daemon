@@ -195,7 +195,7 @@ struct AccountPeerInfo
 struct JamiAccount::DiscoveredPeer
 {
     std::string displayName;
-    std::shared_ptr<Task> cleanupTask;
+    std::unique_ptr<asio::steady_timer> cleanupTimer;
 };
 
 static constexpr const char* const RING_URI_PREFIX = "ring:";
@@ -3377,9 +3377,7 @@ JamiAccount::startAccountDiscovery()
                 auto& dp = discoveredPeers_[v.accountId];
                 dp.displayName = v.displayName;
                 discoveredPeerMap_[v.accountId.toString()] = v.displayName;
-                if (dp.cleanupTask) {
-                    dp.cleanupTask->cancel();
-                } else {
+                if (!dp.cleanupTimer) {
                     // Avoid repeat reception of same peer
                     JAMI_LOG("Account discovered: {}: {}", v.displayName, v.accountId.to_c_str());
                     // Send Added Peer and corrsponding accoundID
@@ -3387,24 +3385,25 @@ JamiAccount::startAccountDiscovery()
                                                                                 v.accountId.toString(),
                                                                                 0,
                                                                                 v.displayName);
+                    dp.cleanupTimer = std::make_unique<asio::steady_timer>(
+                        *Manager::instance().ioContext(), PEER_DISCOVERY_EXPIRATION);
                 }
-                dp.cleanupTask = Manager::instance().scheduler().scheduleIn(
-                    [w = weak(), p = v.accountId, a = v.displayName] {
-                        if (auto this_ = w.lock()) {
-                            {
-                                std::lock_guard lc(this_->discoveryMapMtx_);
-                                this_->discoveredPeers_.erase(p);
-                                this_->discoveredPeerMap_.erase(p.toString());
-                            }
-                            // Send deleted peer
-                            emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(this_->getAccountID(),
-                                                                                        p.toString(),
-                                                                                        1,
-                                                                                        a);
+                dp.cleanupTimer->expires_after(PEER_DISCOVERY_EXPIRATION);
+                dp.cleanupTimer->async_wait([w = weak(), p = v.accountId, a = v.displayName](const asio::error_code& ec) {
+                    if (ec)
+                        return;
+                    if (auto this_ = w.lock()) {
+                        {
+                            std::lock_guard lc(this_->discoveryMapMtx_);
+                            this_->discoveredPeers_.erase(p);
+                            this_->discoveredPeerMap_.erase(p.toString());
+                        }
+                        // Send deleted peer
+                        emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(
+                                this_->getAccountID(), p.toString(), 1, a);
                         }
                         JAMI_INFO("Account removed from discovery list: %s", a.c_str());
-                    },
-                    PEER_DISCOVERY_EXPIRATION);
+                });
             }
         });
 }
