@@ -1742,7 +1742,26 @@ ConversationModule::loadConversations()
     // causing a potential incorrect state between "appdata/contacts" and "appdata/convInfos"
     if (!removed.empty())
         acc->unlinkConversations(removed);
-    // Save if we've removed some invalid entries
+
+    for (const auto& contact : ctx->contacts) {
+        const auto& convId = contact.at("conversationId");
+        const auto& contactId = contact.at("id");
+
+        if (convId.empty())
+            continue;
+
+        auto it = pimpl_->convInfos_.find(convId);
+        if (it != pimpl_->convInfos_.end())
+            continue;
+
+        ConvInfo newInfo;
+        newInfo.id = convId;
+        newInfo.created = std::time(nullptr);
+        newInfo.members.emplace(pimpl_->username_);
+        newInfo.members.emplace(contactId);
+        pimpl_->convInfos_.emplace(convId, std::move(newInfo));
+    }
+
     pimpl_->saveConvInfos();
 
     ilk.unlock();
