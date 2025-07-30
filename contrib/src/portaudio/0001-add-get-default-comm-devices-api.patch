@@ -1,45 +1,56 @@
-From 70ea89479fcff70982bb95ea82426320b8fe0845 Mon Sep 17 00:00:00 2001
-From: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
-Date: Thu, 11 Mar 2021 19:19:54 -0500
+From 8714de7a0b66f0471165530d027036b5d4f6d472 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?F=C3=A9lix=20Boucher?= <felix.boucher@savoirfairelinux.com>
+Date: Wed, 30 Jul 2025 13:41:42 -0400
 Subject: [PATCH] add get default comm devices api
 
 ---
- include/portaudio.h                | 11 +++++
- src/common/pa_front.c              | 54 +++++++++++++++++++++++++
- src/hostapi/wasapi/pa_win_wasapi.c | 65 ++++++++++++++++++++++++++++++
- 3 files changed, 130 insertions(+)
+ include/portaudio.h                | 22 ++++++++++
+ src/common/pa_front.c              | 52 +++++++++++++++++++++++
+ src/hostapi/wasapi/pa_win_wasapi.c | 66 +++++++++++++++++++++++++++++-
+ 3 files changed, 138 insertions(+), 2 deletions(-)
 
 diff --git a/include/portaudio.h b/include/portaudio.h
-index 8a94aaf..0466a54 100644
+index 5d84731..a6f9eea 100644
 --- a/include/portaudio.h
 +++ b/include/portaudio.h
-@@ -320,6 +320,13 @@ typedef struct PaHostApiInfo
-      if no default output device is available.
+@@ -321,6 +321,13 @@ typedef struct PaHostApiInfo
      */
      PaDeviceIndex defaultOutputDevice;
-+
+ 
 +    /** The default input/output devices for this host API(if supported).
 +     The value will be a device index ranging from 0 to (Pa_GetDeviceCount()-1),
 +     or paNoDevice if no default output device is available.
 +    */
 +    PaDeviceIndex defaultCommInputDevice;
 +    PaDeviceIndex defaultCommOutputDevice;
-     
++
  } PaHostApiInfo;
  
-@@ -449,6 +456,10 @@ PaDeviceIndex Pa_GetDefaultInputDevice( void );
+ 
+@@ -448,6 +455,21 @@ PaDeviceIndex Pa_GetDefaultInputDevice( void );
+ */
  PaDeviceIndex Pa_GetDefaultOutputDevice( void );
  
- 
-+PaDeviceIndex Pa_GetDefaultCommOutputDevice( void );
++/** Retrieve the index of the default communication input device. The result can be
++ used in the inputDevice parameter to Pa_OpenStream().
++
++ @return The default communication input device index for the default host API, or paNoDevice
++ if no default communication input device is available or an error was encountered.
++*/
 +PaDeviceIndex Pa_GetDefaultCommInputDevice( void );
 +
++/** Retrieve the index of the default communication output device. The result can be
++ used in the outputDevice parameter to Pa_OpenStream().
 +
- /** The type used to represent monotonic time in seconds. PaTime is 
-  used for the fields of the PaStreamCallbackTimeInfo argument to the 
-  PaStreamCallback and as the result of Pa_GetStreamTime().
++ @return The default communication output device index for the default host API, or paNoDevice
++ if no default communication output device is available or an error was encountered.
++*/
++PaDeviceIndex Pa_GetDefaultCommOutputDevice( void );
+ 
+ /** The type used to represent monotonic time in seconds. PaTime is
+  used for the fields of the PaStreamCallbackTimeInfo argument to the
 diff --git a/src/common/pa_front.c b/src/common/pa_front.c
-index 188cee9..ea0c3da 100644
+index 65a656f..f478a28 100644
 --- a/src/common/pa_front.c
 +++ b/src/common/pa_front.c
 @@ -234,6 +234,8 @@ static PaError InitializeHostApis( void )
@@ -64,9 +75,9 @@ index 188cee9..ea0c3da 100644
              baseDeviceIndex += hostApi->info.deviceCount;
              deviceCount_ += hostApi->info.deviceCount;
  
-@@ -746,6 +754,52 @@ PaDeviceIndex Pa_GetDefaultOutputDevice( void )
+@@ -745,6 +753,50 @@ PaDeviceIndex Pa_GetDefaultOutputDevice( void )
+     return result;
  }
- 
  
 +PaDeviceIndex Pa_GetDefaultCommInputDevice( void )
 +{
@@ -112,35 +123,55 @@ index 188cee9..ea0c3da 100644
 +
 +    return result;
 +}
-+
-+
+ 
  const PaDeviceInfo* Pa_GetDeviceInfo( PaDeviceIndex device )
  {
-     int hostSpecificDeviceIndex;
 diff --git a/src/hostapi/wasapi/pa_win_wasapi.c b/src/hostapi/wasapi/pa_win_wasapi.c
-index b12b91f..fb70eff 100644
+index c76f302..5a41a33 100644
 --- a/src/hostapi/wasapi/pa_win_wasapi.c
 +++ b/src/hostapi/wasapi/pa_win_wasapi.c
-@@ -441,6 +441,9 @@ typedef struct
-     WCHAR defaultRenderer [MAX_STR_LEN];
-     WCHAR defaultCapturer [MAX_STR_LEN];
+@@ -1832,7 +1832,8 @@ static PaError FillInactiveDeviceInfo(PaWasapiHostApiRepresentation *paWasapi, P
  
-+    WCHAR defaultCommRenderer [MAX_STR_LEN];
-+    WCHAR defaultCommCapturer [MAX_STR_LEN];
-+
-     PaWasapiDeviceInfo *devInfo;
- 
- 	// Is true when WOW64 Vista/7 Workaround is needed
-@@ -1463,6 +1466,8 @@ PaError PaWasapi_Initialize( PaUtilHostApiRepresentation **hostApi, PaHostApiInd
-     (*hostApi)->info.deviceCount		 = 0;
-     (*hostApi)->info.defaultInputDevice	 = paNoDevice;
-     (*hostApi)->info.defaultOutputDevice = paNoDevice;
-+    (*hostApi)->info.defaultCommInputDevice = paNoDevice;
-+    (*hostApi)->info.defaultCommOutputDevice = paNoDevice;
+ // ------------------------------------------------------------------------------------------
+ static PaError FillDeviceInfo(PaWasapiHostApiRepresentation *paWasapi, void *pEndPoints, INT32 index, const WCHAR *defaultRenderId,
+-    const WCHAR *defaultCaptureId, PaDeviceInfo *deviceInfo, PaWasapiDeviceInfo *wasapiDeviceInfo
++    const WCHAR *defaultCaptureId, const WCHAR *defaultCommRenderId,
++    const WCHAR *defaultCommCaptureId, PaDeviceInfo *deviceInfo, PaWasapiDeviceInfo *wasapiDeviceInfo
+ #ifdef PA_WINRT
+     , PaWasapiWinrtDeviceListContext *deviceListContext
+ #endif
+@@ -1846,6 +1847,8 @@ static PaError FillDeviceInfo(PaWasapiHostApiRepresentation *paWasapi, void *pEn
+     (void)pEndPoints;
+     (void)defaultRenderId;
+     (void)defaultCaptureId;
++    (void)defaultCommRenderId;
++    (void)defaultCommCaptureId;
+ #endif
  
  #ifndef PA_WINRT
-     paWasapi->enumerator = NULL;
-@@ -1524,6 +1529,57 @@ PaError PaWasapi_Initialize( PaUtilHostApiRepresentation **hostApi, PaHostApiInd
+@@ -1976,6 +1979,12 @@ static PaError FillDeviceInfo(PaWasapiHostApiRepresentation *paWasapi, void *pEn
+     if ((defaultCaptureId != NULL) && (wcsncmp(wasapiDeviceInfo->deviceId, defaultCaptureId, PA_WASAPI_DEVICE_NAME_LEN - 1) == 0))
+         hostApi->info.defaultInputDevice = hostApi->info.deviceCount;
+ 
++    // Set default communications Output/Input devices
++    if ((defaultCommRenderId != NULL) && (wcsncmp(wasapiDeviceInfo->deviceId, defaultCommRenderId, PA_WASAPI_DEVICE_NAME_LEN - 1) == 0))
++        hostApi->info.defaultCommOutputDevice = index;
++    if ((defaultCommCaptureId != NULL) && (wcsncmp(wasapiDeviceInfo->deviceId, defaultCommCaptureId, PA_WASAPI_DEVICE_NAME_LEN - 1) == 0))
++        hostApi->info.defaultCommInputDevice = index;
++
+     // Get a temporary IAudioClient for more details
+     {
+         IAudioClient *tmpClient;
+@@ -2118,6 +2127,8 @@ static PaError CreateDeviceList(PaWasapiHostApiRepresentation *paWasapi, PaHostA
+     UINT32 i;
+     WCHAR *defaultRenderId = NULL;
+     WCHAR *defaultCaptureId = NULL;
++    WCHAR *defaultCommRenderId = NULL;
++    WCHAR *defaultCommCaptureId = NULL;
+ #ifndef PA_WINRT
+     HRESULT hr;
+     IMMDeviceCollection *pEndPoints = NULL;
+@@ -2174,6 +2185,51 @@ static PaError CreateDeviceList(PaWasapiHostApiRepresentation *paWasapi, PaHostA
          }
      }
  
@@ -148,76 +179,86 @@ index b12b91f..fb70eff 100644
 +    {
 +        {
 +            IMMDevice *defaultCommRenderer = NULL;
-+            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(paWasapi->enumerator, eRender, eCommunications, &defaultCommRenderer);
++            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(pEnumerator, eRender, eCommunications, &defaultCommRenderer);
 +            if (hr != S_OK)
-+			{
-+				if (hr != E_NOTFOUND) {
-+					// We need to set the result to a value otherwise we will return paNoError
-+					// [IF_FAILED_JUMP(hResult, error);]
-+					IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
-+				}
-+			}
-+			else
-+			{
-+				WCHAR *pszDeviceId = NULL;
-+				hr = IMMDevice_GetId(defaultCommRenderer, &pszDeviceId);
-+				// We need to set the result to a value otherwise we will return paNoError
-+				// [IF_FAILED_JUMP(hResult, error);]
-+				IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
-+				wcsncpy(paWasapi->defaultCommRenderer, pszDeviceId, MAX_STR_LEN-1);
-+				CoTaskMemFree(pszDeviceId);
-+				IMMDevice_Release(defaultCommRenderer);
-+			}
++            {
++                if (hr != E_NOTFOUND) {
++                    // We need to set the result to a value otherwise we will return paNoError
++                    // [IF_FAILED_JUMP(hResult, error);]
++                    IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
++                }
++            }
++            else
++            {
++                hr = IMMDevice_GetId(defaultCommRenderer, &defaultCommRenderId);
++                // We need to set the result to a value otherwise we will return paNoError
++                // [IF_FAILED_JUMP(hResult, error);]
++                IMMDevice_Release(defaultCommRenderer);
++                IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
++            }
 +        }
 +
 +        {
 +            IMMDevice *defaultCommCapturer = NULL;
-+            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(paWasapi->enumerator, eCapture, eCommunications, &defaultCommCapturer);
++            hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(pEnumerator, eCapture, eCommunications, &defaultCommCapturer);
 +            if (hr != S_OK)
-+			{
-+				if (hr != E_NOTFOUND) {
-+					// We need to set the result to a value otherwise we will return paNoError
-+					// [IF_FAILED_JUMP(hResult, error);]
-+					IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
-+				}
-+			}
-+			else
-+			{
-+				WCHAR *pszDeviceId = NULL;
-+				hr = IMMDevice_GetId(defaultCommCapturer, &pszDeviceId);
-+				// We need to set the result to a value otherwise we will return paNoError
-+				// [IF_FAILED_JUMP(hResult, error);]
-+				IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
-+				wcsncpy(paWasapi->defaultCommCapturer, pszDeviceId, MAX_STR_LEN-1);
-+				CoTaskMemFree(pszDeviceId);
-+				IMMDevice_Release(defaultCommCapturer);
-+			}
++            {
++                if (hr != E_NOTFOUND) {
++                    // We need to set the result to a value otherwise we will return paNoError
++                    // [IF_FAILED_JUMP(hResult, error);]
++                    IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
++                }
++            }
++            else
++            {
++                hr = IMMDevice_GetId(defaultCommCapturer, &defaultCommCaptureId);
++                // We need to set the result to a value otherwise we will return paNoError
++                // [IF_FAILED_JUMP(hResult, error);]
++                IMMDevice_Release(defaultCommCapturer);
++                IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
++            }
 +        }
 +    }
 +
-     hr = IMMDeviceEnumerator_EnumAudioEndpoints(paWasapi->enumerator, eAll, DEVICE_STATE_ACTIVE, &pEndPoints);
- 	// We need to set the result to a value otherwise we will return paNoError
- 	// [IF_FAILED_JUMP(hResult, error);]
-@@ -1599,6 +1655,14 @@ PaError PaWasapi_Initialize( PaUtilHostApiRepresentation **hostApi, PaHostApiInd
- 				{// we found the default output!
-                     (*hostApi)->info.defaultOutputDevice = (*hostApi)->info.deviceCount;
-                 }
-+                if (lstrcmpW(paWasapi->devInfo[i].szDeviceID, paWasapi->defaultCommCapturer) == 0)
-+				{// we found the default input!
-+                    (*hostApi)->info.defaultCommInputDevice = (*hostApi)->info.deviceCount;
-+                }
-+                if (lstrcmpW(paWasapi->devInfo[i].szDeviceID, paWasapi->defaultCommRenderer) == 0)
-+				{// we found the default output!
-+                    (*hostApi)->info.defaultCommOutputDevice = (*hostApi)->info.deviceCount;
-+                }
-             }
+     // Get all currently active devices
+     hr = IMMDeviceEnumerator_EnumAudioEndpoints(pEnumerator, eAll, DEVICE_STATE_ACTIVE, &pEndPoints);
+     IF_FAILED_INTERNAL_ERROR_JUMP(hr, result, error);
+@@ -2249,7 +2305,7 @@ static PaError CreateDeviceList(PaWasapiHostApiRepresentation *paWasapi, PaHostA
+         FillBaseDeviceInfo(deviceInfo, hostApiIndex);
  
-             hr = IMMDevice_GetState(paWasapi->devInfo[i].device, &paWasapi->devInfo[i].state);
-@@ -5736,3 +5800,4 @@ void PaWasapi_FreeMemory(void *ptr)
- 				bFirst = FALSE;
- 			}
+         if ((result = FillDeviceInfo(paWasapi, pEndPoints, i, defaultRenderId, defaultCaptureId,
+-            deviceInfo, &paWasapi->devInfo[i]
++            defaultCommRenderId, defaultCommCaptureId, deviceInfo, &paWasapi->devInfo[i]
+         #ifdef PA_WINRT
+             , &deviceListContext
+         #endif
+@@ -2293,6 +2349,8 @@ done:
+ #ifndef PA_WINRT
+     CoTaskMemFree(defaultRenderId);
+     CoTaskMemFree(defaultCaptureId);
++    CoTaskMemFree(defaultCommRenderId);
++    CoTaskMemFree(defaultCommCaptureId);
+     SAFE_RELEASE(pEndPoints);
+     SAFE_RELEASE(pEnumerator);
  #endif
-+
+@@ -2353,6 +2411,8 @@ PaError PaWasapi_Initialize( PaUtilHostApiRepresentation **hostApi, PaHostApiInd
+     (*hostApi)->info.deviceCount         = 0;
+     (*hostApi)->info.defaultInputDevice     = paNoDevice;
+     (*hostApi)->info.defaultOutputDevice = paNoDevice;
++    (*hostApi)->info.defaultCommInputDevice = paNoDevice;
++    (*hostApi)->info.defaultCommOutputDevice = paNoDevice;
+     (*hostApi)->Terminate                = Terminate;
+     (*hostApi)->OpenStream               = OpenStream;
+     (*hostApi)->IsFormatSupported        = IsFormatSupported;
+@@ -2492,6 +2552,8 @@ static PaError UpdateDeviceList()
+         hostApi->info.deviceCount = 0;
+         hostApi->info.defaultInputDevice = paNoDevice;
+         hostApi->info.defaultOutputDevice = paNoDevice;
++        hostApi->info.defaultCommInputDevice = paNoDevice;
++        hostApi->info.defaultCommOutputDevice = paNoDevice;
+     }
+ 
+     // Fill possibly updated device list
 -- 
-2.17.1
+2.43.0
 
