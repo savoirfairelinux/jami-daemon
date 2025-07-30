@@ -1745,6 +1745,33 @@ ConversationModule::loadConversations()
     // Save if we've removed some invalid entries
     pimpl_->saveConvInfos();
 
+    bool updated = false;
+    {
+        for (const auto& contact : ctx->contacts) {
+            const auto& convId = contact.at("conversationId");
+            const auto& contactId = contact.at("id");
+
+            if (convId.empty())
+                continue;
+
+            auto it = pimpl_->convInfos_.find(convId);
+            if (it != pimpl_->convInfos_.end())
+                continue;
+
+            ConvInfo newInfo;
+            newInfo.id = convId;
+            newInfo.created = std::time(nullptr);
+            newInfo.members.emplace(pimpl_->username_);
+            newInfo.members.emplace(contactId);
+            pimpl_->convInfos_.emplace(convId, std::move(newInfo));
+            updated = true;
+        }
+    }
+
+    if (updated) {
+        pimpl_->saveConvInfos();
+    }
+
     ilk.unlock();
     lk.unlock();
 
@@ -1756,6 +1783,7 @@ ConversationModule::loadConversations()
         if (auto shared = w.lock())
             shared->fixStructures(acc, updateContactConv, toRm);
     });
+
 }
 
 void
