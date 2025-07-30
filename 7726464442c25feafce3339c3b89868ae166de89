@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "660ce88b_fbaa90b2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-07-30T20:18:11Z",
+      "side": 1,
+      "message": "LGTM otherwise - will do some testing",
+      "revId": "7726464442c25feafce3339c3b89868ae166de89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12d40e26_2ea77e10",
+        "filename": "contrib/src/portaudio/0001-add-get-default-comm-devices-api.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-07-30T20:18:11Z",
+      "side": 1,
+      "message": "extreme name",
+      "range": {
+        "startLine": 2,
+        "startChar": 6,
+        "endLine": 2,
+        "endChar": 38
+      },
+      "revId": "7726464442c25feafce3339c3b89868ae166de89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
