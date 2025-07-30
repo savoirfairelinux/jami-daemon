@@ -29,7 +29,6 @@
 #include "jamiaccount_config.h"
 
 #include "noncopyable.h"
-#include "scheduled_executor.h"
 #include "gitserver.h"
 #include "channel_handler.h"
 #include "conversation_module.h"

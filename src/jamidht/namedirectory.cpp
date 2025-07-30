@@ -24,7 +24,6 @@
 #include "string_utils.h"
 #include "fileutils.h"
 #include "base64.h"
-#include "scheduled_executor.h"
 
 #include <asio.hpp>
 
@@ -105,6 +104,7 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
     : serverUrl_(serverUrl)
     , logger_(std::move(l))
     , httpContext_(Manager::instance().ioContext())
+    , saveTask_(*httpContext_)
 {
     if (!serverUrl_.empty() && serverUrl_.back() == '/')
         serverUrl_.pop_back();
@@ -177,47 +177,49 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_done_callback([this, cb = std::move(cb), addr](const dht::http::Response& response) {
-            if (response.status_code > 400 && response.status_code < 500) {
-                auto cacheResult = nameCache(addr);
-                if (not cacheResult.first.empty())
-                    cb(cacheResult.first, cacheResult.second, Response::found);
-                else
-                    cb("", "", Response::notFound);
-            } else if (response.status_code == 400)
-                cb("", "", Response::invalidResponse);
-            else if (response.status_code != 200) {
-                JAMI_ERROR("Address lookup for {} on {} failed with code={}", addr, serverUrl_, response.status_code);
-                cb("", "", Response::error);
-            } else {
-                try {
-                    Json::Value json;
-                    if (!json::parse(response.body, json)) {
-                        cb("", "", Response::error);
-                        return;
-                    }
-                    auto name = json["name"].asString();
-                    if (name.empty()) {
-                        cb(name, addr, Response::notFound);
-                        return;
-                    }
-                    JAMI_DEBUG("Found name for {}: {}", addr, name);
-                    {
-                        std::lock_guard l(cacheLock_);
-                        addrCache_.emplace(name, std::pair(name, addr));
-                        nameCache_.emplace(addr, std::pair(name, addr));
-                    }
-                    cb(name, addr, Response::found);
-                    scheduleCacheSave();
-                } catch (const std::exception& e) {
-                    JAMI_ERROR("Error when performing address lookup: {}", e.what());
+        request->add_on_done_callback(
+            [this, cb = std::move(cb), addr](const dht::http::Response& response) {
+                if (response.status_code > 400 && response.status_code < 500) {
+                    auto cacheResult = nameCache(addr);
+                    if (not cacheResult.first.empty())
+                        cb(cacheResult.first, cacheResult.second, Response::found);
+                    else
+                        cb("", "", Response::notFound);
+                } else if (response.status_code == 400)
+                    cb("", "", Response::invalidResponse);
+                else if (response.status_code != 200) {
+                    JAMI_ERROR("Address lookup for {} on {} failed with code={}",
+                               addr, serverUrl_, response.status_code);
                     cb("", "", Response::error);
+                } else {
+                    try {
+                        Json::Value json;
+                        if (!json::parse(response.body, json)) {
+                            cb("", "", Response::error);
+                            return;
+                        }
+                        auto name = json["name"].asString();
+                        if (name.empty()) {
+                            cb(name, addr, Response::notFound);
+                            return;
+                        }
+                        JAMI_DEBUG("Found name for {}: {}", addr, name);
+                        {
+                            std::lock_guard l(cacheLock_);
+                            addrCache_.emplace(name, std::pair(name, addr));
+                            nameCache_.emplace(addr, std::pair(name, addr));
+                            scheduleCacheSave();
+                        }
+                        cb(name, addr, Response::found);
+                    } catch (const std::exception& e) {
+                        JAMI_ERROR("Error when performing address lookup: {}", e.what());
+                        cb("", "", Response::error);
+                    }
                 }
-            }
-            std::lock_guard lk(requestsMtx_);
-            if (auto req = response.request.lock())
-                requests_.erase(req);
-        });
+                std::lock_guard lk(requestsMtx_);
+                if (auto req = response.request.lock())
+                    requests_.erase(req);
+            });
         {
             std::lock_guard lk(requestsMtx_);
             requests_.emplace(request);
@@ -294,9 +296,9 @@ NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                         addrCache_.emplace(name, std::pair(nameResult, addr));
                         addrCache_.emplace(nameResult, std::pair(nameResult, addr));
                         nameCache_.emplace(addr, std::pair(nameResult, addr));
+                        scheduleCacheSave();
                     }
                     cb(nameResult, addr, Response::found);
-                    scheduleCacheSave();
                 } catch (const std::exception& e) {
                     JAMI_ERROR("Error when performing name lookup: {}", e.what());
                     cb("", "", Response::error);
@@ -427,13 +429,12 @@ NameDirectory::registerName(const std::string& addr,
 void
 NameDirectory::scheduleCacheSave()
 {
-    // JAMI_DBG("Scheduling cache save to %s", cachePath_.c_str());
-    std::weak_ptr<Task> task
-        = Manager::instance().scheduler().scheduleIn([this] { dht::ThreadPool::io().run([this] { saveCache(); }); },
-                                                     SAVE_INTERVAL);
-    std::swap(saveTask_, task);
-    if (auto old = task.lock())
-        old->cancel();
+    saveTask_.expires_after(SAVE_INTERVAL);
+    saveTask_.async_wait([this](const asio::error_code& ec) {
+        if (ec)
+            return;
+        saveCache();
+    });
 }
 
 void
