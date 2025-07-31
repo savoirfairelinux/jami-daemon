@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f29f5ed4_7435d402",
+        "filename": "src/debug_utils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-31T16:00:53Z",
+      "side": 1,
+      "message": "There shouldn\u0027t be quotes around the tag, otherwise the preprocessor returns an error (\"pasting \"StatsTimerTag_\" and \"\"TaskName\"\" does not give a valid preprocessing token\").",
+      "range": {
+        "startLine": 75,
+        "startChar": 15,
+        "endLine": 75,
+        "endChar": 25
+      },
+      "revId": "bfe37e3b975f5b03cb1c208c05cc669efbf94f4d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3ffbb154_a77a156e",
+        "filename": "src/debug_utils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-07-31T16:00:53Z",
+      "side": 1,
+      "message": "This could be included in the string directly instead of being a parameter.",
+      "range": {
+        "startLine": 90,
+        "startChar": 49,
+        "endLine": 90,
+        "endChar": 56
+      },
+      "revId": "bfe37e3b975f5b03cb1c208c05cc669efbf94f4d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
