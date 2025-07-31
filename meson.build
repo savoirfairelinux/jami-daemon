@@ -35,7 +35,7 @@ depjsoncpp        = dependency('jsoncpp', version: '>= 1.6.5')
 depzlib           = dependency('zlib')
 
 if get_option('interfaces').contains('dbus')
-    depsdbuscpp = dependency('sdbus-c++', version: '>= 1.2.0')
+    depsdbuscpp = dependency('sdbus-c++', version: '>= 2.0.0')
     progsdbuscppxml2cpp = find_program('sdbus-c++-xml2cpp', native: true)
 endif
 
