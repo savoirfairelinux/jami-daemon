@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4e5e2a54_eb6d0d73",
+        "filename": "src/debug_utils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-07-31T20:16:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f29f5ed4_7435d402",
+      "range": {
+        "startLine": 75,
+        "startChar": 15,
+        "endLine": 75,
+        "endChar": 25
+      },
+      "revId": "bfe37e3b975f5b03cb1c208c05cc669efbf94f4d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3ffbb154_a77a156e",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-07-31T16:00:53Z",
       "side": 1,
       "message": "This could be included in the string directly instead of being a parameter.",
+      "range": {
+        "startLine": 90,
+        "startChar": 49,
+        "endLine": 90,
+        "endChar": 56
+      },
+      "revId": "bfe37e3b975f5b03cb1c208c05cc669efbf94f4d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9a9782c1_e2cb700c",
+        "filename": "src/debug_utils.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 90,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-07-31T20:16:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3ffbb154_a77a156e",
       "range": {
         "startLine": 90,
         "startChar": 49,
