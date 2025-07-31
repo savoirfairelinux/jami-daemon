@@ -39,6 +39,30 @@
       },
       "revId": "7726464442c25feafce3339c3b89868ae166de89",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "593882d4_5039cfe2",
+        "filename": "contrib/src/portaudio/0001-add-get-default-comm-devices-api.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-07-31T14:39:40Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "12d40e26_2ea77e10",
+      "range": {
+        "startLine": 2,
+        "startChar": 6,
+        "endLine": 2,
+        "endChar": 38
+      },
+      "revId": "7726464442c25feafce3339c3b89868ae166de89",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
