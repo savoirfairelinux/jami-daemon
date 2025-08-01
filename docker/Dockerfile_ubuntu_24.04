@@ -35,7 +35,6 @@ RUN add-apt-repository universe && \
         libtool \
         gettext \
         libsystemd-dev \
-        libsdbus-c++-bin \
         libpulse-dev \
         libasound2-dev \
         libpcre3-dev \
