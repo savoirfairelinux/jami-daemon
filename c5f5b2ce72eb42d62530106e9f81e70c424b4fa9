@@ -16,6 +16,24 @@
       "message": "HAVE_ARMV7A could be removed, since we support from iOS 14.5",
       "revId": "c5f5b2ce72eb42d62530106e9f81e70c424b4fa9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "02234ed8_30f80708",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 9
+      },
+      "lineNbr": 247,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-08-01T18:55:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f7a78d58_d4493e87",
+      "revId": "c5f5b2ce72eb42d62530106e9f81e70c424b4fa9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
