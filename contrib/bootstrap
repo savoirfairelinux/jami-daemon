@@ -238,13 +238,14 @@ test -z "$PREFIX" || add_make "PREFIX := $PREFIX"
 OS="${HOST#*-}" # strip architecture
 case "${OS}" in
 	apple-darwin*)
+		add_make_enabled "HAVE_DARWIN_OS" "HAVE_BSD"
 		if test -z "$BUILDFORIOS"
 		then
 			check_macosx_sdk
-			add_make_enabled "HAVE_MACOSX" "HAVE_DARWIN_OS" "HAVE_BSD"
+			add_make_enabled "HAVE_MACOSX"
 		else
 			check_ios_sdk
-			add_make_enabled "HAVE_IOS" "HAVE_DARWIN_OS" "HAVE_BSD" "HAVE_NEON" "HAVE_ARMV7A"
+			add_make_enabled "HAVE_IOS" "HAVE_NEON"
 		fi
 		;;
 	*bsd*)
