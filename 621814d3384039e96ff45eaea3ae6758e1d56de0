@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "39a76720_443338b8",
+        "filename": "contrib/bootstrap",
+        "patchSetId": 3
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-08-01T19:11:34Z",
+      "side": 1,
+      "message": "for consistency, --ignore-system-libs or --disable-system-libs",
+      "range": {
+        "startLine": 32,
+        "startChar": 11,
+        "endLine": 32,
+        "endChar": 29
+      },
+      "revId": "621814d3384039e96ff45eaea3ae6758e1d56de0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
