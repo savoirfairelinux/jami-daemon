@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c87784c_6ae9dd41",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1925,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2025-08-05T15:03:34Z",
+      "side": 0,
+      "message": "Note, behaviour changes should be handled by tests in the test directory ;)",
+      "revId": "f09bdcb8e2b2429b713f11c324f8b39909455bdf",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
