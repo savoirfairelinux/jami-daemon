@@ -1037,31 +1037,24 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv)
     emitSignal<libjami::ConversationSignal::ConversationRemoved>(accountId_, conv.info.id);
     if (isSyncing)
         return true;
-    if (conv.conversation->mode() != ConversationMode::ONE_TO_ONE) {
-        // For one to one, we do not notify the leave. The other can still generate request
-        // and this is managed by the banned part. If we re-accept, the old conversation will be
-        // retrieved
-        auto commitId = conv.conversation->leave();
-        if (hasMembers) {
-            JAMI_LOG("Wait that someone sync that user left conversation {}", conv.info.id);
-            // Commit that we left
-            if (!commitId.empty()) {
-                // Do not sync as it's synched by convInfos
-                sendMessageNotification(*conv.conversation, false, commitId);
-            } else {
-                JAMI_ERROR("Failed to send message to conversation {}", conv.info.id);
-            }
-            // In this case, we wait that another peer sync the conversation
-            // to definitely remove it from the device. This is to inform the
-            // peer that we left the conversation and never want to receive
-            // any messages
-            return true;
+
+    auto commitId = conv.conversation->leave();
+    if (hasMembers) {
+        JAMI_LOG("Wait that someone sync that user left conversation {}", conv.info.id);
+        // Commit that we left
+        if (!commitId.empty()) {
+            // Do not sync as it's synched by convInfos
+            sendMessageNotification(*conv.conversation, false, commitId);
+        } else {
+            JAMI_ERROR("Failed to send message to conversation {}", conv.info.id);
         }
-    } else {
-        for (const auto& m : members)
-            if (username_ != m.at("uri"))
-                updateConvForContact(m.at("uri"), conv.info.id, "");
+        // In this case, we wait that another peer sync the conversation
+        // to definitely remove it from the device. This is to inform the
+        // peer that we left the conversation and never want to receive
+        // any messages
+        return true;
     }
+
     // Else we are the last member, so we can remove
     removeRepositoryImpl(conv, true);
     return true;
@@ -2930,7 +2923,128 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
 bool
 ConversationModule::removeConversation(const std::string& conversationId)
 {
+    auto conversation = pimpl_->getConversation(conversationId);
+    std::string existingConvId;
+
+    if (!conversation) {
+        JAMI_LOG("Conversation {} not found", conversationId);
+        return false;
+    }
+
+    std::shared_ptr<Conversation> conv;
+    {
+        std::lock_guard lk(conversation->mtx);
+        conv = conversation->conversation;
+    }
+
+    auto sendNotification = [&](const std::string& convId) {
+        if (auto convObj = pimpl_->getConversation(convId)) {
+            std::lock_guard lk(convObj->mtx);
+            if (convObj->conversation) {
+                auto commitId = convObj->conversation->lastCommitId();
+                if (!commitId.empty()) {
+                    pimpl_->sendMessageNotification(*convObj->conversation, true, commitId);
+                }
+            }
+        }
+    };
+
+    auto handleNewConversation = [&](const std::string& uri) {
+        std::string newConvId = startConversation(ConversationMode::ONE_TO_ONE, dht::InfoHash(uri));
+        updateConvForContact(uri, conversationId, newConvId);
+        sendNotification(newConvId);
+        return newConvId;
+    };
+
+    if (!conv) {
+        auto contacts = pimpl_->accountManager_->getContacts(false);
+        for (const auto& contact : contacts) {
+            auto it = contact.find("conversationId");
+            auto itId = contact.find("id");
+
+            if (it != contact.end() && itId != contact.end() && it->second == conversationId) {
+                const std::string& uri = itId->second;
+                handleNewConversation(uri);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    if (conv->mode() == ConversationMode::ONE_TO_ONE) {
+        auto members = conv->getMembers(true, false, false);
+        if (members.empty()) {
+            return false;
+        }
+
+        for (const auto& m : members) {
+            const auto& uri = m.at("uri");
+
+            if (members.size() == 1 && uri == pimpl_->username_) {
+                if (conv->getInitialMembers().size() == 1 &&
+                    conv->getInitialMembers()[0] == pimpl_->username_) {
+                    JAMI_LOG("self conversation {} skip creating new conversation", conversationId);
+                } else {
+                    existingConvId = findMatchingOneToOneConversation(conversationId,
+                                                                      conv->memberUris("", {}));
+                    if (existingConvId.empty()) {
+                        // If left with only ended conversation of peer
+                        for (const auto& otherMember : conv->getInitialMembers()) {
+                            if (otherMember != pimpl_->username_) {
+                                handleNewConversation(otherMember);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+
+            if (uri == pimpl_->username_)
+                continue;
+
+            existingConvId = findMatchingOneToOneConversation(conversationId,
+                                                              conv->memberUris());
+            if (!existingConvId.empty()) {
+                // Found an existing conversation, just update the contact
+                updateConvForContact(uri, conversationId, existingConvId);
+                sendNotification(existingConvId);
+            } else {
+                // No existing conversation found, create a new one
+                handleNewConversation(uri);
+            }
+        }
+    }
+
     return pimpl_->removeConversation(conversationId);
+}
+
+std::string
+ConversationModule::findMatchingOneToOneConversation(
+    const std::string& ConversationId,
+    const std::set<std::string>& targetUris) const
+{
+    std::lock_guard lk(pimpl_->conversationsMtx_);
+    for (const auto& [otherConvId, otherConvPtr] : pimpl_->conversations_) {
+        if (otherConvId == ConversationId)
+            continue;
+
+        std::lock_guard lk(otherConvPtr->mtx);
+        if (!otherConvPtr->conversation ||
+            otherConvPtr->conversation->mode() != ConversationMode::ONE_TO_ONE)
+            continue;
+
+        const auto& info = otherConvPtr->info;
+        if (info.removed != 0 && info.removed > info.created)
+            continue;
+
+        auto otherUris = otherConvPtr->conversation->memberUris();
+
+        if (otherUris == targetUris)
+            return otherConvId;
+    }
+
+    return {};
 }
 
 void
