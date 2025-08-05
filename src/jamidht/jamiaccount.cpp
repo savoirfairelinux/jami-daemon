@@ -2419,7 +2419,7 @@ JamiAccount::syncModule()
     }
     std::lock_guard lk(moduleMtx_);
     if (!syncModule_)
-        syncModule_ = std::make_unique<SyncModule>(weak());
+        syncModule_ = std::make_unique<SyncModule>(shared());
     return syncModule_.get();
 }
 
