@@ -439,6 +439,16 @@ public:
      * @return if successfully removed
      */
     bool removeConversation(const std::string& conversationId);
+    /**
+     * Search for an existing one-to-one conversation
+     * that exactly matches the given set of member URIs.
+     * @param excludedConversationId   Conversation ID to be ignored during the search.
+     * @param targetUris               The set of member URIs that must match exactly.
+     * @return The ID of the matching conversation if found, otherwise an empty string.
+     */
+    std::string findMatchingOneToOneConversation(
+        const std::string& excludedConversationId,
+        const std::set<std::string>& targetUris) const;
     void initReplay(const std::string& oldConvId, const std::string& newConvId);
     /**
      * Check if we're hosting a specific conference
