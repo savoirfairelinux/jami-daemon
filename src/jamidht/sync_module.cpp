@@ -28,9 +28,10 @@ namespace jami {
 class SyncModule::Impl : public std::enable_shared_from_this<Impl>
 {
 public:
-    Impl(std::weak_ptr<JamiAccount>&& account);
+    Impl(const std::shared_ptr<JamiAccount>& account);
 
     std::weak_ptr<JamiAccount> account_;
+    const std::string accountId_;
 
     // Sync connections
     std::recursive_mutex syncConnectionsMtx_;
@@ -47,8 +48,9 @@ public:
                            const DeviceId& device);
 };
 
-SyncModule::Impl::Impl(std::weak_ptr<JamiAccount>&& account)
+SyncModule::Impl::Impl(const std::shared_ptr<JamiAccount>& account)
     : account_(account)
+    , accountId_ {account->getAccountID()}
 {}
 
 void
@@ -73,7 +75,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
                               buffer.size(),
                               ec);
                 if (ec) {
-                    JAMI_ERROR("{:s}", ec.message());
+                    JAMI_ERROR("[Account {}] [device {}] {:s}",
+                               accountId_,
+                               socket->deviceId(),
+                               ec.message());
                     return;
                 }
             }
@@ -87,7 +92,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("{:s}", ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -100,7 +108,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("{:s}", ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -116,7 +127,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("{:s}", ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -129,7 +143,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("{:s}", ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -139,14 +156,17 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
         msgpack::pack(buffer, *syncMsg);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
         if (ec)
-            JAMI_ERROR("{:s}", ec.message());
+            JAMI_ERROR("[Account {}] [device {}] {:s}",
+                       accountId_,
+                       socket->deviceId(),
+                       ec.message());
     }
 }
 
 ////////////////////////////////////////////////////////////////
 
-SyncModule::SyncModule(std::weak_ptr<JamiAccount>&& account)
-    : pimpl_ {std::make_shared<Impl>(std::move(account))}
+SyncModule::SyncModule(const std::shared_ptr<JamiAccount>& account)
+    : pimpl_ {std::make_shared<Impl>(account)}
 {}
 
 void
@@ -155,12 +175,20 @@ SyncModule::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>
 {
     std::lock_guard lk(syncConnectionsMtx_);
     auto connectionsIt = syncConnections_.find(device);
-    if (connectionsIt == syncConnections_.end())
+    if (connectionsIt == syncConnections_.end()) {
+        JAMI_WARNING("[Account {}] [device {}] onChannelShutdown: no connection found.",
+                     accountId_,
+                     device.to_view());
         return;
+    }
     auto& connections = connectionsIt->second;
     auto conn = std::find(connections.begin(), connections.end(), socket);
     if (conn != connections.end())
         connections.erase(conn);
+    JAMI_LOG("[Account {}] [device {}] removed connection, remaining: {:d}",
+             accountId_,
+             device.to_view(),
+             connections.size());
     if (connections.empty())
         syncConnections_.erase(connectionsIt);
 }
@@ -210,7 +238,10 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                         cm->onSyncData(msg, peerId, device.toString());
             }
         } catch (const std::exception& e) {
-            JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
+            JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",
+                         acc->getAccountID(),
+                         device.to_view(),
+                         e.what());
         }
 
         return len;
@@ -236,17 +267,26 @@ void
 SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const DeviceId& deviceId)
 {
     std::lock_guard lk(pimpl_->syncConnectionsMtx_);
+    size_t count = 0;
     for (const auto& [did, sockets] : pimpl_->syncConnections_) {
         if (not sockets.empty() and (!deviceId || deviceId == did)) {
-            dht::ThreadPool::io().run([
-                w = pimpl_->weak_from_this(),
-                s = sockets.back(),
-                syncMsg
-            ] {
+            count++;
+            dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), s = sockets.back(), syncMsg] {
                 if (auto sthis = w.lock())
                     sthis->syncInfos(s, syncMsg);
             });
         }
     }
+    if (count == 0) {
+        JAMI_WARNING("[Account {}] [device {}] no sync connection.",
+                     pimpl_->accountId_,
+                     deviceId.toString());
+    } else {
+        JAMI_DEBUG("[Account {}] [device {}] syncing with {:d} devices",
+                   pimpl_->accountId_,
+                   deviceId.to_view(),
+                   count);
+    }
 }
+
 } // namespace jami
