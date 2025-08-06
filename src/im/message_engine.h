@@ -62,7 +62,6 @@ public:
                        const std::string& deviceId = {});
 
     /**
-     * @TODO change MessageEngine by a queue,
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
      */
     void onPeerOnline(const std::string& peer,
