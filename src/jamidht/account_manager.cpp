@@ -592,18 +592,23 @@ AccountManager::getContactDetails(const std::string& uri) const
 }
 
 std::optional<Contact>
-AccountManager::getContactInfo(const std::string& uri) const
+AccountManager::getContactInfo(const dht::InfoHash& contactId) const
 {
     if (!info_) {
         JAMI_ERROR("[Account {}] getContactInfo(): account not loaded", accountId_);
         return {};
     }
-    dht::InfoHash h(uri);
-    if (not h) {
-        JAMI_ERROR("[Account {}] getContactInfo: invalid contact URI", accountId_);
+    if (not contactId) {
+        JAMI_ERROR("[Account {}] getContactInfo: invalid contact ID", accountId_);
         return {};
     }
-    return info_->contacts->getContactInfo(h);
+    return info_->contacts->getContactInfo(contactId);
+}
+
+std::optional<Contact>
+AccountManager::getContactInfo(const std::string& uri) const
+{
+    return getContactInfo(dht::InfoHash(uri));
 }
 
 bool
