@@ -2040,7 +2040,16 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     }
     pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
-    pimpl_->accountManager_->acceptTrustRequest(request->from, true);
+    if (!pimpl_->accountManager_->acceptTrustRequest(request->from, true)) {
+        if (request->isOneToOne()) {
+            auto existingConvId = pimpl_->getOneToOneConversation(request->from);
+            if (!existingConvId.empty() && existingConvId != request->conversationId) {
+                pimpl_->updateConvForContact(request->from,
+                                             existingConvId,
+                                             request->conversationId);
+            }
+        }
+    }
     cloneConversationFrom(conversationId, request->from);
 }
 
