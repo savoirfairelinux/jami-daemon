@@ -327,6 +327,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account,
                 accept = true;
             if (not contact->second.confirmed) {
                 contact->second.confirmed = true;
+                saveContacts();
                 callbacks_.contactAdded(peer_account.toString(), true);
             }
         }
