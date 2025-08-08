@@ -1126,6 +1126,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                                ctx->addDeviceCtx->maxTries);
                     toSend.set(PayloadKey::passwordCorrect, "false");
                     toSend.set(PayloadKey::canRetry, "true");
+                    ctx->addDeviceCtx->state = AuthDecodingState::AUTH;
                 } else {
                     // cannot retry auth
                     JAMI_WARNING("[LinkDevice] Incorrect password received, maximum attempts reached.");
