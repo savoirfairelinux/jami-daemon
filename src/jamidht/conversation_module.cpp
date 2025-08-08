@@ -1923,6 +1923,20 @@ ConversationModule::onTrustRequest(const std::string& uri,
     req.metadatas = ConversationRepository::infosFromVCard(vCard::utils::toMap(
         std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size())));
     auto reqMap = req.toMap();
+
+    if (req.isOneToOne()) {
+        auto contactInfo = pimpl_->accountManager_->getContactInfo(uri);
+        if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() &&
+            contactInfo->isActive()) {
+            JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}",
+                     pimpl_->accountId_, uri, conversationId);
+            lk.unlock();
+            updateConvForContact(uri, contactInfo->conversationId, conversationId);
+            cloneConversationFrom(conversationId, uri);
+            return;
+        }
+    }
+
     if (pimpl_->addConversationRequest(conversationId, std::move(req))) {
         lk.unlock();
         emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(pimpl_->accountId_,
@@ -1963,6 +1977,19 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                    pimpl_->accountId_,
                    static_cast<int>(oldReq->declined));
         return;
+    }
+
+    if (isOneToOne) {
+        auto contactInfo = pimpl_->accountManager_->getContactInfo(from);
+        if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() &&
+            contactInfo->isActive()) {
+            JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}",
+                pimpl_->accountId_, from, convId);
+            lk.unlock();
+            updateConvForContact(from, contactInfo->conversationId, convId);
+            cloneConversationFrom(convId, from);
+            return;
+        }
     }
 
     req.received = std::time(nullptr);
