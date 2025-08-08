@@ -1110,27 +1110,26 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                     shouldSendArchive = true;
                     JAMI_DEBUG("[LinkDevice] Sending account archive.");
                 } catch (const std::exception& e) {
-                    ctx->addDeviceCtx->state = AuthDecodingState::ERR;
                     JAMI_DEBUG("[LinkDevice] Finished reading archive: FAILURE: {}", e.what());
                     shouldSendArchive = false;
                 }
             }
             if (!shouldSendArchive) {
                 // pass is not valid
+                ctx->addDeviceCtx->numTries++;
                 if (ctx->addDeviceCtx->numTries < ctx->addDeviceCtx->maxTries) {
                     // can retry auth
-                    ctx->addDeviceCtx->numTries++;
                     JAMI_DEBUG("[LinkDevice] Incorrect password received. "
                                "Attempt {} out of {}.",
                                ctx->addDeviceCtx->numTries,
                                ctx->addDeviceCtx->maxTries);
                     toSend.set(PayloadKey::passwordCorrect, "false");
                     toSend.set(PayloadKey::canRetry, "true");
+                    ctx->addDeviceCtx->state = AuthDecodingState::AUTH;
                 } else {
                     // cannot retry auth
                     JAMI_WARNING("[LinkDevice] Incorrect password received, maximum attempts reached.");
                     toSend.set(PayloadKey::canRetry, "false");
-                    ctx->addDeviceCtx->state = AuthDecodingState::AUTH_ERROR;
                     shouldShutdown = true;
                 }
             }
