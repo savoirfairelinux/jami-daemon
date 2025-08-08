@@ -46,6 +46,30 @@
       },
       "revId": "47c732af0ff1e7e47ffd4149673d3539f2f40e3b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "22291556_0b43b95a",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1122,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-08T19:18:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "eb7ec083_9d4d154a",
+      "range": {
+        "startLine": 1122,
+        "startChar": 20,
+        "endLine": 1122,
+        "endChar": 50
+      },
+      "revId": "47c732af0ff1e7e47ffd4149673d3539f2f40e3b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
