@@ -1965,6 +1965,18 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
         return;
     }
 
+    if (isOneToOne) {
+        auto contactInfo = pimpl_->accountManager_->getContactInfo(from);
+        if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() && contactInfo->isActive()) {
+            JAMI_LOG("[Account {}] Contact {} is confirmed, auto-accepting conversation request for {}",
+                    pimpl_->accountId_, from, convId);
+            lk.unlock();
+            updateConvForContact(from, contactInfo->conversationId, convId);
+            cloneConversationFrom(convId, from);
+            return;
+        }
+    }
+
     req.received = std::time(nullptr);
     req.from = from;
     auto reqMap = req.toMap();
