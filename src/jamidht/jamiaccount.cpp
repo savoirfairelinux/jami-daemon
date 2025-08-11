@@ -961,7 +961,6 @@ JamiAccount::loadConfig()
     auto credentials = consumeConfigCredentials();
     loadAccount(credentials.archive_password_scheme,
                 credentials.archive_password,
-                credentials.archive_pin,
                 credentials.archive_path);
 }
 
@@ -1150,7 +1149,6 @@ JamiAccount::saveIdentity(const dht::crypto::Identity id,
 void
 JamiAccount::loadAccount(const std::string& archive_password_scheme,
                          const std::string& archive_password,
-                         const std::string& archive_pin,
                          const std::string& archive_path)
 {
     if (registrationState_ == RegistrationState::INITIALIZING)
@@ -1350,12 +1348,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                     JAMI_DEBUG("[Account {}] [LinkDevice] scheme p2p & uri {}", getAccountID(), conf.archive_url);
                     acreds->scheme = "p2p";
                     acreds->uri = conf.archive_url;
-                } else if (!archive_pin.empty()) {
-                    // Importing from DHT
-                    acreds->scheme = "dht";
-                    acreds->uri = archive_pin;
-                    acreds->dhtBootstrap = loadBootstrap();
-                    acreds->dhtPort = dhtPortUsed();
                 } else if (std::filesystem::is_regular_file(archivePath)) {
                     // Migrating local account
                     acreds->scheme = "local";

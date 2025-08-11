@@ -687,10 +687,8 @@ private:
     void forEachPendingCall(const DeviceId& deviceId,
                             const std::function<void(const std::shared_ptr<SIPCall>&)>& cb);
 
-    void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
     void loadAccount(const std::string& archive_password_scheme = {},
                      const std::string& archive_password = {},
-                     const std::string& archive_pin = {},
                      const std::string& archive_path = {});
 
     std::vector<std::string> loadBootstrap() const;
