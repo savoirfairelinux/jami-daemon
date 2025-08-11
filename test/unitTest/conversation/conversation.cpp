@@ -1051,7 +1051,6 @@ ConversationTest::testSetMessageDisplayedAfterClone()
     details[ConfProperties::ALIAS] = "alice2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
@@ -1086,7 +1085,6 @@ ConversationTest::testSendMessageWithLotOfKnownDevices()
     details[ConfProperties::ALIAS] = "alice2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     auto alice2Account = Manager::instance().getAccount<JamiAccount>(alice2Id);
@@ -1882,7 +1880,6 @@ ConversationTest::testSyncWithoutPinnedCert()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
 
@@ -1930,7 +1927,6 @@ ConversationTest::testImportMalformedContacts()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
     wait_for_announcement_of({bob2Id});
@@ -1959,7 +1955,6 @@ ConversationTest::testCloneFromMultipleDevice()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
 
@@ -2148,7 +2143,6 @@ ConversationTest::testConversationPreferencesBeforeClone()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
@@ -2177,7 +2171,6 @@ ConversationTest::testConversationPreferencesMultiDevices()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
@@ -2459,7 +2452,6 @@ ConversationTest::testUpdateProfileMultiDevice()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.registered; }));

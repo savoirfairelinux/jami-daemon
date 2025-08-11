@@ -273,7 +273,6 @@ CallTest::testDeclineMultiDevice()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
 
     bob2Id = Manager::instance().addAccount(details);
