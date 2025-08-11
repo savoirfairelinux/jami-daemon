@@ -367,7 +367,6 @@ SyncHistoryTest::testCreateConversationThenSync()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
 
     alice2Id = Manager::instance().addAccount(details);
@@ -389,7 +388,6 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     auto convId = libjami::startConversation(aliceId);
     alice2Id = Manager::instance().addAccount(details);
@@ -421,7 +419,6 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !alice2Data.conversationId.empty(); }));
@@ -469,7 +466,6 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
@@ -517,7 +513,6 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
@@ -539,7 +534,6 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     auto convId = libjami::startConversation(aliceId);
 
@@ -580,7 +574,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.deviceAnnounced; }));
@@ -633,7 +626,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     // Should retrieve conversation, no need for action as the convInfos is in the archive
@@ -671,7 +663,6 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return alice2Data.deviceAnnounced; }));
@@ -700,7 +691,6 @@ SyncHistoryTest::testSyncOneToOne()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
 
     alice2Id = Manager::instance().addAccount(details);
@@ -734,7 +724,6 @@ SyncHistoryTest::testConversationRequestRemoved()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
@@ -801,7 +790,6 @@ END:VCARD";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     bobData.profilePath = {};
     alice2Data.profilePath = {};
@@ -849,7 +837,6 @@ SyncHistoryTest::testLastInteractionAfterClone()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
 
@@ -884,7 +871,6 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = aliceArchive;
     alice2Id = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {return alice2Data.deviceAnnounced; }));

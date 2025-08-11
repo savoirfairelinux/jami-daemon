@@ -217,11 +217,6 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details,
                 libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME,
                 credentials.archive_password_scheme);
-    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PIN, credentials.archive_pin);
-    std::transform(credentials.archive_pin.begin(),
-                   credentials.archive_pin.end(),
-                   credentials.archive_pin.begin(),
-                   ::toupper);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, credentials.archive_path);
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_URL, archive_url);

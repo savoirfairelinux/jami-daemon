@@ -308,7 +308,6 @@ BootstrapTest::testBootstrapNeverNewDevice()
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
     details[ConfProperties::ARCHIVE_PASSWORD] = "";
-    details[ConfProperties::ARCHIVE_PIN] = "";
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
     bob2Data.accountId = Manager::instance().addAccount(details);
     auto bob2Account = Manager::instance().getAccount<JamiAccount>(bob2Data.accountId);
