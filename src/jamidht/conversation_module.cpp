@@ -202,8 +202,10 @@ public:
      * @param sync      If we send an update to other account's devices
      * @param force     True if ignore the removing flag
      */
-    void removeRepository(const std::string& convId, bool sync, bool force = false);
-    void removeRepositoryImpl(SyncedConversation& conv, bool sync, bool force = false);
+    void removeRepository(const std::string& convId, bool sync, bool force = false,
+                         bool erase = false);
+    void removeRepositoryImpl(SyncedConversation& conv, bool sync, bool force = false,
+                             bool erase = false);
     /**
      * Remove a conversation
      * @param conversationId
@@ -965,17 +967,23 @@ ConversationModule::Impl::getConversationMembers(const std::string& conversation
 }
 
 void
-ConversationModule::Impl::removeRepository(const std::string& conversationId, bool sync, bool force)
+ConversationModule::Impl::removeRepository(const std::string& conversationId,
+                                           bool sync,
+                                           bool force,
+                                           bool erase)
 {
     auto conv = getConversation(conversationId);
     if (!conv)
         return;
     std::unique_lock lk(conv->mtx);
-    removeRepositoryImpl(*conv, sync, force);
+    removeRepositoryImpl(*conv, sync, force, erase);
 }
 
 void
-ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sync, bool force)
+ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv,
+                                               bool sync,
+                                               bool force,
+                                               bool erase)
 {
     if (conv.conversation && (force || conv.conversation->isRemoving())) {
         // Stop fetch!
@@ -1003,9 +1011,24 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
         if (!sync)
             return;
 
-        conv.info.erased = std::time(nullptr);
+        if (erase) {
+            {
+                std::lock_guard lk(convInfosMtx_);
+                convInfos_.erase(conv.info.id);
+                saveConvInfos();
+            }
+            {
+                std::lock_guard lk(conversationsMtx_);
+                auto it = conversations_.find(conv.info.id);
+                if (it != conversations_.end()) {
+                    conversations_.erase(it);
+                }
+            }
+        } else {
+            conv.info.erased = std::time(nullptr);
+            addConvInfo(conv.info);
+        }
         needsSyncingCb_({});
-        addConvInfo(conv.info);
     }
 }
 
@@ -2929,7 +2952,7 @@ ConversationModule::removeContact(const std::string& uri, bool banned)
         }
     }
     for (const auto& id : toRm)
-        pimpl_->removeRepository(id, true, true);
+        pimpl_->removeRepository(id, true, true, true);
 }
 
 bool
