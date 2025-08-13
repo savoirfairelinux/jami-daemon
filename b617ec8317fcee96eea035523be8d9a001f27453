@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2315a2bc_b9fc0cc9",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-13T19:01:20Z",
+      "side": 1,
+      "message": "LGTM but need to remove archive pin references in jami-client-qt. see: https://review.jami.net/c/jami-client-qt/+/31659",
+      "revId": "b617ec8317fcee96eea035523be8d9a001f27453",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
