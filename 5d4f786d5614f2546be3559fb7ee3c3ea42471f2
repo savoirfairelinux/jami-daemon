@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f322e1ca_8dd028f6",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-13T07:57:57Z",
+      "side": 1,
+      "message": "```\n    void removeRepository(const std::string\u0026 convId,\n                          bool sync,\n                          bool force \u003d false,\n                          bool erase \u003d false);\n```",
+      "range": {
+        "startLine": 205,
+        "startChar": 0,
+        "endLine": 206,
+        "endChar": 45
+      },
+      "revId": "5d4f786d5614f2546be3559fb7ee3c3ea42471f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "964d114c_dd5073ea",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 206,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-13T07:57:57Z",
+      "side": 1,
+      "message": "Should there be another 1 leading space on line 206?\n\n```\n    void removeRepository(const std::string\u0026 convId, bool sync, bool force \u003d false,\n                          bool erase \u003d false);\n```",
+      "range": {
+        "startLine": 206,
+        "startChar": 25,
+        "endLine": 206,
+        "endChar": 45
+      },
+      "revId": "5d4f786d5614f2546be3559fb7ee3c3ea42471f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
