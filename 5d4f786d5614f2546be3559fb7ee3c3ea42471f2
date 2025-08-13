@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "adc926ce_d9de3582",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2025-08-13T12:55:33Z",
+      "side": 1,
+      "message": "could you make it possible that you can choose like \"erase only on this device\" (even if other devices with the same account are online) and \"erase on all devices that are are associated with my own account\" and \"erase on all devices and all peers\" (so that the conversation will be permanently deleted on all devices -even on the devices of other peers)?",
+      "revId": "5d4f786d5614f2546be3559fb7ee3c3ea42471f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f322e1ca_8dd028f6",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 1
