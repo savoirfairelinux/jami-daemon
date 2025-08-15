@@ -2182,6 +2182,11 @@ SIPCall::startAllMedia()
             if (not rtpStream.mediaAttribute_) {
                 throw std::runtime_error("Missing media attribute");
             }
+            if (idx >= remoteMediaList.size()) {
+                JAMI_ERR("[call:%s] Remote media list smaller than streams (idx=%zu, size=%zu)",
+                         getCallId().c_str(), idx, remoteMediaList.size());
+                break;
+            }
             rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(remoteMediaList[idx]);
             if (rtpStream.remoteMediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
                 rtpStream.rtpSession_->setMuted(rtpStream.remoteMediaAttribute_->muted_, RtpSession::Direction::RECV);
