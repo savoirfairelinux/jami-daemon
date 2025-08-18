@@ -2992,6 +2992,14 @@ ConversationModule::removeConversation(const std::string& conversationId)
             if (it != contact.end() && itId != contact.end() && it->second == conversationId) {
                 const std::string& uri = itId->second;
                 handleNewConversation(uri);
+                {
+                    std::lock_guard lk(pimpl_->convInfosMtx_);
+                    auto itConv = pimpl_->convInfos_.find(conversationId);
+                    if (itConv != pimpl_->convInfos_.end()) {
+                        itConv->second.removed = std::time(nullptr);
+                        addConvInfo(itConv->second);
+                    }
+                }
                 return true;
             }
         }
