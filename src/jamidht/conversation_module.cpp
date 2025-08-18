@@ -2978,7 +2978,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
 
     auto handleNewConversation = [&](const std::string& uri) {
         std::string newConvId = startConversation(ConversationMode::ONE_TO_ONE, dht::InfoHash(uri));
-        updateConvForContact(uri, conversationId, newConvId);
+        pimpl_->accountManager_->updateContactConversation(uri, newConvId, true);
         sendNotification(newConvId);
         return newConvId;
     };
@@ -3034,7 +3034,7 @@ ConversationModule::removeConversation(const std::string& conversationId)
                                                               conv->memberUris());
             if (!existingConvId.empty()) {
                 // Found an existing conversation, just update the contact
-                updateConvForContact(uri, conversationId, existingConvId);
+                pimpl_->accountManager_->updateContactConversation(uri, existingConvId, true);
                 sendNotification(existingConvId);
             } else {
                 // No existing conversation found, create a new one
