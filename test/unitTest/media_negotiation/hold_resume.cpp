@@ -491,7 +491,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData,
     // Answer the call.
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.answer_);
-        Manager::instance().answerCall(bobData.accountId_, bobData.callId_, mediaList);
+        Manager::instance().acceptCall(bobData.accountId_, bobData.callId_, mediaList);
     }
 
     // Wait for media negotiation complete signal.

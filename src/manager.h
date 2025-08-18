@@ -162,10 +162,10 @@ public:
      * Answer the call
      * @param callId
      */
-    bool answerCall(const std::string& accountId,
+    bool acceptCall(const std::string& accountId,
                     const std::string& callId,
                     const std::vector<libjami::MediaMap>& mediaList = {});
-    bool answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList = {});
+    bool acceptCall(Call& call, const std::vector<libjami::MediaMap>& mediaList = {});
 
     /**
      * Handle incoming call and notify user

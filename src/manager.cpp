@@ -662,10 +662,10 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     if (state == "HOLD") {
         base_.offHoldCall(call.getAccountId(), callId);
     } else if (state == "INCOMING") {
-        base_.answerCall(call);
+        base_.acceptCall(call);
     } else if (state == "CURRENT") {
     } else if (state == "INACTIVE") {
-        base_.answerCall(call);
+        base_.acceptCall(call);
     } else
         JAMI_WARNING("[call:{}] Call state {} unrecognized for conference", callId, state);
 }
@@ -1086,20 +1086,20 @@ Manager::outgoingCall(const std::string& account_id,
 
 // THREAD=Main : for outgoing Call
 bool
-Manager::answerCall(const std::string& accountId,
+Manager::acceptCall(const std::string& accountId,
                     const std::string& callId,
                     const std::vector<libjami::MediaMap>& mediaList)
 {
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
-            return answerCall(*call, mediaList);
+            return acceptCall(*call, mediaList);
         }
     }
     return false;
 }
 
 bool
-Manager::answerCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
+Manager::acceptCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
 {
     JAMI_LOG("Answer call {}", call.getCallId());
 
@@ -1377,7 +1377,7 @@ Manager::addSubCall(Call& call, Conference& conference)
 {
     JAMI_DEBUG("Add participant {} to conference {}", call.getCallId(), conference.getConfId());
 
-    // store the current call id (it will change in offHoldCall or in answerCall)
+    // store the current call id (it will change in offHoldCall or in acceptCall)
     pimpl_->bindCallToConference(call, conference);
 
     // Don't attach current user yet
@@ -2560,7 +2560,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     if (account->isRendezVous()) {
         dht::ThreadPool::io().run([this, account, incomCall = incomCall.shared_from_this()] {
-            base_.answerCall(*incomCall);
+            base_.acceptCall(*incomCall);
 
             for (const auto& callId : account->getCallList()) {
                 if (auto call = account->getCall(callId)) {
@@ -2596,7 +2596,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
         dht::ThreadPool::io().run(
-            [this, incomCall = incomCall.shared_from_this()] { base_.answerCall(*incomCall); });
+            [this, incomCall = incomCall.shared_from_this()] { base_.acceptCall(*incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
         auto peerNumber = incomCall.getPeerNumber();
@@ -2619,7 +2619,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                  currentCallID = currentCall->getCallId(),
                                  incomCall = incomCall.shared_from_this()] {
                     auto& mgr = Manager::instance();
-                    mgr.answerCall(*incomCall);
+                    mgr.acceptCall(*incomCall);
                     mgr.hangupCall(accountId, currentCallID);
                 });
             }

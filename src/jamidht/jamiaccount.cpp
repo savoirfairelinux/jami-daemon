@@ -577,7 +577,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId,
             }
         }
     }
-    Manager::instance().answerCall(*call, currentMediaList);
+    Manager::instance().acceptCall(*call, currentMediaList);
 
     if (isNotHosting) {
         JAMI_DEBUG("Creating conference for swarm {} with ID {}", conversationId, confId);
