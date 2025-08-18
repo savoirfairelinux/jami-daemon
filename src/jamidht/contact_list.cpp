@@ -106,11 +106,15 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
 }
 
 void
-ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId)
+ContactList::updateConversation(
+    const dht::InfoHash& h, const std::string& conversationId, bool added)
 {
     auto c = contacts_.find(h);
     if (c != contacts_.end() && c->second.conversationId != conversationId) {
         c->second.conversationId = conversationId;
+        if (added) {
+            c->second.added = std::time(nullptr);
+        }
         saveContacts();
     }
 }
