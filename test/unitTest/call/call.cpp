@@ -358,7 +358,7 @@ CallTest::testTlsInfosPeerCertificate()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
 
-    Manager::instance().answerCall(bobId, bobCallId);
+    Manager::instance().acceptCall(bobId, bobCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallState == "CURRENT"; }));
 
     auto call = std::dynamic_pointer_cast<SIPCall>(aliceAccount->getCall(callId));
@@ -426,7 +426,7 @@ CallTest::testSocketInfos()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !bobCallId.empty(); }));
 
-    Manager::instance().answerCall(bobId, bobCallId);
+    Manager::instance().acceptCall(bobId, bobCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallState == "CURRENT" && mediaReady; }));
 
     JAMI_INFO("Detail debug");

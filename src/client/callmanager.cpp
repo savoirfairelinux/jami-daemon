@@ -86,7 +86,7 @@ refuse(const std::string& accountId, const std::string& callId)
 bool
 accept(const std::string& accountId, const std::string& callId)
 {
-    return jami::Manager::instance().answerCall(accountId, callId);
+    return jami::Manager::instance().acceptCall(accountId, callId);
 }
 
 bool
@@ -94,7 +94,7 @@ acceptWithMedia(const std::string& accountId,
                 const std::string& callId,
                 const std::vector<libjami::MediaMap>& mediaList)
 {
-    return jami::Manager::instance().answerCall(accountId, callId, mediaList);
+    return jami::Manager::instance().acceptCall(accountId, callId, mediaList);
 }
 
 bool
