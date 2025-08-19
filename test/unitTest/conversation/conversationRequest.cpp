@@ -541,14 +541,14 @@ ConversationRequestTest::testAddContactDeleteAndReAdd()
     // removeContact
     aliceAccount->removeContact(bobUri, false);
     std::this_thread::sleep_for(5s); // wait a bit that connections are closed
-
     // re-add
     CPPUNIT_ASSERT(aliceData.conversationId != "");
-    auto oldConvId = aliceData.conversationId;
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     // Should retrieve previous conversation
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return oldConvId == aliceData.conversationId; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return aliceData.conversationId == bobData.conversationId;
+    }));
 }
 
 void
@@ -1052,7 +1052,7 @@ ConversationRequestTest::testAddConversationNoPresenceThenConnects()
     std::string convId = "";
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
-            if (accountId == aliceId) {
+            if (accountId == carlaId) {
                 convId = conversationId;
             }
             cv.notify_one();
@@ -1089,7 +1089,7 @@ ConversationRequestTest::testAddConversationNoPresenceThenConnects()
 
     auto carlaDetails = carlaAccount->getContactDetails(aliceUri);
     auto aliceDetails = aliceAccount->getContactDetails(carlaUri);
-    CPPUNIT_ASSERT(carlaDetails["conversationId"] == aliceDetails["conversationId"] && carlaDetails["conversationId"] == convId);
+    CPPUNIT_ASSERT(carlaDetails["conversationId"] == aliceDetails["conversationId"] && aliceDetails["conversationId"] == convId);
 }
 
 void
