@@ -1986,9 +1986,20 @@ ConversationTest::testCloneFromMultipleDevice()
     aliceAccount->sendTrustRequest(bobUri, {});
     // This should retrieve the conversation from Bob and don't show any error
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData.errorDetected; }));
-    CPPUNIT_ASSERT(
-        oldConv
-        == aliceData.conversationId); // Check that convId didn't change and conversation is ready.
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
+        return !aliceData.conversationId.empty() && !bobData.conversationId.empty();
+    }));
+
+    // The new conversation ID should be different from the old one
+    CPPUNIT_ASSERT(oldConv != aliceData.conversationId);
+    CPPUNIT_ASSERT(oldConv != bobData.conversationId);
+
+    // The new conversation ID should match on both sides
+    CPPUNIT_ASSERT(aliceData.conversationId == bobData.conversationId);
+
+    // check that Bob2 also sees the new conversation
+    CPPUNIT_ASSERT(!bob2Data.conversationId.empty());
+    CPPUNIT_ASSERT(bob2Data.conversationId == bobData.conversationId);
 }
 
 void
