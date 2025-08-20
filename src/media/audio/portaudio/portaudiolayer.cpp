@@ -590,7 +590,7 @@ openPaStream(PaStream** stream,
         sampleRate = outputInfo->defaultSampleRate;
     }
 
-    unsigned long framesPerBuffer = (unsigned long) std::max(1.0, sampleRate / 100.0); // ~10 ms
+    unsigned long framesPerBuffer = static_cast<unsigned long>(std::round(sampleRate / 100.0));
     auto err = Pa_OpenStream(stream,
                              inputParamsPtr,
                              outputParamsPtr,
@@ -836,6 +836,11 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
     }
 
     auto inBuff = std::make_shared<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
+    if (!inBuff->pointer() || !inBuff->pointer()->extended_data) {
+        JAMI_ERR("Failed to allocate AudioFrame buffer");
+        return paAbort;
+    }
+
     if (parent.isCaptureMuted_ || inputBuffer == nullptr) {
         libav_utils::fillWithSilence(inBuff->pointer());
     } else {
