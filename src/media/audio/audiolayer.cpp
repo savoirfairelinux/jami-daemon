@@ -53,12 +53,13 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 
-    JAMI_LOG("[audiolayer] AGC: {:d}, noiseReduce: {:s}, VAD: {:d}, echoCancel: {:s}, audioProcessor: {:s}",
-              pref_.isAGCEnabled(),
-              pref.getNoiseReduce(),
-              pref.getVadEnabled(),
-              pref.getEchoCanceller(),
-              pref.getAudioProcessor());
+    JAMI_LOG("[audiolayer] AGC: {:d}, noiseReduce: {:s}, VAD: {:d}, echoCancel: {:s}, "
+             "audioProcessor: {:s}",
+             pref_.isAGCEnabled(),
+             pref.getNoiseReduce(),
+             pref.getVadEnabled(),
+             pref.getEchoCanceller(),
+             pref.getAudioProcessor());
 }
 
 AudioLayer::~AudioLayer() {}
@@ -66,8 +67,8 @@ AudioLayer::~AudioLayer() {}
 void
 AudioLayer::hardwareFormatAvailable(AudioFormat playback, size_t bufSize)
 {
-    JAMI_LOG("Hardware audio format available: {:s} {}", playback.toString(), bufSize);
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
+    JAMI_LOG("Hardware audio format available: {:s} {}", audioFormat_.toString(), bufSize);
     audioInputFormat_.sampleFormat = audioFormat_.sampleFormat;
     urgentRingBuffer_.setFormat(audioFormat_);
     nativeFrameSize_ = bufSize;
@@ -176,10 +177,21 @@ AudioLayer::setHasNativeNS(bool hasNativeNS)
 void
 AudioLayer::createAudioProcessor()
 {
-    auto nb_channels = std::max(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
-    auto sample_rate = std::max(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
+    auto nb_channels = std::min(audioFormat_.nb_channels, audioInputFormat_.nb_channels);
+    auto sample_rate = std::min(audioFormat_.sample_rate, audioInputFormat_.sample_rate);
 
-    sample_rate = std::clamp(sample_rate, 16000u, 48000u);
+    sample_rate = std::clamp(sample_rate, 8000u, 48000u);
+    nb_channels = std::clamp(nb_channels, 1u, 2u);
+
+    // We need to snap to the supported sample rates (8000, 16000, 32000, 48000)
+    // Any other sample rate will snapped up to the next supported rate:
+    if (sample_rate < 16000) {
+        sample_rate = 8000;
+    } else if (sample_rate > 16000 && sample_rate < 32000) {
+        sample_rate = 16000;
+    } else if (sample_rate > 32000 && sample_rate < 48000) {
+        sample_rate = 32000;
+    }
 
     AudioFormat formatForProcessor {sample_rate, nb_channels};
 
@@ -194,9 +206,9 @@ AudioLayer::createAudioProcessor()
     JAMI_WARNING("Input {}", audioInputFormat_.toString());
     JAMI_WARNING("Output {}", audioFormat_.toString());
     JAMI_WARNING("Starting audio processor with: [{} Hz, {} channels, {} samples/frame]",
-              sample_rate,
-              nb_channels,
-              frame_size);
+                 sample_rate,
+                 nb_channels,
+                 frame_size);
 
     if (pref_.getAudioProcessor() == "webrtc") {
 #if HAVE_WEBRTC_AP
@@ -282,7 +294,9 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
         auto fileformat = fileToPlay->getFormat();
         bool resample = format != fileformat;
 
-        size_t readableSamples = resample ? rational<size_t>(writableSamples * (size_t)fileformat.sample_rate, format.sample_rate)
+        size_t readableSamples = resample ? rational<size_t>(writableSamples
+                                                                 * (size_t) fileformat.sample_rate,
+                                                             format.sample_rate)
                                                 .real<size_t>()
                                           : writableSamples;
 
