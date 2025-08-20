@@ -36,6 +36,12 @@ struct AudioFormat
     unsigned nb_channels;
     AVSampleFormat sampleFormat;
 
+    AudioFormat()
+        : sample_rate(0)
+        , nb_channels(0)
+        , sampleFormat(AV_SAMPLE_FMT_NONE)
+    {}
+
     constexpr AudioFormat(unsigned sr, unsigned c, AVSampleFormat f = AV_SAMPLE_FMT_S16)
         : sample_rate(sr)
         , nb_channels(c)
@@ -52,7 +58,10 @@ struct AudioFormat
 
     inline std::string toString() const
     {
-        return fmt::format("{{{}, {} channels, {}Hz}}", av_get_sample_fmt_name(sampleFormat), nb_channels, sample_rate);
+        return fmt::format("{{{}, {} channels, {}Hz}}",
+                           av_get_sample_fmt_name(sampleFormat),
+                           nb_channels,
+                           sample_rate);
     }
 
     inline AudioFormat withSampleFormat(AVSampleFormat format)
@@ -60,11 +69,13 @@ struct AudioFormat
         return {sample_rate, nb_channels, format};
     }
 
-
     /**
      * Returns bytes necessary to hold one frame of audio data.
      */
-    inline size_t getBytesPerFrame() const { return av_get_bytes_per_sample(sampleFormat) * nb_channels; }
+    inline size_t getBytesPerFrame() const
+    {
+        return av_get_bytes_per_sample(sampleFormat) * nb_channels;
+    }
 
     /**
      * Bytes per second (default), or bytes necessary
