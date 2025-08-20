@@ -116,18 +116,42 @@ protected:
      */
     bool tidyQueues()
     {
+        // We should track the overflows and log them infrequently (every 10 frames)
+        static int recordOverflowCount = 0;
+        static int playbackOverflowCount = 0;
+        const int overflowCountMax = 10;
+
         auto recordFrameSize = recordQueue_.frameSize();
         auto playbackFrameSize = playbackQueue_.frameSize();
         while (recordQueue_.samples() > recordFrameSize * 10
-            && 2 * playbackQueue_.samples() * recordFrameSize < recordQueue_.samples() * playbackFrameSize) {
-            JAMI_LOG("record overflow {:d} / {:d} - playback: {:d}", recordQueue_.samples(), frameSize_, playbackQueue_.samples());
+               && 2 * playbackQueue_.samples() * recordFrameSize
+                      < recordQueue_.samples() * playbackFrameSize) {
+            recordOverflowCount++;
             recordQueue_.dequeue();
         }
         while (playbackQueue_.samples() > playbackFrameSize * 10
-            && 2 * recordQueue_.samples() * playbackFrameSize < playbackQueue_.samples() * recordFrameSize) {
-            JAMI_LOG("playback overflow {:d} / {:d} - record: {:d}", playbackQueue_.samples(), frameSize_, recordQueue_.samples());
+               && 2 * recordQueue_.samples() * playbackFrameSize
+                      < playbackQueue_.samples() * recordFrameSize) {
+            playbackOverflowCount++;
             playbackQueue_.dequeue();
         }
+
+        if (recordOverflowCount > overflowCountMax) {
+            JAMI_LOG("record overflow {:d} / {:d} - playback: {:d}",
+                     recordQueue_.samples(),
+                     frameSize_,
+                     playbackQueue_.samples());
+            recordOverflowCount = 0;
+        }
+
+        if (playbackOverflowCount > overflowCountMax) {
+            JAMI_LOG("playback overflow {:d} / {:d} - record: {:d}",
+                     playbackQueue_.samples(),
+                     frameSize_,
+                     recordQueue_.samples());
+            playbackOverflowCount = 0;
+        }
+
         if (recordQueue_.samples() < recordFrameSize
             || playbackQueue_.samples() < playbackFrameSize) {
             // If there are not enough samples in either queue, we are unable to
@@ -179,8 +203,9 @@ private:
     {
         if (buf->getFormat() != format_) {
             frameResizer.enqueue(resampler_->resample(std::move(buf), format_));
-        } else
+        } else {
             frameResizer.enqueue(std::move(buf));
+        }
     };
 };
 
