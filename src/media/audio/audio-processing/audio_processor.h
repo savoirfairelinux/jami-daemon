@@ -37,7 +37,8 @@ public:
     AudioProcessor(AudioFormat format, unsigned frameSize)
         : playbackQueue_(format, (int) frameSize)
         , recordQueue_(format, (int) frameSize)
-        , resampler_(new Resampler)
+        , inputResampler_(new Resampler)
+        , outputResampler_(new Resampler)
         , format_(format)
         , frameSize_(frameSize)
         , frameDurationMs_((unsigned int) (frameSize_ * (1.0 / format_.sample_rate) * 1000))
@@ -89,7 +90,8 @@ public:
 protected:
     AudioFrameResizer playbackQueue_;
     AudioFrameResizer recordQueue_;
-    std::unique_ptr<Resampler> resampler_;
+    std::unique_ptr<Resampler> inputResampler_;
+    std::unique_ptr<Resampler> outputResampler_;
     std::atomic_bool playbackStarted_;
     std::atomic_bool recordStarted_;
     AudioFormat format_;
@@ -202,7 +204,10 @@ private:
     void enqueue(AudioFrameResizer& frameResizer, std::shared_ptr<AudioFrame>&& buf)
     {
         if (buf->getFormat() != format_) {
-            frameResizer.enqueue(resampler_->resample(std::move(buf), format_));
+            auto resampled = &frameResizer == &recordQueue_
+                                 ? inputResampler_->resample(std::move(buf), format_)
+                                 : outputResampler_->resample(std::move(buf), format_);
+            frameResizer.enqueue(std::move(resampled));
         } else {
             frameResizer.enqueue(std::move(buf));
         }
