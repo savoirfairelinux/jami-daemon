@@ -2637,10 +2637,6 @@ AudioFormat
 Manager::audioFormatUsed(AudioFormat format)
 {
     AudioFormat currentFormat = pimpl_->ringbufferpool_->getInternalAudioFormat();
-    format.nb_channels = std::max(currentFormat.nb_channels,
-                                  std::min(format.nb_channels, 2u)); // max 2 channels.
-    format.sample_rate = std::max(currentFormat.sample_rate, format.sample_rate);
-
     if (currentFormat == format)
         return format;
 
