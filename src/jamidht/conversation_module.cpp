@@ -208,8 +208,8 @@ public:
      * Remove a conversation
      * @param conversationId
      */
-    bool removeConversation(const std::string& conversationId);
-    bool removeConversationImpl(SyncedConversation& conv);
+    bool removeConversation(const std::string& conversationId, bool forceRemove = false);
+    bool removeConversationImpl(SyncedConversation& conv, bool forceRemove = false);
 
     /**
      * Send a message notification to all members
@@ -1010,13 +1010,13 @@ ConversationModule::Impl::removeRepositoryImpl(SyncedConversation& conv, bool sy
 }
 
 bool
-ConversationModule::Impl::removeConversation(const std::string& conversationId)
+ConversationModule::Impl::removeConversation(const std::string& conversationId, bool forceRemove)
 {
-    return withConv(conversationId, [this](auto& conv) { return removeConversationImpl(conv); });
+    return withConv(conversationId, [this, forceRemove](auto& conv) { return removeConversationImpl(conv, forceRemove); });
 }
 
 bool
-ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv)
+ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool forceRemove)
 {
     auto members = conv.getMembers(false, false);
     auto isSyncing = !conv.conversation;
@@ -1037,6 +1037,12 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv)
     emitSignal<libjami::ConversationSignal::ConversationRemoved>(accountId_, conv.info.id);
     if (isSyncing)
         return true;
+
+    if (forceRemove && conv.conversation->mode() == ConversationMode::ONE_TO_ONE) {
+        // skip waiting for sync
+        removeRepositoryImpl(conv, true);
+        return true;
+    }
 
     auto commitId = conv.conversation->leave();
     if (hasMembers) {
@@ -1317,7 +1323,7 @@ ConversationModule::Impl::fixStructures(
     ////////////////////////////////////////////////////////////////
     for (const auto& conv : toRm) {
         JAMI_ERROR("[Account {}] Remove conversation ({})", accountId_, conv);
-        removeConversation(conv);
+        removeConversation(conv, true);
     }
     JAMI_DEBUG("[Account {}] Conversations loaded!", accountId_);
 }
