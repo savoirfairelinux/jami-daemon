@@ -345,6 +345,7 @@ SIPCall::createCallAVStreams()
         return m->pointer();
     };
 
+    std::lock_guard lk(avStreamsMtx_);
     for (const auto& rtpSession : getRtpSessionList()) {
         auto isVideo = rtpSession->getMediaType() == MediaType::MEDIA_VIDEO;
         auto streamType = isVideo ? StreamType::video : StreamType::audio;
@@ -383,13 +384,12 @@ SIPCall::createCallAVStreams()
 }
 
 void
-SIPCall::createCallAVStream(const StreamData& StreamData,
+SIPCall::createCallAVStream(const StreamData& streamData,
                             AVMediaStream& streamSource,
                             const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject)
 {
-    const std::string AVStreamId = StreamData.id + std::to_string(static_cast<int>(StreamData.type))
-                                   + std::to_string(StreamData.direction);
-    std::lock_guard lk(avStreamsMtx_);
+    const std::string AVStreamId = streamData.id + std::to_string(static_cast<int>(streamData.type))
+                                   + std::to_string(streamData.direction);
     auto it = callAVStreams.find(AVStreamId);
     if (it != callAVStreams.end())
         return;
@@ -398,7 +398,7 @@ SIPCall::createCallAVStream(const StreamData& StreamData,
     jami::Manager::instance()
         .getJamiPluginManager()
         .getCallServicesManager()
-        .createAVSubject(StreamData, it->second);
+        .createAVSubject(streamData, it->second);
 }
 
 void
@@ -2204,6 +2204,12 @@ SIPCall::startAllMedia()
                         if (auto call = w.lock())
                             call->requestKeyframe(idx);
                     }
+#ifdef ENABLE_PLUGIN
+                    if (auto call = w.lock()) {
+                        // Create AVStreams associated with the call
+                        call->createCallAVStreams();
+                    }
+#endif
                 } catch (const std::exception& e) {
                     JAMI_ERR("[call:%s] Failed to start RTP session %zu: %s",
                             w.lock() ? w.lock()->getCallId().c_str() : "unknown", idx, e.what());
@@ -2243,10 +2249,6 @@ SIPCall::startAllMedia()
 
     mediaRestartRequired_ = false;
 
-#ifdef ENABLE_PLUGIN
-    // Create AVStreams associated with the call
-    createCallAVStreams();
-#endif
 }
 
 void
