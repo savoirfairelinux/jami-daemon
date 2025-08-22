@@ -1658,7 +1658,7 @@ ArchiveAccountManager::isPasswordValid(const std::string& password)
     }
 }
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
 void
 ArchiveAccountManager::registerName(const std::string& name,
                                     std::string_view scheme,

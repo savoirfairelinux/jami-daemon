@@ -386,7 +386,7 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
     try {
         startOutgoingCall(call, uri.authority());
     } catch (...) {
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
         auto suffix = stripPrefix(uri.toString());
         NameDirectory::lookupUri(suffix,
                                  config().nameServer,
@@ -614,7 +614,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     accountManager_->lookupAddress(toUri,
                                    [wCall](const std::string& regName,
                                            const std::string& address,
@@ -1406,7 +1406,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
                         if (not conf.managerUri.empty()) {
                             conf.registeredName = conf.managerUsername;
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
                             registeredName_ = conf.managerUsername;
 #endif
                         }
@@ -1476,7 +1476,7 @@ JamiAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(libjami::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     auto registeredName = getRegisteredName();
     if (not registeredName.empty())
         a.emplace(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
@@ -1493,7 +1493,7 @@ JamiAccount::getVolatileAccountDetails() const
     return a;
 }
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
 void
 JamiAccount::lookupName(const std::string& name)
 {
@@ -1914,7 +1914,7 @@ JamiAccount::doRegister_()
 
         convModule()->clearPendingFetch();
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
         // Look for registered name
         accountManager_->lookupAddress(
             accountManager_->getInfo()->accountId,
@@ -3469,7 +3469,7 @@ JamiAccount::pushNotificationReceived(const std::string& from,
 std::string
 JamiAccount::getUserUri() const
 {
-#ifdef HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     if (not registeredName_.empty())
         return JAMI_URI_PREFIX + registeredName_;
 #endif

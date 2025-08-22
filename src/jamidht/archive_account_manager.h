@@ -93,7 +93,7 @@ public:
     bool provideAccountAuthentication(const std::string& credentialsFromUser,
                                       const std::string& scheme);
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     void registerName(const std::string& name,
                       std::string_view scheme,
                       const std::string& password,
