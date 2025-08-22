@@ -1,6 +1,6 @@
 {
     "name": "natpmp",
-    "version": "6d5c0db6a06036fcd97bdba10b474d5369582dba",
+    "version": "007c3a53165a0551c877130eea4d966885ce19ae",
     "url": "http://github.com/miniupnp/libnatpmp/archive/__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
