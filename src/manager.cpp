@@ -1740,8 +1740,8 @@ Manager::scheduleTaskIn(std::function<void()>&& task,
 void
 Manager::saveConfig(const std::shared_ptr<Account>& acc)
 {
-    if (auto ringAcc = std::dynamic_pointer_cast<JamiAccount>(acc))
-        ringAcc->saveConfig();
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(acc))
+        acc->saveConfig();
     else
         saveConfig();
 }
