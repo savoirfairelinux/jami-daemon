@@ -28,7 +28,7 @@ namespace {
 extern "C" {
 #endif
 
-void ring_secure_memzero(void* ptr, size_t length);
+void jami_secure_memzero(void* ptr, size_t length);
 
 #ifdef __cplusplus
 };

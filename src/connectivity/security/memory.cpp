@@ -42,7 +42,7 @@ memzero(void* ptr, std::size_t length)
 } // namespace jami
 
 extern "C" void
-ring_secure_memzero(void* ptr, size_t length)
+jami_secure_memzero(void* ptr, size_t length)
 {
     jami::secure::memzero(ptr, length);
 }
