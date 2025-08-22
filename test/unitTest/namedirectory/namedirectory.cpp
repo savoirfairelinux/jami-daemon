@@ -185,7 +185,7 @@ NameDirectoryTest::setUp()
     auto actors = load_actors_and_wait_for_announcement("actors/alice.yml");
     aliceId = actors["alice"];
     std::map<std::string, std::string> details;
-    details[ConfProperties::RingNS::URI] = "http://localhost:1412";
+    details[ConfProperties::Nameserver::URI] = "http://localhost:1412";
     libjami::setAccountDetails(aliceId, details);
 }
 

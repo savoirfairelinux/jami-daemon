@@ -50,7 +50,7 @@ JamiAccountConfig::serialize(YAML::Emitter& out) const
     SERIALIZE_CONFIG(Conf::PROXY_SERVER_KEY, proxyServer);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
-    SERIALIZE_CONFIG(libjami::Account::ConfProperties::RingNS::URI, nameServer);
+    SERIALIZE_CONFIG(libjami::Account::ConfProperties::Nameserver::URI, nameServer);
     SERIALIZE_CONFIG(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
     SERIALIZE_PATH(libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath);
     SERIALIZE_CONFIG(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword);
@@ -126,7 +126,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
                        libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
                        accountPeerDiscovery);
     parseValueOptional(node, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
-    parseValueOptional(node, libjami::Account::ConfProperties::RingNS::URI, nameServer);
+    parseValueOptional(node, libjami::Account::ConfProperties::Nameserver::URI, nameServer);
     parseValueOptional(node, libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
     parseValueOptional(node, Conf::DHT_PUBLIC_IN_CALLS, allowPublicIncoming);
 }
@@ -171,7 +171,7 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS,
               dhtPublicInCalls ? TRUE_STR : FALSE_STR);
 #ifdef ENABLE_NAMESERVER
-    a.emplace(libjami::Account::ConfProperties::RingNS::URI, nameServer);
+    a.emplace(libjami::Account::ConfProperties::Nameserver::URI, nameServer);
 #endif
     return a;
 }
@@ -232,7 +232,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     }
 
 #ifdef ENABLE_NAMESERVER
-    parseString(details, libjami::Account::ConfProperties::RingNS::URI, nameServer);
+    parseString(details, libjami::Account::ConfProperties::Nameserver::URI, nameServer);
 #endif
 }
 

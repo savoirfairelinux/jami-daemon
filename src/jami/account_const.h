@@ -245,12 +245,12 @@ constexpr static const char ALLOW_FROM_TRUSTED[] = "DHT.AllowFromTrusted";
 
 } // namespace DHT
 
-namespace RingNS {
+namespace Nameserver {
 
 constexpr static const char URI[] = "RingNS.uri";
 constexpr static const char ACCOUNT[] = "RingNS.account";
 
-} // namespace RingNS
+} // namespace Nameserver
 
 namespace CodecInfo {
 
