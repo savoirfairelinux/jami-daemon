@@ -22,7 +22,7 @@
 
 #include "contact_list.h"
 #include "logger.h"
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
 #include "namedirectory.h"
 #endif
 

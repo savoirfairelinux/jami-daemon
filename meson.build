@@ -76,7 +76,7 @@ depportaudio = dependency('portaudio-2.0', required: get_option('portaudio'))
 conf.set10('HAVE_PORTAUDIO', depportaudio.found())
 
 depopenssl = dependency('openssl', required: get_option('name_service'))
-conf.set10('HAVE_RINGNS', depopenssl.found())
+conf.set('ENABLE_NAMESERVER', depopenssl.found())
 
 depwebrtcap = dependency('webrtc-audio-processing', required: get_option('webrtc_ap'))
 conf.set10('HAVE_WEBRTC_AP', depwebrtcap.found())

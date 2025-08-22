@@ -437,7 +437,7 @@ dnl name service is default-enabled
 AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns],
   [Enable Name Service]))
 AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno")
-AC_DEFINE_UNQUOTED([HAVE_RINGNS],
+AC_DEFINE_UNQUOTED([ENABLE_NAMESERVER],
   `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`,
   [Define if you use the Name Service])
 AM_COND_IF([RINGNS],

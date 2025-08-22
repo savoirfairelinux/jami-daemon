@@ -62,7 +62,7 @@
 #include <filesystem>
 #include <shared_mutex>
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
 #include "namedirectory.h"
 #endif
 
@@ -370,7 +370,7 @@ public:
     // overloaded methods
     void flush() override;
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
     void registerName(const std::string& name,
@@ -725,7 +725,7 @@ private:
     std::filesystem::path cachePath_ {};
     std::filesystem::path dataPath_ {};
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     mutable std::mutex registeredNameMutex_;
     std::string registeredName_;
 

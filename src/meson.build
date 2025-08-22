@@ -197,7 +197,7 @@ if conf.get('HAVE_COREAUDIO') == 1
     endif
 endif
 
-if conf.get('HAVE_RINGNS') == 1
+if conf.get('ENABLE_NAMESERVER')
     libjami_dependencies += depopenssl
 endif
 

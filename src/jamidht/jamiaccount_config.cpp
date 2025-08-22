@@ -170,7 +170,7 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
     a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS,
               dhtPublicInCalls ? TRUE_STR : FALSE_STR);
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     a.emplace(libjami::Account::ConfProperties::RingNS::URI, nameServer);
 #endif
     return a;
@@ -231,7 +231,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
         managerUri = "https://" + managerUri;
     }
 
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     parseString(details, libjami::Account::ConfProperties::RingNS::URI, nameServer);
 #endif
 }

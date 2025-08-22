@@ -1039,7 +1039,7 @@ connectivityChanged()
 bool
 lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
 {
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     if (account.empty()) {
         auto cb = [name](const std::string& regName,
                          const std::string& address,
@@ -1066,7 +1066,7 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
 bool
 lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address)
 {
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     if (account.empty()) {
         jami::NameDirectory::instance(nameserver)
             .lookupAddress(address,
@@ -1100,7 +1100,7 @@ registerName(const std::string& account,
              const std::string& scheme,
              const std::string& password)
 {
-#if HAVE_RINGNS
+#ifdef ENABLE_NAMESERVER
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
         acc->registerName(name, scheme, password);
         return true;

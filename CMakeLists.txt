@@ -378,7 +378,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE_VERSION="${PROJECT_VERSION}"
     PACKAGE="jami"
     LIBJAMI_BUILD
-    HAVE_RINGNS=1
+    ENABLE_NAMESERVER
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
@@ -902,7 +902,7 @@ else()
         target_compile_definitions(ut_library PUBLIC
             JAMI_DATADIR="${JAMI_DATADIR}"
             PJ_AUTOCONF=1
-            HAVE_RINGNS=1
+            ENABLE_NAMESERVER
             ASIO_STANDALONE
             MSGPACK_NO_BOOST
             LIBJAMI_TEST
