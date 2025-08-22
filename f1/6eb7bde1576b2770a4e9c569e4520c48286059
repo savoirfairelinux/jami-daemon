@@ -1,0 +1,7 @@
+Code-Review+2: Eric Bjarstal <eric.bjarstal@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Fri, 22 Aug 2025 15:28:30 -0400
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/31725
+Project: jami-daemon
+Branch: refs/heads/master
