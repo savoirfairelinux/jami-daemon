@@ -91,8 +91,8 @@ public:
                      const char* in_suite,
                      const char* in_key)
     {
-        ring_secure_memzero(&srtp_out, sizeof(srtp_out));
-        ring_secure_memzero(&srtp_in, sizeof(srtp_in));
+        jami_secure_memzero(&srtp_out, sizeof(srtp_out));
+        jami_secure_memzero(&srtp_in, sizeof(srtp_in));
         if (out_suite && out_key) {
             // XXX: see srtp_open from libavformat/srtpproto.c
             if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
