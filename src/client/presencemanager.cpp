@@ -60,9 +60,8 @@ subscribeBuddy(const std::string& accountId, const std::string& uri, bool flag)
                      uri);
             pres->subscribeClient(uri, flag);
         }
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(
-                   accountId)) {
-        ringaccount->trackBuddyPresence(uri, flag);
+    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        acc->trackBuddyPresence(uri, flag);
     } else
         JAMI_ERROR("Unable to find account {}", accountId);
 }
@@ -132,9 +131,9 @@ getSubscriptions(const std::string& accountId)
             }
         } else
             JAMI_ERROR("Presence not initialized");
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(
+    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
                    accountId)) {
-        const auto& trackedBuddies = ringaccount->getTrackedBuddyPresence();
+        const auto& trackedBuddies = acc->getTrackedBuddyPresence();
         ret.reserve(trackedBuddies.size());
         for (const auto& tracked_id : trackedBuddies) {
             ret.push_back(
