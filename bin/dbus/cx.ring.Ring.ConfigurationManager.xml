@@ -464,7 +464,7 @@
 
         <method name="registerName" tp:name-for-bindings="registerName">
             <tp:docstring>
-               Performs name registration with RingNS protocol for the specified account.
+               Performs name registration with Nameserver protocol for the specified account.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
             </arg>
@@ -511,7 +511,7 @@
 
         <method name="searchUser" tp:name-for-bindings="searchUser">
             <tp:docstring>
-               Performs name registration with RingNS protocol for the specified account.
+               Performs name registration with Nameserver protocol for the specified account.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
             </arg>

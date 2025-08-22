@@ -1414,7 +1414,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         conf.deviceName = accountManager_->getAccountDeviceName();
 
                         auto nameServerIt = config.find(
-                            libjami::Account::ConfProperties::RingNS::URI);
+                            libjami::Account::ConfProperties::Nameserver::URI);
                         if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
                             conf.nameServer = nameServerIt->second;
                         }

@@ -179,7 +179,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                         nameServer = this_->managerHostname_ + nameServer;
                                     this_->nameDir_ = NameDirectory::instance(nameServer);
                                     config
-                                        .emplace(libjami::Account::ConfProperties::RingNS::URI,
+                                        .emplace(libjami::Account::ConfProperties::Nameserver::URI,
                                                     std::move(nameServer));
                                 } else if (name == "userPhoto"sv) {
                                     this_->info_->photo = json["userPhoto"].asString();
