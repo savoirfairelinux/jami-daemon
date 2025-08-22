@@ -26,7 +26,7 @@
 #include "string_utils.h"
 #include "system_codec_container.h"
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #include "video/accel.h"
 #endif
 
@@ -268,7 +268,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     }
 
     currentStreamIdx_ = stream->index;
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     // Get compatible list of Hardware API
     if (enableAccel_ && mediaType == AVMEDIA_TYPE_VIDEO) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(static_cast<AVCodecID>(
@@ -341,7 +341,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         const int width = encoderCtx->width;
         const int height = encoderCtx->height;
         int format = encoderCtx->pix_fmt;
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
         if (accel_) {
             // hardware encoders require a specific pixel format
             auto desc = av_pix_fmt_desc_get(encoderCtx->pix_fmt);
@@ -425,14 +425,14 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input,
     }
 
     std::shared_ptr<VideoFrame> output;
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (getHWFrame(input, output) < 0) {
         JAMI_ERR("Fail to get hardware frame");
         return -1;
     }
 #else
     output = getScaledSWFrame(*input.get());
-#endif // RING_ACCEL
+#endif // ENABLE_HWACCEL
 
     if (!output) {
         JAMI_ERR("Fail to get frame");
@@ -620,7 +620,7 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
         encoderCtx->max_b_frames = 0;
         encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
         // Keep YUV format for macOS
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
         if (accel_)
             encoderCtx->pix_fmt = accel_->getSoftwareFormat();
@@ -660,7 +660,7 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
 void
 MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (accel_ && accel_->getName() == "nvenc") {
         if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
             JAMI_WARN("Failed to set preset to 'fast'");
@@ -735,7 +735,7 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
              ctx->level);
 }
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 void
 MediaEncoder::enableAccel(bool enableAccel)
 {
@@ -767,7 +767,7 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
     auto enc = encoders_[streamIdx];
     // TODO set firstTimestamp
     auto ms = MediaStream(name, enc);
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (accel_)
         ms.format = accel_->getSoftwareFormat();
 #endif
@@ -778,7 +778,7 @@ AVCodecContext*
 MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
 {
     outputCodec_ = nullptr;
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
             if (accel_) {
@@ -1058,7 +1058,7 @@ MediaEncoder::initOpus(AVCodecContext* encoderCtx)
 void
 MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (not accel_)
         return;
     if (accel_->getName() == "nvenc"sv) {
@@ -1116,7 +1116,7 @@ MediaEncoder::stopEncoder()
 bool
 MediaEncoder::isDynBitrateSupported(AVCodecID codecid)
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (accel_) {
         return accel_->dynBitrate();
     }
@@ -1188,7 +1188,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
 std::string
 MediaEncoder::testH265Accel()
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (jami::Manager::instance().videoPreferences.getEncodingAccelerated()) {
         // Get compatible list of Hardware API
         auto APIs = video::HardwareAccel::getCompatibleAccel(AV_CODEC_ID_H265,
@@ -1269,7 +1269,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input,
         } else {
             output = getScaledSWFrame(*input.get());
         }
-#elif !defined(__APPLE__) && defined(RING_ACCEL)
+#elif !defined(__APPLE__) && defined(ENABLE_HWACCEL)
         // Other Platforms
         auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format()));
         bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
@@ -1299,7 +1299,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input,
     return 0;
 }
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 std::shared_ptr<VideoFrame>
 MediaEncoder::getUnlinkedHWFrame(const VideoFrame& input)
 {

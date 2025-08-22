@@ -91,15 +91,15 @@ if get_option('video')
     endif
 
     if get_option('hw_acceleration')
-        conf.set('RING_ACCEL', true)
+        conf.set('ENABLE_HWACCEL', true)
         conf.set('ENABLE_VIDEOTOOLBOX', host_machine.system() == 'darwin')
     else
-        conf.set('RING_ACCEL', false)
+        conf.set('ENABLE_HWACCEL', false)
         conf.set('ENABLE_VIDEOTOOLBOX', false)
     endif
 else
     conf.set('ENABLE_VIDEO', false)
-    conf.set('RING_ACCEL', false)
+    conf.set('ENABLE_HWACCEL', false)
     conf.set('ENABLE_VIDEOTOOLBOX', false)
 endif
 

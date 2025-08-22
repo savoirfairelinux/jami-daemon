@@ -23,7 +23,7 @@
 #include "manager.h"
 #include "media_device.h"
 #include "sip/sipcall.h"
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #include "accel.h"
 #endif
 
@@ -49,7 +49,7 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->openOutput(dest, "rtp");
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     videoEncoder_->enableAccel(enableHwAccel
                                and Manager::instance().videoPreferences.getEncodingAccelerated());
 #endif

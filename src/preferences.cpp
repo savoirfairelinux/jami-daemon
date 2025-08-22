@@ -514,7 +514,7 @@ VideoPreferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << RECORD_PREVIEW_KEY << YAML::Value << recordPreview_;
     out << YAML::Key << RECORD_QUALITY_KEY << YAML::Value << recordQuality_;
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
@@ -536,7 +536,7 @@ VideoPreferences::unserialize(const YAML::Node& in)
         recordPreview_ = true;
         recordQuality_ = 0;
     }
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
         parseValue(node, ENCODING_ACCELERATED_KEY, encodingAccelerated_);

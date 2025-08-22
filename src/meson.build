@@ -229,7 +229,7 @@ if conf.get('ENABLE_VIDEO')
         'media/video/video_sender.cpp'
     )
 
-    if conf.get('RING_ACCEL')
+    if conf.get('ENABLE_HWACCEL')
         libjami_sources += files(
             'media/video/accel.cpp'
         )

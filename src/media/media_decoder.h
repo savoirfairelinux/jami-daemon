@@ -28,7 +28,7 @@
 #include "video/video_scaler.h"
 #endif // ENABLE_VIDEO
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #include "video/accel.h"
 #endif
 #include "logger.h"
@@ -200,7 +200,7 @@ public:
     bool emitFrame(bool isAudio);
     void flushBuffers();
     void setSeekTime(int64_t time);
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     void enableAccel(bool enableAccel);
 #endif
 
@@ -242,7 +242,7 @@ private:
 
     bool fallback_ = false;
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     bool enableAccel_ = true;
     std::unique_ptr<video::HardwareAccel> accel_;
     unsigned short accelFailures_ = 0;

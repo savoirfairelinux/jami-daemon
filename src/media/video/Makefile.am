@@ -17,7 +17,7 @@ libvideo_la_SOURCES = \
 	./media/video/sinkclient.cpp sinkclient.h \
 	./media/video/filter_transpose.cpp filter_transpose.h
 
-if RING_ACCEL
+if ENABLE_HWACCEL
 libvideo_la_SOURCES += ./media/video/accel.cpp ./media/video/accel.h
 endif
 

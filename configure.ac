@@ -514,7 +514,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"],
   dnl prefix needs to be different from the one above
   [PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100,
      [ring_accel="yes"
-      AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled])
+      AC_DEFINE([ENABLE_HWACCEL], [1], [Hardware acceleration is enabled])
       AS_IF([test "${SYS}" = "darwin"],
         [AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h],
            [AC_CHECK_HEADER([libavcodec/videotoolbox.h],
@@ -522,7 +522,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"],
                AC_DEFINE([ENABLE_VIDEOTOOLBOX], [1],
                  [Defined if videotoolbox is available])])])])],
      [])])
-AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
+AM_CONDITIONAL([ENABLE_HWACCEL], [test "x${ring_accel}" = "xyes"])
 
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.7.4], [], AC_MSG_ERROR([gnutls not found]))

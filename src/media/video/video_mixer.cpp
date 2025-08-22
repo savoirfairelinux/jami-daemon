@@ -25,7 +25,7 @@
 #include "sinkclient.h"
 #include "logger.h"
 #include "filter_transpose.h"
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #include "accel.h"
 #endif
 #include "connectivity/sip_utils.h"
@@ -244,7 +244,7 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
             std::shared_ptr<VideoFrame> frame;
             try {
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(

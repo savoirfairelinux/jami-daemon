@@ -46,7 +46,7 @@ namespace jami {
 
 struct MediaDescription;
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 namespace video {
 class HardwareAccel;
 }
@@ -104,7 +104,7 @@ public:
     int setBitrate(uint64_t br);
     int setPacketLoss(uint64_t pl);
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     void enableAccel(bool enableAccel);
 #endif
 
@@ -164,7 +164,7 @@ private:
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     bool enableAccel_ {false};
     std::unique_ptr<video::HardwareAccel> accel_;
 #endif

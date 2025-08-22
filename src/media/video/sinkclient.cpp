@@ -35,7 +35,7 @@
 #include "media_filter.h"
 #include "filter_transpose.h"
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #include "accel.h"
 #endif
 
@@ -333,7 +333,7 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
     av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
 
     if (crop_.w || crop_.h) {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
         auto desc = av_pix_fmt_desc_get(
             (AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
         /*
@@ -386,7 +386,7 @@ std::shared_ptr<VideoFrame>
 SinkClient::applyTransform(VideoFrame& frame_p)
 {
     std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     auto desc = av_pix_fmt_desc_get((AVPixelFormat) frame_p.format());
     if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
         try {

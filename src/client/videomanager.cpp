@@ -629,7 +629,7 @@ setAutoRestart(const std::string& id, const bool& restart)
 bool
 getDecodingAccelerated()
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     return jami::Manager::instance().videoPreferences.getDecodingAccelerated();
 #else
     return false;
@@ -639,7 +639,7 @@ getDecodingAccelerated()
 void
 setDecodingAccelerated(bool state)
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
     if (jami::Manager::instance().videoPreferences.setDecodingAccelerated(state))
         jami::Manager::instance().saveConfig();
@@ -649,7 +649,7 @@ setDecodingAccelerated(bool state)
 bool
 getEncodingAccelerated()
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     return jami::Manager::instance().videoPreferences.getEncodingAccelerated();
 #else
     return false;
@@ -659,7 +659,7 @@ getEncodingAccelerated()
 void
 setEncodingAccelerated(bool state)
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
     if (jami::Manager::instance().videoPreferences.setEncodingAccelerated(state))
         jami::Manager::instance().saveConfig();

@@ -27,7 +27,7 @@
 #include "decoder_finder.h"
 #include "manager.h"
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 #include "video/accel.h"
 #endif
 
@@ -472,7 +472,7 @@ MediaDecoder::MediaDecoder(MediaObserver o)
 
 MediaDecoder::~MediaDecoder()
 {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (decoderCtx_ && decoderCtx_->hw_device_ctx)
         av_buffer_unref(&decoderCtx_->hw_device_ctx);
 #endif
@@ -531,7 +531,7 @@ MediaDecoder::setupStream()
     if (prepareDecoderContext() < 0)
         return -1; // failed
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     // if there was a fallback to software decoding, do not enable accel
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
@@ -582,7 +582,7 @@ MediaDecoder::setupStream()
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     if (!accel_) {
         JAMI_WARN("Not using hardware decoding for %s", avcodec_get_name(decoderCtx_->codec_id));
         ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
@@ -653,7 +653,7 @@ MediaDecoder::decode(AVPacket& packet)
     // falling back to software decoding works fine.
     // We need to figure out why this behavior occurs and how to discriminate between the two.
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
         if (accel_) {
             JAMI_WARN("Decoding error falling back to software");
             fallback_ = true;
@@ -764,7 +764,7 @@ MediaDecoder::decode()
 }
 
 #ifdef ENABLE_VIDEO
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
 void
 MediaDecoder::enableAccel(bool enableAccel)
 {
@@ -877,7 +877,7 @@ MediaDecoder::getStream(std::string name) const
         return {};
     }
     auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);
-#ifdef RING_ACCEL
+#ifdef ENABLE_HWACCEL
     // accel_ is null if not using accelerated codecs
     if (accel_)
         ms.format = accel_->getSoftwareFormat();
