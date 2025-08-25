@@ -203,6 +203,26 @@ if (BUILD_CONTRIB)
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
             execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+
+	    set(FAT_CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/apple-darwin${CMAKE_SYSTEM_VERSION})
+	    set(CONTRIB_PATH_FIRST ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
+
+	    execute_process(COMMAND ${CMAKE_COMMAND} -E rm -rf "${FAT_CONTRIB_PATH}")
+	    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${CONTRIB_PATH_FIRST}" "${FAT_CONTRIB_PATH}")
+
+	    # Same path-fix step as multi-arch
+	    file(GLOB_RECURSE PC_FILES    "${FAT_CONTRIB_PATH}/lib/pkgconfig/*.pc")
+	    file(GLOB_RECURSE CMAKE_FILES "${FAT_CONTRIB_PATH}/lib/cmake/*.cmake")
+	    set(ALL_FILES ${PC_FILES} ${CMAKE_FILES})
+	    foreach(FILE_PATH ${ALL_FILES})
+  	       file(READ  "${FILE_PATH}" TXT)
+  	       string(REPLACE "${CONTRIB_PATH_FIRST}" "${FAT_CONTRIB_PATH}" TXT "${TXT}")
+  	       file(WRITE "${FILE_PATH}" "${TXT}")
+	    endforeach()
+
+           # Use the unified path downstream
+	   set(CONTRIB_PATH ${FAT_CONTRIB_PATH})
+            
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
     else()
@@ -378,7 +398,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     PACKAGE_VERSION="${PROJECT_VERSION}"
     PACKAGE="jami"
     LIBJAMI_BUILD
-    ENABLE_NAMESERVER
+    HAVE_RINGNS=1
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
@@ -389,7 +409,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 if (JAMI_VIDEO)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_VIDEO)
     if (JAMI_VIDEO_ACCEL)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_HWACCEL)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE RING_ACCEL)
     endif()
 endif()
 if (JAMI_PLUGIN)
@@ -902,7 +922,7 @@ else()
         target_compile_definitions(ut_library PUBLIC
             JAMI_DATADIR="${JAMI_DATADIR}"
             PJ_AUTOCONF=1
-            ENABLE_NAMESERVER
+            HAVE_RINGNS=1
             ASIO_STANDALONE
             MSGPACK_NO_BOOST
             LIBJAMI_TEST
@@ -913,7 +933,7 @@ else()
         if (JAMI_VIDEO)
             target_compile_definitions(ut_library PUBLIC ENABLE_VIDEO)
             if (JAMI_VIDEO_ACCEL)
-                target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HWACCEL)
+                target_compile_definitions(${PROJECT_NAME} PUBLIC RING_ACCEL)
             endif()
         endif()
 
