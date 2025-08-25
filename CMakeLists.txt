@@ -203,6 +203,27 @@ if (BUILD_CONTRIB)
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
             execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
                 WORKING_DIRECTORY ${CONTRIB_BUILD_PATH})
+
+            if (APPLE)
+
+	            set(FAT_CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/apple-darwin${CMAKE_SYSTEM_VERSION})
+                set(CONTRIB_PATH_FIRST ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${TARGET})
+
+                execute_process(COMMAND ${CMAKE_COMMAND} -E rm -rf "${FAT_CONTRIB_PATH}")
+                execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${CONTRIB_PATH_FIRST}" "${FAT_CONTRIB_PATH}")
+
+                file(GLOB_RECURSE PC_FILES    "${FAT_CONTRIB_PATH}/lib/pkgconfig/*.pc")
+                file(GLOB_RECURSE CMAKE_FILES "${FAT_CONTRIB_PATH}/lib/cmake/*.cmake")
+                set(ALL_FILES ${PC_FILES} ${CMAKE_FILES})
+                foreach(FILE_PATH ${ALL_FILES})
+                    file(READ  "${FILE_PATH}" TXT)
+                    string(REPLACE "${CONTRIB_PATH_FIRST}" "${FAT_CONTRIB_PATH}" TXT "${TXT}")
+                    file(WRITE "${FILE_PATH}" "${TXT}")
+                endforeach()
+                set(CONTRIB_PATH ${FAT_CONTRIB_PATH})
+
+            endif()
+
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
     else()
