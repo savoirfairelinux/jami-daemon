@@ -79,7 +79,7 @@ struct Contact
             banned = c.banned;
         }
         if (c.confirmed != confirmed) {
-            confirmed = c.confirmed or confirmed;
+            confirmed = c.confirmed;
         }
         if (isActive()) {
             removed = 0;
