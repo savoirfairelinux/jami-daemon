@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #include "conversationrepository.h"
 
 #include "account_const.h"
@@ -158,7 +159,7 @@ public:
         git_repository* repo = nullptr;
         auto err = git_repository_open(&repo, path.c_str());
         if (err < 0) {
-            JAMI_ERROR("Unable to open git repository: {} ({})", path, git_error_last()->message);
+            JAMI_ERROR("Unable to open Git repository: {} ({})", path, git_error_last()->message);
             return {nullptr, git_repository_free};
         }
         return {std::move(repo), git_repository_free};
@@ -1432,14 +1433,14 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
         deviceFile = fmt::format("devices/{}.crt", deviceUri);
         auto blob_device = fileAtTree(deviceFile, treeOld);
         if (!blob_device) {
-            JAMI_ERROR("device not found added ({})", deviceFile);
+            JAMI_ERROR("Device not found added ({})", deviceFile);
             return false;
         }
         auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
         auto userUri = deviceCert.getIssuerUID();
 
         if (uriMember != userUri and uriMember != deviceUri /* If device is removed */) {
-            JAMI_ERROR("device removed but not for removed user ({})", deviceFile);
+            JAMI_ERROR("Device removed but not for removed user ({})", deviceFile);
             return false;
         }
     }
@@ -1518,19 +1519,19 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
         if (voteType == "ban") {
             // If we ban a device, it should be there before
             if (!fileAtTree(deviceFile, treeOld)) {
-                JAMI_ERROR("device not found added ({})", deviceFile);
+                JAMI_ERROR("Device not found added ({})", deviceFile);
                 return false;
             }
         } else if (voteType == "unban") {
             // If we unban a device, it should not be there before
             if (fileAtTree(deviceFile, treeOld)) {
-                JAMI_ERROR("device not found added ({})", deviceFile);
+                JAMI_ERROR("Device not found added ({})", deviceFile);
                 return false;
             }
         }
         if (uriMember != uriFromDevice(deviceUri)
             and uriMember != deviceUri /* If device is removed */) {
-            JAMI_ERROR("device removed but not for removed user ({})", deviceFile);
+            JAMI_ERROR("Device removed but not for removed user ({})", deviceFile);
             return false;
         }
     }
@@ -1698,6 +1699,50 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
     }
     if (parentCert.getExpiration() < commitTime) {
         JAMI_ERROR("Certificate {} expired", parentCert.getId().toString());
+        return false;
+    }
+
+    git_buf sig = {}, sig_data = {};
+
+    // Extract the signature block and signature content from the commit
+    int sig_extract_res = git_commit_extract_signature(&sig,
+                                                       &sig_data,
+                                                       repo.get(),
+                                                       &oid,
+                                                       "signature");
+
+    // Verify that the extraction was successful
+    if (sig_extract_res != 0) {
+        switch (sig_extract_res) {
+        case GIT_ERROR_INVALID:
+            JAMI_ERROR("Error, the commit ID ({}) does not correspond to a commit.",
+                       commitId.c_str());
+            break;
+        case GIT_ERROR_OBJECT:
+            JAMI_ERROR("Error, the commit ID ({}) does not have a signature.", commitId.c_str());
+            break;
+        default:
+            JAMI_ERROR("An unknown error occurred while extracting signature for commit ID {}.",
+                       commitId.c_str());
+            break;
+
+            return false;
+        }
+    } else
+        JAMI_LOG("Signature extraction successful.");
+
+    auto pk = base64::decode(std::string_view(sig.ptr, sig.size));
+    auto data = std::vector<uint8_t>(sig_data.ptr, sig_data.ptr + sig_data.size);
+
+    // Verify the signature (git verify-commit)
+    bool valid_signature = deviceCert.getPublicKey().checkSignature(data, pk);
+
+    // Free buffers before check in case of early return
+    git_buf_dispose(&sig);
+    git_buf_dispose(&sig_data);
+
+    if (!valid_signature) {
+        JAMI_WARNING("Commit {} not signed by device {}.", git_oid_tostr_s(&oid), userDevice);
         return false;
     }
 
@@ -2457,7 +2502,7 @@ ConversationRepository::Impl::initMembers()
     using std::filesystem::path;
     auto repo = repository();
     if (!repo)
-        throw std::logic_error("Invalid git repository");
+        throw std::logic_error("Invalid Git repository");
 
     std::vector<std::string> uris;
     std::lock_guard lk(membersMtx_);
@@ -2703,11 +2748,44 @@ ConversationRepository::Impl::validCommits(
     for (const auto& commit : commitsToValidate) {
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
+
+        // For all commits, check that the user is valid,
+        // meaning the user's certificate MUST be in /members or /admins,
+        // their device cert MUST be in /devices,
+        // and the commit MUST be signed by the device
+        if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+            std::string msg_spec;
+            if (commit.parents.size() == 0)
+                msg_spec = "initial";
+            else if (commit.parents.size() == 1)
+                msg_spec = "";
+            else
+                msg_spec = "merge";
+
+            JAMI_WARNING("[Account {}] [Conversation {}] Malformed {} commit {}. Please ensure "
+                         "that you are using the latest version of Jami, or "
+                         "that one of your contacts is not performing any unwanted actions. {}",
+                         accountId_,
+                         id_,
+                         validUserAtCommit,
+                         commit.commit_msg,
+                         msg_spec);
+            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                         id_,
+                                                                         EVALIDFETCH,
+                                                                         "Malformed commit");
+            return false;
+        }
+
         if (commit.parents.size() == 0) {
             if (!checkInitialCommit(userDevice, commit.id, commit.commit_msg)) {
-                JAMI_WARNING("[Account {}] [Conversation {}] Malformed initial commit {}. Please check you use the latest "
-                             "version of Jami, or that your contact is not doing unwanted stuff.",
-                             accountId_, id_, commit.id);
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed initial commit {}. Please "
+                             "ensure that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions.",
+                             accountId_,
+                             id_,
+                             commit.id);
                 emitSignal<libjami::ConversationSignal::OnConversationError>(
                     accountId_, id_, EVALIDFETCH, "Malformed initial commit");
                 return false;
@@ -2719,8 +2797,10 @@ ConversationRepository::Impl::validCommits(
                 type = cm["type"].asString();
                 editId = cm["edit"].asString();
             } else {
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
                 return false;
             }
 
@@ -2728,12 +2808,18 @@ ConversationRepository::Impl::validCommits(
                 // Check that vote is valid
                 if (!checkVote(userDevice, commit.id, commit.parents[0])) {
                     JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Malformed vote commit {}. Please check you use the latest version "
-                        "of Jami, or that your contact is not doing unwanted stuff.",
-                        accountId_, id_, commit.id);
+                        "[Account {}] [Conversation {}] Malformed vote commit {}. Please ensure "
+                        "that you are using the latest version "
+                        "of Jami, or that one of your contacts is not performing any unwanted "
+                        "actions.",
+                        accountId_,
+                        id_,
+                        commit.id);
 
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(
-                        accountId_, id_, EVALIDFETCH, "Malformed vote");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                                 id_,
+                                                                                 EVALIDFETCH,
+                                                                                 "Malformed vote");
                     return false;
                 }
             } else if (type == "member") {
@@ -2741,30 +2827,30 @@ ConversationRepository::Impl::validCommits(
                 std::string uriMember = cm["uri"].asString();
                 if (action == "add") {
                     if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed add commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed add commit {}. "
+                                     "Please check you use the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed add member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed add member commit");
                         return false;
                     }
                 } else if (action == "join") {
                     if (!checkValidJoins(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed joins commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed joins commit {}. "
+                                     "Please ensure that you are using the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed join member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed join member commit");
                         return false;
                     }
                 } else if (action == "remove") {
@@ -2772,16 +2858,16 @@ ConversationRepository::Impl::validCommits(
                     // valid for this commit. Check previous commit
                     validUserAtCommit = commit.parents[0];
                     if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed removes commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed removes commit {}. "
+                                     "Please ensure that you are using the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed remove member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed remove member commit");
                         return false;
                     }
                 } else if (action == "ban" || action == "unban") {
@@ -2791,24 +2877,28 @@ ConversationRepository::Impl::validCommits(
                                                   commit.id,
                                                   commit.parents[0],
                                                   action)) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed removes commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed removes commit {}. "
+                                     "Please ensure that you are using the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed ban member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed ban member commit");
                         return false;
                     }
                 } else {
                     JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Malformed member commit {} with action {}. Please check you use the "
+                        "[Account {}] [Conversation {}] Malformed member commit {} with "
+                        "action {}. Please ensure that you are using the "
                         "latest "
-                        "version of Jami, or that your contact is not doing unwanted stuff.",
-                        accountId_, id_, commit.id,
+                        "version of Jami, or that one of your contacts is not performing any "
+                        "unwanted actions.",
+                        accountId_,
+                        id_,
+                        commit.id,
                         action);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(
@@ -2817,16 +2907,16 @@ ConversationRepository::Impl::validCommits(
                 }
             } else if (type == "application/update-profile") {
                 if (!checkValidProfileUpdate(userDevice, commit.id, commit.parents[0])) {
-                    JAMI_WARNING("[Account {}] [Conversation {}] Malformed profile updates commit {}. Please check you use the "
+                    JAMI_WARNING("[Account {}] [Conversation {}] Malformed profile updates commit "
+                                 "{}. Please check you use the "
                                  "latest version "
                                  "of Jami, or that your contact is not doing unwanted stuff.",
-                                 accountId_, id_, commit.id);
+                                 accountId_,
+                                 id_,
+                                 commit.id);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(
-                        accountId_,
-                        id_,
-                        EVALIDFETCH,
-                        "Malformed profile updates commit");
+                        accountId_, id_, EVALIDFETCH, "Malformed profile updates commit");
                     return false;
                 }
             } else if (type == "application/edited-message" || !editId.empty()) {
@@ -2843,39 +2933,19 @@ ConversationRepository::Impl::validCommits(
                 // Check that no weird file is added outside device cert nor removed
                 if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
                     JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Malformed {} commit {}. Please check you use the latest "
-                        "version of Jami, or that your contact is not doing unwanted stuff.",
-                        accountId_, id_, type, commit.id);
+                        "[Account {}] [Conversation {}] Malformed {} commit {}. Please check you "
+                        "use the latest "
+                        "version of Jami, or that one of your contacts is not performing any "
+                        "unwanted actions.",
+                        accountId_,
+                        id_,
+                        type,
+                        commit.id);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(
                         accountId_, id_, EVALIDFETCH, "Malformed commit");
                     return false;
                 }
-            }
-
-            // For all commit, check that user is valid,
-            // So that user certificate MUST be in /members or /admins
-            // and device cert MUST be in /devices
-            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARNING(
-                    "[Account {}] [Conversation {}] Malformed commit {}. Please check you use the latest version of Jami, or "
-                    "that your contact is not doing unwanted stuff. {}", accountId_, id_,
-                    validUserAtCommit,
-                    commit.commit_msg);
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
-                return false;
-            }
-        } else {
-            // Merge commit, for now, check user
-            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARNING(
-                    "[Account {}] [Conversation {}] Malformed merge commit {}. Please check you use the latest version of "
-                    "Jami, or that your contact is not doing unwanted stuff.", accountId_, id_,
-                    validUserAtCommit);
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
-                return false;
             }
         }
         JAMI_DEBUG("[Account {}] [Conversation {}] Validate commit {}", accountId_, id_, commit.id);
