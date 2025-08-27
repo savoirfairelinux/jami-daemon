@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "aff45a56_5f8e54af",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-27T23:08:51Z",
+      "side": 1,
+      "message": "`add signature check`\n\nhttps://docs.jami.net/contribute/index.html#commit-message-guidelines\n\n\u003e 2. The subject can use the capitalization of the component or scope, but the rest of the title should be lowercase.",
+      "range": {
+        "startLine": 7,
+        "startChar": 24,
+        "endLine": 7,
+        "endChar": 43
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0b78b3e2_1a77e45d",
         "filename": "src/jamidht/conversationrepository.cpp",
         "patchSetId": 2
