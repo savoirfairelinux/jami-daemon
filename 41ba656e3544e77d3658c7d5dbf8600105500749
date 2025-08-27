@@ -3,6 +3,23 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "0b78b3e2_1a77e45d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-27T23:03:41Z",
+      "side": 1,
+      "message": "Should there be a blank line after the copyright comment? Thank you",
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c27ac46d_11d7ebc7",
         "filename": "src/jamidht/conversationrepository.cpp",
         "patchSetId": 2
