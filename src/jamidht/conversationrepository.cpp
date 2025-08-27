@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #include "conversationrepository.h"
 
 #include "account_const.h"
@@ -68,8 +69,7 @@ public:
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
     {
-        conversationDataPath_ = fileutils::get_data_dir() / accountId_
-                                / "conversation_data" / id_;
+        conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / id_;
         membersCache_ = conversationDataPath_ / "members";
         checkLocks();
         loadMembers();
@@ -82,41 +82,66 @@ public:
     {
         auto repo = repository();
         if (!repo)
-            throw std::logic_error("Invalid git repository");
+            throw std::logic_error("Invalid Git repository");
 
         std::filesystem::path repoPath = git_repository_path(repo.get());
         std::error_code ec;
 
         auto indexPath = std::filesystem::path(repoPath / "index.lock");
         if (std::filesystem::exists(indexPath, ec)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Conversation is locked, removing lock {}", accountId_, id_, indexPath);
+            JAMI_WARNING("[Account {}] [Conversation {}] Conversation is locked, removing lock {}",
+                         accountId_,
+                         id_,
+                         indexPath);
             std::filesystem::remove(indexPath, ec);
             if (ec)
-                JAMI_ERROR("[Account {}] [Conversation {}] Unable to remove lock {}: {}", accountId_, id_, indexPath, ec.message());
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to remove lock {}: {}",
+                           accountId_,
+                           id_,
+                           indexPath,
+                           ec.message());
         }
 
         auto refPath = std::filesystem::path(repoPath / "refs" / "heads" / "main.lock");
         if (std::filesystem::exists(refPath)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Conversation is locked, removing lock {}", accountId_, id_, refPath);
+            JAMI_WARNING("[Account {}] [Conversation {}] Conversation is locked, removing lock {}",
+                         accountId_,
+                         id_,
+                         refPath);
             std::filesystem::remove(refPath, ec);
             if (ec)
-                JAMI_ERROR("[Account {}] [Conversation {}] Unable to remove lock {}: {}", accountId_, id_, refPath, ec.message());
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to remove lock {}: {}",
+                           accountId_,
+                           id_,
+                           refPath,
+                           ec.message());
         }
 
         auto remotePath = std::filesystem::path(repoPath / "refs" / "remotes");
         for (const auto& fileIt : std::filesystem::directory_iterator(remotePath, ec)) {
             auto refPath = fileIt.path() / "main.lock";
             if (std::filesystem::exists(refPath, ec)) {
-                JAMI_WARNING("[Account {}] [Conversation {}] Conversation is locked for remote {}, removing lock", accountId_, id_, fileIt.path().filename());
+                JAMI_WARNING("[Account {}] [Conversation {}] Conversation is locked for remote {}, "
+                             "removing lock",
+                             accountId_,
+                             id_,
+                             fileIt.path().filename());
                 std::filesystem::remove(refPath, ec);
                 if (ec)
-                    JAMI_ERROR("[Account {}] [Conversation {}] Unable to remove lock {}: {}", accountId_, id_, refPath, ec.message());
+                    JAMI_ERROR("[Account {}] [Conversation {}] Unable to remove lock {}: {}",
+                               accountId_,
+                               id_,
+                               refPath,
+                               ec.message());
             }
         }
 
         auto err = git_repository_state_cleanup(repo.get());
         if (err < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to cleanup repository: {}", accountId_, id_, git_error_last()->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to cleanup repository: {}",
+                       accountId_,
+                       id_,
+                       git_error_last()->message);
         }
     }
 
@@ -153,12 +178,12 @@ public:
     // git_remote_fetch() leaves pack-data opened)
     GitRepository repository() const
     {
-        auto path = fileutils::get_data_dir().string() + "/" + accountId_ + "/"
-                    + "conversations" + "/" + id_;
+        auto path = fileutils::get_data_dir().string() + "/" + accountId_ + "/" + "conversations"
+                    + "/" + id_;
         git_repository* repo = nullptr;
         auto err = git_repository_open(&repo, path.c_str());
         if (err < 0) {
-            JAMI_ERROR("Unable to open git repository: {} ({})", path, git_error_last()->message);
+            JAMI_ERROR("Unable to open Git repository: {} ({})", path, git_error_last()->message);
             return {nullptr, git_repository_free};
         }
         return {std::move(repo), git_repository_free};
@@ -261,7 +286,6 @@ public:
         return members_;
     }
 
-
     std::filesystem::path conversationDataPath_ {};
     std::filesystem::path membersCache_ {};
 
@@ -292,8 +316,9 @@ public:
                                                  git_repository_workdir(repo.get()),
                                                  issuerUid);
                     auto parentCert = std::make_shared<dht::crypto::Certificate>(
-                        dhtnet::fileutils::loadFile(
-                            std::filesystem::is_regular_file(memberFile, ec) ? memberFile : adminFile));
+                        dhtnet::fileutils::loadFile(std::filesystem::is_regular_file(memberFile, ec)
+                                                        ? memberFile
+                                                        : adminFile));
                     if (parentCert
                         && (ignoreExpired
                             || parentCert->getExpiration() < std::chrono::system_clock::now()))
@@ -329,7 +354,7 @@ public:
     bool resolveConflicts(git_index* index, const std::string& other_id);
 
     std::set<std::string> memberUris(std::string_view filter,
-                                        const std::set<MemberRole>& filteredRoles) const
+                                     const std::set<MemberRole>& filteredRoles) const
     {
         std::lock_guard lk(membersMtx_);
         std::set<std::string> ret;
@@ -742,7 +767,10 @@ ConversationRepository::Impl::signature()
 {
     auto name = getDisplayName();
     if (name.empty()) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to create a commit signature: no name set", accountId_, id_);
+        JAMI_ERROR(
+            "[Account {}] [Conversation {}] Unable to create a commit signature: no name set",
+            accountId_,
+            id_);
         return {nullptr, git_signature_free};
     }
 
@@ -750,9 +778,16 @@ ConversationRepository::Impl::signature()
     // Sign commit's buffer
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId_.c_str(), std::time(nullptr), 0) < 0) {
         // Maybe the display name is invalid (like " ") - try without
-        int err = git_signature_new(&sig_ptr, deviceId_.c_str(), deviceId_.c_str(), std::time(nullptr), 0);
+        int err = git_signature_new(&sig_ptr,
+                                    deviceId_.c_str(),
+                                    deviceId_.c_str(),
+                                    std::time(nullptr),
+                                    0);
         if (err < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create a commit signature: {}", accountId_, id_, err);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create a commit signature: {}",
+                       accountId_,
+                       id_,
+                       err);
             return {nullptr, git_signature_free};
         }
     }
@@ -806,12 +841,18 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to lookup commit {}", accountId_, id_, wanted_ref);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to lookup commit {}",
+                   accountId_,
+                   id_,
+                   wanted_ref);
         return {};
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
     if (git_commit_lookup(&parent, repo.get(), git_annotated_commit_id(annotated.get())) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to lookup commit {}", accountId_, id_, wanted_ref);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to lookup commit {}",
+                   accountId_,
+                   id_,
+                   wanted_ref);
         return {};
     }
     parents[1] = {parent, git_commit_free};
@@ -822,7 +863,10 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     if (git_index_write_tree_to(&tree_oid, index, repo.get()) < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to write index: {}", accountId_, id_, err->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to write index: {}",
+                       accountId_,
+                       id_,
+                       err->message);
         return {};
     }
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_oid) < 0) {
@@ -836,8 +880,8 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     // The last argument of git_commit_create_buffer is of type
     // 'const git_commit **' in all versions of libgit2 except 1.8.0,
     // 1.8.1 and 1.8.3, in which it is of type 'git_commit *const *'.
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 && \
-    (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
     git_commit* const parents_ptr[2] {parents[0].get(), parents[1].get()};
 #else
     const git_commit* parents_ptr[2] {parents[0].get(), parents[1].get()};
@@ -854,7 +898,10 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
         < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create commit buffer: {}", accountId_, id_, err->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create commit buffer: {}",
+                       accountId_,
+                       id_,
+                       err->message);
         return {};
     }
 
@@ -880,14 +927,20 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
 
     auto commit_str = git_oid_tostr_s(&commit_oid);
     if (commit_str) {
-        JAMI_LOG("[Account {}] [Conversation {}] New merge commit added with id: {}", accountId_, id_, commit_str);
+        JAMI_LOG("[Account {}] [Conversation {}] New merge commit added with id: {}",
+                 accountId_,
+                 id_,
+                 commit_str);
         // Move commit to main branch
         git_reference* ref_ptr = nullptr;
         if (git_reference_create(&ref_ptr, repo.get(), "refs/heads/main", &commit_oid, true, nullptr)
             < 0) {
             const git_error* err = giterr_last();
             if (err) {
-                JAMI_ERROR("[Account {}] [Conversation {}] Unable to move commit to main: {}", accountId_, id_, err->message);
+                JAMI_ERROR("[Account {}] [Conversation {}] Unable to move commit to main: {}",
+                           accountId_,
+                           id_,
+                           err->message);
                 emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                              id_,
                                                                              ECOMMIT,
@@ -905,7 +958,11 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     if (git_object_lookup(&target_ptr, repo.get(), &commit_oid, GIT_OBJ_COMMIT) != 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] failed to lookup OID {}: {}", accountId_, id_, git_oid_tostr_s(&commit_oid), err->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] failed to lookup OID {}: {}",
+                       accountId_,
+                       id_,
+                       git_oid_tostr_s(&commit_oid),
+                       err->message);
         return {};
     }
     GitObject target {target_ptr, git_object_free};
@@ -942,7 +999,10 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
             < 0) {
             const git_error* err = giterr_last();
             if (err)
-                JAMI_ERROR("[Account {}] [Conversation {}] failed to create main reference: {}", accountId_, id_, err->message);
+                JAMI_ERROR("[Account {}] [Conversation {}] failed to create main reference: {}",
+                           accountId_,
+                           id_,
+                           err->message);
             return false;
         }
 
@@ -956,7 +1016,10 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
     // Lookup the target object
     git_object* target_ptr = nullptr;
     if (git_object_lookup(&target_ptr, repo.get(), target_oid, GIT_OBJ_COMMIT) != 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] failed to lookup OID {}", accountId_, id_, git_oid_tostr_s(target_oid));
+        JAMI_ERROR("[Account {}] [Conversation {}] failed to lookup OID {}",
+                   accountId_,
+                   id_,
+                   git_oid_tostr_s(target_oid));
         return false;
     }
     GitObject target {target_ptr, git_object_free};
@@ -967,9 +1030,15 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
     ff_checkout_options.checkout_strategy = GIT_CHECKOUT_SAFE;
     if (git_checkout_tree(repo.get(), target.get(), &ff_checkout_options) != 0) {
         if (auto err = git_error_last())
-            JAMI_ERROR("[Account {}] [Conversation {}] failed to checkout HEAD reference: {}", accountId_, id_, err->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] failed to checkout HEAD reference: {}",
+                       accountId_,
+                       id_,
+                       err->message);
         else
-            JAMI_ERROR("[Account {}] [Conversation {}] failed to checkout HEAD reference: unknown error", accountId_, id_);
+            JAMI_ERROR(
+                "[Account {}] [Conversation {}] failed to checkout HEAD reference: unknown error",
+                accountId_,
+                id_);
         return false;
     }
 
@@ -1432,14 +1501,14 @@ ConversationRepository::Impl::checkValidRemove(const std::string& userDevice,
         deviceFile = fmt::format("devices/{}.crt", deviceUri);
         auto blob_device = fileAtTree(deviceFile, treeOld);
         if (!blob_device) {
-            JAMI_ERROR("device not found added ({})", deviceFile);
+            JAMI_ERROR("Device not found added ({})", deviceFile);
             return false;
         }
         auto deviceCert = dht::crypto::Certificate(as_view(blob_device));
         auto userUri = deviceCert.getIssuerUID();
 
         if (uriMember != userUri and uriMember != deviceUri /* If device is removed */) {
-            JAMI_ERROR("device removed but not for removed user ({})", deviceFile);
+            JAMI_ERROR("Device removed but not for removed user ({})", deviceFile);
             return false;
         }
     }
@@ -1518,19 +1587,19 @@ ConversationRepository::Impl::checkValidVoteResolution(const std::string& userDe
         if (voteType == "ban") {
             // If we ban a device, it should be there before
             if (!fileAtTree(deviceFile, treeOld)) {
-                JAMI_ERROR("device not found added ({})", deviceFile);
+                JAMI_ERROR("Device not found added ({})", deviceFile);
                 return false;
             }
         } else if (voteType == "unban") {
             // If we unban a device, it should not be there before
             if (fileAtTree(deviceFile, treeOld)) {
-                JAMI_ERROR("device not found added ({})", deviceFile);
+                JAMI_ERROR("Device not found added ({})", deviceFile);
                 return false;
             }
         }
         if (uriMember != uriFromDevice(deviceUri)
             and uriMember != deviceUri /* If device is removed */) {
-            JAMI_ERROR("device removed but not for removed user ({})", deviceFile);
+            JAMI_ERROR("Device removed but not for removed user ({})", deviceFile);
             return false;
         }
     }
@@ -1701,7 +1770,52 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         return false;
     }
 
+    git_buf sig = {}, sig_data = {};
+
+    // Extract the signature block and signature content from the commit
+    int sig_extract_res = git_commit_extract_signature(&sig,
+                                                       &sig_data,
+                                                       repo.get(),
+                                                       &oid,
+                                                       "signature");
+
+    // Verify that the extraction was successful
+    if (sig_extract_res != 0) {
+        switch (sig_extract_res) {
+        case GIT_ERROR_INVALID:
+            JAMI_ERROR("Error, the commit ID ({}) does not correspond to a commit.",
+                       commitId.c_str());
+            break;
+        case GIT_ERROR_OBJECT:
+            JAMI_ERROR("Error, the commit ID ({}) does not have a signature.", commitId.c_str());
+            break;
+        default:
+            JAMI_ERROR("An unknown error occurred while extracting signature for commit ID {}.",
+                       commitId.c_str());
+            break;
+
+            return false;
+        }
+    } else
+        JAMI_LOG("Signature extraction successful.");
+
+    auto pk = base64::decode(std::string_view(sig.ptr, sig.size));
+    auto data = std::vector<uint8_t>(sig_data.ptr, sig_data.ptr + sig_data.size);
+
+    // Verify the signature (git verify-commit)
+    bool valid_signature = deviceCert.getPublicKey().checkSignature(data, pk);
+
+    // Free buffers before check in case of early return
+    git_buf_dispose(&sig);
+    git_buf_dispose(&sig_data);
+
+    if (!valid_signature) {
+        JAMI_WARNING("Commit {} not signed by device {}.", git_oid_tostr_s(&oid), userDevice);
+        return false;
+    }
+
     auto res = parentCert.getId().toString() == userUri;
+
     if (res && not hasPinnedCert) {
         acc->certStore().pinCertificate(std::move(deviceCert));
         acc->certStore().pinCertificate(std::move(parentCert));
@@ -1796,7 +1910,10 @@ ConversationRepository::Impl::validateDevice()
     std::filesystem::path devicePath = git_repository_workdir(repo.get());
     devicePath /= path;
     if (!std::filesystem::is_regular_file(devicePath)) {
-        JAMI_WARNING("[Account {}] [Conversation {}] Unable to find file {}", accountId_, id_, devicePath);
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to find file {}",
+                     accountId_,
+                     id_,
+                     devicePath);
         return false;
     }
 
@@ -1808,22 +1925,34 @@ ConversationRepository::Impl::validateDevice()
         wrongDeviceFile = true;
     }
     if (wrongDeviceFile) {
-        JAMI_WARNING("[Account {}] [Conversation {}] Device certificate is no longer valid. Attempting to update certificate.", accountId_, id_);
+        JAMI_WARNING("[Account {}] [Conversation {}] Device certificate is no longer valid. "
+                     "Attempting to update certificate.",
+                     accountId_,
+                     id_);
         // Replace certificate with current cert
         auto cert = account->identity().second;
         if (!cert || !account->isValidAccountDevice(*cert)) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Current device's certificate is invalid. A migration is needed", accountId_, id_);
+            JAMI_ERROR("[Account {}] [Conversation {}] Current device's certificate is invalid. A "
+                       "migration is needed",
+                       accountId_,
+                       id_);
             return false;
         }
         std::ofstream file(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to write data to {}", accountId_, id_, devicePath);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to write data to {}",
+                       accountId_,
+                       id_,
+                       devicePath);
             return false;
         }
         file << cert->toString(false);
         file.close();
         if (!add(path)) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to add file {}", accountId_, id_, devicePath);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to add file {}",
+                       accountId_,
+                       id_,
+                       devicePath);
             return false;
         }
     }
@@ -1839,7 +1968,9 @@ ConversationRepository::Impl::validateDevice()
         relativeParentPath = memberPath;
     parentPath /= relativeParentPath;
     if (relativeParentPath.empty()) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Invalid parent path (not in members or admins)", accountId_, id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Invalid parent path (not in members or admins)",
+                   accountId_,
+                   id_);
         return false;
     }
     wrongDeviceFile = false;
@@ -1850,7 +1981,10 @@ ConversationRepository::Impl::validateDevice()
         wrongDeviceFile = true;
     }
     if (wrongDeviceFile) {
-        JAMI_WARNING("[Account {}] [Conversation {}] Account certificate is no longer valid. Attempting to update certificate.", accountId_, id_);
+        JAMI_WARNING("[Account {}] [Conversation {}] Account certificate is no longer valid. "
+                     "Attempting to update certificate.",
+                     accountId_,
+                     id_);
         auto cert = account->identity().second;
         auto newCert = cert->issuer;
         if (newCert && std::filesystem::is_regular_file(parentPath)) {
@@ -1880,7 +2014,9 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     }
     GitSignature sig = signature();
     if (!sig) {
-        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Unable to generate signature", accountId_, id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Unable to generate signature",
+                   accountId_,
+                   id_);
         return {};
     }
     auto account = account_.lock();
@@ -1891,14 +2027,19 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     if (!repo)
         return {};
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Unable to open repository index", accountId_, id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Unable to open repository index",
+                   accountId_,
+                   id_);
         return {};
     }
     GitIndex index {index_ptr, git_index_free};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] commit failed: Unable to write initial tree from index", accountId_, id_);
+        JAMI_ERROR(
+            "[Account {}] [Conversation {}] commit failed: Unable to write initial tree from index",
+            accountId_,
+            id_);
         return {};
     }
 
@@ -1911,7 +2052,9 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", accountId_, id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD",
+                   accountId_,
+                   id_);
         return {};
     }
 
@@ -1926,8 +2069,8 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     // The last argument of git_commit_create_buffer is of type
     // 'const git_commit **' in all versions of libgit2 except 1.8.0,
     // 1.8.1 and 1.8.3, in which it is of type 'git_commit *const *'.
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 && \
-    (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
     git_commit* const head_ref[1] = {head_commit.get()};
 #else
     const git_commit* head_ref[1] = {head_commit.get()};
@@ -1968,7 +2111,10 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
         < 0) {
         const git_error* err = giterr_last();
         if (err) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to move commit to main: {}", accountId_, id_, err->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to move commit to main: {}",
+                       accountId_,
+                       id_,
+                       err->message);
             emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                          id_,
                                                                          ECOMMIT,
@@ -1980,7 +2126,10 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
 
     auto commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str) {
-        JAMI_LOG("[Account {}] [Conversation {}] New message added with id: {}", accountId_, id_, commit_str);
+        JAMI_LOG("[Account {}] [Conversation {}] New message added with id: {}",
+                 accountId_,
+                 id_,
+                 commit_str);
     }
     return commit_str ? commit_str : "";
 }
@@ -1998,9 +2147,9 @@ ConversationRepository::Impl::mode() const
     auto lastMsg = log(options);
     if (lastMsg.size() == 0) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                        id_,
-                                                                        EINVALIDMODE,
-                                                                        "No initial commit");
+                                                                     id_,
+                                                                     EINVALIDMODE,
+                                                                     "No initial commit");
         throw std::logic_error("Unable to retrieve first commit");
     }
     auto commitMsg = lastMsg[0].commit_msg;
@@ -2008,16 +2157,16 @@ ConversationRepository::Impl::mode() const
     Json::Value root;
     if (!json::parse(commitMsg, root)) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                        id_,
-                                                                        EINVALIDMODE,
-                                                                        "No initial commit");
+                                                                     id_,
+                                                                     EINVALIDMODE,
+                                                                     "No initial commit");
         throw std::logic_error("Unable to retrieve first commit");
     }
     if (!root.isMember("mode")) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                        id_,
-                                                                        EINVALIDMODE,
-                                                                        "No mode detected");
+                                                                     id_,
+                                                                     EINVALIDMODE,
+                                                                     "No mode detected");
         throw std::logic_error("No mode detected for initial commit");
     }
     int mode = root["mode"].asInt();
@@ -2037,9 +2186,9 @@ ConversationRepository::Impl::mode() const
         break;
     default:
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                        id_,
-                                                                        EINVALIDMODE,
-                                                                        "Incorrect mode detected");
+                                                                     id_,
+                                                                     EINVALIDMODE,
+                                                                     "Incorrect mode detected");
         throw std::logic_error("Incorrect mode detected");
     }
     return *mode_;
@@ -2176,7 +2325,9 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     // Note: Start from head to get all merge possibilities and correct linearized parent.
     auto repo = repository();
     if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", accountId_, id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD",
+                   accountId_,
+                   id_);
         return;
     }
 
@@ -2206,7 +2357,10 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, id);
+            JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}",
+                         accountId_,
+                         id_,
+                         id);
             break;
         }
         GitCommit commit {commit_ptr, git_commit_free};
@@ -2241,7 +2395,10 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         git_buf signature = {}, signed_data = {};
         if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature")
             < 0) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}", accountId_, id_, id);
+            JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}",
+                         accountId_,
+                         id_,
+                         id);
         } else {
             cc.signature = base64::decode(
                 std::string(signature.ptr, signature.ptr + signature.size));
@@ -2341,7 +2498,10 @@ ConversationRepository::Impl::treeAtCommit(git_repository* repo, const std::stri
     git_oid oid;
     git_commit* commit = nullptr;
     if (git_oid_fromstr(&oid, commitId.c_str()) < 0 || git_commit_lookup(&commit, repo, &oid) < 0) {
-        JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, commitId);
+        JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}",
+                     accountId_,
+                     id_,
+                     commitId);
         return GitTree {nullptr, git_tree_free};
     }
     GitCommit gc = {commit, git_commit_free};
@@ -2398,7 +2558,9 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
     git_oid head_commit_id;
     auto repo = repository();
     if (!repo || git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", accountId_, id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD",
+                   accountId_,
+                   id_);
         return false;
     }
     auto commit_str = git_oid_tostr_s(&head_commit_id);
@@ -2464,13 +2626,13 @@ ConversationRepository::Impl::initMembers()
     members_.clear();
     path repoPath = git_repository_workdir(repo.get());
 
-    static const std::vector<std::pair<MemberRole, path>> paths = {
-        {MemberRole::ADMIN, "admins"},
-        {MemberRole::MEMBER, "members"},
-        {MemberRole::INVITED, "invited"},
-        {MemberRole::BANNED, path("banned") / "members"},
-        {MemberRole::BANNED, path("banned") / "invited"}
-    };
+    static const std::vector<std::pair<MemberRole, path>> paths = {{MemberRole::ADMIN, "admins"},
+                                                                   {MemberRole::MEMBER, "members"},
+                                                                   {MemberRole::INVITED, "invited"},
+                                                                   {MemberRole::BANNED,
+                                                                    path("banned") / "members"},
+                                                                   {MemberRole::BANNED,
+                                                                    path("banned") / "invited"}};
 
     std::error_code ec;
     for (const auto& [role, p] : paths) {
@@ -2499,7 +2661,10 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
 {
     auto authorId = uriFromDevice(commit.author.email, commit.id);
     if (authorId.empty()) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Invalid author id for commit {}", accountId_, id_, commit.id);
+        JAMI_ERROR("[Account {}] [Conversation {}] Invalid author id for commit {}",
+                   accountId_,
+                   id_,
+                   commit.id);
         return std::nullopt;
     }
     std::string parents;
@@ -2637,7 +2802,8 @@ ConversationRepository::cloneConversation(
 {
     // Verify conversationId is not empty to avoid deleting the entire conversations directory
     if (conversationId.empty()) {
-        JAMI_ERROR("[Account {}] Clone conversation with empty conversationId", account->getAccountID());
+        JAMI_ERROR("[Account {}] Clone conversation with empty conversationId",
+                   account->getAccountID());
         return nullptr;
     }
 
@@ -2673,15 +2839,28 @@ ConversationRepository::cloneConversation(
             return nullptr;
     }
 
-    JAMI_DEBUG("[Account {}] [Conversation {}] Start clone of {:s} to {}", account->getAccountID(), conversationId, url, path);
+    JAMI_DEBUG("[Account {}] [Conversation {}] Start clone of {:s} to {}",
+               account->getAccountID(),
+               conversationId,
+               url,
+               path);
     git_repository* rep = nullptr;
     git_clone_options opts = GIT_CLONE_OPTIONS_INIT;
     opts.fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
     if (auto err = git_clone(&rep, url.c_str(), path.string().c_str(), &opts)) {
         if (const git_error* gerr = giterr_last())
-            JAMI_ERROR("[Account {}] [Conversation {}] Error when retrieving remote conversation: {:s} {}", account->getAccountID(), conversationId, gerr->message, path);
+            JAMI_ERROR(
+                "[Account {}] [Conversation {}] Error when retrieving remote conversation: {:s} {}",
+                account->getAccountID(),
+                conversationId,
+                gerr->message,
+                path);
         else
-            JAMI_ERROR("[Account {}] [Conversation {}] Unknown error {:d} when retrieving remote conversation", account->getAccountID(), conversationId, err);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unknown error {:d} when retrieving remote "
+                       "conversation",
+                       account->getAccountID(),
+                       conversationId,
+                       err);
         return nullptr;
     }
     git_repository_free(rep);
@@ -2689,10 +2868,15 @@ ConversationRepository::cloneConversation(
     repo->pinCertificates(true); // need to load certificates to validate non known members
     if (!repo->validClone(std::move(checkCommitCb))) {
         repo->erase();
-        JAMI_ERROR("[Account {}] [Conversation {}] error when validating remote conversation", account->getAccountID(), conversationId);
+        JAMI_ERROR("[Account {}] [Conversation {}] error when validating remote conversation",
+                   account->getAccountID(),
+                   conversationId);
         return nullptr;
     }
-    JAMI_LOG("[Account {}] [Conversation {}] New conversation cloned in {}", account->getAccountID(), conversationId, path);
+    JAMI_LOG("[Account {}] [Conversation {}] New conversation cloned in {}",
+             account->getAccountID(),
+             conversationId,
+             path);
     return repo;
 }
 
@@ -2703,11 +2887,44 @@ ConversationRepository::Impl::validCommits(
     for (const auto& commit : commitsToValidate) {
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
+
+        // For all commits, check that the user is valid,
+        // meaning the user's certificate MUST be in /members or /admins,
+        // their device cert MUST be in /devices,
+        // and the commit MUST be signed by the device
+        if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+            std::string msg_spec;
+            if (commit.parents.size() == 0)
+                msg_spec = "initial";
+            else if (commit.parents.size() == 1)
+                msg_spec = "";
+            else
+                msg_spec = "merge";
+
+            JAMI_WARNING("[Account {}] [Conversation {}] Malformed {} commit {}. Please ensure "
+                         "that you are using the latest version of Jami, or "
+                         "that your contact(s) are not performing any unwanted actions. {}",
+                         accountId_,
+                         id_,
+                         validUserAtCommit,
+                         commit.commit_msg,
+                         msg_spec);
+            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                         id_,
+                                                                         EVALIDFETCH,
+                                                                         "Malformed commit");
+            return false;
+        }
+
         if (commit.parents.size() == 0) {
             if (!checkInitialCommit(userDevice, commit.id, commit.commit_msg)) {
-                JAMI_WARNING("[Account {}] [Conversation {}] Malformed initial commit {}. Please check you use the latest "
-                             "version of Jami, or that your contact is not doing unwanted stuff.",
-                             accountId_, id_, commit.id);
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed initial commit {}. Please "
+                             "ensure that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions.",
+                             accountId_,
+                             id_,
+                             commit.id);
                 emitSignal<libjami::ConversationSignal::OnConversationError>(
                     accountId_, id_, EVALIDFETCH, "Malformed initial commit");
                 return false;
@@ -2719,8 +2936,10 @@ ConversationRepository::Impl::validCommits(
                 type = cm["type"].asString();
                 editId = cm["edit"].asString();
             } else {
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
                 return false;
             }
 
@@ -2728,12 +2947,18 @@ ConversationRepository::Impl::validCommits(
                 // Check that vote is valid
                 if (!checkVote(userDevice, commit.id, commit.parents[0])) {
                     JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Malformed vote commit {}. Please check you use the latest version "
-                        "of Jami, or that your contact is not doing unwanted stuff.",
-                        accountId_, id_, commit.id);
+                        "[Account {}] [Conversation {}] Malformed vote commit {}. Please ensure "
+                        "that you are using the latest version "
+                        "of Jami, or that one of your contacts is not performing any unwanted "
+                        "actions.",
+                        accountId_,
+                        id_,
+                        commit.id);
 
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(
-                        accountId_, id_, EVALIDFETCH, "Malformed vote");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                                 id_,
+                                                                                 EVALIDFETCH,
+                                                                                 "Malformed vote");
                     return false;
                 }
             } else if (type == "member") {
@@ -2741,30 +2966,30 @@ ConversationRepository::Impl::validCommits(
                 std::string uriMember = cm["uri"].asString();
                 if (action == "add") {
                     if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed add commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed add commit {}. "
+                                     "Please check you use the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed add member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed add member commit");
                         return false;
                     }
                 } else if (action == "join") {
                     if (!checkValidJoins(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed joins commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed joins commit {}. "
+                                     "Please ensure that you are using the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed join member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed join member commit");
                         return false;
                     }
                 } else if (action == "remove") {
@@ -2772,16 +2997,16 @@ ConversationRepository::Impl::validCommits(
                     // valid for this commit. Check previous commit
                     validUserAtCommit = commit.parents[0];
                     if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed removes commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed removes commit {}. "
+                                     "Please ensure that you are using the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed remove member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed remove member commit");
                         return false;
                     }
                 } else if (action == "ban" || action == "unban") {
@@ -2791,24 +3016,28 @@ ConversationRepository::Impl::validCommits(
                                                   commit.id,
                                                   commit.parents[0],
                                                   action)) {
-                        JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Malformed removes commit {}. Please check you use the latest version "
-                            "of Jami, or that your contact is not doing unwanted stuff.",
-                            accountId_, id_, commit.id);
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed removes commit {}. "
+                                     "Please ensure that you are using the latest version "
+                                     "of Jami, or that one of your contacts is not performing any "
+                                     "unwanted actions.",
+                                     accountId_,
+                                     id_,
+                                     commit.id);
 
                         emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Malformed ban member commit");
+                            accountId_, id_, EVALIDFETCH, "Malformed ban member commit");
                         return false;
                     }
                 } else {
                     JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Malformed member commit {} with action {}. Please check you use the "
+                        "[Account {}] [Conversation {}] Malformed member commit {} with "
+                        "action {}. Please ensure that you are using the "
                         "latest "
-                        "version of Jami, or that your contact is not doing unwanted stuff.",
-                        accountId_, id_, commit.id,
+                        "version of Jami, or that one of your contacts is not performing any "
+                        "unwanted actions.",
+                        accountId_,
+                        id_,
+                        commit.id,
                         action);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(
@@ -2817,16 +3046,16 @@ ConversationRepository::Impl::validCommits(
                 }
             } else if (type == "application/update-profile") {
                 if (!checkValidProfileUpdate(userDevice, commit.id, commit.parents[0])) {
-                    JAMI_WARNING("[Account {}] [Conversation {}] Malformed profile updates commit {}. Please check you use the "
+                    JAMI_WARNING("[Account {}] [Conversation {}] Malformed profile updates commit "
+                                 "{}. Please check you use the "
                                  "latest version "
                                  "of Jami, or that your contact is not doing unwanted stuff.",
-                                 accountId_, id_, commit.id);
+                                 accountId_,
+                                 id_,
+                                 commit.id);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(
-                        accountId_,
-                        id_,
-                        EVALIDFETCH,
-                        "Malformed profile updates commit");
+                        accountId_, id_, EVALIDFETCH, "Malformed profile updates commit");
                     return false;
                 }
             } else if (type == "application/edited-message" || !editId.empty()) {
@@ -2843,39 +3072,19 @@ ConversationRepository::Impl::validCommits(
                 // Check that no weird file is added outside device cert nor removed
                 if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
                     JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Malformed {} commit {}. Please check you use the latest "
-                        "version of Jami, or that your contact is not doing unwanted stuff.",
-                        accountId_, id_, type, commit.id);
+                        "[Account {}] [Conversation {}] Malformed {} commit {}. Please check you "
+                        "use the latest "
+                        "version of Jami, or that one of your contacts is not performing any "
+                        "unwanted actions.",
+                        accountId_,
+                        id_,
+                        type,
+                        commit.id);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(
                         accountId_, id_, EVALIDFETCH, "Malformed commit");
                     return false;
                 }
-            }
-
-            // For all commit, check that user is valid,
-            // So that user certificate MUST be in /members or /admins
-            // and device cert MUST be in /devices
-            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARNING(
-                    "[Account {}] [Conversation {}] Malformed commit {}. Please check you use the latest version of Jami, or "
-                    "that your contact is not doing unwanted stuff. {}", accountId_, id_,
-                    validUserAtCommit,
-                    commit.commit_msg);
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
-                return false;
-            }
-        } else {
-            // Merge commit, for now, check user
-            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARNING(
-                    "[Account {}] [Conversation {}] Malformed merge commit {}. Please check you use the latest version of "
-                    "Jami, or that your contact is not doing unwanted stuff.", accountId_, id_,
-                    validUserAtCommit);
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
-                return false;
             }
         }
         JAMI_DEBUG("[Account {}] [Conversation {}] Validate commit {}", accountId_, id_, commit.id);
@@ -3025,13 +3234,18 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     auto res = git_remote_lookup(&remote_ptr, repo.get(), remoteDeviceId.c_str());
     if (res != 0) {
         if (res != GIT_ENOTFOUND) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to lookup for remote {}", pimpl_->accountId_, pimpl_->id_, remoteDeviceId);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to lookup for remote {}",
+                       pimpl_->accountId_,
+                       pimpl_->id_,
+                       remoteDeviceId);
             return false;
         }
         std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
         if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str())
             < 0) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create remote for repository", pimpl_->accountId_, pimpl_->id_);
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to create remote for repository",
+                       pimpl_->accountId_,
+                       pimpl_->id_);
             return false;
         }
     }
@@ -3135,10 +3349,13 @@ ConversationRepository::Impl::resetHard()
     auto repo = repository();
     if (!repo)
         return;
-    git_object *head_commit_obj = nullptr;
+    git_object* head_commit_obj = nullptr;
     auto error = git_revparse_single(&head_commit_obj, repo.get(), "HEAD");
     if (error < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get HEAD commit: {}", accountId_, id_, error);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get HEAD commit: {}",
+                   accountId_,
+                   id_,
+                   error);
         return;
     }
     GitObject target {head_commit_obj, git_object_free};
@@ -3205,7 +3422,9 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     // First, the repository must be in a clean state
     auto repo = pimpl_->repository();
     if (!repo) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge without repo", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge without repo",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
         return {false, ""};
     }
     int state = git_repository_state(repo.get());
@@ -3213,25 +3432,40 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
         pimpl_->resetHard();
         int state = git_repository_state(repo.get());
         if (state != GIT_REPOSITORY_STATE_NONE) {
-            JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: repository is in unexpected state {}", pimpl_->accountId_, pimpl_->id_, state);
+            JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: repository is in "
+                       "unexpected state {}",
+                       pimpl_->accountId_,
+                       pimpl_->id_,
+                       state);
             return {false, ""};
         }
     }
     // Checkout main (to do a `git_merge branch`)
     if (git_repository_set_head(repo.get(), "refs/heads/main") < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: unable to checkout main branch", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: unable to checkout "
+                   "main branch",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
         return {false, ""};
     }
 
     // Then check that merge_id exists
     git_oid commit_id;
     if (git_oid_fromstr(&commit_id, merge_id.c_str()) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: unable to lookup commit {}", pimpl_->accountId_, pimpl_->id_, merge_id);
+        JAMI_ERROR(
+            "[Account {}] [Conversation {}] Merge operation aborted: unable to lookup commit {}",
+            pimpl_->accountId_,
+            pimpl_->id_,
+            merge_id);
         return {false, ""};
     }
     git_annotated_commit* annotated_ptr = nullptr;
     if (git_annotated_commit_lookup(&annotated_ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: unable to lookup commit {}", pimpl_->accountId_, pimpl_->id_, merge_id);
+        JAMI_ERROR(
+            "[Account {}] [Conversation {}] Merge operation aborted: unable to lookup commit {}",
+            pimpl_->accountId_,
+            pimpl_->id_,
+            merge_id);
         return {false, ""};
     }
     GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
@@ -3241,7 +3475,10 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     git_merge_preference_t preference;
     const git_annotated_commit* const_annotated = annotated.get();
     if (git_merge_analysis(&analysis, &preference, repo.get(), &const_annotated, 1) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Merge operation aborted: repository analysis failed", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR(
+            "[Account {}] [Conversation {}] Merge operation aborted: repository analysis failed",
+            pimpl_->accountId_,
+            pimpl_->id_);
         return {false, ""};
     }
 
@@ -3253,42 +3490,57 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
                || (analysis & GIT_MERGE_ANALYSIS_FASTFORWARD
                    && !(preference & GIT_MERGE_PREFERENCE_NO_FASTFORWARD))) {
         if (analysis & GIT_MERGE_ANALYSIS_UNBORN)
-            JAMI_LOG("[Account {}] [Conversation {}] Merge analysis result: Unborn", pimpl_->accountId_, pimpl_->id_);
+            JAMI_LOG("[Account {}] [Conversation {}] Merge analysis result: Unborn",
+                     pimpl_->accountId_,
+                     pimpl_->id_);
         else
-            JAMI_LOG("[Account {}] [Conversation {}] Merge analysis result: Fast-forward", pimpl_->accountId_, pimpl_->id_);
+            JAMI_LOG("[Account {}] [Conversation {}] Merge analysis result: Fast-forward",
+                     pimpl_->accountId_,
+                     pimpl_->id_);
         const auto* target_oid = git_annotated_commit_id(annotated.get());
 
         if (!pimpl_->mergeFastforward(target_oid, (analysis & GIT_MERGE_ANALYSIS_UNBORN))) {
             const git_error* err = giterr_last();
             if (err)
-                JAMI_ERROR("[Account {}] [Conversation {}] Fast forward merge failed: {}", pimpl_->accountId_, pimpl_->id_, err->message);
+                JAMI_ERROR("[Account {}] [Conversation {}] Fast forward merge failed: {}",
+                           pimpl_->accountId_,
+                           pimpl_->id_,
+                           err->message);
             return {false, ""};
         }
         return {true, ""}; // fast forward so no commit generated;
     }
 
     if (!pimpl_->validateDevice() && !force) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Invalid device. Not migrated?", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Invalid device. Not migrated?",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
         return {false, ""};
     }
 
     // Else we want to check for conflicts
     git_oid head_commit_id;
     if (git_reference_name_to_id(&head_commit_id, repo.get(), "HEAD") < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
         return {false, ""};
     }
 
     git_commit* head_ptr = nullptr;
     if (git_commit_lookup(&head_ptr, repo.get(), &head_commit_id) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
         return {false, ""};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
 
     git_commit* other__ptr = nullptr;
     if (git_commit_lookup(&other__ptr, repo.get(), &commit_id) < 0) {
-        JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit", pimpl_->accountId_, pimpl_->id_);
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit",
+                   pimpl_->accountId_,
+                   pimpl_->id_);
         return {false, ""};
     }
     GitCommit other_commit {other__ptr, git_commit_free};
@@ -3301,7 +3553,10 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
         < 0) {
         const git_error* err = giterr_last();
         if (err)
-            JAMI_ERROR("[Account {}] [Conversation {}] Git merge failed: {}", pimpl_->accountId_, pimpl_->id_, err->message);
+            JAMI_ERROR("[Account {}] [Conversation {}] Git merge failed: {}",
+                       pimpl_->accountId_,
+                       pimpl_->id_,
+                       err->message);
         return {false, ""};
     }
     GitIndex index {index_ptr, git_index_free};
@@ -3455,7 +3710,8 @@ ConversationRepository::leave()
     for (const auto& crl : account->identity().second->getRevocationLists()) {
         if (!crl)
             continue;
-        auto crlPath = crlsPath / pimpl_->deviceId_ / fmt::format("{}.crl", dht::toHex(crl->getNumber()));
+        auto crlPath = crlsPath / pimpl_->deviceId_
+                       / fmt::format("{}.crl", dht::toHex(crl->getNumber()));
         if (std::filesystem::is_regular_file(crlPath, ec)) {
             std::filesystem::remove(crlPath, ec);
         }
@@ -3485,9 +3741,12 @@ ConversationRepository::leave()
 
     {
         std::lock_guard lk(pimpl_->membersMtx_);
-        pimpl_->members_.erase(std::remove_if(pimpl_->members_.begin(), pimpl_->members_.end(), [&](auto& member) {
-            return member.uri == pimpl_->userId_;
-        }), pimpl_->members_.end());
+        pimpl_->members_.erase(std::remove_if(pimpl_->members_.begin(),
+                                              pimpl_->members_.end(),
+                                              [&](auto& member) {
+                                                  return member.uri == pimpl_->userId_;
+                                              }),
+                               pimpl_->members_.end());
         pimpl_->saveMembers();
     }
 
