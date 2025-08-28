@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "bc0dfe18_3812f2e1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 2985,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-08-28T20:13:29Z",
+      "side": 1,
+      "message": "This is the case of self conversation. Added the comment.",
+      "parentUuid": "e3fb6d1b_686d9b4d",
+      "revId": "a65e2e9b3d5c3147d00fd2e6aadca04fd93c8c01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9a61a571_ccaa56ff",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 12
@@ -31,6 +49,24 @@
       "writtenOn": "2025-08-28T20:00:21Z",
       "side": 1,
       "message": "excludedConversationId",
+      "revId": "a65e2e9b3d5c3147d00fd2e6aadca04fd93c8c01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d8dc4942_e30a967b",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 3024,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-08-28T20:13:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9a61a571_ccaa56ff",
       "revId": "a65e2e9b3d5c3147d00fd2e6aadca04fd93c8c01",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
@@ -48,6 +84,24 @@
       "writtenOn": "2025-08-28T20:00:21Z",
       "side": 1,
       "message": "should be info.removed \u003e\u003d info.created? There is function isRemoved() in the info.",
+      "revId": "a65e2e9b3d5c3147d00fd2e6aadca04fd93c8c01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "20c8dae3_31533d4f",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 3038,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-08-28T20:13:29Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1226cfee_1e2177af",
       "revId": "a65e2e9b3d5c3147d00fd2e6aadca04fd93c8c01",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
