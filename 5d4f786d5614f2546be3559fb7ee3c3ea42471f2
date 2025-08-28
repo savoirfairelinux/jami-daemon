@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "d8a3f2a6_c7390f7e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-08-28T15:56:14Z",
+      "side": 1,
+      "message": "In the current design, conversations are always synced between devices.\nWe might later introduce a feature to block a specific conversation from being synced on a specific device, but that would be a separate work.\nIf one is concerned that their device might get compromised, the best course of action for now is to clear Jami app data on that device entirely, or at least to remove the Jami account from the device.\nWe explicitly designed the protocol to prevent allowing to remotely delete a conversation on a peer device, as this might lead to surprises and potential abuse.\nAuto-deleting conversations might be introduced in the future, but again that would be a separate work.",
+      "parentUuid": "adc926ce_d9de3582",
+      "revId": "5d4f786d5614f2546be3559fb7ee3c3ea42471f2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "f322e1ca_8dd028f6",
         "filename": "src/jamidht/conversation_module.cpp",
         "patchSetId": 1
