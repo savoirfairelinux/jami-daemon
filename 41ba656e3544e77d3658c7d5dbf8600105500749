@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f1bf3492_f597387a",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "aff45a56_5f8e54af",
+      "range": {
+        "startLine": 7,
+        "startChar": 24,
+        "endLine": 7,
+        "endChar": 43
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0b78b3e2_1a77e45d",
@@ -41,6 +65,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a22166a1_bcc9c57e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0b78b3e2_1a77e45d",
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c27ac46d_11d7ebc7",
@@ -54,6 +96,30 @@
       "writtenOn": "2025-08-27T23:02:51Z",
       "side": 1,
       "message": "Capitalize? `ID`",
+      "range": {
+        "startLine": 1714,
+        "startChar": 56,
+        "endLine": 1714,
+        "endChar": 58
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "53b6e025_7521a160",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1714,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c27ac46d_11d7ebc7",
       "range": {
         "startLine": 1714,
         "startChar": 56,
@@ -87,6 +153,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3b1fce01_7e741eb1",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1717,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0ff7eaa4_2aa1a5c9",
+      "range": {
+        "startLine": 1717,
+        "startChar": 55,
+        "endLine": 1717,
+        "endChar": 57
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "bc792bf1_61519140",
@@ -100,6 +190,30 @@
       "writtenOn": "2025-08-27T23:02:51Z",
       "side": 1,
       "message": "1. Typo? `Unknown`?\n2. Add `An`?\n3. Add two `the`s?\n\n`An unknown error occurred while extracting the signature for the commit ID {}`\nOr\n`An unknown error occurred while extracting the commit ID {} signature`\nOr\n`An unknown error occurred while extracting the {} commit ID signature.`",
+      "range": {
+        "startLine": 1720,
+        "startChar": 28,
+        "endLine": 1720,
+        "endChar": 34
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "5608435a_de592338",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1720,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "bc792bf1_61519140",
       "range": {
         "startLine": 1720,
         "startChar": 28,
@@ -133,6 +247,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "36616148_b059f721",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2747,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4c4074d3_7cea13f9",
+      "range": {
+        "startLine": 2747,
+        "startChar": 11,
+        "endLine": 2747,
+        "endChar": 52
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "006ca0cf_665837e8",
@@ -146,6 +284,30 @@
       "writtenOn": "2025-08-27T23:02:51Z",
       "side": 1,
       "message": "Sorry for the noise, unsure yet of the convention of\n`MEMBERS`\n`/members`\n`@members`\n\nShould `/members` be `@members`?\nShould `/admins` be `@admins`?",
+      "range": {
+        "startLine": 2748,
+        "startChar": 47,
+        "endLine": 2748,
+        "endChar": 55
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "73283e43_997057a5",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2748,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "`/members` and `/admins` refers to folders, so we will keep it as it is. The ampersand refers to parameters for Doxygen commenting from what I know.",
+      "parentUuid": "006ca0cf_665837e8",
       "range": {
         "startLine": 2748,
         "startChar": 47,
@@ -179,6 +341,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "84e82f8d_edbef173",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2762,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7d735828_a6211217",
+      "range": {
+        "startLine": 2762,
+        "startChar": 17,
+        "endLine": 2762,
+        "endChar": 63
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5015144a_010b1b81",
@@ -202,6 +388,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "07705b59_690baa87",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2774,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5015144a_010b1b81",
+      "range": {
+        "startLine": 2774,
+        "startChar": 50,
+        "endLine": 2774,
+        "endChar": 96
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f694c060_2fbc3820",
@@ -215,6 +425,30 @@
       "writtenOn": "2025-08-27T23:02:51Z",
       "side": 1,
       "message": "`doing` → `performing`\n`stuff` → `actions`\n\n`that your contact is not performing unwanted actions.`",
+      "range": {
+        "startLine": 2912,
+        "startChar": 42,
+        "endLine": 2912,
+        "endChar": 91
+      },
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "416c4dcd_5b1e5c11",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2912,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-08-28T14:45:38Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f694c060_2fbc3820",
       "range": {
         "startLine": 2912,
         "startChar": 42,
