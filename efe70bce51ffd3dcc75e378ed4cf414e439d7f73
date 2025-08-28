@@ -16,6 +16,24 @@
       "message": "addConvInfo will lock convInfosMtx_",
       "revId": "efe70bce51ffd3dcc75e378ed4cf414e439d7f73",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "227d1e8a_5ebc7fc1",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 3000,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2025-08-28T19:49:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7b0fee04_7819a4fc",
+      "revId": "efe70bce51ffd3dcc75e378ed4cf414e439d7f73",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
