@@ -3821,6 +3821,12 @@ ConversationRepository::validClone(
     return true;
 }
 
+bool
+ConversationRepository::isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const
+{
+    return pimpl_->isValidUserAtCommit(userDevice, commitId);
+}
+
 void
 ConversationRepository::removeBranchWith(const std::string& remoteDevice)
 {
