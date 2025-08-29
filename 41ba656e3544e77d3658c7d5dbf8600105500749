@@ -85,6 +85,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "62ac700d_202761a9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T08:24:03Z",
+      "side": 1,
+      "message": "Here the patch still does not show a blank line after the copyright comment. How can this show correctly here? Thank you",
+      "parentUuid": "a22166a1_bcc9c57e",
+      "revId": "41ba656e3544e77d3658c7d5dbf8600105500749",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "c27ac46d_11d7ebc7",
         "filename": "src/jamidht/conversationrepository.cpp",
         "patchSetId": 2
