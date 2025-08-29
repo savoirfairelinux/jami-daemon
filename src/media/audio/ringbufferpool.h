@@ -34,6 +34,8 @@ class RingBufferPool
 {
 public:
     static const char* const DEFAULT_ID;
+    // Reader ID dedicated to the AEC reverse reference (remote/app-render only)
+    static const char* const AEC_REVERSE_ID;
 
     RingBufferPool();
     ~RingBufferPool();

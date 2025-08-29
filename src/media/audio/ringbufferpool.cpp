@@ -28,10 +28,16 @@
 namespace jami {
 
 const char* const RingBufferPool::DEFAULT_ID = "audiolayer_id";
+const char* const RingBufferPool::AEC_REVERSE_ID = "aec_reverse_id";
 
 RingBufferPool::RingBufferPool()
     : defaultRingBuffer_(createRingBuffer(DEFAULT_ID))
-{}
+{
+    // Ensure the AEC reverse reader ID exists and is independent from DEFAULT_ID
+    // This reader ID is not a separate ring buffer but a logical read binding target.
+    // It will get bound only to remote/app-render sources so AEC sees a clean reference.
+    readBindingsMap_[AEC_REVERSE_ID];
+}
 
 RingBufferPool::~RingBufferPool()
 {

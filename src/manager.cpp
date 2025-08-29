@@ -1676,7 +1676,10 @@ Manager::addAudio(Call& call)
     auto medias = call.getAudioStreams();
     for (const auto& media : medias) {
         JAMI_DEBUG("[call:{}] Attach audio", media.first);
-        getRingBufferPool().bindRingBuffers(media.first, RingBufferPool::DEFAULT_ID);
+    // Bind remote stream to the main output mix
+    getRingBufferPool().bindRingBuffers(media.first, RingBufferPool::DEFAULT_ID);
+    // Also bind remote stream to a dedicated AEC reverse reader so AEC gets only remote audio
+    getRingBufferPool().bindHalfDuplexOut(RingBufferPool::AEC_REVERSE_ID, media.first);
     }
     auto oldGuard = std::move(call.audioGuard);
     call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
@@ -1698,6 +1701,8 @@ Manager::removeAudio(Call& call)
     for (const auto& media : medias) {
         JAMI_DEBUG("[call:{}] Remove local audio {}", callId, media.first);
         getRingBufferPool().unBindAll(media.first);
+    // Ensure reverse AEC reader is detached as well
+    getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::AEC_REVERSE_ID, media.first);
     }
 }
 

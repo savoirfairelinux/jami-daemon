@@ -304,16 +304,18 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 
     std::shared_ptr<AudioFrame> playbackBuf {};
     while (!(playbackBuf = playbackQueue_->dequeue())) {
-        std::shared_ptr<AudioFrame> resampled;
+        std::shared_ptr<AudioFrame> resampledPlayback;
 
+        // 1) Build what we actually play to the device (mix of remote + tones + urgent)
         if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
             bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
-            resampled = resampler_->resample(std::move(urgentSamples), format);
+            resampledPlayback = resampler_->resample(std::move(urgentSamples), format);
         } else if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
-            resampled = resampler_->resample(toneToPlay->getNext(), format);
-        } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
-            resampled = resampler_->resample(std::move(buf), format);
+            resampledPlayback = resampler_->resample(toneToPlay->getNext(), format);
+        } else if (auto mix = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
+            resampledPlayback = resampler_->resample(std::move(mix), format);
         } else {
+            // No content to play; still feed silence into AEC reverse to keep timing
             std::lock_guard lock(audioProcessorMutex);
             if (audioProcessor) {
                 auto silence = std::make_shared<AudioFrame>(format, writableSamples);
@@ -323,14 +325,24 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
             break;
         }
 
-        if (resampled) {
+        // 2) Separately fetch the AEC reverse reference from the dedicated reader ID
+        {
             std::lock_guard lock(audioProcessorMutex);
             if (audioProcessor) {
-                audioProcessor->putPlayback(resampled);
+                if (auto reverse = bufferPool.getData(RingBufferPool::AEC_REVERSE_ID)) {
+                    // Resample to hardware format to match what APM expects via AudioProcessor
+                    auto resampledReverse = resampler_->resample(std::move(reverse), format);
+                    if (resampledReverse)
+                        audioProcessor->putPlayback(resampledReverse);
+                }
             }
-            playbackQueue_->enqueue(std::move(resampled));
-        } else
+        }
+
+        if (resampledPlayback) {
+            playbackQueue_->enqueue(std::move(resampledPlayback));
+        } else {
             break;
+        }
     }
 
     jami_tracepoint(audio_layer_get_to_play_end);
