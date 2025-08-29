@@ -1,0 +1,280 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5b936bd_67043281",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "`Git`\n\nhttps://en.wikipedia.org/wiki/Git",
+      "range": {
+        "startLine": 84,
+        "startChar": 44,
+        "endLine": 84,
+        "endChar": 47
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb1be303_2f9c3645",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "`Git`\n\nhttps://en.wikipedia.org/wiki/Git",
+      "range": {
+        "startLine": 185,
+        "startChar": 39,
+        "endLine": 185,
+        "endChar": 42
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cd9f1f2e_07895f52",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1503,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Should this string start with a capital letter, `Device`?",
+      "range": {
+        "startLine": 1503,
+        "startChar": 24,
+        "endLine": 1503,
+        "endChar": 30
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec6411fc_164a0716",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1510,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Should this string start with a capital letter, `Device`?",
+      "range": {
+        "startLine": 1510,
+        "startChar": 24,
+        "endLine": 1510,
+        "endChar": 30
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6fe014ae_58678fcb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1589,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Should this string start with a capital letter, `Device`?",
+      "range": {
+        "startLine": 1589,
+        "startChar": 28,
+        "endLine": 1589,
+        "endChar": 34
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e25c33f_a3cfd3d7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1595,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Should this string start with a capital letter, `Device`?",
+      "range": {
+        "startLine": 1595,
+        "startChar": 28,
+        "endLine": 1595,
+        "endChar": 34
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e6d27709_942f9755",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1601,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Should this string start with a capital letter, `Device`?",
+      "range": {
+        "startLine": 1601,
+        "startChar": 24,
+        "endLine": 1601,
+        "endChar": 30
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "be4493e0_4bf406c7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1785,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "https://en.wikipedia.org/wiki/Git#Design\n\u003e In Git, branches are very lightweight: a branch is only a reference to one commit.\n\nDo `commit ID` and `commit` refer to `reference` and `commit`, respectively?\n\n1. Typo `commmit`? Change to `commit`?\n2. Can the exclamation mark `!` be removed or changed to a full stop `.`?\n3. Is `provided` superfluous?\n\n`Error, the commit ID ({}) does not correspond to a commit`\nor\n`Error, the commit ID ({}) has no commit`\n\nThank you",
+      "range": {
+        "startLine": 1785,
+        "startChar": 91,
+        "endLine": 1785,
+        "endChar": 92
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de524779_20c5aef0",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1789,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "1. Can the exclamation mark `!` be removed or changed to a full stop `.`?\n2. Is `provided` superfluous?\n\n`Error, the commit ID ({}) does not have a signature`\nor\n`Error, the commit ID ({}) has no signature`",
+      "range": {
+        "startLine": 1789,
+        "startChar": 84,
+        "endLine": 1789,
+        "endChar": 85
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee109612_1745d40e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1813,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Can the exclamation mark `!` be removed or changed to a full stop `.`?",
+      "range": {
+        "startLine": 1813,
+        "startChar": 51,
+        "endLine": 1813,
+        "endChar": 52
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b89805c3_8be4a099",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2905,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Does `contacts are` also include the set of 1 contact?\n\nShould `contact(s) are` be changed to `contacts are` as the string does not explicitly state the number of contacts, for example the string does not state:\n\n… 1 contact is …\n\n… 2 contacts are …\n\nThank you",
+      "range": {
+        "startLine": 2905,
+        "startChar": 36,
+        "endLine": 2905,
+        "endChar": 50
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48971eb8_898ea407",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 2922,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T09:00:13Z",
+      "side": 1,
+      "message": "Does `contacts are` also include the *set* of 1 contact?\n\nShould `contact(s) are` be changed to `contacts are` as the string does not explicitly state the number of contacts, for example the string does not state:\n… 1 contact is …\n… 2 contacts are …\n\nThank you",
+      "range": {
+        "startLine": 2922,
+        "startChar": 60,
+        "endLine": 2922,
+        "endChar": 74
+      },
+      "revId": "e8aefd6ea80c75fef34fe5fa76792ace0dd99607",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
