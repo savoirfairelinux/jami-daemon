@@ -342,6 +342,19 @@ public:
     bool validClone(std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb) const;
 
     /**
+     * Verify the signature against the given commit
+     * @param userDevice    the email of the sender (i.e. their device's public key)
+     * @param commitId      the id of the commit
+     */
+    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
+
+    /**
+     * Validate that commits are not malformed
+     * @param commitsToValidate     the list of commits
+     */
+    bool validCommits(const std::vector<ConversationCommit>& commitsToValidate) const;
+
+    /**
      * Delete branch with remote
      * @param remoteDevice
      */
