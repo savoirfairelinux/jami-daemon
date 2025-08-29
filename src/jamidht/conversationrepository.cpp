@@ -1701,6 +1701,46 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         return false;
     }
 
+    git_buf sig = {}, sig_data = {};
+    // Extract the signature block and signature content from the commit
+    int sig_extract_res = git_commit_extract_signature(&sig,
+                                                       &sig_data,
+                                                       repo.get(),
+                                                       &oid,
+                                                       "signature");
+    // Verify that the extraction was successful
+    if (sig_extract_res != 0) {
+        switch (sig_extract_res) {
+        case GIT_ERROR_INVALID:
+            JAMI_ERROR("Error, the commit ID ({}) does not correspond to a commit.",
+                       commitId.c_str());
+            break;
+        case GIT_ERROR_OBJECT:
+            JAMI_ERROR("Error, the commit ID ({}) does not have a signature.", commitId.c_str());
+            break;
+        default:
+            JAMI_ERROR("An unknown error occurred while extracting signature for commit ID {}.",
+                       commitId.c_str());
+            break;
+            return false;
+        }
+    } 
+
+    auto pk = base64::decode(std::string_view(sig.ptr, sig.size));
+    //  Verify the signature (git verify-commit)
+    bool valid_signature = deviceCert.getPublicKey().checkSignature(reinterpret_cast<const uint8_t*>(
+                                                                        sig_data.ptr),
+                                                                    sig_data.size,
+                                                                    pk.data(),
+                                                                    pk.size());
+    // Free buffers before check in case of early return
+    git_buf_dispose(&sig);
+    git_buf_dispose(&sig_data);
+    if (!valid_signature) {
+        JAMI_WARNING("Commit {} not signed by device {}.", git_oid_tostr_s(&oid), userDevice);
+        return false;
+    }
+
     auto res = parentCert.getId().toString() == userUri;
     if (res && not hasPinnedCert) {
         acc->certStore().pinCertificate(std::move(deviceCert));
@@ -2703,6 +2743,34 @@ ConversationRepository::Impl::validCommits(
     for (const auto& commit : commitsToValidate) {
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
+
+        // For all commits, check that the user is valid,
+        // meaning the user's certificate MUST be in /members or /admins,
+        // their device cert MUST be in /devices,
+        // and the commit MUST be signed by the device
+        if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+            std::string msg_spec;
+            if (commit.parents.size() == 0)
+                msg_spec = "initial";
+            else if (commit.parents.size() == 1)
+                msg_spec = "";
+            else
+                msg_spec = "merge";
+            JAMI_WARNING("[Account {}] [Conversation {}] Malformed {} commit {}. Please ensure "
+                         "that you are using the latest version of Jami, or "
+                         "that one of your contacts is not performing any unwanted actions. {}",
+                         accountId_,
+                         id_,
+                         validUserAtCommit,
+                         commit.commit_msg,
+                         msg_spec);
+            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                         id_,
+                                                                         EVALIDFETCH,
+                                                                         "Malformed commit");
+            return false;
+        }
+
         if (commit.parents.size() == 0) {
             if (!checkInitialCommit(userDevice, commit.id, commit.commit_msg)) {
                 JAMI_WARNING("[Account {}] [Conversation {}] Malformed initial commit {}. Please check you use the latest "
@@ -2851,31 +2919,6 @@ ConversationRepository::Impl::validCommits(
                         accountId_, id_, EVALIDFETCH, "Malformed commit");
                     return false;
                 }
-            }
-
-            // For all commit, check that user is valid,
-            // So that user certificate MUST be in /members or /admins
-            // and device cert MUST be in /devices
-            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARNING(
-                    "[Account {}] [Conversation {}] Malformed commit {}. Please check you use the latest version of Jami, or "
-                    "that your contact is not doing unwanted stuff. {}", accountId_, id_,
-                    validUserAtCommit,
-                    commit.commit_msg);
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
-                return false;
-            }
-        } else {
-            // Merge commit, for now, check user
-            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-                JAMI_WARNING(
-                    "[Account {}] [Conversation {}] Malformed merge commit {}. Please check you use the latest version of "
-                    "Jami, or that your contact is not doing unwanted stuff.", accountId_, id_,
-                    validUserAtCommit);
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed commit");
-                return false;
             }
         }
         JAMI_DEBUG("[Account {}] [Conversation {}] Validate commit {}", accountId_, id_, commit.id);
