@@ -118,6 +118,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "07857885_6d475918",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-08-29T20:53:33Z",
+      "side": 1,
+      "message": "1. Change `cleanup` (noun) to `clean up` (verb)?\n2. Add `the`?\n\n`Unable to clean up the repository:`",
+      "parentUuid": "6d8aa4a3_688d65c9",
+      "range": {
+        "startLine": 120,
+        "startChar": 12,
+        "endLine": 120,
+        "endChar": 134
+      },
+      "revId": "9d82aed99096bfce9db4f50fdd27cae17631f60f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "7cbd1820_5400ce50",
         "filename": "src/jamidht/conversationrepository.cpp",
         "patchSetId": 1
