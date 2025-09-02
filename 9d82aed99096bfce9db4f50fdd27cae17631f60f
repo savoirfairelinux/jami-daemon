@@ -2443,6 +2443,30 @@
       },
       "revId": "9d82aed99096bfce9db4f50fdd27cae17631f60f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "223a151b_102c9db4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3991,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-02T18:41:32Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "86c07a97_f47312eb",
+      "range": {
+        "startLine": 3991,
+        "startChar": 24,
+        "endLine": 3991,
+        "endChar": 56
+      },
+      "revId": "9d82aed99096bfce9db4f50fdd27cae17631f60f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
