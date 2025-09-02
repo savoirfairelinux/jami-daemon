@@ -32,7 +32,13 @@ while read LINE; do
 		echo "$LINE"
 	fi
 done
-echo "Libs: $LIBS_PUBLIC $LIBS_PRIVATE"
+# Fix macOS framework linking
+COMBINED_LIBS="$LIBS_PUBLIC $LIBS_PRIVATE"
+if [ "$(uname)" = "Darwin" ]; then
+    # Convert -framework Name to -Wl,-framework,Name to prevent CMake processing issues
+    COMBINED_LIBS=$(echo "$COMBINED_LIBS" | sed -E 's/-framework ([A-Za-z0-9_]+)/-Wl,-framework,\1/g')
+fi
+echo "Libs: $COMBINED_LIBS"
 echo "Requires: $REQUIRES_PUBLIC $REQUIRES_PRIVATE"
 
 mv -f -- "$1.tmp" "$1"
