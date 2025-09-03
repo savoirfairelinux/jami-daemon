@@ -518,7 +518,7 @@ private:
 
     void detachAudioFromConference();
 
-    std::mutex setupSuccessMutex_;
+    std::mutex mediaStateMutex_;
 #ifdef ENABLE_VIDEO
     int rotation_ {0};
 #endif
