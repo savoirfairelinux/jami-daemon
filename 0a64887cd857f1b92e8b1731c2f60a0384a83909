@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a01a96f0_edafb7b2",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1728,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-09-03T18:20:17Z",
+      "side": 1,
+      "message": "normal flow, remove comment",
+      "range": {
+        "startLine": 1727,
+        "startChar": 5,
+        "endLine": 1728,
+        "endChar": 53
+      },
+      "revId": "0a64887cd857f1b92e8b1731c2f60a0384a83909",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "497854bf_3febf45d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1732,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-09-03T18:20:17Z",
+      "side": 1,
+      "message": "use the raw-pointer version to avoid copying sig_data:\n.checkSignature(sig_data.ptr, sig_data.size, pk.data(), pk.size());",
+      "range": {
+        "startLine": 1732,
+        "startChar": 53,
+        "endLine": 1732,
+        "endChar": 67
+      },
+      "revId": "0a64887cd857f1b92e8b1731c2f60a0384a83909",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69e635e1_7e4a381e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2920,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-09-03T18:20:17Z",
+      "side": 1,
+      "message": "merge commits not checked ?",
+      "range": {
+        "startLine": 2920,
+        "startChar": 6,
+        "endLine": 2920,
+        "endChar": 9
+      },
+      "revId": "0a64887cd857f1b92e8b1731c2f60a0384a83909",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
