@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cc83a07b_3bbbd967",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:43:42Z",
+      "side": 1,
+      "message": "Change `Optimize` to `optimize`?\n\nhttps://docs.jami.net/en_US/contribute/index.html#commit-message-guidelines\n\n\u003e 2. The subject can use the capitalization of the component or scope, but the rest of the title should be lowercase.",
+      "range": {
+        "startLine": 7,
+        "startChar": 7,
+        "endLine": 7,
+        "endChar": 15
+      },
+      "revId": "503c5f4490350b4a902843601f502bbf0928a611",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
