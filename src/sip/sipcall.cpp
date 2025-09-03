@@ -2757,8 +2757,13 @@ SIPCall::reportMediaNegotiationStatus()
         callId,
         libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
         currentMediaList());
+    std::lock_guard lk {mediaStateMutex_};
     auto previousState = isAudioOnly_;
     auto newState = !hasVideo();
+
+    if (!readyToRecord_) {
+        return;
+    }
 
     if (previousState != newState && Call::isRecording()) {
         deinitRecorder();
@@ -3694,7 +3699,7 @@ SIPCall::newIceSocket(unsigned compId)
 void
 SIPCall::rtpSetupSuccess()
 {
-    std::lock_guard lk {setupSuccessMutex_};
+    std::lock_guard lk {mediaStateMutex_};
 
     readyToRecord_ = true; // We're ready to record whenever a stream is ready
 
