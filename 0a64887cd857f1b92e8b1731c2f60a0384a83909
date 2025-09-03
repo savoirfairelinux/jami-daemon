@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "dd9975b0_e3804d8a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1728,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-03T21:42:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a01a96f0_edafb7b2",
+      "range": {
+        "startLine": 1727,
+        "startChar": 5,
+        "endLine": 1728,
+        "endChar": 53
+      },
+      "revId": "0a64887cd857f1b92e8b1731c2f60a0384a83909",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "497854bf_3febf45d",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ccb7c8b2_91a06aa6",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1732,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-03T21:42:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "497854bf_3febf45d",
+      "range": {
+        "startLine": 1732,
+        "startChar": 53,
+        "endLine": 1732,
+        "endChar": 67
+      },
+      "revId": "0a64887cd857f1b92e8b1731c2f60a0384a83909",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "69e635e1_7e4a381e",
@@ -60,6 +108,30 @@
       "writtenOn": "2025-09-03T18:20:17Z",
       "side": 1,
       "message": "merge commits not checked ?",
+      "range": {
+        "startLine": 2920,
+        "startChar": 6,
+        "endLine": 2920,
+        "endChar": 9
+      },
+      "revId": "0a64887cd857f1b92e8b1731c2f60a0384a83909",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6d6f90e5_7c790541",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2920,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-03T21:42:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "69e635e1_7e4a381e",
       "range": {
         "startLine": 2920,
         "startChar": 6,
