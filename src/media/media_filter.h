@@ -76,6 +76,11 @@ public:
     int initialize(const std::string& filterDesc, const std::vector<MediaStream>& msps);
 
     /**
+     * @brief Determines if the media filter needs to be reinitialized for a new stream.
+     */
+    bool needsReinitForNewStream(const std::string& name) const;
+
+    /**
      * @brief Returns a MediaStream object describing the input specified by @inputName.
      */
     const MediaStream& getInputParams(const std::string& inputName) const;

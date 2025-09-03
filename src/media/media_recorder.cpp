@@ -22,6 +22,7 @@
 #include "manager.h"
 #include "media_io_handle.h"
 #include "media_recorder.h"
+#include "media_filter.h"
 #include "system_codec_container.h"
 #include "video/filter_transpose.h"
 #ifdef ENABLE_VIDEO
@@ -275,6 +276,7 @@ MediaRecorder::stopRecording()
 Observer<std::shared_ptr<MediaFrame>>*
 MediaRecorder::addStream(const MediaStream& ms)
 {
+    bool streamIsNew = false;
     std::lock_guard lk(mutexStreamSetup_);
     if (audioOnly_ && ms.isVideo) {
         JAMI_ERR() << "Attempting to add video stream to audio only recording";
@@ -294,6 +296,7 @@ MediaRecorder::addStream(const MediaStream& ms)
                                                           });
         it = streams_.insert(std::make_pair(ms.name, std::move(streamPtr))).first;
         JAMI_LOG("[Recorder: {:p}] Recorder input #{}: {:s}", fmt::ptr(this), streams_.size(), ms.name);
+        streamIsNew = true;
     } else {
         if (ms == it->second->info)
             JAMI_LOG("[Recorder: {:p}] Recorder already has '{:s}' as input", fmt::ptr(this), ms.name);
@@ -304,6 +307,17 @@ MediaRecorder::addStream(const MediaStream& ms)
                                                     ms](const std::shared_ptr<MediaFrame>& frame) {
                                                        onFrame(ms.name, frame);
                                                    });
+        }
+        streamIsNew = false;
+    }
+
+    if (streamIsNew && isRecording_) {
+        if (ms.isVideo) {
+            if (!videoFilter_ || videoFilter_->needsReinitForNewStream(ms.name))
+                setupVideoOutput();
+        } else {
+            if (!audioFilter_ || audioFilter_->needsReinitForNewStream(ms.name))
+                setupAudioOutput();
         }
     }
     it->second->isEnabled = isRecording_;
