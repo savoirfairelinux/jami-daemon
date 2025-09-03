@@ -107,6 +107,13 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
     return 0;
 }
 
+bool MediaFilter::needsReinitForNewStream(const std::string& name) const {
+    for (const auto& ms : inputParams_)
+        if (ms.name == name)
+            return false;
+    return true;
+}
+
 const MediaStream&
 MediaFilter::getInputParams(const std::string& inputName) const
 {
