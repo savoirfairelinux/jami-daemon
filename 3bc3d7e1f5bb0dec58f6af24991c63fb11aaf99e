@@ -1,0 +1,1568 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f9d2ceb6_1b9e98a4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_WARNING(\"[Account {}] [Conversation {}] Conversation is locked, removing lock {}\",\n                         accountId_,\n                         id_,\n                         indexPath);\n            ```",
+      "range": {
+        "startLine": 93,
+        "startChar": 0,
+        "endLine": 93,
+        "endChar": 128
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2f074de_c59ea995",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_WARNING(\"[Account {}] [Conversation {}] Conversation is locked, removing lock {}\",\n                         accountId_,\n                         id_,\n                         refPath);\n```",
+      "range": {
+        "startLine": 105,
+        "startChar": 0,
+        "endLine": 105,
+        "endChar": 126
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8afa3c60_17895567",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n                JAMI_WARNING(\"[Account {}] [Conversation {}] Conversation is locked for remote {}, removing lock\",\n                             accountId_,\n                             id_,\n                             fileIt.path().filename());\n```",
+      "range": {
+        "startLine": 119,
+        "startChar": 0,
+        "endLine": 119,
+        "endChar": 158
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "10291619_12d2e88f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 444,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "`ID`",
+      "range": {
+        "startLine": 444,
+        "startChar": 81,
+        "endLine": 444,
+        "endChar": 83
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9aeca9f0_fd4ac05e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 456,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "`JAMS`",
+      "range": {
+        "startLine": 456,
+        "startChar": 23,
+        "endLine": 456,
+        "endChar": 27
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fe8fef2d_5a1744bb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 771,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        int err \u003d git_signature_new(\u0026sig_ptr,\n                                    deviceId_.c_str(),\n                                    deviceId_.c_str(),\n                                    std::time(nullptr),\n                                    0);\n```",
+      "range": {
+        "startLine": 771,
+        "startChar": 0,
+        "endLine": 771,
+        "endChar": 107
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3445ac6c_6d386088",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 878,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to create commit buffer: {}\",\n                       accountId_,\n                       id_,\n                       err-\u003emessage);\n```",
+      "range": {
+        "startLine": 878,
+        "startChar": 0,
+        "endLine": 878,
+        "endChar": 123
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3869d8a3_5a1eb64a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 904,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_LOG(\"[Account {}] [Conversation {}] New merge commit added with id: {}\",\n                 accountId_,\n                 id_,\n                 commit_str);\n```",
+      "range": {
+        "startLine": 904,
+        "startChar": 0,
+        "endLine": 904,
+        "endChar": 115
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6c438b64_d9533518",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 911,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n                JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to move commit to main: {}\",\n                           accountId_,\n                           id_,\n                           err-\u003emessage);\n```",
+      "range": {
+        "startLine": 911,
+        "startChar": 0,
+        "endLine": 911,
+        "endChar": 126
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "04db3d48_74a4297d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 929,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] failed to look up OID {}: {}\",\n                       accountId_,\n                       id_,\n                       git_oid_tostr_s(\u0026commit_oid),\n                       err-\u003emessage);\n```",
+      "range": {
+        "startLine": 929,
+        "startChar": 0,
+        "endLine": 929,
+        "endChar": 147
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2327d225_5b01b72f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 953,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] failed to look up HEAD ref\",\n                       accountId_,\n                       id_);\n```",
+      "range": {
+        "startLine": 953,
+        "startChar": 0,
+        "endLine": 953,
+        "endChar": 101
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4194d4b0_86ef1d96",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 966,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n                JAMI_ERROR(\"[Account {}] [Conversation {}] failed to create main reference: {}\",\n                           accountId_,\n                           id_,\n                           err-\u003emessage);\n```",
+      "range": {
+        "startLine": 966,
+        "startChar": 0,
+        "endLine": 966,
+        "endChar": 128
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f110c6f2_25bf278b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 980,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] failed to look up OID {}\",\n                   accountId_,\n                   id_,\n                   git_oid_tostr_s(target_oid));\n```",
+      "range": {
+        "startLine": 980,
+        "startChar": 0,
+        "endLine": 980,
+        "endChar": 124
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "48eb00c3_e77e3723",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 991,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] failed to checkout HEAD reference: {}\",\n                       accountId_,\n                       id_,\n                       err-\u003emessage);\n```",
+      "range": {
+        "startLine": 991,
+        "startChar": 0,
+        "endLine": 991,
+        "endChar": 126
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "806f282a_0a98c253",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 993,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] failed to checkout HEAD reference: unknown error\",\n                       accountId_,\n                       id_);\n```",
+      "range": {
+        "startLine": 993,
+        "startChar": 0,
+        "endLine": 993,
+        "endChar": 123
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "07376e2d_31c663cd",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1820,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_WARNING(\"[Account {}] [Conversation {}] Unable to find file {}\",\n                     accountId_,\n                     id_,\n                     devicePath);\n```",
+      "range": {
+        "startLine": 1820,
+        "startChar": 0,
+        "endLine": 1820,
+        "endChar": 107
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "10ddfbb5_bbe2b6ed",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1832,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_WARNING(\"[Account {}] [Conversation {}] Device certificate is no longer valid. Attempting to update certificate.\",\n                     accountId_,\n                     id_);\n```",
+      "range": {
+        "startLine": 1832,
+        "startChar": 0,
+        "endLine": 1832,
+        "endChar": 145
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d75fe008_578a2ef9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1836,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Current device\u0027s certificate is invalid. A migration is needed\",\n                       accountId_,\n                       id_);\n```",
+      "range": {
+        "startLine": 1836,
+        "startChar": 0,
+        "endLine": 1836,
+        "endChar": 137
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "981d21ee_570a0a67",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1841,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to write data to {}\",\n                       accountId_,\n                       id_,\n                       devicePath);\n```",
+      "range": {
+        "startLine": 1841,
+        "startChar": 0,
+        "endLine": 1841,
+        "endChar": 113
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "69d3a1a4_c029839c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1847,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to add file {}\",\n                       accountId_,\n                       id_,\n                       devicePath);\n```",
+      "range": {
+        "startLine": 1847,
+        "startChar": 0,
+        "endLine": 1847,
+        "endChar": 108
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d26ab75e_6e963a77",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1863,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Invalid parent path (not in members or admins)\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1863,
+        "startChar": 0,
+        "endLine": 1863,
+        "endChar": 117
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "941824d7_16debaa4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1874,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_WARNING(\"[Account {}] [Conversation {}] Account certificate is no longer valid. Attempting to update certificate.\",\n                     accountId_,\n                     id_);\n```",
+      "range": {
+        "startLine": 1874,
+        "startChar": 0,
+        "endLine": 1874,
+        "endChar": 146
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35732814_5900226c",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1904,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] commit failed: Unable to generate signature\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1904,
+        "startChar": 0,
+        "endLine": 1904,
+        "endChar": 114
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aea55735_6585cad8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1915,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] commit failed: Unable to open repository index\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1915,
+        "startChar": 0,
+        "endLine": 1915,
+        "endChar": 117
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6cbd4c8_42bcf7f4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1922,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] commit failed: Unable to write initial tree from index\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1922,
+        "startChar": 0,
+        "endLine": 1922,
+        "endChar": 125
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a20944ac_b4f19c9d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1928,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to look up initial tree\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1928,
+        "startChar": 0,
+        "endLine": 1928,
+        "endChar": 101
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8d56fd37_0266fb2b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1935,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to get reference for HEAD\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1935,
+        "startChar": 0,
+        "endLine": 1935,
+        "endChar": 103
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "451bb16e_ad5d59ed",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1966,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to create commit buffer\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 1966,
+        "startChar": 0,
+        "endLine": 1966,
+        "endChar": 101
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2da76c2_ea53c7c1",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1992,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to move commit to main: {}\",\n                       accountId_,\n                       id_,\n                       err-\u003emessage);\n```",
+      "range": {
+        "startLine": 1992,
+        "startChar": 0,
+        "endLine": 1992,
+        "endChar": 122
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d4ae3f9d_e7a1f248",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2004,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_LOG(\"[Account {}] [Conversation {}] New message added with id: {}\",\n                 accountId_,\n                 id_,\n                 commit_str);\n```",
+      "range": {
+        "startLine": 2004,
+        "startChar": 0,
+        "endLine": 2004,
+        "endChar": 110
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d550417e_532711b7",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2024,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        emitSignal\u003clibjami::ConversationSignal::OnConversationError\u003e(accountId_,\n                                                                     id_,\n                                                                     EINVALIDMODE,\n                                                                     \"No initial commit\");\n```",
+      "range": {
+        "startLine": 2021,
+        "startChar": 0,
+        "endLine": 2024,
+        "endChar": 93
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "35b96cfb_bb12325f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2034,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        emitSignal\u003clibjami::ConversationSignal::OnConversationError\u003e(accountId_,\n                                                                     id_,\n                                                                     EINVALIDMODE,\n                                                                     \"No initial commit\");\n```",
+      "range": {
+        "startLine": 2031,
+        "startChar": 0,
+        "endLine": 2034,
+        "endChar": 93
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e1894cd6_796f6fbd",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2041,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        emitSignal\u003clibjami::ConversationSignal::OnConversationError\u003e(accountId_,\n                                                                     id_,\n                                                                     EINVALIDMODE,\n                                                                     \"No mode detected\");\n```",
+      "range": {
+        "startLine": 2038,
+        "startChar": 0,
+        "endLine": 2041,
+        "endChar": 92
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a29cb196_b8c55730",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2200,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to get reference for HEAD\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 2200,
+        "startChar": 0,
+        "endLine": 2200,
+        "endChar": 103
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "99441dcc_7905b56e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2230,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_WARNING(\"[Account {}] [Conversation {}] Failed to look up commit {}\",\n                         accountId_,\n                         id_,\n                         id);\n```",
+      "range": {
+        "startLine": 2230,
+        "startChar": 0,
+        "endLine": 2230,
+        "endChar": 108
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aaee760a_9e27512d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2265,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_WARNING(\"[Account {}] [Conversation {}] Unable to extract signature for commit {}\",\n                         accountId_,\n                         id_,\n                         id);\n```",
+      "range": {
+        "startLine": 2265,
+        "startChar": 0,
+        "endLine": 2265,
+        "endChar": 122
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b6697fba_81acf039",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2365,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_WARNING(\"[Account {}] [Conversation {}] Failed to look up commit {}\",\n                     accountId_,\n                     id_,\n                     commitId);\n```",
+      "range": {
+        "startLine": 2365,
+        "startChar": 0,
+        "endLine": 2365,
+        "endChar": 110
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "444bffbc_f6345f73",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2371,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to look up initial tree\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 2371,
+        "startChar": 0,
+        "endLine": 2371,
+        "endChar": 101
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ba3e1b6b_cd78073a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2422,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to get reference for HEAD\",\n                   accountId_,\n                   id_);\n```",
+      "range": {
+        "startLine": 2422,
+        "startChar": 0,
+        "endLine": 2422,
+        "endChar": 103
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b1954a9_d923ebda",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2445,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"Conflict detected on a file that is not authorized: {}\",\n                       ancestor_out-\u003epath);\n```",
+      "range": {
+        "startLine": 2445,
+        "startChar": 0,
+        "endLine": 2445,
+        "endChar": 101
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a0e35686_7a6345ce",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2523,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Invalid author ID for commit {}\",\n                   accountId_,\n                   id_,\n                   commit.id);\n```",
+      "range": {
+        "startLine": 2523,
+        "startChar": 0,
+        "endLine": 2523,
+        "endChar": 113
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72a2f593_1b026985",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2661,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] Clone conversation with empty conversationId\",\n                   account-\u003egetAccountID());\n```",
+      "range": {
+        "startLine": 2661,
+        "startChar": 0,
+        "endLine": 2661,
+        "endChar": 105
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0c7b9a95_f421190b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2675,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "Typo? Should `advancment` be `advancement`?",
+      "range": {
+        "startLine": 2675,
+        "startChar": 28,
+        "endLine": 2675,
+        "endChar": 38
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b982b4b8_304df834",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2697,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n    JAMI_DEBUG(\"[Account {}] [Conversation {}] Start clone of {:s} to {}\",\n               account-\u003egetAccountID(),\n               conversationId,\n               url,\n               path);\n```",
+      "range": {
+        "startLine": 2697,
+        "startChar": 0,
+        "endLine": 2697,
+        "endChar": 127
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fc8a40d6_4d51b74e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2703,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Error when retrieving remote conversation: {:s} {}\",\n                       account-\u003egetAccountID(),\n                       conversationId,\n                       gerr-\u003emessage, path);\n```",
+      "range": {
+        "startLine": 2703,
+        "startChar": 0,
+        "endLine": 2703,
+        "endChar": 170
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a2279b41_3423ae14",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2705,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unknown error {:d} when retrieving remote conversation\",\n                       account-\u003egetAccountID(),\n                       conversationId,\n                       err);\n```",
+      "range": {
+        "startLine": 2705,
+        "startChar": 0,
+        "endLine": 2705,
+        "endChar": 158
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0fea15e5_c56fd038",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2713,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] An error occurred while validating remote conversation.\",\n                   account-\u003egetAccountID(),\n                   conversationId);\n```",
+      "range": {
+        "startLine": 2713,
+        "startChar": 0,
+        "endLine": 2713,
+        "endChar": 150
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ff8e448_4a1c565a",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2716,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n    JAMI_LOG(\"[Account {}] [Conversation {}] New conversation cloned in {}\",\n             account-\u003egetAccountID(),\n             conversationId, path);\n```",
+      "range": {
+        "startLine": 2716,
+        "startChar": 0,
+        "endLine": 2716,
+        "endChar": 124
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e97ddc82_7cab32e3",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3047,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to look up for remote {}\",\n                       pimpl_-\u003eaccountId_,\n                       pimpl_-\u003eid_,\n                       remoteDeviceId);\n```",
+      "range": {
+        "startLine": 3047,
+        "startChar": 0,
+        "endLine": 3047,
+        "endChar": 138
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0982063f_826003f9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3053,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to create remote for repository\",\n                       pimpl_-\u003eaccountId_,\n                       pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3053,
+        "startChar": 0,
+        "endLine": 3053,
+        "endChar": 129
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fb02d99f_ca1cacc8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3060,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "Typo? Change `advancment` to `advancement`?",
+      "range": {
+        "startLine": 3060,
+        "startChar": 28,
+        "endLine": 3060,
+        "endChar": 38
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "79cb03ec_35c121e0",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3160,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to get HEAD commit: {}\",\n                   accountId_,\n                   id_,\n                   error);\n```",
+      "range": {
+        "startLine": 3160,
+        "startChar": 0,
+        "endLine": 3160,
+        "endChar": 107
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5e6fb8fd_0dadbf8e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3227,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to merge without repo\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3227,
+        "startChar": 0,
+        "endLine": 3227,
+        "endChar": 115
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f28285bd_82d32d3b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3235,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_ERROR(\"[Account {}] [Conversation {}] Merge operation aborted: repository is in unexpected state {}\",\n                       pimpl_-\u003eaccountId_,\n                       pimpl_-\u003eid_, state);\n```",
+      "range": {
+        "startLine": 3235,
+        "startChar": 0,
+        "endLine": 3235,
+        "endChar": 159
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d639d12_fcdcd205",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3241,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Merge operation aborted: unable to checkout main branch\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3241,
+        "startChar": 0,
+        "endLine": 3241,
+        "endChar": 142
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9ef3ece9_e241c89f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3248,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Merge operation aborted: unable to look up commit {}\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_,\n                   merge_id);\n```",
+      "range": {
+        "startLine": 3248,
+        "startChar": 0,
+        "endLine": 3248,
+        "endChar": 149
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "25e64bd6_d4db04c5",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3253,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Merge operation aborted: unable to look up commit {}\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_,\n                   merge_id);\n```",
+      "range": {
+        "startLine": 3253,
+        "startChar": 0,
+        "endLine": 3253,
+        "endChar": 149
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6b21b96d_75e9c3c4",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3263,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Merge operation aborted: repository analysis failed\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3263,
+        "startChar": 0,
+        "endLine": 3263,
+        "endChar": 138
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b675389_da0b3fc8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3275,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_LOG(\"[Account {}] [Conversation {}] Merge analysis result: Unborn\",\n                     pimpl_-\u003eaccountId_,\n                     pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3275,
+        "startChar": 0,
+        "endLine": 3275,
+        "endChar": 118
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5f478c5f_7c911a02",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3277,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n            JAMI_LOG(\"[Account {}] [Conversation {}] Merge analysis result: Fast-forward\",\n                     pimpl_-\u003eaccountId_,\n                     pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3277,
+        "startChar": 0,
+        "endLine": 3277,
+        "endChar": 124
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "707c30c5_62b46be9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3283,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n                JAMI_ERROR(\"[Account {}] [Conversation {}] Fast forward merge failed: {}\",\n                           pimpl_-\u003eaccountId_,\n                           pimpl_-\u003eid_,\n                           err-\u003emessage);\n```",
+      "range": {
+        "startLine": 3283,
+        "startChar": 0,
+        "endLine": 3283,
+        "endChar": 138
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "63b1e502_f1c48d1b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3290,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Invalid device. Not migrated?\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3290,
+        "startChar": 0,
+        "endLine": 3290,
+        "endChar": 116
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7e99c00_cb56cbda",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3297,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to get reference for HEAD\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3297,
+        "startChar": 0,
+        "endLine": 3297,
+        "endChar": 119
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51ce6d3b_471e9ee9",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3303,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to look up HEAD commit\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3303,
+        "startChar": 0,
+        "endLine": 3303,
+        "endChar": 116
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0304cf27_fa6162c2",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3310,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"[Account {}] [Conversation {}] Unable to look up HEAD commit\",\n                   pimpl_-\u003eaccountId_,\n                   pimpl_-\u003eid_);\n```",
+      "range": {
+        "startLine": 3310,
+        "startChar": 0,
+        "endLine": 3310,
+        "endChar": 116
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5874afe1_40acd816",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3635,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"An error occurred while creating the {} directory. Abort resolving vote.\",\n                   destPath);\n```",
+      "range": {
+        "startLine": 3635,
+        "startChar": 0,
+        "endLine": 3635,
+        "endChar": 105
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b23d61cd_4b73882b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3691,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"An error occurred while creating the {} destination path. Abort resolving vote.\",\n                   destPath);\n```",
+      "range": {
+        "startLine": 3691,
+        "startChar": 0,
+        "endLine": 3691,
+        "endChar": 112
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3805fbf_ec9cfbcf",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 3697,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "```\n        JAMI_ERROR(\"Error when moving {} to {}. Abort resolving vote.\",\n                   originFilePath,\n                   destFilePath);\n```",
+      "range": {
+        "startLine": 3697,
+        "startChar": 0,
+        "endLine": 3697,
+        "endChar": 102
+      },
+      "revId": "3bc3d7e1f5bb0dec58f6af24991c63fb11aaf99e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}

@@ -48,6 +48,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1b6e6d1a_67f54e9b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-09-03T22:21:38Z",
+      "side": 1,
+      "message": "When `NOTE:` is written, Git automatically bolds the text.",
+      "parentUuid": "0260b28d_2ae552bf",
+      "range": {
+        "startLine": 168,
+        "startChar": 0,
+        "endLine": 169,
+        "endChar": 50
+      },
+      "revId": "3e6d38a8ac54a6a7548885220b3a84d476f56aab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "0f886a23_cc9f28ae",
