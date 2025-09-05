@@ -135,7 +135,6 @@ if (BUILD_CONTRIB)
             message(STATUS "Building for multiple architectures: ${CMAKE_OSX_ARCHITECTURES}")
             foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
                 message(STATUS "Building for architecture: ${ARCH}")
-                set(ENV{CMAKE_OSX_ARCHITECTURES} ${ARCH})
                 set(CC_TARGET ${ARCH}-apple-darwin${CMAKE_SYSTEM_VERSION})
                 set(CC_CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/native-${CC_TARGET})
                 set(CC_CONTRIB_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/${CC_TARGET})
@@ -146,9 +145,9 @@ if (BUILD_CONTRIB)
                     list(APPEND BOOTSTRAP_COMMAND --ignore-system-libs)
                 endif()
                 execute_process(
-                    COMMAND ${BOOTSTRAP_COMMAND}
+                    COMMAND env CMAKE_OSX_ARCHITECTURES=${ARCH} ${BOOTSTRAP_COMMAND}
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
-                execute_process(COMMAND make list
+                execute_process(COMMAND env CMAKE_OSX_ARCHITECTURES=${ARCH} make list
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
                 execute_process(COMMAND make ${CONTRIB_BUILD_FLAGS}
                     WORKING_DIRECTORY ${CC_CONTRIB_BUILD_PATH})
