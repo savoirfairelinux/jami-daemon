@@ -201,6 +201,15 @@ public:
     bool fetch(const std::string& remoteDeviceId);
 
     /**
+     * Merge the history of the conversation with another peer
+     * @param uri                    The peer uri
+     * @param disconnectFromPeerCb   Callback to disconnect from peer when banning
+     * @return                       A vector of media maps representing the merged history
+     */
+    std::vector<std::map<std::string, std::string>> mergeHistory(
+        const std::string& uri, std::function<void(const std::string&)>&& disconnectFromPeerCb = {});
+
+    /**
      * Retrieve remote head. Can be useful after a fetch operation
      * @param remoteDeviceId        The remote name
      * @param branch                Remote branch to check (default: main)
@@ -257,14 +266,6 @@ public:
      * generated if one (can be a fast forward merge without commit)
      */
     std::pair<bool, std::string> merge(const std::string& merge_id, bool force = false);
-
-    /**
-     * Get the common parent between two branches
-     * @param from  The first branch
-     * @param to    The second branch
-     * @return the common parent
-     */
-    std::string mergeBase(const std::string& from, const std::string& to) const;
 
     /**
      * Get current diff stats between two commits

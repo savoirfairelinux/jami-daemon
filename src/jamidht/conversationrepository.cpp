@@ -26,6 +26,22 @@
 #include "client/ring_signal.h"
 #include "vcard.h"
 #include "json_utils.h"
+#include "fileutils.h"
+#include "logger.h"
+#include "jami/conversation_interface.h"
+
+#include <opendht/crypto.h>
+
+#include <git2/blob.h>
+#include <git2/buffer.h>
+#include <git2/commit.h>
+#include <git2/deprecated.h>
+#include <git2/refs.h>
+#include <git2/object.h>
+#include <git2/indexer.h>
+#include <git2/remote.h>
+#include <git2/merge.h>
+#include <git2/diff.h>
 
 #include <algorithm>
 #include <iterator>
@@ -36,7 +52,9 @@
 #include <regex>
 #include <exception>
 #include <optional>
-#include <git2/diff.h>
+#include <memory>
+#include <cstdint>
+#include <utility>
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
@@ -3298,6 +3316,59 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     return true;
 }
 
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::mergeHistory(const std::string& uri,
+                                     std::function<void(const std::string&)>&& disconnectFromPeerCb)
+{
+    auto remoteHeadRes = remoteHead(uri);
+    if (remoteHeadRes.empty()) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to get HEAD of {}", pimpl_->accountId_, pimpl_->id_, uri);
+        return {};
+    }
+
+    // Validate commit
+    auto [newCommits, err] = validFetch(uri);
+    if (newCommits.empty()) {
+        if (err)
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to validate history with {}",
+                       pimpl_->accountId_,
+                       pimpl_->id_,
+                       uri);
+        removeBranchWith(uri);
+        return {};
+    }
+
+    // If validated, merge
+    auto [ok, cid] = merge(remoteHeadRes);
+    if (!ok) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge history with {}",
+                   pimpl_->accountId_,
+                   pimpl_->id_,
+                   uri);
+        removeBranchWith(uri);
+        return {};
+    }
+    if (!cid.empty()) {
+        // A merge commit was generated, should be added in new commits
+        auto commit = getCommit(cid);
+        if (commit != std::nullopt)
+            newCommits.emplace_back(*commit);
+    }
+
+    JAMI_LOG("[Account {}] [Conversation {}] Successfully merged history with {}", pimpl_->accountId_, pimpl_->id_, uri);
+    auto result = convCommitsToMap(newCommits);
+    for (auto& commit : result) {
+        auto it = commit.find("type");
+        if (it != commit.end() && it->second == "member") {
+            refreshMembers();
+
+            if (commit["action"] == "ban")
+                disconnectFromPeerCb(commit["uri"]);
+        }
+    }
+    return result;
+}
+
 std::string
 ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std::string& branch) const
 {
@@ -3562,20 +3633,6 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     JAMI_LOG("Merge done between {} and main", merge_id);
 
     return {!result.empty(), result};
-}
-
-std::string
-ConversationRepository::mergeBase(const std::string& from, const std::string& to) const
-{
-    if (auto repo = pimpl_->repository()) {
-        git_oid oid, oidFrom, oidMerge;
-        git_oid_fromstr(&oidFrom, from.c_str());
-        git_oid_fromstr(&oid, to.c_str());
-        git_merge_base(&oidMerge, repo.get(), &oid, &oidFrom);
-        if (auto* commit_str = git_oid_tostr_s(&oidMerge))
-            return commit_str;
-    }
-    return {};
 }
 
 std::string
