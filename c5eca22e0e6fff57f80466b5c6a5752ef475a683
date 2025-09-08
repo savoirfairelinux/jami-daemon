@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6e9866f1_056e3f59",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3106,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-08T20:40:12Z",
+      "side": 1,
+      "message": "revert callback to outside the function post-pull",
+      "range": {
+        "startLine": 3106,
+        "startChar": 29,
+        "endLine": 3106,
+        "endChar": 113
+      },
+      "revId": "c5eca22e0e6fff57f80466b5c6a5752ef475a683",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a52424b0_59d3762b",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3108,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-08T20:40:12Z",
+      "side": 1,
+      "message": "Local mutex - remove. Call lock pre-pull and unlock post-pull",
+      "range": {
+        "startLine": 3108,
+        "startChar": 4,
+        "endLine": 3108,
+        "endChar": 28
+      },
+      "revId": "c5eca22e0e6fff57f80466b5c6a5752ef475a683",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
