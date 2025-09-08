@@ -196,6 +196,37 @@ public:
     bool fetch(const std::string& remoteDeviceId);
 
     /**
+     * @param deviceId              Peer device id
+     * @param commitId              Commit id to pull
+     * @param oldHead               The old head commit id
+     * @param cb                    On pulled callback
+     * @param disconnectFromPeerCb  Callback to disconnect from peer when banning
+     * @return                      A vector of media maps representing the files pulled
+     */
+    std::vector<std::map<std::string, std::string>> pull(
+        const std::string& deviceId,
+        const std::string& commitId,
+        const std::string& oldHead,
+        std::function<void(bool fetchOk)> cb,
+        std::function<void(const std::string&)> disconnectFromPeerCb = {});
+
+    /**
+     * Merge the history of the conversation with another peer
+     * @param uri                    The peer uri
+     * @param disconnectFromPeerCb    Callback to disconnect from peer when banning
+     * @return                       A vector of media maps representing the merged history
+     */
+    std::vector<std::map<std::string, std::string>> mergeHistory(
+        const std::string& uri, std::function<void(const std::string&)> disconnectFromPeerCb = {});
+
+    /**
+     * @param options   Log options
+     *
+     * @return          A vector of media maps representing the messages loaded
+     */
+    std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options) const;
+
+    /**
      * Retrieve remote head. Can be useful after a fetch operation
      * @param remoteDeviceId        The remote name
      * @param branch                Remote branch to check (default: main)
