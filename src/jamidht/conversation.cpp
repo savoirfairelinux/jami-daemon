@@ -627,7 +627,6 @@ public:
     std::vector<libjami::SwarmMessage> loadMessages2(const LogOptions& options,
                                                      History* optHistory = nullptr);
     void pull(const std::string& deviceId);
-    std::vector<std::map<std::string, std::string>> mergeHistory(const std::string& uri);
 
     // Avoid multiple fetch/merges at the same time.
     std::mutex pullcbsMtx_ {};
@@ -810,52 +809,7 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 {
     if (!repository_)
         return {};
-    std::vector<ConversationCommit> commits;
-    auto startLogging = options.from == "";
-    auto breakLogging = false;
-    repository_->log(
-        [&](const auto& id, const auto& author, const auto& commit) {
-            if (!commits.empty()) {
-                // Set linearized parent
-                commits.rbegin()->linearized_parent = id;
-            }
-            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
-                return CallbackResult::Skip;
-            }
-            if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
-                return CallbackResult::Break; // Stop logging
-            if (breakLogging)
-                return CallbackResult::Break; // Stop logging
-            if (id == options.to) {
-                if (options.includeTo)
-                    breakLogging = true; // For the next commit
-                else
-                    return CallbackResult::Break; // Stop logging
-            }
-
-            if (!startLogging && options.from != "" && options.from == id)
-                startLogging = true;
-            if (!startLogging)
-                return CallbackResult::Skip; // Start logging after this one
-
-            if (options.fastLog) {
-                if (options.authorUri != "") {
-                    if (options.authorUri == repository_->uriFromDevice(author.email)) {
-                        return CallbackResult::Break; // Found author, stop
-                    }
-                }
-                // Used to only count commit
-                commits.emplace(commits.end(), ConversationCommit {});
-                return CallbackResult::Skip;
-            }
-
-            return CallbackResult::Ok; // Continue
-        },
-        [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
-        [](auto, auto, auto) { return false; },
-        options.from,
-        options.logIfNotFound);
-    return repository_->convCommitsToMap(commits);
+    return repository_->loadMessages(options);
 }
 
 std::vector<libjami::SwarmMessage>
@@ -1758,56 +1712,6 @@ Conversation::lastCommitId() const
     return (*optHistory.messageList.begin())->id;
 }
 
-std::vector<std::map<std::string, std::string>>
-Conversation::Impl::mergeHistory(const std::string& uri)
-{
-    if (not repository_) {
-        JAMI_WARNING("{} Invalid repo. Abort merge", toString());
-        return {};
-    }
-    auto remoteHead = repository_->remoteHead(uri);
-    if (remoteHead.empty()) {
-        JAMI_WARNING("{} Unable to get HEAD of {}", toString(), uri);
-        return {};
-    }
-
-    // Validate commit
-    auto [newCommits, err] = repository_->validFetch(uri);
-    if (newCommits.empty()) {
-        if (err)
-            JAMI_ERROR("{} Unable to validate history with {}", toString(), uri);
-        repository_->removeBranchWith(uri);
-        return {};
-    }
-
-    // If validated, merge
-    auto [ok, cid] = repository_->merge(remoteHead);
-    if (!ok) {
-        JAMI_ERROR("{} Unable to merge history with {}", toString(), uri);
-        repository_->removeBranchWith(uri);
-        return {};
-    }
-    if (!cid.empty()) {
-        // A merge commit was generated, should be added in new commits
-        auto commit = repository_->getCommit(cid);
-        if (commit != std::nullopt)
-            newCommits.emplace_back(*commit);
-    }
-
-    JAMI_LOG("{} Successfully merged history with {:s}", toString(), uri);
-    auto result = repository_->convCommitsToMap(newCommits);
-    for (auto& commit : result) {
-        auto it = commit.find("type");
-        if (it != commit.end() && it->second == "member") {
-            repository_->refreshMembers();
-
-            if (commit["action"] == "ban")
-                disconnectFromPeer(commit["uri"]);
-        }
-    }
-    return result;
-}
-
 bool
 Conversation::pull(const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
@@ -1857,43 +1761,21 @@ Conversation::Impl::pull(const std::string& deviceId)
             cb = std::move(std::get<1>(elem));
             pullcbs.pop_front();
         }
-        // If recently fetched, the commit can already be there, so no need to do complex operations
-        if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
-            cb(true);
-            continue;
-        }
-        // Pull from remote
-        auto fetched = repo->fetch(deviceId);
-        if (!fetched) {
-            cb(false);
-            continue;
-        }
         auto oldHead = repo->getHead();
-        std::string newHead = oldHead;
-        std::unique_lock lk(writeMtx_);
-        auto commits = mergeHistory(deviceId);
-        if (!commits.empty()) {
+        std::string newHead;
+        auto commits = repo->pull(
+            deviceId,
+            commitId,
+            oldHead,
+            cb,
+            [this](const std::string& peerUri) { this->disconnectFromPeer(peerUri); },
+            [this](const std::vector<std::map<std::string, std::string>>& commits) {
+                this->announce(commits);
+            });
+
+
+        if (!commits.empty())
             newHead = commits.rbegin()->at("id");
-            // Note: Because clients needs to linearize the history, they need to know all commits
-            // that can be updated.
-            // In this case, all commits until the common merge base should be announced.
-            // The client ill need to update it's model after this.
-            std::string mergeBase = oldHead; // If fast-forward, the merge base is the previous head
-            auto newHeadCommit = repo->getCommit(newHead);
-            if (newHeadCommit != std::nullopt && newHeadCommit->parents.size() > 1) {
-                mergeBase = repo->mergeBase(newHeadCommit->parents[0], newHeadCommit->parents[1]);
-                LogOptions options;
-                options.to = mergeBase;
-                auto updatedCommits = loadMessages(options);
-                // We announce commits from oldest to update to newest. This generally avoid
-                // to get detached commits until they are all announced.
-                std::reverse(std::begin(updatedCommits), std::end(updatedCommits));
-                announce(updatedCommits);
-            } else {
-                announce(commits);
-            }
-        }
-        lk.unlock();
 
         bool commitFound = false;
         if (commitId != "") {
