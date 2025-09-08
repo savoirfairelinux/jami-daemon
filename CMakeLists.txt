@@ -609,6 +609,8 @@ else()
     list(APPEND CMAKE_FIND_ROOT_PATH ${CONTRIB_PATH})
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
     list(APPEND CMAKE_PREFIX_PATH ${CONTRIB_PATH})
+    set(JAMI_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/jami")
+    message("Data directory: ${JAMI_DATADIR}")
 
     find_package (yaml-cpp CONFIG REQUIRED)
     pkg_search_module (jsoncpp REQUIRED IMPORTED_TARGET jsoncpp)
