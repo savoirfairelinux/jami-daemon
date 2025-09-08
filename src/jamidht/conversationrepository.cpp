@@ -26,6 +26,22 @@
 #include "client/ring_signal.h"
 #include "vcard.h"
 #include "json_utils.h"
+#include "fileutils.h"
+#include "logger.h"
+#include "jami/conversation_interface.h"
+
+#include <opendht/crypto.h>
+
+#include <git2/blob.h>
+#include <git2/buffer.h>
+#include <git2/commit.h>
+#include <git2/deprecated.h>
+#include <git2/refs.h>
+#include <git2/object.h>
+#include <git2/indexer.h>
+#include <git2/remote.h>
+#include <git2/merge.h>
+#include <git2/diff.h>
 
 #include <algorithm>
 #include <iterator>
@@ -36,7 +52,9 @@
 #include <regex>
 #include <exception>
 #include <optional>
-#include <git2/diff.h>
+#include <memory>
+#include <cstdint>
+#include <utility>
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
@@ -495,6 +513,12 @@ public:
         return true;
     }
 
+    /**
+     * @param from  The commit ID to merge from
+     * @param to    The commit ID to merge to
+     * @return      The ID of the merge commit
+     */
+    std::string mergeBase(const std::string& from, const std::string& to) const;
     std::mutex opMtx_; // Mutex for operations
 };
 
@@ -3298,6 +3322,96 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     return true;
 }
 
+std::pair<bool, std::vector<std::map<std::string, std::string>>>
+ConversationRepository::pull(const std::string& deviceId,
+                             const std::string& commitId,
+                             std::function<void(const std::string&)> disconnectFromPeerCb)
+{
+    // If recently fetched, the commit can already be there, so no need to do complex operations
+    if (commitId != "" && getCommit(commitId, false) != std::nullopt) {
+        return {true, {}};
+    }
+
+    // Pull from remote
+    auto fetched = fetch(deviceId);
+    if (!fetched) {
+        return {false, {}};
+    }
+
+    auto commits = mergeHistory(deviceId, std::move(disconnectFromPeerCb));
+
+    if (commitId.empty()) {
+        return {true, commits};
+    }
+    // If `commitId` is non-empty, then we were attempting to pull a specific commit.
+    // We need to check if we actually got it; the fact that the fetch above was
+    // successful doesn't guarantee that we did.
+    bool haveRequestedCommit = false;
+    for (const auto& commit : commits) {
+        if (commit.at("id") == commitId) {
+            haveRequestedCommit = true;
+            break;
+        }
+    }
+    if (!haveRequestedCommit)
+        JAMI_WARNING("Successfully fetched from device {} but didn't receive expected commit {}", deviceId, commitId);
+
+    return {haveRequestedCommit, commits};
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::mergeHistory(const std::string& uri,
+                                     std::function<void(const std::string&)>&& disconnectFromPeerCb)
+{
+    auto remoteHeadRes = remoteHead(uri);
+    if (remoteHeadRes.empty()) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to get HEAD of {}", pimpl_->accountId_, pimpl_->id_, uri);
+        return {};
+    }
+
+    // Validate commit
+    auto [newCommits, err] = validFetch(uri);
+    if (newCommits.empty()) {
+        if (err)
+            JAMI_ERROR("[Account {}] [Conversation {}] Unable to validate history with {}",
+                       pimpl_->accountId_,
+                       pimpl_->id_,
+                       uri);
+        removeBranchWith(uri);
+        return {};
+    }
+
+    // If validated, merge
+    auto [ok, cid] = merge(remoteHeadRes);
+    if (!ok) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to merge history with {}",
+                   pimpl_->accountId_,
+                   pimpl_->id_,
+                   uri);
+        removeBranchWith(uri);
+        return {};
+    }
+    if (!cid.empty()) {
+        // A merge commit was generated, should be added in new commits
+        auto commit = getCommit(cid);
+        if (commit != std::nullopt)
+            newCommits.emplace_back(*commit);
+    }
+
+    JAMI_LOG("[Account {}] [Conversation {}] Successfully merged history with {}", pimpl_->accountId_, pimpl_->id_, uri);
+    auto result = convCommitsToMap(newCommits);
+    for (auto& commit : result) {
+        auto it = commit.find("type");
+        if (it != commit.end() && it->second == "member") {
+            refreshMembers();
+
+            if (commit["action"] == "ban")
+                disconnectFromPeerCb(commit["uri"]);
+        }
+    }
+    return result;
+}
+
 std::string
 ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std::string& branch) const
 {
@@ -3567,7 +3681,13 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
 std::string
 ConversationRepository::mergeBase(const std::string& from, const std::string& to) const
 {
-    if (auto repo = pimpl_->repository()) {
+    return pimpl_->mergeBase(from, to);
+}
+
+std::string
+ConversationRepository::Impl::mergeBase(const std::string& from, const std::string& to) const
+{
+    if (auto repo = repository()) {
         git_oid oid, oidFrom, oidMerge;
         git_oid_fromstr(&oidFrom, from.c_str());
         git_oid_fromstr(&oid, to.c_str());
@@ -4252,6 +4372,57 @@ ConversationRepository::getHead() const
             return commit_str;
     }
     return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::loadMessages(const LogOptions& options) const
+{
+    std::vector<ConversationCommit> commits;
+    auto startLogging = options.from == "";
+    auto breakLogging = false;
+    log(
+        [&](const auto& id, const auto& author, const auto& commit) {
+            if (!commits.empty()) {
+                // Set linearized parent
+                commits.rbegin()->linearized_parent = id;
+            }
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
+            }
+            if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
+                return CallbackResult::Break; // Stop logging
+            if (breakLogging)
+                return CallbackResult::Break; // Stop logging
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+                else
+                    return CallbackResult::Break; // Stop logging
+            }
+
+            if (!startLogging && options.from != "" && options.from == id)
+                startLogging = true;
+            if (!startLogging)
+                return CallbackResult::Skip; // Start logging after this one
+
+            if (options.fastLog) {
+                if (options.authorUri != "") {
+                    if (options.authorUri == uriFromDevice(author.email)) {
+                        return CallbackResult::Break; // Found author, stop
+                    }
+                }
+                // Used to only count commit
+                commits.emplace(commits.end(), ConversationCommit {});
+                return CallbackResult::Skip;
+            }
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
+        [](auto, auto, auto) { return false; },
+        options.from,
+        options.logIfNotFound);
+    return convCommitsToMap(commits);
 }
 
 std::optional<std::map<std::string, std::string>>
