@@ -26,6 +26,22 @@
 #include "client/ring_signal.h"
 #include "vcard.h"
 #include "json_utils.h"
+#include "fileutils.h"
+#include "logger.h"
+#include "jami/conversation_interface.h"
+
+#include <opendht/crypto.h>
+
+#include <git2/blob.h>
+#include <git2/buffer.h>
+#include <git2/commit.h>
+#include <git2/deprecated.h>
+#include <git2/refs.h>
+#include <git2/object.h>
+#include <git2/indexer.h>
+#include <git2/remote.h>
+#include <git2/merge.h>
+#include <git2/diff.h>
 
 #include <algorithm>
 #include <iterator>
@@ -36,7 +52,9 @@
 #include <regex>
 #include <exception>
 #include <optional>
-#include <git2/diff.h>
+#include <memory>
+#include <cstdint>
+#include <utility>
 
 using namespace std::string_view_literals;
 constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
@@ -494,6 +512,12 @@ public:
         return true;
     }
 
+    /**
+     * @param from  The commit ID to merge from
+     * @param to    The commit ID to merge to
+     * @return      The ID of the merge commit
+     */
+    std::string mergeBase(const std::string& from, const std::string& to) const;
     std::mutex opMtx_; // Mutex for operations
 };
 
@@ -3092,15 +3116,17 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
 
             if (!checkValidMergeCommit(commit.id, commit.parents)) {
                 JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
-                                "ensure that you are using the latest "
-                                "version of Jami, or that one of your contacts is not performing "
-                                "any unwanted actions.",
-                                accountId_,
-                                id_,
-                                commit.id);
+                             "ensure that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing "
+                             "any unwanted actions.",
+                             accountId_,
+                             id_,
+                             commit.id);
 
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed merge commit");
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed merge commit");
                 return false;
             }
         }
@@ -3289,6 +3315,80 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     }
 
     return true;
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::pull(const std::string& deviceId,
+                             const std::string& commitId,
+                             const std::string& oldHead,
+                             const std::function<void(bool fetchOk)>& cb,
+                             std::function<void(const std::string&)> disconnectFromPeerCb)
+{
+    // If recently fetched, the commit can already be there, so no need to do complex operations
+    if (commitId != "" && getCommit(commitId, false) != std::nullopt) {
+        cb(true);
+    }
+
+    // Pull from remote
+    auto fetched = fetch(deviceId);
+    if (!fetched) {
+        cb(false);
+    }
+
+    auto commits = mergeHistory(deviceId, std::move(disconnectFromPeerCb));
+
+    return commits;
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::mergeHistory(const std::string& uri,
+                                     std::function<void(const std::string&)>&& disconnectFromPeerCb)
+{
+    if (not pimpl_->repository().get()) {
+        JAMI_WARNING("Invalid repo. Abort merge");
+        return {};
+    }
+    auto remoteHeadRes = remoteHead(uri);
+    if (remoteHeadRes.empty()) {
+        JAMI_WARNING("Unable to get HEAD of {}", uri);
+        return {};
+    }
+
+    // Validate commit
+    auto [newCommits, err] = validFetch(uri);
+    if (newCommits.empty()) {
+        if (err)
+            JAMI_ERROR("Unable to validate history with {}", uri);
+        removeBranchWith(uri);
+        return {};
+    }
+
+    // If validated, merge
+    auto [ok, cid] = merge(remoteHeadRes);
+    if (!ok) {
+        JAMI_ERROR("Unable to merge history with {}", uri);
+        removeBranchWith(uri);
+        return {};
+    }
+    if (!cid.empty()) {
+        // A merge commit was generated, should be added in new commits
+        auto commit = getCommit(cid);
+        if (commit != std::nullopt)
+            newCommits.emplace_back(*commit);
+    }
+
+    JAMI_LOG("Successfully merged history with {:s}", uri);
+    auto result = convCommitsToMap(newCommits);
+    for (auto& commit : result) {
+        auto it = commit.find("type");
+        if (it != commit.end() && it->second == "member") {
+            refreshMembers();
+
+            if (commit["action"] == "ban")
+                disconnectFromPeerCb(commit["uri"]);
+        }
+    }
+    return result;
 }
 
 std::string
@@ -3560,7 +3660,13 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
 std::string
 ConversationRepository::mergeBase(const std::string& from, const std::string& to) const
 {
-    if (auto repo = pimpl_->repository()) {
+    return pimpl_->mergeBase(from, to);
+}
+
+std::string
+ConversationRepository::Impl::mergeBase(const std::string& from, const std::string& to) const
+{
+    if (auto repo = repository()) {
         git_oid oid, oidFrom, oidMerge;
         git_oid_fromstr(&oidFrom, from.c_str());
         git_oid_fromstr(&oid, to.c_str());
@@ -4246,6 +4352,57 @@ ConversationRepository::getHead() const
             return commit_str;
     }
     return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+ConversationRepository::loadMessages(const LogOptions& options) const
+{
+    std::vector<ConversationCommit> commits;
+    auto startLogging = options.from == "";
+    auto breakLogging = false;
+    log(
+        [&](const auto& id, const auto& author, const auto& commit) {
+            if (!commits.empty()) {
+                // Set linearized parent
+                commits.rbegin()->linearized_parent = id;
+            }
+            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
+                return CallbackResult::Skip;
+            }
+            if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
+                return CallbackResult::Break; // Stop logging
+            if (breakLogging)
+                return CallbackResult::Break; // Stop logging
+            if (id == options.to) {
+                if (options.includeTo)
+                    breakLogging = true; // For the next commit
+                else
+                    return CallbackResult::Break; // Stop logging
+            }
+
+            if (!startLogging && options.from != "" && options.from == id)
+                startLogging = true;
+            if (!startLogging)
+                return CallbackResult::Skip; // Start logging after this one
+
+            if (options.fastLog) {
+                if (options.authorUri != "") {
+                    if (options.authorUri == uriFromDevice(author.email)) {
+                        return CallbackResult::Break; // Found author, stop
+                    }
+                }
+                // Used to only count commit
+                commits.emplace(commits.end(), ConversationCommit {});
+                return CallbackResult::Skip;
+            }
+
+            return CallbackResult::Ok; // Continue
+        },
+        [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
+        [](auto, auto, auto) { return false; },
+        options.from,
+        options.logIfNotFound);
+    return convCommitsToMap(commits);
 }
 
 std::optional<std::map<std::string, std::string>>
