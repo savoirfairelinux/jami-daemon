@@ -201,6 +201,42 @@ public:
     bool fetch(const std::string& remoteDeviceId);
 
     /**
+     * Fetch and merge from a peer's device.
+     *
+     * If the commitId argument is nonempty, then the function will first check whether the specified
+     * commit is already present in the repo and return immediately if it is.
+     *
+     * @param deviceId              Peer device id
+     * @param commitId              Commit id to pull
+     * @param disconnectFromPeerCb  Callback to disconnect from peer when banning
+     * @return A pair containing a boolean indicating whether the operation succeeded and a vector
+     * of media maps representing the commits pulled. If commitId is nonempty, success means that
+     * the specified commit is present in the main branch (either because it was already there or
+     * because it was successfully fetched from the peer and merged). If commitId is empty, success
+     * means that we were able to fetch from the peer.
+     */
+    std::pair<bool, std::vector<std::map<std::string, std::string>>> pull(
+        const std::string& deviceId,
+        const std::string& commitId,
+        std::function<void(const std::string&)> disconnectFromPeerCb = {});
+
+    /**
+     * Merge the history of the conversation with another peer
+     * @param uri                    The peer uri
+     * @param disconnectFromPeerCb   Callback to disconnect from peer when banning
+     * @return                       A vector of media maps representing the merged history
+     */
+    std::vector<std::map<std::string, std::string>> mergeHistory(
+        const std::string& uri, std::function<void(const std::string&)>&& disconnectFromPeerCb = {});
+
+    /**
+     * @param options   Log options
+     *
+     * @return          A vector of media maps representing the messages loaded
+     */
+    std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options) const;
+
+    /**
      * Retrieve remote head. Can be useful after a fetch operation
      * @param remoteDeviceId        The remote name
      * @param branch                Remote branch to check (default: main)
@@ -257,14 +293,6 @@ public:
      * generated if one (can be a fast forward merge without commit)
      */
     std::pair<bool, std::string> merge(const std::string& merge_id, bool force = false);
-
-    /**
-     * Get the common parent between two branches
-     * @param from  The first branch
-     * @param to    The second branch
-     * @return the common parent
-     */
-    std::string mergeBase(const std::string& from, const std::string& to) const;
 
     /**
      * Get current diff stats between two commits
