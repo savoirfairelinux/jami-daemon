@@ -212,6 +212,7 @@ protected:
     }
 
     void putRecorded(std::shared_ptr<AudioFrame>&& frame);
+    void putPlayback(AudioFormat format, std::shared_ptr<AudioFrame>&& frame);
 
     void flush();
 

@@ -30,7 +30,7 @@
 
 namespace jami {
 
-enum Direction { Input = 0, Output = 1, IO = 2, End = 3 };
+enum Direction { Input = 0, Output = 1, IO = 2, Loopback = 3, End = 4 };
 
 struct PortAudioLayer::PortAudioLayerImpl
 {
@@ -43,12 +43,14 @@ struct PortAudioLayer::PortAudioLayerImpl
     void terminate() const;
     bool initInputStream(PortAudioLayer&);
     bool initOutputStream(PortAudioLayer&);
+    bool initLoopbackStream(PortAudioLayer&);
     bool apiInitialised_ {false};
 
     std::vector<std::string> getDevicesByType(AudioDeviceType type) const;
     int getIndexByType(AudioDeviceType type);
     std::string getDeviceNameByType(const int index, AudioDeviceType type);
     PaDeviceIndex getApiIndexByType(AudioDeviceType type);
+    PaDeviceIndex getApiLoopbackIndex(void);
     std::string getApiDefaultDeviceName(AudioDeviceType type, bool commDevice) const;
 
     std::string deviceRecord_ {};
@@ -89,6 +91,13 @@ struct PortAudioLayer::PortAudioLayerImpl
                      unsigned long framesPerBuffer,
                      const PaStreamCallbackTimeInfo* timeInfo,
                      PaStreamCallbackFlags statusFlags);
+
+    int paLoopbackCallback(PortAudioLayer& parent,
+                        const float* inputBuffer,
+                        float* outputBuffer,
+                        unsigned long framesPerBuffer,
+                        const PaStreamCallbackTimeInfo* timeInfo,
+                        PaStreamCallbackFlags statusFlags);
 };
 
 // ##################################################################################################
@@ -233,6 +242,8 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
             stopped = true;
             JAMI_DBG("PortAudioLayer input stream stopped");
         }
+        if (pimpl_->paStopStream(Direction::Loopback)) {
+            JAMI_DBG("PortAudioLayer loopback stream stopped");
         }
         break;
     case AudioDeviceType::CAPTURE:
@@ -249,6 +260,9 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
             stopped = true;
             outputStopped = true;
             JAMI_DBG("PortAudioLayer output stream stopped");
+        }
+        if (pimpl_->paStopStream(Direction::Loopback)) {
+            JAMI_DBG("PortAudioLayer loopback stream stopped");
         }
         break;
     }
@@ -507,6 +521,30 @@ PortAudioLayer::PortAudioLayerImpl::getApiIndexByType(AudioDeviceType type)
                                             : Pa_GetDefaultCommOutputDevice();
 }
 
+PaDeviceIndex
+PortAudioLayer::PortAudioLayerImpl::getApiLoopbackIndex()
+{
+    auto numDevices = Pa_GetDeviceCount();
+    auto playbackId = getApiIndexByType(AudioDeviceType::PLAYBACK);
+    if (playbackId == paNoDevice) {
+        JAMI_ERR("PortAudioLayer error: Could not find playback device");
+        return paNoDevice;
+    } else {
+        std::string_view toMatch = Pa_GetDeviceInfo(playbackId)->name;
+        if (!toMatch.empty()) {
+            for (int i = 0; i < numDevices; ++i) {
+                if (const auto deviceInfo = Pa_GetDeviceInfo(i)) {
+                    if (std::string(deviceInfo->name).find(std::string(toMatch)) != std::string::npos &&
+                        std::string(deviceInfo->name).find("Loopback") != std::string::npos)
+                        return i;
+                }
+            }
+        }
+    }
+    // If nothing was found, return the default device
+    return paNoDevice;
+}
+
 std::string
 PortAudioLayer::PortAudioLayerImpl::getApiDefaultDeviceName(AudioDeviceType type,
                                                             bool commDevice) const
@@ -691,6 +729,47 @@ PortAudioLayer::PortAudioLayerImpl::initOutputStream(PortAudioLayer& parent)
     return true;
 }
 
+// PortAudioLayer::PortAudioLayerImpl::initLoopbackStream(PortAudioLayer& parent)
+// {
+//     JAMI_DBG("Open PortAudio Loopback Stream");
+//     std::lock_guard lock(streamsMutex_);
+//     auto& stream = streams_[Direction::Loopback];
+//     auto apiIndex = getApiLoopbackIndex();
+//     if (apiIndex != paNoDevice) {
+//         auto err = openPaStream(
+//             &stream,
+//             apiIndex,
+//             paNoDevice,
+//             [](const void* inputBuffer,
+//                void* outputBuffer,
+//                unsigned long framesPerBuffer,
+//                const PaStreamCallbackTimeInfo* timeInfo,
+//                PaStreamCallbackFlags statusFlags,
+//                void* userData) -> int {
+//                 auto layer = static_cast<PortAudioLayer*>(userData);
+//                 return layer->pimpl_->paLoopbackCallback(*layer,
+//                                                        static_cast<const float*>(inputBuffer),
+//                                                        static_cast<float*>(outputBuffer),
+//                                                        framesPerBuffer,
+//                                                        timeInfo,
+//                                                        statusFlags);
+//             },
+//             &parent);
+//         if (err != paNoError) {
+//             return false;
+//         }
+//     } else {
+//         JAMI_ERR("Error: No valid output device. There will be no loopback available.");
+//         return false;
+//     }
+
+//     JAMI_INFO("Starting PortAudio Loopback Stream");
+//     if (!startPaStream(stream))
+//         return false;
+
+//     parent.playbackChanged(true);
+//     return true;
+// }
 
 bool
 PortAudioLayer::PortAudioLayerImpl::paStopStream(Direction streamDirection)
@@ -752,6 +831,39 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     for (size_t i = 0; i < channels; ++i) {
         std::copy_n((float*) toPlay->pointer()->extended_data[i], numSamples, outputChannels[i]);
     }
+    return paContinue;
+}
+
+int
+PortAudioLayer::PortAudioLayerImpl::paLoopbackCallback(PortAudioLayer& parent,
+                                                     const float* inputBuffer,
+                                                     float* outputBuffer,
+                                                     unsigned long framesPerBuffer,
+                                                     const PaStreamCallbackTimeInfo* timeInfo,
+                                                     PaStreamCallbackFlags statusFlags)
+{
+    // unused arguments
+    (void) outputBuffer;
+    (void) timeInfo;
+    (void) statusFlags;
+
+    if (framesPerBuffer == 0) {
+        JAMI_WARN("No frames for input.");
+        return paContinue;
+    }
+    auto inBuff = std::make_shared<AudioFrame>(parent.audioFormat_, framesPerBuffer);
+    if (inputBuffer == nullptr) {
+        libav_utils::fillWithSilence(inBuff->pointer());
+    } else {
+        auto channels = parent.audioFormat_.nb_channels;
+        float** inputChannels = (float**) inputBuffer;
+        for (size_t i = 0; i < channels; ++i) {
+            std::copy_n(inputChannels[i],
+                        framesPerBuffer,
+                        (float*) inBuff->pointer()->extended_data[i]);
+        }
+    }
+    parent.putPlayback(parent.audioFormat_, std::move(inBuff));
     return paContinue;
 }
 
