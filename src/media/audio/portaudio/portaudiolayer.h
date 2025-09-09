@@ -66,6 +66,9 @@ public:
 private:
     NON_COPYABLE(PortAudioLayer);
 
+    // Override: PortAudioLayer feeds playback into audio processor (loopback)
+    bool forwardPlaybackToAudioProcessor() const override { return false; }
+
     struct PortAudioLayerImpl;
     std::unique_ptr<PortAudioLayerImpl> pimpl_;
 };

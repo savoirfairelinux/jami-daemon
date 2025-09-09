@@ -65,6 +65,10 @@ private:
 protected:
     enum class Status { Idle, Starting, Started };
 
+    // hook to control whether base should forward playback to audio processor
+    // or let the audio layer implementation take care of it
+    virtual bool forwardPlaybackToAudioProcessor() const { return true; }
+
 public:
     AudioLayer(const AudioPreference&);
     virtual ~AudioLayer();
@@ -217,6 +221,7 @@ protected:
     }
 
     void putRecorded(std::shared_ptr<AudioFrame>&& frame);
+    void putPlayback(AudioFormat format, std::shared_ptr<AudioFrame>&& frame);
 
     void flush();
 
