@@ -37,6 +37,8 @@
 
 namespace jami {
 
+class PortAudioLayer;
+
 AudioLayer::AudioLayer(const AudioPreference& pref)
     : isCaptureMuted_(pref.getCaptureMuted())
     , isPlaybackMuted_(pref.getPlaybackMuted())
@@ -324,9 +326,13 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
         }
 
         if (resampled) {
-            std::lock_guard lock(audioProcessorMutex);
-            if (audioProcessor) {
-                audioProcessor->putPlayback(resampled);
+            // Only send to audio processor if not PortAudioLayer
+            // as it already sends the playback to the audio processor
+            if (forwardPlaybackToAudioProcessor()) {
+                std::lock_guard lock(audioProcessorMutex);
+                if (audioProcessor) {
+                    audioProcessor->putPlayback(resampled);
+                }
             }
             playbackQueue_->enqueue(std::move(resampled));
         } else
@@ -352,6 +358,17 @@ AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
     }
 
     jami_tracepoint(audio_layer_put_recorded_end, );
+}
+
+// Used by portaudiolayer for feeding desktop audio as echo cancellation source to audio processor
+void
+AudioLayer::putPlayback(AudioFormat format, std::shared_ptr<AudioFrame>&& frame)
+{
+    std::lock_guard lock(audioProcessorMutex);
+    if (audioProcessor && playbackStarted_ && recordStarted_) {
+        std::shared_ptr<AudioFrame> resampled = resampler_->resample(std::move(frame), format);
+        audioProcessor->putPlayback(std::move(resampled));
+    }
 }
 
 } // namespace jami
