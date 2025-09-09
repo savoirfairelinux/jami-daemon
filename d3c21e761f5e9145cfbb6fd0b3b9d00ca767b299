@@ -16,6 +16,24 @@
       "message": "\u003e Futur work could give the user the choice of which audio source to use as echo cancelation.\n\nCould you please make it possible that a user can have opt-in settings to permanently disable noise suppression and/or echo cancellation (maybe both - so one can be turned on the other can be turned off) - so if you want to stream music from a \"microphone\" such as a virtual soundcard - for example I want to compose music and show this process other participants - no sound will be changed?",
       "revId": "d3c21e761f5e9145cfbb6fd0b3b9d00ca767b299",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d835d8fe_1a9a3b92",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-09-09T23:49:32Z",
+      "side": 1,
+      "message": "This is actually implemented in the daemon :)\nIt\u0027s not yet implemented (yet) in the Qt client, but power users can edit dring.yml while Jami is not running to change these settings from their defaults:\n\n```yml\naudio:\n  audioProcessor: webrtc\n  automaticGainControl: false\n  voiceActivityDetection: true\n  noiseReduce: auto\n  echoCancel: auto\n```\n\naudioProcessor can be set to null or false instead of \"webrtc\" to disable it completely.",
+      "parentUuid": "7f3a4e36_374ceb42",
+      "revId": "d3c21e761f5e9145cfbb6fd0b3b9d00ca767b299",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
