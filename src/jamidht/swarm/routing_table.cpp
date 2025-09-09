@@ -184,9 +184,8 @@ Bucket::shutdownAllNodes()
 {
     while (not nodes.empty()) {
         auto it = nodes.begin();
-        auto socket = it->second.socket;
-        auto nodeId = socket->deviceId();
-        socket->shutdown();
+        it->second.socket->shutdown();
+        auto nodeId = it->first;
         removeNode(nodeId);
     }
 }
