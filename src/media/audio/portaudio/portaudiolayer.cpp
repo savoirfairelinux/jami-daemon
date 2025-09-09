@@ -46,7 +46,6 @@ struct PortAudioLayer::PortAudioLayerImpl
     void terminate() const;
     bool initInputStream(PortAudioLayer&);
     bool initOutputStream(PortAudioLayer&);
-    bool initFullDuplexStream(PortAudioLayer&);
     bool apiInitialised_ {false};
 
     CLoopbackCapture loopbackCapture_;
@@ -70,7 +69,6 @@ struct PortAudioLayer::PortAudioLayerImpl
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
     mutable std::mutex streamsMutex_;
     bool paStopStream(Direction streamDirection);
-    bool hasFullDuplexStream() const;
 
     AudioDeviceNotificationClientPtr audioDeviceNotificationClient_;
     // The following flag used to debounce the device state changes,
@@ -183,15 +181,15 @@ PortAudioLayer::startStream(AudioDeviceType stream)
         return;
     }
 
-    auto startPlayback = [this](bool fullDuplexMode = false) -> bool {
+    auto startPlayback = [this]() -> bool {
         std::unique_lock lock(mutex_);
         if (status_.load() != Status::Idle)
             return false;
         bool ret {false};
-        if (fullDuplexMode)
-            ret = pimpl_->initFullDuplexStream(*this);
-        else
-            ret = pimpl_->initOutputStream(*this);
+        ret = pimpl_->initOutputStream(*this);
+        if (ret) {
+            ret = pimpl_->initLoopbackStream(*this);
+        }
         if (ret) {
             status_.store(Status::Started);
             startedCv_.notify_all();
@@ -301,26 +299,17 @@ PortAudioLayer::stopStream(AudioDeviceType stream)
     bool outputStopped = false;
     switch (stream) {
     case AudioDeviceType::ALL:
-        if (pimpl_->hasFullDuplexStream()) {
-            stopped = pimpl_->paStopStream(Direction::IO);
-            JAMI_DBG("PortAudioLayer full-duplex stream stopped");
-            if (stopped) {
-                playbackChanged(false);
-                recordChanged(false);
-                outputStopped = true;
-            }
-        } else {
-            if (pimpl_->paStopStream(Direction::Output)) {
-                playbackChanged(false);
-                stopped = true;
-                outputStopped = true;
-                JAMI_DBG("PortAudioLayer output stream stopped");
-            }
-            if (pimpl_->paStopStream(Direction::Input)) {
-                recordChanged(false);
-                stopped = true;
-                JAMI_DBG("PortAudioLayer input stream stopped");
-            }
+        if (pimpl_->paStopStream(Direction::Output)) {
+            playbackChanged(false);
+            stopped = true;
+            outputStopped = true;
+            JAMI_DBG("PortAudioLayer output stream stopped");
+        }
+        if (pimpl_->paStopStream(Direction::Input)) {
+            recordChanged(false);
+            stopped = true;
+            JAMI_DBG("PortAudioLayer input stream stopped");
+        }
         }
         break;
     case AudioDeviceType::CAPTURE:
@@ -782,50 +771,6 @@ PortAudioLayer::PortAudioLayerImpl::initOutputStream(PortAudioLayer& parent)
     return true;
 }
 
-bool
-PortAudioLayer::PortAudioLayerImpl::initFullDuplexStream(PortAudioLayer& parent)
-{
-    auto apiIndexRecord = getApiIndexByType(AudioDeviceType::CAPTURE);
-    auto apiIndexPlayback = getApiIndexByType(AudioDeviceType::PLAYBACK);
-    if (apiIndexRecord == paNoDevice || apiIndexPlayback == paNoDevice) {
-        JAMI_ERR("Error: Invalid input/output devices. There will be no audio.");
-        return false;
-    }
-
-    JAMI_DBG("Open PortAudio Full-duplex input/output stream");
-    std::lock_guard lock(streamsMutex_);
-    auto& stream = streams_[Direction::IO];
-    auto err = openPaStream(
-        &stream,
-        apiIndexRecord,
-        apiIndexPlayback,
-        [](const void* inputBuffer,
-           void* outputBuffer,
-           unsigned long framesPerBuffer,
-           const PaStreamCallbackTimeInfo* timeInfo,
-           PaStreamCallbackFlags statusFlags,
-           void* userData) -> int {
-            auto layer = static_cast<PortAudioLayer*>(userData);
-            return layer->pimpl_->paIOCallback(*layer,
-                                               static_cast<const float*>(inputBuffer),
-                                               static_cast<float*>(outputBuffer),
-                                               framesPerBuffer,
-                                               timeInfo,
-                                               statusFlags);
-        },
-        &parent);
-    if (err != paNoError) {
-        return false;
-    }
-
-    JAMI_DBG("Start PortAudio I/O Streams");
-    if (!startPaStream(stream))
-        return false;
-
-    parent.recordChanged(true);
-    parent.playbackChanged(true);
-    return true;
-}
 
 bool
 PortAudioLayer::PortAudioLayerImpl::paStopStream(Direction streamDirection)
@@ -856,13 +801,6 @@ PortAudioLayer::PortAudioLayerImpl::paStopStream(Direction streamDirection)
     streams_[streamDirection] = nullptr;
     return true;
 };
-
-bool
-PortAudioLayer::PortAudioLayerImpl::hasFullDuplexStream() const
-{
-    std::lock_guard lock(streamsMutex_);
-    return streams_[Direction::IO] != nullptr;
-}
 
 int
 PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
