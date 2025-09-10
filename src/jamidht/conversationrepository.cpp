@@ -203,7 +203,7 @@ public:
                    const std::string& commitId,
                    const std::string& parentId) const;
     bool checkEdit(const std::string& userDevice, const ConversationCommit& commit) const;
-    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId, const git_buf& sig, const git_buf& sig_data) const;
+    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId, const git_buf& sig, const git_buf& sig_data, const git_buf& sig, const git_buf& sig_data) const;
     bool checkInitialCommit(const std::string& userDevice,
                             const std::string& commitId,
                             const std::string& commitMsg) const;
@@ -1732,6 +1732,7 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                                     pk.data(),
                                                                     pk.size());
 
+
     if (!valid_signature) {
         JAMI_WARNING("Commit {} not signed by device {}.", git_oid_tostr_s(&oid), userDevice);
         return false;
@@ -2747,7 +2748,42 @@ ConversationRepository::Impl::validCommits(
         if (git_oid_fromstr(&oid, validUserAtCommit.c_str()) < 0
             || git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARNING("Failed to look up commit {}", validUserAtCommit.c_str());
+        git_oid oid;
+        git_commit* commit_ptr = nullptr;
+        if (git_oid_fromstr(&oid, validUserAtCommit.c_str()) < 0
+            || git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
+            JAMI_WARNING("Failed to look up commit {}", validUserAtCommit.c_str());
             return false;
+        }
+
+        struct GitBufDeleter {
+            void operator()(git_buf* b) const { git_buf_dispose(b); }
+        };
+        std::unique_ptr<git_buf, GitBufDeleter> sig(new git_buf {});
+        std::unique_ptr<git_buf, GitBufDeleter> sig_data(new git_buf {});
+
+        // Extract the signature block and signature content from the commit
+        int sig_extract_res = git_commit_extract_signature(sig.get(),
+                                                        sig_data.get(),
+                                                        repo.get(),
+                                                        &oid,
+                                                        "signature");
+        // Verify that the extraction was successful
+        if (sig_extract_res != 0) {
+            switch (sig_extract_res) {
+            case GIT_ERROR_INVALID:
+                JAMI_ERROR("Error, the commit ID ({}) does not correspond to a commit.",
+                        validUserAtCommit.c_str());
+                break;
+            case GIT_ERROR_OBJECT:
+                JAMI_ERROR("Error, the commit ID ({}) does not have a signature.", validUserAtCommit.c_str());
+                break;
+            default:
+                JAMI_ERROR("An unknown error occurred while extracting signature for commit ID {}.",
+                        validUserAtCommit.c_str());
+                break;
+                return false;
+            }
         }
 
         struct GitBufDeleter {
@@ -2926,6 +2962,42 @@ ConversationRepository::Impl::validCommits(
                         accountId_, id_, EVALIDFETCH, "Malformed commit");
                     return false;
                 }
+            }
+
+            // For all commits, check that the user is valid.
+            // So, the user certificate MUST be in /members or /admins
+            // and device cert MUST be in /devices
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit, *sig, *sig_data)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed commit {}.Please ensure "
+                             "that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions. {}",
+                             accountId_,
+                             id_,
+                             validUserAtCommit,
+                             commit.commit_msg);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
+                return false;
+            }
+        } else {
+            // Merge commit, for now, check user
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit, *sig, *sig_data)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
+                             "ensure that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions.",
+                             accountId_,
+                             id_,
+                             validUserAtCommit);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
+                                                                             // Free buffers
+                return false;
             }
 
             // For all commits, check that the user is valid.
@@ -3873,8 +3945,8 @@ ConversationRepository::validClone(
 bool
 ConversationRepository::isValidUserAtCommit(const std::string& userDevice,
                                             const std::string& commitId,
-                                            git_buf& sig,
-                                            git_buf& sig_data) const
+                                            const git_buf& sig,
+                                            const git_buf& sig_data) const
 {
     return pimpl_->isValidUserAtCommit(userDevice, commitId, sig, sig_data);
 }
