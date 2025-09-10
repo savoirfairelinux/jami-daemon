@@ -131,8 +131,8 @@ ConversationRepositoryTest::testCreateRepository()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
-                    / "conversations" / repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -300,8 +300,8 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
     GitTree tree = {tree_ptr, git_tree_free};
 
     git_buf to_sign = {};
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 && \
-    (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
     git_commit* const head_ref[1] = {head_commit.get()};
 #else
     const git_commit* head_ref[1] = {head_commit.get()};
@@ -371,8 +371,8 @@ ConversationRepositoryTest::testMerge()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
-                    / "conversations" / repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -406,8 +406,8 @@ ConversationRepositoryTest::testFFMerge()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
-                    / "conversations" / repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -462,8 +462,8 @@ ConversationRepositoryTest::testMergeProfileWithConflict()
 
     // Assert that repository exists
     CPPUNIT_ASSERT(repository != nullptr);
-    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID()
-                    / "conversations" / repository->id();
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Assert that first commit is signed by alice
@@ -544,8 +544,15 @@ ConversationRepositoryTest::testValidSignatureForCommit()
     const git_signature* author = git_commit_author(commit_ptr);
     std::string userDevice = author->email;
 
+    // Extract the signature and signature data of commit_id
+    git_buf extracted_sig = {}, extracted_sig_data = {};
+    // Extract the signature block and signature content from the commit
+    git_commit_extract_signature(&extracted_sig, &extracted_sig_data, repo, &commit_id, "signature");
     // Verify the signature of the commit
-    CPPUNIT_ASSERT(repository->isValidUserAtCommit(userDevice, git_oid_tostr_s(&commit_id)));
+    CPPUNIT_ASSERT(repository->isValidUserAtCommit(userDevice,
+                                                   git_oid_tostr_s(&commit_id),
+                                                   extracted_sig,
+                                                   extracted_sig_data));
 
     // Free git objects
     git_commit_free(commit_ptr);
@@ -628,6 +635,7 @@ ConversationRepositoryTest::testInvalidSignatureForCommit()
                                  1,
                                  &head_ref[0])
         == 0);
+    git_signature_free(sig);
 
     // git commit -S
     auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
@@ -658,11 +666,21 @@ ConversationRepositoryTest::testInvalidSignatureForCommit()
     // Get the author and user device, and assert that the user is not valid at the commit
     const git_signature* author = git_commit_author(commit_ptr);
     std::string userDevice = author->email;
-    CPPUNIT_ASSERT(!repository->isValidUserAtCommit(userDevice, git_oid_tostr_s(&commit_id)));
+
+    // Extract the signature and signature data of commit_id
+    git_buf extracted_sig = {}, extracted_sig_data = {};
+    // Extract the signature block and signature content from the commit
+    git_commit_extract_signature(&extracted_sig, &extracted_sig_data, repo, &commit_id, "signature");
+    CPPUNIT_ASSERT(!repository->isValidUserAtCommit(userDevice,
+                                                    git_oid_tostr_s(&commit_id),
+                                                    extracted_sig,
+                                                    extracted_sig_data));
 
     // Free git objects
     git_reference_free(ref_ptr);
     git_repository_free(repo);
+    git_buf_dispose(&extracted_sig);
+    git_buf_dispose(&extracted_sig_data);
 }
 
 void
