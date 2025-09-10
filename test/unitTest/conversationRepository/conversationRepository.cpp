@@ -545,7 +545,7 @@ ConversationRepositoryTest::testValidSignatureForCommit()
     std::string userDevice = author->email;
 
     // Verify the signature of the commit
-    CPPUNIT_ASSERT(repository->isValidUserAtCommit(userDevice, git_oid_tostr_s(&commit_id)));
+    CPPUNIT_ASSERT(repository->isValidUserAtCommit(userDevice, git_oid_tostr_s(&commit_id), git_oid_tostr_s(&commit_id)));
 
     // Free git objects
     git_commit_free(commit_ptr);
@@ -658,7 +658,7 @@ ConversationRepositoryTest::testInvalidSignatureForCommit()
     // Get the author and user device, and assert that the user is not valid at the commit
     const git_signature* author = git_commit_author(commit_ptr);
     std::string userDevice = author->email;
-    CPPUNIT_ASSERT(!repository->isValidUserAtCommit(userDevice, git_oid_tostr_s(&commit_id)));
+    CPPUNIT_ASSERT(!repository->isValidUserAtCommit(userDevice, git_oid_tostr_s(&commit_id), git_oid_tostr_s(&commit_id)));
 
     // Free git objects
     git_reference_free(ref_ptr);

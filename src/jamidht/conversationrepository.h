@@ -346,7 +346,7 @@ public:
      * @param userDevice    the email of the sender (i.e. their device's public key)
      * @param commitId      the id of the commit
      */
-    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
+    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId, git_buf& sig, git_buf& sig_data) const;
 
     /**
      * Validate that commits are not malformed
