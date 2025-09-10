@@ -52,6 +52,24 @@
       "parentUuid": "d835d8fe_1a9a3b92",
       "revId": "d3c21e761f5e9145cfbb6fd0b3b9d00ca767b299",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f61ce414_07c5d6b3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2025-09-10T13:16:23Z",
+      "side": 1,
+      "message": "And maybe you can have an opt-in setting like \"immediately notify all other participants that I have enabled setting \"echo cancellation\", \"noise reduction\" etc.\". So that participants will get a notification during or before a call / conference.",
+      "parentUuid": "6ec0c100_421e5907",
+      "revId": "d3c21e761f5e9145cfbb6fd0b3b9d00ca767b299",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
