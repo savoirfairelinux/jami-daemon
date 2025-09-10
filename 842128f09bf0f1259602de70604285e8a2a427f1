@@ -34,6 +34,24 @@
       "parentUuid": "d0855613_fb254924",
       "revId": "842128f09bf0f1259602de70604285e8a2a427f1",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3657d579_ed057864",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 6
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 943
+      },
+      "writtenOn": "2025-09-10T14:02:31Z",
+      "side": 1,
+      "message": "Same applies if one peer removed you (1:1; group swarm) from the contact list but you haven\u0027t removed the peer? The other peer will still view the your presence? And there\u0027s nothing to do if you don\u0027t want to show your presence?",
+      "parentUuid": "2733ef8c_dba6beea",
+      "revId": "842128f09bf0f1259602de70604285e8a2a427f1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ],
   "submitRequirementResults": []
