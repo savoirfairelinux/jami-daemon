@@ -2765,33 +2765,6 @@ ConversationRepository::Impl::validCommits(
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
 
-        // For all commits, check that the user is valid,
-        // meaning the user's certificate MUST be in /members or /admins,
-        // their device cert MUST be in /devices,
-        // and the commit MUST be signed by the device
-        if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-            std::string msg_spec;
-            if (commit.parents.size() == 0)
-                msg_spec = "initial";
-            else if (commit.parents.size() == 1)
-                msg_spec = "";
-            else
-                msg_spec = "merge";
-            JAMI_WARNING("[Account {}] [Conversation {}] Malformed {} commit {}. Please ensure "
-                         "that you are using the latest version of Jami, or "
-                         "that one of your contacts is not performing any unwanted actions. {}",
-                         accountId_,
-                         id_,
-                         validUserAtCommit,
-                         commit.commit_msg,
-                         msg_spec);
-            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                         id_,
-                                                                         EVALIDFETCH,
-                                                                         "Malformed commit");
-            return false;
-        }
-
         if (commit.parents.size() == 0) {
             if (!checkInitialCommit(userDevice, commit.id, commit.commit_msg)) {
                 JAMI_WARNING("[Account {}] [Conversation {}] Malformed initial commit {}. Please ensure that you are using the latest "
@@ -2938,6 +2911,41 @@ ConversationRepository::Impl::validCommits(
                         accountId_, id_, EVALIDFETCH, "Malformed commit");
                     return false;
                 }
+            }
+
+            // For all commits, check that the user is valid.
+            // So, the user certificate MUST be in /members or /admins
+            // and device cert MUST be in /devices
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed commit {}.Please ensure "
+                             "that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions. {}",
+                             accountId_,
+                             id_,
+                             validUserAtCommit,
+                             commit.commit_msg);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
+                return false;
+            }
+        } else {
+            // Merge commit, for now, check user
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
+                             "ensure that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions.",
+                             accountId_,
+                             id_,
+                             validUserAtCommit);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
+                return false;
             }
         }
         JAMI_DEBUG("[Account {}] [Conversation {}] Validate commit {}", accountId_, id_, commit.id);
