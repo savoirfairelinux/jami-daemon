@@ -345,8 +345,9 @@ public:
      * Verify the signature against the given commit
      * @param userDevice    the email of the sender (i.e. their device's public key)
      * @param commitId      the id of the commit
+     * @param certCommitId  the id of the commit containing the revision with an existing cert. of userDevice
      */
-    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
+    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId, const std::string& certCommitId) const;
 
     /**
      * Validate that commits are not malformed

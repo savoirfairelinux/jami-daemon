@@ -203,7 +203,7 @@ public:
                    const std::string& commitId,
                    const std::string& parentId) const;
     bool checkEdit(const std::string& userDevice, const ConversationCommit& commit) const;
-    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId) const;
+    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId, const std::string& certCommitId) const;
     bool checkInitialCommit(const std::string& userDevice,
                             const std::string& commitId,
                             const std::string& commitMsg) const;
@@ -1655,7 +1655,8 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
 
 bool
 ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
-                                                  const std::string& commitId) const
+                                                  const std::string& commitId,
+                                                  const std::string& certCommitId) const
 {
     auto acc = account_.lock();
     if (!acc)
@@ -1667,7 +1668,8 @@ ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
         return false;
 
     // Retrieve tree for commit
-    auto tree = treeAtCommit(repo.get(), commitId);
+    auto tree = treeAtCommit(repo.get(), certCommitId);
+
     if (not tree)
         return false;
 
@@ -2764,33 +2766,7 @@ ConversationRepository::Impl::validCommits(
     for (const auto& commit : commitsToValidate) {
         auto userDevice = commit.author.email;
         auto validUserAtCommit = commit.id;
-
-        // For all commits, check that the user is valid,
-        // meaning the user's certificate MUST be in /members or /admins,
-        // their device cert MUST be in /devices,
-        // and the commit MUST be signed by the device
-        if (!isValidUserAtCommit(userDevice, validUserAtCommit)) {
-            std::string msg_spec;
-            if (commit.parents.size() == 0)
-                msg_spec = "initial";
-            else if (commit.parents.size() == 1)
-                msg_spec = "";
-            else
-                msg_spec = "merge";
-            JAMI_WARNING("[Account {}] [Conversation {}] Malformed {} commit {}. Please ensure "
-                         "that you are using the latest version of Jami, or "
-                         "that one of your contacts is not performing any unwanted actions. {}",
-                         accountId_,
-                         id_,
-                         validUserAtCommit,
-                         commit.commit_msg,
-                         msg_spec);
-            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                         id_,
-                                                                         EVALIDFETCH,
-                                                                         "Malformed commit");
-            return false;
-        }
+        bool isRemoveCommit = false;
 
         if (commit.parents.size() == 0) {
             if (!checkInitialCommit(userDevice, commit.id, commit.commit_msg)) {
@@ -2859,7 +2835,8 @@ ConversationRepository::Impl::validCommits(
                 } else if (action == "remove") {
                     // In this case, we remove the user. So if self, the user will not be
                     // valid for this commit. Check previous commit
-                    validUserAtCommit = commit.parents[0];
+                    isRemoveCommit = true;
+
                     if (!checkValidRemove(userDevice, uriMember, commit.id, commit.parents[0])) {
                         JAMI_WARNING(
                             "[Account {}] [Conversation {}] Malformed removes commit {}. Please ensure that you are using the latest "
@@ -2928,7 +2905,7 @@ ConversationRepository::Impl::validCommits(
                 // Note: accept all mimetype here, as we can have new mimetypes
                 // Just avoid to add weird files
                 // Check that no weird file is added outside device cert nor removed
-                if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
+                if (!checkValidUserDiff(userDevice, commit.id, isRemoveCommit ? commit.parents[0] : validUserAtCommit)) {
                     JAMI_WARNING(
                         "[Account {}] [Conversation {}] Malformed {} commit {}. Please ensure that you are using the latest "
                         "version of Jami, or that one of your contacts is not performing any unwanted actions.",
@@ -2938,6 +2915,41 @@ ConversationRepository::Impl::validCommits(
                         accountId_, id_, EVALIDFETCH, "Malformed commit");
                     return false;
                 }
+            }
+
+            // For all commits, check that the user is valid.
+            // So, the user certificate MUST be in /members or /admins
+            // and device cert MUST be in /devices
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit, isRemoveCommit ? commit.parents[0] : validUserAtCommit)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed commit {}.Please ensure "
+                             "that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions. {}",
+                             accountId_,
+                             id_,
+                             validUserAtCommit,
+                             commit.commit_msg);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
+                return false;
+            }
+        } else {
+            // Merge commit, for now, check user
+            if (!isValidUserAtCommit(userDevice, validUserAtCommit, validUserAtCommit)) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
+                             "ensure that you are using the latest "
+                             "version of Jami, or that one of your contacts is not performing any "
+                             "unwanted actions.",
+                             accountId_,
+                             id_,
+                             validUserAtCommit);
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed commit");
+                return false;
             }
         }
         JAMI_DEBUG("[Account {}] [Conversation {}] Validate commit {}", accountId_, id_, commit.id);
@@ -3848,9 +3860,10 @@ ConversationRepository::validClone(
 
 bool
 ConversationRepository::isValidUserAtCommit(const std::string& userDevice,
-                                            const std::string& commitId) const
+                                            const std::string& commitId,
+                                            const std::string& certCommitId) const
 {
-    return pimpl_->isValidUserAtCommit(userDevice, commitId);
+    return pimpl_->isValidUserAtCommit(userDevice, commitId, certCommitId);
 }
 
 bool
