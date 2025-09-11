@@ -73,4 +73,4 @@ Base64Test::decodingTestFail()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::Base64Test::name());
+CORE_TEST_RUNNER(jami::test::Base64Test::name());

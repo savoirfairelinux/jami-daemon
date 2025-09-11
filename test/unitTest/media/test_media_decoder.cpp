@@ -141,4 +141,4 @@ MediaDecoderTest::writeWav()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaDecoderTest::name());
+CORE_TEST_RUNNER(jami::test::MediaDecoderTest::name());

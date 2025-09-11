@@ -119,4 +119,4 @@ MediaFrameTest::testMix()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaFrameTest::name());
+CORE_TEST_RUNNER(jami::test::MediaFrameTest::name());

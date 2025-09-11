@@ -89,4 +89,4 @@ MapUtilsTest::test_extractValues()
 
 }}} // namespace jami::map_utils::test
 
-RING_TEST_RUNNER(jami::map_utils::test::MapUtilsTest::name());
+CORE_TEST_RUNNER(jami::map_utils::test::MapUtilsTest::name());

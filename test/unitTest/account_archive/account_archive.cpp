@@ -249,4 +249,4 @@ AccountArchiveTest::testChangeDhtPort()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::AccountArchiveTest::name())
+CORE_TEST_RUNNER(jami::test::AccountArchiveTest::name())

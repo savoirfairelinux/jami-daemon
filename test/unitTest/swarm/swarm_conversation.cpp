@@ -215,4 +215,4 @@ SwarmConversationTest::testSendMessage()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SwarmConversationTest::name())
+CORE_TEST_RUNNER(jami::test::SwarmConversationTest::name())

@@ -4,7 +4,7 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/CompilerOutputter.h>
 
-#define RING_TEST_RUNNER(suite_name) \
+#define CORE_TEST_RUNNER(suite_name) \
     int main() \
     { \
         CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry( \
@@ -19,7 +19,7 @@
         return runner.run() ? 0 : 1; \
     }
 
-// This version of the test runner is similar to RING_TEST_RUNNER but
+// This version of the test runner is similar to CORE_TEST_RUNNER but
 // can take multiple unit tests.
 // It's practical to run a test for diffrent configs, for instance when
 // running the same test for both Jami and SIP accounts.

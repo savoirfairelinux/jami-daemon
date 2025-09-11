@@ -557,4 +557,4 @@ SipSrtpTest::audio_video_srtp_enabled_test()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SipSrtpTest::name())
+CORE_TEST_RUNNER(jami::test::SipSrtpTest::name())

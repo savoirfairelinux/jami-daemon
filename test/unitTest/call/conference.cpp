@@ -1123,4 +1123,4 @@ ConferenceTest::testRemoveConferenceInOneOne()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConferenceTest::name())
+CORE_TEST_RUNNER(jami::test::ConferenceTest::name())

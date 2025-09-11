@@ -930,4 +930,4 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SyncHistoryTest::name())
+CORE_TEST_RUNNER(jami::test::SyncHistoryTest::name())

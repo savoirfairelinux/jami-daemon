@@ -804,4 +804,4 @@ FileTransferTest::testDeleteFile()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::FileTransferTest::name())
+CORE_TEST_RUNNER(jami::test::FileTransferTest::name())

@@ -189,4 +189,4 @@ MediaEncoderTest::testMultiStream()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaEncoderTest::name());
+CORE_TEST_RUNNER(jami::test::MediaEncoderTest::name());

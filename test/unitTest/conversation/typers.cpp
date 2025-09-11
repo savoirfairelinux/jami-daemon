@@ -291,4 +291,4 @@ TypersTest::testAccountConfig()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::TypersTest::name())
+CORE_TEST_RUNNER(jami::test::TypersTest::name())

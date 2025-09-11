@@ -88,7 +88,6 @@ private:
     bool merge_in_main(const std::shared_ptr<JamiAccount> account,
                        git_repository* repo,
                        const std::string& commit_ref);
-
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);          // Passes
     CPPUNIT_TEST(testAddSomeMessages);           // Passes
@@ -742,4 +741,4 @@ ConversationRepositoryTest::testMalformedCommit()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationRepositoryTest::name())
+CORE_TEST_RUNNER(jami::test::ConversationRepositoryTest::name())

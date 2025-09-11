@@ -144,4 +144,4 @@ StringUtilsTest::starts_with_test()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::StringUtilsTest::name());
+CORE_TEST_RUNNER(jami::test::StringUtilsTest::name());

@@ -414,4 +414,4 @@ PresenceTest::testPresenceStatusNoteBeforeConnection()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::PresenceTest::name())
+CORE_TEST_RUNNER(jami::test::PresenceTest::name())

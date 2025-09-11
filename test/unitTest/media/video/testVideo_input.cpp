@@ -68,4 +68,4 @@ VideoInputTest::testInput()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::VideoInputTest::name());
+CORE_TEST_RUNNER(jami::test::VideoInputTest::name());

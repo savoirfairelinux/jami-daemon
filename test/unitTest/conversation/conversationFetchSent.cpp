@@ -540,4 +540,4 @@ ConversationFetchSentTest::testDisplayedOnLoad()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationFetchSentTest::name())
+CORE_TEST_RUNNER(jami::test::ConversationFetchSentTest::name())

@@ -768,4 +768,4 @@ PluginsTest::testMessage()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::PluginsTest::name())
+CORE_TEST_RUNNER(jami::test::PluginsTest::name())

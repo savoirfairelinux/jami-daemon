@@ -126,4 +126,4 @@ AudioFrameResizerTest::testDifferentFormat()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::AudioFrameResizerTest::name());
+CORE_TEST_RUNNER(jami::test::AudioFrameResizerTest::name());

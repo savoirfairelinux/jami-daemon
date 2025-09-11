@@ -196,4 +196,4 @@ Account_factoryTest::testClear()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::Account_factoryTest::name())
+CORE_TEST_RUNNER(jami::test::Account_factoryTest::name())

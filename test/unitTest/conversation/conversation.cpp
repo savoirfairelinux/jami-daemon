@@ -2487,4 +2487,4 @@ ConversationTest::testUpdateProfileMultiDevice()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationTest::name())
+CORE_TEST_RUNNER(jami::test::ConversationTest::name())

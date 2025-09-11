@@ -1332,4 +1332,4 @@ RoutingTableTest::testSwarmManagersWMobileModes()
 
 }; // namespace test
 } // namespace jami
-RING_TEST_RUNNER(jami::test::RoutingTableTest::name())
+CORE_TEST_RUNNER(jami::test::RoutingTableTest::name())

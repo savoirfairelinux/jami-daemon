@@ -1234,4 +1234,4 @@ ConversationCallTest::testNoDevice()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationCallTest::name())
+CORE_TEST_RUNNER(jami::test::ConversationCallTest::name())
