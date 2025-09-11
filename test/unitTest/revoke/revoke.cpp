@@ -149,4 +149,4 @@ RevokeTest::testRevokeInvalidDevice()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::RevokeTest::name())
+CORE_TEST_RUNNER(jami::test::RevokeTest::name())

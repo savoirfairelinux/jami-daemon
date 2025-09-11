@@ -631,4 +631,4 @@ CallTest::testDhtPublicInCall()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::CallTest::name())
+CORE_TEST_RUNNER(jami::test::CallTest::name())

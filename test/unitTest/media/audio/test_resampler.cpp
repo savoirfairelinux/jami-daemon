@@ -111,4 +111,4 @@ ResamplerTest::testRematrix()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::ResamplerTest::name());
+CORE_TEST_RUNNER(jami::test::ResamplerTest::name());

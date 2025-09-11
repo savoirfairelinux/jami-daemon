@@ -733,4 +733,4 @@ HoldResumeTest::audio_only_then_hold_resume()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::HoldResumeTest::name())
+CORE_TEST_RUNNER(jami::test::HoldResumeTest::name())

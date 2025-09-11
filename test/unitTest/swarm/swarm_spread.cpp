@@ -474,4 +474,4 @@ SwarmMessageSpread::testWriteMessage()
 
 }; // namespace test
 } // namespace jami
-RING_TEST_RUNNER(jami::test::SwarmMessageSpread::name())
+CORE_TEST_RUNNER(jami::test::SwarmMessageSpread::name())

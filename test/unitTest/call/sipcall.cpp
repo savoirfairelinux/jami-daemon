@@ -144,4 +144,4 @@ SIPCallTest::testCall()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SIPCallTest::name())
+CORE_TEST_RUNNER(jami::test::SIPCallTest::name())

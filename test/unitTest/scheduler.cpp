@@ -86,4 +86,4 @@ SchedulerTest::schedulerTest()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::SchedulerTest::name());
+CORE_TEST_RUNNER(jami::test::SchedulerTest::name());

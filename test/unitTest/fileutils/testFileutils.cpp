@@ -145,4 +145,4 @@ FileutilsTest::testFullPath()
 
 }}} // namespace jami::test::fileutils
 
-RING_TEST_RUNNER(jami::fileutils::test::FileutilsTest::name());
+CORE_TEST_RUNNER(jami::fileutils::test::FileutilsTest::name());

@@ -641,4 +641,4 @@ IceSdpParsingTest::call_with_rfc5245_compliancy_enabled()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::IceSdpParsingTest::name())
+CORE_TEST_RUNNER(jami::test::IceSdpParsingTest::name())

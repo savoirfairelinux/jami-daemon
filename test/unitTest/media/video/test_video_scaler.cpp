@@ -104,4 +104,4 @@ VideoScalerTest::testScaleWithAspect()
 
 }}} // namespace jami::test
 
-RING_TEST_RUNNER(jami::video::test::VideoScalerTest::name());
+CORE_TEST_RUNNER(jami::video::test::VideoScalerTest::name());

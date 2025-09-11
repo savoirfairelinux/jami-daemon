@@ -1186,4 +1186,4 @@ ConversationRequestTest::doNotLooseMetadata()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::ConversationRequestTest::name())
+CORE_TEST_RUNNER(jami::test::ConversationRequestTest::name())

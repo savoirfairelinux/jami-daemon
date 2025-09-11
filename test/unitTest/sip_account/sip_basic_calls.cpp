@@ -1090,4 +1090,4 @@ SipBasicCallTest::blind_transfer_test()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::SipBasicCallTest::name())
+CORE_TEST_RUNNER(jami::test::SipBasicCallTest::name())

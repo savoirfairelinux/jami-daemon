@@ -334,4 +334,4 @@ MediaFilterTest::testReinit()
 
 }} // namespace jami::test
 
-RING_TEST_RUNNER(jami::test::MediaFilterTest::name());
+CORE_TEST_RUNNER(jami::test::MediaFilterTest::name());

@@ -1029,4 +1029,4 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
 } // namespace test
 } // namespace jami
 
-RING_TEST_RUNNER(jami::test::LinkDeviceTest::name())
+CORE_TEST_RUNNER(jami::test::LinkDeviceTest::name())
