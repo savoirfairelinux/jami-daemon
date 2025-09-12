@@ -1,6 +1,6 @@
 # ffnvcodec
-FFNVCODEC_VERSION := n11.1.5.2
-PKG_CPE += cpe:2.3:a:videolan:ffnvcodec:11.1.5.2:*:*:*:*:*:*:*
+FFNVCODEC_VERSION := n13.0.19.0
+PKG_CPE += cpe:2.3:a:videolan:ffnvcodec:13.0.19.0:*:*:*:*:*:*:*
 FFNVCODEC_URL := https://github.com/FFmpeg/nv-codec-headers/archive/$(FFNVCODEC_VERSION).tar.gz
 
 ifeq ($(call need_pkg,"ffnvcodec >= 8"),)
