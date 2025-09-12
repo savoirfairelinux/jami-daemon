@@ -1,5 +1,5 @@
-FFMPEG_HASH := 6.0.1
-PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:6.0.1:*:*:*:*:*:*:*
+FFMPEG_HASH := 6.1.3
+PKG_CPE += cpe:2.3:a:ffmpeg:ffmpeg:$(FFMPEG_HASH):*:*:*:*:*:*:*
 FFMPEG_URL := https://ffmpeg.org/releases/ffmpeg-$(FFMPEG_HASH).tar.xz
 
 PKGS+=ffmpeg
