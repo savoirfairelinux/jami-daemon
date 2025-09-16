@@ -75,6 +75,11 @@ public:
      */
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
 
+
+    virtual void startCaptureStream(const std::string& id) = 0;
+    virtual void stopCaptureStream(const std::string& id) = 0;
+
+
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
