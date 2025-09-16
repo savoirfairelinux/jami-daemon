@@ -11,7 +11,8 @@
     "with_env": "",
     "use_cmake": true,
     "defines": [
-        "CMAKE_INSTALL_PREFIX=./install"
+        "CMAKE_INSTALL_PREFIX=./install",
+        "CMAKE_C_FLAGS=-DNATPMP_MAX_RETRIES=3"
     ],
     "custom_scripts": {
         "pre_build": [],
