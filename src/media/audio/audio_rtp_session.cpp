@@ -132,6 +132,7 @@ AudioRtpSession::startSender()
     }
     if (streamId_ != audioInput_->getId())
         Manager::instance().getRingBufferPool().bindHalfDuplexOut(streamId_, audioInput_->getId());
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(streamId_, "16140");
 
     send_.fecEnabled = true;
 

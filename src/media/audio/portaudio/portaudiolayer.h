@@ -45,6 +45,17 @@ public:
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     /**
+     * Start capturing audio from given process id.
+     * Put audio into newly created RingBuffer.
+    */
+    void startCaptureStream(const std::string& id) override;
+
+    /**
+     * Stop capturing audio from given process id and clean up.
+    */
+    void stopCaptureStream(const std::string& id) override;
+
+    /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      */
