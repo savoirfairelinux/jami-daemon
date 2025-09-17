@@ -937,6 +937,7 @@ else()
 
         add_test_executable(bootstrap test/unitTest/swarm/bootstrap.cpp)
         add_test_executable(conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
+        add_test_executable(conversationRepositoryDST test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp)
         add_test_executable(revoke test/unitTest/revoke/revoke.cpp)
         add_test_executable(syncHistory test/unitTest/syncHistory/syncHistory.cpp)
         add_test_executable(base64 test/unitTest/base64/base64.cpp)
