@@ -105,7 +105,7 @@ if(NOT MSVC)
     endif()
 endif()
 
-if (FALSE)
+if (BUILD_CONTRIB)
     if (NOT MSVC)
         set(CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/native-${TARGET})
         file(MAKE_DIRECTORY ${CONTRIB_BUILD_PATH})
@@ -564,6 +564,7 @@ if(MSVC)
         ws2_32.lib
         advapi32.lib
         Secur32.lib
+        mfuuid.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavcodec.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavdevice.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavfilter.lib
