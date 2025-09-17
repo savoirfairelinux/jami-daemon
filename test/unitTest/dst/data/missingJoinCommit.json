@@ -1,0 +1,233 @@
+{
+	"accountIDs": [
+		"ALICE",
+		"BOB",
+		"CHARLIE"
+	],
+	"date": "20260109",
+	"desc": "Missing 'join' commit in history",
+	"seed": 3402517033,
+	"time": "17:19",
+	"validatedEvents": [
+		{
+			"eventType": "ADD_MEMBER",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "ADD_MEMBER",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "ADD_MEMBER",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "CLONE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "DISCONNECT",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "CONNECT",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		}
+	]
+}
