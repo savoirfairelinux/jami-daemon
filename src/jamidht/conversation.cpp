@@ -1368,6 +1368,12 @@ Conversation::announce(const std::vector<std::map<std::string, std::string>>& co
     pimpl_->announce(commits, commitFromSelf);
 }
 
+void
+Conversation::announce(const std::string& commitId, bool commitFromSelf)
+{
+    pimpl_->announce(commitId, commitFromSelf);
+}
+
 bool
 Conversation::hasSwarmChannel(const std::string& deviceId)
 {
@@ -1627,6 +1633,14 @@ Conversation::loadMessages(OnLoadMessages cb, const LogOptions& options)
             cb(sthis->pimpl_->loadMessages(options));
         }
     });
+}
+
+std::vector<libjami::SwarmMessage>
+Conversation::loadMessagesSync(const LogOptions& options)
+{
+    std::lock_guard lk(pimpl_->loadedHistory_.mutex);
+    auto result = pimpl_->loadMessages2(options);
+    return result;
 }
 
 void
