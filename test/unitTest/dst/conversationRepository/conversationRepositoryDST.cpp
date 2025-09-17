@@ -1,0 +1,1294 @@
+/*
+ *  Copyright (C) 2025 Savoir-faire Linux Inc.
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+// CPPUnit
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <random>
+#include <algorithm>
+#include <chrono>
+#include <filesystem>
+#include <vector>
+#include <string>
+#include <map>
+#include <memory>
+#include <utility>
+#include <mutex>
+#include <condition_variable>
+#include <thread>
+#include <cstdint>
+
+#include <opendht/infohash.h>
+#include <jsoncpp/json/json.h>
+
+#include "fileutils.h"
+#include "logger.h"
+#include "manager.h"
+
+#include "../../../test_runner.h"
+
+#include "jami.h"
+#include "account_const.h"
+#include "conversation_interface.h"
+#include "configurationmanager_interface.h"
+#include "json_utils.h"
+
+#include "jamidht/jamiaccount.h"
+#include "jamidht/conversation.h"
+#include "jamidht/conversationrepository.h"
+#include "jamidht/conversation_module.h"
+
+using namespace std::string_literals;
+using namespace libjami::Account;
+using namespace std::chrono_literals;
+
+namespace jami {
+namespace test {
+// Vector with random silly messages
+const std::vector<std::string> messages = {"{\"body\":\"salut\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"ça va?\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"quoi de neuf?\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"je suis là!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"à plus!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bye!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"à toute!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"à demain!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bonne nuit!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bonne journée!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bon week-end!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bon courage!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bon app!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"je reviens dans 5 min\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"tu as vu le dernier film?\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"on se retrouve où?\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"j'ai une bonne nouvelle!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"félicitations!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"désolé pour le retard\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"c'est parti!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"j'ai faim\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"tu veux un café?\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"il fait beau aujourd'hui\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"bonne chance!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"on se voit ce soir?\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"merci beaucoup!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"je suis d'accord\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"pas de souci\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"à bientôt!\",\"type\":\"text/plain\"}",
+                                           "{\"body\":\"super idée!\",\"type\":\"text/plain\"}"};
+
+// Events to select from randomly
+enum class ConversationEvent : std::uint8_t {
+    ADD_MEMBER = 0,
+    SEND_MESSAGE = 1,
+    CONNECT = 2,
+    DISCONNECT = 3,
+    PULL = 4,
+    CLONE = 5
+};
+
+// Define a map for the event and its string name (for logging purposes)
+std::map<ConversationEvent, std::string> eventNames {{ConversationEvent::ADD_MEMBER, "ADD_MEMBER"},
+                                                     {ConversationEvent::SEND_MESSAGE, "SEND_MESSAGE"},
+                                                     {ConversationEvent::CONNECT, "CONNECT"},
+                                                     {ConversationEvent::DISCONNECT, "DISCONNECT"},
+                                                     {ConversationEvent::PULL, "PULL"},
+                                                     {ConversationEvent::CLONE, "CLONE"}};
+std::map<std::string, ConversationEvent> invertedEventNames {{"ADD_MEMBER", ConversationEvent::ADD_MEMBER},
+                                                             {"SEND_MESSAGE", ConversationEvent::SEND_MESSAGE},
+                                                             {"CONNECT", ConversationEvent::CONNECT},
+                                                             {"DISCONNECT", ConversationEvent::DISCONNECT},
+                                                             {"PULL", ConversationEvent::PULL},
+                                                             {"CLONE", ConversationEvent::CLONE}};
+
+/**
+ * A structure containing the relevant data for account and repo simulation. Meant to avoid calls to the
+ * instance manager.
+ */
+struct RepositoryAccount
+{
+    /*!< Pointer to the JamiAccount associated with the repository */
+    std::shared_ptr<JamiAccount> account;
+    /*!< Pointer to the repository object of the account*/
+    std::unique_ptr<ConversationRepository> repository;
+    /*!< Indicator for whether or not the account is capable of performing connection-dependent actions*/
+    bool connected {false};
+    /*!< Marker for initializing the account, only use in connectSignals()*/
+    bool deviceAnnounced {false};
+    /*!< List of messages that the account has on the client-side (i.e. "on their chatview")*/
+    std::vector<libjami::SwarmMessage> messages;
+    /*!< The most recent commit that was sent when the account was last connected (i.e. "on their
+     * chatview")*/
+    std::string lastConnectedCommit;
+    /*!< Marker for whether or not this particular account successfully received the SwarmLoaded signal*/
+    bool swarmLoaded {false};
+
+    RepositoryAccount(std::shared_ptr<JamiAccount> acc, std::unique_ptr<ConversationRepository> repo, bool connected)
+        : account(std::move(acc))
+        , repository(std::move(repo))
+        , connected(connected)
+    {}
+};
+
+// Event structure, each having a type and a timestamp
+struct Event
+{
+    int instigatorAccountIndex;
+    int receivingAccountIndex;
+    ConversationEvent type;
+    std::chrono::nanoseconds timeOfOccurrence;
+
+    // For construction of an event struct
+    Event(int instigatorAccountIndex,
+          int receivingAccountIndex,
+          ConversationEvent type,
+          std::chrono::nanoseconds timeOfOccurrence)
+        : instigatorAccountIndex(instigatorAccountIndex)
+        , receivingAccountIndex(receivingAccountIndex)
+        , type(type)
+        , timeOfOccurrence(timeOfOccurrence)
+    {}
+};
+
+// Presets for the DSTConfiguration which will determine what settings to enable
+enum class PresetDSTConfiguration {
+    SINGLE_CYCLE, /*!< Run a single cycle of random event generation using provided eventSeed (default: rd()) */
+    MULTI_CYCLE,  /*!< Run 10 cycles of random event generation using provided eventSeed (default: rd()) */
+    UNIT_TEST,    /*!< Run a specific unit test provided in the configurations folder*/
+};
+
+/**
+ * @brief The configuration of the DST representing how it should behave
+ */
+struct DSTConfiguration
+{
+    PresetDSTConfiguration preset;
+    // = DST Preference =
+    int numCycles {1};
+    // This should always be true when running more than one cycle of random repo generation,
+    // otherwise the tests will segfault. When re-simulating a specific seed, set this to false so
+    // that the repo contents can be examined post-test if needed. However, do not forget to delete
+    // the created accounts manually, otherwise you will accumulate junk accounts.
+    bool enableResetRepoBetweenIterations {false};
+
+    // = Logging Preferences =
+    // Enable these for verbose logging. You may wish to disable these if generating a large number of cycles
+    bool enableEventLogging {false};
+    bool enableGitLogging {false};
+
+    // = Unit test Preferences =
+    bool saveGenerationsAsUnitTests {false};
+    bool runUnitTest {false};
+
+    // Assumes MULTI_CYCLE configuration if no preset is defined
+    DSTConfiguration()
+        : DSTConfiguration(PresetDSTConfiguration::MULTI_CYCLE) {};
+
+    // Default preferences
+    DSTConfiguration(const PresetDSTConfiguration& preset, bool eventLogging = true, bool gitLogging = true)
+    {
+        switch (preset) {
+        case PresetDSTConfiguration::SINGLE_CYCLE:
+            numCycles = 1;
+            enableResetRepoBetweenIterations = false;
+            saveGenerationsAsUnitTests = true;
+            break;
+        case PresetDSTConfiguration::MULTI_CYCLE:
+            numCycles = 10;
+            enableResetRepoBetweenIterations = true;
+            saveGenerationsAsUnitTests = false;
+            break;
+        case PresetDSTConfiguration::UNIT_TEST:
+            saveGenerationsAsUnitTests = false;
+            runUnitTest = true;
+            break;
+        default:
+            JAMI_WARNING("Unknown preset, all preferences disabled!");
+            break;
+        }
+
+        enableEventLogging = eventLogging;
+        enableGitLogging = gitLogging;
+    }
+};
+
+// Keys used in config.json
+enum class UTKEY {
+    SEED,
+    DATE,
+    TIME,
+    DESC,
+    ACCOUNT_IDS,
+    VALIDATED_EVENTS,
+    EVENT_TYPE,
+    INSTIGATOR_ACCOUNT_ID,
+    RECEIVING_ACCOUNT_ID
+};
+std::map<UTKEY, std::string> unitTestKeys {{UTKEY::SEED, "seed"},
+                                           {UTKEY::DATE, "date"},
+                                           {UTKEY::TIME, "time"},
+                                           {UTKEY::DESC, "desc"},
+                                           {UTKEY::ACCOUNT_IDS, "accountIDs"},
+                                           {UTKEY::VALIDATED_EVENTS, "validatedEvents"},
+                                           {UTKEY::EVENT_TYPE, "eventType"},
+                                           {UTKEY::INSTIGATOR_ACCOUNT_ID, "instigatorAccountID"},
+                                           {UTKEY::RECEIVING_ACCOUNT_ID, "receivingAccountID"}};
+
+class ConversationRepositoryDST : public CppUnit::TestFixture
+{
+public:
+    ConversationRepositoryDST() {}
+    ~ConversationRepositoryDST() { libjami::fini(); }
+    static std::string name() { return "ConversationRepositoryDST"; }
+
+    // Setup and teardown functions
+    void connectSignals();
+    void setUp();
+    void tearDown();
+
+    // Logging
+    void eventLogger(const Event& event);
+    void displaySummary();
+    void displayGitLog();
+
+    // Event sequence generation dependencies
+    void scheduleGitEvent(const ConversationEvent& gitOperation,
+                          int instigatorAccountIndex,
+                          int receivingAccountIndex,
+                          std::chrono::nanoseconds eventTimeOfOccurrence);
+    void scheduleSideEffects(const Event& event);
+    bool isUserInRepo(int accountIndexToSearch, int accountIndexToFind);
+    bool validateEvent(const Event& event);
+    void triggerEvent(const Event& event);
+    bool checkAppearances(const int receivingAccountIndex, const std::string& oldReceiverHead);
+
+    // Test runner dependencies
+    bool verifyLoadConversationFromScratch();
+    void generateEventSequence();
+    void resetRepositories();
+
+    // Unit testing
+    bool loadUnitTestConfig(const std::string& unitTestFolderName);
+    void saveAsUnitTestConfig();
+
+    // Test runner
+    void run();
+    void runCycles();
+    void runUnitTest();
+
+    // Unit test suite
+    CPPUNIT_TEST_SUITE(ConversationRepositoryDST);
+    CPPUNIT_TEST(run);
+    CPPUNIT_TEST_SUITE_END();
+
+private:
+    // Accounts
+    std::vector<RepositoryAccount> repositoryAccounts;
+    int numAccountsToSimulate = 3;
+    std::uniform_int_distribution<> accountDist {0, numAccountsToSimulate - 1};
+    const std::vector<std::string> displayNames = {"ALICE",  "BOB",   "CHARLIE", "DAVE",   "EMILY", "FRANK", "GREG",
+                                                   "HOLLY",  "IAN",   "JENNA",   "KEVIN",  "LUCY",  "MIKE",  "NORA",
+                                                   "OLIVIA", "PETE",  "QUINN",   "RACHEL", "SAM",   "TOM",   "UMA",
+                                                   "VICTOR", "WENDY", "XANDER",  "YVONNE", "ZOE"};
+
+    // Signal handlers - must be persistent
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+
+    // Random number generation
+    std::random_device rd;
+    std::random_device::result_type eventSeed;
+
+    // Events
+    int numEventsToGenerate = 500;
+    std::vector<Event> unvalidatedEvents;
+    std::vector<Event> validatedEvents;
+    std::uniform_int_distribution<> repositoryEventDist {0, 3}; // 4 events
+    int invalidEventsCount = 0;
+    std::chrono::nanoseconds startTime {0};
+    std::mt19937_64 messageGen;
+
+    std::vector<std::random_device::result_type> badSeeds {};
+    std::vector<std::random_device::result_type> seedsTested {};
+
+    float sumOfRejectionRates = 0;
+    DSTConfiguration dstConfig = DSTConfiguration(PresetDSTConfiguration::SINGLE_CYCLE);
+};
+
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConversationRepositoryDST, ConversationRepositoryDST::name());
+
+void
+ConversationRepositoryDST::connectSignals()
+{
+    JAMI_LOG("=== CONNECTING SIGNALS ===");
+    confHandlers.clear();
+
+    // For account announcement in setUp()
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>&) {
+            for (auto& repoAcc : repositoryAccounts) {
+                auto repositoryAccountID = repoAcc.account->getAccountID();
+                if (accountId == repositoryAccountID) {
+                    auto details = repoAcc.account->getVolatileAccountDetails();
+                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                    repoAcc.deviceAnnounced = deviceAnnounced == "true";
+                    break;
+                }
+            }
+            cv.notify_one();
+        }));
+
+    // For checking individual message reception on pull's
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+        [&](const std::string& accountId, const std::string& conversationId, std::map<std::string, std::string> message) {
+            for (RepositoryAccount& repositoryAccount : repositoryAccounts) {
+                if (accountId == repositoryAccount.account->getAccountID()) {
+                    libjami::SwarmMessage swarmMessage;
+                    swarmMessage.fromMapStringString(message);
+                    repositoryAccount.messages.emplace_back(swarmMessage);
+                    repositoryAccount.swarmLoaded = true;
+                }
+            }
+            cv.notify_one();
+        }));
+
+    // For checking full conversation loading from scratch
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmLoaded>(
+        [&](uint32_t requestId,
+            const std::string& accountId,
+            const std::string& conversationId,
+            const std::vector<libjami::SwarmMessage>& messages) {
+            for (RepositoryAccount& repositoryAccount : repositoryAccounts) {
+                if (repositoryAccount.account->getAccountID() == accountId) {
+                    repositoryAccount.messages.insert(repositoryAccount.messages.end(),
+                                                      messages.begin(),
+                                                      messages.end());
+                    repositoryAccount.swarmLoaded = true;
+                    break;
+                }
+            }
+            cv.notify_one();
+        }));
+
+    JAMI_LOG("Registering {} signal handlers...", confHandlers.size());
+    libjami::registerSignalHandlers(confHandlers);
+}
+
+void
+ConversationRepositoryDST::setUp()
+{
+    connectSignals();
+
+    if (dstConfig.runUnitTest) {
+        // Load the unit test configuration and accounts prior to starting the manager
+        loadUnitTestConfig("20251029-09:59");
+
+        // For the case of unit testing, we need the manager to start only after we load the particular configuration
+        // from the unit test that we want
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        if (not Manager::instance().initialized)
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
+
+        // Load the accounts from the data path
+        auto existingAccounts = Manager::instance().getAllAccounts();
+        for (auto existingAccount : existingAccounts) {
+            auto existingAccountToAdd = Manager::instance().getAccount<JamiAccount>(existingAccount->getAccountID());
+            // Add the account to repository accounts list
+            repositoryAccounts.emplace_back(RepositoryAccount(existingAccountToAdd, nullptr, true));
+        }
+    } else {
+        // For the case of cycling, we need to manager to be up and running first
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        if (not Manager::instance().initialized)
+            CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
+
+        // Initiate account creations for random repo generation
+        messageGen.seed(eventSeed);
+
+        // Reserve space for account IDs
+        repositoryAccounts.reserve(numAccountsToSimulate);
+        // Get the number of existing accounts (in HOME/.local/share/jami/)
+        auto existingAccounts = Manager::instance().getAllAccounts();
+        const int numberOfExistingAccounts = static_cast<int>(existingAccounts.size());
+        int numAccountsToAdd = numAccountsToSimulate;
+        // Check the number of accounts to add based on the number of existing accounts
+        if (numberOfExistingAccounts > 0 && numberOfExistingAccounts <= numAccountsToSimulate) {
+            // Calculate the number of accounts to add
+            numAccountsToAdd = numAccountsToSimulate - numberOfExistingAccounts;
+            // Add the existing accounts to the repository accounts list
+            for (auto existingAccount : existingAccounts) {
+                auto existingAccountToAdd = Manager::instance().getAccount<JamiAccount>(existingAccount->getAccountID());
+                // Add the account to repository accounts list
+                repositoryAccounts.emplace_back(RepositoryAccount(existingAccountToAdd, nullptr, true));
+            }
+        }
+
+        // Add the max number of simulatable accounts
+        for (int i = 0; i < numAccountsToAdd; ++i) {
+            // Configure the account
+            auto accountDetails = libjami::getAccountTemplate("RING");
+            accountDetails[ConfProperties::TYPE] = "RING";
+            accountDetails[ConfProperties::DISPLAYNAME] = displayNames[i];
+            accountDetails[ConfProperties::ALIAS] = displayNames[i];
+            accountDetails[ConfProperties::UPNP_ENABLED] = "true";
+            accountDetails[ConfProperties::ARCHIVE_PASSWORD] = "";
+
+            // Add the account and store the returned account ID
+            auto accountId = Manager::instance().addAccount(accountDetails);
+
+            // Initialize the account details for later indexing
+            auto account = Manager::instance().getAccount<JamiAccount>(accountId);
+            repositoryAccounts.emplace_back(RepositoryAccount(account, nullptr, true));
+        }
+
+        // Need to wait for devices to be registered
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
+            for (const auto& repoAcc : repositoryAccounts) {
+                if (!repoAcc.deviceAnnounced)
+                    return false;
+            }
+            return true;
+        }));
+
+        // Reserve space for max number of events
+        unvalidatedEvents.reserve(numEventsToGenerate);
+    }
+}
+
+void
+ConversationRepositoryDST::tearDown()
+{
+    resetRepositories();
+    JAMI_LOG("Tearing down ConversationRepositoryDST...");
+}
+
+/**
+ * Displays info about an event or git operation
+ * @param event The event to be logged
+ */
+void
+ConversationRepositoryDST::eventLogger(const Event& event)
+{
+    if (dstConfig.enableEventLogging) {
+        auto instigatorName = repositoryAccounts[event.instigatorAccountIndex].account->getDisplayName();
+        auto receiverName = repositoryAccounts[event.receivingAccountIndex].account->getDisplayName();
+        auto eventTime = event.timeOfOccurrence.count();
+
+        switch (event.type) {
+        case ConversationEvent::ADD_MEMBER:
+            JAMI_LOG("EVENT: {} added account {} to the conversation at {}", instigatorName, receiverName, eventTime);
+            break;
+        case ConversationEvent::SEND_MESSAGE:
+            JAMI_LOG("EVENT: {} sent a message to the conversation at {}", instigatorName, eventTime);
+            break;
+        case ConversationEvent::CONNECT:
+            JAMI_LOG("EVENT: {} connected to the conversation at {}", instigatorName, eventTime);
+            break;
+        case ConversationEvent::DISCONNECT:
+            JAMI_LOG("EVENT: {} disconnected from the conversation at {}", instigatorName, eventTime);
+            break;
+        case ConversationEvent::CLONE:
+            JAMI_LOG("GIT OPERATION: {} cloned the conversation from {} at {}", receiverName, instigatorName, eventTime);
+            break;
+        case ConversationEvent::PULL:
+            JAMI_LOG("GIT OPERATION: {} pulled the conversation from {} at {}", receiverName, instigatorName, eventTime);
+            break;
+        default:
+            JAMI_WARNING("Unknown ConversationEvent type received, this is a bug! No action has been "
+                         "triggered.");
+            break;
+        }
+    }
+}
+
+/**
+ * Displays a summary of the events sequence and the sequence of events that took place. Information
+ * includes:
+ * - The seed used
+ * - The number of accounts simulated
+ * - The number of events generated
+ * - The number of valid/invalid events
+ * - The rejection rate
+ */
+void
+ConversationRepositoryDST::displaySummary()
+{
+    float rejectionRate = (static_cast<float>(invalidEventsCount) / unvalidatedEvents.size());
+    sumOfRejectionRates += rejectionRate;
+    JAMI_LOG("=========================== Summary ==========================");
+    JAMI_LOG("Random seed used: {}", eventSeed);
+    JAMI_LOG("Total number of accounts simulated: {}", numAccountsToSimulate);
+    JAMI_LOG("Total events generated: {}", unvalidatedEvents.size());
+    JAMI_LOG("Total valid events: {}", validatedEvents.size());
+    JAMI_LOG("Total invalid events: {}", invalidEventsCount);
+    JAMI_LOG("Rejection rate: {}%", rejectionRate * 100);
+    JAMI_LOG("====================== Validated Events ======================");
+    for (const auto& e : validatedEvents) {
+        eventLogger(e);
+    }
+}
+
+/**
+ * Display the git repository logs of each account that contains a repository. This is the
+ * equivalent of running `git log` for each account that has a repository associated with it.
+ */
+void
+ConversationRepositoryDST::displayGitLog()
+{
+    if (dstConfig.enableGitLogging) {
+        JAMI_LOG("======================= Git Logs ============================");
+        for (const RepositoryAccount& repositoryAccount : repositoryAccounts) {
+            if (repositoryAccount.repository) {
+                JAMI_LOG("Git log for account {}:", repositoryAccount.account->getDisplayName());
+                auto log = repositoryAccount.repository->log(LogOptions {});
+                for (const auto& entry : log) {
+                    JAMI_LOG("Message: {}, Author: {}, ID: {}", entry.commit_msg, entry.author.name, entry.id);
+                }
+            }
+        }
+    }
+}
+
+/**
+ *
+ * @param gitOperation The git operation to be scheduled
+ * @param instigatorAccountIndex The index of the account that performs the git operation
+ * @param receivingAccountIndex The index of the account that has the git operation performed on them.
+ * @param eventTimeOfOccurrence The time of occurrence of the event that triggered the schedule
+ *
+ * @note Example: A pulls from B (where A is the receiver/puller, and B is the instigator/source)
+ */
+void
+ConversationRepositoryDST::scheduleGitEvent(const ConversationEvent& gitOperation,
+                                            int instigatorAccountIndex,
+                                            int receivingAccountIndex,
+                                            std::chrono::nanoseconds eventTimeOfOccurrence)
+{
+    // Seed
+    std::mt19937_64 gen(eventSeed);
+
+    std::chrono::nanoseconds adaptiveDelay(0);
+
+    if (static_cast<int>(unvalidatedEvents.size()) >= 2) {
+        auto recentTimeDiff = unvalidatedEvents.back().timeOfOccurrence
+                              - unvalidatedEvents[unvalidatedEvents.size() - 2].timeOfOccurrence;
+        if (recentTimeDiff > std::chrono::nanoseconds(0)) {
+            std::uniform_int_distribution<> multiplierDist(1, 50);
+            adaptiveDelay = recentTimeDiff * multiplierDist(gen);
+        } else {
+            adaptiveDelay = std::chrono::nanoseconds(unvalidatedEvents.back().timeOfOccurrence.count() / 1000);
+        }
+    } else {
+        adaptiveDelay = std::chrono::nanoseconds(eventTimeOfOccurrence.count() / 100);
+    }
+
+    auto scheduledTime = eventTimeOfOccurrence + adaptiveDelay;
+
+    if (!unvalidatedEvents.empty() && scheduledTime <= unvalidatedEvents.back().timeOfOccurrence) {
+        auto minIncrement = std::chrono::nanoseconds(unvalidatedEvents.back().timeOfOccurrence.count() / 10000);
+        scheduledTime = unvalidatedEvents.back().timeOfOccurrence + minIncrement;
+    }
+
+    if (instigatorAccountIndex != receivingAccountIndex) {
+        // Just push_back, do not insert in order
+        unvalidatedEvents.push_back(Event(instigatorAccountIndex, receivingAccountIndex, gitOperation, scheduledTime));
+    } else {
+        for (int i = 0; i < static_cast<int>(repositoryAccounts.size()); ++i) {
+            if (repositoryAccounts[i].repository != nullptr && i != instigatorAccountIndex) {
+                std::uniform_int_distribution<> offsetPercentDist(1, 20);
+                auto accountSpecificTime = scheduledTime + (adaptiveDelay * offsetPercentDist(gen) / 100);
+                unvalidatedEvents.push_back(Event(instigatorAccountIndex, i, gitOperation, accountSpecificTime));
+            }
+        }
+    }
+}
+
+/**
+ * Schedule an event to take place given an event that just occurred
+ * @param event The event that just took place
+ */
+void
+ConversationRepositoryDST::scheduleSideEffects(const Event& event)
+{
+    switch (event.type) {
+    case ConversationEvent::ADD_MEMBER:
+        scheduleGitEvent(ConversationEvent::CLONE,
+                         event.instigatorAccountIndex,
+                         event.receivingAccountIndex,
+                         event.timeOfOccurrence);
+        break;
+    case ConversationEvent::SEND_MESSAGE:
+        scheduleGitEvent(ConversationEvent::PULL,
+                         event.instigatorAccountIndex,
+                         event.receivingAccountIndex,
+                         event.timeOfOccurrence);
+        break;
+    case ConversationEvent::CLONE:
+        // Now we notify the others about the join
+        scheduleGitEvent(ConversationEvent::PULL,
+                         event.receivingAccountIndex, // Same indicies so that everyone pulls from the joiner
+                         event.receivingAccountIndex,
+                         event.timeOfOccurrence);
+        break;
+    default:
+        break;
+    }
+}
+
+/**
+ * Checks whether or not a user is a member of a conversation
+ * @param accountIndexToSearch
+ * @param accountIndexToFind
+ * @return bool Whether or not the user is a member of the conversation
+ */
+bool
+ConversationRepositoryDST::isUserInRepo(int accountIndexToSearch, int accountIndexToFind)
+{
+    // Check that the repository exists
+    if (!repositoryAccounts[accountIndexToSearch].repository)
+        return false;
+
+    // Check whether the repository to search has members
+    if (repositoryAccounts[accountIndexToSearch].repository->members().empty())
+        return false;
+
+    dht::InfoHash h(repositoryAccounts[accountIndexToFind].account->getUsername());
+    const std::string& targetUri = h.toString();
+    for (const auto& member : repositoryAccounts[accountIndexToSearch].repository->members()) {
+        if (member.uri == targetUri) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Validates a given event based on existing events and the current state of all accounts (i.e. can
+ * this action be performed given the current state of the simulation)
+ * @param event The event to be validated
+ * @return bool Whether or not the event is valid
+ */
+bool
+ConversationRepositoryDST::validateEvent(const Event& event)
+{
+    // Get the accounts (mainly to improve legibility)
+    // References since we can't copy unique ptrs
+    RepositoryAccount& instigatorRepoAcc = repositoryAccounts[event.instigatorAccountIndex];
+    RepositoryAccount& receiverRepoAcc = repositoryAccounts[event.receivingAccountIndex];
+
+    switch (event.type) {
+    case ConversationEvent::CONNECT:
+        // Instigator can only be connected if already disconnected
+        if (!instigatorRepoAcc.repository || instigatorRepoAcc.connected) {
+            invalidEventsCount++;
+            return false;
+        }
+        break;
+    case ConversationEvent::DISCONNECT:
+        // Instigator can only be disconnected if already connected
+        if (!instigatorRepoAcc.repository || !instigatorRepoAcc.connected) {
+            invalidEventsCount++;
+            return false;
+        }
+        break;
+    case ConversationEvent::ADD_MEMBER:
+        // Note: this is within the context of the CURRENT repo
+        // The instigator should only be able to add the receiver if:
+        // 1. The instigator is not trying to add themselves (this occurs in the very first event)
+        // 2. The instigator is already part of of the conversation
+        // 3. The receiver is not already part of the conversation
+        if (event.instigatorAccountIndex == event.receivingAccountIndex || !instigatorRepoAcc.repository
+            || receiverRepoAcc.repository || isUserInRepo(event.instigatorAccountIndex, event.receivingAccountIndex)) {
+            invalidEventsCount++;
+            return false;
+        }
+        break;
+    case ConversationEvent::SEND_MESSAGE:
+        // Instigator can only send a message if part of the conversation
+        if (!instigatorRepoAcc.repository) {
+            invalidEventsCount++;
+            return false;
+        }
+        break;
+    case ConversationEvent::CLONE:
+        // The instigator should only be able to have the receiver clone from them if:
+        // 1. The instigator and receiver are online
+        // 2. The instigator is part of the conversation
+        // 3. The receiver is not already part of the conversation
+        // 4. The receiver is a member of the instigator's repository
+        if (instigatorRepoAcc.repository && !receiverRepoAcc.repository && instigatorRepoAcc.connected
+            && receiverRepoAcc.connected) {
+            return isUserInRepo(event.instigatorAccountIndex, event.receivingAccountIndex);
+        } else {
+            invalidEventsCount++;
+            return false;
+        }
+        break;
+    case ConversationEvent::PULL:
+        // The instigator should only be able to have the receiver pull from them if:
+        // 1. The instigator and receiver are online
+        // 2. The instigator and receiver are part of the conversation
+        // 3. The receiver is already a member of the instigator's repository
+        if (instigatorRepoAcc.repository && receiverRepoAcc.repository && instigatorRepoAcc.connected
+            && receiverRepoAcc.connected) {
+            if (isUserInRepo(event.instigatorAccountIndex, event.receivingAccountIndex))
+                return true;
+        } else {
+            invalidEventsCount++;
+            return false;
+        }
+        break;
+    default:
+        JAMI_WARNING("Unknown ConversationEvent type received, this is a bug! No action has been "
+                     "triggered.");
+        invalidEventsCount++;
+        return false;
+        break;
+    }
+    return true;
+}
+
+/**
+ * Triggers ConversationRepository actions based on the given event.
+ * @param event The event that dictates which actions are to be taken
+ * @note For the action of pulling from a repository, messages are checked for whether or not they
+ * had been sent the appropriate signal for displaying themselves on a client.
+ */
+void
+ConversationRepositoryDST::triggerEvent(const Event& event)
+{
+    auto instigatorAccount = repositoryAccounts[event.instigatorAccountIndex].account;
+    auto receivingAccount = repositoryAccounts[event.receivingAccountIndex].account;
+
+    // Perform the necessary action based on the event type
+    switch (event.type) {
+    case ConversationEvent::CONNECT: {
+        // Enable the account
+        repositoryAccounts[event.instigatorAccountIndex].connected = true;
+        repositoryAccounts[event.instigatorAccountIndex].lastConnectedCommit
+            = repositoryAccounts[event.instigatorAccountIndex].repository->getHead();
+
+        // When running unit tests, additional events should NOT be scheduled and the unit tests events should be
+        // followed strictly
+        if (!dstConfig.runUnitTest) {
+            // We can make an assumption that the instigator will pull from a user once they've
+            // connected to the repository and that the user they are pulling from is online
+            scheduleGitEvent(ConversationEvent::PULL,
+                             event.instigatorAccountIndex,
+                             event.receivingAccountIndex,
+                             event.timeOfOccurrence);
+        }
+        break;
+    }
+    case ConversationEvent::DISCONNECT: {
+        // Disable the account
+        repositoryAccounts[event.instigatorAccountIndex].connected = false;
+        break;
+    }
+    case ConversationEvent::ADD_MEMBER: {
+        // Add the account as a member within the context of the instigator's repository
+        dht::InfoHash h(receivingAccount->getUsername());
+        repositoryAccounts[event.instigatorAccountIndex].repository->addMember(h.toString());
+        break;
+    }
+    case ConversationEvent::SEND_MESSAGE: {
+        // Pick a random message to send
+        std::uniform_int_distribution<> messageDist(0, static_cast<int>(messages.size()) - 1);
+        const std::string& messageContent = messages[messageDist(messageGen)];
+        // Note for logging: commitMessage() returns the ID
+        repositoryAccounts[event.instigatorAccountIndex].repository->commitMessage(messageContent, true);
+        break;
+    }
+    case ConversationEvent::CLONE: {
+        repositoryAccounts[event.receivingAccountIndex].repository = ConversationRepository::cloneConversation(
+            repositoryAccounts[event.receivingAccountIndex].account,
+            std::string(repositoryAccounts[event.instigatorAccountIndex].account->getAccountID()),
+            repositoryAccounts[event.instigatorAccountIndex].repository->id());
+        // Join right after clone
+        repositoryAccounts[event.receivingAccountIndex].repository->join();
+        break;
+    }
+    case ConversationEvent::PULL: {
+        // CONSIDER FOR FURTHER IMPL: Pull from any random member who has already received the
+        // message (might need more state tracking possibly increasing complexity)
+
+        // Create a Conversation object for the receiving account
+        std::string convID = repositoryAccounts[event.receivingAccountIndex].repository->id();
+        std::shared_ptr<Conversation> conversation
+            = std::make_shared<Conversation>(repositoryAccounts[event.receivingAccountIndex].account, convID);
+
+        // Use Conversation's pull method instead of repository's pull
+        const std::string oldHead = repositoryAccounts[event.receivingAccountIndex].repository->getHead();
+
+        std::vector<libjami::MediaMap> commits = repositoryAccounts[event.receivingAccountIndex].repository->pull(
+            std::string(repositoryAccounts[event.instigatorAccountIndex].account->getAccountID()),
+            repositoryAccounts[event.instigatorAccountIndex].repository->getHead(),
+            oldHead,
+            [&](bool) {},
+            [&](const std::string&) {});
+
+        if (!commits.empty()) {
+            // Messages have been found
+            conversation->announce(commits, false);
+            // We perform a check here for message to verify that the messages were "displayed" on
+            // the client side
+            if (!checkAppearances(event.receivingAccountIndex, oldHead)) {
+                if (std::find(badSeeds.begin(), badSeeds.end(), eventSeed) == badSeeds.end())
+                    badSeeds.push_back(eventSeed);
+            }
+        }
+
+        // We point the last commit to the current head (i.e. latest pulled commit of the receiver)
+        repositoryAccounts[event.receivingAccountIndex].lastConnectedCommit
+            = repositoryAccounts[event.receivingAccountIndex].repository->getHead();
+        break;
+    }
+    default:
+        JAMI_WARNING("Unknown ConversationEvent type received, this is a bug! No action has been "
+                     "triggered.");
+        break;
+    }
+}
+
+/**
+ * Checks whether the messages were sent were pulled were marked as displayed
+ * @param receivingAccountIndex The index of the account that pulled from another member
+ * @param oldReceiverHead The old HEAD of the receivingAccount's repository
+ * @return bool Whether or not all the messages found in the repo were associated with a
+ * OnMessageReceived signal
+ */
+bool
+ConversationRepositoryDST::checkAppearances(const int receivingAccountIndex, const std::string& oldReceiverHead)
+{
+    // Get the new commits that have just been pulled
+    std::vector<ConversationCommit> loggedCommitsDiff = repositoryAccounts[receivingAccountIndex].repository->log(
+        LogOptions {/* from */ repositoryAccounts[receivingAccountIndex].repository->getHead(),
+                    /* to */ oldReceiverHead,
+                    /* nbOfCommits */ 0,
+                    /* skipMerge */ false,
+                    /* includeTo */ false});
+
+    // We iterate through the commits in the log of the account that just pulled (the receiver)
+    // and we check whether or not the messages that were sent an OnReceivedMessage
+    // ConversationSignal were actually "displayed" or not
+    for (const auto& commit : loggedCommitsDiff) {
+        const auto found = std::find_if(repositoryAccounts[receivingAccountIndex].messages.begin(),
+                                        repositoryAccounts[receivingAccountIndex].messages.end(),
+                                        [&](const libjami::SwarmMessage& message) { return message.id == commit.id; });
+        if (found == repositoryAccounts[receivingAccountIndex].messages.end()) {
+            JAMI_LOG("Could not find matching commit ID in logged commits!");
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Verifies that all messages are loaded and given the SwarmLoaded signal on a fresh instance of
+ * opening a conversation
+ * @return bool Whether or not all messages were loaded
+ */
+bool
+ConversationRepositoryDST::verifyLoadConversationFromScratch()
+{
+    for (RepositoryAccount& repositoryAccount : repositoryAccounts) {
+        if (repositoryAccount.repository) {
+            // Reset the flag for message loading
+            repositoryAccount.swarmLoaded = false;
+            // Clear messages that may have been added from previous signal handling
+            repositoryAccount.messages.clear();
+            // Get the id of the conversation (i.e. repo id)
+            std::string conversationId = repositoryAccount.repository->id();
+
+            LogOptions options;
+            options.from = "";
+            // options.nbOfCommits = 20;
+            std::shared_ptr<Conversation> conversation = std::make_shared<Conversation>(repositoryAccount.account,
+                                                                                        conversationId);
+            // Load the 20 messages at a time
+            conversation->loadMessages2(
+                [accountId = repositoryAccount.account->getAccountID(),
+                 conversationId,
+                 randomId = std::uniform_int_distribution<uint32_t> {1}(repositoryAccount.account->rand)](
+                    auto&& messages) {
+                    emitSignal<libjami::ConversationSignal::SwarmLoaded>(randomId, accountId, conversationId, messages);
+                },
+                options);
+
+            // Wait up to 30 seconds for the signal to be received
+            if (!cv.wait_for(lk, 30s, [&] { return repositoryAccount.swarmLoaded; })) {
+                JAMI_LOG("ConversationSignal::SwarmLoaded not received for account {}!",
+                         repositoryAccount.account->getAccountID());
+                return false;
+            }
+
+            // Now we compare the number of messages received via the SwarmLoaded signal to that of
+            // the ones logged in the repository
+            LogOptions repoLogOptions;
+            repoLogOptions.skipMerge = true; // Merge commits dont get SwarmLoaded signals, so we
+                                             // disabled their logging here
+            repoLogOptions.fastLog = true;
+            std::vector<jami::ConversationCommit> loggedMessages = repositoryAccount.repository->log(repoLogOptions);
+            JAMI_LOG("COMMITS FROM SWARMLOADED SIGNAL : {} vs COMMITS FROM LOG: {}",
+                     repositoryAccount.messages.size(),
+                     loggedMessages.size());
+            return repositoryAccount.messages.size() == loggedMessages.size();
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Generates a randomized sequence of events based on the current members of the
+ * ConversationRepositoryDST class. A sequence of events can be re-simulated provided that the same
+ * eventSeed is used. Each event will be validated on a case-by-case basis given the already
+ * validated events. Valid events are then triggered and logged.
+ */
+void
+ConversationRepositoryDST::generateEventSequence()
+{
+    // Generate the random number based on the seed from eventSeed
+    std::mt19937_64 gen(eventSeed);
+
+    // Indices to be used throughout iteration
+    int instigatorAccountIndex, receivingAccountIndex;
+
+    // Initialize a repository randomly
+    JAMI_LOG("Creating initial repository...");
+
+    // Pick a random account to initialize
+    instigatorAccountIndex = accountDist(gen);
+    // Get the instigator's account
+    auto& instigatorAccount = repositoryAccounts[instigatorAccountIndex].account;
+    // Create the initial conversation
+    repositoryAccounts[instigatorAccountIndex].repository = ConversationRepository::createConversation(
+        instigatorAccount);
+
+    // Add the initial event
+    startTime = std::chrono::nanoseconds(0);
+
+    unvalidatedEvents.emplace_back(
+        Event(instigatorAccountIndex, instigatorAccountIndex, ConversationEvent::ADD_MEMBER, startTime));
+
+    JAMI_LOG("===================== Unvalidated Events =====================");
+    eventLogger(unvalidatedEvents.back());
+    // Generate the number of events we want to occur in the simulated conversation
+    while (static_cast<int>(unvalidatedEvents.size()) < numEventsToGenerate) {
+        // Select a random event from the pool of events
+        ConversationEvent generatedEvent = static_cast<ConversationEvent>(repositoryEventDist(gen));
+
+        // Select an account (instigator) to perform an event on another account (receiver)
+        instigatorAccountIndex = accountDist(gen);
+        receivingAccountIndex = accountDist(gen);
+
+        startTime += std::chrono::milliseconds(1000);
+
+        // Add the event
+        unvalidatedEvents.emplace_back(Event(instigatorAccountIndex, receivingAccountIndex, generatedEvent, startTime));
+        // Schedule side effects if applicable
+        scheduleSideEffects(unvalidatedEvents.back());
+
+        // Log the event
+        eventLogger(unvalidatedEvents.back());
+    }
+
+    // Sort all events by time before validation
+    std::sort(unvalidatedEvents.begin(), unvalidatedEvents.end(), [](const Event& a, const Event& b) {
+        return a.timeOfOccurrence < b.timeOfOccurrence;
+    });
+
+    // We want to skip the first event, we already know it's the initial repositoryAccount being added
+    validatedEvents.emplace_back(unvalidatedEvents.front());
+    JAMI_LOG("===================== Validating Events... =====================");
+    eventLogger(validatedEvents.front());
+    // Iterate through all the events and not just i-many
+    for (int i = 1; i < static_cast<int>(unvalidatedEvents.size()); i++) {
+        // JAMI_LOG("Validating event {}", i);
+        if (validateEvent(unvalidatedEvents[i])) {
+            validatedEvents.emplace_back(unvalidatedEvents[i]);
+            eventLogger(validatedEvents.back());
+            triggerEvent(validatedEvents.back());
+        }
+    }
+}
+
+/**
+ * Clear out the contents of the repositories of each account so that the accounts may be used for
+ * multiple iterations.
+ */
+void
+ConversationRepositoryDST::resetRepositories()
+{
+    if (dstConfig.enableResetRepoBetweenIterations || dstConfig.saveGenerationsAsUnitTests) {
+        std::vector<std::pair<std::string, std::string>> conversationPaths;
+
+        // Collect conversation paths first
+        for (RepositoryAccount& repoAcc : repositoryAccounts) {
+            if (repoAcc.repository) {
+                auto accountId = repoAcc.account->getAccountID();
+                auto convId = repoAcc.repository->id();
+                conversationPaths.push_back({accountId, convId});
+            }
+        }
+
+        // Force delete conversation directories
+        for (const auto& [accountId, convId] : conversationPaths) {
+            auto convPath = fileutils::get_data_dir() / accountId / "conversations" / convId;
+            auto convDataPath = fileutils::get_data_dir() / accountId / "conversation_data" / convId;
+            if (std::filesystem::exists(convPath)) {
+                JAMI_LOG("Force deleting conversation directory: {}", convPath.string());
+                std::filesystem::remove_all(convPath);
+            }
+            if (std::filesystem::exists(convDataPath)) {
+                JAMI_LOG("Force deleting conversation directory: {}", convDataPath.string());
+                std::filesystem::remove_all(convDataPath);
+            }
+        }
+    }
+
+    // Clear all events for next cycle
+    unvalidatedEvents.clear();
+    validatedEvents.clear();
+    invalidEventsCount = 0;
+}
+
+/**
+ * @brief Load the configuration for an existing, previously-ran test. This will configure the class with with accounts,
+ * a seed, and the validated event sequence.
+ * @param unitTestFolderName The folder name of the unit test configuration (relative to
+ * daemon/test/unitTest/dst/conversationRepository/configurations/)
+ */
+bool
+ConversationRepositoryDST::loadUnitTestConfig(const std::string& unitTestFolderName)
+{
+    JAMI_LOG("Loading unit test {}", unitTestFolderName);
+
+    // Open unitTestFolderName and get text from config.json
+    std::filesystem::path configPath
+        = std::filesystem::path(
+              "/home/ierdogan/Documents/jami-client-qt/daemon/test/unitTest/dst/conversationRepository/configurations")
+          / unitTestFolderName;
+    std::filesystem::path configFile = configPath / "config.json";
+    const std::string configContent = fileutils::loadTextFile(configFile);
+
+    // Copy the account folders from the configPath to HOME/.local/share/jami/
+    for (const auto& entry : std::filesystem::directory_iterator(configPath)) {
+        if (entry.is_directory()) {
+            auto sourcePath = entry.path();
+            auto destinationPath = fileutils::get_data_dir() / sourcePath.filename();
+            if (std::filesystem::exists(destinationPath)) {
+                std::filesystem::remove_all(destinationPath);
+            }
+            std::filesystem::copy(sourcePath, destinationPath, std::filesystem::copy_options::recursive);
+        }
+    }
+
+    // Parse the content into a json object
+    Json::Value unitTest;
+    if (!json::parse(configContent, unitTest)) {
+        JAMI_ERROR("Failed to parse unit test {}!", unitTestFolderName);
+        return false;
+    }
+
+    // Store the event seed (for logging, this will not be used anywhere else)
+    eventSeed = unitTest[unitTestKeys[UTKEY::SEED]].asInt();
+
+    // Get the account IDs
+    const Json::Value& accountIDsObj = unitTest[unitTestKeys[UTKEY::ACCOUNT_IDS]];
+    // Reference an index for each account ID
+    std::map<std::string, int> accountIDs;
+    for (Json::ArrayIndex i = 0; i < accountIDsObj.size(); ++i) {
+        accountIDs[accountIDsObj[i].asString()] = i;
+    }
+
+    numAccountsToSimulate = accountIDs.size();
+    accountDist = std::uniform_int_distribution<> {0, numAccountsToSimulate - 1};
+
+    // Get the validated events
+    const Json::Value& validatedEventsObj = unitTest[unitTestKeys[UTKEY::VALIDATED_EVENTS]];
+    for (const Json::Value& validatedEvent : validatedEventsObj) {
+        ConversationEvent convEvent = invertedEventNames[validatedEvent[unitTestKeys[UTKEY::EVENT_TYPE]].asString()];
+        std::string instigatorAccountID = validatedEvent[unitTestKeys[UTKEY::INSTIGATOR_ACCOUNT_ID]].asString();
+        std::string receiverAccountID = validatedEvent[unitTestKeys[UTKEY::RECEIVING_ACCOUNT_ID]].asString();
+        validatedEvents.emplace_back(
+            Event(accountIDs[instigatorAccountID], accountIDs[receiverAccountID], convEvent, 0s));
+    }
+
+    return true;
+}
+
+/**
+ * When called, this function will save the DST current configuration (including account folders). Configurations get
+ * saved as a subdirectory of the configurations directory. A configuration includes:
+ * - Date and time of generation
+ * - Seed used
+ * - Account IDs used
+ * - Validated events sequence
+ * @note A key with the name "desc" with an empty string as its value. If pushing the configuration to Jami repository,
+ * one should replace the value with a description of what the configuration tests.
+ */
+void
+ConversationRepositoryDST::saveAsUnitTestConfig()
+{
+    JAMI_LOG("Saving DST configuration for seed {} as unit test...", eventSeed);
+
+    // Get current date in YYYYMMDD format
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::tm local_tm = *std::localtime(&now_c);
+
+    std::ostringstream dateOss, timeOss;
+    dateOss << std::put_time(&local_tm, "%Y%m%d");
+    timeOss << std::put_time(&local_tm, "%H:%M");
+
+    std::string dateStr = dateOss.str();
+    std::string timeStr = timeOss.str();
+
+    // Create a JSON object representative of the configuration
+    Json::Value unitTest;
+    // Store basic info
+    unitTest[unitTestKeys[UTKEY::SEED]] = eventSeed;
+    unitTest[unitTestKeys[UTKEY::DATE]] = dateStr;
+    unitTest[unitTestKeys[UTKEY::DESC]] = "", unitTest[unitTestKeys[UTKEY::TIME]] = timeStr;
+    unitTest[unitTestKeys[UTKEY::ACCOUNT_IDS]] = Json::arrayValue;
+    for (const RepositoryAccount& repoAcc : repositoryAccounts) {
+        unitTest[unitTestKeys[UTKEY::ACCOUNT_IDS]].append(repoAcc.account->getAccountID());
+    }
+
+    // Get the validated events and store them as individual JSON objects
+    unitTest[unitTestKeys[UTKEY::VALIDATED_EVENTS]] = Json::arrayValue;
+    for (const Event& validatedEvent : validatedEvents) {
+        Json::Value validatedEventObject;
+        validatedEventObject[unitTestKeys[UTKEY::EVENT_TYPE]] = eventNames[validatedEvent.type];
+        validatedEventObject[unitTestKeys[UTKEY::INSTIGATOR_ACCOUNT_ID]]
+            = repositoryAccounts[validatedEvent.instigatorAccountIndex].account->getAccountID();
+        validatedEventObject[unitTestKeys[UTKEY::RECEIVING_ACCOUNT_ID]]
+            = repositoryAccounts[validatedEvent.receivingAccountIndex].account->getAccountID();
+
+        unitTest[unitTestKeys[UTKEY::VALIDATED_EVENTS]].append(validatedEventObject);
+    }
+
+    // Convert to a stylized string (make it more legible)
+    const std::string dstConfig = unitTest.toStyledString();
+    const std::filesystem::path filePath
+        = std::filesystem::path(
+              "/home/ierdogan/Documents/jami-client-qt/daemon/test/unitTest/dst/conversationRepository/configurations")
+          / (dateStr + "-" + timeStr) / "config.json";
+
+    // Create the directory if it doesn't exist
+    std::filesystem::create_directories(filePath.parent_path());
+    fileutils::saveFile(filePath, (const uint8_t*) dstConfig.data(), dstConfig.size());
+
+    // Store the account folders from .local/share/jami into the configuration folder
+    for (const RepositoryAccount& repoAcc : repositoryAccounts) {
+        auto accountDataPath = fileutils::get_data_dir() / repoAcc.account->getAccountID();
+        auto destinationPath = filePath.parent_path() / repoAcc.account->getAccountID();
+        if (std::filesystem::exists(accountDataPath)) {
+            std::filesystem::copy(accountDataPath,
+                                  destinationPath,
+                                  std::filesystem::copy_options::recursive
+                                      | std::filesystem::copy_options::overwrite_existing);
+        }
+    }
+}
+
+/**
+ * Run a given number of randomized tests and display seeds that ran with/without issues
+ */
+void
+ConversationRepositoryDST::runCycles()
+{
+    for (int i = 0; i < dstConfig.numCycles; ++i) {
+        // Generate the event sequence
+        JAMI_LOG("Starting cycle {} of {}", i + 1, dstConfig.numCycles);
+        // Generate the random seed to be used for event generation
+        eventSeed = 1645552772;
+        // Good testing seed: 1366566905
+        // Possibly broken seed? : 4146118691, 1645552772<- nghia broken// 1105404777 <- MALFORMED JOINS
+        JAMI_LOG("Random seed generated: {}", eventSeed);
+        generateEventSequence();
+        // Load each conversation as if it were being opened for the first time
+        verifyLoadConversationFromScratch();
+        // Log the summary for all the generated events
+        displaySummary();
+        // Log all the commits in each respective repository
+        displayGitLog();
+        // Add the tested seed
+        seedsTested.push_back(eventSeed);
+        // Clear out the repositories for reuse
+        resetRepositories();
+
+        // Save the iteration of the unit test as a configuration
+        if (dstConfig.saveGenerationsAsUnitTests && dstConfig.preset == PresetDSTConfiguration::SINGLE_CYCLE) {
+            saveAsUnitTestConfig();
+        }
+    }
+
+    JAMI_LOG("===================== Seeds Tested ==========================");
+    for (const auto& seed : seedsTested) {
+        JAMI_LOG("{}", seed);
+    }
+
+    if (!badSeeds.empty()) {
+        JAMI_LOG("=================== Bad Seeds ==========================");
+        for (const auto& seed : badSeeds) {
+            JAMI_LOG("{}", seed);
+        }
+    }
+
+    JAMI_LOG("=================== Invalid Events Average: {}% ==========================",
+             (static_cast<double>(sumOfRejectionRates) / static_cast<double>(dstConfig.numCycles)) * 100);
+}
+
+/**
+ * @brief Runs the unit test by triggering all the events in order, specified by the loaded configuration.
+ */
+void
+ConversationRepositoryDST::runUnitTest()
+{
+    // Get the first event (representative of who holds the first repository)
+    const Event& firstEvent = validatedEvents.front();
+    // Get the account associated with the first event
+    auto& firstEventAccount = repositoryAccounts[firstEvent.instigatorAccountIndex].account;
+    // Create the initial conversation
+    repositoryAccounts[firstEvent.instigatorAccountIndex].repository = ConversationRepository::createConversation(
+        firstEventAccount);
+
+    // We skip the first event since it represents who gets their repository first
+    for (size_t i = 1; i < validatedEvents.size(); i++) {
+        eventLogger(validatedEvents[i]);
+        triggerEvent(validatedEvents[i]);
+    }
+}
+
+/**
+ * @brief Runs either a unit test or a randomized cycle generation based on the configuration of the DST
+ */
+void
+ConversationRepositoryDST::run()
+{
+    dstConfig.runUnitTest ? runUnitTest() : runCycles();
+}
+
+} // namespace test
+} // namespace jami
+
+CORE_TEST_RUNNER(jami::test::ConversationRepositoryDST::name())
