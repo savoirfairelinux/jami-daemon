@@ -1,0 +1,83 @@
+{
+	"accountIDs": [
+		"ALICE",
+		"BOB",
+		"CHARLIE"
+	],
+	"date": "20260129",
+	"desc": "Simple conversation: all users are always connected and every message gets pulled immediately after being sent.",
+	"seed": 0,
+	"time": "14:50",
+	"validatedEvents": [
+		{
+			"eventType": "ADD_MEMBER",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "ADD_MEMBER",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "CLONE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "CHARLIE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "ADD_MEMBER",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "CLONE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		},
+		{
+			"eventType": "SEND_MESSAGE",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "ALICE"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "ALICE",
+			"receivingAccountID": "BOB"
+		},
+		{
+			"eventType": "PULL",
+			"instigatorAccountID": "BOB",
+			"receivingAccountID": "CHARLIE"
+		}
+	]
+}
