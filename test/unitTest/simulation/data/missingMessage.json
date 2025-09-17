@@ -1,0 +1,233 @@
+{
+    "accountIDs": [
+        "ALICE",
+        "BOB",
+        "CHARLIE"
+    ],
+    "date": "20251110",
+    "desc": "Missing Message: this unit test should reproduce a problematic topology for a conversation repository involving criss-cross merges.",
+    "seed": 1645552772,
+    "time": "11:48",
+    "validatedEvents": [
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "ADD_MEMBER",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "CLONE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "CLONE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "DISCONNECT",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "CONNECT",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "CONNECT",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "DISCONNECT",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "CONNECT",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "SEND_MESSAGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "CHARLIE"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "CHARLIE",
+            "receivingAccountID": "ALICE"
+        },
+        {
+            "eventType": "CONNECT",
+            "instigatorAccountID": "BOB",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "FETCH",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "BOB"
+        },
+        {
+            "eventType": "MERGE",
+            "instigatorAccountID": "ALICE",
+            "receivingAccountID": "BOB"
+        }
+    ]
+}
