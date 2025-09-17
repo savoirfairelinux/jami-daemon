@@ -64,6 +64,7 @@ namespace jami {
 
 #ifdef LIBJAMI_TEST
 bool ConversationRepository::DISABLE_RESET = false;
+bool ConversationRepository::FETCH_FROM_LOCAL_REPOS = false;
 #endif
 
 static const std::regex regex_display_name("<|>");
@@ -2763,6 +2764,12 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
     dhtnet::fileutils::check_dir(conversationsPath);
     auto path = conversationsPath / conversationId;
     auto url = fmt::format("git://{}/{}", deviceId, conversationId);
+#ifdef LIBJAMI_TEST
+    if (FETCH_FROM_LOCAL_REPOS) {
+        url = fmt::format("file://{}",
+                          (fileutils::get_data_dir() / deviceId / "conversations" / conversationId).string());
+    }
+#endif
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
@@ -3272,6 +3279,13 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
             return false;
         }
         std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
+#ifdef LIBJAMI_TEST
+        if (FETCH_FROM_LOCAL_REPOS) {
+            channelName
+                = fmt::format("file://{}",
+                              (fileutils::get_data_dir() / remoteDeviceId / "conversations" / pimpl_->id_).string());
+        }
+#endif
         if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str()) < 0) {
             JAMI_ERROR("[Account {}] [Conversation {}] Unable to create remote for repository",
                        pimpl_->accountId_,
