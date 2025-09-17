@@ -906,8 +906,44 @@ else()
         pkg_search_module(Cppunit REQUIRED IMPORTED_TARGET cppunit)
         find_package(Restinio REQUIRED) # for namedirectory tests
 
+        # Deterministic simulation testing library
+        add_library(dst_library STATIC
+            test/dst/dst.cpp
+            test/dst/simclient.cpp
+        )
+        target_link_libraries(dst_library
+            PUBLIC
+            ${PROJECT_NAME}
+            ${CMAKE_THREAD_LIBS_INIT}
+            PkgConfig::Cppunit
+            PkgConfig::git2
+            PkgConfig::jsoncpp
+            PkgConfig::fmt
+        )
+        target_link_directories(dst_library PUBLIC ${CONTRIB_PATH}/lib)
+        target_include_directories(dst_library PUBLIC
+            "${CMAKE_CURRENT_SOURCE_DIR}/test/;"
+        )
+        target_compile_definitions(dst_library PUBLIC
+            JAMI_DATADIR="${JAMI_DATADIR}"
+            PJ_AUTOCONF=1
+            ASIO_STANDALONE
+            MSGPACK_NO_BOOST
+            LIBJAMI_TEST
+        )
+        if (JAMI_PLUGIN)
+            target_compile_definitions(dst_library PUBLIC ENABLE_PLUGIN)
+        endif()
+        if (JAMI_VIDEO)
+            target_compile_definitions(dst_library PUBLIC ENABLE_VIDEO)
+        endif()
+        # Deterministic simulation testing CLI tool
+        add_executable(jamidst test/dst/main.cpp)
+        target_link_libraries(jamidst PRIVATE dst_library)
+
         file(COPY test/unitTest/actors DESTINATION ${CMAKE_BINARY_DIR})
         file(COPY test/unitTest/conversation/rsc DESTINATION ${CMAKE_BINARY_DIR}/conversation)
+        file(COPY test/unitTest/simulation/data DESTINATION ${CMAKE_BINARY_DIR}/simulation)
         file(COPY test/unitTest/media/data DESTINATION ${CMAKE_BINARY_DIR}/media)
         file(COPY test/unitTest/plugins/plugin.yml DESTINATION ${CMAKE_BINARY_DIR}/plugins)
         file(COPY test/unitTest/plugins/data DESTINATION ${CMAKE_BINARY_DIR}/plugins)
@@ -917,6 +953,7 @@ else()
             PUBLIC
             ${PROJECT_NAME}
             ${CMAKE_THREAD_LIBS_INIT}
+            dst_library
             PkgConfig::Cppunit
             PkgConfig::opendht
             PkgConfig::pjproject
@@ -985,6 +1022,7 @@ else()
 
         add_test_executable(bootstrap test/unitTest/swarm/bootstrap.cpp)
         add_test_executable(conversationRepository test/unitTest/conversationRepository/conversationRepository.cpp)
+        add_test_executable(simulation test/unitTest/simulation/simulation.cpp)
         add_test_executable(revoke test/unitTest/revoke/revoke.cpp)
         add_test_executable(syncHistory test/unitTest/syncHistory/syncHistory.cpp)
         add_test_executable(base64 test/unitTest/base64/base64.cpp)

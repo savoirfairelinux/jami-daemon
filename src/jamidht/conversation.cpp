@@ -1362,12 +1362,6 @@ Conversation::typers() const
     return pimpl_->typers_;
 }
 
-void
-Conversation::announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf)
-{
-    pimpl_->announce(commits, commitFromSelf);
-}
-
 bool
 Conversation::hasSwarmChannel(const std::string& deviceId)
 {
@@ -2201,6 +2195,26 @@ void
 Conversation::onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb)
 {
     pimpl_->bootstrapCbTest_ = cb;
+}
+
+std::vector<libjami::SwarmMessage>
+Conversation::loadMessagesSync(const LogOptions& options)
+{
+    std::lock_guard lk(pimpl_->loadedHistory_.mutex);
+    auto result = pimpl_->loadMessages2(options);
+    return result;
+}
+
+void
+Conversation::announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf)
+{
+    pimpl_->announce(commits, commitFromSelf);
+}
+
+void
+Conversation::announce(const std::string& commitId, bool commitFromSelf)
+{
+    pimpl_->announce(commitId, commitFromSelf);
 }
 #endif
 
