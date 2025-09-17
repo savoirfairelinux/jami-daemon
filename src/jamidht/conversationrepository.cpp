@@ -2688,7 +2688,9 @@ ConversationRepository::cloneConversation(
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
     dhtnet::fileutils::check_dir(conversationsPath);
     auto path = conversationsPath / conversationId;
-    auto url = fmt::format("git://{}/{}", deviceId, conversationId);
+    auto url = fmt::format("file://{}",
+                           (fileutils::get_data_dir() / deviceId / "conversations" / conversationId)
+                               .string());
 
     git_clone_options clone_options;
     git_clone_options_init(&clone_options, GIT_CLONE_OPTIONS_VERSION);
@@ -3171,7 +3173,10 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
             JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up for remote {}", pimpl_->accountId_, pimpl_->id_, remoteDeviceId);
             return false;
         }
-        std::string channelName = fmt::format("git://{}/{}", remoteDeviceId, pimpl_->id_);
+        std::string channelName = fmt::format("file://{}",
+                                              (fileutils::get_data_dir() / remoteDeviceId
+                                               / "conversations" / pimpl_->id_)
+                                                  .string());
         if (git_remote_create(&remote_ptr, repo.get(), remoteDeviceId.c_str(), channelName.c_str())
             < 0) {
             JAMI_ERROR("[Account {}] [Conversation {}] Unable to create remote for repository", pimpl_->accountId_, pimpl_->id_);
