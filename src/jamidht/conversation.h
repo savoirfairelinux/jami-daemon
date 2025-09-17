@@ -312,6 +312,7 @@ public:
      * @param options   The log options
      */
     void loadMessages2(const OnLoadMessages2& cb, const LogOptions& options);
+    std::vector<libjami::SwarmMessage> loadMessagesSync(const LogOptions& options);
     /**
      * Clear all cached messages
      */
@@ -575,6 +576,7 @@ public:
     std::shared_ptr<Typers> typers() const;
 
     void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
+    void announce(const std::string& commitId, bool commitFromSelf = false);
 
 private:
     std::shared_ptr<Conversation> shared() { return std::static_pointer_cast<Conversation>(shared_from_this()); }
