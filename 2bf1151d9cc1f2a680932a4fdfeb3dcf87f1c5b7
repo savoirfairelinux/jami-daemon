@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "98a31fe7_f54f09a2",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c46c95f7_151da48b",
+      "range": {
+        "startLine": 67,
+        "startChar": 4,
+        "endLine": 68,
+        "endChar": 35
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c7a18f4c_8de83a8a",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-09-17T18:23:44Z",
       "side": 1,
       "message": "Need to have one repo per account.",
+      "range": {
+        "startLine": 130,
+        "startChar": 4,
+        "endLine": 130,
+        "endChar": 60
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d08b714e_e84fa6ed",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 130,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c7a18f4c_8de83a8a",
       "range": {
         "startLine": 130,
         "startChar": 4,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "059ae6bd_3d8eec31",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5078cd77_9ea59631",
+      "range": {
+        "startLine": 162,
+        "startChar": 4,
+        "endLine": 162,
+        "endChar": 91
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "97e9a477_5f80c792",
@@ -83,6 +155,30 @@
       "writtenOn": "2025-09-17T18:23:44Z",
       "side": 1,
       "message": "No need to wait. There\u0027s only one test for now, and if/when we get to the point where there are multiple tests, then we\u0027ll need to find a way to reuse the same accounts to avoid wasting time on account creation/destruction.",
+      "range": {
+        "startLine": 183,
+        "startChar": 4,
+        "endLine": 183,
+        "endChar": 35
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8e8eb101_5a37a28b",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 183,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "97e9a477_5f80c792",
       "range": {
         "startLine": 183,
         "startChar": 4,
@@ -116,6 +212,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "a774c096_018e8925",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "70268cee_09d6a9b5",
+      "range": {
+        "startLine": 205,
+        "startChar": 4,
+        "endLine": 210,
+        "endChar": 26
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "56a69ecd_f5dba6ec",
@@ -139,6 +259,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4d5f3972_69881b5a",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "56a69ecd_f5dba6ec",
+      "range": {
+        "startLine": 214,
+        "startChar": 0,
+        "endLine": 217,
+        "endChar": 1
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "22e4d9c1_be14dd3b",
@@ -152,6 +296,30 @@
       "writtenOn": "2025-09-17T18:23:44Z",
       "side": 1,
       "message": "We\u0027ll probably want to remove these warnings since it\u0027s expected that this function will sometimes return `false`, but it\u0027d be good to add a counter so that we can know what percentage of actions get rejected (and potentially change our approach if it\u0027s too high).",
+      "range": {
+        "startLine": 233,
+        "startChar": 12,
+        "endLine": 233,
+        "endChar": 72
+      },
+      "revId": "2bf1151d9cc1f2a680932a4fdfeb3dcf87f1c5b7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "c7d54a79_ee39de4f",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-18T17:52:10Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "22e4d9c1_be14dd3b",
       "range": {
         "startLine": 233,
         "startChar": 12,
