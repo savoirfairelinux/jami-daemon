@@ -823,9 +823,11 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 #ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif
-        conversation->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
-                                          this,
-                                          conversation->id()),
+        auto id = conversation->id();
+        conversation->bootstrap([w = weak(), id = std::move(id)]() {
+                                    if (auto sthis = w.lock())
+                                        sthis->bootstrapCb(id);
+                                },
                                 kd);
 
         if (!preferences.empty())
@@ -1411,7 +1413,11 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
 #ifdef LIBJAMI_TEST
             conv->onBootstrapStatus(bootstrapCbTest_);
 #endif
-            conv->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb, this, conv->id()), kd);
+            auto id = conv->id();
+            conv->bootstrap([w = weak(), id = std::move(id)]() {
+                if (auto sthis = w.lock())
+                    sthis->bootstrapCb(id);
+            }, kd);
         }
     };
     std::vector<std::string> toClone;
@@ -2112,9 +2118,10 @@ ConversationModule::startConversation(ConversationMode mode, const dht::InfoHash
 #ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(pimpl_->bootstrapCbTest_);
 #endif
-        conversation->bootstrap(std::bind(&ConversationModule::Impl::bootstrapCb,
-                                          pimpl_.get(),
-                                          conversationId),
+        conversation->bootstrap([w = pimpl_->weak_from_this(), conversationId]() {
+                                    if (auto sthis = w.lock())
+                                        sthis->bootstrapCb(conversationId);
+                                },
                                 kd);
     } catch (const std::exception& e) {
         JAMI_ERROR("[Account {}] Error while generating a conversation {}",
