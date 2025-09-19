@@ -2434,7 +2434,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
                pimpl_->toString(),
                devices.size());
     // set callback
-    auto fallback = [](auto sthis, bool now = false) {
+    auto fallback = [](std::shared_ptr<Conversation> sthis, bool now = false) {
         // Fallback
         auto acc = sthis->pimpl_->account_.lock();
         if (!acc)
@@ -2489,7 +2489,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
         pimpl_->swarmManager_->restart();
         pimpl_->swarmManager_->maintainBuckets();
     } else if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
-        fallback(this, true);
+        fallback(shared_from_this(), true);
     }
 }
 
