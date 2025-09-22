@@ -332,6 +332,8 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
     libjami::FrameBuffer outFrame(av_frame_alloc());
     av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
 
+    std::unique_lock lock(mtx_);
+
     if (crop_.w || crop_.h) {
 #ifdef ENABLE_HWACCEL
         auto desc = av_pix_fmt_desc_get(
@@ -365,6 +367,7 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
         av_frame_apply_cropping(outFrame.get(), AV_FRAME_CROP_UNALIGNED);
     }
     if (outFrame->height != height_ || outFrame->width != width_) {
+        lock.unlock();
         setFrameSize(outFrame->width, outFrame->height);
         return;
     }
@@ -448,6 +451,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     bool hasTransformedListener = target_.push and target_.pull;
 
     if (hasDirectListener) {
+        lock.unlock();
         sendFrameDirect(frame_p);
         return;
     }
