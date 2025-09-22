@@ -324,11 +324,9 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
     JAMI_DBG("[Sink:%p] Sink [%s] created", this, getId().c_str());
 }
 
-void
-SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
+libjami::FrameBuffer
+SinkClient::configureFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
 {
-    notify(frame_p);
-
     libjami::FrameBuffer outFrame(av_frame_alloc());
     av_frame_ref(outFrame.get(), std::static_pointer_cast<VideoFrame>(frame_p)->pointer());
 
@@ -350,10 +348,10 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
                 JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
                          this,
                          e.what());
-                return;
+                return {};
             }
             if (not frame)
-                return;
+                return {};
             av_frame_unref(outFrame.get());
             av_frame_ref(outFrame.get(), frame->pointer());
         }
@@ -364,11 +362,7 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
         outFrame->crop_right = (size_t) outFrame->width - crop_.x - crop_.w;
         av_frame_apply_cropping(outFrame.get(), AV_FRAME_CROP_UNALIGNED);
     }
-    if (outFrame->height != height_ || outFrame->width != width_) {
-        setFrameSize(outFrame->width, outFrame->height);
-        return;
-    }
-    target_.push(std::move(outFrame));
+    return outFrame;
 }
 
 void
@@ -448,7 +442,17 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     bool hasTransformedListener = target_.push and target_.pull;
 
     if (hasDirectListener) {
-        sendFrameDirect(frame_p);
+        notify(frame_p);
+        auto outFrame = configureFrameDirect(frame_p);
+        if (!outFrame) {
+            return;
+        }
+        if (outFrame->height != height_ || outFrame->width != width_) {
+            lock.unlock();
+            setFrameSize(outFrame->width, outFrame->height);
+            return;
+        }
+        target_.push(std::move(outFrame));
         return;
     }
 
