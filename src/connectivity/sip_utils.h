@@ -169,13 +169,19 @@ private:
 
 // Helper on PJSIP memory pool allocation from endpoint
 // This encapsulate the allocated memory pool inside a unique_ptr
-static inline std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>
+struct PoolDeleter
+{
+    void operator()(pj_pool_t* pool) const noexcept { pj_pool_release(pool); }
+};
+using PoolPtr = std::unique_ptr<pj_pool_t, PoolDeleter>;
+
+static inline PoolPtr
 smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initial, pj_size_t inc)
 {
     auto pool = pjsip_endpt_create_pool(endpt, name, initial, inc);
     if (not pool)
         throw std::bad_alloc();
-    return std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>(pool, pj_pool_release);
+    return PoolPtr(pool);
 }
 
 void sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr);
