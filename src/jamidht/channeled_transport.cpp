@@ -35,8 +35,8 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     : socket_(socket)
     , shutdownCb_(std::move(cb))
     , trData_()
-    , pool_ {nullptr, pj_pool_release}
-    , rxPool_(nullptr, pj_pool_release)
+    , pool_ {nullptr}
+    , rxPool_(nullptr)
 {
     local_ = socket->getLocalAddress();
     remote_ = socket->getRemoteAddress();
