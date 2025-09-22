@@ -65,7 +65,7 @@ SipTransport::deleteTransport(pjsip_transport* t)
 }
 
 SipTransport::SipTransport(pjsip_transport* t)
-    : transport_(nullptr, deleteTransport)
+    : transport_(nullptr)
 {
     if (not t or pjsip_transport_add_ref(t) != PJ_SUCCESS)
         throw std::runtime_error("Invalid transport");
