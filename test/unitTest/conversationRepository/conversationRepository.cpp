@@ -80,6 +80,8 @@ private:
     void testValidSignatureForCommit();
     void testInvalidSignatureForCommit();
     void testMalformedCommit();
+    void testMalformedCommitUri();
+    void testInvalidJoin();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
@@ -99,6 +101,8 @@ private:
     CPPUNIT_TEST(testValidSignatureForCommit);   // Passes
     CPPUNIT_TEST(testInvalidSignatureForCommit); // Passes
     CPPUNIT_TEST(testMalformedCommit);           // Passes
+    CPPUNIT_TEST(testMalformedCommitUri);        // Passes
+    CPPUNIT_TEST(testInvalidJoin);               // Passes
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -735,6 +739,144 @@ ConversationRepositoryTest::testMalformedCommit()
     // Check that the appropriate signal was called
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isMalformed; }));
     // Check that the return value was false (i.e. malformed commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+void
+ConversationRepositoryTest::testMalformedCommitUri()
+{
+    // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isMalformed = false;
+
+    // Signals for malformed commits in validCommits function
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isMalformed = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Get Alice's account
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    // Create malformed add and join commits with valid user InfoHash,
+    // but with invalid "jami:" prefix
+    std::string malformedID = "jami:" + aliceAccount->getUsername();
+    std::string invitedPath = "invited/" + malformedID;
+
+    CPPUNIT_ASSERT(!std::filesystem::exists(repoPath / invitedPath));
+
+    // Simulate an invitation by creating the "invited/" directory with an empty file
+    std::filesystem::create_directories(repoPath / "invited");
+    std::ofstream(repoPath / invitedPath).close();
+    CPPUNIT_ASSERT(std::filesystem::exists(repoPath / invitedPath));
+
+    addAll(repo);
+
+    auto malformedAddUserId = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"action\":\"add\",\"type\":\"member\",\"uri\":\"" + malformedID + "\"}"
+    );
+
+    auto malformedJoinUserID = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"action\":\"join\",\"type\":\"member\",\"uri\":\"" + malformedID + "\"}"
+    );
+
+    // Log the repository
+    auto conversationCommits = repository->log();
+    // Call the validation for all the commits
+    bool allCommitsValidated = repository->validCommits(conversationCommits);
+
+    // Check that the appropriate signal was called
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isMalformed; }));
+    // Check that the return value was false (i.e. malformed commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+// A join without a previous add should be invalid
+void
+ConversationRepositoryTest::testInvalidJoin()
+{
+    // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isInvalid = false;
+
+    // Signals for malformed commits in validCommits function
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isInvalid = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Get Alice's account
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::string userId = aliceAccount->getUsername();
+
+    auto invalidJoinUserID = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"action\":\"join\",\"type\":\"member\",\"uri\":\"" + userId + "\"}"
+    );
+
+    // Log the repository
+    auto conversationCommits = repository->log();
+    // Call the validation for all the commits
+    bool allCommitsValidated = repository->validCommits(conversationCommits);
+
+    // Check that the appropriate signal was called
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+    // Check that the return value was false (i.e. invalid commit detected)
     CPPUNIT_ASSERT(!allCommitsValidated);
 }
 
