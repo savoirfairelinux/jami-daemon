@@ -74,13 +74,39 @@ private:
     void testDiff();
     void testLogClosestCommitReachable();
     void testMergeProfileWithConflict();
+<<<<<<< PATCH SET (ce54cd ConversationRepositoryTest: add tests for uri and join verif)
+    void testValidSignatureForCommit();
+    void testInvalidSignatureForCommit();
+    void testMalformedCommit();
+    void testMalformedCommitUri();
+    void testInvalidJoin();
+    std::string addCommit(git_repository* repo,
+                          const std::shared_ptr<JamiAccount> account,
+                          const std::string& branch,
+                          const std::string& commit_msg);
+=======
 
+>>>>>>> BASE      (161cd0 Revwalk fixes - in progress)
     void addAll(git_repository* repo);
     bool merge_in_main(const std::shared_ptr<JamiAccount> account,
                        git_repository* repo,
                        const std::string& commit_ref);
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
+<<<<<<< PATCH SET (ce54cd ConversationRepositoryTest: add tests for uri and join verif)
+    CPPUNIT_TEST(testCreateRepository);          // Passes
+    CPPUNIT_TEST(testAddSomeMessages);           // Passes
+    CPPUNIT_TEST(testLogMessages);               // Passes
+    CPPUNIT_TEST(testMerge);                     // Passes
+    CPPUNIT_TEST(testFFMerge);                   // Passes
+    CPPUNIT_TEST(testDiff);                      // Passes
+    CPPUNIT_TEST(testMergeProfileWithConflict);  // Passes
+    CPPUNIT_TEST(testValidSignatureForCommit);   // Passes
+    CPPUNIT_TEST(testInvalidSignatureForCommit); // Passes
+    CPPUNIT_TEST(testMalformedCommit);           // Passes
+    CPPUNIT_TEST(testMalformedCommitUri);        // Passes
+    CPPUNIT_TEST(testInvalidJoin);               // Passes
+=======
     CPPUNIT_TEST(testCreateRepository);
     CPPUNIT_TEST(testAddSomeMessages);
     CPPUNIT_TEST(testLogMessages);
@@ -90,6 +116,7 @@ private:
     CPPUNIT_TEST(testMergeProfileWithConflict);
     CPPUNIT_TEST(testLogClosestCommitReachable);
 
+>>>>>>> BASE      (161cd0 Revwalk fixes - in progress)
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -504,6 +531,328 @@ ConversationRepositoryTest::testLogClosestCommitReachable()
     git_tree_free(tree2);
     git_repository_free(repo);
 }
+<<<<<<< PATCH SET (ce54cd ConversationRepositoryTest: add tests for uri and join verif)
+
+void
+ConversationRepositoryTest::testInvalidSignatureForCommit()
+{
+    // Get Alice and Bob's accounts
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that the repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    // Make a malicious commit that disguises itself as being sent from Alice
+    // Retrieve current index
+    git_index* index_ptr = nullptr;
+    CPPUNIT_ASSERT(git_repository_index(&index_ptr, repo) == 0);
+    GitIndex index {index_ptr, git_index_free};
+
+    // Write the index to a new tree
+    git_oid tree_id;
+    // Assert that the tree was written successfully
+    CPPUNIT_ASSERT(git_index_write_tree(&tree_id, index.get()) == 0);
+
+    // Lookup the newly created tree
+    git_tree* tree_ptr = nullptr;
+    CPPUNIT_ASSERT(git_tree_lookup(&tree_ptr, repo, &tree_id) == 0);
+    GitTree tree = {tree_ptr, git_tree_free};
+
+    // Create a commit object
+    git_oid commit_id;
+    CPPUNIT_ASSERT(git_reference_name_to_id(&commit_id, repo, "HEAD") == 0);
+
+    // Lookup the HEAD commit
+    git_commit* head_ptr = nullptr;
+    CPPUNIT_ASSERT(git_commit_lookup(&head_ptr, repo, &commit_id) == 0);
+    GitCommit head_commit {head_ptr, git_commit_free};
+
+    // The last argument of git_commit_create_buffer is of type
+    // 'const git_commit **' in all versions of libgit2 except 1.8.0,
+    // 1.8.1 and 1.8.3, in which it is of type 'git_commit *const *'.
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+    git_commit* const head_ref[1] = {head_commit.get()};
+#else
+    const git_commit* head_ref[1] = {head_commit.get()};
+#endif
+
+    // Create the signature for the commit with the current time and using the
+    // Alice's device ID (i.e. her public key for her device)
+    git_signature* sig = nullptr;
+    CPPUNIT_ASSERT(git_signature_now(&sig,
+                                     aliceAccount->getDisplayName().c_str(),
+                                     std::string(aliceAccount->currentDeviceId()).c_str())
+                   == 0);
+
+    // Create a signed commit object and place it in a buffer
+    git_buf to_sign = {};
+    CPPUNIT_ASSERT(
+        git_commit_create_buffer(&to_sign,
+                                 repo,
+                                 sig,
+                                 sig,
+                                 nullptr,
+                                 "{\"body\":\"malicious intent\",\"type\":\"text/plain\"}",
+                                 tree.get(),
+                                 1,
+                                 &head_ref[0])
+        == 0);
+    git_signature_free(sig);
+
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    // Sign the commit using Bob's private key
+    std::vector<unsigned char> signed_buf = bobAccount->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf);
+    CPPUNIT_ASSERT(git_commit_create_with_signature(&commit_id,
+                                                    repo,
+                                                    to_sign.ptr,
+                                                    signed_str.c_str(),
+                                                    "signature")
+                   == 0);
+
+    // Dispose the signature buffer
+    git_buf_dispose(&to_sign);
+
+    // Move commit to main branch
+    git_reference* ref_ptr = nullptr;
+    CPPUNIT_ASSERT(
+        (git_reference_create(&ref_ptr, repo, "refs/heads/main", &commit_id, true, nullptr) == 0));
+
+    CPPUNIT_ASSERT(repo);
+
+    // Lookup the commit
+    git_commit* commit_ptr = nullptr;
+    CPPUNIT_ASSERT(git_commit_lookup(&commit_ptr, repo, &commit_id) == 0);
+
+    // Get the author and user device, and assert that the user is not valid at the commit
+    const git_signature* author = git_commit_author(commit_ptr);
+    std::string userDevice = author->email;
+
+    // Extract the signature and signature data of commit_id
+    git_buf extracted_sig = {}, extracted_sig_data = {};
+    // Extract the signature block and signature content from the commit
+    git_commit_extract_signature(&extracted_sig, &extracted_sig_data, repo, &commit_id, "signature");
+    CPPUNIT_ASSERT(!repository->isValidUserAtCommit(userDevice,
+                                                    git_oid_tostr_s(&commit_id),
+                                                    extracted_sig,
+                                                    extracted_sig_data));
+
+    // Free git objects
+    git_reference_free(ref_ptr);
+    git_repository_free(repo);
+    git_buf_dispose(&extracted_sig);
+    git_buf_dispose(&extracted_sig_data);
+}
+
+void
+ConversationRepositoryTest::testMalformedCommit()
+{
+    // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isMalformed = false;
+
+    // Signals for malformed commits in validCommits function
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isMalformed = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Get Alice's account
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    // Create a malformed join commit
+    auto malformedJoinID = addCommit(repo,
+                                     aliceAccount,
+                                     "main",
+                                     "{\"action\":\"join\",\"type\":\"member\",\"uri\":"
+                                     "\"joinGarbage\"}");
+
+    // Log the repository
+    auto conversationCommits = repository->log();
+    // Call the validation for all the commits
+    bool allCommitsValidated = repository->validCommits(conversationCommits);
+    // Check that the appropriate signal was called
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isMalformed; }));
+    // Check that the return value was false (i.e. malformed commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+void
+ConversationRepositoryTest::testMalformedCommitUri()
+{
+    // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isMalformed = false;
+
+    // Signals for malformed commits in validCommits function
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isMalformed = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Get Alice's account
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    // Create malformed add and join commits with valid user InfoHash,
+    // but with invalid "jami:" prefix
+    std::string malformedID = "jami:" + aliceAccount->getUsername();
+    std::string invitedPath = "invited/" + malformedID;
+
+    CPPUNIT_ASSERT(!std::filesystem::exists(repoPath / invitedPath));
+
+    // Simulate an invitation by creating the "invited/" directory with an empty file
+    std::filesystem::create_directories(repoPath / "invited");
+    std::ofstream(repoPath / invitedPath).close();
+    CPPUNIT_ASSERT(std::filesystem::exists(repoPath / invitedPath));
+
+    addAll(repo);
+
+    auto malformedAddUserId = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"action\":\"add\",\"type\":\"member\",\"uri\":\"" + malformedID + "\"}"
+    );
+
+    auto malformedJoinUserID = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"action\":\"join\",\"type\":\"member\",\"uri\":\"" + malformedID + "\"}"
+    );
+
+    // Log the repository
+    auto conversationCommits = repository->log();
+    // Call the validation for all the commits
+    bool allCommitsValidated = repository->validCommits(conversationCommits);
+
+    // Check that the appropriate signal was called
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isMalformed; }));
+    // Check that the return value was false (i.e. malformed commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+// A join without a previous add should be invalid
+void
+ConversationRepositoryTest::testInvalidJoin()
+{
+    // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isInvalid = false;
+
+    // Signals for malformed commits in validCommits function
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isInvalid = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Get Alice's account
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::string userId = aliceAccount->getUsername();
+
+    auto invalidJoinUserID = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"action\":\"join\",\"type\":\"member\",\"uri\":\"" + userId + "\"}"
+    );
+
+    // Log the repository
+    auto conversationCommits = repository->log();
+    // Call the validation for all the commits
+    bool allCommitsValidated = repository->validCommits(conversationCommits);
+
+    // Check that the appropriate signal was called
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+    // Check that the return value was false (i.e. invalid commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+=======
+>>>>>>> BASE      (161cd0 Revwalk fixes - in progress)
 } // namespace test
 } // namespace jami
 
