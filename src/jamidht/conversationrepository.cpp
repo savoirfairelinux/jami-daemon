@@ -1310,6 +1310,7 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     auto treeOld = treeAtCommit(repo.get(), parentId);
     if (not treeOld)
         return false;
+
     auto treeNew = treeAtCommit(repo.get(), commitId);
     auto blob_invite = fileAtTree(invitedFile, treeNew);
     if (!blob_invite) {
@@ -2828,6 +2829,20 @@ ConversationRepository::Impl::validCommits(
             } else if (type == "member") {
                 std::string action = cm["action"].asString();
                 std::string uriMember = cm["uri"].asString();
+
+                dht::InfoHash h(uriMember);
+                if (not h) {
+                    JAMI_WARNING(
+                            "[Account {}] [Conversation {}] Commit {} with invalid member URI {}. Please ensure that you are using the latest "
+                            "version of Jami, or that one of your contacts is not performing any unwanted actions.",
+                            accountId_, id_, commit.id, uriMember);
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(
+                            accountId_,
+                            id_,
+                            EVALIDFETCH,
+                            "Invalid member URI");
+                    return false;
+                }
                 if (action == "add") {
                     if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
                         JAMI_WARNING("[Account {}] [Conversation {}] Malformed add commit {}. "
