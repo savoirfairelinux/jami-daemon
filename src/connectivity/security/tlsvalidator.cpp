@@ -60,6 +60,8 @@
 #include "windirent.h"
 #endif
 
+#include <filesystem>
+
 namespace jami {
 namespace tls {
 
@@ -891,68 +893,67 @@ TlsValidator::publicKeyStoragePermissions()
 TlsValidator::CheckResult
 TlsValidator::privateKeyDirectoryPermissions()
 {
+    namespace fs = std::filesystem;
+
     if (privateKeyPath_.empty())
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-#ifndef _MSC_VER
-    auto path = std::unique_ptr<char, decltype(free)&>(strdup(privateKeyPath_.c_str()), free);
-    const char* dir = dirname(path.get());
-#else
-    char* dir;
-    _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
-#endif
+    fs::path dir = fs::path(privateKeyPath_).parent_path();
+    if (dir.empty())
+        dir = fs::path("."); // mimic dirname() behavior when no separator
 
-    struct stat statbuf;
-    int err = stat(dir, &statbuf);
-    if (err)
+    std::error_code ec;
+    auto st = fs::status(dir, ec);
+    if (ec)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    return TlsValidator::CheckResult(
-        /*                          READ                      WRITE EXECUTE             */
-        /* Owner */ (
-            (statbuf.st_mode & S_IRUSR) /* write is not relevant */ && (statbuf.st_mode & S_IXUSR))
-                /* Group */
-                && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP)
-                    && !(statbuf.st_mode & S_IXGRP))
-                /* Other */
-                && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH)
-                    && !(statbuf.st_mode & S_IXOTH))
-                && S_ISDIR(statbuf.st_mode)
-            ? CheckValues::PASSED
-            : CheckValues::FAILED,
-        "");
+    if (!fs::is_directory(st))
+        return TlsValidator::CheckResult(CheckValues::FAILED, "");
+
+    auto perm = st.permissions();
+
+    bool ownerRead = (perm & fs::perms::owner_read) != fs::perms::none;
+    bool ownerExec = (perm & fs::perms::owner_exec) != fs::perms::none;
+    bool groupAny = (perm & (fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec))
+                    != fs::perms::none;
+    bool othersAny = (perm & (fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec))
+                     != fs::perms::none;
+
+    bool ok = ownerRead && ownerExec && !groupAny && !othersAny;
+    return TlsValidator::CheckResult(ok ? CheckValues::PASSED : CheckValues::FAILED, "");
 }
 
 TlsValidator::CheckResult
 TlsValidator::publicKeyDirectoryPermissions()
 {
-#ifndef _MSC_VER
-    auto path = std::unique_ptr<char, decltype(free)&>(strdup(certificatePath_.c_str()), free);
-    const char* dir = dirname(path.get());
-#else
-    char* dir;
-    _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
-#endif
+    namespace fs = std::filesystem;
 
-    struct stat statbuf;
-    int err = stat(dir, &statbuf);
-    if (err)
+    if (certificatePath_.empty())
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    return TlsValidator::CheckResult(
-        /*                          READ                      WRITE EXECUTE             */
-        /* Owner */ (
-            (statbuf.st_mode & S_IRUSR) /* write is not relevant */ && (statbuf.st_mode & S_IXUSR))
-                /* Group */
-                && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP)
-                    && !(statbuf.st_mode & S_IXGRP))
-                /* Other */
-                && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH)
-                    && !(statbuf.st_mode & S_IXOTH))
-                && S_ISDIR(statbuf.st_mode)
-            ? CheckValues::PASSED
-            : CheckValues::FAILED,
-        "");
+    fs::path dir = fs::path(certificatePath_).parent_path();
+    if (dir.empty())
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+
+    std::error_code ec;
+    auto st = fs::status(dir, ec);
+    if (ec)
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+
+    if (!fs::is_directory(st))
+        return TlsValidator::CheckResult(CheckValues::FAILED, "");
+
+    auto perm = st.permissions();
+
+    bool ownerRead = (perm & fs::perms::owner_read) != fs::perms::none;
+    bool ownerExec = (perm & fs::perms::owner_exec) != fs::perms::none;
+    bool groupAny = (perm & (fs::perms::group_read | fs::perms::group_write | fs::perms::group_exec))
+                    != fs::perms::none;
+    bool othersAny = (perm & (fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec))
+                     != fs::perms::none;
+
+    bool ok = ownerRead && ownerExec && !groupAny && !othersAny;
+    return TlsValidator::CheckResult(ok ? CheckValues::PASSED : CheckValues::FAILED, "");
 }
 
 /**

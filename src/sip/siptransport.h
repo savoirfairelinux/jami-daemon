@@ -125,8 +125,12 @@ private:
     NON_COPYABLE(SipTransport);
 
     static void deleteTransport(pjsip_transport* t);
+    struct TransportDeleter
+    {
+        void operator()(pjsip_transport* t) const noexcept { deleteTransport(t); }
+    };
 
-    std::unique_ptr<pjsip_transport, decltype(deleteTransport)&> transport_;
+    std::unique_ptr<pjsip_transport, TransportDeleter> transport_;
     std::shared_ptr<TlsListener> tlsListener_;
     std::mutex stateListenersMutex_;
     std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
