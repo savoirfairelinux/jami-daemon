@@ -100,7 +100,7 @@ private:
     std::unique_ptr<MediaFilter> filter_;
     std::mutex mtx_;
 
-    void sendFrameDirect(const std::shared_ptr<jami::MediaFrame>&);
+    libjami::FrameBuffer configureFrameDirect(const std::shared_ptr<jami::MediaFrame>&);
     void sendFrameTransformed(AVFrame* frame);
 
     /**
