@@ -229,7 +229,7 @@ public:
 
     const std::string& getEchoCanceller() const { return echoCanceller_; }
 
-    void setEchoCancel(std::string& canceller) { echoCanceller_ = canceller; }
+    void setEchoCancel(const std::string& canceller) { echoCanceller_ = canceller; }
 
 private:
     std::string audioApi_;

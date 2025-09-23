@@ -2457,6 +2457,18 @@ Manager::setNoiseSuppressState(const std::string& state)
     audioPreference.setNoiseReduce(state);
 }
 
+std::string
+Manager::getEchoCancellationState() const
+{
+    return audioPreference.getEchoCanceller();
+}
+
+void
+Manager::setEchoCancellationState(const std::string& state)
+{
+    audioPreference.setEchoCancel(state);
+}
+
 bool
 Manager::isAGCEnabled() const
 {

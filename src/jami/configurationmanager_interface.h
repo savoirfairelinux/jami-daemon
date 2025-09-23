@@ -153,6 +153,8 @@ LIBJAMI_PUBLIC int32_t getAudioOutputDeviceIndex(const std::string& name);
 LIBJAMI_PUBLIC std::string getCurrentAudioOutputPlugin();
 LIBJAMI_PUBLIC std::string getNoiseSuppressState();
 LIBJAMI_PUBLIC void setNoiseSuppressState(const std::string& state);
+LIBJAMI_PUBLIC std::string getEchoCancellationState();
+LIBJAMI_PUBLIC void setEchoCancellationState(const std::string& state);
 
 LIBJAMI_PUBLIC bool isAgcEnabled();
 LIBJAMI_PUBLIC void setAgcState(bool enabled);
