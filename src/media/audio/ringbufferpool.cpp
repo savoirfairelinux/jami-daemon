@@ -184,13 +184,17 @@ RingBufferPool::bindRingBuffers(const std::string &ringbufferId1,
 void
 RingBufferPool::bindHalfDuplexOut(const std::string &readerBufferId,
                                   const std::string &sourceBufferId) {
+    JAMI_LOG("Bind half-duplex out: readerBufferId '{}' to sourceBufferId '{}'", readerBufferId, sourceBufferId);
+
     /* This method is used only for active ringbuffers, if this ringbuffer does not exist,
      * do nothing */
     if (const auto &rb = getRingBuffer(sourceBufferId)) {
         std::lock_guard lk(stateLock_);
 
-        // p1 est le binding de p2 (p2 lit le stream de p1)
+        // p1 is the binding of p2 (p2 reads the stream from p1)
         addReaderToRingBuffer(rb, readerBufferId);
+    } else {
+        JAMI_WARNING("Source ringbuffer '{}' does not exist, cannot bind half-duplex out", sourceBufferId);
     }
 }
 
@@ -220,21 +224,27 @@ RingBufferPool::unbindRingBuffers(const std::string &ringbufferId1,
 void
 RingBufferPool::unBindHalfDuplexOut(const std::string &readerBufferId,
                                     const std::string &sourceBufferId) {
+    JAMI_LOG("Unbind half-duplex out: readerBufferId '{}' from sourceBufferId '{}'", readerBufferId, sourceBufferId);
+
     std::lock_guard lk(stateLock_);
 
     if (const auto &rb = getRingBuffer(sourceBufferId))
         removeReaderFromRingBuffer(rb, readerBufferId);
+    else
+        JAMI_WARNING("Source ringbuffer '{}' does not exist, cannot unbind half-duplex out", sourceBufferId);
 }
 
 void
 RingBufferPool::unBindAllHalfDuplexOut(const std::string &ringbufferId) {
+    JAMI_LOG("Unbind all half-duplex out for ringbuffer '{}'", ringbufferId);
+
     const auto &rb = getRingBuffer(ringbufferId);
     if (not rb) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
     }
     std::lock_guard lk(stateLock_);
-    auto bindings = getReadBindings(ringbufferId);
+    auto *bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
     const auto bindings_copy = *bindings; // temporary copy
@@ -245,6 +255,8 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string &ringbufferId) {
 
 void
 RingBufferPool::unBindAllHalfDuplexIn(const std::string &sourceBufferId) {
+    JAMI_LOG("Unbind all half-duplex in for source ringbuffer '{}'", sourceBufferId);
+
     std::lock_guard lk(stateLock_);
     const std::shared_ptr<RingBuffer> &ringBuffer = getRingBuffer(sourceBufferId);
     const std::vector<std::string> &subscribers = ringBuffer->getSubscribers();
@@ -265,7 +277,7 @@ RingBufferPool::unBindAll(const std::string &ringbufferId) {
 
     std::lock_guard lk(stateLock_);
 
-    auto bindings = getReadBindings(ringbufferId);
+    auto *bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
 
