@@ -749,6 +749,18 @@ setNoiseSuppressState(const std::string& state)
     jami::Manager::instance().setNoiseSuppressState(state);
 }
 
+std::string
+getEchoCancellationState()
+{
+    return jami::Manager::instance().getEchoCancellationState();
+}
+
+void
+setEchoCancellationState(const std::string& state)
+{
+    jami::Manager::instance().setEchoCancellationState(state);
+}
+
 bool
 isAgcEnabled()
 {

@@ -526,6 +526,19 @@ public:
      */
     void setNoiseSuppressState(const std::string& state);
 
+    /**
+     * Get the echo cancellation engine state in
+     * the current audio layer.
+     * @return std::string The current state of echoCancel
+     */
+    std::string getEchoCancellationState() const;
+
+    /**
+     * Get the echo cancellation engine state from
+     * the current audio layer.
+     */
+    void setEchoCancellationState(const std::string& state);
+
     bool isAGCEnabled() const;
     void setAGCState(bool enabled);
 
