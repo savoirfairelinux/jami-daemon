@@ -22,6 +22,30 @@
       },
       "revId": "8726bcf507adc9b87c07bb02acac7ca3d7fcfb7e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "0677d9be_60a76401",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 449,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-09-23T17:21:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "203e94d7_c6e9e4de",
+      "range": {
+        "startLine": 449,
+        "startChar": 8,
+        "endLine": 449,
+        "endChar": 24
+      },
+      "revId": "8726bcf507adc9b87c07bb02acac7ca3d7fcfb7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
