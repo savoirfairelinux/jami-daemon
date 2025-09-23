@@ -138,17 +138,17 @@ private:
     /**
      * Number of audio cards on which capture stream has been opened
      */
-    int indexIn_;
+    unsigned indexIn_;
 
     /**
      * Number of audio cards on which playback stream has been opened
      */
-    int indexOut_;
+    unsigned indexOut_;
 
     /**
      * Number of audio cards on which ringtone stream has been opened
      */
-    int indexRing_;
+    unsigned indexRing_;
 
     AudioUnit ioUnit_;
 
