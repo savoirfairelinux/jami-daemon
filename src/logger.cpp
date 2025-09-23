@@ -42,6 +42,7 @@
 #include <mutex>
 #include <thread>
 #include <array>
+#include <list>
 
 #include "fileutils.h"
 #include "logger.h"
@@ -92,12 +93,6 @@ check_error(int result, char* buffer)
     default:
         return "unknown (invalid error number)";
     }
-}
-
-static const char*
-check_error(char* result, char*)
-{
-    return result;
 }
 #endif
 
@@ -210,9 +205,19 @@ struct Logger::Msg
         linefeed_ = other.linefeed_;
     }
 
-    inline std::string header() const {
-        return formatHeader(file_, line_);
+    Msg& operator=(Msg&& other)
+    {
+        if (this != &other) {
+            file_ = other.file_;
+            line_ = other.line_;
+            payload_ = std::move(other.payload_);
+            level_ = other.level_;
+            linefeed_ = other.linefeed_;
+        }
+        return *this;
     }
+
+    inline std::string header() const { return formatHeader(file_, line_); }
 
     const char* file_;
     unsigned line_;
@@ -228,14 +233,14 @@ public:
 
     virtual void consume(Msg& msg) = 0;
 
-    void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
+    virtual void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
     bool isEnable() { return enabled_.load(std::memory_order_relaxed); }
 
-private:
+protected:
     std::atomic_bool enabled_ {false};
 };
 
-class ConsoleLog : public Logger::Handler
+class ConsoleLog final : public Logger::Handler
 {
 public:
     static ConsoleLog& instance()
@@ -244,6 +249,46 @@ public:
         // Some thread can still be logging even during static destructors.
         static ConsoleLog* self = new ConsoleLog();
         return *self;
+    }
+
+    virtual ~ConsoleLog() { enable(false); }
+
+    void enable(bool en) override
+    {
+        if (enabled_.exchange(en, std::memory_order_relaxed) == en)
+            return;
+        if (en) {
+            std::lock_guard lk(mtx_);
+            if (running_)
+                return;
+            running_ = true;
+            thread_ = std::thread([this] {
+                std::unique_lock lk(mtx_);
+                while (running_) {
+                    cv_.wait(lk, [this] { return not msgQueue_.empty() or not running_; });
+                    auto local = std::move(msgQueue_);
+                    lk.unlock();
+                    for (auto& msg : local) {
+                        printLogImpl(msg, withColor_);
+                        msg.payload_ = {};
+                    }
+                    lk.lock();
+                    if (recycleQueue_.size() < RECYCLE_MAX_SIZE)
+                        recycleQueue_.splice(recycleQueue_.end(), local);
+                }
+            });
+        } else {
+            {
+                std::lock_guard lk(mtx_);
+                if (!running_)
+                    return;
+                running_ = false;
+            }
+            cv_.notify_all();
+            if (thread_.joinable())
+                thread_.join();
+            recycleQueue_.splice(recycleQueue_.end(), std::move(msgQueue_));
+        }
     }
 
 #ifdef _WIN32
@@ -341,12 +386,29 @@ public:
     }
 #endif /* _WIN32 */
 
+    static constexpr size_t RECYCLE_MAX_SIZE = 64;
+    bool withColor_ = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR") || getenv("NO_COLOURS"));
+
+    std::mutex mtx_;
+    std::condition_variable cv_;
+    std::list<Logger::Msg> msgQueue_;
+    std::list<Logger::Msg> recycleQueue_;
+    bool running_ {false};
+
+    std::thread thread_;
+
     void consume(Logger::Msg& msg) override
     {
-        static bool with_color = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR")
-                                   || getenv("NO_COLOURS"));
-
-        printLogImpl(msg, with_color);
+        {
+            std::lock_guard lk(mtx_);
+            if (not recycleQueue_.empty()) {
+                msgQueue_.splice(msgQueue_.end(), recycleQueue_, recycleQueue_.begin());
+                msgQueue_.back() = std::move(msg);
+            } else {
+                msgQueue_.emplace_back(std::move(msg));
+            }
+        }
+        cv_.notify_one();
     }
 };
 
@@ -578,9 +640,9 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, fmt, ap);
 
-    log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(SysLog::instance(), msg);
     log_to_if_enabled(MonitorLog::instance(), msg);
+    log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
 }
 
@@ -590,9 +652,9 @@ Logger::write(int level, const char* file, int line, bool linefeed, std::string&
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, std::move(message));
 
-    log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(SysLog::instance(), msg);
     log_to_if_enabled(MonitorLog::instance(), msg);
+    log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
 }
 
