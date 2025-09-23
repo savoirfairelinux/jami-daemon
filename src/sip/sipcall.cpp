@@ -3356,7 +3356,7 @@ SIPCall::createSinks(ConfInfo& infos)
     }
     auto conf = conf_.lock();
     const auto& id = conf ? conf->getConfId() : getCallId();
-    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_);
+    Manager::instance().createSinkClients(id, infos, sinks, callSinksMap_, getAccountId());
 }
 #endif
 
