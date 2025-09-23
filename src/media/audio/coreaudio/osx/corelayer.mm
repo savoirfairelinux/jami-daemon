@@ -131,7 +131,7 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
-    AudioComponentDescription desc = {0};
+    AudioComponentDescription desc = {};
     desc.componentType = kAudioUnitType_Output;
     // kAudioOutputUnitProperty_EnableIO is ON and read-only
     // for input and output SCOPE on this subtype
@@ -152,8 +152,8 @@ CoreLayer::initAudioLayerIO(AudioDeviceType stream)
         return;
     }
 
-    AudioDeviceID inputDeviceID;
-    AudioDeviceID playbackDeviceID;
+    AudioDeviceID inputDeviceID = 0;
+    AudioDeviceID playbackDeviceID = 0;
     UInt32 size = sizeof(AudioDeviceID);
     if (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL) {
         auto captureList = getDeviceList(true);
@@ -438,13 +438,13 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     format.nb_channels = outChannelsPerFrame_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     if (auto toPlay = getPlayback(format, inNumberFrames)) {
-        for (int i = 0; i < format.nb_channels; ++i) {
+        for (unsigned i = 0; i < format.nb_channels; ++i) {
             std::copy_n((Float32*) toPlay->pointer()->extended_data[i],
                         inNumberFrames,
                         (Float32*) ioData->mBuffers[i].mData);
         }
     } else {
-        for (int i = 0; i < format.nb_channels; ++i)
+        for (unsigned i = 0; i < format.nb_channels; ++i)
             std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), inNumberFrames, 0);
     }
 }
@@ -538,7 +538,7 @@ CoreLayer::getDeviceList(bool getCapture) const
     __Verify_noErr(
         AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &theAddress, 0, nullptr, &propsize));
 
-    std::size_t nDevices = propsize / sizeof(AudioDeviceID);
+    size_t nDevices = propsize / sizeof(AudioDeviceID);
     auto devids = std::vector<AudioDeviceID>(nDevices);
 
     __Verify_noErr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
@@ -548,7 +548,7 @@ CoreLayer::getDeviceList(bool getCapture) const
                                               &propsize,
                                               devids.data()));
 
-    for (int i = 0; i < nDevices; ++i) {
+    for (size_t i = 0; i < nDevices; ++i) {
         auto dev = AudioDevice {devids[i], getCapture};
         if (dev.channels_ > 0) { // Channels < 0 if inactive.
             //There is additional stream under the built-in device - the raw streams enabled by AUVP.
