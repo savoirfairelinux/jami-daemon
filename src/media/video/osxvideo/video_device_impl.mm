@@ -73,9 +73,9 @@ class VideoDeviceImpl {
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
     : id(uniqueID)
-    , current_size_(-1, -1)
     , avDevice_([AVCaptureDevice deviceWithUniqueID:
         [NSString stringWithCString:uniqueID.c_str() encoding:[NSString defaultCStringEncoding]]])
+    , current_size_(-1, -1)
 {
 
     if (id == DEVICE_DESKTOP) {
@@ -161,7 +161,7 @@ VideoDeviceImpl::getSizeList() const
 }
 
 std::vector<FrameRate>
-VideoDeviceImpl::getRateList(const std::string& channel, VideoSize size) const
+VideoDeviceImpl::getRateList(const std::string& /*channel*/, VideoSize size) const
 {
     auto it = available_rates_.find(size);
     if (it != available_rates_.end()) {
@@ -171,7 +171,7 @@ VideoDeviceImpl::getRateList(const std::string& channel, VideoSize size) const
 }
 
 std::vector<VideoSize>
-VideoDeviceImpl::getSizeList(const std::string& channel) const
+VideoDeviceImpl::getSizeList(const std::string& /*channel*/) const
 {
     return available_sizes_;
 }
