@@ -914,7 +914,8 @@ Conference::createSinks(const ConfInfo& infos)
                                           infos,
                                           {std::static_pointer_cast<video::VideoFrameActiveWriter>(
                                               sink)},
-                                          confSinksMap_);
+                                          confSinksMap_,
+                                          getAccountId());
 }
 #endif
 

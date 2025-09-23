@@ -3097,8 +3097,7 @@ Manager::createSinkClients(
         }
         if (participant.w && participant.h && !participant.videoMuted) {
             auto currentSink = getSinkClient(sinkId);
-            if (!accountId.empty() && currentSink
-                && string_remove_suffix(participant.uri, '@') == getAccount(accountId)->getUsername()
+            if (!accountId.empty() && string_remove_suffix(participant.uri, '@') == getAccount(accountId)->getUsername()
                 && participant.device == getAccount<JamiAccount>(accountId)->currentDeviceId()) {
                 // This is a local sink that must already exist
                 continue;
