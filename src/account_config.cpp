@@ -32,9 +32,7 @@ constexpr const char* VIDEO_ENABLED_KEY = "videoEnabled";
 constexpr const char* DISPLAY_NAME_KEY = "displayName";
 constexpr const char* ALIAS_KEY = "alias";
 constexpr const char* TYPE_KEY = "type";
-constexpr const char* AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
 constexpr const char* USERNAME_KEY = "username";
-constexpr const char* PASSWORD_KEY = "password";
 constexpr const char* HOSTNAME_KEY = "hostname";
 constexpr const char* ACCOUNT_ENABLE_KEY = "enable";
 constexpr const char* ACCOUNT_AUTOANSWER_KEY = "autoAnswer";
@@ -45,7 +43,6 @@ constexpr const char* ACCOUNT_ISRENDEZVOUS_KEY = "rendezVous";
 constexpr const char* ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
 constexpr const char* MAILBOX_KEY = "mailbox";
 constexpr const char* USER_AGENT_KEY = "useragent";
-constexpr const char* HAS_CUSTOM_USER_AGENT_KEY = "hasCustomUserAgent";
 constexpr const char* UPNP_ENABLED_KEY = "upnpEnabled";
 constexpr const char* ACTIVE_CODEC_KEY = "activeCodecs";
 constexpr const char* DEFAULT_MODERATORS_KEY = "defaultModerators";
@@ -67,8 +64,7 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(HOSTNAME_KEY, hostname);
     SERIALIZE_CONFIG(USERNAME_KEY, username);
     SERIALIZE_CONFIG(MAILBOX_KEY, mailbox);
-    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value
-        << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
+    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
     SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     SERIALIZE_CONFIG(DENY_SECOND_CALL_KEY, denySecondCallEnabled);
     SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);
