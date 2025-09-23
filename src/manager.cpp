@@ -3065,15 +3065,12 @@ Manager::newOutgoingCall(std::string_view toUrl,
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
 {
-    const auto& iter = pimpl_->sinkMap_.find(id);
-    if (iter != std::end(pimpl_->sinkMap_)) {
-        if (auto sink = iter->second.lock())
-            return sink;
-        pimpl_->sinkMap_.erase(iter); // remove expired weak_ptr
-    }
-
+    std::lock_guard lk(pimpl_->sinksMutex_);
+    auto& sinkRef = pimpl_->sinkMap_[id];
+    if (auto sink = sinkRef.lock())
+        return sink;
     auto sink = std::make_shared<video::SinkClient>(id, mixer);
-    pimpl_->sinkMap_.emplace(id, sink);
+    sinkRef = sink;
     return sink;
 }
 
@@ -3085,10 +3082,13 @@ Manager::createSinkClients(
     std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
     const std::string& accountId)
 {
-    std::lock_guard lk(pimpl_->sinksMutex_);
+    auto account = accountId.empty() ? nullptr : getAccount<JamiAccount>(accountId);
+
     std::set<std::string> sinkIdsList {};
+    std::vector<std::pair<std::shared_ptr<video::SinkClient>, std::pair<int, int>>> newSinks;
 
     // create video sinks
+    std::unique_lock lk(pimpl_->sinksMutex_);
     for (const auto& participant : infos) {
         std::string sinkId = participant.sinkId;
         if (sinkId.empty()) {
@@ -3096,33 +3096,29 @@ Manager::createSinkClients(
             sinkId += string_remove_suffix(participant.uri, '@') + participant.device;
         }
         if (participant.w && participant.h && !participant.videoMuted) {
-            auto currentSink = getSinkClient(sinkId);
-            if (!accountId.empty() && currentSink
-                && string_remove_suffix(participant.uri, '@') == getAccount(accountId)->getUsername()
-                && participant.device == getAccount<JamiAccount>(accountId)->currentDeviceId()) {
+            auto& currentSinkW = pimpl_->sinkMap_[sinkId];
+            if (account && string_remove_suffix(participant.uri, '@') == account->getUsername()
+                && participant.device == account->currentDeviceId()) {
                 // This is a local sink that must already exist
                 continue;
             }
-            if (currentSink) {
+            if (auto currentSink = currentSinkW.lock()) {
                 // If sink exists, update it
                 currentSink->setCrop(participant.x, participant.y, participant.w, participant.h);
                 sinkIdsList.emplace(sinkId);
                 continue;
             }
-            auto newSink = createSinkClient(sinkId);
-            newSink->start();
+            auto newSink = std::make_shared<video::SinkClient>(sinkId, false);
+            currentSinkW = newSink;
             newSink->setCrop(participant.x, participant.y, participant.w, participant.h);
-            newSink->setFrameSize(participant.w, participant.h);
-
-            for (auto& videoStream : videoStreams)
-                videoStream->attach(newSink.get());
-
-            sinksMap.emplace(sinkId, newSink);
+            newSinks.emplace_back(newSink, std::make_pair(participant.w, participant.h));
+            sinksMap.emplace(sinkId, std::move(newSink));
             sinkIdsList.emplace(sinkId);
         } else {
             sinkIdsList.erase(sinkId);
         }
     }
+    lk.unlock();
 
     // remove unused video sinks
     for (auto it = sinksMap.begin(); it != sinksMap.end();) {
@@ -3135,11 +3131,20 @@ Manager::createSinkClients(
             it++;
         }
     }
+
+    // create new video sinks
+    for (const auto& [sink, size] : newSinks) {
+        sink->setFrameSize(size.first, size.second);
+        sink->start();
+        for (auto& videoStream : videoStreams)
+            videoStream->attach(sink.get());
+    }
 }
 
 std::shared_ptr<video::SinkClient>
 Manager::getSinkClient(const std::string& id)
 {
+    std::lock_guard lk(pimpl_->sinksMutex_);
     const auto& iter = pimpl_->sinkMap_.find(id);
     if (iter != std::end(pimpl_->sinkMap_))
         if (auto sink = iter->second.lock())
