@@ -16,6 +16,24 @@
       "message": "need to be verified it does not called from createSinkClients, after setFrameSize",
       "revId": "ccb6afa86d805e7f7bf2a62e4e82e17e9b9c8714",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2945ff3d_b4b882a6",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3142,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-09-23T15:47:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d9613ddf_d6eda62f",
+      "revId": "ccb6afa86d805e7f7bf2a62e4e82e17e9b9c8714",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
