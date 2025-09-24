@@ -351,6 +351,16 @@ public:
         libjami::setEchoCancellationState(state);
     }
 
+    auto getVoiceActivityDetectionState() -> decltype(libjami::getVoiceActivityDetectionState())
+    {
+        return libjami::getVoiceActivityDetectionState();
+    }
+
+    void setVoiceActivityDetectionState(bool state)
+    {
+        libjami::setVoiceActivityDetectionState(state);
+    }
+
     auto isAgcEnabled() -> decltype(libjami::isAgcEnabled()) { return libjami::isAgcEnabled(); }
 
     void setAgcState(const bool& enabled) { libjami::setAgcState(enabled); }
