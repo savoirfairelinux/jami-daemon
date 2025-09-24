@@ -507,7 +507,11 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
     }
 
     // Update the media states in the newly added call.
-    call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
+    bool success = call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
+    if (!success) {
+        JAMI_WARNING("[call:{}] Media change request failed, not updating media list", callId);
+        return;
+    }
 
     // Notify the client
     for (auto mediaType : mediaTypeList) {
