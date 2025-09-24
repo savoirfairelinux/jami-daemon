@@ -762,6 +762,18 @@ setEchoCancellationState(const std::string& state)
 }
 
 bool
+getVoiceActivityDetectionState()
+{
+    return jami::Manager::instance().getVoiceActivityDetectionState();
+}
+
+void
+setVoiceActivityDetectionState(bool state)
+{
+    jami::Manager::instance().setVoiceActivityDetectionState(state);
+}
+
+bool
 isAgcEnabled()
 {
     return jami::Manager::instance().isAGCEnabled();

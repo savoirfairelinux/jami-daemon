@@ -539,6 +539,19 @@ public:
      */
     void setEchoCancellationState(const std::string& state);
 
+    /**
+     * Get the voice activity detection engine state from
+     * the current audio layer.
+     * @return bool The current state of voice activity detection
+     */
+    bool getVoiceActivityDetectionState() const;
+
+    /**
+     * Set the voice activity detection engine state in the current
+     * audio layer.
+     */
+    void setVoiceActivityDetectionState(bool state);
+
     bool isAGCEnabled() const;
     void setAGCState(bool enabled);
 

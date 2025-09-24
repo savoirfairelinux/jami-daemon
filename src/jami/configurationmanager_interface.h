@@ -155,6 +155,8 @@ LIBJAMI_PUBLIC std::string getNoiseSuppressState();
 LIBJAMI_PUBLIC void setNoiseSuppressState(const std::string& state);
 LIBJAMI_PUBLIC std::string getEchoCancellationState();
 LIBJAMI_PUBLIC void setEchoCancellationState(const std::string& state);
+LIBJAMI_PUBLIC bool getVoiceActivityDetectionState();
+LIBJAMI_PUBLIC void setVoiceActivityDetectionState(bool state);
 
 LIBJAMI_PUBLIC bool isAgcEnabled();
 LIBJAMI_PUBLIC void setAgcState(bool enabled);
