@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "726b32f6_664b3a21",
+        "filename": "test/unitTest/dst/conversationRepository/conversationRepositoryDST.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-09-24T20:55:15Z",
+      "side": 1,
+      "message": "Should probably move this outside the loop, redundant check after initial call",
+      "range": {
+        "startLine": 420,
+        "startChar": 8,
+        "endLine": 436,
+        "endChar": 9
+      },
+      "revId": "6e6e47db537992723de77cb76ea30e5c05a6527d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
