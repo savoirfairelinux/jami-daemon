@@ -2470,6 +2470,18 @@ Manager::setEchoCancellationState(const std::string& state)
 }
 
 bool
+Manager::getVoiceActivityDetectionState() const
+{
+    return audioPreference.getVadEnabled();
+}
+
+void
+Manager::setVoiceActivityDetectionState(bool state)
+{
+    audioPreference.setVad(state);
+}
+
+bool
 Manager::isAGCEnabled() const
 {
     return audioPreference.isAGCEnabled();
