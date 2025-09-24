@@ -1173,7 +1173,7 @@
         </method>
 
         <method name="setEchoCancellationState" tp:name-for-bindings="setEchoCancellationState">
-            <arg type="s" name="state" direction="int">
+            <arg type="s" name="state" direction="in">
             </arg>
         </method>
 

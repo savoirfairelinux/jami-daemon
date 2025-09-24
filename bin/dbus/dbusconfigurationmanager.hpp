@@ -341,6 +341,16 @@ public:
 
     void setNoiseSuppressState(const std::string& state) { libjami::setNoiseSuppressState(state); }
 
+    auto getEchoCancellationState() -> decltype(libjami::getEchoCancellationState())
+    {
+        return libjami::getEchoCancellationState();
+    }
+
+    void setEchoCancellationState(const std::string& state)
+    {
+        libjami::setEchoCancellationState(state);
+    }
+
     auto isAgcEnabled() -> decltype(libjami::isAgcEnabled()) { return libjami::isAgcEnabled(); }
 
     void setAgcState(const bool& enabled) { libjami::setAgcState(enabled); }
