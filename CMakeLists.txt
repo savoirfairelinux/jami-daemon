@@ -274,6 +274,7 @@ source_group("Source Files\\plugin" FILES ${Source_Files__plugin})
 
 if(MSVC)
     source_group("Source Files\\media\\audio\\portaudio" FILES ${Source_Files__media__audio__portaudio})
+    source_group("Source Files\\media\\audio\\audio-loopback" FILES ${Source_Files__media__audio__audio_loopback})
     if(JAMI_VIDEO)
        source_group("Source Files\\media\\video\\winvideo" FILES ${Source_Files__media__video__winvideo})
     endif()
@@ -353,6 +354,7 @@ elseif (APPLE)
 elseif(MSVC)
    list (APPEND ALL_FILES ${ALL_FILES}
          "${Source_Files__media__audio__portaudio}"
+         "${Source_Files__media__audio__audio_loopback}"
          "${Source_Files__media__audio__webrtc}"
          "${Source_Files__media__audio__speexdsp}"
    )
@@ -485,6 +487,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/wil/include;"
        )
    endif()
 
@@ -561,6 +564,7 @@ if(MSVC)
         ws2_32.lib
         advapi32.lib
         Secur32.lib
+        mfuuid.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavcodec.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavdevice.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/lib/libavfilter.lib
