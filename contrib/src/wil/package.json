@@ -1,0 +1,12 @@
+{
+    "name": "wil",
+    "version": "v1.0.250325.1",
+    "cpe": "cpe:2.3:a:*:wil:v1.0.250325.1:*:*:*:*:*:*:*",
+    "url": "https://github.com/microsoft/wil/archive/refs/tags/__VERSION__.tar.gz",
+    "use_cmake" : true,
+    "defines": [
+        "FAST_BUILD=1",
+        "WIL_BUILD_PACKAGING=0",
+        "WIL_BUILD_TESTS=0"
+    ]
+}

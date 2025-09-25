@@ -96,7 +96,7 @@ Subject: [PATCH] Windows patch.
 +  <PropertyGroup Label="Globals">
 +    <ProjectGuid>{9C2C266D-35A3-465F-A297-0E21D54E5C89}</ProjectGuid>
 +    <RootNamespace>ixml</RootNamespace>
-+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
++    <WindowsTargetPlatformVersion>10.0.20348.0</WindowsTargetPlatformVersion>
 +  </PropertyGroup>
 +  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 +  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -445,7 +445,7 @@ Subject: [PATCH] Windows patch.
 +  <PropertyGroup Label="Globals">
 +    <ProjectGuid>{6227F51A-1498-4C4A-B213-F6FDED605125}</ProjectGuid>
 +    <RootNamespace>libupnp</RootNamespace>
-+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
++    <WindowsTargetPlatformVersion10.0.20348.0</WindowsTargetPlatformVersion>
 +  </PropertyGroup>
 +  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 +  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
