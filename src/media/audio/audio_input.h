@@ -70,9 +70,12 @@ public:
 
     std::string getId() const { return id_; };
 
+    std::string getCaptureStreamId() const { return captureStreamId_; }
+
 private:
     void readFromDevice();
     void readFromFile();
+    bool initCapture(const std::string& device);
     void readFromQueue();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
@@ -113,6 +116,8 @@ private:
     std::function<void(MediaType, bool)> onSuccessfulSetup_;
     std::function<void(const MediaStream& ms)> recorderCallback_;
     std::atomic_bool settingMS_ {true};
+
+    std::string captureStreamId_;
 };
 
 } // namespace jami

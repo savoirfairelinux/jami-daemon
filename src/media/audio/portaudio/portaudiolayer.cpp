@@ -19,11 +19,13 @@
 
 #include "audio/resampler.h"
 #include "audio/portaudio/audio_device_monitor.h"
+#include "audio/ringbufferpool.h"
+#include <audio/audio-loopback/loopback_capture.h>
+
 #include "manager.h"
 #include "preferences.h"
 
 #include <portaudio.h>
-
 #include <windows.h>
 
 #include <algorithm>
@@ -45,6 +47,9 @@ struct PortAudioLayer::PortAudioLayerImpl
     bool initOutputStream(PortAudioLayer&);
     bool initFullDuplexStream(PortAudioLayer&);
     bool apiInitialised_ {false};
+
+    CLoopbackCapture loopbackCapture_;
+    Resampler        resampler_;
 
     std::vector<std::string> getDevicesByType(AudioDeviceType type) const;
     int getIndexByType(AudioDeviceType type);
@@ -211,6 +216,92 @@ PortAudioLayer::startStream(AudioDeviceType stream)
         startPlayback();
         break;
     }
+}
+
+void
+PortAudioLayer::startCaptureStream(const std::string& id)
+{
+    if (!pimpl_->apiInitialised_) {
+        JAMI_WARNING("PortAudioLayer API not initialised");
+        return;
+    }
+
+    // The id is expected to be a window handle in hex format.
+    const HWND hwnd = reinterpret_cast<HWND>(std::strtoull(id.c_str(), nullptr, 16));
+    if (!IsWindow(hwnd)) {
+        JAMI_ERR("Invalid HWND: %p", hwnd);
+        return;
+    }
+
+    DWORD processId = 0;
+    GetWindowThreadProcessId(hwnd, &processId);
+    if (processId == 0) {
+        JAMI_ERR("Failed to retrieve process ID for HWND: %p", hwnd);
+        return;
+    }
+
+    JAMI_LOG("Converted window handle {:s} to process ID {:d}", id.c_str(), processId);
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    auto ringBuffer = rbPool.createRingBuffer(id);
+
+    JAMI_LOG("Initializing Loopback Capture for process ID {:d}", processId);
+    HRESULT hr = pimpl_->loopbackCapture_.StartCaptureAsync(
+        processId,
+        true,  // include child processes
+        [this, ringBuffer](const BYTE* audioData,
+                           UINT32 framesAvailable,
+                           DWORD captureFlags,
+                           UINT64 devicePosition,
+                           UINT64 qpcPosition,
+                           const WAVEFORMATEX& format) {
+
+            // unused arguments
+            (void) captureFlags;
+            (void) devicePosition;
+            (void) qpcPosition;
+
+            if (framesAvailable == 0 || !audioData) {
+                JAMI_WARN("No audio data captured.");
+                return;
+            }
+
+            auto capturedFrame = std::make_shared<AudioFrame>(
+                AudioFormat{
+                    format.nSamplesPerSec,
+                    format.nChannels,
+                    format.wBitsPerSample == 16 ? AV_SAMPLE_FMT_S16 : AV_SAMPLE_FMT_FLT
+                },
+                framesAvailable
+            );
+
+            std::memcpy(capturedFrame->pointer()->data[0], audioData, framesAvailable * format.nChannels * (format.wBitsPerSample / 8));
+
+            ringBuffer->put(std::move(capturedFrame));
+        });
+
+    if (FAILED(hr)) {
+        JAMI_ERR("Failed to start capture stream: 0x%08X", hr);
+    }
+}
+
+void
+PortAudioLayer::stopCaptureStream(const std::string& id)
+{
+    if (!pimpl_->apiInitialised_) {
+        JAMI_WARN("PortAudioLayer API not initialised");
+        return;
+    }
+
+    JAMI_DBG("Stopping Loopback Capture");
+    HRESULT hr = pimpl_->loopbackCapture_.StopCaptureAsync();
+    if (FAILED(hr)) {
+        JAMI_ERR("Failed to stop capture stream: 0x%08X", hr);
+        return;
+    }
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    rbPool.unBindAll(id);
 }
 
 void

@@ -2446,6 +2446,11 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
                      getCallId().c_str(),
                      stream.mediaAttribute_->label_.c_str(),
                      streamIdx);
+            // If added media is audio, add main ring buffer as reader
+            if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+                const std::string streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
+                Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId);
+            }
         } else {
             updateMediaStream(newAttr, streamIdx);
         }
@@ -2536,7 +2541,9 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
     bool hasFileSharing {false};
 
+    JAMI_DEBUG("[call:{}] Requesting media change", getCallId());
     for (const auto& media : mediaAttrList) {
+        JAMI_DEBUG("[call:{}] Media: {}", getCallId(), media.toString(true));
         if (!media.enabled_ || media.sourceUri_.empty())
             continue;
 
@@ -3381,7 +3388,7 @@ SIPCall::monitor() const
         JAMI_LOG("\t- Video codec: {}", codec->name);
 #endif
     if (auto transport = getIceMedia()) {
-        if (transport->isRunning())
+        if (transport && transport->isRunning())
             JAMI_LOG("\t- Media stream(s): {}", transport->link());
     }
 }

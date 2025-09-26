@@ -179,6 +179,40 @@ AudioInput::readFromFile()
 }
 
 bool
+AudioInput::initCapture(const std::string& device)
+{
+    std::string windowId = device;
+    
+    // Check if it's a full display URI format
+    std::string windowIdStr = "window-id:hwnd=";
+    size_t winHandlePos = device.find(windowIdStr);
+    
+    if (winHandlePos != std::string::npos) {
+        // Extract window ID from full format: "display://window-id:hwnd=12345 params"
+        size_t startPos = winHandlePos + windowIdStr.size();
+        size_t endPos = device.find(' ', startPos);
+        windowId = device.substr(startPos, endPos - startPos);
+    }
+    // If winHandlePos == npos, assume device is already just the window ID
+
+    devOpts_ = {};
+    devOpts_.input = windowId;
+    devOpts_.channel = format_.nb_channels;
+    devOpts_.framerate = format_.sample_rate;
+
+    captureStreamId_ = windowId;
+
+    deviceGuard_ = Manager::instance().startCaptureStream(windowId);
+    if (!deviceGuard_) {
+        JAMI_ERROR("Failed to start capture stream for window-id: {}", windowId);
+        return false;
+    }
+    
+    playingDevice_ = true;
+    return true;
+}
+
+bool
 AudioInput::initDevice(const std::string& device)
 {
     devOpts_ = {};
@@ -309,9 +343,12 @@ AudioInput::switchInput(const std::string& resource)
             return {};
 
         const auto suffix = resource_.substr(pos + sep.size());
+        
         bool ready = false;
         if (prefix == libjami::Media::VideoProtocolPrefix::FILE)
             ready = initFile(suffix);
+        else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY)
+            ready = initCapture(suffix);
         else
             ready = initDevice(suffix);
 

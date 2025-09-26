@@ -76,6 +76,18 @@ public:
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
 
     /**
+     * Start a capture stream on the given device (eg. a window handle).
+     * @param id The identifier of the capture device to use
+     */
+    virtual void startCaptureStream(const std::string& id) = 0;
+
+    /**
+     * Stop a capture stream on the given device (eg. a window handle).
+     * @param id The identifier of the capture device to stop
+     */
+    virtual void stopCaptureStream(const std::string& id) = 0;
+
+    /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      */
