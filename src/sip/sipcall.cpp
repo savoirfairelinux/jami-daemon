@@ -3391,7 +3391,7 @@ SIPCall::monitor() const
         JAMI_LOG("\t- Video codec: {}", codec->name);
 #endif
     if (auto transport = getIceMedia()) {
-        if (transport->isRunning())
+        if (transport && transport->isRunning())
             JAMI_LOG("\t- Media stream(s): {}", transport->link());
     }
 }
