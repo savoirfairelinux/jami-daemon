@@ -1,0 +1,565 @@
+From 487ce4368094fd3aeb5d632e33eeec0650377f5f Mon Sep 17 00:00:00 2001
+From: Felix Boucher <felix.boucher@savoirfairelinux.com>
+Date: Thu, 25 Sep 2025 17:06:19 -0400
+Subject: [PATCH] cmake: fix jami contrib linking
+
+This commit aims to provide cmake modules for dependencies built by the
+jami contribs. In case vcpkg is not used, the build now fallsback to
+some relative paths.
+---
+ CMakeLists.txt                           | 143 +++++++++++++++--------
+ find_package/FindGnuTLS.cmake            |  32 +++++
+ find_package/FindOpenSSL.cmake           |  30 +++++
+ find_package/Findasio.cmake              |  13 +++
+ find_package/Findfmt.cmake               |  24 ++++
+ find_package/Findjsoncpp.cmake           |  25 ++++
+ find_package/Findllhttp.cmake            |  24 ++++
+ find_package/Findmsgpack-cxx.cmake       |   9 ++
+ find_package/Findrestinio.cmake          |  13 +++
+ find_package/Findunofficial-argon2.cmake |  24 ++++
+ 10 files changed, 289 insertions(+), 48 deletions(-)
+ create mode 100644 find_package/FindGnuTLS.cmake
+ create mode 100644 find_package/FindOpenSSL.cmake
+ create mode 100644 find_package/Findasio.cmake
+ create mode 100644 find_package/Findfmt.cmake
+ create mode 100644 find_package/Findjsoncpp.cmake
+ create mode 100644 find_package/Findllhttp.cmake
+ create mode 100644 find_package/Findmsgpack-cxx.cmake
+ create mode 100644 find_package/Findrestinio.cmake
+ create mode 100644 find_package/Findunofficial-argon2.cmake
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index dce30c70..1e7661d8 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -20,6 +20,13 @@ project (opendht
+     HOMEPAGE_URL "https://opendht.net/"
+ )
+ 
++if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg[\\/].*vcpkg.cmake$|vcpkg.cmake$")
++    set(OPENDHT_USING_VCPKG TRUE)
++else()
++    set(OPENDHT_USING_VCPKG FALSE)
++endif()
++message(STATUS "Using vcpkg : = ${OPENDHT_USING_VCPKG}")
++
+ include(CMakePackageConfigHelpers)
+ include(CMakeDependentOption)
+ include(CheckIncludeFileCXX)
+@@ -31,6 +38,9 @@ endif()
+ include(cmake/CheckAtomic.cmake)
+ include(CTest)
+ 
++if(MSVC)
++    list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/find_package")
++endif()
+ # Options
+ option (BUILD_SHARED_LIBS "Build shared library" ON)
+ option (OPENDHT_USE_PKGCONFIG "Use pkg-config to find installed libraries where possible" ${POSSIBLE_PKGCONFIG})
+@@ -127,10 +137,10 @@ if (NOT MSVC)
+             set(JSONCPP_INCLUDE_DIRS ${Jsoncpp_INCLUDE_DIRS})
+             set(JSONCPP_FOUND ${Jsoncpp_FOUND})
+         endif()
+-        #  libfmt 
++        #  libfmt
+         pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
+         # libreadline
+-        if (OPENDHT_TOOLS AND NOT APPLE)   
++        if (OPENDHT_TOOLS AND NOT APPLE)
+             pkg_search_module(readline REQUIRED IMPORTED_TARGET readline)
+             message(STATUS "libreadline: version ${readline_VERSION}")
+             set(READLINE_VERSION ${readline_VERSION})
+@@ -218,7 +228,7 @@ if (NOT MSVC)
+                     FetchContent_Declare(msgpack-c
+                         GIT_REPOSITORY "https://github.com/msgpack/msgpack-c.git"
+                         GIT_TAG        "cpp-7.0.0"
+-                        FIND_PACKAGE_ARGS NAMES msgpack-c 
++                        FIND_PACKAGE_ARGS NAMES msgpack-c
+                     )
+                     set(MSGPACK_USE_BOOST OFF CACHE INTERNAL "Workaround for Boost")
+                     FetchContent_MakeAvailable(msgpack-c)
+@@ -287,32 +297,57 @@ if (NOT MSVC)
+ else () # MSVC
+     include_directories(src/compat/msvc)
+     include_directories(src/compat/win32)
+-    
+-    find_package(unofficial-argon2 CONFIG REQUIRED)
++
++    if(OPENDHT_USING_VCPKG)
++        find_package(unofficial-argon2 CONFIG REQUIRED)
++    else()
++        find_package(unofficial-argon2 MODULE REQUIRED)
++    endif()
+     include_directories(${ARGON2_INCLUDEDIR})
+     set(argon2_lib ", libargon2")
+ 
+-    find_package(GnuTLS REQUIRED)
++    if(OPENDHT_USING_VCPKG)
++        find_package(GnuTLS CONFIG REQUIRED)
++    else()
++        find_package(GnuTLS MODULE REQUIRED)
++    endif()
+     include_directories(${GNUTLS_INCLUDE_DIR})
+-    
+-    find_package(msgpack-cxx CONFIG REQUIRED)
++
++    if(OPENDHT_USING_VCPKG)
++        find_package(msgpack-cxx CONFIG REQUIRED)
++    else()
++        find_package(msgpack-cxx MODULE REQUIRED)
++    endif()
+     get_target_property(MSGPACK_INCLUDEDIR msgpack-cxx INTERFACE_INCLUDE_DIRECTORIES)
+     include_directories(${MSGPACK_INCLUDEDIR})
+-    
+-    find_package(jsoncpp CONFIG REQUIRED)
++
++    if(OPENDHT_USING_VCPKG)
++        find_package(jsoncpp CONFIG REQUIRED)
++    else()
++        find_package(jsoncpp MODULE REQUIRED)
++    endif()
+     set(JSONCPP_FOUND TRUE)
+     include_directories(${JSONCPP_INCLUDE_DIRS})
+-    
+-    find_package(fmt CONFIG REQUIRED)
++
++    if(OPENDHT_USING_VCPKG)
++        find_package(fmt CONFIG REQUIRED)
++    else()
++        find_package(fmt MODULE REQUIRED)
++    endif()
+     include_directories(${FMT_INCLUDEDIR})
+-    
++
+     if(OPENDHT_TOOLS)
+         find_package(unofficial-readline-win32 CONFIG REQUIRED)
+         include_directories(${READLINE_INCLUDEDIR})
+     endif()
+ 
+     if (OPENDHT_HTTP OR OPENDHT_PEER_DISCOVERY)
+-        find_package(asio CONFIG REQUIRED)
++        if(OPENDHT_USING_VCPKG)
++            find_package(asio CONFIG REQUIRED)
++        else()
++            find_package(asio MODULE REQUIRED)
++        endif()
++        message(STATUS "Searching ASIO: ${ASIO_INCLUDE_DIRS}/asio/include")
+         find_path(ASIO_INCLUDE_DIR asio.hpp REQUIRED HINTS ${ASIO_INCLUDE_DIRS}/asio/include)
+         message(STATUS "Found ASIO ${ASIO_INCLUDE_DIR}")
+     else()
+@@ -320,40 +355,52 @@ else () # MSVC
+     endif ()
+ 
+     if (OPENDHT_HTTP)
+-        find_package(restinio CONFIG REQUIRED)
++        if(OPENDHT_USING_VCPKG)
++            find_package(restinio CONFIG REQUIRED)
++        else()
++            find_package(restinio MODULE REQUIRED)
++        endif()
+         set(restinio_target restinio::restinio)
+ 
+-        find_package(llhttp CONFIG REQUIRED)
++        if(OPENDHT_USING_VCPKG)
++            find_package(llhttp CONFIG REQUIRED)
++        else()
++            find_package(llhttp MODULE REQUIRED)
++        endif()
+         set(http_lib "-lllhttp")
+-
+         if (OPENDHT_PROXY_OPENSSL)
+-            find_package(OpenSSL REQUIRED)
++            if(OPENDHT_USING_VCPKG)
++                find_package(OpenSSL CONFIG REQUIRED)
++            else()
++                find_package(OpenSSL MODULE REQUIRED)
++            endif()
+             set(openssl_lib ", openssl")
+         endif()
+     else()
+         set(OPENDHT_PROXY_OPENSSL OFF)
+     endif()
+-    
+-    message(STATUS "Discovering external non-CMake libraries")
+-    find_library(NETTLE_LIBRARY NAMES nettle libnettle REQUIRED)
+-    find_library(HOGWEED_LIBRARY NAMES hogweed REQUIRED)
+-    find_library(TASN_LIBRARY NAMES tasn1 REQUIRED)
+-    find_path(NETTLE_INCLUDE_DIR nettle/aes.h REQUIRED)
+-    
+-    add_library(nettle_lib STATIC IMPORTED)
+-    set_target_properties(nettle_lib PROPERTIES
+-        IMPORTED_LOCATION ${NETTLE_LIBRARY}
+-        INTERFACE_INCLUDE_DIRECTORIES ${NETTLE_INCLUDE_DIR}
+-    )
+-    add_library(hogweed_lib STATIC IMPORTED)
+-    set_target_properties(hogweed_lib PROPERTIES
+-        IMPORTED_LOCATION ${HOGWEED_LIBRARY}
+-    )
+-    add_library(tasn1_lib STATIC IMPORTED)
+-    set_target_properties(tasn1_lib PROPERTIES
+-        IMPORTED_LOCATION ${TASN_LIBRARY}
+-    )
+-    
++    if(OPENDHT_USING_VCPKG)
++        message(STATUS "Discovering external non-CMake libraries")
++        find_library(NETTLE_LIBRARY NAMES nettle libnettle REQUIRED HINTS ${PROJECT_SOURCE_DIR}/../)
++        find_library(HOGWEED_LIBRARY NAMES hogweed REQUIRED HINTS ${PROJECT_SOURCE_DIR}/../)
++        find_library(TASN_LIBRARY NAMES tasn1 REQUIRED HINTS ${PROJECT_SOURCE_DIR}/../)
++        find_path(NETTLE_INCLUDE_DIR nettle/aes.h REQUIRED HINTS ${PROJECT_SOURCE_DIR}/../)
++
++        add_library(nettle_lib STATIC IMPORTED)
++        set_target_properties(nettle_lib PROPERTIES
++            IMPORTED_LOCATION ${NETTLE_LIBRARY}
++            INTERFACE_INCLUDE_DIRECTORIES ${NETTLE_INCLUDE_DIR}
++        )
++        add_library(hogweed_lib STATIC IMPORTED)
++        set_target_properties(hogweed_lib PROPERTIES
++            IMPORTED_LOCATION ${HOGWEED_LIBRARY}
++        )
++        add_library(tasn1_lib STATIC IMPORTED)
++        set_target_properties(tasn1_lib PROPERTIES
++            IMPORTED_LOCATION ${TASN_LIBRARY}
++        )
++    endif()
++
+ endif ()
+ 
+ # Definitions
+@@ -544,7 +591,7 @@ if (MSVC)
+     message(STATUS "Build pipeline: Windows/MSVC + vcpkg")
+     message(STATUS "Used GnuTLS library: ${GNUTLS_LIBRARIES}")
+     message(STATUS "Used NETTLE library: ${NETTLE_LIBRARY}")
+-    target_link_libraries(opendht 
++    target_link_libraries(opendht
+         PRIVATE
+             unofficial::argon2::libargon2
+             nettle_lib
+@@ -574,7 +621,7 @@ else()
+         target_link_libraries(opendht PRIVATE "-framework CoreFoundation" "-framework Security")
+     endif ()
+     # Generalized UNIX/MSYS2 build pipeline
+-    if (OPENDHT_USE_PKGCONFIG) 
++    if (OPENDHT_USE_PKGCONFIG)
+         target_link_libraries(opendht
+             PRIVATE
+                 PkgConfig::argon2
+@@ -585,7 +632,7 @@ else()
+                 PkgConfig::fmt
+                 ${JSONCPP_LIBRARIES}
+         )
+-        if(OPENDHT_TOOLS) 
++        if(OPENDHT_TOOLS)
+             message(STATUS ${READLINE_LIBRARIES})
+             target_link_libraries(opendht PUBLIC ${READLINE_LIBRARIES})
+         endif()
+@@ -612,7 +659,7 @@ else()
+         else()
+             target_link_libraries(opendht PUBLIC fmt::fmt-header-only)
+         endif()
+-        if(OPENDHT_TOOLS) 
++        if(OPENDHT_TOOLS)
+             target_link_libraries(opendht PUBLIC ${READLINE_LIBRARIES})
+         endif()
+         if (OPENDHT_PROXY_OPENSSL)
+@@ -623,7 +670,7 @@ else()
+         target_link_libraries(opendht PUBLIC ${MSGPACK_TARGET})
+     endif()
+     if(OPENDHT_HTTP)
+-        target_link_libraries(opendht 
++        target_link_libraries(opendht
+             PUBLIC # Required for linking tests
+                 ${llhttp_target}
+                 ${restinio_target}
+@@ -649,7 +696,7 @@ endif()
+ if (BUILD_SHARED_LIBS)
+     set_target_properties (opendht PROPERTIES IMPORT_SUFFIX "_import.lib")
+     set_target_properties (opendht PROPERTIES SOVERSION ${opendht_VERSION_MAJOR} VERSION ${opendht_VERSION})
+-    target_compile_definitions(opendht PRIVATE OPENDHT_BUILD) 
++    target_compile_definitions(opendht PRIVATE OPENDHT_BUILD)
+     target_compile_definitions(opendht PUBLIC opendht_EXPORTS)
+ endif ()
+ 
+@@ -684,7 +731,7 @@ if (WIN32)
+             "winspool\\.drv"
+             "mpr\\.dll"
+             "version\\.dll"
+-            "ws2_32\\.dll" 
++            "ws2_32\\.dll"
+             "vcruntime.*\\.dll"
+             "msvcp.*\\.dll"
+             "wpax.*\\.dll"
+@@ -741,7 +788,7 @@ if (OPENDHT_PYTHON)
+             list(APPEND OPENDHT_PYTHON_LIBRARY_DIRS_LIST ${MSGPACK_LIBRARY_DIRS})
+         endif()
+     endif()
+-    
++
+     # Add the directory where the OpenDHT library is built
+     if(WIN32)
+         # Append actual configuration-specific build directories instead of an unevaluated $<CONFIG> generator expression
+@@ -763,7 +810,7 @@ if (OPENDHT_PYTHON)
+             endif()
+         endif()
+     endif()
+-    
++
+     if (OPENDHT_PYTHON_INCLUDE_DIRS_LIST)
+         list(REMOVE_DUPLICATES OPENDHT_PYTHON_INCLUDE_DIRS_LIST)
+         string(JOIN "\", \"" OPENDHT_PYTHON_INCLUDE_DIRS ${OPENDHT_PYTHON_INCLUDE_DIRS_LIST})
+diff --git a/find_package/FindGnuTLS.cmake b/find_package/FindGnuTLS.cmake
+new file mode 100644
+index 00000000..2a48912b
+--- /dev/null
++++ b/find_package/FindGnuTLS.cmake
+@@ -0,0 +1,32 @@
++if(GNUTLS_INCLUDE_DIR AND GNUTLS_LIBRARIES)
++    return()
++endif()
++
++set(GNUTLS_ROOT "${PROJECT_SOURCE_DIR}/../../msvc" CACHE PATH "GnuTLS root prefix")
++
++if(NOT GNUTLS_INCLUDE_DIR)
++    set(GNUTLS_INCLUDE_DIR "${GNUTLS_ROOT}/include" CACHE PATH "GnuTLS include dir" FORCE)
++endif()
++
++if(NOT GNUTLS_LIBRARY)
++    find_library(GNUTLS_LIBRARY
++        NAMES gnutls libgnutls
++        HINTS "${GNUTLS_ROOT}/lib/x64"
++    )
++endif()
++
++if(GNUTLS_INCLUDE_DIR AND GNUTLS_LIBRARY)
++    set(GNUTLS_LIBRARIES "${GNUTLS_LIBRARY}" CACHE FILEPATH "GnuTLS library" FORCE)
++    add_library(GnuTLS UNKNOWN IMPORTED)
++    set_target_properties(GnuTLS PROPERTIES
++        IMPORTED_LOCATION "${GNUTLS_LIBRARY}"
++        INTERFACE_INCLUDE_DIRECTORIES "${GNUTLS_INCLUDE_DIR}"
++        )
++else()
++    message(FATAL_ERROR "GnuTLS library not found. ${GNUTLS_ROOT}/lib was used")
++endif()
++
++if(ARGON2_INCLUDEDIR AND ARGON2_LIBRARY)
++
++else()
++endif()
+\ No newline at end of file
+diff --git a/find_package/FindOpenSSL.cmake b/find_package/FindOpenSSL.cmake
+new file mode 100644
+index 00000000..0a13bf3e
+--- /dev/null
++++ b/find_package/FindOpenSSL.cmake
+@@ -0,0 +1,30 @@
++if(TARGET OpenSSL::SSL AND TARGET OpenSSL::Crypto)
++    set(OPENSSL_FOUND TRUE)
++    return()
++endif()
++
++if(NOT OPENSSL_INCLUDEDIR)
++    set(OPENSSL_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../openssl/include" CACHE PATH "OpenSSL include dir")
++endif()
++
++if(NOT OPENSSL_LIBRARIES)
++    set(OPENSSL_LIBRARIES
++        ${PROJECT_SOURCE_DIR}/../openssl/libssl.lib
++        ${PROJECT_SOURCE_DIR}/../openssl/libcrypto.lib
++    )
++endif()
++
++if(OPENSSL_INCLUDEDIR AND OPENSSL_LIBRARIES)
++    add_library(OpenSSL::SSL UNKNOWN IMPORTED)
++    set_target_properties(OpenSSL::SSL PROPERTIES
++        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/../openssl/libssl.lib"
++        INTERFACE_INCLUDE_DIRECTORIES "${OPENSSL_INCLUDEDIR}"
++    )
++    add_library(OpenSSL::Crypto UNKNOWN IMPORTED)
++    set_target_properties(OpenSSL::Crypto PROPERTIES
++        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/../openssl/libcrypto.lib"
++        INTERFACE_INCLUDE_DIRECTORIES "${OPENSSL_INCLUDEDIR}"
++    )
++else()
++    message(FATAL_ERROR "OpenSSL library not found. ${PROJECT_SOURCE_DIR}/../openssl/libssl.lib and ${PROJECT_SOURCE_DIR}/../openssl/libcrypto.lib were used")
++endif()
+\ No newline at end of file
+diff --git a/find_package/Findasio.cmake b/find_package/Findasio.cmake
+new file mode 100644
+index 00000000..189a00fc
+--- /dev/null
++++ b/find_package/Findasio.cmake
+@@ -0,0 +1,13 @@
++if(TARGET asio)
++    set(ASIO_FOUND TRUE)
++    return()
++endif()
++
++if(NOT ASIO_INCLUDE_DIRS)
++    set(ASIO_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/../asio" CACHE PATH "ASIO include dir")
++endif()
++
++add_library(asio UNKNOWN IMPORTED)
++set_target_properties(asio PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${ASIO_INCLUDE_DIRS}/asio/include"
++)
+\ No newline at end of file
+diff --git a/find_package/Findfmt.cmake b/find_package/Findfmt.cmake
+new file mode 100644
+index 00000000..cfcb8e1c
+--- /dev/null
++++ b/find_package/Findfmt.cmake
+@@ -0,0 +1,24 @@
++if(TARGET fmt)
++    set(FMT_FOUND TRUE)
++    return()
++endif()
++if(NOT FMT_INCLUDEDIR)
++    set(FMT_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../fmt/include" CACHE PATH "fmt include dir")
++endif()
++
++if(NOT FMT_LIBRARY)
++    find_library(FMT_LIBRARY
++        NAMES fmt
++        HINTS "${PROJECT_SOURCE_DIR}/../fmt/msvc/Release"
++    )
++endif()
++
++if(FMT_INCLUDEDIR AND FMT_LIBRARY)
++    add_library(fmt::fmt UNKNOWN IMPORTED)
++    set_target_properties(fmt::fmt PROPERTIES
++        IMPORTED_LOCATION "${FMT_LIBRARY}"
++        INTERFACE_INCLUDE_DIRECTORIES "${FMT_INCLUDEDIR}"
++    )
++else()
++    message(FATAL_ERROR "fmt library not found. ${PROJECT_SOURCE_DIR}/../fmt/msvc/Release was used")
++endif()
+\ No newline at end of file
+diff --git a/find_package/Findjsoncpp.cmake b/find_package/Findjsoncpp.cmake
+new file mode 100644
+index 00000000..fbc38b91
+--- /dev/null
++++ b/find_package/Findjsoncpp.cmake
+@@ -0,0 +1,25 @@
++if(TARGET jsoncpp)
++    set(JSONCPP_FOUND TRUE)
++    return()
++endif()
++
++if(NOT JSONCPP_INCLUDE_DIRS)
++    set(JSONCPP_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/../jsoncpp/include" CACHE PATH "jsoncpp include dir")
++endif()
++
++if(NOT JSONCPP_LIBRARIES)
++    find_library(JSONCPP_LIBRARIES
++        NAMES lib_json
++        HINTS "${PROJECT_SOURCE_DIR}/../../msvc/lib/x64"
++    )
++endif()
++
++if(JSONCPP_INCLUDE_DIRS AND JSONCPP_LIBRARIES)
++    add_library(JsonCpp::JsonCpp UNKNOWN IMPORTED)
++    set_target_properties(JsonCpp::JsonCpp PROPERTIES
++        IMPORTED_LOCATION "${JSONCPP_LIBRARIES}"
++        INTERFACE_INCLUDE_DIRECTORIES "${JSONCPP_INCLUDE_DIRS}"
++    )
++else()
++    message(FATAL_ERROR "jsoncpp library not found. ${PROJECT_SOURCE_DIR}/../../msvc/lib was used")
++endif()
+diff --git a/find_package/Findllhttp.cmake b/find_package/Findllhttp.cmake
+new file mode 100644
+index 00000000..34450ccc
+--- /dev/null
++++ b/find_package/Findllhttp.cmake
+@@ -0,0 +1,24 @@
++if(TARGET llhttp)
++    set(LLHTTP_FOUND TRUE)
++    return()
++endif()
++if(NOT LLHTTP_INCLUDEDIR)
++    set(LLHTTP_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../llhttp/include" CACHE PATH "llhttp include dir")
++endif()
++
++if(NOT LLHTTP_LIBRARY)
++    find_library(LLHTTP_LIBRARY
++        NAMES llhttp
++        HINTS "${PROJECT_SOURCE_DIR}/../llhttp/build/Release"
++    )
++endif()
++
++if(LLHTTP_INCLUDEDIR AND LLHTTP_LIBRARY)
++    add_library(llhttp::llhttp_static UNKNOWN IMPORTED)
++    set_target_properties(llhttp::llhttp_static PROPERTIES
++        IMPORTED_LOCATION "${LLHTTP_LIBRARY}"
++        INTERFACE_INCLUDE_DIRECTORIES "${LLHTTP_INCLUDEDIR}"
++    )
++else()
++    message(FATAL_ERROR "llhttp library not found. ${PROJECT_SOURCE_DIR}/../llhttp/build/Release/llhttp.lib was used")
++endif()
+diff --git a/find_package/Findmsgpack-cxx.cmake b/find_package/Findmsgpack-cxx.cmake
+new file mode 100644
+index 00000000..5f38b9b9
+--- /dev/null
++++ b/find_package/Findmsgpack-cxx.cmake
+@@ -0,0 +1,9 @@
++if(TARGET msgpack-cxx)
++    set(MSGPACK_CXX_FOUND TRUE)
++        return()
++endif()
++
++add_library(msgpack-cxx INTERFACE IMPORTED)
++set_target_properties(msgpack-cxx PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/../msgpack-c/include"
++)
+\ No newline at end of file
+diff --git a/find_package/Findrestinio.cmake b/find_package/Findrestinio.cmake
+new file mode 100644
+index 00000000..2c527388
+--- /dev/null
++++ b/find_package/Findrestinio.cmake
+@@ -0,0 +1,13 @@
++if(TARGET restinio::restinio)
++    set(RESTINIO_FOUND TRUE)
++    return()
++endif()
++
++if(NOT Restinio_INCLUDE_DIR)
++    set(Restinio_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/../restinio/dev" CACHE PATH "restinio include dir")
++endif()
++
++add_library(restinio::restinio INTERFACE IMPORTED)
++set_target_properties(restinio::restinio PROPERTIES
++    INTERFACE_INCLUDE_DIRECTORIES "${Restinio_INCLUDE_DIR}"
++)
+diff --git a/find_package/Findunofficial-argon2.cmake b/find_package/Findunofficial-argon2.cmake
+new file mode 100644
+index 00000000..07a68a77
+--- /dev/null
++++ b/find_package/Findunofficial-argon2.cmake
+@@ -0,0 +1,24 @@
++if(TARGET unofficial::argon2::libargon2)
++    set(UNOFFICIAL_ARGON2_FOUND TRUE)
++    return()
++endif()
++
++if(NOT ARGON2_INCLUDEDIR)
++    set(ARGON2_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../argon2/include" CACHE PATH "Argon2 include dir")
++endif()
++if(NOT ARGON2_LIBRARY)
++    find_library(ARGON2_LIBRARY
++        NAMES argon2 Argon2Ref libargon2
++        HINTS "${PROJECT_SOURCE_DIR}/../argon2/vs2015/Argon2Ref/vs2015/build"
++    )
++endif()
++
++if(ARGON2_INCLUDEDIR AND ARGON2_LIBRARY)
++    add_library(unofficial::argon2::libargon2 UNKNOWN IMPORTED)
++    set_target_properties(unofficial::argon2::libargon2 PROPERTIES
++        IMPORTED_LOCATION "${ARGON2_LIBRARY}"
++        INTERFACE_INCLUDE_DIRECTORIES "${ARGON2_INCLUDEDIR}"
++    )
++else()
++    message(FATAL_ERROR "Argon2 library not found. ${PROJECT_SOURCE_DIR}/vs2015/Argon2Ref/vs2015/build was used")
++endif()
+\ No newline at end of file
+-- 
+2.49.0.windows.1
+
