@@ -205,9 +205,9 @@ if (BUILD_CONTRIB)
         endif()
         file(LOCK ${CONTRIB_BUILD_PATH} DIRECTORY RELEASE)
     else()
-        set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/extras/scripts)
+        set(SCRIPTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc)
         execute_process(
-            COMMAND python ${SCRIPTS_DIR}/winmake.py
+            COMMAND python ${SCRIPTS_DIR}/winmake.py -b daemon
             WORKING_DIRECTORY ${SCRIPTS_DIR}
             RESULT_VARIABLE BUILD_RESULT
         )
