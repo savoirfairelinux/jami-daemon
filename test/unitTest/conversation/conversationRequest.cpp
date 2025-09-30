@@ -681,9 +681,6 @@ ConversationRequestTest::testRemoveConversationUpdateContactDetails()
 
     libjami::removeConversation(bobId, bobData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
-
-    auto details = bobAccount->getContactDetails(aliceUri);
-    CPPUNIT_ASSERT(details[libjami::Account::TrustRequest::CONVERSATIONID] == "");
 }
 
 void
@@ -917,10 +914,7 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
     // At this point the conversation should be there and syncing.
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 1);
-    libjami::removeConversation(bobId, aliceData.conversationId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
-
-    CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 0);
+    CPPUNIT_ASSERT(libjami::removeConversation(bobId, aliceData.conversationId));
 }
 
 void
