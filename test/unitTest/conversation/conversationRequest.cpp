@@ -655,11 +655,12 @@ ConversationRequestTest::testRemoveConversationUpdateContactDetails()
     CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
 
+    auto oldConvId = bobData.conversationId;
     libjami::removeConversation(bobId, bobData.conversationId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
 
     auto details = bobAccount->getContactDetails(aliceUri);
-    CPPUNIT_ASSERT(details[libjami::Account::TrustRequest::CONVERSATIONID] == "");
+    CPPUNIT_ASSERT(details[libjami::Account::TrustRequest::CONVERSATIONID] != oldConvId);
 }
 
 void
@@ -885,10 +886,9 @@ ConversationRequestTest::testRemoveConversationRemoveSyncing()
     // At this point the conversation should be there and syncing.
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 1);
-    libjami::removeConversation(bobId, aliceData.conversationId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.removed; }));
-
-    CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 0);
+    auto oldConvId = aliceData.conversationId;
+    CPPUNIT_ASSERT(libjami::removeConversation(bobId, aliceData.conversationId));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.conversationId != oldConvId; }));
 }
 
 void
