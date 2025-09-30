@@ -1005,11 +1005,17 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
         passwordWasIncorrect = false;
         libjami::provideAccountAuthentication(newDeviceId, wrongPassword, "password");
 
-        // Wait for auth to fail on new device
-        { // Lock mtxOld
-            std::unique_lock lkNew {mtxNew};
-            CPPUNIT_ASSERT(cvOld.wait_for(lkNew, 30s, [&] { return passwordWasIncorrect; }));
-        } // Unlock mtxOld
+        if (attempt < 3) {
+            { // Lock mtxNew
+                std::unique_lock lkNew {mtxNew};
+                CPPUNIT_ASSERT(cvNew.wait_for(lkNew, 30s, [&] { return passwordWasIncorrect; }));
+            } // Unlock mtxNew
+        } else {
+            { // Lock mtxOld
+                std::unique_lock lkOld {mtxOld};
+                CPPUNIT_ASSERT(cvOld.wait_for(lkOld, 30s, [&] { return linkDeviceUnsuccessful; }));
+            } // Unlock mtxOld
+        }
     }
 
     // Wait for unsuccessful linking
