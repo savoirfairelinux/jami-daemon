@@ -2442,10 +2442,16 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
             // If the remote asks for a new stream, our side sends nothing
             stream.mediaAttribute_->muted_ = isRemote ? true : stream.mediaAttribute_->muted_;
             createRtpSession(stream);
-            JAMI_DBG("[call:%s] Added a new media stream [%s] @ index %i",
-                     getCallId().c_str(),
-                     stream.mediaAttribute_->label_.c_str(),
+            JAMI_DEBUG("[call:{:s}] Added a new media stream {:s} @ index {:d}",
+                     getCallId(),
+                     stream.mediaAttribute_->label_,
                      streamIdx);
+            // If new media is audio, bind it to the main ring buffer
+            if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+                auto streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
+                JAMI_DEBUG("[call:{:s}] Binding audio stream {:s} to the main ring buffer", getCallId(), streamId);
+                Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId);
+            }
         } else {
             updateMediaStream(newAttr, streamIdx);
         }
