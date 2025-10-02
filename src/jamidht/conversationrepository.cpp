@@ -2999,6 +2999,20 @@ ConversationRepository::Impl::validCommits(
                                                                              "Malformed commit");
                 return false;
             }
+
+            if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
+                                "ensure that you are using the latest "
+                                "version of Jami, or that one of your contacts is not performing "
+                                "any unwanted actions.",
+                                accountId_,
+                                id_,
+                                commit.id);
+
+                emitSignal<libjami::ConversationSignal::OnConversationError>(
+                    accountId_, id_, EVALIDFETCH, "Malformed merge commit");
+                return false;
+            }
         }
         JAMI_DEBUG("[Account {}] [Conversation {}] Validate commit {}", accountId_, id_, commit.id);
     }
