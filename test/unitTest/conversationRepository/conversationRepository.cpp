@@ -75,17 +75,21 @@ private:
     void testMerge();
     void testFFMerge();
     void testDiff();
-
     void testMergeProfileWithConflict();
     void testValidSignatureForCommit();
     void testInvalidSignatureForCommit();
     void testMalformedCommit();
     void testMalformedCommitUri();
     void testInvalidJoin();
+    void testInvalidFile();
+    void testMergeWithInvalidFile();
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
                           const std::string& branch,
                           const std::string& commit_msg);
+    std::string addMergeCommit(git_repository* repo,
+                          const std::shared_ptr<JamiAccount> account,
+                          const std::string& wanted_ref);
     void addAll(git_repository* repo);
     bool merge_in_main(const std::shared_ptr<JamiAccount> account,
                        git_repository* repo,
@@ -103,6 +107,8 @@ private:
     CPPUNIT_TEST(testMalformedCommit);           // Passes
     CPPUNIT_TEST(testMalformedCommitUri);        // Passes
     CPPUNIT_TEST(testInvalidJoin);               // Passes
+    CPPUNIT_TEST(testInvalidFile);               // Passes
+    CPPUNIT_TEST(testMergeWithInvalidFile);      // Passes
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -346,6 +352,122 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         if (git_reference_create(&ref_ptr, repo, branch_name.c_str(), &commit_id, true, nullptr)
             < 0) {
             JAMI_WARN("Unable to move commit to main");
+        }
+        git_reference_free(ref_ptr);
+    }
+    return commit_str ? commit_str : "";
+}
+
+std::string
+ConversationRepositoryTest::addMergeCommit(git_repository* repo,
+                          const std::shared_ptr<JamiAccount> account,
+                          const std::string& wanted_ref)
+{
+    auto deviceId = DeviceId(std::string(account->currentDeviceId()));
+    auto name = account->getDisplayName();
+    if (name.empty())
+        name = deviceId.toString();
+
+    git_signature* sig_ptr = nullptr;
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.to_c_str(), std::time(nullptr), 0) < 0) {
+        return {};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+
+    // Get current HEAD (parent 1)
+    git_oid head_oid;
+    if (git_reference_name_to_id(&head_oid, repo, "HEAD") < 0) {
+        JAMI_ERR("Unable to get HEAD commit");
+        return "";
+    }
+
+    git_commit* head_ptr = nullptr;
+    if (git_commit_lookup(&head_ptr, repo, &head_oid) < 0) {
+        JAMI_ERR("Unable to look up HEAD commit");
+        return "";
+    }
+
+    GitCommit head_commit {head_ptr, git_commit_free};
+
+    // Get wanted commit (parent 2)
+    git_oid wanted_oid;
+    if (git_oid_fromstr(&wanted_oid, wanted_ref.c_str()) < 0) {
+        JAMI_ERR("Unable to get wanted commit");
+        return "";
+    }
+
+    git_commit* wanted_ptr = nullptr;
+    if (git_commit_lookup(&wanted_ptr, repo, &wanted_oid) < 0) {
+        JAMI_ERR("Unable to look up wanted commit");
+        return "";
+    }
+    GitCommit wanted_commit {wanted_ptr, git_commit_free};
+
+    // Get current index and tree (same as addCommit)
+    git_index* index_ptr = nullptr;
+    if (git_repository_index(&index_ptr, repo) < 0) {
+        JAMI_ERR("Unable to get repository index");
+        return {};
+    }
+    GitIndex index {index_ptr, git_index_free};
+
+    git_oid tree_id;
+    if (git_index_write_tree(&tree_id, index.get()) < 0) {
+        JAMI_ERR("Unable to write tree from index");
+        return {};
+    }
+    git_tree* tree_ptr = nullptr;
+    if (git_tree_lookup(&tree_ptr, repo, &tree_id) < 0) {
+        JAMI_ERR("Unable to look up tree");
+        return {};
+    }
+    GitTree tree = {tree_ptr, git_tree_free};
+
+    // Create merge message
+    auto commitMsg = fmt::format("Merge commit '{}'", wanted_ref);
+
+    git_buf to_sign = {};
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+    git_commit* const parents[2] = {head_commit.get(), wanted_commit.get()};
+#else
+    const git_commit* parents[2] = {head_commit.get(), wanted_commit.get()};
+#endif
+    if (git_commit_create_buffer(&to_sign,
+                                 repo,
+                                 sig.get(),
+                                 sig.get(),
+                                 nullptr,
+                                 commitMsg.c_str(),
+                                 tree.get(),
+                                 2,
+                                 &parents[0])
+        < 0) {
+        return {};
+    }
+
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf);
+    git_oid commit_id;
+    if (git_commit_create_with_signature(&commit_id,
+                                         repo,
+                                         to_sign.ptr,
+                                         signed_str.c_str(),
+                                         "signature")
+        < 0) {
+        git_buf_dispose(&to_sign);
+        return {};
+    }
+    git_buf_dispose(&to_sign);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        // Move to main branch
+        git_reference* ref_ptr = nullptr;
+        if (git_reference_create(&ref_ptr, repo, "refs/heads/main", &commit_id, true, nullptr) < 0) {
+            JAMI_WARN("Unable to move commit to main");
+            return {};
         }
         git_reference_free(ref_ptr);
     }
@@ -880,6 +1002,195 @@ ConversationRepositoryTest::testInvalidJoin()
     // Check that the appropriate signal was called
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
     // Check that the return value was false (i.e. invalid commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+void
+ConversationRepositoryTest::testInvalidFile()
+{
+     // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isInvalid = false;
+
+    // Signals for malformed commits in validCommits function
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isInvalid = true;
+                }
+                cv.notify_one();
+            }));
+    libjami::registerSignalHandlers(confHandlers);
+
+    // Get Alice's account
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    // Create a repository associated with Alice's account
+    auto repository = ConversationRepository::createConversation(aliceAccount);
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    // Get the path to the conversation repository
+    auto repoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / repository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
+
+    // Assert that the git repo was opened successfully
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+    std::string userId = aliceAccount->getUsername();
+
+    auto invalidFile = repoPath / "invalidFile.txt";
+    std::ofstream(invalidFile).close();
+    addAll(repo);
+
+    auto invalidFileCommitID = addCommit(
+        repo,
+        aliceAccount,
+        "main",
+        "{\"type\":\"other\",\"note\":\"Add invalid file\"}"
+    );
+
+    // Log the repository
+    auto conversationCommits = repository->log();
+    // Call the validation for all the commits
+    bool allCommitsValidated = repository->validCommits(conversationCommits);
+
+    // Check that the appropriate signal was called
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
+    // Check that the return value was false (i.e. invalid commit detected)
+    CPPUNIT_ASSERT(!allCommitsValidated);
+}
+
+
+void
+ConversationRepositoryTest::testMergeWithInvalidFile()
+{
+    // Register signals
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+
+    // Variable to be set to true on detection of malformed commit
+    bool isInvalid = false;
+
+    // Get member accounts
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
+
+    auto bobRequestReceived = false;
+
+    std::vector<libjami::SwarmMessage> aliceMessages = {};
+
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
+            [&](const std::string& accountId,
+                const std::string& conversationId,
+                int code,
+                auto malformedSpec) {
+                if (code == EVALIDFETCH) {
+                    isInvalid = true;
+                }
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+            [&](const std::string& accountId,
+                const std::string& /* conversationId */,
+                std::map<std::string, std::string> /*metadatas*/) {
+                if (accountId == bobId) {
+                    bobRequestReceived = true;
+                }
+                cv.notify_one();
+            }));
+    confHandlers.insert(
+        libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+            [&](const std::string& accountId,
+                const std::string& /* conversationId */,
+                libjami::SwarmMessage message) {
+                if (accountId == aliceId) {
+                    aliceMessages.emplace_back(message);
+                }
+                cv.notify_one();
+            }));
+
+    libjami::registerSignalHandlers(confHandlers);
+
+    auto convId = libjami::startConversation(aliceId);
+
+    // Alice adds Bob to the conversation
+    libjami::addConversationMember(aliceId, convId, bobUri);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobRequestReceived; }));
+
+    auto aliceMsgSize = aliceMessages.size();
+    libjami::acceptConversationRequest(bobId, convId);
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceMessages.size(); }));
+
+    auto convMembers = libjami::getConversationMembers(aliceId, convId);
+    CPPUNIT_ASSERT(convMembers.size() == 2);
+
+    // Alice and Bob exchange messages
+    std::string msgId1 = "", msgId2 = "";
+    aliceAccount->convModule()
+        ->sendMessage(convId, "1"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
+            msgId1 = commitId;
+            cv.notify_one();
+        });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId1.empty(); }));
+    bobAccount->convModule()
+        ->sendMessage(convId, "2"s, "", "text/plain", true, {}, [&](bool, std::string commitId) {
+            msgId2 = commitId;
+            cv.notify_one();
+        });
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return !msgId2.empty(); }));
+
+    // Retrieve the repository associated with Alice's account
+    auto aliceRepository = std::make_unique<ConversationRepository>(aliceAccount, convId);
+    // Assert that the repository exists
+    CPPUNIT_ASSERT(aliceRepository != nullptr);
+    // Get the path to the conversation repository
+    auto aliceRepoPath = fileutils::get_data_dir() / aliceAccount->getAccountID() / "conversations"
+                    / aliceRepository->id();
+    // Assert that the repository path is a directory
+    CPPUNIT_ASSERT(std::filesystem::is_directory(aliceRepoPath));
+
+    // Assert that Alice's git repo was opened successfully
+    git_repository* aliceRepo;
+    CPPUNIT_ASSERT(git_repository_open(&aliceRepo, aliceRepoPath.c_str()) == 0);
+
+    // Bob adds an unwanted file
+    auto bobRepository = std::make_unique<ConversationRepository>(bobAccount, convId);
+
+    auto bobRepoPath = fileutils::get_data_dir() / bobAccount->getAccountID() / "conversations"
+                    / bobRepository->id();
+    CPPUNIT_ASSERT(std::filesystem::is_directory(bobRepoPath));
+
+    git_repository* bobRepo;
+    CPPUNIT_ASSERT(git_repository_open(&bobRepo, bobRepoPath.c_str()) == 0);
+
+    auto invalidBobFile = bobRepoPath / "invalidBobFile.txt";
+    std::ofstream(invalidBobFile).close();
+    addAll(bobRepo);
+
+    // Add a fake merge commit associated with the invalid file
+    auto invalidBobMergeCommitId = addMergeCommit(
+        bobRepo,
+        bobAccount,
+        msgId2
+    );
+
+    // Log Bob's repository
+    auto bobCommits = bobRepository->log();
+
+    bool allCommitsValidated = bobRepository->validCommits(bobCommits);
+
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return isInvalid; }));
     CPPUNIT_ASSERT(!allCommitsValidated);
 }
 
