@@ -63,7 +63,7 @@ private:
     NON_COPYABLE(AudioLayer);
 
 protected:
-    enum class Status { Idle, Starting, Started };
+    enum class AudioLayerStatus { Idle, Starting, Started };
 
 public:
     AudioLayer(const AudioPreference&);
@@ -74,6 +74,10 @@ public:
      * The playback starts accordingly to its threshold
      */
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
+
+    virtual void startCaptureStream(const std::string& id) = 0;
+
+    virtual void stopCaptureStream(const std::string& id) = 0;
 
     /**
      * Stop the playback and capture streams.
@@ -93,7 +97,7 @@ public:
     /**
      * Determine whether or not the audio layer is active (i.e. playback opened)
      */
-    inline bool isStarted() const { return status_ == Status::Started; }
+    inline bool isStarted() const { return status_ == AudioLayerStatus::Started; }
 
     template<class Rep, class Period>
     bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const
@@ -257,7 +261,7 @@ protected:
     /**
      * Whether or not the audio layer's playback stream is started
      */
-    std::atomic<Status> status_ {Status::Idle};
+    std::atomic<AudioLayerStatus> status_ {AudioLayerStatus::Idle};
     mutable std::condition_variable startedCv_;
 
     /**

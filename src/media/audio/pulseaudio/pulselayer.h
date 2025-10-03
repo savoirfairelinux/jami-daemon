@@ -20,6 +20,10 @@
 #include "logger.h"
 #include "audio/audiolayer.h"
 
+#include "audio/linux-audio-loopback/loopback_capture.h"
+#undef Success
+#undef Status
+
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
 
@@ -133,6 +137,8 @@ public:
     std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    virtual void startCaptureStream(const std::string& id);
+    virtual void stopCaptureStream(const std::string& id);
     virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
 private:
@@ -225,6 +231,10 @@ private:
      * Contains the list of capture devices
      */
     std::vector<PaDeviceInfos> sourceList_ {};
+
+    /** Loopback capture */
+    LoopbackCapture loopbackCapture_;
+    Resampler resampler_;
 
     /** PulseAudio server defaults */
     AudioFormat defaultAudioFormat_ {AudioFormat::MONO()};

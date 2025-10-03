@@ -46,7 +46,7 @@ AlsaLayer::AlsaLayer(const AudioPreference& pref)
 
 AlsaLayer::~AlsaLayer()
 {
-    status_ = Status::Idle;
+    status_ = AudioLayerStatus::Idle;
     stopThread();
 
     /* Then close the audio devices */
@@ -66,7 +66,7 @@ AlsaLayer::run()
     if (captureHandle_)
         recordChanged(true);
 
-    while (status_ == Status::Started and running_) {
+    while (status_ == AudioLayerStatus::Started and running_) {
         playback();
         ringtone();
         capture();
@@ -121,7 +121,7 @@ void
 AlsaLayer::startStream(AudioDeviceType type)
 {
     std::unique_lock lk(mutex_);
-    status_ = Status::Starting;
+    status_ = AudioLayerStatus::Starting;
     stopThread();
 
     bool dsnop = audioPlugin_ == PCM_DMIX_DSNOOP;
@@ -159,7 +159,7 @@ AlsaLayer::startStream(AudioDeviceType type)
         startCaptureStream();
     }
 
-    status_ = Status::Started;
+    status_ = AudioLayerStatus::Started;
     startThread();
 }
 
@@ -186,7 +186,7 @@ AlsaLayer::stopStream(AudioDeviceType stream)
     if (is_capture_open_ or is_playback_open_ or ringtoneHandle_) {
         startThread();
     } else {
-        status_ = Status::Idle;
+        status_ = AudioLayerStatus::Idle;
     }
 }
 

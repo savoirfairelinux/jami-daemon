@@ -419,7 +419,7 @@ PulseLayer::disconnectAudioStream()
     playbackChanged(false);
     recordChanged(false);
     pendingStreams = 0;
-    status_ = Status::Idle;
+    status_ = AudioLayerStatus::Idle;
     startedCv_.notify_all();
 }
 
@@ -457,9 +457,141 @@ PulseLayer::startStream(AudioDeviceType type)
     }
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
 
+    //startCaptureStream("0x1c00016");
+
     std::lock_guard lk(mutex_);
-    status_ = Status::Started;
+    status_ = AudioLayerStatus::Started;
     startedCv_.notify_all();
+}
+
+void
+PulseLayer::startCaptureStream(const std::string& id)
+{
+    waitForDevices();
+
+    // The id is expected to be a window handle (eg. "0x3800016")
+    // No conversion should be necessary
+    if (id.empty()) {
+        JAMI_WARNING("Loopback capture id is empty");
+        return;
+    }
+
+    // Stop any existing capture first
+    if (loopbackCapture_.isCapturing()) {
+        JAMI_LOG("Stopping existing loopback capture before starting new one");
+        loopbackCapture_.stopCaptureAsync();
+    }
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    auto ringBuffer = rbPool.createRingBuffer(id);
+
+    JAMI_LOG("Initializing loopback capture for window id {:s}", id);
+    // Get the target format from the audio layer (this should match what Jami expects)
+    const auto& targetFormat = this->audioFormat_;
+    bool success = loopbackCapture_.startCaptureFromWindow(
+        id,
+        [this, ringBuffer, id, targetFormat](const void* data, size_t length, const pa_sample_spec& spec) {
+            
+            if (length == 0 or not data) {
+                JAMI_WARNING("No audio data captured");
+                return;
+            }
+
+            // Map PulseAudio sample format to AVSampleFormat
+            AVSampleFormat avFormat = AV_SAMPLE_FMT_NONE;
+            switch (spec.format) {
+                case PA_SAMPLE_U8:
+                    avFormat = AV_SAMPLE_FMT_U8;
+                    break;
+                case PA_SAMPLE_S16LE:
+                case PA_SAMPLE_S16BE:
+                    avFormat = AV_SAMPLE_FMT_S16;
+                    break;
+                case PA_SAMPLE_S32LE:
+                case PA_SAMPLE_S32BE:
+                    avFormat = AV_SAMPLE_FMT_S32;
+                    break;
+                case PA_SAMPLE_FLOAT32LE:
+                case PA_SAMPLE_FLOAT32BE:
+                    avFormat = AV_SAMPLE_FMT_FLT;
+                    break;
+                case PA_SAMPLE_ALAW:
+                case PA_SAMPLE_ULAW:
+                case PA_SAMPLE_S24LE:
+                case PA_SAMPLE_S24BE:
+                case PA_SAMPLE_S24_32LE:
+                case PA_SAMPLE_S24_32BE:
+                default:
+                    avFormat = AV_SAMPLE_FMT_NONE;
+                    JAMI_WARNING("[LOOPBACK-CALLBACK] Unsupported audio format: {}", (int)spec.format);
+                    break;
+            }
+
+            if (avFormat == AV_SAMPLE_FMT_NONE) {
+                JAMI_ERROR("[LOOPBACK-CALLBACK] Failed to map audio format, skipping frame");
+                return;
+            }
+
+            size_t frame_size = pa_frame_size(&spec);
+            size_t nb_samples = frame_size ? length / frame_size : 0;
+
+            // Create input frame with captured audio format
+            auto inputFrame = std::make_shared<AudioFrame>(
+                AudioFormat{
+                    spec.rate,
+                    spec.channels,
+                    avFormat
+                },
+                nb_samples
+            );
+
+            if (!inputFrame) {
+                JAMI_ERROR("[LOOPBACK-CALLBACK] Failed to create input AudioFrame");
+                return;
+            }
+
+            std::memcpy(inputFrame->pointer()->data[0], data, length);
+            
+            std::shared_ptr<AudioFrame> outputFrame;
+            
+            // Check if resampling is needed
+            bool needsResampling = (spec.rate != targetFormat.sample_rate) ||
+                                   (spec.channels != targetFormat.nb_channels) ||
+                                   (avFormat != targetFormat.sampleFormat);
+            
+            if (needsResampling) {
+                
+                // Use resampler to convert to target format
+                outputFrame = resampler_.resample(std::move(inputFrame), targetFormat);
+                
+                if (!outputFrame) {
+                    JAMI_ERROR("[LOOPBACK-CALLBACK] Failed to resample audio frame");
+                    return;
+                }
+                
+            } else {
+                // No resampling needed, use input frame directly
+                outputFrame = inputFrame;
+            }
+
+            this->putRecorded(std::move(outputFrame));
+        });
+
+    if (not success) {
+        JAMI_ERROR("Failed to start loopback capture for window id {:s}", id);
+    }
+}
+
+void
+PulseLayer::stopCaptureStream(const std::string& id)
+{
+    waitForDevices();
+
+    JAMI_DEBUG("Stopping loopback capture for window id {:s}", id);
+    loopbackCapture_.stopCaptureAsync();
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    rbPool.unBindAll(id);
 }
 
 void
@@ -470,6 +602,8 @@ PulseLayer::stopStream(AudioDeviceType type)
     auto& stream(getStream(type));
     if (not stream)
         return;
+
+    // stopCaptureStream("0x1c00016");
 
     if (not stream->isReady())
         pendingStreams--;
@@ -482,7 +616,7 @@ PulseLayer::stopStream(AudioDeviceType type)
     std::lock_guard lk(mutex_);
     if (not playback_ and not ringtone_ and not record_) {
         pendingStreams = 0;
-        status_ = Status::Idle;
+        status_ = AudioLayerStatus::Idle;
         startedCv_.notify_all();
     }
 }
@@ -655,7 +789,7 @@ PulseLayer::waitForDeviceList()
                               and (!recordInfo->name.empty()
                                    and recordInfo->name != stripEchoSufix(record_->getDeviceName()));
 
-        if (status_ != Status::Started)
+        if (status_ != AudioLayerStatus::Started)
             return;
         if (playbackDeviceChanged) {
             JAMI_WARN("Playback devices changed, restarting streams.");
