@@ -153,7 +153,7 @@ JackLayer::ringbuffer_worker()
         std::unique_lock lock(ringbuffer_thread_mutex_);
 
         // may have changed, we don't want to wait for a notification we won't get
-        if (status_ != Status::Started)
+        if (status_ != AudioLayerStatus::Started)
             return;
 
         // FIXME this is all kinds of evil
@@ -167,7 +167,7 @@ JackLayer::ringbuffer_worker()
         // is rather arbitrary. We should wait until ring has/needs data
         // and jack has/needs data.
         data_ready_.wait(lock, [&] {
-            return status_ != Status::Started or ringbuffer_ready_for_read(in_ringbuffers_[0]);
+            return status_ != AudioLayerStatus::Started or ringbuffer_ready_for_read(in_ringbuffers_[0]);
         });
     }
 }
@@ -376,9 +376,9 @@ JackLayer::process_playback(jack_nframes_t frames, void* arg)
 void JackLayer::startStream(AudioDeviceType)
 {
     std::lock_guard lock(mutex_);
-    if (status_ != Status::Idle)
+    if (status_ != AudioLayerStatus::Idle)
         return;
-    status_ = Status::Started;
+    status_ = AudioLayerStatus::Started;
 
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
         JAMI_ERR("Unable to activate JACK client");
@@ -402,9 +402,9 @@ JackLayer::onShutdown(void* /* data */)
 void JackLayer::stopStream(AudioDeviceType)
 {
     std::lock_guard lock(mutex_);
-    if (status_ != Status::Started)
+    if (status_ != AudioLayerStatus::Started)
         return;
-    status_ = Status::Idle;
+    status_ = AudioLayerStatus::Idle;
     data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
