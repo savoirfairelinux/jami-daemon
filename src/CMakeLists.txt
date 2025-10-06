@@ -96,6 +96,7 @@ set (Source_Files__media__audio__speexdsp ${Source_Files__media__audio__speexdsp
 set (Source_Files__media__video ${Source_Files__media__video} PARENT_SCOPE)
 if(MSVC)
    set (Source_Files__media__audio__portaudio ${Source_Files__media__audio__portaudio} PARENT_SCOPE)
+   set (Source_Files__media__audio__audio_loopback ${Source_Files__media__audio__audio_loopback} PARENT_SCOPE)
    set (Source_Files__media__video__winvideo ${Source_Files__media__video__winvideo} PARENT_SCOPE)
 endif()
 set (Source_Files__security ${Source_Files__security} PARENT_SCOPE)
