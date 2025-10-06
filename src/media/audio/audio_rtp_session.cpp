@@ -130,9 +130,13 @@ AudioRtpSession::startSender()
             return;
         }
     }
+
     if (streamId_ != audioInput_->getId())
         Manager::instance().getRingBufferPool().bindHalfDuplexOut(streamId_, audioInput_->getId());
 
+    if (!audioInput_->getCaptureStreamId().empty())
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(streamId_, audioInput_->getCaptureStreamId());
+        
     send_.fecEnabled = true;
 
     // be sure to not send any packets before saving last RTP seq value
