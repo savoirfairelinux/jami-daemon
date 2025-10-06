@@ -179,6 +179,50 @@ AudioInput::readFromFile()
 }
 
 bool
+AudioInput::initCapture(const std::string& device)
+{
+    std::string targetId = device;
+#ifdef _WIN32
+    // There are two possible formats for device:
+    // 1. A string containing "window-id:hwnd=XXXX" where XXXX is the HWND of the window to capture
+    // 2. A string that does not contain a window handle, in which case we capture desktop audio
+    std::string windowIdStr = "window-id:hwnd=";
+    size_t winHandlePos = device.find(windowIdStr);
+    
+    if (winHandlePos != std::string::npos) {
+        // Get HWND from device URI
+        size_t startPos = winHandlePos + windowIdStr.size();
+        size_t endPos = device.find(' ', startPos);
+        if (endPos == std::string::npos) {
+            endPos = device.size();
+        }
+        targetId = device.substr(startPos, endPos - startPos);
+    } else {
+        targetId = "desktop-audio";
+    }
+#endif
+
+    devOpts_ = {};
+    devOpts_.input = targetId;
+    devOpts_.channel = format_.nb_channels;
+    devOpts_.framerate = format_.sample_rate;
+
+    captureStreamId_ = targetId;
+
+    deviceGuard_ = Manager::instance().startCaptureStream(targetId);
+    if (!deviceGuard_) {
+        if (!targetId.empty())
+            JAMI_ERROR("Failed to start capture stream for window-id: {}", targetId);
+        else
+            JAMI_ERROR("Failed to start capture stream for desktop audio");
+        return false;
+    }
+    
+    playingDevice_ = true;
+    return true;
+}
+
+bool
 AudioInput::initDevice(const std::string& device)
 {
     devOpts_ = {};
@@ -309,9 +353,15 @@ AudioInput::switchInput(const std::string& resource)
             return {};
 
         const auto suffix = resource_.substr(pos + sep.size());
+        
         bool ready = false;
         if (prefix == libjami::Media::VideoProtocolPrefix::FILE)
             ready = initFile(suffix);
+// Todo: handle audio capture on Linux (X11/Wayland) and MacOS
+#ifdef _WIN32
+        else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY)
+            ready = initCapture(suffix);
+#endif
         else
             ready = initDevice(suffix);
 

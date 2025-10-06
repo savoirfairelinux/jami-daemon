@@ -186,6 +186,7 @@ RingBufferPool::bindHalfDuplexOut(const std::string &readerBufferId,
                                   const std::string &sourceBufferId) {
     /* This method is used only for active ringbuffers, if this ringbuffer does not exist,
      * do nothing */
+    JAMI_DEBUG("Binding half duplex out. Reader: {} / Source: {}", readerBufferId, sourceBufferId);
     if (const auto &rb = getRingBuffer(sourceBufferId)) {
         std::lock_guard lk(stateLock_);
 
