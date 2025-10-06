@@ -44,8 +44,16 @@ public:
      */
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
-    virtual void startCaptureStream(const std::string& id) override;
-    virtual void stopCaptureStream(const std::string& id) override;
+    /**
+     * Start capturing audio from given id (window handle).
+     * Put audio into newly created RingBuffer with given id.
+     */
+    void startCaptureStream(const std::string& id) override;
+
+    /**
+     * Stop capturing audio from given id and clean up.
+     */
+    void stopCaptureStream(const std::string& id) override;
 
     /**
      * Stop the playback and capture streams.
