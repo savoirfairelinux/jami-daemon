@@ -27,7 +27,7 @@ index 0000000..f820489
 +  </ItemGroup>
 +  <PropertyGroup Label="Globals">
 +    <ProjectGuid>{EC42C425-F492-3C2E-8CF5-C02DBC0AE100}</ProjectGuid>
-+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
++    <WindowsTargetPlatformVersion>10.0.20348.0</WindowsTargetPlatformVersion>
 +    <Keyword>Win32Proj</Keyword>
 +    <Platform>x64</Platform>
 +    <ProjectName>archive_static</ProjectName>
