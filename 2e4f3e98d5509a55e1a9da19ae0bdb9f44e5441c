@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ec615f57_87538840",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1084,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c48d3dab_0b7adc6a",
+      "range": {
+        "startLine": 1084,
+        "startChar": 9,
+        "endLine": 1084,
+        "endChar": 29
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9f1828fa_ed10ebf9",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-10-08T19:45:01Z",
       "side": 1,
       "message": "Not referenced outside of callback, consider removing",
+      "range": {
+        "startLine": 1088,
+        "startChar": 39,
+        "endLine": 1088,
+        "endChar": 50
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "430a8200_09515ec8",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1088,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9f1828fa_ed10ebf9",
       "range": {
         "startLine": 1088,
         "startChar": 39,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e8bea12b_7c809529",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1166,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c407adfd_d3565022",
+      "range": {
+        "startLine": 1166,
+        "startChar": 4,
+        "endLine": 1166,
+        "endChar": 61
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "72ec7fee_035aa84d",
@@ -93,6 +165,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b78058c_0505307c",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1170,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "72ec7fee_035aa84d",
+      "range": {
+        "startLine": 1170,
+        "startChar": 11,
+        "endLine": 1170,
+        "endChar": 15
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a60df5b8_e6dba411",
@@ -106,6 +202,30 @@
       "writtenOn": "2025-10-08T19:45:01Z",
       "side": 1,
       "message": "Unused variable. Is this log necessary?",
+      "range": {
+        "startLine": 1192,
+        "startChar": 9,
+        "endLine": 1192,
+        "endChar": 21
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2b388515_68862e99",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1192,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a60df5b8_e6dba411",
       "range": {
         "startLine": 1192,
         "startChar": 9,
