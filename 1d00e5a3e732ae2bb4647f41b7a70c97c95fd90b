@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2c9d96cc_39cfd7dc",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 798,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "678f82d1_c8a8e21f",
+      "range": {
+        "startLine": 798,
+        "startChar": 9,
+        "endLine": 798,
+        "endChar": 27
+      },
+      "revId": "1d00e5a3e732ae2bb4647f41b7a70c97c95fd90b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c2664895_52ffb225",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-10-08T18:53:07Z",
       "side": 1,
       "message": "Unused after assignment. Perhaps change to an assert which checks that the return value of `addCommit` is not empty.",
+      "range": {
+        "startLine": 805,
+        "startChar": 9,
+        "endLine": 805,
+        "endChar": 28
+      },
+      "revId": "1d00e5a3e732ae2bb4647f41b7a70c97c95fd90b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "67a6d041_6292e250",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 805,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c2664895_52ffb225",
       "range": {
         "startLine": 805,
         "startChar": 9,
@@ -70,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b3dfc8fb_fed2024b",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 851,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c102ed20_57d09cdc",
+      "range": {
+        "startLine": 851,
+        "startChar": 4,
+        "endLine": 851,
+        "endChar": 36
+      },
+      "revId": "1d00e5a3e732ae2bb4647f41b7a70c97c95fd90b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6c0ebd5b_b09b4b05",
@@ -83,6 +155,30 @@
       "writtenOn": "2025-10-08T18:53:07Z",
       "side": 1,
       "message": "Unused after assignment. Perhaps change to an assert which checks that the return value of addCommit is not empty.",
+      "range": {
+        "startLine": 865,
+        "startChar": 9,
+        "endLine": 865,
+        "endChar": 26
+      },
+      "revId": "1d00e5a3e732ae2bb4647f41b7a70c97c95fd90b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2d5db51d_d83e22c7",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 865,
+      "author": {
+        "id": 1157
+      },
+      "writtenOn": "2025-10-08T20:15:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6c0ebd5b_b09b4b05",
       "range": {
         "startLine": 865,
         "startChar": 9,
