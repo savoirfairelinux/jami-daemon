@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c48d3dab_0b7adc6a",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1084,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-10-08T19:45:01Z",
+      "side": 1,
+      "message": "Not referenced outside of callback, consider removing",
+      "range": {
+        "startLine": 1084,
+        "startChar": 9,
+        "endLine": 1084,
+        "endChar": 29
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9f1828fa_ed10ebf9",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1088,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-10-08T19:45:01Z",
+      "side": 1,
+      "message": "Not referenced outside of callback, consider removing",
+      "range": {
+        "startLine": 1088,
+        "startChar": 39,
+        "endLine": 1088,
+        "endChar": 50
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c407adfd_d3565022",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1166,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-10-08T19:45:01Z",
+      "side": 1,
+      "message": "`Assert that Alice\u0027s git repo was opened successfully`",
+      "range": {
+        "startLine": 1166,
+        "startChar": 4,
+        "endLine": 1166,
+        "endChar": 61
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "72ec7fee_035aa84d",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1170,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-10-08T19:45:01Z",
+      "side": 1,
+      "message": "`also` here implies someone else (Alice?) added an unwanted file, is this missing? If not, remove `also`",
+      "range": {
+        "startLine": 1170,
+        "startChar": 11,
+        "endLine": 1170,
+        "endChar": 15
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a60df5b8_e6dba411",
+        "filename": "test/unitTest/conversationRepository/conversationRepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1192,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2025-10-08T19:45:01Z",
+      "side": 1,
+      "message": "Unused variable. Is this log necessary?",
+      "range": {
+        "startLine": 1192,
+        "startChar": 9,
+        "endLine": 1192,
+        "endChar": 21
+      },
+      "revId": "2e4f3e98d5509a55e1a9da19ae0bdb9f44e5441c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
