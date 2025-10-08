@@ -23,28 +23,16 @@ namespace jami {
 
 namespace Conf {
 // SIP specific configuration keys
-const char* const BIND_ADDRESS_KEY = "bindAddress";
 const char* const INTERFACE_KEY = "interface";
-const char* const PORT_KEY = "port";
 const char* const PUBLISH_ADDR_KEY = "publishAddr";
-const char* const PUBLISH_PORT_KEY = "publishPort";
 const char* const SAME_AS_LOCAL_KEY = "sameasLocal";
 const char* const DTMF_TYPE_KEY = "dtmfType";
-const char* const SERVICE_ROUTE_KEY = "serviceRoute";
-const char* const ALLOW_IP_AUTO_REWRITE = "allowIPAutoRewrite";
-const char* const PRESENCE_ENABLED_KEY = "presenceEnabled";
-const char* const PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
-const char* const PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
-const char* const PRESENCE_STATUS_KEY = "presenceStatus";
 const char* const PRESENCE_NOTE_KEY = "presenceNote";
-const char* const STUN_ENABLED_KEY = "stunEnabled";
-const char* const STUN_SERVER_KEY = "stunServer";
 const char* const TURN_ENABLED_KEY = "turnEnabled";
 const char* const TURN_SERVER_KEY = "turnServer";
 const char* const TURN_SERVER_UNAME_KEY = "turnServerUserName";
 const char* const TURN_SERVER_PWD_KEY = "turnServerPassword";
 const char* const TURN_SERVER_REALM_KEY = "turnServerRealm";
-const char* const CRED_KEY = "credential";
 const char* const AUDIO_PORT_MIN_KEY = "audioPortMin";
 const char* const AUDIO_PORT_MAX_KEY = "audioPortMax";
 const char* const VIDEO_PORT_MIN_KEY = "videoPortMin";
@@ -75,7 +63,8 @@ addRangeToDetails(std::map<std::string, std::string>& a,
 }
 
 void
-SipAccountBaseConfig::serializeDiff(YAML::Emitter& out, const SipAccountBaseConfig& DEFAULT_CONFIG) const
+SipAccountBaseConfig::serializeDiff(YAML::Emitter& out,
+                                    const SipAccountBaseConfig& DEFAULT_CONFIG) const
 {
     AccountConfig::serializeDiff(out, DEFAULT_CONFIG);
     SERIALIZE_CONFIG(Conf::DTMF_TYPE_KEY, dtmfType);
@@ -105,8 +94,6 @@ SipAccountBaseConfig::unserialize(const YAML::Node& node)
     unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange);
 
     // ICE - STUN/TURN
-    //parseValueOptional(node, Conf::STUN_ENABLED_KEY, stunEnabled);
-    //parseValueOptional(node, Conf::STUN_SERVER_KEY, stunServer);
     parseValueOptional(node, Conf::TURN_ENABLED_KEY, turnEnabled);
     parseValueOptional(node, Conf::TURN_SERVER_KEY, turnServer);
     parseValueOptional(node, Conf::TURN_SERVER_UNAME_KEY, turnServerUserName);
@@ -164,8 +151,8 @@ SipAccountBaseConfig::fromMap(const std::map<std::string, std::string>& details)
     updateRange(tmpMin, tmpMax, videoPortRange);
 
     // ICE - STUN
-    //parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled);
-    //parseString(details, Conf::CONFIG_STUN_SERVER, stunServer);
+    // parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled);
+    // parseString(details, Conf::CONFIG_STUN_SERVER, stunServer);
 
     // ICE - TURN
     parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled);
@@ -175,4 +162,4 @@ SipAccountBaseConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm);
 }
 
-}
+} // namespace jami

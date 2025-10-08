@@ -27,7 +27,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-constexpr const std::chrono::minutes FIND_PERIOD {10};
 using namespace std::placeholders;
 
 namespace jami {
@@ -197,7 +196,10 @@ Bucket::printBucket(unsigned number) const
 
     unsigned nodeNum = 1;
     for (auto it = nodes.begin(); it != nodes.end(); ++it) {
-        JAMI_DEBUG("Node {:s}   Id: {:s}  isMobile: {:s}", std::to_string(nodeNum), it->first.toString(), std::to_string(it->second.isMobile_));
+        JAMI_DEBUG("Node {:s}   Id: {:s}  isMobile: {:s}",
+                   std::to_string(nodeNum),
+                   it->first.toString(),
+                   std::to_string(it->second.isMobile_));
         nodeNum++;
     }
     JAMI_ERROR("Mobile Nodes");

@@ -37,7 +37,6 @@ constexpr const char* SAME_AS_LOCAL_KEY = "sameasLocal";
 constexpr const char* DTMF_TYPE_KEY = "dtmfType";
 constexpr const char* SERVICE_ROUTE_KEY = "serviceRoute";
 constexpr const char* ALLOW_IP_AUTO_REWRITE = "allowIPAutoRewrite";
-constexpr const char* PRESENCE_ENABLED_KEY = "presenceEnabled";
 constexpr const char* PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
 constexpr const char* PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
 constexpr const char* PRESENCE_STATUS_KEY = "presenceStatus";
@@ -70,7 +69,7 @@ constexpr const char* RTP_FALLBACK_KEY = "rtpFallback";
 } // namespace Conf
 
 static const SipAccountConfig DEFAULT_CONFIG {};
-static constexpr unsigned MIN_REGISTRATION_TIME = 60;                  // seconds
+static constexpr unsigned MIN_REGISTRATION_TIME = 60; // seconds
 
 using yaml_utils::parseValueOptional;
 using yaml_utils::parseVectorMap;
@@ -93,8 +92,8 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
 
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << registrationRefreshEnabled;
 
-    //out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value
-    //    << (presence_ and presence_->isEnabled());
+    // out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value
+    //     << (presence_ and presence_->isEnabled());
 
     out << YAML::Key << Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE << YAML::Value
         << registrationExpire;
@@ -176,7 +175,8 @@ SipAccountConfig::unserialize(const YAML::Node& node)
         parseValueOptional(tlsMap, Conf::VERIFY_SERVER_KEY, tlsVerifyServer);
         parseValueOptional(tlsMap, Conf::DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck);
         parseValueOptional(tlsMap, Conf::TIMEOUT_KEY, tlsNegotiationTimeout);
-    } catch (...) {}
+    } catch (...) {
+    }
 
     // get srtp submap
     const auto& srtpMap = node[Conf::SRTP_KEY];
@@ -232,9 +232,11 @@ SipAccountConfig::toMap() const
     a.emplace(Conf::CONFIG_TLS_SERVER_NAME, tlsServerName);
     a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE,
+              tlsRequireClientCertificate ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, std::to_string(tlsNegotiationTimeout));
-    a.emplace(Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK,
+              tlsDisableSecureDlgCheck ? TRUE_STR : FALSE_STR);
     return a;
 }
 
@@ -314,7 +316,8 @@ SipAccountConfig::Credentials::toMap() const
 }
 
 void
-SipAccountConfig::Credentials::computePasswordHash() {
+SipAccountConfig::Credentials::computePasswordHash()
+{
     pj_md5_context pms;
 
     /* Compute md5 hash = MD5(username ":" realm ":" password) */
@@ -356,4 +359,4 @@ SipAccountConfig::setCredentials(const std::vector<std::map<std::string, std::st
         credentials.emplace_back(cred);
 }
 
-}
+} // namespace jami
