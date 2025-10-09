@@ -611,6 +611,7 @@ public:
     std::mutex membersMtx_ {};
     std::set<std::string> checkedMembers_; // Store members we tried
     std::function<void()> bootstrapCb_;
+    std::mutex bootstrapMtx_ {};
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, BootstrapStatus)> bootstrapCbTest_;
 #endif
@@ -2419,6 +2420,7 @@ void
 Conversation::bootstrap(std::function<void()> onBootstraped,
                         const std::vector<DeviceId>& knownDevices)
 {
+    std::lock_guard lock(pimpl_->bootstrapMtx_);
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
         return;
     // Here, we bootstrap the DRT with devices who already wrote in the conversation
