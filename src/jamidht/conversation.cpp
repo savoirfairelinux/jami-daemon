@@ -611,6 +611,7 @@ public:
     std::mutex membersMtx_ {};
     std::set<std::string> checkedMembers_; // Store members we tried
     std::function<void()> bootstrapCb_;
+    std::mutex bootstrapCbMtx_ {};
 #ifdef LIBJAMI_TEST
     std::function<void(std::string, BootstrapStatus)> bootstrapCbTest_;
 #endif
@@ -2424,7 +2425,10 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
     // Here, we bootstrap the DRT with devices who already wrote in the conversation
     // If this doesn't work, it will attempt to fallback with checkBootstrapMember
     // If it works, the callback onConnectionChanged will be called with ok=true
-    pimpl_->bootstrapCb_ = std::move(onBootstraped);
+    {
+        std::lock_guard<std::mutex> lock(pimpl_->bootstrapCbMtx_);
+        pimpl_->bootstrapCb_ = std::move(onBootstraped);
+    }
     std::vector<DeviceId> devices = knownDevices;
     for (const auto& [member, memberDevices] : pimpl_->repository_->devices()) {
         if (!isBanned(member))
@@ -2469,8 +2473,15 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
                     std::lock_guard lock(sthis->pimpl_->membersMtx_);
                     sthis->pimpl_->checkedMembers_.clear();
                 }
-                if (sthis->pimpl_->bootstrapCb_)
-                    sthis->pimpl_->bootstrapCb_();
+                std::function<void()> callback;
+                {
+                    std::lock_guard<std::mutex> lock(sthis->pimpl_->bootstrapCbMtx_);
+                    if (sthis->pimpl_->bootstrapCb_) {
+                        callback = sthis->pimpl_->bootstrapCb_;
+                    }
+                }
+                if (callback)
+                    callback();
 #ifdef LIBJAMI_TEST
                 if (sthis->pimpl_->bootstrapCbTest_)
                     sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::SUCCESS);
