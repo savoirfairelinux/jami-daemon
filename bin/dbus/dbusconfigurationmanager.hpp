@@ -356,7 +356,7 @@ public:
         return libjami::getVoiceActivityDetectionState();
     }
 
-    void setVoiceActivityDetectionState(bool state)
+    void setVoiceActivityDetectionState(const bool& state)
     {
         libjami::setVoiceActivityDetectionState(state);
     }
