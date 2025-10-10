@@ -1487,6 +1487,7 @@ SIPAccount::setCredentials(const std::vector<SipAccountConfig::Credentials>& cre
                                                 : PJSIP_CRED_DATA_PLAIN_PASSWD),
                              /*.data      = */
                              CONST_PJ_STR(md5HashingEnabled ? c.password_h : c.password),
+                             /*.algorithm_type = */ PJSIP_AUTH_ALGORITHM_NOT_SET,
                              /*.ext       = */ {}});
     }
 }
