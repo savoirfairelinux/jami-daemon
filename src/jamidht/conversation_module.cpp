@@ -289,12 +289,13 @@ public:
     }
     std::vector<std::shared_ptr<Conversation>> getConversations() const
     {
-        std::lock_guard lk(conversationsMtx_);
+        auto conversations = getSyncedConversations();
         std::vector<std::shared_ptr<Conversation>> result;
-        result.reserve(conversations_.size());
-        for (const auto& [_, sc] : conversations_) {
-            if (auto c = sc->conversation)
-                result.emplace_back(std::move(c));
+        result.reserve(conversations.size());
+        for (const auto& sc : conversations) {
+            std::lock_guard lk(sc->mtx);
+            if (sc->conversation)
+                result.emplace_back(sc->conversation);
         }
         return result;
     }
@@ -1135,8 +1136,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         if (nonConnectedMembers.size() > 2)
             nonConnectedMembers.resize(2);
         if (!conversation.isBootstrapped()) {
-            JAMI_DEBUG("[Conversation {}] Not yet bootstrapped, save notification",
-                       conversation.id());
+            JAMI_DEBUG("[Conversation {}] Not yet bootstrapped, save notification", conversation.id());
             // Because we can get some git channels but not bootstrapped, we should keep this
             // to refresh when bootstrapped.
             notSyncedNotification_[conversation.id()] = commit;
@@ -1408,31 +1408,23 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
         for (const auto& [id, _] : devices)
             kd.emplace_back(id);
     }
-    auto bootstrap = [&](auto& conv) {
-        if (conv) {
-#ifdef LIBJAMI_TEST
-            conv->onBootstrapStatus(bootstrapCbTest_);
-#endif
-            auto id = conv->id();
-            conv->bootstrap([w = weak(), id = std::move(id)]() {
-                if (auto sthis = w.lock())
-                    sthis->bootstrapCb(id);
-            }, kd);
-        }
-    };
     std::vector<std::string> toClone;
     std::vector<std::shared_ptr<Conversation>> conversations;
     if (convId.empty()) {
-        std::lock_guard lk(convInfosMtx_);
-        for (const auto& [conversationId, convInfo] : convInfos_) {
-            auto conv = getConversation(conversationId);
-            if (!conv)
-                return;
+        std::vector<std::shared_ptr<SyncedConversation>> convs;
+        {
+            std::lock_guard lk(convInfosMtx_);
+            for (const auto& [conversationId, convInfo] : convInfos_) {
+                if (auto conv = getConversation(conversationId))
+                    convs.emplace_back(std::move(conv));
+            }
+        }
+        for (const auto& conv : convs) {
+            std::lock_guard lk(conv->mtx);
             if (!conv->conversation && !conv->info.isRemoved()) {
-                // Because we're not tracking contact presence in order to sync now,
-                // we need to ask to clone requests when bootstraping all conversations
-                // else it can stay syncing
-                toClone.emplace_back(conversationId);
+                // we need to ask to clone requests when bootstrapping all conversations
+                // otherwise it can stay syncing
+                toClone.emplace_back(conv->info.id);
             } else if (conv->conversation) {
                 conversations.emplace_back(conv->conversation);
             }
@@ -1443,8 +1435,17 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
             conversations.emplace_back(conv->conversation);
     }
 
-    for (const auto& conversation : conversations)
-        bootstrap(conversation);
+    for (const auto& conversation : conversations) {
+#ifdef LIBJAMI_TEST
+        conversation->onBootstrapStatus(bootstrapCbTest_);
+#endif
+        conversation->bootstrap(
+            [w = weak(), id = conversation->id()] {
+                if (auto sthis = w.lock())
+                    sthis->bootstrapCb(id);
+            },
+            kd);
+    }
     for (const auto& cid : toClone) {
         auto members = getConversationMembers(cid);
         for (const auto& member : members) {
