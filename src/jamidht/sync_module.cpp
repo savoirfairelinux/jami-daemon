@@ -247,7 +247,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         return len;
     });
 
-    dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket]() {
+    dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket = std::move(socket)]() {
         if (auto s = w.lock())
             s->syncInfos(socket, nullptr);
     });
