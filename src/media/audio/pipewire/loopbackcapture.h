@@ -51,6 +51,7 @@ private:
         struct pw_registry *registry;
         std::map<uint32_t, std::unique_ptr<StreamData>> streams;
         LoopbackCapture* parent;
+        std::string excluded_app;  // Application name to exclude
     };
 
     AppData app_data_;
@@ -78,7 +79,7 @@ public:
     LoopbackCapture& operator=(const LoopbackCapture&) = delete;
 
     // Main interface
-    bool startCaptureAsync(AudioCallback callback);
+    bool startCaptureAsync(const std::string& exclude_app, AudioCallback callback);
     void stopCapture();
     bool isRunning() const { return is_running_.load(); }
 };

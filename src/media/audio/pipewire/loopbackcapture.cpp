@@ -33,19 +33,21 @@ LoopbackCapture::LoopbackCapture()
     app_data_.core = nullptr;
     app_data_.registry = nullptr;
     app_data_.parent = this;
+    app_data_.excluded_app = "";
 }
 
 LoopbackCapture::~LoopbackCapture() {
     stopCapture();
 }
 
-bool LoopbackCapture::startCaptureAsync(AudioCallback callback) {
+bool LoopbackCapture::startCaptureAsync(const std::string& exclude_app, AudioCallback callback) {
     if (is_running_.load()) {
         std::cerr << "Capture is already running" << "\n";
         return false;
     }
 
     callback_ = std::move(callback);
+    app_data_.excluded_app = exclude_app;
     should_stop_.store(false);
 
     // Initialize PipeWire in the background thread
@@ -256,10 +258,10 @@ void LoopbackCapture::start_recording_stream(uint32_t node_id, const std::string
 }
 
 void LoopbackCapture::registry_event_global(void *data, uint32_t id,
-                                            uint32_t permissions,
-                                            const char *type,
-                                            uint32_t version,
-                                            const struct spa_dict *props){
+                                           uint32_t permissions,
+                                           const char *type,
+                                           uint32_t version,
+                                           const struct spa_dict *props) {
     auto *app = static_cast<AppData*>(data);
     
     if (strcmp(type, PW_TYPE_INTERFACE_Node) != 0) {
@@ -286,6 +288,13 @@ void LoopbackCapture::registry_event_global(void *data, uint32_t id,
 
     if (media_class && strcmp(media_class, "Stream/Output/Audio") == 0) {
         std::string name = app_name ? app_name : (node_name ? node_name : "unknown");
+        
+        // Check if this application should be excluded
+        if (!app->excluded_app.empty() && name == app->excluded_app) {
+            std::cout << "Excluding audio output stream: " << name << " (node " << id << ")" << "\n";
+            return;
+        }
+        
         std::cout << "Found audio output stream: " << name << " (node " << id << ")" << "\n";
         app->parent->start_recording_stream(id, name);
     }

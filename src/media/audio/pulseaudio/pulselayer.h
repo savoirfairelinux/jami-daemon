@@ -19,6 +19,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
+#include "audio/pipewire/loopbackcapture.h"
 
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
@@ -133,6 +134,8 @@ public:
     std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    virtual void startCaptureStream(const std::string& id);
+    virtual void stopCaptureStream(const std::string& id);
     virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
 private:
@@ -225,6 +228,8 @@ private:
      * Contains the list of capture devices
      */
     std::vector<PaDeviceInfos> sourceList_ {};
+
+    LoopbackCapture loopbackCapture_;
 
     /** PulseAudio server defaults */
     AudioFormat defaultAudioFormat_ {AudioFormat::MONO()};

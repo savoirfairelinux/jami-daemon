@@ -200,6 +200,11 @@ AudioInput::initCapture(const std::string& device)
     } else {
         targetId = "desktop-audio";
     }
+#elif defined(__linux__)
+    // On Linux, always capture desktop audio because window audio capture is not supported
+    // Possible to implement window audio capture on X11 in the future, but not Wayland as of now
+    // See https://github.com/flatpak/xdg-desktop-portal/issues/957
+    targetId = "desktop-audio";
 #endif
 
     devOpts_ = {};
@@ -357,10 +362,10 @@ AudioInput::switchInput(const std::string& resource)
         bool ready = false;
         if (prefix == libjami::Media::VideoProtocolPrefix::FILE)
             ready = initFile(suffix);
-// Todo: handle audio capture on Linux (X11/Wayland) and MacOS
-#ifdef _WIN32
-        else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY)
-            ready = initCapture(suffix);
+// Todo: handle audio capture on MacOS
+#if defined(_WIN32) || defined(__linux__)
+    else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY)
+        ready = initCapture(suffix);
 #endif
         else
             ready = initDevice(suffix);
