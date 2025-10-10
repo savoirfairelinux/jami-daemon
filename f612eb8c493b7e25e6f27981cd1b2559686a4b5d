@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0f18ca51_3a6080d7",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 2423,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-10-10T16:40:59Z",
+      "side": 1,
+      "message": "just std::lock_guard",
+      "range": {
+        "startLine": 2423,
+        "startChar": 4,
+        "endLine": 2423,
+        "endChar": 31
+      },
+      "revId": "f612eb8c493b7e25e6f27981cd1b2559686a4b5d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
