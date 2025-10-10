@@ -152,7 +152,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define PACKAGE_NAME "Jami Daemon"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Jami Daemon 10.0.2"
+#define PACKAGE_STRING "Jami Daemon 16.0.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "jami"
@@ -161,7 +161,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "10.0.2"
+#define PACKAGE_VERSION "16.0.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
 your system. */
@@ -198,7 +198,7 @@ STACK_DIRECTION = 0 => direction of growth unknown */
 #undef _MBCS
 
 /* Version number of package */
-#define VERSION "10.0.2"
+#define VERSION "16.0.0"
 
 // UWP compatibility
 #define JAMI_DATADIR ""
