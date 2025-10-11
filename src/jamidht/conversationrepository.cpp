@@ -1080,7 +1080,7 @@ ConversationRepository::Impl::checkValidUserDiff(const std::string& userDevice,
             }
         } else {
             // Invalid file detected
-            JAMI_ERROR("Invalid add file detected: {} {}", changedFile, (int) *mode_);
+            JAMI_ERROR("Invalid add file detected: {} {}", changedFile, (int) mode());
             return false;
         }
     }
