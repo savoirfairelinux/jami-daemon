@@ -66,6 +66,7 @@ class JamiPluginManager;
 class LIBJAMI_TEST_EXPORT Manager
 {
 private:
+    std::mutex randMutex_;
     std::mt19937_64 rand_;
 
 public:

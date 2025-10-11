@@ -2754,6 +2754,7 @@ Manager::setAccountDetails(const std::string& accountID,
 std::mt19937_64
 Manager::getSeededRandomEngine()
 {
+    std::lock_guard l(randMutex_);
     return dht::crypto::getDerivedRandomEngine(rand_);
 }
 
