@@ -1322,7 +1322,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
-            convModule()->loadConversations();
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
