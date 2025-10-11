@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #include "conversation.h"
 
 #include "account_const.h"
@@ -2417,7 +2418,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec,
 }
 
 void
-Conversation::bootstrap(std::function<void()> onBootstraped,
+Conversation::bootstrap(std::function<void()> onBootstrapped,
                         const std::vector<DeviceId>& knownDevices)
 {
     std::lock_guard lock(pimpl_->bootstrapMtx_);
@@ -2426,7 +2427,7 @@ Conversation::bootstrap(std::function<void()> onBootstraped,
     // Here, we bootstrap the DRT with devices who already wrote in the conversation
     // If this doesn't work, it will attempt to fallback with checkBootstrapMember
     // If it works, the callback onConnectionChanged will be called with ok=true
-    pimpl_->bootstrapCb_ = std::move(onBootstraped);
+    pimpl_->bootstrapCb_ = std::move(onBootstrapped);
     std::vector<DeviceId> devices = knownDevices;
     for (const auto& [member, memberDevices] : pimpl_->repository_->devices()) {
         if (!isBanned(member))
