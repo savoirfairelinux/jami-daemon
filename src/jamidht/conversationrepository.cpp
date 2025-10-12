@@ -2718,21 +2718,23 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
 
         // Extract the signature block and signature content from the commit
         int sig_extract_res = git_commit_extract_signature(sig.get(), sig_data.get(), repo.get(), &oid, "signature");
-        // Verify that the extraction was successful
         if (sig_extract_res != 0) {
             switch (sig_extract_res) {
             case GIT_ERROR_INVALID:
-                JAMI_ERROR("Error, the commit ID ({}) does not correspond to a commit.", validUserAtCommit.c_str());
+                JAMI_ERROR("Error, the commit ID ({}) does not correspond to a commit.", validUserAtCommit);
                 break;
             case GIT_ERROR_OBJECT:
-                JAMI_ERROR("Error, the commit ID ({}) does not have a signature.", validUserAtCommit.c_str());
+                JAMI_ERROR("Error, the commit ID ({}) does not have a signature.", validUserAtCommit);
                 break;
             default:
-                JAMI_ERROR("An unknown error occurred while extracting signature for commit ID {}.",
-                           validUserAtCommit.c_str());
+                JAMI_ERROR("An unknown error occurred while extracting signature for commit ID {}.", validUserAtCommit);
                 break;
-                return false;
             }
+            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                         id_,
+                                                                         EVALIDFETCH,
+                                                                         "Malformed commit");
+            return false;
         }
 
         if (commit.parents.size() == 0) {
@@ -2788,15 +2790,18 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                 dht::InfoHash h(uriMember);
                 if (not h) {
                     JAMI_WARNING(
-                            "[Account {}] [Conversation {}] Commit {} with invalid member URI {}. Please ensure that you are using the latest "
-                            "version of Jami, or that one of your contacts is not performing any unwanted actions.",
-                            accountId_, id_, commit.id, uriMember);
+                        "[Account {}] [Conversation {}] Commit {} with invalid member URI {}. Please ensure that you "
+                        "are using the latest "
+                        "version of Jami, or that one of your contacts is not performing any unwanted actions.",
+                        accountId_,
+                        id_,
+                        commit.id,
+                        uriMember);
 
-                    emitSignal<libjami::ConversationSignal::OnConversationError>(
-                            accountId_,
-                            id_,
-                            EVALIDFETCH,
-                            "Invalid member URI");
+                    emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                                 id_,
+                                                                                 EVALIDFETCH,
+                                                                                 "Invalid member URI");
                     return false;
                 }
                 if (action == "add") {
@@ -2934,7 +2939,7 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
             // So, the user certificate MUST be in /members or /admins
             // and device cert MUST be in /devices
             if (!isValidUserAtCommit(userDevice, validUserAtCommit, *sig, *sig_data)) {
-                JAMI_WARNING("[Account {}] [Conversation {}] Malformed commit {}.Please ensure "
+                JAMI_WARNING("[Account {}] [Conversation {}] Malformed commit {}. Please ensure "
                              "that you are using the latest "
                              "version of Jami, or that one of your contacts is not performing any "
                              "unwanted actions. {}",
@@ -2945,7 +2950,7 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                 emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                              id_,
                                                                              EVALIDFETCH,
-                                                                             "Malformed commit");
+                                                                             "Invalid user");
                 return false;
             }
         } else {
@@ -2969,16 +2974,17 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
             }
 
             if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
-                JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
-                                "ensure that you are using the latest "
-                                "version of Jami, or that one of your contacts is not performing "
-                                "any unwanted actions.",
-                                accountId_,
-                                id_,
-                                commit.id);
+                JAMI_WARNING(
+                    "[Account {}] [Conversation {}] Malformed merge commit {}. Please ensure that you are using the "
+                    "latest version of Jami, or that one of your contacts is not performing any unwanted actions.",
+                    accountId_,
+                    id_,
+                    commit.id);
 
-                emitSignal<libjami::ConversationSignal::OnConversationError>(
-                    accountId_, id_, EVALIDFETCH, "Malformed merge commit");
+                emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
+                                                                             id_,
+                                                                             EVALIDFETCH,
+                                                                             "Malformed merge commit");
                 return false;
             }
         }
