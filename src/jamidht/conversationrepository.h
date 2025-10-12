@@ -30,8 +30,7 @@ using GitPackBuilder = std::unique_ptr<git_packbuilder, decltype(&git_packbuilde
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
 using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
 using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
-using GitAnnotatedCommit
-    = std::unique_ptr<git_annotated_commit, decltype(&git_annotated_commit_free)>;
+using GitAnnotatedCommit = std::unique_ptr<git_annotated_commit, decltype(&git_annotated_commit_free)>;
 using GitIndex = std::unique_ptr<git_index, decltype(&git_index_free)>;
 using GitTree = std::unique_ptr<git_tree, decltype(&git_tree_free)>;
 using GitRemote = std::unique_ptr<git_remote, decltype(&git_remote_free)>;
@@ -130,10 +129,8 @@ struct ConversationMember
 
 enum class CallbackResult { Skip, Break, Ok };
 
-using PreConditionCb
-    = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
-using PostConditionCb
-    = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
+using PreConditionCb = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
+using PostConditionCb = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
 using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 
 /**
@@ -142,9 +139,9 @@ using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 class LIBJAMI_TEST_EXPORT ConversationRepository
 {
 public:
-    #ifdef LIBJAMI_TEST
+#ifdef LIBJAMI_TEST
     static bool DISABLE_RESET; // Some tests inject bad files so resetHard() will break the test
-    #endif
+#endif
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
      * @param account       The related account
@@ -201,8 +198,7 @@ public:
      * @param branch                Remote branch to check (default: main)
      * @return the commit id pointed
      */
-    std::string remoteHead(const std::string& remoteDeviceId,
-                           const std::string& branch = "main") const;
+    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "main") const;
 
     /**
      * Return the conversation id
@@ -233,12 +229,11 @@ public:
      */
     std::vector<ConversationCommit> log(const LogOptions& options = {}) const;
     void log(PreConditionCb&& preCondition,
-            std::function<void(ConversationCommit&&)>&& emplaceCb,
-            PostConditionCb&& postCondition,
-            const std::string& from = "",
-            bool logIfNotFound = true) const;
-    std::optional<ConversationCommit> getCommit(const std::string& commitId,
-                                                bool logIfNotFound = true) const;
+             std::function<void(ConversationCommit&&)>&& emplaceCb,
+             PostConditionCb&& postCondition,
+             const std::string& from = "",
+             bool logIfNotFound = true) const;
+    std::optional<ConversationCommit> getCommit(const std::string& commitId, bool logIfNotFound = true) const;
 
     /**
      * Get parent via topological + date sort in branch main of a commit
@@ -329,17 +324,14 @@ public:
      * @param voteType  "ban" or "unban"
      * @return the commit id or empty if failed
      */
-    std::string resolveVote(const std::string& uri,
-                            const std::string_view type,
-                            const std::string& voteType);
+    std::string resolveVote(const std::string& uri, const std::string_view type, const std::string& voteType);
 
     /**
      * Validate a fetch with remote device
      * @param remotedevice
      * @return the validated commits and if an error occurs
      */
-    std::pair<std::vector<ConversationCommit>, bool> validFetch(
-        const std::string& remoteDevice) const;
+    std::pair<std::vector<ConversationCommit>, bool> validFetch(const std::string& remoteDevice) const;
     bool validClone(std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb) const;
 
     /**
@@ -347,7 +339,10 @@ public:
      * @param userDevice    the email of the sender (i.e. their device's public key)
      * @param commitId      the id of the commit
      */
-    bool isValidUserAtCommit(const std::string& userDevice, const std::string& commitId, const git_buf& sig, const git_buf& sig_data) const;
+    bool isValidUserAtCommit(const std::string& userDevice,
+                             const std::string& commitId,
+                             const git_buf& sig,
+                             const git_buf& sig_data) const;
 
     /**
      * Validate that commits are not malformed
@@ -385,8 +380,7 @@ public:
      * @param filteredRoles    If we want to ignore some roles
      * @return members' uris
      */
-    std::set<std::string> memberUris(std::string_view filter,
-                                        const std::set<MemberRole>& filteredRoles) const;
+    std::set<std::string> memberUris(std::string_view filter, const std::set<MemberRole>& filteredRoles) const;
 
     /**
      * To use after a merge with member's events, refresh members knowledge
@@ -428,8 +422,7 @@ public:
      */
     std::vector<std::map<std::string, std::string>> convCommitsToMap(
         const std::vector<ConversationCommit>& commits) const;
-    std::optional<std::map<std::string, std::string>> convCommitToMap(
-        const ConversationCommit& commit) const;
+    std::optional<std::map<std::string, std::string>> convCommitToMap(const ConversationCommit& commit) const;
 
     /**
      * Get current HEAD hash
