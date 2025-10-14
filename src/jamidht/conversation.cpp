@@ -53,6 +53,11 @@ ConvInfo::ConvInfo(const Json::Value& json)
         members.emplace(v["uri"].asString());
     }
     lastDisplayed = json[ConversationMapKeys::LAST_DISPLAYED].asString();
+    try {
+    // do something
+    } catch (const std::exception&) {
+        // SonarQube flags empty catch block as bad practice
+    }
 }
 
 Json::Value
@@ -1230,7 +1235,7 @@ Conversation::Impl::addToHistory(History& history,
                 if (cache > status)
                     status = cache;
             }
- 
+
             for (auto it = sharedCommits.rbegin(); it != sharedCommits.rend(); it++) {
                 auto sharedCommit = *it;
                 auto previousStatus = status;
@@ -1251,7 +1256,7 @@ Conversation::Impl::addToHistory(History& history,
 
                 // Store computed value.
                 sharedCommit->status[member.uri] = status;
- 
+
                 // Update messagesStatus_ if needed.
                 if (previousStatus == SENDING && status >= SENT) {
                     messagesStatus_[member.uri]["fetched"] = sharedCommit->id;

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+
+
 project(jami-core
     VERSION 16.0.0
     LANGUAGES C CXX)
