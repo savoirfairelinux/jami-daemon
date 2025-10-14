@@ -2650,7 +2650,7 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
             JAMI_WARNING("[call:{}] Peer does not support more than 2 ICE medias. "
                          "Media change request modified",
                          getCallId());
-        MediaAttribute audioAttr;
+        MediaAttribute audioAttr(MediaType::MEDIA_AUDIO);
         MediaAttribute videoAttr;
         auto hasVideo = false, hasAudio = false;
         for (auto it = mediaAttrList.rbegin(); it != mediaAttrList.rend(); ++it) {
@@ -2668,6 +2668,7 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         }
         mediaAttrList.clear();
         // Note: use the order VIDEO/AUDIO to avoid reinvite.
+        // Note: always add at least one media for valid SDP (RFC4566)
         mediaAttrList.emplace_back(audioAttr);
         if (hasVideo)
             mediaAttrList.emplace_back(videoAttr);
