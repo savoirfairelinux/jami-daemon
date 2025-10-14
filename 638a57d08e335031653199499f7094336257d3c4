@@ -1,4 +1,22 @@
 {
-  "comments": [],
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "92eebcc2_9e17c394",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2025-10-14T17:07:08Z",
+      "side": 1,
+      "message": "Maybe check (mode_ !\u003d std::nullopt)? As mode() doing more than null check",
+      "revId": "638a57d08e335031653199499f7094336257d3c4",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ],
   "submitRequirementResults": []
 }
