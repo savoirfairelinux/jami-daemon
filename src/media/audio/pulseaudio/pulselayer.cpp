@@ -463,6 +463,111 @@ PulseLayer::startStream(AudioDeviceType type)
 }
 
 void
+PulseLayer::startCaptureStream(const std::string& id)
+{
+    // Whether the id is a window handle (for sharing a specific window) e.g: "0x1e00016"
+    // (original source string would be "display://:+0,0 window-id:0x1e00016")
+    
+    // Or whether it is a screen index (for sharing a specific screen) e.g: ":1+0,0 1920x1080" 
+    // (original source string would be "display://:1+0,0 1920x1080")
+
+    // We will (for now) always share the entire desktop audio (except Jami's own audio)
+
+    // Todo: implement audio sharing of a specific application window once
+    // Wayland support is possible (which is not currently the case)
+    // See https://github.com/flatpak/xdg-desktop-portal/issues/957
+    // Currently the goal is to have the same experience on X11 and Wayland
+
+    if (loopbackCapture_.isRunning()) {
+        JAMI_WARNING("Loopback capture is already running");
+        return;
+    }
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    
+    // Create the main ring buffer that will receive mixed audio from all streams
+    auto mainRingBuffer = rbPool.createRingBuffer(id);
+    if (!mainRingBuffer) {
+        JAMI_ERROR("Failed to create main ring buffer for id {:s}", id);
+        return;
+    }
+
+    JAMI_LOG("Starting Loopback Capture for ID {:s}", id);
+
+    // Map to store per-stream ring buffers
+    // This needs to be a shared_ptr so it can be captured by the lambda
+    auto streamRingBuffers = std::make_shared<std::map<uint32_t, std::shared_ptr<jami::RingBuffer>>>();
+
+    loopbackCapture_.startCaptureAsync(
+        id,
+        [id, streamRingBuffers](const AudioData& audioData) {
+            if (audioData.size == 0 || !audioData.data) {
+                JAMI_WARNING("No audio data captured.");
+                return;
+            }
+
+            // Get RingBufferPool inside the lambda to avoid dangling reference
+            auto& rbPool = Manager::instance().getRingBufferPool();
+
+            // Get or create a ring buffer for this specific stream
+            std::shared_ptr<jami::RingBuffer> streamRingBuffer;
+            auto it = streamRingBuffers->find(audioData.node_id);
+            
+            if (it == streamRingBuffers->end()) {
+                // Create a new ring buffer for this stream
+                std::string streamId = id + "_stream_" + std::to_string(audioData.node_id);
+                streamRingBuffer = rbPool.createRingBuffer(streamId);
+                
+                if (!streamRingBuffer) {
+                    JAMI_ERROR("Failed to create ring buffer for stream {:d}", audioData.node_id);
+                    return;
+                }
+                
+                // Bind this stream's ring buffer to the main ring buffer
+                // This makes the main ring buffer read from this stream's ring buffer
+                rbPool.bindHalfDuplexOut(id, streamId);
+                
+                // Store it in our map
+                (*streamRingBuffers)[audioData.node_id] = streamRingBuffer;
+                
+                JAMI_LOG("Created and bound ring buffer for stream {:d} ({})", 
+                         audioData.node_id, audioData.app_name);
+            } else {
+                streamRingBuffer = it->second;
+            }
+
+            // Create audio frame and put it in the stream's ring buffer
+            auto capturedFrame = std::make_shared<AudioFrame>(
+                AudioFormat{
+                    audioData.rate,
+                    audioData.channels,
+                    audioData.size / audioData.channels / sizeof(int16_t) == 0 ? AV_SAMPLE_FMT_FLT : AV_SAMPLE_FMT_S16
+                },
+                audioData.size / (audioData.channels * sizeof(int16_t))
+            );
+            std::memcpy(capturedFrame->pointer()->data[0], audioData.data, audioData.size);
+            streamRingBuffer->put(std::move(capturedFrame));
+        }
+    );
+}
+
+void
+PulseLayer::stopCaptureStream(const std::string& id)
+{
+    if (!loopbackCapture_.isRunning()) {
+        JAMI_WARNING("Loopback capture is not running");
+        return;
+    }
+
+    JAMI_LOG("Stopping Loopback Capture for ID {:s}", id);
+
+    loopbackCapture_.stopCapture();
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    rbPool.unBindAll(id);
+}
+
+void
 PulseLayer::stopStream(AudioDeviceType type)
 {
     waitForDevices();
