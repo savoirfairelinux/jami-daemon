@@ -201,10 +201,18 @@ AudioInput::initCapture(const std::string& device)
         targetId = "desktop-audio";
     }
 #elif defined(__linux__)
-    // On Linux, always capture desktop audio because window audio capture is not supported
-    // Possible to implement window audio capture on X11 in the future, but not Wayland as of now
+    // On Linux, we always capture desktop audio because window audio capture is not yet implemented
+    // Possible to implement window audio capture on X11 specifically in the future, but not Wayland as of now
     // See https://github.com/flatpak/xdg-desktop-portal/issues/957
-    targetId = "desktop-audio";
+
+    // The way audio capture works on Linux is the following:
+    // - The audio input id (which is the stream ID, e.g "3053892991031547_audio_1") is passed down to the pipewire layer
+    // - The pipewire layer asynchronously captures audio from all output streams except Jami's own audio
+    // - For each application, the captured audio is written to a dedicated ring buffer with the id "<audio input id>_stream_<node_id>"
+    // - These ring buffers are all bound to the rtp session's ring buffer (e.g "3053892991031547_audio_1")
+    // - The rtp session's ring buffer mixes the captured audio streams
+    // - The mixed audio is sent to the remote peer
+    targetId = id_;
 #endif
 
     devOpts_ = {};

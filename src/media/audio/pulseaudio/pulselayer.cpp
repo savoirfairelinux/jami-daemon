@@ -483,15 +483,6 @@ PulseLayer::startCaptureStream(const std::string& id)
         return;
     }
 
-    auto& rbPool = Manager::instance().getRingBufferPool();
-    
-    // Create the main ring buffer that will receive mixed audio from all streams
-    auto mainRingBuffer = rbPool.createRingBuffer(id);
-    if (!mainRingBuffer) {
-        JAMI_ERROR("Failed to create main ring buffer for id {:s}", id);
-        return;
-    }
-
     JAMI_LOG("Starting Loopback Capture for ID {:s}", id);
 
     // Map to store per-stream ring buffers
@@ -499,7 +490,7 @@ PulseLayer::startCaptureStream(const std::string& id)
     auto streamRingBuffers = std::make_shared<std::map<uint32_t, std::shared_ptr<jami::RingBuffer>>>();
 
     loopbackCapture_.startCaptureAsync(
-        id,
+        "Jami Daemon",
         [id, streamRingBuffers](const AudioData& audioData) {
             if (audioData.size == 0 || !audioData.data) {
                 JAMI_WARNING("No audio data captured.");
@@ -523,15 +514,15 @@ PulseLayer::startCaptureStream(const std::string& id)
                     return;
                 }
                 
-                // Bind this stream's ring buffer to the main ring buffer
-                // This makes the main ring buffer read from this stream's ring buffer
+                // Bind this stream's ring buffer directly to the main stream ring buffer
+                // This makes the main stream ring buffer (id) read from this stream's ring buffer
                 rbPool.bindHalfDuplexOut(id, streamId);
                 
                 // Store it in our map
                 (*streamRingBuffers)[audioData.node_id] = streamRingBuffer;
                 
-                JAMI_LOG("Created and bound ring buffer for stream {:d} ({})", 
-                         audioData.node_id, audioData.app_name);
+                JAMI_LOG("Created and bound ring buffer for stream {:d} ({}) to main stream {}", 
+                         audioData.node_id, audioData.app_name, id);
             } else {
                 streamRingBuffer = it->second;
             }

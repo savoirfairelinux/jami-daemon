@@ -1,5 +1,7 @@
-#include "loopbackcapture.h"
-#include <iostream>
+#include "pipewire_loopbackcapture.h"
+
+#include "logger.h"
+
 #include <cerrno>
 #include <cstring>
 
@@ -42,7 +44,7 @@ LoopbackCapture::~LoopbackCapture() {
 
 bool LoopbackCapture::startCaptureAsync(const std::string& exclude_app, AudioCallback callback) {
     if (is_running_.load()) {
-        std::cerr << "Capture is already running" << "\n";
+        JAMI_WARNING("Capture is already running");
         return false;
     }
 
@@ -77,12 +79,12 @@ void LoopbackCapture::stopCapture() {
 
 void LoopbackCapture::run_capture_loop() {
     if (!initialize_pipewire()) {
-        std::cerr << "Failed to initialize PipeWire" << "\n";
+        JAMI_ERROR("Failed to initialize PipeWire");
         return;
     }
 
     is_running_.store(true);
-    std::cout << "LoopbackCapture started. Monitoring audio streams..." << "\n";
+    JAMI_LOG("LoopbackCapture started. Monitoring audio streams...");
 
     // Initial enumeration
     roundtrip();
@@ -92,7 +94,7 @@ void LoopbackCapture::run_capture_loop() {
 
     cleanup();
     is_running_.store(false);
-    std::cout << "LoopbackCapture stopped." << "\n";
+    JAMI_LOG("LoopbackCapture stopped.");
 }
 
 bool LoopbackCapture::initialize_pipewire() {
@@ -102,21 +104,20 @@ bool LoopbackCapture::initialize_pipewire() {
 
     app_data_.loop = pw_main_loop_new(NULL);
     if (!app_data_.loop) {
-        std::cerr << "Error: failed to create new main loop object" << "\n";
+        JAMI_ERROR("Error: failed to create new main loop object");
         return false;
     }
 
     app_data_.context = pw_context_new(pw_main_loop_get_loop(app_data_.loop), NULL, 0);
     if (!app_data_.context) {
-        std::cerr << "Error: failed to create new context object" << "\n";
+        JAMI_ERROR("Error: failed to create new context object");
         pw_main_loop_destroy(app_data_.loop);
         return false;
     }
 
     app_data_.core = pw_context_connect(app_data_.context, NULL, 0);
     if (!app_data_.core) {
-        std::cerr << "Error: failed to connect context: " << std::strerror(errno) 
-                  << " (errno=" << errno << ")" << "\n";
+        JAMI_ERROR("Error: failed to connect context: {} (errno={})", std::strerror(errno), errno);
         pw_context_destroy(app_data_.context);
         pw_main_loop_destroy(app_data_.loop);
         return false;
@@ -124,7 +125,7 @@ bool LoopbackCapture::initialize_pipewire() {
 
     app_data_.registry = pw_core_get_registry(app_data_.core, PW_VERSION_REGISTRY, 0);
     if (!app_data_.registry) {
-        std::cerr << "Error: failed to get core registry" << "\n";
+        JAMI_ERROR("Error: failed to get core registry");
         pw_core_disconnect(app_data_.core);
         pw_context_destroy(app_data_.context);
         pw_main_loop_destroy(app_data_.loop);
@@ -169,7 +170,7 @@ void LoopbackCapture::on_process(void *userdata) {
 
     b = pw_stream_dequeue_buffer(stream_data->stream);
     if (!b) {
-        pw_log_warn("out of buffers: %m");
+        JAMI_WARNING("out of buffers");
         return;
     }
 
@@ -205,7 +206,7 @@ void LoopbackCapture::start_recording_stream(uint32_t node_id, const std::string
     stream_data_ptr->is_recording = false;
     stream_data_ptr->parent = this;
 
-    std::cout << "Starting capture for " << app_name << " (node " << node_id << ")" << "\n";
+    JAMI_LOG("Starting capture for {} (node {})", app_name, node_id);
 
     // Create recording stream
     stream_data_ptr->stream = pw_stream_new_simple(
@@ -220,7 +221,7 @@ void LoopbackCapture::start_recording_stream(uint32_t node_id, const std::string
         stream_data_ptr.get());
 
     if (!stream_data_ptr->stream) {
-        std::cerr << "Failed to create stream for " << app_name << "\n";
+        JAMI_ERROR("Failed to create stream for {}", app_name);
         return;
     }
 
@@ -247,8 +248,7 @@ void LoopbackCapture::start_recording_stream(uint32_t node_id, const std::string
                                    params, 1);
 
     if (result < 0) {
-        std::cerr << "Failed to connect stream for " << app_name 
-                  << ": " << std::strerror(-result) << "\n";
+        JAMI_ERROR("Failed to connect stream for {}: {}", app_name, std::strerror(-result));
         pw_stream_destroy(stream_data_ptr->stream);
         return;
     }
@@ -291,11 +291,11 @@ void LoopbackCapture::registry_event_global(void *data, uint32_t id,
         
         // Check if this application should be excluded
         if (!app->excluded_app.empty() && name == app->excluded_app) {
-            std::cout << "Excluding audio output stream: " << name << " (node " << id << ")" << "\n";
+            JAMI_DEBUG("Excluding audio output stream: {} (node {})", name, id);
             return;
         }
         
-        std::cout << "Found audio output stream: " << name << " (node " << id << ")" << "\n";
+        JAMI_DEBUG("Found audio output stream: {} (node {})", name, id);
         app->parent->start_recording_stream(id, name);
     }
 }
@@ -305,8 +305,7 @@ void LoopbackCapture::registry_event_global_remove(void *data, uint32_t id) {
     
     auto it = app->streams.find(id);
     if (it != app->streams.end()) {
-        std::cout << "Stopping capture for " << it->second->app_name 
-                  << " (node " << id << ")" << "\n";
+        JAMI_LOG("Stopping capture for {} (node {})", it->second->app_name, id);
         if (it->second->stream) {
             pw_stream_destroy(it->second->stream);
         }
@@ -354,7 +353,7 @@ void LoopbackCapture::roundtrip() {
 
     err = pw_main_loop_run(app_data_.loop);
     if (err < 0)
-        printf("main_loop_run error:%d!\n", err);
+        JAMI_ERROR("main_loop_run error: {}", err);
 
     spa_hook_remove(&core_listener);
 }

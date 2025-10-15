@@ -19,7 +19,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
-#include "audio/pipewire/loopbackcapture.h"
+#include "audio/pipewire/pipewire_loopbackcapture.h"
 
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
