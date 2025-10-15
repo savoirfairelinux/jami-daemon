@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b07d0652_575f8c91",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 373,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2025-10-15T02:58:28Z",
+      "side": 1,
+      "message": "There should probably be a fallback to try a full clone, because not all git servers enable shallow clones (it\u0027s expensive to compute).",
+      "revId": "dc6c4d774fa021385ec7229aec847e8879a2c49f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
