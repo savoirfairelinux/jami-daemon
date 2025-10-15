@@ -72,7 +72,7 @@ AudioRtpSession::startSender()
 {
     std::lock_guard lock(mutex_);
     JAMI_DEBUG("Start audio RTP sender: input [{}] - muted [{}]",
-             input_,
+             mediaSource_,
              muteState_ ? "YES" : "NO");
 
     if (not send_.enabled or send_.onHold) {
@@ -92,14 +92,14 @@ AudioRtpSession::startSender()
     if (audioInput_)
         audioInput_->detach(sender_.get());
 
-    bool fileAudio = !input_.empty() && input_.find("file://") != std::string::npos;
+    bool fileAudio = !mediaSource_.empty() && mediaSource_.find("file://") != std::string::npos;
     auto audioInputId = streamId_;
     if (fileAudio) {
-        auto suffix = input_;
+        auto suffix = mediaSource_;
         static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-        const auto pos = input_.find(sep);
+        const auto pos = mediaSource_.find(sep);
         if (pos != std::string::npos) {
-            suffix = input_.substr(pos + sep.size());
+            suffix = mediaSource_.substr(pos + sep.size());
         }
         audioInputId = suffix;
     }
@@ -116,7 +116,7 @@ AudioRtpSession::startSender()
     audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     if (!fileAudio) {
-        auto newParams = audioInput_->switchInput(input_);
+        auto newParams = audioInput_->switchInput(mediaSource_);
         try {
             if (newParams.valid()
                 && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {

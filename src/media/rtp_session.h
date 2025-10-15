@@ -46,8 +46,8 @@ public:
     virtual void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
     virtual void stop() = 0;
-    void setMediaSource(const std::string& resource) { input_ = resource; }
-    const std::string& getInput() const { return input_; }
+    void setMediaSource(const std::string& resource) { mediaSource_ = resource; }
+    const std::string& getMediaSource() const { return mediaSource_; }
     MediaType getMediaType() const { return mediaType_; };
     virtual void setMuted(bool mute, Direction dir = Direction::SEND) = 0;
 
@@ -78,7 +78,7 @@ protected:
     const std::string streamId_;
     MediaType mediaType_;
     std::unique_ptr<SocketPair> socketPair_;
-    std::string input_ {};
+    std::string mediaSource_ {};
     MediaDescription send_;
     MediaDescription receive_;
     uint16_t mtu_;

@@ -115,7 +115,7 @@ VideoRtpSession::startSender()
 
     JAMI_DBG("[%p] Start video RTP sender: input [%s] - muted [%s]",
              this,
-             conference_ ? "Video Mixer" : input_.c_str(),
+             conference_ ? "Video Mixer" : mediaSource_.c_str(),
              send_.onHold ? "YES" : "NO");
 
     if (not socketPair_) {
@@ -134,7 +134,7 @@ VideoRtpSession::startSender()
         }
 
         if (not conference_) {
-            videoLocal_ = getVideoInput(input_);
+            videoLocal_ = getVideoInput(mediaSource_);
             if (videoLocal_) {
                 videoLocal_->setRecorderCallback(
                     [w=weak_from_this()](const MediaStream& ms) {
@@ -244,7 +244,7 @@ VideoRtpSession::stopSender(bool forceStopSocket)
 
     JAMI_DBG("[%p] Stop video RTP sender: input [%s] - muted [%s]",
              this,
-             conference_ ? "Video Mixer" : input_.c_str(),
+             conference_ ? "Video Mixer" : mediaSource_.c_str(),
              send_.onHold ? "YES" : "NO");
 
     if (sender_) {
