@@ -2014,12 +2014,19 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
 
         addMediaStream(mediaAttr);
         auto& stream = rtpStreams_.back();
-        createRtpSession(stream);
-
-        JAMI_DEBUG("[call:{:s}] Added media @{:d}: {:s}",
-                   getCallId(),
-                   idx,
-                   stream.mediaAttribute_->toString(true));
+        try {
+            createRtpSession(stream);
+            JAMI_DEBUG("[call:{:s}] Added media @{:d}: {:s}",
+                        getCallId(),
+                        idx,
+                        stream.mediaAttribute_->toString(true));
+        } catch (const std::exception& e) {
+            JAMI_ERROR("[call:{:s}] Failed to create RTP session for media @{:d}: {:s}. Ignoring the media",
+                        getCallId(),
+                        idx,
+                        e.what());
+            rtpStreams_.pop_back();
+        }
     }
 
     JAMI_DEBUG("[call:{:s}] Created {:d} media stream(s)", getCallId(), rtpStreams_.size());
@@ -2441,11 +2448,19 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
             auto& stream = rtpStreams_.back();
             // If the remote asks for a new stream, our side sends nothing
             stream.mediaAttribute_->muted_ = isRemote ? true : stream.mediaAttribute_->muted_;
-            createRtpSession(stream);
-            JAMI_DBG("[call:%s] Added a new media stream [%s] @ index %i",
-                     getCallId().c_str(),
-                     stream.mediaAttribute_->label_.c_str(),
-                     streamIdx);
+            try {
+                createRtpSession(stream);
+                JAMI_DEBUG("[call:{:s}] Added a new media stream @{:d}: {:s}",
+                            getCallId(),
+                            idx,
+                            stream.mediaAttribute_->toString(true));
+            } catch (const std::exception& e) {
+                JAMI_ERROR("[call:{:s}] Failed to create RTP session for media @{:d}: {:s}. Ignoring the media",
+                            getCallId(),
+                            idx,
+                            e.what());
+                rtpStreams_.pop_back();
+            }
         } else {
             updateMediaStream(newAttr, streamIdx);
         }
