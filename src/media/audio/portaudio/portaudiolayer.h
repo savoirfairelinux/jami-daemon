@@ -44,6 +44,9 @@ public:
      */
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
+    virtual void startCaptureStream(const std::string& id) override;
+    virtual void stopCaptureStream(const std::string& id) override;
+
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
