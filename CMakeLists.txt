@@ -339,7 +339,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     endif()
     if (pipewire_FOUND)
         list (APPEND ALL_FILES ${ALL_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pipewire/pipewire_loopbackcapture.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pipewire_loopback_capture/pipewire_loopbackcapture.cpp
         )
     endif()
 elseif (APPLE)
