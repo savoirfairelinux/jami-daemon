@@ -87,6 +87,9 @@ public:
 
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
+    virtual void startCaptureStream(const std::string& id) override;
+    virtual void stopCaptureStream(const std::string& id) override;
+
     void destroyAudioLayer();
 
     /**
