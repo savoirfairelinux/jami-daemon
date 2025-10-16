@@ -167,6 +167,14 @@ if conf.get('HAVE_PULSE') == 1
     libjami_dependencies += deplibpulse
 endif
 
+if conf.get('HAVE_PIPEWIRE') == 1
+    libjami_sources += files(
+        'media/audio/pipewire/pipestream.cpp',
+        'media/audio/pipewire/pipelayer.cpp'
+    )
+    libjami_dependencies += deppipewire
+endif
+
 if conf.get('HAVE_JACK') == 1
     libjami_sources += files(
         'media/audio/jack/jacklayer.cpp'
