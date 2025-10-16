@@ -463,6 +463,20 @@ PulseLayer::startStream(AudioDeviceType type)
 }
 
 void
+PulseLayer::startCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("startCaptureStream not implemented for PulseLayer");
+}
+
+void
+PulseLayer::stopCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("stopCaptureStream not implemented for PulseLayer");
+}
+
+void
 PulseLayer::stopStream(AudioDeviceType type)
 {
     waitForDevices();
