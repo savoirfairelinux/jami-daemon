@@ -26,6 +26,9 @@
 #include <memory>
 #include <thread>
 #include <sstream>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
 
 #include <spa/utils/hook.h>
 #include <pipewire/core.h>
@@ -55,8 +58,21 @@ public:
     std::vector<std::string> getCaptureDeviceList() const override;
     std::vector<std::string> getPlaybackDeviceList() const override;
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
+
+    /**
+     * Start capturing audio from PipeWire nodes in the 'Stream/Output/Audio' class.
+     * 'Jami Daemon' audio is not captured.
+     * Each captured stream has its own ring buffer that is bound to the audio Rtp session's ring buffer
+     * @param id Id of the ring buffer of the audio Rtp session that will receive/send the captured audio.
+     */
     void startCaptureStream(const std::string& id) override;
+
+    /**
+     * Stop capturing audio from PipeWire nodes in the 'Stream/Output/Audio' class.
+     * @param id Id of the ring buffer of the audio Rtp session that was receiving/sending the captured audio.
+     */
     void stopCaptureStream(const std::string& id) override;
+
     void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     // PipeWire specific methods
@@ -88,6 +104,11 @@ private:
     // Device lists
     std::vector<PwDeviceInfo> sinkList_;
     std::vector<PwDeviceInfo> sourceList_;
+    
+    // Synchronization for device enumeration
+    mutable std::mutex deviceListMutex_;
+    std::condition_variable deviceListCv_;
+    std::atomic_bool devicesEnumerated_ {false};
 
     LoopbackCapture loopbackCapture_;
 

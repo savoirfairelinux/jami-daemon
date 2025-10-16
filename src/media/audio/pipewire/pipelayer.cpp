@@ -30,10 +30,11 @@
 namespace jami {
 
 
-static int metadata_property(void *data, uint32_t id, const char *key, const char *type, const char *value)
+static int
+metadata_property(void *data, uint32_t id, const char *key, const char *type, const char *value)
 {
     if (key && value) {
-        printf("Metadata: %d %s %s = %s\n", id, key, type, value);
+        JAMI_LOG("Metadata: {:d} {:s} {:s} = {:s}", id, key, type, value);
     }
     return 0;
 }
@@ -43,20 +44,35 @@ static const struct pw_metadata_events metadata_events = {
     .property = metadata_property,
 };
 
+static PwDeviceInfo defaultDeviceInfo {
+    PW_ID_ANY,           // id - lets PipeWire choose the default
+    "",                  // name - empty for default
+    "default",           // description
+    2,                   // channels - default stereo
+    48000,               // rate - default sample rate
+    PW_STREAM_FLAG_NONE  // flags
+};
+
 const PwDeviceInfo*
 getDeviceInfo(const std::vector<PwDeviceInfo>& list, const std::string& name)
 {
+    // Empty name means use system default device
+    if (name.empty()) {
+        JAMI_LOG("Using system default device (PW_ID_ANY)");
+        return &defaultDeviceInfo;
+    }
+    
     if (list.empty()) {
-        JAMI_WARN("getDeviceInfo: device list is empty");
+        JAMI_WARNING("getDeviceInfo: device list is empty");
         return nullptr;
     }
     auto dev_info = std::find_if(list.begin(), list.end(), 
         [&name](const PwDeviceInfo& info) { return info.name == name; });
     
     if (dev_info == list.end()) {
-        JAMI_WARN("Preferred device %s not found in device list, selecting default %s instead.",
-                  name.c_str(),
-                  list.front().name.c_str());
+        JAMI_WARNING("Preferred device {:s} not found in device list, selecting default {:s} instead.",
+                  name,
+                  list.front().name);
         return &list.front();
     }
     return &(*dev_info);
@@ -85,7 +101,10 @@ PipeWireLayer::PipeWireLayer(AudioPreference& pref)
     JAMI_LOG("PipeWireLayer pw_registry_add_listener");
     pw_registry_add_listener(registry_, &registry_listener, &registry_events, this);
     pw_thread_loop_start(loop_);
-    //updateDeviceList();
+    
+    // Wait for initial device enumeration
+    updateDeviceList();
+    devicesEnumerated_ = true;
 }
 
 PipeWireLayer::~PipeWireLayer()
@@ -101,56 +120,74 @@ PipeWireLayer::~PipeWireLayer()
 
 void PipeWireLayer::startStream(AudioDeviceType type)
 {
-    pw_thread_loop_lock(loop_);
-
-    try {
-        // Create Streams
+    // Ensure devices are enumerated before trying to start streams
+    if (!devicesEnumerated_) {
+        updateDeviceList();
+        devicesEnumerated_ = true;
+    }
+    
+    // Get device info before locking PipeWire loop
+    const PwDeviceInfo* playbackInfo = nullptr;
+    const PwDeviceInfo* ringtoneInfo = nullptr;
+    const PwDeviceInfo* captureInfo = nullptr;
+    
+    {
+        std::lock_guard<std::mutex> lock(deviceListMutex_);
         if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::ALL) {
-            if (auto dev_info = getDeviceInfo(sinkList_, pref_.getPulseDevicePlayback())) {
-                createStream(playback_,
-                             AudioDeviceType::PLAYBACK,
-                             *dev_info,
-                             std::bind(&PipeWireLayer::writeToSpeaker, this, std::placeholders::_1));
+            playbackInfo = getDeviceInfo(sinkList_, pref_.getPulseDevicePlayback());
+            if (!playbackInfo) {
+                JAMI_ERROR("Failed to get device info for playback device: {:s}", 
+                         pref_.getPulseDevicePlayback());
             }
         }
         
         if (type == AudioDeviceType::RINGTONE || type == AudioDeviceType::ALL) {
-            if (auto dev_info = getDeviceInfo(sinkList_, pref_.getPulseDeviceRingtone())) {
-                createStream(ringtone_,
-                             AudioDeviceType::RINGTONE,
-                             *dev_info,
-                             std::bind(&PipeWireLayer::ringtoneToSpeaker, this, std::placeholders::_1));
+            ringtoneInfo = getDeviceInfo(sinkList_, pref_.getPulseDeviceRingtone());
+            if (!ringtoneInfo) {
+                JAMI_ERROR("Failed to get device info for ringtone device: {:s}", 
+                         pref_.getPulseDeviceRingtone());
             }
         }
         
         if (type == AudioDeviceType::CAPTURE || type == AudioDeviceType::ALL) {
-            if (auto dev_info = getDeviceInfo(sourceList_, pref_.getPulseDeviceRecord())) {
-                createStream(record_,
-                             AudioDeviceType::CAPTURE,
-                             *dev_info,
-                             std::bind(&PipeWireLayer::readFromMic, this, std::placeholders::_1));
+            captureInfo = getDeviceInfo(sourceList_, pref_.getPulseDeviceRecord());
+            if (!captureInfo) {
+                JAMI_ERROR("Failed to get device info for capture device: {:s}", 
+                         pref_.getPulseDeviceRecord());
             }
         }
+    }
+    
+    pw_thread_loop_lock(loop_);
 
-        // Start the streams
-        /*if (playback_ && (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::ALL)) {
-            playback_->start();
-            playbackChanged(true);
+    try {
+        // Create Streams using the device info we got earlier
+        if (playbackInfo) {
+            createStream(playback_,
+                         AudioDeviceType::PLAYBACK,
+                         *playbackInfo,
+                         std::bind(&PipeWireLayer::writeToSpeaker, this, std::placeholders::_1));
         }
         
-        if (ringtone_ && (type == AudioDeviceType::RINGTONE || type == AudioDeviceType::ALL)) {
-            ringtone_->start();
+        if (ringtoneInfo) {
+            createStream(ringtone_,
+                         AudioDeviceType::RINGTONE,
+                         *ringtoneInfo,
+                         std::bind(&PipeWireLayer::ringtoneToSpeaker, this, std::placeholders::_1));
         }
         
-        if (record_ && (type == AudioDeviceType::CAPTURE || type == AudioDeviceType::ALL)) {
-            record_->start();
-        }*/
+        if (captureInfo) {
+            createStream(record_,
+                         AudioDeviceType::CAPTURE,
+                         *captureInfo,
+                         std::bind(&PipeWireLayer::readFromMic, this, std::placeholders::_1));
+        }
 
         status_ = Status::Started;
         startedCv_.notify_all();
     }
     catch (const std::exception& e) {
-        JAMI_ERR("Error starting PipeWire stream: %s", e.what());
+        JAMI_ERROR("Error starting PipeWire stream: {:s}", e.what());
         status_ = Status::Idle;
     }
 
@@ -163,7 +200,7 @@ void PipeWireLayer::createStream(std::unique_ptr<PipeWireStream>& stream,
                                  std::function<void(pw_buffer* buf)>&& onData)
 {
     if (stream) {
-        JAMI_WARN("Stream already exists");
+        JAMI_WARNING("Stream already exists");
         return;
     }
 
@@ -193,23 +230,18 @@ void PipeWireLayer::createStream(std::unique_ptr<PipeWireStream>& stream,
 void PipeWireLayer::onStreamReady()
 {
     if (--pendingStreams == 0) {
-        JAMI_DBG("All streams ready, starting audio");
+        JAMI_DEBUG("All streams ready, starting audio");
         flushUrgent();
         flushMain();
         if (status_ == Status::Started) {
             if (playback_) {
-                //hardwareFormatAvailable(playback_->format());
                 playback_->start();
-                //playbackChanged(true);
             }
             if (ringtone_) {
-                //hardwareFormatAvailable(ringtone_->format());
                 ringtone_->start();
             }
             if (record_) {
-                //hardwareFormatAvailable(record_->format());
                 record_->start();
-                //recordChanged(true);
             }
         }
     }
@@ -218,18 +250,10 @@ void PipeWireLayer::onStreamReady()
 void
 PipeWireLayer::startCaptureStream(const std::string& id)
 {
-    // Whether the id is a window handle (for sharing a specific window) e.g: "0x1e00016"
-    // (original source string would be "display://:+0,0 window-id:0x1e00016")
-    
-    // Or whether it is a screen index (for sharing a specific screen) e.g: ":1+0,0 1920x1080" 
-    // (original source string would be "display://:1+0,0 1920x1080")
-
-    // We will (for now) always share the entire desktop audio (except Jami's own audio)
-
-    // Todo: implement audio sharing of a specific application window once
-    // Wayland support is possible (which is not currently the case)
+    // Todo: implement audio sharing of a specific application window
+    // Currently, Wayland does not allow this
+    // So we only capture 'desktop' audio on both X11 and Wayland for a similar experience 
     // See https://github.com/flatpak/xdg-desktop-portal/issues/957
-    // Currently the goal is to have the same experience on X11 and Wayland
 
     if (loopbackCapture_.isRunning()) {
         JAMI_WARNING("Loopback capture is already running");
@@ -243,22 +267,19 @@ PipeWireLayer::startCaptureStream(const std::string& id)
     auto streamRingBuffers = std::make_shared<std::map<uint32_t, std::shared_ptr<jami::RingBuffer>>>();
 
     loopbackCapture_.startCaptureAsync(
-        "Jami Daemon",
+        PACKAGE_NAME,
         [id, streamRingBuffers](const AudioData& audioData) {
             if (audioData.size == 0 || !audioData.data) {
                 JAMI_WARNING("No audio data captured.");
                 return;
             }
 
-            // Get RingBufferPool inside the lambda to avoid dangling reference
             auto& rbPool = Manager::instance().getRingBufferPool();
 
-            // Get or create a ring buffer for this specific stream
             std::shared_ptr<jami::RingBuffer> streamRingBuffer;
             auto it = streamRingBuffers->find(audioData.node_id);
             
             if (it == streamRingBuffers->end()) {
-                // Create a new ring buffer for this stream
                 std::string streamId = id + "_stream_" + std::to_string(audioData.node_id);
                 streamRingBuffer = rbPool.createRingBuffer(streamId);
                 
@@ -267,14 +288,11 @@ PipeWireLayer::startCaptureStream(const std::string& id)
                     return;
                 }
                 
-                // Bind this stream's ring buffer directly to the main stream ring buffer
-                // This makes the main stream ring buffer (id) read from this stream's ring buffer
                 rbPool.bindHalfDuplexOut(id, streamId);
                 
-                // Store it in our map
                 (*streamRingBuffers)[audioData.node_id] = streamRingBuffer;
-                
-                JAMI_LOG("Created and bound ring buffer for stream {:d} ({}) to main stream {}", 
+
+                JAMI_LOG("Created and bound ring buffer for stream {:d} ({}) to ring buffer {}", 
                          audioData.node_id, audioData.app_name, id);
             } else {
                 streamRingBuffer = it->second;
@@ -347,7 +365,7 @@ void PipeWireLayer::stopStream(AudioDeviceType type)
         }
     }
     catch (const std::exception& e) {
-        JAMI_ERR("Error stopping PipeWire stream: %s", e.what());
+        JAMI_ERROR("Error stopping PipeWire stream: {:s}", e.what());
         status_ = Status::Idle;
     }
 
@@ -356,6 +374,18 @@ void PipeWireLayer::stopStream(AudioDeviceType type)
 
 void PipeWireLayer::updateDeviceList()
 {
+    JAMI_DEBUG("Updating PipeWire device list");
+    
+    // wait for device enumeration to complete
+    std::unique_lock<std::mutex> lock(deviceListMutex_);
+    if (!deviceListCv_.wait_for(lock, std::chrono::seconds(2), [this] {
+        return !sinkList_.empty() || !sourceList_.empty();
+    })) {
+        JAMI_WARNING("Timeout waiting for PipeWire device enumeration");
+    } else {
+        JAMI_LOG("Device enumeration complete: {} sinks, {} sources", 
+                 sinkList_.size(), sourceList_.size());
+    }
 }
 
 void PipeWireLayer::registryEventCallback(void* data, 
@@ -368,7 +398,7 @@ void PipeWireLayer::registryEventCallback(void* data,
 
     PipeWireLayer* self = static_cast<PipeWireLayer*>(data);
     if (!type) {
-        JAMI_WARN("Received null type");
+        JAMI_WARNING("Received null type");
         return;
     }
     std::string_view stype(type);
@@ -389,13 +419,6 @@ void PipeWireLayer::registryEventCallback(void* data,
         }
     } else if (stype == PW_TYPE_INTERFACE_Metadata) {
         JAMI_LOG("Received metadata event");
-        /*
-        // enumerate everything in props
-        if (props) {
-            for (int i = 0; i < props->n_items; i++) {
-                printf("Metadata: %s = %s\n", props->items[i].key, props->items[i].value);
-            }
-        }*/
 
         // filter metadata.name = default
         const char* name = spa_dict_lookup(props, PW_KEY_METADATA_NAME);
@@ -414,23 +437,28 @@ PipeWireLayer::registryEventCallbackRemove(void* data, uint32_t id)
     JAMI_LOG("registryEventCallbackRemove id {}", id);
 
     bool deviceRemoved = false;
-    // Remove the device from the list
-    auto it = std::find_if(self->sinkList_.begin(), self->sinkList_.end(),
-                           [id](const PwDeviceInfo& info) { return info.id == id; });
-    if (it != self->sinkList_.end()) {
-        self->sinkList_.erase(it);
-        deviceRemoved = true;
+    {
+        std::lock_guard<std::mutex> lock(self->deviceListMutex_);
+        // Remove the device from the list
+        auto it = std::find_if(self->sinkList_.begin(), self->sinkList_.end(),
+                               [id](const PwDeviceInfo& info) { return info.id == id; });
+        if (it != self->sinkList_.end()) {
+            self->sinkList_.erase(it);
+            deviceRemoved = true;
+        }
+
+        it = std::find_if(self->sourceList_.begin(), self->sourceList_.end(),
+                          [id](const PwDeviceInfo& info) { return info.id == id; });
+        if (it != self->sourceList_.end()) {
+            self->sourceList_.erase(it);
+            deviceRemoved = true;
+        }
     }
 
-    it = std::find_if(self->sourceList_.begin(), self->sourceList_.end(),
-                      [id](const PwDeviceInfo& info) { return info.id == id; });
-    if (it != self->sourceList_.end()) {
-        self->sourceList_.erase(it);
-        deviceRemoved = true;
-    }
-
-    if (deviceRemoved)
+    if (deviceRemoved) {
+        self->deviceListCv_.notify_all();
         self->devicesChanged();
+    }
 }
 
 void PipeWireLayer::handleSinkEvent(uint32_t id, const struct spa_dict* props)
@@ -438,7 +466,7 @@ void PipeWireLayer::handleSinkEvent(uint32_t id, const struct spa_dict* props)
     const char* name = spa_dict_lookup(props, PW_KEY_NODE_NAME);
     const char* description = spa_dict_lookup(props, PW_KEY_NODE_DESCRIPTION);
     if (!name || !description) {
-        JAMI_WARN("Incomplete sink information received");
+        JAMI_WARNING("Incomplete sink information received");
         return;
     }
     const char* channels = spa_dict_lookup(props, PW_KEY_AUDIO_CHANNELS);
@@ -446,33 +474,35 @@ void PipeWireLayer::handleSinkEvent(uint32_t id, const struct spa_dict* props)
 
     JAMI_LOG("Added new sink: {} ({})\n{}\n{}", name, description, channels ? channels : "(null)", rates ? rates : "(null)");
 
-    auto it = std::find_if(sinkList_.begin(), sinkList_.end(),
-                           [id](const PwDeviceInfo& info) { return info.id == id; });
+    {
+        std::lock_guard<std::mutex> lock(deviceListMutex_);
+        auto it = std::find_if(sinkList_.begin(), sinkList_.end(),
+                               [id](const PwDeviceInfo& info) { return info.id == id; });
 
-    if (it != sinkList_.end()) {
-        // Update existing sink
-        it->name = name;
-        it->description = description;
-        JAMI_LOG("Updated sink: {} ({})", name, description);
-    } else {
-        // Add new sink
-        PwDeviceInfo newSink;
-        newSink.id = id;
-        newSink.name = name;
-        newSink.description = description;
-        // channels and sample rate
-        if (channels) {
-            newSink.channels = std::stoi(channels);
+        if (it != sinkList_.end()) {
+            // Update existing sink
+            it->name = name;
+            it->description = description;
+            JAMI_LOG("Updated sink: {} ({})", name, description);
+        } else {
+            // Add new sink
+            PwDeviceInfo newSink;
+            newSink.id = id;
+            newSink.name = name;
+            newSink.description = description;
+            if (channels) {
+                newSink.channels = std::stoi(channels);
+            }
+            if (rates) {
+                newSink.rate = std::stoi(rates);
+            }
+            
+            sinkList_.push_back(newSink);
+            JAMI_LOG("Added new sink: {} ({})", name, description);
         }
-        if (rates) {
-            newSink.rate = std::stoi(rates);
-        }
-        
-        sinkList_.push_back(newSink);
-        JAMI_LOG("Added new sink: {} ({})", name, description);
     }
-
-    // Notify that the device list has changed
+    
+    deviceListCv_.notify_all();
     devicesChanged();
 }
 
@@ -482,31 +512,34 @@ void PipeWireLayer::handleSourceEvent(uint32_t id, const struct spa_dict* props)
     const char* description = spa_dict_lookup(props, PW_KEY_NODE_DESCRIPTION);
     
     if (!name || !description) {
-        JAMI_WARN("Incomplete source information received");
+        JAMI_WARNING("Incomplete source information received");
         return;
     }
 
-    auto it = std::find_if(sourceList_.begin(), sourceList_.end(),
-                           [id](const PwDeviceInfo& info) { return info.id == id; });
+    {
+        std::lock_guard<std::mutex> lock(deviceListMutex_);
+        auto it = std::find_if(sourceList_.begin(), sourceList_.end(),
+                               [id](const PwDeviceInfo& info) { return info.id == id; });
 
-    if (it != sourceList_.end()) {
-        // Update existing source
-        it->name = name;
-        it->description = description;
-        JAMI_DBG("Updated source: %s (%s)", name, description);
-    } else {
-        // Add new source
-        PwDeviceInfo newSource;
-        newSource.id = id;
-        newSource.name = name;
-        newSource.description = description;
-        // You might want to query more properties here, such as channels and sample rate
-        
-        sourceList_.emplace_back(std::move(newSource));
-        JAMI_DBG("Added new source: %s (%s)", name, description);
+        if (it != sourceList_.end()) {
+            // Update existing source
+            it->name = name;
+            it->description = description;
+            JAMI_DEBUG("Updated source: {:s} ({:s})", name, description);
+        } else {
+            // Add new source
+            PwDeviceInfo newSource;
+            newSource.id = id;
+            newSource.name = name;
+            newSource.description = description;
+            // might want to query more properties here, such as channels and sample rate
+            
+            sourceList_.emplace_back(std::move(newSource));
+            JAMI_DEBUG("Added new source: {:s} ({:s})", name, description);
+        }
     }
-
-    // Notify that the device list has changed
+    
+    deviceListCv_.notify_all();
     devicesChanged();
 }
 
@@ -523,7 +556,7 @@ PipeWireLayer::writeToSpeaker(pw_buffer* buf)
 
     uint8_t* data = (uint8_t*)first_buf->data;
     if (!data) {
-        JAMI_WARN("Received null data pointer");
+        JAMI_WARNING("Received null data pointer");
         return;
     }
     auto format = playback_->format();
@@ -531,7 +564,6 @@ PipeWireLayer::writeToSpeaker(pw_buffer* buf)
 
     size_t writableBytes = first_buf->maxsize;
     size_t requestedSamples = buf->requested;
-    JAMI_LOG("writeToSpeaker: writableBytes = {}, requestedSamples = {}", writableBytes, requestedSamples);
     if (requestedSamples == 0) {
         requestedSamples = writableBytes / frameSize;
     }
@@ -594,7 +626,7 @@ PipeWireLayer::ringtoneToSpeaker(pw_buffer* buf)
 
     uint8_t* data = (uint8_t*)first_buf->data;
     if (!data) {
-        JAMI_WARN("Received null data pointer");
+        JAMI_WARNING("Received null data pointer");
         return;
     }
     auto format = ringtone_->format();
@@ -629,17 +661,17 @@ PipeWireLayer::updatePreference(AudioPreference& preference, int index, AudioDev
 
     switch (type) {
     case AudioDeviceType::PLAYBACK:
-        JAMI_DBG("setting %s for playback", devName.c_str());
+        JAMI_DEBUG("setting {:s} for playback", devName);
         preference.setPulseDevicePlayback(devName);
         break;
 
     case AudioDeviceType::CAPTURE:
-        JAMI_DBG("setting %s for capture", devName.c_str());
+        JAMI_DEBUG("setting {:s} for capture", devName);
         preference.setPulseDeviceRecord(devName);
         break;
 
     case AudioDeviceType::RINGTONE:
-        JAMI_DBG("setting %s for ringer", devName.c_str());
+        JAMI_DEBUG("setting {:s} for ringer", devName);
         preference.setPulseDeviceRingtone(devName);
         break;
 
@@ -652,25 +684,34 @@ PipeWireLayer::updatePreference(AudioPreference& preference, int index, AudioDev
 std::string
 PipeWireLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
+    // Index 0 is always "default" (empty string means use system default)
+    if (index == 0) {
+        return "";
+    }
+    
+    // Adjust index to account for "default" at position 0
+    int adjustedIndex = index - 1;
+    
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
     switch (type) {
     case AudioDeviceType::PLAYBACK:
     case AudioDeviceType::RINGTONE:
-        if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
-            JAMI_ERR("Index %d out of range", index);
+        if (adjustedIndex < 0 or static_cast<size_t>(adjustedIndex) >= sinkList_.size()) {
+            JAMI_ERROR("Index {:d} out of range", index);
             return "";
         }
-        return sinkList_[index].name;
+        return sinkList_[adjustedIndex].name;
 
     case AudioDeviceType::CAPTURE:
-        if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
-            JAMI_ERR("Index %d out of range", index);
+        if (adjustedIndex < 0 or static_cast<size_t>(adjustedIndex) >= sourceList_.size()) {
+            JAMI_ERROR("Index {:d} out of range", index);
             return "";
         }
-        return sourceList_[index].name;
+        return sourceList_[adjustedIndex].name;
 
     default:
         // Should never happen
-        JAMI_ERR("Unexpected type");
+        JAMI_ERROR("Unexpected type");
         return "";
     }
 }
@@ -706,20 +747,34 @@ private:
 int
 PipeWireLayer::getAudioDeviceIndex(const std::string& descr, AudioDeviceType type) const
 {
+    // "default" is always at index 0
+    if (descr == "default") {
+        return 0;
+    }
+    
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
+    int foundIndex = -1;
+    
     switch (type) {
     case AudioDeviceType::PLAYBACK:
     case AudioDeviceType::RINGTONE:
-        return std::distance(sinkList_.begin(),
+        foundIndex = std::distance(sinkList_.begin(),
                              std::find_if(sinkList_.begin(),
                                           sinkList_.end(),
                                           DescriptionComparator(descr)));
+        // Add 1 to account for "default" at index 0
+        return (foundIndex < static_cast<int>(sinkList_.size())) ? foundIndex + 1 : 0;
+        
     case AudioDeviceType::CAPTURE:
-        return std::distance(sourceList_.begin(),
+        foundIndex = std::distance(sourceList_.begin(),
                              std::find_if(sourceList_.begin(),
                                           sourceList_.end(),
                                           DescriptionComparator(descr)));
+        // Add 1 to account for "default" at index 0
+        return (foundIndex < static_cast<int>(sourceList_.size())) ? foundIndex + 1 : 0;
+        
     default:
-        JAMI_ERR("Unexpected device type");
+        JAMI_ERROR("Unexpected device type");
         return 0;
     }
 }
@@ -727,22 +782,34 @@ PipeWireLayer::getAudioDeviceIndex(const std::string& descr, AudioDeviceType typ
 int
 PipeWireLayer::getAudioDeviceIndexByName(const std::string& name, AudioDeviceType type) const
 {
-    if (name.empty())
+    // Empty name or "default" means index 0
+    if (name.empty() || name == "default") {
         return 0;
+    }
+    
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
+    int foundIndex = -1;
+    
     switch (type) {
     case AudioDeviceType::PLAYBACK:
     case AudioDeviceType::RINGTONE:
-        return std::distance(sinkList_.begin(),
+        foundIndex = std::distance(sinkList_.begin(),
                              std::find_if(sinkList_.begin(),
                                           sinkList_.end(),
                                           NameComparator(name)));
+        // Add 1 to account for "default" at index 0
+        return (foundIndex < static_cast<int>(sinkList_.size())) ? foundIndex + 1 : 0;
+        
     case AudioDeviceType::CAPTURE:
-        return std::distance(sourceList_.begin(),
+        foundIndex = std::distance(sourceList_.begin(),
                              std::find_if(sourceList_.begin(),
                                           sourceList_.end(),
                                           NameComparator(name)));
+        // Add 1 to account for "default" at index 0
+        return (foundIndex < static_cast<int>(sourceList_.size())) ? foundIndex + 1 : 0;
+        
     default:
-        JAMI_ERR("Unexpected device type");
+        JAMI_ERROR("Unexpected device type");
         return 0;
     }
 }
@@ -771,8 +838,13 @@ PipeWireLayer::getIndexRingtone() const
 std::vector<std::string>
 PipeWireLayer::getCaptureDeviceList() const
 {
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
     std::vector<std::string> names;
-    names.reserve(sourceList_.size());
+    names.reserve(sourceList_.size() + 1);
+    
+    // Add "default" as the first option (index 0), matching PulseAudio behavior
+    names.emplace_back("default");
+    
     for (const auto& s : sourceList_)
         names.emplace_back(s.description);
     return names;
@@ -781,8 +853,13 @@ PipeWireLayer::getCaptureDeviceList() const
 std::vector<std::string>
 PipeWireLayer::getPlaybackDeviceList() const
 {
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
     std::vector<std::string> names;
-    names.reserve(sinkList_.size());
+    names.reserve(sinkList_.size() + 1);
+    
+    // Add "default" as the first option (index 0), matching PulseAudio behavior
+    names.emplace_back("default");
+    
     for (const auto& s : sinkList_)
         names.emplace_back(s.description);
     return names;
