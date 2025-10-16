@@ -164,6 +164,20 @@ AlsaLayer::startStream(AudioDeviceType type)
 }
 
 void
+AlsaLayer::startCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("startCaptureStream not implemented for AlsaLayer");
+}
+
+void
+AlsaLayer::stopCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("stopCaptureStream not implemented for AlsaLayer");
+}
+
+void
 AlsaLayer::stopStream(AudioDeviceType stream)
 {
     std::unique_lock lk(mutex_);
