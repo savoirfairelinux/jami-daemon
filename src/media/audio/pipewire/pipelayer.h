@@ -19,6 +19,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
+#include "audio/pipewire/pipeloopbackcapture.h"
 
 #include <list>
 #include <string>
@@ -54,6 +55,8 @@ public:
     std::vector<std::string> getCaptureDeviceList() const override;
     std::vector<std::string> getPlaybackDeviceList() const override;
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
+    void startCaptureStream(const std::string& id) override;
+    void stopCaptureStream(const std::string& id) override;
     void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     // PipeWire specific methods
@@ -86,6 +89,8 @@ private:
     std::vector<PwDeviceInfo> sinkList_;
     std::vector<PwDeviceInfo> sourceList_;
 
+    LoopbackCapture loopbackCapture_;
+
     // Helper methods
     void createStream(std::unique_ptr<PipeWireStream>& stream, AudioDeviceType type, const PwDeviceInfo& dev_info, std::function<void(pw_buffer* buf)>&& onData);
     void disconnectAudioStream();
@@ -106,12 +111,12 @@ private:
     void writeToSpeaker(pw_buffer* buf);
     void ringtoneToSpeaker(pw_buffer* buf);
 
-    int getAudioDeviceIndex(const std::string& descr, AudioDeviceType type) const;
+    int getAudioDeviceIndex(const std::string& descr, AudioDeviceType type) const override;
     int getAudioDeviceIndexByName(const std::string& name, AudioDeviceType type) const;
 
-    virtual int getIndexCapture() const;
-    virtual int getIndexPlayback() const;
-    virtual int getIndexRingtone() const;
+    virtual int getIndexCapture() const override;
+    virtual int getIndexPlayback() const override;
+    virtual int getIndexRingtone() const override;
 
     //AudioPreference& preference_;
 };

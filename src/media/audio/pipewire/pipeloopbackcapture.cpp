@@ -1,4 +1,4 @@
-#include "pipewire_loopbackcapture.h"
+#include "pipeloopbackcapture.h"
 
 #include "logger.h"
 
