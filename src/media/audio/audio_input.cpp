@@ -179,6 +179,63 @@ AudioInput::readFromFile()
 }
 
 bool
+AudioInput::initCapture(const std::string& device)
+{
+    std::string targetId = device;
+#ifdef _WIN32
+    // There are two possible formats for device:
+    // 1. A string containing "window-id:hwnd=XXXX" where XXXX is the HWND of the window to capture
+    // 2. A string that does not contain a window handle, in which case we capture desktop audio
+    std::string windowIdStr = "window-id:hwnd=";
+    size_t winHandlePos = device.find(windowIdStr);
+    
+    if (winHandlePos != std::string::npos) {
+        // Get HWND from device URI
+        size_t startPos = winHandlePos + windowIdStr.size();
+        size_t endPos = device.find(' ', startPos);
+        if (endPos == std::string::npos) {
+            endPos = device.size();
+        }
+        targetId = device.substr(startPos, endPos - startPos);
+    } else {
+        targetId = "desktop-audio";
+    }
+#elif defined(__linux__)
+    // On Linux, we always capture desktop audio because window audio capture is not yet implemented
+    // Possible to implement window audio capture on X11 specifically in the future, but not Wayland as of now
+    // See https://github.com/flatpak/xdg-desktop-portal/issues/957
+
+    // The way audio capture works on Linux is the following:
+    // - The audio input id (which is the stream ID, e.g "3053892991031547_audio_1") is passed down to the pipewire layer
+    // - The pipewire layer asynchronously captures audio from all output streams except Jami's own audio
+    // - For each application, the captured audio is written to a dedicated ring buffer with the id "<audio input id>_stream_<node_id>"
+    // - These ring buffers are all bound to the rtp session's ring buffer (e.g "3053892991031547_audio_1")
+    // - The rtp session's ring buffer mixes the captured audio streams
+    // - The mixed audio is sent to the remote peer
+    targetId = id_;
+#endif
+
+    devOpts_ = {};
+    devOpts_.input = targetId;
+    devOpts_.channel = format_.nb_channels;
+    devOpts_.framerate = format_.sample_rate;
+
+    captureStreamId_ = targetId;
+
+    deviceGuard_ = Manager::instance().startCaptureStream(targetId);
+    if (!deviceGuard_) {
+        if (!targetId.empty())
+            JAMI_ERROR("Failed to start capture stream for window-id: {}", targetId);
+        else
+            JAMI_ERROR("Failed to start capture stream for desktop audio");
+        return false;
+    }
+    
+    playingDevice_ = true;
+    return true;
+}
+
+bool
 AudioInput::initDevice(const std::string& device)
 {
     devOpts_ = {};
@@ -309,9 +366,15 @@ AudioInput::switchInput(const std::string& resource)
             return {};
 
         const auto suffix = resource_.substr(pos + sep.size());
+        
         bool ready = false;
         if (prefix == libjami::Media::VideoProtocolPrefix::FILE)
             ready = initFile(suffix);
+// Todo: handle audio capture on MacOS
+#if defined(_WIN32) || defined(__linux__)
+    else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY)
+        ready = initCapture(suffix);
+#endif
         else
             ready = initDevice(suffix);
 

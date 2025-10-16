@@ -232,13 +232,11 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     // Mute/un-mute media
     if (mediaAttr->muted_) {
         rtpSession->setMuted(true);
-        // TODO. Setting mute to true should be enough to mute.
-        // Kept for backward compatiblity.
-        rtpSession->setMediaSource("");
     } else {
         rtpSession->setMuted(false);
-        rtpSession->setMediaSource(mediaAttr->sourceUri_);
     }
+
+    rtpSession->setMediaSource(mediaAttr->sourceUri_);
 
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType, bool) {
         // This sends SIP messages on socket, so move to io
@@ -2446,6 +2444,14 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
                      getCallId().c_str(),
                      stream.mediaAttribute_->label_.c_str(),
                      streamIdx);
+            // If new media added to call is audio, bind the associated ring buffer to default one
+            if (stream.mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
+                const std::string streamId = sip_utils::streamId(id_, stream.mediaAttribute_->label_);
+                JAMI_DEBUG("[call:{}] Binding audio stream {} to default ring buffer",
+                         getCallId(),
+                         streamId);
+                Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId);
+            }
         } else {
             updateMediaStream(newAttr, streamIdx);
         }
