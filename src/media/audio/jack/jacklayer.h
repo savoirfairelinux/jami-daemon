@@ -72,6 +72,9 @@ private:
      */
     void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
+    void startCaptureStream(const std::string& id) override;
+    void stopCaptureStream(const std::string& id) override;
+
     /**
      * Stop playback and capture.
      */

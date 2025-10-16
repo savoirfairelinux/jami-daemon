@@ -109,6 +109,20 @@ OpenSLLayer::startStream(AudioDeviceType stream)
 }
 
 void
+OpenSLLayer::startCaptureStream(const std::string& id)
+{
+    (void) id;
+    // JAMI_ERROR("startCaptureStream not implemented for OpenSLLayer");
+}
+
+void
+OpenSLLayer::stopCaptureStream(const std::string& id)
+{
+    (void) id;
+    // JAMI_ERROR("stopCaptureStream not implemented for OpenSLLayer");
+}
+
+void
 OpenSLLayer::stopStream(AudioDeviceType stream)
 {
     std::lock_guard lock(mutex_);

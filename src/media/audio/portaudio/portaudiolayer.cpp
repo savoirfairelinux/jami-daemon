@@ -214,6 +214,20 @@ PortAudioLayer::startStream(AudioDeviceType stream)
 }
 
 void
+PortAudioLayer::startCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("startCaptureStream not implemented for PortAudioLayer");
+}
+
+void
+PortAudioLayer::stopCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("stopCaptureStream not implemented for PortAudioLayer");
+}
+
+void
 PortAudioLayer::stopStream(AudioDeviceType stream)
 {
     std::lock_guard lock(mutex_);

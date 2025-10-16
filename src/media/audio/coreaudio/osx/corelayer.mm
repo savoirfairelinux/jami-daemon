@@ -361,6 +361,20 @@ CoreLayer::startStream(AudioDeviceType stream)
 }
 
 void
+CoreLayer::startCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("startCaptureStream not implemented for CoreLayer");
+}
+
+void
+CoreLayer::stopCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("stopCaptureStream not implemented for CoreLayer");
+}
+
+void
 CoreLayer::destroyAudioLayer()
 {
     AudioOutputUnitStop(ioUnit_);
