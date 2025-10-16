@@ -69,6 +69,9 @@ conf.set10('HAVE_ALSA', depalsa.found())
 deplibpulse = dependency('libpulse', version: '>= 0.9.15', required: get_option('pulseaudio'))
 conf.set10('HAVE_PULSE', deplibpulse.found())
 
+deppipewire = dependency('pipewire-0.3', version: '>= 1.0', required: get_option('pipewire'))
+conf.set10('HAVE_PIPEWIRE', deppipewire.found())
+
 depjack = dependency('jack', required: get_option('jack'))
 conf.set10('HAVE_JACK', depjack.found())
 
