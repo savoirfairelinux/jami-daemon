@@ -559,8 +559,8 @@ PulseLayer::ringtoneToSpeaker()
     }
 }
 
-std::string
-stripEchoSufix(const std::string& deviceName)
+static std::string
+stripEchoSuffix(const std::string& deviceName)
 {
     return std::regex_replace(deviceName, PA_EC_SUFFIX, "");
 }
@@ -646,12 +646,12 @@ PulseLayer::waitForDeviceList()
         playbackDeviceChanged = playback_
                                 and (!playbackInfo->name.empty()
                                      and playbackInfo->name
-                                             != stripEchoSufix(playback_->getDeviceName()));
+                                             != stripEchoSuffix(playback_->getDeviceName()));
 
         auto recordInfo = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
         recordDeviceChanged = record_
                               and (!recordInfo->name.empty()
-                                   and recordInfo->name != stripEchoSufix(record_->getDeviceName()));
+                                   and recordInfo->name != stripEchoSuffix(record_->getDeviceName()));
 
         if (status_ != Status::Started)
             return;
@@ -853,21 +853,21 @@ std::string
 PulseLayer::getPreferredPlaybackDevice() const
 {
     const std::string& device(preference_.getPulseDevicePlayback());
-    return stripEchoSufix(device.empty() ? defaultSink_ : device);
+    return stripEchoSuffix(device.empty() ? defaultSink_ : device);
 }
 
 std::string
 PulseLayer::getPreferredRingtoneDevice() const
 {
     const std::string& device(preference_.getPulseDeviceRingtone());
-    return stripEchoSufix(device.empty() ? defaultSink_ : device);
+    return stripEchoSuffix(device.empty() ? defaultSink_ : device);
 }
 
 std::string
 PulseLayer::getPreferredCaptureDevice() const
 {
     const std::string& device(preference_.getPulseDeviceRecord());
-    return stripEchoSufix(device.empty() ? defaultSource_ : device);
+    return stripEchoSuffix(device.empty() ? defaultSource_ : device);
 }
 
 } // namespace jami
