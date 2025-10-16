@@ -390,10 +390,24 @@ void JackLayer::startStream(AudioDeviceType)
 }
 
 void
+JackLayer::startCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("startCaptureStream not implemented for JackLayer");
+}
+
+void
 JackLayer::onShutdown(void* /* data */)
 {
     JAMI_WARN("JACK server shutdown");
     // FIXME: handle this safely
+}
+
+void
+JackLayer::stopCaptureStream(const std::string& id)
+{
+    (void) id;
+    JAMI_ERROR("stopCaptureStream not implemented for JackLayer");
 }
 
 /**
