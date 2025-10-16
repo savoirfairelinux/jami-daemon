@@ -133,6 +133,8 @@ public:
     std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    virtual void startCaptureStream(const std::string& id);
+    virtual void stopCaptureStream(const std::string& id);
     virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
 private:
