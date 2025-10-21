@@ -217,6 +217,14 @@ std::vector<unsigned> split_string_to_unsigned(std::string_view s, char sep);
 
 void string_replace(std::string& str, const std::string& from, const std::string& to);
 
+/**
+ * Remove the prefix from a string_view if it exists.
+ * @param str The input string_view.
+ * @param prefix The prefix to remove.
+ * @return The string_view without the prefix if it was present, otherwise the original string_view
+ */
+std::string_view string_remove_prefix(std::string_view str, std::string_view prefix);
+
 std::string_view string_remove_suffix(std::string_view str, char separator);
 
 std::string string_join(const std::set<std::string>& set, std::string_view separator = "/");
