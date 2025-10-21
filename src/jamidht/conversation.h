@@ -557,6 +557,8 @@ public:
      */
     std::shared_ptr<Typers> typers() const;
 
+    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
+
 private:
     std::shared_ptr<Conversation> shared() { return std::static_pointer_cast<Conversation>(shared_from_this()); }
     std::shared_ptr<Conversation const> shared() const
