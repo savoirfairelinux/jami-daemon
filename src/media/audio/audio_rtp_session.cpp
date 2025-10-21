@@ -202,6 +202,9 @@ AudioRtpSession::startReceiver()
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
+
+    JAMI_DEBUG("Started audio RTP receiver: input [{}], id [{}]", input_, streamId_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 }
 
 void

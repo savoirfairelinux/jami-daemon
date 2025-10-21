@@ -232,13 +232,11 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     // Mute/un-mute media
     if (mediaAttr->muted_) {
         rtpSession->setMuted(true);
-        // TODO. Setting mute to true should be enough to mute.
-        // Kept for backward compatiblity.
-        rtpSession->setMediaSource("");
     } else {
         rtpSession->setMuted(false);
-        rtpSession->setMediaSource(mediaAttr->sourceUri_);
     }
+
+    rtpSession->setMediaSource(mediaAttr->sourceUri_);
 
     rtpSession->setSuccessfulSetupCb([w = weak()](MediaType, bool) {
         // This sends SIP messages on socket, so move to io

@@ -76,6 +76,7 @@ private:
     void readFromQueue();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
+    bool initCapture(const std::string& device);
     bool createDecoder();
     void frameResized(std::shared_ptr<AudioFrame>&& ptr);
 
