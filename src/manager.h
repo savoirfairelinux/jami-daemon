@@ -146,6 +146,18 @@ public:
     }
 
     /**
+     * Start a capture stream on the given device (eg. a window handle).
+     * If another stream is already using this device, increase its user count and return a guard.
+     * Otherwise, start a new capture stream on the device and return a guard.
+     * @param captureDevice The name of the capture device to use
+     * @return A guard that will stop the capture stream when destroyed
+     */
+    inline std::unique_ptr<AudioDeviceGuard> startCaptureStream(const std::string& captureDevice)
+    {
+        return std::make_unique<AudioDeviceGuard>(*this, captureDevice);
+    }
+
+    /**
      * Place a new call
      * @param accountId the user's account ID
      * @param callee the callee's ID/URI. Depends on the account type.
@@ -909,11 +921,13 @@ class AudioDeviceGuard
 {
 public:
     AudioDeviceGuard(Manager& manager, AudioDeviceType type);
+    AudioDeviceGuard(Manager& manager, const std::string& captureDevice);
     ~AudioDeviceGuard();
 
 private:
     Manager& manager_;
     const AudioDeviceType type_;
+    const std::string captureDevice_;
 };
 
 // Helper to install a callback to be called once by the main event loop

@@ -344,6 +344,10 @@ struct Manager::ManagerPimpl
     std::shared_ptr<AudioLayer> audiodriver_ {nullptr};
     std::array<std::atomic_uint, 3> audioStreamUsers_ {};
 
+    /* Audio device users */
+    std::mutex audioDeviceUsersMutex_ {};
+    std::map<std::string, unsigned> audioDeviceUsers_ {};
+
     // Main thread
     std::unique_ptr<DTMF> dtmfKey_;
 
@@ -2269,12 +2273,38 @@ AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
     }
 }
 
+AudioDeviceGuard::AudioDeviceGuard(Manager& manager, const std::string& captureDevice)
+    : manager_(manager)
+    , type_(AudioDeviceType::CAPTURE)
+    , captureDevice_(captureDevice)
+{
+    std::lock_guard lock(manager_.pimpl_->audioDeviceUsersMutex_);
+    auto& users = manager_.pimpl_->audioDeviceUsers_[captureDevice];
+    if (users++ == 0) {
+        if (auto layer = manager_.getAudioDriver()) {
+            layer->startCaptureStream(captureDevice);
+        }
+    }
+}
+
 AudioDeviceGuard::~AudioDeviceGuard()
 {
-    auto streamId = (unsigned) type_;
-    if (--manager_.pimpl_->audioStreamUsers_[streamId] == 0) {
-        if (auto layer = manager_.getAudioDriver())
-            layer->stopStream(type_);
+    if (captureDevice_.empty()) {
+        auto streamId = (unsigned) type_;
+        if (--manager_.pimpl_->audioStreamUsers_[streamId] == 0) {
+            if (auto layer = manager_.getAudioDriver())
+                layer->stopStream(type_);
+        }
+    } else {
+        std::lock_guard lock(manager_.pimpl_->audioDeviceUsersMutex_);
+        auto it = manager_.pimpl_->audioDeviceUsers_.find(captureDevice_);
+        if (it != manager_.pimpl_->audioDeviceUsers_.end()) {
+            if (--it->second == 0) {
+                if (auto layer = manager_.getAudioDriver())
+                    layer->stopCaptureStream(captureDevice_);
+                manager_.pimpl_->audioDeviceUsers_.erase(it);
+            }
+        }
     }
 }
 

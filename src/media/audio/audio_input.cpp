@@ -25,6 +25,7 @@
 #include "ringbuffer.h"
 #include "ringbufferpool.h"
 #include "tracepoint.h"
+#include "video/video_device.h"
 
 #include <future>
 #include <memory>
@@ -179,6 +180,58 @@ AudioInput::readFromFile()
 }
 
 bool
+AudioInput::initCapture(const std::string& device)
+{
+    std::string targetId = device;
+#if defined(_WIN32)
+    // There are two possible formats for device:
+    // 1. A string containing "window-id:hwnd=XXXX" where XXXX is the HWND of the window to capture
+    // 2. A string that does not contain a window handle, in which case we capture desktop audio
+    std::string windowIdStr = "window-id:hwnd=";
+    size_t winHandlePos = device.find(windowIdStr);
+    
+    if (winHandlePos != std::string::npos) {
+        // Get HWND from device URI
+        size_t startPos = winHandlePos + windowIdStr.size();
+        size_t endPos = device.find(' ', startPos);
+        if (endPos == std::string::npos) {
+            endPos = device.size();
+        }
+        targetId = device.substr(startPos, endPos - startPos);
+    } else {
+        targetId = video::DEVICE_DESKTOP;
+    }
+#elif defined(__linux__)
+    // On Linux, we always capture desktop audio because window audio capture is not yet implemented
+    // Possible to implement window audio capture on X11 specifically in the future, but not Wayland as of now
+    // See https://github.com/flatpak/xdg-desktop-portal/issues/957
+    targetId = video::DEVICE_DESKTOP;
+#elif defined(__APPLE__)
+    // Todo: parse device for macos window capture
+    targetId = video::DEVICE_DESKTOP;
+#endif
+
+    devOpts_ = {};
+    devOpts_.input = targetId;
+    devOpts_.channel = format_.nb_channels;
+    devOpts_.framerate = format_.sample_rate;
+
+    deviceGuard_ = Manager::instance().startCaptureStream(targetId);
+    if (!deviceGuard_) {
+        if (!targetId.empty())
+            JAMI_ERROR("Failed to start capture stream for window-id: {}", targetId);
+        else
+            JAMI_ERROR("Failed to start capture stream for desktop audio");
+        return false;
+    }
+
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, targetId);
+    
+    playingDevice_ = true;
+    return true;
+}
+
+bool
 AudioInput::initDevice(const std::string& device)
 {
     devOpts_ = {};
@@ -309,9 +362,12 @@ AudioInput::switchInput(const std::string& resource)
             return {};
 
         const auto suffix = resource_.substr(pos + sep.size());
+        
         bool ready = false;
         if (prefix == libjami::Media::VideoProtocolPrefix::FILE)
             ready = initFile(suffix);
+        else if (prefix == libjami::Media::VideoProtocolPrefix::DISPLAY)
+            ready = initCapture(suffix);
         else
             ready = initDevice(suffix);
 
