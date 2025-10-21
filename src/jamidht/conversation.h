@@ -91,10 +91,12 @@ struct ConversationRequest
         return m.size() == om.size() && std::equal(m.begin(), m.end(), om.begin());
     }
 
-    bool isOneToOne() const {
+    bool isOneToOne() const
+    {
         try {
             return metadatas.at("mode") == "0";
-        } catch (...) {}
+        } catch (...) {
+        }
         return true;
     }
 
@@ -113,7 +115,8 @@ struct ConvInfo
     ConvInfo() = default;
     ConvInfo(const ConvInfo&) = default;
     ConvInfo(ConvInfo&&) = default;
-    ConvInfo(const std::string& id) : id(id) {};
+    ConvInfo(const std::string& id)
+        : id(id) {};
     explicit ConvInfo(const Json::Value& json);
 
     bool isRemoved() const { return removed >= created; }
@@ -132,10 +135,8 @@ class TransferManager;
 enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk)>;
-using OnLoadMessages
-    = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
-using OnLoadMessages2
-    = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
+using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
+using OnLoadMessages2 = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
 using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
@@ -143,8 +144,7 @@ using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 using DeviceId = dht::PkId;
 using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
-using NeedSocketCb
-    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
+using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
 
 class Conversation : public std::enable_shared_from_this<Conversation>
 {
@@ -152,8 +152,7 @@ public:
     Conversation(const std::shared_ptr<JamiAccount>& account,
                  ConversationMode mode,
                  const std::string& otherMember = "");
-    Conversation(const std::shared_ptr<JamiAccount>& account,
-                 const std::string& conversationId = "");
+    Conversation(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId = "");
     Conversation(const std::shared_ptr<JamiAccount>& account,
                  const std::string& remoteDevice,
                  const std::string& conversationId);
@@ -235,11 +234,10 @@ public:
      * @param filteredRoles    If we want to ignore some roles
      * @return members' uris
      */
-    std::set<std::string> memberUris(
-        std::string_view filter = {},
-        const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
-                                                     MemberRole::LEFT,
-                                                     MemberRole::BANNED}) const;
+    std::set<std::string> memberUris(std::string_view filter = {},
+                                     const std::set<MemberRole>& filteredRoles = {MemberRole::INVITED,
+                                                                                  MemberRole::LEFT,
+                                                                                  MemberRole::BANNED}) const;
 
     /**
      * Get peers to sync with. This is mostly managed by the DRT
@@ -328,10 +326,7 @@ public:
      * @param cb        cf pull()
      * @param commitId  cf pull()
      */
-    void sync(const std::string& member,
-              const std::string& deviceId,
-              OnPullCb&& cb,
-              std::string commitId = "");
+    void sync(const std::string& member, const std::string& deviceId, OnPullCb&& cb, std::string commitId = "");
 
     /**
      * Generate an invitation to send to new contacts
@@ -478,7 +473,8 @@ public:
      * }
      */
     void updateMessageStatus(const std::map<std::string, std::map<std::string, std::string>>& messageStatus);
-    void onMessageStatusChanged(const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb);
+    void onMessageStatusChanged(
+        const std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)>& cb);
     /**
      * Retrieve how many interactions there is from HEAD to interactionId
      * @param toId      "" for getting the whole history
@@ -496,9 +492,7 @@ public:
      * @param flag      To check when search is finished
      * @note triggers messagesFound
      */
-    void search(uint32_t req,
-                const Filter& filter,
-                const std::shared_ptr<std::atomic_int>& flag) const;
+    void search(uint32_t req, const Filter& filter, const std::shared_ptr<std::atomic_int>& flag) const;
     /**
      * Host a conference in the conversation
      * @note the message must have "confId"
@@ -554,7 +548,7 @@ public:
 
     /**
      * @return getAllNodes()    Nodes that are linked to the conversation
-    */
+     */
     std::vector<jami::DeviceId> getDeviceIdList() const;
 
     /**
@@ -563,19 +557,15 @@ public:
      */
     std::shared_ptr<Typers> typers() const;
 
+    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
+
 private:
-    std::shared_ptr<Conversation> shared()
-    {
-        return std::static_pointer_cast<Conversation>(shared_from_this());
-    }
+    std::shared_ptr<Conversation> shared() { return std::static_pointer_cast<Conversation>(shared_from_this()); }
     std::shared_ptr<Conversation const> shared() const
     {
         return std::static_pointer_cast<Conversation const>(shared_from_this());
     }
-    std::weak_ptr<Conversation> weak()
-    {
-        return std::static_pointer_cast<Conversation>(shared_from_this());
-    }
+    std::weak_ptr<Conversation> weak() { return std::static_pointer_cast<Conversation>(shared_from_this()); }
     std::weak_ptr<Conversation const> weak() const
     {
         return std::static_pointer_cast<Conversation const>(shared_from_this());
@@ -587,8 +577,7 @@ private:
      * @param ec
      * @param members       Members to try to connect
      */
-    void checkBootstrapMember(const asio::error_code& ec,
-                              std::vector<std::map<std::string, std::string>> members);
+    void checkBootstrapMember(const asio::error_code& ec, std::vector<std::map<std::string, std::string>> members);
 
     class Impl;
     std::unique_ptr<Impl> pimpl_;
