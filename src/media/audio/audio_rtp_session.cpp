@@ -196,6 +196,9 @@ AudioRtpSession::startReceiver()
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
+
+    // Make the default ring buffer read the audio from the stream
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 }
 
 void
@@ -253,6 +256,9 @@ AudioRtpSession::stop()
         socketPair_->setReadBlockingMode(false);
 
     receiveThread_->stopReceiver();
+
+    // Unbind the default ring buffer from this audio stream
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 
     if (audioInput_)
         audioInput_->detach(sender_.get());
