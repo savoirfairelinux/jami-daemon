@@ -563,6 +563,8 @@ public:
      */
     std::shared_ptr<Typers> typers() const;
 
+    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
+
 private:
     std::shared_ptr<Conversation> shared()
     {
