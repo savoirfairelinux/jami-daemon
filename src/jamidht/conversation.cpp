@@ -1328,6 +1328,12 @@ Conversation::typers() const
     return pimpl_->typers_;
 }
 
+void
+Conversation::announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf)
+{
+    pimpl_->announce(commits, commitFromSelf);
+}
+
 bool
 Conversation::hasSwarmChannel(const std::string& deviceId)
 {
