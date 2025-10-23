@@ -1034,6 +1034,8 @@ ConversationModule::Impl::removeConversationImpl(SyncedConversation& conv, bool 
     conv.info.removed = std::time(nullptr);
     if (isSyncing)
         conv.info.erased = std::time(nullptr);
+    if (conv.fallbackClone)
+        conv.fallbackClone->cancel();
     // Sync now, because it can take some time to really removes the datas
     needsSyncingCb_({});
     addConvInfo(conv.info);
