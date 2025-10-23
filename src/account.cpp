@@ -182,7 +182,7 @@ Account::getVolatileAccountDetails() const
             {libjami::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
 }
 
-std::map<std::string, std::string>
+vCard::utils::VCardData
 Account::getProfileVcard() const
 {
     try {
