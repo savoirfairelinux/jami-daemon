@@ -89,7 +89,6 @@ GTAGS
 nbproject
 *.kdev*
 tools/.vscode/
-.vscode/
 .idea/
 *iml
 .history/
