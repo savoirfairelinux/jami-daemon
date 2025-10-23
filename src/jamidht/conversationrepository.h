@@ -127,7 +127,28 @@ struct ConversationMember
     MSGPACK_DEFINE(uri, role)
 };
 
-enum class CallbackResult { Skip, Break, Ok };
+struct GitDiffDeltaComparator
+{
+    bool operator()(const git_diff_delta* lhs, const git_diff_delta* rhs) const
+    {
+        if (!lhs || !rhs)
+            return lhs < rhs;
+
+        // Compare the old files
+        int old_file_cmp = std::strcmp(lhs->old_file.path, rhs->old_file.path);
+        if (old_file_cmp != 0)
+            return old_file_cmp < 0;
+
+        // Compare the new file
+        return std::strcmp(lhs->new_file.path, rhs->new_file.path);
+    }
+};
+
+enum class CallbackResult {
+    Skip,
+    Break,
+    Ok
+};
 
 using PreConditionCb = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
 using PostConditionCb = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
