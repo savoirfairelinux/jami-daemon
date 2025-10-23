@@ -66,18 +66,14 @@ public:
                             AuthFailureCallback onFailure,
                             const OnChangeCallback& onChange) override;
 
-    void startSync(const OnNewDeviceCb&,
-                   const OnDeviceAnnouncedCb& dcb = {},
-                   bool publishPresence = true) override;
+    void startSync(const OnNewDeviceCb&, const OnDeviceAnnouncedCb& dcb = {}, bool publishPresence = true) override;
 
     bool changePassword(const std::string& password_old, const std::string& password_new) override;
     virtual std::vector<uint8_t> getPasswordKey(const std::string& /*password*/) override;
 
     void syncDevices() override;
 
-    int32_t addDevice(const std::string& uri,
-                      std::string_view auth_scheme,
-                      AuthChannelHandler*) override;
+    int32_t addDevice(const std::string& uri, std::string_view auth_scheme, AuthChannelHandler*) override;
     bool cancelAddDevice(uint32_t token) override;
     bool confirmAddDevice(uint32_t token) override;
 
@@ -85,20 +81,15 @@ public:
                       std::string_view scheme,
                       const std::string& password,
                       RevokeDeviceCallback) override;
-    bool exportArchive(const std::string& destinationPath,
-                       std::string_view scheme,
-                       const std::string& password);
+    bool exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password);
     bool isPasswordValid(const std::string& password) override;
 
-    bool provideAccountAuthentication(const std::string& credentialsFromUser,
-                                      const std::string& scheme);
+    bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& scheme);
 
-#ifdef ENABLE_NAMESERVER
     void registerName(const std::string& name,
                       std::string_view scheme,
                       const std::string& password,
                       RegistrationCallback cb) override;
-#endif
 
     /**
      * Change the validity of a certificate. If hash is empty, update all certificates
@@ -116,7 +107,8 @@ private:
     struct DeviceContextBase;
     struct AddDeviceContext;
     struct LinkDeviceContext;
-    struct AuthContext {
+    struct AuthContext
+    {
         std::mutex mutex;
         std::string accountId;
         uint32_t token;
@@ -139,10 +131,9 @@ private:
     void createAccount(AuthContext& ctx);
     void migrateAccount(AuthContext& ctx);
 
-    std::pair<std::string, std::shared_ptr<dht::Value>> makeReceipt(
-        const dht::crypto::Identity& id,
-        const dht::crypto::Certificate& device,
-        const std::string& ethAccount);
+    std::pair<std::string, std::shared_ptr<dht::Value>> makeReceipt(const dht::crypto::Identity& id,
+                                                                    const dht::crypto::Certificate& device,
+                                                                    const std::string& ethAccount);
     void updateArchive(AccountArchive& content /*, const ContactList& syncData*/) const;
     void saveArchive(AccountArchive& content, std::string_view scheme, const std::string& pwd);
     AccountArchive readArchive(std::string_view scheme, const std::string& password) const;

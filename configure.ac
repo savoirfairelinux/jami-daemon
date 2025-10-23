@@ -437,20 +437,6 @@ AS_IF([test "x$with_dbus" = "xyes"],
   [TESTS= $(check_PROGRAMS)
    AM_CONDITIONAL(RING_DBUS, false)]);
 
-dnl name service is default-enabled
-AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns],
-  [Enable Name Service]))
-AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno")
-AC_DEFINE_UNQUOTED([ENABLE_NAMESERVER],
-  `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`,
-  [Define if you use the Name Service])
-AM_COND_IF([RINGNS],
-  [PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,,
-     AC_MSG_ERROR([Missing libcrypto development files]))
-   PKG_CHECK_MODULES(LIBSSL, libssl,,
-     AC_MSG_ERROR([Missing libssl development files]))],
-  []);
-
 dnl nodejs module
 AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
 AM_CONDITIONAL(ENABLE_NODEJS, [test "x$with_nodejs" = "xyes"])
