@@ -55,6 +55,8 @@ struct AccountInfo
     std::shared_ptr<dht::Value> announce;
     std::string ethAccount;
     std::string username;
+
+    std::string displayName;
     std::string photo;
 };
 
