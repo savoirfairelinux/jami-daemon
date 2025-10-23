@@ -52,7 +52,8 @@ ServerAccountManager::ServerAccountManager(const std::string& accountId,
                                            const std::string& nameServer)
     : AccountManager(accountId, path, nameServer)
     , managerHostname_(managerHostname)
-    , logger_(Logger::dhtLogger()) {}
+    , logger_(Logger::dhtLogger())
+{}
 
 void
 ServerAccountManager::setAuthHeaderFields(Request& request) const
@@ -85,9 +86,10 @@ ServerAccountManager::initAuthentication(PrivateKey key,
     const std::string url = managerHostname_ + PATH_DEVICE;
     JAMI_WARNING("[Account {}] [Auth] Authentication with: {} to {}", accountId_, ctx->credentials->username, url);
 
-    dht::ThreadPool::computation().run([ctx, url, w=weak_from_this()] {
+    dht::ThreadPool::computation().run([ctx, url, w = weak_from_this()] {
         auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-        if (not this_) return;
+        if (not this_)
+            return;
         Json::Value body;
         {
             auto csr = ctx->request.get()->toString();
@@ -100,8 +102,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
             body,
             [ctx, w](Json::Value json, const dht::http::Response& response) {
                 auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-                JAMI_DEBUG("[Auth] Got request callback with status code={}",
-                            response.status_code);
+                JAMI_DEBUG("[Auth] Got request callback with status code={}", response.status_code);
                 if (response.status_code == 0 || this_ == nullptr)
                     ctx->onFailure(AuthError::SERVER_ERROR, "Unable to connect to server");
                 else if (response.status_code >= 400 && response.status_code < 500)
@@ -111,14 +112,14 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                 else {
                     do {
                         try {
-                            JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
-                            auto cert = std::make_shared<dht::crypto::Certificate>(
-                                json["certificateChain"].asString());
+                            JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes",
+                                         this_->accountId_,
+                                         response.body.size());
+                            auto cert = std::make_shared<dht::crypto::Certificate>(json["certificateChain"].asString());
                             auto accountCert = cert->issuer;
                             if (not accountCert) {
-                                JAMI_ERR("[Auth] Unable to parse certificate: no issuer");
-                                ctx->onFailure(AuthError::SERVER_ERROR,
-                                                "Invalid certificate from server");
+                                JAMI_ERROR("[Auth] Unable to parse certificate: no issuer");
+                                ctx->onFailure(AuthError::SERVER_ERROR, "Invalid certificate from server");
                                 break;
                             }
                             auto receipt = json["deviceReceipt"].asString();
@@ -127,17 +128,14 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                             auto receiptReader = std::unique_ptr<Json::CharReader>(
                                 Json::CharReaderBuilder {}.newCharReader());
                             if (!receiptReader->parse(receipt.data(),
-                                                        receipt.data() + receipt.size(),
-                                                        &receiptJson,
-                                                        &err)) {
-                                JAMI_ERR("[Auth] Unable to parse receipt from server: %s",
-                                            err.c_str());
-                                ctx->onFailure(AuthError::SERVER_ERROR,
-                                                "Unable to parse receipt from server");
+                                                      receipt.data() + receipt.size(),
+                                                      &receiptJson,
+                                                      &err)) {
+                                JAMI_ERROR("[Auth] Unable to parse receipt from server: {}", err);
+                                ctx->onFailure(AuthError::SERVER_ERROR, "Unable to parse receipt from server");
                                 break;
                             }
-                            auto receiptSignature = base64::decode(
-                                json["receiptSignature"].asString());
+                            auto receiptSignature = base64::decode(json["receiptSignature"].asString());
 
                             auto info = std::make_unique<AccountInfo>();
                             info->identity.first = ctx->key.get();
@@ -146,24 +144,20 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                             info->deviceId = info->devicePk->getLongId().toString();
                             info->accountId = accountCert->getId().toString();
                             info->contacts = std::make_unique<ContactList>(ctx->accountId,
-                                                                            accountCert,
-                                                                            this_->path_,
-                                                                            this_->onChange_);
+                                                                           accountCert,
+                                                                           this_->path_,
+                                                                           this_->onChange_);
                             // info->contacts->setContacts(a.contacts);
                             if (ctx->deviceName.empty())
                                 ctx->deviceName = info->deviceId.substr(8);
-                            info->contacts->foundAccountDevice(cert,
-                                                                ctx->deviceName,
-                                                                clock::now());
+                            info->contacts->foundAccountDevice(cert, ctx->deviceName, clock::now());
                             info->ethAccount = receiptJson["eth"].asString();
-                            info->announce
-                                = parseAnnounce(receiptJson["announce"].asString(),
-                                                info->accountId,
-                                                info->devicePk->getId().toString(),
-                                                info->devicePk->getLongId().toString());
+                            info->announce = parseAnnounce(receiptJson["announce"].asString(),
+                                                           info->accountId,
+                                                           info->devicePk->getId().toString(),
+                                                           info->devicePk->getLongId().toString());
                             if (not info->announce) {
-                                ctx->onFailure(AuthError::SERVER_ERROR,
-                                                "Unable to parse announce from server");
+                                ctx->onFailure(AuthError::SERVER_ERROR, "Unable to parse announce from server");
                                 return;
                             }
                             info->username = ctx->credentials->username;
@@ -178,22 +172,25 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                     if (!nameServer.empty() && nameServer[0] == '/')
                                         nameServer = this_->managerHostname_ + nameServer;
                                     this_->nameDir_ = NameDirectory::instance(nameServer);
-                                    config
-                                        .emplace(libjami::Account::ConfProperties::Nameserver::URI,
-                                                    std::move(nameServer));
+                                    config.emplace(libjami::Account::ConfProperties::Nameserver::URI,
+                                                   std::move(nameServer));
                                 } else if (name == "userPhoto"sv) {
                                     this_->info_->photo = json["userPhoto"].asString();
+                                } else if (name == libjami::Account::ConfProperties::DISPLAYNAME) {
+                                    this_->info_->displayName = json[libjami::Account::ConfProperties::DISPLAYNAME].asString();
                                 } else {
                                     config.emplace(name, itr->asString());
                                 }
                             }
 
                             ctx->onSuccess(*this_->info_,
-                                            std::move(config),
-                                            std::move(receipt),
-                                            std::move(receiptSignature));
+                                           std::move(config),
+                                           std::move(receipt),
+                                           std::move(receiptSignature));
                         } catch (const std::exception& e) {
-                            JAMI_ERROR("[Account {}] [Auth] Error when loading account: {}", this_->accountId_, e.what());
+                            JAMI_ERROR("[Account {}] [Auth] Error when loading account: {}",
+                                       this_->accountId_,
+                                       e.what());
                             ctx->onFailure(AuthError::NETWORK, "");
                         }
                     } while (false);
@@ -209,21 +206,24 @@ ServerAccountManager::initAuthentication(PrivateKey key,
 }
 
 void
-ServerAccountManager::onAuthEnded(const Json::Value& json,
-                                  const dht::http::Response& response,
-                                  TokenScope expectedScope)
+ServerAccountManager::onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope expectedScope)
 {
     if (response.status_code >= 200 && response.status_code < 300) {
         auto scopeStr = json["scope"].asString();
-        auto scope = scopeStr == "DEVICE"sv
-                         ? TokenScope::Device
-                         : (scopeStr == "USER"sv ? TokenScope::User : TokenScope::None);
+        auto scope = scopeStr == "DEVICE"sv ? TokenScope::Device
+                                            : (scopeStr == "USER"sv ? TokenScope::User : TokenScope::None);
         auto expires_in = json["expires_in"].asLargestUInt();
         auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
-        JAMI_WARNING("[Account {}] [Auth] Got server response: {} ({} bytes)", accountId_, response.status_code, response.body.size());
+        JAMI_WARNING("[Account {}] [Auth] Got server response: {} ({} bytes)",
+                     accountId_,
+                     response.status_code,
+                     response.body.size());
         setToken(json["access_token"].asString(), scope, expiration);
     } else {
-        JAMI_WARNING("[Account {}] [Auth] Got server response: {} ({} bytes)", accountId_, response.status_code, response.body.size());
+        JAMI_WARNING("[Account {}] [Auth] Got server response: {} ({} bytes)",
+                     accountId_,
+                     response.status_code,
+                     response.body.size());
         authFailed(expectedScope, response.status_code);
     }
     clearRequest(response.request);
@@ -241,7 +241,7 @@ ServerAccountManager::authenticateDevice()
         *Manager::instance().ioContext(),
         url,
         Json::Value {Json::objectValue},
-        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock()))
                 this_->onAuthEnded(json, response, TokenScope::Device);
         },
@@ -260,7 +260,7 @@ ServerAccountManager::authenticateAccount(const std::string& username, const std
         *Manager::instance().ioContext(),
         url,
         Json::Value {Json::objectValue},
-        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock()))
                 this_->onAuthEnded(json, response, TokenScope::User);
         },
@@ -283,7 +283,7 @@ ServerAccountManager::sendRequest(const std::shared_ptr<dht::http::Request>& req
 void
 ServerAccountManager::clearRequest(const std::weak_ptr<dht::http::Request>& request)
 {
-    asio::post(*Manager::instance().ioContext(), [w=weak_from_this(), request] {
+    asio::post(*Manager::instance().ioContext(), [w = weak_from_this(), request] {
         if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock())) {
             if (auto req = request.lock()) {
                 std::lock_guard lock(this_->requestLock_);
@@ -301,13 +301,10 @@ ServerAccountManager::authFailed(TokenScope scope, int code)
         std::lock_guard lock(tokenLock_);
         requests = std::move(getRequestQueue(scope));
     }
-    JAMI_DEBUG("[Auth] Failed auth with scope {}, ending {} pending requests",
-             (int) scope,
-             requests.size());
+    JAMI_DEBUG("[Auth] Failed auth with scope {}, ending {} pending requests", (int) scope, requests.size());
     if (code == 401) {
-        // NOTE: we do not login every time to the server but retrieve a device token to use the account
-        // If authentificate device fails with 401
-        // it means that the device is revoked
+        // NOTE: we do not login every time to the server but retrieve a device token to use the
+        // account If authentificate device fails with 401 it means that the device is revoked
         if (onNeedsMigration_)
             onNeedsMigration_();
     }
@@ -333,9 +330,7 @@ ServerAccountManager::authError(TokenScope scope)
 }
 
 void
-ServerAccountManager::setToken(std::string token,
-                               TokenScope scope,
-                               std::chrono::steady_clock::time_point expiration)
+ServerAccountManager::setToken(std::string token, TokenScope scope, std::chrono::steady_clock::time_point expiration)
 {
     std::lock_guard lock(tokenLock_);
     token_ = std::move(token);
@@ -346,9 +341,9 @@ ServerAccountManager::setToken(std::string token,
     if (not token_.empty() and scope != TokenScope::None) {
         auto& reqQueue = getRequestQueue(scope);
         JAMI_DEBUG("[Account {}] [Auth] Got token with scope {}, handling {} pending requests",
-                 accountId_,
-                 (int) scope,
-                 reqQueue.size());
+                   accountId_,
+                   (int) scope,
+                   reqQueue.size());
         while (not reqQueue.empty()) {
             auto req = std::move(reqQueue.front());
             reqQueue.pop();
@@ -374,8 +369,7 @@ ServerAccountManager::sendDeviceRequest(const std::shared_ptr<dht::http::Request
 }
 
 void
-ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req,
-                                         const std::string& pwd)
+ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req, const std::string& pwd)
 {
     std::lock_guard lock(tokenLock_);
     if (hasAuthorization(TokenScope::User)) {
@@ -406,17 +400,21 @@ ServerAccountManager::syncDevices()
         *Manager::instance().ioContext(),
         urlConversations,
         jsonConversations,
-        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
+            if (!this_)
+                return;
             JAMI_DEBUG("[Account {}] [Auth] Got conversation sync request callback with status code={}",
-                         this_->accountId_,
-                         response.status_code);
+                       this_->accountId_,
+                       response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
+                    JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes",
+                                 this_->accountId_,
+                                 response.body.size());
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array", this_->accountId_);
+                        JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array",
+                                   this_->accountId_);
                     } else {
                         SyncMsg convs;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
@@ -424,7 +422,7 @@ ServerAccountManager::syncDevices()
                             auto ci = ConvInfo(e);
                             convs.c[ci.id] = std::move(ci);
                         }
-                        dht::ThreadPool::io().run([accountId=this_->accountId_, convs] {
+                        dht::ThreadPool::io().run([accountId = this_->accountId_, convs] {
                             if (auto acc = Manager::instance().getAccount<JamiAccount>(accountId)) {
                                 acc->convModule()->onSyncData(convs, "", "");
                             }
@@ -450,16 +448,20 @@ ServerAccountManager::syncDevices()
         *Manager::instance().ioContext(),
         urlConversationsRequests,
         jsonConversationsRequests,
-        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
-            JAMI_DEBUG("[Account {}] [Auth] Got conversations requests sync request callback with status code={}",
-                            this_->accountId_, response.status_code);
+            if (!this_)
+                return;
+            JAMI_DEBUG("[Account {}] [Auth] Got conversations requests sync request callback with "
+                       "status code={}",
+                       this_->accountId_,
+                       response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARNING("[Account {}] [Auth] Got server response: {}", this_->accountId_, response.body);
                     if (not json.isArray()) {
-                        JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array", this_->accountId_);
+                        JAMI_ERROR("[Account {}] [Auth] Unable to parse server response: not an array",
+                                   this_->accountId_);
                     } else {
                         SyncMsg convReqs;
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
@@ -467,14 +469,16 @@ ServerAccountManager::syncDevices()
                             auto cr = ConversationRequest(e);
                             convReqs.cr[cr.conversationId] = std::move(cr);
                         }
-                        dht::ThreadPool::io().run([accountId=this_->accountId_, convReqs] {
+                        dht::ThreadPool::io().run([accountId = this_->accountId_, convReqs] {
                             if (auto acc = Manager::instance().getAccount<JamiAccount>(accountId)) {
                                 acc->convModule()->onSyncData(convReqs, "", "");
                             }
                         });
                     }
                 } catch (const std::exception& e) {
-                    JAMI_ERROR("[Account {}] Error when iterating conversations requests list: {}", this_->accountId_, e.what());
+                    JAMI_ERROR("[Account {}] Error when iterating conversations requests list: {}",
+                               this_->accountId_,
+                               e.what());
                 }
             } else if (response.status_code == 401)
                 this_->authError(TokenScope::Device);
@@ -494,22 +498,25 @@ ServerAccountManager::syncDevices()
         *Manager::instance().ioContext(),
         urlContacts,
         jsonContacts,
-        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
+            if (!this_)
+                return;
             JAMI_DEBUG("[Account {}] [Auth] Got contact sync request callback with status code={}",
-                this_->accountId_, response.status_code);
+                       this_->accountId_,
+                       response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
+                    JAMI_WARNING("[Account {}] [Auth] Got server response: {} bytes",
+                                 this_->accountId_,
+                                 response.body.size());
                     if (not json.isArray()) {
                         JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
                         for (unsigned i = 0, n = json.size(); i < n; i++) {
                             const auto& e = json[i];
                             Contact contact(e);
-                            this_->info_->contacts
-                                ->updateContact(dht::InfoHash {e["uri"].asString()}, contact);
+                            this_->info_->contacts->updateContact(dht::InfoHash {e["uri"].asString()}, contact);
                         }
                         this_->info_->contacts->saveContacts();
                     }
@@ -527,13 +534,18 @@ ServerAccountManager::syncDevices()
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlDevices,
-        [w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
-            JAMI_DEBUG("[Account {}] [Auth] Got request callback with status code={}", this_->accountId_, response.status_code);
+            if (!this_)
+                return;
+            JAMI_DEBUG("[Account {}] [Auth] Got request callback with status code={}",
+                       this_->accountId_,
+                       response.status_code);
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    JAMI_LOG("[Account {}] [Auth] Got server response: {} bytes", this_->accountId_, response.body.size());
+                    JAMI_LOG("[Account {}] [Auth] Got server response: {} bytes",
+                             this_->accountId_,
+                             response.body.size());
                     if (not json.isArray()) {
                         JAMI_ERROR("[Auth] Unable to parse server response: not an array");
                     } else {
@@ -541,15 +553,14 @@ ServerAccountManager::syncDevices()
                             const auto& e = json[i];
                             const bool revoked = e["revoked"].asBool();
                             dht::PkId deviceId(e["deviceId"].asString());
-                            if(!deviceId){
+                            if (!deviceId) {
                                 continue;
                             }
                             if (!revoked) {
                                 this_->info_->contacts->foundAccountDevice(deviceId,
-                                                                            e["alias"].asString(),
-                                                                            clock::now());
-                            }
-                            else {
+                                                                           e["alias"].asString(),
+                                                                           clock::now());
+                            } else {
                                 this_->info_->contacts->removeAccountDevice(deviceId);
                             }
                         }
@@ -574,10 +585,11 @@ ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         urlBlueprints,
-        [syncBlueprintCallback, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [syncBlueprintCallback, w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DEBUG("[Auth] Got sync request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
+            if (!this_)
+                return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     std::map<std::string, std::string> config;
@@ -598,7 +610,8 @@ ServerAccountManager::syncBlueprintConfig(SyncBlueprintCallback onSuccess)
 
 bool
 ServerAccountManager::revokeDevice(const std::string& device,
-                                   std::string_view scheme, const std::string& password,
+                                   std::string_view scheme,
+                                   const std::string& password,
                                    RevokeDeviceCallback cb)
 {
     if (not info_ || scheme != fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD) {
@@ -611,10 +624,11 @@ ServerAccountManager::revokeDevice(const std::string& device,
     auto request = std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
-        [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [cb, w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DEBUG("[Revoke] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
+            if (!this_)
+                return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     JAMI_WARNING("[Revoke] Got server response");
@@ -637,7 +651,10 @@ ServerAccountManager::revokeDevice(const std::string& device,
 }
 
 void
-ServerAccountManager::registerName(const std::string& name, std::string_view scheme, const std::string&, RegistrationCallback cb)
+ServerAccountManager::registerName(const std::string& name,
+                                   std::string_view scheme,
+                                   const std::string&,
+                                   RegistrationCallback cb)
 {
     cb(NameDirectory::RegistrationResponse::unsupported, name);
 }
@@ -650,10 +667,11 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
     sendDeviceRequest(std::make_shared<Request>(
         *Manager::instance().ioContext(),
         url,
-        [cb, w=weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [cb, w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
             JAMI_DEBUG("[Search] Got request callback with status code={}", response.status_code);
             auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock());
-            if (!this_) return;
+            if (!this_)
+                return;
             if (response.status_code >= 200 && response.status_code < 300) {
                 try {
                     const auto& profiles = json["profiles"];
