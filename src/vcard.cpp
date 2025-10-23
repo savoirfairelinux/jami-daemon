@@ -16,15 +16,21 @@
  */
 #include "vcard.h"
 #include "string_utils.h"
+#include "fileutils.h"
 
+#include <fstream>
+#include <filesystem>
+#include <map>
+
+namespace jami {
 namespace vCard {
 
 namespace utils {
 
-std::map<std::string, std::string>
+VCardData
 toMap(std::string_view content)
 {
-    std::map<std::string, std::string> vCard;
+    VCardData vCard;
 
     std::string_view line;
     while (jami::getline(content, line)) {
@@ -38,7 +44,7 @@ toMap(std::string_view content)
     return vCard;
 }
 
-std::map<std::string, std::string>
+VCardData
 initVcard()
 {
     return {
@@ -48,9 +54,8 @@ initVcard()
     };
 }
 
-
 std::string
-toString(const std::map<std::string, std::string>& vCard)
+toString(const VCardData& vCard)
 {
     size_t estimatedSize = 0;
     for (const auto& [key, value] : vCard) {
@@ -59,7 +64,8 @@ toString(const std::map<std::string, std::string>& vCard)
         estimatedSize += key.size() + value.size() + 2;
     }
     std::string result;
-    result.reserve(estimatedSize + Delimiter::BEGIN_TOKEN.size() + Delimiter::END_LINE_TOKEN.size() + Delimiter::END_TOKEN.size() + Delimiter::END_LINE_TOKEN.size());
+    result.reserve(estimatedSize + Delimiter::BEGIN_TOKEN.size() + Delimiter::END_LINE_TOKEN.size()
+                   + Delimiter::END_TOKEN.size() + Delimiter::END_LINE_TOKEN.size());
 
     result += Delimiter::BEGIN_TOKEN;
     result += Delimiter::END_LINE_TOKEN;
@@ -77,8 +83,22 @@ toString(const std::map<std::string, std::string>& vCard)
 }
 
 void
-removeByKey(std::map<std::string, std::string>& vCard, std::string_view key) {
-    for (auto it = vCard.begin(); it != vCard.end(); ) {
+save(const VCardData& vCard, const std::filesystem::path& path, const std::filesystem::path& pathLink)
+{
+    std::filesystem::path tmpPath = path + std::filesystem::path(".tmp");
+    std::ofstream file(tmpPath);
+    if (file.is_open()) {
+        file << vCard::utils::toString(vCard);
+        file.close();
+        std::filesystem::rename(tmpPath, path);
+        fileutils::createFileLink(pathLink, path, true);
+    }
+}
+
+void
+removeByKey(VCardData& vCard, std::string_view key)
+{
+    for (auto it = vCard.begin(); it != vCard.end();) {
         if (jami::starts_with(it->first, key)) {
             it = vCard.erase(it);
         } else {
@@ -89,3 +109,4 @@ removeByKey(std::map<std::string, std::string>& vCard, std::string_view key) {
 
 } // namespace utils
 } // namespace vCard
+} // namespace jami

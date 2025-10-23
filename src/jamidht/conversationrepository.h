@@ -15,15 +15,16 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "def.h"
+#include "vcard.h"
+
+#include <opendht/default_types.h>
+#include <git2.h>
 
 #include <optional>
-#include <git2.h>
 #include <memory>
-#include <opendht/default_types.h>
 #include <string>
 #include <vector>
-
-#include "def.h"
 
 using GitPackBuilder = std::unique_ptr<git_packbuilder, decltype(&git_packbuilder_free)>;
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
@@ -420,8 +421,7 @@ public:
      * @return infos
      */
     std::map<std::string, std::string> infos() const;
-    static std::map<std::string, std::string> infosFromVCard(
-        std::map<std::string, std::string>&& details);
+    static std::map<std::string, std::string> infosFromVCard(vCard::utils::VCardData&& details);
 
     /**
      * Convert ConversationCommit to MapStringString for the client
