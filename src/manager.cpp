@@ -1398,7 +1398,7 @@ Manager::addSubCall(Call& call, Conference& conference)
 void
 Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
-    conf.attachHost();
+    conf.attachHost({});
     emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(),
                                                        conf.getConfId(),
                                                        conf.getStateStr());
@@ -1487,7 +1487,8 @@ Manager::joinParticipant(const std::string& accountId,
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    std::vector<libjami::MediaMap> mediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttr);
+    conf->attachHost(mediaList);
     account->attach(conf);
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
                                                        "",
@@ -1528,7 +1529,7 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     }
 
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    conf->attachHost({});
 
     unsigned successCounter = 0;
     for (const auto& numberaccount : participantList) {

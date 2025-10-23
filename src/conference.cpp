@@ -682,7 +682,6 @@ Conference::addSubCall(const std::string& callId)
 {
     JAMI_DEBUG("Adding call {:s} to conference {:s}", callId, id_);
 
-
     jami_tracepoint(conference_add_participant, id_.c_str(), callId.c_str());
 
     {
@@ -922,11 +921,13 @@ Conference::createSinks(const ConfInfo& infos)
 void
 Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_LOG("Attach local participant to conference {}", id_);
+    JAMI_LOG("Attaching host to conference {}", id_);
 
     if (getState() == State::ACTIVE_DETACHED) {
         setState(State::ACTIVE_ATTACHED);
         if (mediaList.empty()) {
+            JAMI_DEBUG("[conf {:s}] No media list provided, initializing sources for host",
+                       getConfId());
             initSourcesForHost();
             bindHostAudio();
 #ifdef ENABLE_VIDEO
