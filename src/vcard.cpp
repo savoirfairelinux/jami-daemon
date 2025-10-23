@@ -16,15 +16,22 @@
  */
 #include "vcard.h"
 #include "string_utils.h"
+#include "fileutils.h"
+#include "logger.h"
 
+#include <fstream>
+#include <filesystem>
+#include <map>
+
+namespace jami {
 namespace vCard {
 
 namespace utils {
 
-std::map<std::string, std::string>
+VCardData
 toMap(std::string_view content)
 {
-    std::map<std::string, std::string> vCard;
+    VCardData vCard;
 
     std::string_view line;
     while (jami::getline(content, line)) {
@@ -38,7 +45,7 @@ toMap(std::string_view content)
     return vCard;
 }
 
-std::map<std::string, std::string>
+VCardData
 initVcard()
 {
     return {
@@ -50,7 +57,7 @@ initVcard()
 
 
 std::string
-toString(const std::map<std::string, std::string>& vCard)
+toString(const VCardData& vCard)
 {
     size_t estimatedSize = 0;
     for (const auto& [key, value] : vCard) {
@@ -76,8 +83,20 @@ toString(const std::map<std::string, std::string>& vCard)
     return result;
 }
 
+void save(const VCardData& vCard, const std::filesystem::path& path, const std::filesystem::path& pathLink)
+{
+    std::filesystem::path tmpPath = path + std::string_view(".tmp");
+    std::ofstream file(tmpPath);
+    if (file.is_open()) {
+        file << vCard::utils::toString(vCard);
+        file.close();
+        std::filesystem::rename(tmpPath, path);
+        fileutils::createFileLink(pathLink, path, true);
+    }
+}
+
 void
-removeByKey(std::map<std::string, std::string>& vCard, std::string_view key) {
+removeByKey(VCardData& vCard, std::string_view key) {
     for (auto it = vCard.begin(); it != vCard.end(); ) {
         if (jami::starts_with(it->first, key)) {
             it = vCard.erase(it);
@@ -89,3 +108,5 @@ removeByKey(std::map<std::string, std::string>& vCard, std::string_view key) {
 
 } // namespace utils
 } // namespace vCard
+} // namespace jami
+

@@ -32,6 +32,7 @@
 #include "compiler_intrinsics.h" // include the "UNUSED" macro
 #include "call_set.h"
 #include "account_config.h"
+#include "vcard.h"
 
 #include <dhtnet/ip_utils.h>
 #include <dhtnet/upnp/upnp_control.h>
@@ -218,7 +219,7 @@ public:
 
     virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/, const std::string& /*fileType*/, int32_t /*flag*/) = 0;
 
-    std::map<std::string, std::string> getProfileVcard() const;
+    vCard::utils::VCardData getProfileVcard() const;
 
     /**
      * Return the status corresponding to the token.
