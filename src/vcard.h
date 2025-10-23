@@ -19,7 +19,9 @@
 #include <string>
 #include <string_view>
 #include <map>
+#include <filesystem>
 
+namespace jami {
 namespace vCard {
 
 struct Delimiter
@@ -82,16 +84,21 @@ struct Value
 };
 
 namespace utils {
+
+using VCardData = std::map<std::string, std::string, std::less<>>;
+
 /**
  * Payload to vCard
  * @param content payload
  * @return the vCard representation
  */
-std::map<std::string, std::string> toMap(std::string_view content);
-std::map<std::string, std::string> initVcard();
-std::string toString(const std::map<std::string, std::string>& vCard);
-void removeByKey(std::map<std::string, std::string>& vCard, std::string_view key);
+VCardData toMap(std::string_view content);
+VCardData initVcard();
+std::string toString(const VCardData& vCard);
+void removeByKey(VCardData& vCard, std::string_view key);
+void save(const VCardData& vCard, const std::filesystem::path& path, const std::filesystem::path& pathLink);
 
 } // namespace utils
 
 } // namespace vCard
+} // namespace jami
