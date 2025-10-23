@@ -4119,7 +4119,7 @@ ConversationRepository::infos() const
 }
 
 std::map<std::string, std::string>
-ConversationRepository::infosFromVCard(std::map<std::string, std::string>&& details)
+ConversationRepository::infosFromVCard(vCard::utils::VCardData&& details)
 {
     std::map<std::string, std::string> result;
     for (auto&& [k, v] : details) {
