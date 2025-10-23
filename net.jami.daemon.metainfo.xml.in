@@ -53,11 +53,11 @@
  </description>
 
  <url type="homepage">https://jami.net/</url>
- <url type="bugtracker">https://git.jami.net/savoirfairelinux/ring-daemon/issues/</url>
- <url type="faq">https://jami.net/help/</url>
- <url type="help">https://git.jami.net/savoirfairelinux/jami-project/-/wikis/home</url>
- <url type="donation">https://www.paypal.com/donate/?hosted_button_id=MGUDJLQZ4TP5W</url>
- <url type="translate">https://www.transifex.com/savoirfairelinux/jami</url>
+ <url type="bugtracker">https://git.jami.net/savoirfairelinux/jami-daemon/issues</url>
+ <url type="faq">https://docs.jami.net/user/faq.html</url>
+ <url type="help">https://forum.jami.net/</url>
+ <url type="donation">https://jami.net/donate/</url>
+ <url type="translate">https://explore.transifex.com/savoirfairelinux/</url>
 
  <provides>
 @PROVIDES_CONTENT@
