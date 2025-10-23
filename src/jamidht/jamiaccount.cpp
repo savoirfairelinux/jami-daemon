@@ -1440,9 +1440,21 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                     if (migrating) {
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
-                    if (not info.photo.empty() or not config_->displayName.empty())
-                        emitSignal<libjami::ConfigurationSignal::AccountProfileReceived>(
-                            getAccountID(), config_->displayName, info.photo);
+                    if (not info.photo.empty() or not info.displayName.empty()) {
+                        try {
+                            auto newProfile = vCard::utils::initVcard();
+                            newProfile[std::string(vCard::Property::FORMATTED_NAME)] = info.displayName;
+                            newProfile[std::string(vCard::Property::PHOTO)] = info.photo;
+                            const auto& profiles = idPath_ / "profiles";
+                            const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(info.accountId));
+                            vCard::utils::save(newProfile, vCardPath, profilePath());
+                            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(
+                                getAccountID(), info.accountId, profilePath().string());
+                        } catch (const std::exception& e) {
+                            JAMI_WARNING("[Account {}] Unable to save profile after authentication: {}",
+                                         getAccountID(), e.what());
+                        }
+                    }
                     setRegistrationState(RegistrationState::UNREGISTERED);
                     doRegister();
                 },
@@ -3598,7 +3610,7 @@ JamiAccount::updateProfile(const std::string& displayName,
         profile = vCard::utils::initVcard();
     }
 
-    profile["FN"] = displayName;
+    profile[std::string(vCard::Property::FORMATTED_NAME)] = displayName;
     editConfig([&](JamiAccountConfig& config) { config.displayName = displayName; });
     emitSignal<libjami::ConfigurationSignal::AccountDetailsChanged>(getAccountID(),
                                                                     getAccountDetails());
@@ -3606,7 +3618,7 @@ JamiAccount::updateProfile(const std::string& displayName,
     if (!fileType.empty()) {
         const std::string& key = "PHOTO;ENCODING=BASE64;TYPE=" + fileType;
         if (flag == 0) {
-            vCard::utils::removeByKey(profile, "PHOTO");
+            vCard::utils::removeByKey(profile, vCard::Property::PHOTO);
             const auto& avatarPath = std::filesystem::path(avatar);
             if (std::filesystem::exists(avatarPath)) {
                 try {
@@ -3616,28 +3628,19 @@ JamiAccount::updateProfile(const std::string& displayName,
                 }
             }
         } else if (flag == 1) {
-            vCard::utils::removeByKey(profile, "PHOTO");
+            vCard::utils::removeByKey(profile, vCard::Property::PHOTO);
             profile[key] = avatar;
         }
     }
     if (flag == 2) {
-        vCard::utils::removeByKey(profile, "PHOTO");
+        vCard::utils::removeByKey(profile, vCard::Property::PHOTO);
     }
     try {
-        std::filesystem::path tmpPath = vCardPath.string() + ".tmp";
-        std::ofstream file(tmpPath);
-        if (file.is_open()) {
-            file << vCard::utils::toString(profile);
-            file.close();
-            std::filesystem::rename(tmpPath, vCardPath);
-            fileutils::createFileLink(path, vCardPath, true);
-            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
-                                                                      accountUri,
-                                                                      path.string());
-            sendProfileToPeers();
-        } else {
-            JAMI_ERROR("Unable to open file for writing: {}", tmpPath.string());
-        }
+        vCard::utils::save(profile, vCardPath, path);
+        emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
+                                                                    accountUri,
+                                                                    path.string());
+        sendProfileToPeers();
     } catch (const std::exception& e) {
         JAMI_ERROR("Error writing profile: {}", e.what());
     }
