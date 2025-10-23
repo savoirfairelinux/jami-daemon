@@ -3216,7 +3216,6 @@ ConversationModule::call(
 
     if (!sendCallRequest || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {
         confId = confId == "0" ? Manager::instance().callFactory.getNewCallID() : confId;
-        // TODO attach host with media list
         hostConference(conversationId, confId, "", mediaMap);
         return {};
     }
