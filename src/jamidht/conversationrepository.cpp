@@ -27,6 +27,8 @@
 #include "vcard.h"
 #include "json_utils.h"
 
+#include <algorithm>
+#include <iterator>
 #include <ctime>
 #include <fstream>
 #include <future>
@@ -34,6 +36,7 @@
 #include <regex>
 #include <exception>
 #include <optional>
+#include <git2/diff.h>
 
 using namespace std::string_view_literals;
 constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
@@ -227,6 +230,8 @@ public:
     bool checkValidProfileUpdate(const std::string& userDevice,
                                  const std::string& commitid,
                                  const std::string& parentId) const;
+    bool checkValidMergeCommit(const std::string& mergeId, const std::vector<std::string>& parents) const;
+    std::optional<std::set<std::string_view>> getDeltaPathsFromDiff(const GitDiff& diff) const;
 
     bool add(const std::string& path);
     void addUserDevice();
@@ -1654,6 +1659,118 @@ ConversationRepository::Impl::checkValidProfileUpdate(const std::string& userDev
     return true;
 }
 
+/**
+ * @brief Get the deltas from a git diff
+ * @param diff The diff object to extract deltas from
+ * @return The set of git_diff deltas extracted from the diff
+ */
+std::optional<std::set<std::string_view>>
+ConversationRepository::Impl::getDeltaPathsFromDiff(const GitDiff& diff) const
+{
+    std::set<std::string_view> deltas_set = {};
+    for (size_t delta_idx = 0, delta_count = git_diff_num_deltas(diff.get()); delta_idx < delta_count; delta_idx++) {
+        const git_diff_delta* delta = git_diff_get_delta(diff.get(), delta_idx);
+        if (!delta) {
+            JAMI_LOG("[Account {}] [Conversation {}] Index of delta out of range!", accountId_, id_);
+            return std::nullopt;
+        }
+
+        deltas_set.emplace(std::string_view(delta->old_file.path));
+        deltas_set.emplace(std::string_view(delta->new_file.path));
+    }
+    return deltas_set;
+}
+
+/**
+ * @brief Validate the merge commit by ensuring the absence of invalid files
+ * @param mergeId The id of the merge commit
+ * @param parents The two commit IDs of parent's of the merge commit
+ * @return bool Whether or not invalid files were found in the merge commit
+ */
+bool
+ConversationRepository::Impl::checkValidMergeCommit(const std::string& mergeId,
+                                                    const std::vector<std::string>& parents) const
+{
+    // Get the repository associated with this implementation
+    auto repo = repository();
+    if (!repo)
+        return false;
+
+    // Check for exactly two parents
+    if (static_cast<int>(parents.size()) != 2)
+        return false;
+
+    // Get the tree of the merge commit
+    GitTree merge_commit_tree = treeAtCommit(repo.get(), mergeId);
+
+    // Get the diff of the merge commit and the first parent
+    GitTree first_tree = treeAtCommit(repo.get(), parents[0]);
+    git_diff* diff_merge_tree_to_first_tree = nullptr;
+    if (git_diff_tree_to_tree(&diff_merge_tree_to_first_tree,
+                              repo.get(),
+                              first_tree.get(),
+                              merge_commit_tree.get(),
+                              nullptr)
+        < 0) {
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERROR("[Account {}] [Conversation {}] Failed to git diff of merge and first parent "
+                       "failed: {}",
+                       accountId_,
+                       id_,
+                       err->message);
+        return false;
+    }
+    GitDiff first_diff = GitDiff {diff_merge_tree_to_first_tree, git_diff_free};
+
+    // Get the diff of the merge commit and the second parent
+    GitTree second_tree = treeAtCommit(repo.get(), parents[1]);
+    git_diff* diff_merge_tree_to_second_tree = nullptr;
+    if (git_diff_tree_to_tree(&diff_merge_tree_to_second_tree,
+                              repo.get(),
+                              second_tree.get(),
+                              merge_commit_tree.get(),
+                              nullptr)
+        < 0) {
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERROR("[Account {}] [Conversation {}] Failed to git diff of merge and second parent "
+                       "failed: {}",
+                       accountId_,
+                       id_,
+                       err->message);
+        return false;
+    }
+    GitDiff second_diff = GitDiff {diff_merge_tree_to_second_tree, git_diff_free};
+
+    // Get the deltas of the first parent's commit
+    auto first_parent_deltas_set = getDeltaPathsFromDiff(first_diff);
+    // Get the deltas of the second parent's commit
+    auto second_parent_deltas_set = getDeltaPathsFromDiff(second_diff);
+    if (first_parent_deltas_set == std::nullopt || second_parent_deltas_set == std::nullopt) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get deltas from diffs for merge commit {}",
+                   accountId_,
+                   id_,
+                   mergeId);
+        return false;
+    }
+    // Get the intersection of the deltas of both parents
+    std::set<std::string_view> parent_deltas_intersection_set = {};
+    std::set_intersection(first_parent_deltas_set->begin(),
+                          first_parent_deltas_set->end(),
+                          second_parent_deltas_set->begin(),
+                          second_parent_deltas_set->end(),
+                          std::inserter(parent_deltas_intersection_set, parent_deltas_intersection_set.begin()));
+
+    // The intersection of the set of diffs of both the parents of the merge commit should be be the
+    // empty set (i.e. no deltas in the intersection vector). This ensures that no malicious files
+    // have been added into the merge commit itself.
+    if (not parent_deltas_intersection_set.empty()) {
+        return false;
+    }
+    return true;
+}
+
 bool
 ConversationRepository::Impl::isValidUserAtCommit(const std::string& userDevice,
                                                   const std::string& commitId,
@@ -3001,7 +3118,7 @@ ConversationRepository::Impl::validCommits(
                 return false;
             }
 
-            if (!checkValidUserDiff(userDevice, commit.id, commit.parents[0])) {
+            if (!checkValidMergeCommit(commit.id, commit.parents)) {
                 JAMI_WARNING("[Account {}] [Conversation {}] Malformed merge commit {}. Please "
                                 "ensure that you are using the latest "
                                 "version of Jami, or that one of your contacts is not performing "

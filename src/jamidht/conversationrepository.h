@@ -128,7 +128,11 @@ struct ConversationMember
     MSGPACK_DEFINE(uri, role)
 };
 
-enum class CallbackResult { Skip, Break, Ok };
+enum class CallbackResult {
+    Skip,
+    Break,
+    Ok
+};
 
 using PreConditionCb
     = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
