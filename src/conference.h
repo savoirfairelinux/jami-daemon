@@ -193,8 +193,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    explicit Conference(const std::shared_ptr<Account>&,
-                        const std::string& confId = "");
+    explicit Conference(const std::shared_ptr<Account>&, const std::string& confId = "");
 
     /**
      * Destructor for this class, decrement static counter
