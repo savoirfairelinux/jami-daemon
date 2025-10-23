@@ -140,7 +140,8 @@ libjami_dependencies = [
     depfmt,
     depyamlcpp,
     depjsoncpp,
-    depzlib
+    depzlib,
+    depopenssl
 ]
 
 if conf.get('HAVE_OPENSL') == 1
@@ -195,10 +196,6 @@ if conf.get('HAVE_COREAUDIO') == 1
             'media/audio/coreaudio/osx/corelayer.cpp'
         )
     endif
-endif
-
-if conf.get('ENABLE_NAMESERVER')
-    libjami_dependencies += depopenssl
 endif
 
 if conf.get('HAVE_WEBRTC_AP') == 1
