@@ -326,12 +326,13 @@ Conference::initSourcesForHost()
         MediaAttribute videoAttr;
         // Setup local video source
         if (confState_ == State::ACTIVE_ATTACHED) {
-            videoAttr
-                = {MediaType::MEDIA_VIDEO,
-                   false,
+            videoAttr = {MediaType::MEDIA_VIDEO,
+                         true,
                    false,
                    true,
-                   Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
+                         Manager::instance()
+                             .getVideoManager()
+                             ->videoDeviceMonitor.getMRLForDefaultDevice(),
                    sip_utils::DEFAULT_VIDEO_STREAMID};
         }
         JAMI_DEBUG("[conf {:s}] Setting local host video source to [{:s}]",
@@ -933,7 +934,7 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
             if (videoMixer_) {
                 std::vector<std::string> videoInputs;
                 for (const auto& source : hostSources_) {
-                    if (source.type_ == MediaType::MEDIA_VIDEO)
+                    if (not source.muted_ and source.type_ == MediaType::MEDIA_VIDEO)
                         videoInputs.emplace_back(source.sourceUri_);
                 }
                 if (videoInputs.empty()) {
