@@ -22,6 +22,30 @@
       },
       "revId": "372677519d39f6de024fd9a2b2d9cd25d317747e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b5d4c0e1_39c62d5a",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2022,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-10-23T18:00:42Z",
+      "side": 1,
+      "message": "To be managed in separate commit by formatting rules",
+      "parentUuid": "8c33dc0b_59e3ce3b",
+      "range": {
+        "startLine": 2019,
+        "startChar": 0,
+        "endLine": 2022,
+        "endChar": 64
+      },
+      "revId": "372677519d39f6de024fd9a2b2d9cd25d317747e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
