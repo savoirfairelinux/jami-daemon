@@ -219,8 +219,7 @@ createFileLink(const std::filesystem::path& linkFile, const std::filesystem::pat
         return true;
     std::error_code ec;
     if (std::filesystem::exists(linkFile, ec)) {
-        if (std::filesystem::is_symlink(linkFile, ec)
-            && std::filesystem::read_symlink(linkFile, ec) == target)
+        if (std::filesystem::is_symlink(linkFile, ec) && std::filesystem::read_symlink(linkFile, ec) == target)
             return true;
         std::filesystem::remove(linkFile, ec);
     }
@@ -300,10 +299,7 @@ loadTextFile(const std::filesystem::path& path, const std::filesystem::path& def
 }
 
 void
-saveFile(const std::filesystem::path& path,
-         const uint8_t* data,
-         size_t data_size,
-         mode_t UNUSED mode)
+saveFile(const std::filesystem::path& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
@@ -397,8 +393,7 @@ readArchive(const std::filesystem::path& path, std::string_view scheme, const st
         if (scheme == ARCHIVE_AUTH_SCHEME_KEY) {
             try {
                 ret.salt = dht::crypto::aesGetSalt(fileContent);
-                fileContent = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(fileContent),
-                                                      base64::decode(pwd));
+                fileContent = dht::crypto::aesDecrypt(dht::crypto::aesGetEncrypted(fileContent), base64::decode(pwd));
             } catch (const std::exception& e) {
                 JAMI_ERROR("Error decrypting archive: {}", e.what());
                 throw;
@@ -443,10 +438,7 @@ writeArchive(const std::string& archive_str,
     } else if (scheme == ARCHIVE_AUTH_SCHEME_PASSWORD and not password.empty()) {
         // Encrypt using provided password
         try {
-            saveFile(path,
-                     dht::crypto::aesEncrypt(archiver::compress(archive_str),
-                                             password,
-                                             password_salt));
+            saveFile(path, dht::crypto::aesEncrypt(archiver::compress(archive_str), password, password_salt));
         } catch (const std::runtime_error& ex) {
             JAMI_ERROR("Export failed: {}", ex.what());
             return false;
@@ -626,8 +618,7 @@ eraseFile_win32(const std::string& path, bool dosync)
     // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-deletefilea#remarks To
     // delete a read-only file, first you must remove the read-only attribute.
     SetFileAttributesA(path.c_str(), GetFileAttributesA(path.c_str()) & ~FILE_ATTRIBUTE_READONLY);
-    HANDLE h
-        = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE h = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (h == INVALID_HANDLE_VALUE) {
         JAMI_WARN("Unable to open file %s for erasing.", path.c_str());
         return false;

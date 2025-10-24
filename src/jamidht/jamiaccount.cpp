@@ -3233,7 +3233,10 @@ JamiAccount::sendMessage(const std::string& to,
                                            }
 
                                            // Else, ask for a channel to send the message
-                                           requestMessageConnection(to, deviceId, payload_type);
+                                           dht::ThreadPool::computation().run([w = weak(), to, deviceId, payload_type] {
+                                               if (auto acc = w.lock())
+                                                   acc->requestMessageConnection(to, deviceId, payload_type);
+                                           });
                                        });
     } else {
         requestMessageConnection(to, device, payload_type);

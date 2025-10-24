@@ -78,8 +78,7 @@ struct TlsInfos
     std::shared_ptr<dht::crypto::Certificate> peerCert {};
 };
 
-using SipTransportStateCallback
-    = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
+using SipTransportStateCallback = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
 
 /**
  * SIP transport wraps pjsip_transport.
@@ -91,8 +90,7 @@ public:
     SipTransport(pjsip_transport*, const std::shared_ptr<TlsListener>&);
     // If the SipTransport is a channeled transport, we are already connected to the peer,
     // so, we can directly set tlsInfos_.peerCert and avoid any copy
-    SipTransport(pjsip_transport* t,
-                 const std::shared_ptr<dht::crypto::Certificate>& peerCertficate);
+    SipTransport(pjsip_transport* t, const std::shared_ptr<dht::crypto::Certificate>& peerCertficate);
 
     ~SipTransport();
 
@@ -165,19 +163,16 @@ public:
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
-    std::shared_ptr<SipTransport> getChanneledTransport(
-        const std::shared_ptr<SIPAccountBase>& account,
-        const std::shared_ptr<dhtnet::ChannelSocket>& socket,
-        onShutdownCb&& cb);
+    std::shared_ptr<SipTransport> getChanneledTransport(const std::shared_ptr<SIPAccountBase>& account,
+                                                        const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                                        onShutdownCb&& cb);
 
     /**
      * Start graceful shutdown procedure for all transports
      */
     void shutdown();
 
-    void transportStateChanged(pjsip_transport*,
-                               pjsip_transport_state,
-                               const pjsip_transport_state_info*);
+    void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
 
 private:
     NON_COPYABLE(SipTransportBroker);

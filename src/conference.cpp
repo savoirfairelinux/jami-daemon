@@ -51,8 +51,7 @@ using namespace std::literals;
 
 namespace jami {
 
-Conference::Conference(const std::shared_ptr<Account>& account,
-                       const std::string& confId)
+Conference::Conference(const std::shared_ptr<Account>& account, const std::string& confId)
     : id_(confId.empty() ? Manager::instance().callFactory.getNewCallID() : confId)
     , account_(account)
 #ifdef ENABLE_VIDEO
@@ -131,8 +130,7 @@ Conference::Conference(const std::shared_ptr<Account>& account,
                         isModeratorMuted = shared->isMuted(streamId);
                         if (auto videoMixer = shared->videoMixer_)
                             active = videoMixer->verifyActive(streamId);
-                        if (auto call = std::dynamic_pointer_cast<SIPCall>(
-                                getCall(streamInfo.callId))) {
+                        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(streamInfo.callId))) {
                             uri = call->getPeerNumber();
                             isLocalMuted = call->isPeerMuted();
                             isPeerRecording = call->isPeerRecording();
@@ -187,9 +185,7 @@ Conference::Conference(const std::shared_ptr<Account>& account,
             shared->updateConferenceInfo(std::move(newInfo));
         });
     });
-    auto conf_res = split_string_to_unsigned(jami::Manager::instance()
-                                                 .videoPreferences.getConferenceResolution(),
-                                             'x');
+    auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
     if (conf_res.size() == 2u) {
 #if defined(__APPLE__) && TARGET_OS_MAC
         videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
@@ -203,32 +199,26 @@ Conference::Conference(const std::shared_ptr<Account>& account,
 
     parser_.onVersion([&](uint32_t) {}); // TODO
     parser_.onCheckAuthorization([&](std::string_view peerId) { return isModerator(peerId); });
-    parser_.onHangupParticipant([&](const auto& accountUri, const auto& deviceId) {
-        hangupParticipant(accountUri, deviceId);
-    });
+    parser_.onHangupParticipant(
+        [&](const auto& accountUri, const auto& deviceId) { hangupParticipant(accountUri, deviceId); });
     parser_.onRaiseHand([&](const auto& deviceId, bool state) { setHandRaised(deviceId, state); });
-    parser_.onSetActiveStream(
-        [&](const auto& streamId, bool state) { setActiveStream(streamId, state); });
-    parser_.onMuteStreamAudio(
-        [&](const auto& accountUri, const auto& deviceId, const auto& streamId, bool state) {
-            muteStream(accountUri, deviceId, streamId, state);
-        });
+    parser_.onSetActiveStream([&](const auto& streamId, bool state) { setActiveStream(streamId, state); });
+    parser_.onMuteStreamAudio([&](const auto& accountUri, const auto& deviceId, const auto& streamId, bool state) {
+        muteStream(accountUri, deviceId, streamId, state);
+    });
     parser_.onSetLayout([&](int layout) { setLayout(layout); });
 
     // Version 0, deprecated
     parser_.onKickParticipant([&](const auto& participantId) { hangupParticipant(participantId); });
-    parser_.onSetActiveParticipant(
-        [&](const auto& participantId) { setActiveParticipant(participantId); });
-    parser_.onMuteParticipant(
-        [&](const auto& participantId, bool state) { muteParticipant(participantId, state); });
+    parser_.onSetActiveParticipant([&](const auto& participantId) { setActiveParticipant(participantId); });
+    parser_.onMuteParticipant([&](const auto& participantId, bool state) { muteParticipant(participantId, state); });
     parser_.onRaiseHandUri([&](const auto& uri, bool state) {
         if (auto call = std::dynamic_pointer_cast<SIPCall>(getCallFromPeerID(uri)))
             if (auto* transport = call->getTransport())
                 setHandRaised(std::string(transport->deviceId()), state);
     });
 
-    parser_.onVoiceActivity(
-        [&](const auto& streamId, bool state) { setVoiceActivity(streamId, state); });
+    parser_.onVoiceActivity([&](const auto& streamId, bool state) { setVoiceActivity(streamId, state); });
     jami_tracepoint(conference_begin, id_.c_str());
 }
 
@@ -238,8 +228,7 @@ Conference::~Conference()
 
 #ifdef ENABLE_VIDEO
     auto videoManager = Manager::instance().getVideoManager();
-    auto defaultDevice = videoManager ? videoManager->videoDeviceMonitor.getMRLForDefaultDevice() 
-                                      : std::string {};
+    auto defaultDevice = videoManager ? videoManager->videoDeviceMonitor.getMRLForDefaultDevice() : std::string {};
     foreachCall([&](auto call) {
         call->exitConference();
         // Reset distant callInfo
@@ -253,8 +242,7 @@ Conference::~Conference()
             JAMI_DEBUG("Stop recording for conf {:s}", getConfId());
             toggleRecording();
             if (not call->isRecording()) {
-                JAMI_DEBUG("Conference was recorded, start recording for conf {:s}",
-                           call->getCallId());
+                JAMI_DEBUG("Conference was recorded, start recording for conf {:s}", call->getCallId());
                 call->toggleRecording();
             }
         }
@@ -274,12 +262,8 @@ Conference::~Conference()
 #ifdef ENABLE_PLUGIN
     {
         std::lock_guard lk(avStreamsMtx_);
-        jami::Manager::instance()
-            .getJamiPluginManager()
-            .getCallServicesManager()
-            .clearCallHandlerMaps(getConfId());
-        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(
-            getConfId());
+        jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(getConfId());
+        Manager::instance().getJamiPluginManager().getCallServicesManager().clearAVSubject(getConfId());
         confAVStreams.clear();
     }
 #endif // ENABLE_PLUGIN
@@ -299,10 +283,7 @@ Conference::getState() const
 void
 Conference::setState(State state)
 {
-    JAMI_DEBUG("[conf {:s}] Set state to [{:s}] (was [{:s}])",
-               id_,
-               getStateStr(state),
-               getStateStr());
+    JAMI_DEBUG("[conf {:s}] Set state to [{:s}] (was [{:s}])", id_, getStateStr(state), getStateStr());
 
     confState_ = state;
 }
@@ -314,8 +295,7 @@ Conference::initSourcesForHost()
     // Setup local audio source
     MediaAttribute audioAttr;
     if (confState_ == State::ACTIVE_ATTACHED) {
-        audioAttr
-            = {MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID};
+        audioAttr = {MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID};
     }
 
     JAMI_DEBUG("[conf {:s}] Setting local host audio source to [{:s}]", id_, audioAttr.toString());
@@ -326,17 +306,14 @@ Conference::initSourcesForHost()
         MediaAttribute videoAttr;
         // Setup local video source
         if (confState_ == State::ACTIVE_ATTACHED) {
-            videoAttr
-                = {MediaType::MEDIA_VIDEO,
-                   false,
-                   false,
-                   true,
-                   Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
-                   sip_utils::DEFAULT_VIDEO_STREAMID};
+            videoAttr = {MediaType::MEDIA_VIDEO,
+                         false,
+                         false,
+                         true,
+                         Manager::instance().getVideoManager()->videoDeviceMonitor.getMRLForDefaultDevice(),
+                         sip_utils::DEFAULT_VIDEO_STREAMID};
         }
-        JAMI_DEBUG("[conf {:s}] Setting local host video source to [{:s}]",
-                   id_,
-                   videoAttr.toString());
+        JAMI_DEBUG("[conf {:s}] Setting local host video source to [{:s}]", id_, videoAttr.toString());
         hostSources_.emplace_back(videoAttr);
     }
 #endif
@@ -348,9 +325,7 @@ void
 Conference::reportMediaNegotiationStatus()
 {
     emitSignal<libjami::CallSignal::MediaNegotiationStatus>(
-        getConfId(),
-        libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS,
-        currentMediaList());
+        getConfId(), libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS, currentMediaList());
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -389,11 +364,7 @@ Conference::createConfAVStreams()
         // Preview
         if (auto videoPreview = videoMixer_->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfId(),
-                                          false,
-                                          StreamType::video,
-                                          getConfId(),
-                                          accountId};
+            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId(), accountId};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject);
         }
     }
@@ -416,10 +387,8 @@ Conference::createConfAVStream(const StreamData& StreamData,
     confAVStreams.erase(AVStreamId);
     confAVStreams[AVStreamId] = mediaStreamSubject;
     streamSource.attachPriorityObserver(mediaStreamSubject);
-    jami::Manager::instance()
-        .getJamiPluginManager()
-        .getCallServicesManager()
-        .createAVSubject(StreamData, mediaStreamSubject);
+    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().createAVSubject(StreamData,
+                                                                                              mediaStreamSubject);
 }
 #endif // ENABLE_PLUGIN
 
@@ -531,8 +500,7 @@ bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     if (getState() != State::ACTIVE_ATTACHED) {
-        JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode",
-                   getConfId());
+        JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode", getConfId());
         return false;
     }
 
@@ -603,9 +571,8 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
                 // If the current media source is muted, just call un-mute, it
                 // will set the new source as input.
                 muteLocalHost(mediaAttr.muted_,
-                              mediaAttr.type_ == MediaType::MEDIA_AUDIO
-                                  ? libjami::Media::Details::MEDIA_TYPE_AUDIO
-                                  : libjami::Media::Details::MEDIA_TYPE_VIDEO);
+                              mediaAttr.type_ == MediaType::MEDIA_AUDIO ? libjami::Media::Details::MEDIA_TYPE_AUDIO
+                                                                        : libjami::Media::Details::MEDIA_TYPE_VIDEO);
             }
         }
     }
@@ -637,14 +604,12 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.
-    auto remoteHasVideo
-        = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList,
-                                                                                false),
-                                       MediaType::MEDIA_VIDEO);
+    auto remoteHasVideo = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList, false),
+                                                       MediaType::MEDIA_VIDEO);
     if (videoMixer_ && remoteHasVideo) {
         auto callId = call->getCallId();
-        videoMixer_->removeAudioOnlySource(
-            callId, std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+        videoMixer_->removeAudioOnlySource(callId,
+                                           std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
     }
 #endif
 
@@ -681,7 +646,6 @@ void
 Conference::addSubCall(const std::string& callId)
 {
     JAMI_DEBUG("Adding call {:s} to conference {:s}", callId, id_);
-
 
     jami_tracepoint(conference_add_participant, id_.c_str(), callId.c_str());
 
@@ -741,8 +705,7 @@ Conference::addSubCall(const std::string& callId)
             JAMI_DEBUG("Stop recording for call {:s}", call->getCallId());
             call->toggleRecording();
             if (not this->isRecording()) {
-                JAMI_DEBUG("One participant was recording, start recording for conference {:s}",
-                           getConfId());
+                JAMI_DEBUG("One participant was recording, start recording for conference {:s}", getConfId());
                 this->toggleRecording();
             }
         }
@@ -799,8 +762,7 @@ Conference::setActiveParticipant(const std::string& participant_id)
         return;
     }
     if (auto call = getCallFromPeerID(participant_id)) {
-        videoMixer_->setActiveStream(
-            sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID));
+        videoMixer_->setActiveStream(sip_utils::streamId(call->getCallId(), sip_utils::DEFAULT_VIDEO_STREAMID));
         return;
     }
 
@@ -883,9 +845,7 @@ Conference::sendConferenceInfos()
             return;
 
         dht::ThreadPool::io().run(
-            [call,
-             confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht",
-                                           call->getPeerNumber())] {
+            [call, confInfo = getConfInfoHostUri(account->getUsername() + "@ring.dht", call->getPeerNumber())] {
                 call->sendConfInfo(confInfo.toString());
             });
     });
@@ -895,11 +855,8 @@ Conference::sendConferenceInfos()
     createSinks(confInfo);
 #endif
 
-
     // Inform client that layout has changed
-    jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_,
-                                                                    confInfo
-                                                                        .toVectorMapStringString());
+    jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_, confInfo.toVectorMapStringString());
 }
 
 #ifdef ENABLE_VIDEO
@@ -947,10 +904,9 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
             requestMediaChange(mediaList);
         }
     } else {
-        JAMI_WARNING(
-            "Invalid conference state in attach participant: current \"{}\" - expected \"{}\"",
-            getStateStr(),
-            "ACTIVE_DETACHED");
+        JAMI_WARNING("Invalid conference state in attach participant: current \"{}\" - expected \"{}\"",
+                     getStateStr(),
+                     "ACTIVE_DETACHED");
     }
 }
 
@@ -967,10 +923,9 @@ Conference::detachHost()
             videoMixer_->stopInputs();
 #endif
     } else {
-        JAMI_WARNING(
-            "Invalid conference state in detach participant: current \"{}\" - expected \"{}\"",
-            getStateStr(),
-            "ACTIVE_ATTACHED");
+        JAMI_WARNING("Invalid conference state in detach participant: current \"{}\" - expected \"{}\"",
+                     getStateStr(),
+                     "ACTIVE_ATTACHED");
         return;
     }
 
@@ -1041,11 +996,7 @@ Conference::switchInput(const std::string& input)
         // Preview
         if (auto videoPreview = mixer->getVideoLocal()) {
             auto previewSubject = std::make_shared<MediaStreamSubject>(pluginVideoMap_);
-            StreamData previewStreamData {getConfId(),
-                                          false,
-                                          StreamType::video,
-                                          getConfId(),
-                                          getAccountId()};
+            StreamData previewStreamData {getConfId(), false, StreamType::video, getConfId(), getAccountId()};
             createConfAVStream(previewStreamData, *videoPreview, previewSubject, true);
         }
 #endif
@@ -1329,10 +1280,7 @@ Conference::isMuted(std::string_view callId) const
 }
 
 void
-Conference::muteStream(const std::string& accountUri,
-                       const std::string& deviceId,
-                       const std::string&,
-                       const bool& state)
+Conference::muteStream(const std::string& accountUri, const std::string& deviceId, const std::string&, const bool& state)
 {
     if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock())) {
         if (accountUri == acc->getUsername() && deviceId == acc->currentDeviceId()) {
@@ -1419,8 +1367,7 @@ Conference::updateRecording()
     for (auto& info : confInfo_) {
         if (info.uri.empty()) {
             info.recording = isRecording();
-        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')),
-                                           info.device)) {
+        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')), info.device)) {
             info.recording = call->isPeerRecording();
         }
     }
@@ -1435,8 +1382,7 @@ Conference::updateMuted()
         if (info.uri.empty()) {
             info.audioModeratorMuted = isMuted("host"sv);
             info.audioLocalMuted = isMediaSourceMuted(MediaType::MEDIA_AUDIO);
-        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')),
-                                           info.device)) {
+        } else if (auto call = getCallWith(std::string(string_remove_suffix(info.uri, '@')), info.device)) {
             info.audioModeratorMuted = isMuted(call->getCallId());
             info.audioLocalMuted = call->isPeerMuted();
         }
@@ -1553,8 +1499,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
 {
     if (mediaType.compare(libjami::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (is_muted == isMediaSourceMuted(MediaType::MEDIA_AUDIO)) {
-            JAMI_DEBUG("Local audio source already in [{:s}] state",
-                       is_muted ? "muted" : "un-muted");
+            JAMI_DEBUG("Local audio source already in [{:s}] state", is_muted ? "muted" : "un-muted");
             return;
         }
 
@@ -1578,8 +1523,7 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
         }
 
         if (is_muted == isMediaSourceMuted(MediaType::MEDIA_VIDEO)) {
-            JAMI_DEBUG("Local camera source already in [{:s}] state",
-                       is_muted ? "stopped" : "started");
+            JAMI_DEBUG("Local camera source already in [{:s}] state", is_muted ? "stopped" : "started");
             return;
         }
         setLocalHostMuteState(MediaType::MEDIA_VIDEO, is_muted);
@@ -1615,11 +1559,9 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
     if (remoteFrameHeight == 0 or remoteFrameWidth == 0) {
         // get the size of the remote frame from receiveThread
         // if the one from confInfo is empty
-        if (auto call = std::dynamic_pointer_cast<SIPCall>(
-                getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCallFromPeerID(string_remove_suffix(peerURI, '@')))) {
             for (auto const& videoRtp : call->getRtpSessionList(MediaType::MEDIA_VIDEO)) {
-                auto recv = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)
-                                ->getVideoReceive();
+                auto recv = std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->getVideoReceive();
                 remoteFrameHeight = recv->getHeight();
                 remoteFrameWidth = recv->getWidth();
                 // NOTE: this may be not the behavior we want, but this is only called
@@ -1778,8 +1720,7 @@ Conference::bindHostAudio()
                         auto hostAudioInput = hostAudioInputs_.find(source.label_);
                         if (hostAudioInput == hostAudioInputs_.end()) {
                             hostAudioInput = hostAudioInputs_
-                                                 .emplace(source.label_,
-                                                          std::make_shared<AudioInput>(source.label_))
+                                                 .emplace(source.label_, std::make_shared<AudioInput>(source.label_))
                                                  .first;
                         }
                         if (hostAudioInput != hostAudioInputs_.end()) {
@@ -1868,7 +1809,8 @@ Conference::bindSubCallAudio(const std::string& callId)
                 bool isHostMuted = isMuted("host"sv);
                 if (isMediaSourceMuted(MediaType::MEDIA_AUDIO) or isHostMuted)
                     rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
-                else rbPool.bindRingBuffers(stream.first, RingBufferPool::DEFAULT_ID);
+                else
+                    rbPool.bindRingBuffers(stream.first, RingBufferPool::DEFAULT_ID);
                 rbPool.flush(RingBufferPool::DEFAULT_ID);
             }
         }
@@ -1887,6 +1829,5 @@ Conference::unbindSubCallAudio(const std::string& callId)
         }
     }
 }
-
 
 } // namespace jami
