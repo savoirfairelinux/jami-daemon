@@ -1398,10 +1398,9 @@ Manager::addSubCall(Call& call, Conference& conference)
 void
 Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
-    conf.attachHost();
-    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(),
-                                                       conf.getConfId(),
-                                                       conf.getStateStr());
+    JAMI_LOG("Add main participant to conference {}", conf.getConfId());
+    conf.attachHost(conf.getLastMediaList());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(), conf.getConfId(), conf.getStateStr());
     switchCall(conf.getConfId());
 }
 
@@ -1487,11 +1486,10 @@ Manager::joinParticipant(const std::string& accountId,
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    std::vector<libjami::MediaMap> mediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttr);
+    conf->attachHost(mediaList);
     account->attach(conf);
-    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
-                                                       "",
-                                                       conf->getConfId());
+    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
