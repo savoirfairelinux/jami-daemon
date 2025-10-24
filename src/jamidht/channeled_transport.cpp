@@ -47,10 +47,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     // Init memory
     trData_.self = this; // up-link for PJSIP callbacks
 
-    pool_ = sip_utils::smart_alloc_pool(endpt,
-                                        "channeled.pool",
-                                        sip_utils::POOL_TP_INIT,
-                                        sip_utils::POOL_TP_INC);
+    pool_ = sip_utils::smart_alloc_pool(endpt, "channeled.pool", sip_utils::POOL_TP_INIT, sip_utils::POOL_TP_INC);
 
     auto& base = trData_.base;
     std::memset(&base, 0, sizeof(base));
@@ -83,11 +80,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), sip_utils::TRANSPORT_INFO_LENGTH));
 
     auto remote_addr = remote_.toString();
-    pj_ansi_snprintf(base.info,
-                     sip_utils::TRANSPORT_INFO_LENGTH,
-                     "%s to %s",
-                     base.type_name,
-                     remote_addr.c_str());
+    pj_ansi_snprintf(base.info, sip_utils::TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name, remote_addr.c_str());
     base.addr_len = remote_.getLength();
     base.dir = PJSIP_TP_DIR_NONE;
 
@@ -104,13 +97,11 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
                        int addr_len,
                        void* token,
                        pjsip_transport_callback callback) -> pj_status_t {
-        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
-            reinterpret_cast<TransportData*>(transport)->self);
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
     base.do_shutdown = [](pjsip_transport* transport) -> pj_status_t {
-        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
-            reinterpret_cast<TransportData*>(transport)->self);
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         JAMI_LOG("ChanneledSIPTransport@{} tr={} rc={:d}: shutdown",
                  fmt::ptr(this_),
                  fmt::ptr(transport),
@@ -120,18 +111,14 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
         return PJ_SUCCESS;
     };
     base.destroy = [](pjsip_transport* transport) -> pj_status_t {
-        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(
-            reinterpret_cast<TransportData*>(transport)->self);
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         delete this_;
         return PJ_SUCCESS;
     };
 
     // Init rdata_
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_ = sip_utils::smart_alloc_pool(endpt,
-                                          "channeled.rxPool",
-                                          PJSIP_POOL_RDATA_LEN,
-                                          PJSIP_POOL_RDATA_LEN);
+    rxPool_ = sip_utils::smart_alloc_pool(endpt, "channeled.rxPool", PJSIP_POOL_RDATA_LEN, PJSIP_POOL_RDATA_LEN);
     rdata_.tp_info.pool = rxPool_.get();
     rdata_.tp_info.transport = &base;
     rdata_.tp_info.tp_data = this;
@@ -157,8 +144,7 @@ ChanneledSIPTransport::start()
         size_t remaining {len};
         while (remaining) {
             // Build rdata
-            size_t added = std::min(remaining,
-                                    (size_t) PJSIP_MAX_PKT_LEN - (size_t) rdata_.pkt_info.len);
+            size_t added = std::min(remaining, (size_t) PJSIP_MAX_PKT_LEN - (size_t) rdata_.pkt_info.len);
             std::copy_n(buf, added, rdata_.pkt_info.packet + rdata_.pkt_info.len);
             rdata_.pkt_info.len += added;
             buf += added;
@@ -179,7 +165,7 @@ ChanneledSIPTransport::start()
     socket_->onShutdown([this] {
         disconnected_ = true;
         if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
-            //JAMI_LOG("[SIPS] process disconnect event");
+            // JAMI_LOG("[SIPS] process disconnect event");
             pjsip_transport_state_info state_info;
             std::memset(&state_info, 0, sizeof(state_info));
             state_info.status = PJ_SUCCESS;
@@ -211,11 +197,8 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
 }
 
 pj_status_t
-ChanneledSIPTransport::send(pjsip_tx_data* tdata,
-                            const pj_sockaddr_t* rem_addr,
-                            int addr_len,
-                            void*,
-                            pjsip_transport_callback)
+ChanneledSIPTransport::send(
+    pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr, int addr_len, void*, pjsip_transport_callback)
 {
     // Sanity check
     PJ_ASSERT_RETURN(tdata, PJ_EINVAL);
@@ -224,9 +207,7 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata,
     PJ_ASSERT_RETURN(tdata->op_key.tdata == nullptr, PJSIP_EPENDINGTX);
 
     // Check the address is supported
-    PJ_ASSERT_RETURN(rem_addr
-                         and (addr_len == sizeof(pj_sockaddr_in)
-                              or addr_len == sizeof(pj_sockaddr_in6)),
+    PJ_ASSERT_RETURN(rem_addr and (addr_len == sizeof(pj_sockaddr_in) or addr_len == sizeof(pj_sockaddr_in6)),
                      PJ_EINVAL);
 
     // Check in we are able to send it in synchronous way first
