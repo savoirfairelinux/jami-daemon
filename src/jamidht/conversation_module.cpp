@@ -1767,6 +1767,7 @@ ConversationModule::loadConversations()
         newInfo.created = std::time(nullptr);
         newInfo.members.emplace(pimpl_->username_);
         newInfo.members.emplace(contactId);
+        pimpl_->conversations_.emplace(convId, std::make_shared<SyncedConversation>(newInfo));
         pimpl_->convInfos_.emplace(convId, std::move(newInfo));
     }
 
