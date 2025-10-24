@@ -129,8 +129,8 @@ public:
 
     void monitor(bool continuous);
 
-    std::vector<std::map<std::string, std::string>> getConnectionList(
-        const std::string& accountId, const std::string& conversationId);
+    std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& accountId,
+                                                                      const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId,
                                                                    const std::string& connectionId);
 
@@ -249,9 +249,9 @@ public:
      * @param the conference id
      */
     bool addSubCall(const std::string& accountId,
-                        const std::string& callId,
-                        const std::string& account2Id,
-                        const std::string& confId);
+                    const std::string& callId,
+                    const std::string& account2Id,
+                    const std::string& confId);
     bool addSubCall(Call& call, Conference& conference);
     void bindCallToConference(Call& call, Conference& conf);
 
@@ -424,15 +424,10 @@ public:
      * @param accountID   The account identifier
      * @param details     The account parameters
      */
-    void setAccountDetails(const std::string& accountID,
-                           const std::map<std::string, std::string>& details);
+    void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
 
-    void setAccountActive(const std::string& accountID,
-                          bool active,
-                          bool shutdownConnections);
-    void loadAccountAndConversation(const std::string& accountId,
-                                    bool loadAll,
-                                    const std::string& convId);
+    void setAccountActive(const std::string& accountID, bool active, bool shutdownConnections);
+    void loadAccountAndConversation(const std::string& accountId, bool loadAll, const std::string& convId);
 
     std::mt19937_64 getSeededRandomEngine();
 
@@ -448,8 +443,7 @@ public:
      * @param accountId optionnal predetermined accountid to use
      * @return The account Id given to the new account
      */
-    std::string addAccount(const std::map<std::string, std::string>& details,
-                           const std::string& accountId = {});
+    std::string addAccount(const std::map<std::string, std::string>& details, const std::string& accountId = {});
 
     /**
      * Delete an existing account, unregister VoIPLink associated, and
@@ -840,8 +834,7 @@ public:
      * @param mixer true if the SinkCient is the sink of a VideoMixer node. Default is false.
      * @return share_ptr<SinkClient> A shared pointer on the created instance.
      */
-    std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id = "",
-                                                        bool mixer = false);
+    std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id = "", bool mixer = false);
 
     /**
      * Create a SinkClient instance for each participant in a conference, store it in an internal
@@ -851,12 +844,11 @@ public:
      * @param videoStream the the VideoFrameActiveWriter to which the sinks should be attached
      * @param sinksMap A map between sink ids and the respective shared pointer.
      */
-    void createSinkClients(
-        const std::string& callId,
-        const ConfInfo& infos,
-        const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-        std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
-        const std::string& accountId = "");
+    void createSinkClients(const std::string& callId,
+                           const ConfInfo& infos,
+                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
+                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
+                           const std::string& accountId = "");
 
     /**
      * Return an existing SinkClient instance as a shared_ptr associated to the given identifier.
@@ -872,8 +864,7 @@ public:
     unsigned dhtLogLevel {0}; // default = disable
     AccountFactory accountFactory;
 
-    std::vector<libjami::Message> getLastMessages(const std::string& accountID,
-                                                  const uint64_t& base_timestamp);
+    std::vector<libjami::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
     SIPVoIPLink& sipVoIPLink() const;
 #ifdef ENABLE_PLUGIN
