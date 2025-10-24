@@ -37,36 +37,33 @@ namespace libjami {
 /* Call related methods */
 LIBJAMI_PUBLIC std::string placeCall(const std::string& accountId, const std::string& to);
 
-LIBJAMI_PUBLIC std::string placeCallWithMedia(
-    const std::string& accountId,
-    const std::string& to,
-    const std::vector<std::map<std::string, std::string>>& mediaList);
+LIBJAMI_PUBLIC std::string placeCallWithMedia(const std::string& accountId,
+                                              const std::string& to,
+                                              const std::vector<std::map<std::string, std::string>>& mediaList);
 LIBJAMI_PUBLIC bool refuse(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool accept(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool hangUp(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool hold(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool unhold(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool muteLocalMedia(const std::string& accountId,
-                                 const std::string& callId,
-                                 const std::string& mediaType,
-                                 bool mute);
-LIBJAMI_PUBLIC bool transfer(const std::string& accountId,
-                           const std::string& callId,
-                           const std::string& to);
-LIBJAMI_PUBLIC bool attendedTransfer(const std::string& accountId,
                                    const std::string& callId,
-                                   const std::string& targetID);
+                                   const std::string& mediaType,
+                                   bool mute);
+LIBJAMI_PUBLIC bool transfer(const std::string& accountId, const std::string& callId, const std::string& to);
+LIBJAMI_PUBLIC bool attendedTransfer(const std::string& accountId,
+                                     const std::string& callId,
+                                     const std::string& targetID);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getCallDetails(const std::string& accountId,
-                                                               const std::string& callId);
+                                                                 const std::string& callId);
 LIBJAMI_PUBLIC std::vector<std::string> getCallList(const std::string& accountId);
 
 /* APIs that supports an arbitrary number of media */
 LIBJAMI_PUBLIC bool acceptWithMedia(const std::string& accountId,
-                                  const std::string& callId,
-                                  const std::vector<libjami::MediaMap>& mediaList);
+                                    const std::string& callId,
+                                    const std::vector<libjami::MediaMap>& mediaList);
 LIBJAMI_PUBLIC bool requestMediaChange(const std::string& accountId,
-                                     const std::string& callId,
-                                     const std::vector<libjami::MediaMap>& mediaList);
+                                       const std::string& callId,
+                                       const std::vector<libjami::MediaMap>& mediaList);
 
 /**
  * Answer a media change request
@@ -79,84 +76,78 @@ LIBJAMI_PUBLIC bool requestMediaChange(const std::string& accountId,
  * method, or calling it with an empty media list.
  */
 LIBJAMI_PUBLIC bool answerMediaChangeRequest(const std::string& accountId,
-                                           const std::string& callId,
-                                           const std::vector<libjami::MediaMap>& mediaList);
+                                             const std::string& callId,
+                                             const std::vector<libjami::MediaMap>& mediaList);
 
 /* Conference related methods */
 LIBJAMI_PUBLIC bool joinParticipant(const std::string& accountId,
-                                  const std::string& sel_callId,
-                                  const std::string& account2Id,
-                                  const std::string& drag_callId);
-LIBJAMI_PUBLIC void createConfFromParticipantList(const std::string& accountId,
-                                                const std::vector<std::string>& participants);
-LIBJAMI_PUBLIC void setConferenceLayout(const std::string& accountId,
-                                      const std::string& confId,
-                                      uint32_t layout);
+                                    const std::string& sel_callId,
+                                    const std::string& account2Id,
+                                    const std::string& drag_callId);
+LIBJAMI_PUBLIC void setConferenceLayout(const std::string& accountId, const std::string& confId, uint32_t layout);
 LIBJAMI_PUBLIC bool isConferenceParticipant(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool addParticipant(const std::string& accountId,
-                                 const std::string& callId,
-                                 const std::string& account2Id,
-                                 const std::string& confId);
+                                   const std::string& callId,
+                                   const std::string& account2Id,
+                                   const std::string& confId);
 LIBJAMI_PUBLIC bool addMainParticipant(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool detachLocalParticipant();
 LIBJAMI_PUBLIC bool detachParticipant(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool joinConference(const std::string& accountId,
-                                 const std::string& sel_confId,
-                                 const std::string& account2Id,
-                                 const std::string& drag_confId);
+                                   const std::string& sel_confId,
+                                   const std::string& account2Id,
+                                   const std::string& drag_confId);
 LIBJAMI_PUBLIC bool hangUpConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool unholdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
-LIBJAMI_PUBLIC std::vector<std::string> getParticipantList(const std::string& accountId,
-                                                         const std::string& confId);
+LIBJAMI_PUBLIC std::vector<std::string> getParticipantList(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::string getConferenceId(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
-                                                                     const std::string& callId);
-LIBJAMI_PUBLIC std::vector<libjami::MediaMap> currentMediaList(const std::string& accountId,
-                                                           const std::string& callId);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(
-    const std::string& accountId, const std::string& confId);
+                                                                       const std::string& callId);
+LIBJAMI_PUBLIC std::vector<libjami::MediaMap> currentMediaList(const std::string& accountId, const std::string& callId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& accountId,
+                                                                                  const std::string& confId);
 LIBJAMI_PUBLIC void setModerator(const std::string& accountId,
-                               const std::string& confId,
-                               const std::string& accountUri,
-                               const bool& state);
+                                 const std::string& confId,
+                                 const std::string& accountUri,
+                                 const bool& state);
 /// DEPRECATED USE muteStream
 LIBJAMI_PUBLIC void muteParticipant(const std::string& accountId,
-                                  const std::string& confId,
-                                  const std::string& accountUri,
-                                  const bool& state);
-// Note: muting Audio not supported yet
-LIBJAMI_PUBLIC void muteStream(const std::string& accountId,
-                             const std::string& confId,
-                             const std::string& accountUri,
-                             const std::string& deviceId,
-                             const std::string& streamId,
-                             const bool& state);
-/// DEPRECATED, USE setActiveStream
-LIBJAMI_PUBLIC void setActiveParticipant(const std::string& accountId,
-                                       const std::string& confId,
-                                       const std::string& callId);
-LIBJAMI_PUBLIC void setActiveStream(const std::string& accountId,
-                                  const std::string& confId,
-                                  const std::string& accountUri,
-                                  const std::string& deviceId,
-                                  const std::string& streamId,
-                                  const bool& state);
-LIBJAMI_PUBLIC void hangupParticipant(const std::string& accountId,
                                     const std::string& confId,
                                     const std::string& accountUri,
-                                    const std::string& deviceId);
+                                    const bool& state);
+// Note: muting Audio not supported yet
+LIBJAMI_PUBLIC void muteStream(const std::string& accountId,
+                               const std::string& confId,
+                               const std::string& accountUri,
+                               const std::string& deviceId,
+                               const std::string& streamId,
+                               const bool& state);
+/// DEPRECATED, USE setActiveStream
+LIBJAMI_PUBLIC void setActiveParticipant(const std::string& accountId,
+                                         const std::string& confId,
+                                         const std::string& callId);
+LIBJAMI_PUBLIC void setActiveStream(const std::string& accountId,
+                                    const std::string& confId,
+                                    const std::string& accountUri,
+                                    const std::string& deviceId,
+                                    const std::string& streamId,
+                                    const bool& state);
+LIBJAMI_PUBLIC void hangupParticipant(const std::string& accountId,
+                                      const std::string& confId,
+                                      const std::string& accountUri,
+                                      const std::string& deviceId);
 /// DEPRECATED, use raiseHand
 LIBJAMI_PUBLIC void raiseParticipantHand(const std::string& accountId,
-                                       const std::string& confId,
-                                       const std::string& peerId,
-                                       const bool& state);
+                                         const std::string& confId,
+                                         const std::string& peerId,
+                                         const bool& state);
 LIBJAMI_PUBLIC void raiseHand(const std::string& accountId,
-                            const std::string& confId,
-                            const std::string& accountUri,
-                            const std::string& deviceId,
-                            const bool& state);
+                              const std::string& confId,
+                              const std::string& accountUri,
+                              const std::string& deviceId,
+                              const bool& state);
 
 /* Statistic related methods */
 LIBJAMI_PUBLIC void startSmartInfo(uint32_t refreshTimeMs);
@@ -176,19 +167,17 @@ LIBJAMI_PUBLIC bool getIsRecording(const std::string& accountId, const std::stri
 LIBJAMI_PUBLIC void playDTMF(const std::string& key);
 LIBJAMI_PUBLIC void startTone(int32_t start, int32_t type);
 
-LIBJAMI_PUBLIC bool switchInput(const std::string& accountId,
-                              const std::string& callId,
-                              const std::string& resource);
+LIBJAMI_PUBLIC bool switchInput(const std::string& accountId, const std::string& callId, const std::string& resource);
 LIBJAMI_PUBLIC bool switchSecondaryInput(const std::string& accountId,
-                                       const std::string& confId,
-                                       const std::string& resource);
+                                         const std::string& confId,
+                                         const std::string& resource);
 
 /* Instant messaging */
 LIBJAMI_PUBLIC void sendTextMessage(const std::string& accountId,
-                                  const std::string& callId,
-                                  const std::map<std::string, std::string>& messages,
-                                  const std::string& from,
-                                  bool isMixed);
+                                    const std::string& callId,
+                                    const std::map<std::string, std::string>& messages,
+                                    const std::string& from,
+                                    bool isMixed);
 
 // Call signal type definitions
 struct LIBJAMI_PUBLIC CallSignal
@@ -309,8 +298,7 @@ struct LIBJAMI_PUBLIC CallSignal
     struct LIBJAMI_PUBLIC OnConferenceInfosUpdated
     {
         constexpr static const char* name = "OnConferenceInfosUpdated";
-        using cb_type = void(const std::string&,
-                             const std::vector<std::map<std::string, std::string>>&);
+        using cb_type = void(const std::string&, const std::vector<std::map<std::string, std::string>>&);
     };
     struct LIBJAMI_PUBLIC RemoteRecordingChanged
     {

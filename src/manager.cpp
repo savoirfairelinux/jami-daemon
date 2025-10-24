@@ -1511,49 +1511,6 @@ Manager::joinParticipant(const std::string& accountId,
     return true;
 }
 
-void
-Manager::createConfFromParticipantList(const std::string& accountId,
-                                       const std::vector<std::string>& participantList)
-{
-    auto account = getAccount(accountId);
-    if (not account) {
-        JAMI_WARN("Unable to find account");
-        return;
-    }
-
-    // we must have at least 2 participant for a conference
-    if (participantList.size() <= 1) {
-        JAMI_ERR("Participant number must be greater than or equal to 2");
-        return;
-    }
-
-    auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
-
-    unsigned successCounter = 0;
-    for (const auto& numberaccount : participantList) {
-        std::string tostr(numberaccount.substr(0, numberaccount.find(',')));
-        std::string account(numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
-
-        pimpl_->unsetCurrentCall();
-
-        // Create call
-        auto callId = outgoingCall(account, tostr, {});
-        if (callId.empty())
-            continue;
-
-        // Manager methods may behave differently if the call id participates in a conference
-        conf->addSubCall(callId);
-        successCounter++;
-    }
-
-    // Create the conference if and only if at least 2 calls have been successfully created
-    if (successCounter >= 2) {
-        account->attach(conf);
-        emitSignal<libjami::CallSignal::ConferenceCreated>(accountId, "", conf->getConfId());
-    }
-}
-
 bool
 Manager::detachHost(const std::shared_ptr<Conference>& conf)
 {

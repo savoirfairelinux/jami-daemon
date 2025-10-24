@@ -299,16 +299,6 @@
             <arg type="b" name="joinSucceeded" direction="out"/>
         </method>
 
-        <method name="createConfFromParticipantList" tp:name-for-bindings="createConfFromParticipantList">
-            <tp:added version="11.0.0"/>
-            <tp:docstring>
-                <p>Create a conference from a list of participants</p>
-            <tp:rationale>The signal <tp:member-ref>conferenceCreated</tp:member-ref> is emitted on success.</tp:rationale>
-            </tp:docstring>
-            <arg type="s" name="accountId" direction="in" />
-            <arg type="as" name="participants" direction="in"/>
-        </method>
-
         <method name="setConferenceLayout" tp:name-for-bindings="setConferenceLayout">
             <tp:added version="11.0.0"/>
             <tp:docstring>

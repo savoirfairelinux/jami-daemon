@@ -273,13 +273,6 @@ public:
                          bool attached = true);
 
     /**
-     * Create a conference from a list of participant
-     * @param A vector containing the list of participant
-     */
-    void createConfFromParticipantList(const std::string& accountId,
-                                       const std::vector<std::string>&);
-
-    /**
      * Detach a participant from a conference, put the call on hold, do not hangup it
      * @param call id
      * @param the current call id
