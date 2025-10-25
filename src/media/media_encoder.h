@@ -151,7 +151,6 @@ private:
     unsigned sent_samples = 0;
     bool initialized_ {false};
     bool fileIO_ {false};
-    unsigned int currentVideoCodecID_ {0};
     const AVCodec* outputCodec_ = nullptr;
     std::mutex encMutex_;
     bool linkableHW_ {false};
