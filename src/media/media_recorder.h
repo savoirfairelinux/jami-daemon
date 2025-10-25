@@ -161,7 +161,6 @@ private:
     int audioIdx_ = -1;
     bool isRecording_ = false;
     bool audioOnly_ = false;
-    int lastVideoPts_ = 0;
 
     std::condition_variable cv_;
     std::atomic_bool interrupted_ {false};
