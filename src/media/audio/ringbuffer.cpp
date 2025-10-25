@@ -28,9 +28,6 @@
 
 namespace jami {
 
-// corresponds to 160 ms (about 5 rtp packets)
-static const size_t MIN_BUFFER_SIZE = 1024;
-
 static constexpr const int RMS_SIGNAL_INTERVAL = 5;
 
 RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat format)
