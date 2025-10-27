@@ -1786,7 +1786,7 @@ Conference::bindHostAudio()
                                                           std::make_shared<AudioInput>(source.label_))
                                                  .first;
                         }
-                        if (hostAudioInput != hostAudioInputs_.end()) {
+                        if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
                             hostAudioInput->second->switchInput(source.sourceUri_);
                         }
                         // Bind audio
@@ -1822,7 +1822,7 @@ Conference::unbindHostAudio()
         if (source.type_ == MediaType::MEDIA_AUDIO) {
             // Stop audio input
             auto hostAudioInput = hostAudioInputs_.find(source.label_);
-            if (hostAudioInput != hostAudioInputs_.end()) {
+            if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
                 hostAudioInput->second->switchInput("");
             }
             // Unbind audio
