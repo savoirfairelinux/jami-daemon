@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <regex>
 #include <sstream>
 
@@ -603,13 +604,33 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
-    // If the new media list has video, remove the participant from audioonlylist.
-    auto remoteHasVideo = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList, false),
-                                                       MediaType::MEDIA_VIDEO);
-    if (videoMixer_ && remoteHasVideo) {
+    // If the new media list has video, remove the participant from audioonlylist and add the host's video stream.
+    auto remoteMediaAttrs = MediaAttribute::buildMediaAttributesList(remoteMediaList, false);
+    auto remoteHasActiveVideo = std::any_of(remoteMediaAttrs.begin(),
+                                            remoteMediaAttrs.end(),
+                                            [](const MediaAttribute& mediaAttr) {
+                                                return mediaAttr.type_ == MediaType::MEDIA_VIDEO && mediaAttr.enabled_
+                                                       && !mediaAttr.muted_;
+                                            });
+    if (videoMixer_) {
         auto callId = call->getCallId();
-        videoMixer_->removeAudioOnlySource(callId,
-                                           std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+        if (remoteHasActiveVideo) {
+            videoMixer_->removeAudioOnlySource(callId,
+                                               std::string(
+                                                   sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+            // Collect all active video URIs from remote media attributes
+            std::vector<std::string> videoUris;
+            for (const auto& attr : remoteMediaAttrs) {
+                if (attr.type_ == MediaType::MEDIA_VIDEO && attr.enabled_ && !attr.muted_ && !attr.sourceUri_.empty()) {
+                    videoUris.push_back(attr.sourceUri_);
+                }
+            }
+            if (!videoUris.empty()) {
+                videoMixer_->switchInputs(videoUris);
+            }
+        } else {
+            videoMixer_->addAudioOnlySource(callId, sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID));
+        }
     }
 #endif
 
@@ -624,13 +645,12 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     }
     // Create minimum media list (ignore muted and disabled medias)
     std::vector<libjami::MediaMap> newMediaList;
-    newMediaList.reserve(remoteMediaList.size());
+    newMediaList.reserve(currentMediaList.size() + remoteList.size());
     for (auto const& media : currentMediaList) {
         if (media.enabled_ and not media.muted_)
             newMediaList.emplace_back(MediaAttribute::toMediaMap(media));
     }
-    for (auto idx = newMediaList.size(); idx < remoteMediaList.size(); idx++)
-        newMediaList.emplace_back(remoteMediaList[idx]);
+    newMediaList.insert(newMediaList.end(), remoteList.begin(), remoteList.end());
 
     // NOTE:
     // Since this is a conference, newly added media will be also
