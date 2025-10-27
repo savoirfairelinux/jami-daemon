@@ -2831,7 +2831,17 @@ JamiAccount::getContacts(bool includeRemoved) const
     std::lock_guard lock(configurationMutex_);
     if (not accountManager_)
         return {};
-    return accountManager_->getContacts(includeRemoved);
+    const auto& contacts = accountManager_->getContacts(includeRemoved);
+    std::vector<std::map<std::string, std::string>> ret;
+    ret.reserve(contacts.size());
+    for (const auto& c : contacts) {
+        auto details = c.second.toMap();
+        if (not details.empty()) {
+            details["id"] = c.first.toString();
+            ret.emplace_back(std::move(details));
+        }
+    }
+    return ret;
 }
 
 /* trust requests */

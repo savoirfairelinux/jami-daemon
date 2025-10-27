@@ -81,9 +81,7 @@ public:
     using OnNewDeviceCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>;
     using OnDeviceAnnouncedCb = std::function<void()>;
 
-    AccountManager(const std::string& accountId,
-                   const std::filesystem::path& path,
-                   const std::string& nameServer)
+    AccountManager(const std::string& accountId, const std::filesystem::path& path, const std::string& nameServer)
         : accountId_(accountId)
         , path_(path)
         , nameDir_(NameDirectory::instance(nameServer)) {};
@@ -145,9 +143,7 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync(const OnNewDeviceCb& cb,
-                           const OnDeviceAnnouncedCb& dcb,
-                           bool publishPresence = true);
+    virtual void startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence = true);
 
     const AccountInfo* getInfo() const { return info_.get(); }
 
@@ -175,9 +171,7 @@ public:
      *         - ALREADY_LINKING (-2): A device linking operation is already in progress
      *         - GENERIC (-3): A generic error occurred during the process
      */
-    virtual int32_t addDevice(const std::string& /*uri*/,
-                              std::string_view /*auth_scheme*/,
-                              AuthChannelHandler*)
+    virtual int32_t addDevice(const std::string& /*uri*/, std::string_view /*auth_scheme*/, AuthChannelHandler*)
     {
         return 0;
     };
@@ -203,11 +197,9 @@ public:
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
 
-    using PeerCertificateCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
-                                                 const dht::InfoHash& peer_account)>;
-    void onPeerMessage(const dht::crypto::PublicKey& peer_device,
-                       bool allowPublic,
-                       PeerCertificateCb&& cb);
+    using PeerCertificateCb
+        = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>;
+    void onPeerMessage(const dht::crypto::PublicKey& peer_device, bool allowPublic, PeerCertificateCb&& cb);
     bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt,
                            bool allowPublic,
                            dht::InfoHash& account_id);
@@ -228,9 +220,7 @@ public:
     bool acceptTrustRequest(const std::string& from, bool includeConversation = true);
     bool discardTrustRequest(const std::string& from);
 
-    void sendTrustRequest(const std::string& to,
-                          const std::string& convId,
-                          const std::vector<uint8_t>& payload);
+    void sendTrustRequest(const std::string& to, const std::string& convId, const std::vector<uint8_t>& payload);
     void sendTrustRequestConfirm(const dht::InfoHash& to,
                                  const std::string& conversationId); // TODO ideally no convId here
 
@@ -240,34 +230,27 @@ public:
      * Add contact to the account contact list.
      * Set confirmed if we know the contact also added us.
      */
-    bool addContact(const dht::InfoHash& uri,
-                    bool confirmed = false,
-                    const std::string& conversationId = "");
+    bool addContact(const dht::InfoHash& uri, bool confirmed = false, const std::string& conversationId = "");
     void removeContact(const std::string& uri, bool banned = true);
     void removeContactConversation(const std::string& uri); // for non swarm contacts
-    void updateContactConversation(
-        const std::string& uri, const std::string& convId, bool added = false);
-    std::vector<std::map<std::string, std::string>> getContacts(bool includeRemoved = false) const;
+    void updateContactConversation(const std::string& uri, const std::string& convId, bool added = false);
+    std::map<dht::InfoHash, Contact> getContacts(bool includeRemoved = false) const;
 
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
     std::optional<Contact> getContactInfo(const std::string& uri) const;
 
-    virtual bool findCertificate(
-        const dht::InfoHash& h,
-        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    virtual bool findCertificate(const dht::InfoHash& h,
+                                 std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
-    virtual bool findCertificate(
-        const dht::PkId& h,
-        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    virtual bool findCertificate(const dht::PkId& h,
+                                 std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
-    bool setCertificateStatus(const std::string& cert_id,
-                              dhtnet::tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                               dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(
-        dhtnet::tls::TrustStore::PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
     dhtnet::tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;
     bool isAllowed(const crypto::Certificate& crt, bool allowPublic = false);
 
@@ -283,9 +266,7 @@ public:
     using RegistrationCallback = NameDirectory::RegistrationCallback;
     using SearchResponse = NameDirectory::Response;
 
-    virtual void lookupUri(const std::string& name,
-                           const std::string& defaultServer,
-                           LookupCallback cb);
+    virtual void lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb);
     virtual void lookupAddress(const std::string& address, LookupCallback cb);
     virtual bool searchUser(const std::string& /*query*/, SearchCallback /*cb*/) { return false; }
     virtual void registerName(const std::string& name,
