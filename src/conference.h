@@ -285,7 +285,7 @@ public:
     /**
      * Attach host
      */
-    void attachHost(const std::vector<libjami::MediaMap>& mediaList = {});
+    void attachHost(const std::vector<libjami::MediaMap>& mediaList);
 
     /**
      * Detach local audio/video from the conference
@@ -365,6 +365,12 @@ public:
      */
     std::vector<libjami::MediaMap> currentMediaList() const;
 
+    /**
+     * Return the last media list before the host was detached
+     * @return Last media list
+     */
+    std::vector<libjami::MediaMap> getLastMediaList() const { return lastMediaList_; }
+
     // Update layout if recording changes
     void stopRecording() override;
     bool startRecording(const std::string& path) override;
@@ -441,6 +447,9 @@ private:
     std::vector<MediaAttribute> hostSources_;
     // Because host doesn't have a call, we need to store the audio inputs
     std::map<std::string, std::shared_ptr<jami::AudioInput>> hostAudioInputs_;
+
+    // Last media list before detaching from a conference
+    std::vector<libjami::MediaMap> lastMediaList_ = {};
 
     bool localModAdded_ {false};
 
