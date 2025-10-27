@@ -73,13 +73,17 @@ static pjsip_module mod_ua_;
 
 static void invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* e);
 static void outgoing_request_forked_cb(pjsip_inv_session* inv, pjsip_event* e);
-static void transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjsip_event* e);
+static void transaction_state_changed_cb(pjsip_inv_session* inv,
+                                         pjsip_transaction* tsx,
+                                         pjsip_event* e);
 // Called when an SDP offer is found in answer. This will occur
 // when we send an empty invite (no SDP). In this case, we should
 // expect an offer in a the 200 OK message
 static void on_rx_offer2(pjsip_inv_session* inv, struct pjsip_inv_on_rx_offer_cb_param* param);
 // Called when a re-invite is received
-static pj_status_t reinvite_received_cb(pjsip_inv_session* inv, const pjmedia_sdp_session* offer, pjsip_rx_data* rdata);
+static pj_status_t reinvite_received_cb(pjsip_inv_session* inv,
+                                        const pjmedia_sdp_session* offer,
+                                        pjsip_rx_data* rdata);
 // Called to request an SDP offer if the peer sent an invite or
 // a re-invite with no SDP. In this, we must provide an offer in
 // the answer (200 OK) if we accept the call
@@ -231,8 +235,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    const auto sip_to_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.to->uri));
-    const auto sip_from_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.from->uri));
+    const auto sip_to_uri = reinterpret_cast<pjsip_sip_uri*>(
+        pjsip_uri_get_uri(rdata->msg_info.to->uri));
+    const auto sip_from_uri = reinterpret_cast<pjsip_sip_uri*>(
+        pjsip_uri_get_uri(rdata->msg_info.from->uri));
     const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
     if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
@@ -250,17 +256,23 @@ transaction_request_cb(pjsip_rx_data* rdata)
         peerNumber = remote_user + "@" + remote_hostname;
     else {
         char tmp[PJSIP_MAX_URL_SIZE];
-        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+        size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                                        sip_from_uri,
+                                        tmp,
+                                        PJSIP_MAX_URL_SIZE);
         peerNumber = sip_utils::stripSipUriPrefix(std::string_view(tmp, length));
     }
 
-    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(rdata->tp_info.transport);
+    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(
+        rdata->tp_info.transport);
 
     std::shared_ptr<SIPAccountBase> account;
     // If transport account is default-constructed, guessing account is allowed
     const auto& waccount = transport ? transport->getAccount() : std::weak_ptr<SIPAccountBase> {};
     if (is_uninitialized(waccount)) {
-        account = Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname);
+        account = Manager::instance().sipVoIPLink().guessAccount(toUsername,
+                                                                 viaHostname,
+                                                                 remote_hostname);
         if (not account)
             return PJ_FALSE;
         if (not transport and account->getAccountType() == SIPAccount::ACCOUNT_TYPE) {
@@ -289,7 +301,11 @@ transaction_request_cb(pjsip_rx_data* rdata)
                     int oldCount {0};
                     int urgentCount {0};
                     std::string sp(body_view.substr(pos));
-                    int ret = sscanf(sp.c_str(), "Voice-Message: %d/%d (%d/", &newCount, &oldCount, &urgentCount);
+                    int ret = sscanf(sp.c_str(),
+                                     "Voice-Message: %d/%d (%d/",
+                                     &newCount,
+                                     &oldCount,
+                                     &urgentCount);
 
                     // According to rfc3842
                     // urgent messages are optional
@@ -307,16 +323,17 @@ transaction_request_cb(pjsip_rx_data* rdata)
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
             if (payloads.size() > 0) {
                 constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
-                auto* msgId = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
-                                                                                     &STR_MESSAGE_ID,
-                                                                                     nullptr);
+                auto* msgId = (pjsip_generic_string_hdr*)
+                    pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &STR_MESSAGE_ID, nullptr);
                 std::string id = {};
                 if (!msgId) {
                     // Supports IMDN message format https://tools.ietf.org/html/rfc5438#section-7.1.1.3
-                    constexpr pj_str_t STR_IMDN_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("imdn.Message-ID");
-                    msgId = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
-                                                                                   &STR_IMDN_MESSAGE_ID,
-                                                                                   nullptr);
+                    constexpr pj_str_t STR_IMDN_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR(
+                        "imdn.Message-ID");
+                    msgId = (pjsip_generic_string_hdr*)
+                        pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
+                                                   &STR_IMDN_MESSAGE_ID,
+                                                   nullptr);
                 }
                 if (msgId)
                     id = std::string(msgId->hvalue.ptr, msgId->hvalue.slen);
@@ -354,7 +371,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     pjmedia_sdp_session* r_sdp {nullptr};
     if (body) {
-        if (pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS) {
+        if (pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp)
+            != PJ_SUCCESS) {
             JAMI_WARN("Failed to parse the SDP in offer");
             r_sdp = nullptr;
         }
@@ -396,12 +414,14 @@ transaction_request_cb(pjsip_rx_data* rdata)
     call->toUsername(std::string(toUsername));
 
     // FIXME: for now, use the same address family as the SIP transport
-    auto family = pjsip_transport_type_get_af(pjsip_transport_get_type_from_flag(transport->get()->flag));
+    auto family = pjsip_transport_type_get_af(
+        pjsip_transport_get_type_from_flag(transport->get()->flag));
 
     dhtnet::IpAddr addrSdp;
     if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
-        addrSdp = account->getPublishedSameasLocal() ? account->getUPnPIpAddress() : account->getPublishedIpAddress();
+        addrSdp = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
+                                                     : account->getPublishedIpAddress();
     } else {
         addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
                       ? account->getPublishedIpAddress()
@@ -435,10 +455,16 @@ transaction_request_cb(pjsip_rx_data* rdata)
     }
 
     pjsip_dialog* dialog = nullptr;
-    if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
+    if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog)
+        != PJ_SUCCESS) {
         JAMI_ERR("Unable to create UAS");
         call.reset();
-        try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
+        try_respond_stateless(endpt_,
+                              rdata,
+                              PJSIP_SC_INTERNAL_SERVER_ERROR,
+                              nullptr,
+                              nullptr,
+                              nullptr);
         return PJ_FALSE;
     }
 
@@ -490,7 +516,13 @@ transaction_request_cb(pjsip_rx_data* rdata)
     // Check if call has been transferred
     pjsip_tx_data* tdata = nullptr;
 
-    if (pjsip_inv_initial_answer(call->inviteSession_.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_initial_answer(call->inviteSession_.get(),
+                                 rdata,
+                                 PJSIP_SC_TRYING,
+                                 NULL,
+                                 NULL,
+                                 &tdata)
+        != PJ_SUCCESS) {
         JAMI_ERR("Unable to create answer TRYING");
         return PJ_FALSE;
     }
@@ -505,7 +537,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     call->setState(Call::ConnectionState::TRYING);
 
-    if (pjsip_inv_answer(call->inviteSession_.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_answer(call->inviteSession_.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata)
+        != PJ_SUCCESS) {
         JAMI_ERR("Unable to create answer RINGING");
         return PJ_FALSE;
     }
@@ -525,7 +558,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
         auto replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
 
         // Disconnect the "replaced" INVITE session.
-        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, nullptr, &tdata) == PJ_SUCCESS && tdata) {
+        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, nullptr, &tdata) == PJ_SUCCESS
+            && tdata) {
             pjsip_inv_send_msg(replaced_inv, tdata);
         }
 
@@ -538,7 +572,9 @@ transaction_request_cb(pjsip_rx_data* rdata)
 }
 
 static void
-tp_state_callback(pjsip_transport* tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
+tp_state_callback(pjsip_transport* tp,
+                  pjsip_transport_state state,
+                  const pjsip_transport_state_info* info)
 {
     if (auto& broker = Manager::instance().sipVoIPLink().sipTransportBroker)
         broker->transportStateChanged(tp, state, info);
@@ -594,8 +630,13 @@ SIPVoIPLink::SIPVoIPLink()
         std::vector<pj_uint16_t> dns_ports(ns.size());
         for (unsigned i = 0, n = ns.size(); i < n; i++) {
             char hbuf[NI_MAXHOST];
-            if (auto ret
-                = getnameinfo((sockaddr*) &ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST)) {
+            if (auto ret = getnameinfo((sockaddr*) &ns[i],
+                                       ns[i].getLength(),
+                                       hbuf,
+                                       sizeof(hbuf),
+                                       nullptr,
+                                       0,
+                                       NI_NUMERICHOST)) {
                 JAMI_WARN("Error printing SIP nameserver: %s", gai_strerror(ret));
             } else {
                 JAMI_DBG("Using SIP nameserver: %s", hbuf);
@@ -614,7 +655,8 @@ SIPVoIPLink::SIPVoIPLink()
                 JAMI_WARN("Error setting SIP DNS servers: %s", sip_utils::sip_strerror(ret).c_str());
             } else {
                 if (auto ret = pjsip_endpt_set_resolver(endpt_, resv)) {
-                    JAMI_WARN("Error setting PJSIP DNS resolver: %s", sip_utils::sip_strerror(ret).c_str());
+                    JAMI_WARN("Error setting PJSIP DNS resolver: %s",
+                              sip_utils::sip_strerror(ret).c_str());
                 }
             }
         }
@@ -667,7 +709,12 @@ SIPVoIPLink::SIPVoIPLink()
         CONST_PJ_STR(sip_utils::SIP_METHODS::PUBLISH),
     };
 
-    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, nullptr, PJ_ARRAY_SIZE(allowed), allowed);
+    pjsip_endpt_add_capability(endpt_,
+                               &mod_ua_,
+                               PJSIP_H_ALLOW,
+                               nullptr,
+                               PJ_ARRAY_SIZE(allowed),
+                               allowed);
 
     static constexpr pj_str_t text_plain = CONST_PJ_STR("text/plain");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &text_plain);
@@ -699,7 +746,8 @@ SIPVoIPLink::shutdown()
     // may be called and another instance of SIPVoIPLink can be re-created!
 
     if (not Manager::instance().callFactory.empty(Call::LinkType::SIP))
-        JAMI_ERR("%zu SIP calls remains!", Manager::instance().callFactory.callCount(Call::LinkType::SIP));
+        JAMI_ERR("%zu SIP calls remains!",
+                 Manager::instance().callFactory.callCount(Call::LinkType::SIP));
 
     sipTransportBroker->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
@@ -715,9 +763,14 @@ SIPVoIPLink::shutdown()
 }
 
 std::shared_ptr<SIPAccountBase>
-SIPVoIPLink::guessAccount(std::string_view userName, std::string_view server, std::string_view fromUri) const
+SIPVoIPLink::guessAccount(std::string_view userName,
+                          std::string_view server,
+                          std::string_view fromUri) const
 {
-    JAMI_LOG("username = {}, server = {}, from = {}", userName, server, fromUri);
+    JAMI_LOG("username = {}, server = {}, from = {}",
+             userName,
+             server,
+             fromUri);
     // Attempt to find the account id from username and server name by full match
 
     std::shared_ptr<SIPAccountBase> result;
@@ -749,7 +802,8 @@ SIPVoIPLink::handleEvents()
 {
     const pj_time_val timeout = {1, 0};
     if (auto ret = pjsip_endpt_handle_events(endpt_, &timeout))
-        JAMI_ERR("pjsip_endpt_handle_events failed with error %s", sip_utils::sip_strerror(ret).c_str());
+        JAMI_ERR("pjsip_endpt_handle_events failed with error %s",
+                 sip_utils::sip_strerror(ret).c_str());
 }
 
 void
@@ -807,7 +861,8 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     if (not call)
         return;
 
-    if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG and ev->type != PJSIP_EVENT_RX_MSG) {
+    if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG
+        and ev->type != PJSIP_EVENT_RX_MSG) {
         JAMI_WARN("[call:%s] INVITE@%p state changed to %d (%s): unexpected event type %d",
                   call->getCallId().c_str(),
                   inv,
@@ -827,9 +882,9 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         JAMI_LOG("[call:{}] INVITE@{:p} state changed to {:d} ({}): cause={:d}, tsx@{:p} status {:d} ({:s})",
                  call->getCallId(),
                  fmt::ptr(inv),
-                 (int) inv->state,
+                 (int)inv->state,
                  pjsip_inv_state_name(inv->state),
-                 (int) inv->cause,
+                 (int)inv->cause,
                  fmt::ptr(tsx),
                  status_code,
                  sip_utils::as_view(*description));
@@ -837,9 +892,9 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         JAMI_LOG("[call:{}] INVITE@{:p} state changed to {:d} ({:s}): cause={:d} (TX_MSG)",
                  call->getCallId(),
                  fmt::ptr(inv),
-                 (int) inv->state,
+                 (int)inv->state,
                  pjsip_inv_state_name(inv->state),
-                 (int) inv->cause);
+                 (int)inv->cause);
     }
     pjsip_rx_data* rdata {nullptr};
     if (ev->type == PJSIP_EVENT_RX_MSG) {
@@ -978,7 +1033,8 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
     dhtnet::IpAddr address;
     if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if it's set */
-        address = account->getPublishedSameasLocal() ? account->getUPnPIpAddress() : account->getPublishedIpAddress();
+        address = account->getPublishedSameasLocal() ? account->getUPnPIpAddress()
+                                                     : account->getPublishedIpAddress();
     } else {
         address = account->getPublishedSameasLocal() ? ifaceAddr : account->getPublishedIpAddress();
     }
@@ -1054,7 +1110,8 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     JAMI_DBG("[call:%s] INVITE@%p media update: status %d", call->getCallId().c_str(), inv, status);
 
     if (status != PJ_SUCCESS) {
-        const int reason = inv->state != PJSIP_INV_STATE_NULL and inv->state != PJSIP_INV_STATE_CONFIRMED
+        const int reason = inv->state != PJSIP_INV_STATE_NULL
+                                   and inv->state != PJSIP_INV_STATE_CONFIRMED
                                ? PJSIP_SC_UNSUPPORTED_MEDIA_TYPE
                                : 0;
 
@@ -1208,7 +1265,8 @@ transferCall(SIPCall& call, const std::string& refer_to)
     try {
         Manager::instance().newOutgoingCall(refer_to,
                                             call.getAccountId(),
-                                            MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList()));
+                                            MediaAttribute::mediaAttributesToMediaMaps(
+                                                call.getMediaAttributeList()));
         Manager::instance().hangupCall(call.getAccountId(), callId);
     } catch (const std::exception& e) {
         JAMI_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());
@@ -1304,7 +1362,10 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     // Using method name to dispatch
     auto methodName = sip_utils::as_view(msg->line.req.method.name);
-    JAMI_LOG("[INVITE:{:p}] RX SIP method {:d} ({:s})", fmt::ptr(inv), (int) msg->line.req.method.id, methodName);
+    JAMI_LOG("[INVITE:{:p}] RX SIP method {:d} ({:s})",
+             fmt::ptr(inv),
+             (int)msg->line.req.method.id,
+             methodName);
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
@@ -1323,7 +1384,9 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         handleIncomingOptions(rdata);
     else if (methodName == sip_utils::SIP_METHODS::MESSAGE) {
         if (msg->body)
-            runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable { call->onTextMessage(std::move(m)); });
+            runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable {
+                call->onTextMessage(std::move(m));
+            });
     }
 }
 
@@ -1353,10 +1416,10 @@ processInviteResponseHelper(pjsip_inv_session* inv, pjsip_event* event)
     }
 
     JAMI_LOG("[INVITE:{:p}] SIP RX response: reason {:s}, status code {:d} {:s}",
-             fmt::ptr(inv),
-             sip_utils::as_view(msg->line.status.reason),
-             msg->line.status.code,
-             sip_utils::as_view(*pjsip_get_status_text(msg->line.status.code)));
+              fmt::ptr(inv),
+              sip_utils::as_view(msg->line.status.reason),
+              msg->line.status.code,
+              sip_utils::as_view(*pjsip_get_status_text(msg->line.status.code)));
 
     sip_utils::logMessageHeaders(&msg->hdr);
 }
@@ -1418,7 +1481,9 @@ resolver_callback(pj_status_t status, void* token, const struct pjsip_server_add
 }
 
 void
-SIPVoIPLink::resolveSrvName(const std::string& name, pjsip_transport_type_e type, SrvResolveCallback&& cb)
+SIPVoIPLink::resolveSrvName(const std::string& name,
+                            pjsip_transport_type_e type,
+                            SrvResolveCallback&& cb)
 {
     // PJSIP limits hostname to be longer than PJ_MAX_HOSTNAME.
     // But, resolver prefix the given name by a string like "_sip._udp."
@@ -1452,8 +1517,8 @@ SIPVoIPLink::resolveSrvName(const std::string& name, pjsip_transport_type_e type
     };
 
     const auto token = std::hash<std::string>()(name + std::to_string(type));
-    getResolveCallbackMap()
-        .registerCallback(token, [=, cb = std::move(cb)](pj_status_t s, const pjsip_server_addresses* r) {
+    getResolveCallbackMap().registerCallback(
+        token, [=, cb = std::move(cb)](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
                     JAMI_WARN("Unable to resolve \"%s\" using pjsip_endpt_resolve, attempting getaddrinfo.",
@@ -1504,7 +1569,10 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     addr = sip_utils::as_view(*pj_gethostname());
 
     // Update address and port with active transport
-    RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s :%d", addr.c_str(), port);
+    RETURN_IF_NULL(transport,
+                   "Transport is NULL in findLocalAddress, using local address %s :%d",
+                   addr.c_str(),
+                   port);
 
     // get the transport manager associated with the SIP enpoint
     auto tpmgr = pjsip_endpt_get_tpmgr(endpt_);
@@ -1516,9 +1584,12 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     const pj_str_t pjstring(CONST_PJ_STR(host));
 
     auto tp_sel = getTransportSelector(transport);
-    pjsip_tpmgr_fla2_param param = {transportType, &tp_sel, pjstring, PJ_FALSE, {nullptr, 0}, 0, nullptr};
+    pjsip_tpmgr_fla2_param param
+        = {transportType, &tp_sel, pjstring, PJ_FALSE, {nullptr, 0}, 0, nullptr};
     if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_.get(), &param) != PJ_SUCCESS) {
-        JAMI_WARN("Unable to retrieve local address and port from transport, using %s :%d", addr.c_str(), port);
+        JAMI_WARN("Unable to retrieve local address and port from transport, using %s :%d",
+                  addr.c_str(),
+                  port);
         return;
     }
 
@@ -1530,8 +1601,11 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
 }
 
 bool
-SIPVoIPLink::findLocalAddressFromSTUN(
-    pjsip_transport* transport, pj_str_t* stunServerName, int stunPort, std::string& addr, pj_uint16_t& port) const
+SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
+                                      pj_str_t* stunServerName,
+                                      int stunPort,
+                                      std::string& addr,
+                                      pj_uint16_t& port) const
 {
     // WARN: this code use pjstun_get_mapped_addr2 that works
     // in IPv4 only.
@@ -1559,12 +1633,18 @@ SIPVoIPLink::findLocalAddressFromSTUN(
 
     pj_sockaddr_in mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
-    const pjstun_setting stunOpt = {PJ_TRUE, localIp.getFamily(), *stunServerName, stunPort, *stunServerName, stunPort};
-    pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory, &stunOpt, 1, &sipSocket, &mapped_addr);
+    const pjstun_setting stunOpt
+        = {PJ_TRUE, localIp.getFamily(), *stunServerName, stunPort, *stunServerName, stunPort};
+    pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory,
+                                                           &stunOpt,
+                                                           1,
+                                                           &sipSocket,
+                                                           &mapped_addr);
 
     switch (stunStatus) {
     case PJLIB_UTIL_ESTUNNOTRESPOND:
-        JAMI_ERROR("No response from STUN server {:s}", sip_utils::as_view(*stunServerName));
+        JAMI_ERROR("No response from STUN server {:s}",
+                 sip_utils::as_view(*stunServerName));
         return false;
 
     case PJLIB_UTIL_ESTUNSYMMETRIC:
@@ -1578,7 +1658,8 @@ SIPVoIPLink::findLocalAddressFromSTUN(
         return true;
 
     default: // use given address, silent any not handled error
-        JAMI_WARNING("Error from STUN server {:s}, using source address", sip_utils::as_view(*stunServerName));
+        JAMI_WARNING("Error from STUN server {:s}, using source address",
+                  sip_utils::as_view(*stunServerName));
         return false;
     }
 }

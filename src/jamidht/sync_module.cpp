@@ -35,14 +35,17 @@ public:
 
     // Sync connections
     std::recursive_mutex syncConnectionsMtx_;
-    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>> syncConnections_;
+    std::map<DeviceId /* deviceId */, std::vector<std::shared_ptr<dhtnet::ChannelSocket>>>
+        syncConnections_;
 
     /**
      * Build SyncMsg and send it on socket
      * @param socket
      */
-    void syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const std::shared_ptr<SyncMsg>& syncMsg);
-    void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& device);
+    void syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                   const std::shared_ptr<SyncMsg>& syncMsg);
+    void onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                           const DeviceId& device);
 };
 
 SyncModule::Impl::Impl(const std::shared_ptr<JamiAccount>& account)
@@ -68,9 +71,14 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
                 SyncMsg msg;
                 msg.ds = info->contacts->getSyncData();
                 msgpack::pack(buffer, msg);
-                socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+                socket->write(reinterpret_cast<const unsigned char*>(buffer.data()),
+                              buffer.size(),
+                              ec);
                 if (ec) {
-                    JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+                    JAMI_ERROR("[Account {}] [device {}] {:s}",
+                               accountId_,
+                               socket->deviceId(),
+                               ec.message());
                     return;
                 }
             }
@@ -84,7 +92,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -97,7 +108,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -113,7 +127,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -126,7 +143,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             msgpack::pack(buffer, msg);
             socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
             if (ec) {
-                JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+                JAMI_ERROR("[Account {}] [device {}] {:s}",
+                           accountId_,
+                           socket->deviceId(),
+                           ec.message());
                 return;
             }
         }
@@ -136,7 +156,10 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
         msgpack::pack(buffer, *syncMsg);
         socket->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
         if (ec)
-            JAMI_ERROR("[Account {}] [device {}] {:s}", accountId_, socket->deviceId(), ec.message());
+            JAMI_ERROR("[Account {}] [device {}] {:s}",
+                       accountId_,
+                       socket->deviceId(),
+                       ec.message());
     }
 }
 
@@ -147,12 +170,15 @@ SyncModule::SyncModule(const std::shared_ptr<JamiAccount>& account)
 {}
 
 void
-SyncModule::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const DeviceId& device)
+SyncModule::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
+                                    const DeviceId& device)
 {
     std::lock_guard lk(syncConnectionsMtx_);
     auto connectionsIt = syncConnections_.find(device);
     if (connectionsIt == syncConnections_.end()) {
-        JAMI_WARNING("[Account {}] [device {}] onChannelShutdown: no connection found.", accountId_, device.to_view());
+        JAMI_WARNING("[Account {}] [device {}] onChannelShutdown: no connection found.",
+                     accountId_,
+                     device.to_view());
         return;
     }
     auto& connections = connectionsIt->second;
@@ -182,40 +208,44 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
 
     struct DecodingContext
     {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 512};
+        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
+                               nullptr,
+                               512};
     };
 
-    socket->setOnRecv(
-        [acc = pimpl_->account_.lock(), device, peerId, ctx = std::make_shared<DecodingContext>()](const uint8_t* buf,
-                                                                                                   size_t len) {
-            if (!buf || !acc)
-                return len;
-
-            ctx->pac.reserve_buffer(len);
-            std::copy_n(buf, len, ctx->pac.buffer());
-            ctx->pac.buffer_consumed(len);
-
-            msgpack::object_handle oh;
-            try {
-                while (ctx->pac.next(oh)) {
-                    SyncMsg msg;
-                    oh.get().convert(msg);
-                    if (auto manager = acc->accountManager())
-                        manager->onSyncData(std::move(msg.ds), false);
-
-                    if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
-                        if (auto cm = acc->convModule(true))
-                            cm->onSyncData(msg, peerId, device.toString());
-                }
-            } catch (const std::exception& e) {
-                JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",
-                             acc->getAccountID(),
-                             device.to_view(),
-                             e.what());
-            }
-
+    socket->setOnRecv([acc = pimpl_->account_.lock(),
+                       device,
+                       peerId,
+                       ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
+        if (!buf || !acc)
             return len;
-        });
+
+        ctx->pac.reserve_buffer(len);
+        std::copy_n(buf, len, ctx->pac.buffer());
+        ctx->pac.buffer_consumed(len);
+
+        msgpack::object_handle oh;
+        try {
+            while (ctx->pac.next(oh)) {
+                SyncMsg msg;
+                oh.get().convert(msg);
+                if (auto manager = acc->accountManager())
+                    manager->onSyncData(std::move(msg.ds), false);
+
+                if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty()
+                    || !msg.ms.empty())
+                    if (auto cm = acc->convModule(true))
+                        cm->onSyncData(msg, peerId, device.toString());
+            }
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",
+                         acc->getAccountID(),
+                         device.to_view(),
+                         e.what());
+        }
+
+        return len;
+    });
 
     dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket]() {
         if (auto s = w.lock())
@@ -250,11 +280,11 @@ SyncModule::syncWithConnected(const std::shared_ptr<SyncMsg>& syncMsg, const Dev
     if (count == 0) {
         JAMI_WARNING("[Account {}] [device {}] no sync connection.",
                      pimpl_->accountId_,
-                     deviceId ? deviceId.to_view() : "any");
+                     deviceId.toString());
     } else {
         JAMI_DEBUG("[Account {}] [device {}] syncing with {:d} devices",
                    pimpl_->accountId_,
-                   deviceId ? deviceId.to_view() : "any",
+                   deviceId.to_view(),
                    count);
     }
 }

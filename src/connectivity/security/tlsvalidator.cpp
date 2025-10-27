@@ -132,30 +132,31 @@ const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValida
         /* IS_CA                        */ &TlsValidator::isCA,
     }};
 
-const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
-    /*      CertificateCheck                    Callback        */
-    /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN,
-    /*EXPIRED                          */ CheckValuesType::BOOLEAN,
-    /*STRONG_SIGNING                   */ CheckValuesType::BOOLEAN,
-    /*NOT_SELF_SIGNED                  */ CheckValuesType::BOOLEAN,
-    /*KEY_MATCH                        */ CheckValuesType::BOOLEAN,
-    /*PRIVATE_KEY_STORAGE_PERMISSION   */ CheckValuesType::BOOLEAN,
-    /*PUBLIC_KEY_STORAGE_PERMISSION    */ CheckValuesType::BOOLEAN,
-    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ CheckValuesType::BOOLEAN,
-    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ CheckValuesType::BOOLEAN,
-    /*PRIVATE_KEY_STORAGE_LOCATION     */ CheckValuesType::BOOLEAN,
-    /*PUBLIC_KEY_STORAGE_LOCATION      */ CheckValuesType::BOOLEAN,
-    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ CheckValuesType::BOOLEAN,
-    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ CheckValuesType::BOOLEAN,
-    /*EXIST                            */ CheckValuesType::BOOLEAN,
-    /*VALID                            */ CheckValuesType::BOOLEAN,
-    /*VALID_AUTHORITY                  */ CheckValuesType::BOOLEAN,
-    /*KNOWN_AUTHORITY                  */ CheckValuesType::BOOLEAN,
-    /*NOT_REVOKED                      */ CheckValuesType::BOOLEAN,
-    /*AUTHORITY_MISMATCH               */ CheckValuesType::BOOLEAN,
-    /*UNEXPECTED_OWNER                 */ CheckValuesType::BOOLEAN,
-    /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN,
-}};
+const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType>
+    TlsValidator::enforcedCheckType = {{
+        /*      CertificateCheck                    Callback        */
+        /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN,
+        /*EXPIRED                          */ CheckValuesType::BOOLEAN,
+        /*STRONG_SIGNING                   */ CheckValuesType::BOOLEAN,
+        /*NOT_SELF_SIGNED                  */ CheckValuesType::BOOLEAN,
+        /*KEY_MATCH                        */ CheckValuesType::BOOLEAN,
+        /*PRIVATE_KEY_STORAGE_PERMISSION   */ CheckValuesType::BOOLEAN,
+        /*PUBLIC_KEY_STORAGE_PERMISSION    */ CheckValuesType::BOOLEAN,
+        /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ CheckValuesType::BOOLEAN,
+        /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ CheckValuesType::BOOLEAN,
+        /*PRIVATE_KEY_STORAGE_LOCATION     */ CheckValuesType::BOOLEAN,
+        /*PUBLIC_KEY_STORAGE_LOCATION      */ CheckValuesType::BOOLEAN,
+        /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ CheckValuesType::BOOLEAN,
+        /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ CheckValuesType::BOOLEAN,
+        /*EXIST                            */ CheckValuesType::BOOLEAN,
+        /*VALID                            */ CheckValuesType::BOOLEAN,
+        /*VALID_AUTHORITY                  */ CheckValuesType::BOOLEAN,
+        /*KNOWN_AUTHORITY                  */ CheckValuesType::BOOLEAN,
+        /*NOT_REVOKED                      */ CheckValuesType::BOOLEAN,
+        /*AUTHORITY_MISMATCH               */ CheckValuesType::BOOLEAN,
+        /*UNEXPECTED_OWNER                 */ CheckValuesType::BOOLEAN,
+        /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN,
+    }};
 
 const EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
     /*      CertificateCheck                                   Name */
@@ -219,8 +220,8 @@ const EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckVal
     /* NUMBER   */ libjami::Certificate::ChecksValuesTypesNames::NUMBER,
 }};
 
-const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool> TlsValidator::acceptedCheckValuesResult = {
-    {
+const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool>
+    TlsValidator::acceptedCheckValuesResult = {{
         /*   Type          PASSED    FAILED   UNSUPPORTED   ISO_DATE    CUSTOM    NUMBER */
         /* BOOLEAN  */ {{true, true, true, false, false, false}},
         /* ISO_DATE */ {{false, false, true, true, false, false}},
@@ -228,8 +229,7 @@ const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool> T
         /* NUMBER   */ {{false, false, true, false, false, true}},
     }};
 
-TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
-                           const std::vector<std::vector<uint8_t>>& crtChain)
+TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& crtChain)
     : TlsValidator(certStore, std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
 {}
 
@@ -289,8 +289,7 @@ TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const
     }
 }
 
-TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
-                           const std::shared_ptr<dht::crypto::Certificate>& crt)
+TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::shared_ptr<dht::crypto::Certificate>& crt)
     : certStore_(certStore)
     , certificateFound_(true)
 {
@@ -312,7 +311,7 @@ TlsValidator::~TlsValidator() {}
  * @todo The date should be validated, this is currently not an issue
  */
 std::string
-TlsValidator::getStringValue([[maybe_unused]] const TlsValidator::CertificateCheck check,
+TlsValidator::getStringValue([[maybe_unused]]const TlsValidator::CertificateCheck check,
                              const TlsValidator::CheckResult result)
 {
     assert(acceptedCheckValuesResult[enforcedCheckType[check]][result.first]);
@@ -367,10 +366,11 @@ TlsValidator::getSerializedChecks()
     if (not certificateFound_) {
         // Instead of checking `certificateFound` everywhere, handle it once
         ret[std::string(CertificateCheckNames[CertificateCheck::EXIST])] = getStringValue(CertificateCheck::EXIST,
-                                                                                          exist());
+                                                                             exist());
     } else {
         for (const CertificateCheck check : Matrix0D<CertificateCheck>())
-            ret[std::string(CertificateCheckNames[check])] = getStringValue(check, (this->*(checkCallback[check]))());
+            ret[std::string(CertificateCheckNames[check])] = getStringValue(check,
+                                                               (this->*(checkCallback[check]))());
     }
 
     return ret;
@@ -415,9 +415,12 @@ TlsValidator::getSerializedDetails()
 static TlsValidator::CheckResult
 checkError(int err, char* copy_buffer, size_t size)
 {
-    return TlsValidator::TlsValidator::CheckResult(err == GNUTLS_E_SUCCESS ? TlsValidator::CheckValues::CUSTOM
-                                                                           : TlsValidator::CheckValues::UNSUPPORTED,
-                                                   err == GNUTLS_E_SUCCESS ? std::string(copy_buffer, size) : "");
+    return TlsValidator::TlsValidator::CheckResult(err == GNUTLS_E_SUCCESS
+                                                       ? TlsValidator::CheckValues::CUSTOM
+                                                       : TlsValidator::CheckValues::UNSUPPORTED,
+                                                   err == GNUTLS_E_SUCCESS
+                                                       ? std::string(copy_buffer, size)
+                                                       : "");
 }
 
 /**
@@ -442,7 +445,8 @@ checkBinaryError(int err, char* copy_buffer, size_t resultSize)
 {
     if (err == GNUTLS_E_SUCCESS)
         return TlsValidator::CheckResult(TlsValidator::CheckValues::CUSTOM,
-                                         dht::toHex(reinterpret_cast<uint8_t*>(copy_buffer), resultSize));
+                                         dht::toHex(reinterpret_cast<uint8_t*>(copy_buffer),
+                                                     resultSize));
     else
         return TlsValidator::CheckResult(TlsValidator::CheckValues::UNSUPPORTED, "");
 }
@@ -468,9 +472,19 @@ TlsValidator::compareToCa()
 
     if (not caListPath_.empty()) {
         if (std::filesystem::is_directory(caListPath_))
-            gnutls_x509_trust_list_add_trust_dir(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
+            gnutls_x509_trust_list_add_trust_dir(trust,
+                                                 caListPath_.c_str(),
+                                                 nullptr,
+                                                 GNUTLS_X509_FMT_PEM,
+                                                 0,
+                                                 0);
         else
-            gnutls_x509_trust_list_add_trust_file(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
+            gnutls_x509_trust_list_add_trust_file(trust,
+                                                  caListPath_.c_str(),
+                                                  nullptr,
+                                                  GNUTLS_X509_FMT_PEM,
+                                                  0,
+                                                  0);
     }
 
     // build the certificate chain
@@ -772,7 +786,8 @@ TlsValidator::notExpired()
         TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     // time_t expirationTime = gnutls_x509_crt_get_expiration_time(cert);
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_EXPIRED ? CheckValues::FAILED : CheckValues::PASSED,
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_EXPIRED ? CheckValues::FAILED
+                                                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -788,8 +803,9 @@ TlsValidator::activated()
         TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     // time_t activationTime = gnutls_x509_crt_get_activation_time(cert);
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_NOT_ACTIVATED ? CheckValues::FAILED
-                                                                               : CheckValues::PASSED,
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_NOT_ACTIVATED
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -806,8 +822,9 @@ TlsValidator::strongSigning()
     // Doesn't seem to have the same value as
     // certtool  --infile /home/etudiant/Téléchargements/mynsauser.pem --key-inf
     // TODO figure out why
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_INSECURE_ALGORITHM ? CheckValues::FAILED
-                                                                                    : CheckValues::PASSED,
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_INSECURE_ALGORITHM
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -831,7 +848,8 @@ TlsValidator::keyMatch()
 
     if (not privateKeyFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
-    return TlsValidator::CheckResult(privateKeyMatch_ ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult(privateKeyMatch_ ? CheckValues::PASSED : CheckValues::FAILED,
+                                     "");
 }
 
 TlsValidator::CheckResult
@@ -842,7 +860,7 @@ TlsValidator::privateKeyStoragePermissions()
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    // clang-format off
+// clang-format off
     return TlsValidator::CheckResult(
         (statbuf.st_mode & S_IFREG) && /* Regular file only */
         /*                          READ                      WRITE                            EXECUTE          */
@@ -850,7 +868,7 @@ TlsValidator::privateKeyStoragePermissions()
         /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
         /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
         ? CheckValues::PASSED:CheckValues::FAILED, "");
-    // clang-format on
+// clang-format on
 }
 
 TlsValidator::CheckResult
@@ -861,7 +879,7 @@ TlsValidator::publicKeyStoragePermissions()
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    // clang-format off
+// clang-format off
     return TlsValidator::CheckResult(
         (statbuf.st_mode & S_IFREG) && /* Regular file only */
         /*                          READ                      WRITE                            EXECUTE          */
@@ -869,7 +887,7 @@ TlsValidator::publicKeyStoragePermissions()
         /* Group */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
         /* Other */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
         ? CheckValues::PASSED:CheckValues::FAILED, "");
-    // clang-format on
+// clang-format on
 }
 
 TlsValidator::CheckResult
@@ -986,7 +1004,8 @@ TlsValidator::publicKeySelinuxAttributes()
 TlsValidator::CheckResult
 TlsValidator::requirePrivateKeyPassword()
 {
-    return TlsValidator::CheckResult(privateKeyPassword_ ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult(privateKeyPassword_ ? CheckValues::PASSED : CheckValues::FAILED,
+                                     "");
 }
 /**
  * The CA and certificate provide conflicting ownership information
@@ -994,8 +1013,9 @@ TlsValidator::requirePrivateKeyPassword()
 TlsValidator::CheckResult
 TlsValidator::expectedOwner()
 {
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_UNEXPECTED_OWNER ? CheckValues::FAILED
-                                                                                  : CheckValues::PASSED,
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_UNEXPECTED_OWNER
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -1005,8 +1025,9 @@ TlsValidator::expectedOwner()
 TlsValidator::CheckResult
 TlsValidator::exist()
 {
-    return TlsValidator::CheckResult((certificateFound_ or certificateFileFound_) ? CheckValues::PASSED
-                                                                                  : CheckValues::FAILED,
+    return TlsValidator::CheckResult((certificateFound_ or certificateFileFound_)
+                                         ? CheckValues::PASSED
+                                         : CheckValues::FAILED,
                                      "");
 }
 
@@ -1018,7 +1039,8 @@ TlsValidator::exist()
 TlsValidator::CheckResult
 TlsValidator::valid()
 {
-    return TlsValidator::CheckResult(certificateFound_ ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult(certificateFound_ ? CheckValues::PASSED : CheckValues::FAILED,
+                                     "");
 }
 
 /**
@@ -1028,8 +1050,9 @@ TlsValidator::CheckResult
 TlsValidator::validAuthority()
 {
     // TODO Merge with either above or below
-    return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND) ? CheckValues::FAILED
-                                                                                    : CheckValues::PASSED,
+    return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND)
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -1039,8 +1062,9 @@ TlsValidator::validAuthority()
 TlsValidator::CheckResult
 TlsValidator::authorityMatch()
 {
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_CA ? CheckValues::FAILED
-                                                                               : CheckValues::PASSED,
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_CA
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -1057,8 +1081,9 @@ TlsValidator::knownAuthority()
 {
     // TODO need a new boolean account setting "require trusted authority" or something defaulting
     // to true using GNUTLS_CERT_SIGNER_NOT_FOUND is a temporary placeholder as it is close enough
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND ? CheckValues::FAILED
-                                                                                  : CheckValues::PASSED,
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
                                      "");
 }
 
@@ -1069,7 +1094,8 @@ TlsValidator::CheckResult
 TlsValidator::notRevoked()
 {
     return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_REVOKED)
-                                             || (compareToCa() & GNUTLS_CERT_REVOCATION_DATA_ISSUED_IN_FUTURE)
+                                             || (compareToCa()
+                                                 & GNUTLS_CERT_REVOCATION_DATA_ISSUED_IN_FUTURE)
                                          ? CheckValues::FAILED
                                          : CheckValues::PASSED,
                                      "");
@@ -1153,7 +1179,8 @@ TlsValidator::CheckResult
 TlsValidator::getSubjectKeyAlgorithm()
 {
     unsigned key_length = 0;
-    gnutls_pk_algorithm_t algo = (gnutls_pk_algorithm_t) gnutls_x509_crt_get_pk_algorithm(x509crt_->cert, &key_length);
+    gnutls_pk_algorithm_t algo = (gnutls_pk_algorithm_t)
+        gnutls_x509_crt_get_pk_algorithm(x509crt_->cert, &key_length);
 
     if (algo < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1192,7 +1219,12 @@ TlsValidator::getCN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert, GNUTLS_OID_X520_COMMON_NAME, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+                                            GNUTLS_OID_X520_COMMON_NAME,
+                                            0,
+                                            0,
+                                            copy_buffer,
+                                            &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1203,7 +1235,12 @@ TlsValidator::CheckResult
 TlsValidator::getUID()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert, GNUTLS_OID_LDAP_UID, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+                                            GNUTLS_OID_LDAP_UID,
+                                            0,
+                                            0,
+                                            copy_buffer,
+                                            &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1215,7 +1252,12 @@ TlsValidator::getN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert, GNUTLS_OID_X520_NAME, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+                                            GNUTLS_OID_X520_NAME,
+                                            0,
+                                            0,
+                                            copy_buffer,
+                                            &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1244,7 +1286,8 @@ TlsValidator::getO()
 TlsValidator::CheckResult
 TlsValidator::getSignatureAlgorithm()
 {
-    gnutls_sign_algorithm_t algo = (gnutls_sign_algorithm_t) gnutls_x509_crt_get_signature_algorithm(x509crt_->cert);
+    gnutls_sign_algorithm_t algo = (gnutls_sign_algorithm_t) gnutls_x509_crt_get_signature_algorithm(
+        x509crt_->cert);
 
     if (algo < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1262,7 +1305,10 @@ TlsValidator::CheckResult
 TlsValidator::getMd5Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert, GNUTLS_DIG_MD5, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
+                                              GNUTLS_DIG_MD5,
+                                              copy_buffer,
+                                              &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1275,7 +1321,10 @@ TlsValidator::CheckResult
 TlsValidator::getSha1Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert, GNUTLS_DIG_SHA1, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
+                                              GNUTLS_DIG_SHA1,
+                                              copy_buffer,
+                                              &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1330,7 +1379,12 @@ TlsValidator::CheckResult
 TlsValidator::getIssuerUID()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_issuer_dn_by_oid(x509crt_->cert, GNUTLS_OID_LDAP_UID, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_issuer_dn_by_oid(x509crt_->cert,
+                                                   GNUTLS_OID_LDAP_UID,
+                                                   0,
+                                                   0,
+                                                   copy_buffer,
+                                                   &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1341,7 +1395,12 @@ TlsValidator::CheckResult
 TlsValidator::getIssuerN()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_issuer_dn_by_oid(x509crt_->cert, GNUTLS_OID_X520_NAME, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_issuer_dn_by_oid(x509crt_->cert,
+                                                   GNUTLS_OID_X520_NAME,
+                                                   0,
+                                                   0,
+                                                   copy_buffer,
+                                                   &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 

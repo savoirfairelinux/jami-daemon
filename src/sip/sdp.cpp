@@ -146,7 +146,8 @@ Sdp::generateSdesAttribute()
     // generate keys
     randomFill(keyAndSalt);
 
-    std::string crypto_attr = "1 "s + jami::CryptoSuites[cryptoSuite].name + " inline:" + base64::encode(keyAndSalt);
+    std::string crypto_attr = "1 "s + jami::CryptoSuites[cryptoSuite].name
+                              + " inline:" + base64::encode(keyAndSalt);
     pj_str_t val {sip_utils::CONST_PJ_STR(crypto_attr)};
     return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
 }
@@ -182,22 +183,34 @@ Sdp::mediaDirection(const MediaAttribute& mediaAttr)
 MediaDirection
 Sdp::getMediaDirection(pjmedia_sdp_media* media)
 {
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, DIRECTION_STR[MediaDirection::SENDRECV], nullptr)
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::SENDRECV],
+                               nullptr)
         != nullptr) {
         return MediaDirection::SENDRECV;
     }
 
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, DIRECTION_STR[MediaDirection::SENDONLY], nullptr)
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::SENDONLY],
+                               nullptr)
         != nullptr) {
         return MediaDirection::SENDONLY;
     }
 
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, DIRECTION_STR[MediaDirection::RECVONLY], nullptr)
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::RECVONLY],
+                               nullptr)
         != nullptr) {
         return MediaDirection::RECVONLY;
     }
 
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, DIRECTION_STR[MediaDirection::INACTIVE], nullptr)
+    if (pjmedia_sdp_attr_find2(media->attr_count,
+                               media->attr,
+                               DIRECTION_STR[MediaDirection::INACTIVE],
+                               nullptr)
         != nullptr) {
         return MediaDirection::INACTIVE;
     }
@@ -258,7 +271,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
     med->desc.port_count = 1;
 
     // Set the transport protocol of the media
-    med->desc.transport = secure ? sip_utils::CONST_PJ_STR("RTP/SAVP") : sip_utils::CONST_PJ_STR("RTP/AVP");
+    med->desc.transport = secure ? sip_utils::CONST_PJ_STR("RTP/SAVP")
+                                 : sip_utils::CONST_PJ_STR("RTP/AVP");
 
     unsigned dynamic_payload = 96;
 
@@ -271,7 +285,8 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         unsigned payload;
 
         if (type == MediaType::MEDIA_AUDIO) {
-            auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(audio_codec_list_[i]);
+            auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
+                audio_codec_list_[i]);
             payload = accountAudioCodec->payloadType;
             enc_name = accountAudioCodec->name;
 
@@ -311,12 +326,15 @@ Sdp::addMediaDescription(const MediaAttribute& mediaAttr)
         if (enc_name == "H264") {
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(video_codec_list_[i]);
+            const auto accountVideoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(
+                video_codec_list_[i]);
             const auto& profileLevelID = accountVideoCodec->parameters.empty()
                                              ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID
                                              : accountVideoCodec->parameters;
             auto value = fmt::format("fmtp:{} {}", payload, profileLevelID);
-            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), value.c_str(), NULL);
+            med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(),
+                                                                   value.c_str(),
+                                                                   NULL);
         }
 #endif
     }
@@ -379,7 +397,9 @@ void
 Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 {
     ++med->desc.fmt_count;
-    pj_strdup2(memPool_.get(), &med->desc.fmt[med->desc.fmt_count - 1], std::to_string(telephoneEventPayload_).c_str());
+    pj_strdup2(memPool_.get(),
+               &med->desc.fmt[med->desc.fmt_count - 1],
+               std::to_string(telephoneEventPayload_).c_str());
 
     pjmedia_sdp_attr* attr_rtpmap = static_cast<pjmedia_sdp_attr*>(
         pj_pool_zalloc(memPool_.get(), sizeof(pjmedia_sdp_attr)));
@@ -397,7 +417,8 @@ Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media* med)
 }
 
 void
-Sdp::setLocalMediaCapabilities(MediaType type, const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs)
+Sdp::setLocalMediaCapabilities(MediaType type,
+                               const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs)
 {
     switch (type) {
     case MediaType::MEDIA_AUDIO:
@@ -465,7 +486,8 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDir
         return;
     }
 
-    JAMI_LOG("[SDP {}] {}\n{:s}", getSdpDirectionStr(direction), header, std::string_view(buffer.data(), size));
+    JAMI_LOG("[SDP {}] {}\n{:s}", getSdpDirectionStr(direction), header,
+        std::string_view(buffer.data(), size));
 }
 
 void
@@ -539,7 +561,8 @@ Sdp::createOffer(const std::vector<MediaAttribute>& mediaList)
         return false;
     }
 
-    if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
+    if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_)
+        != PJ_SUCCESS) {
         JAMI_ERR("Failed to create an initial SDP negotiator");
         return false;
     }
@@ -565,7 +588,9 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
     if (not remoteSession_)
         return false;
 
-    JAMI_DEBUG("Processing received offer for [{:s}] with {:d} media", sessionName_, mediaList.size());
+    JAMI_DEBUG("Processing received offer for [{:s}] with {:d} media",
+             sessionName_,
+             mediaList.size());
 
     printSession(remoteSession_, "Remote session:", SdpDirection::OFFER);
 
@@ -590,7 +615,10 @@ Sdp::processIncomingOffer(const std::vector<MediaAttribute>& mediaList)
         return false;
     }
 
-    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_, remoteSession_, &negotiator_)
+    if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(),
+                                              localSession_,
+                                              remoteSession_,
+                                              &negotiator_)
         != PJ_SUCCESS) {
         JAMI_ERR("Failed to initialize media negotiation");
         return false;
@@ -631,7 +659,8 @@ Sdp::startNegotiation()
         printSession(active_local, "Local active session:", sdpDirection_);
     }
 
-    if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS or active_remote == nullptr) {
+    if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS
+        or active_remote == nullptr) {
         JAMI_ERR("Unable to retrieve remote active session");
         return false;
     }
@@ -693,7 +722,9 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
             while (auto attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fmt", &pt))
                 pjmedia_sdp_attr_remove(&media->attr_count, media->attr, attr);
 
-            std::move(media->desc.fmt + c + 1, media->desc.fmt + media->desc.fmt_count, media->desc.fmt + c);
+            std::move(media->desc.fmt + c + 1,
+                      media->desc.fmt + media->desc.fmt_count,
+                      media->desc.fmt + c);
             media->desc.fmt_count--;
             c--;
         }
@@ -779,15 +810,19 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
-            const auto rtpMapAttribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[j]);
+            const auto rtpMapAttribute = pjmedia_sdp_media_find_attr(media,
+                                                                     &STR_RTPMAP,
+                                                                     &media->desc.fmt[j]);
             if (!rtpMapAttribute) {
                 JAMI_ERR("Unable to find rtpmap attribute");
                 descr.enabled = false;
                 continue;
             }
             pjmedia_sdp_rtpmap rtpmap;
-            if (pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap) != PJ_SUCCESS || rtpmap.enc_name.slen == 0) {
-                JAMI_ERROR("Unable to find payload type {} in SDP", sip_utils::as_view(media->desc.fmt[j]));
+            if (pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap) != PJ_SUCCESS
+                || rtpmap.enc_name.slen == 0) {
+                JAMI_ERROR("Unable to find payload type {} in SDP",
+                    sip_utils::as_view(media->desc.fmt[j]));
                 descr.enabled = false;
                 continue;
             }
@@ -801,7 +836,9 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             }
             descr.payload_type = pj_strtoul(&rtpmap.pt);
             if (descr.type == MEDIA_VIDEO) {
-                const auto fmtpAttr = pjmedia_sdp_media_find_attr(media, &STR_FMTP, &media->desc.fmt[j]);
+                const auto fmtpAttr = pjmedia_sdp_media_find_attr(media,
+                                                                  &STR_FMTP,
+                                                                  &media->desc.fmt[j]);
                 // descr.bitrate = getOutgoingVideoField(codec, "bitrate");
                 if (fmtpAttr && fmtpAttr->value.ptr && fmtpAttr->value.slen) {
                     const auto& v = fmtpAttr->value;
@@ -845,7 +882,8 @@ void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
 {
     if (media_index >= localSession_->media_count) {
-        JAMI_ERR("addIceCandidates failed: unable to access media#%u (may be deactivated)", media_index);
+        JAMI_ERR("addIceCandidates failed: unable to access media#%u (may be deactivated)",
+                 media_index);
         return;
     }
 
@@ -874,7 +912,8 @@ Sdp::getIceCandidates(unsigned media_index) const
         return {};
     }
     if (media_index >= remoteSession->media_count || media_index >= localSession->media_count) {
-        JAMI_ERR("getIceCandidates failed: unable to access media#%u (may be deactivated)", media_index);
+        JAMI_ERR("getIceCandidates failed: unable to access media#%u (may be deactivated)",
+                 media_index);
         return {};
     }
     auto media = remoteSession->media[media_index];
@@ -1016,7 +1055,8 @@ Sdp::getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession, bool ig
 
         // Get mute state.
         auto direction = getMediaDirection(media);
-        mediaAttr.muted_ = direction != MediaDirection::SENDRECV and direction != MediaDirection::SENDONLY;
+        mediaAttr.muted_ = direction != MediaDirection::SENDRECV
+                           and direction != MediaDirection::SENDONLY;
 
         // Get transport.
         auto transp = getMediaTransport(media);
