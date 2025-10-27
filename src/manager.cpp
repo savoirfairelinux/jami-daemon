@@ -27,6 +27,7 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "map_utils.h"
+#include "media_attribute.h"
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
@@ -1389,7 +1390,8 @@ Manager::addSubCall(Call& call, Conference& conference)
 void
 Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
-    conf.attachHost();
+    JAMI_LOG("Adding main participant to conference {}", conf.getConfId());
+    conf.attachHost(conf.getLastMediaList());
     emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(), conf.getConfId(), conf.getStateStr());
     switchCall(conf.getConfId());
 }
@@ -1475,9 +1477,12 @@ Manager::joinParticipant(const std::string& accountId,
     auto mediaAttr = call1->getMediaAttributeList();
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
+    std::vector<libjami::MediaMap> mediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttr);
+
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    conf->attachHost(mediaList);
     account->attach(conf);
+
     emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
     // Bind calls according to their state
@@ -1512,7 +1517,8 @@ Manager::createConfFromParticipantList(const std::string& accountId, const std::
     }
 
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    // attach host with empty medialist, which will set default media list
+    conf->attachHost({});
 
     unsigned successCounter = 0;
     for (const auto& numberaccount : participantList) {
