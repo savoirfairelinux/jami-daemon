@@ -1468,32 +1468,41 @@ Conference::updateConferenceInfo(ConfInfo confInfo)
 void
 Conference::hangupParticipant(const std::string& accountUri, const std::string& deviceId)
 {
-    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock())) {
-        if (deviceId.empty()) {
-            // If deviceId is empty, hangup all calls with device
-            while (auto call = getCallFromPeerID(accountUri)) {
-                Manager::instance().hangupCall(acc->getAccountID(), call->getCallId());
-            }
-            return;
-        } else {
-            if (accountUri == acc->getUsername() && deviceId == acc->currentDeviceId()) {
-                Manager::instance().detachHost(shared_from_this());
-                return;
-            } else if (auto call = getCallWith(accountUri, deviceId)) {
-                Manager::instance().hangupCall(acc->getAccountID(), call->getCallId());
-                return;
-            }
+    auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock());
+    if (!acc)
+        return;
+
+    JAMI_DEBUG("[conf:{:s}] Hanging up participant {:s}", id_, accountUri);
+    bool stateChanged = false;
+    if (deviceId.empty()) {
+        // hangup all calls with device
+        bool anyHungUp = false;
+        while (auto call = getCallFromPeerID(accountUri)) {
+            Manager::instance().hangupCall(acc->getAccountID(), call->getCallId());
+            anyHungUp = true;
         }
-        // Else, it may be a remote host
+        stateChanged = anyHungUp;
+    } else if (accountUri == acc->getUsername() && deviceId == acc->currentDeviceId()) {
+        Manager::instance().detachHost(shared_from_this());
+        stateChanged = true;
+    } else if (auto call = getCallWith(accountUri, deviceId)) {
+        Manager::instance().hangupCall(acc->getAccountID(), call->getCallId());
+        stateChanged = true;
+    } else {
+        // it may be a remote host
         auto remoteHost = findHostforRemoteParticipant(accountUri, deviceId);
         if (remoteHost.empty()) {
-            JAMI_WARN("Unable to hangup %s, peer not found", accountUri.c_str());
-            return;
-        }
-        if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
-            // Forward to the remote host.
+            JAMI_WARNING("[conf:{:s}] Unable to hangup {:s}, peer not found", id_, accountUri);
+        } else if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
+            // forward to remote host
             libjami::hangupParticipant(acc->getAccountID(), call->getCallId(), accountUri, deviceId);
+            stateChanged = true;
         }
+    }
+
+    if (stateChanged) {
+        JAMI_DEBUG("[conf:{:s}] Participant {:s} hung up, updating conference layout", id_, accountUri);
+        sendConferenceInfos();
     }
 }
 
