@@ -50,7 +50,8 @@ AccountManager::buildRequest(PrivateKey fDeviceKey)
         });
 }
 
-AccountManager::~AccountManager() {
+AccountManager::~AccountManager()
+{
     if (dht_)
         dht_->join();
 }
@@ -68,10 +69,10 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 
     // Sync known devices
     JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts, {:d} requests)",
-             accountId_,
-             sync.devices_known.size() + sync.devices.size(),
-             sync.peers.size(),
-             sync.trust_requests.size());
+               accountId_,
+               sync.devices_known.size() + sync.devices.size(),
+               sync.peers.size(),
+               sync.trust_requests.size());
     for (const auto& d : sync.devices_known) {
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
@@ -81,19 +82,18 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
         });
     }
     for (const auto& d : sync.devices) {
-        findCertificate(d.second.sha1,
-                        [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                            if (not crt || crt->getLongId() != d.first)
-                                return;
-                            // std::lock_guard lock(deviceListMutex_);
-                            foundAccountDevice(crt, d.second.name);
-                        });
+        findCertificate(d.second.sha1, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+            if (not crt || crt->getLongId() != d.first)
+                return;
+            // std::lock_guard lock(deviceListMutex_);
+            foundAccountDevice(crt, d.second.name);
+        });
     }
     // saveKnownDevices();
 
     // Sync contacts
     if (!sync.peers.empty()) {
-        for (const auto &peer: sync.peers) {
+        for (const auto& peer : sync.peers) {
             info_->contacts->updateContact(peer.first, peer.second);
         }
         info_->contacts->saveContacts();
@@ -101,18 +101,12 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
 
     // Sync trust requests
     for (const auto& tr : sync.trust_requests)
-        info_->contacts->onTrustRequest(tr.first,
-                                        tr.second.device,
-                                        tr.second.received,
-                                        false,
-                                        tr.second.conversationId,
-                                        {});
+        info_->contacts
+            ->onTrustRequest(tr.first, tr.second.device, tr.second.received, false, tr.second.conversationId, {});
 }
 
 dht::crypto::Identity
-AccountManager::loadIdentity(const std::string& crt_path,
-                             const std::string& key_path,
-                             const std::string& key_pwd) const
+AccountManager::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
 {
     // Return to avoid unnecessary log if certificate or key is missing. Example case: when
     // importing an account when the certificate has not been unpacked from the archive.
@@ -120,10 +114,10 @@ AccountManager::loadIdentity(const std::string& crt_path,
         return {};
 
     JAMI_DEBUG("[Account {}] [Auth] Loading certificate from '{}' and key from '{}' at {}",
-             accountId_,
-             crt_path,
-             key_path,
-             path_);
+               accountId_,
+               crt_path,
+               key_path,
+               path_);
     try {
         dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, path_));
         dht::crypto::PrivateKey dht_key(fileutils::loadFile(key_path, path_), key_pwd);
@@ -134,7 +128,9 @@ AccountManager::loadIdentity(const std::string& crt_path,
         }
         auto& issuer = dht_cert.issuer;
         if (not issuer) {
-            JAMI_ERROR("[Account {}] [Auth] Device certificate {:s} has no issuer", accountId_, dht_cert.getId().to_view());
+            JAMI_ERROR("[Account {}] [Auth] Device certificate {:s} has no issuer",
+                       accountId_,
+                       dht_cert.getId().to_view());
             return {};
         }
         // load revocation lists for device authority (account certificate).
@@ -157,8 +153,7 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
     auto announce_val = std::make_shared<dht::Value>();
     try {
         auto announce = base64::decode(announceBase64);
-        msgpack::object_handle announce_msg = msgpack::unpack((const char*) announce.data(),
-                                                              announce.size());
+        msgpack::object_handle announce_msg = msgpack::unpack((const char*) announce.data(), announce.size());
         announce_val->msgpack_unpack(announce_msg.get());
         if (not announce_val->checkSignature()) {
             JAMI_ERROR("[Auth] announce signature check failed");
@@ -167,11 +162,15 @@ AccountManager::parseAnnounce(const std::string& announceBase64,
         DeviceAnnouncement da;
         da.unpackValue(*announce_val);
         if (da.from.toString() != accountId) {
-            JAMI_ERROR("[Auth] Account ID mismatch in announce (account: {}, in announce: {})", accountId, da.from.toString());
+            JAMI_ERROR("[Auth] Account ID mismatch in announce (account: {}, in announce: {})",
+                       accountId,
+                       da.from.toString());
             return {};
         }
         if ((da.pk && da.pk->getLongId().to_view() != deviceSha256) || da.dev.toString() != deviceSha1) {
-            JAMI_ERROR("[Auth] Device ID mismatch in announce (device: {}, in announce: {})", da.pk ? deviceSha256 : deviceSha1, da.pk ? da.pk->getLongId().to_view() : da.dev.toString());
+            JAMI_ERROR("[Auth] Device ID mismatch in announce (device: {}, in announce: {})",
+                       da.pk ? deviceSha256 : deviceSha1,
+                       da.pk ? da.pk->getLongId().to_view() : da.dev.toString());
             return {};
         }
     } catch (const std::exception& e) {
@@ -206,13 +205,17 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     auto contactList = std::make_unique<ContactList>(accountId_, accountCertificate, path_, onChange);
     auto result = contactList->isValidAccountDevice(*identity.second);
     if (not result) {
-        JAMI_ERROR("[Account {}] [Auth] unable to use identity: device certificate chain is unable to be verified: {}", accountId_,
-                 result.toString());
+        JAMI_ERROR("[Account {}] [Auth] unable to use identity: device certificate chain is unable to be verified: {}",
+                   accountId_,
+                   result.toString());
         return nullptr;
     }
 
     auto pk = accountCertificate->getSharedPublicKey();
-    JAMI_LOG("[Account {}] [Auth] checking device receipt for account:{} device:{}", accountId_, pk->getId().toString(), identity.second->getLongId().toString());
+    JAMI_LOG("[Account {}] [Auth] checking device receipt for account:{} device:{}",
+             accountId_,
+             pk->getId().toString(),
+             identity.second->getLongId().toString());
     if (!pk->checkSignature({receipt.begin(), receipt.end()}, receiptSignature)) {
         JAMI_ERROR("[Account {}] [Auth] device receipt signature check failed", accountId_);
         return nullptr;
@@ -241,7 +244,10 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
         return nullptr;
     }
 
-    auto announce = parseAnnounce(root["announce"].asString(), id, devicePk->getId().toString(), devicePk->getLongId().toString());
+    auto announce = parseAnnounce(root["announce"].asString(),
+                                  id,
+                                  devicePk->getId().toString(),
+                                  devicePk->getLongId().toString());
     if (not announce) {
         return nullptr;
     }
@@ -260,8 +266,7 @@ AccountManager::useIdentity(const dht::crypto::Identity& identity,
     info->username = username;
     info_ = std::move(info);
 
-    JAMI_LOG("[Account {}] [Auth] Device {} receipt checked successfully for user {}", accountId_,
-             info_->deviceId, id);
+    JAMI_LOG("[Account {}] [Auth] Device {} receipt checked successfully for user {}", accountId_, info_->deviceId, id);
     return info_.get();
 }
 
@@ -283,7 +288,7 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             dht_->put(
                 h,
                 info_->announce,
-                [dcb = std::move(dcb), h, accountId=accountId_](bool ok) {
+                [dcb = std::move(dcb), h, accountId = accountId_](bool ok) {
                     if (ok)
                         JAMI_DEBUG("[Account {}] device announced at {}", accountId, h.toString());
                     // We do not care about the status, it's a permanent put, if this fail,
@@ -297,21 +302,18 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
-            findCertificate(dev.dev,
-                            [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                                foundAccountDevice(crt);
-                                if (cb)
-                                    cb(crt);
-                            });
+            findCertificate(dev.dev, [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                foundAccountDevice(crt);
+                if (cb)
+                    cb(crt);
+            });
             return true;
         });
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
             if (crl.isSignedBy(*info_->identity.second->issuer)) {
                 JAMI_DEBUG("[Account {}] Found CRL for account.", accountId_);
-                certStore()
-                    .pinRevocationList(info_->accountId,
-                                       std::make_shared<dht::crypto::RevocationList>(
-                                           std::move(crl)));
+                certStore().pinRevocationList(info_->accountId,
+                                              std::make_shared<dht::crypto::RevocationList>(std::move(crl)));
             }
             return true;
         });
@@ -326,45 +328,44 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(
-            *v.owner,
-            true,
-            [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
-                      dht::InfoHash peer_account) mutable {
-                JAMI_WARNING("[Account {}] Got trust request (confirm: {}) from: {} / {}. ConversationId: {}",
-                          accountId_,
-                          v.confirm,
-                          peer_account.toString(),
-                          v.from.toString(),
-                          v.conversationId);
-                if (info_)
-                    if (info_->contacts->onTrustRequest(peer_account,
-                                                        v.owner,
-                                                        time(nullptr),
-                                                        v.confirm,
-                                                        v.conversationId,
-                                                        std::move(v.payload))) {
-                        if (v.confirm) // No need to send a confirmation as already accepted here
-                            return;
-                        auto conversationId = v.conversationId;
-                        // Check if there was an old active conversation.
-                        if (auto details = info_->contacts->getContactInfo(peer_account)) {
-                            if (!details->conversationId.empty()) {
-                                if (details->conversationId == conversationId) {
-                                    // Here, it's possible that we already have accepted the conversation
-                                    // but contact were offline and sync failed.
-                                    // So, retrigger the callback so upper layer will clone conversation if needed
-                                    // instead of getting stuck in sync.
-                                    info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
-                                    return;
-                                }
-                                conversationId = details->conversationId;
-                                JAMI_WARNING("Accept with old convId: {}", conversationId);
-                            }
-                        }
-                        sendTrustRequestConfirm(peer_account, conversationId);
-                    }
-            });
+        onPeerMessage(*v.owner,
+                      true,
+                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                          JAMI_WARNING("[Account {}] Got trust request (confirm: {}) from: {} / {}. ConversationId: {}",
+                                       accountId_,
+                                       v.confirm,
+                                       peer_account.toString(),
+                                       v.from.toString(),
+                                       v.conversationId);
+                          if (info_)
+                              if (info_->contacts->onTrustRequest(peer_account,
+                                                                  v.owner,
+                                                                  time(nullptr),
+                                                                  v.confirm,
+                                                                  v.conversationId,
+                                                                  std::move(v.payload))) {
+                                  if (v.confirm) // No need to send a confirmation as already accepted here
+                                      return;
+                                  auto conversationId = v.conversationId;
+                                  // Check if there was an old active conversation.
+                                  if (auto details = info_->contacts->getContactInfo(peer_account)) {
+                                      if (!details->conversationId.empty()) {
+                                          if (details->conversationId == conversationId) {
+                                              // Here, it's possible that we already have accepted the conversation
+                                              // but contact were offline and sync failed.
+                                              // So, retrigger the callback so upper layer will clone conversation if
+                                              // needed instead of getting stuck in sync.
+                                              info_->contacts->acceptConversation(conversationId,
+                                                                                  v.owner->getLongId().toString());
+                                              return;
+                                          }
+                                          conversationId = details->conversationId;
+                                          JAMI_WARNING("Accept with old convId: {}", conversationId);
+                                      }
+                                  }
+                                  sendTrustRequestConfirm(peer_account, conversationId);
+                              }
+                      });
         return true;
     });
 }
@@ -399,7 +400,8 @@ AccountManager::getAccountDeviceName() const
 }
 
 bool
-AccountManager::foundPeerDevice(const std::string& accountId, const std::shared_ptr<dht::crypto::Certificate>& crt,
+AccountManager::foundPeerDevice(const std::string& accountId,
+                                const std::shared_ptr<dht::crypto::Certificate>& crt,
                                 dht::InfoHash& peer_id)
 {
     if (not crt)
@@ -432,18 +434,18 @@ AccountManager::foundPeerDevice(const std::string& accountId, const std::shared_
 
     peer_id = crt->issuer->getId();
     JAMI_LOG("[Account {}] Found peer device: {} account:{} CA:{}",
-              accountId,
-              crt->getLongId().toString(),
-              peer_id.toString(),
-              top_issuer->getId().toString());
+             accountId,
+             crt->getLongId().toString(),
+             peer_id.toString(),
+             top_issuer->getId().toString());
     return true;
 }
 
 void
-AccountManager::onPeerMessage(const dht::crypto::PublicKey& peer_device,
-                              bool allowPublic,
-                              std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
-                                                 const dht::InfoHash& peer_account)>&& cb)
+AccountManager::onPeerMessage(
+    const dht::crypto::PublicKey& peer_device,
+    bool allowPublic,
+    std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
 {
     // quick check in case we already explicilty banned this device
     auto trustStatus = getCertificateStatus(peer_device.toString());
@@ -453,8 +455,7 @@ AccountManager::onPeerMessage(const dht::crypto::PublicKey& peer_device,
     }
 
     findCertificate(peer_device.getId(),
-                    [this, cb = std::move(cb), allowPublic](
-                        const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                    [this, cb = std::move(cb), allowPublic](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                         dht::InfoHash peer_account_id;
                         if (onPeerCertificate(cert, allowPublic, peer_account_id)) {
                             cb(cert, peer_account_id);
@@ -475,7 +476,8 @@ AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate
 
     if (not isAllowed(*cert, allowPublic)) {
         JAMI_WARNING("[Account {}] [Auth] Discarding message from unauthorized peer {}.",
-                  accountId_, peer_account_id.toString());
+                     accountId_,
+                     peer_account_id.toString());
         return false;
     }
 
@@ -531,8 +533,7 @@ AccountManager::removeContactConversation(const std::string& uri)
 }
 
 void
-AccountManager::updateContactConversation(
-    const std::string& uri, const std::string& convId, bool added)
+AccountManager::updateContactConversation(const std::string& uri, const std::string& convId, bool added)
 {
     dht::InfoHash h(uri);
     if (not h) {
@@ -553,7 +554,7 @@ AccountManager::updateContactConversation(
     syncDevices();
 }
 
-std::vector<std::map<std::string, std::string>>
+std::map<dht::InfoHash, Contact>
 AccountManager::getContacts(bool includeRemoved) const
 {
     if (not info_) {
@@ -561,17 +562,11 @@ AccountManager::getContacts(bool includeRemoved) const
         return {};
     }
     const auto& contacts = info_->contacts->getContacts();
-    std::vector<std::map<std::string, std::string>> ret;
-    ret.reserve(contacts.size());
-
+    std::map<dht::InfoHash, Contact> ret;
     for (const auto& c : contacts) {
         if (!c.second.isActive() && !includeRemoved && !c.second.isBanned())
             continue;
-        auto details = c.second.toMap();
-        if (not details.empty()) {
-            details["id"] = c.first.toString();
-            ret.emplace_back(std::move(details));
-        }
+        ret.emplace(c.first, c.second);
     }
     return ret;
 }
@@ -608,36 +603,32 @@ AccountManager::getContactInfo(const std::string& uri) const
 }
 
 bool
-AccountManager::findCertificate(
-    const dht::InfoHash& h,
-    std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+AccountManager::findCertificate(const dht::InfoHash& h,
+                                std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = certStore().getCertificate(h.toString())) {
         if (cb)
             cb(cert);
     } else if (dht_) {
-        dht_->findCertificate(h,
-                              [cb = std::move(cb), this](
-                                  const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                                  if (crt && info_) {
-                                      certStore().pinCertificate(crt);
-                                  }
-                                  if (cb)
-                                      cb(crt);
-                              });
+        dht_->findCertificate(h, [cb = std::move(cb), this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+            if (crt && info_) {
+                certStore().pinCertificate(crt);
+            }
+            if (cb)
+                cb(crt);
+        });
     }
     return true;
 }
 
 bool
-AccountManager::findCertificate(
-    const dht::PkId& id, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+AccountManager::findCertificate(const dht::PkId& id,
+                                std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = certStore().getCertificate(id.toString())) {
         if (cb)
             cb(cert);
-    } else if (auto cert = certStore().getCertificateLegacy(fileutils::get_data_dir().string(),
-                                                            id.toString())) {
+    } else if (auto cert = certStore().getCertificateLegacy(fileutils::get_data_dir().string(), id.toString())) {
         if (cb)
             cb(cert);
     } else if (cb)
@@ -646,16 +637,15 @@ AccountManager::findCertificate(
 }
 
 bool
-AccountManager::setCertificateStatus(const std::string& cert_id,
-                                     dhtnet::tls::TrustStore::PermissionStatus status)
+AccountManager::setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status)
 {
     return info_ and info_->contacts->setCertificateStatus(cert_id, status);
 }
 
 bool
 AccountManager::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                              dhtnet::tls::TrustStore::PermissionStatus status,
-                              bool local)
+                                     dhtnet::tls::TrustStore::PermissionStatus status,
+                                     bool local)
 {
     return info_ and info_->contacts->setCertificateStatus(cert, status, local);
 }
@@ -696,10 +686,7 @@ AccountManager::acceptTrustRequest(const std::string& from, bool includeConversa
     if (info_) {
         auto req = info_->contacts->getTrustRequest(dht::InfoHash(from));
         if (info_->contacts->acceptTrustRequest(f)) {
-            sendTrustRequestConfirm(f,
-                                    includeConversation
-                                        ? req[libjami::Account::TrustRequest::CONVERSATIONID]
-                                        : "");
+            sendTrustRequestConfirm(f, includeConversation ? req[libjami::Account::TrustRequest::CONVERSATIONID] : "");
             syncDevices();
             return true;
         }
@@ -716,9 +703,7 @@ AccountManager::discardTrustRequest(const std::string& from)
 }
 
 void
-AccountManager::sendTrustRequest(const std::string& to,
-                                 const std::string& convId,
-                                 const std::vector<uint8_t>& payload)
+AccountManager::sendTrustRequest(const std::string& to, const std::string& convId, const std::vector<uint8_t>& payload)
 {
     JAMI_WARNING("[Account {}] AccountManager::sendTrustRequest", accountId_);
     auto toH = dht::InfoHash(to);
@@ -733,28 +718,33 @@ AccountManager::sendTrustRequest(const std::string& to,
     if (info_->contacts->addContact(toH, false, convId)) {
         syncDevices();
     }
-    forEachDevice(toH,
-                  [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-                      auto to = toH.toString();
-                      JAMI_WARNING("[Account {}] Sending trust request to: {:s} / {:s} of size {:d}",
-                                   accountId_, to, dev->getLongId(), payload.size());
-                      dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
-                                         dev,
-                                         dht::TrustRequest(DHT_TYPE_NS, convId, payload),
-                                         [to, size = payload.size()](bool ok) {
-                                             if (!ok)
-                                                 JAMI_ERROR("Tried to send request {:s} (size: "
-                                                            "{:d}), but put failed",
-                                                            to,
-                                                            size);
-                                         });
-                  });
+    forEachDevice(toH, [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+        auto to = toH.toString();
+        JAMI_WARNING("[Account {}] Sending trust request to: {:s} / {:s} of size {:d}",
+                     accountId_,
+                     to,
+                     dev->getLongId(),
+                     payload.size());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
+                           dev,
+                           dht::TrustRequest(DHT_TYPE_NS, convId, payload),
+                           [to, size = payload.size()](bool ok) {
+                               if (!ok)
+                                   JAMI_ERROR("Tried to send request {:s} (size: "
+                                              "{:d}), but put failed",
+                                              to,
+                                              size);
+                           });
+    });
 }
 
 void
 AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::string& convId)
 {
-    JAMI_WARNING("[Account {}] AccountManager::sendTrustRequestConfirm to {} (conversation {})", accountId_, toH, convId);
+    JAMI_WARNING("[Account {}] AccountManager::sendTrustRequestConfirm to {} (conversation {})",
+                 accountId_,
+                 toH,
+                 convId);
     dht::TrustRequest answer {DHT_TYPE_NS, convId};
     answer.confirm = true;
 
@@ -762,17 +752,15 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH, const std::str
         info_->contacts->acceptConversation(convId);
 
     forEachDevice(toH, [this, toH, answer](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-        JAMI_WARNING("[Account {}] sending trust request reply: {} / {}",
-                     accountId_, toH, dev->getLongId());
+        JAMI_WARNING("[Account {}] sending trust request reply: {} / {}", accountId_, toH, dev->getLongId());
         dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()), dev, answer);
     });
 }
 
 void
-AccountManager::forEachDevice(
-    const dht::InfoHash& to,
-    std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
-    std::function<void(bool)>&& end)
+AccountManager::forEachDevice(const dht::InfoHash& to,
+                              std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
+                              std::function<void(bool)>&& end)
 {
     if (not dht_) {
         JAMI_ERROR("[Account {}] forEachDevice: no dht", accountId_);
@@ -796,7 +784,9 @@ AccountManager::forEachDevice(
         std::function<void(bool)> onEnd;
 
         State(dht::InfoHash to, std::string accountId)
-            : to(std::move(to)), accountId(std::move(accountId)) {}
+            : to(std::move(to))
+            , accountId(std::move(accountId))
+        {}
 
         void found(const std::shared_ptr<dht::crypto::PublicKey>& pk)
         {
@@ -831,8 +821,7 @@ AccountManager::forEachDevice(
                 return true;
             state->remaining++;
             findCertificate(dev.dev, [state](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                state->found(cert ? cert->getSharedPublicKey()
-                                  : std::shared_ptr<dht::crypto::PublicKey> {});
+                state->found(cert ? cert->getSharedPublicKey() : std::shared_ptr<dht::crypto::PublicKey> {});
             });
             return true;
         },
@@ -840,9 +829,7 @@ AccountManager::forEachDevice(
 }
 
 void
-AccountManager::lookupUri(const std::string& name,
-                          const std::string& defaultServer,
-                          LookupCallback cb)
+AccountManager::lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb)
 {
     nameDir_.get().lookupUri(name, defaultServer, std::move(cb));
 }
