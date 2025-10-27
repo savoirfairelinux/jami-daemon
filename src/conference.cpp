@@ -869,8 +869,7 @@ Conference::createSinks(const ConfInfo& infos)
     auto& sink = videoMixer_->getSink();
     Manager::instance().createSinkClients(getConfId(),
                                           infos,
-                                          {std::static_pointer_cast<video::VideoFrameActiveWriter>(
-                                              sink)},
+                                          {std::static_pointer_cast<video::VideoFrameActiveWriter>(sink)},
                                           confSinksMap_,
                                           getAccountId());
 }
