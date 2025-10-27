@@ -27,6 +27,8 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "map_utils.h"
+#include "jami.h"
+#include "media_attribute.h"
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
@@ -246,8 +248,7 @@ setGnuTlsLogLevel()
     }
 
     gnutls_global_set_log_level(level);
-    gnutls_global_set_log_function(
-        [](int level, const char* msg) { JAMI_XDBG("[{:d}]GnuTLS: {:s}", level, msg); });
+    gnutls_global_set_log_function([](int level, const char* msg) { JAMI_XDBG("[{:d}]GnuTLS: {:s}", level, msg); });
 }
 
 //==============================================================================
@@ -624,9 +625,7 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
                 throw std::runtime_error("No associated call");
             call->sendTextMessage(messages, from);
         } catch (const std::exception& e) {
-            JAMI_ERR("Failed to send message to conference participant %s: %s",
-                     callId.c_str(),
-                     e.what());
+            JAMI_ERR("Failed to send message to conference participant %s: %s", callId.c_str(), e.what());
         }
     }
 }
@@ -822,9 +821,8 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
         if (pimpl_->audiodriver_) {
             auto format = pimpl_->audiodriver_->getFormat();
             pimpl_->toneCtrl_.setSampleRate(format.sample_rate, format.sampleFormat);
-            pimpl_->dtmfKey_.reset(
-                new DTMF(getRingBufferPool().getInternalSamplingRate(),
-                         getRingBufferPool().getInternalAudioFormat().sampleFormat));
+            pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate(),
+                                            getRingBufferPool().getInternalAudioFormat().sampleFormat));
         }
     }
 
@@ -937,8 +935,7 @@ Manager::monitor(bool continuous)
 #ifdef __linux__
 #if defined(__ANDROID__)
 #else
-    auto opened_files
-        = dhtnet::fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
+    auto opened_files = dhtnet::fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
     JAMI_DBG("Opened files: %lu", opened_files);
 #endif
 #endif
@@ -1315,9 +1312,7 @@ Manager::holdConference(const std::string& accountId, const std::string& confId)
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->detachHost();
-            emitSignal<libjami::CallSignal::ConferenceChanged>(accountId,
-                                                               conf->getConfId(),
-                                                               conf->getStateStr());
+            emitSignal<libjami::CallSignal::ConferenceChanged>(accountId, conf->getConfId(), conf->getStateStr());
             return true;
         }
     }
@@ -1339,9 +1334,7 @@ Manager::unHoldConference(const std::string& accountId, const std::string& confI
 
                 pimpl_->switchCall(confId);
                 conf->setState(Conference::State::ACTIVE_ATTACHED);
-                emitSignal<libjami::CallSignal::ConferenceChanged>(accountId,
-                                                                   conf->getConfId(),
-                                                                   conf->getStateStr());
+                emitSignal<libjami::CallSignal::ConferenceChanged>(accountId, conf->getConfId(), conf->getStateStr());
                 return true;
             } else if (conf->getState() == Conference::State::ACTIVE_DETACHED) {
                 pimpl_->addMainParticipant(*conf);
@@ -1398,10 +1391,9 @@ Manager::addSubCall(Call& call, Conference& conference)
 void
 Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
-    conf.attachHost();
-    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(),
-                                                       conf.getConfId(),
-                                                       conf.getStateStr());
+    JAMI_LOG("Adding main participant to conference {}", conf.getConfId());
+    conf.attachHost(conf.getLastMediaList());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(), conf.getConfId(), conf.getStateStr());
     switchCall(conf.getConfId());
 }
 
@@ -1486,12 +1478,13 @@ Manager::joinParticipant(const std::string& accountId,
     auto mediaAttr = call1->getMediaAttributeList();
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
+    std::vector<libjami::MediaMap> mediaList = MediaAttribute::mediaAttributesToMediaMaps(mediaAttr);
+
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    conf->attachHost(mediaList);
     account->attach(conf);
-    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
-                                                       "",
-                                                       conf->getConfId());
+
+    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1504,16 +1497,13 @@ Manager::joinParticipant(const std::string& accountId,
     } else {
         conf->detachHost();
     }
-    emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
-                                                       conf->getConfId(),
-                                                       conf->getStateStr());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(), conf->getConfId(), conf->getStateStr());
 
     return true;
 }
 
 void
-Manager::createConfFromParticipantList(const std::string& accountId,
-                                       const std::vector<std::string>& participantList)
+Manager::createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>& participantList)
 {
     auto account = getAccount(accountId);
     if (not account) {
@@ -1528,7 +1518,8 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     }
 
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    // attach host with empty medialist, which will set default media list
+    conf->attachHost({});
 
     unsigned successCounter = 0;
     for (const auto& numberaccount : participantList) {
@@ -1562,9 +1553,7 @@ Manager::detachHost(const std::shared_ptr<Conference>& conf)
 
     JAMI_LOG("Detach local participant from conference {}", conf->getConfId());
     conf->detachHost();
-    emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(),
-                                                       conf->getConfId(),
-                                                       conf->getStateStr());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(), conf->getConfId(), conf->getStateStr());
     pimpl_->unsetCurrentCall();
     return true;
 }
@@ -1603,9 +1592,7 @@ Manager::removeParticipant(Call& call)
 
     removeAudio(call);
 
-    emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(),
-                                                       conf->getConfId(),
-                                                       conf->getStateStr());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf->getAccountId(), conf->getConfId(), conf->getStateStr());
 
     pimpl_->processRemainingParticipants(*conf);
 }
@@ -1854,8 +1841,7 @@ Manager::playDtmf(char code)
         pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
     }
 
-    scheduler().scheduleIn([audioGuard] { JAMI_WARN("End of dtmf"); },
-                           std::chrono::milliseconds(pulselen));
+    scheduler().scheduleIn([audioGuard] { JAMI_WARN("End of dtmf"); }, std::chrono::milliseconds(pulselen));
 
     // TODO Cache the DTMF
 }
@@ -1912,10 +1898,7 @@ Manager::incomingMessage(const std::string& accountId,
                 }
 
                 // in case of a conference we must notify client using conference id
-                emitSignal<libjami::CallSignal::IncomingMessage>(accountId,
-                                                                 conf->getConfId(),
-                                                                 from,
-                                                                 messages);
+                emitSignal<libjami::CallSignal::IncomingMessage>(accountId, conf->getConfId(), from, messages);
             } else {
                 JAMI_ERR("No conference associated to ID %s", callId.c_str());
             }
@@ -1952,9 +1935,7 @@ Manager::sendCallTextMessage(const std::string& accountId,
             try {
                 call->sendTextMessage(messages, from);
             } catch (const im::InstantMessageException& e) {
-                JAMI_ERR("Failed to send message to call %s: %s",
-                         call->getCallId().c_str(),
-                         e.what());
+                JAMI_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
             }
         }
     } else {
@@ -2548,21 +2529,14 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         return;
     }
 
-    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(
-        incomCall.getMediaAttributeList());
+    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(incomCall.getMediaAttributeList());
 
     if (mediaList.empty())
         JAMI_WARNING("Incoming call {} has an empty media list", incomCallId);
 
-    JAMI_DEBUG("Incoming call {} on account {} with {} media",
-               incomCallId,
-               accountId,
-               mediaList.size());
+    JAMI_DEBUG("Incoming call {} on account {} with {} media", incomCallId, accountId, mediaList.size());
 
-    emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId,
-                                                           incomCallId,
-                                                           incomCall.getPeerNumber(),
-                                                           mediaList);
+    emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
 
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
@@ -2605,9 +2579,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
             // First call
             auto conf = std::make_shared<Conference>(account);
             account->attach(conf);
-            emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
-                                                               "",
-                                                               conf->getConfId());
+            emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
             // Bind calls according to their state
             bindCallToConference(*incomCall, *conf);
@@ -2617,16 +2589,14 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                                                conf->getStateStr());
         });
     } else if (autoAnswer_ || account->isAutoAnswerEnabled()) {
-        dht::ThreadPool::io().run(
-            [this, incomCall = incomCall.shared_from_this()] { base_.acceptCall(*incomCall); });
+        dht::ThreadPool::io().run([this, incomCall = incomCall.shared_from_this()] { base_.acceptCall(*incomCall); });
     } else if (currentCall && currentCall->getCallId() != incomCallId) {
         // Test if already calling this person
         auto peerNumber = incomCall.getPeerNumber();
         auto currentPeerNumber = currentCall->getPeerNumber();
         string_replace(peerNumber, "@ring.dht", "");
         string_replace(currentPeerNumber, "@ring.dht", "");
-        if (currentCall->getAccountId() == account->getAccountID()
-            && currentPeerNumber == peerNumber) {
+        if (currentCall->getAccountId() == account->getAccountID() && currentPeerNumber == peerNumber) {
             auto answerToCall = false;
             auto downgradeToAudioOnly = currentCall->isAudioOnly() != incomCall.isAudioOnly();
             if (downgradeToAudioOnly)
@@ -2715,15 +2685,13 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getVolatileAccountDetails();
     } else {
-        JAMI_ERR("Unable to get volatile account details on a nonexistent accountID %s",
-                 accountID.c_str());
+        JAMI_ERR("Unable to get volatile account details on a nonexistent accountID %s", accountID.c_str());
         return {};
     }
 }
 
 void
-Manager::setAccountDetails(const std::string& accountID,
-                           const std::map<std::string, std::string>& details)
+Manager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
     JAMI_DBG("Set account details for %s", accountID.c_str());
 
@@ -2786,9 +2754,7 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
 
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {
-        JAMI_ERROR("Unknown {:s} param when calling addAccount(): {:s}",
-                   Conf::CONFIG_ACCOUNT_TYPE,
-                   accountType);
+        JAMI_ERROR("Unknown {:s} param when calling addAccount(): {:s}", Conf::CONFIG_ACCOUNT_TYPE, accountType);
         return "";
     }
 
@@ -3004,14 +2970,11 @@ Manager::setAccountActive(const std::string& accountID, bool active, bool shutdo
             acc->doUnregister(shutdownConnections);
         }
     }
-    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-        accountID, acc->getVolatileAccountDetails());
+    emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountID, acc->getVolatileAccountDetails());
 }
 
 void
-Manager::loadAccountAndConversation(const std::string& accountId,
-                                    bool loadAll,
-                                    const std::string& convId)
+Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, const std::string& convId)
 {
     auto account = getAccount(accountId);
     if (!account && !autoLoad) {
@@ -3098,12 +3061,11 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 }
 
 void
-Manager::createSinkClients(
-    const std::string& callId,
-    const ConfInfo& infos,
-    const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
-    std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
-    const std::string& accountId)
+Manager::createSinkClients(const std::string& callId,
+                           const ConfInfo& infos,
+                           const std::vector<std::shared_ptr<video::VideoFrameActiveWriter>>& videoStreams,
+                           std::map<std::string, std::shared_ptr<video::SinkClient>>& sinksMap,
+                           const std::string& accountId)
 {
     auto account = accountId.empty() ? nullptr : getAccount<JamiAccount>(accountId);
 
@@ -3223,9 +3185,7 @@ Manager::getJamiPluginManager() const
 #endif
 
 std::shared_ptr<dhtnet::ChannelSocket>
-Manager::gitSocket(std::string_view accountId,
-                   std::string_view deviceId,
-                   std::string_view conversationId)
+Manager::gitSocket(std::string_view accountId, std::string_view deviceId, std::string_view conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
         if (auto convModule = acc->convModule(true))
@@ -3274,8 +3234,7 @@ void
 Manager::enableLocalModerators(const std::string& accountID, bool isModEnabled)
 {
     if (auto acc = getAccount(accountID))
-        acc->editConfig(
-            [&](AccountConfig& config) { config.localModeratorsEnabled = isModEnabled; });
+        acc->editConfig([&](AccountConfig& config) { config.localModeratorsEnabled = isModEnabled; });
 }
 
 bool
