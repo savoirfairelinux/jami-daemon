@@ -132,7 +132,9 @@ getConversationPreferences(const std::string& accountId, const std::string& conv
 
 // Member management
 void
-addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri)
+addConversationMember(const std::string& accountId,
+                      const std::string& conversationId,
+                      const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule(true)) {
@@ -146,7 +148,9 @@ addConversationMember(const std::string& accountId, const std::string& conversat
 }
 
 void
-removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri)
+removeConversationMember(const std::string& accountId,
+                         const std::string& conversationId,
+                         const std::string& contactUri)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule(true)) {
@@ -202,9 +206,9 @@ loadConversationMessages(const std::string& accountId,
 
 uint32_t
 loadConversation(const std::string& accountId,
-                 const std::string& conversationId,
-                 const std::string& fromMessage,
-                 size_t n)
+                         const std::string& conversationId,
+                         const std::string& fromMessage,
+                         size_t n)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule(true))

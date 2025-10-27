@@ -51,7 +51,11 @@
 
 namespace jami {
 
-constexpr const char* TRANSPORT_STATE_STR[] = {"CONNECTED", "DISCONNECTED", "SHUTDOWN", "DESTROY", "UNKNOWN STATE"};
+constexpr const char* TRANSPORT_STATE_STR[] = {"CONNECTED",
+                                               "DISCONNECTED",
+                                               "SHUTDOWN",
+                                               "DESTROY",
+                                               "UNKNOWN STATE"};
 constexpr const size_t TRANSPORT_STATE_SZ = std::size(TRANSPORT_STATE_STR);
 
 void
@@ -70,9 +74,9 @@ SipTransport::SipTransport(pjsip_transport* t)
     transport_.reset(t);
 
     JAMI_DEBUG("SipTransport@{} tr={} rc={:d}",
-               fmt::ptr(this),
-               fmt::ptr(transport_.get()),
-               pj_atomic_get(transport_->ref_cnt));
+                 fmt::ptr(this),
+                 fmt::ptr(transport_.get()),
+                 pj_atomic_get(transport_->ref_cnt));
 }
 
 SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener>& l)
@@ -81,7 +85,8 @@ SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener
     tlsListener_ = l;
 }
 
-SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<dht::crypto::Certificate>& peerCertficate)
+SipTransport::SipTransport(pjsip_transport* t,
+                           const std::shared_ptr<dht::crypto::Certificate>& peerCertficate)
     : SipTransport(t)
 {
     tlsInfos_.peerCert = peerCertficate;
@@ -90,15 +95,16 @@ SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<dht::crypto
 SipTransport::~SipTransport()
 {
     JAMI_DEBUG("~SipTransport@{} tr={} rc={:d}",
-               fmt::ptr(this),
-               fmt::ptr(transport_.get()),
-               pj_atomic_get(transport_->ref_cnt));
+                 fmt::ptr(this),
+                 fmt::ptr(transport_.get()),
+                 pj_atomic_get(transport_->ref_cnt));
 }
 
 bool
 SipTransport::isAlive(pjsip_transport_state state)
 {
-    return state != PJSIP_TP_STATE_DISCONNECTED && state != PJSIP_TP_STATE_SHUTDOWN && state != PJSIP_TP_STATE_DESTROY;
+    return state != PJSIP_TP_STATE_DISCONNECTED && state != PJSIP_TP_STATE_SHUTDOWN
+           && state != PJSIP_TP_STATE_DESTROY;
 }
 
 const char*
@@ -122,9 +128,13 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
             const auto& peers = tlsInfo->remote_cert_info->raw_chain;
             std::vector<std::pair<const uint8_t*, const uint8_t*>> bits;
             bits.resize(peers.cnt);
-            std::transform(peers.cert_raw, peers.cert_raw + peers.cnt, std::begin(bits), [](const pj_str_t& crt) {
-                return std::make_pair((uint8_t*) crt.ptr, (uint8_t*) (crt.ptr + crt.slen));
-            });
+            std::transform(peers.cert_raw,
+                           peers.cert_raw + peers.cnt,
+                           std::begin(bits),
+                           [](const pj_str_t& crt) {
+                               return std::make_pair((uint8_t*) crt.ptr,
+                                                     (uint8_t*) (crt.ptr + crt.slen));
+                           });
             tlsInfos_.peerCert = std::make_shared<dht::crypto::Certificate>(bits);
         }
     } else {
@@ -209,7 +219,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
     if (!isDestroying_ && state == PJSIP_TP_STATE_DESTROY) {
         // maps cleanup
         JAMI_DEBUG("Unmap PJSIP transport@{} {{SipTransport@{}}}", fmt::ptr(tp), fmt::ptr(sipTransport.get()));
-        transports_.erase(key);
+      transports_.erase(key);
 
         // If UDP
         const auto type = tp->key.type;
@@ -278,13 +288,13 @@ SipTransportBroker::getUdpTransport(const dhtnet::IpAddr& ipAddress)
                 return spt;
             } else {
                 // Transport still exists but have not been destroyed yet.
-                JAMI_WARNING("Recycling transport {}", ipAddress.toString(true));
+              JAMI_WARNING("Recycling transport {}", ipAddress.toString(true));
                 auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
         } else {
-            JAMI_WARNING("Cleaning up UDP transport {}", ipAddress.toString(true));
+          JAMI_WARNING("Cleaning up UDP transport {}", ipAddress.toString(true));
             udpTransports_.erase(itp);
         }
     }
@@ -306,8 +316,11 @@ SipTransportBroker::createUdpTransport(const dhtnet::IpAddr& ipAddress)
     pj_cfg.bind_addr = ipAddress;
     pjsip_transport* transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
-        JAMI_ERROR("pjsip_udp_transport_start2 failed with error {:d}: {:s}", status, sip_utils::sip_strerror(status));
-        JAMI_ERROR("UDP IPv{} Transport did not start on {}", ipAddress.isIpv4() ? "4" : "6", ipAddress.toString(true));
+        JAMI_ERROR("pjsip_udp_transport_start2 failed with error {:d}: {:s}",
+                status, sip_utils::sip_strerror(status));
+        JAMI_ERROR("UDP IPv{} Transport did not start on {}",
+                ipAddress.isIpv4() ? "4" : "6",
+                ipAddress.toString(true));
         return nullptr;
     }
 
@@ -362,7 +375,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
                                                         &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        JAMI_ERROR("Unable to get new TLS transport: {}", sip_utils::sip_strerror(status));
+      JAMI_ERROR("Unable to get new TLS transport: {}", sip_utils::sip_strerror(status));
         return nullptr;
     }
     auto ret = std::make_shared<SipTransport>(transport, l);
@@ -381,7 +394,9 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
 {
     if (!socket)
         return {};
-    auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_, socket, std::move(cb));
+    auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_,
+                                                                socket,
+                                                                std::move(cb));
     auto tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr, socket->peerCertificate());
     sip_tr->setDeviceId(socket->deviceId().toString());

@@ -64,7 +64,8 @@ AccountConfig::serializeDiff(YAML::Emitter& out, const AccountConfig& DEFAULT_CO
     SERIALIZE_CONFIG(HOSTNAME_KEY, hostname);
     SERIALIZE_CONFIG(USERNAME_KEY, username);
     SERIALIZE_CONFIG(MAILBOX_KEY, mailbox);
-    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
+    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value
+        << fmt::format(FMT_COMPILE("{}"), fmt::join(activeCodecs, "/"));
     SERIALIZE_CONFIG(ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled);
     SERIALIZE_CONFIG(DENY_SECOND_CALL_KEY, denySecondCallEnabled);
     SERIALIZE_CONFIG(ACCOUNT_READRECEIPT_KEY, sendReadReceipt);

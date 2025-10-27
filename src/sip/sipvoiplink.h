@@ -100,7 +100,9 @@ public:
     std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
     typedef std::function<void(std::vector<dhtnet::IpAddr>)> SrvResolveCallback;
-    void resolveSrvName(const std::string& name, pjsip_transport_type_e type, SrvResolveCallback&& cb);
+    void resolveSrvName(const std::string& name,
+                        pjsip_transport_type_e type,
+                        SrvResolveCallback&& cb);
 
     /**
      * Guess the account related to an incoming SIP call.
