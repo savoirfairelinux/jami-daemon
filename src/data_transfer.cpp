@@ -76,12 +76,16 @@ OutgoingFile::OutgoingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
 {
     std::filesystem::path fpath(info_.path);
     if (!std::filesystem::is_regular_file(fpath)) {
-        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
+        dht::ThreadPool::io().run([channel = std::move(channel_)] {
+            channel->shutdown();
+        });
         return;
     }
     stream_.open(fpath, std::ios::binary | std::ios::in);
     if (!stream_ || !stream_.is_open()) {
-        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
+        dht::ThreadPool::io().run([channel = std::move(channel_)] {
+            channel->shutdown();
+        });
         return;
     }
 }
@@ -91,7 +95,9 @@ OutgoingFile::~OutgoingFile()
     if (stream_ && stream_.is_open())
         stream_.close();
     if (channel_) {
-        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
+        dht::ThreadPool::io().run([channel = std::move(channel_)] {
+            channel->shutdown();
+        });
     }
 }
 
@@ -107,7 +113,8 @@ OutgoingFile::process()
         std::error_code ec;
         auto pos = start_;
         while (!stream_.eof()) {
-            stream_.read(buffer.data(), end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
+            stream_.read(buffer.data(),
+                         end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
             auto gcount = stream_.gcount();
             pos += gcount;
             channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
@@ -126,7 +133,8 @@ OutgoingFile::process()
         // will retry the transfer if they need, so we don't need to show errors.
         if (!interactionId_.empty() && !correct)
             return;
-        auto code = correct ? libjami::DataTransferEventCode::finished : libjami::DataTransferEventCode::closed_by_peer;
+        auto code = correct ? libjami::DataTransferEventCode::finished
+                            : libjami::DataTransferEventCode::closed_by_peer;
         emit(code);
     }
 }
@@ -135,7 +143,8 @@ void
 OutgoingFile::cancel()
 {
     // Remove link, not original file
-    auto path = fileutils::get_data_dir() / "conversation_data" / info_.accountId / info_.conversationId / fileId_;
+    auto path = fileutils::get_data_dir() / "conversation_data" / info_.accountId
+                / info_.conversationId / fileId_;
     if (std::filesystem::is_symlink(path))
         dhtnet::fileutils::remove(path);
     isUserCancelled_ = true;
@@ -151,7 +160,8 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
     , sha3Sum_(sha3Sum)
     , path_(info.path + ".tmp")
 {
-    stream_.open(path_, std::ios::binary | std::ios::out | std::ios::app);
+    stream_.open(path_,
+                 std::ios::binary | std::ios::out | std::ios::app);
     if (!stream_)
         return;
 
@@ -207,15 +217,9 @@ IncomingFile::process()
             if (shared->isUserCancelled_) {
                 std::filesystem::remove(shared->path_, ec);
             } else if (shared->info_.bytesProgress < shared->info_.totalSize) {
-                JAMI_WARNING("Channel for {} shut down before transfer was complete (progress: {}/{})",
-                             shared->info_.path,
-                             shared->info_.bytesProgress,
-                             shared->info_.totalSize);
+                JAMI_WARNING("Channel for {} shut down before transfer was complete (progress: {}/{})", shared->info_.path, shared->info_.bytesProgress, shared->info_.totalSize);
             } else if (shared->info_.totalSize != 0 && shared->info_.bytesProgress > shared->info_.totalSize) {
-                JAMI_WARNING("Removing {} larger than announced: {}/{}",
-                             shared->path_,
-                             shared->info_.bytesProgress,
-                             shared->info_.totalSize);
+                JAMI_WARNING("Removing {} larger than announced: {}/{}", shared->path_, shared->info_.bytesProgress, shared->info_.totalSize);
                 std::filesystem::remove(shared->path_, ec);
             } else {
                 auto sha3Sum = fileutils::sha3File(shared->path_);
@@ -223,12 +227,8 @@ IncomingFile::process()
                     JAMI_LOG("New file received: {}", shared->info_.path);
                     correct = true;
                 } else {
-                    JAMI_WARNING(
-                        "Removing {} with expected size ({} bytes) but invalid sha3sum (expected: {}, actual: {})",
-                        shared->path_,
-                        shared->info_.totalSize,
-                        shared->sha3Sum_,
-                        sha3Sum);
+                    JAMI_WARNING("Removing {} with expected size ({} bytes) but invalid sha3sum (expected: {}, actual: {})",
+                                 shared->path_, shared->info_.totalSize, shared->sha3Sum_, sha3Sum);
                     std::filesystem::remove(shared->path_, ec);
                 }
             }
@@ -245,7 +245,8 @@ IncomingFile::process()
         }
         if (shared->isUserCancelled_)
             return;
-        auto code = correct ? libjami::DataTransferEventCode::finished : libjami::DataTransferEventCode::closed_by_host;
+        auto code = correct ? libjami::DataTransferEventCode::finished
+                            : libjami::DataTransferEventCode::closed_by_host;
         shared->emit(code);
     });
 }
@@ -255,14 +256,18 @@ IncomingFile::process()
 class TransferManager::Impl
 {
 public:
-    Impl(const std::string& accountId, const std::string& accountUri, const std::string& to, const std::mt19937_64& rand)
+    Impl(const std::string& accountId,
+         const std::string& accountUri,
+         const std::string& to,
+         const std::mt19937_64& rand)
         : accountId_(accountId)
         , accountUri_(accountUri)
         , to_(to)
         , rand_(rand)
     {
         if (!to_.empty()) {
-            conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / to_;
+            conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data"
+                                    / to_;
             dhtnet::fileutils::check_dir(conversationDataPath_);
             waitingPath_ = conversationDataPath_ / "waiting";
         }
@@ -385,7 +390,10 @@ TransferManager::cancel(const std::string& fileId)
 }
 
 bool
-TransferManager::info(const std::string& fileId, std::string& path, int64_t& total, int64_t& progress) const noexcept
+TransferManager::info(const std::string& fileId,
+                      std::string& path,
+                      int64_t& total,
+                      int64_t& progress) const noexcept
 {
     std::unique_lock lk {pimpl_->mapMutex_};
     if (pimpl_->to_.empty())
@@ -448,7 +456,9 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     }
     auto itW = pimpl_->waitingIds_.find(fileId);
     if (itW == pimpl_->waitingIds_.end()) {
-        dht::ThreadPool().io().run([channel] { channel->shutdown(); });
+        dht::ThreadPool().io().run([channel] {
+            channel->shutdown();
+        });
         return;
     }
 
@@ -508,7 +518,8 @@ TransferManager::path(const std::string& fileId) const
 }
 
 void
-TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel, const std::string& sha3Sum)
+TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                                   const std::string& sha3Sum)
 {
     if (!channel)
         return;
@@ -588,7 +599,9 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
                     if (itO != pimpl->vcards_.end())
                         pimpl->vcards_.erase(itO);
                     if (code == uint32_t(libjami::DataTransferEventCode::finished)) {
-                        emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId, uri, destPath.string());
+                        emitSignal<libjami::ConfigurationSignal::ProfileReceived>(accountId,
+                                                                                  uri,
+                                                                                  destPath.string());
                     }
                 }
             });

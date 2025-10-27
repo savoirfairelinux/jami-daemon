@@ -18,7 +18,7 @@
 
 #include "jami/def.h"
 
-// #define __STDC_FORMAT_MACROS 1
+//#define __STDC_FORMAT_MACROS 1
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/chrono.h>
@@ -82,6 +82,7 @@ void strErr();
 class Logger
 {
 public:
+
     class Handler;
     struct Msg;
 
@@ -105,8 +106,7 @@ public:
         return *this;
     }
 
-    constexpr static int dhtLevel(dht::log::LogLevel level)
-    {
+    constexpr static int dhtLevel(dht::log::LogLevel level) {
         switch (level) {
         case dht::log::LogLevel::debug:
             return LOG_DEBUG;
@@ -114,19 +114,17 @@ public:
             return LOG_WARNING;
         case dht::log::LogLevel::error:
         default:
-            return LOG_ERR;
+                return LOG_ERR;
         }
     }
 
     LIBJAMI_PUBLIC
     static void write(int level, const char* file, int line, bool linefeed, std::string&& message);
 
-    static inline void writeDht(dht::log::LogLevel level, std::string&& message)
-    {
+    static inline void writeDht(dht::log::LogLevel level, std::string&& message) {
         write(dhtLevel(level), nullptr, 0, true, std::move(message));
     }
-    static inline std::shared_ptr<dht::log::Logger> dhtLogger()
-    {
+    static inline std::shared_ptr<dht::log::Logger> dhtLogger() {
         return std::make_shared<dht::Logger>(&Logger::writeDht);
     }
 
@@ -160,69 +158,58 @@ public:
     ///
     /// Example: JAMI_DBG() << "Hello, World!"
     ///
-    static Logger log(int level, const char* file, int line, bool linefeed) { return {level, file, line, linefeed}; }
+    static Logger log(int level, const char* file, int line, bool linefeed)
+    {
+        return {level, file, line, linefeed};
+    }
 
 private:
+
     int level_;              ///< LOG_XXXX values
     const char* const file_; ///< contextual filename (printed as header)
     const int line_;         ///< contextual line number (printed as header)
-    bool linefeed_ {true};   ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
-    std::ostringstream os_;  ///< string stream used with C++ stream style (stream operator<<)
+    bool linefeed_ {
+        true}; ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
+    std::ostringstream os_; ///< string stream used with C++ stream style (stream operator<<)
 };
 
 namespace log {
 
 template<typename S, typename... Args>
-void
-info(const char* file, int line, S&& format, Args&&... args)
-{
+void info(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_INFO, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
-void
-dbg(const char* file, int line, S&& format, Args&&... args)
-{
+void dbg(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_DEBUG, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
-void
-warn(const char* file, int line, S&& format, Args&&... args)
-{
+void warn(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_WARNING, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
-void
-error(const char* file, int line, S&& format, Args&&... args)
-{
+void error(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_ERR, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
 template<typename S, typename... Args>
-void
-xinfo(const char* file, int line, S&& format, Args&&... args)
-{
+void xinfo(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_INFO, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
-void
-xdbg(const char* file, int line, S&& format, Args&&... args)
-{
+void xdbg(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_DEBUG, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
-void
-xwarn(const char* file, int line, S&& format, Args&&... args)
-{
+void xwarn(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_WARNING, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
-void
-xerror(const char* file, int line, S&& format, Args&&... args)
-{
+void xerror(const char* file, int line, S&& format, Args&&... args) {
     Logger::write(LOG_ERR, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
-} // namespace log
+}
 
 // We need to use macros for contextual information
 #define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
@@ -236,11 +223,8 @@ xerror(const char* file, int line, S&& format, Args&&... args)
 #define JAMI_XERR(formatstr, ...)  ::jami::log::xerror(__FILE__, __LINE__, FMT_COMPILE(formatstr), ##__VA_ARGS__)
 
 #define JAMI_LOG(formatstr, ...) ::jami::log::info(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
-#define JAMI_DEBUG(formatstr, ...) \
-    if (::jami::Logger::debugEnabled()) { \
-        ::jami::log::dbg(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__); \
-    }
+#define JAMI_DEBUG(formatstr, ...) if(::jami::Logger::debugEnabled()) { ::jami::log::dbg(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__); }
 #define JAMI_WARNING(formatstr, ...) ::jami::log::warn(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
-#define JAMI_ERROR(formatstr, ...)   ::jami::log::error(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
+#define JAMI_ERROR(formatstr, ...) ::jami::log::error(__FILE__, __LINE__, FMT_STRING(formatstr), ##__VA_ARGS__)
 
 } // namespace jami

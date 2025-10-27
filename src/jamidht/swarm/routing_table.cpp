@@ -379,9 +379,11 @@ RoutingTable::closestNodes(const NodeId& nodeId, unsigned count)
         auto nodes = b->getNodeIds();
         for (auto n : nodes) {
             if (n != nodeId) {
-                auto here = std::find_if(closestNodes.begin(), closestNodes.end(), [&nodeId, &n](NodeId& NodeId) {
-                    return nodeId.xorCmp(n, NodeId) < 0;
-                });
+                auto here = std::find_if(closestNodes.begin(),
+                                         closestNodes.end(),
+                                         [&nodeId, &n](NodeId& NodeId) {
+                                             return nodeId.xorCmp(n, NodeId) < 0;
+                                         });
 
                 closestNodes.insert(here, n);
             }
@@ -486,7 +488,8 @@ bool
 RoutingTable::contains(const std::list<Bucket>::iterator& bucket, const NodeId& nodeId) const
 {
     return NodeId::cmp(bucket->getLowerLimit(), nodeId) <= 0
-           && (std::next(bucket) == buckets.end() || NodeId::cmp(nodeId, std::next(bucket)->getLowerLimit()) < 0);
+           && (std::next(bucket) == buckets.end()
+               || NodeId::cmp(nodeId, std::next(bucket)->getLowerLimit()) < 0);
 }
 
 std::vector<NodeId>
@@ -533,7 +536,8 @@ unsigned
 RoutingTable::depth(std::list<Bucket>::iterator& bucket) const
 {
     int bit1 = bucket->getLowerLimit().lowbit();
-    int bit2 = std::next(bucket) != buckets.end() ? std::next(bucket)->getLowerLimit().lowbit() : -1;
+    int bit2 = std::next(bucket) != buckets.end() ? std::next(bucket)->getLowerLimit().lowbit()
+                                                  : -1;
     return std::max(bit1, bit2) + 1;
 }
 
