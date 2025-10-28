@@ -27,6 +27,8 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "map_utils.h"
+#include "jami.h"
+#include "media_attribute.h"
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
@@ -1398,10 +1400,9 @@ Manager::addSubCall(Call& call, Conference& conference)
 void
 Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
-    conf.attachHost();
-    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(),
-                                                       conf.getConfId(),
-                                                       conf.getStateStr());
+    JAMI_DEBUG("[conf:{:s}] Adding main participant to conference", conf.getConfId());
+    conf.attachHost(conf.getLastMediaList());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(conf.getAccountId(), conf.getConfId(), conf.getStateStr());
     switchCall(conf.getConfId());
 }
 
@@ -1486,12 +1487,12 @@ Manager::joinParticipant(const std::string& accountId,
     auto mediaAttr = call1->getMediaAttributeList();
     if (mediaAttr.empty())
         mediaAttr = call2->getMediaAttributeList();
+
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    conf->attachHost(MediaAttribute::mediaAttributesToMediaMaps(mediaAttr));
     account->attach(conf);
-    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(),
-                                                       "",
-                                                       conf->getConfId());
+
+    emitSignal<libjami::CallSignal::ConferenceCreated>(account->getAccountID(), "", conf->getConfId());
 
     // Bind calls according to their state
     pimpl_->bindCallToConference(*call1, *conf);
@@ -1504,16 +1505,13 @@ Manager::joinParticipant(const std::string& accountId,
     } else {
         conf->detachHost();
     }
-    emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(),
-                                                       conf->getConfId(),
-                                                       conf->getStateStr());
+    emitSignal<libjami::CallSignal::ConferenceChanged>(account->getAccountID(), conf->getConfId(), conf->getStateStr());
 
     return true;
 }
 
 void
-Manager::createConfFromParticipantList(const std::string& accountId,
-                                       const std::vector<std::string>& participantList)
+Manager::createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>& participantList)
 {
     auto account = getAccount(accountId);
     if (not account) {
@@ -1528,7 +1526,9 @@ Manager::createConfFromParticipantList(const std::string& accountId,
     }
 
     auto conf = std::make_shared<Conference>(account);
-    conf->attachHost();
+    // attach host with empty medialist
+    // which will result in a default list set by initSourcesForHost
+    conf->attachHost({});
 
     unsigned successCounter = 0;
     for (const auto& numberaccount : participantList) {
