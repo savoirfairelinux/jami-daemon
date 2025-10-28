@@ -540,6 +540,8 @@ private:
      * Unbind call's audio from the conference
      */
     void unbindSubCallAudio(const std::string& callId);
+
+    bool pruneParticipantState(const std::string& callId, std::string_view remoteUri, std::string_view remotePeerId);
 };
 
 } // namespace jami

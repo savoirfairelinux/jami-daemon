@@ -682,7 +682,6 @@ Conference::addSubCall(const std::string& callId)
 {
     JAMI_DEBUG("Adding call {:s} to conference {:s}", callId, id_);
 
-
     jami_tracepoint(conference_add_participant, id_.c_str(), callId.c_str());
 
     {
@@ -691,7 +690,18 @@ Conference::addSubCall(const std::string& callId)
             return;
     }
 
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
+    auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId));
+    std::string remoteUri;
+    std::string remotePeerId;
+    if (call) {
+        remoteUri = call->getPeerNumber();
+        if (!remoteUri.empty())
+            remotePeerId = std::string(string_remove_suffix(remoteUri, '@'));
+    }
+
+    const bool cleanedStaleState = pruneParticipantState(callId, remoteUri, remotePeerId);
+
+    if (call) {
         // Check if participant was muted before conference
         if (call->isPeerMuted())
             participantsMuted_.emplace(call->getCallId());
@@ -741,8 +751,7 @@ Conference::addSubCall(const std::string& callId)
             JAMI_DEBUG("Stop recording for call {:s}", call->getCallId());
             call->toggleRecording();
             if (not this->isRecording()) {
-                JAMI_DEBUG("One participant was recording, start recording for conference {:s}",
-                           getConfId());
+                JAMI_DEBUG("One participant was recording, start recording for conference {:s}", getConfId());
                 this->toggleRecording();
             }
         }
@@ -750,6 +759,9 @@ Conference::addSubCall(const std::string& callId)
 #endif // ENABLE_VIDEO
     } else
         JAMI_ERROR("no call associate to participant {}", callId.c_str());
+
+    if (cleanedStaleState)
+        sendConferenceInfos();
 #ifdef ENABLE_PLUGIN
     createConfAVStreams();
 #endif
@@ -764,28 +776,116 @@ Conference::removeSubCall(const std::string& callId)
         if (!subCalls_.erase(callId))
             return;
     }
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
-        const auto& peerId = getRemoteId(call);
+    auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId));
+    std::string remoteUri;
+    std::string remotePeerId;
+    if (call) {
+        remoteUri = call->getPeerNumber();
+        if (!remoteUri.empty())
+            remotePeerId = std::string(string_remove_suffix(remoteUri, '@'));
+
         participantsMuted_.erase(call->getCallId());
         if (auto* transport = call->getTransport())
             handsRaised_.erase(std::string(transport->deviceId()));
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
-            for (auto const& rtpSession : call->getRtpSessionList()) {
+            for (const auto& rtpSession : call->getRtpSessionList()) {
+                const auto& streamId = rtpSession->streamId();
                 if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO)
-                    videoMixer_->removeAudioOnlySource(callId, rtpSession->streamId());
-                if (videoMixer_->verifyActive(rtpSession->streamId()))
+                    videoMixer_->removeAudioOnlySource(callId, streamId);
+                if (videoMixer_->verifyActive(streamId))
                     videoMixer_->resetActiveStream();
             }
         }
+#endif
+        }
 
-        auto sinkId = getConfId() + peerId;
+    if (call) {
         unbindSubCallAudio(callId);
         call->exitConference();
+#ifdef ENABLE_VIDEO
         if (call->isPeerRecording())
             call->peerRecording(false);
-#endif // ENABLE_VIDEO
+#endif
     }
+
+    if (pruneParticipantState(callId, remoteUri, remotePeerId))
+        sendConferenceInfos();
+}
+
+bool
+Conference::pruneParticipantState(const std::string& callId, std::string_view remoteUri, std::string_view remotePeerId)
+{
+    const std::string sinkPrefix = callId.empty() ? std::string {} : callId + "_";
+    bool layoutChanged = false;
+    std::vector<std::string> sinkIdsToErase;
+    std::vector<std::string> devicesToClear;
+
+    participantsMuted_.erase(callId);
+
+    auto matchesRemoteParticipant = [&](const ParticipantInfo& info) {
+        if (!remoteUri.empty() && info.uri == remoteUri)
+            return true;
+        if (!remotePeerId.empty() && string_remove_suffix(info.uri, '@') == remotePeerId)
+            return true;
+        return false;
+    };
+
+    std::lock_guard lk(confInfoMutex_);
+    for (auto it = confInfo_.begin(); it != confInfo_.end();) {
+        const bool matchesSink = !sinkPrefix.empty() && it->sinkId.rfind(sinkPrefix, 0) == 0;
+        const bool matchesParticipant = matchesRemoteParticipant(*it);
+        if (matchesSink || matchesParticipant) {
+            if (!it->sinkId.empty())
+                sinkIdsToErase.emplace_back(it->sinkId);
+            if (!it->device.empty())
+                devicesToClear.emplace_back(it->device);
+            it = confInfo_.erase(it);
+            layoutChanged = true;
+        } else {
+            ++it;
+        }
+    }
+
+    if (!remoteUri.empty() || !remotePeerId.empty()) {
+        for (auto it = remoteHosts_.begin(); it != remoteHosts_.end();) {
+            const bool matchesHost = (!remoteUri.empty() && it->first == remoteUri)
+                                     || (!remotePeerId.empty() && string_remove_suffix(it->first, '@') == remotePeerId);
+            if (matchesHost) {
+                for (const auto& info : it->second) {
+                    if (!info.sinkId.empty())
+                        sinkIdsToErase.emplace_back(info.sinkId);
+                    if (!info.device.empty())
+                        devicesToClear.emplace_back(info.device);
+                }
+                it = remoteHosts_.erase(it);
+                layoutChanged = true;
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    if (!sinkPrefix.empty()) {
+        for (auto it = streamsVoiceActive.begin(); it != streamsVoiceActive.end();) {
+            if (it->rfind(sinkPrefix, 0) == 0) {
+                it = streamsVoiceActive.erase(it);
+                layoutChanged = true;
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    for (const auto& sinkId : sinkIdsToErase) {
+        if (streamsVoiceActive.erase(sinkId) > 0)
+            layoutChanged = true;
+    }
+
+    for (const auto& deviceId : devicesToClear)
+        handsRaised_.erase(deviceId);
+
+    return layoutChanged;
 }
 
 void
