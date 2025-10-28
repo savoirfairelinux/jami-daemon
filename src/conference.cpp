@@ -764,28 +764,102 @@ Conference::removeSubCall(const std::string& callId)
         if (!subCalls_.erase(callId))
             return;
     }
-    if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
-        const auto& peerId = getRemoteId(call);
+    auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId));
+    std::string remoteUri;
+    std::string remotePeerId;
+    if (call) {
+        remoteUri = call->getPeerNumber();
+        if (!remoteUri.empty())
+            remotePeerId = std::string(string_remove_suffix(remoteUri, '@'));
+
         participantsMuted_.erase(call->getCallId());
         if (auto* transport = call->getTransport())
             handsRaised_.erase(std::string(transport->deviceId()));
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
-            for (auto const& rtpSession : call->getRtpSessionList()) {
+            for (const auto& rtpSession : call->getRtpSessionList()) {
+                const auto& streamId = rtpSession->streamId();
                 if (rtpSession->getMediaType() == MediaType::MEDIA_AUDIO)
-                    videoMixer_->removeAudioOnlySource(callId, rtpSession->streamId());
-                if (videoMixer_->verifyActive(rtpSession->streamId()))
+                    videoMixer_->removeAudioOnlySource(callId, streamId);
+                if (videoMixer_->verifyActive(streamId))
                     videoMixer_->resetActiveStream();
             }
         }
+#endif
+        }
 
-        auto sinkId = getConfId() + peerId;
+    if (call) {
         unbindSubCallAudio(callId);
         call->exitConference();
+#ifdef ENABLE_VIDEO
         if (call->isPeerRecording())
             call->peerRecording(false);
-#endif // ENABLE_VIDEO
+#endif
     }
+
+    bool layoutChanged = false;
+    std::vector<std::string> removedSinkIds;
+    const std::string sinkPrefix = callId.empty() ? std::string {} : callId + "_";
+
+    {
+        std::lock_guard lk(confInfoMutex_);
+        for (auto it = confInfo_.begin(); it != confInfo_.end();) {
+            bool removeEntry = false;
+            if (!sinkPrefix.empty() && it->sinkId.rfind(sinkPrefix, 0) == 0)
+                removeEntry = true;
+            if (!remoteUri.empty()
+                && (it->uri == remoteUri
+                    || (!remotePeerId.empty() && string_remove_suffix(it->uri, '@') == remotePeerId)))
+                removeEntry = true;
+
+            if (removeEntry) {
+                removedSinkIds.emplace_back(it->sinkId);
+                it = confInfo_.erase(it);
+                layoutChanged = true;
+            } else {
+                ++it;
+            }
+        }
+
+        if (!remoteUri.empty() || !remotePeerId.empty()) {
+            for (auto it = remoteHosts_.begin(); it != remoteHosts_.end();) {
+                const bool matches = (!remoteUri.empty() && it->first == remoteUri)
+                                     || (!remotePeerId.empty() && string_remove_suffix(it->first, '@') == remotePeerId);
+                if (matches) {
+                    for (const auto& info : it->second)
+                        removedSinkIds.emplace_back(info.sinkId);
+                    it = remoteHosts_.erase(it);
+                    layoutChanged = true;
+                } else {
+                    ++it;
+                }
+            }
+        }
+
+        if (!sinkPrefix.empty()) {
+            for (auto it = streamsVoiceActive.begin(); it != streamsVoiceActive.end();) {
+                if (it->rfind(sinkPrefix, 0) == 0) {
+                    it = streamsVoiceActive.erase(it);
+                    layoutChanged = true;
+                } else {
+                    ++it;
+                }
+            }
+        }
+
+        for (const auto& sinkId : removedSinkIds) {
+            if (sinkId.empty())
+                continue;
+            auto voiceIt = streamsVoiceActive.find(sinkId);
+            if (voiceIt != streamsVoiceActive.end()) {
+                streamsVoiceActive.erase(voiceIt);
+                layoutChanged = true;
+            }
+        }
+    }
+
+    if (layoutChanged)
+        sendConferenceInfos();
 }
 
 void
