@@ -1844,33 +1844,63 @@ Conference::bindSubCallAudio(const std::string& callId)
     JAMI_LOG("Bind participant {} to conference {}", callId, id_);
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    // Bind each of the new participant's audio streams to each of the other participants audio streams
     if (auto participantCall = getCall(callId)) {
-        auto participantStreams = participantCall->getAudioStreams();
-        for (auto stream : participantStreams) {
-            for (const auto& other : getSubCalls()) {
-                auto otherCall = other != callId ? getCall(other) : nullptr;
-                if (otherCall) {
-                    auto otherStreams = otherCall->getAudioStreams();
-                    for (auto otherStream : otherStreams) {
-                        if (isMuted(other))
-                            rbPool.bindHalfDuplexOut(otherStream.first, stream.first);
-                        else
-                            rbPool.bindRingBuffers(stream.first, otherStream.first);
+        const bool participantMuted = isMuted(callId);
+        const auto participantStreams = participantCall->getAudioStreams();
 
-                        rbPool.flush(otherStream.first);
+        for (const auto& [streamId, streamMutedFlag] : participantStreams) {
+            // if either the participant or the specific stream is muted, they should not transmit audio
+            const bool participantCanSend = !(participantMuted || streamMutedFlag);
+
+            // bind each of the new participant's audio streams to each of the other participants audio streams
+            for (const auto& otherId : getSubCalls()) {
+                if (otherId == callId)
+                    continue;
+
+                auto otherCall = getCall(otherId);
+                if (!otherCall)
+                    continue;
+
+                const bool otherMuted = isMuted(otherId);
+                const auto otherStreams = otherCall->getAudioStreams();
+
+                for (const auto& [otherStreamId, otherStreamMutedFlag] : otherStreams) {
+                    const bool otherCanSend = !(otherMuted || otherStreamMutedFlag);
+
+                    if (participantCanSend && otherCanSend) {
+                        rbPool.bindRingBuffers(streamId, otherStreamId);
+                        rbPool.flush(streamId);
+                        rbPool.flush(otherStreamId);
+                    } else {
+                        if (participantCanSend) {
+                            rbPool.bindHalfDuplexOut(otherStreamId, streamId);
+                            rbPool.flush(otherStreamId);
+                        }
+                        if (otherCanSend) {
+                            rbPool.bindHalfDuplexOut(streamId, otherStreamId);
+                            rbPool.flush(streamId);
+                        }
                     }
                 }
             }
 
-            // Bind local participant to other participants only if the
-            // local is attached to the conference.
             if (getState() == State::ACTIVE_ATTACHED) {
-                bool isHostMuted = isMuted("host"sv);
-                if (isMediaSourceMuted(MediaType::MEDIA_AUDIO) or isHostMuted)
-                    rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, stream.first);
-                else rbPool.bindRingBuffers(stream.first, RingBufferPool::DEFAULT_ID);
+                const bool hostCanSend = !(isMuted("host"sv) || isMediaSourceMuted(MediaType::MEDIA_AUDIO));
+
+                if (participantCanSend && hostCanSend) {
+                    rbPool.bindRingBuffers(streamId, RingBufferPool::DEFAULT_ID);
+                    rbPool.flush(streamId);
+                    rbPool.flush(RingBufferPool::DEFAULT_ID);
+                } else {
+                    if (participantCanSend) {
+                        rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId);
                 rbPool.flush(RingBufferPool::DEFAULT_ID);
+                    }
+                    if (hostCanSend) {
+                        rbPool.bindHalfDuplexOut(streamId, RingBufferPool::DEFAULT_ID);
+                        rbPool.flush(streamId);
+                    }
+                }
             }
         }
     }
