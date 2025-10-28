@@ -612,9 +612,12 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
 #ifdef ENABLE_VIDEO
     if (videoMixer_) {
+        const auto defaultAudioStream = sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID);
         if (newVideoInputs.empty()) {
-            videoMixer_->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
+            videoMixer_->switchInputs(newVideoInputs);
+            videoMixer_->addAudioOnlySource("", defaultAudioStream);
         } else {
+            videoMixer_->removeAudioOnlySource("", defaultAudioStream);
             videoMixer_->switchInputs(newVideoInputs);
         }
     }
