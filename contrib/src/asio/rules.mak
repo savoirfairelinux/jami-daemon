@@ -22,6 +22,9 @@ PKG_CPE += cpe:2.3:a:*:asio:1.36.0:*:*:*:*:*:*:*
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 # Pure dependency of restinio: do not add to PKGS.
+ifeq ($(call need_header,asio.hpp),)
+PKGS_FOUND += asio
+endif
 
 $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 	$(call download,$(ASIO_URL))
