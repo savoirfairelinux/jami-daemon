@@ -13,13 +13,10 @@ endif
 ifneq ($(call need_pkg,"zlib"),)
 DEPS_restinio += zlib
 endif
-ifneq ($(call need_pkg,"asio"),)
-DEPS_restinio += asio
-endif
 ifneq ($(call need_pkg,"fmt >= 5.3.0"),)
 DEPS_restinio += fmt
 endif
-DEPS_restinio += llhttp
+DEPS_restinio += asio llhttp
 
 RESTINIO_CMAKECONF = -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
 					-DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \

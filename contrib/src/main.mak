@@ -90,8 +90,11 @@ export PKG_CONFIG_PATH
 
 ifdef HAVE_CROSS_COMPILE
 need_pkg = 1
+need_header = 1
 else
 need_pkg = $(shell $(PKG_CONFIG) $(1) || echo 1)
+need_header = $(shell printf '\#include <%s>\nint main() { return 0; }\n' $(1) | \
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_COMMON) $(EXTRA_CXXFLAGS) -x c++ - -c -o /dev/null >/dev/null 2>&1 || echo 1)
 endif
 #
 # Default values for tools
