@@ -254,22 +254,24 @@ class libjamiCtrl(Thread):
         del self.activeCalls[callid]
         self.currentCallId = None # reset current call as none exists anymore
 
-    def onCallStateChanged_cb(self, callid, state, code):
+    def onCallStateChanged_cb(self, account, callid, state, code):
         pass
 
-    def onCallStateChanged(self, callid, state, code):
+    def onCallStateChanged(self, account, callid, state, code):
         """ On call state changed event, set the values for new calls,
         or delete the call from the list of active calls
         """
-        print(("On call state changed " + callid + " " + state))
+        print(("On call state changed " + str(account) + "; " + str(callid) + "; " + str(state) + "; " + str(code)))
 
         if callid not in self.activeCalls:
             print("This call didn't exist!: " + callid + ". Adding it to the list.")
             callDetails = self.getCallDetails(callid)
-            self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
-                                             'To': callDetails['PEER_NUMBER'],
-                                          'State': state,
-                                          'Code': code }
+            print(callDetails)
+            if callDetails is not None:
+                self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
+                                            'To': callDetails['PEER_NUMBER'],
+                                            'State': state,
+                                            'Code': code }
 
         self.currentCallId = callid
 
@@ -292,8 +294,8 @@ class libjamiCtrl(Thread):
         elif state == "INACTIVE":
             self.onCallInactive(callid,state)
         else:
-            print("unknown state:" + str(state))
-        self.onCallStateChanged_cb(callid, state, code)
+            print("Unknown state:" + str(state))
+        self.onCallStateChanged_cb(account, callid, state, code)
 
     def onConferenceCreated_cb(self):
         pass
