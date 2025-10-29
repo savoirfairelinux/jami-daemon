@@ -56,7 +56,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("djami-sample.yml"));
     }
     ~AccountArchiveTest() { libjami::fini(); }
     static std::string name() { return "AccountArchive"; }
@@ -136,7 +136,7 @@ AccountArchiveTest::testExportImportNoPassword()
 
     CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     auto accountId = jami::Manager::instance().addAccount(details);
@@ -156,7 +156,7 @@ AccountArchiveTest::testExportImportNoPasswordDoubleGunzip()
     auto dat = fileutils::loadFile("test.gz");
     archiver::compressGzip(dat, "test.gz");
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     auto accountId = jami::Manager::instance().addAccount(details);
@@ -174,7 +174,7 @@ AccountArchiveTest::testExportImportPassword()
 
     CPPUNIT_ASSERT(bobAccount->exportArchive("test.gz", "password", "test"));
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
     details[ConfProperties::ARCHIVE_PASSWORD] = "test";
 
@@ -195,7 +195,7 @@ AccountArchiveTest::testExportImportPasswordDoubleGunzip()
     auto dat = fileutils::loadFile("test.gz");
     archiver::compressGzip(dat, "test.gz");
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
     details[ConfProperties::ARCHIVE_PASSWORD] = "test";
 
@@ -211,7 +211,7 @@ void
 AccountArchiveTest::testChangePassword()
 {
     // Test incorrect password, should fail
-    CPPUNIT_ASSERT(!libjami::changeAccountPassword(aliceId, "wrong", "new"));
+    CPPUNIT_ASSERT(!libjami::changeAccountPassword(aliceId, "incorrect", "new"));
     // Test correct password, should succeed
     CPPUNIT_ASSERT(libjami::changeAccountPassword(aliceId, "", "new"));
     // Now it should fail
