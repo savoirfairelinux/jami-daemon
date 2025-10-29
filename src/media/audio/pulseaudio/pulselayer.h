@@ -137,21 +137,12 @@ public:
 
 private:
     static void context_state_callback(pa_context* c, void* user_data);
-    static void context_changed_callback(pa_context* c,
-                                         pa_subscription_event_type_t t,
-                                         uint32_t idx,
-                                         void* userdata);
+    static void context_changed_callback(pa_context* c, pa_subscription_event_type_t t, uint32_t idx, void* userdata);
     void contextStateChanged(pa_context* c);
     void contextChanged(pa_context*, pa_subscription_event_type_t, uint32_t idx);
 
-    static void source_input_info_callback(pa_context* c,
-                                           const pa_source_info* i,
-                                           int eol,
-                                           void* userdata);
-    static void sink_input_info_callback(pa_context* c,
-                                         const pa_sink_info* i,
-                                         int eol,
-                                         void* userdata);
+    static void source_input_info_callback(pa_context* c, const pa_source_info* i, int eol, void* userdata);
+    static void sink_input_info_callback(pa_context* c, const pa_sink_info* i, int eol, void* userdata);
     static void server_info_callback(pa_context*, const pa_server_info* i, void* userdata);
 
     virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
@@ -172,7 +163,11 @@ private:
     /**
      * Create the audio stream
      */
-    void createStream(std::unique_ptr<AudioStream>& stream, AudioDeviceType type, const PaDeviceInfos& dev_infos, bool ec, std::function<void(size_t)>&& onData);
+    void createStream(std::unique_ptr<AudioStream>& stream,
+                      AudioDeviceType type,
+                      const PaDeviceInfos& dev_infos,
+                      bool ec,
+                      std::function<void(size_t)>&& onData);
 
     std::unique_ptr<AudioStream>& getStream(AudioDeviceType type)
     {
@@ -196,8 +191,7 @@ private:
      * Returns a pointer to the PaEndpointInfos with the given name in sourceList_, or nullptr if
      * not found.
      */
-    const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&,
-                                        const std::string& name) const;
+    const PaDeviceInfos* getDeviceInfos(const std::vector<PaDeviceInfos>&, const std::string& name) const;
 
     std::atomic_uint pendingStreams {0};
 

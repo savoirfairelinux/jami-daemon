@@ -26,9 +26,11 @@
 
 #include "../test_runner.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class ResamplerTest : public CppUnit::TestFixture {
+class ResamplerTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "resampler"; }
 
@@ -109,6 +111,7 @@ ResamplerTest::testRematrix()
     CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data[0]);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::ResamplerTest::name());

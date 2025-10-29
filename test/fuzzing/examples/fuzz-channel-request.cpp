@@ -42,39 +42,37 @@ struct ChannelRequest
     MSGPACK_DEFINE(name, channel, state)
 };
 
-
-
 /*
  * Mangle channel
  */
 bool
 mutate_gnutls_record_send(ChanneledMessage& msg)
 {
-        try {
-                msgpack::unpacked result;
-                msgpack::unpack(result, (const char*) msg.data.data(), msg.data.size(), 0);
-                auto object = result.get();
-                auto req = object.as<ChannelRequest>();
+    try {
+        msgpack::unpacked result;
+        msgpack::unpack(result, (const char*) msg.data.data(), msg.data.size(), 0);
+        auto object = result.get();
+        auto req = object.as<ChannelRequest>();
 
-                int state = rand() % 8;
+        int state = rand() % 8;
 
-                static_assert(sizeof(state) == sizeof(req.state));
-                memcpy(&req.state, &state, sizeof(state));
+        static_assert(sizeof(state) == sizeof(req.state));
+        memcpy(&req.state, &state, sizeof(state));
 
-                msgpack::sbuffer buffer(512);
-                msgpack::pack(buffer, req);
+        msgpack::sbuffer buffer(512);
+        msgpack::pack(buffer, req);
 
-                msg.data.clear();
+        msg.data.clear();
 
-                for (size_t i=0; i<buffer.size(); ++i) {
-                        msg.data.emplace_back(buffer.data()[i]);
-                }
-
-        } catch (...) {
-                return false;
+        for (size_t i = 0; i < buffer.size(); ++i) {
+            msg.data.emplace_back(buffer.data()[i]);
         }
 
-        return true;
+    } catch (...) {
+        return false;
+    }
+
+    return true;
 }
 
 MSGPACK_ADD_ENUM(ChannelRequestState);

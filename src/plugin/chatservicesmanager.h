@@ -89,8 +89,7 @@ public:
      * @param peerId
      * @return Vector with active ChatHandler ids for a given accountId, peerId pair.
      */
-    std::vector<std::string> getChatHandlerStatus(const std::string& accountId,
-                                                  const std::string& peerId);
+    std::vector<std::string> getChatHandlerStatus(const std::string& accountId, const std::string& peerId);
 
     /**
      * @brief Gets details from ChatHandler implementation.
@@ -106,9 +105,7 @@ public:
      * @param rootPath
      * @return False if preference was changed.
      */
-    bool setPreference(const std::string& key,
-                       const std::string& value,
-                       const std::string& rootPath);
+    bool setPreference(const std::string& key, const std::string& value, const std::string& rootPath);
 
 private:
     /**

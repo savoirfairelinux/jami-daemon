@@ -82,30 +82,14 @@ public:
      *
      * \note modify validStateTransition/getStateStr if this enum changes
      */
-    enum class ConnectionState : unsigned {
-        DISCONNECTED,
-        TRYING,
-        PROGRESSING,
-        RINGING,
-        CONNECTED,
-        COUNT__
-    };
+    enum class ConnectionState : unsigned { DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED, COUNT__ };
 
     /**
      * The Call State.
      *
      * \note modify validStateTransition/getStateStr if this enum changes
      */
-    enum class CallState : unsigned {
-        INACTIVE,
-        ACTIVE,
-        HOLD,
-        BUSY,
-        PEER_BUSY,
-        MERROR,
-        OVER,
-        COUNT__
-    };
+    enum class CallState : unsigned { INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY, MERROR, OVER, COUNT__ };
 
     enum class LinkType { GENERIC, SIP };
 
@@ -266,9 +250,7 @@ public:
      * to determine wether an answer will be sent to the peer.
      * @param isRemote      True if the media list is from the remote peer
      */
-    virtual void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList,
-                                          bool isRemote = false)
-        = 0;
+    virtual void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) = 0;
     /**
      * Hang up the call
      * @param reason
@@ -355,8 +337,7 @@ public:
     {
         return duration_start_ == time_point::min()
                    ? std::chrono::milliseconds::zero()
-                   : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
-                                                                           - duration_start_);
+                   : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - duration_start_);
     }
 
     // media management
@@ -404,20 +385,12 @@ public:
      * @param A list of mimetype/payload pairs
      * @param The sender of this message (could be another participant of a conference)
      */
-    virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
-                                 const std::string& from)
-        = 0;
+    virtual void sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from) = 0;
 
     void onTextMessage(std::map<std::string, std::string>&& messages);
 
-    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const
-    {
-        return {};
-    }
-    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const
-    {
-        return {};
-    }
+    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const { return {}; }
+    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const { return {}; }
 
     virtual void restartMediaSender() = 0;
 
@@ -447,10 +420,7 @@ public:
 
     virtual void monitor() const = 0;
 
-    int conferenceProtocolVersion() const
-    {
-        return peerConfProtocol_;
-    }
+    int conferenceProtocolVersion() const { return peerConfProtocol_; }
 
 protected:
     using clock = std::chrono::steady_clock;

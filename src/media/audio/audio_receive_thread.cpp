@@ -133,8 +133,7 @@ AudioReceiveThread::addIOContext(SocketPair& socketPair)
 }
 
 void
-AudioReceiveThread::setRecorderCallback(
-    const std::function<void(const MediaStream& ms)>& cb)
+AudioReceiveThread::setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb)
 {
     recorderCallback_ = cb;
     if (audioDecoder_)

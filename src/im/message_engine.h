@@ -35,7 +35,7 @@ namespace im {
 
 using MessageToken = uint64_t;
 
-enum class MessageStatus { UNKNOWN=0, IDLE, SENDING, SENT, FAILURE };
+enum class MessageStatus { UNKNOWN = 0, IDLE, SENDING, SENT, FAILURE };
 
 class MessageEngine
 {
@@ -56,18 +56,13 @@ public:
 
     MessageStatus getStatus(MessageToken t) const;
 
-    void onMessageSent(const std::string& peer,
-                       MessageToken t,
-                       bool success,
-                       const std::string& deviceId = {});
+    void onMessageSent(const std::string& peer, MessageToken t, bool success, const std::string& deviceId = {});
 
     /**
      * @TODO change MessageEngine by a queue,
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
      */
-    void onPeerOnline(const std::string& peer,
-                      const std::string& deviceId = {},
-                      bool retryOnTimeout = true);
+    void onPeerOnline(const std::string& peer, const std::string& deviceId = {}, bool retryOnTimeout = true);
 
     /**
      * Load persisted messages
@@ -83,9 +78,7 @@ private:
     static const constexpr unsigned MAX_RETRIES = 20;
     using clock = std::chrono::system_clock;
 
-    void retrySend(const std::string& peer,
-                   const std::string& deviceId,
-                   bool retryOnTimeout);
+    void retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout);
 
     void save_() const;
     void scheduleSave();

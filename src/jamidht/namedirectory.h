@@ -73,15 +73,12 @@ public:
     ~NameDirectory();
     void load();
 
-    static NameDirectory& instance(const std::string& serverUrl,
-                                   std::shared_ptr<dht::Logger> l = {});
+    static NameDirectory& instance(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});
     static NameDirectory& instance();
 
     void setToken(std::string token) { serverToken_ = std::move(token); }
 
-    static void lookupUri(std::string_view uri,
-                          const std::string& default_server,
-                          LookupCallback cb);
+    static void lookupUri(std::string_view uri, const std::string& default_server, LookupCallback cb);
 
     void lookupAddress(const std::string& addr, LookupCallback cb);
     void lookupName(const std::string& name, LookupCallback cb);
@@ -137,9 +134,7 @@ private:
         return cacheRes != addrCache_.end() ? cacheRes->second : std::pair<std::string, std::string> {};
     }
 
-    static bool verify(const std::string& name,
-                       const dht::crypto::PublicKey& publickey,
-                       const std::string& signature);
+    static bool verify(const std::string& name, const dht::crypto::PublicKey& publickey, const std::string& signature);
 
     void scheduleCacheSave();
     void saveCache();

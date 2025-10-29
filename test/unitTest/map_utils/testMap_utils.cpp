@@ -27,9 +27,12 @@
 
 #include "../../test_runner.h"
 
-namespace jami { namespace map_utils { namespace test {
+namespace jami {
+namespace map_utils {
+namespace test {
 
-class MapUtilsTest : public CppUnit::TestFixture {
+class MapUtilsTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "map_utils"; }
 
@@ -87,6 +90,8 @@ MapUtilsTest::test_extractValues()
     }
 }
 
-}}} // namespace jami::map_utils::test
+} // namespace test
+} // namespace map_utils
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::map_utils::test::MapUtilsTest::name());

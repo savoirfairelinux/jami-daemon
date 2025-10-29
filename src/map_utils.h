@@ -26,8 +26,7 @@ namespace map_utils {
 
 ///< Return the N-th type of a tuple type used as the Container compliant value type
 template<typename C, std::size_t N>
-using type_element =
-    typename std::remove_cv<typename std::tuple_element<N, typename C::value_type>::type>::type;
+using type_element = typename std::remove_cv<typename std::tuple_element<N, typename C::value_type>::type>::type;
 
 ///< Extract in a std::vector object each N-th values of tuples contained in a Container compliant
 ///< object \a container.

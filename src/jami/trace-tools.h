@@ -21,11 +21,11 @@
  * GCC Only.  We use these instead of classic __FILE__ and __LINE__ because
  * these are evaluated where invoked and not at expansion time.  See GCC manual.
  */
-#  define CURRENT_FILENAME() __builtin_FILE()
-#  define CURRENT_LINE()     __builtin_LINE()
+#define CURRENT_FILENAME() __builtin_FILE()
+#define CURRENT_LINE()     __builtin_LINE()
 #else
-#  define CURRENT_FILENAME() ""
-#  define CURRENT_LINE()     0
+#define CURRENT_FILENAME() ""
+#define CURRENT_LINE()     0
 #endif
 
 #ifdef HAVE_CXXABI_H
@@ -33,10 +33,11 @@
 #include <string>
 
 template<typename T>
-std::string demangle()
+std::string
+demangle()
 {
     int err;
-    char *raw;
+    char* raw;
     std::string ret;
 
     raw = abi::__cxa_demangle(typeid(T).name(), 0, 0, &err);
@@ -54,7 +55,8 @@ std::string demangle()
 
 #else
 template<typename T>
-std::string demangle()
+std::string
+demangle()
 {
     return typeid(T).name();
 }

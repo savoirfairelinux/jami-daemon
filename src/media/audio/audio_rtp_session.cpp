@@ -71,9 +71,7 @@ void
 AudioRtpSession::startSender()
 {
     std::lock_guard lock(mutex_);
-    JAMI_DEBUG("Start audio RTP sender: input [{}] - muted [{}]",
-             input_,
-             muteState_ ? "YES" : "NO");
+    JAMI_DEBUG("Start audio RTP sender: input [{}] - muted [{}]", input_, muteState_ ? "YES" : "NO");
 
     if (not send_.enabled or send_.onHold) {
         JAMI_WARNING("Audio sending disabled");
@@ -106,20 +104,18 @@ AudioRtpSession::startSender()
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
     audioInput_ = jami::getAudioInput(audioInputId);
-    audioInput_->setRecorderCallback(
-            [w=weak_from_this()](const MediaStream& ms) {
-                asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
-                    if (auto shared = w.lock())
-                        shared->attachLocalRecorder(ms);
-                });
-            });
+    audioInput_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+        asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
+            if (auto shared = w.lock())
+                shared->attachLocalRecorder(ms);
+        });
+    });
     audioInput_->setMuted(muteState_);
     audioInput_->setSuccessfulSetupCb(onSuccessfulSetup_);
     if (!fileAudio) {
         auto newParams = audioInput_->switchInput(input_);
         try {
-            if (newParams.valid()
-                && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+            if (newParams.valid() && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                 localAudioParams_ = newParams.get();
             } else {
                 JAMI_ERROR("No valid new audio parameters");
@@ -188,13 +184,11 @@ AudioRtpSession::startReceiver()
         JAMI_WARNING("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(streamId_,
-                                                accountAudioCodec->audioformat,
-                                                receive_.receiving_sdp,
-                                                mtu_));
+    receiveThread_.reset(
+        new AudioReceiveThread(streamId_, accountAudioCodec->audioformat, receive_.receiving_sdp, mtu_));
 
-    receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-        asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
+    receiveThread_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+        asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
             if (auto shared = w.lock())
                 shared->attachRemoteRecorder(ms);
         });
@@ -277,7 +271,7 @@ AudioRtpSession::stop()
 void
 AudioRtpSession::setMuted(bool muted, Direction dir)
 {
-    asio::post(*Manager::instance().ioContext(), [w=weak_from_this(), muted, dir]() {
+    asio::post(*Manager::instance().ioContext(), [w = weak_from_this(), muted, dir]() {
         if (auto shared = w.lock()) {
             std::lock_guard lock(shared->mutex_);
             if (dir == Direction::SEND) {
@@ -426,20 +420,18 @@ AudioRtpSession::initRecorder()
     if (!recorder_)
         return;
     if (receiveThread_)
-        receiveThread_->setRecorderCallback(
-            [w=weak_from_this()](const MediaStream& ms) {
-                asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
-                    if (auto shared = w.lock())
-                        shared->attachRemoteRecorder(ms);
-                });
+        receiveThread_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+            asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachRemoteRecorder(ms);
+            });
         });
     if (audioInput_)
-        audioInput_->setRecorderCallback(
-            [w=weak_from_this()](const MediaStream& ms) {
-                asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
-                    if (auto shared = w.lock())
-                        shared->attachLocalRecorder(ms);
-                });
+        audioInput_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+            asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
+                if (auto shared = w.lock())
+                    shared->attachLocalRecorder(ms);
+            });
         });
 }
 

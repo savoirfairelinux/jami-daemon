@@ -49,8 +49,8 @@ parseValueOptional(const YAML::Node& node, const char* key, T& value)
 void parsePath(const YAML::Node& node, const char* key, std::string& path, const std::filesystem::path& base);
 void parsePathOptional(const YAML::Node& node, const char* key, std::string& path, const std::filesystem::path& base);
 
-std::vector<std::map<std::string, std::string>> parseVectorMap(
-    const YAML::Node& node, const std::initializer_list<std::string>& keys);
+std::vector<std::map<std::string, std::string>> parseVectorMap(const YAML::Node& node,
+                                                               const std::initializer_list<std::string>& keys);
 std::set<std::string> parseVector(const YAML::Node& node);
 
 } // namespace yaml_utils

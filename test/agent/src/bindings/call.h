@@ -24,9 +24,7 @@
 #include "utils.h"
 
 static SCM
-place_call_with_media_binding(SCM accountID_str,
-                              SCM contact_str,
-                              SCM call_media_vector_alist_optional)
+place_call_with_media_binding(SCM accountID_str, SCM contact_str, SCM call_media_vector_alist_optional)
 {
     LOG_BINDING();
 
@@ -35,8 +33,8 @@ place_call_with_media_binding(SCM accountID_str,
     }
 
     return to_guile(libjami::placeCallWithMedia(from_guile(accountID_str),
-                                              from_guile(contact_str),
-                                              from_guile(call_media_vector_alist_optional)));
+                                                from_guile(contact_str),
+                                                from_guile(call_media_vector_alist_optional)));
 }
 
 static SCM
@@ -57,8 +55,8 @@ accept_binding(SCM accountID_str, SCM callID_str, SCM call_media_vector_alist_op
     }
 
     return to_guile(libjami::acceptWithMedia(from_guile(accountID_str),
-                                           from_guile(callID_str),
-                                           from_guile(call_media_vector_alist_optional)));
+                                             from_guile(callID_str),
+                                             from_guile(call_media_vector_alist_optional)));
 }
 
 static SCM

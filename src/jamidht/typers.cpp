@@ -29,9 +29,7 @@ Typers::Typers(const std::shared_ptr<JamiAccount>& acc, const std::string& convI
     , accountId_(acc->getAccountID())
     , convId_(convId)
     , selfUri_(acc->getUsername())
-{
-
-}
+{}
 
 Typers::~Typers()
 {
@@ -48,13 +46,11 @@ getIsComposing(const std::string& conversationId, bool isWriting)
     return fmt::format("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n"
                        "<isComposing><state>{}</state>{}</isComposing>",
                        isWriting ? "active"sv : "idle"sv,
-                       conversationId.empty()
-                           ? ""
-                           : "<conversation>" + conversationId + "</conversation>");
+                       conversationId.empty() ? "" : "<conversation>" + conversationId + "</conversation>");
 }
 
 void
-Typers::addTyper(const std::string &typer, bool sendMessage)
+Typers::addTyper(const std::string& typer, bool sendMessage)
 {
     auto acc = acc_.lock();
     if (!acc || !acc->isComposingEnabled())
@@ -64,47 +60,35 @@ Typers::addTyper(const std::string &typer, bool sendMessage)
         auto& watcher = it->second;
         // Check next member
         watcher.expires_at(std::chrono::steady_clock::now() + COMPOSING_TIMEOUT);
-        watcher.async_wait(
-            std::bind(&Typers::onTyperTimeout,
-                        shared_from_this(),
-                        std::placeholders::_1,
-                        typer));
+        watcher.async_wait(std::bind(&Typers::onTyperTimeout, shared_from_this(), std::placeholders::_1, typer));
 
         if (typer != selfUri_)
-            emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountId_,
-                                                                                convId_,
-                                                                                typer,
-                                                                                1);
+            emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountId_, convId_, typer, 1);
     }
     if (sendMessage) {
         // In this case we should emit for remote to update the timer
-        acc->sendInstantMessage(convId_,
-                               {{MIME_TYPE_IM_COMPOSING, getIsComposing(convId_, true)}});
+        acc->sendInstantMessage(convId_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(convId_, true)}});
     }
 }
 
 void
-Typers::removeTyper(const std::string &typer, bool sendMessage)
+Typers::removeTyper(const std::string& typer, bool sendMessage)
 {
     auto acc = acc_.lock();
     if (!acc || !acc->isComposingEnabled())
         return;
     if (watcher_.erase(typer)) {
         if (sendMessage) {
-            acc->sendInstantMessage(convId_,
-                                {{MIME_TYPE_IM_COMPOSING, getIsComposing(convId_, false)}});
+            acc->sendInstantMessage(convId_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(convId_, false)}});
         }
         if (typer != selfUri_) {
-            emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountId_,
-                                                                                convId_,
-                                                                                typer,
-                                                                                0);
+            emitSignal<libjami::ConfigurationSignal::ComposingStatusChanged>(accountId_, convId_, typer, 0);
         }
     }
 }
 
 void
-Typers::onTyperTimeout(const asio::error_code& ec, const std::string &typer)
+Typers::onTyperTimeout(const asio::error_code& ec, const std::string& typer)
 {
     if (ec == asio::error::operation_aborted)
         return;

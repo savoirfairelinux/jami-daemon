@@ -79,17 +79,13 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
     while (dummyInput && ++count) // increment count before evaluating its value
         dummyInput = dummyInput->next;
     if (count != msps.size())
-        return fail(
-            "Size mismatch between number of inputs in filter graph and input parameter array",
-            AVERROR(EINVAL));
+        return fail("Size mismatch between number of inputs in filter graph and input parameter array", AVERROR(EINVAL));
 
     for (AVFilterInOut* current = inputs.get(); current; current = current->next) {
         if (!current->name)
             return fail("Filters require non empty names", AVERROR(EINVAL));
         std::string_view name = current->name;
-        auto it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) {
-            return msp.name == name;
-        });
+        auto it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) { return msp.name == name; });
         if (it != msps.end()) {
             if ((ret = initInputFilter(current, *it)) < 0) {
                 return fail(fmt::format("Failed to initialize input: {}", name), ret);
@@ -107,7 +103,9 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
     return 0;
 }
 
-bool MediaFilter::needsReinitForNewStream(const std::string& name) const {
+bool
+MediaFilter::needsReinitForNewStream(const std::string& name) const
+{
     for (const auto& ms : inputParams_)
         if (ms.name == name)
             return false;
@@ -173,10 +171,8 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
         if (ms.name != inputName)
             continue;
 
-        if (ms.format != frame->format
-            || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
-            || (!ms.isVideo
-                && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->ch_layout.nb_channels))) {
+        if (ms.format != frame->format || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
+            || (!ms.isVideo && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->ch_layout.nb_channels))) {
             ms.update(frame);
             if ((ret = reinitialize()) < 0)
                 return fail("Failed to reinitialize filter with new input parameters", ret);
@@ -231,8 +227,7 @@ MediaFilter::flush()
     for (size_t i = 0; i < inputs_.size(); ++i) {
         int ret = av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
         if (ret < 0) {
-            JAMI_ERR() << "Failed to flush filter '" << inputParams_[i].name
-                       << "': " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to flush filter '" << inputParams_[i].name << "': " << libav_utils::getError(ret);
         }
     }
 }
@@ -250,9 +245,7 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
     else
         buffersink = avfilter_get_by_name("abuffersink");
 
-    if ((ret
-         = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out", nullptr, nullptr, graph_))
-        < 0) {
+    if ((ret = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out", nullptr, nullptr, graph_)) < 0) {
         avfilter_free(buffersinkCtx);
         return fail("Failed to create buffer sink", ret);
     }

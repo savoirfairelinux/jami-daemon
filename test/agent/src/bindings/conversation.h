@@ -35,8 +35,7 @@ get_conversation_members_binding(SCM accountID_str, SCM conversationID_str)
 {
     LOG_BINDING();
 
-    return  to_guile(libjami::getConversationMembers(from_guile(accountID_str),
-                                                   from_guile(conversationID_str)));
+    return to_guile(libjami::getConversationMembers(from_guile(accountID_str), from_guile(conversationID_str)));
 }
 
 static SCM
@@ -44,47 +43,37 @@ accept_conversation_binding(SCM accountID_str, SCM conversationID_str)
 {
     LOG_BINDING();
 
-    libjami::acceptConversationRequest(from_guile(accountID_str),
-                                     from_guile(conversationID_str));
+    libjami::acceptConversationRequest(from_guile(accountID_str), from_guile(conversationID_str));
 
     return SCM_UNDEFINED;
 }
 
 static SCM
-send_message_binding(SCM accountID_str, SCM conversationID_str, SCM message_str,
-                     SCM parent_str_optional)
+send_message_binding(SCM accountID_str, SCM conversationID_str, SCM message_str, SCM parent_str_optional)
 {
     LOG_BINDING();
 
     if (SCM_UNBNDP(parent_str_optional)) {
-        libjami::sendMessage(from_guile(accountID_str),
-                           from_guile(conversationID_str),
-                           from_guile(message_str),
-                           "");
+        libjami::sendMessage(from_guile(accountID_str), from_guile(conversationID_str), from_guile(message_str), "");
 
     } else {
         libjami::sendMessage(from_guile(accountID_str),
-                           from_guile(conversationID_str),
-                           from_guile(message_str),
-                           from_guile(parent_str_optional));
+                             from_guile(conversationID_str),
+                             from_guile(message_str),
+                             from_guile(parent_str_optional));
     }
-
 
     return SCM_UNDEFINED;
 }
 
 static void
-install_conversation_primitives(void *)
+install_conversation_primitives(void*)
 {
-    define_primitive("get-conversations", 1, 0, 0,
-                     (void*) get_conversations_binding);
+    define_primitive("get-conversations", 1, 0, 0, (void*) get_conversations_binding);
 
-    define_primitive("get-conversation-members", 2, 0, 0,
-                     (void*) get_conversation_members_binding);
+    define_primitive("get-conversation-members", 2, 0, 0, (void*) get_conversation_members_binding);
 
-    define_primitive("accept-conversation", 2, 0, 0,
-                     (void*) accept_conversation_binding);
+    define_primitive("accept-conversation", 2, 0, 0, (void*) accept_conversation_binding);
 
-    define_primitive("send-message", 3, 1, 0,
-                     (void*) send_message_binding);
+    define_primitive("send-message", 3, 1, 0, (void*) send_message_binding);
 }

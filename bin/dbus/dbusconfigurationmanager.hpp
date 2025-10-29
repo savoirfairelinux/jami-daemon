@@ -21,8 +21,7 @@
 #include <datatransfer_interface.h>
 #include <conversation_interface.h>
 
-class DBusConfigurationManager
-    : public sdbus::AdaptorInterfaces<cx::ring::Ring::ConfigurationManager_adaptor>
+class DBusConfigurationManager : public sdbus::AdaptorInterfaces<cx::ring::Ring::ConfigurationManager_adaptor>
 {
 public:
     using DBusSwarmMessage = sdbus::Struct<std::string,
@@ -41,8 +40,7 @@ public:
 
     ~DBusConfigurationManager() { unregisterAdaptor(); }
 
-    auto getAccountDetails(const std::string& accountID)
-        -> decltype(libjami::getAccountDetails(accountID))
+    auto getAccountDetails(const std::string& accountID) -> decltype(libjami::getAccountDetails(accountID))
     {
         return libjami::getAccountDetails(accountID);
     }
@@ -53,8 +51,7 @@ public:
         return libjami::getVolatileAccountDetails(accountID);
     }
 
-    void setAccountDetails(const std::string& accountID,
-                           const std::map<std::string, std::string>& details)
+    void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
     {
         libjami::setAccountDetails(accountID, details);
     }
@@ -64,14 +61,12 @@ public:
         libjami::setAccountActive(accountID, active);
     }
 
-    auto getAccountTemplate(const std::string& accountType)
-        -> decltype(libjami::getAccountTemplate(accountType))
+    auto getAccountTemplate(const std::string& accountType) -> decltype(libjami::getAccountTemplate(accountType))
     {
         return libjami::getAccountTemplate(accountType);
     }
 
-    auto addAccount(const std::map<std::string, std::string>& details)
-        -> decltype(libjami::addAccount(details))
+    auto addAccount(const std::map<std::string, std::string>& details) -> decltype(libjami::addAccount(details))
     {
         return libjami::addAccount(details);
     }
@@ -98,20 +93,19 @@ public:
         return libjami::provideAccountAuthentication(accountID, credentialsFromUser, scheme);
     }
 
-    auto addDevice(const std::string& accountID, const std::string& uri)
-        -> decltype(libjami::addDevice(accountID, uri))
+    auto addDevice(const std::string& accountID, const std::string& uri) -> decltype(libjami::addDevice(accountID, uri))
     {
         return libjami::addDevice(accountID, uri);
     }
 
-    auto confirmAddDevice(const std::string& accountId, const uint32_t& op_id)
-        -> decltype(libjami::confirmAddDevice(accountId, op_id))
+    auto confirmAddDevice(const std::string& accountId,
+                          const uint32_t& op_id) -> decltype(libjami::confirmAddDevice(accountId, op_id))
     {
         return libjami::confirmAddDevice(accountId, op_id);
     }
 
-    auto cancelAddDevice(const std::string& accountId, const uint32_t& op_id)
-        -> decltype(libjami::cancelAddDevice(accountId, op_id))
+    auto cancelAddDevice(const std::string& accountId,
+                         const uint32_t& op_id) -> decltype(libjami::cancelAddDevice(accountId, op_id))
     {
         return libjami::cancelAddDevice(accountId, op_id);
     }
@@ -125,8 +119,7 @@ public:
         return libjami::revokeDevice(accountID, device, scheme, password);
     }
 
-    auto getKnownRingDevices(const std::string& accountID)
-        -> decltype(libjami::getKnownRingDevices(accountID))
+    auto getKnownRingDevices(const std::string& accountID) -> decltype(libjami::getKnownRingDevices(accountID))
     {
         return libjami::getKnownRingDevices(accountID);
     }
@@ -141,16 +134,14 @@ public:
 
     auto lookupName(const std::string& account,
                     const std::string& nameserver,
-                    const std::string& name)
-        -> decltype(libjami::lookupName(account, nameserver, name))
+                    const std::string& name) -> decltype(libjami::lookupName(account, nameserver, name))
     {
         return libjami::lookupName(account, nameserver, name);
     }
 
     auto lookupAddress(const std::string& account,
                        const std::string& nameserver,
-                       const std::string& address)
-        -> decltype(libjami::lookupAddress(account, nameserver, address))
+                       const std::string& address) -> decltype(libjami::lookupAddress(account, nameserver, address))
     {
         return libjami::lookupAddress(account, nameserver, address);
     }
@@ -158,29 +149,22 @@ public:
     auto registerName(const std::string& account,
                       const std::string& name,
                       const std::string& scheme,
-                      const std::string& password)
-        -> decltype(libjami::registerName(account, name, scheme, password))
+                      const std::string& password) -> decltype(libjami::registerName(account, name, scheme, password))
     {
         return libjami::registerName(account, name, scheme, password);
     }
 
-    auto searchUser(const std::string& account, const std::string& query)
-        -> decltype(libjami::searchUser(account, query))
+    auto searchUser(const std::string& account,
+                    const std::string& query) -> decltype(libjami::searchUser(account, query))
     {
         return libjami::searchUser(account, query);
     }
 
     void removeAccount(const std::string& accountID) { libjami::removeAccount(accountID); }
 
-    auto getAccountList() -> decltype(libjami::getAccountList())
-    {
-        return libjami::getAccountList();
-    }
+    auto getAccountList() -> decltype(libjami::getAccountList()) { return libjami::getAccountList(); }
 
-    void sendRegister(const std::string& accountID, const bool& enable)
-    {
-        libjami::sendRegister(accountID, enable);
-    }
+    void sendRegister(const std::string& accountID, const bool& enable) { libjami::sendRegister(accountID, enable); }
 
     void registerAllAccounts(void) { libjami::registerAllAccounts(); }
 
@@ -193,14 +177,15 @@ public:
         return libjami::sendAccountTextMessage(accountID, to, payloads, flags);
     }
 
-    std::vector<sdbus::Struct<std::string, std::map<std::string, std::string>, uint64_t>>
-    getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
+    std::vector<sdbus::Struct<std::string, std::map<std::string, std::string>, uint64_t>> getLastMessages(
+        const std::string& accountID, const uint64_t& base_timestamp)
     {
         auto messages = libjami::getLastMessages(accountID, base_timestamp);
         std::vector<sdbus::Struct<std::string, std::map<std::string, std::string>, uint64_t>> result;
         for (const auto& message : messages) {
-            sdbus::Struct<std::string, std::map<std::string, std::string>, uint64_t>
-                m(message.from, message.payloads, message.received);
+            sdbus::Struct<std::string, std::map<std::string, std::string>, uint64_t> m(message.from,
+                                                                                       message.payloads,
+                                                                                       message.received);
             result.emplace_back(m);
         }
         return result;
@@ -225,8 +210,8 @@ public:
         return libjami::getMessageStatus(id);
     }
 
-    auto getMessageStatus(const std::string& accountID, const uint64_t& id)
-        -> decltype(libjami::getMessageStatus(accountID, id))
+    auto getMessageStatus(const std::string& accountID,
+                          const uint64_t& id) -> decltype(libjami::getMessageStatus(accountID, id))
     {
         return libjami::getMessageStatus(accountID, id);
     }
@@ -236,9 +221,7 @@ public:
         return libjami::cancelMessage(accountID, id);
     }
 
-    void setIsComposing(const std::string& accountID,
-                        const std::string& conversationUri,
-                        const bool& isWriting)
+    void setIsComposing(const std::string& accountID, const std::string& conversationUri, const bool& isWriting)
     {
         libjami::setIsComposing(accountID, conversationUri, isWriting);
     }
@@ -258,14 +241,13 @@ public:
         return libjami::getSupportedTlsMethod();
     }
 
-    auto getSupportedCiphers(const std::string& accountID)
-        -> decltype(libjami::getSupportedCiphers(accountID))
+    auto getSupportedCiphers(const std::string& accountID) -> decltype(libjami::getSupportedCiphers(accountID))
     {
         return libjami::getSupportedCiphers(accountID);
     }
 
-    auto getCodecDetails(const std::string& accountID, const unsigned& codecId)
-        -> decltype(libjami::getCodecDetails(accountID, codecId))
+    auto getCodecDetails(const std::string& accountID,
+                         const unsigned& codecId) -> decltype(libjami::getCodecDetails(accountID, codecId))
     {
         return libjami::getCodecDetails(accountID, codecId);
     }
@@ -278,8 +260,7 @@ public:
         return libjami::setCodecDetails(accountID, codecId, details);
     }
 
-    auto getActiveCodecList(const std::string& accountID)
-        -> decltype(libjami::getActiveCodecList(accountID))
+    auto getActiveCodecList(const std::string& accountID) -> decltype(libjami::getActiveCodecList(accountID))
     {
         return libjami::getActiveCodecList(accountID);
     }
@@ -289,10 +270,7 @@ public:
         libjami::setActiveCodecList(accountID, list);
     }
 
-    auto getAudioPluginList() -> decltype(libjami::getAudioPluginList())
-    {
-        return libjami::getAudioPluginList();
-    }
+    auto getAudioPluginList() -> decltype(libjami::getAudioPluginList()) { return libjami::getAudioPluginList(); }
 
     void setAudioPlugin(const std::string& audioPlugin) { libjami::setAudioPlugin(audioPlugin); }
 
@@ -317,14 +295,12 @@ public:
         return libjami::getCurrentAudioDevicesIndex();
     }
 
-    auto getAudioInputDeviceIndex(const std::string& name)
-        -> decltype(libjami::getAudioInputDeviceIndex(name))
+    auto getAudioInputDeviceIndex(const std::string& name) -> decltype(libjami::getAudioInputDeviceIndex(name))
     {
         return libjami::getAudioInputDeviceIndex(name);
     }
 
-    auto getAudioOutputDeviceIndex(const std::string& name)
-        -> decltype(libjami::getAudioOutputDeviceIndex(name))
+    auto getAudioOutputDeviceIndex(const std::string& name) -> decltype(libjami::getAudioOutputDeviceIndex(name))
     {
         return libjami::getAudioOutputDeviceIndex(name);
     }
@@ -346,20 +322,14 @@ public:
         return libjami::getEchoCancellationState();
     }
 
-    void setEchoCancellationState(const std::string& state)
-    {
-        libjami::setEchoCancellationState(state);
-    }
+    void setEchoCancellationState(const std::string& state) { libjami::setEchoCancellationState(state); }
 
     auto getVoiceActivityDetectionState() -> decltype(libjami::getVoiceActivityDetectionState())
     {
         return libjami::getVoiceActivityDetectionState();
     }
 
-    void setVoiceActivityDetectionState(const bool& state)
-    {
-        libjami::setVoiceActivityDetectionState(state);
-    }
+    void setVoiceActivityDetectionState(const bool& state) { libjami::setVoiceActivityDetectionState(state); }
 
     auto isAgcEnabled() -> decltype(libjami::isAgcEnabled()) { return libjami::isAgcEnabled(); }
 
@@ -369,31 +339,19 @@ public:
 
     auto isDtmfMuted() -> decltype(libjami::isDtmfMuted()) { return libjami::isDtmfMuted(); }
 
-    auto isCaptureMuted() -> decltype(libjami::isCaptureMuted())
-    {
-        return libjami::isCaptureMuted();
-    }
+    auto isCaptureMuted() -> decltype(libjami::isCaptureMuted()) { return libjami::isCaptureMuted(); }
 
     void muteCapture(const bool& mute) { libjami::muteCapture(mute); }
 
-    auto isPlaybackMuted() -> decltype(libjami::isPlaybackMuted())
-    {
-        return libjami::isPlaybackMuted();
-    }
+    auto isPlaybackMuted() -> decltype(libjami::isPlaybackMuted()) { return libjami::isPlaybackMuted(); }
 
     void mutePlayback(const bool& mute) { libjami::mutePlayback(mute); }
 
-    auto isRingtoneMuted() -> decltype(libjami::isRingtoneMuted())
-    {
-        return libjami::isRingtoneMuted();
-    }
+    auto isRingtoneMuted() -> decltype(libjami::isRingtoneMuted()) { return libjami::isRingtoneMuted(); }
 
     void muteRingtone(const bool& mute) { libjami::muteRingtone(mute); }
 
-    auto getAudioManager() -> decltype(libjami::getAudioManager())
-    {
-        return libjami::getAudioManager();
-    }
+    auto getAudioManager() -> decltype(libjami::getAudioManager()) { return libjami::getAudioManager(); }
 
     auto setAudioManager(const std::string& api) -> decltype(libjami::setAudioManager(api))
     {
@@ -409,45 +367,31 @@ public:
 
     void setRecordPath(const std::string& recPath) { libjami::setRecordPath(recPath); }
 
-    auto getIsAlwaysRecording() -> decltype(libjami::getIsAlwaysRecording())
-    {
-        return libjami::getIsAlwaysRecording();
-    }
+    auto getIsAlwaysRecording() -> decltype(libjami::getIsAlwaysRecording()) { return libjami::getIsAlwaysRecording(); }
 
     void setIsAlwaysRecording(const bool& rec) { libjami::setIsAlwaysRecording(rec); }
 
-    auto getRecordPreview() -> decltype(libjami::getRecordPreview())
-    {
-        return libjami::getRecordPreview();
-    }
+    auto getRecordPreview() -> decltype(libjami::getRecordPreview()) { return libjami::getRecordPreview(); }
 
     void setRecordPreview(const bool& rec) { libjami::setRecordPreview(rec); }
 
-    auto getRecordQuality() -> decltype(libjami::getRecordQuality())
-    {
-        return libjami::getRecordQuality();
-    }
+    auto getRecordQuality() -> decltype(libjami::getRecordQuality()) { return libjami::getRecordQuality(); }
 
     void setRecordQuality(const int32_t& quality) { libjami::setRecordQuality(quality); }
 
     void setHistoryLimit(const int32_t& days) { libjami::setHistoryLimit(days); }
 
-    auto getHistoryLimit() -> decltype(libjami::getHistoryLimit())
-    {
-        return libjami::getHistoryLimit();
-    }
+    auto getHistoryLimit() -> decltype(libjami::getHistoryLimit()) { return libjami::getHistoryLimit(); }
 
     void setRingingTimeout(const int32_t& timeout) { libjami::setRingingTimeout(timeout); }
 
-    auto getRingingTimeout() -> decltype(libjami::getRingingTimeout())
-    {
-        return libjami::getRingingTimeout();
-    }
+    auto getRingingTimeout() -> decltype(libjami::getRingingTimeout()) { return libjami::getRingingTimeout(); }
 
     void setAccountsOrder(const std::string& order) { libjami::setAccountsOrder(order); }
 
-    auto validateCertificate(const std::string& accountId, const std::string& certificate)
-        -> decltype(libjami::validateCertificate(accountId, certificate))
+    auto validateCertificate(const std::string& accountId,
+                             const std::string& certificate) -> decltype(libjami::validateCertificate(accountId,
+                                                                                                      certificate))
     {
         return libjami::validateCertificate(accountId, certificate);
     }
@@ -457,18 +401,14 @@ public:
                                  const std::string& privateKey,
                                  const std::string& privateKeyPass,
                                  const std::string& caList)
-        -> decltype(libjami::validateCertificatePath(
-            accountId, certificate, privateKey, privateKeyPass, caList))
+        -> decltype(libjami::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
     {
-        return libjami::validateCertificatePath(accountId,
-                                                certificate,
-                                                privateKey,
-                                                privateKeyPass,
-                                                caList);
+        return libjami::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
     }
 
-    auto getCertificateDetails(const std::string& accountId, const std::string& certificate)
-        -> decltype(libjami::getCertificateDetails(accountId, certificate))
+    auto getCertificateDetails(const std::string& accountId,
+                               const std::string& certificate) -> decltype(libjami::getCertificateDetails(accountId,
+                                                                                                          certificate))
     {
         return libjami::getCertificateDetails(accountId, certificate);
     }
@@ -477,25 +417,19 @@ public:
                                    const std::string& certificate,
                                    const std::string& privateKey,
                                    const std::string& privateKeyPass)
-        -> decltype(libjami::getCertificateDetailsPath(
-            accountId, certificate, privateKey, privateKeyPass))
+        -> decltype(libjami::getCertificateDetailsPath(accountId, certificate, privateKey, privateKeyPass))
     {
-        return libjami::getCertificateDetailsPath(accountId,
-                                                  certificate,
-                                                  privateKey,
-                                                  privateKeyPass);
+        return libjami::getCertificateDetailsPath(accountId, certificate, privateKey, privateKeyPass);
     }
 
-    auto getPinnedCertificates(const std::string& accountId)
-        -> decltype(libjami::getPinnedCertificates(accountId))
+    auto getPinnedCertificates(const std::string& accountId) -> decltype(libjami::getPinnedCertificates(accountId))
     {
         return libjami::getPinnedCertificates(accountId);
     }
 
     auto pinCertificate(const std::string& accountId,
                         const std::vector<uint8_t>& certificate,
-                        const bool& local)
-        -> decltype(libjami::pinCertificate(accountId, certificate, local))
+                        const bool& local) -> decltype(libjami::pinCertificate(accountId, certificate, local))
     {
         return libjami::pinCertificate(accountId, certificate, local);
     }
@@ -505,87 +439,81 @@ public:
         libjami::pinCertificatePath(accountId, certPath);
     }
 
-    auto unpinCertificate(const std::string& accountId, const std::string& certId)
-        -> decltype(libjami::unpinCertificate(accountId, certId))
+    auto unpinCertificate(const std::string& accountId,
+                          const std::string& certId) -> decltype(libjami::unpinCertificate(accountId, certId))
     {
         return libjami::unpinCertificate(accountId, certId);
     }
 
-    auto unpinCertificatePath(const std::string& accountId, const std::string& p)
-        -> decltype(libjami::unpinCertificatePath(accountId, p))
+    auto unpinCertificatePath(const std::string& accountId,
+                              const std::string& p) -> decltype(libjami::unpinCertificatePath(accountId, p))
     {
         return libjami::unpinCertificatePath(accountId, p);
     }
 
-    auto pinRemoteCertificate(const std::string& accountId, const std::string& certId)
-        -> decltype(libjami::pinRemoteCertificate(accountId, certId))
+    auto pinRemoteCertificate(const std::string& accountId,
+                              const std::string& certId) -> decltype(libjami::pinRemoteCertificate(accountId, certId))
     {
         return libjami::pinRemoteCertificate(accountId, certId);
     }
 
-    auto setCertificateStatus(const std::string& accountId,
-                              const std::string& certId,
-                              const std::string& status)
+    auto setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& status)
         -> decltype(libjami::setCertificateStatus(accountId, certId, status))
     {
         return libjami::setCertificateStatus(accountId, certId, status);
     }
 
-    auto getCertificatesByStatus(const std::string& accountId, const std::string& status)
-        -> decltype(libjami::getCertificatesByStatus(accountId, status))
+    auto getCertificatesByStatus(const std::string& accountId,
+                                 const std::string& status) -> decltype(libjami::getCertificatesByStatus(accountId,
+                                                                                                         status))
     {
         return libjami::getCertificatesByStatus(accountId, status);
     }
 
-    auto getTrustRequests(const std::string& accountId)
-        -> decltype(libjami::getTrustRequests(accountId))
+    auto getTrustRequests(const std::string& accountId) -> decltype(libjami::getTrustRequests(accountId))
     {
         return libjami::getTrustRequests(accountId);
     }
 
-    auto acceptTrustRequest(const std::string& accountId, const std::string& from)
-        -> decltype(libjami::acceptTrustRequest(accountId, from))
+    auto acceptTrustRequest(const std::string& accountId,
+                            const std::string& from) -> decltype(libjami::acceptTrustRequest(accountId, from))
     {
         return libjami::acceptTrustRequest(accountId, from);
     }
 
-    auto discardTrustRequest(const std::string& accountId, const std::string& from)
-        -> decltype(libjami::discardTrustRequest(accountId, from))
+    auto discardTrustRequest(const std::string& accountId,
+                             const std::string& from) -> decltype(libjami::discardTrustRequest(accountId, from))
     {
         return libjami::discardTrustRequest(accountId, from);
     }
 
-    void sendTrustRequest(const std::string& accountId,
-                          const std::string& to,
-                          const std::vector<uint8_t>& payload)
+    void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
     {
         libjami::sendTrustRequest(accountId, to, payload);
     }
 
-    void addContact(const std::string& accountId, const std::string& uri)
-    {
-        libjami::addContact(accountId, uri);
-    }
+    void addContact(const std::string& accountId, const std::string& uri) { libjami::addContact(accountId, uri); }
 
     void removeContact(const std::string& accountId, const std::string& uri, const bool& ban)
     {
         libjami::removeContact(accountId, uri, ban);
     }
 
-    auto getContactDetails(const std::string& accountId, const std::string& uri)
-        -> decltype(libjami::getContactDetails(accountId, uri))
+    auto getContactDetails(const std::string& accountId,
+                           const std::string& uri) -> decltype(libjami::getContactDetails(accountId, uri))
     {
         return libjami::getContactDetails(accountId, uri);
     }
 
-    auto getConnectionList(const std::string& accountId, const std::string& conversationId)
-        -> decltype(libjami::getConnectionList(accountId, conversationId))
+    auto getConnectionList(const std::string& accountId,
+                           const std::string& conversationId) -> decltype(libjami::getConnectionList(accountId,
+                                                                                                     conversationId))
     {
         return libjami::getConnectionList(accountId, conversationId);
     }
 
-    auto getChannelList(const std::string& accountId, const std::string& connectionId)
-        -> decltype(libjami::getChannelList(accountId, connectionId))
+    auto getChannelList(const std::string& accountId,
+                        const std::string& connectionId) -> decltype(libjami::getChannelList(accountId, connectionId))
     {
         return libjami::getChannelList(accountId, connectionId);
     }
@@ -595,38 +523,29 @@ public:
         return libjami::getContacts(accountId);
     }
 
-    auto getCredentials(const std::string& accountID)
-        -> decltype(libjami::getCredentials(accountID))
+    auto getCredentials(const std::string& accountID) -> decltype(libjami::getCredentials(accountID))
     {
         return libjami::getCredentials(accountID);
     }
 
-    void setCredentials(const std::string& accountID,
-                        const std::vector<std::map<std::string, std::string>>& details)
+    void setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details)
     {
         libjami::setCredentials(accountID, details);
     }
 
-    auto getAddrFromInterfaceName(const std::string& interface)
-        -> decltype(libjami::getAddrFromInterfaceName(interface))
+    auto getAddrFromInterfaceName(const std::string& interface) -> decltype(libjami::getAddrFromInterfaceName(interface))
     {
         return libjami::getAddrFromInterfaceName(interface);
     }
 
-    auto getAllIpInterface() -> decltype(libjami::getAllIpInterface())
-    {
-        return libjami::getAllIpInterface();
-    }
+    auto getAllIpInterface() -> decltype(libjami::getAllIpInterface()) { return libjami::getAllIpInterface(); }
 
     auto getAllIpInterfaceByName() -> decltype(libjami::getAllIpInterfaceByName())
     {
         return libjami::getAllIpInterfaceByName();
     }
 
-    void setVolume(const std::string& device, const double& value)
-    {
-        libjami::setVolume(device, value);
-    }
+    void setVolume(const std::string& device, const double& value) { libjami::setVolume(device, value); }
 
     auto getVolume(const std::string& device) -> decltype(libjami::getVolume(device))
     {
@@ -644,8 +563,9 @@ public:
         libjami::sendFile(accountId, conversationId, path, displayName, replyTo);
     }
 
-    std::tuple<uint32_t, std::string, int64_t, int64_t> fileTransferInfo(
-        const std::string& accountId, const std::string& to, const std::string& fileId)
+    std::tuple<uint32_t, std::string, int64_t, int64_t> fileTransferInfo(const std::string& accountId,
+                                                                         const std::string& to,
+                                                                         const std::string& fileId)
     {
         uint32_t error;
         std::string path;
@@ -671,10 +591,7 @@ public:
         return uint32_t(libjami::cancelDataTransfer(accountId, conversationId, fileId));
     }
 
-    std::string startConversation(const std::string& accountId)
-    {
-        return libjami::startConversation(accountId);
-    }
+    std::string startConversation(const std::string& accountId) { return libjami::startConversation(accountId); }
 
     void acceptConversationRequest(const std::string& accountId, const std::string& conversationId)
     {
@@ -702,8 +619,7 @@ public:
         return libjami::getActiveCalls(accountId, conversationId);
     }
 
-    std::vector<std::map<std::string, std::string>> getConversationRequests(
-        const std::string& accountId)
+    std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId)
     {
         return libjami::getConversationRequests(accountId);
     }
@@ -715,8 +631,7 @@ public:
         libjami::updateConversationInfos(accountId, conversationId, infos);
     }
 
-    std::map<std::string, std::string> conversationInfos(const std::string& accountId,
-                                                         const std::string& conversationId)
+    std::map<std::string, std::string> conversationInfos(const std::string& accountId, const std::string& conversationId)
     {
         return libjami::conversationInfos(accountId, conversationId);
     }
@@ -748,8 +663,8 @@ public:
         libjami::removeConversationMember(accountId, conversationId, contactUri);
     }
 
-    std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& accountId, const std::string& conversationId)
+    std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
+                                                                           const std::string& conversationId)
     {
         return libjami::getConversationMembers(accountId, conversationId);
     }
@@ -820,34 +735,20 @@ public:
                                 const uint32_t& maxResult,
                                 const int32_t& flag)
     {
-        return libjami::searchConversation(accountId,
-                                           conversationId,
-                                           author,
-                                           lastId,
-                                           regexSearch,
-                                           type,
-                                           after,
-                                           before,
-                                           maxResult,
-                                           flag);
+        return libjami::searchConversation(
+            accountId, conversationId, author, lastId, regexSearch, type, after, before, maxResult, flag);
     }
 
     bool isAudioMeterActive(const std::string& id) { return libjami::isAudioMeterActive(id); }
 
-    void setAudioMeterState(const std::string& id, const bool& state)
-    {
-        return libjami::setAudioMeterState(id, state);
-    }
+    void setAudioMeterState(const std::string& id, const bool& state) { return libjami::setAudioMeterState(id, state); }
 
-    void setDefaultModerator(const std::string& accountID,
-                             const std::string& peerURI,
-                             const bool& state)
+    void setDefaultModerator(const std::string& accountID, const std::string& peerURI, const bool& state)
     {
         libjami::setDefaultModerator(accountID, peerURI, state);
     }
 
-    auto getDefaultModerators(const std::string& accountID)
-        -> decltype(libjami::getDefaultModerators(accountID))
+    auto getDefaultModerators(const std::string& accountID) -> decltype(libjami::getDefaultModerators(accountID))
     {
         return libjami::getDefaultModerators(accountID);
     }
@@ -857,20 +758,14 @@ public:
         return libjami::enableLocalModerators(accountID, isModEnabled);
     }
 
-    bool isLocalModeratorsEnabled(const std::string& accountID)
-    {
-        return libjami::isLocalModeratorsEnabled(accountID);
-    }
+    bool isLocalModeratorsEnabled(const std::string& accountID) { return libjami::isLocalModeratorsEnabled(accountID); }
 
     void setAllModerators(const std::string& accountID, const bool& allModerators)
     {
         return libjami::setAllModerators(accountID, allModerators);
     }
 
-    bool isAllModerators(const std::string& accountID)
-    {
-        return libjami::isAllModerators(accountID);
-    }
+    bool isAllModerators(const std::string& accountID) { return libjami::isAllModerators(accountID); }
 
 private:
     void registerSignalHandlers()
@@ -894,33 +789,24 @@ private:
                 std::bind(&DBusConfigurationManager::emitAccountDetailsChanged, this, _1, _2)),
             exportable_serialized_callback<ConfigurationSignal::StunStatusFailed>(
                 std::bind(&DBusConfigurationManager::emitStunStatusFailure, this, _1)),
-            exportable_serialized_callback<ConfigurationSignal::RegistrationStateChanged>(std::bind(
-                &DBusConfigurationManager::emitRegistrationStateChanged, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::RegistrationStateChanged>(
+                std::bind(&DBusConfigurationManager::emitRegistrationStateChanged, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::VolatileDetailsChanged>(
-                std::bind(&DBusConfigurationManager::emitVolatileAccountDetailsChanged,
-                          this,
-                          _1,
-                          _2)),
+                std::bind(&DBusConfigurationManager::emitVolatileAccountDetailsChanged, this, _1, _2)),
             exportable_serialized_callback<ConfigurationSignal::Error>(
                 std::bind(&DBusConfigurationManager::emitErrorAlert, this, _1)),
-            exportable_serialized_callback<ConfigurationSignal::IncomingAccountMessage>(std::bind(
-                &DBusConfigurationManager::emitIncomingAccountMessage, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::IncomingAccountMessage>(
+                std::bind(&DBusConfigurationManager::emitIncomingAccountMessage, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConfigurationSignal::AccountMessageStatusChanged>(
-                std::bind(&DBusConfigurationManager::emitAccountMessageStatusChanged,
-                          this,
-                          _1,
-                          _2,
-                          _3,
-                          _4,
-                          _5)),
+                std::bind(&DBusConfigurationManager::emitAccountMessageStatusChanged, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::ProfileReceived>(
                 std::bind(&DBusConfigurationManager::emitProfileReceived, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::ActiveCallsChanged>(
                 std::bind(&DBusConfigurationManager::emitActiveCallsChanged, this, _1, _2, _3)),
-            exportable_serialized_callback<ConfigurationSignal::ComposingStatusChanged>(std::bind(
-                &DBusConfigurationManager::emitComposingStatusChanged, this, _1, _2, _3, _4)),
-            exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(std::bind(
-                &DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
+            exportable_serialized_callback<ConfigurationSignal::ComposingStatusChanged>(
+                std::bind(&DBusConfigurationManager::emitComposingStatusChanged, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConfigurationSignal::IncomingTrustRequest>(
+                std::bind(&DBusConfigurationManager::emitIncomingTrustRequest, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::ContactAdded>(
                 std::bind(&DBusConfigurationManager::emitContactAdded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::ContactRemoved>(
@@ -935,8 +821,8 @@ private:
                 std::bind(&DBusConfigurationManager::emitNameRegistrationEnded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::UserSearchEnded>(
                 std::bind(&DBusConfigurationManager::emitUserSearchEnded, this, _1, _2, _3, _4)),
-            exportable_serialized_callback<ConfigurationSignal::RegisteredNameFound>(std::bind(
-                &DBusConfigurationManager::emitRegisteredNameFound, this, _1, _2, _3, _4, _5)),
+            exportable_serialized_callback<ConfigurationSignal::RegisteredNameFound>(
+                std::bind(&DBusConfigurationManager::emitRegisteredNameFound, this, _1, _2, _3, _4, _5)),
             exportable_serialized_callback<ConfigurationSignal::DeviceRevocationEnded>(
                 std::bind(&DBusConfigurationManager::emitDeviceRevocationEnded, this, _1, _2, _3)),
             exportable_serialized_callback<ConfigurationSignal::AccountProfileReceived>(
@@ -993,10 +879,7 @@ private:
                                               message.status};
                         msgList.push_back(msg);
                     }
-                    DBusConfigurationManager::emitSwarmLoaded(id,
-                                                              account_id,
-                                                              conversation_id,
-                                                              msgList);
+                    DBusConfigurationManager::emitSwarmLoaded(id, account_id, conversation_id, msgList);
                 }),
             exportable_serialized_callback<ConversationSignal::MessagesFound>(
                 std::bind(&DBusConfigurationManager::emitMessagesFound, this, _1, _2, _3, _4)),
@@ -1013,9 +896,7 @@ private:
                                           message.reactions,
                                           message.editions,
                                           message.status};
-                    DBusConfigurationManager::emitSwarmMessageReceived(account_id,
-                                                                       conversation_id,
-                                                                       msg);
+                    DBusConfigurationManager::emitSwarmMessageReceived(account_id, conversation_id, msg);
                 }),
             exportable_serialized_callback<ConversationSignal::SwarmMessageUpdated>(
                 [this](const std::string& account_id,
@@ -1028,42 +909,28 @@ private:
                                           message.reactions,
                                           message.editions,
                                           message.status};
-                    DBusConfigurationManager::emitSwarmMessageUpdated(account_id,
-                                                                      conversation_id,
-                                                                      msg);
+                    DBusConfigurationManager::emitSwarmMessageUpdated(account_id, conversation_id, msg);
                 }),
             exportable_serialized_callback<ConversationSignal::ReactionAdded>(
                 std::bind(&DBusConfigurationManager::emitReactionAdded, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::ReactionRemoved>(
                 std::bind(&DBusConfigurationManager::emitReactionRemoved, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::ConversationProfileUpdated>(
-                std::bind(&DBusConfigurationManager::emitConversationProfileUpdated,
-                          this,
-                          _1,
-                          _2,
-                          _3)),
+                std::bind(&DBusConfigurationManager::emitConversationProfileUpdated, this, _1, _2, _3)),
             exportable_serialized_callback<ConversationSignal::ConversationRequestReceived>(
-                std::bind(&DBusConfigurationManager::emitConversationRequestReceived,
-                          this,
-                          _1,
-                          _2,
-                          _3)),
+                std::bind(&DBusConfigurationManager::emitConversationRequestReceived, this, _1, _2, _3)),
             exportable_serialized_callback<ConversationSignal::ConversationRequestDeclined>(
                 std::bind(&DBusConfigurationManager::emitConversationRequestDeclined, this, _1, _2)),
             exportable_serialized_callback<ConversationSignal::ConversationReady>(
                 std::bind(&DBusConfigurationManager::emitConversationReady, this, _1, _2)),
             exportable_serialized_callback<ConversationSignal::ConversationRemoved>(
                 std::bind(&DBusConfigurationManager::emitConversationRemoved, this, _1, _2)),
-            exportable_serialized_callback<ConversationSignal::ConversationMemberEvent>(std::bind(
-                &DBusConfigurationManager::emitConversationMemberEvent, this, _1, _2, _3, _4)),
+            exportable_serialized_callback<ConversationSignal::ConversationMemberEvent>(
+                std::bind(&DBusConfigurationManager::emitConversationMemberEvent, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::OnConversationError>(
                 std::bind(&DBusConfigurationManager::emitOnConversationError, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::ConversationPreferencesUpdated>(
-                std::bind(&DBusConfigurationManager::emitConversationPreferencesUpdated,
-                          this,
-                          _1,
-                          _2,
-                          _3)),
+                std::bind(&DBusConfigurationManager::emitConversationPreferencesUpdated, this, _1, _2, _3)),
         };
 
         libjami::registerSignalHandlers(configEvHandlers);

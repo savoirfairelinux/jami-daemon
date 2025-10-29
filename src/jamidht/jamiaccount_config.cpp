@@ -104,14 +104,10 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseValueOptional(node, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    parseValueOptional(node,
-                       libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS,
-                       dhtPublicInCalls);
+    parseValueOptional(node, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
 
     parsePathOptional(node, libjami::Account::ConfProperties::ARCHIVE_PATH, archivePath, path);
-    parseValueOptional(node,
-                       libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
-                       archiveHasPassword);
+    parseValueOptional(node, libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword);
 
     try {
         parseValueOptional(node, Conf::RING_ACCOUNT_RECEIPT, receipt);
@@ -122,9 +118,7 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
     }
 
     parseValueOptional(node, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery);
-    parseValueOptional(node,
-                       libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-                       accountPeerDiscovery);
+    parseValueOptional(node, libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery);
     parseValueOptional(node, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
     parseValueOptional(node, libjami::Account::ConfProperties::Nameserver::URI, nameServer);
     parseValueOptional(node, libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
@@ -137,39 +131,28 @@ JamiAccountConfig::toMap() const
     std::map<std::string, std::string> a = SipAccountBaseConfig::toMap();
     a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtPort));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, allowPublicIncoming ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::DHT_PEER_DISCOVERY,
-              dhtPeerDiscovery ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-              accountPeerDiscovery ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::ACCOUNT_PUBLISH,
-              accountPublish ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     a.emplace(libjami::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
     if (not archivePath.empty() or not managerUri.empty())
-        a.emplace(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD,
-                  archiveHasPassword ? TRUE_STR : FALSE_STR);
+        a.emplace(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE, fileutils::getFullPath(path, tlsCaListFile).string());
-    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,
-              fileutils::getFullPath(path, tlsCertificateFile).string());
-    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,
-              fileutils::getFullPath(path, tlsPrivateKeyFile).string());
+    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE, fileutils::getFullPath(path, tlsCertificateFile).string());
+    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE, fileutils::getFullPath(path, tlsPrivateKeyFile).string());
     a.emplace(Conf::CONFIG_TLS_PASSWORD, tlsPassword);
-    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
-              allowPeersFromHistory ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
-              allowPeersFromContact ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
-              allowPeersFromTrusted ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled ? TRUE_STR : FALSE_STR);
-    a.emplace(libjami::Account::ConfProperties::PROXY_LIST_ENABLED,
-              proxyListEnabled ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled ? TRUE_STR : FALSE_STR);
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServer);
     a.emplace(libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
-    a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS,
-              dhtPublicInCalls ? TRUE_STR : FALSE_STR);
+    a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls ? TRUE_STR : FALSE_STR);
 #ifdef ENABLE_NAMESERVER
     a.emplace(libjami::Account::ConfProperties::Nameserver::URI, nameServer);
 #endif
@@ -192,31 +175,19 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, allowPublicIncoming);
     parseBool(details, libjami::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery);
-    parseBool(details,
-              libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY,
-              accountPeerDiscovery);
+    parseBool(details, libjami::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery);
     parseBool(details, libjami::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish);
-    parseBool(details,
-              libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY,
-              allowPeersFromHistory);
-    parseBool(details,
-              libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT,
-              allowPeersFromContact);
-    parseBool(details,
-              libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED,
-              allowPeersFromTrusted);
+    parseBool(details, libjami::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory);
+    parseBool(details, libjami::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact);
+    parseBool(details, libjami::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted);
 
     parseString(details, libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     parseString(details, libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
     parseBool(details, libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls);
     // parseString(details, libjami::Account::ConfProperties::USERNAME, username);
 
-    parseString(details,
-                libjami::Account::ConfProperties::ARCHIVE_PASSWORD,
-                credentials.archive_password);
-    parseString(details,
-                libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME,
-                credentials.archive_password_scheme);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD, credentials.archive_password);
+    parseString(details, libjami::Account::ConfProperties::ARCHIVE_PASSWORD_SCHEME, credentials.archive_password_scheme);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_PATH, credentials.archive_path);
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_URL, archive_url);

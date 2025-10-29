@@ -51,7 +51,7 @@ using ssize_t = SSIZE_T;
  *
  * @param Char the character
  */
-#define UNICODE_VALID(Char) ((Char) < 0x110000 && (((Char) &0xFFFFF800) != 0xD800))
+#define UNICODE_VALID(Char) ((Char) < 0x110000 && (((Char) & 0xFFFFF800) != 0xD800))
 
 #define CONTINUATION_CHAR \
     if ((*(unsigned char*) p & 0xc0) != 0x80) /* 10xxxxxx */ \

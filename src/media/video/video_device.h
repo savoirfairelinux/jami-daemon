@@ -46,8 +46,7 @@ class VideoDeviceImpl;
 class VideoDevice
 {
 public:
-    VideoDevice(const std::string& path,
-                const std::vector<std::map<std::string, std::string>>& devInfo);
+    VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo);
     ~VideoDevice();
 
     /*
@@ -116,8 +115,7 @@ public:
             auto max_rate = *std::max_element(rates.begin(), rates.end());
             if (max_rate < 10)
                 continue;
-            if (s.second > max_size.second
-                || (s.second == max_size.second && s.first > max_size.first)) {
+            if (s.second > max_size.second || (s.second == max_size.second && s.first > max_size.first)) {
                 max_size = s;
                 max_size_rate = max_rate;
             }
@@ -125,9 +123,7 @@ public:
         if (max_size.second > 0) {
             settings.video_size = fmt::format("{}x{}", max_size.first, max_size.second);
             settings.framerate = jami::to_string(max_size_rate.real());
-            JAMI_WARN("Default video settings: %s, %s FPS",
-                      settings.video_size.c_str(),
-                      settings.framerate.c_str());
+            JAMI_WARN("Default video settings: %s, %s FPS", settings.video_size.c_str(), settings.framerate.c_str());
         }
 
         return settings;
@@ -192,14 +188,9 @@ private:
         return {0, 0};
     }
 
-    std::string sizeToString(unsigned w, unsigned h) const
-    {
-        return fmt::format("{}x{}", w, h);
-    }
+    std::string sizeToString(unsigned w, unsigned h) const { return fmt::format("{}x{}", w, h); }
 
-    FrameRate rateFromString(const std::string& channel,
-                             VideoSize size,
-                             const std::string& rate) const
+    FrameRate rateFromString(const std::string& channel, VideoSize size, const std::string& rate) const
     {
         FrameRate closest {0};
         double rate_val = 0;

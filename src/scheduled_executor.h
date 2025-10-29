@@ -40,42 +40,38 @@ extern std::atomic<uint64_t> task_cookie;
 /**
  * A runnable function
  */
-struct Job {
+struct Job
+{
     Job(std::function<void()>&& f, const char* file, uint32_t l)
         : fn(std::move(f))
         , filename(file)
-        , linum(l) { }
+        , linum(l)
+    {}
 
     std::function<void()> fn;
     const char* filename;
     uint32_t linum;
 
-    inline operator bool() const {
-        return static_cast<bool>(fn);
-    }
+    inline operator bool() const { return static_cast<bool>(fn); }
 
-    void reset() {
-        fn = {};
-    }
+    void reset() { fn = {}; }
 };
 
-struct RepeatedJob {
+struct RepeatedJob
+{
     RepeatedJob(std::function<bool()>&& f, const char* file, uint32_t l)
         : fn(std::move(f))
         , filename(file)
-        , linum(l) { }
+        , linum(l)
+    {}
 
     std::function<bool()> fn;
     const char* filename;
     uint32_t linum;
 
-    inline operator bool() {
-        return static_cast<bool>(fn);
-    }
+    inline operator bool() { return static_cast<bool>(fn); }
 
-    void reset() {
-        fn = {};
-    }
+    void reset() { fn = {}; }
 };
 
 /**
@@ -86,20 +82,17 @@ class Task
 public:
     Task(std::function<void()>&& fn, const char* filename, uint32_t linum)
         : job_(std::move(fn), filename, linum)
-        , cookie_(task_cookie++) { }
+        , cookie_(task_cookie++)
+    {}
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
     void run(const char* executor_name)
     {
         if (job_.fn) {
-            jami_tracepoint(scheduled_executor_task_begin,
-                            executor_name,
-                            job_.filename, job_.linum,
-                            cookie_);
+            jami_tracepoint(scheduled_executor_task_begin, executor_name, job_.filename, job_.linum, cookie_);
             job_.fn();
-            jami_tracepoint(scheduled_executor_task_end,
-                            cookie_);
+            jami_tracepoint(scheduled_executor_task_end, cookie_);
         }
     }
 #pragma GCC pop
@@ -120,10 +113,10 @@ private:
 class RepeatedTask
 {
 public:
-    RepeatedTask(std::function<bool()>&& fn, const char* filename,
-                 uint32_t linum)
+    RepeatedTask(std::function<bool()>&& fn, const char* filename, uint32_t linum)
         : job_(std::move(fn), filename, linum)
-        , cookie_(task_cookie++) { }
+        , cookie_(task_cookie++)
+    {}
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -133,13 +126,9 @@ public:
         std::lock_guard l(lock_);
 
         if (not cancel_.load() and job_.fn) {
-            jami_tracepoint(scheduled_executor_task_begin,
-                            executor_name,
-                            job_.filename, job_.linum,
-                            cookie_);
+            jami_tracepoint(scheduled_executor_task_begin, executor_name, job_.filename, job_.linum, cookie_);
             cont = job_.fn();
-            jami_tracepoint(scheduled_executor_task_end,
-                            cookie_);
+            jami_tracepoint(scheduled_executor_task_end, cookie_);
 
         } else {
             cont = false;
@@ -188,31 +177,31 @@ public:
     /**
      * Schedule job to be run ASAP
      */
-    void run(std::function<void()>&& job,
-             const char* filename=CURRENT_FILENAME(),
-             uint32_t linum=CURRENT_LINE());
+    void run(std::function<void()>&& job, const char* filename = CURRENT_FILENAME(), uint32_t linum = CURRENT_LINE());
 
     /**
      * Schedule job to be run at time t
      */
-    std::shared_ptr<Task> schedule(std::function<void()>&& job, time_point t,
-                                   const char* filename=CURRENT_FILENAME(),
-                                   uint32_t linum=CURRENT_LINE());
+    std::shared_ptr<Task> schedule(std::function<void()>&& job,
+                                   time_point t,
+                                   const char* filename = CURRENT_FILENAME(),
+                                   uint32_t linum = CURRENT_LINE());
 
     /**
      * Schedule job to be run after delay dt
      */
-    std::shared_ptr<Task> scheduleIn(std::function<void()>&& job, duration dt,
-                                     const char* filename=CURRENT_FILENAME(),
-                                     uint32_t linum=CURRENT_LINE());
+    std::shared_ptr<Task> scheduleIn(std::function<void()>&& job,
+                                     duration dt,
+                                     const char* filename = CURRENT_FILENAME(),
+                                     uint32_t linum = CURRENT_LINE());
 
     /**
      * Schedule job to be run every dt, starting now.
      */
     std::shared_ptr<RepeatedTask> scheduleAtFixedRate(std::function<bool()>&& job,
                                                       duration dt,
-                                                      const char* filename=CURRENT_FILENAME(),
-                                                      uint32_t linum=CURRENT_LINE());
+                                                      const char* filename = CURRENT_FILENAME(),
+                                                      uint32_t linum = CURRENT_LINE());
 
     /**
      * Stop the scheduler, it is unable to be reversed

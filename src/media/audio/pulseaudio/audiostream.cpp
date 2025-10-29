@@ -43,38 +43,31 @@ AudioStream::AudioStream(pa_context* c,
     , mainloop_(m)
     , audioType_(type)
 {
-    pa_sample_spec sample_spec = {format,
-                                  samplrate,
-                                  infos.channel_map.channels};
+    pa_sample_spec sample_spec = {format, samplrate, infos.channel_map.channels};
 
     JAMI_DEBUG("{}: Creating stream with device {} ({}, {}Hz, {} channels)",
-             desc,
-             infos.name,
-             pa_sample_format_to_string(sample_spec.format),
-             samplrate,
-             infos.channel_map.channels);
+               desc,
+               infos.name,
+               pa_sample_format_to_string(sample_spec.format),
+               samplrate,
+               infos.channel_map.channels);
 
     assert(pa_sample_spec_valid(&sample_spec));
     assert(pa_channel_map_valid(&infos.channel_map));
 
-    std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(),
-                                                                 pa_proplist_free);
+    std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(), pa_proplist_free);
     pa_proplist_sets(pl.get(), PA_PROP_FILTER_WANT, "echo-cancel");
-    pa_proplist_sets(
-        pl.get(), "filter.apply.echo-cancel.parameters", // needs pulseaudio >= 11.0
-        "use_volume_sharing=0"  // share volume with master sink/source
-        " use_master_format=1"  // use format/rate/channels from master sink/source
-        " aec_args=\""
-            "digital_gain_control=1"
-            " analog_gain_control=0"
-            " experimental_agc=1"
-        "\"");
+    pa_proplist_sets(pl.get(),
+                     "filter.apply.echo-cancel.parameters", // needs pulseaudio >= 11.0
+                     "use_volume_sharing=0"                 // share volume with master sink/source
+                     " use_master_format=1"                 // use format/rate/channels from master sink/source
+                     " aec_args=\""
+                     "digital_gain_control=1"
+                     " analog_gain_control=0"
+                     " experimental_agc=1"
+                     "\"");
 
-    audiostream_ = pa_stream_new_with_proplist(c,
-                                               desc,
-                                               &sample_spec,
-                                               &infos.channel_map,
-                                               ec ? pl.get() : nullptr);
+    audiostream_ = pa_stream_new_with_proplist(c, desc, &sample_spec, &infos.channel_map, ec ? pl.get() : nullptr);
     if (!audiostream_) {
         JAMI_ERR("%s: pa_stream_new() failed : %s", desc, pa_strerror(pa_context_errno(c)));
         throw std::runtime_error("Unable to create stream\n");
@@ -92,9 +85,7 @@ AudioStream::AudioStream(pa_context* c,
         [](pa_stream* s, void* user_data) { static_cast<AudioStream*>(user_data)->stateChanged(s); },
         this);
     pa_stream_set_moved_callback(
-        audiostream_,
-        [](pa_stream* s, void* user_data) { static_cast<AudioStream*>(user_data)->moved(s); },
-        this);
+        audiostream_, [](pa_stream* s, void* user_data) { static_cast<AudioStream*>(user_data)->moved(s); }, this);
 
     constexpr pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(
         PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_CORKED);
@@ -102,9 +93,7 @@ AudioStream::AudioStream(pa_context* c,
     if (type == AudioDeviceType::PLAYBACK || type == AudioDeviceType::RINGTONE) {
         pa_stream_set_write_callback(
             audiostream_,
-            [](pa_stream* /*s*/, size_t bytes, void* userdata) {
-                static_cast<AudioStream*>(userdata)->onData_(bytes);
-            },
+            [](pa_stream* /*s*/, size_t bytes, void* userdata) { static_cast<AudioStream*>(userdata)->onData_(bytes); },
             this);
 
         pa_stream_connect_playback(audiostream_,
@@ -116,15 +105,10 @@ AudioStream::AudioStream(pa_context* c,
     } else if (type == AudioDeviceType::CAPTURE) {
         pa_stream_set_read_callback(
             audiostream_,
-            [](pa_stream* /*s*/, size_t bytes, void* userdata) {
-                static_cast<AudioStream*>(userdata)->onData_(bytes);
-            },
+            [](pa_stream* /*s*/, size_t bytes, void* userdata) { static_cast<AudioStream*>(userdata)->onData_(bytes); },
             this);
 
-        pa_stream_connect_record(audiostream_,
-                                 infos.name.empty() ? nullptr : infos.name.c_str(),
-                                 &attributes,
-                                 flags);
+        pa_stream_connect_record(audiostream_, infos.name.empty() ? nullptr : infos.name.c_str(), &attributes, flags);
     }
 }
 
@@ -172,8 +156,7 @@ AudioStream::stop()
     JAMI_DBG("Destroying stream with device %s", pa_stream_get_device_name(audiostream_));
     if (pa_stream_get_state(audiostream_) == PA_STREAM_CREATING) {
         disconnectStream(audiostream_);
-        pa_stream_set_state_callback(
-            audiostream_, [](pa_stream* s, void*) { destroyStream(s); }, nullptr);
+        pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void*) { destroyStream(s); }, nullptr);
     } else {
         destroyStream(audiostream_);
     }
@@ -183,16 +166,14 @@ AudioStream::stop()
     for (auto op : ongoing_ops)
         pa_operation_cancel(op);
     // wait for all operations to end
-    cond_.wait(lock, [this]{ return ongoing_ops.empty(); });
+    cond_.wait(lock, [this] { return ongoing_ops.empty(); });
 }
 
 void
 AudioStream::moved(pa_stream* s)
 {
     audiostream_ = s;
-    JAMI_LOG("[audiostream] Stream moved: {:d}, {:s}",
-             pa_stream_get_index(s),
-             pa_stream_get_device_name(s));
+    JAMI_LOG("[audiostream] Stream moved: {:d}, {:s}", pa_stream_get_index(s), pa_stream_get_device_name(s));
 
     if (audioType_ == AudioDeviceType::CAPTURE) {
         // check for echo cancel
@@ -221,16 +202,15 @@ AudioStream::moved(pa_stream* s)
                 // string compare
                 bool usingEchoCancel = std::string_view(i->driver) == "module-echo-cancel.c"sv;
                 JAMI_WARNING("[audiostream] capture stream using pulse echo cancel module? {} ({})",
-                          usingEchoCancel ? "yes" : "no",
-                          i->name);
+                             usingEchoCancel ? "yes" : "no",
+                             i->name);
                 thisPtr->echoCancelCb(usingEchoCancel);
             },
             this);
 
         std::lock_guard lock(mutex_);
-        pa_operation_set_state_callback(op, [](pa_operation *op, void *userdata){
-            static_cast<AudioStream*>(userdata)->opEnded(op);
-        }, this);
+        pa_operation_set_state_callback(
+            op, [](pa_operation* op, void* userdata) { static_cast<AudioStream*>(userdata)->opEnded(op); }, this);
         ongoing_ops.emplace(op);
     }
 }

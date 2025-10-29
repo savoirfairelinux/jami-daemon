@@ -41,56 +41,30 @@ public:
     /**
      * Ask the caller to check if a peer is authorized (moderator of the conference)
      */
-    void onCheckAuthorization(std::function<bool(std::string_view)>&& cb)
-    {
-        checkAuthorization_ = std::move(cb);
-    }
+    void onCheckAuthorization(std::function<bool(std::string_view)>&& cb) { checkAuthorization_ = std::move(cb); }
 
     void onHangupParticipant(std::function<void(const std::string&, const std::string&)>&& cb)
     {
         hangupParticipant_ = std::move(cb);
     }
-    void onRaiseHand(std::function<void(const std::string&, bool)>&& cb)
-    {
-        raiseHand_ = std::move(cb);
-    }
-    void onSetActiveStream(std::function<void(const std::string&, bool)>&& cb)
-    {
-        setActiveStream_ = std::move(cb);
-    }
-    void onMuteStreamAudio(
-        std::function<void(const std::string&, const std::string&, const std::string&, bool)>&& cb)
+    void onRaiseHand(std::function<void(const std::string&, bool)>&& cb) { raiseHand_ = std::move(cb); }
+    void onSetActiveStream(std::function<void(const std::string&, bool)>&& cb) { setActiveStream_ = std::move(cb); }
+    void onMuteStreamAudio(std::function<void(const std::string&, const std::string&, const std::string&, bool)>&& cb)
     {
         muteStreamAudio_ = std::move(cb);
     }
-    void onMuteStreamVideo(
-        std::function<void(const std::string&, const std::string&, const std::string&, bool)>&& cb)
+    void onMuteStreamVideo(std::function<void(const std::string&, const std::string&, const std::string&, bool)>&& cb)
     {
         muteStreamVideo_ = std::move(cb);
     }
     void onSetLayout(std::function<void(int)>&& cb) { setLayout_ = std::move(cb); }
 
     // Version 0, deprecated
-    void onKickParticipant(std::function<void(const std::string&)>&& cb)
-    {
-        kickParticipant_ = std::move(cb);
-    }
-    void onSetActiveParticipant(std::function<void(const std::string&)>&& cb)
-    {
-        setActiveParticipant_ = std::move(cb);
-    }
-    void onMuteParticipant(std::function<void(const std::string&, bool)>&& cb)
-    {
-        muteParticipant_ = std::move(cb);
-    }
-    void onRaiseHandUri(std::function<void(const std::string&, bool)>&& cb)
-    {
-        raiseHandUri_ = std::move(cb);
-    }
-    void onVoiceActivity(std::function<void(const std::string&, bool)>&& cb)
-    {
-        voiceActivity_ = std::move(cb);
-    }
+    void onKickParticipant(std::function<void(const std::string&)>&& cb) { kickParticipant_ = std::move(cb); }
+    void onSetActiveParticipant(std::function<void(const std::string&)>&& cb) { setActiveParticipant_ = std::move(cb); }
+    void onMuteParticipant(std::function<void(const std::string&, bool)>&& cb) { muteParticipant_ = std::move(cb); }
+    void onRaiseHandUri(std::function<void(const std::string&, bool)>&& cb) { raiseHandUri_ = std::move(cb); }
+    void onVoiceActivity(std::function<void(const std::string&, bool)>&& cb) { voiceActivity_ = std::move(cb); }
 
     /**
      * Inject in the parser the data to parse
@@ -119,10 +93,8 @@ private:
     std::function<void(const std::string&, const std::string&)> hangupParticipant_;
     std::function<void(const std::string&, bool)> raiseHand_;
     std::function<void(const std::string&, bool)> setActiveStream_;
-    std::function<void(const std::string&, const std::string&, const std::string&, bool)>
-        muteStreamAudio_;
-    std::function<void(const std::string&, const std::string&, const std::string&, bool)>
-        muteStreamVideo_;
+    std::function<void(const std::string&, const std::string&, const std::string&, bool)> muteStreamAudio_;
+    std::function<void(const std::string&, const std::string&, const std::string&, bool)> muteStreamVideo_;
     std::function<void(int)> setLayout_;
 
     std::function<void(const std::string&, bool)> raiseHandUri_;

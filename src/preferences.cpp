@@ -373,25 +373,24 @@ AudioPreference::createAudioLayer()
 std::vector<std::string>
 AudioPreference::getSupportedAudioManagers()
 {
-    return
-    {
+    return {
 #if HAVE_OPENSL
         OPENSL_API_STR,
 #endif
 #if HAVE_ALSA
-            ALSA_API_STR,
+        ALSA_API_STR,
 #endif
 #if HAVE_PULSE
-            PULSEAUDIO_API_STR,
+        PULSEAUDIO_API_STR,
 #endif
 #if HAVE_JACK
-            JACK_API_STR,
+        JACK_API_STR,
 #endif
 #if HAVE_COREAUDIO
-            COREAUDIO_API_STR,
+        COREAUDIO_API_STR,
 #endif
 #if HAVE_PORTAUDIO
-            PORTAUDIO_API_STR,
+        PORTAUDIO_API_STR,
 #endif
     };
 }

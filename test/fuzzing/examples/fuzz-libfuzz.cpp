@@ -19,9 +19,8 @@
 
 static gnutls_session_t captured_tls_session = nullptr;
 
-
-
-void post_gnutls_init_hook(const gnutls_session_t session)
+void
+post_gnutls_init_hook(const gnutls_session_t session)
 {
-        captured_tls_session = session;
+    captured_tls_session = session;
 }

@@ -190,8 +190,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
     } else if (inputCtx_->nb_streams > 0 && inputCtx_->streams[0]->codecpar) {
         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
-        JAMI_LOG("Opened input Using format {:s} and resolution {:d}x{:d}",
-                 params.format, baseWidth_, baseHeight_);
+        JAMI_LOG("Opened input Using format {:s} and resolution {:d}x{:d}", params.format, baseWidth_, baseHeight_);
     }
 
     return ret;
@@ -291,10 +290,9 @@ MediaDemuxer::emitFrame(bool isAudio)
 }
 
 bool
-MediaDemuxer::pushFrameFrom(
-    std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
-    bool isAudio,
-    std::mutex& mutex)
+MediaDemuxer::pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
+                            bool isAudio,
+                            std::mutex& mutex)
 {
     std::unique_lock lock(mutex);
     if (buffer.empty()) {
@@ -324,12 +322,10 @@ MediaDemuxer::pushFrameFrom(
 MediaDemuxer::Status
 MediaDemuxer::demuxe()
 {
-    auto packet = std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>(av_packet_alloc(),
-                                                                            [](AVPacket* p) {
-                                                                                if (p)
-                                                                                    av_packet_free(
-                                                                                        &p);
-                                                                            });
+    auto packet = std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>(av_packet_alloc(), [](AVPacket* p) {
+        if (p)
+            av_packet_free(&p);
+    });
 
     int ret = av_read_frame(inputCtx_, packet.get());
     if (ret == AVERROR(EAGAIN)) {
@@ -400,8 +396,7 @@ MediaDemuxer::decode()
         if (inputParams_.framerate.numerator() == 0)
             return Status::Success;
         rational<double> frameTime = 1e6 / inputParams_.framerate;
-        int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative()
-                              + frameTime.real<int64_t>();
+        int64_t timeToSleep = lastReadPacketTime_ - av_gettime_relative() + frameTime.real<int64_t>();
         if (timeToSleep <= 0) {
             return Status::Success;
         }
@@ -444,9 +439,7 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
     setupStream();
 }
 
-MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer,
-                           int index,
-                           MediaObserver observer)
+MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer)
     : demuxer_(demuxer)
     , avStream_(demuxer->getStream(index))
     , callback_(std::move(observer))
@@ -621,12 +614,12 @@ MediaDecoder::prepareDecoderContext()
             decoderCtx_->framerate = inputParams_.framerate;
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
-    }
-    else if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+    } else if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
         if (decoderCtx_->codec_id == AV_CODEC_ID_OPUS) {
             av_opt_set_int(decoderCtx_, "decode_fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
         }
-        auto format = libav_utils::choose_sample_fmt_default(inputDecoder_, Manager::instance().getRingBufferPool().getInternalAudioFormat().sampleFormat);
+        auto format = libav_utils::choose_sample_fmt_default(
+            inputDecoder_, Manager::instance().getRingBufferPool().getInternalAudioFormat().sampleFormat);
         decoderCtx_->sample_fmt = format;
         decoderCtx_->request_sample_fmt = format;
     }
@@ -688,11 +681,7 @@ MediaDecoder::decode(AVPacket& packet)
     frame->time_base = decoderCtx_->time_base;
     if (resolutionChangedCallback_) {
         if (decoderCtx_->width != width_ or decoderCtx_->height != height_) {
-            JAMI_DBG("Resolution changed from %dx%d to %dx%d",
-                     width_,
-                     height_,
-                     decoderCtx_->width,
-                     decoderCtx_->height);
+            JAMI_DBG("Resolution changed from %dx%d to %dx%d", width_, height_, decoderCtx_->width, decoderCtx_->height);
             width_ = decoderCtx_->width;
             height_ = decoderCtx_->height;
             resolutionChangedCallback_(width_, height_);
@@ -711,8 +700,7 @@ MediaDecoder::decode(AVPacket& packet)
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
                                       decoderCtx_->time_base,
-                                      static_cast<AVRounding>(AV_ROUND_NEAR_INF
-                                                              | AV_ROUND_PASS_MINMAX));
+                                      static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;

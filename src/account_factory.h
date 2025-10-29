@@ -36,7 +36,7 @@ using AccountMap = std::map<std::string, std::shared_ptr<T>, std::less<>>;
 class AccountFactory
 {
 public:
-    static const std::string_view DEFAULT_ACCOUNT_TYPE;// = SIPAccount::ACCOUNT_TYPE;
+    static const std::string_view DEFAULT_ACCOUNT_TYPE; // = SIPAccount::ACCOUNT_TYPE;
 
     AccountFactory();
 

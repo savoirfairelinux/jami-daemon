@@ -89,9 +89,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
 
     auto status = pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s %d",
-                 to->ptr,
-                 status);
+        JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s %d", to->ptr, status);
         return false;
     }
 
@@ -104,11 +102,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
         // Append "Subject: Phone Call" header
         constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
         auto subj_hdr = reinterpret_cast<pjsip_hdr*>(
-            pjsip_parse_hdr(dialog->pool,
-                            &subj_hdr_name,
-                            const_cast<char*>("Phone call"),
-                            10,
-                            nullptr));
+            pjsip_parse_hdr(dialog->pool, &subj_hdr_name, const_cast<char*>("Phone call"), 10, nullptr));
         pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
         if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
@@ -168,15 +162,11 @@ SIPAccountBase::getVolatileAccountDetails() const
 }
 
 void
-SIPAccountBase::setRegistrationState(RegistrationState state,
-                                     int details_code,
-                                     const std::string& details_str)
+SIPAccountBase::setRegistrationState(RegistrationState state, int details_code, const std::string& details_str)
 {
-    if (state == RegistrationState::REGISTERED
-        && registrationState_ != RegistrationState::REGISTERED)
+    if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
         messageEngine_.load();
-    else if (state != RegistrationState::REGISTERED
-             && registrationState_ == RegistrationState::REGISTERED)
+    else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
         messageEngine_.save();
     Account::setRegistrationState(state, details_code, details_str);
 }
@@ -277,7 +267,11 @@ SIPAccountBase::onTextMessage(const std::string& id,
                               const std::shared_ptr<dht::crypto::Certificate>& peerCert,
                               const std::map<std::string, std::string>& payloads)
 {
-    JAMI_LOG("[Account {}] [peer {}] Text message received from {}, {:d} part(s)", accountID_, peerCert ? peerCert->getLongId().to_view() : ""sv, from, payloads.size());
+    JAMI_LOG("[Account {}] [peer {}] Text message received from {}, {:d} part(s)",
+             accountID_,
+             peerCert ? peerCert->getLongId().to_view() : ""sv,
+             from,
+             payloads.size());
     for (const auto& m : payloads) {
         if (!utf8_validate(m.first))
             return;
@@ -292,8 +286,7 @@ SIPAccountBase::onTextMessage(const std::string& id,
 #ifdef ENABLE_PLUGIN
     auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
     if (pluginChatManager.hasHandlers()) {
-        pluginChatManager.publishMessage(
-            std::make_shared<JamiMessage>(accountID_, from, true, payloads, false));
+        pluginChatManager.publishMessage(std::make_shared<JamiMessage>(accountID_, from, true, payloads, false));
     }
 #endif
     emitSignal<libjami::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, id, payloads);
@@ -359,24 +352,14 @@ SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
     std::vector<MediaAttribute> mediaList;
     bool secure = isSrtpEnabled();
     // Add audio and DTMF events
-    mediaList.emplace_back(MediaAttribute(MediaType::MEDIA_AUDIO,
-                                          false,
-                                          secure,
-                                          true,
-                                          "",
-                                          sip_utils::DEFAULT_AUDIO_STREAMID,
-                                          onHold));
+    mediaList.emplace_back(
+        MediaAttribute(MediaType::MEDIA_AUDIO, false, secure, true, "", sip_utils::DEFAULT_AUDIO_STREAMID, onHold));
 
 #ifdef ENABLE_VIDEO
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
-        mediaList.emplace_back(MediaAttribute(MediaType::MEDIA_VIDEO,
-                                              false,
-                                              secure,
-                                              true,
-                                              "",
-                                              sip_utils::DEFAULT_VIDEO_STREAMID,
-                                              onHold));
+        mediaList.emplace_back(
+            MediaAttribute(MediaType::MEDIA_VIDEO, false, secure, true, "", sip_utils::DEFAULT_VIDEO_STREAMID, onHold));
     }
 #endif
     return mediaList;

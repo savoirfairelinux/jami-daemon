@@ -28,7 +28,8 @@ namespace jami {
 class MessageChannelHandler : public ChannelHandlerInterface
 {
 public:
-    using OnMessage = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&, std::string&, const std::string&)>;
+    using OnMessage
+        = std::function<void(const std::shared_ptr<dht::crypto::Certificate>&, std::string&, const std::string&)>;
     using OnPeerStateChanged = std::function<void(const std::string&, bool)>;
     MessageChannelHandler(dhtnet::ConnectionManager& cm, OnMessage onMessage, OnPeerStateChanged onPeer);
     ~MessageChannelHandler();
@@ -47,8 +48,7 @@ public:
                  const std::string& connectionType,
                  bool forceNewConnection = false) override;
 
-    std::shared_ptr<dhtnet::ChannelSocket> getChannel(const std::string& peer,
-                                                      const DeviceId& deviceId) const;
+    std::shared_ptr<dhtnet::ChannelSocket> getChannel(const std::string& peer, const DeviceId& deviceId) const;
     std::vector<std::shared_ptr<dhtnet::ChannelSocket>> getChannels(const std::string& peer) const;
 
     /**
@@ -57,8 +57,7 @@ public:
      * @param name          Name asked
      * @return if the channel is for a valid conversation and device not banned
      */
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
-                   const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
 
     /**
      * Launch message process
@@ -70,7 +69,9 @@ public:
                  const std::string& name,
                  std::shared_ptr<dhtnet::ChannelSocket> channel) override;
 
-    void closeChannel(const std::string& peer, const DeviceId& device, const std::shared_ptr<dhtnet::ChannelSocket>& conn);
+    void closeChannel(const std::string& peer,
+                      const DeviceId& device,
+                      const std::shared_ptr<dhtnet::ChannelSocket>& conn);
 
     struct Message
     {

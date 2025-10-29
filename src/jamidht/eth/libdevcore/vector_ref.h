@@ -22,8 +22,8 @@ class vector_ref
 public:
     using value_type = _T;
     using element_type = _T;
-    using mutable_value_type = typename std::
-        conditional<std::is_const<_T>::value, typename std::remove_const<_T>::type, _T>::type;
+    using mutable_value_type =
+        typename std::conditional<std::is_const<_T>::value, typename std::remove_const<_T>::type, _T>::type;
 
     static_assert(std::is_pod<value_type>::value,
                   "vector_ref can only be used with PODs due to its low-level treatment of data.");
@@ -38,9 +38,7 @@ public:
         , m_count(_count)
     {}
     /// Creates a new vector_ref pointing to the data part of a string (given as pointer).
-    vector_ref(
-        typename std::conditional<std::is_const<_T>::value, std::string const*, std::string*>::type
-            _data)
+    vector_ref(typename std::conditional<std::is_const<_T>::value, std::string const*, std::string*>::type _data)
         : m_data(reinterpret_cast<_T*>(_data->data()))
         , m_count(_data->size() / sizeof(_T))
     {}
@@ -52,9 +50,7 @@ public:
         , m_count(_data->size())
     {}
     /// Creates a new vector_ref pointing to the data part of a string (given as reference).
-    vector_ref(
-        typename std::conditional<std::is_const<_T>::value, std::string const&, std::string&>::type
-            _data)
+    vector_ref(typename std::conditional<std::is_const<_T>::value, std::string const&, std::string&>::type _data)
         : m_data(reinterpret_cast<_T*>(_data.data()))
         , m_count(_data.size() / sizeof(_T))
     {}
@@ -74,8 +70,7 @@ public:
     std::vector<unsigned char> toBytes() const
     {
         return std::vector<unsigned char>(reinterpret_cast<unsigned char const*>(m_data),
-                                          reinterpret_cast<unsigned char const*>(m_data)
-                                              + m_count * sizeof(_T));
+                                          reinterpret_cast<unsigned char const*>(m_data) + m_count * sizeof(_T));
     }
     std::string toString() const
     {
@@ -170,10 +165,7 @@ public:
         return m_data[_i];
     }
 
-    bool operator==(vector_ref<_T> const& _cmp) const
-    {
-        return m_data == _cmp.m_data && m_count == _cmp.m_count;
-    }
+    bool operator==(vector_ref<_T> const& _cmp) const { return m_data == _cmp.m_data && m_count == _cmp.m_count; }
     bool operator!=(vector_ref<_T> const& _cmp) const { return !operator==(_cmp); }
 
     void reset()

@@ -22,28 +22,33 @@
 
 namespace dht {
 
-__weak
-bool mutate_dht_encrypted_ImMessage(ImMessage& msg)
+__weak bool
+mutate_dht_encrypted_ImMessage(ImMessage& msg)
 {
-        printf("message!\n");
+    printf("message!\n");
 
-        return false;
+    return false;
 }
 
 /* TODO - Is there a way to not tod without the mangled name?  Use nm(1) for that.  */
 BEGIN_METHOD_WRAPPER(
-        _ZN3dht9DhtRunner12putEncryptedENS_4HashILm20EEES2_St10shared_ptrINS_5ValueEESt8functionIFvbRKSt6vectorIS3_INS_4NodeEESaIS9_EEEEb,
-        void, DhtRunner::putEncrypted, InfoHash hash, InfoHash to, std::shared_ptr<Value> value, DoneCallback cb, bool permanent)
+    _ZN3dht9DhtRunner12putEncryptedENS_4HashILm20EEES2_St10shared_ptrINS_5ValueEESt8functionIFvbRKSt6vectorIS3_INS_4NodeEESaIS9_EEEEb,
+    void,
+    DhtRunner::putEncrypted,
+    InfoHash hash,
+    InfoHash to,
+    std::shared_ptr<Value> value,
+    DoneCallback cb,
+    bool permanent)
 {
-        if (value->type == ImMessage::TYPE.id) {
-                ImMessage uv = Value::unpack<ImMessage>(value);
-                bool mutated = mutate_dht_encrypted_ImMessage(uv);
-        }
+    if (value->type == ImMessage::TYPE.id) {
+        ImMessage uv = Value::unpack<ImMessage>(value);
+        bool mutated = mutate_dht_encrypted_ImMessage(uv);
+    }
 
-        this_func(this, hash, to, value, cb, permanent);
-
+    this_func(this, hash, to, value, cb, permanent);
 }
 END_WRAPPER();
 
-};
+}; // namespace dht
 #endif

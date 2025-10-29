@@ -144,10 +144,9 @@ MediaAttribute::mediaTypeToString(MediaType type)
 bool
 MediaAttribute::hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type)
 {
-    return mediaList.end()
-           != std::find_if(mediaList.begin(), mediaList.end(), [type](const MediaAttribute& media) {
-                  return media.type_ == type;
-              });
+    return mediaList.end() != std::find_if(mediaList.begin(), mediaList.end(), [type](const MediaAttribute& media) {
+               return media.type_ == type;
+           });
 }
 
 libjami::MediaMap
@@ -155,8 +154,7 @@ MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
 {
     libjami::MediaMap mediaMap;
 
-    mediaMap.emplace(libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                     mediaTypeToString(mediaAttr.type_));
+    mediaMap.emplace(libjami::Media::MediaAttributeKey::MEDIA_TYPE, mediaTypeToString(mediaAttr.type_));
     mediaMap.emplace(libjami::Media::MediaAttributeKey::LABEL, mediaAttr.label_);
     mediaMap.emplace(libjami::Media::MediaAttributeKey::ENABLED, boolToString(mediaAttr.enabled_));
     mediaMap.emplace(libjami::Media::MediaAttributeKey::MUTED, boolToString(mediaAttr.muted_));
@@ -203,6 +201,6 @@ MediaAttribute::toString(bool full) const
 bool
 MediaAttribute::hasValidVideo()
 {
-    return type_ == MediaType::MEDIA_VIDEO && enabled_&& !muted_ && !onHold_;
+    return type_ == MediaType::MEDIA_VIDEO && enabled_ && !muted_ && !onHold_;
 }
 } // namespace jami

@@ -47,29 +47,31 @@ bool_to_str(bool b) noexcept
 const std::string& userAgent();
 
 constexpr inline std::string_view
-platform() {
+platform()
+{
     using namespace std::literals;
 #ifdef __linux__
-    #if defined(__ANDROID__)
-        return "Android"sv;
-    #else
-        return "Linux"sv;
-    #endif
+#if defined(__ANDROID__)
+    return "Android"sv;
+#else
+    return "Linux"sv;
+#endif
 #elif defined(_WIN32)
     return "Windows"sv;
 #elif defined(__APPLE__)
-    #if TARGET_OS_IOS
-        return "iOS"sv;
-    #else
-        return "macOS"sv;
-    #endif
+#if TARGET_OS_IOS
+    return "iOS"sv;
+#else
+    return "macOS"sv;
+#endif
 #else
     return "unknown"sv;
 #endif
 }
 
 constexpr inline std::string_view
-arch() {
+arch()
+{
     using namespace std::literals;
 #if defined(__x86_64__) || defined(_M_X64)
     return "x86_64"sv;
@@ -99,7 +101,7 @@ inline T
 to_int(std::string_view str, T defaultValue)
 {
     T result;
-    auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), result);
+    auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), result);
     if (ec == std::errc())
         return result;
     else
@@ -111,7 +113,7 @@ T
 to_int(std::string_view str)
 {
     T result;
-    auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), result);
+    auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), result);
     if (ec == std::errc())
         return result;
     if (ec == std::errc::invalid_argument)
@@ -128,10 +130,12 @@ starts_with(std::string_view str, std::string_view prefix)
 }
 
 template<typename... Args>
-std::string concat(Args &&... args){
+std::string
+concat(Args&&... args)
+{
     static_assert((std::is_constructible_v<std::string_view, Args&&> && ...));
     std::string s;
-    s.reserve((std::string_view{ args }.size() + ...));
+    s.reserve((std::string_view {args}.size() + ...));
     (s.append(std::forward<Args>(args)), ...);
     return s;
 }
@@ -173,8 +177,7 @@ inline std::vector<std::string_view>
 split_string(std::string_view str, char delim)
 {
     std::vector<std::string_view> output;
-    for (auto first = str.data(), second = str.data(), last = first + str.size();
-         second != last && first != last;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last;
          first = second + 1) {
         second = std::find(first, last, delim);
         if (first != second)
@@ -187,8 +190,7 @@ inline std::vector<std::string_view>
 split_string(std::string_view str, std::string_view delims = " ")
 {
     std::vector<std::string_view> output;
-    for (auto first = str.data(), second = str.data(), last = first + str.size();
-         second != last && first != last;
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last;
          first = second + 1) {
         second = std::find_first_of(first, last, std::cbegin(delims), std::cend(delims));
         if (first != second)
@@ -232,7 +234,9 @@ operator+(const string_view& sv, const string& s)
 }
 using svmatch = match_results<string_view::const_iterator>;
 using svsub_match = sub_match<string_view::const_iterator>;
-constexpr string_view svsub_match_view(const svsub_match& submatch) noexcept {
+constexpr string_view
+svsub_match_view(const svsub_match& submatch) noexcept
+{
     return string_view(&*submatch.first, submatch.second - submatch.first);
 }
 inline bool
@@ -244,9 +248,7 @@ regex_match(string_view sv,
     return regex_match(sv.begin(), sv.end(), m, e, flags);
 }
 inline bool
-regex_match(string_view sv,
-            const regex& e,
-            regex_constants::match_flag_type flags = regex_constants::match_default)
+regex_match(string_view sv, const regex& e, regex_constants::match_flag_type flags = regex_constants::match_default)
 {
     return regex_match(sv.begin(), sv.end(), e, flags);
 }

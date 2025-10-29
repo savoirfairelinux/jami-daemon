@@ -56,9 +56,7 @@ downloadFile(const std::string& accountId,
 }
 
 DataTransferError
-cancelDataTransfer(const std::string& accountId,
-                   const std::string& conversationId,
-                   const std::string& fileId) noexcept
+cancelDataTransfer(const std::string& accountId, const std::string& conversationId, const std::string& fileId) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto dt = acc->dataTransfer(conversationId))
@@ -78,9 +76,8 @@ fileTransferInfo(const std::string& accountId,
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         if (auto dt = acc->dataTransfer(conversationId))
-            return dt->info(fileId, path, total, progress)
-                       ? libjami::DataTransferError::success
-                       : libjami::DataTransferError::invalid_argument;
+            return dt->info(fileId, path, total, progress) ? libjami::DataTransferError::success
+                                                           : libjami::DataTransferError::invalid_argument;
     }
     return libjami::DataTransferError::invalid_argument;
 }

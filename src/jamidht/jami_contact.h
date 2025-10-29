@@ -92,8 +92,7 @@ struct Contact
     }
     bool hasDifferentState(const Contact& other) const
     {
-        return other.isActive() != isActive() or other.isBanned() != isBanned()
-               or other.confirmed != confirmed;
+        return other.isActive() != isActive() or other.isBanned() != isBanned() or other.confirmed != confirmed;
     }
 
     Json::Value toJson() const
@@ -149,7 +148,8 @@ public:
     MSGPACK_DEFINE_MAP(dev, pk)
 };
 
-struct KnownDeviceSync {
+struct KnownDeviceSync
+{
     std::string name;
     dht::InfoHash sha1;
     MSGPACK_DEFINE_MAP(name, sha1)

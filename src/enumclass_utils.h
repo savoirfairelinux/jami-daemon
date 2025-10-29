@@ -175,12 +175,12 @@ constexpr Matrix1D<Row, Value, Accessor>::Matrix1D(std::initializer_list<std::in
     static_assert((int) Row::COUNT__ > 0, "Row need a COUNT__ element");
 
     // FIXME C++14, use static_assert and make the ctor constexpr
-    assert(s.begin()->size()
-           == enum_class_size<Row>()); //,"Matrix row have to match the enum class size");
+    assert(s.begin()->size() == enum_class_size<Row>()); //,"Matrix row have to match the enum class size");
 }
 
 template<class Row, typename Value, typename Accessor>
-Value Matrix1D<Row, Value, Accessor>::operator[](Row v)
+Value
+Matrix1D<Row, Value, Accessor>::operator[](Row v)
 {
     // ASSERT(size_t(v) >= size_t(Row::COUNT__),"State Machine Out of Bounds\n");
     if (size_t(v) >= enum_class_size<Row>() || static_cast<int>(v) < 0) {
@@ -192,7 +192,8 @@ Value Matrix1D<Row, Value, Accessor>::operator[](Row v)
 }
 
 template<class Row, typename Value, typename Accessor>
-const Value Matrix1D<Row, Value, Accessor>::operator[](Row v) const
+const Value
+Matrix1D<Row, Value, Accessor>::operator[](Row v) const
 {
     assert(size_t(v) <= enum_class_size<Row>() + 1 && size_t(v) >= 0); // COUNT__ is also valid
     if (size_t(v) >= enum_class_size<Row>()) {
@@ -220,8 +221,7 @@ Matrix1D<Row, Value, Accessor>::fromValue(const Value& value) const
 {
     if (!reverseMapping_.empty()) {
         for (int i = 0; i < enum_class_size<Row>(); i++) {
-            const_cast<Matrix1D*>(this)->reverseMapping_[(*const_cast<Matrix1D*>(this))[(Row) i]]
-                = static_cast<Row>(i);
+            const_cast<Matrix1D*>(this)->reverseMapping_[(*const_cast<Matrix1D*>(this))[(Row) i]] = static_cast<Row>(i);
         }
         assert(reverseMapping_.empty() == enum_class_size<Row>());
     }
@@ -234,12 +234,12 @@ Matrix1D<Row, Value, Accessor>::fromValue(const Value& value) const
 template<class EnumClass>
 Matrix0D<EnumClass>::Matrix0D()
 {
-    static_assert(std::is_enum<EnumClass>(),
-                  "The first template parameter has to be an enum class\n");
+    static_assert(std::is_enum<EnumClass>(), "The first template parameter has to be an enum class\n");
 }
 
 template<class EnumClass>
-EnumClass Matrix0D<EnumClass>::EnumClassIter::operator*() const
+EnumClass
+Matrix0D<EnumClass>::EnumClassIter::operator*() const
 {
     assert(pos_ < enum_class_size<EnumClass>());
     return static_cast<EnumClass>(pos_);

@@ -49,8 +49,7 @@ public:
     CallTest()
     {
         // Init daemon
-        libjami::init(
-            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -198,8 +197,7 @@ CallTest::testCachedCall()
     aliceAccount->connectionManager()
         .connectDevice(bobDeviceId,
                        "sip",
-                       [&cv, &successfullyConnected](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                     const DeviceId&) {
+                       [&cv, &successfullyConnected](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
                            if (socket)
                                successfullyConnected = true;
                            cv.notify_one();
@@ -411,9 +409,7 @@ CallTest::testSocketInfos()
         }));
     auto mediaReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId,
-            const std::string& event,
-            const std::vector<std::map<std::string, std::string>>&) {
+        [&](const std::string& callId, const std::string& event, const std::vector<std::map<std::string, std::string>>&) {
             if (event == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS) {
                 mediaReady = true;
                 cv.notify_one();
@@ -478,20 +474,19 @@ CallTest::testInvalidTurn()
                     cv.notify_one();
             }
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId,
-                const std::map<std::string, std::string>& details) {
-                if (accountId != aliceId) {
-                    return;
-                }
-                try {
-                    aliceReady |= accountId == aliceId
-                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
-                                && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
-                } catch (const std::out_of_range&) {}
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId != aliceId) {
+                return;
+            }
+            try {
+                aliceReady |= accountId == aliceId
+                              && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
+                              && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
+            } catch (const std::out_of_range&) {
+            }
+            cv.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
 
     std::map<std::string, std::string> details;

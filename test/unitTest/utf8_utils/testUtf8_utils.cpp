@@ -24,10 +24,11 @@
 #include "connectivity/utf8_utils.h"
 #include "../../test_runner.h"
 
+namespace jami {
+namespace test {
 
-namespace jami { namespace test {
-
-class Utf8UtilsTest : public CppUnit::TestFixture {
+class Utf8UtilsTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "utf8_utils"; }
 
@@ -64,6 +65,7 @@ Utf8UtilsTest::utf8_make_valid_test()
     CPPUNIT_ASSERT(utf8_validate(str));
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::Utf8UtilsTest::name());

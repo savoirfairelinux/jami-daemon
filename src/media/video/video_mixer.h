@@ -66,8 +66,7 @@ public:
     AVPixelFormat getPixelFormat() const override;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<MediaFrame>>* ob,
-                const std::shared_ptr<MediaFrame>& v) override;
+    void update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& v) override;
     void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
@@ -155,9 +154,7 @@ private:
                       const std::shared_ptr<VideoFrame>& input,
                       std::unique_ptr<VideoMixerSource>& source);
 
-    void calc_position(std::unique_ptr<VideoMixerSource>& source,
-                       const std::shared_ptr<VideoFrame>& input,
-                       int index);
+    void calc_position(std::unique_ptr<VideoMixerSource>& source, const std::shared_ptr<VideoFrame>& input, int index);
 
     void startSink();
     void stopSink();

@@ -24,21 +24,20 @@
 void
 pack_gnutls_record_recv(msgpack::sbuffer& buf, const ChanneledMessage& msg)
 {
-     msgpack::packer<msgpack::sbuffer> pk(&buf);
+    msgpack::packer<msgpack::sbuffer> pk(&buf);
 
-     pk.pack_array(2);
-     pk.pack_bin(msg.data.size());
-     pk.pack_bin_body((const char*) msg.data.data(), msg.data.size());
-     pk.pack(msg.channel);
+    pk.pack_array(2);
+    pk.pack_bin(msg.data.size());
+    pk.pack_bin_body((const char*) msg.data.data(), msg.data.size());
+    pk.pack(msg.channel);
 }
 
 bool
 mutate_gnutls_record_recv(ChanneledMessage& msg)
 {
-    (void)msg;
+    (void) msg;
 
     return true;
 }
-
 
 #include "scenarios/classic-alice-and-bob.h"

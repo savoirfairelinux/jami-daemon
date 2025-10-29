@@ -41,7 +41,6 @@ struct HardwareAPI
     bool dynBitrate;
 };
 
-
 static std::list<HardwareAPI> apiListDec = {
     {"nvdec",
      AV_HWDEVICE_TYPE_CUDA,
@@ -55,8 +54,10 @@ static std::list<HardwareAPI> apiListDec = {
      AV_PIX_FMT_VAAPI,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8},
-     {{"default", DeviceState::NOT_TESTED}, {"/dev/dri/renderD128", DeviceState::NOT_TESTED},
-      {"/dev/dri/renderD129", DeviceState::NOT_TESTED}, {":0", DeviceState::NOT_TESTED}},
+     {{"default", DeviceState::NOT_TESTED},
+      {"/dev/dri/renderD128", DeviceState::NOT_TESTED},
+      {"/dev/dri/renderD129", DeviceState::NOT_TESTED},
+      {":0", DeviceState::NOT_TESTED}},
      false},
     {"vdpau",
      AV_HWDEVICE_TYPE_VDPAU,
@@ -94,7 +95,8 @@ static std::list<HardwareAPI> apiListEnc = {
      AV_PIX_FMT_VAAPI,
      AV_PIX_FMT_NV12,
      {AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP8},
-     {{"default", DeviceState::NOT_TESTED}, {"/dev/dri/renderD128", DeviceState::NOT_TESTED},
+     {{"default", DeviceState::NOT_TESTED},
+      {"/dev/dri/renderD128", DeviceState::NOT_TESTED},
       {"/dev/dri/renderD129", DeviceState::NOT_TESTED},
       {":0", DeviceState::NOT_TESTED}},
      false},
@@ -148,8 +150,8 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
         if (accel && formats[i] == accel->getFormat()) {
             // found hardware format for codec with api
             JAMI_DBG() << "Found compatible hardware format for "
-                       << avcodec_get_name(static_cast<AVCodecID>(accel->getCodecId()))
-                       << " decoder with " << accel->getName();
+                       << avcodec_get_name(static_cast<AVCodecID>(accel->getCodecId())) << " decoder with "
+                       << accel->getName();
             // hardware tends to under-report supported levels
             codecCtx->hwaccel_flags |= AV_HWACCEL_FLAG_IGNORE_LEVEL;
             return formats[i];
@@ -260,8 +262,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
     if (type_ == CODEC_DECODER) {
         auto input = frame.pointer();
         if (input->format != format_) {
-            JAMI_ERR() << "Frame format mismatch: expected " << av_get_pix_fmt_name(format_)
-                       << ", got "
+            JAMI_ERR() << "Frame format mismatch: expected " << av_get_pix_fmt_name(format_) << ", got "
                        << av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format));
             return nullptr;
         }
@@ -270,8 +271,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
     } else if (type_ == CODEC_ENCODER) {
         auto input = frame.pointer();
         if (input->format != swFormat_) {
-            JAMI_ERR() << "Frame format mismatch: expected " << av_get_pix_fmt_name(swFormat_)
-                       << ", got "
+            JAMI_ERR() << "Frame format mismatch: expected " << av_get_pix_fmt_name(swFormat_) << ", got "
                        << av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format));
             return nullptr;
         }
@@ -280,8 +280,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
         auto hwFrame = framePtr->pointer();
 
         if ((ret = av_hwframe_get_buffer(framesCtx_, hwFrame, 0)) < 0) {
-            JAMI_ERR() << "Failed to allocate hardware buffer: "
-                       << libav_utils::getError(ret).c_str();
+            JAMI_ERR() << "Failed to allocate hardware buffer: " << libav_utils::getError(ret).c_str();
             return nullptr;
         }
 
@@ -337,9 +336,7 @@ HardwareAccel::initFrame()
     ctx->initial_pool_size = 20; // TODO try other values
 
     if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0) {
-        JAMI_ERR("Failed to initialize hardware frame context: %s (%d)",
-                 libav_utils::getError(ret).c_str(),
-                 ret);
+        JAMI_ERR("Failed to initialize hardware frame context: %s (%d)", libav_utils::getError(ret).c_str(), ret);
         av_buffer_unref(&framesCtx_);
     }
 
@@ -359,8 +356,8 @@ HardwareAccel::linkHardware(AVBufferRef* framesCtx)
             av_buffer_unref(&framesCtx_);
         framesCtx_ = av_buffer_ref(framesCtx);
         if ((linked_ = (framesCtx_ != nullptr))) {
-            JAMI_DBG() << "Hardware transcoding pipeline successfully set up for"
-                       << " encoder '" << getCodecName() << "'";
+            JAMI_DBG() << "Hardware transcoding pipeline successfully set up for" << " encoder '" << getCodecName()
+                       << "'";
         }
         return linked_;
     } else {
@@ -396,9 +393,7 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
 
     output->pts = input->pts;
     if (AVFrameSideData* side_data = av_frame_get_side_data(input, AV_FRAME_DATA_DISPLAYMATRIX))
-        av_frame_new_side_data_from_buf(output,
-                                        AV_FRAME_DATA_DISPLAYMATRIX,
-                                        av_buffer_ref(side_data->buf));
+        av_frame_new_side_data_from_buf(output, AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(side_data->buf));
     return out;
 }
 
@@ -431,13 +426,7 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
             auto hwtype = AV_HWDEVICE_TYPE_NONE;
             while ((hwtype = av_hwdevice_iterate_types(hwtype)) != AV_HWDEVICE_TYPE_NONE) {
                 if (hwtype == api.hwType) {
-                    auto accel = HardwareAccel(id,
-                                               api.name,
-                                               api.hwType,
-                                               api.format,
-                                               api.swFormat,
-                                               type,
-                                               api.dynBitrate);
+                    auto accel = HardwareAccel(id, api.name, api.hwType, api.format, api.swFormat, type, api.dynBitrate);
                     accel.height_ = height;
                     accel.width_ = width;
                     accel.possible_devices_ = &api.possible_devices;

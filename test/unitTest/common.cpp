@@ -34,8 +34,7 @@
 #pragma GCC diagnostic ignored "-Wunused-function"
 
 void
-wait_for_announcement_of(const std::vector<std::string> accountIDs,
-                         std::chrono::seconds timeout)
+wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono::seconds timeout)
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
@@ -45,36 +44,33 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 
     size_t to_be_announced = accountIDs.size();
 
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&,
-             accountIDs = std::move(accountIDs)](const std::string& accountID,
-                                                 const std::map<std::string, std::string>& details) {
-                for (size_t i = 0; i < accountIDs.size(); ++i) {
-                    if (accountIDs[i] != accountID) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&, accountIDs = std::move(accountIDs)](const std::string& accountID,
+                                                const std::map<std::string, std::string>& details) {
+            for (size_t i = 0; i < accountIDs.size(); ++i) {
+                if (accountIDs[i] != accountID) {
+                    continue;
+                }
+
+                if (jami::Manager::instance().getAccount(accountID)->getAccountType() == "SIP") {
+                    auto daemonStatus = details.at(libjami::Account::ConfProperties::Registration::STATUS);
+                    if (daemonStatus != "REGISTERED") {
                         continue;
                     }
-
-                    if (jami::Manager::instance().getAccount(accountID)->getAccountType() == "SIP") {
-                        auto daemonStatus = details.at(libjami::Account::ConfProperties::Registration::STATUS);
-                        if (daemonStatus != "REGISTERED") {
+                } else {
+                    try {
+                        if ("true" != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
                             continue;
                         }
-                    } else {
-                        try {
-                            if ("true"
-                                != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
-                                continue;
-                            }
-                        } catch (const std::out_of_range&) {
-                            continue;
-                        }
+                    } catch (const std::out_of_range&) {
+                        continue;
                     }
-
-                    accountsReady[i] = true;
-                    cv.notify_one();
                 }
-            }));
+
+                accountsReady[i] = true;
+                cv.notify_one();
+            }
+        }));
 
     JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
 
@@ -96,15 +92,13 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs,
 }
 
 void
-wait_for_announcement_of(const std::string& accountId,
-                         std::chrono::seconds timeout)
+wait_for_announcement_of(const std::string& accountId, std::chrono::seconds timeout)
 {
     wait_for_announcement_of(std::vector<std::string> {accountId}, timeout);
 }
 
 void
-wait_for_removal_of(const std::vector<std::string> accounts,
-                    std::chrono::seconds timeout)
+wait_for_removal_of(const std::vector<std::string> accounts, std::chrono::seconds timeout)
 {
     JAMI_INFO("Removing %zu accounts...", accounts.size());
 
@@ -121,13 +115,12 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 
     size_t target = current - accounts.size();
 
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
-            if (jami::Manager::instance().getAccountList().size() <= target) {
-                accountsRemoved = true;
-                cv.notify_one();
-            }
-        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
+        if (jami::Manager::instance().getAccountList().size() <= target) {
+            accountsRemoved = true;
+            cv.notify_one();
+        }
+    }));
 
     libjami::unregisterSignalHandlers();
     libjami::registerSignalHandlers(confHandlers);
@@ -142,10 +135,9 @@ wait_for_removal_of(const std::vector<std::string> accounts,
 }
 
 void
-wait_for_removal_of(const std::string& account,
-                    std::chrono::seconds timeout)
+wait_for_removal_of(const std::string& account, std::chrono::seconds timeout)
 {
-    wait_for_removal_of(std::vector<std::string>{account}, timeout);
+    wait_for_removal_of(std::vector<std::string> {account}, timeout);
 }
 
 std::map<std::string, std::string>
@@ -163,7 +155,8 @@ load_actors(const std::filesystem::path& from_yaml)
 
     auto default_account = node["default-account"];
 
-    std::map<std::string, std::string> default_details = libjami::getAccountTemplate(default_account["type"].as<std::string>());
+    std::map<std::string, std::string> default_details = libjami::getAccountTemplate(
+        default_account["type"].as<std::string>());
     if (default_account.IsMap()) {
         for (const auto& kv : default_account) {
             auto key = kv.first.as<std::string>();

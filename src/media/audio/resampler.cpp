@@ -64,8 +64,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      * LFE downmixing is optional, so any coefficient can be used, we use +6dB for mono and
      * +0dB in each channel for stereo.
      */
-    if (in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1
-        || in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1_BACK) {
+    if (in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1 || in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1_BACK) {
         // NOTE: MSVC is unable to allocate dynamic size arrays on the stack
         if (out->ch_layout.nb_channels == 2) {
             double matrix[2][6];
@@ -160,8 +159,7 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
         return {};
     }
 
-    if (inPtr->sample_rate == (int) format.sample_rate
-        && inPtr->ch_layout.nb_channels == (int) format.nb_channels
+    if (inPtr->sample_rate == (int) format.sample_rate && inPtr->ch_layout.nb_channels == (int) format.nb_channels
         && (AVSampleFormat) inPtr->format == format.sampleFormat) {
         return std::move(in);
     }

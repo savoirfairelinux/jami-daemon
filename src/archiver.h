@@ -88,8 +88,7 @@ void uncompressArchive(const std::string& path, const std::string& dir, const Fi
  * E.g: data/myfile.txt inside the archive
  * @return fileContent std::vector<uint8_t> that contains the file content
  */
-std::vector<uint8_t> readFileFromArchive(const std::string& path,
-                                         const std::string& fileRelativePathName);
+std::vector<uint8_t> readFileFromArchive(const std::string& path, const std::string& fileRelativePathName);
 
 /**
  * @brief listFilesFromArchive list all files from an archive

@@ -297,8 +297,7 @@ PortAudioLayer::updatePreference(AudioPreference& preference, int index, AudioDe
 
 // ##################################################################################################
 
-PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent,
-                                                       const AudioPreference& pref)
+PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent, const AudioPreference& pref)
     : deviceRecord_ {pref.getPortAudioDeviceRecord()}
     , devicePlayback_ {pref.getPortAudioDevicePlayback()}
     , deviceRingtone_ {pref.getPortAudioDeviceRingtone()}
@@ -307,9 +306,7 @@ PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent,
     // Set up our callback to restart the layer on any device event
     audioDeviceNotificationClient_->setDeviceEventCallback(
         [this, &parent](const std::string& deviceName, const DeviceEventType event) {
-            JAMI_LOG("PortAudioLayer device event: {}, {}",
-                     deviceName.c_str(),
-                     to_string(event).c_str());
+            JAMI_LOG("PortAudioLayer device event: {}, {}", deviceName.c_str(), to_string(event).c_str());
             // Here we want to debounce the device events as a DefaultChanged could
             // follow a DeviceAdded event and we don't want to restart the layer twice
             if (!restartRequestPending_.exchange(true)) {
@@ -471,8 +468,7 @@ PortAudioLayer::PortAudioLayerImpl::getIndexByType(AudioDeviceType type)
     }
     std::string_view toMatch = (type == AudioDeviceType::CAPTURE
                                     ? deviceRecord_
-                                    : (type == AudioDeviceType::PLAYBACK ? devicePlayback_
-                                                                         : deviceRingtone_));
+                                    : (type == AudioDeviceType::PLAYBACK ? devicePlayback_ : deviceRingtone_));
     auto it = std::find_if(devices.cbegin(), devices.cend(), [&toMatch](const auto& deviceName) {
         return deviceName == toMatch;
     });
@@ -502,8 +498,7 @@ PortAudioLayer::PortAudioLayerImpl::getApiIndexByType(AudioDeviceType type)
     } else {
         std::string_view toMatch = (type == AudioDeviceType::CAPTURE
                                         ? deviceRecord_
-                                        : (type == AudioDeviceType::PLAYBACK ? devicePlayback_
-                                                                             : deviceRingtone_));
+                                        : (type == AudioDeviceType::PLAYBACK ? devicePlayback_ : deviceRingtone_));
         if (!toMatch.empty()) {
             for (int i = 0; i < numDevices; ++i) {
                 if (const auto deviceInfo = Pa_GetDeviceInfo(i)) {
@@ -514,13 +509,11 @@ PortAudioLayer::PortAudioLayerImpl::getApiIndexByType(AudioDeviceType type)
         }
     }
     // If nothing was found, return the default device
-    return type == AudioDeviceType::CAPTURE ? Pa_GetDefaultCommInputDevice()
-                                            : Pa_GetDefaultCommOutputDevice();
+    return type == AudioDeviceType::CAPTURE ? Pa_GetDefaultCommInputDevice() : Pa_GetDefaultCommOutputDevice();
 }
 
 std::string
-PortAudioLayer::PortAudioLayerImpl::getApiDefaultDeviceName(AudioDeviceType type,
-                                                            bool commDevice) const
+PortAudioLayer::PortAudioLayerImpl::getApiDefaultDeviceName(AudioDeviceType type, bool commDevice) const
 {
     std::string deviceName {};
     PaDeviceIndex deviceIndex {paNoDevice};
@@ -808,8 +801,7 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     }
 
     auto numSamples = toPlay->pointer()->nb_samples;
-    auto channels = std::min<size_t>(parent.audioFormat_.nb_channels,
-                                     toPlay->pointer()->ch_layout.nb_channels);
+    auto channels = std::min<size_t>(parent.audioFormat_.nb_channels, toPlay->pointer()->ch_layout.nb_channels);
     float** outputChannels = (float**) outputBuffer;
     for (size_t i = 0; i < channels; ++i) {
         std::copy_n((float*) toPlay->pointer()->extended_data[i], numSamples, outputChannels[i]);
@@ -842,9 +834,7 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
         auto channels = parent.audioInputFormat_.nb_channels;
         float** inputChannels = (float**) inputBuffer;
         for (size_t i = 0; i < channels; ++i) {
-            std::copy_n(inputChannels[i],
-                        framesPerBuffer,
-                        (float*) inBuff->pointer()->extended_data[i]);
+            std::copy_n(inputChannels[i], framesPerBuffer, (float*) inBuff->pointer()->extended_data[i]);
         }
     }
     parent.putRecorded(std::move(inBuff));

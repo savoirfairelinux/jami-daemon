@@ -43,8 +43,7 @@ void
 CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subject)
 {
     auto predicate = [&data](std::pair<const StreamData, AVSubjectSPtr> item) {
-        return data.id == item.first.id && data.direction == item.first.direction
-               && data.type == item.first.type;
+        return data.id == item.first.id && data.direction == item.first.direction && data.type == item.first.type;
     };
     callAVsubjects_[data.id].remove_if(predicate);
 
@@ -56,10 +55,10 @@ CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subje
     for (auto& callMediaHandler : callMediaHandlers_) {
         std::size_t found = callMediaHandler->id().find_last_of(DIR_SEPARATOR_CH);
         // toggle is true if we should automatically activate the MediaHandler.
-        bool toggle = PluginPreferencesUtils::getAlwaysPreference(
-            callMediaHandler->id().substr(0, found),
-            callMediaHandler->getCallMediaHandlerDetails().at("name"),
-            data.source);
+        bool toggle = PluginPreferencesUtils::getAlwaysPreference(callMediaHandler->id().substr(0, found),
+                                                                  callMediaHandler->getCallMediaHandlerDetails().at(
+                                                                      "name"),
+                                                                  data.source);
         // toggle may be overwritten if the MediaHandler was previously activated/deactivated
         // for the given call.
         for (const auto& toggledMediaHandlerPair : mediaHandlerToggled_[data.id]) {
@@ -99,8 +98,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
             return -1;
         std::size_t found = ptr->id().find_last_of(DIR_SEPARATOR_CH);
         // Adding preference that tells us to automatically activate a MediaHandler.
-        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at(
-                                                               "name"),
+        PluginPreferencesUtils::addAlwaysHandlerPreference(ptr->getCallMediaHandlerDetails().at("name"),
                                                            ptr->id().substr(0, found));
         callMediaHandlers_.emplace_back(std::move(ptr));
         return 0;
@@ -111,18 +109,14 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
         std::lock_guard lk(pmMtx_);
         auto handlerIt = std::find_if(callMediaHandlers_.begin(),
                                       callMediaHandlers_.end(),
-                                      [data](CallMediaHandlerPtr& handler) {
-                                          return (handler.get() == data);
-                                      });
+                                      [data](CallMediaHandlerPtr& handler) { return (handler.get() == data); });
 
         if (handlerIt != callMediaHandlers_.end()) {
             for (auto& toggledList : mediaHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [handlerIt](
-                                                  std::pair<uintptr_t, bool> handlerIdPair) {
-                                                  return handlerIdPair.first
-                                                             == (uintptr_t) handlerIt->get()
+                                              [handlerIt](std::pair<uintptr_t, bool> handlerIdPair) {
+                                                  return handlerIdPair.first == (uintptr_t) handlerIt->get()
                                                          && handlerIdPair.second;
                                               });
                 // If MediaHandler is attempting to destroy one which is currently in use, we deactivate it.
@@ -135,9 +129,7 @@ CallServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     };
 
     // Services are registered to the PluginManager.
-    pluginManager.registerComponentManager("CallMediaHandlerManager",
-                                           registerMediaHandler,
-                                           unregisterMediaHandler);
+    pluginManager.registerComponentManager("CallMediaHandlerManager", registerMediaHandler, unregisterMediaHandler);
 }
 
 std::vector<std::string>
@@ -218,9 +210,7 @@ CallServicesManager::getCallMediaHandlerStatus(const std::string& callId)
 }
 
 bool
-CallServicesManager::setPreference(const std::string& key,
-                                   const std::string& value,
-                                   const std::string& rootPath)
+CallServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
 {
     bool status {true};
     for (auto& mediaHandler : callMediaHandlers_) {
@@ -250,9 +240,7 @@ CallServicesManager::notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
 }
 
 void
-CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
-                                            const std::string& callId,
-                                            const bool toggle)
+CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId, const std::string& callId, const bool toggle)
 {
     auto& handlers = mediaHandlerToggled_[callId];
     bool applyRestart = false;
@@ -282,7 +270,7 @@ CallServicesManager::toggleCallMediaHandler(const uintptr_t mediaHandlerId,
     if (applyRestart) {
         auto call = Manager::instance().callFactory.getCall<SIPCall>(callId);
         if (call && !call->isConferenceParticipant()) {
-            for (auto const& videoRtp: call->getRtpSessionList(MediaType::MEDIA_VIDEO))
+            for (auto const& videoRtp : call->getRtpSessionList(MediaType::MEDIA_VIDEO))
                 videoRtp->restartSender();
         }
     }

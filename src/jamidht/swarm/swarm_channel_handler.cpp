@@ -19,8 +19,7 @@
 
 namespace jami {
 
-SwarmChannelHandler::SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                         dhtnet::ConnectionManager& cm)
+SwarmChannelHandler::SwarmChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -43,8 +42,7 @@ SwarmChannelHandler::connect(const DeviceId& deviceId,
 }
 
 bool
-SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                               const std::string& name)
+SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
 {
 #ifdef LIBJAMI_TEST
     if (disableSwarmManager)

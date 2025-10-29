@@ -49,7 +49,7 @@ struct DeviceParams
     int offset_y {};
     int orientation {};
     std::string window_id {};
-    int fd {}; // file descriptor for PipeWire (only relevant on Wayland)
+    int fd {};           // file descriptor for PipeWire (only relevant on Wayland)
     std::string node {}; // node id for PipeWire
     int is_area {};
     // Skip DTS delay while finding stream info when PTS is sufficient

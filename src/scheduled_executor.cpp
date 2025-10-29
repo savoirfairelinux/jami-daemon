@@ -59,8 +59,7 @@ ScheduledExecutor::stop()
 }
 
 void
-ScheduledExecutor::run(std::function<void()>&& job,
-                       const char* filename, uint32_t linum)
+ScheduledExecutor::run(std::function<void()>&& job, const char* filename, uint32_t linum)
 {
     std::lock_guard lock(jobLock_);
     auto now = clock::now();
@@ -69,8 +68,7 @@ ScheduledExecutor::run(std::function<void()>&& job,
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::schedule(std::function<void()>&& job, time_point t,
-                            const char* filename, uint32_t linum)
+ScheduledExecutor::schedule(std::function<void()>&& job, time_point t, const char* filename, uint32_t linum)
 {
     auto ret = std::make_shared<Task>(std::move(job), filename, linum);
     schedule(ret, t);
@@ -78,17 +76,13 @@ ScheduledExecutor::schedule(std::function<void()>&& job, time_point t,
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::scheduleIn(std::function<void()>&& job, duration dt,
-                              const char* filename, uint32_t linum)
+ScheduledExecutor::scheduleIn(std::function<void()>&& job, duration dt, const char* filename, uint32_t linum)
 {
-    return schedule(std::move(job), clock::now() + dt,
-                    filename, linum);
+    return schedule(std::move(job), clock::now() + dt, filename, linum);
 }
 
 std::shared_ptr<RepeatedTask>
-ScheduledExecutor::scheduleAtFixedRate(std::function<bool()>&& job,
-                                       duration dt,
-                                       const char* filename, uint32_t linum)
+ScheduledExecutor::scheduleAtFixedRate(std::function<bool()>&& job, duration dt, const char* filename, uint32_t linum)
 {
     auto ret = std::make_shared<RepeatedTask>(std::move(job), filename, linum);
     reschedule(ret, clock::now(), dt);
@@ -98,23 +92,25 @@ ScheduledExecutor::scheduleAtFixedRate(std::function<bool()>&& job,
 void
 ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, duration dt)
 {
-    const char* filename =  task->job().filename;
+    const char* filename = task->job().filename;
     uint32_t linenum = task->job().linum;
-    schedule(std::make_shared<Task>([this, task = std::move(task), t, dt]() mutable {
-        if (task->run(name_.c_str()))
-                reschedule(std::move(task), t + dt, dt);
-    }, filename, linenum),
+    schedule(std::make_shared<Task>(
+                 [this, task = std::move(task), t, dt]() mutable {
+                     if (task->run(name_.c_str()))
+                         reschedule(std::move(task), t + dt, dt);
+                 },
+                 filename,
+                 linenum),
              t);
 }
 
 void
 ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
 {
-    const char* filename =  task->job().filename;
+    const char* filename = task->job().filename;
     uint32_t linenum = task->job().linum;
     std::lock_guard lock(jobLock_);
-    jobs_[t].emplace_back([task = std::move(task), this] { task->run(name_.c_str()); },
-                            filename, linenum);
+    jobs_[t].emplace_back([task = std::move(task), this] { task->run(name_.c_str()); }, filename, linenum);
     cv_.notify_all();
 }
 

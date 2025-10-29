@@ -24,9 +24,11 @@
 #include "scheduled_executor.h"
 #include <opendht/rng.h>
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class SchedulerTest : public CppUnit::TestFixture {
+class SchedulerTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "scheduler"; }
 
@@ -53,10 +55,10 @@ SchedulerTest::schedulerTest()
     std::atomic_uint64_t taskRun {0};
     std::atomic_uint64_t result {0};
 
-    auto task = [&]{
+    auto task = [&] {
         auto rng = dht::crypto::getSeededRandomEngine();
         uint64_t sum {0};
-        for (uint64_t i=0; i<64 * N; i++)
+        for (uint64_t i = 0; i < 64 * N; i++)
             sum += rng();
         result += sum;
         std::lock_guard l(mtx);
@@ -65,25 +67,22 @@ SchedulerTest::schedulerTest()
     };
     CPPUNIT_ASSERT(taskRun == 0);
 
-    for (unsigned i=0; i<N; i++)
+    for (unsigned i = 0; i < N; i++)
         executor.run(task);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{
-        return taskRun == N;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return taskRun == N; }));
 
-    for (unsigned i=0; i<N; i++)
+    for (unsigned i = 0; i < N; i++)
         executor.scheduleIn(task, std::chrono::microseconds(1));
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&]{
-        return taskRun == 2 * N;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return taskRun == 2 * N; }));
 
-    for (unsigned i=0; i<N; i++)
+    for (unsigned i = 0; i < N; i++)
         executor.scheduleIn(task, std::chrono::microseconds(1));
     executor.stop();
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::SchedulerTest::name());

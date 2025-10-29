@@ -33,19 +33,11 @@ public:
         registerAdaptor();
     }
 
-    ~DBusInstance()
-    {
-        unregisterAdaptor();
-    }
+    ~DBusInstance() { unregisterAdaptor(); }
 
-    void
-    Register(const int32_t& /*pid*/, const std::string& /*name*/)
-    {
-        ++count_;
-    }
+    void Register(const int32_t& /*pid*/, const std::string& /*name*/) { ++count_; }
 
-    void
-    Unregister(const int32_t& /*pid*/)
+    void Unregister(const int32_t& /*pid*/)
     {
         --count_;
 

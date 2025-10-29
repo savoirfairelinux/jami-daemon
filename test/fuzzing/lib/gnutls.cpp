@@ -48,7 +48,7 @@ print_channel_msg(const ChanneledMessage& msg, const char* direction, bool mutat
     fprintf(redirect_to,
             "\n"
             "================================================================================\n"
-            "#:direction %s #:mut %d #:transport TLS #:channel %" PRIu16 " #:ID %" PRIu64   "\n"
+            "#:direction %s #:mut %d #:transport TLS #:channel %" PRIu16 " #:ID %" PRIu64 "\n"
             "--------------------------------------------------------------------------------\n"
             "%.*s\n"
             "================================================================================\n",
@@ -72,8 +72,7 @@ register_channel(const std::string& name, uint16_t channel)
 }
 #endif
 
-__weak
-bool
+__weak bool
 mutate_gnutls_record_send(ChanneledMessage& msg)
 {
     (void) msg;
@@ -81,8 +80,7 @@ mutate_gnutls_record_send(ChanneledMessage& msg)
     return false;
 }
 
-__weak
-bool
+__weak bool
 mutate_gnutls_record_recv(ChanneledMessage& msg)
 {
     (void) msg;
@@ -90,8 +88,7 @@ mutate_gnutls_record_recv(ChanneledMessage& msg)
     return false;
 }
 
-__weak
-void
+__weak void
 pack_gnutls_record_recv(msgpack::sbuffer& buf, const ChanneledMessage& msg)
 {
     msgpack::packer<msgpack::sbuffer> pk(&buf);
@@ -102,8 +99,7 @@ pack_gnutls_record_recv(msgpack::sbuffer& buf, const ChanneledMessage& msg)
     pk.pack_bin_body((const char*) msg.data.data(), msg.data.size());
 }
 
-__weak
-void
+__weak void
 pack_gnutls_record_send(msgpack::sbuffer& buf, const ChanneledMessage& msg)
 {
     msgpack::packer<msgpack::sbuffer> pk(&buf);
@@ -117,7 +113,6 @@ pack_gnutls_record_send(msgpack::sbuffer& buf, const ChanneledMessage& msg)
 BEGIN_WRAPPER(ssize_t, gnutls_record_send, gnutls_session_t session, const void* data, size_t data_size)
 {
     if (data_size > 0) {
-
         msgpack::unpacker pac {};
         msgpack::object_handle oh;
 
@@ -128,32 +123,31 @@ BEGIN_WRAPPER(ssize_t, gnutls_record_send, gnutls_session_t session, const void*
         pac.buffer_consumed(data_size);
 
         if (pac.next(oh)) {
+            try {
+                auto msg = oh.get().as<ChanneledMessage>();
 
-                try {
-                        auto msg = oh.get().as<ChanneledMessage>();
+                size_t ID = packet_ID++;
 
-                        size_t ID = packet_ID++;
+                bool mutated;
 
-                        bool mutated;
+                print_channel_msg(msg, "TX", false, ID);
 
-                        print_channel_msg(msg, "TX", false, ID);
+                mutated = mutate_gnutls_record_send(msg);
 
-                        mutated = mutate_gnutls_record_send(msg);
+                if (not mutated) {
+                    goto no_mut;
+                }
 
-                        if (not mutated) {
-                                goto no_mut;
+                print_channel_msg(msg, "TX", true, ID);
 
-                        }
+                msgpack::sbuffer buf(16 + msg.data.size());
 
-                        print_channel_msg(msg, "TX", true, ID);
+                pack_gnutls_record_send(buf, msg);
 
-                        msgpack::sbuffer buf(16 +msg.data.size());
+                return this_func(session, buf.data(), buf.size());
 
-                        pack_gnutls_record_send(buf, msg);
-
-                        return this_func(session, buf.data(), buf.size());
-
-                } catch (...) { }
+            } catch (...) {
+            }
         }
     }
 
@@ -167,7 +161,6 @@ BEGIN_WRAPPER(ssize_t, gnutls_record_recv, gnutls_session_t session, void* data,
     ssize_t ret = this_func(session, data, data_size);
 
     if (ret > 0) {
-
         msgpack::unpacker pac {};
         msgpack::object_handle oh;
 
@@ -178,7 +171,6 @@ BEGIN_WRAPPER(ssize_t, gnutls_record_recv, gnutls_session_t session, void* data,
         pac.buffer_consumed(ret);
 
         if (pac.next(oh)) {
-
             auto msg = oh.get().as<ChanneledMessage>();
 
             size_t ID = packet_ID++;
@@ -231,38 +223,35 @@ no_mut:
 }
 END_WRAPPER();
 
-__weak
-void
+__weak void
 post_gnutls_init_hook(gnutls_session_t session)
 {
-    (void)session;
+    (void) session;
 }
 
-__weak
-void
+__weak void
 pre_gnutls_deinit_hook(gnutls_session_t session)
 {
-    (void)session;
+    (void) session;
 }
 
-BEGIN_WRAPPER(int, gnutls_init, gnutls_session_t * session, unsigned int flags)
+BEGIN_WRAPPER(int, gnutls_init, gnutls_session_t* session, unsigned int flags)
 {
-        int ret;
+    int ret;
 
-        ret = this_func(session, flags);
+    ret = this_func(session, flags);
 
-        post_gnutls_init_hook(*session);
+    post_gnutls_init_hook(*session);
 
-        return ret;
+    return ret;
 }
 END_WRAPPER();
 
-BEGIN_WRAPPER(ssize_t, gnutls_record_recv_seq, gnutls_session_t session, void * data, size_t data_size, unsigned char * seq)
+BEGIN_WRAPPER(ssize_t, gnutls_record_recv_seq, gnutls_session_t session, void* data, size_t data_size, unsigned char* seq)
 {
     ssize_t ret = this_func(session, data, data_size, seq);
 
     if (ret > 0) {
-
         msgpack::unpacker pac {};
         msgpack::object_handle oh;
 
@@ -273,7 +262,6 @@ BEGIN_WRAPPER(ssize_t, gnutls_record_recv_seq, gnutls_session_t session, void * 
         pac.buffer_consumed(ret);
 
         if (pac.next(oh)) {
-
             auto msg = oh.get().as<ChanneledMessage>();
 
             size_t ID = packet_ID++;

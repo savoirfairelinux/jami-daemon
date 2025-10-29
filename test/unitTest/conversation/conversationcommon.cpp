@@ -50,8 +50,7 @@ addVote(std::shared_ptr<JamiAccount> account,
         const std::string& content)
 {
     ConversationRepository::DISABLE_RESET = true;
-    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
-                    / "conversations" / convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID() / "conversations" / convId;
     auto voteDirectory = repoPath / "votes" / "members";
     auto voteFile = voteDirectory / votedUri;
     if (!dhtnet::fileutils::recursive_mkdir(voteDirectory, 0700)) {
@@ -72,16 +71,12 @@ addVote(std::shared_ptr<JamiAccount> account,
 }
 
 void
-simulateRemoval(std::shared_ptr<JamiAccount> account,
-                const std::string& convId,
-                const std::string& votedUri)
+simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId, const std::string& votedUri)
 {
     ConversationRepository::DISABLE_RESET = true;
-    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
-                    / "conversations" / convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID() / "conversations" / convId;
     auto memberFile = repoPath / "members" / (votedUri + ".crt");
-    auto bannedFile = repoPath / "banned" / "members"
-                      / (votedUri + ".crt");
+    auto bannedFile = repoPath / "banned" / "members" / (votedUri + ".crt");
     std::rename(memberFile.c_str(), bannedFile.c_str());
 
     git_repository* repo = nullptr;
@@ -107,10 +102,7 @@ simulateRemoval(std::shared_ptr<JamiAccount> account,
     json["type"] = "member";
     cr.commitMessage(json::toString(json));
 
-    libjami::sendMessage(account->getAccountID(),
-                       convId,
-                       "trigger the fake history to be pulled"s,
-                       "");
+    libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
 }
 
 void
@@ -120,8 +112,7 @@ addFile(std::shared_ptr<JamiAccount> account,
         const std::string& content)
 {
     ConversationRepository::DISABLE_RESET = true;
-    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
-                    / "conversations" / convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID() / "conversations" / convId;
     // Add file
     auto p = std::filesystem::path(fileutils::getFullPath(repoPath, relativePath));
     dhtnet::fileutils::recursive_mkdir(p.parent_path());
@@ -151,8 +142,7 @@ void
 addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
 {
     ConversationRepository::DISABLE_RESET = true;
-    auto repoPath = fileutils::get_data_dir() / account->getAccountID()
-                    / "conversations" / convId;
+    auto repoPath = fileutils::get_data_dir() / account->getAccountID() / "conversations" / convId;
 
     git_repository* repo = nullptr;
     if (git_repository_open(&repo, repoPath.c_str()) != 0)
@@ -237,14 +227,13 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     GitCommit head_commit {head_ptr, git_commit_free};
 
     git_buf to_sign = {};
-#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 && \
-    (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
+#if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
+    && (LIBGIT2_VER_REVISION == 0 || LIBGIT2_VER_REVISION == 1 || LIBGIT2_VER_REVISION == 3)
     git_commit* const head_ref[1] = {head_commit.get()};
 #else
     const git_commit* head_ref[1] = {head_commit.get()};
 #endif
-    if (git_commit_create_buffer(
-            &to_sign, repo, sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0])
+    if (git_commit_create_buffer(&to_sign, repo, sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0])
         < 0) {
         JAMI_ERROR("Unable to create commit buffer");
         return {};
@@ -254,12 +243,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
     auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
     auto signed_buf = account->identity().first->sign(to_sign_vec);
     std::string signed_str = base64::encode(signed_buf);
-    if (git_commit_create_with_signature(&commit_id,
-                                         repo,
-                                         to_sign.ptr,
-                                         signed_str.c_str(),
-                                         "signature")
-        < 0) {
+    if (git_commit_create_with_signature(&commit_id, repo, to_sign.ptr, signed_str.c_str(), "signature") < 0) {
         const git_error* err = giterr_last();
         if (err)
             JAMI_ERROR("Unable to sign commit: {}", err->message);

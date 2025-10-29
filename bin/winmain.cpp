@@ -42,35 +42,34 @@ bool loop = true;
 static void
 print_title()
 {
-    std::cout
-        << "Jami Core " << libjami::version()
-        << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2025" << std::endl
-        << "https://jami.net/" << std::endl
+    std::cout << "Jami Core " << libjami::version() << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2025"
+              << std::endl
+              << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
-        << "[Video support enabled]" << std::endl
+              << "[Video support enabled]" << std::endl
 #endif
 #ifdef ENABLE_PLUGIN
-        << "[Plugins support enabled]" << std::endl
+              << "[Plugins support enabled]" << std::endl
 #endif
-        << std::endl;
+              << std::endl;
 }
 
 static void
 print_usage()
 {
-    std::cout << std::endl <<
-    "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
-    "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
-    "-p, --persistent \t- Stay alive after client quits" << std::endl <<
-    "--auto-answer \t- Force automatic answer to incoming calls" << std::endl <<
-    "-h, --help \t- Print help" << std::endl;
+    std::cout << std::endl
+              << "-c, --console \t- Log in console (instead of syslog)" << std::endl
+              << "-d, --debug \t- Debug mode (more verbose)" << std::endl
+              << "-p, --persistent \t- Stay alive after client quits" << std::endl
+              << "--auto-answer \t- Force automatic answer to incoming calls" << std::endl
+              << "-h, --help \t- Print help" << std::endl;
 }
 
 // Parse command line arguments, setting debug options or printing a help
 // message accordingly.
 // returns true if we should quit (i.e. help was printed), false otherwise
 static bool
-parse_args(int argc, char *argv[], bool& persistent)
+parse_args(int argc, char* argv[], bool& persistent)
 {
     int consoleFlag = false;
     int debugFlag = false;
@@ -100,29 +99,29 @@ parse_args(int argc, char *argv[], bool& persistent)
             break;
 
         switch (c) {
-            case 'd':
-                debugFlag = true;
-                break;
+        case 'd':
+            debugFlag = true;
+            break;
 
-            case 'c':
-                consoleFlag = true;
-                break;
+        case 'c':
+            consoleFlag = true;
+            break;
 
-            case 'p':
-                persistent = true;
-                break;
+        case 'p':
+            persistent = true;
+            break;
 
-            case 'h':
-            case '?':
-                helpFlag = true;
-                break;
+        case 'h':
+        case '?':
+            helpFlag = true;
+            break;
 
-            case 'v':
-                versionFlag = true;
-                break;
+        case 'v':
+            versionFlag = true;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 
@@ -149,8 +148,7 @@ parse_args(int argc, char *argv[], bool& persistent)
 }
 
 void
-IncomingCall(const std::string& accountId,
-    const std::string& callId, const std::string& message)
+IncomingCall(const std::string& accountId, const std::string& callId, const std::string& message)
 {
     (void) accountId;
     (void) message;
@@ -169,8 +167,8 @@ run()
     libjami::init(static_cast<libjami::InitFlag>(initFlags));
 
     std::map<std::string, SharedCallback> callHandlers;
-    callHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>
-        (std::bind(&IncomingCall, _1, _2, _3)));
+    callHandlers.insert(
+        libjami::exportable_callback<libjami::CallSignal::IncomingCall>(std::bind(&IncomingCall, _1, _2, _3)));
 
     registerSignalHandlers(callHandlers);
 
@@ -195,8 +193,7 @@ interrupt()
 static void
 signal_handler(int code)
 {
-    std::cerr << "Caught signal " << code
-              << ", terminating..." << std::endl;
+    std::cerr << "Caught signal " << code << ", terminating..." << std::endl;
     // Unset signal handlers
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
@@ -205,7 +202,7 @@ signal_handler(int code)
 }
 
 int
-main(int argc, char *argv [])
+main(int argc, char* argv[])
 {
     // Set the program's directory path as the resource directory path.
     std::filesystem::path programPath(argv[0]);

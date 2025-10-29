@@ -65,8 +65,8 @@ ConfProtocolParser::parse()
 void
 ConfProtocolParser::parseV0()
 {
-    if (!checkAuthorization_ || !raiseHandUri_ || !setLayout_ || !setActiveParticipant_
-        || !muteParticipant_ || !kickParticipant_) {
+    if (!checkAuthorization_ || !raiseHandUri_ || !setLayout_ || !setActiveParticipant_ || !muteParticipant_
+        || !kickParticipant_) {
         JAMI_ERR() << "Missing methods for ConfProtocolParser";
         return;
     }
@@ -105,8 +105,8 @@ ConfProtocolParser::parseV0()
 void
 ConfProtocolParser::parseV1()
 {
-    if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !hangupParticipant_
-        || !muteStreamAudio_ || !setActiveStream_) {
+    if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !hangupParticipant_ || !muteStreamAudio_
+        || !setActiveStream_) {
         JAMI_ERR() << "Missing methods for ConfProtocolParser";
         return;
     }
@@ -138,19 +138,16 @@ ConfProtocolParser::parseV1()
                         hangupParticipant_(accountUri, deviceId);
                     }
                     if (deviceValue.isMember(ProtocolKeys::MEDIAS)) {
-                        for (Json::Value::const_iterator itrm = accValue[ProtocolKeys::MEDIAS]
-                                                                    .begin();
+                        for (Json::Value::const_iterator itrm = accValue[ProtocolKeys::MEDIAS].begin();
                              itrm != accValue[ProtocolKeys::MEDIAS].end();
                              itrm++) {
                             auto streamId = itrm.key().asString();
                             auto mediaVal = *itrm;
                             if (mediaVal.isMember(ProtocolKeys::VOICEACTIVITY)) {
-                                voiceActivity_(streamId,
-                                               mediaVal[ProtocolKeys::VOICEACTIVITY].asBool());
+                                voiceActivity_(streamId, mediaVal[ProtocolKeys::VOICEACTIVITY].asBool());
                             }
                             if (isPeerModerator) {
-                                if (mediaVal.isMember(ProtocolKeys::MUTEVIDEO)
-                                    && !muteStreamVideo_) {
+                                if (mediaVal.isMember(ProtocolKeys::MUTEVIDEO) && !muteStreamVideo_) {
                                     // Note: For now, it's not implemented so not set
                                     muteStreamVideo_(accountUri,
                                                      deviceId,
@@ -164,8 +161,7 @@ ConfProtocolParser::parseV1()
                                                      mediaVal[ProtocolKeys::MUTEAUDIO].asBool());
                                 }
                                 if (mediaVal.isMember(ProtocolKeys::ACTIVE)) {
-                                    setActiveStream_(streamId,
-                                                     mediaVal[ProtocolKeys::ACTIVE].asBool());
+                                    setActiveStream_(streamId, mediaVal[ProtocolKeys::ACTIVE].asBool());
                                 }
                             }
                         }

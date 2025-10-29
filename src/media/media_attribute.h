@@ -46,18 +46,16 @@ public:
 
     MediaAttribute(const libjami::MediaMap& mediaMap, bool secure);
 
-    static std::vector<MediaAttribute> buildMediaAttributesList(
-        const std::vector<libjami::MediaMap>& mediaList, bool secure);
+    static std::vector<MediaAttribute> buildMediaAttributesList(const std::vector<libjami::MediaMap>& mediaList,
+                                                                bool secure);
 
     static MediaType stringToMediaType(const std::string& mediaType);
 
     static std::pair<bool, MediaType> getMediaType(const libjami::MediaMap& map);
 
-    static std::pair<bool, bool> getBoolValue(const libjami::MediaMap& mediaMap,
-                                              const std::string& key);
+    static std::pair<bool, bool> getBoolValue(const libjami::MediaMap& mediaMap, const std::string& key);
 
-    static std::pair<bool, std::string> getStringValue(const libjami::MediaMap& mediaMap,
-                                                       const std::string& key);
+    static std::pair<bool, std::string> getStringValue(const libjami::MediaMap& mediaMap, const std::string& key);
 
     // Return true if at least one media has a matching type.
     static bool hasMediaType(const std::vector<MediaAttribute>& mediaList, MediaType type);
@@ -72,8 +70,7 @@ public:
     static libjami::MediaMap toMediaMap(const MediaAttribute& mediaAttr);
 
     // Serialize a vector of MediaAttribute to a vector of MediaMap
-    static std::vector<libjami::MediaMap> mediaAttributesToMediaMaps(
-        std::vector<MediaAttribute> mediaAttrList);
+    static std::vector<libjami::MediaMap> mediaAttributesToMediaMaps(std::vector<MediaAttribute> mediaAttrList);
 
     std::string toString(bool full = false) const;
 

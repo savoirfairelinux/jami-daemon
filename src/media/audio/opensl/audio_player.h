@@ -46,10 +46,7 @@ class AudioPlayer
     EngineCallback callback_ {};
 
 public:
-    explicit AudioPlayer(jami::AudioFormat sampleFormat,
-                         size_t bufSize,
-                         SLEngineItf engine,
-                         SLint32 streamType);
+    explicit AudioPlayer(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf engine, SLint32 streamType);
     ~AudioPlayer();
     NON_COPYABLE(AudioPlayer);
 

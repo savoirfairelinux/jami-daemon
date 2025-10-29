@@ -48,11 +48,12 @@ namespace debug {
 class Timer
 {
 public:
-    Timer(std::string_view name) : name_(name), start_(Clock::now()) {}
+    Timer(std::string_view name)
+        : name_(name)
+        , start_(Clock::now())
+    {}
 
-    ~Timer() {
-        print("end"sv);
-    }
+    ~Timer() { print("end"sv); }
 
     template<class Period = std::ratio<1>>
     uint64_t getDuration() const
@@ -61,7 +62,8 @@ public:
         return diff.count();
     }
 
-    void print(std::string_view action) const {
+    void print(std::string_view action) const
+    {
         JAMI_LOG("{}: {} after {}", name_, action, dht::print_duration(Clock::now() - start_));
     }
 
@@ -81,10 +83,14 @@ class StatsTimer
 {
     using time_point = std::chrono::time_point<Clock>;
     using duration = Clock::duration;
-public:
-    StatsTimer() : start_(Clock::now()) {}
 
-    ~StatsTimer() {
+public:
+    StatsTimer()
+        : start_(Clock::now())
+    {}
+
+    ~StatsTimer()
+    {
         auto duration = Clock::now() - start_;
         auto [avg, count] = inc(duration);
         JAMI_LOG("{}: end after {}", Tag::name(), dht::print_duration(duration));
@@ -92,13 +98,15 @@ public:
             JAMI_LOG("{}: Average duration: {} ({})", Tag::name(), dht::print_duration(avg), count);
         }
     }
+
 private:
     time_point start_;
     static inline std::mutex mutex_;
     static inline duration total_duration_ {};
     static inline duration::rep count_ {0};
 
-    std::pair<duration, duration::rep> inc(duration dt) {
+    std::pair<duration, duration::rep> inc(duration dt)
+    {
         std::lock_guard lock(mutex_);
         total_duration_ += dt;
         count_++;
@@ -107,49 +115,57 @@ private:
 };
 
 #define STATS_TIMER(tag) \
-    struct StatsTimerTag_##tag { \
-        static constexpr std::string_view name() { return #tag; } \
+    struct StatsTimerTag_##tag \
+    { \
+        static constexpr std::string_view name() \
+        { \
+            return #tag; \
+        } \
     }; \
     jami::debug::StatsTimer<StatsTimerTag_##tag> stats_timer_##tag
 
 /**
  * Audio logger. Writes a wav file from raw PCM or AVFrame. Helps debug what goes wrong with audio.
  */
-class WavWriter {
+class WavWriter
+{
 public:
     WavWriter(const char* filename, AVFrame* frame)
     {
-        JAMI_WARNING("WavWriter(): {} ({}, {})", filename, av_get_sample_fmt_name((AVSampleFormat)frame->format), frame->sample_rate);
+        JAMI_WARNING("WavWriter(): {} ({}, {})",
+                     filename,
+                     av_get_sample_fmt_name((AVSampleFormat) frame->format),
+                     frame->sample_rate);
         avformat_alloc_output_context2(&format_ctx_, nullptr, "wav", filename);
         if (!format_ctx_)
             throw std::runtime_error("Failed to allocate output format context");
 
         AVCodecID codec_id = AV_CODEC_ID_NONE;
         switch (frame->format) {
-            case AV_SAMPLE_FMT_U8:
-                codec_id = AV_CODEC_ID_PCM_U8;
-                break;
-            case AV_SAMPLE_FMT_S16:
-            case AV_SAMPLE_FMT_S16P:
-                codec_id = AV_CODEC_ID_PCM_S16LE;
-                break;
-            case AV_SAMPLE_FMT_S32:
-            case AV_SAMPLE_FMT_S32P:
-                codec_id = AV_CODEC_ID_PCM_S32LE;
-                break;
-            case AV_SAMPLE_FMT_S64:
-            case AV_SAMPLE_FMT_S64P:
-                codec_id = AV_CODEC_ID_PCM_S64LE;
-                break;
-            case AV_SAMPLE_FMT_FLT:
-            case AV_SAMPLE_FMT_FLTP:
-                codec_id = AV_CODEC_ID_PCM_F32LE;
-                break;
-            case AV_SAMPLE_FMT_DBL:
-                codec_id = AV_CODEC_ID_PCM_F64LE;
-                break;
-            default:
-                throw std::runtime_error("Unsupported audio format");
+        case AV_SAMPLE_FMT_U8:
+            codec_id = AV_CODEC_ID_PCM_U8;
+            break;
+        case AV_SAMPLE_FMT_S16:
+        case AV_SAMPLE_FMT_S16P:
+            codec_id = AV_CODEC_ID_PCM_S16LE;
+            break;
+        case AV_SAMPLE_FMT_S32:
+        case AV_SAMPLE_FMT_S32P:
+            codec_id = AV_CODEC_ID_PCM_S32LE;
+            break;
+        case AV_SAMPLE_FMT_S64:
+        case AV_SAMPLE_FMT_S64P:
+            codec_id = AV_CODEC_ID_PCM_S64LE;
+            break;
+        case AV_SAMPLE_FMT_FLT:
+        case AV_SAMPLE_FMT_FLTP:
+            codec_id = AV_CODEC_ID_PCM_F32LE;
+            break;
+        case AV_SAMPLE_FMT_DBL:
+            codec_id = AV_CODEC_ID_PCM_F64LE;
+            break;
+        default:
+            throw std::runtime_error("Unsupported audio format");
         }
 
         auto codec = avcodec_find_encoder(codec_id);
@@ -160,7 +176,7 @@ public:
         if (!codec_ctx_)
             throw std::runtime_error("Failed to allocate audio codec context");
 
-        codec_ctx_->sample_fmt = (AVSampleFormat)frame->format;
+        codec_ctx_->sample_fmt = (AVSampleFormat) frame->format;
         codec_ctx_->ch_layout = frame->ch_layout;
         codec_ctx_->sample_rate = frame->sample_rate;
         if (format_ctx_->oformat->flags & AVFMT_GLOBALHEADER)
@@ -185,12 +201,13 @@ public:
             throw std::runtime_error("Failed to write header to output file");
     }
 
-    void write(AVFrame* frame) {
+    void write(AVFrame* frame)
+    {
         int ret = avcodec_send_frame(codec_ctx_, frame);
         if (ret < 0)
             JAMI_ERROR("Error sending a frame to the encoder");
         while (ret >= 0) {
-            AVPacket *pkt = av_packet_alloc();
+            AVPacket* pkt = av_packet_alloc();
             ret = avcodec_receive_packet(codec_ctx_, pkt);
             if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
                 break;
@@ -201,7 +218,8 @@ public:
             pkt->stream_index = stream_->index;
             pkt->pts = lastPts;
             pkt->dts = lastPts;
-            lastPts += frame->nb_samples * (int64_t)stream_->time_base.den / (stream_->time_base.num * (int64_t)frame->sample_rate);
+            lastPts += frame->nb_samples * (int64_t) stream_->time_base.den
+                       / (stream_->time_base.num * (int64_t) frame->sample_rate);
             ret = av_write_frame(format_ctx_, pkt);
             if (ret < 0) {
                 JAMI_ERROR("Error while writing output packet");
@@ -211,7 +229,8 @@ public:
         }
     }
 
-    ~WavWriter() {
+    ~WavWriter()
+    {
         if (codec_ctx_) {
             avcodec_close(codec_ctx_);
             avcodec_free_context(&codec_ctx_);
@@ -223,6 +242,7 @@ public:
             avformat_free_context(format_ctx_);
         }
     }
+
 private:
     AVFormatContext* format_ctx_ {nullptr};
     AVCodecContext* codec_ctx_ {nullptr};

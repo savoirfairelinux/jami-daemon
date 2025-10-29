@@ -61,8 +61,7 @@ public:
     LinkDeviceTest()
     {
         // Init daemon
-        libjami::init(
-            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
             CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
     }
@@ -128,29 +127,20 @@ LinkDeviceTest::testCreateOldDevice()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     JAMI_DEBUG("[ut_linkdevice::{}] Registering handlers..", testTag);
     // Setup oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                JAMI_DEBUG("[ut_linkdevice::{}] cb -> VolatileDetailsChanged {}",
-                           testTag,
-                           accountId);
-                if (accountId == oldDeviceId) {
-                    auto daemonStatus = details.at(
-                        libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
-                    JAMI_DEBUG("[ut_linkdevice::{} {}] oldDevice: daemonStatus = {}",
-                               testTag,
-                               oldDeviceId,
-                               daemonStatus);
-                    if (daemonStatus == "true") {
-                        std::lock_guard lock(mtxOld);
-                        oldDeviceStarted = true;
-                        JAMI_DEBUG("[ut_linkdevice::{} {}] [OldDevice] Started old device.",
-                                   testTag,
-                                   accountId);
-                        cvOld.notify_one();
-                    }
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            JAMI_DEBUG("[ut_linkdevice::{}] cb -> VolatileDetailsChanged {}", testTag, accountId);
+            if (accountId == oldDeviceId) {
+                auto daemonStatus = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+                JAMI_DEBUG("[ut_linkdevice::{} {}] oldDevice: daemonStatus = {}", testTag, oldDeviceId, daemonStatus);
+                if (daemonStatus == "true") {
+                    std::lock_guard lock(mtxOld);
+                    oldDeviceStarted = true;
+                    JAMI_DEBUG("[ut_linkdevice::{} {}] [OldDevice] Started old device.", testTag, accountId);
+                    cvOld.notify_one();
                 }
-            }));
+            }
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
     JAMI_DEBUG("[ut_linkdevice::{}] Registered handlers.", testTag);
@@ -189,48 +179,35 @@ LinkDeviceTest::testQrConnection()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
 
     // Setup oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                if (accountId != oldDeviceId) {
-                    return;
-                }
-                auto daemonStatus = details.at(
-                    libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
-                if (daemonStatus == "true") {
-                    std::lock_guard lock(mtxOld);
-                    oldDeviceStarted = true;
-                    JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.",
-                               testTag,
-                               accountId);
-                    cvOld.notify_one();
-                }
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId != oldDeviceId) {
+                return;
+            }
+            auto daemonStatus = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+            if (daemonStatus == "true") {
+                std::lock_guard lock(mtxOld);
+                oldDeviceStarted = true;
+                JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.", testTag, accountId);
+                cvOld.notify_one();
+            }
+        }));
 
     // Monitor QR code generation
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-            [&](const std::string& accountId,
-                int status,
-                const std::map<std::string, std::string>& details) {
-                if (details.find("token") != details.end()) {
-                    std::lock_guard lock(mtxNew);
-                    qrInfo = details.at("token");
-                    JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}",
-                               testTag,
-                               qrInfo);
-                    CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
-                    cvNew.notify_one();
-                }
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+        [&](const std::string& accountId, int status, const std::map<std::string, std::string>& details) {
+            if (details.find("token") != details.end()) {
+                std::lock_guard lock(mtxNew);
+                qrInfo = details.at("token");
+                JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}", testTag, qrInfo);
+                CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
+                cvNew.notify_one();
+            }
+        }));
 
     // Monitor device linking progress
-    confHandlers.insert(libjami::exportable_callback<
-                        libjami::ConfigurationSignal::AddDeviceStateChanged>(
-        [&](const std::string& accountId,
-            uint32_t opId,
-            int status,
-            const std::map<std::string, std::string>& details) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+        [&](const std::string& accountId, uint32_t opId, int status, const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxOld);
             ++authSignalCount;
 
@@ -272,11 +249,10 @@ LinkDeviceTest::testQrConnection()
     } // Unlock mtxNew
 
     // Initiate device linking
-    JAMI_DEBUG(
-        "[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
-        testTag,
-        oldDeviceId,
-        qrInfo);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
+               testTag,
+               oldDeviceId,
+               qrInfo);
     libjami::addDevice(oldDeviceId, qrInfo);
 
     // Wait for connecting status
@@ -316,86 +292,72 @@ LinkDeviceTest::testExportNoPassword()
     // Signals
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     // Setup oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                if (accountId != oldDeviceId) {
-                    return;
-                }
-                JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
-                std::string daemonStatus = details.at(
-                    libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
-                if (daemonStatus == "true") {
-                    std::lock_guard lock(mtxOld);
-                    oldDeviceStarted = true;
-                    JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.",
-                               testTag,
-                               accountId);
-                    cvOld.notify_one();
-                }
-            }));
-    // Simulate user input on new device
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-            [&](const std::string& accountId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxNew);
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    authStartedOnNewDevice = true;
-                }
-
-                // Token available status
-                if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
-                    qrInfo = details.at("token");
-                    JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}",
-                               testTag,
-                               qrInfo);
-                    CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
-                }
-                cvNew.notify_one();
-            }));
-    // Simulate add device on oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-            [&](const std::string& accountId,
-                uint32_t opId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId != oldDeviceId) {
+                return;
+            }
+            JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
+            std::string daemonStatus = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+            if (daemonStatus == "true") {
                 std::lock_guard lock(mtxOld);
-                JAMI_DEBUG("[ut_linkdevice:{} {}] cb -> AddDeviceStateChanged", testTag, accountId);
-                ++authSignalCount;
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    authStartedOnOldDevice = true;
-                }
-                // Done status
-                if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
-                    auto errorIt = details.find("error");
-                    if (errorIt != details.end()
-                        && (!errorIt->second.empty() && errorIt->second != "none")) {
-                        // Error when link device
-                    } else {
-                        linkDeviceSuccessful = true;
-                    }
-                }
-                JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
+                oldDeviceStarted = true;
+                JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.", testTag, accountId);
                 cvOld.notify_one();
-            }));
+            }
+        }));
+    // Simulate user input on new device
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxNew);
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                authStartedOnNewDevice = true;
+            }
+
+            // Token available status
+            if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
+                qrInfo = details.at("token");
+                JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}", testTag, qrInfo);
+                CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
+            }
+            cvNew.notify_one();
+        }));
+    // Simulate add device on oldDevice
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+        [&](const std::string& accountId,
+            uint32_t opId,
+            uint8_t status,
+            const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxOld);
+            JAMI_DEBUG("[ut_linkdevice:{} {}] cb -> AddDeviceStateChanged", testTag, accountId);
+            ++authSignalCount;
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                authStartedOnOldDevice = true;
+            }
+            // Done status
+            if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
+                auto errorIt = details.find("error");
+                if (errorIt != details.end() && (!errorIt->second.empty() && errorIt->second != "none")) {
+                    // Error when link device
+                } else {
+                    linkDeviceSuccessful = true;
+                }
+            }
+            JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
+            cvOld.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
     JAMI_DEBUG("[ut_linkdevice:{}] Registered signal handlers.", testTag);
 
     JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
-    std::this_thread::sleep_for(
-        std::chrono::seconds(20)); // wait for the old device to be fully initialized
+    std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account.", testTag);
     std::map<std::string, std::string> detailsOldDevice = libjami::getAccountTemplate("RING");
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
-    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}",
-               testTag,
-               oldDeviceId);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}", testTag, oldDeviceId);
 
     { // Lock mtxOld
         std::unique_lock lkOld {mtxOld};
@@ -403,8 +365,7 @@ LinkDeviceTest::testExportNoPassword()
     } // Unlock mtxOld
 
     JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
-    std::this_thread::sleep_for(
-        std::chrono::seconds(20)); // wait for the old device to be fully initialized
+    std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
     auto detailsNewDevice = libjami::getAccountTemplate("RING");
@@ -417,11 +378,10 @@ LinkDeviceTest::testExportNoPassword()
         CPPUNIT_ASSERT(cvNew.wait_for(lkNew, 30s, [&] { return !qrInfo.empty(); }));
     } // Unlock mtxNew
 
-    JAMI_DEBUG(
-        "[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
-        testTag,
-        oldDeviceId,
-        qrInfo);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
+               testTag,
+               oldDeviceId,
+               qrInfo);
 
     // Initiate device linking
     operationId = libjami::addDevice(oldDeviceId, qrInfo);
@@ -460,8 +420,7 @@ LinkDeviceTest::testExportWithCorrectPassword()
 {
     const std::string testTag = "testExportWithCorrectPassword";
     const std::string correctPassword = "c2cvc3jmbafsw";
-    JAMI_DEBUG("\n[ut_linkdevice::{}] Starting ut_linkdevice::testExportWithCorrectPassword\n",
-               testTag);
+    JAMI_DEBUG("\n[ut_linkdevice::{}] Starting ut_linkdevice::testExportWithCorrectPassword\n", testTag);
 
     std::mutex mtxOld;
     std::condition_variable cvOld;
@@ -480,77 +439,66 @@ LinkDeviceTest::testExportWithCorrectPassword()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
 
     // Setup oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                if (accountId != oldDeviceId) {
-                    return;
-                }
-                JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
-                auto daemonStatus = details.at(
-                    libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
-                if (daemonStatus == "true") {
-                    std::lock_guard lock(mtxOld);
-                    oldDeviceStarted = true;
-                    JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.",
-                               testTag,
-                               accountId);
-                    cvOld.notify_one();
-                }
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId != oldDeviceId) {
+                return;
+            }
+            JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
+            auto daemonStatus = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+            if (daemonStatus == "true") {
+                std::lock_guard lock(mtxOld);
+                oldDeviceStarted = true;
+                JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.", testTag, accountId);
+                cvOld.notify_one();
+            }
+        }));
 
     // Monitor QR code generation
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-            [&](const std::string& accountId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxNew);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxNew);
 
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    authStartedOnNewDevice = true;
-                }
-                // Token available status
-                if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
-                    qrInfo = details.at("token");
-                    JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}",
-                               testTag,
-                               qrInfo);
-                    CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
-                }
-                cvNew.notify_one();
-            }));
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                authStartedOnNewDevice = true;
+            }
+            // Token available status
+            if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
+                qrInfo = details.at("token");
+                JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}", testTag, qrInfo);
+                CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
+            }
+            cvNew.notify_one();
+        }));
 
     // Monitor device linking progress
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-            [&](const std::string& accountId,
-                uint32_t opId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxOld);
-                ++authSignalCount;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+        [&](const std::string& accountId,
+            uint32_t opId,
+            uint8_t status,
+            const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxOld);
+            ++authSignalCount;
 
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    JAMI_DEBUG("[ut_linkdevice:{}] auth started on old device", testTag);
-                    authStartedOnOldDevice = true;
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                JAMI_DEBUG("[ut_linkdevice:{}] auth started on old device", testTag);
+                authStartedOnOldDevice = true;
+            }
+            // Done status
+            if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
+                auto errorIt = details.find("error");
+                if (errorIt != details.end() && (!errorIt->second.empty() && errorIt->second != "none")) {
+                    // error when link device
+                } else {
+                    linkDeviceSuccessful = true;
                 }
-                // Done status
-                if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
-                    auto errorIt = details.find("error");
-                    if (errorIt != details.end()
-                        && (!errorIt->second.empty() && errorIt->second != "none")) {
-                        // error when link device
-                    } else {
-                        linkDeviceSuccessful = true;
-                    }
-                }
+            }
 
-                JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
-                cvOld.notify_one();
-            }));
+            JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
+            cvOld.notify_one();
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
 
@@ -558,16 +506,13 @@ LinkDeviceTest::testExportWithCorrectPassword()
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account with password.", testTag);
     auto detailsOldDevice = libjami::getAccountTemplate("RING");
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD] = correctPassword;
-    detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME]
-        = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
+    detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME] = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
     detailsOldDevice[ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
     auto oldAcc = Manager::instance().getAccount<JamiAccount>(oldDeviceId);
 
     // Simulate user entering password credentials
-    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}",
-               testTag,
-               oldDeviceId);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}", testTag, oldDeviceId);
 
     { // Lock mtxOld
         std::unique_lock lkOld {mtxOld};
@@ -579,8 +524,7 @@ LinkDeviceTest::testExportWithCorrectPassword()
     CPPUNIT_ASSERT(oldAcc->isPasswordValid(correctPassword));
 
     JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
-    std::this_thread::sleep_for(
-        std::chrono::seconds(20)); // wait for the old device to be fully initialized
+    std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
     auto detailsNewDevice = libjami::getAccountTemplate("RING");
@@ -593,11 +537,10 @@ LinkDeviceTest::testExportWithCorrectPassword()
         CPPUNIT_ASSERT(cvNew.wait_for(lkNew, 30s, [&] { return !qrInfo.empty(); }));
     } // Unlock mtxNew
 
-    JAMI_DEBUG(
-        "[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
-        testTag,
-        oldDeviceId,
-        qrInfo);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
+               testTag,
+               oldDeviceId,
+               qrInfo);
 
     // Initiate device linking
     operationId = libjami::addDevice(oldDeviceId, qrInfo);
@@ -630,8 +573,7 @@ LinkDeviceTest::testExportWithCorrectPassword()
     // Cleanup
     wait_for_removal_of(oldDeviceId);
     wait_for_removal_of(newDeviceId);
-    JAMI_DEBUG("\n[ut_linkdevice::{}] Finished ut_linkdevice::testExportWithCorrectPassword\n",
-               testTag);
+    JAMI_DEBUG("\n[ut_linkdevice::{}] Finished ut_linkdevice::testExportWithCorrectPassword\n", testTag);
     libjami::unregisterSignalHandlers();
 }
 
@@ -641,8 +583,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     const std::string testTag = "testExportWithWrongPasswordOnce";
     const std::string correctPassword = "c2cvc3jmbafsw";
     const std::string wrongPassword = "bad_password";
-    JAMI_DEBUG("\n[ut_linkdevice::{}] Starting ut_linkdevice::testExportWithWrongPasswordOnce\n",
-               testTag);
+    JAMI_DEBUG("\n[ut_linkdevice::{}] Starting ut_linkdevice::testExportWithWrongPasswordOnce\n", testTag);
 
     std::mutex mtxOld;
     std::condition_variable cvOld;
@@ -662,80 +603,69 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
 
     // Setup oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                if (accountId != oldDeviceId) {
-                    return;
-                }
-                JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
-                auto daemonStatus = details.at(
-                    libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
-                if (daemonStatus == "true") {
-                    std::lock_guard lock(mtxOld);
-                    oldDeviceStarted = true;
-                    JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.",
-                               testTag,
-                               accountId);
-                    cvOld.notify_one();
-                }
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId != oldDeviceId) {
+                return;
+            }
+            JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
+            auto daemonStatus = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+            if (daemonStatus == "true") {
+                std::lock_guard lock(mtxOld);
+                oldDeviceStarted = true;
+                JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.", testTag, accountId);
+                cvOld.notify_one();
+            }
+        }));
 
     // Monitor QR code generation
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-            [&](const std::string& accountId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxNew);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxNew);
 
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    if (authStartedOnNewDevice) {
-                        passwordWasIncorrect = true;
-                    }
-                    authStartedOnNewDevice = true;
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                if (authStartedOnNewDevice) {
+                    passwordWasIncorrect = true;
                 }
-                // Token available status
-                if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
-                    qrInfo = details.at("token");
-                    JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}",
-                               testTag,
-                               qrInfo);
-                    CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
-                }
-                cvNew.notify_one();
-            }));
+                authStartedOnNewDevice = true;
+            }
+            // Token available status
+            if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
+                qrInfo = details.at("token");
+                JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}", testTag, qrInfo);
+                CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
+            }
+            cvNew.notify_one();
+        }));
 
     // Monitor device linking progress
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-            [&](const std::string& accountId,
-                uint32_t opId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxOld);
-                ++authSignalCount;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+        [&](const std::string& accountId,
+            uint32_t opId,
+            uint8_t status,
+            const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxOld);
+            ++authSignalCount;
 
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    JAMI_DEBUG("[ut_linkdevice:{}] auth started on old device", testTag);
-                    authStartedOnOldDevice = true;
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                JAMI_DEBUG("[ut_linkdevice:{}] auth started on old device", testTag);
+                authStartedOnOldDevice = true;
+            }
+            // Done status
+            if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
+                auto errorIt = details.find("error");
+                if (errorIt != details.end() && (!errorIt->second.empty() && errorIt->second != "none")) {
+                    // error when link device
+                } else {
+                    linkDeviceSuccessful = true;
                 }
-                // Done status
-                if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
-                    auto errorIt = details.find("error");
-                    if (errorIt != details.end()
-                        && (!errorIt->second.empty() && errorIt->second != "none")) {
-                        // error when link device
-                    } else {
-                        linkDeviceSuccessful = true;
-                    }
-                }
+            }
 
-                JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
-                cvOld.notify_one();
-            }));
+            JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
+            cvOld.notify_one();
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
 
@@ -743,16 +673,13 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account with password.", testTag);
     auto detailsOldDevice = libjami::getAccountTemplate("RING");
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD] = correctPassword;
-    detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME]
-        = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
+    detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME] = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
     detailsOldDevice[ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
     auto oldAcc = Manager::instance().getAccount<JamiAccount>(oldDeviceId);
 
     // Simulate user entering password credentials
-    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}",
-               testTag,
-               oldDeviceId);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}", testTag, oldDeviceId);
 
     { // Lock mtxOld
         std::unique_lock lkOld {mtxOld};
@@ -764,8 +691,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     CPPUNIT_ASSERT(oldAcc->isPasswordValid(correctPassword));
 
     JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
-    std::this_thread::sleep_for(
-        std::chrono::seconds(20)); // wait for the old device to be fully initialized
+    std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
     auto detailsNewDevice = libjami::getAccountTemplate("RING");
@@ -798,9 +724,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     } // Unlock mtxNew
 
     // Provide incorrect password authentication on new device
-    JAMI_DEBUG(
-        "[ut_linkdevice:{}] [NewDevice] Providing wrong password authentication on new device.",
-        testTag);
+    JAMI_DEBUG("[ut_linkdevice:{}] [NewDevice] Providing wrong password authentication on new device.", testTag);
 
     libjami::provideAccountAuthentication(newDeviceId, wrongPassword, "password");
 
@@ -811,9 +735,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     } // Unlock mtxOld
 
     // Provide correct password authentication on new device
-    JAMI_DEBUG(
-        "[ut_linkdevice:{}] [NewDevice] Providing correct password authentication on new device.",
-        testTag);
+    JAMI_DEBUG("[ut_linkdevice:{}] [NewDevice] Providing correct password authentication on new device.", testTag);
     libjami::provideAccountAuthentication(newDeviceId, correctPassword, "password");
 
     // Wait for successful linking
@@ -825,8 +747,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     // Cleanup
     wait_for_removal_of(oldDeviceId);
     wait_for_removal_of(newDeviceId);
-    JAMI_DEBUG("\n[ut_linkdevice::{}] Finished ut_linkdevice::testExportWithCorrectPassword\n",
-               testTag);
+    JAMI_DEBUG("\n[ut_linkdevice::{}] Finished ut_linkdevice::testExportWithCorrectPassword\n", testTag);
     libjami::unregisterSignalHandlers();
 }
 
@@ -836,9 +757,7 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
     const std::string testTag = "testExportWithWrongPasswordMaxAttempts";
     const std::string correctPassword = "c2cvc3jmbafsw";
     const std::string wrongPassword = "bad_password";
-    JAMI_DEBUG(
-        "\n[ut_linkdevice::{}] Starting ut_linkdevice::testExportWithWrongPasswordMaxAttempts\n",
-        testTag);
+    JAMI_DEBUG("\n[ut_linkdevice::{}] Starting ut_linkdevice::testExportWithWrongPasswordMaxAttempts\n", testTag);
 
     std::mutex mtxOld;
     std::condition_variable cvOld;
@@ -858,83 +777,73 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
 
     // Setup oldDevice
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
-                if (accountId != oldDeviceId) {
-                    return;
-                }
-                JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
-                auto daemonStatus = details.at(
-                    libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
-                if (daemonStatus == "true") {
-                    std::lock_guard lock(mtxOld);
-                    oldDeviceStarted = true;
-                    JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.",
-                               testTag,
-                               accountId);
-                    cvOld.notify_one();
-                }
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>& details) {
+            if (accountId != oldDeviceId) {
+                return;
+            }
+            JAMI_DEBUG("[ut_linkdevice:{}] cb -> VolatileDetailsChanged == MATCH ==", testTag);
+            auto daemonStatus = details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED);
+            if (daemonStatus == "true") {
+                std::lock_guard lock(mtxOld);
+                oldDeviceStarted = true;
+                JAMI_DEBUG("[ut_linkdevice:{} {}] [OldDevice] Started oldDevice.", testTag, accountId);
+                cvOld.notify_one();
+            }
+        }));
 
     // Monitor QR code generation
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-            [&](const std::string& accountId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxNew);
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
+        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxNew);
 
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    if (authStartedOnNewDevice) {
-                        passwordWasIncorrect = true;
-                    }
-                    authStartedOnNewDevice = true;
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                if (authStartedOnNewDevice) {
+                    passwordWasIncorrect = true;
                 }
+                authStartedOnNewDevice = true;
+            }
 
-                // Token available status
-                if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
-                    qrInfo = details.at("token");
-                    JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}",
-                               testTag,
-                               qrInfo);
-                    CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
-                }
-                cvNew.notify_one();
-            }));
+            // Token available status
+            if (status == static_cast<uint8_t>(DeviceAuthState::TOKEN_AVAILABLE)) {
+                qrInfo = details.at("token");
+                JAMI_DEBUG("[ut_linkdevice:{}] cb -> DeviceAuthStateChanged {}", testTag, qrInfo);
+                CPPUNIT_ASSERT(qrInfo.substr(0, 9) == "jami-auth");
+            }
+            cvNew.notify_one();
+        }));
 
     // Monitor device linking progress
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-            [&](const std::string& accountId,
-                uint32_t opId,
-                uint8_t status,
-                const std::map<std::string, std::string>& details) {
-                std::lock_guard lock(mtxOld);
-                ++authSignalCount;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+        [&](const std::string& accountId,
+            uint32_t opId,
+            uint8_t status,
+            const std::map<std::string, std::string>& details) {
+            std::lock_guard lock(mtxOld);
+            ++authSignalCount;
 
-                // Auth status
-                if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
-                    JAMI_DEBUG("[ut_linkdevice:{}] auth started on old device", testTag);
-                    authStartedOnOldDevice = true;
-                }
-                // Done status
-                if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
-                    auto errorIt = details.find("error");
-                    if (errorIt != details.end() && !errorIt->second.empty()) {
-                        if (errorIt->second == "auth_error") {
-                            passwordWasIncorrect = true;
-                            linkDeviceUnsuccessful = true;
-                        } else if (errorIt->second == "none") {
-                            linkDeviceUnsuccessful = false;
-                        }
+            // Auth status
+            if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
+                JAMI_DEBUG("[ut_linkdevice:{}] auth started on old device", testTag);
+                authStartedOnOldDevice = true;
+            }
+            // Done status
+            if (status == static_cast<uint8_t>(DeviceAuthState::DONE)) {
+                auto errorIt = details.find("error");
+                if (errorIt != details.end() && !errorIt->second.empty()) {
+                    if (errorIt->second == "auth_error") {
+                        passwordWasIncorrect = true;
+                        linkDeviceUnsuccessful = true;
+                    } else if (errorIt->second == "none") {
+                        linkDeviceUnsuccessful = false;
                     }
                 }
+            }
 
-                JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
-                cvOld.notify_one();
-            }));
+            JAMI_DEBUG("[ut_linkdevice:{}] authSignalCount = {}", testTag, authSignalCount);
+            cvOld.notify_one();
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
 
@@ -942,16 +851,13 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account with password.", testTag);
     auto detailsOldDevice = libjami::getAccountTemplate("RING");
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD] = correctPassword;
-    detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME]
-        = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
+    detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME] = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
     detailsOldDevice[ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
     auto oldAcc = Manager::instance().getAccount<JamiAccount>(oldDeviceId);
 
     // Simulate user entering password credentials
-    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}",
-               testTag,
-               oldDeviceId);
+    JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}", testTag, oldDeviceId);
 
     { // Lock mtxOld
         std::unique_lock lkOld {mtxOld};
@@ -963,8 +869,7 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
     CPPUNIT_ASSERT(oldAcc->isPasswordValid(correctPassword));
 
     JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
-    std::this_thread::sleep_for(
-        std::chrono::seconds(20)); // wait for the old device to be fully initialized
+    std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
     auto detailsNewDevice = libjami::getAccountTemplate("RING");
@@ -1027,8 +932,7 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
     // Cleanup
     wait_for_removal_of(oldDeviceId);
     wait_for_removal_of(newDeviceId);
-    JAMI_DEBUG("\n[ut_linkdevice::{}] Finished ut_linkdevice::testExportWithCorrectPassword\n",
-               testTag);
+    JAMI_DEBUG("\n[ut_linkdevice::{}] Finished ut_linkdevice::testExportWithCorrectPassword\n", testTag);
     libjami::unregisterSignalHandlers();
 }
 

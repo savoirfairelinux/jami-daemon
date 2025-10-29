@@ -35,7 +35,7 @@
 #include <regex>
 
 // uncomment to log PulseAudio sink and sources
-//#define PA_LOG_SINK_SOURCES
+// #define PA_LOG_SINK_SOURCES
 
 namespace jami {
 
@@ -71,13 +71,10 @@ PulseLayer::PulseLayer(AudioPreference& pref)
 
     PulseMainLoopLock lock(mainloop_.get());
 
-    std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(),
-                                                                 pa_proplist_free);
+    std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(), pa_proplist_free);
     pa_proplist_sets(pl.get(), PA_PROP_MEDIA_ROLE, "phone");
 
-    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_.get()),
-                                            PACKAGE_NAME,
-                                            pl.get());
+    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_.get()), PACKAGE_NAME, pl.get());
     if (!context_)
         throw std::runtime_error("Unable to create PulseAudio context");
 
@@ -217,18 +214,14 @@ PulseLayer::updateServerInfo()
 bool
 PulseLayer::inSinkList(const std::string& deviceName)
 {
-    return std::find_if(sinkList_.begin(),
-                        sinkList_.end(),
-                        PaDeviceInfos::NameComparator(deviceName))
+    return std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(deviceName))
            != sinkList_.end();
 }
 
 bool
 PulseLayer::inSourceList(const std::string& deviceName)
 {
-    return std::find_if(sourceList_.begin(),
-                        sourceList_.end(),
-                        PaDeviceInfos::NameComparator(deviceName))
+    return std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(deviceName))
            != sourceList_.end();
 }
 
@@ -282,14 +275,10 @@ PulseLayer::getAudioDeviceIndexByName(const std::string& name, AudioDeviceType t
     case AudioDeviceType::PLAYBACK:
     case AudioDeviceType::RINGTONE:
         return std::distance(sinkList_.begin(),
-                             std::find_if(sinkList_.begin(),
-                                          sinkList_.end(),
-                                          PaDeviceInfos::NameComparator(name)));
+                             std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(name)));
     case AudioDeviceType::CAPTURE:
         return std::distance(sourceList_.begin(),
-                             std::find_if(sourceList_.begin(),
-                                          sourceList_.end(),
-                                          PaDeviceInfos::NameComparator(name)));
+                             std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
     default:
         JAMI_ERR("Unexpected device type");
         return 0;
@@ -428,25 +417,16 @@ PulseLayer::startStream(AudioDeviceType type)
 {
     waitForDevices();
     PulseMainLoopLock lock(mainloop_.get());
-    bool ec = preference_.getEchoCanceller() == "system"
-              || preference_.getEchoCanceller() == "auto";
+    bool ec = preference_.getEchoCanceller() == "system" || preference_.getEchoCanceller() == "auto";
 
     // Create Streams
     if (type == AudioDeviceType::PLAYBACK) {
         if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-            createStream(playback_,
-                         type,
-                         *dev_infos,
-                         ec,
-                         std::bind(&PulseLayer::writeToSpeaker, this));
+            createStream(playback_, type, *dev_infos, ec, std::bind(&PulseLayer::writeToSpeaker, this));
         }
     } else if (type == AudioDeviceType::RINGTONE) {
         if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice()))
-            createStream(ringtone_,
-                         type,
-                         *dev_infos,
-                         false,
-                         std::bind(&PulseLayer::ringtoneToSpeaker, this));
+            createStream(ringtone_, type, *dev_infos, false, std::bind(&PulseLayer::ringtoneToSpeaker, this));
     } else if (type == AudioDeviceType::CAPTURE) {
         if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
             createStream(record_, type, *dev_infos, ec, std::bind(&PulseLayer::readFromMic, this));
@@ -503,9 +483,7 @@ PulseLayer::writeToSpeaker()
         if (not buff or isPlaybackMuted_)
             memset(data, 0, writableBytes);
         else
-            std::memcpy(data,
-                        buff->pointer()->data[0],
-                        buff->pointer()->nb_samples * playback_->frameSize());
+            std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
         pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
 }
@@ -554,9 +532,7 @@ PulseLayer::ringtoneToSpeaker()
         if (not buff or isRingtoneMuted_)
             memset(data, 0, writableBytes);
         else
-            std::memcpy(data,
-                        buff->pointer()->data[0],
-                        buff->pointer()->nb_samples * ringtone_->frameSize());
+            std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * ringtone_->frameSize());
         pa_stream_write(ringtone_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
 }
@@ -568,18 +544,13 @@ stripEchoSufix(const std::string& deviceName)
 }
 
 void
-PulseLayer::context_changed_callback(pa_context* c,
-                                     pa_subscription_event_type_t type,
-                                     uint32_t idx,
-                                     void* userdata)
+PulseLayer::context_changed_callback(pa_context* c, pa_subscription_event_type_t type, uint32_t idx, void* userdata)
 {
     static_cast<PulseLayer*>(userdata)->contextChanged(c, type, idx);
 }
 
 void
-PulseLayer::contextChanged(pa_context* c UNUSED,
-                           pa_subscription_event_type_t type,
-                           uint32_t idx UNUSED)
+PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t type, uint32_t idx UNUSED)
 {
     bool reset = false;
 
@@ -623,9 +594,7 @@ void
 PulseLayer::waitForDevices()
 {
     std::unique_lock lk(readyMtx_);
-    readyCv_.wait(lk, [this] {
-        return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
-    });
+    readyCv_.wait(lk, [this] { return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_); });
 }
 
 void
@@ -647,8 +616,7 @@ PulseLayer::waitForDeviceList()
         auto playbackInfo = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
         playbackDeviceChanged = playback_
                                 and (!playbackInfo->name.empty()
-                                     and playbackInfo->name
-                                             != stripEchoSufix(playback_->getDeviceName()));
+                                     and playbackInfo->name != stripEchoSufix(playback_->getDeviceName()));
 
         auto recordInfo = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
         recordDeviceChanged = record_
@@ -694,11 +662,9 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
     std::lock_guard lk(context->readyMtx_);
     context->defaultSink_ = {};
     context->defaultSource_ = {};
-    context->defaultAudioFormat_ = {
-        i->sample_spec.rate,
-        i->sample_spec.channels,
-        sampleFormatFromPulse(i->sample_spec.format)
-    };
+    context->defaultAudioFormat_ = {i->sample_spec.rate,
+                                    i->sample_spec.channels,
+                                    sampleFormatFromPulse(i->sample_spec.format)};
     {
         std::lock_guard lk(context->mutex_);
         context->hardwareFormatAvailable(context->defaultAudioFormat_);
@@ -714,10 +680,7 @@ PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* use
 }
 
 void
-PulseLayer::source_input_info_callback(pa_context* c UNUSED,
-                                       const pa_source_info* i,
-                                       int eol,
-                                       void* userdata)
+PulseLayer::source_input_info_callback(pa_context* c UNUSED, const pa_source_info* i, int eol, void* userdata)
 {
     PulseLayer* context = static_cast<PulseLayer*>(userdata);
 
@@ -760,10 +723,7 @@ PulseLayer::source_input_info_callback(pa_context* c UNUSED,
 }
 
 void
-PulseLayer::sink_input_info_callback(pa_context* c UNUSED,
-                                     const pa_sink_info* i,
-                                     int eol,
-                                     void* userdata)
+PulseLayer::sink_input_info_callback(pa_context* c UNUSED, const pa_sink_info* i, int eol, void* userdata)
 {
     PulseLayer* context = static_cast<PulseLayer*>(userdata);
     std::lock_guard lk(context->readyMtx_);
@@ -840,15 +800,13 @@ PulseLayer::getIndexCapture() const
 int
 PulseLayer::getIndexPlayback() const
 {
-    return getAudioDeviceIndexByName(preference_.getPulseDevicePlayback(),
-                                     AudioDeviceType::PLAYBACK);
+    return getAudioDeviceIndexByName(preference_.getPulseDevicePlayback(), AudioDeviceType::PLAYBACK);
 }
 
 int
 PulseLayer::getIndexRingtone() const
 {
-    return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(),
-                                     AudioDeviceType::RINGTONE);
+    return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), AudioDeviceType::RINGTONE);
 }
 
 std::string

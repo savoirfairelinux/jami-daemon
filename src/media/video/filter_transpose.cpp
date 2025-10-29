@@ -22,8 +22,7 @@ namespace jami {
 namespace video {
 
 std::unique_ptr<MediaFilter>
-getTransposeFilter(
-    int rotation, std::string inputName, int width, int height, int format, bool rescale)
+getTransposeFilter(int rotation, std::string inputName, int width, int height, int format, bool rescale)
 {
     JAMI_WARN("Rotation set to %d", rotation);
     if (rotation == 0) {
@@ -39,11 +38,9 @@ getTransposeFilter(
         ss << "transpose=2";
         if (rescale) {
             if (width > height)
-                ss << ", scale=w=-1:h=" << height << ", pad=" << width << ":" << height
-                   << ":(ow-iw)/2";
+                ss << ", scale=w=-1:h=" << height << ", pad=" << width << ":" << height << ":(ow-iw)/2";
             else
-                ss << ", scale=w=" << width << ":h=-1"
-                   << ", pad=" << width << ":" << height << ":0:(oh-ih)/2";
+                ss << ", scale=w=" << width << ":h=-1" << ", pad=" << width << ":" << height << ":0:(oh-ih)/2";
         }
         break;
     case 180:
@@ -55,11 +52,9 @@ getTransposeFilter(
         ss << "transpose=1";
         if (rescale) {
             if (width > height)
-                ss << ", scale=w=-1:h=" << height << ", pad=" << width << ":" << height
-                   << ":(ow-iw)/2";
+                ss << ", scale=w=-1:h=" << height << ", pad=" << width << ":" << height << ":(ow-iw)/2";
             else
-                ss << ", scale=w=" << width << ":h=-1"
-                   << ", pad=" << width << ":" << height << ":0:(oh-ih)/2";
+                ss << ", scale=w=" << width << ":h=-1" << ", pad=" << width << ":" << height << ":0:(oh-ih)/2";
         }
         break;
     default:

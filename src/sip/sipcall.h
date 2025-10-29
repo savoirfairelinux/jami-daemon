@@ -53,7 +53,7 @@ class IceSocket;
 namespace upnp {
 class Controller;
 }
-}
+} // namespace dhtnet
 
 namespace jami {
 
@@ -116,8 +116,7 @@ public:
     void answer(const std::vector<libjami::MediaMap>& mediaList) override;
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
-    void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList,
-                                  bool isRemote = false) override;
+    void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) override;
     void hangup(int reason) override;
     void refuse() override;
     void transfer(const std::string& to) override;
@@ -129,8 +128,7 @@ public:
     void carryingDTMFdigits(char code) override;
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) override;
     std::vector<libjami::MediaMap> currentMediaList() const override;
-    void sendTextMessage(const std::map<std::string, std::string>& messages,
-                         const std::string& from) override;
+    void sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from) override;
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
@@ -153,10 +151,7 @@ public:
 
     // TODO: cleanup this (used by conference + Call::getDetails() (and clients can use this))
     bool isCaptureDeviceMuted(const MediaType& mediaType) const override;
-    bool isSrtpEnabled() const
-    {
-        return srtpEnabled_;
-    }
+    bool isSrtpEnabled() const { return srtpEnabled_; }
     // End of override of Call class
 
     // Override of Recordable class
@@ -189,10 +184,7 @@ public:
     /**
      * Return the SDP's manager of this call
      */
-    Sdp& getSDP()
-    {
-        return *sdp_;
-    }
+    Sdp& getSDP() { return *sdp_; }
 
     // Implementation of events reported by SipVoipLink.
     /**
@@ -229,13 +221,9 @@ public:
 
     const std::string& getContactHeader() const;
 
-    void setSipTransport(const std::shared_ptr<SipTransport>& transport,
-                         const std::string& contactHdr = {});
+    void setSipTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contactHdr = {});
 
-    SipTransport* getTransport()
-    {
-        return sipTransport_.get();
-    }
+    SipTransport* getTransport() { return sipTransport_.get(); }
 
     void sendSIPInfo(std::string_view body, std::string_view subtype);
 
@@ -280,27 +268,18 @@ public:
     void setRotation(int streamIdx, int rotation);
 #endif
     // Get the list of current RTP sessions
-    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(
-        MediaType type = MediaType::MEDIA_ALL) const;
+    std::vector<std::shared_ptr<RtpSession>> getRtpSessionList(MediaType type = MediaType::MEDIA_ALL) const;
     static size_t getActiveMediaStreamCount(const std::vector<MediaAttribute>& mediaAttrList);
     void setActiveMediaStream(const std::string& accountUri,
                               const std::string& deviceId,
                               const std::string& streamId,
                               const bool& state);
 
-    void setPeerRegisteredName(const std::string& name)
-    {
-        peerRegisteredName_ = name;
-    }
+    void setPeerRegisteredName(const std::string& name) { peerRegisteredName_ = name; }
 
-    void setPeerUri(const std::string& peerUri)
-    {
-        peerUri_ = peerUri;
-    }
+    void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
-    std::string_view peerUri() const {
-        return peerUri_;
-    }
+    std::string_view peerUri() const { return peerUri_; }
 
     // Create a new ICE media session. If we already have an instance,
     // it will be destroyed first.
@@ -309,8 +288,7 @@ public:
     // Initialize the ICE session.
     // The initialization is performed asynchronously, i.e, the instance
     // may not be ready to use when this method returns.
-    bool initIceMediaTransport(bool master,
-                               std::optional<dhtnet::IceTransportOptions> options = std::nullopt);
+    bool initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOptions> options = std::nullopt);
 
     std::vector<std::string> getLocalIceCandidates(unsigned compId) const;
 
@@ -318,14 +296,8 @@ public:
 
     std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inviteSession_;
 
-    inline std::weak_ptr<const SIPCall> weak() const
-    {
-        return std::weak_ptr<const SIPCall>(shared());
-    }
-    inline std::weak_ptr<SIPCall> weak()
-    {
-        return std::weak_ptr<SIPCall>(shared());
-    }
+    inline std::weak_ptr<const SIPCall> weak() const { return std::weak_ptr<const SIPCall>(shared()); }
+    inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
     /**
      * Announce to the client that medias are successfully negotiated
      */
@@ -442,10 +414,7 @@ private:
     {
         return std::static_pointer_cast<const SIPCall>(shared_from_this());
     }
-    inline std::shared_ptr<SIPCall> shared()
-    {
-        return std::static_pointer_cast<SIPCall>(shared_from_this());
-    }
+    inline std::shared_ptr<SIPCall> shared() { return std::static_pointer_cast<SIPCall>(shared_from_this()); }
 
     // Peer's User-Agent.
     std::string peerUserAgent_ {};

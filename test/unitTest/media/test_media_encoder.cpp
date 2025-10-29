@@ -28,9 +28,11 @@
 
 #include "../../test_runner.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class MediaEncoderTest : public CppUnit::TestFixture {
+class MediaEncoderTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "media_encoder"; }
 
@@ -143,11 +145,9 @@ MediaEncoderTest::testMultiStream()
     const constexpr int width = 320;
     const constexpr int height = 240;
     auto vp8Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
-        getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO)
-    );
+        getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
     auto opusCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
-        getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO)
-    );
+        getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
     auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1, 30);
     auto a = MediaStream("a", AV_SAMPLE_FMT_S16, rational<int>(1, sampleRate), sampleRate, nbChannels, 960);
 
@@ -167,7 +167,7 @@ MediaEncoderTest::testMultiStream()
         AVFrame* audio = nullptr;
         AVFrame* video = nullptr;
         for (int i = 0; i < 25; ++i) {
-            audio = getAudioFrame(sampleRate, 0.02*sampleRate, nbChannels);
+            audio = getAudioFrame(sampleRate, 0.02 * sampleRate, nbChannels);
             CPPUNIT_ASSERT(audio);
             audio->pts = sentSamples;
             video = getVideoFrame(width, height, i);
@@ -187,6 +187,7 @@ MediaEncoderTest::testMultiStream()
     }
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::MediaEncoderTest::name());

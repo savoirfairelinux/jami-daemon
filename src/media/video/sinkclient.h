@@ -27,7 +27,7 @@
 #include <vector>
 #include <memory>
 
-//#define DEBUG_FPS
+// #define DEBUG_FPS
 
 namespace jami {
 class MediaFilter;
@@ -55,14 +55,10 @@ public:
 
     int getHeight() const noexcept { return height_; }
 
-    AVPixelFormat getPreferredFormat() const noexcept
-    {
-        return (AVPixelFormat) target_.preferredFormat;
-    }
+    AVPixelFormat getPreferredFormat() const noexcept { return (AVPixelFormat) target_.preferredFormat; }
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
-                const std::shared_ptr<jami::MediaFrame>&) override;
+    void update(Observable<std::shared_ptr<jami::MediaFrame>>*, const std::shared_ptr<jami::MediaFrame>&) override;
 
     bool start() noexcept;
     bool stop() noexcept;

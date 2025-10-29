@@ -30,9 +30,11 @@ extern "C" {
 
 #include "../../test_runner.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class MediaFrameTest : public CppUnit::TestFixture {
+class MediaFrameTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "media_frame"; }
 
@@ -48,7 +50,6 @@ private:
     CPPUNIT_TEST(testMix);
     CPPUNIT_TEST_SUITE_END();
 };
-
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFrameTest, MediaFrameTest::name());
 
@@ -117,6 +118,7 @@ MediaFrameTest::testMix()
     CPPUNIT_ASSERT(d2[6] == std::numeric_limits<int16_t>::max());
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::MediaFrameTest::name());

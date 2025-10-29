@@ -94,8 +94,7 @@ WebRTCAudioProcessor::enableEchoCancel(bool enabled)
     if (apm->echo_cancellation()->Enable(enabled) != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] Error enabling echo cancellation");
     }
-    if (apm->echo_cancellation()->set_suppression_level(
-            webrtc::EchoCancellation::SuppressionLevel::kHighSuppression)
+    if (apm->echo_cancellation()->set_suppression_level(webrtc::EchoCancellation::SuppressionLevel::kHighSuppression)
         != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] Error setting echo cancellation level");
     }
@@ -111,8 +110,7 @@ WebRTCAudioProcessor::enableVoiceActivityDetection(bool enabled)
     if (apm->voice_detection()->Enable(enabled) != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] Error enabling voice activation detection");
     }
-    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood)
-        != webrtcNoError) {
+    if (apm->voice_detection()->set_likelihood(webrtc::VoiceDetection::kVeryLowLikelihood) != webrtcNoError) {
         JAMI_ERROR("[webrtc-ap] Error setting voice detection likelihood");
     }
     // asserted to be 10 in voice_detection_impl.cc
@@ -164,7 +162,7 @@ WebRTCAudioProcessor::getProcessed()
 
     analogLevel_ = apm->gain_control()->stream_analog_level();
     record->has_voice = apm->voice_detection()->is_enabled()
-                           && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
+                        && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
     return record;
 }
 

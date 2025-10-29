@@ -62,8 +62,7 @@ public:
      * @param preferenceHandlerIdStr
      * @return Details map from the PreferenceHandler implementation
      */
-    std::map<std::string, std::string> getHandlerDetails(
-        const std::string& preferenceHandlerIdStr) const;
+    std::map<std::string, std::string> getHandlerDetails(const std::string& preferenceHandlerIdStr) const;
 
     /**
      * @brief Sets a preference.

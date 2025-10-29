@@ -43,8 +43,7 @@ public:
 
 private:
     using SpeexEchoStatePtr = std::unique_ptr<SpeexEchoState, void (*)(SpeexEchoState*)>;
-    using SpeexPreprocessStatePtr
-        = std::unique_ptr<SpeexPreprocessState, void (*)(SpeexPreprocessState*)>;
+    using SpeexPreprocessStatePtr = std::unique_ptr<SpeexPreprocessState, void (*)(SpeexPreprocessState*)>;
 
     // multichannel, one for the entire audio processor
     SpeexEchoStatePtr echoState;

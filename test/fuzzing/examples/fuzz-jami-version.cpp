@@ -38,44 +38,41 @@ struct VersionMsg
     MSGPACK_DEFINE_MAP(v)
 };
 
-__attribute__((constructor))
-static void
+__attribute__((constructor)) static void
 init(void)
 {
-        std::thread([&] {
+    std::thread([&] {
+        msgpack::sbuffer buffer(8);
+        {
+            msgpack::packer<msgpack::sbuffer> pk(&buffer);
+            pk.pack(VersionMsg {rand()});
+        }
 
-                msgpack::sbuffer buffer(8);
-                {
-                    msgpack::packer<msgpack::sbuffer> pk(&buffer);
-                    pk.pack(VersionMsg {rand()});
-                }
+        msgpack::sbuffer buffer2(16 + buffer.size());
+        {
+            msgpack::packer<msgpack::sbuffer> pk(&buffer2);
+            pk.pack_array(2);
+            pk.pack(jami::PROTOCOL_CHANNEL);
+            pk.pack_bin(buffer2.size());
+            pk.pack_bin_body(buffer2.data(), buffer2.size());
+        }
 
-                msgpack::sbuffer buffer2(16 + buffer.size());
-                {
-                        msgpack::packer<msgpack::sbuffer> pk(&buffer2);
-                        pk.pack_array(2);
-                        pk.pack(jami::PROTOCOL_CHANNEL);
-                        pk.pack_bin(buffer2.size());
-                        pk.pack_bin_body(buffer2.data(), buffer2.size());
-                }
+        std::unique_lock lock(worker_lock);
 
-                std::unique_lock lock(worker_lock);
+        cv.wait(lock);
 
-                cv.wait(lock);
-
-                while (true) {
-                    gnutls_record_send(captured_session, buffer2.data(), buffer2.size());
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                }
-
-        }).detach();
+        while (true) {
+            gnutls_record_send(captured_session, buffer2.data(), buffer2.size());
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+    }).detach();
 }
 
 void
 post_gnutls_init_hook(const gnutls_session_t session)
 {
     if (nullptr == captured_session) {
-            captured_session = session;
-            cv.notify_one();
+        captured_session = session;
+        cv.notify_one();
     }
 }

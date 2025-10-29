@@ -35,7 +35,8 @@ Tone::Tone(std::string_view definition, unsigned int sampleRate, AVSampleFormat 
     genBuffer(definition); // allocate memory with definition parameter
 }
 
-struct ParsedDefinition {
+struct ParsedDefinition
+{
     unsigned total_samples;
     std::vector<std::tuple<unsigned, unsigned, unsigned>> frequencies;
 };
@@ -50,7 +51,7 @@ parseDefinition(std::string_view definition, unsigned sampleRate)
     while (getline_full(definition, s, ',')) {
         // Sample string: "350+440" or "350+440/2000,244+655/2000"
         unsigned low, high, time;
-        size_t count;  // number of int for one sequence
+        size_t count; // number of int for one sequence
 
         // The 1st frequency is before the first + or the /
         size_t pos_plus = s.find('+');
@@ -128,7 +129,7 @@ Tone::genSin(AVFrame* buffer, size_t outPos, unsigned nb_samples, unsigned lowFr
             ptr[t] = (sin(t * dx_h) + sin(t * dx_l)) * DATA_AMPLITUDE_FLT;
         }
     } else {
-        JAMI_ERROR("Unsupported sample format: {}", av_get_sample_fmt_name((AVSampleFormat)buffer->format));
+        JAMI_ERROR("Unsupported sample format: {}", av_get_sample_fmt_name((AVSampleFormat) buffer->format));
     }
 }
 

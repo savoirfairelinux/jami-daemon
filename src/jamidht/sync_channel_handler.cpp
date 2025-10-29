@@ -21,8 +21,7 @@ static constexpr const char SYNC_SCHEME[] {"sync://"};
 
 namespace jami {
 
-SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                       dhtnet::ConnectionManager& cm)
+SyncChannelHandler::SyncChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -46,8 +45,7 @@ SyncChannelHandler::connect(const DeviceId& deviceId,
 }
 
 bool
-SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                              const std::string& /* name */)
+SyncChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& /* name */)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
@@ -65,9 +63,7 @@ SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cer
         return;
     auto deviceId = channel->deviceId();
     if (auto sm = acc->syncModule())
-        sm->cacheSyncConnection(std::move(channel),
-                                cert->issuer->getId().toString(),
-                                cert->getLongId());
+        sm->cacheSyncConnection(std::move(channel), cert->issuer->getId().toString(), cert->getLongId());
     dht::ThreadPool::io().run([account = account_, deviceId = deviceId.toString()]() {
         if (auto acc = account.lock())
             acc->sendProfile("", acc->getUsername(), deviceId);

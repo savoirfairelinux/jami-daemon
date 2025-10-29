@@ -94,8 +94,7 @@ validateCertificate(const std::string& accountId, const std::string& certificate
 {
     try {
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}
-                .getSerializedChecks();
+            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}.getSerializedChecks();
     } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
     }
@@ -111,8 +110,7 @@ validateCertificatePath(const std::string& accountId,
 {
     try {
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-            return TlsValidator {acc->certStore(), certificate, privateKey, privateKeyPass, caList}
-                .getSerializedChecks();
+            return TlsValidator {acc->certStore(), certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
@@ -125,8 +123,7 @@ getCertificateDetails(const std::string& accountId, const std::string& certifica
 {
     try {
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}
-                .getSerializedDetails();
+            return TlsValidator {acc->certStore(), acc->certStore().getCertificate(certificate)}.getSerializedDetails();
     } catch (const std::runtime_error& e) {
         JAMI_WARN("Certificate loading failed: %s", e.what());
     }
@@ -140,8 +137,7 @@ getCertificateDetailsPath(const std::string& accountId,
                           const std::string& privateKeyPassword)
 {
     try {
-        auto crt = std::make_shared<dht::crypto::Certificate>(
-            jami::fileutils::loadFile(certificate));
+        auto crt = std::make_shared<dht::crypto::Certificate>(jami::fileutils::loadFile(certificate));
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
             TlsValidator validator {acc->certStore(), certificate, privateKey, privateKeyPassword};
             acc->certStore().pinCertificate(validator.getCertificate(), false);
@@ -196,17 +192,14 @@ bool
 pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
-        acc->dht()->findCertificate(dht::InfoHash(certId),
-                                    [](const std::shared_ptr<dht::crypto::Certificate>& crt) {});
+        acc->dht()->findCertificate(dht::InfoHash(certId), [](const std::shared_ptr<dht::crypto::Certificate>& crt) {});
         return true;
     }
     return false;
 }
 
 bool
-setCertificateStatus(const std::string& accountId,
-                     const std::string& certId,
-                     const std::string& ststr)
+setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
 {
     try {
         if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
@@ -419,9 +412,7 @@ getKnownRingDevices(const std::string& accountId)
 }
 
 bool
-changeAccountPassword(const std::string& accountId,
-                      const std::string& password_old,
-                      const std::string& password_new)
+changeAccountPassword(const std::string& accountId, const std::string& password_old, const std::string& password_new)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->changeArchivePassword(password_old, password_new);
@@ -486,9 +477,7 @@ discardTrustRequest(const std::string& accountId, const std::string& from)
 }
 
 void
-sendTrustRequest(const std::string& accountId,
-                 const std::string& to,
-                 const std::vector<uint8_t>& payload)
+sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         acc->sendTrustRequest(to, payload);
@@ -548,8 +537,7 @@ getAccountList()
 std::vector<unsigned>
 getCodecList()
 {
-    std::vector<unsigned> list {
-        jami::getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
+    std::vector<unsigned> list {jami::getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
     if (list.empty())
         jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return list;
@@ -571,9 +559,7 @@ getSupportedCiphers(const std::string& accountId)
 }
 
 bool
-setCodecDetails(const std::string& accountId,
-                const unsigned& codecId,
-                const std::map<std::string, std::string>& details)
+setCodecDetails(const std::string& accountId, const unsigned& codecId, const std::map<std::string, std::string>& details)
 {
     auto acc = jami::Manager::instance().getAccount(accountId);
     if (!acc) {
@@ -1027,13 +1013,11 @@ getCredentials(const std::string& accountId)
 }
 
 void
-setCredentials(const std::string& accountId,
-               const std::vector<std::map<std::string, std::string>>& details)
+setCredentials(const std::string& accountId, const std::vector<std::map<std::string, std::string>>& details)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
         sipaccount->doUnregister();
-        sipaccount->editConfig(
-            [&](jami::SipAccountConfig& config) { config.setCredentials(details); });
+        sipaccount->editConfig([&](jami::SipAccountConfig& config) { config.setCredentials(details); });
         sipaccount->loadConfig();
         if (sipaccount->isEnabled())
             sipaccount->doRegister();
@@ -1065,15 +1049,14 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
 {
 #ifdef ENABLE_NAMESERVER
     if (account.empty()) {
-        auto cb = [name](const std::string& regName,
-                         const std::string& address,
-                         jami::NameDirectory::Response response) {
-            jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>("",
-                                                                                name,
-                                                                                (int) response,
-                                                                                address,
-                                                                                regName);
-        };
+        auto cb =
+            [name](const std::string& regName, const std::string& address, jami::NameDirectory::Response response) {
+                jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>("",
+                                                                                    name,
+                                                                                    (int) response,
+                                                                                    address,
+                                                                                    regName);
+            };
         if (nameserver.empty())
             jami::NameDirectory::lookupUri(name, "", cb);
         else
@@ -1097,8 +1080,11 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
                            [address](const std::string& regName,
                                      const std::string& addr,
                                      jami::NameDirectory::Response response) {
-                               jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>(
-                                   "", address, (int) response, addr, regName);
+                               jami::emitSignal<libjami::ConfigurationSignal::RegisteredNameFound>("",
+                                                                                                   address,
+                                                                                                   (int) response,
+                                                                                                   addr,
+                                                                                                   regName);
                            });
         return true;
     } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
@@ -1119,10 +1105,7 @@ searchUser(const std::string& account, const std::string& query)
 }
 
 bool
-registerName(const std::string& account,
-             const std::string& name,
-             const std::string& scheme,
-             const std::string& password)
+registerName(const std::string& account, const std::string& name, const std::string& scheme, const std::string& password)
 {
 #ifdef ENABLE_NAMESERVER
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {

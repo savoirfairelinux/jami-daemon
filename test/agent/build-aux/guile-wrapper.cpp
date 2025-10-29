@@ -18,12 +18,14 @@
 
 #include <libguile.h>
 
-void inner_main(void *, int argc, char **argv)
+void
+inner_main(void*, int argc, char** argv)
 {
     scm_shell(argc, argv);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char* argv[])
 {
     (void) scm_boot_guile(argc, argv, inner_main, NULL);
     __builtin_unreachable();

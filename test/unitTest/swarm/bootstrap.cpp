@@ -95,8 +95,7 @@ BootstrapTest::setUp()
     carlaData = {};
 
     // Init daemon
-    libjami::init(
-        libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
@@ -120,8 +119,7 @@ BootstrapTest::tearDown()
     if (bob2Data.accountId.empty()) {
         wait_for_removal_of({aliceData.accountId, bobData.accountId, carlaData.accountId});
     } else {
-        wait_for_removal_of(
-            {aliceData.accountId, bobData.accountId, carlaData.accountId, bob2Data.accountId});
+        wait_for_removal_of({aliceData.accountId, bobData.accountId, carlaData.accountId, bob2Data.accountId});
     }
 }
 
@@ -146,22 +144,21 @@ BootstrapTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& accountId,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                if (accountId == aliceData.accountId) {
-                    aliceData.requestReceived = true;
-                } else if (accountId == bobData.accountId) {
-                    bobData.requestReceived = true;
-                } else if (accountId == bob2Data.accountId) {
-                    bob2Data.requestReceived = true;
-                } else if (accountId == carlaData.accountId) {
-                    carlaData.requestReceived = true;
-                }
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*metadatas*/) {
+            if (accountId == aliceData.accountId) {
+                aliceData.requestReceived = true;
+            } else if (accountId == bobData.accountId) {
+                bobData.requestReceived = true;
+            } else if (accountId == bob2Data.accountId) {
+                bob2Data.requestReceived = true;
+            } else if (accountId == carlaData.accountId) {
+                carlaData.requestReceived = true;
+            }
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
         [&](const std::string& accountId,
             const std::string& /*conversationId*/,
@@ -184,21 +181,18 @@ BootstrapTest::connectSignals()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
     auto carlaAccount = Manager::instance().getAccount<JamiAccount>(carlaData.accountId);
 
-    aliceAccount->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            aliceData.bootstrap = status;
-            cv.notify_one();
-        });
-    bobAccount->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            bobData.bootstrap = status;
-            cv.notify_one();
-        });
-    carlaAccount->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            carlaData.bootstrap = status;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        aliceData.bootstrap = status;
+        cv.notify_one();
+    });
+    bobAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        bobData.bootstrap = status;
+        cv.notify_one();
+    });
+    carlaAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        carlaData.bootstrap = status;
+        cv.notify_one();
+    });
 }
 
 void
@@ -208,11 +202,10 @@ BootstrapTest::testBootstrapOk()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
     auto bobUri = bobAccount->getUsername();
 
-    aliceAccount->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            aliceData.bootstrap = status;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        aliceData.bootstrap = status;
+        cv.notify_one();
+    });
 
     std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
@@ -236,11 +229,10 @@ BootstrapTest::testBootstrapFailed()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
     auto bobUri = bobAccount->getUsername();
 
-    aliceAccount->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            aliceData.bootstrap = status;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        aliceData.bootstrap = status;
+        cv.notify_one();
+    });
 
     std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
@@ -259,9 +251,7 @@ BootstrapTest::testBootstrapFailed()
     // Now bob goes offline, it should disconnect alice
     Manager::instance().sendRegister(bobData.accountId, false);
     // Alice will try to maintain before failing (so will take 30secs to fail)
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return aliceData.bootstrap == Conversation::BootstrapStatus::FAILED;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return aliceData.bootstrap == Conversation::BootstrapStatus::FAILED; }));
 }
 
 void
@@ -271,11 +261,10 @@ BootstrapTest::testBootstrapNeverNewDevice()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
     auto bobUri = bobAccount->getUsername();
 
-    aliceAccount->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            aliceData.bootstrap = status;
-            cv.notify_one();
-        });
+    aliceAccount->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        aliceData.bootstrap = status;
+        cv.notify_one();
+    });
 
     std::unique_lock lk {mtx};
     auto convId = libjami::startConversation(aliceData.accountId);
@@ -294,9 +283,7 @@ BootstrapTest::testBootstrapNeverNewDevice()
     // Alice offline
     Manager::instance().sendRegister(aliceData.accountId, false);
     // Bob will try to maintain before failing (so will take 30secs to fail)
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return bobData.bootstrap == Conversation::BootstrapStatus::FAILED;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData.bootstrap == Conversation::BootstrapStatus::FAILED; }));
 
     // Create bob2
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
@@ -314,23 +301,21 @@ BootstrapTest::testBootstrapNeverNewDevice()
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool bob2Connected = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto details = bob2Account->getVolatileAccountDetails();
-                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus != "UNREGISTERED")
-                    bob2Connected = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string&, const std::map<std::string, std::string>&) {
+            auto details = bob2Account->getVolatileAccountDetails();
+            auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+            if (daemonStatus != "UNREGISTERED")
+                bob2Connected = true;
+            cv.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Connected; }));
-    bob2Account->convModule()->onBootstrapStatus(
-        [&](std::string /*convId*/, Conversation::BootstrapStatus status) {
-            bob2Data.bootstrap = status;
-            cv.notify_one();
-        });
+    bob2Account->convModule()->onBootstrapStatus([&](std::string /*convId*/, Conversation::BootstrapStatus status) {
+        bob2Data.bootstrap = status;
+        cv.notify_one();
+    });
 
     // Disconnect bob2, to create a valid conv betwen Alice and Bob1
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
@@ -341,16 +326,13 @@ BootstrapTest::testBootstrapNeverNewDevice()
     // Bob offline
     Manager::instance().sendRegister(bobData.accountId, false);
     // Bob2 will try to maintain before failing (so will take 30secs to fail)
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return bob2Data.bootstrap == Conversation::BootstrapStatus::FAILED;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bob2Data.bootstrap == Conversation::BootstrapStatus::FAILED; }));
 
     // Alice bootstrap should go to fallback (because bob2 never wrote into the conversation) & Connected
     Manager::instance().sendRegister(aliceData.accountId, true);
     // Wait for announcement, ICE fallback + delay
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 60s, [&]() { return aliceData.bootstrap == Conversation::BootstrapStatus::SUCCESS; }));
 }
 
 void
@@ -360,8 +342,7 @@ BootstrapTest::testBootstrapCompat()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobData.accountId);
     auto bobUri = bobAccount->getUsername();
 
-    dynamic_cast<SwarmChannelHandler*>(aliceAccount->channelHandlers()[Uri::Scheme::SWARM].get())
-        ->disableSwarmManager
+    dynamic_cast<SwarmChannelHandler*>(aliceAccount->channelHandlers()[Uri::Scheme::SWARM].get())->disableSwarmManager
         = true;
 
     std::unique_lock lk {mtx};
@@ -379,8 +360,7 @@ BootstrapTest::testBootstrapCompat()
     auto bobMsgSize = bobData.messages.size();
     libjami::sendMessage(aliceData.accountId, convId, "hi"s, "");
     cv.wait_for(lk, 30s, [&]() {
-        return bobData.messages.size() == bobMsgSize + 1
-               && bobData.bootstrap == Conversation::BootstrapStatus::FAILED;
+        return bobData.messages.size() == bobMsgSize + 1 && bobData.bootstrap == Conversation::BootstrapStatus::FAILED;
     });
 }
 

@@ -281,10 +281,7 @@ pjsip_module PresSubServer::mod_presence_server = {
 
 };
 
-PresSubServer::PresSubServer(SIPPresence* pres,
-                             pjsip_evsub* evsub,
-                             const char* remote,
-                             pjsip_dialog* d)
+PresSubServer::PresSubServer(SIPPresence* pres, pjsip_evsub* evsub, const char* remote, pjsip_dialog* d)
     : remote_(remote)
     , pres_(pres)
     , sub_(evsub)

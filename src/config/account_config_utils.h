@@ -18,10 +18,13 @@
 #include "yamlparser.h"
 
 template<typename T>
-inline void serializeValue(YAML::Emitter& out, const char* key, const T& value, const T& def) {
+inline void
+serializeValue(YAML::Emitter& out, const char* key, const T& value, const T& def)
+{
     if (value != def)
         out << YAML::Key << key << YAML::Value << value;
 }
 
 #define SERIALIZE_CONFIG(key, name) serializeValue(out, key, name, DEFAULT_CONFIG.name)
-#define SERIALIZE_PATH(key, name) serializeValue(out, key, fileutils::getCleanPath(path.string(), name), DEFAULT_CONFIG.name)
+#define SERIALIZE_PATH(key, name) \
+    serializeValue(out, key, fileutils::getCleanPath(path.string(), name), DEFAULT_CONFIG.name)

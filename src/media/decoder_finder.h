@@ -44,7 +44,8 @@ findDecoder(const enum AVCodecID codec_id)
         codec_name = "vp9_mediacodec"; break;
 #endif
     case AV_CODEC_ID_OPUS:
-        codec_name = "libopus"; break;
+        codec_name = "libopus";
+        break;
     default:
         codec_name = nullptr;
     }

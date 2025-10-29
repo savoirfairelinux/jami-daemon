@@ -89,8 +89,7 @@ void
 PresenceTest::setUp()
 {
     // Init daemon
-    libjami::init(
-        libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
@@ -126,37 +125,32 @@ PresenceTest::connectSignals()
                 carlaData_.conversationId = conversationId;
             cv.notify_one();
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& accountId,
-                const std::string& /*conversationId*/,
-                std::map<std::string, std::string> /*metadatas*/) {
-                if (accountId == aliceId)
-                    aliceData_.requestReceived = true;
-                if (accountId == bobId)
-                    bobData_.requestReceived = true;
-                if (accountId == carlaId)
-                    carlaData_.requestReceived = true;
-                cv.notify_one();
-            }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::PresenceSignal::NewBuddyNotification>(
-            [&](const std::string& accountId,
-                const std::string& peerId,
-                int status,
-                const std::string& note) {
-                if (accountId == aliceId) {
-                    aliceData_.status[peerId] = status;
-                    aliceData_.statusNote[peerId] = note;
-                } else if (accountId == bobId) {
-                    bobData_.status[peerId] = status;
-                    bobData_.statusNote[peerId] = note;
-                } else if (accountId == carlaId) {
-                    carlaData_.status[peerId] = status;
-                    carlaData_.statusNote[peerId] = note;
-                }
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+        [&](const std::string& accountId,
+            const std::string& /*conversationId*/,
+            std::map<std::string, std::string> /*metadatas*/) {
+            if (accountId == aliceId)
+                aliceData_.requestReceived = true;
+            if (accountId == bobId)
+                bobData_.requestReceived = true;
+            if (accountId == carlaId)
+                carlaData_.requestReceived = true;
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::PresenceSignal::NewBuddyNotification>(
+        [&](const std::string& accountId, const std::string& peerId, int status, const std::string& note) {
+            if (accountId == aliceId) {
+                aliceData_.status[peerId] = status;
+                aliceData_.statusNote[peerId] = note;
+            } else if (accountId == bobId) {
+                bobData_.status[peerId] = status;
+                bobData_.statusNote[peerId] = note;
+            } else if (accountId == carlaId) {
+                carlaData_.status[peerId] = status;
+                carlaData_.statusNote[peerId] = note;
+            }
+            cv.notify_one();
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
 }
@@ -168,17 +162,15 @@ PresenceTest::enableCarla()
     // Enable carla
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     bool carlaConnected = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto details = carlaAccount->getVolatileAccountDetails();
-                auto deviceAnnounced
-                    = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
-                if (deviceAnnounced == "true") {
-                    carlaConnected = true;
-                    cv.notify_one();
-                }
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string&, const std::map<std::string, std::string>&) {
+            auto details = carlaAccount->getVolatileAccountDetails();
+            auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+            if (deviceAnnounced == "true") {
+                carlaConnected = true;
+                cv.notify_one();
+            }
+        }));
     libjami::registerSignalHandlers(confHandlers);
 
     Manager::instance().sendRegister(carlaId, true);
@@ -201,9 +193,10 @@ PresenceTest::testGetSetSubscriptions()
     auto subscriptions = libjami::getSubscriptions(aliceId);
     CPPUNIT_ASSERT(subscriptions.size() == 2);
     auto checkSub = [&](const std::string& uri) {
-        return std::find_if(subscriptions.begin(), subscriptions.end(), [&](const auto& sub) {
-                   return sub.at("Buddy") == uri;
-               }) != subscriptions.end();
+        return std::find_if(subscriptions.begin(),
+                            subscriptions.end(),
+                            [&](const auto& sub) { return sub.at("Buddy") == uri; })
+               != subscriptions.end();
     };
     CPPUNIT_ASSERT(checkSub(bobUri) && checkSub(carlaUri));
 }
@@ -241,22 +234,17 @@ PresenceTest::testPresenceStatus()
 
     libjami::addConversationMember(aliceId, aliceData_.conversationId, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.conversationId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return bobData_.requestReceived && carlaData_.requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived && carlaData_.requestReceived; }));
     libjami::acceptConversationRequest(bobId, aliceData_.conversationId);
     libjami::acceptConversationRequest(carlaId, aliceData_.conversationId);
 
     // Should connect to peers
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2; }));
 
     // Carla disconnects, should just let the presence on the DHT for a few minutes
     Manager::instance().sendRegister(carlaId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.status[carlaUri] == 1;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData_.status[carlaUri] == 1; }));
 }
 
 void
@@ -283,7 +271,7 @@ PresenceTest::testPresenceStatusNote()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.status.find(bobUri) != aliceData_.status.end() && aliceData_.status[bobUri] == 1
-            && aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
+               && aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
     }));
 
     // Start conversation
@@ -292,26 +280,24 @@ PresenceTest::testPresenceStatusNote()
 
     libjami::addConversationMember(aliceId, aliceData_.conversationId, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.conversationId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return bobData_.requestReceived && carlaData_.requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived && carlaData_.requestReceived; }));
     libjami::acceptConversationRequest(bobId, aliceData_.conversationId);
     libjami::acceptConversationRequest(carlaId, aliceData_.conversationId);
 
     // Should connect to peers
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2; }));
 
     // Alice sends a status note, should be received by Bob and Carla
     libjami::publish(aliceId, true, "Testing Jami");
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return bobData_.statusNote.find(aliceUri) != bobData_.statusNote.end() && bobData_.statusNote[aliceUri] == "Testing Jami"
-            && carlaData_.statusNote.find(aliceUri) != carlaData_.statusNote.end() && carlaData_.statusNote[aliceUri] == "Testing Jami";
+        return bobData_.statusNote.find(aliceUri) != bobData_.statusNote.end()
+               && bobData_.statusNote[aliceUri] == "Testing Jami"
+               && carlaData_.statusNote.find(aliceUri) != carlaData_.statusNote.end()
+               && carlaData_.statusNote[aliceUri] == "Testing Jami";
     }));
 }
-
 
 void
 PresenceTest::testPresenceInvalidStatusNote()
@@ -333,7 +319,7 @@ PresenceTest::testPresenceInvalidStatusNote()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.status.find(bobUri) != aliceData_.status.end() && aliceData_.status[bobUri] == 1
-            && aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
+               && aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
     }));
 
     // Start conversation
@@ -342,23 +328,22 @@ PresenceTest::testPresenceInvalidStatusNote()
 
     libjami::addConversationMember(aliceId, aliceData_.conversationId, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.conversationId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return bobData_.requestReceived && carlaData_.requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived && carlaData_.requestReceived; }));
     libjami::acceptConversationRequest(bobId, aliceData_.conversationId);
     libjami::acceptConversationRequest(carlaId, aliceData_.conversationId);
 
     // Should connect to peers
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2; }));
 
     // Alice sends a status note that will generate an invalid XML message
     libjami::publish(aliceId, true, "Testing<BAD>");
 
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() {
-        return bobData_.statusNote.find(aliceUri) != bobData_.statusNote.end() && bobData_.statusNote[aliceUri] == "Testing<BAD>"
-            && carlaData_.statusNote.find(aliceUri) != carlaData_.statusNote.end() && carlaData_.statusNote[aliceUri] == "Testing<BAD>";
+        return bobData_.statusNote.find(aliceUri) != bobData_.statusNote.end()
+               && bobData_.statusNote[aliceUri] == "Testing<BAD>"
+               && carlaData_.statusNote.find(aliceUri) != carlaData_.statusNote.end()
+               && carlaData_.statusNote[aliceUri] == "Testing<BAD>";
     }));
 }
 
@@ -383,7 +368,7 @@ PresenceTest::testPresenceStatusNoteBeforeConnection()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.status.find(bobUri) != aliceData_.status.end() && aliceData_.status[bobUri] == 1
-            && aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
+               && aliceData_.status.find(carlaUri) != aliceData_.status.end() && aliceData_.status[carlaUri] == 1;
     }));
 
     // Start conversation
@@ -392,23 +377,21 @@ PresenceTest::testPresenceStatusNoteBeforeConnection()
 
     libjami::addConversationMember(aliceId, aliceData_.conversationId, bobUri);
     libjami::addConversationMember(aliceId, aliceData_.conversationId, carlaUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() {
-        return bobData_.requestReceived && carlaData_.requestReceived;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return bobData_.requestReceived && carlaData_.requestReceived; }));
     libjami::acceptConversationRequest(bobId, aliceData_.conversationId);
     libjami::acceptConversationRequest(carlaId, aliceData_.conversationId);
 
     // Should connect to peers
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2;
-    }));
+    CPPUNIT_ASSERT(
+        cv.wait_for(lk, 30s, [&]() { return aliceData_.status[bobUri] == 2 && aliceData_.status[carlaUri] == 2; }));
 
     // Alice sends a status note, should be received by Bob and Carla
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return bobData_.statusNote.find(aliceUri) != bobData_.statusNote.end() && bobData_.statusNote[aliceUri] == "Testing Jami"
-            && carlaData_.statusNote.find(aliceUri) != carlaData_.statusNote.end() && carlaData_.statusNote[aliceUri] == "Testing Jami";
+        return bobData_.statusNote.find(aliceUri) != bobData_.statusNote.end()
+               && bobData_.statusNote[aliceUri] == "Testing Jami"
+               && carlaData_.statusNote.find(aliceUri) != carlaData_.statusNote.end()
+               && carlaData_.statusNote[aliceUri] == "Testing Jami";
     }));
-
 }
 
 } // namespace test

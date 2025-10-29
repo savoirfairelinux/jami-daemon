@@ -64,8 +64,7 @@ public:
     /**
      * Return the list of subscribers (Ring buffers Id that are reading this ring buffer).
      */
-    std::vector<std::string>
-    getSubscribers();
+    std::vector<std::string> getSubscribers();
 
     inline AudioFormat getFormat() const { return format_; }
 
@@ -139,8 +138,7 @@ public:
      * the call blocks indefinitely.
      * @return available data for ringbufferId after the call returned (same as calling getLength(ringbufferId) ).
      */
-    size_t waitForDataAvailable(const std::string& ringbufferId,
-                                const time_point& deadline = time_point::max()) const;
+    size_t waitForDataAvailable(const std::string& ringbufferId, const time_point& deadline = time_point::max()) const;
 
     /**
      * Debug function print mEnd, mStart, mBufferSize

@@ -44,8 +44,7 @@ struct AudioFormat
 
     inline bool operator==(const AudioFormat& b) const
     {
-        return ((b.sample_rate == sample_rate) && (b.nb_channels == nb_channels)
-                && (b.sampleFormat == sampleFormat));
+        return ((b.sample_rate == sample_rate) && (b.nb_channels == nb_channels) && (b.sampleFormat == sampleFormat));
     }
 
     inline bool operator!=(const AudioFormat& b) const { return !(*this == b); }
@@ -55,11 +54,7 @@ struct AudioFormat
         return fmt::format("{{{}, {} channels, {}Hz}}", av_get_sample_fmt_name(sampleFormat), nb_channels, sample_rate);
     }
 
-    inline AudioFormat withSampleFormat(AVSampleFormat format)
-    {
-        return {sample_rate, nb_channels, format};
-    }
-
+    inline AudioFormat withSampleFormat(AVSampleFormat format) { return {sample_rate, nb_channels, format}; }
 
     /**
      * Returns bytes necessary to hold one frame of audio data.

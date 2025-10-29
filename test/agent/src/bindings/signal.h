@@ -16,4 +16,4 @@
  */
 #pragma once
 
-extern void install_signal_primitives(void *);
+extern void install_signal_primitives(void*);

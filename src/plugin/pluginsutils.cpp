@@ -26,33 +26,33 @@
 #include <regex>
 
 #if defined(__APPLE__)
-    #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        #define ABI "iphone"
-    #else
-        #if defined(__x86_64__)
-            #define ABI "x86_64-apple-Darwin"
-        #else
-            #define ABI "arm64-apple-Darwin"
-        #endif
-    #endif
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#define ABI "iphone"
+#else
+#if defined(__x86_64__)
+#define ABI "x86_64-apple-Darwin"
+#else
+#define ABI "arm64-apple-Darwin"
+#endif
+#endif
 #elif defined(__arm__)
-    #if defined(__ARM_ARCH_7A__)
-        #define ABI "armeabi-v7a"
-    #else
-        #define ABI "armeabi"
-    #endif
+#if defined(__ARM_ARCH_7A__)
+#define ABI "armeabi-v7a"
+#else
+#define ABI "armeabi"
+#endif
 #elif defined(__i386__)
-    #if __ANDROID__
-        #define ABI "x86"
-    #else
-        #define ABI "x86-linux-gnu"
-    #endif
+#if __ANDROID__
+#define ABI "x86"
+#else
+#define ABI "x86-linux-gnu"
+#endif
 #elif defined(__x86_64__)
-    #if __ANDROID__
-        #define ABI "x86_64"
-    #else
-        #define ABI "x86_64-linux-gnu"
-    #endif
+#if __ANDROID__
+#define ABI "x86_64"
+#else
+#define ABI "x86_64-linux-gnu"
+#endif
 #elif defined(__aarch64__)
 #define ABI "arm64-v8a"
 #elif defined(WIN32)
@@ -79,9 +79,7 @@ manifestPath(const std::filesystem::path& rootPath)
 std::map<std::string, std::string>
 getPlatformInfo()
 {
-    return {
-        {"os", ABI}
-    };
+    return {{"os", ABI}};
 }
 
 std::filesystem::path
@@ -107,13 +105,13 @@ checkManifestJsonContentValidity(const Json::Value& root)
     std::string background = root.get("backgroundPath", "background.jpg").asString();
     if (!name.empty() || !version.empty()) {
         return {
-                {"id", id},
-                {"name", name},
-                {"description", description},
-                {"version", version},
-                {"iconPath", iconPath},
-                {"backgroundPath", background},
-                };
+            {"id", id},
+            {"name", name},
+            {"description", description},
+            {"version", version},
+            {"iconPath", iconPath},
+            {"backgroundPath", background},
+        };
     } else {
         throw std::runtime_error("plugin manifest file: bad format");
     }
@@ -226,7 +224,8 @@ readPluginCertificate(const std::string& rootPath, const std::string& pluginId)
 }
 
 std::unique_ptr<dht::crypto::Certificate>
-readPluginCertificateFromArchive(const std::string& jplPath) {
+readPluginCertificateFromArchive(const std::string& jplPath)
+{
     try {
         auto manifest = readPluginManifestFromArchive(jplPath);
         const std::string& name = manifest["id"];
@@ -235,23 +234,22 @@ readPluginCertificateFromArchive(const std::string& jplPath) {
             return {};
         }
         return std::make_unique<dht::crypto::Certificate>(archiver::readFileFromArchive(jplPath, name + ".crt"));
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
         return {};
     }
 }
 
 std::map<std::string, std::vector<uint8_t>>
-readPluginSignatureFromArchive(const std::string& jplPath) {
+readPluginSignatureFromArchive(const std::string& jplPath)
+{
     try {
         std::vector<uint8_t> vec = archiver::readFileFromArchive(jplPath, "signatures");
-        msgpack::object_handle oh = msgpack::unpack(
-                        reinterpret_cast<const char*>(vec.data()),
-                        vec.size() * sizeof(uint8_t)
-                    );
+        msgpack::object_handle oh = msgpack::unpack(reinterpret_cast<const char*>(vec.data()),
+                                                    vec.size() * sizeof(uint8_t));
         msgpack::object obj = oh.get();
         return obj.as<std::map<std::string, std::vector<uint8_t>>>();
-    } catch(const std::exception& e) {
+    } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
         return {};
     }
@@ -284,44 +282,44 @@ std::string
 getLanguage()
 {
     std::string lang;
-        if (auto envLang = std::getenv("JAMI_LANG"))
-            lang = envLang;
-        else
-            JAMI_INFO() << "Error getting JAMI_LANG env, attempting to get system language";
-        // If language preference is empty, try to get from the system.
-        if (lang.empty()) {
+    if (auto envLang = std::getenv("JAMI_LANG"))
+        lang = envLang;
+    else
+        JAMI_INFO() << "Error getting JAMI_LANG env, attempting to get system language";
+    // If language preference is empty, try to get from the system.
+    if (lang.empty()) {
 #ifdef WIN32
-            WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
-            if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
-                char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
-                WideCharToMultiByte(CP_UTF8,
-                                    0,
-                                    localeBuffer,
-                                    LOCALE_NAME_MAX_LENGTH,
-                                    utf8Buffer,
-                                    LOCALE_NAME_MAX_LENGTH,
-                                    nullptr,
-                                    nullptr);
+        WCHAR localeBuffer[LOCALE_NAME_MAX_LENGTH];
+        if (GetUserDefaultLocaleName(localeBuffer, LOCALE_NAME_MAX_LENGTH) != 0) {
+            char utf8Buffer[LOCALE_NAME_MAX_LENGTH] {};
+            WideCharToMultiByte(CP_UTF8,
+                                0,
+                                localeBuffer,
+                                LOCALE_NAME_MAX_LENGTH,
+                                utf8Buffer,
+                                LOCALE_NAME_MAX_LENGTH,
+                                nullptr,
+                                nullptr);
 
-                lang.append(utf8Buffer);
-                string_replace(lang, "-", "_");
-            }
-            // Even though we default to the system variable in Windows, technically this
-            // part of the code should not be reached because the client-qt must define that
-            // variable and is unable to run the client and the daemon in diferent processes in Windows.
+            lang.append(utf8Buffer);
+            string_replace(lang, "-", "_");
+        }
+        // Even though we default to the system variable in Windows, technically this
+        // part of the code should not be reached because the client-qt must define that
+        // variable and is unable to run the client and the daemon in diferent processes in Windows.
 #else
-            // The same way described in the comment just above, Android should not reach this
-            // part of the code given the client-android must define "JAMI_LANG" system variable.
-            // And even if this part is reached, it should not work since std::locale is not
-            // supported by the NDK.
+        // The same way described in the comment just above, Android should not reach this
+        // part of the code given the client-android must define "JAMI_LANG" system variable.
+        // And even if this part is reached, it should not work since std::locale is not
+        // supported by the NDK.
 
-            // LC_COLLATE is used to grab the locale for the case when the system user has set different
-            // values for the preferred Language and Format.
-            lang = setlocale(LC_COLLATE, "");
-            // We set the environment to avoid checking from system everytime.
-            // This is the case when running daemon and client in different processes
-            // like with dbus.
-            setenv("JAMI_LANG", lang.c_str(), 1);
+        // LC_COLLATE is used to grab the locale for the case when the system user has set different
+        // values for the preferred Language and Format.
+        lang = setlocale(LC_COLLATE, "");
+        // We set the environment to avoid checking from system everytime.
+        // This is the case when running daemon and client in different processes
+        // like with dbus.
+        setenv("JAMI_LANG", lang.c_str(), 1);
 #endif // WIN32
     }
     return lang;

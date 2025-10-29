@@ -61,7 +61,8 @@ extern SignalHandlerMap& getSignalHandlers();
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 template<typename Ts, typename... Args>
-void emitSignal(Args... args)
+void
+emitSignal(Args... args)
 {
     jami_tracepoint_if_enabled(emit_signal, demangle<Ts>().c_str());
 
@@ -69,8 +70,7 @@ void emitSignal(Args... args)
     if (auto wrap = libjami::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
         try {
             auto cb = *wrap;
-            jami_tracepoint(emit_signal_begin_callback,
-                            wrap.file_, wrap.linum_);
+            jami_tracepoint(emit_signal_begin_callback, wrap.file_, wrap.linum_);
             cb(args...);
             jami_tracepoint(emit_signal_end_callback);
         } catch (std::exception& e) {

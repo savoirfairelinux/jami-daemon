@@ -62,8 +62,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 {
     const MediaStream info;
 
-    StreamObserver(const MediaStream& ms,
-                   std::function<void(const std::shared_ptr<MediaFrame>&)> func)
+    StreamObserver(const MediaStream& ms, std::function<void(const std::shared_ptr<MediaFrame>&)> func)
         : info(ms)
         , cb_(func) {};
 
@@ -72,15 +71,15 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
         while (observablesFrames_.size() > 0) {
             auto obs = observablesFrames_.begin();
             (*obs)->detach(this);
-            // it should be erased from observablesFrames_ in detach. If it does not happens erase frame to avoid infinite loop.
+            // it should be erased from observablesFrames_ in detach. If it does not happens erase frame to avoid
+            // infinite loop.
             auto it = observablesFrames_.find(*obs);
             if (it != observablesFrames_.end())
                 observablesFrames_.erase(it);
         }
     };
 
-    void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/,
-                const std::shared_ptr<MediaFrame>& m) override
+    void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/, const std::shared_ptr<MediaFrame>& m) override
     {
         if (not isEnabled)
             return;
@@ -88,12 +87,11 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
         if (info.isVideo) {
             std::shared_ptr<VideoFrame> framePtr;
 #ifdef ENABLE_HWACCEL
-            auto desc = av_pix_fmt_desc_get(
-                (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(m))->format());
+            auto desc = av_pix_fmt_desc_get((AVPixelFormat) (std::static_pointer_cast<VideoFrame>(m))->format());
             if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
                 try {
-                    framePtr = jami::video::HardwareAccel::transferToMainMemory(
-                        *std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
+                    framePtr = jami::video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m),
+                                                                                AV_PIX_FMT_NV12);
                 } catch (const std::runtime_error& e) {
                     JAMI_ERR("Accel failure: %s", e.what());
                     return;
@@ -127,10 +125,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 #endif
     }
 
-    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override
-    {
-        observablesFrames_.insert(obs);
-    }
+    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override { observablesFrames_.insert(obs); }
 
     void detached(Observable<std::shared_ptr<MediaFrame>>* obs) override
     {
@@ -140,6 +135,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
     }
 
     bool isEnabled = false;
+
 private:
     std::function<void(const std::shared_ptr<MediaFrame>&)> cb_;
     std::unique_ptr<MediaFilter> videoRotationFilter_ {};
@@ -223,9 +219,7 @@ MediaRecorder::startRecording()
                 // get frame from queue
                 {
                     std::unique_lock lk(rec->mutexFrameBuff_);
-                    rec->cv_.wait(lk, [rec] {
-                        return rec->interrupted_ or not rec->frameBuff_.empty();
-                    });
+                    rec->cv_.wait(lk, [rec] { return rec->interrupted_ or not rec->frameBuff_.empty(); });
                     if (rec->interrupted_) {
                         break;
                     }
@@ -237,8 +231,7 @@ MediaRecorder::startRecording()
                     if (rec->encoder_ && frame && frame->pointer()) {
 #ifdef ENABLE_VIDEO
                         bool isVideo = (frame->pointer()->width > 0 && frame->pointer()->height > 0);
-                        rec->encoder_->encode(frame->pointer(),
-                                              isVideo ? rec->videoIdx_ : rec->audioIdx_);
+                        rec->encoder_->encode(frame->pointer(), isVideo ? rec->videoIdx_ : rec->audioIdx_);
 #else
                         rec->encoder_->encode(frame->pointer(), rec->audioIdx_);
 #endif // ENABLE_VIDEO
@@ -289,11 +282,9 @@ MediaRecorder::addStream(const MediaStream& ms)
 
     auto it = streams_.find(ms.name);
     if (it == streams_.end()) {
-        auto streamPtr = std::make_unique<StreamObserver>(ms,
-                                                          [this,
-                                                           ms](const std::shared_ptr<MediaFrame>& frame) {
-                                                              onFrame(ms.name, frame);
-                                                          });
+        auto streamPtr = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
+            onFrame(ms.name, frame);
+        });
         it = streams_.insert(std::make_pair(ms.name, std::move(streamPtr))).first;
         JAMI_LOG("[Recorder: {:p}] Recorder input #{}: {:s}", fmt::ptr(this), streams_.size(), ms.name);
         streamIsNew = true;
@@ -301,12 +292,9 @@ MediaRecorder::addStream(const MediaStream& ms)
         if (ms == it->second->info)
             JAMI_LOG("[Recorder: {:p}] Recorder already has '{:s}' as input", fmt::ptr(this), ms.name);
         else {
-            it->second
-                = std::make_unique<StreamObserver>(ms,
-                                                   [this,
-                                                    ms](const std::shared_ptr<MediaFrame>& frame) {
-                                                       onFrame(ms.name, frame);
-                                                   });
+            it->second = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
+                onFrame(ms.name, frame);
+            });
         }
         streamIsNew = false;
     }
@@ -365,13 +353,11 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     const auto& ms = streams_[name]->info;
 #if defined(ENABLE_VIDEO) && defined(ENABLE_HWACCEL)
     if (ms.isVideo) {
-        auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
+        auto desc = av_pix_fmt_desc_get((AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
-                clone = video::HardwareAccel::transferToMainMemory(
-                    *std::static_pointer_cast<VideoFrame>(frame),
-                    static_cast<AVPixelFormat>(ms.format));
+                clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
+                                                                   static_cast<AVPixelFormat>(ms.format));
             } catch (const std::runtime_error& e) {
                 JAMI_ERR("Accel failure: %s", e.what());
                 return;
@@ -390,13 +376,12 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     clone->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTimeStamp_,
                                              {1, AV_TIME_BASE},
                                              ms.timeBase,
-                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF
-                                                                     | AV_ROUND_PASS_MINMAX));
+                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
     std::vector<std::unique_ptr<MediaFrame>> filteredFrames;
 #ifdef ENABLE_VIDEO
     if (ms.isVideo && videoFilter_ && outputVideoFilter_) {
         std::lock_guard lk(mutexFilterVideo_);
-                videoFilter_->feedInput(clone->pointer(), name);
+        videoFilter_->feedInput(clone->pointer(), name);
         auto videoFilterOutput = videoFilter_->readOutput();
         if (videoFilterOutput) {
             outputVideoFilter_->feedInput(videoFilterOutput->pointer(), "input");
@@ -508,22 +493,19 @@ MediaRecorder::setupVideoOutput()
 {
     MediaStream encoderStream, peer, local, mixer;
     auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
-        return pair.second->info.isVideo
-               && pair.second->info.name.find("remote") != std::string::npos;
+        return pair.second->info.isVideo && pair.second->info.name.find("remote") != std::string::npos;
     });
     if (it != streams_.end())
         peer = it->second->info;
 
     it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
-        return pair.second->info.isVideo
-               && pair.second->info.name.find("local") != std::string::npos;
+        return pair.second->info.isVideo && pair.second->info.name.find("local") != std::string::npos;
     });
     if (it != streams_.end())
         local = it->second->info;
 
     it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
-        return pair.second->info.isVideo
-               && pair.second->info.name.find("mixer") != std::string::npos;
+        return pair.second->info.isVideo && pair.second->info.name.find("mixer") != std::string::npos;
     });
     if (it != streams_.end())
         mixer = it->second->info;
@@ -578,14 +560,13 @@ MediaRecorder::setupVideoOutput()
 
     outputVideoFilter_.reset(new MediaFilter);
 
-    float scaledHeight = 1280 * (float)secondaryFilter.height / (float)secondaryFilter.width;
+    float scaledHeight = 1280 * (float) secondaryFilter.height / (float) secondaryFilter.width;
     std::string scaleFilter = "scale=1280:-2";
     if (scaledHeight > 720)
         scaleFilter += ",scale=-2:720";
 
     std::ostringstream f;
-    f << "[input]" << scaleFilter
-      << ",pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=pix_fmts=yuv420p,fps=30";
+    f << "[input]" << scaleFilter << ",pad=1280:720:(ow-iw)/2:(oh-ih)/2,format=pix_fmts=yuv420p,fps=30";
 
     ret = outputVideoFilter_->initialize(f.str(), {secondaryFilter});
 
@@ -599,8 +580,7 @@ MediaRecorder::setupVideoOutput()
 }
 
 std::string
-MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
-                                const MediaStream& local) const
+MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const
 {
     std::ostringstream v;
 
@@ -616,16 +596,13 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
 
         // NOTE -2 means preserve aspect ratio and have the new number be even
         if (needScale)
-            v << "[" << p.name << "] fps=30, scale=-2:" << newHeight
-              << " [v:m]; ";
+            v << "[" << p.name << "] fps=30, scale=-2:" << newHeight << " [v:m]; ";
         else
             v << "[" << p.name << "] fps=30 [v:m]; ";
 
-        v << "[" << local.name << "] fps=30, scale=-2:" << newHeight / 5
-          << " [v:o]; ";
+        v << "[" << local.name << "] fps=30, scale=-2:" << newHeight / 5 << " [v:o]; ";
 
-        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h"
-          << ", format=pix_fmts=yuv420p";
+        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h" << ", format=pix_fmts=yuv420p";
     } break;
     default:
         JAMI_ERR() << "Video recordings with more than 2 video streams are not supported";
@@ -673,9 +650,8 @@ MediaRecorder::setupAudioOutput()
     }
 
     outputAudioFilter_.reset(new MediaFilter);
-    ret = outputAudioFilter_->initialize(
-        "[input]aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo",
-        {secondaryFilter});
+    ret = outputAudioFilter_->initialize("[input]aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo",
+                                         {secondaryFilter});
 
     if (ret < 0) {
         JAMI_ERR() << "Failed to initialize output audio filter";

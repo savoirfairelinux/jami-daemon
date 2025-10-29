@@ -31,8 +31,7 @@
 
 namespace jami {
 
-decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer
-    = getGlobalInstance<SystemCodecContainer>;
+decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
 
 SystemCodecContainer::SystemCodecContainer()
 {
@@ -89,21 +88,11 @@ SystemCodecContainer::initCodecConfig()
                                                minVP8,
                                                maxVP8),
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
-                                               AV_CODEC_ID_MPEG4,
-                                               "MP4V-ES",
-                                               "MP4V-ES",
-                                               "mpeg4",
-                                               CODEC_ENCODER_DECODER,
-                                               defaultBitrate),
+        std::make_shared<SystemVideoCodecInfo>(
+            AV_CODEC_ID_MPEG4, AV_CODEC_ID_MPEG4, "MP4V-ES", "MP4V-ES", "mpeg4", CODEC_ENCODER_DECODER, defaultBitrate),
 
-        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
-                                               AV_CODEC_ID_H263,
-                                               "H.263",
-                                               "H263-1998",
-                                               "h263",
-                                               CODEC_ENCODER_DECODER,
-                                               defaultBitrate),
+        std::make_shared<SystemVideoCodecInfo>(
+            AV_CODEC_ID_H263, AV_CODEC_ID_H263, "H.263", "H263-1998", "h263", CODEC_ENCODER_DECODER, defaultBitrate),
 #endif
 
 #endif
@@ -165,16 +154,8 @@ SystemCodecContainer::initCodecConfig()
                                                1,
                                                111),
 
-        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX,
-                                               AV_CODEC_ID_SPEEX,
-                                               "Speex",
-                                               "speex",
-                                               "libspeex",
-                                               CODEC_ENCODER_DECODER,
-                                               0,
-                                               8000,
-                                               1,
-                                               110),
+        std::make_shared<SystemAudioCodecInfo>(
+            AV_CODEC_ID_SPEEX, AV_CODEC_ID_SPEEX, "Speex", "speex", "libspeex", CODEC_ENCODER_DECODER, 0, 8000, 1, 110),
 
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
                                                AV_CODEC_ID_PCM_ALAW,
@@ -235,14 +216,14 @@ SystemCodecContainer::checkInstalledCodecs()
             if (avcodec_find_encoder(codecId) != nullptr)
                 enc_ss << codecIt->name << ' ';
             else
-                codecIt->codecType = (CodecType)((unsigned) codecType & ~CODEC_ENCODER);
+                codecIt->codecType = (CodecType) ((unsigned) codecType & ~CODEC_ENCODER);
         }
 
         if (codecType & CODEC_DECODER) {
             if (avcodec_find_decoder(codecId) != nullptr)
                 dec_ss << codecIt->name << ' ';
             else
-                codecIt->codecType = (CodecType)((unsigned) codecType & ~CODEC_DECODER);
+                codecIt->codecType = (CodecType) ((unsigned) codecType & ~CODEC_DECODER);
         }
     }
     JAMI_INFO("Encoder(s) found: %s", enc_ss.str().c_str());
@@ -306,8 +287,7 @@ SystemCodecContainer::searchCodecByPayload(unsigned payload, MediaType mediaType
 void
 SystemCodecContainer::removeCodecByName(const std::string& name, MediaType mediaType)
 {
-    for (auto codecIt = availableCodecList_.begin(); codecIt != availableCodecList_.end();
-         ++codecIt) {
+    for (auto codecIt = availableCodecList_.begin(); codecIt != availableCodecList_.end(); ++codecIt) {
         if ((*codecIt)->mediaType & mediaType and (*codecIt)->name == name) {
             availableCodecList_.erase(codecIt);
             break;

@@ -39,8 +39,7 @@ public:
         pjsip_transport base; // do not move, SHOULD be the fist member
         AbstractSIPTransport* self {nullptr};
     };
-    static_assert(std::is_standard_layout<TransportData>::value,
-                  "TransportData requires standard-layout");
+    static_assert(std::is_standard_layout<TransportData>::value, "TransportData requires standard-layout");
 
     virtual ~AbstractSIPTransport() {};
 

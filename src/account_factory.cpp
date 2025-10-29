@@ -32,12 +32,10 @@ const std::string_view AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUN
 
 AccountFactory::AccountFactory()
 {
-    generators_.emplace(SIPAccount::ACCOUNT_TYPE, [](const std::string& id) {
-        return std::make_shared<SIPAccount>(id, true);
-    });
-    generators_.emplace(JamiAccount::ACCOUNT_TYPE, [](const std::string& id) {
-        return std::make_shared<JamiAccount>(id);
-    });
+    generators_.emplace(SIPAccount::ACCOUNT_TYPE,
+                        [](const std::string& id) { return std::make_shared<SIPAccount>(id, true); });
+    generators_.emplace(JamiAccount::ACCOUNT_TYPE,
+                        [](const std::string& id) { return std::make_shared<JamiAccount>(id); });
 }
 
 std::shared_ptr<Account>
@@ -57,7 +55,7 @@ AccountFactory::createAccount(std::string_view accountType, const std::string& i
         std::lock_guard lock(mutex_);
         auto m = accountMaps_.find(accountType);
         if (m == accountMaps_.end())
-            m = accountMaps_.emplace(std::string(accountType), AccountMap<Account>{}).first;
+            m = accountMaps_.emplace(std::string(accountType), AccountMap<Account> {}).first;
         m->second.emplace(id, account);
     }
     return account;

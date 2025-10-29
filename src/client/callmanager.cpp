@@ -49,9 +49,7 @@ placeCall(const std::string& accountId, const std::string& to)
 }
 
 std::string
-placeCallWithMedia(const std::string& accountId,
-                   const std::string& to,
-                   const std::vector<libjami::MediaMap>& mediaList)
+placeCallWithMedia(const std::string& accountId, const std::string& to, const std::vector<libjami::MediaMap>& mediaList)
 {
     // Check if a destination number is available
     if (to.empty()) {
@@ -90,9 +88,7 @@ accept(const std::string& accountId, const std::string& callId)
 }
 
 bool
-acceptWithMedia(const std::string& accountId,
-                const std::string& callId,
-                const std::vector<libjami::MediaMap>& mediaList)
+acceptWithMedia(const std::string& accountId, const std::string& callId, const std::vector<libjami::MediaMap>& mediaList)
 {
     return jami::Manager::instance().acceptCall(accountId, callId, mediaList);
 }
@@ -139,10 +135,7 @@ unhold(const std::string& accountId, const std::string& callId)
 }
 
 bool
-muteLocalMedia(const std::string& accountId,
-               const std::string& callId,
-               const std::string& mediaType,
-               bool mute)
+muteLocalMedia(const std::string& accountId, const std::string& callId, const std::string& mediaType, bool mute)
 {
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
@@ -167,9 +160,7 @@ transfer(const std::string& accountId, const std::string& callId, const std::str
 }
 
 bool
-attendedTransfer(const std::string& accountId,
-                 const std::string& transferID,
-                 const std::string& targetID)
+attendedTransfer(const std::string& accountId, const std::string& transferID, const std::string& targetID)
 {
     if (auto account = jami::Manager::instance().getAccount(accountId))
         if (auto call = account->getCall(transferID))
@@ -187,8 +178,7 @@ joinParticipant(const std::string& accountId,
 }
 
 void
-createConfFromParticipantList(const std::string& accountId,
-                              const std::vector<std::string>& participants)
+createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>& participants)
 {
     jami::Manager::instance().createConfFromParticipantList(accountId, participants);
 }
@@ -452,9 +442,7 @@ switchInput(const std::string& accountId, const std::string& callId, const std::
 }
 
 bool
-switchSecondaryInput(const std::string& accountId,
-                     const std::string& confId,
-                     const std::string& resource)
+switchSecondaryInput(const std::string& accountId, const std::string& confId, const std::string& resource)
 {
     JAMI_ERR("Use requestMediaChange");
     return false;
@@ -473,27 +461,19 @@ sendTextMessage(const std::string& accountId,
 }
 
 void
-setModerator(const std::string& accountId,
-             const std::string& confId,
-             const std::string& peerId,
-             const bool& state)
+setModerator(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
             conf->setModerator(peerId, state);
         } else {
-            JAMI_WARN("Fail to change moderator %s, conference %s not found",
-                      peerId.c_str(),
-                      confId.c_str());
+            JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
         }
     }
 }
 
 void
-muteParticipant(const std::string& accountId,
-                const std::string& confId,
-                const std::string& peerId,
-                const bool& state)
+muteParticipant(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state)
 {
     JAMI_ERROR("muteParticipant is deprecated, please use muteStream");
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
@@ -546,9 +526,7 @@ muteStream(const std::string& accountId,
 }
 
 void
-setActiveParticipant(const std::string& accountId,
-                     const std::string& confId,
-                     const std::string& participant)
+setActiveParticipant(const std::string& accountId, const std::string& confId, const std::string& participant)
 {
     JAMI_ERR() << "setActiveParticipant is deprecated, please use setActiveStream";
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
@@ -618,8 +596,7 @@ raiseParticipantHand(const std::string& accountId,
     JAMI_ERR() << "raiseParticipantHand is deprecated, please use raiseHand";
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            if (auto call = std::static_pointer_cast<jami::SIPCall>(
-                    conf->getCallFromPeerID(peerId))) {
+            if (auto call = std::static_pointer_cast<jami::SIPCall>(conf->getCallFromPeerID(peerId))) {
                 if (auto* transport = call->getTransport())
                     conf->setHandRaised(std::string(transport->deviceId()), state);
             }
@@ -650,8 +627,7 @@ raiseHand(const std::string& accountId,
                 Json::Value deviceVal;
                 deviceVal["raiseHand"] = state;
                 Json::Value deviceObj;
-                std::string device = deviceId.empty() ? std::string(account->currentDeviceId())
-                                                      : deviceId;
+                std::string device = deviceId.empty() ? std::string(account->currentDeviceId()) : deviceId;
                 deviceObj[device] = deviceVal;
                 Json::Value accountVal;
                 deviceVal["devices"] = deviceObj;

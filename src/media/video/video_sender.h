@@ -50,8 +50,7 @@ public:
     void forceKeyFrame();
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<MediaFrame>>* obs,
-                const std::shared_ptr<MediaFrame>& frame_p) override;
+    void update(Observable<std::shared_ptr<MediaFrame>>* obs, const std::shared_ptr<MediaFrame>& frame_p) override;
 
     uint16_t getLastSeqValue();
 
@@ -59,7 +58,7 @@ public:
     int setBitrate(uint64_t br);
 
 private:
-    static constexpr int KEYFRAMES_AT_START {1}; // Number of keyframes to enforce at stream startup
+    static constexpr int KEYFRAMES_AT_START {1};    // Number of keyframes to enforce at stream startup
     static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
 
     NON_COPYABLE(VideoSender);

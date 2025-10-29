@@ -58,7 +58,7 @@
 #endif /* APP_NAME */
 #endif
 
-#define END_COLOR     "\033[0m"
+#define END_COLOR "\033[0m"
 
 #ifndef _WIN32
 #define RED    "\033[22;31m"
@@ -119,7 +119,8 @@ stripDirName(const char* path)
     if (path) {
         const char* occur = strrchr(path, DIR_SEPARATOR_CH);
         return occur ? occur + 1 : path;
-    } else return nullptr;
+    } else
+        return nullptr;
 }
 
 std::string
@@ -210,9 +211,7 @@ struct Logger::Msg
         linefeed_ = other.linefeed_;
     }
 
-    inline std::string header() const {
-        return formatHeader(file_, line_);
-    }
+    inline std::string header() const { return formatHeader(file_, line_); }
 
     const char* file_;
     unsigned line_;
@@ -366,8 +365,7 @@ Logger::setConsoleLog(bool en)
             GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
             original_attributes = consoleInfo.wAttributes;
             SetConsoleCP(CP_UTF8);
-            SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE),
-                           ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
+            SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
         }
     } else {
         // Restore the original state of the console window in case we attached.
@@ -570,8 +568,8 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
         return;
     }
 
-    if (not(ConsoleLog::instance().isEnable() or SysLog::instance().isEnable()
-            or MonitorLog::instance().isEnable() or FileLog::instance().isEnable())) {
+    if (not(ConsoleLog::instance().isEnable() or SysLog::instance().isEnable() or MonitorLog::instance().isEnable()
+            or FileLog::instance().isEnable())) {
         return;
     }
 

@@ -118,8 +118,7 @@ MigrationTest::testLoadExpiredAccount()
     auto newAccountExpiration = archive.id.second->getExpiration();
 
     // Check expiration is changed
-    CPPUNIT_ASSERT(newDeviceExpiration < deviceExpiration
-                   && newAccountExpiration < accountExpiration);
+    CPPUNIT_ASSERT(newDeviceExpiration < deviceExpiration && newAccountExpiration < accountExpiration);
 
     // Sleep and wait that certificate is expired
     std::this_thread::sleep_for(10s);
@@ -147,8 +146,7 @@ MigrationTest::testLoadExpiredAccount()
     deviceCert = dht::crypto::Certificate(fileutils::loadFile(devicePath));
     deviceExpiration = deviceCert.getExpiration();
     accountExpiration = archive.id.second->getExpiration();
-    CPPUNIT_ASSERT(newDeviceExpiration < deviceExpiration
-                   && newAccountExpiration < accountExpiration);
+    CPPUNIT_ASSERT(newDeviceExpiration < deviceExpiration && newAccountExpiration < accountExpiration);
     CPPUNIT_ASSERT(aliceUri == aliceAccount->getUsername());
     CPPUNIT_ASSERT(aliceDevice == aliceAccount->currentDeviceId());
 }
@@ -180,13 +178,12 @@ MigrationTest::testMigrationAfterRevokation()
     details[ConfProperties::ARCHIVE_PATH] = bobArchive;
 
     auto deviceRevoked = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
-            [&](const std::string& accountId, const std::string&, int status) {
-                if (accountId == bobId && status == 0)
-                    deviceRevoked = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
+        [&](const std::string& accountId, const std::string&, int status) {
+            if (accountId == bobId && status == 0)
+                deviceRevoked = true;
+            cv.notify_one();
+        }));
     auto bobMigrated = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::MigrationEnded>(
         [&](const std::string& accountId, const std::string& state) {
@@ -245,14 +242,13 @@ MigrationTest::testExpiredDeviceInSwarm()
             cv.notify_one();
         }));
     bool requestReceived = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+        [&](const std::string& /*accountId*/,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*metadatas*/) {
+            requestReceived = true;
+            cv.notify_one();
+        }));
     bool conversationReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
@@ -270,22 +266,21 @@ MigrationTest::testExpiredDeviceInSwarm()
             cv.notify_one();
         }));
     bool aliceStopped = false, aliceAnnounced = false, aliceRegistered = false, aliceRegistering = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string&, const std::map<std::string, std::string>&) {
-                auto details = aliceAccount->getVolatileAccountDetails();
-                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-                if (daemonStatus == "UNREGISTERED")
-                    aliceStopped = true;
-                else if (daemonStatus == "REGISTERED")
-                    aliceRegistered = true;
-                else if (daemonStatus == "TRYING")
-                    aliceRegistering = true;
-                auto announced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
-                if (announced == "true")
-                    aliceAnnounced = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string&, const std::map<std::string, std::string>&) {
+            auto details = aliceAccount->getVolatileAccountDetails();
+            auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+            if (daemonStatus == "UNREGISTERED")
+                aliceStopped = true;
+            else if (daemonStatus == "REGISTERED")
+                aliceRegistered = true;
+            else if (daemonStatus == "TRYING")
+                aliceRegistering = true;
+            auto announced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+            if (announced == "true")
+                aliceAnnounced = true;
+            cv.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
 
     // NOTE: We must update certificate before announcing, else, there will be several
@@ -322,8 +317,7 @@ MigrationTest::testExpiredDeviceInSwarm()
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() / bobAccount->getAccountID()
-                    / "conversations" / convId;
+    auto repoPath = fileutils::get_data_dir() / bobAccount->getAccountID() / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 20s, [&]() { return messageAliceReceived == 1; });

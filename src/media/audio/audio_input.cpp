@@ -40,9 +40,7 @@ AudioInput::AudioInput(const std::string& id)
     , resampler_(new Resampler)
     , resizer_(new AudioFrameResizer(format_,
                                      frameSize_,
-                                     [this](std::shared_ptr<AudioFrame>&& f) {
-                                         frameResized(std::move(f));
-                                     }))
+                                     [this](std::shared_ptr<AudioFrame>&& f) { frameResized(std::move(f)); }))
     , deviceGuard_()
     , loop_([] { return true; }, [this] { process(); }, [] {})
 {
@@ -191,24 +189,21 @@ AudioInput::initDevice(const std::string& device)
 }
 
 void
-AudioInput::configureFilePlayback(const std::string& path,
-                                  std::shared_ptr<MediaDemuxer>& demuxer,
-                                  int index)
+AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
 {
     decoder_.reset();
     devOpts_ = {};
     devOpts_.input = path;
     devOpts_.name = path;
-    auto decoder
-        = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
-              if (muteState_)
-                  libav_utils::fillWithSilence(frame->pointer());
-              if (ringBuf_)
-                  ringBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
-          });
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        if (muteState_)
+            libav_utils::fillWithSilence(frame->pointer());
+        if (ringBuf_)
+            ringBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
+    });
     decoder->emulateRate();
-    decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+    decoder->setInterruptCallback([](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); },
+                                  this);
 
     // have file audio mixed into the local buffer so it gets played
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
@@ -284,8 +279,7 @@ AudioInput::switchInput(const std::string& resource)
     decoder_.reset();
     if (decodingFile_) {
         decodingFile_ = false;
-        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID,
-                                                                    id_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     }
 
     playingDevice_ = false;
@@ -338,9 +332,7 @@ AudioInput::foundDevOpts(const DeviceParams& params)
 }
 
 void
-AudioInput::setRecorderCallback(
-    const std::function<void(const MediaStream& ms)>&
-        cb)
+AudioInput::setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb)
 {
     settingMS_.exchange(true);
     recorderCallback_ = cb;
@@ -350,7 +342,6 @@ AudioInput::setRecorderCallback(
                 recorderCallback_(getInfo());
         });
 }
-
 
 bool
 AudioInput::createDecoder()
@@ -368,8 +359,8 @@ AudioInput::createDecoder()
 
     // NOTE don't emulate rate, file is read as frames are needed
 
-    decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+    decoder->setInterruptCallback([](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); },
+                                  this);
 
     if (decoder->openInput(devOpts_) < 0) {
         JAMI_ERR() << "Unable to open input '" << devOpts_.input << "'";

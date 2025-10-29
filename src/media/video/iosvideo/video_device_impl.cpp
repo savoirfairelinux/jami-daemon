@@ -42,8 +42,7 @@ static const std::array<ios_fmt, 4> ios_formats {ios_fmt {"RGBA", AV_PIX_FMT_RGB
 class VideoDeviceImpl
 {
 public:
-    VideoDeviceImpl(const std::string& path,
-                    const std::vector<std::map<std::string, std::string>>& devInfo);
+    VideoDeviceImpl(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo);
 
     std::string name;
 
@@ -95,8 +94,7 @@ VideoDeviceImpl::selectFormat()
     }
 }
 
-VideoDeviceImpl::VideoDeviceImpl(const std::string& path,
-                                 const std::vector<std::map<std::string, std::string>>& devInfo)
+VideoDeviceImpl::VideoDeviceImpl(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
     : name(path)
 {
     for (auto& setting : devInfo) {
@@ -166,8 +164,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     emitSignal<libjami::VideoSignal::ParametersChanged>(name);
 }
 
-VideoDevice::VideoDevice(const std::string& path,
-                         const std::vector<std::map<std::string, std::string>>& devInfo)
+VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
     : deviceImpl_(new VideoDeviceImpl(path, devInfo))
 {
     id_ = path;

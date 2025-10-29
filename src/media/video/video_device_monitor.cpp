@@ -183,8 +183,7 @@ notify()
 }
 
 bool
-VideoDeviceMonitor::addDevice(const string& id,
-                              const std::vector<std::map<std::string, std::string>>& devInfo)
+VideoDeviceMonitor::addDevice(const string& id, const std::vector<std::map<std::string, std::string>>& devInfo)
 {
     try {
         std::lock_guard l(lock_);

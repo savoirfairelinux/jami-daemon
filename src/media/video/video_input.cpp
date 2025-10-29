@@ -138,8 +138,7 @@ VideoInput::getPixelFormat() const
 void
 VideoInput::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
-                                                [](AVBufferRef* buf) {
+    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9), [](AVBufferRef* buf) {
                                                     av_buffer_unref(&buf);
                                                 }};
     if (displayMatrix) {
@@ -225,22 +224,16 @@ VideoInput::flushBuffers()
 }
 
 void
-VideoInput::configureFilePlayback(const std::string&,
-                                  std::shared_ptr<MediaDemuxer>& demuxer,
-                                  int index)
+VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemuxer>& demuxer, int index)
 {
     deleteDecoder();
     clearOptions();
 
-    auto decoder = std::make_unique<MediaDecoder>(demuxer,
-                                                  index,
-                                                  [this](std::shared_ptr<MediaFrame>&& frame) {
-                                                      publishFrame(
-                                                          std::static_pointer_cast<VideoFrame>(
-                                                              frame));
-                                                  });
-    decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+    });
+    decoder->setInterruptCallback([](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
+                                  this);
     decoder->emulateRate();
 
     decoder_ = std::move(decoder);
@@ -293,19 +286,19 @@ VideoInput::createDecoder()
         return;
     }
 
-    auto decoder = std::make_unique<MediaDecoder>(
-        [this](const std::shared_ptr<MediaFrame>& frame) mutable {
-            publishFrame(std::static_pointer_cast<VideoFrame>(frame));
-        });
+    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
+        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+    });
 
     if (emulateRate_)
         decoder->emulateRate();
 
-    decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
+    decoder->setInterruptCallback([](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
+                                  this);
 
     bool ready = false, restartSink = false;
-    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab") && !decOpts_.is_area) {
+    if ((decOpts_.format == "x11grab" || decOpts_.format == "dxgigrab" || decOpts_.format == "pipewiregrab")
+        && !decOpts_.is_area) {
         decOpts_.width = 0;
         decOpts_.height = 0;
     }
@@ -733,13 +726,7 @@ VideoInput::getInfo() const
     }
     auto opts = futureDecOpts_.get();
     rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
-    return MediaStream("v:local",
-                       av_get_pix_fmt(opts.pixel_format.c_str()),
-                       1 / fr,
-                       opts.width,
-                       opts.height,
-                       0,
-                       fr);
+    return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()), 1 / fr, opts.width, opts.height, 0, fr);
 }
 
 void

@@ -73,33 +73,33 @@ public:
      *
      */
     enum class CertificateCheck {
-        HAS_PRIVATE_KEY, /** This certificate has a build in private key                          */
-        EXPIRED,         /** This certificate is past its expiration date                         */
-        STRONG_SIGNING,  /** This certificate has been signed with a brute-force-able method      */
-        NOT_SELF_SIGNED, /** This certificate has been self signed                                */
-        KEY_MATCH,       /** The public and private keys provided don't match                     */
-        PRIVATE_KEY_STORAGE_PERMISSION, /** The file hosting the private key isn't correctly secured */
-        PUBLIC_KEY_STORAGE_PERMISSION, /** The file hosting the public key isn't correctly secured */
+        HAS_PRIVATE_KEY,                   /** This certificate has a build in private key                          */
+        EXPIRED,                           /** This certificate is past its expiration date                         */
+        STRONG_SIGNING,                    /** This certificate has been signed with a brute-force-able method      */
+        NOT_SELF_SIGNED,                   /** This certificate has been self signed                                */
+        KEY_MATCH,                         /** The public and private keys provided don't match                     */
+        PRIVATE_KEY_STORAGE_PERMISSION,    /** The file hosting the private key isn't correctly secured */
+        PUBLIC_KEY_STORAGE_PERMISSION,     /** The file hosting the public key isn't correctly secured */
         PRIVATE_KEY_DIRECTORY_PERMISSIONS, /** The folder storing the private key isn't correctly
                                               secured           */
         PUBLIC_KEY_DIRECTORY_PERMISSIONS,  /** The folder storing the public key isn't correctly
                                               secured            */
-        PRIVATE_KEY_STORAGE_LOCATION, /** Some operating systems have extra policies for certificate
-                                         storage   */
-        PUBLIC_KEY_STORAGE_LOCATION,  /** Some operating systems have extra policies for certificate
-                                         storage   */
-        PRIVATE_KEY_SELINUX_ATTRIBUTES, /** Some operating systems require keys to have extra
-                                           attributes         */
-        PUBLIC_KEY_SELINUX_ATTRIBUTES,  /** Some operating systems require keys to have extra
-                                           attributes         */
-        EXIST,           /** The certificate file doesn't exist or is not accessible              */
-        VALID,           /** The file is not a certificate                                        */
-        VALID_AUTHORITY, /** The claimed authority did not sign the certificate                   */
-        KNOWN_AUTHORITY, /** Some operating systems provide a list of trusted authorities, use it */
-        NOT_REVOKED,     /** The certificate has been revoked by the authority                    */
-        AUTHORITY_MISMATCH, /** The certificate and authority mismatch */
-        UNEXPECTED_OWNER,   /** The certificate has an expected owner   */
-        NOT_ACTIVATED, /** The certificate has not been activated yet                           */
+        PRIVATE_KEY_STORAGE_LOCATION,      /** Some operating systems have extra policies for certificate
+                                              storage   */
+        PUBLIC_KEY_STORAGE_LOCATION,       /** Some operating systems have extra policies for certificate
+                                              storage   */
+        PRIVATE_KEY_SELINUX_ATTRIBUTES,    /** Some operating systems require keys to have extra
+                                              attributes         */
+        PUBLIC_KEY_SELINUX_ATTRIBUTES,     /** Some operating systems require keys to have extra
+                                              attributes         */
+        EXIST,                             /** The certificate file doesn't exist or is not accessible              */
+        VALID,                             /** The file is not a certificate                                        */
+        VALID_AUTHORITY,                   /** The claimed authority did not sign the certificate                   */
+        KNOWN_AUTHORITY,                   /** Some operating systems provide a list of trusted authorities, use it */
+        NOT_REVOKED,                       /** The certificate has been revoked by the authority                    */
+        AUTHORITY_MISMATCH,                /** The certificate and authority mismatch */
+        UNEXPECTED_OWNER,                  /** The certificate has an expected owner   */
+        NOT_ACTIVATED,                     /** The certificate has not been activated yet                           */
         COUNT__,
     };
 
@@ -107,8 +107,8 @@ public:
      * @enum CertificateDetails Informative fields about a certificate
      */
     enum class CertificateDetails {
-        EXPIRATION_DATE, /** The certificate expiration date                                      */
-        ACTIVATION_DATE, /** The certificate activation date                                      */
+        EXPIRATION_DATE,              /** The certificate expiration date                                      */
+        ACTIVATION_DATE,              /** The certificate activation date                                      */
         REQUIRE_PRIVATE_KEY_PASSWORD, /** Does the private key require a password */
         PUBLIC_SIGNATURE,
         VERSION_NUMBER,
@@ -188,7 +188,8 @@ public:
                  const std::string& privatekeyPasswd = "",
                  const std::string& caList = "");
 
-    TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
+    TlsValidator(const dhtnet::tls::CertificateStore& certStore,
+                 const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 
     TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw);
 
@@ -284,7 +285,7 @@ private:
 
     static const Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
 
-    const dhtnet::tls::CertificateStore&  certStore_;
+    const dhtnet::tls::CertificateStore& certStore_;
     std::string certificatePath_;
     std::string privateKeyPath_;
     std::string caListPath_ {};

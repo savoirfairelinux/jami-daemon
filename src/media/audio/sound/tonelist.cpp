@@ -78,8 +78,7 @@ TelephoneTone::getCurrentTone()
 void
 TelephoneTone::buildTones(unsigned int sampleRate, AVSampleFormat sampleFormat)
 {
-    const char* toneZone[(size_t) TelephoneTone::CountryId::ZID_COUNTRIES]
-                        [(size_t) Tone::ToneId::TONE_NULL]
+    const char* toneZone[(size_t) TelephoneTone::CountryId::ZID_COUNTRIES][(size_t) Tone::ToneId::TONE_NULL]
         = {{
                // ZID_NORTH_AMERICA
                "350+440",             // Tone::TONE_DIALTONE
@@ -131,16 +130,18 @@ TelephoneTone::buildTones(unsigned int sampleRate, AVSampleFormat sampleFormat)
            }};
     tones_[(size_t) Tone::ToneId::DIALTONE]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::DIALTONE],
-                                 sampleRate, sampleFormat);
+                                 sampleRate,
+                                 sampleFormat);
     tones_[(size_t) Tone::ToneId::BUSY]
-        = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::BUSY],
-                                 sampleRate, sampleFormat);
+        = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::BUSY], sampleRate, sampleFormat);
     tones_[(size_t) Tone::ToneId::RINGTONE]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::RINGTONE],
-                                 sampleRate, sampleFormat);
+                                 sampleRate,
+                                 sampleFormat);
     tones_[(size_t) Tone::ToneId::CONGESTION]
         = std::make_shared<Tone>(toneZone[(size_t) countryId_][(size_t) Tone::ToneId::CONGESTION],
-                                 sampleRate, sampleFormat);
+                                 sampleRate,
+                                 sampleFormat);
 }
 
 } // namespace jami

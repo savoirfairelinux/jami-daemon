@@ -64,12 +64,11 @@ enum class LIBJAMI_PUBLIC DataTransferFlags {
 
 struct LIBJAMI_PUBLIC DataTransferInfo
 {
-    std::string accountId; ///< Identifier of the emiter/receiver account
-    DataTransferEventCode lastEvent {
-        DataTransferEventCode::invalid}; ///< Latest event code sent to the user
-    uint32_t flags {0};                  ///< Transfer global information.
-    int64_t totalSize {0};               ///< Total number of bytes to sent/receive, 0 if not known
-    int64_t bytesProgress {0};           ///< Number of bytes sent/received
+    std::string accountId;                                            ///< Identifier of the emiter/receiver account
+    DataTransferEventCode lastEvent {DataTransferEventCode::invalid}; ///< Latest event code sent to the user
+    uint32_t flags {0};                                               ///< Transfer global information.
+    int64_t totalSize {0};     ///< Total number of bytes to sent/receive, 0 if not known
+    int64_t bytesProgress {0}; ///< Number of bytes sent/received
     std::string author;
     std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
     std::string conversationId;

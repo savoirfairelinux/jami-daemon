@@ -42,10 +42,7 @@ const char* const VIDEO_PORT_MAX_KEY = "videoPortMax";
 using yaml_utils::parseValueOptional;
 
 static void
-unserializeRange(const YAML::Node& node,
-                 const char* minKey,
-                 const char* maxKey,
-                 std::pair<uint16_t, uint16_t>& range)
+unserializeRange(const YAML::Node& node, const char* minKey, const char* maxKey, std::pair<uint16_t, uint16_t>& range)
 {
     int tmpMin = yaml_utils::parseValueOptional(node, minKey, tmpMin);
     int tmpMax = yaml_utils::parseValueOptional(node, maxKey, tmpMax);
@@ -63,8 +60,7 @@ addRangeToDetails(std::map<std::string, std::string>& a,
 }
 
 void
-SipAccountBaseConfig::serializeDiff(YAML::Emitter& out,
-                                    const SipAccountBaseConfig& DEFAULT_CONFIG) const
+SipAccountBaseConfig::serializeDiff(YAML::Emitter& out, const SipAccountBaseConfig& DEFAULT_CONFIG) const
 {
     AccountConfig::serializeDiff(out, DEFAULT_CONFIG);
     SERIALIZE_CONFIG(Conf::DTMF_TYPE_KEY, dtmfType);
@@ -106,14 +102,8 @@ SipAccountBaseConfig::toMap() const
 {
     auto a = AccountConfig::toMap();
 
-    addRangeToDetails(a,
-                      Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN,
-                      Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX,
-                      audioPortRange);
-    addRangeToDetails(a,
-                      Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN,
-                      Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX,
-                      videoPortRange);
+    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange);
+    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange);
 
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType);
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE, interface);

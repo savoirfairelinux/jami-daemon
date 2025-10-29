@@ -42,13 +42,7 @@ struct MediaStream
 
     MediaStream() {}
 
-    MediaStream(const std::string& streamName,
-                int fmt,
-                rational<int> tb,
-                int w,
-                int h,
-                int br,
-                rational<int> fr)
+    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int w, int h, int br, rational<int> fr)
         : name(streamName)
         , format(fmt)
         , isVideo(true)
@@ -59,8 +53,7 @@ struct MediaStream
         , frameRate(fr)
     {}
 
-    MediaStream(
-        const std::string& streamName, int fmt, rational<int> tb, int sr, int channels, int size)
+    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int sr, int channels, int size)
         : name(streamName)
         , format(fmt)
         , isVideo(false)
@@ -149,12 +142,10 @@ struct MediaStream
 
     friend bool operator==(const MediaStream& ms1, const MediaStream& ms2)
     {
-        return ms1.bitrate == ms2.bitrate and ms1.firstTimestamp == ms2.firstTimestamp
-               and ms1.format == ms2.format and ms1.frameRate == ms2.frameRate
-               and ms1.frameSize == ms2.frameSize and ms1.height == ms2.height
-               and ms1.isVideo == ms2.isVideo and ms1.name == ms2.name
-               and ms1.nbChannels == ms2.nbChannels and ms1.sampleRate == ms2.sampleRate
-               and ms1.timeBase == ms2.timeBase and ms1.width == ms2.width;
+        return ms1.bitrate == ms2.bitrate and ms1.firstTimestamp == ms2.firstTimestamp and ms1.format == ms2.format
+               and ms1.frameRate == ms2.frameRate and ms1.frameSize == ms2.frameSize and ms1.height == ms2.height
+               and ms1.isVideo == ms2.isVideo and ms1.name == ms2.name and ms1.nbChannels == ms2.nbChannels
+               and ms1.sampleRate == ms2.sampleRate and ms1.timeBase == ms2.timeBase and ms1.width == ms2.width;
     }
 };
 
@@ -163,16 +154,15 @@ operator<<(std::ostream& os, const MediaStream& ms)
 {
     if (ms.isVideo) {
         auto formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
-        os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-           << (formatName ? formatName : "(unknown format)") << " video, " << ms.width << "x"
-           << ms.height << ", " << ms.frameRate << " fps (" << ms.timeBase << ")";
+        os << (ms.name.empty() ? "(null)" : ms.name) << ": " << (formatName ? formatName : "(unknown format)")
+           << " video, " << ms.width << "x" << ms.height << ", " << ms.frameRate << " fps (" << ms.timeBase << ")";
         if (ms.bitrate > 0)
             os << ", " << ms.bitrate << " kb/s";
     } else {
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-           << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
-           << ms.nbChannels << " channel(s), " << ms.sampleRate << " Hz (" << ms.timeBase << "), "
-           << ms.frameSize << " samples per frame";
+           << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, " << ms.nbChannels
+           << " channel(s), " << ms.sampleRate << " Hz (" << ms.timeBase << "), " << ms.frameSize
+           << " samples per frame";
     }
     if (ms.firstTimestamp > 0)
         os << ", start: " << ms.firstTimestamp;

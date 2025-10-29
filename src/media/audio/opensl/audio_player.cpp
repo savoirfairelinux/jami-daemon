@@ -96,10 +96,7 @@ AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
     }
 }
 
-AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
-                         size_t bufSize,
-                         SLEngineItf slEngine,
-                         SLint32 streamType)
+AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf slEngine, SLint32 streamType)
     : sampleInfo_(sampleFormat)
 {
     JAMI_DBG("Creating OpenSL playback stream %s", sampleFormat.toString().c_str());
@@ -138,13 +135,8 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
     SLASSERT(result);
 
     SLAndroidConfigurationItf playerConfig;
-    result = (*playerObjectItf_)
-                 ->GetInterface(playerObjectItf_, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
-    result = (*playerConfig)
-                 ->SetConfiguration(playerConfig,
-                                    SL_ANDROID_KEY_STREAM_TYPE,
-                                    &streamType,
-                                    sizeof(SLint32));
+    result = (*playerObjectItf_)->GetInterface(playerObjectItf_, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
+    result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
 
     // realize the player
     result = (*playerObjectItf_)->Realize(playerObjectItf_, SL_BOOLEAN_FALSE);
@@ -155,8 +147,7 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
     SLASSERT(result);
 
     // get the buffer queue interface
-    result = (*playerObjectItf_)
-                 ->GetInterface(playerObjectItf_, SL_IID_BUFFERQUEUE, &playBufferQueueItf_);
+    result = (*playerObjectItf_)->GetInterface(playerObjectItf_, SL_IID_BUFFERQUEUE, &playBufferQueueItf_);
     SLASSERT(result);
 
     // register callback on the buffer queue
@@ -168,7 +159,7 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat,
 
     silentBuf_ = {(format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize};
     silentBuf_.size_ = silentBuf_.cap_;
-    av_samples_set_silence(&silentBuf_.buf_, 0, (int)bufSize, (int)sampleInfo_.nb_channels, sampleInfo_.sampleFormat);
+    av_samples_set_silence(&silentBuf_.buf_, 0, (int) bufSize, (int) sampleInfo_.nb_channels, sampleInfo_.sampleFormat);
 }
 
 AudioPlayer::~AudioPlayer()
@@ -279,11 +270,7 @@ AudioPlayer::playAudioBuffers(unsigned count)
 
         SLresult result = (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, buf->buf_, buf->size_);
         if (result != SL_RESULT_SUCCESS) {
-            JAMI_ERR("%s Error @( %p, %zu ), result = %d",
-                     __FUNCTION__,
-                     (void*) buf->buf_,
-                     buf->size_,
-                     result);
+            JAMI_ERR("%s Error @( %p, %zu ), result = %d", __FUNCTION__, (void*) buf->buf_, buf->size_, result);
             /*
              * when this happens, a buffer is lost. Need to remove the buffer
              * from top of the devShadowQueue. Since I do not have it now,

@@ -179,15 +179,10 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
     size_ = getSize({params.width, params.height});
     rate_ = getRate(params.framerate);
-    emitSignal<libjami::VideoSignal::SetParameters>(name,
-                                                  fmt_->code,
-                                                  size_.first,
-                                                  size_.second,
-                                                  rate_.real());
+    emitSignal<libjami::VideoSignal::SetParameters>(name, fmt_->code, size_.first, size_.second, rate_.real());
 }
 
-VideoDevice::VideoDevice(const std::string& id,
-                         const std::vector<std::map<std::string, std::string>>&)
+VideoDevice::VideoDevice(const std::string& id, const std::vector<std::map<std::string, std::string>>&)
     : deviceImpl_(new VideoDeviceImpl(id))
 {
     id_ = id;

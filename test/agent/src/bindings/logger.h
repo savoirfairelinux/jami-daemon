@@ -22,21 +22,19 @@
 /* Agent */
 #include "utils.h"
 
-static SCM log_binding(SCM log_lvl_int, SCM file_str, SCM line_int, SCM text_str)
+static SCM
+log_binding(SCM log_lvl_int, SCM file_str, SCM line_int, SCM text_str)
 {
-        const std::string file = from_guile(file_str);
-        const std::string text = from_guile(text_str);
+    const std::string file = from_guile(file_str);
+    const std::string text = from_guile(text_str);
 
-        jami::Logger::log(from_guile(log_lvl_int),
-                          file.c_str(),
-                          from_guile(line_int),
-                          false, "[GUILE] %s\n", text.c_str());
+    jami::Logger::log(from_guile(log_lvl_int), file.c_str(), from_guile(line_int), false, "[GUILE] %s\n", text.c_str());
 
-        return SCM_UNDEFINED;
+    return SCM_UNDEFINED;
 }
 
 static void
-install_logger_primitives(void *)
+install_logger_primitives(void*)
 {
     define_primitive("log", 4, 0, 0, (void*) log_binding);
 

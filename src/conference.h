@@ -135,19 +135,14 @@ struct ParticipantInfo
 
     friend bool operator==(const ParticipantInfo& p1, const ParticipantInfo& p2)
     {
-        return p1.uri == p2.uri and p1.device == p2.device and p1.sinkId == p2.sinkId
-               and p1.active == p2.active and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w
-               and p1.h == p2.h and p1.videoMuted == p2.videoMuted
-               and p1.audioLocalMuted == p2.audioLocalMuted
-               and p1.audioModeratorMuted == p2.audioModeratorMuted
+        return p1.uri == p2.uri and p1.device == p2.device and p1.sinkId == p2.sinkId and p1.active == p2.active
+               and p1.x == p2.x and p1.y == p2.y and p1.w == p2.w and p1.h == p2.h and p1.videoMuted == p2.videoMuted
+               and p1.audioLocalMuted == p2.audioLocalMuted and p1.audioModeratorMuted == p2.audioModeratorMuted
                and p1.isModerator == p2.isModerator and p1.handRaised == p2.handRaised
                and p1.voiceActivity == p2.voiceActivity and p1.recording == p2.recording;
     }
 
-    friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2)
-    {
-        return !(p1 == p2);
-    }
+    friend bool operator!=(const ParticipantInfo& p1, const ParticipantInfo& p2) { return !(p1 == p2); }
 };
 
 struct ConfInfo : public std::vector<ParticipantInfo>
@@ -165,9 +160,7 @@ struct ConfInfo : public std::vector<ParticipantInfo>
             return false;
 
         for (auto& p1 : c1) {
-            auto it = std::find_if(c2.begin(), c2.end(), [&p1](const ParticipantInfo& p2) {
-                return p1 == p2;
-            });
+            auto it = std::find_if(c2.begin(), c2.end(), [&p1](const ParticipantInfo& p2) { return p1 == p2; });
             if (it != c2.end())
                 continue;
             else
@@ -193,8 +186,7 @@ public:
     /**
      * Constructor for this class, increment static counter
      */
-    explicit Conference(const std::shared_ptr<Account>&,
-                        const std::string& confId = "");
+    explicit Conference(const std::shared_ptr<Account>&, const std::string& confId = "");
 
     /**
      * Destructor for this class, decrement static counter
@@ -376,15 +368,11 @@ public:
     {
         return duration_start_ == clock::time_point::min()
                    ? std::chrono::milliseconds::zero()
-                   : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now()
-                                                                           - duration_start_);
+                   : std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - duration_start_);
     }
 
 private:
-    std::weak_ptr<Conference> weak()
-    {
-        return std::static_pointer_cast<Conference>(shared_from_this());
-    }
+    std::weak_ptr<Conference> weak() { return std::static_pointer_cast<Conference>(shared_from_this()); }
 
     static std::shared_ptr<Call> getCall(const std::string& callId);
     bool isModerator(std::string_view uri) const;
@@ -448,8 +436,7 @@ private:
 #ifdef ENABLE_VIDEO
     void resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerURI);
 #endif
-    std::string_view findHostforRemoteParticipant(std::string_view uri,
-                                                  std::string_view deviceId = "");
+    std::string_view findHostforRemoteParticipant(std::string_view uri, std::string_view deviceId = "");
 
     std::shared_ptr<Call> getCallWith(const std::string& accountUri, const std::string& deviceId);
 

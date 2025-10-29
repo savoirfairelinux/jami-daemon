@@ -19,5 +19,5 @@
 #include <stdarg.h>
 
 extern "C" {
-	extern bool syslog_handler(int priority, const char *fmt, va_list ap);
+extern bool syslog_handler(int priority, const char* fmt, va_list ap);
 };

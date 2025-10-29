@@ -58,12 +58,13 @@ DTMFGenerator::DTMFGenerator(unsigned int sampleRate, AVSampleFormat sampleForma
         toneBuffers_[i] = fillToneBuffer(i);
 }
 
-DTMFGenerator::~DTMFGenerator()
-{}
+DTMFGenerator::~DTMFGenerator() {}
 
 using std::vector;
 
-void DTMFGenerator::getSamples(AVFrame* frame, unsigned char code) {
+void
+DTMFGenerator::getSamples(AVFrame* frame, unsigned char code)
+{
     code = toupper(code);
 
     if (code >= '0' and code <= '9')
@@ -86,7 +87,13 @@ void DTMFGenerator::getSamples(AVFrame* frame, unsigned char code) {
         }
     }
 
-    av_samples_copy(frame->data, state.sample->data, 0, state.offset, frame->nb_samples, frame->ch_layout.nb_channels, (AVSampleFormat)frame->format);
+    av_samples_copy(frame->data,
+                    state.sample->data,
+                    0,
+                    state.offset,
+                    frame->nb_samples,
+                    frame->ch_layout.nb_channels,
+                    (AVSampleFormat) frame->format);
     state.offset = frame->nb_samples % sampleRate_;
 }
 
@@ -94,14 +101,21 @@ void DTMFGenerator::getSamples(AVFrame* frame, unsigned char code) {
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(AVFrame* frame) {
+void
+DTMFGenerator::getNextSamples(AVFrame* frame)
+{
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
 
-    av_samples_copy(frame->data, state.sample->data, 0, state.offset, frame->nb_samples, frame->ch_layout.nb_channels, (AVSampleFormat)frame->format);
+    av_samples_copy(frame->data,
+                    state.sample->data,
+                    0,
+                    state.offset,
+                    frame->nb_samples,
+                    frame->ch_layout.nb_channels,
+                    (AVSampleFormat) frame->format);
     state.offset = (state.offset + frame->nb_samples) % sampleRate_;
 }
-
 
 libjami::FrameBuffer
 DTMFGenerator::fillToneBuffer(int index)

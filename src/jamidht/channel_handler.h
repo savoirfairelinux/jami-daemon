@@ -23,8 +23,7 @@ namespace jami {
 
 using DeviceId = dht::PkId;
 using ConnectCb = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const DeviceId&)>;
-using ConnectCallbackLegacy
-    = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const dht::InfoHash&)>;
+using ConnectCallbackLegacy = std::function<void(std::shared_ptr<dhtnet::ChannelSocket>, const dht::InfoHash&)>;
 
 // using ConnectCb = dhtnet::ConnectCallback;
 // using ConnectCallbackLegacy = dhtnet::ConnectCallbackLegacy;
@@ -53,9 +52,8 @@ public:
                          bool forceNewConnection = false)
         = 0;
 
-    virtual void connect(const dht::InfoHash& /*infoHash*/,
-                         const std::string& /*name*/,
-                         ConnectCallbackLegacy&& /*cb*/) {}
+    virtual void connect(const dht::InfoHash& /*infoHash*/, const std::string& /*name*/, ConnectCallbackLegacy&& /*cb*/)
+    {}
 
     /**
      * Determine if we accept or not the request. Called when ConnectionManager receives a request
@@ -63,9 +61,7 @@ public:
      * @param name          The name of the channel
      * @return if we accept or not
      */
-    virtual bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
-                           const std::string& name)
-        = 0;
+    virtual bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) = 0;
 
     /**
      * Called when ConnectionManager has a new channel ready

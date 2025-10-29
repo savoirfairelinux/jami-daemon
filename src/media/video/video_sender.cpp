@@ -50,8 +50,7 @@ VideoSender::VideoSender(const std::string& dest,
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
 #ifdef ENABLE_HWACCEL
-    videoEncoder_->enableAccel(enableHwAccel
-                               and Manager::instance().videoPreferences.getEncodingAccelerated());
+    videoEncoder_->enableAccel(enableHwAccel and Manager::instance().videoPreferences.getEncodingAccelerated());
 #endif
     videoEncoder_->addStream(*args.codec);
     videoEncoder_->setInitSeqVal(seqVal);
@@ -71,8 +70,7 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
     if (auto packet = input_frame->packet()) {
         videoEncoder_->send(*packet);
     } else {
-        bool is_keyframe = forceKeyFrame_ > 0
-                           or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
+        bool is_keyframe = forceKeyFrame_ > 0 or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
         if (is_keyframe)
             --forceKeyFrame_;
@@ -87,8 +85,7 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
 }
 
 void
-VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
-                    const std::shared_ptr<MediaFrame>& frame_p)
+VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/, const std::shared_ptr<MediaFrame>& frame_p)
 {
     encodeAndSendVideo(std::dynamic_pointer_cast<VideoFrame>(frame_p));
 }

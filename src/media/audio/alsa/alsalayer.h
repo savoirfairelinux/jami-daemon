@@ -145,10 +145,7 @@ private:
      * will often hold on to a device temporarily after it has been opened
      * and closed.
      */
-    bool openDevice(snd_pcm_t** pcm,
-                    const std::string& dev,
-                    snd_pcm_stream_t stream,
-                    AudioFormat& format);
+    bool openDevice(snd_pcm_t** pcm, const std::string& dev, snd_pcm_stream_t stream, AudioFormat& format);
 
     /**
      * Number of audio cards on which capture stream has been opened

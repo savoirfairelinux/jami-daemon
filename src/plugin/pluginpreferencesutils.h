@@ -41,7 +41,7 @@ public:
      * @return preference.json file path.
      */
     static std::filesystem::path getPreferencesConfigFilePath(const std::filesystem::path& rootPath,
-                                                    const std::string& accountId = "");
+                                                              const std::string& accountId = "");
 
     /**
      * @brief Given a plugin installation path, returns the path to the
@@ -53,7 +53,7 @@ public:
      * @return preference.msgpack file path.
      */
     static std::filesystem::path valuesFilePath(const std::filesystem::path& rootPath,
-                                      const std::string& accountId = "");
+                                                const std::string& accountId = "");
 
     /**
      * @brief Returns the path to allowdeny.msgpack file.
@@ -75,8 +75,7 @@ public:
      * @param jsonPreference
      * @return std::map<std::string, std::string> preference
      */
-    static std::map<std::string, std::string> parsePreferenceConfig(
-        const Json::Value& jsonPreference);
+    static std::map<std::string, std::string> parsePreferenceConfig(const Json::Value& jsonPreference);
 
     /**
      * @brief Reads a preference.json file from the plugin installed in rootPath.
@@ -84,8 +83,8 @@ public:
      * @param accountId
      * @return std::vector<std::map<std::string, std::string>> with preferences.json content
      */
-    static std::vector<std::map<std::string, std::string>> getPreferences(
-        const std::filesystem::path& rootPath, const std::string& accountId = "");
+    static std::vector<std::map<std::string, std::string>> getPreferences(const std::filesystem::path& rootPath,
+                                                                          const std::string& accountId = "");
 
     /**
      * @brief Reads preferences values which were modified from defaultValue
@@ -93,8 +92,8 @@ public:
      * @param accountId
      * @return Map with preference keys and actuall values.
      */
-    static std::map<std::string, std::string> getUserPreferencesValuesMap(
-        const std::filesystem::path& rootPath, const std::string& accountId = "");
+    static std::map<std::string, std::string> getUserPreferencesValuesMap(const std::filesystem::path& rootPath,
+                                                                          const std::string& accountId = "");
 
     /**
      * @brief Reads preferences values
@@ -102,8 +101,8 @@ public:
      * @param accountId
      * @return Map with preference keys and actuall values.
      */
-    static std::map<std::string, std::string> getPreferencesValuesMap(
-        const std::filesystem::path& rootPath, const std::string& accountId = "");
+    static std::map<std::string, std::string> getPreferencesValuesMap(const std::filesystem::path& rootPath,
+                                                                      const std::string& accountId = "");
 
     /**
      * @brief Resets all preferences values to their defaultValues
@@ -133,8 +132,7 @@ public:
      * @param handlerName
      * @param rootPath
      */
-    static void addAlwaysHandlerPreference(const std::string& handlerName,
-                                           const std::string& rootPath);
+    static void addAlwaysHandlerPreference(const std::string& handlerName, const std::string& rootPath);
 
     /**
      * @brief Read plugin's preferences and returns wheter a specific handler

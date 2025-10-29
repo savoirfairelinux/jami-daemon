@@ -301,8 +301,7 @@ private:
     /**
      * Time of the last incoming call notification
      */
-    std::chrono::system_clock::time_point lastNotificationTime_ {
-        std::chrono::system_clock::time_point::min()};
+    std::chrono::system_clock::time_point lastNotificationTime_ {std::chrono::system_clock::time_point::min()};
 };
 
 } // namespace jami

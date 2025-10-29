@@ -37,7 +37,7 @@ mutate_gnutls_record_send(ChanneledMessage& msg)
 
     /* Skip none SDP Content-Type */
     if (not sip.isApplication("media_control+xml")) {
-         return false;
+        return false;
     }
 
     auto body = sip.getBody();
@@ -45,10 +45,10 @@ mutate_gnutls_record_send(ChanneledMessage& msg)
 
     newBody.reserve(body_repeat * body.size());
 
-    for (size_t i=0; i<body_repeat; ++i) {
-            for (auto it=body.cbegin(); it!=body.cend(); ++it) {
-                    newBody.emplace_back(*it);
-            }
+    for (size_t i = 0; i < body_repeat; ++i) {
+        for (auto it = body.cbegin(); it != body.cend(); ++it) {
+            newBody.emplace_back(*it);
+        }
     }
 
     sip.swapBody(newBody);

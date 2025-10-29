@@ -39,7 +39,8 @@ struct SwarmMessage
     std::vector<std::map<std::string, std::string>> editions;
     std::map<std::string, int32_t> status;
 
-    void fromMapStringString(const std::map<std::string, std::string>& commit) {
+    void fromMapStringString(const std::map<std::string, std::string>& commit)
+    {
         id = commit.at("id");
         type = commit.at("type");
         body = commit; // TODO erase type/id?
@@ -48,31 +49,27 @@ struct SwarmMessage
 
 // Conversation management
 LIBJAMI_PUBLIC std::string startConversation(const std::string& accountId);
-LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId,
-                                              const std::string& conversationId);
-LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId,
-                                               const std::string& conversationId);
-LIBJAMI_PUBLIC bool removeConversation(const std::string& accountId,
-                                       const std::string& conversationId);
+LIBJAMI_PUBLIC void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC bool removeConversation(const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::string> getConversations(const std::string& accountId);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(
-    const std::string& accountId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId);
 
 // Calls
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getActiveCalls(
-    const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getActiveCalls(const std::string& accountId,
+                                                                              const std::string& conversationId);
 
 // Conversation's infos management
 LIBJAMI_PUBLIC void updateConversationInfos(const std::string& accountId,
                                             const std::string& conversationId,
                                             const std::map<std::string, std::string>& infos);
-LIBJAMI_PUBLIC std::map<std::string, std::string> conversationInfos(
-    const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC std::map<std::string, std::string> conversationInfos(const std::string& accountId,
+                                                                    const std::string& conversationId);
 LIBJAMI_PUBLIC void setConversationPreferences(const std::string& accountId,
                                                const std::string& conversationId,
                                                const std::map<std::string, std::string>& prefs);
-LIBJAMI_PUBLIC std::map<std::string, std::string> getConversationPreferences(
-    const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC std::map<std::string, std::string> getConversationPreferences(const std::string& accountId,
+                                                                             const std::string& conversationId);
 
 // Member management
 LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
@@ -81,8 +78,8 @@ LIBJAMI_PUBLIC void addConversationMember(const std::string& accountId,
 LIBJAMI_PUBLIC void removeConversationMember(const std::string& accountId,
                                              const std::string& conversationId,
                                              const std::string& contactUri);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
-    const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId,
+                                                                                      const std::string& conversationId);
 
 // Message send/load
 LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
@@ -95,9 +92,9 @@ LIBJAMI_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                                  const std::string& fromMessage,
                                                  size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversation(const std::string& accountId,
-                                                 const std::string& conversationId,
-                                                 const std::string& fromMessage,
-                                                 size_t n);
+                                         const std::string& conversationId,
+                                         const std::string& fromMessage,
+                                         size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
                                               const std::string& conversationId,
                                               const std::string& fromMessage,
@@ -204,20 +201,17 @@ struct LIBJAMI_PUBLIC ConversationSignal
     struct LIBJAMI_PUBLIC ConversationRequestDeclined
     {
         constexpr static const char* name = "ConversationRequestDeclined";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /* conversationId */);
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */);
     };
     struct LIBJAMI_PUBLIC ConversationReady
     {
         constexpr static const char* name = "ConversationReady";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /* conversationId */);
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */);
     };
     struct LIBJAMI_PUBLIC ConversationRemoved
     {
         constexpr static const char* name = "ConversationRemoved";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /* conversationId */);
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */);
     };
     struct LIBJAMI_PUBLIC ConversationMemberEvent
     {
@@ -243,9 +237,7 @@ struct LIBJAMI_PUBLIC ConversationSignal
     struct LIBJAMI_PUBLIC CallConnectionRequest
     {
         constexpr static const char* name = "CallConnectionRequest";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /*peerId*/,
-                             bool hasVideo);
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /*peerId*/, bool hasVideo);
     };
 
     struct LIBJAMI_PUBLIC OnConversationError

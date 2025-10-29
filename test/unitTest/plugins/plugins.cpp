@@ -100,9 +100,7 @@ public:
     CallData bobData;
 
 private:
-    static bool waitForSignal(CallData& callData,
-                              const std::string& signal,
-                              const std::string& expectedEvent = {});
+    static bool waitForSignal(CallData& callData, const std::string& signal, const std::string& expectedEvent = {});
     // Event/Signal handlers
     static void onCallStateChange(const std::string& accountId,
                                   const std::string& callId,
@@ -113,19 +111,19 @@ private:
                                         const std::vector<libjami::MediaMap> mediaList,
                                         CallData& callData);
 
-    std::string name_{};
-    std::string jplPath_{};
-    std::string certPath_{};
-    std::string pluginCertNotFound_{};
-    std::string pluginNotSign_{};
-    std::string pluginFileNotSign_{};
-    std::string pluginManifestChanged_{};
-    std::string pluginNotSignByIssuer_{};
-    std::string pluginNotFoundPath_{};
-    std::unique_ptr<dht::crypto::Certificate> cert_{};
-    std::string installationPath_{};
-    std::vector<std::string> mediaHandlers_{};
-    std::vector<std::string> chatHandlers_{};
+    std::string name_ {};
+    std::string jplPath_ {};
+    std::string certPath_ {};
+    std::string pluginCertNotFound_ {};
+    std::string pluginNotSign_ {};
+    std::string pluginFileNotSign_ {};
+    std::string pluginManifestChanged_ {};
+    std::string pluginNotSignByIssuer_ {};
+    std::string pluginNotFoundPath_ {};
+    std::unique_ptr<dht::crypto::Certificate> cert_ {};
+    std::string installationPath_ {};
+    std::vector<std::string> mediaHandlers_ {};
+    std::vector<std::string> chatHandlers_ {};
 
     void testEnable();
     void testCertificateVerification();
@@ -156,9 +154,9 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(PluginsTest, PluginsTest::name());
 
 void
 PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
-                                        const std::string& callId,
-                                        const std::vector<libjami::MediaMap> mediaList,
-                                        CallData& callData)
+                                     const std::string& callId,
+                                     const std::vector<libjami::MediaMap> mediaList,
+                                     CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
@@ -188,9 +186,9 @@ PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
 
 void
 PluginsTest::onCallStateChange(const std::string& accountId,
-                                const std::string& callId,
-                                const std::string& state,
-                                CallData& callData)
+                               const std::string& callId,
+                               const std::string& state,
+                               CallData& callData)
 {
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - state [%s]",
               libjami::CallSignal::StateChange::name,
@@ -202,8 +200,7 @@ PluginsTest::onCallStateChange(const std::string& accountId,
 
     {
         std::unique_lock lock {callData.mtx_};
-        callData.signals_.emplace_back(
-            CallData::Signal(libjami::CallSignal::StateChange::name, state));
+        callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
     // NOTE. Only states that we are interested in will notify the CV.
     // If this unit test is modified to process other states, they must
@@ -224,8 +221,7 @@ PluginsTest::setUp()
     // Configure Alice
     {
         CPPUNIT_ASSERT(not aliceData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<Account>(
-            aliceData.accountId_);
+        auto const& account = Manager::instance().getAccount<Account>(aliceData.accountId_);
         aliceData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         aliceData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
     }
@@ -233,8 +229,7 @@ PluginsTest::setUp()
     // Configure Bob
     {
         CPPUNIT_ASSERT(not bobData.accountId_.empty());
-        auto const& account = Manager::instance().getAccount<Account>(
-            bobData.accountId_);
+        auto const& account = Manager::instance().getAccount<Account>(bobData.accountId_);
         bobData.userName_ = account->getAccountDetails()[ConfProperties::USERNAME];
         bobData.alias_ = account->getAccountDetails()[ConfProperties::ALIAS];
     }
@@ -253,11 +248,8 @@ PluginsTest::setUp()
                 onIncomingCallWithMedia(accountId, callId, mediaList, bobData);
         }));
 
-    signalHandlers.insert(
-        libjami::exportable_callback<libjami::CallSignal::StateChange>([&](const std::string& accountId,
-                                                                       const std::string& callId,
-                                                                       const std::string& state,
-                                                                       signed) {
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string& callId, const std::string& state, signed) {
             if (aliceData.accountId_ == accountId)
                 onCallStateChange(accountId, callId, state, aliceData);
             else if (bobData.accountId_ == accountId)
@@ -273,7 +265,8 @@ PluginsTest::setUp()
 
     name_ = node["plugin"].as<std::string>();
     certPath_ = node["cert"].as<std::string>();
-    cert_ = std::make_unique<dht::crypto::Certificate>(fileutils::loadFile(node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + certPath_));
+    cert_ = std::make_unique<dht::crypto::Certificate>(
+        fileutils::loadFile(node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + certPath_));
     dht::crypto::TrustList trust;
     trust.add(*cert_);
     jplPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + name_ + ".jpl";
@@ -281,11 +274,16 @@ PluginsTest::setUp()
     mediaHandlers_ = node["mediaHandlers"].as<std::vector<std::string>>();
     chatHandlers_ = node["chatHandlers"].as<std::vector<std::string>>();
     pluginNotFoundPath_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + "fakePlugin.jpl";
-    pluginCertNotFound_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginCertNotFound"].as<std::string>() + ".jpl";
-    pluginNotSign_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginNotSign"].as<std::string>() + ".jpl";
-    pluginFileNotSign_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginFileNotSign"].as<std::string>() + ".jpl";
-    pluginManifestChanged_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginManifestChanged"].as<std::string>() + ".jpl";
-    pluginNotSignByIssuer_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginNotSignByIssuer"].as<std::string>() + ".jpl";
+    pluginCertNotFound_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH
+                          + node["pluginCertNotFound"].as<std::string>() + ".jpl";
+    pluginNotSign_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH + node["pluginNotSign"].as<std::string>()
+                     + ".jpl";
+    pluginFileNotSign_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH
+                         + node["pluginFileNotSign"].as<std::string>() + ".jpl";
+    pluginManifestChanged_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH
+                             + node["pluginManifestChanged"].as<std::string>() + ".jpl";
+    pluginNotSignByIssuer_ = node["jplDirectory"].as<std::string>() + DIR_SEPARATOR_CH
+                             + node["pluginNotSignByIssuer"].as<std::string>() + ".jpl";
 }
 
 void
@@ -323,26 +321,30 @@ PluginsTest::testSignatureVerification()
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureFile(pluginFileNotSign_));
     auto notCertSign = std::make_unique<dht::crypto::Certificate>();
     // Test with wrong certificate
-    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(jplPath_, notCertSign.get()));
+    CPPUNIT_ASSERT(
+        !Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(jplPath_, notCertSign.get()));
     // Test with wrong signature
-    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(pluginManifestChanged_, cert_.get()));
-
+    CPPUNIT_ASSERT(
+        !Manager::instance().getJamiPluginManager().checkPluginSignatureValidity(pluginManifestChanged_, cert_.get()));
 }
 
 void
 PluginsTest::testCertificateVerification()
 {
-
     std::string pluginNotFoundPath = "fakePlugin.jpl";
     Manager::instance().pluginPreferences.setPluginsEnabled(true);
     auto pluginCert = PluginUtils::readPluginCertificateFromArchive(jplPath_);
     Manager::instance().getJamiPluginManager().addPluginAuthority(*pluginCert);
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, true)->toString() == pluginCert->toString());
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, false)->toString() == pluginCert->toString());
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, true)->toString()
+                   == pluginCert->toString());
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, false)->toString()
+                   == pluginCert->toString());
     // create a plugin with not the same certificate
 
     auto pluginCertNotSignByIssuer = PluginUtils::readPluginCertificateFromArchive(pluginNotSignByIssuer_);
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotSignByIssuer_, true)->toString() == pluginCertNotSignByIssuer->toString());
+    CPPUNIT_ASSERT(
+        Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotSignByIssuer_, true)->toString()
+        == pluginCertNotSignByIssuer->toString());
     // Test with a plugin that does not exist
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(pluginNotFoundPath, false));
     // Test with a plugin that does not have a certificate
@@ -370,32 +372,21 @@ PluginsTest::testInstallAndLoad()
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true));
     auto installedPlugins = Manager::instance().getJamiPluginManager().getInstalledPlugins();
     CPPUNIT_ASSERT(!installedPlugins.empty());
-    CPPUNIT_ASSERT(std::find(installedPlugins.begin(),
-                             installedPlugins.end(),
-                             installationPath_)
+    CPPUNIT_ASSERT(std::find(installedPlugins.begin(), installedPlugins.end(), installationPath_)
                    != installedPlugins.end());
 
     auto loadedPlugins = Manager::instance().getJamiPluginManager().getLoadedPlugins();
     CPPUNIT_ASSERT(!loadedPlugins.empty());
-    CPPUNIT_ASSERT(std::find(loadedPlugins.begin(),
-                             loadedPlugins.end(),
-                             installationPath_)
-                   != loadedPlugins.end());
+    CPPUNIT_ASSERT(std::find(loadedPlugins.begin(), loadedPlugins.end(), installationPath_) != loadedPlugins.end());
 
     CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().unloadPlugin(installationPath_));
     loadedPlugins = Manager::instance().getJamiPluginManager().getLoadedPlugins();
-    CPPUNIT_ASSERT(std::find(loadedPlugins.begin(),
-                             loadedPlugins.end(),
-                             installationPath_)
-                   == loadedPlugins.end());
+    CPPUNIT_ASSERT(std::find(loadedPlugins.begin(), loadedPlugins.end(), installationPath_) == loadedPlugins.end());
 
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
     installedPlugins = Manager::instance().getJamiPluginManager().getInstalledPlugins();
-    CPPUNIT_ASSERT(std::find(installedPlugins.begin(),
-                             installedPlugins.end(),
-                             installationPath_)
+    CPPUNIT_ASSERT(std::find(installedPlugins.begin(), installedPlugins.end(), installationPath_)
                    == installedPlugins.end());
-
 }
 
 void
@@ -409,25 +400,19 @@ PluginsTest::testHandlers()
     auto chatHandlers = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlers();
 
     auto handlerLoaded = mediaHandlers_.size() + chatHandlers_.size(); // number of handlers expected
-    for (auto handler : mediaHandlers)
-    {
-        auto details = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(handler);
+    for (auto handler : mediaHandlers) {
+        auto details = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(
+            handler);
         // check details expected for the test plugin
-        if(std::find(mediaHandlers_.begin(),
-                        mediaHandlers_.end(),
-                        details["name"])
-                   != mediaHandlers_.end()) {
+        if (std::find(mediaHandlers_.begin(), mediaHandlers_.end(), details["name"]) != mediaHandlers_.end()) {
             handlerLoaded--;
         }
     }
-    for (auto handler : chatHandlers)
-    {
-        auto details = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerDetails(handler);
+    for (auto handler : chatHandlers) {
+        auto details = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerDetails(
+            handler);
         // check details expected for the test plugin
-        if(std::find(chatHandlers_.begin(),
-                        chatHandlers_.end(),
-                        details["name"])
-                   != chatHandlers_.end()) {
+        if (std::find(chatHandlers_.begin(), chatHandlers_.end(), details["name"]) != chatHandlers_.end()) {
             handlerLoaded--;
         }
     }
@@ -451,40 +436,56 @@ PluginsTest::testDetailsAndPreferences()
     // Get-set-reset - no account
     auto preferences = Manager::instance().getJamiPluginManager().getPluginPreferences(installationPath_, "");
     CPPUNIT_ASSERT(!preferences.empty());
-    auto preferencesValuesOrig = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
+    auto preferencesValuesOrig
+        = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
 
     std::string preferenceNewValue = aliceData.accountId_;
     auto key = preferences[0]["key"];
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().setPluginPreference(installationPath_, "", key, preferenceNewValue));
+    CPPUNIT_ASSERT(
+        Manager::instance().getJamiPluginManager().setPluginPreference(installationPath_, "", key, preferenceNewValue));
 
     // Test global preference change
-    auto preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
+    auto preferencesValuesNew
+        = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
     CPPUNIT_ASSERT(preferencesValuesOrig[key] != preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesNew[key] == preferenceNewValue);
 
     // Test global preference change in an account
-    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
+    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_,
+                                                                                                    aliceData.accountId_);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] != preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesNew[key] == preferenceNewValue);
 
     // Test reset global preference change
     Manager::instance().getJamiPluginManager().resetPluginPreferencesValuesMap(installationPath_, "");
-    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
+    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_,
+                                                                                                    "");
     CPPUNIT_ASSERT(preferencesValuesOrig[key] == preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesNew[key] != preferenceNewValue);
 
     // Get-set-reset - alice account
-    preferences = Manager::instance().getJamiPluginManager().getPluginPreferences(installationPath_, aliceData.accountId_);
+    preferences = Manager::instance().getJamiPluginManager().getPluginPreferences(installationPath_,
+                                                                                  aliceData.accountId_);
     CPPUNIT_ASSERT(!preferences.empty());
-    preferencesValuesOrig = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
-    auto preferencesValuesBobOrig = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
+    preferencesValuesOrig = Manager::instance()
+                                .getJamiPluginManager()
+                                .getPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
+    auto preferencesValuesBobOrig = Manager::instance()
+                                        .getJamiPluginManager()
+                                        .getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
 
     key = preferences[0]["key"];
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().setPluginPreference(installationPath_, aliceData.accountId_, key, preferenceNewValue));
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().setPluginPreference(installationPath_,
+                                                                                  aliceData.accountId_,
+                                                                                  key,
+                                                                                  preferenceNewValue));
 
     // Test account preference change
-    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
-    auto preferencesValuesBobNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
+    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_,
+                                                                                                    aliceData.accountId_);
+    auto preferencesValuesBobNew = Manager::instance()
+                                       .getJamiPluginManager()
+                                       .getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
     CPPUNIT_ASSERT(preferencesValuesBobNew[key] == preferencesValuesBobOrig[key]);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] != preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] == preferencesValuesBobOrig[key]);
@@ -493,8 +494,11 @@ PluginsTest::testDetailsAndPreferences()
 
     // Test account preference change with global preference reset
     Manager::instance().getJamiPluginManager().resetPluginPreferencesValuesMap(installationPath_, "");
-    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
-    preferencesValuesBobNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
+    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_,
+                                                                                                    aliceData.accountId_);
+    preferencesValuesBobNew = Manager::instance()
+                                  .getJamiPluginManager()
+                                  .getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
     CPPUNIT_ASSERT(preferencesValuesBobNew[key] == preferencesValuesBobOrig[key]);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] != preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] == preferencesValuesBobOrig[key]);
@@ -503,8 +507,11 @@ PluginsTest::testDetailsAndPreferences()
 
     // Test account preference reset
     Manager::instance().getJamiPluginManager().resetPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
-    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, aliceData.accountId_);
-    preferencesValuesBobNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
+    preferencesValuesNew = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_,
+                                                                                                    aliceData.accountId_);
+    preferencesValuesBobNew = Manager::instance()
+                                  .getJamiPluginManager()
+                                  .getPluginPreferencesValuesMap(installationPath_, bobData.accountId_);
     CPPUNIT_ASSERT(preferencesValuesBobNew[key] == preferencesValuesBobOrig[key]);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] == preferencesValuesNew[key]);
     CPPUNIT_ASSERT(preferencesValuesOrig[key] == preferencesValuesBobOrig[key]);
@@ -521,7 +528,8 @@ PluginsTest::testTranslations()
     setenv("JAMI_LANG", "en", true);
     Manager::instance().getJamiPluginManager().installPlugin(jplPath_, true);
 
-    auto preferencesValuesEN = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
+    auto preferencesValuesEN
+        = Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "");
     auto detailsValuesEN = Manager::instance().getJamiPluginManager().getPluginDetails(installationPath_, true);
 
     CPPUNIT_ASSERT(!preferencesValuesEN.empty());
@@ -529,21 +537,23 @@ PluginsTest::testTranslations()
 
     setenv("JAMI_LANG", "fr", true);
 
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "") != preferencesValuesEN);
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginDetails(installationPath_, true) != detailsValuesEN);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "")
+                   != preferencesValuesEN);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginDetails(installationPath_, true)
+                   != detailsValuesEN);
 
     setenv("JAMI_LANG", "en", true);
 
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "") == preferencesValuesEN);
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginDetails(installationPath_, true) == detailsValuesEN);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(installationPath_, "")
+                   == preferencesValuesEN);
+    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().getPluginDetails(installationPath_, true)
+                   == detailsValuesEN);
 
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
 }
 
 bool
-PluginsTest::waitForSignal(CallData& callData,
-                            const std::string& expectedSignal,
-                            const std::string& expectedEvent)
+PluginsTest::waitForSignal(CallData& callData, const std::string& expectedSignal, const std::string& expectedEvent)
 {
     const std::chrono::seconds TIME_OUT {30};
     std::unique_lock lock {callData.mtx_};
@@ -561,8 +571,7 @@ PluginsTest::waitForSignal(CallData& callData,
         for (auto it = callData.signals_.begin(); it != callData.signals_.end(); it++) {
             // The predicate is true if the signal names match, and if the
             // expectedEvent is not empty, the events must also match.
-            if (it->name_ == expectedSignal
-                and (expectedEvent.empty() or it->event_ == expectedEvent)) {
+            if (it->name_ == expectedSignal and (expectedEvent.empty() or it->event_ == expectedEvent)) {
                 pred = true;
                 // Done with this signal.
                 callData.signals_.erase(it);
@@ -574,15 +583,12 @@ PluginsTest::waitForSignal(CallData& callData,
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!",
-                 callData.alias_.c_str(),
-                 sigEvent.c_str());
+        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
 
         JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "\tSignal [" << sig.name_
-                        << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
+            JAMI_INFO() << "\tSignal [" << sig.name_ << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
         }
     }
 
@@ -616,11 +622,12 @@ PluginsTest::testCall()
     answer.emplace_back(MediaAttribute(defaultVideo));
 
     JAMI_INFO("Start call between alice and Bob");
-    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_, bobData.userName_, MediaAttribute::mediaAttributesToMediaMaps(request));
+    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_,
+                                                    bobData.userName_,
+                                                    MediaAttribute::mediaAttributesToMediaMaps(request));
     CPPUNIT_ASSERT(not aliceData.callId_.empty());
 
-    auto aliceCall = std::static_pointer_cast<SIPCall>(
-        Manager::instance().getCallFromCallID(aliceData.callId_));
+    auto aliceCall = std::static_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceData.callId_));
     CPPUNIT_ASSERT(aliceCall);
 
     aliceData.callId_ = aliceCall->getCallId();
@@ -634,7 +641,9 @@ PluginsTest::testCall()
 
     // Answer the call.
     {
-        libjami::acceptWithMedia(bobData.accountId_, bobData.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
+        libjami::acceptWithMedia(bobData.accountId_,
+                                 bobData.callId_,
+                                 MediaAttribute::mediaAttributesToMediaMaps(answer));
     }
 
     CPPUNIT_ASSERT_EQUAL(true,
@@ -647,20 +656,24 @@ PluginsTest::testCall()
     std::this_thread::sleep_for(std::chrono::seconds(3));
     auto mediaHandlers = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlers();
 
-    for (auto handler : mediaHandlers)
-    {
-        auto details = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(handler);
+    for (auto handler : mediaHandlers) {
+        auto details = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(
+            handler);
         // check details expected for the test plugin
-        if(std::find(mediaHandlers_.begin(),
-                        mediaHandlers_.end(),
-                        details["name"])
-                   != mediaHandlers_.end()) {
-            Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(handler, aliceData.callId_, true);
-            auto statusMap = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerStatus(aliceData.callId_);
+        if (std::find(mediaHandlers_.begin(), mediaHandlers_.end(), details["name"]) != mediaHandlers_.end()) {
+            Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(handler,
+                                                                                                       aliceData.callId_,
+                                                                                                       true);
+            auto statusMap
+                = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerStatus(
+                    aliceData.callId_);
             CPPUNIT_ASSERT(std::find(statusMap.begin(), statusMap.end(), handler) != statusMap.end());
 
-            Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(handler, aliceData.callId_, false);
-            statusMap = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerStatus(aliceData.callId_);
+            Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(handler,
+                                                                                                       aliceData.callId_,
+                                                                                                       false);
+            statusMap = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerStatus(
+                aliceData.callId_);
             CPPUNIT_ASSERT(std::find(statusMap.begin(), statusMap.end(), handler) == statusMap.end());
         }
     }
@@ -707,14 +720,13 @@ PluginsTest::testMessage()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& /*accountId*/,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                requestReceived = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+        [&](const std::string& /*accountId*/,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*metadatas*/) {
+            requestReceived = true;
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& /* conversationId */) {
             if (accountId == bobData.accountId_) {
@@ -733,31 +745,39 @@ PluginsTest::testMessage()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return conversationReady; }));
 
     // Assert that repository exists
-    auto repoPath = fileutils::get_data_dir() / bobData.accountId_
-                    / "conversations" / convId;
+    auto repoPath = fileutils::get_data_dir() / bobData.accountId_ / "conversations" / convId;
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
     // Wait that alice sees Bob
     cv.wait_for(lk, 30s, [&]() { return messageAliceReceived == 2; });
 
     auto chatHandlers = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlers();
 
-    for (auto handler : chatHandlers)
-    {
-        auto details = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerDetails(handler);
+    for (auto handler : chatHandlers) {
+        auto details = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerDetails(
+            handler);
         // check details expected for the test plugin
-        if(std::find(chatHandlers_.begin(),
-                        chatHandlers_.end(),
-                        details["name"])
-                   != chatHandlers_.end()) {
-            Manager::instance().getJamiPluginManager().getChatServicesManager().toggleChatHandler(handler, aliceData.accountId_, convId, true);
-            auto statusMap = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerStatus(aliceData.accountId_, convId);
+        if (std::find(chatHandlers_.begin(), chatHandlers_.end(), details["name"]) != chatHandlers_.end()) {
+            Manager::instance().getJamiPluginManager().getChatServicesManager().toggleChatHandler(handler,
+                                                                                                  aliceData.accountId_,
+                                                                                                  convId,
+                                                                                                  true);
+            auto statusMap = Manager::instance()
+                                 .getJamiPluginManager()
+                                 .getChatServicesManager()
+                                 .getChatHandlerStatus(aliceData.accountId_, convId);
             CPPUNIT_ASSERT(std::find(statusMap.begin(), statusMap.end(), handler) != statusMap.end());
 
             libjami::sendMessage(aliceData.accountId_, convId, "hi"s, "");
             cv.wait_for(lk, 30s, [&]() { return messageBobReceived == 1; });
 
-            Manager::instance().getJamiPluginManager().getChatServicesManager().toggleChatHandler(handler, aliceData.accountId_, convId, false);
-            statusMap = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerStatus(aliceData.accountId_, convId);
+            Manager::instance().getJamiPluginManager().getChatServicesManager().toggleChatHandler(handler,
+                                                                                                  aliceData.accountId_,
+                                                                                                  convId,
+                                                                                                  false);
+            statusMap = Manager::instance()
+                            .getJamiPluginManager()
+                            .getChatServicesManager()
+                            .getChatHandlerStatus(aliceData.accountId_, convId);
             CPPUNIT_ASSERT(std::find(statusMap.begin(), statusMap.end(), handler) == statusMap.end());
         }
     }

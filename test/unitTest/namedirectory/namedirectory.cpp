@@ -37,7 +37,6 @@ using namespace std::literals::chrono_literals;
 namespace jami {
 namespace test {
 
-
 using RestRouter = restinio::router::express_router_t<>;
 struct RestRouterTraits : public restinio::default_traits_t
 {
@@ -50,79 +49,53 @@ public:
     NameDirectoryTest()
     {
         // Init daemon
-        libjami::init(
-            libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized) {
             CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
             // Create express router for our service.
             auto router = std::make_unique<router::express_router_t<>>();
-            router->http_post(
-                    R"(/name/:name)",
-                    [](auto req, auto params) {
-                        const auto qp = parse_query(req->header().query());
-                        return req->create_response()
-                                .set_body(
-                                        fmt::format("{{\"success\":true}}")
-                                )
-                                .done();
-                    });
-            router->http_get(
-                    R"(/name/:name)",
-                    [](auto req, auto params) {
-                        const auto qp = parse_query(req->header().query());
-                        const auto& name = params["name"];
-                        if (name.find('%') != std::string::npos) {
-                            return req->create_response(restinio::status_bad_request())
-                                    .set_body(
-                                            fmt::format("{{\"error\":\"invalid name\"}}")
-                                    )
-                                    .done();
-                        }
-                        else if (name == "taken") {
-                            return req->create_response()
-                                    .set_body(
-                                            fmt::format("{{\"name\":\"taken\",\"addr\":\"c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de\"}}")
-                                    )
-                                    .done();
-                        }
-                        return req->create_response(restinio::status_not_found())
-                                .set_body(
-                                        fmt::format("{{\"error\":\"name not registered\"}}")
-                                )
-                                .done();
-                    });
-            router->http_get(
-                    R"(/addr/:addr)",
-                    [](auto req, auto params) {
-                        const auto qp = parse_query(req->header().query());
-                        const auto& addr = params["addr"];
-                        if (addr.find_first_not_of("0123456789abcdefABCDEF") != std::string::npos) {
-                            return req->create_response(restinio::status_bad_request())
-                                    .set_body(
-                                            fmt::format("{{\"error\":\"invalid address\"}}")
-                                    )
-                                    .done();
-                        }
-                        else if (addr == "c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de") {
-                            return req->create_response()
-                                    .set_body(
-                                            fmt::format("{{\"name\":\"taken\",\"addr\":\"c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de\"}}")
-                                    )
-                                    .done();
-                        }
-                        return req->create_response(restinio::status_not_found())
-                                .set_body(
-                                        fmt::format("{{\"error\":\"address not registered\"}}")
-                                )
-                                .done();
-                    });
+            router->http_post(R"(/name/:name)", [](auto req, auto params) {
+                const auto qp = parse_query(req->header().query());
+                return req->create_response().set_body(fmt::format("{{\"success\":true}}")).done();
+            });
+            router->http_get(R"(/name/:name)", [](auto req, auto params) {
+                const auto qp = parse_query(req->header().query());
+                const auto& name = params["name"];
+                if (name.find('%') != std::string::npos) {
+                    return req->create_response(restinio::status_bad_request())
+                        .set_body(fmt::format("{{\"error\":\"invalid name\"}}"))
+                        .done();
+                } else if (name == "taken") {
+                    return req->create_response()
+                        .set_body(
+                            fmt::format("{{\"name\":\"taken\",\"addr\":\"c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de\"}}"))
+                        .done();
+                }
+                return req->create_response(restinio::status_not_found())
+                    .set_body(fmt::format("{{\"error\":\"name not registered\"}}"))
+                    .done();
+            });
+            router->http_get(R"(/addr/:addr)", [](auto req, auto params) {
+                const auto qp = parse_query(req->header().query());
+                const auto& addr = params["addr"];
+                if (addr.find_first_not_of("0123456789abcdefABCDEF") != std::string::npos) {
+                    return req->create_response(restinio::status_bad_request())
+                        .set_body(fmt::format("{{\"error\":\"invalid address\"}}"))
+                        .done();
+                } else if (addr == "c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de") {
+                    return req->create_response()
+                        .set_body(
+                            fmt::format("{{\"name\":\"taken\",\"addr\":\"c0dec0dec0dec0dec0dec0dec0dec0dec0dec0de\"}}"))
+                        .done();
+                }
+                return req->create_response(restinio::status_not_found())
+                    .set_body(fmt::format("{{\"error\":\"address not registered\"}}"))
+                    .done();
+            });
 
             router->non_matched_request_handler(
-                    [](auto req){
-                        return req->create_response(restinio::status_not_found()).connection_close().done();
-                    });
-
+                [](auto req) { return req->create_response(restinio::status_not_found()).connection_close().done(); });
 
             auto settings = restinio::run_on_this_thread_settings_t<RestRouterTraits>();
             settings.address("localhost");
@@ -130,19 +103,16 @@ public:
             settings.request_handler(std::move(router));
             httpServer_ = std::make_unique<restinio::http_server_t<RestRouterTraits>>(
                 Manager::instance().ioContext(),
-                std::forward<restinio::run_on_this_thread_settings_t<RestRouterTraits>>(std::move(settings))
-            );
+                std::forward<restinio::run_on_this_thread_settings_t<RestRouterTraits>>(std::move(settings)));
             // run http server
-            serverThread_ = std::thread([this](){
-                httpServer_->open_async([]{/*ok*/}, [](std::exception_ptr ex){
-                    std::rethrow_exception(ex);
-                });
+            serverThread_ = std::thread([this]() {
+                httpServer_->open_async([] { /*ok*/ }, [](std::exception_ptr ex) { std::rethrow_exception(ex); });
                 httpServer_->io_context().run();
             });
         }
-
     }
-    ~NameDirectoryTest() {
+    ~NameDirectoryTest()
+    {
         libjami::fini();
         if (serverThread_.joinable())
             serverThread_.join();
@@ -204,9 +174,7 @@ NameDirectoryTest::testRegisterName()
     bool nameRegistered {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::NameRegistrationEnded>(
-        [&](const std::string&,
-            int status,
-            const std::string&) {
+        [&](const std::string&, int status, const std::string&) {
             std::lock_guard lk {mtx};
             nameRegistered = status == 0;
             cv.notify_one();
@@ -226,11 +194,7 @@ NameDirectoryTest::testLookupName()
     bool nameFound {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
-        [&](const std::string&,
-            const std::string&,
-            int status,
-            const std::string&,
-            const std::string&) {
+        [&](const std::string&, const std::string&, int status, const std::string&, const std::string&) {
             std::lock_guard lk {mtx};
             nameFound = status == 0;
             cv.notify_one();
@@ -250,11 +214,7 @@ NameDirectoryTest::testLookupNameInvalid()
     bool nameInvalid {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
-        [&](const std::string&,
-            const std::string&,
-            int status,
-            const std::string&,
-            const std::string&) {
+        [&](const std::string&, const std::string&, int status, const std::string&, const std::string&) {
             std::lock_guard lk {mtx};
             nameInvalid = status == 1;
             cv.notify_one();
@@ -274,11 +234,7 @@ NameDirectoryTest::testLookupNameNotFound()
     bool nameNotFound {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
-        [&](const std::string&,
-            const std::string&,
-            int status,
-            const std::string&,
-            const std::string&) {
+        [&](const std::string&, const std::string&, int status, const std::string&, const std::string&) {
             std::lock_guard lk {mtx};
             nameNotFound = status == 2;
             cv.notify_one();
@@ -298,11 +254,7 @@ NameDirectoryTest::testLookupAddr()
     bool addrFound {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
-        [&](const std::string&,
-            const std::string&,
-            int status,
-            const std::string&,
-            const std::string&) {
+        [&](const std::string&, const std::string&, int status, const std::string&, const std::string&) {
             std::lock_guard lk {mtx};
             addrFound = status == 0;
             cv.notify_one();
@@ -322,11 +274,7 @@ NameDirectoryTest::testLookupAddrInvalid()
     bool addrInvalid {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
-        [&](const std::string&,
-            const std::string&,
-            int status,
-            const std::string&,
-            const std::string&) {
+        [&](const std::string&, const std::string&, int status, const std::string&, const std::string&) {
             std::lock_guard lk {mtx};
             addrInvalid = status == 1;
             cv.notify_one();
@@ -346,11 +294,7 @@ NameDirectoryTest::testLookupAddrNotFound()
     bool addrNotFound {false};
     // Watch signals
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::RegisteredNameFound>(
-        [&](const std::string&,
-            const std::string&,
-            int status,
-            const std::string&,
-            const std::string&) {
+        [&](const std::string&, const std::string&, int status, const std::string&, const std::string&) {
             std::lock_guard lk {mtx};
             addrNotFound = status == 2;
             cv.notify_one();

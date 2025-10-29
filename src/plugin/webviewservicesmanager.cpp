@@ -96,9 +96,7 @@ WebViewServicesManager::registerComponentsLifeCycleManagers(PluginManager& plugi
     };
 
     // register the functions
-    pluginManager.registerComponentManager("WebViewHandlerManager",
-                                           registerWebViewHandler,
-                                           unregisterWebViewHandler);
+    pluginManager.registerComponentManager("WebViewHandlerManager", registerWebViewHandler, unregisterWebViewHandler);
 }
 
 void
@@ -113,9 +111,9 @@ WebViewServicesManager::registerWebViewService(PluginManager& pluginManager)
         std::string dataPath = PluginUtils::dataPath(plugin->getPath()).string();
 
         emitSignal<libjami::PluginSignal::WebViewMessageReceived>(dataPath,
-                                                                message->webViewId,
-                                                                message->messageId,
-                                                                message->payload);
+                                                                  message->webViewId,
+                                                                  message->messageId,
+                                                                  message->payload);
 
         return 0;
     };

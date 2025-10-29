@@ -170,9 +170,7 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow,
-                                                     ERole role,
-                                                     LPCWSTR deviceId) override
+    HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR deviceId) override
     {
         // If the default communication device changes, we should restart the layer
         // to ensure the new device is used. We only care about the default communication
@@ -184,8 +182,7 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR deviceId,
-                                                     const PROPERTYKEY key) override
+    HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR deviceId, const PROPERTYKEY key) override
     {
         // Limit this to samplerate changes
         if (key == PKEY_AudioEngine_DeviceFormat) {
@@ -204,8 +201,7 @@ public:
                 auto* pWaveFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(var.blob.pBlobData);
                 UINT sampleRate = pWaveFormat->Format.nSamplesPerSec;
                 JAMI_DBG("Sample rate changed to %u", sampleRate);
-                std::string friendlyName = GetFriendlyNameFromIMMDeviceId(deviceEnumerator_,
-                                                                          deviceId);
+                std::string friendlyName = GetFriendlyNameFromIMMDeviceId(deviceEnumerator_, deviceId);
                 deviceEventCallback_(friendlyName, DeviceEventType::PropertyChanged);
             }
 

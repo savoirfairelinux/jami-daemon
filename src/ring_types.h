@@ -27,7 +27,6 @@
 
 namespace jami {
 
-
 static constexpr size_t SIZEBUF = 16000; /** About 62.5ms of buffering at 48kHz */
 
 /**

@@ -43,9 +43,7 @@ public:
      * @param key
      * @param value
      */
-    virtual void setPreferenceAttribute(const std::string& accountId,
-                                        const std::string& key,
-                                        const std::string& value)
+    virtual void setPreferenceAttribute(const std::string& accountId, const std::string& key, const std::string& value)
         = 0;
 
     /**

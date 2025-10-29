@@ -25,18 +25,17 @@
 /* Jami */
 #include "logger.h"
 
-__weak
-bool
-syslog_handler(int priority, const char *fmt, va_list ap)
+__weak bool
+syslog_handler(int priority, const char* fmt, va_list ap)
 {
-        (void)priority;
-        (void)fmt;
-        (void)ap;
+    (void) priority;
+    (void) fmt;
+    (void) ap;
 
-        fflush(NULL);
-        fprintf(stderr, "libfuzz: stop by supervisor log\n");
+    fflush(NULL);
+    fprintf(stderr, "libfuzz: stop by supervisor log\n");
 
-        return false;
+    return false;
 }
 
 BEGIN_WRAPPER(void, vsyslog, int priority, const char* format, va_list ap)
@@ -44,17 +43,14 @@ BEGIN_WRAPPER(void, vsyslog, int priority, const char* format, va_list ap)
     static int priority_threshold = -2;
 
     if (-2 == priority_threshold) {
-
-        const char* str_to_int[] = {
-                [LOG_EMERG]   = "EMERG",
-                [LOG_ALERT]   = "ALERT",
-                [LOG_CRIT]    = "CRIT",
-                [LOG_ERR]     = "ERR",
-                [LOG_WARNING] = "WARNING",
-                [LOG_NOTICE]  = "NOTICE",
-                [LOG_INFO]    = "INFO",
-                [LOG_DEBUG]   = "DEBUG"
-        };
+        const char* str_to_int[] = {[LOG_EMERG] = "EMERG",
+                                    [LOG_ALERT] = "ALERT",
+                                    [LOG_CRIT] = "CRIT",
+                                    [LOG_ERR] = "ERR",
+                                    [LOG_WARNING] = "WARNING",
+                                    [LOG_NOTICE] = "NOTICE",
+                                    [LOG_INFO] = "INFO",
+                                    [LOG_DEBUG] = "DEBUG"};
 
         const char* supervisor_says = std::getenv(supervisor::env::log);
 
@@ -80,7 +76,7 @@ no_threshold:
     this_func(priority, format, ap);
 
     if (priority <= priority_threshold) {
-       if (not syslog_handler(priority, format, ap)) {
+        if (not syslog_handler(priority, format, ap)) {
             exit(supervisor::signal::exit::log);
         }
     }

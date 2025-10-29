@@ -29,8 +29,7 @@
 namespace jami {
 
 std::filesystem::path
-PluginPreferencesUtils::getPreferencesConfigFilePath(const std::filesystem::path& rootPath,
-                                                     const std::string& accountId)
+PluginPreferencesUtils::getPreferencesConfigFilePath(const std::filesystem::path& rootPath, const std::string& accountId)
 {
     if (accountId.empty())
         return rootPath / "data" / "preferences.json";
@@ -138,9 +137,7 @@ PluginPreferencesUtils::getPreferences(const std::filesystem::path& rootPath, co
                         if (!preferenceAttributes.empty()) {
                             for (const auto& locale : locales) {
                                 for (auto& pair : preferenceAttributes) {
-                                    string_replace(pair.second,
-                                                   "{{" + locale.first + "}}",
-                                                   locale.second);
+                                    string_replace(pair.second, "{{" + locale.first + "}}", locale.second);
                                 }
                             }
                             preferences.push_back(std::move(preferenceAttributes));
@@ -159,8 +156,7 @@ PluginPreferencesUtils::getPreferences(const std::filesystem::path& rootPath, co
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getUserPreferencesValuesMap(const std::filesystem::path& rootPath,
-                                                    const std::string& accountId)
+PluginPreferencesUtils::getUserPreferencesValuesMap(const std::filesystem::path& rootPath, const std::string& accountId)
 {
     auto preferencesValuesFilePath = valuesFilePath(rootPath, accountId);
     std::lock_guard guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
@@ -195,8 +191,7 @@ PluginPreferencesUtils::getUserPreferencesValuesMap(const std::filesystem::path&
 }
 
 std::map<std::string, std::string>
-PluginPreferencesUtils::getPreferencesValuesMap(const std::filesystem::path& rootPath,
-                                                const std::string& accountId)
+PluginPreferencesUtils::getPreferencesValuesMap(const std::filesystem::path& rootPath, const std::string& accountId)
 {
     std::map<std::string, std::string> rmap;
 
@@ -226,8 +221,7 @@ PluginPreferencesUtils::getPreferencesValuesMap(const std::filesystem::path& roo
 }
 
 bool
-PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath,
-                                                  const std::string& accountId)
+PluginPreferencesUtils::resetPreferencesValuesMap(const std::string& rootPath, const std::string& accountId)
 {
     bool returnValue = true;
     std::map<std::string, std::string> pluginPreferencesMap {};
@@ -298,8 +292,7 @@ PluginPreferencesUtils::getAllowDenyListPreferences(ChatHandlerList& list)
 }
 
 void
-PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerName,
-                                                   const std::string& rootPath)
+PluginPreferencesUtils::addAlwaysHandlerPreference(const std::string& handlerName, const std::string& rootPath)
 {
     {
         auto filePath = getPreferencesConfigFilePath(rootPath);

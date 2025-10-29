@@ -44,8 +44,7 @@ public:
 
     void setVoiceCallback(std::function<void(bool)> cb);
 
-    void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
-                const std::shared_ptr<jami::MediaFrame>&) override;
+    void update(Observable<std::shared_ptr<jami::MediaFrame>>*, const std::shared_ptr<jami::MediaFrame>&) override;
 
 private:
     NON_COPYABLE(AudioSender);

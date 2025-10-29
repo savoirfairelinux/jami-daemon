@@ -36,9 +36,7 @@ using sip_utils::CONST_PJ_STR;
  *     type/subtype; arg=value; arg=value; …
  */
 static void
-createMessageBody(pj_pool_t* pool,
-                  const std::pair<std::string, std::string>& payload,
-                  pjsip_msg_body** body_p)
+createMessageBody(pj_pool_t* pool, const std::pair<std::string, std::string>& payload, pjsip_msg_body** body_p)
 {
     /* parse the key:
      * 1. split by ';'
@@ -143,8 +141,7 @@ im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::
         return;
     }
 
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD,
-                                         CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
 
     {
         auto dialog = session->dlg;

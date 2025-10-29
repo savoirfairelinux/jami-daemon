@@ -68,9 +68,7 @@ struct AccountArchive
     {
         deserialize(data, password_salt);
     }
-    AccountArchive(const std::filesystem::path& path,
-                   std::string_view scheme = {},
-                   const std::string& pwd = {})
+    AccountArchive(const std::filesystem::path& path, std::string_view scheme = {}, const std::string& pwd = {})
     {
         load(path, scheme, pwd);
     }
@@ -89,9 +87,7 @@ struct AccountArchive
     }
 
     /** Save archive to file, optionally encrypted with provided password. */
-    bool save(const std::filesystem::path& path,
-              std::string_view scheme,
-              const std::string& password) const
+    bool save(const std::filesystem::path& path, std::string_view scheme, const std::string& password) const
     {
         return fileutils::writeArchive(serialize(), path, scheme, password, password_salt);
     }

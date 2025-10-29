@@ -69,12 +69,12 @@ struct CryptoSuiteDefinition
  * as defined in RFC4568 (6.2)
  */
 
-static std::vector<CryptoSuiteDefinition> CryptoSuites = {
-    {"AES_CM_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160},
+static std::vector<CryptoSuiteDefinition> CryptoSuites
+    = {{"AES_CM_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160},
 
-    {"AES_CM_128_HMAC_SHA1_32"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160},
+       {"AES_CM_128_HMAC_SHA1_32"sv, 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160},
 
-    {"F8_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160}};
+       {"F8_128_HMAC_SHA1_80"sv, 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160}};
 
 class SdesNegotiator
 {

@@ -43,7 +43,8 @@ public:
 
     // Equal to n/1
     constexpr rational(I n)
-        : num_(n) {}
+        : num_(n)
+    {}
 
     // General case (n/d)
     constexpr rational(I n, I d)
@@ -59,9 +60,7 @@ public:
         , den_(r.den) {};
     constexpr operator AVRational() const { return AVRational {(int) num_, (int) den_}; }
 
-    std::string to_string() const {
-        return fmt::format("{}/{}", num_, den_);
-    }
+    std::string to_string() const { return fmt::format("{}/{}", num_, den_); }
 
     // Normal copy constructors and assignment operators
 
@@ -93,14 +92,8 @@ public:
     }
 
     // Arithmetic operators
-    constexpr rational operator+(const rational& r) const
-    {
-        return {num_ * r.den_ + r.num_ * den_, den_ * r.den_};
-    }
-    constexpr rational operator-(const rational& r) const
-    {
-        return {num_ * r.den_ - r.num_ * den_, den_ * r.den_};
-    }
+    constexpr rational operator+(const rational& r) const { return {num_ * r.den_ + r.num_ * den_, den_ * r.den_}; }
+    constexpr rational operator-(const rational& r) const { return {num_ * r.den_ - r.num_ * den_, den_ * r.den_}; }
     constexpr rational operator*(const rational& r) const { return {num_ * r.num_, den_ * r.den_}; }
     constexpr rational operator/(const rational& r) const { return {num_ * r.den_, den_ * r.num_}; }
 
@@ -275,9 +268,11 @@ struct modulus<double>
 } // namespace std
 
 template<typename I>
-struct fmt::formatter<jami::rational<I>> : fmt::formatter<std::string_view> {
+struct fmt::formatter<jami::rational<I>> : fmt::formatter<std::string_view>
+{
     template<typename FormatContext>
-    auto format(const jami::rational<I>& r, FormatContext& ctx) const -> decltype(ctx.out()) {
+    auto format(const jami::rational<I>& r, FormatContext& ctx) const -> decltype(ctx.out())
+    {
         return fmt::formatter<std::string_view>::format(r.to_string(), ctx);
     }
 };

@@ -37,8 +37,7 @@
 #include "videomanager_interface.h"
 #include <opendht/thread_pool.h>
 
-static constexpr auto MIN_LINE_ZOOM
-    = 6; // Used by the ONE_BIG_WITH_SMALL layout for the small previews
+static constexpr auto MIN_LINE_ZOOM = 6; // Used by the ONE_BIG_WITH_SMALL layout for the small previews
 
 namespace jami {
 namespace video {
@@ -87,9 +86,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
     if (not localInput.empty() && attachHost) {
         auto videoInput = getVideoInput(localInput);
         localInputs_.emplace_back(videoInput);
-        attachVideo(videoInput.get(),
-                    "",
-                    sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));
+        attachVideo(videoInput.get(), "", sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));
     }
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
@@ -237,8 +234,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 }
 
 void
-VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
-                   const std::shared_ptr<MediaFrame>& frame_p)
+VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& frame_p)
 {
     std::shared_lock lock(rwMutex_);
 
@@ -247,8 +243,7 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
 #ifdef ENABLE_HWACCEL
             std::shared_ptr<VideoFrame> frame;
             try {
-                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
-                                                                frame_p),
+                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p),
                                                             AV_PIX_FMT_NV12);
                 x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
@@ -386,14 +381,8 @@ VideoMixer::process()
             if (layoutUpdated_ == 0) {
                 for (auto& x : sources_) {
                     auto sinfo = streamInfo(x->source);
-                    sourcesInfo.emplace_back(SourceInfo {x->source,
-                                                         x->x,
-                                                         x->y,
-                                                         x->w,
-                                                         x->h,
-                                                         x->hasVideo,
-                                                         sinfo.callId,
-                                                         sinfo.streamId});
+                    sourcesInfo.emplace_back(
+                        SourceInfo {x->source, x->x, x->y, x->w, x->h, x->hasVideo, sinfo.callId, sinfo.streamId});
                 }
                 if (onSourcesUpdated_)
                     onSourcesUpdated_(std::move(sourcesInfo));
@@ -404,8 +393,7 @@ VideoMixer::process()
     output.pointer()->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                              {1, AV_TIME_BASE},
                                              {1, MIXER_FRAMERATE},
-                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF
-                                                                     | AV_ROUND_PASS_MINMAX));
+                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
     lastTimestamp_ = output.pointer()->pts;
     publishFrame();
 }
@@ -426,19 +414,14 @@ VideoMixer::render_frame(VideoFrame& output,
     int angle = input->getOrientation();
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
-        source->rotationFilter = video::getTransposeFilter(angle,
-                                                           filterIn,
-                                                           input->width(),
-                                                           input->height(),
-                                                           input->format(),
-                                                           false);
+        source->rotationFilter
+            = video::getTransposeFilter(angle, filterIn, input->width(), input->height(), input->format(), false);
         source->rotation = angle;
     }
     std::shared_ptr<VideoFrame> frame;
     if (source->rotationFilter) {
         source->rotationFilter->feedInput(input->pointer(), filterIn);
-        frame = std::static_pointer_cast<VideoFrame>(
-            std::shared_ptr<MediaFrame>(source->rotationFilter->readOutput()));
+        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(source->rotationFilter->readOutput()));
     } else {
         frame = input;
     }
@@ -448,9 +431,7 @@ VideoMixer::render_frame(VideoFrame& output,
 }
 
 void
-VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
-                          const std::shared_ptr<VideoFrame>& input,
-                          int index)
+VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::shared_ptr<VideoFrame>& input, int index)
 {
     if (!width_ or !height_)
         return;
@@ -458,8 +439,7 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source,
     // Compute cell size/position
     int cell_width, cell_height, cellW_off, cellH_off;
     const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
-    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n)
-                                                                  : ceil(sqrt(n));
+    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n) : ceil(sqrt(n));
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
         // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
         // The rest is the active source

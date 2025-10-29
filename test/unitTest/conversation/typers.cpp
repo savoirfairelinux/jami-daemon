@@ -44,7 +44,8 @@ using namespace libjami::Account;
 namespace jami {
 namespace test {
 
-struct UserData {
+struct UserData
+{
     std::string conversationId;
     bool registered {false};
     bool stopped {false};
@@ -92,8 +93,7 @@ void
 TypersTest::setUp()
 {
     // Init daemon
-    libjami::init(
-        libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
@@ -109,34 +109,33 @@ void
 TypersTest::connectSignals()
 {
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountId, const std::map<std::string, std::string>&) {
-                if (accountId == aliceId) {
-                    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-                    auto details = aliceAccount->getVolatileAccountDetails();
-                    auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-                    if (daemonStatus == "REGISTERED") {
-                        aliceData.registered = true;
-                    } else if (daemonStatus == "UNREGISTERED") {
-                        aliceData.stopped = true;
-                    }
-                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
-                    aliceData.deviceAnnounced = deviceAnnounced == "true";
-                } else if (accountId == bobId) {
-                    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-                    auto details = bobAccount->getVolatileAccountDetails();
-                    auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-                    if (daemonStatus == "REGISTERED") {
-                        bobData.registered = true;
-                    } else if (daemonStatus == "UNREGISTERED") {
-                        bobData.stopped = true;
-                    }
-                    auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
-                    bobData.deviceAnnounced = deviceAnnounced == "true";
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountId, const std::map<std::string, std::string>&) {
+            if (accountId == aliceId) {
+                auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+                auto details = aliceAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    aliceData.registered = true;
+                } else if (daemonStatus == "UNREGISTERED") {
+                    aliceData.stopped = true;
                 }
-                cv.notify_one();
-            }));
+                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                aliceData.deviceAnnounced = deviceAnnounced == "true";
+            } else if (accountId == bobId) {
+                auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+                auto details = bobAccount->getVolatileAccountDetails();
+                auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
+                if (daemonStatus == "REGISTERED") {
+                    bobData.registered = true;
+                } else if (daemonStatus == "UNREGISTERED") {
+                    bobData.stopped = true;
+                }
+                auto deviceAnnounced = details[libjami::Account::VolatileProperties::DEVICE_ANNOUNCED];
+                bobData.deviceAnnounced = deviceAnnounced == "true";
+            }
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
         [&](const std::string& accountId, const std::string& conversationId) {
             if (accountId == aliceId) {
@@ -146,31 +145,29 @@ TypersTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& accountId,
-                const std::string& /* conversationId */,
-                std::map<std::string, std::string> /*metadatas*/) {
-                if (accountId == aliceId) {
-                    aliceData.requestReceived = true;
-                } else if (accountId == bobId) {
-                    bobData.requestReceived = true;
-                }
-                cv.notify_one();
-            }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::ComposingStatusChanged>(
-            [&](const std::string& accountId,
-                const std::string& /* conversationId */,
-                const std::string& contactUri,
-                int status) {
-                if (accountId == aliceId) {
-                    aliceData.composing[contactUri] = status;
-                } else if (accountId == bobId) {
-                    bobData.composing[contactUri] = status;
-                }
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            std::map<std::string, std::string> /*metadatas*/) {
+            if (accountId == aliceId) {
+                aliceData.requestReceived = true;
+            } else if (accountId == bobId) {
+                bobData.requestReceived = true;
+            }
+            cv.notify_one();
+        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ComposingStatusChanged>(
+        [&](const std::string& accountId,
+            const std::string& /* conversationId */,
+            const std::string& contactUri,
+            int status) {
+            if (accountId == aliceId) {
+                aliceData.composing[contactUri] = status;
+            } else if (accountId == bobId) {
+                bobData.composing[contactUri] = status;
+            }
+            cv.notify_one();
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
 }
@@ -200,8 +197,7 @@ TypersTest::testSetIsComposing()
     std::this_thread::sleep_for(5s); // Wait a bit to ensure that everything is updated
 
     libjami::setIsComposing(aliceId, "swarm:" + aliceData.conversationId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() {
-        return bobData.composing[aliceUri]; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return bobData.composing[aliceUri]; }));
 
     libjami::setIsComposing(aliceId, "swarm:" + aliceData.conversationId, false);
     CPPUNIT_ASSERT(cv.wait_for(lk, 12s, [&]() { return !bobData.composing[aliceUri]; }));
@@ -282,11 +278,8 @@ TypersTest::testAccountConfig()
 
     // Should not receive composing status
     libjami::setIsComposing(aliceId, "swarm:" + aliceData.conversationId, true);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&]() {
-        return bobData.composing[aliceUri]
-        ; }));
+    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&]() { return bobData.composing[aliceUri]; }));
 }
-
 
 } // namespace test
 } // namespace jami

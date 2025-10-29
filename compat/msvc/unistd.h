@@ -24,9 +24,9 @@
 #include <fcntl.h>
 #include <io.h>
 
-#define R_OK    4
-#define W_OK    2
-#define F_OK    0
+#define R_OK 4
+#define W_OK 2
+#define F_OK 0
 
 #ifndef STDIN_FILENO
 #define STDIN_FILENO 0
@@ -41,7 +41,7 @@
 #endif
 
 #define srandom srand
-#define random rand
+#define random  rand
 
 #define inline __inline
 typedef int mode_t;

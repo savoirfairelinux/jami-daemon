@@ -27,7 +27,7 @@
 
 #define WINLOG_PRIMASK 0x07
 
-#define WINLOG_PRI(p)            ((p) &WINLOG_PRIMASK)
+#define WINLOG_PRI(p)            ((p) & WINLOG_PRIMASK)
 #define WINLOG_MAKEPRI(fac, pri) (((fac) << 3) | (pri))
 
 #define WINLOG_KERN     (0 << 3)
@@ -44,7 +44,7 @@
 
 #define WINLOG_NFACILITIES 10
 #define WINLOG_FACMASK     0x03f8
-#define WINLOG_FAC(p)      (((p) &WINLOG_FACMASK) >> 3)
+#define WINLOG_FAC(p)      (((p) & WINLOG_FACMASK) >> 3)
 
 #define WINLOG_MASK(pri) (1 << (pri))
 #define WINLOG_UPTO(pri) ((1 << ((pri) + 1)) - 1)

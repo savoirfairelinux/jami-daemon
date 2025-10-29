@@ -45,16 +45,14 @@ public:
                             AuthFailureCallback onFailure,
                             const OnChangeCallback& onChange) override;
 
-    bool changePassword(const std::string& /*password_old*/,
-                        const std::string& /*password_new*/) override
+    bool changePassword(const std::string& /*password_old*/, const std::string& /*password_new*/) override
     {
         return false;
     }
 
     void syncDevices() override;
 
-    using SyncBlueprintCallback
-        = std::function<void(const std::map<std::string, std::string>& config)>;
+    using SyncBlueprintCallback = std::function<void(const std::map<std::string, std::string>& config)>;
 
     void syncBlueprintConfig(SyncBlueprintCallback onSuccess);
 
@@ -97,8 +95,7 @@ private:
     std::mutex tokenLock_;
     std::string token_ {};
     TokenScope tokenScope_ {};
-    std::chrono::steady_clock::time_point tokenExpire_ {
-        std::chrono::steady_clock::time_point::min()};
+    std::chrono::steady_clock::time_point tokenExpire_ {std::chrono::steady_clock::time_point::min()};
 
     using RequestQueue = std::queue<std::shared_ptr<dht::http::Request>>;
     RequestQueue pendingDeviceRequests_;
@@ -109,14 +106,12 @@ private:
     }
     bool hasAuthorization(TokenScope scope) const
     {
-        return not token_.empty() and tokenScope_ >= scope
-               and tokenExpire_ >= std::chrono::steady_clock::now();
+        return not token_.empty() and tokenScope_ >= scope and tokenExpire_ >= std::chrono::steady_clock::now();
     }
     void setAuthHeaderFields(dht::http::Request& request) const;
 
     void sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req);
-    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req,
-                            const std::string& password);
+    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req, const std::string& password);
 
     void authenticateDevice();
     void authenticateAccount(const std::string& username, const std::string& password);
@@ -125,9 +120,7 @@ private:
     void onAuthEnded(const Json::Value& json, const dht::http::Response& response, TokenScope scope);
     std::function<void()> onNeedsMigration_;
 
-    void setToken(std::string token,
-                  TokenScope scope,
-                  std::chrono::steady_clock::time_point expiration);
+    void setToken(std::string token, TokenScope scope, std::chrono::steady_clock::time_point expiration);
 };
 
 } // namespace jami

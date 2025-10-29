@@ -20,63 +20,70 @@
 
 #include "utils.h"
 
-static SCM init_binding(SCM flags)
+static SCM
+init_binding(SCM flags)
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        unsigned int flags_cast = from_guile(flags);
+    unsigned int flags_cast = from_guile(flags);
 
-        return to_guile(libjami::init(static_cast<libjami::InitFlag>(flags_cast)));
+    return to_guile(libjami::init(static_cast<libjami::InitFlag>(flags_cast)));
 }
 
-static SCM fini_binding()
+static SCM
+fini_binding()
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        libjami::fini();
+    libjami::fini();
 
-        return SCM_UNDEFINED;
+    return SCM_UNDEFINED;
 }
 
-static SCM initialized_binding()
+static SCM
+initialized_binding()
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        return to_guile(libjami::initialized());
+    return to_guile(libjami::initialized());
 }
 
-static SCM logging_binding(SCM whom, SCM action)
+static SCM
+logging_binding(SCM whom, SCM action)
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        libjami::logging(from_guile(whom), from_guile(action));
+    libjami::logging(from_guile(whom), from_guile(action));
 
-        return SCM_UNDEFINED;
+    return SCM_UNDEFINED;
 }
 
-static SCM platform_binding()
+static SCM
+platform_binding()
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        return to_guile(libjami::platform());
+    return to_guile(libjami::platform());
 }
 
-static SCM start_binding(SCM config_file)
+static SCM
+start_binding(SCM config_file)
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        return to_guile(libjami::start(from_guile(config_file)));
+    return to_guile(libjami::start(from_guile(config_file)));
 }
 
-static SCM version_binding()
+static SCM
+version_binding()
 {
-        LOG_BINDING();
+    LOG_BINDING();
 
-        return to_guile(libjami::version());
+    return to_guile(libjami::version());
 }
 
 static void
-install_jami_primitives(void *)
+install_jami_primitives(void*)
 {
     define_primitive("init", 1, 0, 0, (void*) init_binding);
     define_primitive("initialized", 0, 0, 0, (void*) initialized_binding);

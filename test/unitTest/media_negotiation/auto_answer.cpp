@@ -121,9 +121,7 @@ protected:
                                        const std::vector<libjami::MediaMap> mediaList,
                                        CallData& callData);
     static void onVideoMuted(const std::string& callId, bool muted, CallData& callData);
-    static void onMediaNegotiationStatus(const std::string& callId,
-                                         const std::string& event,
-                                         CallData& callData);
+    static void onMediaNegotiationStatus(const std::string& callId, const std::string& event, CallData& callData);
 
     // Helpers
     void configureScenario();
@@ -137,14 +135,11 @@ protected:
     static MediaDirection inferNegotiatedDirection(MediaDirection local, MediaDirection answer);
     // Wait for a signal from the callbacks. Some signals also report the event that
     // triggered the signal like the StateChange signal.
-    static bool validateMuteState(std::vector<MediaAttribute> expected,
-                                  std::vector<MediaAttribute> actual);
+    static bool validateMuteState(std::vector<MediaAttribute> expected, std::vector<MediaAttribute> actual);
     static bool validateMediaDirection(std::vector<MediaDescription> descrList,
                                        std::vector<MediaAttribute> listInOffer,
                                        std::vector<MediaAttribute> listInAnswer);
-    static bool waitForSignal(CallData& callData,
-                              const std::string& signal,
-                              const std::string& expectedEvent = {});
+    static bool waitForSignal(CallData& callData, const std::string& signal, const std::string& expectedEvent = {});
 
     bool isSipAccount_ {false};
     CallData aliceData_;
@@ -209,19 +204,17 @@ AutoAnswerMediaNegoTestSip::tearDown()
     std::condition_variable cv;
     auto currentAccSize = Manager::instance().getAccountList().size();
     std::atomic_bool accountsRemoved {false};
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
-            if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
-                accountsRemoved = true;
-                cv.notify_one();
-            }
-        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
+        if (Manager::instance().getAccountList().size() <= currentAccSize - 2) {
+            accountsRemoved = true;
+            cv.notify_one();
+        }
+    }));
     libjami::registerSignalHandlers(confHandlers);
 
     Manager::instance().removeAccount(aliceData_.accountId_, true);
     Manager::instance().removeAccount(bobData_.accountId_, true);
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [&] { return accountsRemoved.load(); }));
 
     libjami::unregisterSignalHandlers();
 }
@@ -338,8 +331,7 @@ AutoAnswerMediaNegoTest::inferNegotiatedDirection(MediaDirection local, MediaDir
 }
 
 bool
-AutoAnswerMediaNegoTest::validateMuteState(std::vector<MediaAttribute> expected,
-                                           std::vector<MediaAttribute> actual)
+AutoAnswerMediaNegoTest::validateMuteState(std::vector<MediaAttribute> expected, std::vector<MediaAttribute> actual)
 {
     CPPUNIT_ASSERT_EQUAL(expected.size(), actual.size());
 
@@ -461,8 +453,7 @@ AutoAnswerMediaNegoTest::onCallStateChange(const std::string& accountId UNUSED,
 
     {
         std::unique_lock lock {callData.mtx_};
-        callData.signals_.emplace_back(
-            CallData::Signal(libjami::CallSignal::StateChange::name, state));
+        callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
     if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
@@ -532,8 +523,7 @@ AutoAnswerMediaNegoTest::onMediaNegotiationStatus(const std::string& callId,
 
     {
         std::unique_lock lock {callData.mtx_};
-        callData.signals_.emplace_back(
-            CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
+        callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::MediaNegotiationStatus::name, event));
     }
 
     callData.cv_.notify_one();
@@ -560,8 +550,7 @@ AutoAnswerMediaNegoTest::waitForSignal(CallData& callData,
         for (auto it = callData.signals_.begin(); it != callData.signals_.end(); it++) {
             // The predicate is true if the signal names match, and if the
             // expectedEvent is not empty, the events must also match.
-            if (it->name_ == expectedSignal
-                and (expectedEvent.empty() or it->event_ == expectedEvent)) {
+            if (it->name_ == expectedSignal and (expectedEvent.empty() or it->event_ == expectedEvent)) {
                 pred = true;
                 // Done with this signal.
                 callData.signals_.erase(it);
@@ -573,15 +562,12 @@ AutoAnswerMediaNegoTest::waitForSignal(CallData& callData,
     });
 
     if (not res) {
-        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!",
-                 callData.alias_.c_str(),
-                 sigEvent.c_str());
+        JAMI_ERR("[%s] waiting for signal/event [%s] timed-out!", callData.alias_.c_str(), sigEvent.c_str());
 
         JAMI_INFO("[%s] currently has the following signals:", callData.alias_.c_str());
 
         for (auto const& sig : callData.signals_) {
-            JAMI_INFO() << "Signal [" << sig.name_
-                        << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
+            JAMI_INFO() << "Signal [" << sig.name_ << (sig.event_.empty() ? "" : ("::" + sig.event_)) << "]";
         }
     }
 
@@ -630,62 +616,42 @@ AutoAnswerMediaNegoTest::configureScenario()
             const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onIncomingCallWithMedia(accountId,
-                                        callId,
-                                        mediaList,
-                                        user == aliceData_.alias_ ? aliceData_ : bobData_);
+                onIncomingCallWithMedia(accountId, callId, mediaList, user == aliceData_.alias_ ? aliceData_ : bobData_);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaChangeRequested>(
-        [&](const std::string& accountId,
-            const std::string& callId,
-            const std::vector<libjami::MediaMap> mediaList) {
+        [&](const std::string& accountId, const std::string& callId, const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onMediaChangeRequested(accountId,
-                                       callId,
-                                       mediaList,
-                                       user == aliceData_.alias_ ? aliceData_ : bobData_);
+                onMediaChangeRequested(accountId, callId, mediaList, user == aliceData_.alias_ ? aliceData_ : bobData_);
+        }));
+
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
+        [&](const std::string& accountId, const std::string& callId, const std::string& state, signed) {
+            auto user = getUserAlias(callId);
+            if (not user.empty())
+                onCallStateChange(accountId, callId, state, user == aliceData_.alias_ ? aliceData_ : bobData_);
         }));
 
     signalHandlers.insert(
-        libjami::exportable_callback<libjami::CallSignal::StateChange>([&](const std::string& accountId,
-                                                                       const std::string& callId,
-                                                                       const std::string& state,
-                                                                       signed) {
-            auto user = getUserAlias(callId);
-            if (not user.empty())
-                onCallStateChange(accountId,
-                                  callId,
-                                  state,
-                                  user == aliceData_.alias_ ? aliceData_ : bobData_);
-        }));
-
-    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::VideoMuted>(
-        [&](const std::string& callId, bool muted) {
+        libjami::exportable_callback<libjami::CallSignal::VideoMuted>([&](const std::string& callId, bool muted) {
             auto user = getUserAlias(callId);
             if (not user.empty())
                 onVideoMuted(callId, muted, user == aliceData_.alias_ ? aliceData_ : bobData_);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId,
-            const std::string& event,
-            const std::vector<std::map<std::string, std::string>>&) {
+        [&](const std::string& callId, const std::string& event, const std::vector<std::map<std::string, std::string>>&) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onMediaNegotiationStatus(callId,
-                                         event,
-                                         user == aliceData_.alias_ ? aliceData_ : bobData_);
+                onMediaNegotiationStatus(callId, event, user == aliceData_.alias_ ? aliceData_ : bobData_);
         }));
 
     libjami::registerSignalHandlers(signalHandlers);
 }
 
 void
-AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
-                                          CallData& bobData,
-                                          const TestScenario& scenario)
+AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData, const TestScenario& scenario)
 {
     JAMI_INFO("=== Start a call and validate ===");
 
@@ -694,13 +660,10 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
     CPPUNIT_ASSERT_EQUAL(mediaCount, scenario.answer_.size());
 
     aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_,
-                                                  isSipAccount_ ? bobData.toUri_
-                                                                : bobData_.userName_,
-                                                  MediaAttribute::mediaAttributesToMediaMaps(
-                                                      scenario.offer_));
+                                                    isSipAccount_ ? bobData.toUri_ : bobData_.userName_,
+                                                    MediaAttribute::mediaAttributesToMediaMaps(scenario.offer_));
     CPPUNIT_ASSERT(not aliceData.callId_.empty());
-    auto aliceCall = std::static_pointer_cast<SIPCall>(
-        Manager::instance().getCallFromCallID(aliceData.callId_));
+    auto aliceCall = std::static_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(aliceData.callId_));
 
     CPPUNIT_ASSERT(aliceCall);
 
@@ -714,25 +677,20 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
     // Bob automatically answers the call.
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT_EQUAL(
-        true,
-        waitForSignal(bobData,
-                      libjami::CallSignal::MediaNegotiationStatus::name,
-                      libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
-    // Wait for the StateChange signal.
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(bobData,
-                                       libjami::CallSignal::StateChange::name,
-                                       StateEvent::CURRENT));
+                                       libjami::CallSignal::MediaNegotiationStatus::name,
+                                       libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    // Wait for the StateChange signal.
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
     JAMI_INFO("BOB answered the call [%s]", bobData.callId_.c_str());
 
     // Wait for media negotiation complete signal.
-    CPPUNIT_ASSERT_EQUAL(
-        true,
-        waitForSignal(aliceData,
-                      libjami::CallSignal::MediaNegotiationStatus::name,
-                      libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+    CPPUNIT_ASSERT_EQUAL(true,
+                         waitForSignal(aliceData,
+                                       libjami::CallSignal::MediaNegotiationStatus::name,
+                                       libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
     // Validate Alice's media
     {
@@ -755,8 +713,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
 
     // Validate Bob's media
     {
-        auto const& bobCall = std::dynamic_pointer_cast<SIPCall>(
-            Manager::instance().getCallFromCallID(bobData.callId_));
+        auto const& bobCall = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCallFromCallID(bobData.callId_));
         auto mediaList = bobCall->getMediaAttributeList();
         CPPUNIT_ASSERT_EQUAL(mediaCount, mediaList.size());
 
@@ -788,11 +745,10 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
 
     if (scenario.expectMediaRenegotiation_) {
         // Wait for media negotiation complete signal.
-        CPPUNIT_ASSERT_EQUAL(
-            true,
-            waitForSignal(aliceData,
-                          libjami::CallSignal::MediaNegotiationStatus::name,
-                          libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
+        CPPUNIT_ASSERT_EQUAL(true,
+                             waitForSignal(aliceData,
+                                           libjami::CallSignal::MediaNegotiationStatus::name,
+                                           libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS));
 
         // Validate Alice's media
         {
@@ -808,17 +764,13 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
             {
                 auto descrList = sdp.getActiveMediaDescription(false);
                 CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
-                CPPUNIT_ASSERT(validateMediaDirection(descrList,
-                                                      scenario.offerUpdate_,
-                                                      scenario.answerUpdate_));
+                CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.offerUpdate_, scenario.answerUpdate_));
             }
             // Validate remote media direction
             {
                 auto descrList = sdp.getActiveMediaDescription(true);
                 CPPUNIT_ASSERT_EQUAL(mediaCount, descrList.size());
-                CPPUNIT_ASSERT(validateMediaDirection(descrList,
-                                                      scenario.answerUpdate_,
-                                                      scenario.offerUpdate_));
+                CPPUNIT_ASSERT(validateMediaDirection(descrList, scenario.answerUpdate_, scenario.offerUpdate_));
             }
         }
 
@@ -843,10 +795,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData,
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
     libjami::hangUp(bobData.accountId_, bobData.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true,
-                         waitForSignal(aliceData,
-                                       libjami::CallSignal::StateChange::name,
-                                       StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 
     JAMI_INFO("Call terminated on both sides");
 }
@@ -1016,10 +965,8 @@ AutoAnswerMediaNegoTest::audio_and_video_then_change_video_source()
     JAMI_INFO("=== End test %s ===", __FUNCTION__);
 }
 
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestSip,
-                                      AutoAnswerMediaNegoTestSip::name());
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestJami,
-                                      AutoAnswerMediaNegoTestJami::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestSip, AutoAnswerMediaNegoTestSip::name());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AutoAnswerMediaNegoTestJami, AutoAnswerMediaNegoTestJami::name());
 
 } // namespace test
 } // namespace jami

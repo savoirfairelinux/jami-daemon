@@ -59,8 +59,7 @@ std::string
 fetchHeaderValue(pjsip_msg* msg, const std::string& field)
 {
     pj_str_t name = pj_str((char*) field.c_str());
-    pjsip_generic_string_hdr* hdr = static_cast<pjsip_generic_string_hdr*>(
-        pjsip_msg_find_hdr_by_name(msg, &name, NULL));
+    pjsip_generic_string_hdr* hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
     if (!hdr)
         return "";
@@ -188,10 +187,7 @@ addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
     auto pjContact = pj_strdup3(tdata->pool, contactHdr.c_str());
 
     pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool,
-                                   pjContact.ptr,
-                                   pjContact.slen,
-                                   PJSIP_PARSE_URI_AS_NAMEADDR);
+    contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr, pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
@@ -211,8 +207,7 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
     }
 
     // Add Header
-    auto hdr = reinterpret_cast<pjsip_hdr*>(
-        pjsip_user_agent_hdr_create(tdata->pool, &USER_AGENT_STR, &pjUserAgent));
+    auto hdr = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &USER_AGENT_STR, &pjUserAgent));
 
     if (hdr != nullptr) {
         pjsip_msg_add_hdr(tdata->msg, hdr);

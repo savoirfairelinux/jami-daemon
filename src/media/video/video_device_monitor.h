@@ -54,8 +54,7 @@ public:
     bool setDefaultDevice(const std::string& name);
     void setDeviceOrientation(const std::string& id, int angle);
 
-    bool addDevice(const std::string& node,
-                   const std::vector<std::map<std::string, std::string>>& devInfo = {});
+    bool addDevice(const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo = {});
     void removeDevice(const std::string& node);
     void removeDeviceViaInput(const std::string& path);
 

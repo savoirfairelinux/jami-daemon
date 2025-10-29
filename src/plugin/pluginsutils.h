@@ -76,7 +76,7 @@ std::map<std::string, std::string> checkManifestValidity(const std::vector<uint8
 /**
  * @brief Returns a map with platform information.
  * @return Map with platform information
-*/
+ */
 std::map<std::string, std::string> getPlatformInfo();
 
 /**
@@ -84,7 +84,8 @@ std::map<std::string, std::string> getPlatformInfo();
  * @param manifestFilePath
  * @return Map with manifest contents
  */
-std::map<std::string, std::string> parseManifestFile(const std::filesystem::path& manifestFilePath, const std::string& rootPath);
+std::map<std::string, std::string> parseManifestFile(const std::filesystem::path& manifestFilePath,
+                                                     const std::string& rootPath);
 
 /**
  * @brief Parses the manifest file of an installed plugin if it's valid.
@@ -114,8 +115,9 @@ std::map<std::string, std::string> readPluginManifestFromArchive(const std::stri
  * @param rootPath
  * @param pluginId
  * @return Certificate object pointer
-*/
-std::unique_ptr<dht::crypto::Certificate> readPluginCertificate(const std::string& rootPath, const std::string& pluginId);
+ */
+std::unique_ptr<dht::crypto::Certificate> readPluginCertificate(const std::string& rootPath,
+                                                                const std::string& pluginId);
 /**
  * @brief Read plugin certificate without uncompressing the whole archive.and
  * return an object Certificate
@@ -128,14 +130,14 @@ std::unique_ptr<dht::crypto::Certificate> readPluginCertificateFromArchive(const
  * @brief Reads signature file content without uncompressing the whole archive and
  * @param jplPath
  * return a map of signature path as key and signature content as value.
-*/
+ */
 std::map<std::string, std::vector<uint8_t>> readPluginSignatureFromArchive(const std::string& jplPath);
 
 /**
  * @brief Read the signature of the file signature without uncompressing the whole archive.
  * @param jplPath
  * @return Signature file content
-*/
+ */
 std::vector<uint8_t> readSignatureFileFromArchive(const std::string& jplPath);
 
 /**
@@ -159,8 +161,7 @@ std::string getLanguage();
  * @param lang
  * @return locales map
  */
-std::map<std::string, std::string> getLocales(const std::string& rootPath,
-                                                     const std::string& lang);
+std::map<std::string, std::string> getLocales(const std::string& rootPath, const std::string& lang);
 
 /**
  * @brief Returns the available keys and translations for a given file.

@@ -607,13 +607,10 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     }
 }
 
-VideoDevice::VideoDevice(const std::string& id,
-                         const std::vector<std::map<std::string, std::string>>& devInfo)
+VideoDevice::VideoDevice(const std::string& id, const std::vector<std::map<std::string, std::string>>& devInfo)
     : id_(id)
 {
-    deviceImpl_ = std::make_shared<VideoDeviceImpl>(id,
-                                                    devInfo.empty() ? id
-                                                                    : devInfo.at(0).at("devPath"));
+    deviceImpl_ = std::make_shared<VideoDeviceImpl>(id, devInfo.empty() ? id : devInfo.at(0).at("devPath"));
     name = deviceImpl_->name;
 }
 

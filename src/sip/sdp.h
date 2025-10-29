@@ -73,8 +73,7 @@ public:
      * Set the local media capabilities.
      * @param List of codec in preference order
      */
-    void setLocalMediaCapabilities(
-        MediaType type, const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs);
+    void setLocalMediaCapabilities(MediaType type, const std::vector<std::shared_ptr<SystemCodecInfo>>& selectedCodecs);
 
     /**
      *  Read accessor. Get the local passive sdp session information before negotiation
@@ -169,11 +168,10 @@ public:
 
     std::vector<MediaDescription> getActiveMediaDescription(bool remote) const;
 
-    std::vector<MediaDescription> getMediaDescriptions(const pjmedia_sdp_session* session,
-                                                       bool remote) const;
+    std::vector<MediaDescription> getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const;
 
-    static std::vector<MediaAttribute> getMediaAttributeListFromSdp(
-        const pjmedia_sdp_session* sdpSession, bool ignoreDisabled = false);
+    static std::vector<MediaAttribute> getMediaAttributeListFromSdp(const pjmedia_sdp_session* sdpSession,
+                                                                    bool ignoreDisabled = false);
 
     using MediaSlot = std::pair<MediaDescription, MediaDescription>;
     std::vector<MediaSlot> getMediaSlots() const;
@@ -195,9 +193,7 @@ public:
 
     /// \brief Log the given session
     /// \note crypto lines with are removed for security
-    static void printSession(const pjmedia_sdp_session* session,
-                             const char* header,
-                             SdpDirection direction);
+    static void printSession(const pjmedia_sdp_session* session, const char* header, SdpDirection direction);
 
 private:
     friend class test::SDPTest;
@@ -210,9 +206,7 @@ private:
      * Returns the printed original SDP filtered with only the specified media index and codec
      * remaining.
      */
-    static std::string getFilteredSdp(const pjmedia_sdp_session* session,
-                                      unsigned media_keep,
-                                      unsigned pt_keep);
+    static std::string getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep);
 
     static void clearIce(pjmedia_sdp_session* session);
 
@@ -259,8 +253,7 @@ private:
     void addRTCPAttribute(pjmedia_sdp_media* med, uint16_t port);
 
     std::shared_ptr<SystemCodecInfo> findCodecByPayload(const unsigned payloadType);
-    std::shared_ptr<SystemCodecInfo> findCodecBySpec(std::string_view codecName,
-                                                      const unsigned clockrate = 0) const;
+    std::shared_ptr<SystemCodecInfo> findCodecBySpec(std::string_view codecName, const unsigned clockrate = 0) const;
 
     // Data members
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> memPool_;

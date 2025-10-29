@@ -29,67 +29,65 @@
 static std::thread spammer;
 static gnutls_session_t spamming_session = nullptr;
 
-void post_gnutls_init_hook(gnutls_session_t session)
+void
+post_gnutls_init_hook(gnutls_session_t session)
 {
-        if (not session) {
-                return;
+    if (not session) {
+        return;
+    }
+
+    if (spamming_session) {
+        return;
+    }
+
+    printf("Starting channel spammer...\n");
+
+    spamming_session = session;
+
+    spammer = std::thread([&, session = session] {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+
+        printf("Starting spamming!\n");
+
+        jami::ChannelRequest val;
+
+        val.name = "sip";
+        val.state = jami::ChannelRequestState::REQUEST;
+
+        for (size_t i = 0; i < UINT16_MAX; ++i) {
+            if (not spamming_session) {
+                break;
+            }
+
+            val.channel = i;
+
+            msgpack::sbuffer buffer1(256);
+            msgpack::pack(buffer1, val);
+
+            msgpack::sbuffer buffer2(16 + buffer1.size());
+            msgpack::packer<msgpack::sbuffer> pk(&buffer2);
+
+            pk.pack_array(2);
+            pk.pack(jami::CONTROL_CHANNEL);
+            pk.pack_bin(buffer1.size());
+            pk.pack_bin_body((const char*) buffer1.data(), buffer1.size());
+
+            gnutls_record_send(session, buffer2.data(), buffer2.size());
+            std::this_thread::sleep_for(std::chrono::microseconds(1000));
         }
 
-        if (spamming_session) {
-                return;
-        }
-
-        printf("Starting channel spammer...\n");
-
-        spamming_session = session;
-
-        spammer = std::thread([&, session=session]{
-
-                std::this_thread::sleep_for(std::chrono::seconds(5));
-
-                printf("Starting spamming!\n");
-
-                jami::ChannelRequest val;
-
-                val.name  = "sip";
-                val.state = jami::ChannelRequestState::REQUEST;
-
-                for (size_t i=0; i<UINT16_MAX; ++i) {
-
-                        if (not spamming_session) {
-                                break;
-                        }
-
-                        val.channel = i;
-
-                        msgpack::sbuffer buffer1(256);
-                        msgpack::pack(buffer1, val);
-
-                        msgpack::sbuffer buffer2(16 + buffer1.size());
-                        msgpack::packer<msgpack::sbuffer> pk(&buffer2);
-
-                        pk.pack_array(2);
-                        pk.pack(jami::CONTROL_CHANNEL);
-                        pk.pack_bin(buffer1.size());
-                        pk.pack_bin_body((const char*) buffer1.data(), buffer1.size());
-
-                        gnutls_record_send(session, buffer2.data(), buffer2.size());
-                        std::this_thread::sleep_for(std::chrono::microseconds(1000));
-                }
-
-                printf("Stopping spamming!\n");
-
-        });
+        printf("Stopping spamming!\n");
+    });
 }
 
-void pre_gnutls_deinit_hook(gnutls_session_t session)
+void
+pre_gnutls_deinit_hook(gnutls_session_t session)
 {
-        if (session and session == spamming_session) {
-                spamming_session = nullptr;
-                spammer.join();
-                printf("Channel spammer killed!\n");
-        }
+    if (session and session == spamming_session) {
+        spamming_session = nullptr;
+        spammer.join();
+        printf("Channel spammer killed!\n");
+    }
 }
-
 
 #include "scenarios/classic-alice-and-bob.h"

@@ -26,9 +26,7 @@ namespace jami {
 static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
 MediaPlayer::MediaPlayer(const std::string& resource)
-    : loop_(std::bind(&MediaPlayer::configureMediaInputs, this),
-            std::bind(&MediaPlayer::process, this),
-            [] {})
+    : loop_(std::bind(&MediaPlayer::configureMediaInputs, this), std::bind(&MediaPlayer::process, this), [] {})
 {
     auto suffix = resource;
     static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
@@ -239,7 +237,7 @@ MediaPlayer::seekToTime(int64_t time)
     demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Demuxing);
 
     int64_t currentTime = av_gettime();
-    if (paused_){
+    if (paused_) {
         pauseInterval_ += currentTime - lastPausedTime_;
         lastPausedTime_ = currentTime;
     }

@@ -167,7 +167,7 @@
 #define DT_LNK     S_IFLNK
 
 /* Macros for converting between st_mode and d_type */
-#define IFTODT(mode) ((mode) &S_IFMT)
+#define IFTODT(mode) ((mode) & S_IFMT)
 #define DTTOIF(type) (type)
 
 /*
@@ -177,25 +177,25 @@
  * These macros should always return false on Windows.
  */
 #if !defined(S_ISFIFO)
-#define S_ISFIFO(mode) (((mode) &S_IFMT) == S_IFIFO)
+#define S_ISFIFO(mode) (((mode) & S_IFMT) == S_IFIFO)
 #endif
 #if !defined(S_ISDIR)
-#define S_ISDIR(mode) (((mode) &S_IFMT) == S_IFDIR)
+#define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
 #endif
 #if !defined(S_ISREG)
-#define S_ISREG(mode) (((mode) &S_IFMT) == S_IFREG)
+#define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
 #endif
 #if !defined(S_ISLNK)
-#define S_ISLNK(mode) (((mode) &S_IFMT) == S_IFLNK)
+#define S_ISLNK(mode) (((mode) & S_IFMT) == S_IFLNK)
 #endif
 #if !defined(S_ISSOCK)
-#define S_ISSOCK(mode) (((mode) &S_IFMT) == S_IFSOCK)
+#define S_ISSOCK(mode) (((mode) & S_IFMT) == S_IFSOCK)
 #endif
 #if !defined(S_ISCHR)
-#define S_ISCHR(mode) (((mode) &S_IFMT) == S_IFCHR)
+#define S_ISCHR(mode) (((mode) & S_IFMT) == S_IFCHR)
 #endif
 #if !defined(S_ISBLK)
-#define S_ISBLK(mode) (((mode) &S_IFMT) == S_IFBLK)
+#define S_ISBLK(mode) (((mode) & S_IFMT) == S_IFBLK)
 #endif
 
 /* Return the exact length of d_namlen without zero terminator */
@@ -296,11 +296,9 @@ static void rewinddir(DIR* dirp);
 static WIN32_FIND_DATAW* dirent_first(_WDIR* dirp);
 static WIN32_FIND_DATAW* dirent_next(_WDIR* dirp);
 
-static int dirent_mbstowcs_s(
-    size_t* pReturnValue, wchar_t* wcstr, size_t sizeInWords, const char* mbstr, size_t count);
+static int dirent_mbstowcs_s(size_t* pReturnValue, wchar_t* wcstr, size_t sizeInWords, const char* mbstr, size_t count);
 
-static int dirent_wcstombs_s(
-    size_t* pReturnValue, char* mbstr, size_t sizeInBytes, const wchar_t* wcstr, size_t count);
+static int dirent_wcstombs_s(size_t* pReturnValue, char* mbstr, size_t sizeInBytes, const wchar_t* wcstr, size_t count);
 
 static void dirent_set_errno(int error);
 
@@ -532,12 +530,7 @@ dirent_first(_WDIR* dirp)
     WIN32_FIND_DATAW* datap;
 
     /* Open directory and retrieve the first entry */
-    dirp->handle = FindFirstFileExW(dirp->patt,
-                                    FindExInfoStandard,
-                                    &dirp->data,
-                                    FindExSearchNameMatch,
-                                    NULL,
-                                    0);
+    dirp->handle = FindFirstFileExW(dirp->patt, FindExInfoStandard, &dirp->data, FindExSearchNameMatch, NULL, 0);
     if (dirp->handle != INVALID_HANDLE_VALUE) {
         /* a directory entry is now waiting in memory */
         datap = &dirp->data;
@@ -680,11 +673,7 @@ readdir(DIR* dirp)
          * VirtualBox shared folders fail to do this.
          */
         if (error && datap->cAlternateFileName[0] != '\0') {
-            error = dirent_wcstombs_s(&n,
-                                      dirp->ent.d_name,
-                                      PATH_MAX,
-                                      datap->cAlternateFileName,
-                                      PATH_MAX);
+            error = dirent_wcstombs_s(&n, dirp->ent.d_name, PATH_MAX, datap->cAlternateFileName, PATH_MAX);
         }
 
         if (!error) {
@@ -769,8 +758,7 @@ rewinddir(DIR* dirp)
 
 /* Convert multi-byte string to wide character string */
 static int
-dirent_mbstowcs_s(
-    size_t* pReturnValue, wchar_t* wcstr, size_t sizeInWords, const char* mbstr, size_t count)
+dirent_mbstowcs_s(size_t* pReturnValue, wchar_t* wcstr, size_t sizeInWords, const char* mbstr, size_t count)
 {
     int error;
 

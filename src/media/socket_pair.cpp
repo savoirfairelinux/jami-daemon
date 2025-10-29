@@ -16,7 +16,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <dhtnet/ip_utils.h>   // MUST BE INCLUDED FIRST
+#include <dhtnet/ip_utils.h> // MUST BE INCLUDED FIRST
 
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
@@ -86,10 +86,7 @@ enum class DataType : unsigned { RTP = 1 << 0, RTCP = 1 << 1 };
 class SRTPProtoContext
 {
 public:
-    SRTPProtoContext(const char* out_suite,
-                     const char* out_key,
-                     const char* in_suite,
-                     const char* in_key)
+    SRTPProtoContext(const char* out_suite, const char* out_key, const char* in_suite, const char* in_key)
     {
         jami_secure_memzero(&srtp_out, sizeof(srtp_out));
         jami_secure_memzero(&srtp_in, sizeof(srtp_in));
@@ -282,10 +279,7 @@ SocketPair::getRtcpREMB()
 }
 
 void
-SocketPair::createSRTP(const char* out_suite,
-                       const char* out_key,
-                       const char* in_suite,
-                       const char* in_key)
+SocketPair::createSRTP(const char* out_suite, const char* out_key, const char* in_suite, const char* in_key)
 {
     srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));
 }
@@ -375,12 +369,8 @@ SocketPair::createIOContext(const uint16_t mtu)
     return new MediaIOHandle(
         mtu - (srtpContext_ ? SRTP_OVERHEAD : 0) - UDP_HEADER_SIZE - ip_header_size,
         true,
-        [](void* sp, uint8_t* buf, int len) {
-            return static_cast<SocketPair*>(sp)->readCallback(buf, len);
-        },
-        [](void* sp, uint8_t* buf, int len) {
-            return static_cast<SocketPair*>(sp)->writeCallback(buf, len);
-        },
+        [](void* sp, uint8_t* buf, int len) { return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
+        [](void* sp, uint8_t* buf, int len) { return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
         0,
         reinterpret_cast<void*>(this));
 }
@@ -420,8 +410,7 @@ SocketPair::waitForData()
     {
         std::unique_lock lk(dataBuffMutex_);
         cv_.wait(lk, [this] {
-            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty()
-                   or not readBlockingMode_;
+            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty() or not readBlockingMode_;
         });
     }
 
@@ -595,12 +584,7 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 
         if (noWrite_)
             return buf_size;
-        return ::sendto(fd,
-                        reinterpret_cast<const char*>(buf),
-                        buf_size,
-                        0,
-                        *dest_addr,
-                        dest_addr->getLength());
+        return ::sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0, *dest_addr, dest_addr->getLength());
     }
 
     if (noWrite_)
@@ -643,8 +627,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
         auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-        rtcpPacketLoss_ = (header->pt == 201
-                           && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
+        rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
     do {
@@ -719,8 +702,7 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
     lastSendTS_ = sendTS;
 
     std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
-    auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_)
-                      .count();
+    auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_).count();
     lastReceiveTS_ = arrival_TS;
 
     *gradient = deltaR - deltaS;

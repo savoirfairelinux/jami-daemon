@@ -45,9 +45,7 @@ struct RTCPInfo
 class AudioRtpSession : public RtpSession, public std::enable_shared_from_this<AudioRtpSession>
 {
 public:
-    AudioRtpSession(const std::string& callId,
-                    const std::string& streamId,
-                    const std::shared_ptr<MediaRecorder>& rec);
+    AudioRtpSession(const std::string& callId, const std::string& streamId, const std::shared_ptr<MediaRecorder>& rec);
     virtual ~AudioRtpSession();
 
     void start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_ptr<dhtnet::IceSocket> rtcp_sock) override;

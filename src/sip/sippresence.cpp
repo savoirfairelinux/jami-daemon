@@ -133,10 +133,7 @@ SIPPresence::updateStatus(bool status, const std::string& note)
 {
     // char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
 
-    pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON,
-                           CONST_PJ_STR("0"),
-                           PJRPID_ACTIVITY_UNKNOWN,
-                           CONST_PJ_STR(note)};
+    pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON, CONST_PJ_STR("0"), PJRPID_ACTIVITY_UNKNOWN, CONST_PJ_STR(note)};
 
     /* fill activity if user not available. */
     if (note == "away")
@@ -182,7 +179,8 @@ SIPPresence::reportPresSubClientNotification(std::string_view uri, pjsip_pres_st
     const std::string& acc_ID = acc_->getAccountID();
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
     JAMI_DBG(" Received status of PresSubClient %.*s(acc:%s): status=%s note=%s",
-             (int)uri.size(), uri.data(),
+             (int) uri.size(),
+             uri.data(),
              acc_ID.c_str(),
              status->info[0].basic_open ? "open" : "closed",
              note.c_str());
@@ -194,9 +192,9 @@ SIPPresence::reportPresSubClientNotification(std::string_view uri, pjsip_pres_st
     }
     // report status to client signal
     emitSignal<libjami::PresenceSignal::NewBuddyNotification>(acc_ID,
-                                                            std::string(uri),
-                                                            status->info[0].basic_open,
-                                                            note);
+                                                              std::string(uri),
+                                                              status->info[0].basic_open,
+                                                              note);
 }
 
 void
@@ -321,9 +319,7 @@ SIPPresence::fillDoc(pjsip_tx_data* tdata, const pres_msg_data* msg_data)
         constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
         std::string useragent(acc_->getUserAgentName());
         pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
-        pjsip_hdr* h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool,
-                                                                    &STR_USER_AGENT,
-                                                                    &pJuseragent);
+        pjsip_hdr* h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent);
         pjsip_msg_add_hdr(tdata->msg, h);
     }
 
@@ -368,9 +364,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam* param)
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
             JAMI_ERR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-            emitSignal<libjami::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
-                                                           error,
-                                                           errmsg);
+            emitSignal<libjami::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(), error, errmsg);
 
         } else if (param->code == 412) {
             /* 412 (Conditional Request Failed)
@@ -378,13 +372,12 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam* param)
              */
             JAMI_WARN("Publish retry.");
             publish(pres);
-        } else if ((param->code == PJSIP_SC_BAD_EVENT)
-                   || (param->code == PJSIP_SC_NOT_IMPLEMENTED)) { // 489 or 501
+        } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)) { // 489 or 501
             JAMI_WARN("Client (PUBLISH) failed (%s)", error.c_str());
 
             emitSignal<libjami::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
-                                                           error,
-                                                           "Publish not supported.");
+                                                             error,
+                                                             "Publish not supported.");
 
             pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, false);
         }
@@ -520,9 +513,7 @@ SIPPresence::publish(SIPPresence* pres)
 
     /* Add credential for authentication */
     if (acc->hasCredentials()
-        and pjsip_publishc_set_credentials(pres->publish_sess_,
-                                           acc->getCredentialCount(),
-                                           acc->getCredInfo())
+        and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo())
                 != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return status;
@@ -532,8 +523,7 @@ SIPPresence::publish(SIPPresence* pres)
     // FIXME: is this really necessary?
     pjsip_regc* regc = acc->getRegistrationInfo();
     if (regc and acc->hasServiceRoute())
-        pjsip_regc_set_route_set(regc,
-                                 sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
 
     /* Send initial PUBLISH request */
     status = send_publish(pres);

@@ -49,15 +49,15 @@ private:
     struct DTMFTone
     {
         unsigned char code; /** Code of the tone */
-        unsigned lower;          /** Lower frequency */
-        unsigned higher;         /** Higher frequency */
+        unsigned lower;     /** Lower frequency */
+        unsigned higher;    /** Higher frequency */
     };
 
     /** State of the DTMF generator */
     struct DTMFState
     {
         unsigned int offset; /** Offset in the sample currently being played */
-        AVFrame* sample; /** Currently generated code */
+        AVFrame* sample;     /** Currently generated code */
     };
 
     /** State of the DTMF generator */

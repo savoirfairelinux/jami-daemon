@@ -46,35 +46,34 @@ static int initFlags = 0;
 static void
 print_title()
 {
-    std::cout
-        << "Jami Core " << libjami::version()
-        << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2025" << std::endl
-        << "https://jami.net/" << std::endl
+    std::cout << "Jami Core " << libjami::version() << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2025"
+              << std::endl
+              << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
-        << "[Video support enabled]" << std::endl
+              << "[Video support enabled]" << std::endl
 #endif
 #ifdef ENABLE_PLUGIN
-        << "[Plugins support enabled]" << std::endl
+              << "[Plugins support enabled]" << std::endl
 #endif
-        << std::endl;
+              << std::endl;
 }
 
 static void
 print_usage()
 {
-    std::cout << std::endl <<
-    "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
-    "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
-    "-p, --persistent \t- Stay alive after client quits" << std::endl <<
-    "--auto-answer \t- Force automatic answer to incoming calls" << std::endl <<
-    "-h, --help \t- Print help" << std::endl;
+    std::cout << std::endl
+              << "-c, --console \t- Log in console (instead of syslog)" << std::endl
+              << "-d, --debug \t- Debug mode (more verbose)" << std::endl
+              << "-p, --persistent \t- Stay alive after client quits" << std::endl
+              << "--auto-answer \t- Force automatic answer to incoming calls" << std::endl
+              << "-h, --help \t- Print help" << std::endl;
 }
 
 // Parse command line arguments, setting debug options or printing a help
 // message accordingly.
 // returns true if we should quit (i.e. help was printed), false otherwise
 static bool
-parse_args(int argc, char *argv[])
+parse_args(int argc, char* argv[])
 {
     int consoleFlag = false;
     int debugFlag = false;
@@ -84,13 +83,13 @@ parse_args(int argc, char *argv[])
 
     const struct option long_options[] = {
         /* These options set a flag. */
-        {"debug",       no_argument,        nullptr,    'd'},
-        {"console",     no_argument,        nullptr,    'c'},
-        {"persistent",  no_argument,        nullptr,    'p'},
-        {"help",        no_argument,        nullptr,    'h'},
-        {"version",     no_argument,        nullptr,    'v'},
-        {"auto-answer", no_argument,        &autoAnswer, true},
-        {nullptr,       0,                  nullptr,     0} /* Sentinel */
+        {"debug", no_argument, nullptr, 'd'},
+        {"console", no_argument, nullptr, 'c'},
+        {"persistent", no_argument, nullptr, 'p'},
+        {"help", no_argument, nullptr, 'h'},
+        {"version", no_argument, nullptr, 'v'},
+        {"auto-answer", no_argument, &autoAnswer, true},
+        {nullptr, 0, nullptr, 0} /* Sentinel */
     };
 
     while (true) {
@@ -104,29 +103,29 @@ parse_args(int argc, char *argv[])
             break;
 
         switch (c) {
-            case 'd':
-                debugFlag = true;
-                break;
+        case 'd':
+            debugFlag = true;
+            break;
 
-            case 'c':
-                consoleFlag = true;
-                break;
+        case 'c':
+            consoleFlag = true;
+            break;
 
-            case 'p':
-                persistent = true;
-                break;
+        case 'p':
+            persistent = true;
+            break;
 
-            case 'h':
-            case '?':
-                helpFlag = true;
-                break;
+        case 'h':
+        case '?':
+            helpFlag = true;
+            break;
 
-            case 'v':
-                versionFlag = true;
-                break;
+        case 'v':
+            versionFlag = true;
+            break;
 
-            default:
-                break;
+        default:
+            break;
         }
     }
 
@@ -160,14 +159,13 @@ signal_handler(int code)
     signal(SIGHUP, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
 
-    std::cerr << "Caught signal " << strsignal(code)
-              << ", terminating..." << std::endl;
+    std::cerr << "Caught signal " << strsignal(code) << ", terminating..." << std::endl;
 
     connection->leaveEventLoop();
 }
 
 int
-main(int argc, char *argv [])
+main(int argc, char* argv[])
 {
     print_title();
 

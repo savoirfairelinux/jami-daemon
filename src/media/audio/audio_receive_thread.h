@@ -50,10 +50,7 @@ public:
     void startReceiver();
     void stopReceiver();
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-    {
-        onSuccessfulSetup_ = cb;
-    }
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 

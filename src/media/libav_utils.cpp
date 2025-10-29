@@ -51,9 +51,7 @@ namespace jami {
 namespace libav_utils {
 
 AVSampleFormat
-choose_sample_fmt(const AVCodec* codec,
-                  const AVSampleFormat* preferred_formats,
-                  int preferred_formats_count)
+choose_sample_fmt(const AVCodec* codec, const AVSampleFormat* preferred_formats, int preferred_formats_count)
 {
     if (codec->sample_fmts)
         for (int i = 0; i < preferred_formats_count; ++i) {
@@ -78,9 +76,7 @@ choose_sample_fmt_default(const AVCodec* codec, AVSampleFormat defaultFormat)
                                                 AV_SAMPLE_FMT_DBL,
                                                 AV_SAMPLE_FMT_S32P,
                                                 AV_SAMPLE_FMT_S32};
-    return choose_sample_fmt(codec,
-                             preferred_formats,
-                             sizeof(preferred_formats) / sizeof(preferred_formats[0]));
+    return choose_sample_fmt(codec, preferred_formats, sizeof(preferred_formats) / sizeof(preferred_formats[0]));
 }
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
@@ -273,12 +269,7 @@ fillWithBlack(AVFrame* frame)
     ptrdiff_t linesizes[4];
     for (int i = 0; i < planes; ++i)
         linesizes[i] = frame->linesize[i];
-    int ret = av_image_fill_black(frame->data,
-                                  linesizes,
-                                  format,
-                                  frame->color_range,
-                                  frame->width,
-                                  frame->height);
+    int ret = av_image_fill_black(frame->data, linesizes, format, frame->color_range, frame->width, frame->height);
     if (ret < 0) {
         JAMI_ERR() << "Failed to blacken frame";
     }

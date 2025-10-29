@@ -28,14 +28,13 @@
 #include <stdexcept>
 #include <msgpack.hpp>
 
-#define FAILURE                        -1
+#define FAILURE                         -1
 #define SUCCESS                         0
 #define PLUGIN_ALREADY_INSTALLED        100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION              200 /* Plugin already installed with a newer version */
 #define SIGNATURE_VERIFICATION_FAILED   300
 #define CERTIFICATE_VERIFICATION_FAILED 400
 #define INVALID_PLUGIN                  500
-
 
 #ifdef WIN32
 #define LIB_TYPE   ".dll"
@@ -82,8 +81,8 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath, bool reset)
         pluginDetailsMap_.erase(detailsIt);
     }
 
-    std::map<std::string, std::string> details = PluginUtils::parseManifestFile(
-        PluginUtils::manifestPath(rootPath), rootPath);
+    std::map<std::string, std::string> details = PluginUtils::parseManifestFile(PluginUtils::manifestPath(rootPath),
+                                                                                rootPath);
     if (!details.empty()) {
         auto itIcon = details.find("iconPath");
         itIcon->second.insert(0, rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH);
@@ -113,8 +112,7 @@ JamiPluginManager::getInstalledPlugins()
     }
 
     // Gets plugins installed in non standard path
-    std::vector<std::string> nonStandardInstalls = jami::Manager::instance()
-                                                       .pluginPreferences.getInstalledPlugins();
+    std::vector<std::string> nonStandardInstalls = jami::Manager::instance().pluginPreferences.getInstalledPlugins();
     for (auto& path : nonStandardInstalls) {
         if (PluginUtils::checkPluginValidity(path))
             pluginsPaths.emplace_back(path);
@@ -126,13 +124,12 @@ JamiPluginManager::getInstalledPlugins()
 bool
 JamiPluginManager::checkPluginCertificatePublicKey(const std::string& oldJplPath, const std::string& newJplPath)
 {
-    std::map<std::string, std::string> oldDetails = PluginUtils::parseManifestFile(PluginUtils::manifestPath(oldJplPath), oldJplPath);
+    std::map<std::string, std::string> oldDetails = PluginUtils::parseManifestFile(PluginUtils::manifestPath(oldJplPath),
+                                                                                   oldJplPath);
     std::error_code ec;
-    if (
-        oldDetails.empty() ||
-        !std::filesystem::is_regular_file(oldJplPath + DIR_SEPARATOR_CH + oldDetails["id"] + ".crt", ec) ||
-        !std::filesystem::is_regular_file(newJplPath, ec)
-    )
+    if (oldDetails.empty()
+        || !std::filesystem::is_regular_file(oldJplPath + DIR_SEPARATOR_CH + oldDetails["id"] + ".crt", ec)
+        || !std::filesystem::is_regular_file(newJplPath, ec))
         return false;
     try {
         auto oldCert = PluginUtils::readPluginCertificate(oldJplPath, oldDetails["id"]);
@@ -158,7 +155,7 @@ JamiPluginManager::checkPluginCertificateValidity(dht::crypto::Certificate* cert
     if (!result) {
         JAMI_ERROR("Certificate verification failed: {}", result.toString());
     }
-    return (bool)result;
+    return (bool) result;
 }
 
 std::map<std::string, std::string>
@@ -172,7 +169,7 @@ JamiPluginManager::checkPluginSignatureFile(const std::string& jplPath)
 {
     // check if the file exists
     std::error_code ec;
-    if (!std::filesystem::is_regular_file(jplPath, ec)){
+    if (!std::filesystem::is_regular_file(jplPath, ec)) {
         return false;
     }
     try {
@@ -203,7 +200,7 @@ JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht:
 {
     if (!std::filesystem::is_regular_file(jplPath))
         return false;
-    try{
+    try {
         const auto& pk = cert->getPublicKey();
         auto signaturesData = archiver::readFileFromArchive(jplPath, "signatures");
         auto signatureFile = PluginUtils::readSignatureFileFromArchive(jplPath);
@@ -212,7 +209,7 @@ JamiPluginManager::checkPluginSignatureValidity(const std::string& jplPath, dht:
         auto signatures = PluginUtils::readPluginSignatureFromArchive(jplPath);
         for (const auto& signature : signatures) {
             auto file = archiver::readFileFromArchive(jplPath, signature.first);
-            if (!pk.checkSignature(file, signature.second)){
+            if (!pk.checkSignature(file, signature.second)) {
                 JAMI_ERROR("{} not correctly signed", signature.first);
                 return false;
             }
@@ -230,8 +227,7 @@ JamiPluginManager::checkPluginSignature(const std::string& jplPath, dht::crypto:
     if (!std::filesystem::is_regular_file(jplPath) || !cert || !*cert)
         return false;
     try {
-        return  checkPluginSignatureValidity(jplPath, cert) &&
-                checkPluginSignatureFile(jplPath);
+        return checkPluginSignatureValidity(jplPath, cert) && checkPluginSignatureFile(jplPath);
     } catch (const std::exception& e) {
         return false;
     }
@@ -244,7 +240,7 @@ JamiPluginManager::checkPluginCertificate(const std::string& jplPath, bool force
         return {};
     try {
         auto cert = PluginUtils::readPluginCertificateFromArchive(jplPath);
-        if(checkPluginCertificateValidity(cert.get()) || force){
+        if (checkPluginCertificateValidity(cert.get()) || force) {
             return cert;
         }
         return {};
@@ -267,32 +263,29 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
             auto cert = checkPluginCertificate(jplPath, force);
             if (!cert)
                 return CERTIFICATE_VERIFICATION_FAILED;
-            if(!checkPluginSignature(jplPath, cert.get()))
+            if (!checkPluginSignature(jplPath, cert.get()))
                 return SIGNATURE_VERIFICATION_FAILED;
             const std::string& version = manifestMap["version"];
             auto destinationDir = (fileutils::get_data_dir() / "plugins" / name).string();
             // Find if there is an existing version of this plugin
-            const auto alreadyInstalledManifestMap = PluginUtils::parseManifestFile(
-                PluginUtils::manifestPath(destinationDir), destinationDir);
+            const auto alreadyInstalledManifestMap = PluginUtils::parseManifestFile(PluginUtils::manifestPath(
+                                                                                        destinationDir),
+                                                                                    destinationDir);
 
             if (!alreadyInstalledManifestMap.empty()) {
                 if (force) {
                     r = uninstallPlugin(destinationDir);
                     if (r == SUCCESS) {
-                        archiver::uncompressArchive(jplPath,
-                                                    destinationDir,
-                                                    PluginUtils::uncompressJplFunction);
+                        archiver::uncompressArchive(jplPath, destinationDir, PluginUtils::uncompressJplFunction);
                     }
                 } else {
                     std::string installedVersion = alreadyInstalledManifestMap.at("version");
                     if (version > installedVersion) {
-                        if(!checkPluginCertificatePublicKey(destinationDir, jplPath))
+                        if (!checkPluginCertificatePublicKey(destinationDir, jplPath))
                             return CERTIFICATE_VERIFICATION_FAILED;
                         r = uninstallPlugin(destinationDir);
                         if (r == SUCCESS) {
-                            archiver::uncompressArchive(jplPath,
-                                                        destinationDir,
-                                                        PluginUtils::uncompressJplFunction);
+                            archiver::uncompressArchive(jplPath, destinationDir, PluginUtils::uncompressJplFunction);
                         }
                     } else if (version == installedVersion) {
                         r = PLUGIN_ALREADY_INSTALLED;
@@ -301,9 +294,7 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
                     }
                 }
             } else {
-                archiver::uncompressArchive(jplPath,
-                                            destinationDir,
-                                            PluginUtils::uncompressJplFunction);
+                archiver::uncompressArchive(jplPath, destinationDir, PluginUtils::uncompressJplFunction);
             }
             if (!libjami::getPluginsEnabled()) {
                 libjami::setPluginsEnabled(true);
@@ -336,8 +327,8 @@ JamiPluginManager::uninstallPlugin(const std::string& rootPath)
                 }
             }
             for (const auto& accId : jami::Manager::instance().getAccountList())
-                std::filesystem::remove_all(fileutils::get_data_dir() / accId
-                                     / "plugins" / detailsIt->second.at("id"), ec);
+                std::filesystem::remove_all(fileutils::get_data_dir() / accId / "plugins" / detailsIt->second.at("id"),
+                                            ec);
             pluginDetailsMap_.erase(detailsIt);
         }
         return std::filesystem::remove_all(rootPath, ec) ? SUCCESS : FAILURE;
@@ -405,9 +396,7 @@ JamiPluginManager::getLoadedPlugins() const
     std::transform(loadedSoPlugins.begin(),
                    loadedSoPlugins.end(),
                    std::back_inserter(loadedPlugins),
-                   [](const std::string& soPath) {
-                       return PluginUtils::getRootPathFromSoPath(soPath).string();
-                   });
+                   [](const std::string& soPath) { return PluginUtils::getRootPathFromSoPath(soPath).string(); });
     return loadedPlugins;
 }
 
@@ -444,8 +433,8 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
 
     std::map<std::string, std::string> pluginUserPreferencesMap
         = PluginPreferencesUtils::getUserPreferencesValuesMap(rootPath, acc);
-    std::map<std::string, std::string> pluginPreferencesMap
-        = PluginPreferencesUtils::getPreferencesValuesMap(rootPath, acc);
+    std::map<std::string, std::string> pluginPreferencesMap = PluginPreferencesUtils::getPreferencesValuesMap(rootPath,
+                                                                                                              acc);
 
     // If any plugin handler is active we may have to reload it
     bool force {pm_.checkLoadedPlugin(rootPath.string())};
@@ -462,8 +451,7 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
         pluginUserPreferencesMap[key] = value;
-        auto preferencesValuesFilePath
-            = PluginPreferencesUtils::valuesFilePath(rootPath, acc);
+        auto preferencesValuesFilePath = PluginPreferencesUtils::valuesFilePath(rootPath, acc);
         std::lock_guard guard(dhtnet::fileutils::getFileLock(preferencesValuesFilePath));
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if (!fs.good()) {
@@ -489,15 +477,13 @@ JamiPluginManager::setPluginPreference(const std::filesystem::path& rootPath,
 }
 
 std::map<std::string, std::string>
-JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath,
-                                                 const std::string& accountId)
+JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath, const std::string& accountId)
 {
     return PluginPreferencesUtils::getPreferencesValuesMap(rootPath, accountId);
 }
 
 bool
-JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath,
-                                                   const std::string& accountId)
+JamiPluginManager::resetPluginPreferencesValuesMap(const std::string& rootPath, const std::string& accountId)
 {
     bool acc {accountId.empty()};
     bool loaded {pm_.checkLoadedPlugin(rootPath)};
@@ -517,8 +503,7 @@ JamiPluginManager::registerServices()
     // Register getPluginPreferences so that plugin's can receive it's preferences
     pm_.registerService("getPluginPreferences", [](const DLPlugin* plugin, void* data) {
         auto ppp = static_cast<std::map<std::string, std::string>*>(data);
-        *ppp = PluginPreferencesUtils::getPreferencesValuesMap(
-            PluginUtils::getRootPathFromSoPath(plugin->getPath()));
+        *ppp = PluginPreferencesUtils::getPreferencesValuesMap(PluginUtils::getRootPathFromSoPath(plugin->getPath()));
         return SUCCESS;
     });
 
@@ -536,12 +521,10 @@ JamiPluginManager::registerServices()
         if (!preferencesPtr)
             return FAILURE;
 
-        preferencesPtr->emplace("default",
-                                PluginPreferencesUtils::getPreferencesValuesMap(path, "default"));
+        preferencesPtr->emplace("default", PluginPreferencesUtils::getPreferencesValuesMap(path, "default"));
 
         for (const auto& accId : jami::Manager::instance().getAccountList())
-            preferencesPtr->emplace(accId,
-                                    PluginPreferencesUtils::getPreferencesValuesMap(path, accId));
+            preferencesPtr->emplace(accId, PluginPreferencesUtils::getPreferencesValuesMap(path, accId));
         return SUCCESS;
     };
 

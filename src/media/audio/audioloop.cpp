@@ -35,11 +35,9 @@ AudioLoop::AudioLoop(AudioFormat format)
     : format_(format)
     , buffer_(av_frame_alloc())
     , pos_(0)
-{
-}
-
-AudioLoop::~AudioLoop()
 {}
+
+AudioLoop::~AudioLoop() {}
 
 void
 AudioLoop::seek(double relative_position)
@@ -72,7 +70,13 @@ AudioLoop::getNext(AVFrame* output, bool mute)
     while (total_samples != 0) {
         size_t samples = std::min(total_samples, buf_samples - pos);
         if (not mute)
-            av_samples_copy(output->data, buffer_->data, output_pos, pos, samples, format_.nb_channels, format_.sampleFormat);
+            av_samples_copy(output->data,
+                            buffer_->data,
+                            output_pos,
+                            pos,
+                            samples,
+                            format_.nb_channels,
+                            format_.sampleFormat);
         else
             av_samples_set_silence(output->data, output_pos, samples, format_.nb_channels, format_.sampleFormat);
         output_pos += samples;

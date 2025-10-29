@@ -44,14 +44,16 @@
 namespace jami {
 
 namespace json {
-Json::CharReaderBuilder getJsonReaderBuilder()
+Json::CharReaderBuilder
+getJsonReaderBuilder()
 {
     Json::CharReaderBuilder builder;
     builder["collectComments"] = false;
     return builder;
 }
 
-Json::StreamWriterBuilder getJsonWriterBuilder()
+Json::StreamWriterBuilder
+getJsonWriterBuilder()
 {
     Json::StreamWriterBuilder builder;
     builder["commentStyle"] = "None";
@@ -61,7 +63,7 @@ Json::StreamWriterBuilder getJsonWriterBuilder()
 
 const Json::CharReaderBuilder rbuilder = getJsonReaderBuilder();
 const Json::StreamWriterBuilder wbuilder = getJsonWriterBuilder();
-}
+} // namespace json
 
 const std::string&
 userAgent()
@@ -95,8 +97,7 @@ to_string(const std::wstring& wstr, int codePage)
         throw std::runtime_error("Unable to convert wstring to string");
     }
     std::string result((size_t) requiredSize, 0);
-    if (!WideCharToMultiByte(
-            codePage, 0, wstr.c_str(), srcLength, &(*result.begin()), requiredSize, 0, 0)) {
+    if (!WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, &(*result.begin()), requiredSize, 0, 0)) {
         throw std::runtime_error("Unable to convert wstring to string");
     }
     return result;
@@ -123,7 +124,7 @@ uint64_t
 from_hex_string(const std::string& str)
 {
     uint64_t id;
-    if (auto [p, ec] = std::from_chars(str.data(), str.data()+str.size(), id, 16); ec != std::errc()) {
+    if (auto [p, ec] = std::from_chars(str.data(), str.data() + str.size(), id, 16); ec != std::errc()) {
         throw std::invalid_argument("Unable to parse id: " + str);
     }
     return id;
@@ -133,22 +134,25 @@ std::string_view
 trim(std::string_view s)
 {
     auto wsfront = std::find_if_not(s.cbegin(), s.cend(), [](int c) { return std::isspace(c); });
-    return std::string_view(&*wsfront, std::find_if_not(s.rbegin(),
-                                        std::string_view::const_reverse_iterator(wsfront),
-                                        [](int c) { return std::isspace(c); })
-                           .base() - wsfront);
+    return std::string_view(&*wsfront,
+                            std::find_if_not(s.rbegin(),
+                                             std::string_view::const_reverse_iterator(wsfront),
+                                             [](int c) { return std::isspace(c); })
+                                    .base()
+                                - wsfront);
 }
 
 std::vector<unsigned>
 split_string_to_unsigned(std::string_view str, char delim)
 {
     std::vector<unsigned> output;
-    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last;
+         first = second + 1) {
         second = std::find(first, last, delim);
         if (first != second) {
             unsigned result;
             auto [p, ec] = std::from_chars(first, second, result);
-            if (ec ==  std::errc())
+            if (ec == std::errc())
                 output.emplace_back(result);
         }
     }
@@ -184,7 +188,8 @@ std::set<std::string>
 string_split_set(std::string& str, std::string_view separator)
 {
     std::set<std::string> output;
-    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+    for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last;
+         first = second + 1) {
         second = std::find_first_of(first, last, std::cbegin(separator), std::cend(separator));
         if (first != second)
             output.emplace(first, second - first);
@@ -192,16 +197,15 @@ string_split_set(std::string& str, std::string_view separator)
     return output;
 }
 
-std::string urlEncode(std::string_view input)
+std::string
+urlEncode(std::string_view input)
 {
     if (input.empty()) {
         return {};
     }
 
     auto isAsciiAlnum = [](unsigned char c) {
-        return (c >= '0' && c <= '9')
-        || (c >= 'A' && c <= 'Z')
-        || (c >= 'a' && c <= 'z');
+        return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
     };
 
     std::ostringstream encoded;

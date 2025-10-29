@@ -26,22 +26,23 @@ namespace json {
 extern const Json::CharReaderBuilder rbuilder;
 extern const Json::StreamWriterBuilder wbuilder;
 
-inline bool parse(std::string_view jsonStr, Json::Value& jsonVal) {
+inline bool
+parse(std::string_view jsonStr, Json::Value& jsonVal)
+{
     std::string err;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-    if (!reader->parse(jsonStr.data(),
-                       jsonStr.data() + jsonStr.size(),
-                       &jsonVal,
-                       &err)) {
+    if (!reader->parse(jsonStr.data(), jsonStr.data() + jsonStr.size(), &jsonVal, &err)) {
         JAMI_WARNING("Can't parse JSON: {}\n{}", err, jsonStr);
         return false;
     }
     return true;
 }
 
-inline std::string toString(const Json::Value& jsonVal) {
+inline std::string
+toString(const Json::Value& jsonVal)
+{
     return Json::writeString(wbuilder, jsonVal);
 }
 
-}
-}
+} // namespace json
+} // namespace jami

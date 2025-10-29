@@ -6,14 +6,15 @@
 
 struct timezone
 {
-    int  tz_minuteswest; /* minutes W of Greenwich */
-    int  tz_dsttime;     /* type of dst correction */
+    int tz_minuteswest; /* minutes W of Greenwich */
+    int tz_dsttime;     /* type of dst correction */
 };
 
-static __inline int gettimeofday(struct timeval *tp, struct timezone * tzp)
+static __inline int
+gettimeofday(struct timeval* tp, struct timezone* tzp)
 {
-    FILETIME    file_time;
-    SYSTEMTIME  system_time;
+    FILETIME file_time;
+    SYSTEMTIME system_time;
     ULARGE_INTEGER ularge;
     static int tzflag;
 
@@ -22,13 +23,11 @@ static __inline int gettimeofday(struct timeval *tp, struct timezone * tzp)
     ularge.LowPart = file_time.dwLowDateTime;
     ularge.HighPart = file_time.dwHighDateTime;
 
-    tp->tv_sec = (long)((ularge.QuadPart - 116444736000000000Ui64) / 10000000L);
-    tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
+    tp->tv_sec = (long) ((ularge.QuadPart - 116444736000000000Ui64) / 10000000L);
+    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
 
-    if (NULL != tzp)
-    {
-        if (!tzflag)
-        {
+    if (NULL != tzp) {
+        if (!tzflag) {
             _tzset();
             tzflag++;
         }

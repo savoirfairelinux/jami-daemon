@@ -107,11 +107,11 @@ typedef struct
     uint32_t p : 1;       /* padding flag always 0 */
     uint32_t version : 2; /* protocol version */
 #endif
-    uint32_t pt : 8;      /* payload type */
-    uint32_t len : 16;    /* length of RTCP packet */
-    uint32_t ssrc;        /* synchronization source identifier of packet sender */
-    uint32_t ssrc_source; /* synchronization source identifier of first source alway 0*/
-    uint32_t uid; /* Unique identifier Always ‘R’ ‘E’ ‘M’ ‘B’ (4 ASCII characters). */
+    uint32_t pt : 8;         /* payload type */
+    uint32_t len : 16;       /* length of RTCP packet */
+    uint32_t ssrc;           /* synchronization source identifier of packet sender */
+    uint32_t ssrc_source;    /* synchronization source identifier of first source alway 0*/
+    uint32_t uid;            /* Unique identifier Always ‘R’ ‘E’ ‘M’ ‘B’ (4 ASCII characters). */
     uint32_t n_ssrc : 8;     /* Number of SSRCs in this message. */
     uint32_t br_exp : 6;     /* BR Exp */
     uint32_t br_mantis : 18; /* BR Mantissa */
@@ -163,10 +163,7 @@ public:
 
        Will throw an std::runtime_error on failure, should be handled at a higher level
     */
-    void createSRTP(const char* out_suite,
-                    const char* out_params,
-                    const char* in_suite,
-                    const char* in_params);
+    void createSRTP(const char* out_suite, const char* out_params, const char* in_suite, const char* in_params);
 
     void stopSendOp(bool state = true);
     std::list<rtcpRRHeader> getRtcpRR();
@@ -175,10 +172,7 @@ public:
     bool waitForRTCP(std::chrono::seconds interval);
     double getLastLatency();
 
-    void setPacketLossCallback(std::function<void(void)> cb)
-    {
-        packetLossCallback_ = std::move(cb);
-    }
+    void setPacketLossCallback(std::function<void(void)> cb) { packetLossCallback_ = std::move(cb); }
     void setRtpDelayCallback(std::function<void(int, int)> cb);
 
     int writeData(uint8_t* buf, int buf_size);

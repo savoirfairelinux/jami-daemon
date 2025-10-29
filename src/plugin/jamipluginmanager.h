@@ -49,7 +49,7 @@ public:
      * @param rootPath
      * @param pluginId
      * @return string
-    */
+     */
     std::string getPluginAuthor(const std::string& rootPath, const std::string& pluginId);
 
     /**
@@ -72,21 +72,21 @@ public:
      * @brief Check the validity of a plugin certificate
      * @param cert
      * @return true if valid
-    */
+     */
     bool checkPluginCertificateValidity(dht::crypto::Certificate* cert);
 
     /**
      * @brief check if the if the public key of the certificate is the same as the public key in the new plugin
      * @param oldJplPath, newJplPath
      * return true if valid
-    */
+     */
     bool checkPluginCertificatePublicKey(const std::string& oldJplPath, const std::string& newJplPath);
 
     /**
      * @brief check if all file are present in the signature file
      * @param jplPath
      * return true if valid
-    */
+     */
     bool checkPluginSignatureFile(const std::string& jplPath);
 
     /**
@@ -94,7 +94,7 @@ public:
      * @param jplPath
      * @param cert
      * @return true if valid
-    */
+     */
     bool checkPluginSignatureValidity(const std::string& jplPath, dht::crypto::Certificate* cert);
 
     /**
@@ -103,7 +103,7 @@ public:
      * @param
      * @return true if the plugin signature is valid
      *
-    */
+     */
     bool checkPluginSignature(const std::string& jplPath, dht::crypto::Certificate* cert);
 
     /**
@@ -111,7 +111,7 @@ public:
      * @param jplPath
      * @param force
      * @return return certificate if valid
-    */
+     */
     std::unique_ptr<dht::crypto::Certificate> checkPluginCertificate(const std::string& jplPath, bool force);
 
     /**
@@ -142,7 +142,7 @@ public:
 
     /**
      * @brief Returns True if success
-    */
+     */
     bool loadPlugins();
 
     /**
@@ -161,8 +161,8 @@ public:
      * @param rootPath
      * @param accountId
      */
-    std::vector<std::map<std::string, std::string>> getPluginPreferences(
-        const std::string& rootPath, const std::string& accountId);
+    std::vector<std::map<std::string, std::string>> getPluginPreferences(const std::string& rootPath,
+                                                                         const std::string& accountId);
 
     /**
      * @brief Returns a Map with preferences keys and values.

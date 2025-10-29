@@ -71,16 +71,12 @@ MessageEngine::sendMessage(const std::string& to,
         }
         scheduleSave();
     }
-    asio::post(*ioContext_, [this, to, deviceId]() {
-        retrySend(to, deviceId, true);
-    });
+    asio::post(*ioContext_, [this, to, deviceId]() { retrySend(to, deviceId, true); });
     return token;
 }
 
 void
-MessageEngine::onPeerOnline(const std::string& peer,
-                            const std::string& deviceId,
-                            bool retryOnTimeout)
+MessageEngine::onPeerOnline(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
     retrySend(peer, deviceId, retryOnTimeout);
 }
@@ -88,7 +84,8 @@ MessageEngine::onPeerOnline(const std::string& peer,
 void
 MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, bool retryOnTimeout)
 {
-    struct PendingMsg {
+    struct PendingMsg
+    {
         MessageToken token;
         std::string to;
         std::map<std::string, std::string> payloads;
@@ -103,7 +100,7 @@ MessageEngine::retrySend(const std::string& peer, const std::string& deviceId, b
             return;
         auto& messages = p->second;
 
-        for (auto& m: messages) {
+        for (auto& m : messages) {
             if (m.status == MessageStatus::IDLE) {
                 m.status = MessageStatus::SENDING;
                 m.retried++;
@@ -140,27 +137,27 @@ MessageEngine::getStatus(MessageToken t) const
 }
 
 void
-MessageEngine::onMessageSent(const std::string& peer,
-                             MessageToken token,
-                             bool ok,
-                             const std::string& deviceId)
+MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok, const std::string& deviceId)
 {
-    JAMI_DEBUG("[Account {:s}] [message {:d}] Message sent: {:s}", account_.getAccountID(), token, ok ? "success"sv : "failure"sv);
+    JAMI_DEBUG("[Account {:s}] [message {:d}] Message sent: {:s}",
+               account_.getAccountID(),
+               token,
+               ok ? "success"sv : "failure"sv);
     std::lock_guard lock(messagesMutex_);
     auto& m = deviceId.empty() ? messages_ : messagesDevices_;
 
     auto p = m.find(deviceId.empty() ? peer : deviceId);
     if (p == m.end()) {
-        JAMI_WARNING("[Account {:s}] onMessageSent: Peer not found: id:{} device:{}", account_.getAccountID(), peer, deviceId);
+        JAMI_WARNING("[Account {:s}] onMessageSent: Peer not found: id:{} device:{}",
+                     account_.getAccountID(),
+                     peer,
+                     deviceId);
         return;
     }
 
-    auto f = std::find_if(p->second.begin(), p->second.end(), [&](const Message& m) {
-        return m.token == token;
-    });
+    auto f = std::find_if(p->second.begin(), p->second.end(), [&](const Message& m) { return m.token == token; });
     if (f != p->second.end()) {
-        auto emit = f->payloads.find("application/im-gitmessage-id")
-                    == f->payloads.end();
+        auto emit = f->payloads.find("application/im-gitmessage-id") == f->payloads.end();
         if (f->status == MessageStatus::SENDING) {
             if (ok) {
                 f->status = MessageStatus::SENT;
@@ -225,16 +222,10 @@ MessageEngine::load()
         std::lock_guard lock(messagesMutex_);
         messages_ = std::move(root);
         if (not messages_.empty()) {
-            JAMI_LOG("[Account {}] Loaded {} messages from {}",
-                     account_.getAccountID(),
-                     messages_.size(),
-                     savePath_);
+            JAMI_LOG("[Account {}] Loaded {} messages from {}", account_.getAccountID(), messages_.size(), savePath_);
         }
     } catch (const std::exception& e) {
-        JAMI_LOG("[Account {}] Unable to load messages from {}: {}",
-                 account_.getAccountID(),
-                 savePath_,
-                 e.what());
+        JAMI_LOG("[Account {}] Unable to load messages from {}: {}", account_.getAccountID(), savePath_, e.what());
     }
 }
 
@@ -266,8 +257,7 @@ MessageEngine::save_() const
         if (file.is_open())
             msgpack::pack(file, messages_);
     } catch (const std::exception& e) {
-        JAMI_ERROR("[Account {}] Unable to serialize pending messages: {}",
-                 account_.getAccountID(), e.what());
+        JAMI_ERROR("[Account {}] Unable to serialize pending messages: {}", account_.getAccountID(), e.what());
     }
 }
 

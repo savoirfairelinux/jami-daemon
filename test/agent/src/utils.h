@@ -88,8 +88,10 @@ to_guile(double x)
 }
 
 /* Forward declarations since we call to_guile() recursively for containers */
-template<typename T> static inline SCM to_guile(const std::vector<T>& values);
-template<typename K, typename V> static inline SCM to_guile(const std::map<K, V>& map);
+template<typename T>
+static inline SCM to_guile(const std::vector<T>& values);
+template<typename K, typename V>
+static inline SCM to_guile(const std::map<K, V>& map);
 
 template<typename T>
 static inline SCM
@@ -152,52 +154,25 @@ struct from_guile
 
     from_guile(SCM val)
         : value(val)
-    { }
+    {}
 
-    operator bool()
-    {
-        return scm_to_bool(value);
-    }
+    operator bool() { return scm_to_bool(value); }
 
-    operator uint8_t()
-    {
-        return scm_to_uint8(value);
-    }
+    operator uint8_t() { return scm_to_uint8(value); }
 
-    operator uint16_t()
-    {
-        return scm_to_uint16(value);
-    }
+    operator uint16_t() { return scm_to_uint16(value); }
 
-    operator uint32_t()
-    {
-        return scm_to_uint32(value);
-    }
+    operator uint32_t() { return scm_to_uint32(value); }
 
-    operator uint64_t()
-    {
-        return scm_to_uint64(value);
-    }
+    operator uint64_t() { return scm_to_uint64(value); }
 
-    operator int8_t()
-    {
-        return scm_to_int8(value);
-    }
+    operator int8_t() { return scm_to_int8(value); }
 
-    operator int16_t()
-    {
-        return scm_to_int16(value);
-    }
+    operator int16_t() { return scm_to_int16(value); }
 
-    operator int32_t()
-    {
-        return scm_to_int32(value);
-    }
+    operator int32_t() { return scm_to_int32(value); }
 
-    operator int64_t()
-    {
-        return scm_to_int64(value);
-    }
+    operator int64_t() { return scm_to_int64(value); }
 
     operator std::string()
     {
@@ -252,4 +227,3 @@ struct from_guile
         return ret;
     }
 };
-

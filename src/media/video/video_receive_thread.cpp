@@ -36,10 +36,7 @@ namespace video {
 
 using std::string;
 
-VideoReceiveThread::VideoReceiveThread(const std::string& id,
-                                       bool useSink,
-                                       const std::string& sdp,
-                                       uint16_t mtu)
+VideoReceiveThread::VideoReceiveThread(const std::string& id, bool useSink, const std::string& sdp, uint16_t mtu)
     : VideoGenerator::VideoGenerator()
     , args_()
     , id_(id)
@@ -94,9 +91,7 @@ VideoReceiveThread::setup()
                 displayMatrix.reset(av_buffer_ref(displayMatrix_.get()));
         }
         if (displayMatrix)
-            av_frame_new_side_data_from_buf(frame->pointer(),
-                                            AV_FRAME_DATA_DISPLAYMATRIX,
-                                            displayMatrix.release());
+            av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, displayMatrix.release());
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
     videoDecoder_->setContextCallback([this]() {
@@ -191,8 +186,7 @@ VideoReceiveThread::addIOContext(SocketPair& socketPair)
 }
 
 void
-VideoReceiveThread::setRecorderCallback(
-    const std::function<void(const MediaStream& ms)>& cb)
+VideoReceiveThread::setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb)
 {
     recorderCallback_ = cb;
     if (videoDecoder_)
@@ -220,11 +214,9 @@ VideoReceiveThread::decodeFrame()
     if (status == MediaDemuxer::Status::EndOfFile) {
         JAMI_LOG("[{:p}] End of file", fmt::ptr(this));
         loop_.stop();
-    }
-    else if (status == MediaDemuxer::Status::ReadError) {
+    } else if (status == MediaDemuxer::Status::ReadError) {
         JAMI_ERROR("[{:p}] Decoding error: %s", fmt::ptr(this), MediaDemuxer::getStatusStr(status));
-    }
-    else if (status == MediaDemuxer::Status::FallBack) {
+    } else if (status == MediaDemuxer::Status::FallBack) {
         if (keyFrameRequestCallback_)
             keyFrameRequestCallback_();
     }

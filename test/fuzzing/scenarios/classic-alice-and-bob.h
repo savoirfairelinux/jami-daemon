@@ -25,48 +25,49 @@
 
 #include "lib/utils.h"
 
-int main(void)
+int
+main(void)
 {
-        libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
 
-        if (not jami::Manager::instance().initialized) {
-            assert(libjami::start("dring-sample.yml"));
-        }
+    if (not jami::Manager::instance().initialized) {
+        assert(libjami::start("dring-sample.yml"));
+    }
 
-        auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
+    auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
 
-        auto alice = actors["alice"];
-        auto bob   = actors["bob"];
+    auto alice = actors["alice"];
+    auto bob = actors["bob"];
 
-        auto aliceAccount = jami::Manager::instance().getAccount<jami::JamiAccount>(alice);
-        auto bobAccount   = jami::Manager::instance().getAccount<jami::JamiAccount>(bob);
+    auto aliceAccount = jami::Manager::instance().getAccount<jami::JamiAccount>(alice);
+    auto bobAccount = jami::Manager::instance().getAccount<jami::JamiAccount>(bob);
 
-        auto aliceUri = aliceAccount->getUsername();
-        auto bobUri   = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
+    auto bobUri = bobAccount->getUsername();
 
-        std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
-        std::atomic_bool callReceived {false};
-        std::mutex mtx;
-        std::unique_lock lk {mtx};
-        std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
+    std::atomic_bool callReceived {false};
+    std::mutex mtx;
+    std::unique_lock lk {mtx};
+    std::condition_variable cv;
 
-        confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
-                                    [&](const std::string&, const std::string&, const std::string&) {
-                                            callReceived = true;
-                                            cv.notify_one();
-                                    }));
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
+        [&](const std::string&, const std::string&, const std::string&) {
+            callReceived = true;
+            cv.notify_one();
+        }));
 
-        libjami::registerSignalHandlers(confHandlers);
+    libjami::registerSignalHandlers(confHandlers);
 
-        auto call = aliceAccount->newOutgoingCall(bobUri);
+    auto call = aliceAccount->newOutgoingCall(bobUri);
 
-        assert(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
+    assert(cv.wait_for(lk, std::chrono::seconds(30), [&] { return callReceived.load(); }));
 
-        std::this_thread::sleep_for(std::chrono::seconds(60));
+    std::this_thread::sleep_for(std::chrono::seconds(60));
 
-        wait_for_removal_of({alice, bob});
+    wait_for_removal_of({alice, bob});
 
-        libjami::fini();
+    libjami::fini();
 
-        return 0;
+    return 0;
 }

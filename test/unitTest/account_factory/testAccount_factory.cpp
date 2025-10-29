@@ -33,9 +33,11 @@
 
 using namespace std::literals::chrono_literals;
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class Account_factoryTest : public CppUnit::TestFixture {
+class Account_factoryTest : public CppUnit::TestFixture
+{
 public:
     Account_factoryTest()
     {
@@ -80,31 +82,27 @@ Account_factoryTest::setUp()
     accountsRemoved = false;
     initialAccounts = Manager::instance().accountCount();
 
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [&](const std::string& accountID,
-                const std::map<std::string, std::string>& details) {
-                if (accountID != JAMI_ID && accountID != SIP_ID) {
-                    return;
-                }
-                try {
-                    ringReady |= accountID == JAMI_ID
-                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
-                                && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
-                    sipReady |= accountID == SIP_ID
-                                && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "READY";
-                } catch (const std::out_of_range&) {}
-            }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
-            if (jami::Manager::instance().getAccountList().size() <= initialAccounts) {
-                accountsRemoved = true;
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [&](const std::string& accountID, const std::map<std::string, std::string>& details) {
+            if (accountID != JAMI_ID && accountID != SIP_ID) {
+                return;
+            }
+            try {
+                ringReady |= accountID == JAMI_ID
+                             && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "REGISTERED"
+                             && details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED) == "true";
+                sipReady |= accountID == SIP_ID
+                            && details.at(jami::Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS) == "READY";
+            } catch (const std::out_of_range&) {
             }
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>([&](auto, auto) {
-            knownDevicesChanged = true;
-        }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
+        if (jami::Manager::instance().getAccountList().size() <= initialAccounts) {
+            accountsRemoved = true;
+        }
+    }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(
+        [&](auto, auto) { knownDevicesChanged = true; }));
     libjami::registerSignalHandlers(confHandlers);
 }
 
@@ -122,9 +120,7 @@ Account_factoryTest::testAddRemoveSIPAccount()
     auto accDetails = libjami::getAccountTemplate("SIP");
     auto newAccount = Manager::instance().addAccount(accDetails, SIP_ID);
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
-        return sipReady;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return sipReady; }));
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(JAMI_ID));
@@ -146,9 +142,7 @@ Account_factoryTest::testAddRemoveRINGAccount()
 
     auto accDetails = libjami::getAccountTemplate("RING");
     auto newAccount = Manager::instance().addAccount(accDetails, JAMI_ID);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] {
-        return ringReady;
-    }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return ringReady; }));
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(JAMI_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
@@ -166,7 +160,6 @@ Account_factoryTest::testAddRemoveRINGAccount()
     details = Manager::instance().getAccountDetails(JAMI_ID);
     CPPUNIT_ASSERT(details[libjami::Account::ConfProperties::DEVICE_NAME] == "foo");
 
-
     Manager::instance().removeAccount(JAMI_ID, true);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return accountsRemoved; }));
 }
@@ -181,19 +174,20 @@ Account_factoryTest::testClear()
 
     const int nbrAccount = 5;
 
-    for(int i = 0; i < nbrAccount ; ++i) {
-        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, JAMI_ID+std::to_string(i));
+    for (int i = 0; i < nbrAccount; ++i) {
+        accountFactory.createAccount(libjami::Account::ProtocolNames::RING, JAMI_ID + std::to_string(i));
     }
 
-    CPPUNIT_ASSERT(accountFactory.accountCount()==nbrAccount);
+    CPPUNIT_ASSERT(accountFactory.accountCount() == nbrAccount);
     CPPUNIT_ASSERT(!accountFactory.empty());
 
     accountFactory.clear();
 
     CPPUNIT_ASSERT(accountFactory.empty());
-    CPPUNIT_ASSERT(accountFactory.accountCount()==0);
+    CPPUNIT_ASSERT(accountFactory.accountCount() == 0);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::Account_factoryTest::name())

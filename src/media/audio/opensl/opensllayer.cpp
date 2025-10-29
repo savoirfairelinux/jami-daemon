@@ -92,8 +92,7 @@ OpenSLLayer::startStream(AudioDeviceType stream)
         if (not recorder_) {
             std::lock_guard lck(recMtx);
             try {
-                recorder_.reset(
-                    new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
+                recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, hardwareBuffSize_, engineInterface_));
                 recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
                 recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
                 setHasNativeAEC(recorder_->hasNativeAEC());
@@ -250,9 +249,7 @@ OpenSLLayer::dbgEngineGetBufCount()
              freeRingBufQueue_.size());
 
     if (count_player != BUF_COUNT) {
-        JAMI_ERR("====Lost Bufs among the queue(supposed = %d, found = %u)",
-                 BUF_COUNT,
-                 count_player);
+        JAMI_ERR("====Lost Bufs among the queue(supposed = %d, found = %u)", BUF_COUNT, count_player);
     }
     return count_player;
 }
@@ -269,10 +266,7 @@ OpenSLLayer::engineServicePlay()
                 break;
             }
             if (not dat->pointer()->data[0] or not buf->buf_) {
-                JAMI_ERR("null bufer %p -> %p %d",
-                         dat->pointer()->data[0],
-                         buf->buf_,
-                         dat->pointer()->nb_samples);
+                JAMI_ERR("null bufer %p -> %p %d", dat->pointer()->data[0], buf->buf_, dat->pointer()->nb_samples);
                 break;
             }
             memcpy(buf->buf_, dat->pointer()->data[0], buf->size_);
@@ -299,10 +293,7 @@ OpenSLLayer::engineServiceRing()
                 break;
             }
             if (not dat->pointer()->data[0] or not buf->buf_) {
-                JAMI_ERR("null bufer %p -> %p %d",
-                         dat->pointer()->data[0],
-                         buf->buf_,
-                         dat->pointer()->nb_samples);
+                JAMI_ERR("null bufer %p -> %p %d", dat->pointer()->data[0], buf->buf_, dat->pointer()->nb_samples);
                 break;
             }
             memcpy(buf->buf_, dat->pointer()->data[0], buf->size_);
@@ -402,16 +393,12 @@ OpenSLLayer::getCaptureDeviceList() const
 
     // Get the Audio IO DEVICE CAPABILITIES interface, implicit
     SLAudioIODeviceCapabilitiesItf deviceCapabilities {nullptr};
-    res = (*engineObject_)
-              ->GetInterface(engineObject_,
-                             SL_IID_AUDIOIODEVICECAPABILITIES,
-                             (void*) &deviceCapabilities);
+    res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*) &deviceCapabilities);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
 
     numInputs = MAX_NUMBER_INPUT_DEVICES;
-    res = (*deviceCapabilities)
-              ->GetAvailableAudioInputs(deviceCapabilities, &numInputs, InputDeviceIDs);
+    res = (*deviceCapabilities)->GetAvailableAudioInputs(deviceCapabilities, &numInputs, InputDeviceIDs);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
 
@@ -420,9 +407,7 @@ OpenSLLayer::getCaptureDeviceList() const
     for (int i = 0; i < numInputs; i++) {
         SLAudioInputDescriptor audioInputDescriptor_;
         res = (*deviceCapabilities)
-                  ->QueryAudioInputCapabilities(deviceCapabilities,
-                                                InputDeviceIDs[i],
-                                                &audioInputDescriptor_);
+                  ->QueryAudioInputCapabilities(deviceCapabilities, InputDeviceIDs[i], &audioInputDescriptor_);
         if (res != SL_RESULT_SUCCESS)
             return captureDeviceList;
 
@@ -457,9 +442,7 @@ OpenSLLayer::getPlaybackDeviceList() const
 }
 
 void
-OpenSLLayer::updatePreference(AudioPreference& /*preference*/,
-                              int /*index*/,
-                              AudioDeviceType /*type*/)
+OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, AudioDeviceType /*type*/)
 {}
 
 void

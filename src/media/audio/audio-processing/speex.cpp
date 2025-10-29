@@ -76,24 +76,17 @@ SpeexAudioProcessor::SpeexAudioProcessor(AudioFormat format, unsigned frameSize)
     // set up speex preprocess states, one for each channel
     // note that they are not enabled here, but rather in the enable* functions
     for (unsigned int i = 0; i < format_.nb_channels; i++) {
-        auto channelPreprocessorState
-            = SpeexPreprocessStatePtr(speex_preprocess_state_init((int) frameSize,
-                                                                  (int) format_.sample_rate),
-                                      &speex_preprocess_state_destroy);
+        auto channelPreprocessorState = SpeexPreprocessStatePtr(speex_preprocess_state_init((int) frameSize,
+                                                                                            (int) format_.sample_rate),
+                                                                &speex_preprocess_state_destroy);
 
         // set max noise suppression level
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_NOISE_SUPPRESS,
-                             &maxNoiseSuppress);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_NOISE_SUPPRESS, &maxNoiseSuppress);
 
         // set up voice activity values
         speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_VAD, &speexOn);
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_PROB_START,
-                             &probStart);
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_PROB_CONTINUE,
-                             &probContinue);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_PROB_START, &probStart);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_PROB_CONTINUE, &probContinue);
 
         // keep track of this channel's preprocessor state
         preprocessorStates.push_back(std::move(channelPreprocessorState));
@@ -115,17 +108,13 @@ SpeexAudioProcessor::enableEchoCancel(bool enabled)
 
         for (auto& channelPreprocessorState : preprocessorStates) {
             // attach our already-created echo canceller
-            speex_preprocess_ctl(channelPreprocessorState.get(),
-                                 SPEEX_PREPROCESS_SET_ECHO_STATE,
-                                 echoState.get());
+            speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_ECHO_STATE, echoState.get());
         }
     } else {
         for (auto& channelPreprocessorState : preprocessorStates) {
             // detach echo canceller (set it to NULL)
             // don't destroy it though, we will reset it when necessary
-            speex_preprocess_ctl(channelPreprocessorState.get(),
-                                 SPEEX_PREPROCESS_SET_ECHO_STATE,
-                                 NULL);
+            speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_ECHO_STATE, NULL);
         }
     }
 }
@@ -139,13 +128,9 @@ SpeexAudioProcessor::enableNoiseSuppression(bool enabled)
     // for each preprocessor
     for (auto& channelPreprocessorState : preprocessorStates) {
         // set denoise status
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_DENOISE,
-                             &speexSetValue);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_DENOISE, &speexSetValue);
         // set de-reverb status
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_DEREVERB,
-                             &speexSetValue);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_DEREVERB, &speexSetValue);
     }
 }
 
@@ -158,9 +143,7 @@ SpeexAudioProcessor::enableAutomaticGainControl(bool enabled)
     // for each preprocessor
     for (auto& channelPreprocessorState : preprocessorStates) {
         // set AGC status
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_AGC,
-                             &speexSetValue);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_AGC, &speexSetValue);
     }
 }
 
@@ -173,9 +156,7 @@ SpeexAudioProcessor::enableVoiceActivityDetection(bool enabled)
 
     spx_int32_t speexSetValue = (spx_int32_t) enabled;
     for (auto& channelPreprocessorState : preprocessorStates) {
-        speex_preprocess_ctl(channelPreprocessorState.get(),
-                             SPEEX_PREPROCESS_SET_VAD,
-                             &speexSetValue);
+        speex_preprocess_ctl(channelPreprocessorState.get(), SPEEX_PREPROCESS_SET_VAD, &speexSetValue);
     }
 }
 
@@ -218,7 +199,8 @@ SpeexAudioProcessor::getProcessed()
     int channel = 0;
     for (auto& channelPreprocessorState : preprocessorStates) {
         // preprocesses in place, returns voice activity boolean
-        channelVad = speex_preprocess_run(channelPreprocessorState.get(), (int16_t*)procBuffer->pointer()->data[channel]);
+        channelVad = speex_preprocess_run(channelPreprocessorState.get(),
+                                          (int16_t*) procBuffer->pointer()->data[channel]);
 
         // boolean OR
         overallVad |= channelVad;

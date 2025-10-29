@@ -45,8 +45,7 @@ TransferChannelHandler::connect(const DeviceId& deviceId,
 {}
 
 bool
-TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                  const std::string& name)
+TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
 {
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
@@ -76,8 +75,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     if (fileId == fmt::format("{}.vcf", acc->getUsername()) || fileId == "profile.vcf") {
         // Or a member from the conversation
         auto members = cm->getConversationMembers(conversationId);
-        return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; })
-               != members.end();
+        return std::find_if(members.begin(), members.end(), [&](auto m) { return m["uri"] == uri; }) != members.end();
     } else if (fileHost == "profile") {
         // If a profile is sent, check if it's from another device
         return uri == acc->getUsername();
@@ -121,9 +119,7 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
                 try {
                     lastModified = to_int<uint64_t>(keyVal[1]);
                 } catch (const std::exception& e) {
-                    JAMI_WARNING("TransferChannel: Unable to parse modified date: {}: {}",
-                                 keyVal[1],
-                                 e.what());
+                    JAMI_WARNING("TransferChannel: Unable to parse modified date: {}: {}", keyVal[1], e.what());
                 }
             }
         }
@@ -131,21 +127,21 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     // Check if profile
     if (idstr == "profile.vcf") {
-        dht::ThreadPool::io().run([wacc = acc->weak(), path = idPath_ / "profile.vcf", channel, idstr, lastModified, sha3Sum] {
-            if (auto acc = wacc.lock()) {
-                if (!channel->isInitiator()) {
-                    // Only accept newest profiles
-                    if (lastModified == 0
-                        || lastModified > fileutils::lastWriteTimeInSeconds(acc->profilePath()))
-                        acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
-                    else
-                        channel->shutdown();
-                } else {
-                    // If it's a profile from sync
-                    acc->dataTransfer()->transferFile(channel, idstr, "", path.string());
+        dht::ThreadPool::io().run(
+            [wacc = acc->weak(), path = idPath_ / "profile.vcf", channel, idstr, lastModified, sha3Sum] {
+                if (auto acc = wacc.lock()) {
+                    if (!channel->isInitiator()) {
+                        // Only accept newest profiles
+                        if (lastModified == 0 || lastModified > fileutils::lastWriteTimeInSeconds(acc->profilePath()))
+                            acc->dataTransfer()->onIncomingProfile(channel, sha3Sum);
+                        else
+                            channel->shutdown();
+                    } else {
+                        // If it's a profile from sync
+                        acc->dataTransfer()->transferFile(channel, idstr, "", path.string());
+                    }
                 }
-            }
-        });
+            });
         return;
     }
 
@@ -165,7 +161,16 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
         return;
 
     // Profile for a member in the conversation
-    dht::ThreadPool::io().run([wacc = acc->weak(), profilePath = idPath_ / "profile.vcf", channel, conversationId, fileId, isContactProfile, idstr, start, end, sha3Sum] {
+    dht::ThreadPool::io().run([wacc = acc->weak(),
+                               profilePath = idPath_ / "profile.vcf",
+                               channel,
+                               conversationId,
+                               fileId,
+                               isContactProfile,
+                               idstr,
+                               start,
+                               end,
+                               sha3Sum] {
         if (auto acc = wacc.lock()) {
             if (fileId == fmt::format("{}.vcf", acc->getUsername())) {
                 acc->dataTransfer()->transferFile(channel, fileId, "", profilePath.string());

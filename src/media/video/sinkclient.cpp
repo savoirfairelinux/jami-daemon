@@ -94,10 +94,7 @@ private:
     void unMapShmArea() noexcept
     {
         if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-            JAMI_ERR("[ShmHolder:%s] munmap(%zu) failed with errno %d",
-                     openedName_.c_str(),
-                     areaSize_,
-                     errno);
+            JAMI_ERR("[ShmHolder:%s] munmap(%zu) failed with errno %d", openedName_.c_str(), areaSize_, errno);
         }
     }
 
@@ -181,22 +178,15 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
-        JAMI_ERR("[ShmHolder:%s] ftruncate(%zu) failed with errno %d",
-                 openedName_.c_str(),
-                 areaSize,
-                 errno);
+        JAMI_ERR("[ShmHolder:%s] ftruncate(%zu) failed with errno %d", openedName_.c_str(), areaSize, errno);
         return false;
     }
 
-    area_ = static_cast<SHMHeader*>(
-        ::mmap(nullptr, areaSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
+    area_ = static_cast<SHMHeader*>(::mmap(nullptr, areaSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
-        JAMI_ERR("[ShmHolder:%s] mmap(%zu) failed with errno %d",
-                 openedName_.c_str(),
-                 areaSize,
-                 errno);
+        JAMI_ERR("[ShmHolder:%s] mmap(%zu) failed with errno %d", openedName_.c_str(), areaSize, errno);
         return false;
     }
 
@@ -334,8 +324,7 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
 
     if (crop_.w || crop_.h) {
 #ifdef ENABLE_HWACCEL
-        auto desc = av_pix_fmt_desc_get(
-            (AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
+        auto desc = av_pix_fmt_desc_get((AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
         /*
          Cropping does not work for hardware-decoded frames.
          They need to be transferred to main memory.
@@ -343,13 +332,10 @@ SinkClient::sendFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_p)
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
             try {
-                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
-                                                                frame_p),
+                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p),
                                                             AV_PIX_FMT_NV12);
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
-                         this,
-                         e.what());
+                JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s", this, e.what());
                 return;
             }
             if (not frame)
@@ -392,9 +378,7 @@ SinkClient::applyTransform(VideoFrame& frame_p)
         try {
             frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s",
-                     this,
-                     e.what());
+            JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s", this, e.what());
             return {};
         }
     } else
@@ -403,18 +387,12 @@ SinkClient::applyTransform(VideoFrame& frame_p)
 
     int angle = frame->getOrientation();
     if (angle != rotation_) {
-        filter_ = getTransposeFilter(angle,
-                                     FILTER_INPUT_NAME,
-                                     frame->width(),
-                                     frame->height(),
-                                     frame->format(),
-                                     false);
+        filter_ = getTransposeFilter(angle, FILTER_INPUT_NAME, frame->width(), frame->height(), frame->format(), false);
         rotation_ = angle;
     }
     if (filter_) {
         filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
-        frame = std::static_pointer_cast<VideoFrame>(
-            std::shared_ptr<MediaFrame>(filter_->readOutput()));
+        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
     }
     if (crop_.w || crop_.h) {
         frame->pointer()->crop_top = crop_.y;
@@ -427,8 +405,7 @@ SinkClient::applyTransform(VideoFrame& frame_p)
 }
 
 void
-SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
-                   const std::shared_ptr<MediaFrame>& frame_p)
+SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/, const std::shared_ptr<MediaFrame>& frame_p)
 {
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::steady_clock::now();
@@ -484,23 +461,11 @@ SinkClient::setFrameSize(int width, int height)
     width_ = width;
     height_ = height;
     if (width > 0 and height > 0) {
-        JAMI_DBG("[Sink:%p] Started - size=%dx%d, mixer=%s",
-                 this,
-                 width,
-                 height,
-                 mixer_ ? "Yes" : "No");
-        emitSignal<libjami::VideoSignal::DecodingStarted>(getId(),
-                                                          openedName(),
-                                                          width,
-                                                          height,
-                                                          mixer_);
+        JAMI_DBG("[Sink:%p] Started - size=%dx%d, mixer=%s", this, width, height, mixer_ ? "Yes" : "No");
+        emitSignal<libjami::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
-        JAMI_DBG("[Sink:%p] Stopped - size=%dx%d, mixer=%s",
-                 this,
-                 width,
-                 height,
-                 mixer_ ? "Yes" : "No");
+        JAMI_DBG("[Sink:%p] Stopped - size=%dx%d, mixer=%s", this, width, height, mixer_ ? "Yes" : "No");
         emitSignal<libjami::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }

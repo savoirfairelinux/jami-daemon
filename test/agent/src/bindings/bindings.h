@@ -22,11 +22,11 @@
 /* Agent */
 #include "utils.h"
 
-#define DEFINE_AND_EXPORT(NAME, VALUE, TYPE)     \
-        do {                                     \
-                scm_c_define(NAME, TYPE(VALUE)); \
-                scm_c_export(NAME, NULL);        \
-        } while (0)
+#define DEFINE_AND_EXPORT(NAME, VALUE, TYPE) \
+    do { \
+        scm_c_define(NAME, TYPE(VALUE)); \
+        scm_c_export(NAME, NULL); \
+    } while (0)
 
 #define DEFINE_INT(NAME)    DEFINE_AND_EXPORT(#NAME, NAME, scm_from_int)
 #define DEFINE_UINT(NAME)   DEFINE_AND_EXPORT(#NAME, NAME, scm_from_uint)

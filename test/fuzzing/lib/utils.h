@@ -26,24 +26,18 @@
 constexpr size_t WAIT_FOR_ANNOUNCEMENT_TIMEOUT = 30;
 constexpr size_t WAIT_FOR_REMOVAL_TIMEOUT = 30;
 
-extern void
-wait_for_announcement_of(const std::vector<std::string> accountIDs,
-                         std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT));
+extern void wait_for_announcement_of(const std::vector<std::string> accountIDs,
+                                     std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT));
 
-extern void
-wait_for_announcement_of(const std::string& accountId,
-                         std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT));
+extern void wait_for_announcement_of(const std::string& accountId,
+                                     std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_ANNOUNCEMENT_TIMEOUT));
 
-extern void
-wait_for_removal_of(const std::vector<std::string> accounts,
-                    std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_REMOVAL_TIMEOUT));
+extern void wait_for_removal_of(const std::vector<std::string> accounts,
+                                std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_REMOVAL_TIMEOUT));
 
-extern void
-wait_for_removal_of(const std::string& account,
-                    std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_REMOVAL_TIMEOUT));
+extern void wait_for_removal_of(const std::string& account,
+                                std::chrono::seconds timeout = std::chrono::seconds(WAIT_FOR_REMOVAL_TIMEOUT));
 
-extern std::map<std::string, std::string>
-load_actors(const std::filesystem::path& from_yaml);
+extern std::map<std::string, std::string> load_actors(const std::filesystem::path& from_yaml);
 
-extern std::map<std::string, std::string>
-load_actors_and_wait_for_announcement(const std::string& from_yaml);
+extern std::map<std::string, std::string> load_actors_and_wait_for_announcement(const std::string& from_yaml);

@@ -21,8 +21,7 @@
 
 namespace jami {
 
-AuthChannelHandler::AuthChannelHandler(const std::shared_ptr<JamiAccount>& acc,
-                                       dhtnet::ConnectionManager& cm)
+AuthChannelHandler::AuthChannelHandler(const std::shared_ptr<JamiAccount>& acc, dhtnet::ConnectionManager& cm)
     : ChannelHandlerInterface()
     , account_(acc)
     , connectionManager_(cm)
@@ -43,17 +42,14 @@ AuthChannelHandler::connect(const DeviceId& deviceId,
 }
 
 void
-AuthChannelHandler::connect(const dht::InfoHash& infoHash,
-                            const std::string& channelPath,
-                            ConnectCallbackLegacy&& cb)
+AuthChannelHandler::connect(const dht::InfoHash& infoHash, const std::string& channelPath, ConnectCallbackLegacy&& cb)
 {
     JAMI_DEBUG("[AuthChannel {}] connecting to channelPath = {}", infoHash.toString(), channelPath);
     connectionManager_.connectDevice(infoHash, channelPath, std::move(cb));
 }
 
 bool
-AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                              const std::string& name)
+AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
 {
     JAMI_DEBUG("[AuthChannel] New auth channel requested for `{}`.", cert->getId().toString());
     auto acc = account_.lock();

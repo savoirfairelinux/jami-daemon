@@ -53,18 +53,15 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     // unregisterChatHandler may be called by the PluginManager while unloading.
     auto unregisterChatHandler = [this](void* data, std::mutex& pmMtx_) {
         std::lock_guard lk(pmMtx_);
-        auto handlerIt = std::find_if(chatHandlers_.begin(),
-                                      chatHandlers_.end(),
-                                      [data](ChatHandlerPtr& handler) {
-                                          return (handler.get() == data);
-                                      });
+        auto handlerIt = std::find_if(chatHandlers_.begin(), chatHandlers_.end(), [data](ChatHandlerPtr& handler) {
+            return (handler.get() == data);
+        });
 
         if (handlerIt != chatHandlers_.end()) {
             for (auto& toggledList : chatHandlerToggled_) {
                 auto handlerId = std::find_if(toggledList.second.begin(),
                                               toggledList.second.end(),
-                                              [id = (uintptr_t) handlerIt->get()](
-                                                  uintptr_t handlerId) {
+                                              [id = (uintptr_t) handlerIt->get()](uintptr_t handlerId) {
                                                   return (handlerId == id);
                                               });
                 // If ChatHandler is attempting to destroy one which is currently in use, we deactivate it.
@@ -80,9 +77,7 @@ ChatServicesManager::registerComponentsLifeCycleManagers(PluginManager& pluginMa
     };
 
     // Services are registered to the PluginManager.
-    pluginManager.registerComponentManager("ChatHandlerManager",
-                                           registerChatHandler,
-                                           unregisterChatHandler);
+    pluginManager.registerComponentManager("ChatHandlerManager", registerChatHandler, unregisterChatHandler);
 }
 
 void
@@ -91,16 +86,12 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
     // sendTextMessage is a service that allows plugins to send a message in a conversation.
     auto sendTextMessage = [](const DLPlugin*, void* data) {
         auto cm = static_cast<JamiMessage*>(data);
-        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
-                cm->accountId)) {
+        if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(cm->accountId)) {
             try {
                 if (cm->isSwarm)
                     acc->convModule()->sendMessage(cm->peerId, cm->data.at("body"));
                 else
-                    jami::Manager::instance().sendTextMessage(cm->accountId,
-                                                              cm->peerId,
-                                                              cm->data,
-                                                              true);
+                    jami::Manager::instance().sendTextMessage(cm->accountId, cm->peerId, cm->data, true);
             } catch (const std::exception& e) {
                 JAMI_ERR("Exception during text message sending: %s", e.what());
             }
@@ -117,7 +108,6 @@ ChatServicesManager::hasHandlers() const
 {
     return not chatHandlers_.empty();
 }
-
 
 std::vector<std::string>
 ChatServicesManager::getChatHandlers() const
@@ -156,7 +146,8 @@ ChatServicesManager::publishMessage(pluginMessagePtr message)
         bool toggled = handlers.find((uintptr_t) chatHandler.get()) != handlers.end();
         if (toggle || toggled) {
             // Creates chat subjects if it doesn't exist yet.
-            auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>()).first->second;
+            auto& subject = chatSubjects_.emplace(mPair, std::make_shared<PublishObservable<pluginMessagePtr>>())
+                                .first->second;
             if (!toggled) {
                 // If activation is expected, and not yet performed, we perform activation
                 handlers.insert((uintptr_t) chatHandler.get());
@@ -201,7 +192,9 @@ ChatServicesManager::getChatHandlerStatus(const std::string& accountId, const st
     std::vector<std::string> ret;
     if (it != allowDenyList_.end()) {
         for (const auto& chatHandlerName : it->second)
-            if (chatHandlerName.second && handlersNameMap_.find(chatHandlerName.first) != handlersNameMap_.end()) { // We only return active ChatHandler ids
+            if (chatHandlerName.second
+                && handlersNameMap_.find(chatHandlerName.first)
+                       != handlersNameMap_.end()) { // We only return active ChatHandler ids
                 ret.emplace_back(std::to_string(handlersNameMap_.at(chatHandlerName.first)));
             }
     }
@@ -222,9 +215,7 @@ ChatServicesManager::getChatHandlerDetails(const std::string& chatHandlerIdStr)
 }
 
 bool
-ChatServicesManager::setPreference(const std::string& key,
-                                   const std::string& value,
-                                   const std::string& rootPath)
+ChatServicesManager::setPreference(const std::string& key, const std::string& value, const std::string& rootPath)
 {
     bool status {true};
     for (auto& chatHandler : chatHandlers_) {

@@ -45,8 +45,9 @@ AudioFile::onBufferFinish()
     // We want to send values in milisecond
     if ((updatePlaybackScale_ % 5) == 0)
         emitSignal<libjami::CallSignal::UpdatePlaybackScale>(filepath_,
-                                                           (unsigned) (1000lu * pos_ / buffer_->sample_rate),
-                                                           (unsigned) (1000lu * buffer_->nb_samples / buffer_->sample_rate));
+                                                             (unsigned) (1000lu * pos_ / buffer_->sample_rate),
+                                                             (unsigned) (1000lu * buffer_->nb_samples
+                                                                         / buffer_->sample_rate));
 
     updatePlaybackScale_++;
 }
@@ -88,13 +89,23 @@ AudioFile::AudioFile(const std::string& fileName, unsigned int sampleRate, AVSam
 
     size_t outPos = 0;
     for (auto& frame : buf) {
-        av_samples_copy(buffer_->data, frame->pointer()->data, outPos, 0, frame->getFrameSize(), format_.nb_channels, format_.sampleFormat);
+        av_samples_copy(buffer_->data,
+                        frame->pointer()->data,
+                        outPos,
+                        0,
+                        frame->getFrameSize(),
+                        format_.nb_channels,
+                        format_.sampleFormat);
         outPos += frame->getFrameSize();
     }
     auto end = std::chrono::steady_clock::now();
-    auto audioDuration = std::chrono::duration<double>(total_samples/(double)format_.sample_rate);
+    auto audioDuration = std::chrono::duration<double>(total_samples / (double) format_.sample_rate);
     JAMI_LOG("AudioFile: loaded {} samples ({}) as {} in {} from {:s}",
-        total_samples, audioDuration, format_.toString(), dht::print_duration(end-start), fileName);
+             total_samples,
+             audioDuration,
+             format_.toString(),
+             dht::print_duration(end - start),
+             fileName);
 }
 
 } // namespace jami

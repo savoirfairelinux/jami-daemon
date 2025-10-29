@@ -106,8 +106,7 @@ private:
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagers;
     std::map<NodeId,
              std::map<NodeId,
-                      std::pair<std::shared_ptr<dhtnet::ChannelSocketTest>,
-                                std::shared_ptr<dhtnet::ChannelSocketTest>>>>
+                      std::pair<std::shared_ptr<dhtnet::ChannelSocketTest>, std::shared_ptr<dhtnet::ChannelSocketTest>>>>
         channelSockets_;
     std::vector<NodeId> randomNodeIds;
     std::vector<std::shared_ptr<jami::SwarmManager>> swarmManagersShuffled;
@@ -141,8 +140,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SwarmMessageSpread, SwarmMessageSpread::na
 void
 SwarmMessageSpread::setUp()
 {
-    libjami::init(
-        libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized) {
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
     }
@@ -159,7 +157,7 @@ SwarmMessageSpread::generateSwarmManagers()
 {
     for (size_t i = 0; i < nNodes; i++) {
         const NodeId node = Hash<32>::getRandom();
-        auto sm = std::make_shared<SwarmManager>(node, rd, [](auto) {return false;});
+        auto sm = std::make_shared<SwarmManager>(node, rd, [](auto) { return false; });
         swarmManagers[node] = sm;
         randomNodeIds.emplace_back(node);
         swarmManagersShuffled.emplace_back(sm);
@@ -205,14 +203,11 @@ SwarmMessageSpread::sendMessage(const std::shared_ptr<dhtnet::ChannelSocketInter
 }
 
 void
-SwarmMessageSpread::receiveMessage(const NodeId nodeId,
-                                   const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
+SwarmMessageSpread::receiveMessage(const NodeId nodeId, const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
     struct DecodingContext
     {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
-                               nullptr,
-                               32};
+        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 32};
     };
 
     socket->setOnRecv([this,
@@ -272,47 +267,55 @@ SwarmMessageSpread::updateHops(int hops)
 void
 SwarmMessageSpread::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 {
-    sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
-                                                                      auto&& onSocket) {
-        dht::ThreadPool::io().run(
-            [this, wsm = std::move(wsm), nodeId, onSocket = std::move(onSocket)] {
-                auto sm = wsm.lock();
-                if (!sm)
-                    return;
+    sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId, auto&& onSocket) {
+        dht::ThreadPool::io().run([this, wsm = std::move(wsm), nodeId, onSocket = std::move(onSocket)] {
+            auto sm = wsm.lock();
+            if (!sm)
+                return;
 
-                NodeId node = dhtnet::DeviceId(nodeId);
-                if (auto smRemote = getManager(node)) {
-                    auto myId = sm->getId();
-                    std::unique_lock lk(channelSocketsMtx_);
-                    auto& cstRemote = channelSockets_[node][myId];
-                    auto& cstMe = channelSockets_[myId][node];
-                    if (cstMe.second && cstMe.first)
-                        return;
-                    if (!cstMe.second) {
-                        cstMe.second = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), node, "test1", 1);
-                        cstRemote.second = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), myId, "test1", 1);
-                    }
-                    if (!cstMe.first) {
-                        cstRemote.first = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), myId, "swarm1", 0);
-                        cstMe.first = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(), node, "swarm1", 0);
-                    }
-                    lk.unlock();
-                    dhtnet::ChannelSocketTest::link(cstMe.second, cstRemote.second);
-                    receiveMessage(myId, cstMe.second);
-                    receiveMessage(node, cstRemote.second);
-                    // std::this_thread::sleep_for(std::chrono::seconds(5));
-                    dhtnet::ChannelSocketTest::link(cstMe.first, cstRemote.first);
-                    smRemote->addChannel(cstRemote.first);
-                    onSocket(cstMe.first);
+            NodeId node = dhtnet::DeviceId(nodeId);
+            if (auto smRemote = getManager(node)) {
+                auto myId = sm->getId();
+                std::unique_lock lk(channelSocketsMtx_);
+                auto& cstRemote = channelSockets_[node][myId];
+                auto& cstMe = channelSockets_[myId][node];
+                if (cstMe.second && cstMe.first)
+                    return;
+                if (!cstMe.second) {
+                    cstMe.second = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(),
+                                                                               node,
+                                                                               "test1",
+                                                                               1);
+                    cstRemote.second = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(),
+                                                                                   myId,
+                                                                                   "test1",
+                                                                                   1);
                 }
-            });
+                if (!cstMe.first) {
+                    cstRemote.first = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(),
+                                                                                  myId,
+                                                                                  "swarm1",
+                                                                                  0);
+                    cstMe.first = std::make_shared<dhtnet::ChannelSocketTest>(Manager::instance().ioContext(),
+                                                                              node,
+                                                                              "swarm1",
+                                                                              0);
+                }
+                lk.unlock();
+                dhtnet::ChannelSocketTest::link(cstMe.second, cstRemote.second);
+                receiveMessage(myId, cstMe.second);
+                receiveMessage(node, cstRemote.second);
+                // std::this_thread::sleep_for(std::chrono::seconds(5));
+                dhtnet::ChannelSocketTest::link(cstMe.first, cstRemote.first);
+                smRemote->addChannel(cstRemote.first);
+                onSocket(cstMe.first);
+            }
+        });
     };
 }
 
 void
-SwarmMessageSpread::relayMessageToRoutingTable(const NodeId nodeId,
-                                               const NodeId sourceId,
-                                               const Message msg)
+SwarmMessageSpread::relayMessageToRoutingTable(const NodeId nodeId, const NodeId sourceId, const Message msg)
 {
     auto swarmManager = getManager(nodeId);
     const auto& routingtable = swarmManager->getRoutingTable().getNodes();
@@ -347,17 +350,14 @@ SwarmMessageSpread::distribution()
         }
         mean += i * dist[i];
     }
-    std::cout << "Le noeud avec le plus de noeuds dans sa routing table: " << dist.size()
-              << std::endl;
-    std::cout << "Moyenne de nombre de noeuds par Swarm: " << mean / (float) swarmManagers.size()
-              << std::endl;
+    std::cout << "Le noeud avec le plus de noeuds dans sa routing table: " << dist.size() << std::endl;
+    std::cout << "Moyenne de nombre de noeuds par Swarm: " << mean / (float) swarmManagers.size() << std::endl;
 }
 
 void
 SwarmMessageSpread::displayBucketDistribution(const NodeId& id)
 {
-    std::string const fileName("distrib_rt_" + std::to_string(nNodes) + "_" + id.toString()
-                               + ".txt");
+    std::string const fileName("distrib_rt_" + std::to_string(nNodes) + "_" + id.toString() + ".txt");
     std::ofstream myStream(fileName.c_str());
 
     const auto& routingtable = swarmManagers[id]->getRoutingTable().getBuckets();
@@ -368,8 +368,7 @@ SwarmMessageSpread::displayBucketDistribution(const NodeId& id)
         auto lowerLimit = it->getLowerLimit().toString();
 
         std::string hex_prefix = lowerLimit.substr(0, 4); // extraire les deux premiers caractères
-        std::cout << "Bucket " << hex_prefix << " has " << it->getNodesSize() << " nodes"
-                  << std::endl;
+        std::cout << "Bucket " << hex_prefix << " has " << it->getNodesSize() << " nodes" << std::endl;
 
         if (myStream) {
             myStream << hex_prefix << "," << it->getNodesSize() << std::endl;
@@ -420,16 +419,13 @@ SwarmMessageSpread::testWriteMessage()
 
     std::unique_lock lk(channelSocketsMtx_);
     bool ok = channelSocketsCv_.wait_for(lk, 1200s, [&] {
-        std::cout << "\r"
-                  << "Size of Received " << numberTimesReceived.size();
+        std::cout << "\r" << "Size of Received " << numberTimesReceived.size();
         return numberTimesReceived.size() == swarmManagers.size();
     });
     auto now = std::chrono::steady_clock::now();
 
-    std::cout << "#########################################################################"
-              << std::endl;
-    std::cout << "Time for everyone to receive the message " << dht::print_duration(now - start)
-              << std::endl;
+    std::cout << "#########################################################################" << std::endl;
+    std::cout << "Time for everyone to receive the message " << dht::print_duration(now - start) << std::endl;
     std::cout << " IS OK " << ok << std::endl;
 
     // ##############################################################################
@@ -454,8 +450,8 @@ SwarmMessageSpread::testWriteMessage()
     std::advance(it, swarmManagers.size() / 2 - 1);
     displayBucketDistribution((*it).first);
 
-    std::cout << "MOYENNE DE RECEPTION PAR NOEUD [ " << moyenne / (float) numberTimesReceived.size()
-              << " ] " << std::endl;
+    std::cout << "MOYENNE DE RECEPTION PAR NOEUD [ " << moyenne / (float) numberTimesReceived.size() << " ] "
+              << std::endl;
     std::cout << "MAX DE RECEPTION PAR NOEUD     [ " << max << " ] " << std::endl;
     std::cout << "MIN DE RECEPTION PAR NOEUD     [ " << min << " ] " << std::endl;
 
@@ -463,8 +459,7 @@ SwarmMessageSpread::testWriteMessage()
     std::cout << "NOMBRE D'ITERATIONS            [ " << iterations << " ] " << std::endl;
 
     distribution();
-    std::cout << "#########################################################################"
-              << std::endl;
+    std::cout << "#########################################################################" << std::endl;
 
     std::cout << "Number of times received " << numberTimesReceived.size() << std::endl;
     std::cout << "Number of swarm managers " << swarmManagers.size() << std::endl;

@@ -126,14 +126,12 @@ protected:
         auto recordFrameSize = recordQueue_.frameSize();
         auto playbackFrameSize = playbackQueue_.frameSize();
         while (recordQueue_.samples() > recordFrameSize * 10
-               && 2 * playbackQueue_.samples() * recordFrameSize
-                      < recordQueue_.samples() * playbackFrameSize) {
+               && 2 * playbackQueue_.samples() * recordFrameSize < recordQueue_.samples() * playbackFrameSize) {
             recordOverflowCount++;
             recordQueue_.dequeue();
         }
         while (playbackQueue_.samples() > playbackFrameSize * 10
-               && 2 * recordQueue_.samples() * playbackFrameSize
-                      < playbackQueue_.samples() * recordFrameSize) {
+               && 2 * recordQueue_.samples() * playbackFrameSize < playbackQueue_.samples() * recordFrameSize) {
             playbackOverflowCount++;
             playbackQueue_.dequeue();
         }
@@ -154,8 +152,7 @@ protected:
             playbackOverflowCount = 0;
         }
 
-        if (recordQueue_.samples() < recordFrameSize
-            || playbackQueue_.samples() < playbackFrameSize) {
+        if (recordQueue_.samples() < recordFrameSize || playbackQueue_.samples() < playbackFrameSize) {
             // If there are not enough samples in either queue, we are unable to
             // process anything.
             return true;
@@ -204,9 +201,8 @@ private:
     void enqueue(AudioFrameResizer& frameResizer, std::shared_ptr<AudioFrame>&& buf)
     {
         if (buf->getFormat() != format_) {
-            auto resampled = &frameResizer == &recordQueue_
-                                 ? inputResampler_->resample(std::move(buf), format_)
-                                 : outputResampler_->resample(std::move(buf), format_);
+            auto resampled = &frameResizer == &recordQueue_ ? inputResampler_->resample(std::move(buf), format_)
+                                                            : outputResampler_->resample(std::move(buf), format_);
             frameResizer.enqueue(std::move(resampled));
         } else {
             frameResizer.enqueue(std::move(buf));

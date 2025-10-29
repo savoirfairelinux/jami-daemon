@@ -114,9 +114,7 @@ private:
      * Transaction functions of event subscription client side.
      */
     static void pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event);
-    static void pres_client_evsub_on_tsx_state(pjsip_evsub* sub,
-                                               pjsip_transaction* tsx,
-                                               pjsip_event* event);
+    static void pres_client_evsub_on_tsx_state(pjsip_evsub* sub, pjsip_transaction* tsx, pjsip_event* event);
     static void pres_client_evsub_on_rx_notify(pjsip_evsub* sub,
                                                pjsip_rx_data* rdata,
                                                int* p_st_code,

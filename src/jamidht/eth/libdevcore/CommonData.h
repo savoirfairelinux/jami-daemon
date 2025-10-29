@@ -90,8 +90,7 @@ template<class T>
 static bool
 isHash(std::string const& _hash)
 {
-    return (_hash.size() == T::size * 2
-            || (_hash.size() == T::size * 2 + 2 && _hash.substr(0, 2) == "0x"))
+    return (_hash.size() == T::size * 2 || (_hash.size() == T::size * 2 + 2 && _hash.substr(0, 2) == "0x"))
            && isHex(_hash);
 }
 
@@ -134,7 +133,7 @@ fromBigEndian(_In const& _bytes)
 {
     T ret = (T) 0;
     for (auto i : _bytes)
-        ret = (T)((ret << 8) | (uint8_t)(typename std::make_unsigned<decltype(i)>::type) i);
+        ret = (T) ((ret << 8) | (uint8_t) (typename std::make_unsigned<decltype(i)>::type) i);
     return ret;
 }
 
@@ -186,8 +185,7 @@ pushFront(T& _t, _U _e)
 /// Concatenate two vectors of elements of POD types.
 template<class T>
 inline std::vector<T>&
-operator+=(std::vector<typename std::enable_if<std::is_pod<T>::value, T>::type>& _a,
-           std::vector<T> const& _b)
+operator+=(std::vector<typename std::enable_if<std::is_pod<T>::value, T>::type>& _a, std::vector<T> const& _b)
 {
     auto s = _a.size();
     _a.resize(_a.size() + _b.size());
@@ -198,8 +196,7 @@ operator+=(std::vector<typename std::enable_if<std::is_pod<T>::value, T>::type>&
 /// Concatenate two vectors of elements.
 template<class T>
 inline std::vector<T>&
-operator+=(std::vector<typename std::enable_if<!std::is_pod<T>::value, T>::type>& _a,
-           std::vector<T> const& _b)
+operator+=(std::vector<typename std::enable_if<!std::is_pod<T>::value, T>::type>& _a, std::vector<T> const& _b)
 {
     _a.reserve(_a.size() + _b.size());
     for (auto& i : _b)

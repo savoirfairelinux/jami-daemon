@@ -57,7 +57,7 @@ namespace dht {
 namespace crypto {
 struct Certificate;
 }
-}
+} // namespace dht
 
 namespace jami {
 static constexpr uint64_t JAMI_ID_MAX_VAL = 9007199254740992;
@@ -210,24 +210,22 @@ public:
         return false;
     };
 
-    virtual std::vector<libjami::Message> getLastMessages(const uint64_t& /*base_timestamp*/)
-    {
-        return {};
-    }
+    virtual std::vector<libjami::Message> getLastMessages(const uint64_t& /*base_timestamp*/) { return {}; }
 
     virtual std::map<std::string, std::string> getNearbyPeers() const { return {}; }
 
-    virtual void updateProfile(const std::string& /*displayName*/,  const std::string& /*avatar*/, const std::string& /*fileType*/, int32_t /*flag*/) = 0;
+    virtual void updateProfile(const std::string& /*displayName*/,
+                               const std::string& /*avatar*/,
+                               const std::string& /*fileType*/,
+                               int32_t /*flag*/)
+        = 0;
 
     vCard::utils::VCardData getProfileVcard() const;
 
     /**
      * Return the status corresponding to the token.
      */
-    virtual im::MessageStatus getMessageStatus(uint64_t /*id*/) const
-    {
-        return im::MessageStatus::UNKNOWN;
-    }
+    virtual im::MessageStatus getMessageStatus(uint64_t /*id*/) const { return im::MessageStatus::UNKNOWN; }
 
     virtual bool cancelMessage(uint64_t /*id*/) { return false; }
 
@@ -290,9 +288,7 @@ public:
      * Set the registration state of the specified link
      * @param state The registration state of underlying VoIPLink
      */
-    virtual void setRegistrationState(RegistrationState state,
-                                      int detail_code = 0,
-                                      const std::string& detail_str = {});
+    virtual void setRegistrationState(RegistrationState state, int detail_code = 0, const std::string& detail_str = {});
 
     const std::string& getUsername() const { return config().username; }
     const std::string& getHostname() const { return config().hostname; }
@@ -313,8 +309,7 @@ public:
      */
     virtual void setActiveCodecs(const std::vector<unsigned>& list);
     std::shared_ptr<SystemCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
-    std::vector<std::shared_ptr<SystemCodecInfo>> getActiveAccountCodecInfoList(
-        MediaType mediaType) const;
+    std::vector<std::shared_ptr<SystemCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType) const;
     std::shared_ptr<SystemCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
     std::filesystem::path getRingtonePath() const { return ringtonePath_; }
@@ -324,10 +319,7 @@ public:
 
     bool isRendezVous() const { return config().isRendezVous; }
     bool isAutoAnswerEnabled() const { return config().autoAnswerEnabled; }
-    bool isDenySecondCallEnabled() const
-    {
-        return config().denySecondCallEnabled;
-    }
+    bool isDenySecondCallEnabled() const { return config().denySecondCallEnabled; }
     bool isReadReceiptEnabled() const { return config().sendReadReceipt; }
     bool isComposingEnabled() const { return config().sendComposing; }
 
@@ -413,10 +405,7 @@ public:
     void enableIceCompIdRfc5245Compliance(bool enable) { iceCompIdRfc5245Compliant_ = enable; }
     void enableAutoLoadConversations(bool enable) { autoLoadConversations_ = enable; }
 
-    std::shared_ptr<Call> getCall(const std::string& callId) const
-    {
-        return callSet_.getCall(callId);
-    }
+    std::shared_ptr<Call> getCall(const std::string& callId) const { return callSet_.getCall(callId); }
     std::vector<std::string> getCallList() const { return callSet_.getCallIds(); }
     std::shared_ptr<Conference> getConference(const std::string& confId) const
     {
@@ -440,7 +429,7 @@ public:
      * This method is called to request removal of possible account traces on the system,
      * like internal account setup files.
      */
-    virtual void flush() {/* nothing to do here - overload */};
+    virtual void flush() { /* nothing to do here - overload */ };
 
 private:
     NON_COPYABLE(Account);

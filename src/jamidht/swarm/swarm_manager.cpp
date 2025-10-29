@@ -173,8 +173,7 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
         auto connecting_nodes = myBucket ? bucket.getConnectingNodesSize()
                                          : bucket.getConnectingNodesSize() + bucket.getNodesSize();
         if (connecting_nodes < Bucket::BUCKET_MAX_SIZE) {
-            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes,
-                                                         rd);
+            auto nodesToTry = bucket.getKnownNodesRandom(Bucket::BUCKET_MAX_SIZE - connecting_nodes, rd);
             for (auto& node : nodesToTry)
                 routing_table.addConnectingNode(node);
 
@@ -192,7 +191,7 @@ SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>&
                           Query q,
                           int numberNodes)
 {
-    dht::ThreadPool::io().run([socket, isMobile=isMobile_, nodeId, q, numberNodes] {
+    dht::ThreadPool::io().run([socket, isMobile = isMobile_, nodeId, q, numberNodes] {
         msgpack::sbuffer buffer;
         msgpack::packer<msgpack::sbuffer> pk(&buffer);
         Message msg;
@@ -209,8 +208,7 @@ SwarmManager::sendRequest(const std::shared_ptr<dhtnet::ChannelSocketInterface>&
 }
 
 void
-SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket,
-                         const Message& msg_)
+SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket, const Message& msg_)
 {
     std::lock_guard lock(mutex);
 
@@ -242,9 +240,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
 {
     struct DecodingContext
     {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
-                               nullptr,
-                               512};
+        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 512};
     };
 
     socket->setOnRecv([w = weak(),
@@ -332,8 +328,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
 {
     if (needSocketCb_)
         needSocketCb_(nodeId.toString(),
-                      [w = weak(),
-                       nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
+                      [w = weak(), nodeId](const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket) {
                           auto shared = w.lock();
                           if (!shared || shared->isShutdown_)
                               return true;
@@ -349,8 +344,7 @@ SwarmManager::tryConnect(const NodeId& nodeId)
                           if (bucket->getConnectingNodesSize() == 0 && bucket->isEmpty()
                               && shared->onConnectionChanged_) {
                               lk.unlock();
-                              JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed",
-                                           fmt::ptr(shared.get()));
+                              JAMI_LOG("[SwarmManager {:p}] Bootstrap: all connections failed", fmt::ptr(shared.get()));
                               shared->onConnectionChanged_(false);
                           }
                           return true;

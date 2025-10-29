@@ -99,13 +99,12 @@ RevokeTest::testRevokeDevice()
     auto deviceRevoked = false;
     auto knownChanged = false;
     std::string alice2Device;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
-            [&](const std::string& accountId, const std::string& deviceId, int status) {
-                if (accountId == aliceId && deviceId == alice2Device && status == 0)
-                    deviceRevoked = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
+        [&](const std::string& accountId, const std::string& deviceId, int status) {
+            if (accountId == aliceId && deviceId == alice2Device && status == 0)
+                deviceRevoked = true;
+            cv.notify_one();
+        }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::KnownDevicesChanged>(
         [&](const std::string& accountId, auto devices) {
             if (accountId == aliceId && devices.size() == 2)
@@ -134,13 +133,12 @@ RevokeTest::testRevokeInvalidDevice()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto revokeFailed = false;
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
-            [&](const std::string& accountId, const std::string& deviceId, int status) {
-                if (accountId == aliceId && deviceId == "foo" && status == 2)
-                    revokeFailed = true;
-                cv.notify_one();
-            }));
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceRevocationEnded>(
+        [&](const std::string& accountId, const std::string& deviceId, int status) {
+            if (accountId == aliceId && deviceId == "foo" && status == 2)
+                revokeFailed = true;
+            cv.notify_one();
+        }));
     libjami::registerSignalHandlers(confHandlers);
     aliceAccount->revokeDevice("foo");
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return revokeFailed; }));

@@ -41,8 +41,8 @@ mutate_gnutls_record_send(ChanneledMessage& msg)
 
     body.reserve(array_size(htmlBody));
 
-    for (size_t i=0; i<array_size(htmlBody); ++i) {
-            body.emplace_back(htmlBody[i]);
+    for (size_t i = 0; i < array_size(htmlBody); ++i) {
+        body.emplace_back(htmlBody[i]);
     }
 
     sip.swapBody(body);

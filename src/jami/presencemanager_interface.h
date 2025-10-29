@@ -37,10 +37,8 @@ namespace libjami {
 LIBJAMI_PUBLIC void publish(const std::string& accountID, bool status, const std::string& note);
 LIBJAMI_PUBLIC void answerServerRequest(const std::string& uri, bool flag);
 LIBJAMI_PUBLIC void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
-LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getSubscriptions(
-    const std::string& accountID);
-LIBJAMI_PUBLIC void setSubscriptions(const std::string& accountID,
-                                   const std::vector<std::string>& uris);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getSubscriptions(const std::string& accountID);
+LIBJAMI_PUBLIC void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 
 // Presence signal type definitions
 struct LIBJAMI_PUBLIC PresenceSignal
@@ -76,9 +74,7 @@ struct LIBJAMI_PUBLIC PresenceSignal
     struct LIBJAMI_PUBLIC SubscriptionStateChanged
     {
         constexpr static const char* name = "SubscriptionStateChanged";
-        using cb_type = void(const std::string& /*account_id*/,
-                             const std::string& /*buddy_uri*/,
-                             int /*state*/);
+        using cb_type = void(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/);
     };
 };
 

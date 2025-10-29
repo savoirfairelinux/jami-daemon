@@ -105,9 +105,7 @@ Account::updateUpnpController()
 }
 
 void
-Account::setRegistrationState(RegistrationState state,
-                              int detail_code,
-                              const std::string& detail_str)
+Account::setRegistrationState(RegistrationState state, int detail_code, const std::string& detail_str)
 {
     if (state != registrationState_) {
         registrationState_ = state;
@@ -118,9 +116,9 @@ Account::setRegistrationState(RegistrationState state,
                          detail_str,
                          details = getVolatileAccountDetails()] {
             emitSignal<libjami::ConfigurationSignal::RegistrationStateChanged>(accountId,
-                                                                             state,
-                                                                             detail_code,
-                                                                             detail_str);
+                                                                               state,
+                                                                               detail_code,
+                                                                               detail_str);
 
             emitSignal<libjami::ConfigurationSignal::VolatileDetailsChanged>(accountId, details);
         });
@@ -140,19 +138,20 @@ Account::loadDefaultCodecs()
             continue;
 
         if (systemCodec->mediaType & MEDIA_AUDIO) {
-            accountCodecInfoList_.emplace_back(std::make_shared<SystemAudioCodecInfo>(
-                *std::static_pointer_cast<SystemAudioCodecInfo>(systemCodec)));
+            accountCodecInfoList_.emplace_back(
+                std::make_shared<SystemAudioCodecInfo>(*std::static_pointer_cast<SystemAudioCodecInfo>(systemCodec)));
         }
 
         if (systemCodec->mediaType & MEDIA_VIDEO) {
-            accountCodecInfoList_.emplace_back(std::make_shared<SystemVideoCodecInfo>(
-                *std::static_pointer_cast<SystemVideoCodecInfo>(systemCodec)));
+            accountCodecInfoList_.emplace_back(
+                std::make_shared<SystemVideoCodecInfo>(*std::static_pointer_cast<SystemVideoCodecInfo>(systemCodec)));
         }
     }
 }
 
 void
-Account::loadConfig() {
+Account::loadConfig()
+{
     setActiveCodecs(config_->activeCodecs);
 
     // Try to get the client-defined resource base directory, if any. If not set, use the default
@@ -230,8 +229,9 @@ Account::sortCodec()
 {
     std::sort(std::begin(accountCodecInfoList_),
               std::end(accountCodecInfoList_),
-              [](const std::shared_ptr<SystemCodecInfo>& a,
-                 const std::shared_ptr<SystemCodecInfo>& b) { return a->order < b->order; });
+              [](const std::shared_ptr<SystemCodecInfo>& a, const std::shared_ptr<SystemCodecInfo>& b) {
+                  return a->order < b->order;
+              });
 }
 
 std::string
@@ -318,8 +318,7 @@ Account::searchCodecById(unsigned codecId, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if ((codecIt->id == codecId)
-                && (codecIt->mediaType & mediaType))
+            if ((codecIt->id == codecId) && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
@@ -331,8 +330,7 @@ Account::searchCodecByName(const std::string& name, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if (codecIt->name == name
-                && (codecIt->mediaType & mediaType))
+            if (codecIt->name == name && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }
@@ -344,8 +342,7 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt : accountCodecInfoList_) {
-            if ((codecIt->payloadType == payload)
-                && (codecIt->mediaType & mediaType))
+            if ((codecIt->payloadType == payload) && (codecIt->mediaType & mediaType))
                 return codecIt;
         }
     }

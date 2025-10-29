@@ -80,8 +80,7 @@ PreferenceServicesManager::setPreference(const std::string& key,
 }
 
 void
-PreferenceServicesManager::resetPreferences(const std::string& rootPath,
-                                            const std::string& accountId)
+PreferenceServicesManager::resetPreferences(const std::string& rootPath, const std::string& accountId)
 {
     for (auto& preferenceHandler : handlers_) {
         if (preferenceHandler->id().find(rootPath) != std::string::npos) {
@@ -107,11 +106,9 @@ PreferenceServicesManager::registerComponentsLifeCycleManagers(PluginManager& pl
     // unregisterHandler may be called by the PluginManager while unloading.
     auto unregisterHandler = [this](void* data, std::mutex& pmMtx_) {
         std::lock_guard lk(pmMtx_);
-        auto handlerIt = std::find_if(handlers_.begin(),
-                                      handlers_.end(),
-                                      [data](PreferenceHandlerPtr& handler) {
-                                          return (handler.get() == data);
-                                      });
+        auto handlerIt = std::find_if(handlers_.begin(), handlers_.end(), [data](PreferenceHandlerPtr& handler) {
+            return (handler.get() == data);
+        });
 
         if (handlerIt != handlers_.end()) {
             handlers_.erase(handlerIt);
@@ -120,8 +117,6 @@ PreferenceServicesManager::registerComponentsLifeCycleManagers(PluginManager& pl
     };
 
     // Services are registered to the PluginManager.
-    pluginManager.registerComponentManager("PreferenceHandlerManager",
-                                           registerHandler,
-                                           unregisterHandler);
+    pluginManager.registerComponentManager("PreferenceHandlerManager", registerHandler, unregisterHandler);
 }
 } // namespace jami

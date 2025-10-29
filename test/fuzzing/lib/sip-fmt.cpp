@@ -27,11 +27,11 @@ SIPFmt::SIPFmt(const std::vector<uint8_t>& data)
 }
 
 void
-SIPFmt::pushBody(char *bytes, size_t len)
+SIPFmt::pushBody(char* bytes, size_t len)
 {
-        for (size_t i=0; i<len; ++i) {
-            body_.emplace_back(bytes[i]);
-        }
+    for (size_t i = 0; i < len; ++i) {
+        body_.emplace_back(bytes[i]);
+    }
 }
 
 void
@@ -67,14 +67,14 @@ SIPFmt::getField(const std::string& field) const
 
     fieldLow.reserve(field.size());
 
-     for (auto it = field.cbegin(); it != field.cend(); ++it) {
+    for (auto it = field.cbegin(); it != field.cend(); ++it) {
         fieldLow.push_back(tolower(*it));
     }
 
     try {
-            return fields_.at(fieldLow);
+        return fields_.at(fieldLow);
     } catch (...) {
-            return emptyString;
+        return emptyString;
     }
 }
 

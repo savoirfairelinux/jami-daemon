@@ -39,20 +39,16 @@ AudioDevice::init(AudioDeviceID devid, bool isInput)
 
     UInt32 propsize = sizeof(Float32);
 
-    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput
-                                                 : kAudioDevicePropertyScopeOutput;
+    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
 
-    AudioObjectPropertyAddress theAddress = {kAudioDevicePropertySafetyOffset,
-                                             theScope,
-                                             0}; // channel
+    AudioObjectPropertyAddress theAddress = {kAudioDevicePropertySafetyOffset, theScope, 0}; // channel
 
     __Verify_noErr(AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &safetyOffset_));
 
     propsize = sizeof(UInt32);
     theAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
 
-    __Verify_noErr(
-        AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &bufferSizeFrames_));
+    __Verify_noErr(AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &bufferSizeFrames_));
 
     propsize = sizeof(AudioStreamBasicDescription);
     theAddress.mSelector = kAudioDevicePropertyStreamFormat;
@@ -71,17 +67,13 @@ AudioDevice::setBufferSize(UInt32 size)
 {
     UInt32 propsize = sizeof(UInt32);
 
-    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput
-                                                 : kAudioDevicePropertyScopeOutput;
+    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
 
-    AudioObjectPropertyAddress theAddress = {kAudioDevicePropertyBufferFrameSize,
-                                             theScope,
-                                             0}; // channel
+    AudioObjectPropertyAddress theAddress = {kAudioDevicePropertyBufferFrameSize, theScope, 0}; // channel
 
     __Verify_noErr(AudioObjectSetPropertyData(id_, &theAddress, 0, NULL, propsize, &size));
 
-    __Verify_noErr(
-        AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &bufferSizeFrames_));
+    __Verify_noErr(AudioObjectGetPropertyData(id_, &theAddress, 0, NULL, &propsize, &bufferSizeFrames_));
 }
 
 int
@@ -91,12 +83,9 @@ AudioDevice::countChannels() const
     UInt32 propSize;
     int result = 0;
 
-    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput
-                                                 : kAudioDevicePropertyScopeOutput;
+    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
 
-    AudioObjectPropertyAddress theAddress = {kAudioDevicePropertyStreamConfiguration,
-                                             theScope,
-                                             0}; // channel
+    AudioObjectPropertyAddress theAddress = {kAudioDevicePropertyStreamConfiguration, theScope, 0}; // channel
 
     err = AudioObjectGetPropertyDataSize(id_, &theAddress, 0, NULL, &propSize);
     if (err)
@@ -119,8 +108,7 @@ AudioDevice::getName() const
     char buf[256];
     UInt32 maxlen = sizeof(buf) - 1;
 
-    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput
-                                                 : kAudioDevicePropertyScopeOutput;
+    AudioObjectPropertyScope theScope = isInput_ ? kAudioDevicePropertyScopeInput : kAudioDevicePropertyScopeOutput;
 
     AudioObjectPropertyAddress theAddress = {kAudioDevicePropertyDeviceName, theScope, 0}; // channel
 

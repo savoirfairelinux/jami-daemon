@@ -54,10 +54,7 @@ subscribeBuddy(const std::string& accountId, const std::string& uri, bool flag)
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
-            JAMI_DEBUG("{}ubscribePresence (acc:{}, buddy:{})",
-                     flag ? "S" : "Uns",
-                     accountId,
-                     uri);
+            JAMI_DEBUG("{}ubscribePresence (acc:{}, buddy:{})", flag ? "S" : "Uns", accountId, uri);
             pres->subscribeClient(uri, flag);
         }
     } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
@@ -77,13 +74,10 @@ publish(const std::string& accountId, bool status, const std::string& note)
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
-            JAMI_DEBUG("Send Presence (acc:{}, status {}).",
-                     accountId,
-                     status ? "online" : "offline");
+            JAMI_DEBUG("Send Presence (acc:{}, status {}).", accountId, status ? "online" : "offline");
             pres->sendPresence(status, note);
         }
-    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
-                   accountId)) {
+    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         acc->sendPresenceNote(note);
     } else
         JAMI_ERROR("Unable to find account {}", accountId);
@@ -124,22 +118,20 @@ getSubscriptions(const std::string& accountId)
             const auto& subs = pres->getClientSubscriptions();
             ret.reserve(subs.size());
             for (const auto& s : subs) {
-                ret.push_back(
-                    {{libjami::Presence::BUDDY_KEY, std::string(s->getURI())},
-                     {libjami::Presence::STATUS_KEY, s->isPresent() ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY},
-                     {libjami::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())}});
+                ret.push_back({{libjami::Presence::BUDDY_KEY, std::string(s->getURI())},
+                               {libjami::Presence::STATUS_KEY,
+                                s->isPresent() ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY},
+                               {libjami::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())}});
             }
         } else
             JAMI_ERROR("Presence not initialized");
-    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
-                   accountId)) {
+    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         const auto& trackedBuddies = acc->getTrackedBuddyPresence();
         ret.reserve(trackedBuddies.size());
         for (const auto& tracked_id : trackedBuddies) {
-            ret.push_back(
-                {{libjami::Presence::BUDDY_KEY, tracked_id.first},
-                 {libjami::Presence::STATUS_KEY,
-                  tracked_id.second ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY}});
+            ret.push_back({{libjami::Presence::BUDDY_KEY, tracked_id.first},
+                           {libjami::Presence::STATUS_KEY,
+                            tracked_id.second ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY}});
         }
     } else
         JAMI_ERROR("Unable to find account {}", accountId);
@@ -159,8 +151,7 @@ setSubscriptions(const std::string& accountId, const std::vector<std::string>& u
                 pres->subscribeClient(u, true);
         } else
             JAMI_ERROR("Presence not initialized");
-    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(
-                   accountId)) {
+    } else if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
         for (const auto& u : uris)
             acc->trackBuddyPresence(u, true);
     } else

@@ -82,9 +82,7 @@ Call::Call(const std::shared_ptr<Account>& account,
     , type_(type)
     , account_(account)
 {
-    addStateListener([this](Call::CallState call_state,
-                            Call::ConnectionState cnx_state,
-                            int code) {
+    addStateListener([this](Call::CallState call_state, Call::ConnectionState cnx_state, int code) {
         checkPendingIM();
         runOnMainThread([callWkPtr = weak()] {
             if (auto call = callWkPtr.lock())
@@ -100,9 +98,8 @@ Call::Call(const std::shared_ptr<Account>& account,
                 [callWkPtr = weak()] {
                     if (auto callShPtr = callWkPtr.lock()) {
                         if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                            JAMI_DBG(
-                                "Call %s is still ringing after timeout, setting state to BUSY",
-                                callShPtr->getCallId().c_str());
+                            JAMI_DBG("Call %s is still ringing after timeout, setting state to BUSY",
+                                     callShPtr->getCallId().c_str());
                             callShPtr->hangup(PJSIP_SC_BUSY_HERE);
                             Manager::instance().callFailure(*callShPtr);
                         }
@@ -271,15 +268,9 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 
     if (old_client_state != new_client_state) {
         if (not parent_) {
-            JAMI_DBG("[call:%s] emit client call state change %s, code %d",
-                     id_.c_str(),
-                     new_client_state.c_str(),
-                     code);
+            JAMI_DBG("[call:%s] emit client call state change %s, code %d", id_.c_str(), new_client_state.c_str(), code);
             lock.unlock();
-            emitSignal<libjami::CallSignal::StateChange>(getAccountId(),
-                                                         id_,
-                                                         new_client_state,
-                                                         code);
+            emitSignal<libjami::CallSignal::StateChange>(getAccountId(), id_, new_client_state, code);
         }
     }
 
@@ -377,10 +368,8 @@ Call::getDetails() const
         {libjami::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
         {libjami::Call::Details::ACCOUNTID, getAccountId()},
         {libjami::Call::Details::TO_USERNAME, toUsername()},
-        {libjami::Call::Details::AUDIO_MUTED,
-         std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
-        {libjami::Call::Details::VIDEO_MUTED,
-         std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
+        {libjami::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
+        {libjami::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
         {libjami::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
     };
 }
@@ -434,8 +423,8 @@ Call::addSubCall(Call& subcall)
     // Add subCall only if call is not connected or terminated
     // Because we only want to addSubCall if the peer didn't answer
     // So till it's <= RINGING
-    if (connectionState_ == ConnectionState::CONNECTED
-        || connectionState_ == ConnectionState::DISCONNECTED || callState_ == CallState::OVER) {
+    if (connectionState_ == ConnectionState::CONNECTED || connectionState_ == ConnectionState::DISCONNECTED
+        || callState_ == CallState::OVER) {
         subcall.removeCall();
         return;
     }
@@ -451,19 +440,18 @@ Call::addSubCall(Call& subcall)
     for (const auto& msg : pendingOutMessages_)
         subcall.sendTextMessage(msg.first, msg.second);
 
-    subcall.addStateListener(
-        [sub = subcall.weak(), parent = weak()](Call::CallState new_state,
-                                                Call::ConnectionState new_cstate,
-                                                int /* code */) {
-            runOnMainThread([sub, parent, new_state, new_cstate]() {
-                if (auto p = parent.lock()) {
-                    if (auto s = sub.lock()) {
-                        p->subcallStateChanged(*s, new_state, new_cstate);
-                    }
+    subcall.addStateListener([sub = subcall.weak(), parent = weak()](Call::CallState new_state,
+                                                                     Call::ConnectionState new_cstate,
+                                                                     int /* code */) {
+        runOnMainThread([sub, parent, new_state, new_cstate]() {
+            if (auto p = parent.lock()) {
+                if (auto s = sub.lock()) {
+                    p->subcallStateChanged(*s, new_state, new_cstate);
                 }
-            });
-            return true;
+            }
         });
+        return true;
+    });
 }
 
 /// Called by a subcall when its states change (multidevice)
@@ -487,9 +475,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
 
     // We found a responding device: hangup all other subcalls and merge
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
-        JAMI_DBG("[call:%s] subcall %s answered by peer",
-                 getCallId().c_str(),
-                 subcall.getCallId().c_str());
+        JAMI_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(), subcall.getCallId().c_str());
 
         hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call) { return call != &subcall; });
         merge(subcall);
@@ -500,9 +486,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
     // Hangup the call if any device hangup or send busy
     if ((new_state == CallState::ACTIVE or new_state == CallState::PEER_BUSY)
         and new_cstate == ConnectionState::DISCONNECTED) {
-        JAMI_WARN("[call:%s] subcall %s hangup by peer",
-                  getCallId().c_str(),
-                  subcall.getCallId().c_str());
+        JAMI_WARN("[call:%s] subcall %s hangup by peer", getCallId().c_str(), subcall.getCallId().c_str());
         reason_ = new_state == CallState::ACTIVE ? "declined" : "busy";
         hangupCalls(safePopSubcalls(), 0);
         Manager::instance().peerHungupCall(*this);
@@ -515,9 +499,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
         if (new_state == CallState::BUSY || new_state == CallState::PEER_BUSY)
             JAMI_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
         else
-            JAMI_WARN("[call:%s] subcall %s failed",
-                      getCallId().c_str(),
-                      subcall.getCallId().c_str());
+            JAMI_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
         std::lock_guard lk {callMutex_};
         subcalls_.erase(getPtr(subcall));
 
@@ -534,9 +516,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
             } else {
                 // XXX: first idea was to use std::errc::host_unreachable, but it's not available on
                 // some platforms like mingw.
-                setState(CallState::MERROR,
-                         ConnectionState::DISCONNECTED,
-                         static_cast<int>(std::errc::io_error));
+                setState(CallState::MERROR, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::io_error));
             }
             removeCall();
         } else {
@@ -590,10 +570,7 @@ Call::checkPendingIM()
     if (not parent_) {
         if (state == libjami::Call::StateEvent::CURRENT) {
             for (const auto& msg : pendingInMessages_)
-                Manager::instance().incomingMessage(getAccountId(),
-                                                    getCallId(),
-                                                    getPeerNumber(),
-                                                    msg.first);
+                Manager::instance().incomingMessage(getAccountId(), getCallId(), getPeerNumber(), msg.first);
             pendingInMessages_.clear();
 
             std::weak_ptr<Call> callWkPtr = shared_from_this();
@@ -680,8 +657,7 @@ Call::setConferenceInfo(const std::string& msg)
             createSinks(confInfo_);
 #endif
             // Inform client that layout has changed
-            jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(
-                id_, confInfo_.toVectorMapStringString());
+            jami::emitSignal<libjami::CallSignal::OnConferenceInfosUpdated>(id_, confInfo_.toVectorMapStringString());
         } else if (auto conf = conf_.lock()) {
             conf->mergeConfInfo(newInfo, getPeerNumber());
         }

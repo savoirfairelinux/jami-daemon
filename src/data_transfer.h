@@ -117,7 +117,10 @@ private:
 class TransferManager : public std::enable_shared_from_this<TransferManager>
 {
 public:
-    TransferManager(const std::string& accountId, const std::string& accountUri, const std::string& to, const std::mt19937_64& rand);
+    TransferManager(const std::string& accountId,
+                    const std::string& accountUri,
+                    const std::string& to,
+                    const std::mt19937_64& rand);
     ~TransferManager();
 
     /**
@@ -151,10 +154,7 @@ public:
      * @param progress  current progress
      * @return if found
      */
-    bool info(const std::string& fileId,
-              std::string& path,
-              int64_t& total,
-              int64_t& progress) const noexcept;
+    bool info(const std::string& fileId, std::string& path, int64_t& total, int64_t& progress) const noexcept;
 
     /**
      * Inform the transfer manager that a transfer is waited (and will be automatically accepted)
@@ -201,10 +201,7 @@ public:
     std::filesystem::path profilePath(const std::string& contactId) const;
 
 private:
-    std::weak_ptr<TransferManager> weak()
-    {
-        return std::static_pointer_cast<TransferManager>(shared_from_this());
-    }
+    std::weak_ptr<TransferManager> weak() { return std::static_pointer_cast<TransferManager>(shared_from_this()); }
     NON_COPYABLE(TransferManager);
     class Impl;
     std::unique_ptr<Impl> pimpl_;

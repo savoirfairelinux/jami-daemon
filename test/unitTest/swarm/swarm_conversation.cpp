@@ -84,8 +84,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SwarmConversationTest, SwarmConversationTe
 void
 SwarmConversationTest::setUp()
 {
-    libjami::init(
-        libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
+    libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     if (not Manager::instance().initialized)
         CPPUNIT_ASSERT(libjami::start("jami-sample.yml"));
 
@@ -122,9 +121,7 @@ SwarmConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& conversationId,
-            std::map<std::string, std::string> message) {
+        [&](const std::string& accountId, const std::string& conversationId, std::map<std::string, std::string> message) {
             for (const auto& accId : accountIds) {
                 if (accountId == accId && accountMap[accId].id == conversationId) {
                     accountMap[accId].messages.emplace_back(message);
@@ -132,18 +129,15 @@ SwarmConversationTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
-            [&](const std::string& accountId,
-                const std::string&,
-                std::map<std::string, std::string>) {
-                for (const auto& accId : accountIds) {
-                    if (accountId == accId) {
-                        accountMap[accId].requestReceived = true;
-                    }
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationRequestReceived>(
+        [&](const std::string& accountId, const std::string&, std::map<std::string, std::string>) {
+            for (const auto& accId : accountIds) {
+                if (accountId == accId) {
+                    accountMap[accId].requestReceived = true;
                 }
-                cv.notify_one();
-            }));
+            }
+            cv.notify_one();
+        }));
 
     libjami::registerSignalHandlers(confHandlers);
 }
@@ -183,30 +177,24 @@ SwarmConversationTest::testSendMessage()
 
     std::cout << "waiting for conversation ready" << std::endl;
     for (size_t i = 1; i < accountIds.size(); i++) {
-        CPPUNIT_ASSERT(
-            cv.wait_for(lk, 40s, [&]() { return accountMap[accountIds.at(i)].id == convId; }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() { return accountMap[accountIds.at(i)].id == convId; }));
     }
     std::cout << "messages size " << accountMap[accountIds.at(0)].messages.size() << std::endl;
 
-    CPPUNIT_ASSERT(
-        cv.wait_for(lk, 70s, [&]() { return accountMap[accountIds.at(0)].messages.size() >= 2; }));
+    CPPUNIT_ASSERT(cv.wait_for(lk, 70s, [&]() { return accountMap[accountIds.at(0)].messages.size() >= 2; }));
 
     libjami::sendMessage(aliceId, convId, "hi"s, "");
 
     for (size_t i = 1; i < accountIds.size(); i++) {
-        std::cout << "COUNTER: " << i << " messages size "
-                  << accountMap[accountIds.at(i)].messages.size() << std::endl;
+        std::cout << "COUNTER: " << i << " messages size " << accountMap[accountIds.at(i)].messages.size() << std::endl;
 
         if (accountMap[accountIds.at(i)].messages.size() >= 105) {
             for (const auto& msg : accountMap[accountIds.at(i)].messages) {
-                std::cout << "Message id: " << msg.at("id") << " type: " << msg.at("type")
-                          << std::endl;
+                std::cout << "Message id: " << msg.at("id") << " type: " << msg.at("type") << std::endl;
             }
         }
 
-        CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() {
-            return accountMap[accountIds.at(i)].messages.size() >= 1;
-        }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() { return accountMap[accountIds.at(i)].messages.size() >= 1; }));
     }
 
     libjami::unregisterSignalHandlers();

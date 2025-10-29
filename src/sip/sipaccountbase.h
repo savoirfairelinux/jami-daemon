@@ -84,10 +84,7 @@ public:
 
     virtual ~SIPAccountBase() noexcept;
 
-    const SipAccountBaseConfig& config() const
-    {
-        return *static_cast<const SipAccountBaseConfig*>(&Account::config());
-    }
+    const SipAccountBaseConfig& config() const { return *static_cast<const SipAccountBaseConfig*>(&Account::config()); }
 
     void loadConfig() override;
 
@@ -194,10 +191,7 @@ public:
         return messageEngine_.sendMessage(to, deviceId, payloads, refreshToken);
     }
 
-    im::MessageStatus getMessageStatus(uint64_t id) const override
-    {
-        return messageEngine_.getStatus(id);
-    }
+    im::MessageStatus getMessageStatus(uint64_t id) const override { return messageEngine_.getStatus(id); }
 
     virtual void onTextMessage(const std::string& id,
                                const std::string& from,

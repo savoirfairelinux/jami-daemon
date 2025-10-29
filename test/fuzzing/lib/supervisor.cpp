@@ -21,7 +21,7 @@ namespace supervisor {
 
 namespace env {
 
-const char* log     = "SUPERVISOR_LOG";
+const char* log = "SUPERVISOR_LOG";
 const char* tls_out = "SUPERVISOR_TLS_OUT";
 
 }; // namespace env

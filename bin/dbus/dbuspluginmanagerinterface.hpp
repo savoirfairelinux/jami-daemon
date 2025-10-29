@@ -29,183 +29,114 @@ public:
         registerSignalHandlers();
     }
 
-    ~DBusPluginManagerInterface()
-    {
-        unregisterAdaptor();
-    }
+    ~DBusPluginManagerInterface() { unregisterAdaptor(); }
 
-    bool
-    loadPlugin(const std::string& path)
-    {
-        return libjami::loadPlugin(path);
-    }
+    bool loadPlugin(const std::string& path) { return libjami::loadPlugin(path); }
 
-    bool
-    unloadPlugin(const std::string& path)
-    {
-        return libjami::unloadPlugin(path);
-    }
+    bool unloadPlugin(const std::string& path) { return libjami::unloadPlugin(path); }
 
-    std::map<std::string, std::string>
-    getPluginDetails(const std::string& path)
+    std::map<std::string, std::string> getPluginDetails(const std::string& path)
     {
         return libjami::getPluginDetails(path);
     }
 
-    std::vector<std::map<std::string, std::string>>
-    getPluginPreferences(const std::string& path,
-                         const std::string& accountId)
+    std::vector<std::map<std::string, std::string>> getPluginPreferences(const std::string& path,
+                                                                         const std::string& accountId)
     {
         return libjami::getPluginPreferences(path, accountId);
     }
 
-    bool
-    setPluginPreference(const std::string& path,
-                        const std::string& accountId,
-                        const std::string& key,
-                        const std::string& value)
+    bool setPluginPreference(const std::string& path,
+                             const std::string& accountId,
+                             const std::string& key,
+                             const std::string& value)
     {
         return libjami::setPluginPreference(path, accountId, key, value);
     }
 
-    std::map<std::string, std::string>
-    getPluginPreferencesValues(const std::string& path,
-                               const std::string& accountId)
+    std::map<std::string, std::string> getPluginPreferencesValues(const std::string& path, const std::string& accountId)
     {
         return libjami::getPluginPreferencesValues(path, accountId);
     }
 
-    bool
-    resetPluginPreferencesValues(const std::string& path,
-                                 const std::string& accountId)
+    bool resetPluginPreferencesValues(const std::string& path, const std::string& accountId)
     {
         return libjami::resetPluginPreferencesValues(path, accountId);
     }
 
-    std::map<std::string, std::string>
-    getPlatformInfo()
-    {
-        return libjami::getPlatformInfo();
-    }
+    std::map<std::string, std::string> getPlatformInfo() { return libjami::getPlatformInfo(); }
 
-    auto
-    getInstalledPlugins() -> decltype(libjami::getInstalledPlugins())
-    {
-        return libjami::getInstalledPlugins();
-    }
+    auto getInstalledPlugins() -> decltype(libjami::getInstalledPlugins()) { return libjami::getInstalledPlugins(); }
 
-    auto
-    getLoadedPlugins() -> decltype(libjami::getLoadedPlugins())
-    {
-        return libjami::getLoadedPlugins();
-    }
+    auto getLoadedPlugins() -> decltype(libjami::getLoadedPlugins()) { return libjami::getLoadedPlugins(); }
 
-    int
-    installPlugin(const std::string& jplPath, const bool& force)
-    {
-        return libjami::installPlugin(jplPath, force);
-    }
+    int installPlugin(const std::string& jplPath, const bool& force) { return libjami::installPlugin(jplPath, force); }
 
-    int
-    uninstallPlugin(const std::string& pluginRootPath)
-    {
-        return libjami::uninstallPlugin(pluginRootPath);
-    }
+    int uninstallPlugin(const std::string& pluginRootPath) { return libjami::uninstallPlugin(pluginRootPath); }
 
-    auto
-    getCallMediaHandlers() -> decltype(libjami::getCallMediaHandlers())
-    {
-        return libjami::getCallMediaHandlers();
-    }
+    auto getCallMediaHandlers() -> decltype(libjami::getCallMediaHandlers()) { return libjami::getCallMediaHandlers(); }
 
-    auto
-    getChatHandlers() -> decltype(libjami::getChatHandlers())
-    {
-        return libjami::getChatHandlers();
-    }
-    void
-    toggleCallMediaHandler(const std::string& mediaHandlerId,
-                           const std::string& callId,
-                           const bool& toggle)
+    auto getChatHandlers() -> decltype(libjami::getChatHandlers()) { return libjami::getChatHandlers(); }
+    void toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, const bool& toggle)
     {
         libjami::toggleCallMediaHandler(mediaHandlerId, callId, toggle);
     }
 
-    void
-    toggleChatHandler(const std::string& chatHandlerId,
-                      const std::string& accountId,
-                      const std::string& peerId,
-                      const bool& toggle)
+    void toggleChatHandler(const std::string& chatHandlerId,
+                           const std::string& accountId,
+                           const std::string& peerId,
+                           const bool& toggle)
     {
         libjami::toggleChatHandler(chatHandlerId, accountId, peerId, toggle);
     }
 
-    std::map<std::string, std::string>
-    getCallMediaHandlerDetails(const std::string& mediaHanlderId)
+    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHanlderId)
     {
         return libjami::getCallMediaHandlerDetails(mediaHanlderId);
     }
 
-    std::vector<std::string>
-    getCallMediaHandlerStatus(const std::string& callId)
+    std::vector<std::string> getCallMediaHandlerStatus(const std::string& callId)
     {
         return libjami::getCallMediaHandlerStatus(callId);
     }
 
-    std::map<std::string, std::string>
-    getChatHandlerDetails(const std::string& chatHanlderId)
+    std::map<std::string, std::string> getChatHandlerDetails(const std::string& chatHanlderId)
     {
         return libjami::getChatHandlerDetails(chatHanlderId);
     }
 
-    std::vector<std::string>
-    getChatHandlerStatus(const std::string& accountId,
-                         const std::string& peerId)
+    std::vector<std::string> getChatHandlerStatus(const std::string& accountId, const std::string& peerId)
     {
         return libjami::getChatHandlerStatus(accountId, peerId);
     }
 
-    bool
-    getPluginsEnabled()
-    {
-        return libjami::getPluginsEnabled();
-    }
+    bool getPluginsEnabled() { return libjami::getPluginsEnabled(); }
 
-    void
-    setPluginsEnabled(const bool& state)
-    {
-        libjami::setPluginsEnabled(state);
-    }
+    void setPluginsEnabled(const bool& state) { libjami::setPluginsEnabled(state); }
 
-    void
-    sendWebViewMessage(const std::string& pluginId,
-                       const std::string& webViewId,
-                       const std::string& messageId,
-                       const std::string& payload)
+    void sendWebViewMessage(const std::string& pluginId,
+                            const std::string& webViewId,
+                            const std::string& messageId,
+                            const std::string& payload)
     {
         libjami::sendWebViewAttach(pluginId, webViewId, messageId, payload);
     }
 
-    std::string
-    sendWebViewAttach(const std::string& pluginId,
-                      const std::string& accountId,
-                      const std::string& webViewId,
-                      const std::string& action)
+    std::string sendWebViewAttach(const std::string& pluginId,
+                                  const std::string& accountId,
+                                  const std::string& webViewId,
+                                  const std::string& action)
     {
         return libjami::sendWebViewAttach(pluginId, accountId, webViewId, action);
     }
 
-    void
-    sendWebViewDetach(const std::string& pluginId,
-                      const std::string& webViewId)
+    void sendWebViewDetach(const std::string& pluginId, const std::string& webViewId)
     {
         libjami::sendWebViewDetach(pluginId, webViewId);
     }
 
 private:
-
-    void
-    registerSignalHandlers()
+    void registerSignalHandlers()
     {
         using namespace std::placeholders;
 
@@ -219,5 +150,4 @@ private:
 
         libjami::registerSignalHandlers(pluginEvHandlers);
     }
-
 };

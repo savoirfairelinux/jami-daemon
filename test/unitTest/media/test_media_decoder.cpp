@@ -29,9 +29,11 @@
 
 #include "../../test_runner.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class MediaDecoderTest : public CppUnit::TestFixture {
+class MediaDecoderTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "media_decoder"; }
 
@@ -70,8 +72,7 @@ MediaDecoderTest::tearDown()
 void
 MediaDecoderTest::testAudioFile()
 {
-    if (!avcodec_find_decoder(AV_CODEC_ID_PCM_S16LE)
-        || !avcodec_find_decoder(AV_CODEC_ID_PCM_S16BE))
+    if (!avcodec_find_decoder(AV_CODEC_ID_PCM_S16LE) || !avcodec_find_decoder(AV_CODEC_ID_PCM_S16BE))
         return; // no way to test the wav file, since it is in pcm signed 16
 
     writeWav();
@@ -105,7 +106,8 @@ MediaDecoderTest::testAudioFile()
 
 // write bytes to file using native endianness
 template<typename Word>
-static std::ostream& write(std::ostream& os, Word value, unsigned size)
+static std::ostream&
+write(std::ostream& os, Word value, unsigned size)
 {
     for (; size; --size, value >>= 8)
         os.put(static_cast<char>(value & 0xFF));
@@ -117,13 +119,13 @@ MediaDecoderTest::writeWav()
 {
     auto f = std::ofstream(filename_, std::ios::binary);
     f << "RIFF----WAVEfmt ";
-    write(f, 16, 4); // no extension data
-    write(f, 1, 2); // PCM integer samples
-    write(f, 1, 2); // channels
-    write(f, 8000, 4); // sample rate
+    write(f, 16, 4);           // no extension data
+    write(f, 1, 2);            // PCM integer samples
+    write(f, 1, 2);            // channels
+    write(f, 8000, 4);         // sample rate
     write(f, 8000 * 1 * 2, 4); // sample rate * channels * bytes per sample
-    write(f, 4, 2); // data block size
-    write(f, 2 * 8, 2); // bits per sample
+    write(f, 4, 2);            // data block size
+    write(f, 2 * 8, 2);        // bits per sample
     size_t dataChunk = f.tellp();
     f << "data----";
 
@@ -139,6 +141,7 @@ MediaDecoderTest::writeWav()
     write(f, length - 8, 4);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::MediaDecoderTest::name());

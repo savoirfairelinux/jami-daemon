@@ -132,8 +132,7 @@ private:
 
     int initRecord();
     void setupVideoOutput();
-    std::string buildVideoFilter(const std::vector<MediaStream>& peers,
-                                 const MediaStream& local) const;
+    std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
     void setupAudioOutput();
     std::mutex mutexStreamSetup_;
     std::string buildAudioFilter(const std::vector<MediaStream>& peers) const;

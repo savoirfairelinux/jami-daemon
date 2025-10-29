@@ -53,8 +53,7 @@ decshake(128) decshake(256) decsha3(224) decsha3(256) decsha3(384) decsha3(512)
     /*** Constants. ***/
     static const uint8_t rho[24]
     = {1, 3, 6, 10, 15, 21, 28, 36, 45, 55, 2, 14, 27, 41, 56, 8, 25, 43, 62, 18, 39, 61, 20, 44};
-static const uint8_t pi[24] = {10, 7,  11, 17, 18, 3, 5,  16, 8,  21, 24, 4,
-                               15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1};
+static const uint8_t pi[24] = {10, 7, 11, 17, 18, 3, 5, 16, 8, 21, 24, 4, 15, 23, 19, 13, 12, 2, 20, 14, 22, 9, 6, 1};
 static const uint64_t RC[24] = {1ULL,
                                 0x8082ULL,
                                 0x800000000000808aULL,
@@ -107,10 +106,7 @@ keccakf(void* state)
         x = 0;
         REPEAT24(b[0] = a[pi[x]]; a[pi[x]] = rol(t, rho[x]); t = b[0]; x++;)
         // Chi
-        FOR5(y,
-             5,
-             FOR5(x, 1, b[x] = a[y + x];)
-                 FOR5(x, 1, a[y + x] = b[x] ^ ((~b[(x + 1) % 5]) & b[(x + 2) % 5]);))
+        FOR5(y, 5, FOR5(x, 1, b[x] = a[y + x];) FOR5(x, 1, a[y + x] = b[x] ^ ((~b[(x + 1) % 5]) & b[(x + 2) % 5]);))
         // Iota
         a[0] ^= RC[i];
     }
@@ -126,9 +122,15 @@ keccakf(void* state)
     } while (0)
 #define FOR(i, ST, L, S) _(for (size_t i = 0; i < L; i += ST) { S; })
 #define mkapply_ds(NAME, S) \
-    static inline void NAME(uint8_t* dst, const uint8_t* src, size_t len) { FOR(i, 1, len, S); }
+    static inline void NAME(uint8_t* dst, const uint8_t* src, size_t len) \
+    { \
+        FOR(i, 1, len, S); \
+    }
 #define mkapply_sd(NAME, S) \
-    static inline void NAME(const uint8_t* src, uint8_t* dst, size_t len) { FOR(i, 1, len, S); }
+    static inline void NAME(const uint8_t* src, uint8_t* dst, size_t len) \
+    { \
+        FOR(i, 1, len, S); \
+    }
 
 mkapply_ds(xorin, dst[i] ^= src[i])     // xorin
     mkapply_sd(setout, dst[i] = src[i]) // setout
@@ -146,8 +148,7 @@ mkapply_ds(xorin, dst[i] ^= src[i])     // xorin
     }
 
     /** The sponge-based hash construction. **/
-    static inline int hash(
-        uint8_t* out, size_t outlen, const uint8_t* in, size_t inlen, size_t rate, uint8_t delim)
+    static inline int hash(uint8_t* out, size_t outlen, const uint8_t* in, size_t inlen, size_t rate, uint8_t delim)
 {
     if ((out == NULL) || ((in == NULL) && inlen != 0) || (rate >= Plen)) {
         return -1;

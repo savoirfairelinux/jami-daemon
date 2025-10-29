@@ -70,7 +70,10 @@ VideoRtpSession::VideoRtpSession(const string& callId,
 {
     recorder_ = rec;
     setupVideoBitrateInfo(); // reset bitrate
-    JAMI_LOG("[{:p}] Video RTP session created for call {} (recorder {:p})", fmt::ptr(this), callId_, fmt::ptr(recorder_));
+    JAMI_LOG("[{:p}] Video RTP session created for call {} (recorder {:p})",
+             fmt::ptr(this),
+             callId_,
+             fmt::ptr(recorder_));
 }
 
 VideoRtpSession::~VideoRtpSession()
@@ -96,8 +99,8 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
     auto codecVideo = std::static_pointer_cast<jami::SystemVideoCodecInfo>(send_.codec);
     if (codecVideo) {
         auto const pixels = localVideoParams_.height * localVideoParams_.width;
-        codecVideo->bitrate = std::max((unsigned int)(pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
-        codecVideo->maxBitrate = std::max((unsigned int)(pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+        codecVideo->bitrate = std::max((unsigned int) (pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+        codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
     }
     setupVideoBitrateInfo();
 }
@@ -136,17 +139,15 @@ VideoRtpSession::startSender()
         if (not conference_) {
             videoLocal_ = getVideoInput(input_);
             if (videoLocal_) {
-                videoLocal_->setRecorderCallback(
-                    [w=weak_from_this()](const MediaStream& ms) {
-                        asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
-                            if (auto shared = w.lock())
-                                shared->attachLocalRecorder(ms);
-                        });
+                videoLocal_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+                    asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
+                        if (auto shared = w.lock())
+                            shared->attachLocalRecorder(ms);
                     });
+                });
                 auto newParams = videoLocal_->getParams();
                 try {
-                    if (newParams.valid()
-                        && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                    if (newParams.valid() && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
                     } else {
                         JAMI_ERR("[%p] No valid new video parameters", this);
@@ -178,7 +179,8 @@ VideoRtpSession::startSender()
         // Current implementation does not handle resolution change
         // (needed by window sharing feature) with HW codecs, so HW
         // codecs will be disabled for now.
-        bool allowHwAccel = (localVideoParams_.format != "x11grab" && localVideoParams_.format != "dxgigrab" && localVideoParams_.format != "lavfi");
+        bool allowHwAccel = (localVideoParams_.format != "x11grab" && localVideoParams_.format != "dxgigrab"
+                             && localVideoParams_.format != "lavfi");
 
         if (socketPair_)
             initSeqVal_ = socketPair_->lastSeqValOut();
@@ -186,18 +188,16 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms
-                = !videoMixer_
-                      ? MediaStream("video sender",
-                                    AV_PIX_FMT_YUV420P,
-                                    1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                                    localVideoParams_.width == 0 ? 1080u : localVideoParams_.width,
-                                    localVideoParams_.height == 0 ? 720u : localVideoParams_.height,
-                                    send_.bitrate,
-                                    static_cast<rational<int>>(localVideoParams_.framerate))
-                      : videoMixer_->getStream("Video Sender");
-            sender_.reset(new VideoSender(
-                getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
+            MediaStream ms = !videoMixer_ ? MediaStream("video sender",
+                                                        AV_PIX_FMT_YUV420P,
+                                                        1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                                                        localVideoParams_.width == 0 ? 1080u : localVideoParams_.width,
+                                                        localVideoParams_.height == 0 ? 720u : localVideoParams_.height,
+                                                        send_.bitrate,
+                                                        static_cast<rational<int>>(localVideoParams_.framerate))
+                                          : videoMixer_->getStream("Video Sender");
+            sender_.reset(
+                new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
@@ -215,7 +215,7 @@ VideoRtpSession::startSender()
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
         // Block reads to received feedback packets
-        if(socketPair_)
+        if (socketPair_)
             socketPair_->setReadBlockingMode(true);
     }
 }
@@ -257,7 +257,7 @@ VideoRtpSession::stopSender(bool forceStopSocket)
 
     if (socketPair_) {
         bool const isReceivingVideo = receive_.enabled && !receive_.onHold;
-        if(forceStopSocket || !isReceivingVideo) {
+        if (forceStopSocket || !isReceivingVideo) {
             socketPair_->stopSendOp();
             socketPair_->setReadBlockingMode(false);
         }
@@ -274,8 +274,7 @@ VideoRtpSession::startReceiver()
     if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
             JAMI_WARN("[%p] Already has a receiver, restarting", this);
-        receiveThread_.reset(
-            new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
+        receiveThread_.reset(new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
 
         // ensure that start has been called
         if (not socketPair_)
@@ -296,8 +295,8 @@ VideoRtpSession::startReceiver()
             if (activeStream)
                 videoMixer_->setActiveStream(streamId_);
         }
-        receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-            asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
+        receiveThread_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+            asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
                 if (auto shared = w.lock())
                     shared->attachRemoteRecorder(ms);
             });
@@ -364,7 +363,7 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
         recorder_->removeStream(ms);
     }
 
-    if(forceStopSocket || !isSendingVideo)
+    if (forceStopSocket || !isSendingVideo)
         receiveThread_->stopLoop();
     receiveThread_->stopSink();
 }
@@ -397,8 +396,7 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
         last_REMB_inc_ = clock::now();
         last_REMB_dec_ = clock::now();
 
-        socketPair_->setRtpDelayCallback(
-            [&](int gradient, int deltaT) { delayMonitor(gradient, deltaT); });
+        socketPair_->setRtpDelayCallback([&](int gradient, int deltaT) { delayMonitor(gradient, deltaT); });
 
         if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
@@ -703,14 +701,13 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
             newBitrate *= 1.0f - rtcpi->packetLoss / 150.0f;
             histoLoss_.clear();
             lastMediaRestart_ = now;
-            JAMI_DBG(
-                "[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from "
-                "%u Kbps to %d Kbps, ratio %f (ponderate loss: %f%%, packet loss rate: %f%%)",
-                oldBitrate,
-                newBitrate,
-                (float) newBitrate / oldBitrate,
-                pondLoss,
-                rtcpi->packetLoss);
+            JAMI_DBG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from "
+                     "%u Kbps to %d Kbps, ratio %f (ponderate loss: %f%%, packet loss rate: %f%%)",
+                     oldBitrate,
+                     newBitrate,
+                     (float) newBitrate / oldBitrate,
+                     pondLoss,
+                     rtcpi->packetLoss);
         }
     }
 
@@ -725,8 +722,7 @@ VideoRtpSession::delayProcessing(int br)
         newBitrate *= 0.85f;
     else if (br == 0x7378) {
         auto now = clock::now();
-        auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - lastBitrateDecrease);
+        auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBitrateDecrease);
         auto increaseCoefficient = std::min(msSinceLastDecrease.count() / 600000.0f + 1.0f, 1.05f);
         newBitrate *= increaseCoefficient;
     } else
@@ -782,8 +778,7 @@ VideoRtpSession::setupVideoBitrateInfo()
             videoBitrateInfo_.packetLostThreshold,
         };
     } else {
-        videoBitrateInfo_
-            = {0, 0, 0, 0, 0, 0, 0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+        videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
     }
 }
 
@@ -831,16 +826,16 @@ VideoRtpSession::initRecorder()
     if (!recorder_)
         return;
     if (receiveThread_) {
-        receiveThread_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-            asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
+        receiveThread_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+            asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
                 if (auto shared = w.lock())
                     shared->attachRemoteRecorder(ms);
             });
         });
     }
     if (videoLocal_ && !send_.onHold) {
-        videoLocal_->setRecorderCallback([w=weak_from_this()](const MediaStream& ms) {
-            asio::post(*Manager::instance().ioContext(), [w=std::move(w), ms]() {
+        videoLocal_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
+            asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
                 if (auto shared = w.lock())
                     shared->attachLocalRecorder(ms);
             });

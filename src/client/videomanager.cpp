@@ -108,9 +108,7 @@ AudioFrame::setFormat(const jami::AudioFormat& format)
 jami::AudioFormat
 AudioFrame::getFormat() const
 {
-    return {(unsigned) frame_->sample_rate,
-            (unsigned) frame_->ch_layout.nb_channels,
-            (AVSampleFormat) frame_->format};
+    return {(unsigned) frame_->sample_rate, (unsigned) frame_->ch_layout.nb_channels, (AVSampleFormat) frame_->format};
 }
 
 size_t
@@ -170,8 +168,7 @@ AudioFrame::mix(const AudioFrame& frame)
             }
         }
     } else {
-        throw std::invalid_argument(std::string("Unsupported format for mixing: ")
-                                    + av_get_sample_fmt_name(fmt));
+        throw std::invalid_argument(std::string("Unsupported format for mixing: ") + av_get_sample_fmt_name(fmt));
     }
 }
 
@@ -181,8 +178,7 @@ AudioFrame::calcRMS() const
     double rms = 0.0;
     auto fmt = static_cast<AVSampleFormat>(frame_->format);
     bool planar = av_sample_fmt_is_planar(fmt);
-    int perChannel = planar ? frame_->nb_samples
-                            : frame_->nb_samples * frame_->ch_layout.nb_channels;
+    int perChannel = planar ? frame_->nb_samples : frame_->nb_samples * frame_->ch_layout.nb_channels;
     int channels = planar ? frame_->ch_layout.nb_channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (int c = 0; c < channels; ++c) {
@@ -201,8 +197,7 @@ AudioFrame::calcRMS() const
         }
     } else {
         // Should not happen
-        JAMI_ERR() << "Unsupported format for getting volume level: "
-                   << av_get_sample_fmt_name(fmt);
+        JAMI_ERR() << "Unsupported format for getting volume level: " << av_get_sample_fmt_name(fmt);
         return 0.0;
     }
     // divide by the number of multi-byte samples
@@ -236,10 +231,7 @@ VideoFrame::copyFrom(const VideoFrame& o)
 size_t
 VideoFrame::size() const noexcept
 {
-    return av_image_get_buffer_size((AVPixelFormat) frame_->format,
-                                    frame_->width,
-                                    frame_->height,
-                                    1);
+    return av_image_get_buffer_size((AVPixelFormat) frame_->format, frame_->width, frame_->height, 1);
 }
 
 int
@@ -275,8 +267,7 @@ VideoFrame::reserve(int format, int width, int height)
 
     if (allocated_) {
         // nothing to do if same properties
-        if (width == libav_frame->width and height == libav_frame->height
-            and format == libav_frame->format)
+        if (width == libav_frame->width and height == libav_frame->height and format == libav_frame->format)
             av_frame_unref(libav_frame);
     }
 
@@ -304,11 +295,8 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexc
 }
 
 void
-VideoFrame::setFromMemory(uint8_t* ptr,
-                          int format,
-                          int width,
-                          int height,
-                          const std::function<void(uint8_t*)>& cb) noexcept
+VideoFrame::setFromMemory(
+    uint8_t* ptr, int format, int width, int height, const std::function<void(uint8_t*)>& cb) noexcept
 {
     setFromMemory(ptr, format, width, height);
     if (cb) {
@@ -341,8 +329,7 @@ VideoFrame::getOrientation() const
 {
     int32_t* matrix {nullptr};
     if (auto p = packet()) {
-        matrix = reinterpret_cast<int32_t*>(
-            av_packet_get_side_data(p, AV_PKT_DATA_DISPLAYMATRIX, nullptr));
+        matrix = reinterpret_cast<int32_t*>(av_packet_get_side_data(p, AV_PKT_DATA_DISPLAYMATRIX, nullptr));
     } else if (auto p = pointer()) {
         if (AVFrameSideData* side_data = av_frame_get_side_data(p, AV_FRAME_DATA_DISPLAYMATRIX)) {
             matrix = reinterpret_cast<int32_t*>(side_data->data);
@@ -437,8 +424,7 @@ std::map<std::string, std::string>
 getSettings(const std::string& deviceId)
 {
     if (auto vm = jami::Manager::instance().getVideoManager()) {
-        return vm->videoDeviceMonitor.getSettings(deviceId)
-            .to_map();
+        return vm->videoDeviceMonitor.getSettings(deviceId).to_map();
     }
     return {};
 }
@@ -679,8 +665,7 @@ setEncodingAccelerated(bool state)
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void
-addVideoDevice(const std::string& node,
-               const std::vector<std::map<std::string, std::string>>& devInfo)
+addVideoDevice(const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo)
 {
     if (auto videoManager = jami::Manager::instance().getVideoManager()) {
         videoManager->videoDeviceMonitor.addDevice(node, devInfo);
@@ -788,11 +773,11 @@ std::string
 createMediaPlayer(const std::string& path)
 {
     if (auto vmgr = Manager::instance().getVideoManager()) {
-		auto& player = vmgr->mediaPlayers[path];
-	    if (!player) {
-	        player = std::make_shared<MediaPlayer>(path);
-	    }
-	    return path;
+        auto& player = vmgr->mediaPlayers[path];
+        if (!player) {
+            player = std::make_shared<MediaPlayer>(path);
+        }
+        return path;
     }
     return {};
 }

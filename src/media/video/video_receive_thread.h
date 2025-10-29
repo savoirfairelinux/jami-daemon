@@ -55,10 +55,7 @@ public:
     void stopLoop();
     void decodeFrame();
     void addIOContext(SocketPair& socketPair);
-    void setRequestKeyFrameCallback(std::function<void(void)> cb)
-    {
-        keyFrameRequestCallback_ = std::move(cb);
-    };
+    void setRequestKeyFrameCallback(std::function<void(void)> cb) { keyFrameRequestCallback_ = std::move(cb); };
     void startSink();
     void stopSink();
     std::shared_ptr<SinkClient>& getSink() { return sink_; }
@@ -76,13 +73,9 @@ public:
      */
     void setRotation(int angle);
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-    {
-        onSuccessfulSetup_ = cb;
-    }
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
 
-    void setRecorderCallback(
-        const std::function<void(const MediaStream& ms)>& cb);
+    void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 
 private:
     NON_COPYABLE(VideoReceiveThread);

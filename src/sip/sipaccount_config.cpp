@@ -95,8 +95,7 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
     // out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value
     //     << (presence_ and presence_->isEnabled());
 
-    out << YAML::Key << Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE << YAML::Value
-        << registrationExpire;
+    out << YAML::Key << Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE << YAML::Value << registrationExpire;
     out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute;
     out << YAML::Key << Conf::ALLOW_IP_AUTO_REWRITE << YAML::Value << allowIPAutoRewrite;
     out << YAML::Key << Conf::STUN_ENABLED_KEY << YAML::Value << stunEnabled;
@@ -122,8 +121,7 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
 
     // srtp submap
     out << YAML::Key << Conf::SRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value
-        << sip_utils::getKeyExchangeName(srtpKeyExchange);
+    out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value << sip_utils::getKeyExchangeName(srtpKeyExchange);
     out << YAML::Key << Conf::RTP_FALLBACK_KEY << YAML::Value << srtpFallback;
     out << YAML::EndMap;
 
@@ -153,10 +151,9 @@ SipAccountConfig::unserialize(const YAML::Node& node)
     parseValueOptional(node, Conf::STUN_SERVER_KEY, stunServer);
 
     const auto& credsNode = node[Conf::CRED_KEY];
-    setCredentials(parseVectorMap(credsNode,
-                                  {Conf::CONFIG_ACCOUNT_REALM,
-                                   Conf::CONFIG_ACCOUNT_USERNAME,
-                                   Conf::CONFIG_ACCOUNT_PASSWORD}));
+    setCredentials(
+        parseVectorMap(credsNode,
+                       {Conf::CONFIG_ACCOUNT_REALM, Conf::CONFIG_ACCOUNT_USERNAME, Conf::CONFIG_ACCOUNT_PASSWORD}));
 
     // get tls submap
     try {
@@ -232,11 +229,9 @@ SipAccountConfig::toMap() const
     a.emplace(Conf::CONFIG_TLS_SERVER_NAME, tlsServerName);
     a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE,
-              tlsRequireClientCertificate ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, std::to_string(tlsNegotiationTimeout));
-    a.emplace(Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK,
-              tlsDisableSecureDlgCheck ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_TLS_DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck ? TRUE_STR : FALSE_STR);
     return a;
 }
 

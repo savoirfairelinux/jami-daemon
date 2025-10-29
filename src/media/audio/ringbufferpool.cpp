@@ -137,8 +137,8 @@ RingBufferPool::removeReadBindings(const std::string& ringbufferId)
 }
 
 void
-RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer> &sourceBuffer,
-                                      const std::string &readerBufferId) {
+RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& sourceBuffer, const std::string& readerBufferId)
+{
     if (readerBufferId != DEFAULT_ID and sourceBuffer->getId() == readerBufferId)
         JAMI_WARNING("RingBuffer has a readoffset on itself");
 
@@ -147,8 +147,9 @@ RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer> &sourceB
 }
 
 void
-RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer> &sourceBuffer,
-                                           const std::string &readerBufferId) {
+RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& sourceBuffer,
+                                           const std::string& readerBufferId)
+{
     if (auto bindings = getReadBindings(readerBufferId)) {
         bindings->erase(sourceBuffer);
         if (bindings->empty())
@@ -159,17 +160,17 @@ RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer> &so
 }
 
 void
-RingBufferPool::bindRingBuffers(const std::string &ringbufferId1,
-                                const std::string &ringbufferId2) {
+RingBufferPool::bindRingBuffers(const std::string& ringbufferId1, const std::string& ringbufferId2)
+{
     JAMI_LOG("Bind ringbuffer {} to ringbuffer {}", ringbufferId1, ringbufferId2);
 
-    const auto &rb1 = getRingBuffer(ringbufferId1);
+    const auto& rb1 = getRingBuffer(ringbufferId1);
     if (not rb1) {
         JAMI_ERROR("No ringbuffer associated with id '{}'", ringbufferId1);
         return;
     }
 
-    const auto &rb2 = getRingBuffer(ringbufferId2);
+    const auto& rb2 = getRingBuffer(ringbufferId2);
     if (not rb2) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId2);
         return;
@@ -182,11 +183,11 @@ RingBufferPool::bindRingBuffers(const std::string &ringbufferId1,
 }
 
 void
-RingBufferPool::bindHalfDuplexOut(const std::string &readerBufferId,
-                                  const std::string &sourceBufferId) {
+RingBufferPool::bindHalfDuplexOut(const std::string& readerBufferId, const std::string& sourceBufferId)
+{
     /* This method is used only for active ringbuffers, if this ringbuffer does not exist,
      * do nothing */
-    if (const auto &rb = getRingBuffer(sourceBufferId)) {
+    if (const auto& rb = getRingBuffer(sourceBufferId)) {
         std::lock_guard lk(stateLock_);
 
         // p1 est le binding de p2 (p2 lit le stream de p1)
@@ -195,17 +196,17 @@ RingBufferPool::bindHalfDuplexOut(const std::string &readerBufferId,
 }
 
 void
-RingBufferPool::unbindRingBuffers(const std::string &ringbufferId1,
-                                  const std::string &ringbufferId2) {
+RingBufferPool::unbindRingBuffers(const std::string& ringbufferId1, const std::string& ringbufferId2)
+{
     JAMI_LOG("Unbind ringbuffers {} and {}", ringbufferId1, ringbufferId2);
 
-    const auto &rb1 = getRingBuffer(ringbufferId1);
+    const auto& rb1 = getRingBuffer(ringbufferId1);
     if (not rb1) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId1);
         return;
     }
 
-    const auto &rb2 = getRingBuffer(ringbufferId2);
+    const auto& rb2 = getRingBuffer(ringbufferId2);
     if (not rb2) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId2);
         return;
@@ -218,17 +219,18 @@ RingBufferPool::unbindRingBuffers(const std::string &ringbufferId1,
 }
 
 void
-RingBufferPool::unBindHalfDuplexOut(const std::string &readerBufferId,
-                                    const std::string &sourceBufferId) {
+RingBufferPool::unBindHalfDuplexOut(const std::string& readerBufferId, const std::string& sourceBufferId)
+{
     std::lock_guard lk(stateLock_);
 
-    if (const auto &rb = getRingBuffer(sourceBufferId))
+    if (const auto& rb = getRingBuffer(sourceBufferId))
         removeReaderFromRingBuffer(rb, readerBufferId);
 }
 
 void
-RingBufferPool::unBindAllHalfDuplexOut(const std::string &ringbufferId) {
-    const auto &rb = getRingBuffer(ringbufferId);
+RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
+{
+    const auto& rb = getRingBuffer(ringbufferId);
     if (not rb) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
@@ -238,26 +240,28 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string &ringbufferId) {
     if (not bindings)
         return;
     const auto bindings_copy = *bindings; // temporary copy
-    for (const auto &rbuf: bindings_copy) {
+    for (const auto& rbuf : bindings_copy) {
         removeReaderFromRingBuffer(rb, rbuf->getId());
     }
 }
 
 void
-RingBufferPool::unBindAllHalfDuplexIn(const std::string &sourceBufferId) {
+RingBufferPool::unBindAllHalfDuplexIn(const std::string& sourceBufferId)
+{
     std::lock_guard lk(stateLock_);
-    const std::shared_ptr<RingBuffer> &ringBuffer = getRingBuffer(sourceBufferId);
-    const std::vector<std::string> &subscribers = ringBuffer->getSubscribers();
-    for (const auto &subscriber: subscribers) {
+    const std::shared_ptr<RingBuffer>& ringBuffer = getRingBuffer(sourceBufferId);
+    const std::vector<std::string>& subscribers = ringBuffer->getSubscribers();
+    for (const auto& subscriber : subscribers) {
         removeReaderFromRingBuffer(ringBuffer, subscriber);
     }
 }
 
 void
-RingBufferPool::unBindAll(const std::string &ringbufferId) {
+RingBufferPool::unBindAll(const std::string& ringbufferId)
+{
     JAMI_LOG("Unbind ringbuffer {} from all bound ringbuffers", ringbufferId);
 
-    const auto &rb = getRingBuffer(ringbufferId);
+    const auto& rb = getRingBuffer(ringbufferId);
     if (not rb) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
@@ -270,7 +274,7 @@ RingBufferPool::unBindAll(const std::string &ringbufferId) {
         return;
 
     const auto bindings_copy = *bindings; // temporary copy
-    for (const auto &rbuf: bindings_copy) {
+    for (const auto& rbuf : bindings_copy) {
         removeReaderFromRingBuffer(rbuf, ringbufferId);
         removeReaderFromRingBuffer(rb, rbuf->getId());
     }
@@ -305,8 +309,7 @@ RingBufferPool::getData(const std::string& ringbufferId)
 }
 
 bool
-RingBufferPool::waitForDataAvailable(const std::string& ringbufferId,
-                                     const std::chrono::microseconds& max_wait) const
+RingBufferPool::waitForDataAvailable(const std::string& ringbufferId, const std::chrono::microseconds& max_wait) const
 {
     std::unique_lock<std::recursive_mutex> lk(stateLock_);
 

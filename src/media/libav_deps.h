@@ -38,9 +38,7 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 
 #if LIBAVUTIL_VERSION_MAJOR < 56
-AVFrameSideData* av_frame_new_side_data_from_buf(AVFrame* frame,
-                                                 enum AVFrameSideDataType type,
-                                                 AVBufferRef* buf);
+AVFrameSideData* av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, AVBufferRef* buf);
 #endif
 }
 

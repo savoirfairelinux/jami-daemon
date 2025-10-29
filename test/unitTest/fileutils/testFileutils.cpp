@@ -29,9 +29,12 @@
 #include <cstdlib>
 #include <unistd.h>
 
-namespace jami { namespace fileutils { namespace test {
+namespace jami {
+namespace fileutils {
+namespace test {
 
-class FileutilsTest : public CppUnit::TestFixture {
+class FileutilsTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "fileutils"; }
 
@@ -124,25 +127,27 @@ FileutilsTest::testIsDirectoryWritable()
 void
 FileutilsTest::testGetCleanPath()
 {
-    //empty base
+    // empty base
     CPPUNIT_ASSERT(getCleanPath("", NON_EXISTANT_PATH).compare(NON_EXISTANT_PATH) == 0);
-    //the base is not contain in the path
+    // the base is not contain in the path
     CPPUNIT_ASSERT(getCleanPath(NON_EXISTANT_PATH, NON_EXISTANT_PATH_BASE).compare(NON_EXISTANT_PATH_BASE) == 0);
-    //the method is use correctly
+    // the method is use correctly
     CPPUNIT_ASSERT(getCleanPath(NON_EXISTANT_PATH_BASE, NON_EXISTANT_PATH).compare("test") == 0);
 }
 
 void
 FileutilsTest::testFullPath()
 {
-    //empty base
+    // empty base
     CPPUNIT_ASSERT(getFullPath("", "relativePath").compare("relativePath") == 0);
-    //the path is not relative
+    // the path is not relative
     CPPUNIT_ASSERT(getFullPath(NON_EXISTANT_PATH_BASE, "/tmp").compare("/tmp") == 0);
-    //the method is use correctly
+    // the method is use correctly
     CPPUNIT_ASSERT(getFullPath(NON_EXISTANT_PATH_BASE, "test").compare(NON_EXISTANT_PATH) == 0);
 }
 
-}}} // namespace jami::test::fileutils
+} // namespace test
+} // namespace fileutils
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::fileutils::test::FileutilsTest::name());

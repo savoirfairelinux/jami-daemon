@@ -34,14 +34,11 @@ ConversationChannelHandler::connect(const DeviceId& deviceId,
                                     const std::string& connectionType,
                                     bool forceNewConnection)
 {
-    connectionManager_.connectDevice(deviceId,
-                                     "git://" + deviceId.toString() + "/" + channelName,
-                                     std::move(cb));
+    connectionManager_.connectDevice(deviceId, "git://" + deviceId.toString() + "/" + channelName, std::move(cb));
 }
 
 bool
-ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                      const std::string& name)
+ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)
 {
     auto acc = account_.lock();
     if (!cert || !cert->issuer || !acc)
@@ -56,11 +53,17 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
         if (auto convModule = acc->convModule(true)) {
             auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
             if (!res) {
-                JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but user {} is banned", acc->getAccountID(), name, cert->issuer->getId().toString());
+                JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but user {} is banned",
+                             acc->getAccountID(),
+                             name,
+                             cert->issuer->getId().toString());
             } else {
                 res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
                 if (!res) {
-                    JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but device {} is banned", acc->getAccountID(), name, cert->getLongId().toString());
+                    JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but device {} is banned",
+                                 acc->getAccountID(),
+                                 name,
+                                 cert->getLongId().toString());
                 }
             }
             return res;

@@ -23,13 +23,15 @@
 
 #include <stdexcept>
 
-void init_daemon()
+void
+init_daemon()
 {
     libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
     libjami::start("test/unitTest/jami-sample.yml");
 }
 
-int main()
+int
+main()
 {
     init_daemon();
 
@@ -40,7 +42,7 @@ int main()
     runner.addTest(registry.makeTest());
 
     // Use a compiler error format outputter for results and output into stderr
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr ));
+    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 
     bool ret;
 

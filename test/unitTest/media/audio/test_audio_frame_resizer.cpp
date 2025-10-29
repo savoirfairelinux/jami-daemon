@@ -28,9 +28,11 @@
 
 #include <stdexcept>
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class AudioFrameResizerTest : public CppUnit::TestFixture {
+class AudioFrameResizerTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "audio_frame_resizer"; }
 
@@ -80,7 +82,9 @@ void
 AudioFrameResizerTest::testSameSize()
 {
     // input.nb_samples == output.nb_samples
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f) {
+        gotFrame(std::move(f));
+    }));
     auto in = getFrame(outputSize_);
     // gotFrame should be called after this
     CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
@@ -91,7 +95,9 @@ void
 AudioFrameResizerTest::testBiggerInput()
 {
     // input.nb_samples > output.nb_samples
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f) {
+        gotFrame(std::move(f));
+    }));
     auto in = getFrame(outputSize_ + 100);
     // gotFrame should be called after this
     CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
@@ -102,7 +108,9 @@ void
 AudioFrameResizerTest::testBiggerOutput()
 {
     // input.nb_samples < output.nb_samples
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f) {
+        gotFrame(std::move(f));
+    }));
     auto in = getFrame(outputSize_ - 100);
     CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
     CPPUNIT_ASSERT(q_->samples() == outputSize_ - 100);
@@ -116,14 +124,17 @@ void
 AudioFrameResizerTest::testDifferentFormat()
 {
     // frame format != q_->format_
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
-    auto in = getFrame(outputSize_-27);
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f) {
+        gotFrame(std::move(f));
+    }));
+    auto in = getFrame(outputSize_ - 27);
     q_->enqueue(std::move(in));
-    CPPUNIT_ASSERT(q_->samples()==outputSize_-27);
+    CPPUNIT_ASSERT(q_->samples() == outputSize_ - 27);
     q_->setFormat(AudioFormat::MONO(), 960);
     CPPUNIT_ASSERT(q_->samples() == 0);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::AudioFrameResizerTest::name());

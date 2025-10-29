@@ -33,11 +33,12 @@ namespace {
 secp256k1_context const*
 getCtx()
 {
-    struct secp256k1Deleter {
+    struct secp256k1Deleter
+    {
         void operator()(secp256k1_context* b) { secp256k1_context_destroy(b); }
     };
-    static std::unique_ptr<secp256k1_context, secp256k1Deleter>
-        s_ctx(secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY));
+    static std::unique_ptr<secp256k1_context, secp256k1Deleter> s_ctx(
+        secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY));
     return s_ctx.get();
 }
 

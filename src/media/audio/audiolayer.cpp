@@ -43,8 +43,7 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
     , pref_(pref)
-    , mainRingBuffer_(
-          Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
@@ -54,11 +53,11 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 
     JAMI_LOG("[audiolayer] AGC: {:d}, noiseReduce: {:s}, VAD: {:d}, echoCancel: {:s}, audioProcessor: {:s}",
-              pref_.isAGCEnabled(),
-              pref.getNoiseReduce(),
-              pref.getVadEnabled(),
-              pref.getEchoCanceller(),
-              pref.getAudioProcessor());
+             pref_.isAGCEnabled(),
+             pref.getNoiseReduce(),
+             pref.getVadEnabled(),
+             pref.getEchoCanceller(),
+             pref.getAudioProcessor());
 }
 
 AudioLayer::~AudioLayer() {}
@@ -154,8 +153,7 @@ AudioLayer::setHasNativeAEC(bool hasNativeAEC)
     hasNativeAEC_ = hasNativeAEC;
     // if we have a current audio processor, tell it to enable/disable its own AEC
     if (audioProcessor) {
-        audioProcessor->enableEchoCancel(
-            shouldUseAudioProcessorEchoCancel(hasNativeAEC, pref_.getEchoCanceller()));
+        audioProcessor->enableEchoCancel(shouldUseAudioProcessorEchoCancel(hasNativeAEC, pref_.getEchoCanceller()));
     }
 }
 
@@ -194,9 +192,9 @@ AudioLayer::createAudioProcessor()
     JAMI_WARNING("Input {}", audioInputFormat_.toString());
     JAMI_WARNING("Output {}", audioFormat_.toString());
     JAMI_WARNING("Starting audio processor with: [{} Hz, {} channels, {} samples/frame]",
-              sample_rate,
-              nb_channels,
-              frame_size);
+                 sample_rate,
+                 nb_channels,
+                 frame_size);
 
     if (pref_.getAudioProcessor() == "webrtc") {
 #if HAVE_WEBRTC_AP
@@ -231,8 +229,7 @@ AudioLayer::createAudioProcessor()
 
         audioProcessor->enableAutomaticGainControl(pref_.isAGCEnabled());
 
-        audioProcessor->enableEchoCancel(
-            shouldUseAudioProcessorEchoCancel(hasNativeAEC_, pref_.getEchoCanceller()));
+        audioProcessor->enableEchoCancel(shouldUseAudioProcessorEchoCancel(hasNativeAEC_, pref_.getEchoCanceller()));
 
         audioProcessor->enableVoiceActivityDetection(pref_.getVadEnabled());
     }
@@ -282,7 +279,8 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
         auto fileformat = fileToPlay->getFormat();
         bool resample = format != fileformat;
 
-        size_t readableSamples = resample ? rational<size_t>(writableSamples * (size_t)fileformat.sample_rate, format.sample_rate)
+        size_t readableSamples = resample ? rational<size_t>(writableSamples * (size_t) fileformat.sample_rate,
+                                                             format.sample_rate)
                                                 .real<size_t>()
                                           : writableSamples;
 

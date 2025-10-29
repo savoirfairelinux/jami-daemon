@@ -61,20 +61,14 @@ public:
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
 
-    const DeviceParams& getConfig() const {
-        return decOpts_;
-    }
-    std::shared_future<DeviceParams> getParams() const {
-        return futureDecOpts_;
-    }
+    const DeviceParams& getConfig() const { return decOpts_; }
+    std::shared_future<DeviceParams> getParams() const { return futureDecOpts_; }
 
     MediaStream getInfo() const;
 
     void setSink(const std::string& sinkId);
     void updateStartTime(int64_t startTime);
-    void configureFilePlayback(const std::string& path,
-                               std::shared_ptr<MediaDemuxer>& demuxer,
-                               int index);
+    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
     void flushBuffers();
     void setPaused(bool paused) { paused_ = paused; }
     void setSeekTime(int64_t time);
@@ -83,10 +77,7 @@ public:
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-    {
-        onSuccessfulSetup_ = cb;
-    }
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
 
     /**
      * Restart stopped video input
@@ -148,10 +139,7 @@ private:
     std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
     VideoInputMode inputMode_;
-    inline bool videoManagedByClient() const
-    {
-        return inputMode_ == VideoInputMode::ManagedByClient;
-    }
+    inline bool videoManagedByClient() const { return inputMode_ == VideoInputMode::ManagedByClient; }
     bool playingFile_ = false;
     std::atomic_bool paused_ {true};
 

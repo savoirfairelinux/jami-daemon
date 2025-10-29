@@ -38,7 +38,8 @@ VideoScaler::~VideoScaler()
 }
 
 void
-VideoScaler::scale(const VideoFrame& input, VideoFrame& output){
+VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
+{
     scale(input.pointer(), output.pointer());
 }
 
@@ -117,8 +118,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
     }
 
     // buffer overflow checks
-    if ((xoff + dest_width > (unsigned) output_frame->width)
-        || (yoff + dest_height > (unsigned) output_frame->height)) {
+    if ((xoff + dest_width > (unsigned) output_frame->width) || (yoff + dest_height > (unsigned) output_frame->height)) {
         JAMI_ERR("Unable to scale video");
         return;
     }
@@ -149,17 +149,10 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
             y_shift = -((-y_shift) >> out_desc->log2_chroma_h);
         }
         auto x_step = out_desc->comp[i].step;
-        tmp_data_[i] = output_frame->data[i] + y_shift * output_frame->linesize[i]
-                       + x_shift * x_step;
+        tmp_data_[i] = output_frame->data[i] + y_shift * output_frame->linesize[i] + x_shift * x_step;
     }
 
-    sws_scale(ctx_,
-              input_frame->data,
-              input_frame->linesize,
-              0,
-              input_frame->height,
-              tmp_data_,
-              output_frame->linesize);
+    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0, input_frame->height, tmp_data_, output_frame->linesize);
 }
 
 std::unique_ptr<VideoFrame>

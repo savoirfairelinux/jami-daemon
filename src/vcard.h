@@ -32,7 +32,8 @@ struct Delimiter
     constexpr static std::string_view END_TOKEN = "END:VCARD";
     constexpr static std::string_view BEGIN_TOKEN_KEY = "BEGIN";
     constexpr static std::string_view END_TOKEN_KEY = "END";
-};;
+};
+;
 
 struct Property
 {

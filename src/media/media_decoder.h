@@ -72,15 +72,7 @@ class Resampler;
 class MediaIOHandle;
 class MediaDecoder;
 
-enum class DecodeStatus {
-    Success,
-    FrameFinished,
-    EndOfFile,
-    ReadError,
-    DecodeError,
-    RestartRequired,
-    FallBack
-};
+enum class DecodeStatus { Success, FrameFinished, EndOfFile, ReadError, DecodeError, RestartRequired, FallBack };
 
 class MediaDemuxer
 {
@@ -88,14 +80,7 @@ public:
     MediaDemuxer();
     ~MediaDemuxer();
 
-    enum class Status {
-        Success,
-        EndOfFile,
-        ReadBufferOverflow,
-        ReadError,
-        FallBack,
-        RestartRequired
-    };
+    enum class Status { Success, EndOfFile, ReadBufferOverflow, ReadError, FallBack, RestartRequired };
 
     static const char* getStatusStr(Status status);
 
@@ -206,10 +191,7 @@ public:
 
     MediaStream getStream(std::string name = "") const;
 
-    void setResolutionChangedCallback(std::function<void(int, int)> cb)
-    {
-        resolutionChangedCallback_ = std::move(cb);
-    }
+    void setResolutionChangedCallback(std::function<void(int, int)> cb) { resolutionChangedCallback_ = std::move(cb); }
 
     void setFEC(bool enable) { fecEnabled_ = enable; }
 

@@ -118,8 +118,7 @@ test_SIP::tearDown()
     std::cout << "test_SIP: Clean all remaining sipp instances" << std::endl;
     int ret = system("killall sipp");
     if (ret)
-        std::cout << "test_SIP: Error from system call, killall sipp"
-                  << ", ret=" << ret << '\n';
+        std::cout << "test_SIP: Error from system call, killall sipp" << ", ret=" << ret << '\n';
     Manager::instance().callFactory.clear();
 }
 void

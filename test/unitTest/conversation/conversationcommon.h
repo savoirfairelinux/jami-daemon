@@ -26,9 +26,7 @@ void addVote(std::shared_ptr<JamiAccount> account,
              const std::string& votedUri,
              const std::string& content);
 
-void simulateRemoval(std::shared_ptr<JamiAccount> account,
-                     const std::string& convId,
-                     const std::string& votedUri);
+void simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId, const std::string& votedUri);
 
 void addFile(std::shared_ptr<JamiAccount> account,
              const std::string& convId,
@@ -39,7 +37,5 @@ void addAll(std::shared_ptr<JamiAccount> account, const std::string& convId);
 
 void commit(std::shared_ptr<JamiAccount> account, const std::string& convId, Json::Value& message);
 
-std::string commitInRepo(const std::string& repoPath,
-                         std::shared_ptr<JamiAccount> account,
-                         const std::string& message);
+std::string commitInRepo(const std::string& repoPath, std::shared_ptr<JamiAccount> account, const std::string& message);
 } // namespace jami

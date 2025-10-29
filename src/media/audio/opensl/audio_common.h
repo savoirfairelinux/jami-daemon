@@ -44,7 +44,7 @@ convertToSLSampleFormat(const jami::AudioFormat& infos)
             .bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_16,
             .containerSize = SL_PCMSAMPLEFORMAT_FIXED_16,
             .channelMask = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
-                                                : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+                                                  : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
             .endianness = SL_BYTEORDER_LITTLEENDIAN,
             .representation = SL_ANDROID_PCM_REPRESENTATION_SIGNED_INT,
         };
@@ -56,7 +56,7 @@ convertToSLSampleFormat(const jami::AudioFormat& infos)
             .bitsPerSample = SL_PCMSAMPLEFORMAT_FIXED_32,
             .containerSize = SL_PCMSAMPLEFORMAT_FIXED_32,
             .channelMask = infos.nb_channels <= 1 ? SL_SPEAKER_FRONT_CENTER
-                                                : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
+                                                  : SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
             .endianness = SL_BYTEORDER_LITTLEENDIAN,
             .representation = SL_ANDROID_PCM_REPRESENTATION_FLOAT,
         };

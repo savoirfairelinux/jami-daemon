@@ -31,12 +31,7 @@ extern "C" {
 namespace jami {
 namespace video {
 
-
-enum class DeviceState {
-    NOT_TESTED,
-    USABLE,
-    NOT_USABLE
-};
+enum class DeviceState { NOT_TESTED, USABLE, NOT_USABLE };
 
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
@@ -56,8 +51,7 @@ public:
      * @param desiredFormat Software pixel format that the hardware outputs.
      * @returns Software frame.
      */
-    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame,
-                                                            AVPixelFormat desiredFormat);
+    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
 
     /**
      * @brief Constructs a HardwareAccel object
@@ -148,10 +142,7 @@ public:
      */
     bool linkHardware(AVBufferRef* framesCtx);
 
-    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id,
-                                                       int width,
-                                                       int height,
-                                                       CodecType type);
+    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
     int initAPI(bool linkable, AVBufferRef* framesCtx);
     bool dynBitrate() { return dynBitrate_; }
 

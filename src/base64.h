@@ -31,8 +31,10 @@ class base64_exception : public std::exception
 
 std::string encode(std::string_view);
 
-inline std::string encode(const std::vector<uint8_t>& data) {
-    return encode(std::string_view((const char*)data.data(), data.size()));
+inline std::string
+encode(const std::vector<uint8_t>& data)
+{
+    return encode(std::string_view((const char*) data.data(), data.size()));
 }
 
 std::vector<uint8_t> decode(std::string_view);

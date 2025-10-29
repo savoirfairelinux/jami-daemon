@@ -51,7 +51,6 @@ int ff_srtp_encrypt(struct SRTPContext* s, const uint8_t* in, int len, uint8_t* 
 /* RTCP packet types */
 enum RTCPType { RTCP_FIR = 192, RTCP_IJ = 195, RTCP_SR = 200, RTCP_TOKEN = 210, RTCP_REMB = 206 };
 
-#define RTP_PT_IS_RTCP(x) \
-    (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || ((x) >= RTCP_SR && (x) <= RTCP_TOKEN))
+#define RTP_PT_IS_RTCP(x) (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || ((x) >= RTCP_SR && (x) <= RTCP_TOKEN))
 
 #endif /* SRTP_H */

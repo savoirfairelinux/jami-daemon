@@ -57,10 +57,7 @@ compress(const std::string& str)
 {
     auto destSize = compressBound(str.size());
     std::vector<uint8_t> outbuffer(destSize);
-    int ret = ::compress(reinterpret_cast<Bytef*>(outbuffer.data()),
-                         &destSize,
-                         (Bytef*) str.data(),
-                         str.size());
+    int ret = ::compress(reinterpret_cast<Bytef*>(outbuffer.data()), &destSize, (Bytef*) str.data(), str.size());
     outbuffer.resize(destSize);
 
     if (ret != Z_OK) {
@@ -111,7 +108,7 @@ decompress(const std::vector<uint8_t>& str)
     z_stream zs; // z_stream is zlib's control structure
     memset(&zs, 0, sizeof(zs));
 
-    if (inflateInit2(&zs, 32+MAX_WBITS) != Z_OK)
+    if (inflateInit2(&zs, 32 + MAX_WBITS) != Z_OK)
         throw std::runtime_error("inflateInit failed while decompressing.");
 
     zs.next_in = (Bytef*) str.data();
@@ -231,16 +228,11 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             dhtnet::fileutils::check_dir(directory.c_str());
             mz_zip_reader_entry_open(zip_handle);
             void* buffStream = mz_stream_os_create();
-            if (mz_stream_os_open(buffStream,
-                                  filePath.c_str(),
-                                  MZ_OPEN_MODE_WRITE | MZ_OPEN_MODE_CREATE)
-                == MZ_OK) {
+            if (mz_stream_os_open(buffStream, filePath.c_str(), MZ_OPEN_MODE_WRITE | MZ_OPEN_MODE_CREATE) == MZ_OK) {
                 int chunkSize = 8192;
                 std::vector<uint8_t> fileContent;
                 fileContent.resize(chunkSize);
-                while (auto ret = mz_zip_reader_entry_read(zip_handle,
-                                                           (void*) fileContent.data(),
-                                                           chunkSize)) {
+                while (auto ret = mz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), chunkSize)) {
                     ret = mz_stream_os_write(buffStream, (void*) fileContent.data(), ret);
                     if (ret < 0) {
                         dhtnet::fileutils::removeAll(dir, true);
@@ -280,8 +272,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
 
     // Try to read the archive
     if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
-        throw std::runtime_error("Open Archive: " + archivePath + "\t"
-                                 + archive_error_string(archiveReader.get()));
+        throw std::runtime_error("Open Archive: " + archivePath + "\t" + archive_error_string(archiveReader.get()));
     }
 
     while (true) {
@@ -291,8 +282,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
             break;
         }
         if (r != ARCHIVE_OK && r != ARCHIVE_WARN) {
-            throw std::runtime_error("Error reading archive: "s
-                                     + archive_error_string(archiveReader.get()));
+            throw std::runtime_error("Error reading archive: "s + archive_error_string(archiveReader.get()));
         }
 
         std::string_view fileEntry(archive_entry_pathname(entry));
@@ -360,9 +350,7 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
         if (filename == fileRelativePathName) {
             mz_zip_reader_entry_open(zip_handle);
             fileContent.resize(info->uncompressed_size);
-            mz_zip_reader_entry_read(zip_handle,
-                                     (void*) fileContent.data(),
-                                     info->uncompressed_size);
+            mz_zip_reader_entry_read(zip_handle, (void*) fileContent.data(), info->uncompressed_size);
             mz_zip_reader_entry_close(zip_handle);
             status = -1;
         } else {
@@ -383,8 +371,7 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
 
     // Try to read the archive
     if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
-        throw std::runtime_error("Open Archive: " + archivePath + "\t"
-                                 + archive_error_string(archiveReader.get()));
+        throw std::runtime_error("Open Archive: " + archivePath + "\t" + archive_error_string(archiveReader.get()));
     }
 
     while (true) {
@@ -396,7 +383,8 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
 
         std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "";
         if (r != ARCHIVE_OK) {
-            throw std::runtime_error(fmt::format("Read file pathname: {}: {}", fileEntry, archive_error_string(archiveReader.get())));
+            throw std::runtime_error(
+                fmt::format("Read file pathname: {}: {}", fileEntry, archive_error_string(archiveReader.get())));
         }
 
         // File is ok and the reader has moved past the header
@@ -458,9 +446,8 @@ listFilesFromArchive(const std::string& path)
     struct archive_entry* entry;
 
     archive_read_support_format_all(archiveReader.get());
-    if(archive_read_open_filename(archiveReader.get(), path.c_str(), 10240)) {
-        throw std::runtime_error("Open Archive: " + path + "\t"
-                                 + archive_error_string(archiveReader.get()));
+    if (archive_read_open_filename(archiveReader.get(), path.c_str(), 10240)) {
+        throw std::runtime_error("Open Archive: " + path + "\t" + archive_error_string(archiveReader.get()));
     }
 
     while (archive_read_next_header(archiveReader.get(), &entry) == ARCHIVE_OK) {

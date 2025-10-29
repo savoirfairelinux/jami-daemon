@@ -23,9 +23,11 @@ constexpr static const char* const SIPINFO_STR = "sipinfo";
 constexpr static unsigned MAX_PORT {65536};
 constexpr static unsigned HALF_MAX_PORT {MAX_PORT / 2};
 
-struct SipAccountBaseConfig: public AccountConfig {
+struct SipAccountBaseConfig : public AccountConfig
+{
     SipAccountBaseConfig(const std::string& type, const std::string& id, const std::filesystem::path& path)
-        : AccountConfig(type, id, path) {}
+        : AccountConfig(type, id, path)
+    {}
 
     void serializeDiff(YAML::Emitter& out, const SipAccountBaseConfig& def) const;
     void unserialize(const YAML::Node& node) override;
@@ -75,7 +77,7 @@ struct SipAccountBaseConfig: public AccountConfig {
     /**
      * Port range for video RTP ports
      */
-    std::pair<uint16_t, uint16_t> videoPortRange {49152, (65536) -2};
+    std::pair<uint16_t, uint16_t> videoPortRange {49152, (65536) - 2};
 };
 
 inline void
@@ -87,4 +89,4 @@ updateRange(uint16_t min, uint16_t max, std::pair<uint16_t, uint16_t>& range)
     }
 }
 
-}
+} // namespace jami

@@ -42,7 +42,8 @@ struct MessageChannelHandler::Impl : public std::enable_shared_from_this<Impl>
 };
 
 MessageChannelHandler::MessageChannelHandler(dhtnet::ConnectionManager& cm,
-                                             OnMessage onMessage, OnPeerStateChanged onPeer)
+                                             OnMessage onMessage,
+                                             OnPeerStateChanged onPeer)
     : ChannelHandlerInterface()
     , pimpl_(std::make_shared<Impl>(cm, std::move(onMessage), std::move(onPeer)))
 {}
@@ -61,12 +62,8 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
     }
-    pimpl_->connectionManager_.connectDevice(deviceId,
-                                             channelName,
-                                             std::move(cb),
-                                             false,
-                                             forceNewConnection,
-                                             connectionType);
+    pimpl_->connectionManager_
+        .connectDevice(deviceId, channelName, std::move(cb), false, forceNewConnection, connectionType);
 }
 
 void
@@ -127,8 +124,7 @@ MessageChannelHandler::getChannels(const std::string& peer) const
 }
 
 bool
-MessageChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                 const std::string& /* name */)
+MessageChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& /* name */)
 {
     if (!cert || !cert->issuer)
         return false;
@@ -159,38 +155,37 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
 
     struct DecodingContext
     {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; },
-                               nullptr,
-                               16 * 1024};
+        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 16 * 1024};
     };
 
-    socket->setOnRecv([onMessage = pimpl_->onMessage_,
-                       peerId,
-                       cert,
-                       ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
-        if (!buf)
-            return len;
+    socket->setOnRecv(
+        [onMessage = pimpl_->onMessage_, peerId, cert, ctx = std::make_shared<DecodingContext>()](const uint8_t* buf,
+                                                                                                  size_t len) {
+            if (!buf)
+                return len;
 
-        ctx->pac.reserve_buffer(len);
-        std::copy_n(buf, len, ctx->pac.buffer());
-        ctx->pac.buffer_consumed(len);
+            ctx->pac.reserve_buffer(len);
+            std::copy_n(buf, len, ctx->pac.buffer());
+            ctx->pac.buffer_consumed(len);
 
-        msgpack::object_handle oh;
-        try {
-            while (ctx->pac.next(oh)) {
-                Message msg;
-                oh.get().convert(msg);
-                onMessage(cert, msg.t, msg.c);
+            msgpack::object_handle oh;
+            try {
+                while (ctx->pac.next(oh)) {
+                    Message msg;
+                    oh.get().convert(msg);
+                    onMessage(cert, msg.t, msg.c);
+                }
+            } catch (const std::exception& e) {
+                JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
             }
-        } catch (const std::exception& e) {
-            JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
-        }
-        return len;
-    });
+            return len;
+        });
 }
 
 void
-MessageChannelHandler::closeChannel(const std::string& peer, const DeviceId& device, const std::shared_ptr<dhtnet::ChannelSocket>& conn)
+MessageChannelHandler::closeChannel(const std::string& peer,
+                                    const DeviceId& device,
+                                    const std::shared_ptr<dhtnet::ChannelSocket>& conn)
 {
     if (!conn)
         return;
@@ -214,8 +209,7 @@ MessageChannelHandler::closeChannel(const std::string& peer, const DeviceId& dev
 }
 
 bool
-MessageChannelHandler::sendMessage(const std::shared_ptr<dhtnet::ChannelSocket>& socket,
-                                   const Message& message)
+MessageChannelHandler::sendMessage(const std::shared_ptr<dhtnet::ChannelSocket>& socket, const Message& message)
 {
     if (!socket)
         return false;

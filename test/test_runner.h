@@ -7,8 +7,7 @@
 #define CORE_TEST_RUNNER(suite_name) \
     int main() \
     { \
-        CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry( \
-            suite_name); \
+        CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry(suite_name); \
         CppUnit::Test* suite = registry.makeTest(); \
         if (suite->countTestCases() == 0) { \
             std::cout << "No test cases specified for suite \"" << suite_name << "\"\n"; \
@@ -30,8 +29,7 @@
     { \
         std::vector<std::string> suite_names {__VA_ARGS__}; \
         for (const std::string& name : suite_names) { \
-            CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry( \
-                name); \
+            CppUnit::TestFactoryRegistry& registry = CppUnit::TestFactoryRegistry::getRegistry(name); \
             CppUnit::Test* suite = registry.makeTest(); \
             if (suite->countTestCases() == 0) { \
                 std::cout << "No test cases specified for suite \"" << name << "\"\n"; \

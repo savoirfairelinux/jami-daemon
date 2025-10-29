@@ -24,44 +24,44 @@
 /* Agent */
 #include "utils.h"
 
-static SCM set_details_binding(SCM accountID_str, SCM details_alist)
+static SCM
+set_details_binding(SCM accountID_str, SCM details_alist)
 {
     LOG_BINDING();
 
-    libjami::setAccountDetails(from_guile(accountID_str),
-                             from_guile(details_alist));
+    libjami::setAccountDetails(from_guile(accountID_str), from_guile(details_alist));
     return SCM_UNDEFINED;
 }
 
-static SCM get_details_binding(SCM accountID_str)
+static SCM
+get_details_binding(SCM accountID_str)
 {
     LOG_BINDING();
 
     return to_guile(libjami::getAccountDetails(from_guile(accountID_str)));
 }
 
-static SCM send_register_binding(SCM accountID_str, SCM enable_boolean)
+static SCM
+send_register_binding(SCM accountID_str, SCM enable_boolean)
 {
     LOG_BINDING();
 
-    libjami::sendRegister(from_guile(accountID_str),
-                        from_guile(enable_boolean));
+    libjami::sendRegister(from_guile(accountID_str), from_guile(enable_boolean));
 
     return SCM_UNDEFINED;
 }
 
-static SCM export_to_file_binding(SCM accountID_str, SCM path_str, SCM passwd_str_optional)
+static SCM
+export_to_file_binding(SCM accountID_str, SCM path_str, SCM passwd_str_optional)
 {
     LOG_BINDING();
 
     if (SCM_UNBNDP(passwd_str_optional)) {
-        return to_guile(libjami::exportToFile(from_guile(accountID_str),
-                                            from_guile(path_str)));
+        return to_guile(libjami::exportToFile(from_guile(accountID_str), from_guile(path_str)));
     }
 
-    return to_guile(libjami::exportToFile(from_guile(accountID_str),
-                                        from_guile(path_str),
-                                        from_guile(passwd_str_optional)));
+    return to_guile(
+        libjami::exportToFile(from_guile(accountID_str), from_guile(path_str), from_guile(passwd_str_optional)));
 }
 
 static SCM
@@ -73,8 +73,7 @@ add_account_binding(SCM details_alist, SCM accountID_str_optional)
         return to_guile(libjami::addAccount(from_guile(details_alist)));
     }
 
-    return to_guile(libjami::addAccount(from_guile(details_alist),
-                                      from_guile(accountID_str_optional)));
+    return to_guile(libjami::addAccount(from_guile(details_alist), from_guile(accountID_str_optional)));
 }
 
 static SCM
@@ -82,8 +81,7 @@ accept_trust_request_binding(SCM accountID_str, SCM from_uri_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::acceptTrustRequest(from_guile(accountID_str),
-                                              from_guile(from_uri_str)));
+    return to_guile(libjami::acceptTrustRequest(from_guile(accountID_str), from_guile(from_uri_str)));
 }
 
 static SCM
@@ -96,8 +94,8 @@ send_trust_request_binding(SCM accountID_str, SCM to_uri_str, SCM payload_vector
     }
 
     libjami::sendTrustRequest(from_guile(accountID_str),
-                            from_guile(to_uri_str),
-                            from_guile(payload_vector_uint8_optional));
+                              from_guile(to_uri_str),
+                              from_guile(payload_vector_uint8_optional));
     return SCM_UNDEFINED;
 }
 
@@ -114,9 +112,7 @@ subscribe_buddy_binding(SCM accountID_str, SCM peer_uri_str, SCM flag_bool)
 {
     LOG_BINDING();
 
-    libjami::subscribeBuddy(from_guile(accountID_str),
-                          from_guile(peer_uri_str),
-                          from_guile(flag_bool));
+    libjami::subscribeBuddy(from_guile(accountID_str), from_guile(peer_uri_str), from_guile(flag_bool));
 
     return SCM_UNDEFINED;
 }
@@ -126,8 +122,7 @@ add_contact_binding(SCM accountID_str, SCM uri_str)
 {
     LOG_BINDING();
 
-    libjami::addContact(from_guile(accountID_str),
-                      from_guile(uri_str));
+    libjami::addContact(from_guile(accountID_str), from_guile(uri_str));
 
     return SCM_UNDEFINED;
 }
@@ -137,16 +132,13 @@ remove_contact_binding(SCM accountID_str, SCM uri_str, SCM ban_optional_bool)
 {
     LOG_BINDING();
 
-    libjami::removeContact(from_guile(accountID_str),
-                         from_guile(uri_str),
-                         from_guile(ban_optional_bool));
+    libjami::removeContact(from_guile(accountID_str), from_guile(uri_str), from_guile(ban_optional_bool));
 
     return SCM_UNDEFINED;
 }
 
-
 static void
-install_account_primitives(void *)
+install_account_primitives(void*)
 {
     define_primitive("set-details", 2, 0, 0, (void*) set_details_binding);
     define_primitive("get-details", 1, 0, 0, (void*) get_details_binding);

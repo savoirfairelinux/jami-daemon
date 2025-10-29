@@ -41,29 +41,26 @@ wait_for_announcement_of(const std::vector<std::string> accountIDs, std::chrono:
 
     size_t to_be_announced = accountIDs.size();
 
-    confHandlers.insert(
-        libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
-            [=,
-             accountIDs = std::move(accountIDs)](const std::string& accountID,
-                                                 const std::map<std::string, std::string>& details) {
-                for (size_t i = 0; i < accountIDs.size(); ++i) {
-                    if (accountIDs[i] != accountID) {
-                        continue;
-                    }
-
-                    try {
-                        if ("true"
-                            != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
-                            continue;
-                        }
-                    } catch (const std::out_of_range&) {
-                        continue;
-                    }
-
-                    accountsReady->at(i) = true;
-                    cv->notify_one();
+    confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::VolatileDetailsChanged>(
+        [=, accountIDs = std::move(accountIDs)](const std::string& accountID,
+                                                const std::map<std::string, std::string>& details) {
+            for (size_t i = 0; i < accountIDs.size(); ++i) {
+                if (accountIDs[i] != accountID) {
+                    continue;
                 }
-            }));
+
+                try {
+                    if ("true" != details.at(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED)) {
+                        continue;
+                    }
+                } catch (const std::out_of_range&) {
+                    continue;
+                }
+
+                accountsReady->at(i) = true;
+                cv->notify_one();
+            }
+        }));
 
     JAMI_DBG("Waiting for %zu account to be announced...", to_be_announced);
 

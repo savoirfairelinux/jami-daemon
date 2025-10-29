@@ -89,11 +89,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
                                  SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
                                  SL_IID_ANDROIDAUTOMATICGAINCONTROL,
                                  SL_IID_ANDROIDNOISESUPPRESSION};
-    const SLboolean req[] = {SL_BOOLEAN_TRUE,
-                              SL_BOOLEAN_TRUE,
-                              SL_BOOLEAN_FALSE,
-                              SL_BOOLEAN_FALSE,
-                              SL_BOOLEAN_FALSE};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_FALSE, SL_BOOLEAN_FALSE, SL_BOOLEAN_FALSE};
 
     SLresult result;
     result = (*slEngine)->CreateAudioRecorder(slEngine,
@@ -107,14 +103,10 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
 
     SLAndroidConfigurationItf recordConfig;
     SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
-    result = (*recObjectItf_)
-                 ->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
+    result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
     SLASSERT(result);
     result = (*recordConfig)
-                 ->SetConfiguration(recordConfig,
-                                    SL_ANDROID_KEY_RECORDING_PRESET,
-                                    &streamType,
-                                    sizeof(SLint32));
+                 ->SetConfiguration(recordConfig, SL_ANDROID_KEY_RECORDING_PRESET, &streamType, sizeof(SLint32));
 
     bool aec {true}, agc(true), ns(true);
 
@@ -127,10 +119,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
     SLuint32 modeRetrieved = SL_ANDROID_PERFORMANCE_NONE;
     SLuint32 modeSize = sizeof(SLuint32);
     result = (*recordConfig)
-                 ->GetConfiguration(recordConfig,
-                                    SL_ANDROID_KEY_PERFORMANCE_MODE,
-                                    &modeSize,
-                                    (void*) &modeRetrieved);
+                 ->GetConfiguration(recordConfig, SL_ANDROID_KEY_PERFORMANCE_MODE, &modeSize, (void*) &modeRetrieved);
     if (result == SL_RESULT_SUCCESS) {
         JAMI_WARN("Actual performance mode is %u\n", modeRetrieved);
     }
@@ -138,10 +127,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
     /* Enable AEC if requested */
     if (aec) {
         SLAndroidAcousticEchoCancellationItf aecItf;
-        result = (*recObjectItf_)
-                     ->GetInterface(recObjectItf_,
-                                    SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
-                                    (void*) &aecItf);
+        result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDACOUSTICECHOCANCELLATION, (void*) &aecItf);
         JAMI_WARN("AEC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
@@ -158,10 +144,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
     /* Enable AGC if requested */
     if (agc) {
         SLAndroidAutomaticGainControlItf agcItf;
-        result = (*recObjectItf_)
-                     ->GetInterface(recObjectItf_,
-                                    SL_IID_ANDROIDAUTOMATICGAINCONTROL,
-                                    (void*) &agcItf);
+        result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDAUTOMATICGAINCONTROL, (void*) &agcItf);
         JAMI_WARN("AGC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
@@ -177,15 +160,14 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
     /* Enable NS if requested */
     if (ns) {
         SLAndroidNoiseSuppressionItf nsItf;
-        result = (*recObjectItf_)
-                     ->GetInterface(recObjectItf_, SL_IID_ANDROIDNOISESUPPRESSION, (void*) &nsItf);
+        result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDNOISESUPPRESSION, (void*) &nsItf);
         JAMI_WARN("NS is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
             if ((*nsItf)->IsEnabled(nsItf, &enabled) == SL_RESULT_SUCCESS) {
                 JAMI_WARN("NS was %s\n", enabled ? "enabled" : "not enabled");
                 (*nsItf)->SetEnabled(nsItf, true);
-                if ((*nsItf)->IsEnabled(nsItf, &enabled)  == SL_RESULT_SUCCESS) {
+                if ((*nsItf)->IsEnabled(nsItf, &enabled) == SL_RESULT_SUCCESS) {
                     JAMI_WARN("NS is now %s\n", enabled ? "enabled" : "not enabled");
                     hasNativeNS_ = enabled;
                 }
@@ -193,8 +175,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
         }
     }
 
-    result = (*recObjectItf_)
-                 ->GetInterface(recObjectItf_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &recBufQueueItf_);
+    result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &recBufQueueItf_);
     SLASSERT(result);
 
     result = (*recBufQueueItf_)->RegisterCallback(recBufQueueItf_, bqRecorderCallback, this);
@@ -202,7 +183,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, size_t bufSize, SLE
 
     silentBuf_ = {(format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize};
     silentBuf_.size_ = silentBuf_.cap_;
-    av_samples_set_silence(&silentBuf_.buf_, 0, (int)bufSize, (int)sampleInfo_.nb_channels, sampleInfo_.sampleFormat);
+    av_samples_set_silence(&silentBuf_.buf_, 0, (int) bufSize, (int) sampleInfo_.nb_channels, sampleInfo_.sampleFormat);
 }
 
 bool

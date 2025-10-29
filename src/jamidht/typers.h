@@ -26,10 +26,10 @@ namespace jami {
 
 class JamiAccount;
 
-class Typers: public std::enable_shared_from_this<Typers>
+class Typers : public std::enable_shared_from_this<Typers>
 {
 public:
-    Typers(const std::shared_ptr<JamiAccount>& acc, const std::string &convId);
+    Typers(const std::shared_ptr<JamiAccount>& acc, const std::string& convId);
     ~Typers();
 
     /**
@@ -37,11 +37,11 @@ public:
      * @param typer
      * @param sendMessage (should be true for local typer, false for remote typer)
      */
-    void addTyper(const std::string &typer, bool sendMessage = false);
-    void removeTyper(const std::string &typer, bool sendMessage = false);
+    void addTyper(const std::string& typer, bool sendMessage = false);
+    void removeTyper(const std::string& typer, bool sendMessage = false);
 
 private:
-    void onTyperTimeout(const asio::error_code& ec, const std::string &typer);
+    void onTyperTimeout(const asio::error_code& ec, const std::string& typer);
 
     std::shared_ptr<asio::io_context> ioContext_;
     std::map<std::string, asio::steady_timer> watcher_;

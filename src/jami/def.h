@@ -31,8 +31,8 @@
 // LIBJAMI_PUBLIC is used for the public API symbols. It is either DLL imports or DLL exports (or does
 // nothing for static build) LIBJAMI_LOCAL is used for non-api symbols.
 
-#ifdef jami_EXPORTS // defined if Jami is compiled as a shared library
-#ifdef LIBJAMI_BUILD  // defined if we are building the Jami shared library (instead of using it)
+#ifdef jami_EXPORTS  // defined if Jami is compiled as a shared library
+#ifdef LIBJAMI_BUILD // defined if we are building the Jami shared library (instead of using it)
 #define LIBJAMI_PUBLIC LIBJAMI_EXPORT
 #else
 #define LIBJAMI_PUBLIC LIBJAMI_IMPORT

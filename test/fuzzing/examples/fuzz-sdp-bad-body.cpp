@@ -35,7 +35,7 @@ mutate_gnutls_record_send(ChanneledMessage& msg)
 
     /* Skip none SDP Content-Type */
     if (not sip.isApplication("sdp")) {
-         return false;
+        return false;
     }
 
     char payload[] = "@";

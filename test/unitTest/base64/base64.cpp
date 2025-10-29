@@ -23,9 +23,11 @@
 
 #include "base64.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class Base64Test : public CppUnit::TestFixture {
+class Base64Test : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "base64"; }
 
@@ -40,7 +42,7 @@ private:
     CPPUNIT_TEST(decodingTestFail);
     CPPUNIT_TEST_SUITE_END();
 
-    const std::vector<uint8_t> test_bytes = { 23, 45, 67, 87, 89, 34, 2, 45, 9, 10 };
+    const std::vector<uint8_t> test_bytes = {23, 45, 67, 87, 89, 34, 2, 45, 9, 10};
     const std::string test_base64 = "Fy1DV1kiAi0JCg==";
     const std::string test_invalid_base64 = "ERSAÄÖöädt4-++asd==";
 };
@@ -71,6 +73,7 @@ Base64Test::decodingTestFail()
     CPPUNIT_ASSERT(true);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::Base64Test::name());

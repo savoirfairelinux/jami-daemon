@@ -49,18 +49,12 @@ class SIPAccount : public SIPAccountBase
 public:
     constexpr static auto ACCOUNT_TYPE = ACCOUNT_TYPE_SIP;
 
-    std::shared_ptr<SIPAccount> shared()
-    {
-        return std::static_pointer_cast<SIPAccount>(shared_from_this());
-    }
+    std::shared_ptr<SIPAccount> shared() { return std::static_pointer_cast<SIPAccount>(shared_from_this()); }
     std::shared_ptr<SIPAccount const> shared() const
     {
         return std::static_pointer_cast<SIPAccount const>(shared_from_this());
     }
-    std::weak_ptr<SIPAccount> weak()
-    {
-        return std::static_pointer_cast<SIPAccount>(shared_from_this());
-    }
+    std::weak_ptr<SIPAccount> weak() { return std::static_pointer_cast<SIPAccount>(shared_from_this()); }
     std::weak_ptr<SIPAccount const> weak() const
     {
         return std::static_pointer_cast<SIPAccount const>(shared_from_this());
@@ -74,10 +68,7 @@ public:
 
     ~SIPAccount() noexcept;
 
-    const SipAccountConfig& config() const
-    {
-        return *static_cast<const SipAccountConfig*>(&Account::config());
-    }
+    const SipAccountConfig& config() const { return *static_cast<const SipAccountConfig*>(&Account::config()); }
 
     std::unique_ptr<AccountConfig> buildConfig() const override
     {
@@ -85,8 +76,7 @@ public:
     }
     inline void editConfig(std::function<void(SipAccountConfig& conf)>&& edit)
     {
-        Account::editConfig(
-            [&](AccountConfig& conf) { edit(*static_cast<SipAccountConfig*>(&conf)); });
+        Account::editConfig([&](AccountConfig& conf) { edit(*static_cast<SipAccountConfig*>(&conf)); });
     }
 
     std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
@@ -130,7 +120,10 @@ public:
     /**
      * updates SIP account profile
      */
-    void updateProfile(const std::string& displayName, const std::string& avatar, const std::string& fileType, int32_t flag) override;
+    void updateProfile(const std::string& displayName,
+                       const std::string& avatar,
+                       const std::string& fileType,
+                       int32_t flag) override;
 
     /**
      * Initialize the SIP voip link with the account parameters and send registration
@@ -165,10 +158,7 @@ public:
 
     bool hasCredentials() const { return not config().credentials.empty(); }
 
-    std::vector<std::map<std::string, std::string>> getCredentials() const
-    {
-        return config().getCredentials();
-    }
+    std::vector<std::map<std::string, std::string>> getCredentials() const { return config().getCredentials(); }
 
     virtual void setRegistrationState(RegistrationState state,
                                       int code = 0,
@@ -388,10 +378,9 @@ public:
      * @param sipTr: SIP Transport
      * @return A shared pointer on the created call.
      */
-    std::shared_ptr<SIPCall> newIncomingCall(
-        const std::string& from,
-        const std::vector<libjami::MediaMap>& mediaList,
-        const std::shared_ptr<SipTransport>& sipTr = {}) override;
+    std::shared_ptr<SIPCall> newIncomingCall(const std::string& from,
+                                             const std::vector<libjami::MediaMap>& mediaList,
+                                             const std::shared_ptr<SipTransport>& sipTr = {}) override;
 
     void onRegister(pjsip_regc_cbparam* param);
 
@@ -413,10 +402,7 @@ public:
     dhtnet::IpAddr createBindingAddress();
 
     void setActiveCodecs(const std::vector<unsigned>& list) override;
-    bool isSrtpEnabled() const override
-    {
-        return config().srtpKeyExchange != KeyExchangeProtocol::NONE;
-    }
+    bool isSrtpEnabled() const override { return config().srtpKeyExchange != KeyExchangeProtocol::NONE; }
 
     bool setPushNotificationToken(const std::string& pushDeviceToken = "") override;
     bool setPushNotificationConfig(const std::map<std::string, std::string>& data) override;
@@ -424,8 +410,7 @@ public:
     /**
      * To be called by clients with relevant data when a push notification is received.
      */
-    void pushNotificationReceived(const std::string& from,
-                                  const std::map<std::string, std::string>& data);
+    void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
 private:
     void doRegister1_();
@@ -462,8 +447,7 @@ private:
      * Callback called by the transport layer when the registration
      * transport state changes.
      */
-    virtual void onTransportStateChanged(pjsip_transport_state state,
-                                         const pjsip_transport_state_info* info);
+    virtual void onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info* info);
 
     struct
     {

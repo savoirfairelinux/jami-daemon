@@ -30,7 +30,7 @@ void
 install_scheme_primitives()
 {
     /* Define modules here */
-    auto load_module = [](auto name, auto init){
+    auto load_module = [](auto name, auto init) {
         scm_c_define_module(name, init, NULL);
     };
 
@@ -67,6 +67,6 @@ install_scheme_primitives()
 void
 define_primitive(const char* name, int req, int opt, int rst, void* func)
 {
-        scm_c_define_gsubr(name, req, opt, rst, func);
-        scm_c_export(name, NULL);
+    scm_c_define_gsubr(name, req, opt, rst, func);
+    scm_c_export(name, NULL);
 }

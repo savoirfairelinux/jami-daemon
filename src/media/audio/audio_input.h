@@ -55,16 +55,11 @@ public:
     MediaStream getInfo(const std::string& name) const;
     void updateStartTime(int64_t start);
     void setPaused(bool paused);
-    void configureFilePlayback(const std::string& path,
-                               std::shared_ptr<MediaDemuxer>& demuxer,
-                               int index);
+    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
     void flushBuffers();
     void setSeekTime(int64_t time);
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-    {
-        onSuccessfulSetup_ = cb;
-    }
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
 
     void setRecorderCallback(const std::function<void(const MediaStream& ms)>& cb);
 

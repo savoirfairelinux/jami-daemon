@@ -102,27 +102,18 @@ public:
 
     std::string_view getAccountType() const override { return ACCOUNT_TYPE; }
 
-    std::shared_ptr<JamiAccount> shared()
-    {
-        return std::static_pointer_cast<JamiAccount>(shared_from_this());
-    }
+    std::shared_ptr<JamiAccount> shared() { return std::static_pointer_cast<JamiAccount>(shared_from_this()); }
     std::shared_ptr<JamiAccount const> shared() const
     {
         return std::static_pointer_cast<JamiAccount const>(shared_from_this());
     }
-    std::weak_ptr<JamiAccount> weak()
-    {
-        return std::static_pointer_cast<JamiAccount>(shared_from_this());
-    }
+    std::weak_ptr<JamiAccount> weak() { return std::static_pointer_cast<JamiAccount>(shared_from_this()); }
     std::weak_ptr<JamiAccount const> weak() const
     {
         return std::static_pointer_cast<JamiAccount const>(shared_from_this());
     }
 
-    const JamiAccountConfig& config() const
-    {
-        return *static_cast<const JamiAccountConfig*>(&Account::config());
-    }
+    const JamiAccountConfig& config() const { return *static_cast<const JamiAccountConfig*>(&Account::config()); }
 
     JamiAccountConfig::Credentials consumeConfigCredentials()
     {
@@ -183,9 +174,7 @@ public:
      * Set the registration state of the specified link
      * @param state The registration state of underlying VoIPLink
      */
-    void setRegistrationState(RegistrationState state,
-                              int detail_code = 0,
-                              const std::string& detail_str = {}) override;
+    void setRegistrationState(RegistrationState state, int detail_code = 0, const std::string& detail_str = {}) override;
 
     /**
      * @return pj_str_t "From" uri based on account information.
@@ -220,9 +209,7 @@ public:
 
     void setIsComposing(const std::string& conversationUri, bool isWriting) override;
 
-    bool setMessageDisplayed(const std::string& conversationUri,
-                             const std::string& messageId,
-                             int status) override;
+    bool setMessageDisplayed(const std::string& conversationUri, const std::string& messageId, int status) override;
 
     /**
      * Get the contact header for
@@ -253,10 +240,9 @@ public:
      * @param sipTr: SIP Transport
      * @return A shared pointer on the created call.
      */
-    std::shared_ptr<SIPCall> newIncomingCall(
-        const std::string& from,
-        const std::vector<libjami::MediaMap>& mediaList,
-        const std::shared_ptr<SipTransport>& sipTr = {}) override;
+    std::shared_ptr<SIPCall> newIncomingCall(const std::string& from,
+                                             const std::vector<libjami::MediaMap>& mediaList,
+                                             const std::shared_ptr<SipTransport>& sipTr = {}) override;
 
     void onTextMessage(const std::string& id,
                        const std::string& from,
@@ -269,21 +255,17 @@ public:
 
     virtual bool getSrtpFallback() const override { return false; }
 
-    bool setCertificateStatus(const std::string& cert_id,
-                              dhtnet::tls::TrustStore::PermissionStatus status);
+    bool setCertificateStatus(const std::string& cert_id, dhtnet::tls::TrustStore::PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                               dhtnet::tls::TrustStore::PermissionStatus status,
                               bool local = true);
-    std::vector<std::string> getCertificatesByStatus(
-        dhtnet::tls::TrustStore::PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(dhtnet::tls::TrustStore::PermissionStatus status);
 
     bool findCertificate(const std::string& id);
-    bool findCertificate(
-        const dht::InfoHash& h,
-        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
-    bool findCertificate(
-        const dht::PkId& h,
-        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    bool findCertificate(const dht::InfoHash& h,
+                         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    bool findCertificate(const dht::PkId& h,
+                         std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
     /* contact requests */
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
@@ -319,8 +301,7 @@ public:
                              const std::map<std::string, std::string>& payloads,
                              uint64_t refreshToken = 0,
                              bool onlyConnected = false) override;
-    void sendInstantMessage(const std::string& convId,
-                            const std::map<std::string, std::string>& msg);
+    void sendInstantMessage(const std::string& convId, const std::map<std::string, std::string>& msg);
 
     /**
      * Create and return ICE options.
@@ -342,8 +323,7 @@ public:
     bool cancelAddDevice(uint32_t op_token);
     bool confirmAddDevice(uint32_t op_token);
     /* Devices - new device */
-    bool provideAccountAuthentication(const std::string& credentialsFromUser,
-                                      const std::string& scheme);
+    bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& scheme);
 
     /**
      * Export the archive to a file
@@ -355,9 +335,7 @@ public:
     bool exportArchive(const std::string& destinationPath,
                        std::string_view scheme = {},
                        const std::string& password = {});
-    bool revokeDevice(const std::string& device,
-                      std::string_view scheme = {},
-                      const std::string& password = {});
+    bool revokeDevice(const std::string& device, std::string_view scheme = {}, const std::string& password = {});
     std::map<std::string, std::string> getKnownDevices() const;
 
     bool isPasswordValid(const std::string& password);
@@ -373,9 +351,7 @@ public:
 #ifdef ENABLE_NAMESERVER
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
-    void registerName(const std::string& name,
-                      const std::string& scheme,
-                      const std::string& password);
+    void registerName(const std::string& name, const std::string& scheme, const std::string& password);
 #endif
     bool searchUser(const std::string& nameQuery);
 
@@ -399,8 +375,7 @@ public:
     /**
      * To be called by clients with relevant data when a push notification is received.
      */
-    void pushNotificationReceived(const std::string& from,
-                                  const std::map<std::string, std::string>& data);
+    void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
     std::string getUserUri() const override;
 
@@ -424,8 +399,7 @@ public:
 
     inline void editConfig(std::function<void(JamiAccountConfig& conf)>&& edit)
     {
-        Account::editConfig(
-            [&](AccountConfig& conf) { edit(*static_cast<JamiAccountConfig*>(&conf)); });
+        Account::editConfig([&](AccountConfig& conf) { edit(*static_cast<JamiAccountConfig*>(&conf)); });
     }
 
     /**
@@ -474,8 +448,7 @@ public:
 
     void monitor();
     // conversationId optional
-    std::vector<std::map<std::string, std::string>> getConnectionList(
-        const std::string& conversationId = "");
+    std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& conversationId = "");
     std::vector<std::map<std::string, std::string>> getChannelList(const std::string& connectionId);
 
     // File transfer
@@ -502,9 +475,7 @@ public:
                            size_t start = 0,
                            size_t end = 0);
 
-    void askForProfile(const std::string& conversationId,
-                       const std::string& deviceId,
-                       const std::string& memberUri);
+    void askForProfile(const std::string& conversationId, const std::string& deviceId, const std::string& memberUri);
 
     /**
      * Retrieve linked transfer manager
@@ -529,18 +500,14 @@ public:
      * @param sha3Sum       SHA3 hash of the profile
      */
     // Note: when swarm will be merged, this can be moved in transferManager
-    bool needToSendProfile(const std::string& peerUri,
-                           const std::string& deviceId,
-                           const std::string& sha3Sum);
+    bool needToSendProfile(const std::string& peerUri, const std::string& deviceId, const std::string& sha3Sum);
     /**
      * Send Profile via cached SIP connection
      * @param convId        Conversation's identifier (can be empty for self profile on sync)
      * @param peerUri       Uri that will receive the profile
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& convId,
-                     const std::string& peerUri,
-                     const std::string& deviceId);
+    void sendProfile(const std::string& convId, const std::string& peerUri, const std::string& deviceId);
     /**
      * Send profile via cached SIP connection
      * @param peerUri       Uri that will receive the profile
@@ -566,10 +533,7 @@ public:
      * @param validity  New validity
      * @note forceReloadAccount may be necessary to retrigger the migration
      */
-    bool setValidity(std::string_view scheme,
-                     const std::string& pwd,
-                     const dht::InfoHash& id,
-                     int64_t validity);
+    bool setValidity(std::string_view scheme, const std::string& pwd, const dht::InfoHash& id, int64_t validity);
     /**
      * Try to reload the account to force the identity to be updated
      */
@@ -600,9 +564,7 @@ public:
     bool isMobile() const { return config().proxyEnabled and not config().deviceKey.empty(); }
 
 #ifdef LIBJAMI_TEST
-    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() {
-        return channelHandlers_;
-    };
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() { return channelHandlers_; };
 #endif
 
     dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
@@ -655,9 +617,7 @@ private:
 
     void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri);
 
-    void onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call,
-                                 const std::string& to_id,
-                                 dhtnet::IpAddr target);
+    void onConnectedOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, dhtnet::IpAddr target);
 
     /**
      * Start a SIP Call
@@ -684,8 +644,7 @@ private:
      * Add port mapping callback function.
      */
     void onPortMappingAdded(uint16_t port_used, bool success);
-    void forEachPendingCall(const DeviceId& deviceId,
-                            const std::function<void(const std::shared_ptr<SIPCall>&)>& cb);
+    void forEachPendingCall(const DeviceId& deviceId, const std::function<void(const std::shared_ptr<SIPCall>&)>& cb);
 
     void loadAccount(const std::string& archive_password_scheme = {},
                      const std::string& archive_password = {},
@@ -718,8 +677,7 @@ private:
     void generateDhParams();
 
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
-    std::shared_ptr<SIPCall> newSwarmOutgoingCallHelper(
-        const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
+    std::shared_ptr<SIPCall> newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
 
     std::filesystem::path cachePath_ {};
@@ -770,8 +728,7 @@ private:
      */
     in_port_t dhtPortUsed()
     {
-        return (upnpCtrl_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort()
-                                                         : config().dhtPort;
+        return (upnpCtrl_ and dhtUpnpMapping_.isValid()) ? dhtUpnpMapping_.getExternalPort() : config().dhtPort;
     }
 
     /* Current UPNP mapping */
@@ -887,7 +844,8 @@ private:
                         uint64_t token,
                         const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
-    void onMessageSent(const std::string& to, uint64_t id, const std::string& deviceId, bool success, bool onlyConnected, bool retry);
+    void onMessageSent(
+        const std::string& to, uint64_t id, const std::string& deviceId, bool success, bool onlyConnected, bool retry);
 
     std::mutex gitServersMtx_ {};
     std::map<dht::Value::Id, std::unique_ptr<GitServer>> gitServers_ {};

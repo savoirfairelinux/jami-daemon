@@ -77,14 +77,13 @@ StringUtilsTest::to_string_test()
     // test with float
     float varFloat = 3.14;
     std::string sVarFloat = to_string(varFloat);
-    CPPUNIT_ASSERT(sVarFloat.at(0) == '3' && sVarFloat.at(1) == '.' && sVarFloat.at(2) == '1'
-                   && sVarFloat.at(3) == '4');
+    CPPUNIT_ASSERT(sVarFloat.at(0) == '3' && sVarFloat.at(1) == '.' && sVarFloat.at(2) == '1' && sVarFloat.at(3) == '4');
 
     // test with int
     CPPUNIT_ASSERT(std::to_string(INT).compare(PI_42) == 0);
 
     CPPUNIT_ASSERT_EQUAL("0000000000000010"s, to_hex_string(16));
-    CPPUNIT_ASSERT_EQUAL((uint64_t)16, from_hex_string("0000000000000010"s));
+    CPPUNIT_ASSERT_EQUAL((uint64_t) 16, from_hex_string("0000000000000010"s));
 }
 
 void
@@ -93,13 +92,11 @@ StringUtilsTest::split_string_test()
     auto data = "*fdg454()**{&xcx*"sv;
     auto split_string_result = split_string(data, '*');
     CPPUNIT_ASSERT(split_string_result.size() == 2);
-    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
-                   && split_string_result.at(1) == "{&xcx"sv);
+    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv && split_string_result.at(1) == "{&xcx"sv);
 
     auto split_string_to_unsigned_result = split_string_to_unsigned("/4545497//45454/", '/');
     CPPUNIT_ASSERT(split_string_to_unsigned_result.size() == 2);
-    CPPUNIT_ASSERT(split_string_to_unsigned_result.at(0) == 4545497
-                   && split_string_to_unsigned_result.at(1) == 45454);
+    CPPUNIT_ASSERT(split_string_to_unsigned_result.at(0) == 4545497 && split_string_to_unsigned_result.at(1) == 45454);
 
     std::string_view line;
     split_string_result.clear();
@@ -107,8 +104,7 @@ StringUtilsTest::split_string_test()
         split_string_result.emplace_back(line);
     }
     CPPUNIT_ASSERT(split_string_result.size() == 2);
-    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv
-                   && split_string_result.at(1) == "{&xcx"sv);
+    CPPUNIT_ASSERT(split_string_result.at(0) == "fdg454()"sv && split_string_result.at(1) == "{&xcx"sv);
 }
 
 void
@@ -119,17 +115,15 @@ StringUtilsTest::version_test()
     CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3}));
     CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({1, 2, 3, 4}, {1, 2, 3}));
     CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion({2}, {1, 2, 3}));
-    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion(
-        split_string_to_unsigned("1.2.3.5", '.'),
-        split_string_to_unsigned("1.2.3.4", '.')));
+    CPPUNIT_ASSERT(Account::meetMinimumRequiredVersion(split_string_to_unsigned("1.2.3.5", '.'),
+                                                       split_string_to_unsigned("1.2.3.4", '.')));
 
     CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({}, {1, 2, 3}));
     CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 2}, {1, 2, 3}));
     CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 3}, {1, 2, 3, 4}));
     CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion({1, 2, 3}, {2}));
-    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion(
-        split_string_to_unsigned("1.2.3.4", '.'),
-        split_string_to_unsigned("1.2.3.5", '.')));
+    CPPUNIT_ASSERT(!Account::meetMinimumRequiredVersion(split_string_to_unsigned("1.2.3.4", '.'),
+                                                        split_string_to_unsigned("1.2.3.5", '.')));
 }
 
 void

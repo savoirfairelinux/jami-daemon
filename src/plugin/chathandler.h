@@ -41,9 +41,7 @@ public:
      * @param subjectConnection accountId, peerId pair
      * @param subject chat Subject pointer
      */
-    virtual void notifyChatSubject(std::pair<std::string, std::string>& subjectConnection,
-                                   chatSubjectPtr subject)
-        = 0;
+    virtual void notifyChatSubject(std::pair<std::string, std::string>& subjectConnection, chatSubjectPtr subject) = 0;
 
     /**
      * @brief Returns a map with handler's name, iconPath, and pluginId.

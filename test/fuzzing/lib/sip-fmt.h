@@ -27,10 +27,9 @@ public:
 
     bool parse(const std::vector<uint8_t>& blob);
 
-    void pushBody(char *bytes, size_t len);
+    void pushBody(char* bytes, size_t len);
 
-
-    const std::string& getField(const std::string& field) const ;
+    const std::string& getField(const std::string& field) const;
     const std::vector<uint8_t>& getBody();
 
     void setVersion(const std::string& version) { version_ = version; }
@@ -49,7 +48,7 @@ public:
 
     bool isApplication(const std::string& app) const
     {
-          return isValid() and (std::string::npos != getField("content-type").find("application/" + app));
+        return isValid() and (std::string::npos != getField("content-type").find("application/" + app));
     }
 
     void setAsRequest() { isRequest_ = true; };

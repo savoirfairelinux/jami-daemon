@@ -43,5 +43,4 @@ extern bool mutate_gnutls_record_send(ChanneledMessage& msg);
 extern void pre_mutate_gnutls_record_recv_hook(const ChanneledMessage& msg);
 extern void post_mutate_gnutls_record_recv_hook(const ChanneledMessage& msg, bool hasMutated);
 extern bool mutate_gnutls_record_recv(ChanneledMessage& msg);
-
 };

@@ -59,10 +59,7 @@ public:
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb)
-    {
-        onSuccessfulSetup_ = cb;
-    }
+    void setSuccessfulSetupCb(const std::function<void(MediaType, bool)>& cb) { onSuccessfulSetup_ = cb; }
 
     virtual void initRecorder() = 0;
     virtual void deinitRecorder() = 0;

@@ -33,8 +33,7 @@
 namespace jami {
 namespace video {
 
-constexpr GUID guidCamera
-    = {0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44};
+constexpr GUID guidCamera = {0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44};
 
 class VideoDeviceMonitorImpl
 {
@@ -117,9 +116,7 @@ registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY* hDeviceNotify)
     NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
     NotificationFilter.dbcc_classguid = guidCamera;
 
-    *hDeviceNotify = RegisterDeviceNotification(hWnd,
-                                                &NotificationFilter,
-                                                DEVICE_NOTIFY_WINDOW_HANDLE);
+    *hDeviceNotify = RegisterDeviceNotification(hWnd, &NotificationFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
 
     if (nullptr == *hDeviceNotify) {
         return false;
@@ -156,10 +153,8 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
             PDEV_BROADCAST_DEVICEINTERFACE_A pbdi = (PDEV_BROADCAST_DEVICEINTERFACE_A) lParam;
             auto unique_name = getDeviceUniqueName(pbdi);
             if (!unique_name.empty()) {
-                JAMI_DBG() << unique_name
-                           << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
-                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(
-                        GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
+                JAMI_DBG() << unique_name << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
                         auto captureDeviceList = pThis->enumerateVideoInputDevices();
                         for (auto id : captureDeviceList) {
@@ -207,8 +202,7 @@ VideoDeviceMonitorImpl::run()
     wx.lpszClassName = className;
     if (RegisterClassEx(&wx)) {
         // Pass this as lpParam so WinProcCallback can access members of VideoDeviceMonitorImpl.
-        hWnd_ = CreateWindowEx(
-            0, className, "devicenotifications", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, this);
+        hWnd_ = CreateWindowEx(0, className, "devicenotifications", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, this);
     }
 
     // Run the message loop that will finish once a WM_DESTROY message
@@ -229,10 +223,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     std::vector<std::string> deviceList;
 
     ICreateDevEnum* pDevEnum;
-    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum,
-                                  NULL,
-                                  CLSCTX_INPROC_SERVER,
-                                  IID_PPV_ARGS(&pDevEnum));
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
         JAMI_ERR() << "Unable to enumerate webcams";

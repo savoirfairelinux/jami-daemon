@@ -43,9 +43,7 @@ public:
                  ConnectCb&& cb,
                  const std::string& connectionType = "",
                  bool forceNewConnection = false) override;
-    void connect(const dht::InfoHash& infoHash,
-                 const std::string&,
-                 ConnectCallbackLegacy&& cb) override;
+    void connect(const dht::InfoHash& infoHash, const std::string&, ConnectCallbackLegacy&& cb) override;
 
     /**
      * Determine if we accept or not the sync request
@@ -53,8 +51,7 @@ public:
      * @param name          Name asked
      * @return if the channel is for a valid conversation and device not banned
      */
-    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer,
-                   const std::string& name) override;
+    bool onRequest(const std::shared_ptr<dht::crypto::Certificate>& peer, const std::string& name) override;
 
     /**
      * Launch sync process

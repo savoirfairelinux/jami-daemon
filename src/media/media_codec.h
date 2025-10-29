@@ -89,10 +89,11 @@ struct SystemCodecInfo
     virtual std::map<std::string, std::string> getCodecSpecifications() const;
 
     /* generic codec information */
-    unsigned id;        /* id of the codec used with dbus */
-    unsigned avcodecId; /* AVCodecID libav codec identifier */
-    std::string longName;   /* User-friendly codec name */
-    std::string name;       /* RTP codec name as specified by http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml */
+    unsigned id;          /* id of the codec used with dbus */
+    unsigned avcodecId;   /* AVCodecID libav codec identifier */
+    std::string longName; /* User-friendly codec name */
+    std::string
+        name; /* RTP codec name as specified by http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml */
     std::string libName;
     CodecType codecType;
     MediaType mediaType;
@@ -201,10 +202,7 @@ public:
 
     inline explicit operator bool() const { return not tag_.empty(); }
 
-    std::string to_string() const
-    {
-        return tag_ + " " + cryptoSuite_ + " " + srtpKeyMethod_ + ":" + srtpKeyInfo_;
-    }
+    std::string to_string() const { return tag_ + " " + cryptoSuite_ + " " + srtpKeyMethod_ + ":" + srtpKeyInfo_; }
 
 private:
     std::string tag_;

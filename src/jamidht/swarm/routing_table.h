@@ -135,10 +135,7 @@ public:
      * @param nodeId
      * @return true if known node exists, false if not
      */
-    bool hasKnownNode(const NodeId& nodeId) const
-    {
-        return known_nodes.find(nodeId) != known_nodes.end();
-    }
+    bool hasKnownNode(const NodeId& nodeId) const { return known_nodes.find(nodeId) != known_nodes.end(); }
 
     /**
      * Add NodeId to mobile_nodes if it doesn't exist in nodes
@@ -158,10 +155,7 @@ public:
      * @param nodeId
      * @return true if mobile node exists, false if not
      */
-    bool hasMobileNode(const NodeId& nodeId)
-    {
-        return mobile_nodes.find(nodeId) != mobile_nodes.end();
-    }
+    bool hasMobileNode(const NodeId& nodeId) { return mobile_nodes.find(nodeId) != mobile_nodes.end(); }
 
     /**
      * Get NodeIds from mobile_nodes
@@ -322,8 +316,7 @@ public:
      * @param bucket
      * @return true if socket was added to bucket, false if not
      */
-    bool addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel,
-                 std::list<Bucket>::iterator& bucket);
+    bool addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& channel, std::list<Bucket>::iterator& bucket);
 
     /**
      * Removes node from routing table
@@ -418,8 +411,7 @@ public:
      */
     inline const std::list<Bucket>::const_iterator findBucket(const NodeId& nodeId) const
     {
-        return std::list<Bucket>::const_iterator(
-            const_cast<RoutingTable*>(this)->findBucket(nodeId));
+        return std::list<Bucket>::const_iterator(const_cast<RoutingTable*>(this)->findBucket(nodeId));
     }
 
     /**

@@ -35,11 +35,10 @@ mutate_gnutls_record_send(ChanneledMessage& msg)
         return false;
     }
 
-    char version[]     = "SIP/2.0";
+    char version[] = "SIP/2.0";
     char version_fmt[] = "SIP/%d.0";
 
-    snprintf(version, array_size(version),
-             version_fmt, (version_cnt++ % 2) + 1);
+    snprintf(version, array_size(version), version_fmt, (version_cnt++ % 2) + 1);
 
     sip.setVersion(version);
 

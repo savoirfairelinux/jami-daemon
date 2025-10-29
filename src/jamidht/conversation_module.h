@@ -58,10 +58,9 @@ struct SyncMsg
 };
 
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
-using NeedSocketCb
-    = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
-using SengMsgCb = std::function<
-    uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
+using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
+using SengMsgCb
+    = std::function<uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
 using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
 using OneToOneRecvCb = std::function<void(const std::string&, const std::string&)>;
 
@@ -127,9 +126,7 @@ public:
      * @param newConv
      * @return if replaced
      */
-    bool updateConvForContact(const std::string& uri,
-                              const std::string& oldConv,
-                              const std::string& newConv);
+    bool updateConvForContact(const std::string& uri, const std::string& oldConv, const std::string& newConv);
 
     /**
      * Return conversation's requests
@@ -175,8 +172,7 @@ public:
      * @param convId
      * @param deviceId      If a trust request is accepted from a device (can help to sync)
      */
-    void acceptConversationRequest(const std::string& conversationId,
-                                   const std::string& deviceId = "");
+    void acceptConversationRequest(const std::string& conversationId, const std::string& deviceId = "");
 
     /**
      * Decline a conversation's request
@@ -220,12 +216,8 @@ public:
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
 
-    void editMessage(const std::string& conversationId,
-                     const std::string& newBody,
-                     const std::string& editedId);
-    void reactToMessage(const std::string& conversationId,
-                        const std::string& newBody,
-                        const std::string& reactToId);
+    void editMessage(const std::string& conversationId, const std::string& newBody, const std::string& editedId);
+    void reactToMessage(const std::string& conversationId, const std::string& newBody, const std::string& reactToId);
 
     /**
      * Add to the related conversation the call history message
@@ -251,9 +243,7 @@ public:
     uint32_t loadConversationMessages(const std::string& conversationId,
                                       const std::string& fromMessage = "",
                                       size_t n = 0);
-    uint32_t loadConversation(const std::string& conversationId,
-                              const std::string& fromMessage = "",
-                              size_t n = 0);
+    uint32_t loadConversation(const std::string& conversationId, const std::string& fromMessage = "", size_t n = 0);
     uint32_t loadConversationUntil(const std::string& conversationId,
                                    const std::string& fromMessage,
                                    const std::string& to);
@@ -327,9 +317,7 @@ public:
      * @param deviceId          Device who synced
      * @param commit            HEAD synced
      */
-    void setFetched(const std::string& conversationId,
-                    const std::string& deviceId,
-                    const std::string& commit);
+    void setFetched(const std::string& conversationId, const std::string& deviceId, const std::string& commit);
 
     /**
      * Launch fetch on new commit
@@ -368,8 +356,8 @@ public:
      * @param includeBanned
      * @return a map of members with their role and details
      */
-    std::vector<std::map<std::string, std::string>> getConversationMembers(
-        const std::string& conversationId, bool includeBanned = false) const;
+    std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& conversationId,
+                                                                           bool includeBanned = false) const;
     /**
      * Retrieve the number of interactions from interactionId to HEAD
      * @param convId
@@ -407,8 +395,7 @@ public:
      * @param conversationId
      * @param preferences
      */
-    void setConversationPreferences(const std::string& conversationId,
-                                    const std::map<std::string, std::string>& prefs);
+    void setConversationPreferences(const std::string& conversationId, const std::map<std::string, std::string>& prefs);
     std::map<std::string, std::string> getConversationPreferences(const std::string& conversationId,
                                                                   bool includeCreated = false) const;
     /**
@@ -446,9 +433,8 @@ public:
      * @param targetUris               The set of member URIs that must match exactly.
      * @return The ID of the matching conversation if found, otherwise an empty string.
      */
-    std::string findMatchingOneToOneConversation(
-        const std::string& excludedConversationId,
-        const std::set<std::string>& targetUris) const;
+    std::string findMatchingOneToOneConversation(const std::string& excludedConversationId,
+                                                 const std::set<std::string>& targetUris) const;
     void initReplay(const std::string& oldConvId, const std::string& newConvId);
     /**
      * Check if we're hosting a specific conference
@@ -462,8 +448,7 @@ public:
      * @param convId        Which conversation to choose
      * @return {{"id":id}, {"uri":uri}, {"device":device}}
      */
-    std::vector<std::map<std::string, std::string>> getActiveCalls(
-        const std::string& conversationId) const;
+    std::vector<std::map<std::string, std::string>> getActiveCalls(const std::string& conversationId) const;
     /**
      * Call the conversation
      * @param url       Url to call (swarm:conversation or swarm:conv/account/device/conf to join)
@@ -471,31 +456,28 @@ public:
      * @param cb        Callback to pass which device to call (called in the same thread)
      * @return call if a call is started, else nullptr
      */
-    std::shared_ptr<SIPCall> call(const std::string& url,
-                                const std::vector<libjami::MediaMap>& mediaList,
-                                std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&& cb);
+    std::shared_ptr<SIPCall> call(
+        const std::string& url,
+        const std::vector<libjami::MediaMap>& mediaList,
+        std::function<void(const std::string&, const DeviceId&, const std::shared_ptr<SIPCall>&)>&& cb);
     void hostConference(const std::string& conversationId,
                         const std::string& confId,
                         const std::string& callId,
                         const std::vector<libjami::MediaMap>& mediaList = {});
 
     // The following methods modify what is stored on the disk
-    static void saveConvInfos(const std::string& accountId,
-                              const std::map<std::string, ConvInfo>& conversations);
+    static void saveConvInfos(const std::string& accountId, const std::map<std::string, ConvInfo>& conversations);
     static void saveConvInfosToPath(const std::filesystem::path& path,
                                     const std::map<std::string, ConvInfo>& conversations);
-    static void saveConvRequests(
-        const std::string& accountId,
-        const std::map<std::string, ConversationRequest>& conversationsRequests);
-    static void saveConvRequestsToPath(
-        const std::filesystem::path& path,
-        const std::map<std::string, ConversationRequest>& conversationsRequests);
+    static void saveConvRequests(const std::string& accountId,
+                                 const std::map<std::string, ConversationRequest>& conversationsRequests);
+    static void saveConvRequestsToPath(const std::filesystem::path& path,
+                                       const std::map<std::string, ConversationRequest>& conversationsRequests);
 
     static std::map<std::string, ConvInfo> convInfos(const std::string& accountId);
     static std::map<std::string, ConvInfo> convInfosFromPath(const std::filesystem::path& path);
     static std::map<std::string, ConversationRequest> convRequests(const std::string& accountId);
-    static std::map<std::string, ConversationRequest> convRequestsFromPath(
-        const std::filesystem::path& path);
+    static std::map<std::string, ConversationRequest> convRequestsFromPath(const std::filesystem::path& path);
     void addConvInfo(const ConvInfo& info);
 
     /**
@@ -509,8 +491,7 @@ public:
      * @param conversationId    Related conversation
      * @return the related socket
      */
-    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view deviceId,
-                                                     std::string_view convId) const;
+    std::shared_ptr<dhtnet::ChannelSocket> gitSocket(std::string_view deviceId, std::string_view convId) const;
     void removeGitSocket(std::string_view deviceId, std::string_view convId);
     void addGitSocket(std::string_view deviceId,
                       std::string_view convId,
@@ -524,8 +505,7 @@ public:
      * @param conversationId
      * @param socket
      */
-    void addSwarmChannel(const std::string& conversationId,
-                         std::shared_ptr<dhtnet::ChannelSocket> socket);
+    void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
     /**
      * Triggers a bucket maintainance for DRTs
      */

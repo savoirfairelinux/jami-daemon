@@ -29,7 +29,7 @@ struct AVFrame;
 struct AVPixFmtDescriptor;
 struct AVBufferRef;
 struct AVCodec;
-void av_buffer_unref(AVBufferRef **buf);
+void av_buffer_unref(AVBufferRef** buf);
 }
 
 namespace jami {
@@ -40,7 +40,9 @@ void av_init();
 const char* const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
 const char* const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
 
-enum AVSampleFormat choose_sample_fmt(const AVCodec* codec, const enum AVSampleFormat* preferred_formats, int preferred_formats_count);
+enum AVSampleFormat choose_sample_fmt(const AVCodec* codec,
+                                      const enum AVSampleFormat* preferred_formats,
+                                      int preferred_formats_count);
 enum AVSampleFormat choose_sample_fmt_default(const AVCodec* codec, enum AVSampleFormat defaultFormat);
 
 bool is_yuv_planar(const AVPixFmtDescriptor& desc);
@@ -55,7 +57,8 @@ void fillWithBlack(AVFrame* frame);
 
 void fillWithSilence(AVFrame* frame);
 
-struct AVBufferRef_deleter {
+struct AVBufferRef_deleter
+{
     void operator()(AVBufferRef* buf) const { av_buffer_unref(&buf); }
 };
 

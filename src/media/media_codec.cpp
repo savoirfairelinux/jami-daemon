@@ -60,8 +60,7 @@ std::map<std::string, std::string>
 SystemCodecInfo::getCodecSpecifications() const
 {
     return {{libjami::Account::ConfProperties::CodecInfo::NAME, longName},
-            {libjami::Account::ConfProperties::CodecInfo::TYPE,
-             (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
+            {libjami::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
             {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)}};
 }
 
@@ -79,15 +78,7 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
                                            unsigned m_nbChannels,
                                            unsigned m_payloadType,
                                            AVSampleFormat sampleFormat)
-    : SystemCodecInfo(codecId,
-                      m_avcodecId,
-                      longName,
-                      m_name,
-                      m_libName,
-                      MEDIA_AUDIO,
-                      m_type,
-                      m_bitrate,
-                      m_payloadType)
+    : SystemCodecInfo(codecId, m_avcodecId, longName, m_name, m_libName, MEDIA_AUDIO, m_type, m_bitrate, m_payloadType)
     , audioformat {m_sampleRate, m_nbChannels, sampleFormat}
 {}
 
@@ -97,15 +88,11 @@ std::map<std::string, std::string>
 SystemAudioCodecInfo::getCodecSpecifications() const
 {
     return {{libjami::Account::ConfProperties::CodecInfo::NAME, longName},
-            {libjami::Account::ConfProperties::CodecInfo::TYPE,
-             (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
+            {libjami::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
             {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-            {libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE,
-             std::to_string(audioformat.sample_rate)},
-            {libjami::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER,
-             std::to_string(audioformat.nb_channels)}};
+            {libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
+            {libjami::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}};
 }
-
 
 bool
 SystemAudioCodecInfo::isPCMG722() const
@@ -116,11 +103,9 @@ SystemAudioCodecInfo::isPCMG722() const
 void
 SystemAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
-    decltype(bitrate) tmp_bitrate = std::stoi(
-        details.at(libjami::Account::ConfProperties::CodecInfo::BITRATE));
+    decltype(bitrate) tmp_bitrate = std::stoi(details.at(libjami::Account::ConfProperties::CodecInfo::BITRATE));
     decltype(audioformat) tmp_audioformat = audioformat;
-    tmp_audioformat.sample_rate = std::stoi(
-        details.at(libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
+    tmp_audioformat.sample_rate = std::stoi(details.at(libjami::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
 
     // copy back if no exception was raised
     bitrate = tmp_bitrate;
@@ -164,8 +149,7 @@ SystemVideoCodecInfo::getCodecSpecifications() const
 {
     return {
         {libjami::Account::ConfProperties::CodecInfo::NAME, longName},
-        {libjami::Account::ConfProperties::CodecInfo::TYPE,
-         (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
+        {libjami::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
         {libjami::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
         {libjami::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
         {libjami::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(minBitrate)},

@@ -56,7 +56,7 @@ void
 PresSubClient::pres_client_timer_cb(pj_timer_heap_t* /*th*/, pj_timer_entry* entry)
 {
     PresSubClient* c = (PresSubClient*) entry->user_data;
-    JAMI_DBG("timeout for %.*s", (int)c->getURI().size(), c->getURI().data());
+    JAMI_DBG("timeout for %.*s", (int) c->getURI().size(), c->getURI().data());
 }
 
 /* Callback called when *client* subscription state has changed. */
@@ -74,7 +74,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
     }
 
     JAMI_DBG("Subscription for pres_client '%.*s' is '%s'",
-             (int)pres_client->getURI().size(), pres_client->getURI().data(),
+             (int) pres_client->getURI().size(),
+             pres_client->getURI().data(),
              pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
     pjsip_evsub_state state = pjsip_evsub_get_state(sub);
@@ -83,23 +84,19 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
 
     if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
         pres_client->enable(true);
-        emitSignal<libjami::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
-                                                                        ->getAccountID(),
-                                                                    std::string(pres_client->getURI()),
-                                                                    PJ_TRUE);
+        emitSignal<libjami::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()->getAccountID(),
+                                                                      std::string(pres_client->getURI()),
+                                                                      PJ_TRUE);
 
         pres->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, true);
 
     } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
         int resub_delay = -1;
-        pj_strdup_with_null(pres_client->pool_,
-                            &pres_client->term_reason_,
-                            pjsip_evsub_get_termination_reason(sub));
+        pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
 
-        emitSignal<libjami::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
-                                                                        ->getAccountID(),
-                                                                    std::string(pres_client->getURI()),
-                                                                    PJ_FALSE);
+        emitSignal<libjami::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()->getAccountID(),
+                                                                      std::string(pres_client->getURI()),
+                                                                      PJ_FALSE);
 
         pres_client->term_code_ = 200;
 
@@ -111,8 +108,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                 pres_client->term_code_ = tsx->status_code;
                 std::ostringstream os;
                 os << pres_client->term_code_;
-                const std::string error = os.str() + "/"
-                                          + sip_utils::as_view(pres_client->term_reason_);
+                const std::string error = os.str() + "/" + sip_utils::as_view(pres_client->term_reason_);
 
                 std::string msg;
                 bool subscribe_allowed = PJ_FALSE;
@@ -154,20 +150,18 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                  *  2) change the support field in the account schema if the pres_sub's server
                  *  is the same as the account's server
                  */
-                emitSignal<libjami::PresenceSignal::ServerError>(
-                    pres_client->getPresence()->getAccount()->getAccountID(), error, msg);
+                emitSignal<libjami::PresenceSignal::ServerError>(pres_client->getPresence()->getAccount()->getAccountID(),
+                                                                 error,
+                                                                 msg);
 
                 auto account_host = sip_utils::as_view(*pj_gethostname());
                 auto sub_host = sip_utils::getHostFromUri(pres_client->getURI());
 
                 if (not subscribe_allowed and account_host == sub_host)
-                    pres_client->getPresence()
-                        ->getAccount()
-                        ->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, false);
+                    pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, false);
 
             } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
-                if (pres_client->isTermReason("deactivated")
-                    || pres_client->isTermReason("timeout")) {
+                if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
                     /* deactivated: The subscription has been terminated,
                      * but the subscriber SHOULD retry immediately with
                      * a new subscription.
@@ -179,8 +173,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                      * "timeout".
                      */
                     resub_delay = 500;
-                } else if (pres_client->isTermReason("probation")
-                           || pres_client->isTermReason("giveup")) {
+                } else if (pres_client->isTermReason("probation") || pres_client->isTermReason("giveup")) {
                     /* probation: The subscription has been terminated,
                      * but the client SHOULD retry at some later time.
                      * If a "retry-after" parameter is also present, the
@@ -202,9 +195,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                     const pjsip_msg* msg;
 
                     msg = event->body.tsx_state.src.rdata->msg_info.msg;
-                    sub_hdr = (const pjsip_sub_state_hdr*) pjsip_msg_find_hdr_by_name(msg,
-                                                                                      &sub_state,
-                                                                                      NULL);
+                    sub_hdr = (const pjsip_sub_state_hdr*) pjsip_msg_find_hdr_by_name(msg, &sub_state, NULL);
 
                     if (sub_hdr && sub_hdr->retry_after > 0)
                         resub_delay = sub_hdr->retry_after * 1000;
@@ -243,9 +234,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
 
 /* Callback when transaction state has changed. */
 void
-PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub* sub,
-                                              pjsip_transaction* tsx,
-                                              pjsip_event* event)
+PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub* sub, pjsip_transaction* tsx, pjsip_event* event)
 {
     PresSubClient* pres_client;
     pjsip_contact_hdr* contact_hdr;
@@ -267,16 +256,13 @@ PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub* sub,
     }
 
     /* Only care about 2xx response to outgoing SUBSCRIBE */
-    if (tsx->status_code / 100 != 2 || tsx->role != PJSIP_UAC_ROLE
-        || event->type != PJSIP_EVENT_RX_MSG
+    if (tsx->status_code / 100 != 2 || tsx->role != PJSIP_UAC_ROLE || event->type != PJSIP_EVENT_RX_MSG
         || pjsip_method_cmp(&tsx->method, pjsip_get_subscribe_method()) != 0) {
         return;
     }
 
     /* Find contact header. */
-    contact_hdr = (pjsip_contact_hdr*) pjsip_msg_find_hdr(event->body.rx_msg.rdata->msg_info.msg,
-                                                          PJSIP_H_CONTACT,
-                                                          NULL);
+    contact_hdr = (pjsip_contact_hdr*) pjsip_msg_find_hdr(event->body.rx_msg.rdata->msg_info.msg, PJSIP_H_CONTACT, NULL);
 
     if (!contact_hdr || !contact_hdr->uri) {
         return;
@@ -364,7 +350,7 @@ PresSubClient::isSubscribed()
 std::string_view
 PresSubClient::getURI()
 {
-    return {uri_.ptr, (size_t)uri_.slen};
+    return {uri_.ptr, (size_t) uri_.slen};
 }
 
 SIPPresence*
@@ -382,13 +368,13 @@ PresSubClient::isPresent()
 std::string_view
 PresSubClient::getLineStatus()
 {
-    return {status_.info[0].rpid.note.ptr, (size_t)status_.info[0].rpid.note.slen};
+    return {status_.info[0].rpid.note.ptr, (size_t) status_.info[0].rpid.note.slen};
 }
 
 bool
 PresSubClient::isTermReason(const std::string& reason)
 {
-    const std::string_view myReason(term_reason_.ptr, (size_t)term_reason_.slen);
+    const std::string_view myReason(term_reason_.ptr, (size_t) term_reason_.slen);
     return not myReason.compare(reason);
 }
 
@@ -414,10 +400,7 @@ PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
         delay.msec = msec;
         pj_time_val_normalize(&delay);
 
-        if (pjsip_endpt_schedule_timer(Manager::instance().sipVoIPLink().getEndpoint(),
-                                       &timer_,
-                                       &delay)
-            == PJ_SUCCESS) {
+        if (pjsip_endpt_schedule_timer(Manager::instance().sipVoIPLink().getEndpoint(), &timer_, &delay) == PJ_SUCCESS) {
             timer_.id = PJ_TRUE;
         }
     }
@@ -426,7 +409,7 @@ PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 void
 PresSubClient::enable(bool flag)
 {
-    JAMI_DBG("pres_client %.*s is %s monitored.", (int)getURI().size(), getURI().data(), flag ? "" : "NOT");
+    JAMI_DBG("pres_client %.*s is %s monitored.", (int) getURI().size(), getURI().data(), flag ? "" : "NOT");
     if (flag and not monitored_)
         pres_->addPresSubClient(this);
     monitored_ = flag;
@@ -566,9 +549,7 @@ PresSubClient::subscribe()
 
     /* Add credential for auth. */
     if (acc->hasCredentials()
-        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess,
-                                           acc->getCredentialCount(),
-                                           acc->getCredInfo())
+        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo())
                 != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize credentials for subscribe session authentication");
     }
@@ -596,9 +577,7 @@ PresSubClient::subscribe()
 
     /* Add credential for authentication */
     if (acc->hasCredentials()
-        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess,
-                                           acc->getCredentialCount(),
-                                           acc->getCredInfo())
+        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo())
                 != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return false;
@@ -607,9 +586,7 @@ PresSubClient::subscribe()
     /* Set route-set */
     pjsip_regc* regc = acc->getRegistrationInfo();
     if (regc and acc->hasServiceRoute())
-        pjsip_regc_set_route_set(regc,
-                                 sip_utils::createRouteSet(acc->getServiceRoute(),
-                                                           pres_->getPool()));
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pres_->getPool()));
 
     // attach the client data to the sub
     pjsip_evsub_set_mod_data(sub_, modId_, this);

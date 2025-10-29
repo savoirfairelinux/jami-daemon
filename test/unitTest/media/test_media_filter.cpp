@@ -26,9 +26,11 @@
 
 #include "../../test_runner.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class MediaFilterTest : public CppUnit::TestFixture {
+class MediaFilterTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "media_filter"; }
 
@@ -70,7 +72,7 @@ MediaFilterTest::tearDown()
 }
 
 static void
-fill_yuv_image(uint8_t *data[4], int linesize[4], int width, int height, int frame_index)
+fill_yuv_image(uint8_t* data[4], int linesize[4], int width, int height, int frame_index)
 {
     int x, y;
 
@@ -95,7 +97,7 @@ fill_samples(uint16_t* samples, int sampleRate, int nbSamples, int nbChannels, f
     const float tincr = 2 * pi * tone / sampleRate;
 
     for (int j = 0; j < nbSamples; ++j) {
-        samples[2 * j] = (int)(sin(t) * 10000);
+        samples[2 * j] = (int) (sin(t) * 10000);
         for (int k = 1; k < nbChannels; ++k)
             samples[2 * j + k] = samples[2 * j];
         t += tincr;
@@ -140,7 +142,8 @@ MediaFilterTest::testAudioFilter()
     frame->sample_rate = sampleRate;
 
     // construct the filter parameters
-    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->ch_layout.nb_channels, nbSamples);
+    auto params
+        = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->ch_layout.nb_channels, nbSamples);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
@@ -184,17 +187,32 @@ MediaFilterTest::testAudioMixing()
         fillAudioFrameProps(frame1, vec[0]);
         frame1->pts = i * frame1->nb_samples;
         CPPUNIT_ASSERT(av_frame_get_buffer(frame1, 0) >= 0);
-        fill_samples(reinterpret_cast<uint16_t*>(frame1->data[0]), frame1->sample_rate, frame1->nb_samples, frame1->ch_layout.nb_channels, 440.0, t1);
+        fill_samples(reinterpret_cast<uint16_t*>(frame1->data[0]),
+                     frame1->sample_rate,
+                     frame1->nb_samples,
+                     frame1->ch_layout.nb_channels,
+                     440.0,
+                     t1);
 
         fillAudioFrameProps(frame2, vec[1]);
         frame2->pts = i * frame2->nb_samples;
         CPPUNIT_ASSERT(av_frame_get_buffer(frame2, 0) >= 0);
-        fill_samples(reinterpret_cast<uint16_t*>(frame2->data[0]), frame2->sample_rate, frame2->nb_samples, frame2->ch_layout.nb_channels, 329.6276, t2);
+        fill_samples(reinterpret_cast<uint16_t*>(frame2->data[0]),
+                     frame2->sample_rate,
+                     frame2->nb_samples,
+                     frame2->ch_layout.nb_channels,
+                     329.6276,
+                     t2);
 
         fillAudioFrameProps(frame3, vec[2]);
         frame3->pts = i * frame3->nb_samples;
         CPPUNIT_ASSERT(av_frame_get_buffer(frame3, 0) >= 0);
-        fill_samples(reinterpret_cast<uint16_t*>(frame3->data[0]), frame3->sample_rate, frame3->nb_samples, frame3->ch_layout.nb_channels, 349.2282, t3);
+        fill_samples(reinterpret_cast<uint16_t*>(frame3->data[0]),
+                     frame3->sample_rate,
+                     frame3->nb_samples,
+                     frame3->ch_layout.nb_channels,
+                     349.2282,
+                     t3);
 
         // apply filter
         CPPUNIT_ASSERT(filter_->feedInput(frame1, "a1") >= 0);
@@ -317,11 +335,20 @@ MediaFilterTest::testReinit()
     frame->sample_rate = 44100;
 
     // construct the filter parameters with different sample rate
-    auto params = MediaStream("in1", frame->format, rational<int>(1, 16000), 16000, frame->ch_layout.nb_channels, frame->nb_samples);
+    auto params = MediaStream("in1",
+                              frame->format,
+                              rational<int>(1, 16000),
+                              16000,
+                              frame->ch_layout.nb_channels,
+                              frame->nb_samples);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
-    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), frame->sample_rate, frame->nb_samples, frame->ch_layout.nb_channels, 440.0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]),
+                 frame->sample_rate,
+                 frame->nb_samples,
+                 frame->ch_layout.nb_channels,
+                 440.0);
 
     // prepare filter
     std::vector<MediaStream> vec;
@@ -332,6 +359,7 @@ MediaFilterTest::testReinit()
     CPPUNIT_ASSERT(filter_->feedInput(frame, "in1") >= 0);
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::MediaFilterTest::name());

@@ -154,11 +154,8 @@ public:
     // Set internal pixel buffers on given memory buffer
     // This buffer must follow given specifications.
     void setFromMemory(uint8_t* data, int format, int width, int height) noexcept;
-    void setFromMemory(uint8_t* data,
-                       int format,
-                       int width,
-                       int height,
-                       const std::function<void(uint8_t*)>& cb) noexcept;
+    void setFromMemory(
+        uint8_t* data, int format, int width, int height, const std::function<void(uint8_t*)>& cb) noexcept;
     void setReleaseCb(const std::function<void(uint8_t*)>& cb) noexcept;
 
     void noise();
@@ -182,8 +179,7 @@ using VideoCapabilities = std::map<std::string, std::map<std::string, std::vecto
 LIBJAMI_PUBLIC std::vector<std::string> getDeviceList();
 LIBJAMI_PUBLIC VideoCapabilities getCapabilities(const std::string& deviceId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getSettings(const std::string& deviceId);
-LIBJAMI_PUBLIC void applySettings(const std::string& deviceId,
-                                  const std::map<std::string, std::string>& settings);
+LIBJAMI_PUBLIC void applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings);
 LIBJAMI_PUBLIC void setDefaultDevice(const std::string& deviceId);
 LIBJAMI_PUBLIC void setDeviceOrientation(const std::string& deviceId, int angle);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& deviceId);
@@ -209,13 +205,12 @@ LIBJAMI_PUBLIC void startShmSink(const std::string& sinkId, bool value);
 #endif
 LIBJAMI_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
-LIBJAMI_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId,
-                                                   const std::string& filepath);
+LIBJAMI_PUBLIC std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath);
 LIBJAMI_PUBLIC void stopLocalRecorder(const std::string& filepath);
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-LIBJAMI_PUBLIC void addVideoDevice(
-    const std::string& node, const std::vector<std::map<std::string, std::string>>& devInfo = {});
+LIBJAMI_PUBLIC void addVideoDevice(const std::string& node,
+                                   const std::vector<std::map<std::string, std::string>>& devInfo = {});
 LIBJAMI_PUBLIC void removeVideoDevice(const std::string& node);
 LIBJAMI_PUBLIC VideoFrame* getNewFrame(std::string_view id);
 LIBJAMI_PUBLIC void publishFrame(std::string_view id);
@@ -232,8 +227,7 @@ struct LIBJAMI_PUBLIC MediaPlayerSignal
     struct LIBJAMI_PUBLIC FileOpened
     {
         constexpr static const char* name = "FileOpened";
-        using cb_type = void(const std::string& /*playerId*/,
-                             std::map<std::string, std::string> /*playerInfo*/);
+        using cb_type = void(const std::string& /*playerId*/, std::map<std::string, std::string> /*playerInfo*/);
     };
 };
 
@@ -248,28 +242,20 @@ struct LIBJAMI_PUBLIC VideoSignal
     struct LIBJAMI_PUBLIC DecodingStarted
     {
         constexpr static const char* name = "DecodingStarted";
-        using cb_type = void(const std::string& /*id*/,
-                             const std::string& /*shm_path*/,
-                             int /*w*/,
-                             int /*h*/,
-                             bool /*is_mixer*/ id);
+        using cb_type = void(
+            const std::string& /*id*/, const std::string& /*shm_path*/, int /*w*/, int /*h*/, bool /*is_mixer*/ id);
     };
     struct LIBJAMI_PUBLIC DecodingStopped
     {
         constexpr static const char* name = "DecodingStopped";
-        using cb_type = void(const std::string& /*id*/,
-                             const std::string& /*shm_path*/,
-                             bool /*is_mixer*/);
+        using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
     };
 #ifdef __ANDROID__
     struct LIBJAMI_PUBLIC SetParameters
     {
         constexpr static const char* name = "SetParameters";
-        using cb_type = void(const std::string& device,
-                             const int format,
-                             const int width,
-                             const int height,
-                             const int rate);
+        using cb_type = void(
+            const std::string& device, const int format, const int width, const int height, const int rate);
     };
     struct LIBJAMI_PUBLIC GetCameraInfo
     {

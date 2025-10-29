@@ -87,17 +87,14 @@ public:
      * @param callId
      * @param toggle notify with new subjects if true, detach if false.
      */
-    void toggleCallMediaHandler(const std::string& mediaHandlerId,
-                                const std::string& callId,
-                                const bool toggle);
+    void toggleCallMediaHandler(const std::string& mediaHandlerId, const std::string& callId, const bool toggle);
 
     /**
      * @brief Returns details Map from MediaHandler implementation.
      * @param mediaHandlerIdStr
      * @return Details map from the MediaHandler implementation
      */
-    std::map<std::string, std::string> getCallMediaHandlerDetails(
-        const std::string& mediaHandlerIdStr);
+    std::map<std::string, std::string> getCallMediaHandlerDetails(const std::string& mediaHandlerIdStr);
 
     /**
      * @brief Returns a list of active MediaHandlers for a given call.
@@ -113,9 +110,7 @@ public:
      * @param rootPath
      * @return False if preference was changed.
      */
-    bool setPreference(const std::string& key,
-                       const std::string& value,
-                       const std::string& rootPath);
+    bool setPreference(const std::string& key, const std::string& value, const std::string& rootPath);
 
     /**
      * @brief Removes call from mediaHandlerToggled_ mapping.
@@ -137,13 +132,9 @@ private:
      * @param data
      * @param subject
      */
-    void notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
-                         const StreamData& data,
-                         AVSubjectSPtr& subject);
+    void notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr, const StreamData& data, AVSubjectSPtr& subject);
 
-    void toggleCallMediaHandler(const uintptr_t mediaHandlerId,
-                                const std::string& callId,
-                                const bool toggle);
+    void toggleCallMediaHandler(const uintptr_t mediaHandlerId, const std::string& callId, const bool toggle);
 
     /**
      * @brief Checks if the MediaHandler being (de)activated expects a video stream.

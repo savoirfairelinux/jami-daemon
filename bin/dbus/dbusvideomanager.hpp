@@ -29,175 +29,85 @@ public:
         registerSignalHandlers();
     }
 
-    ~DBusVideoManager()
-    {
-        unregisterAdaptor();
-    }
+    ~DBusVideoManager() { unregisterAdaptor(); }
 
-    auto
-    getDeviceList() -> decltype(libjami::getDeviceList())
-    {
-        return libjami::getDeviceList();
-    }
+    auto getDeviceList() -> decltype(libjami::getDeviceList()) { return libjami::getDeviceList(); }
 
-    auto
-    getCapabilities(const std::string& deviceId) -> decltype(libjami::getCapabilities(deviceId))
+    auto getCapabilities(const std::string& deviceId) -> decltype(libjami::getCapabilities(deviceId))
     {
         return libjami::getCapabilities(deviceId);
     }
 
-    auto
-    getSettings(const std::string& deviceId) -> decltype(libjami::getSettings(deviceId))
+    auto getSettings(const std::string& deviceId) -> decltype(libjami::getSettings(deviceId))
     {
         return libjami::getSettings(deviceId);
     }
 
-    void
-    applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
+    void applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
     {
         libjami::applySettings(deviceId, settings);
     }
 
-    void
-    setDefaultDevice(const std::string& deviceId)
-    {
-        libjami::setDefaultDevice(deviceId);
-    }
+    void setDefaultDevice(const std::string& deviceId) { libjami::setDefaultDevice(deviceId); }
 
-    auto
-    getDefaultDevice() -> decltype(libjami::getDefaultDevice())
-    {
-        return libjami::getDefaultDevice();
-    }
+    auto getDefaultDevice() -> decltype(libjami::getDefaultDevice()) { return libjami::getDefaultDevice(); }
 
-    void
-    startAudioDevice()
-    {
-        libjami::startAudioDevice();
-    }
+    void startAudioDevice() { libjami::startAudioDevice(); }
 
-    void
-    stopAudioDevice()
-    {
-        libjami::stopAudioDevice();
-    }
+    void stopAudioDevice() { libjami::stopAudioDevice(); }
 
-    std::string
-    openVideoInput(const std::string& inputUri)  {
-        return libjami::openVideoInput(inputUri);
-    }
+    std::string openVideoInput(const std::string& inputUri) { return libjami::openVideoInput(inputUri); }
 
-    bool
-    closeVideoInput(const std::string& inputId) {
-        return libjami::closeVideoInput(inputId);
-    }
+    bool closeVideoInput(const std::string& inputId) { return libjami::closeVideoInput(inputId); }
 
-    auto
-    getDecodingAccelerated() -> decltype(libjami::getDecodingAccelerated())
+    auto getDecodingAccelerated() -> decltype(libjami::getDecodingAccelerated())
     {
         return libjami::getDecodingAccelerated();
     }
 
-    void
-    setDecodingAccelerated(const bool& state)
-    {
-        libjami::setDecodingAccelerated(state);
-    }
+    void setDecodingAccelerated(const bool& state) { libjami::setDecodingAccelerated(state); }
 
-    auto
-    getEncodingAccelerated() -> decltype(libjami::getEncodingAccelerated())
+    auto getEncodingAccelerated() -> decltype(libjami::getEncodingAccelerated())
     {
         return libjami::getEncodingAccelerated();
     }
 
-    void
-    setEncodingAccelerated(const bool& state)
-    {
-        libjami::setEncodingAccelerated(state);
-    }
+    void setEncodingAccelerated(const bool& state) { libjami::setEncodingAccelerated(state); }
 
-    void
-    setDeviceOrientation(const std::string& deviceId, const int& angle)
+    void setDeviceOrientation(const std::string& deviceId, const int& angle)
     {
         libjami::setDeviceOrientation(deviceId, angle);
     }
 
-    void
-    startShmSink(const std::string& sinkId, const bool& value)
-    {
-        libjami::startShmSink(sinkId, value);
-    }
+    void startShmSink(const std::string& sinkId, const bool& value) { libjami::startShmSink(sinkId, value); }
 
-    std::map<std::string, std::string>
-    getRenderer(const std::string& callId)
-    {
-        return libjami::getRenderer(callId);
-    }
+    std::map<std::string, std::string> getRenderer(const std::string& callId) { return libjami::getRenderer(callId); }
 
-    std::string
-    startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath)
+    std::string startLocalMediaRecorder(const std::string& videoInputId, const std::string& filepath)
     {
         return libjami::startLocalMediaRecorder(videoInputId, filepath);
     }
 
-    void
-    stopLocalRecorder(const std::string& filepath)
-    {
-        libjami::stopLocalRecorder(filepath);
-    }
+    void stopLocalRecorder(const std::string& filepath) { libjami::stopLocalRecorder(filepath); }
 
-    std::string
-    createMediaPlayer(const std::string& path)
-    {
-        return libjami::createMediaPlayer(path);
-    }
+    std::string createMediaPlayer(const std::string& path) { return libjami::createMediaPlayer(path); }
 
-    bool
-    pausePlayer(const std::string& id, const bool& pause)
-    {
-        return libjami::pausePlayer(id, pause);
-    }
+    bool pausePlayer(const std::string& id, const bool& pause) { return libjami::pausePlayer(id, pause); }
 
-    bool
-    closeMediaPlayer(const std::string& id)
-    {
-        return libjami::closeMediaPlayer(id);
-    }
+    bool closeMediaPlayer(const std::string& id) { return libjami::closeMediaPlayer(id); }
 
-    bool
-    mutePlayerAudio(const std::string& id, const bool& mute)
-    {
-        return libjami::mutePlayerAudio(id, mute);
-    }
+    bool mutePlayerAudio(const std::string& id, const bool& mute) { return libjami::mutePlayerAudio(id, mute); }
 
-    bool
-    playerSeekToTime(const std::string& id, const int& time)
-    {
-        return libjami::playerSeekToTime(id, time);
-    }
+    bool playerSeekToTime(const std::string& id, const int& time) { return libjami::playerSeekToTime(id, time); }
 
-    int64_t
-    getPlayerPosition(const std::string& id)
-    {
-        return libjami::getPlayerPosition(id);
-    }
+    int64_t getPlayerPosition(const std::string& id) { return libjami::getPlayerPosition(id); }
 
-    int64_t
-    getPlayerDuration(const std::string& id)
-    {
-        return libjami::getPlayerDuration(id);
-    }
+    int64_t getPlayerDuration(const std::string& id) { return libjami::getPlayerDuration(id); }
 
-    void
-    setAutoRestart(const std::string& id, const bool& restart)
-    {
-        libjami::setAutoRestart(id, restart);
-    }
+    void setAutoRestart(const std::string& id, const bool& restart) { libjami::setAutoRestart(id, restart); }
 
 private:
-
-    void
-    registerSignalHandlers()
+    void registerSignalHandlers()
     {
         using namespace std::placeholders;
 

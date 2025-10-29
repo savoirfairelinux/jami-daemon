@@ -25,9 +25,12 @@
 
 #include "../../../test_runner.h"
 
-namespace jami { namespace video { namespace test {
+namespace jami {
+namespace video {
+namespace test {
 
-class VideoScalerTest : public CppUnit::TestFixture {
+class VideoScalerTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "video_scaler"; }
 
@@ -47,7 +50,6 @@ private:
 
     std::unique_ptr<VideoScaler> scaler_;
 };
-
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(VideoScalerTest, VideoScalerTest::name());
 
@@ -94,7 +96,7 @@ VideoScalerTest::testScaleWithAspect()
     scaler_.reset(new VideoScaler);
 
     libjami::VideoFrame input, output;
-    input.reserve(AV_PIX_FMT_YUV420P, 320, 240); // 4:3
+    input.reserve(AV_PIX_FMT_YUV420P, 320, 240);  // 4:3
     output.reserve(AV_PIX_FMT_YUV420P, 640, 360); // 16:9
     scaler_->scale_with_aspect(input, output);
     CPPUNIT_ASSERT(static_cast<AVPixelFormat>(output.format()) == AV_PIX_FMT_YUV420P);
@@ -102,6 +104,8 @@ VideoScalerTest::testScaleWithAspect()
     CPPUNIT_ASSERT(output.height() == 360);
 }
 
-}}} // namespace jami::test
+} // namespace test
+} // namespace video
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::video::test::VideoScalerTest::name());

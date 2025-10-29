@@ -25,9 +25,11 @@
 #include "../../test_runner.h"
 #include "client/videomanager.h"
 
-namespace jami { namespace test {
+namespace jami {
+namespace test {
 
-class MediaPlayerTest : public CppUnit::TestFixture {
+class MediaPlayerTest : public CppUnit::TestFixture
+{
 public:
     static std::string name() { return "media_player"; }
 
@@ -76,8 +78,7 @@ MediaPlayerTest::setUp()
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> handler;
     handler.insert(libjami::exportable_callback<libjami::MediaPlayerSignal::FileOpened>(
-        [=](const std::string& playerId,
-            const std::map<std::string, std::string>& info) {
+        [=](const std::string& playerId, const std::map<std::string, std::string>& info) {
             duration_ = std::stol(info.at("duration"));
             audio_stream_ = std::stoi(info.at("audio_stream"));
             video_stream_ = std::stoi(info.at("video_stream"));
@@ -163,7 +164,7 @@ MediaPlayerTest::testPause()
 bool
 MediaPlayerTest::isWithinUsec(int64_t currentTime, int64_t seekTime, int64_t margin)
 {
-    return std::abs(currentTime-seekTime) <= margin;
+    return std::abs(currentTime - seekTime) <= margin;
 }
 
 void
@@ -176,22 +177,22 @@ MediaPlayerTest::testSeekWhilePaused()
 
     int64_t startTime = mediaPlayer->getPlayerPosition();
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime+100));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime+100, 1));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime + 100));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime + 100, 1));
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime+1000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime+1000, 1));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime + 1000));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime + 1000, 1));
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime+500));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime+500, 1));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime + 500));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime + 500, 1));
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(duration_-1));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), duration_-1, 1));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(duration_ - 1));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), duration_ - 1, 1));
 
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 1));
 
-    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_+1)));
+    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_INFO("End testSeekWhilePaused");
 }
 
@@ -206,12 +207,12 @@ MediaPlayerTest::testSeekWhilePlaying()
 
     int64_t startTime = mediaPlayer->getPlayerPosition();
 
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime+10000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime+10000, 50));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime + 10000));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime + 10000, 50));
 
     startTime = mediaPlayer->getPlayerPosition();
-    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime-5000));
-    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime-5000, 50));
+    CPPUNIT_ASSERT(mediaPlayer->seekToTime(startTime - 5000));
+    CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), startTime - 5000, 50));
 
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(10000));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 10000, 50));
@@ -219,10 +220,11 @@ MediaPlayerTest::testSeekWhilePlaying()
     CPPUNIT_ASSERT(mediaPlayer->seekToTime(0));
     CPPUNIT_ASSERT(isWithinUsec(mediaPlayer->getPlayerPosition(), 0, 50));
 
-    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_+1)));
+    CPPUNIT_ASSERT(!(mediaPlayer->seekToTime(duration_ + 1)));
     JAMI_INFO("End testSeekWhilePlaying");
 }
 
-}} // namespace jami::test
+} // namespace test
+} // namespace jami
 
 CORE_TEST_RUNNER(jami::test::MediaPlayerTest::name());

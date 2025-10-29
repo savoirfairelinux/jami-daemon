@@ -29,43 +29,36 @@ static gnutls_session_t captured_session = nullptr;
 static std::mutex worker_lock {};
 static std::condition_variable cv {};
 
-__attribute__((constructor))
-static void
+__attribute__((constructor)) static void
 init(void)
 {
-        std::thread([&] {
+    std::thread([&] {
+        std::unique_lock lock(worker_lock);
 
-                std::unique_lock lock(worker_lock);
+        cv.wait(lock);
 
-                cv.wait(lock);
+        size_t max_size = gnutls_record_get_max_size(captured_session);
+        void* payload = NULL;
 
+        while (true) {
+            size_t size = (size_t) rand() % max_size;
 
-                size_t max_size =  gnutls_record_get_max_size(captured_session);
-                void *payload = NULL;
+            payload = realloc(payload, size);
 
-                while (true) {
+            printf("Spamming random payload of %zu bytes...\n", size);
 
-                    size_t size = (size_t)rand() % max_size;
+            gnutls_record_send(captured_session, payload, size);
 
-                    payload = realloc(payload, size);
-
-                    printf("Spamming random payload of %zu bytes...\n",
-                           size);
-
-                    gnutls_record_send(captured_session, payload, size);
-
-                    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-                }
-
-        }).detach();
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+    }).detach();
 }
-
 
 void
 post_gnutls_init_hook(const gnutls_session_t session)
 {
     if (nullptr == captured_session) {
-            captured_session = session;
-            cv.notify_one();
+        captured_session = session;
+        cv.notify_one();
     }
 }

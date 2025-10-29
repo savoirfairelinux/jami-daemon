@@ -192,10 +192,8 @@ private:
     template<typename TCallback>
     auto ioContextWrapper(TCallback&& fun)
     {
-        return [this, fun {std::move(fun)}](
-                   auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...)) {
-            post([fun {std::move(fun)},
-                  forwardArgs = std::make_tuple(std::move(args)...)]() mutable {
+        return [this, fun {std::move(fun)}](auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...)) {
+            post([fun {std::move(fun)}, forwardArgs = std::make_tuple(std::move(args)...)]() mutable {
                 std::apply(std::move(fun), std::move(forwardArgs));
             });
         };
@@ -268,8 +266,7 @@ exportable_serialized_callback(std::function<typename Ts::cb_type>&& func,
                               std::forward<std::function<typename Ts::cb_type>>(func), file, linum));
 }
 
-LIBJAMI_PUBLIC void registerSignalHandlers(
-    const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+LIBJAMI_PUBLIC void registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 LIBJAMI_PUBLIC void unregisterSignalHandlers();
 
 using MediaMap = std::map<std::string, std::string>;

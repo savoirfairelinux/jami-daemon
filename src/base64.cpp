@@ -30,12 +30,12 @@ encode(std::string_view dat)
     if (dat.empty() || dat.size() > INT_MAX)
         return {};
 
-    int input_length = (int)dat.size();
+    int input_length = (int) dat.size();
     int output_length = PJ_BASE256_TO_BASE64_LEN(input_length);
     std::string out;
     out.resize(output_length);
 
-    if (pj_base64_encode((const uint8_t*)dat.data(), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
+    if (pj_base64_encode((const uint8_t*) dat.data(), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
         throw base64_exception();
     }
 
