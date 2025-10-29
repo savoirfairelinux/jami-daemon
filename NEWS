@@ -33,8 +33,8 @@ DRing (2.1.0) / 2015-04-14
 	* Media: reorder AV codec default order (Opus/H264 first)
 	* Media: PulseAudio backend has echo cancelling by default
 	* Media: add rationnal number support for framerate
-	* RingAccount: use a random port at creation or if user force it to 0
-	* RingAccount: generate identity when saving account
+	* JamiAccount: use a random port at creation or if user force it to 0
+	* JamiAccount: generate identity when saving account
 	* Account: fix disabled DHT usage to place a call
 	* API: introduce text messaging per account for non-RT communication
 	* Platform: introduce windows support

@@ -31,7 +31,7 @@ main(void)
     libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
 
     if (not jami::Manager::instance().initialized) {
-        assert(libjami::start("dring-sample.yml"));
+        assert(libjami::start("djami-sample.yml"));
     }
 
     auto actors = load_actors_and_wait_for_announcement("actors/alice-bob.yml");
