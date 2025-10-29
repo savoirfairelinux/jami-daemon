@@ -49,7 +49,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("djami-sample.yml"));
     }
     ~MigrationTest() { libjami::fini(); }
     static std::string name() { return "AccountArchive"; }
@@ -171,8 +171,8 @@ MigrationTest::testMigrationAfterRevokation()
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
