@@ -1665,8 +1665,9 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
 void
 Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
 {
+    JAMI_DEBUG("[conf:{:s}] Merging confInfo from {:s}", id_, peerURI);
     if (newInfo.empty()) {
-        JAMI_DBG("confInfo empty, remove remoteHost");
+        JAMI_DEBUG("[conf:{:s}] confInfo empty, remove remoteHost", id_);
         std::lock_guard lk(confInfoMutex_);
         remoteHosts_.erase(peerURI);
         sendConferenceInfos();
@@ -1677,28 +1678,33 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
     resizeRemoteParticipants(newInfo, peerURI);
 #endif
 
-    bool updateNeeded = false;
-    auto it = remoteHosts_.find(peerURI);
-    if (it != remoteHosts_.end()) {
-        // Compare confInfo before update
-        if (it->second != newInfo) {
-            it->second = newInfo;
+    {
+        std::lock_guard lk(confInfoMutex_);
+        bool updateNeeded = false;
+        auto it = remoteHosts_.find(peerURI);
+        if (it != remoteHosts_.end()) {
+            // Compare confInfo before update
+            if (it->second != newInfo) {
+                it->second = newInfo;
+                updateNeeded = true;
+            } else
+                JAMI_WARNING("[conf:{:s}] No change in confInfo, don't update", id_);
+        } else {
+            remoteHosts_.emplace(peerURI, newInfo);
             updateNeeded = true;
-        } else
-            JAMI_WARN("No change in confInfo, don't update");
-    } else {
-        remoteHosts_.emplace(peerURI, newInfo);
-        updateNeeded = true;
-    }
-    // Send confInfo only if needed to avoid loops
+        }
+        // Send confInfo only if needed to avoid loops
 #ifdef ENABLE_VIDEO
-    if (updateNeeded and videoMixer_) {
-        // Trigger the layout update in the mixer because the frame resolution may
-        // change from participant to conference and cause a mismatch between
-        // confInfo layout and rendering layout.
-        videoMixer_->updateLayout();
-    }
+        if (updateNeeded and videoMixer_) {
+            // Trigger the layout update in the mixer because the frame resolution may
+            // change from participant to conference and cause a mismatch between
+            // confInfo layout and rendering layout.
+            videoMixer_->updateLayout();
+        }
 #endif
+        if (updateNeeded)
+            sendConferenceInfos();
+    }
 }
 
 std::string_view
