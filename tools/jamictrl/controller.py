@@ -252,6 +252,7 @@ class libjamiCtrl(Thread):
 
         self.onCallOver_cb()
         del self.activeCalls[callid]
+        self.currentCallId = None # reset current call as none exists anymore
 
     def onCallStateChanged_cb(self, callid, state, code):
         pass
