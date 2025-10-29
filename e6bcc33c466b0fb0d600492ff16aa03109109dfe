@@ -1,0 +1,22 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e2366de4_484d83c4",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 58,
+      "author": {
+        "id": 1131
+      },
+      "writtenOn": "2025-10-29T17:02:57Z",
+      "side": 1,
+      "message": "\u003e INFO SonarQube violation:\n\u003e \n\u003e \n\u003e empty catch statements hide issues; to handle exceptions appropriately, consider re-throwing, handling, or avoiding catch altogether\n\u003e \n\u003e \n\u003e Read more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dclangtidy%3Abugprone-empty-catch\n\nPlease fix.",
+      "parentUuid": "6a3bf73a_d149d4f9",
+      "revId": "e6bcc33c466b0fb0d600492ff16aa03109109dfe",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
