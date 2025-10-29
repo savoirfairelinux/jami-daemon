@@ -2,8 +2,6 @@
 #
 #  Copyright (C) 2004-2025 Savoir-faire Linux Inc. Inc
 #
-# Author: Mohamed Fenjiro <mohamed.fenjiro@savoirfairelinux.com>
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -25,7 +23,7 @@ import time
 import argparse
 
 from gi.repository import GLib
-from errorsDring import libjamiCtrlError
+from errorsDjami import libjamiCtrlError
 from controller import libjamiCtrl
 
 class JamiTest(libjamiCtrl):
@@ -37,13 +35,13 @@ class JamiTest(libjamiCtrl):
         self.failureCount = 0
         self.failureRate = 0
         self.callsCompleted = 0
-        ringAccounts = self.getAllAccounts('RING')
+        jamiAccounts = self.getAllAccounts('JAMI')
 
-        if len (ringAccounts) < 1:
-            callerDetails = {'Account.type':'RING', 'Account.alias':'testringaccount3'}
+        if len (jamiAccounts) < 1:
+            callerDetails = {'Account.type':'JAMI', 'Account.alias':'testjamiaccount3'}
             self.addAccount(callerDetails)
 
-        self.setAccount(ringAccounts[0])
+        self.setAccount(jamiAccounts[0])
         volatileCallerDetails = self.getVolatileAccountDetails(self.account)
 
         if volatileCallerDetails['Account.registrationStatus'] != 'REGISTERED':

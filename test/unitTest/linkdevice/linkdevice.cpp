@@ -63,7 +63,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("djami-sample.yml"));
     }
     ~LinkDeviceTest() { libjami::fini(); }
     static std::string name() { return "LinkDevice"; }
@@ -105,11 +105,11 @@ void
 LinkDeviceTest::tearDown()
 {
     try {
-        // try and cleanup the devices if the test fails or succeeds... this should usually fail due
+        // try and cleanup the devices if the test fails or succeeds… this should usually fail due
         // to newDeviceId already being destroyed and same with oldDeviceId
         wait_for_removal_of({oldDeviceId, newDeviceId});
     } catch (const std::exception& e) {
-        JAMI_WARNING("[ut_linkdevice] Error during account cleanup... this should be ok.");
+        JAMI_WARNING("[ut_linkdevice] Error while cleaning up account… this should be OK.");
     }
 }
 
@@ -146,7 +146,7 @@ LinkDeviceTest::testCreateOldDevice()
     JAMI_DEBUG("[ut_linkdevice::{}] Registered handlers.", testTag);
 
     JAMI_DEBUG("[ut_linkdevice::{}] [OldDevice] Creating old device account.", testTag);
-    std::map<std::string, std::string> detailsOldDevice = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> detailsOldDevice = libjami::getAccountTemplate("JAMI");
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
     { // Lock mtxOld
         JAMI_DEBUG("LOCKING ====");
@@ -227,7 +227,7 @@ LinkDeviceTest::testQrConnection()
 
     // Create old device
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account.", testTag);
-    auto detailsOldDevice = libjami::getAccountTemplate("RING");
+    auto detailsOldDevice = libjami::getAccountTemplate("JAMI");
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
 
     // Wait for old device to start
@@ -238,7 +238,7 @@ LinkDeviceTest::testQrConnection()
 
     // Create new device
     JAMI_DEBUG("[ut_linkdevice:{}] [NewDevice] Creating new device account.", testTag);
-    auto detailsNewDevice = libjami::getAccountTemplate("RING");
+    auto detailsNewDevice = libjami::getAccountTemplate("JAMI");
     detailsNewDevice[ConfProperties::ARCHIVE_URL] = "jami-auth";
     auto newDeviceId = jami::Manager::instance().addAccount(detailsNewDevice);
 
@@ -355,7 +355,7 @@ LinkDeviceTest::testExportNoPassword()
     std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account.", testTag);
-    std::map<std::string, std::string> detailsOldDevice = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> detailsOldDevice = libjami::getAccountTemplate("JAMI");
     oldDeviceId = jami::Manager::instance().addAccount(detailsOldDevice);
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Created OldDevice account with accountId = {}", testTag, oldDeviceId);
 
@@ -368,7 +368,7 @@ LinkDeviceTest::testExportNoPassword()
     std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
-    auto detailsNewDevice = libjami::getAccountTemplate("RING");
+    auto detailsNewDevice = libjami::getAccountTemplate("JAMI");
     detailsNewDevice[ConfProperties::ARCHIVE_URL] = "jami-auth";
     auto newDeviceId = jami::Manager::instance().addAccount(detailsNewDevice);
 
@@ -504,7 +504,7 @@ LinkDeviceTest::testExportWithCorrectPassword()
 
     // Create old device with password
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account with password.", testTag);
-    auto detailsOldDevice = libjami::getAccountTemplate("RING");
+    auto detailsOldDevice = libjami::getAccountTemplate("JAMI");
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD] = correctPassword;
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME] = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
     detailsOldDevice[ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
@@ -527,7 +527,7 @@ LinkDeviceTest::testExportWithCorrectPassword()
     std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
-    auto detailsNewDevice = libjami::getAccountTemplate("RING");
+    auto detailsNewDevice = libjami::getAccountTemplate("JAMI");
     detailsNewDevice[ConfProperties::ARCHIVE_URL] = "jami-auth";
     auto newDeviceId = jami::Manager::instance().addAccount(detailsNewDevice);
 
@@ -671,7 +671,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
 
     // Create old device with password
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account with password.", testTag);
-    auto detailsOldDevice = libjami::getAccountTemplate("RING");
+    auto detailsOldDevice = libjami::getAccountTemplate("JAMI");
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD] = correctPassword;
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME] = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
     detailsOldDevice[ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
@@ -694,7 +694,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
     std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
-    auto detailsNewDevice = libjami::getAccountTemplate("RING");
+    auto detailsNewDevice = libjami::getAccountTemplate("JAMI");
     detailsNewDevice[ConfProperties::ARCHIVE_URL] = "jami-auth";
     auto newDeviceId = jami::Manager::instance().addAccount(detailsNewDevice);
 
@@ -849,7 +849,7 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
 
     // Create old device with password
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Creating old device account with password.", testTag);
-    auto detailsOldDevice = libjami::getAccountTemplate("RING");
+    auto detailsOldDevice = libjami::getAccountTemplate("JAMI");
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD] = correctPassword;
     detailsOldDevice[ConfProperties::ARCHIVE_PASSWORD_SCHEME] = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
     detailsOldDevice[ConfProperties::ARCHIVE_HAS_PASSWORD] = "true";
@@ -872,7 +872,7 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
     std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
 
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
-    auto detailsNewDevice = libjami::getAccountTemplate("RING");
+    auto detailsNewDevice = libjami::getAccountTemplate("JAMI");
     detailsNewDevice[ConfProperties::ARCHIVE_URL] = "jami-auth";
     auto newDeviceId = jami::Manager::instance().addAccount(detailsNewDevice);
 
