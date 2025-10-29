@@ -1,3 +1,12 @@
+  # 
+  todo_name:
+    displayName: TODO_NAME
+    alias: TODO_NAME
+
+
+
+
+
 default-account:
       type: RING
       upnpEnabled: "true"
@@ -5,43 +14,143 @@ default-account:
       archivePIN: ""
       archivePath: ""
 
+# https://en.wikipedia.org/wiki/Alice_and_Bob#Cryptographic_systems
 accounts:
 
+  # The original, generic characters.
+  # Generally, Alice and Bob want to exchange a message or cryptographic key.
   alice:
     displayName: ALICE
     alias: ALICE
 
+  # The original, generic characters.
+  # Generally, Alice and Bob want to exchange a message or cryptographic key.
   bob:
     displayName: BOB
     alias: BOB
 
+  # A generic third participant.
+  carol:
+    displayName: CAROL
+    alias: CAROL
+
+  # A generic third participant.
+  carlos:
+    displayName: CARLOS
+    alias: CARLOS
+
+  # A generic third participant.
   charlie:
     displayName: CHARLIE
     alias: CHARLIE
 
+  # A third participant, usually of malicious intent.
+  chuck:
+    displayName: CHUCK
+    alias: CHUCK
+
+  # A third participant, usually of malicious intent.
+  chad:
+    displayName: CHAD
+    alias: CHAD
+
+  # A password cracker, often encountered in situations with stored passwords.
+  craig:
+    displayName: CRAIG
+    alias: CRAIG
+
+  # A generic fourth participant.
+  dan:
+    displayName: DAN
+    alias: DAN
+
+  # A generic fourth participant.
   dave:
     displayName: DAVE
     alias: DAVE
+
+  # A generic fourth participant.
+  david:
+    displayName: DAVID
+    alias: DAVID
+
+  # A malicious attacker.
+  # Associated with Trudy, an intruder.
+  # Unlike the passive Eve, Mallory is an active attacker (often used in man-in-the-middle attacks), who can modify messages, substitute messages, or replay old messages.
+  # The difficulty of securing a system against a Mallory is much greater than against an Eve.
+  darth:
+    displayName: DARTH
+    alias: DARTH
+
+  # A generic fifth participant, but rarely used, as "E" is usually reserved for Eve.
+  erin:
+    displayName: ERIN
+    alias: ERIN
 
   emily:
     displayName: EMILY
     alias: EMILY
 
+  # An eavesdropper, who is usually a passive attacker.
+  # While they can listen in on messages between Alice and Bob, they cannot modify them.
+  # In quantum cryptography, Eve may also represent the environment.
+  eve:
+    displayName: EVE
+    alias: EVE
+
+  # A generic sixth participant.
   frank:
     displayName: FRANK
     alias: FRANK
+
+  # A trusted advisor, courier or intermediary.
+  # Faythe is used infrequently, and is associated with faith and faithfulness.
+  # Faythe may be a repository of key service or courier of shared secrets.
+  faythe:
+    displayName: FAYTHE
+    alias: FAYTHE
+
+  # A government representative.
+  # For example, Grace may try to force Alice or Bob to implement backdoors in their protocols.
+  # Grace may also deliberately weaken standards.
+  grace:
+    displayName: GRACE
+    alias: GRACE
 
   greg:
     displayName: GREG
     alias: GREG
 
+  # A government representative.
+  # For example, Grace may try to force Alice or Bob to implement backdoors in their protocols.
+  # Grace may also deliberately weaken standards.
+  grace:
+    displayName: GRACE
+    alias: GRACE
+
+  # A mischievous designer for cryptographic standards, but rarely used.
+  heidi:
+    displayName: HEIDI
+    alias: HEIDI
+
   holly:
     displayName: HOLLY
     alias: HOLLY
 
+  # An issuer, mentioned first by Ian Grigg in the context of Ricardian contracts.
+  ivan:
+    displayName: IVAN
+    alias: IVAN
+
   ian:
     displayName: IAN
     alias: IAN
+
+  # A judge who may be called upon to resolve a potential dispute between participants.
+  # See Judge Judy.
+  judy:
+    displayName: JUDY
+    alias: JUDY
 
   jenna:
     displayName: JENNA
@@ -55,6 +164,28 @@ accounts:
     displayName: LUCY
     alias: LUCY
 
+  # A malicious attacker.
+  # Associated with Trudy, an intruder.
+  # Unlike the passive Eve, Mallory is an active attacker (often used in man-in-the-middle attacks), who can modify messages, substitute messages, or replay old messages.
+  # The difficulty of securing a system against a Mallory is much greater than against an Eve.
+  mallory:
+    displayName: MALLORY
+    alias: MALLORY
+
+  # A malicious attacker.
+  # Associated with Trudy, an intruder.
+  # Unlike the passive Eve, Mallory is an active attacker (often used in man-in-the-middle attacks), who can modify messages, substitute messages, or replay old messages.
+  # The difficulty of securing a system against a Mallory is much greater than against an Eve.
+  mallet:
+    displayName: MALLET
+    alias: MALLET
+
+  # Used as an alternative to the eavesdropper Eve, from microphone.
+  michael:
+    displayName: MICHAEL
+    alias: MICHAEL
+
+  # Used as an alternative to the eavesdropper Eve, from microphone.
   mike:
     displayName: MIKE
     alias: MIKE
@@ -63,9 +194,21 @@ accounts:
     displayName: NORA
     alias: NORA
 
+  # Used as an alternative to the eavesdropper Eve in several South Asian nations.
+  niaj:
+    displayName: NIAJ
+    alias: NIAJ
+
+  # An oracle, who responds to queries from other participants.
+  # Olivia often acts as a "black box" with some concealed state or information, or as a random oracle.
   olivia:
     displayName: OLIVIA
     alias: OLIVIA
+
+  # An opponent, similar to Mallory, but not necessarily malicious.
+  oscar:
+    displayName: OSCAR
+    alias: OSCAR
 
   pete:
     displayName: PETE
@@ -102,6 +245,12 @@ accounts:
   xander:
     displayName: XANDER
     alias: XANDER
+
+  # An eavesdropper, who is usually a passive attacker.
+  # While they can listen in on messages between Alice and Bob, they cannot modify them.
+  yves:
+    displayName: YVES
+    alias: YVES
 
   yvonne:
     displayName: YVONNE
