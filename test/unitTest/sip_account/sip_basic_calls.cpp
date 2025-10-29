@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -84,7 +84,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jamid-sample.yml"));
     }
     ~SipBasicCallTest() { libjami::fini(); }
 
@@ -103,7 +103,7 @@ private:
     CPPUNIT_TEST_SUITE(SipBasicCallTest);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
-    // Test when the peer answers with all the media disabled (RTP port = 0)
+    // Test when the peer accepts with all the media disabled (RTP port = 0)
     CPPUNIT_TEST(peer_answer_with_all_media_disabled);
     CPPUNIT_TEST(hold_resume_test);
     CPPUNIT_TEST(blind_transfer_test);
@@ -462,7 +462,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::IncomingCall::name));
 
-    // Answer the call.
+    // Accept the call.
     libjami::acceptWithMedia(callDataMap_["BOB"].accountId_,
                              callDataMap_["BOB"].callId_,
                              MediaAttribute::mediaAttributesToMediaMaps(answer));
@@ -476,7 +476,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
         // Wait for the StateChange signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-        JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
+        JAMI_INFO("BOB accepted the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
@@ -962,7 +962,7 @@ SipBasicCallTest::blind_transfer_test()
     // Let it ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    // Carla answers the call.
+    // Carla accepts the call.
     libjami::acceptWithMedia(callDataMap_["CARLA"].accountId_,
                              callDataMap_["CARLA"].callId_,
                              MediaAttribute::mediaAttributesToMediaMaps(answer));

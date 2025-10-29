@@ -59,13 +59,13 @@ AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& sa
                 } else if (key.compare(libjami::Account::ConfProperties::PROXY_ENABLED) == 0) {
                 } else if (key.compare(libjami::Account::ConfProperties::PROXY_SERVER) == 0) {
                 } else if (key.compare(libjami::Account::ConfProperties::PROXY_PUSH_TOKEN) == 0) {
-                } else if (key.compare(Conf::RING_CA_KEY) == 0) {
+                } else if (key.compare(Conf::JAMI_CA_KEY) == 0) {
                     ca_key = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
-                } else if (key.compare(Conf::RING_ACCOUNT_KEY) == 0) {
+                } else if (key.compare(Conf::JAMI_ACCOUNT_KEY) == 0) {
                     id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
-                } else if (key.compare(Conf::RING_ACCOUNT_CERT) == 0) {
+                } else if (key.compare(Conf::JAMI_ACCOUNT_CERT) == 0) {
                     id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
-                } else if (key.compare(Conf::RING_ACCOUNT_CONTACTS) == 0) {
+                } else if (key.compare(Conf::JAMI_ACCOUNT_CONTACTS) == 0) {
                     for (Json::ValueIterator citr = itr->begin(); citr != itr->end(); citr++) {
                         dht::InfoHash h {citr.key().asString()};
                         if (h != dht::InfoHash {})
@@ -82,7 +82,7 @@ AccountArchive::deserialize(std::string_view dat, const std::vector<uint8_t>& sa
                     }
                 } else if (key.compare(Conf::ETH_KEY) == 0) {
                     eth_key = base64::decode(itr->asString());
-                } else if (key.compare(Conf::RING_ACCOUNT_CRL) == 0) {
+                } else if (key.compare(Conf::JAMI_ACCOUNT_CRL) == 0) {
                     revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
                 } else {
                     config[key] = itr->asString();
@@ -109,17 +109,17 @@ AccountArchive::serialize() const
         root[it.first] = it.second;
 
     if (ca_key and *ca_key)
-        root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());
+        root[Conf::JAMI_CA_KEY] = base64::encode(ca_key->serialize());
 
-    root[Conf::RING_ACCOUNT_KEY] = base64::encode(id.first->serialize());
-    root[Conf::RING_ACCOUNT_CERT] = base64::encode(id.second->getPacked());
+    root[Conf::JAMI_ACCOUNT_KEY] = base64::encode(id.first->serialize());
+    root[Conf::JAMI_ACCOUNT_CERT] = base64::encode(id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(eth_key);
 
     if (revoked)
-        root[Conf::RING_ACCOUNT_CRL] = base64::encode(revoked->getPacked());
+        root[Conf::JAMI_ACCOUNT_CRL] = base64::encode(revoked->getPacked());
 
     if (not contacts.empty()) {
-        Json::Value& jsonContacts = root[Conf::RING_ACCOUNT_CONTACTS];
+        Json::Value& jsonContacts = root[Conf::JAMI_ACCOUNT_CONTACTS];
         for (const auto& c : contacts)
             jsonContacts[c.first.toString()] = c.second.toJson();
     }
