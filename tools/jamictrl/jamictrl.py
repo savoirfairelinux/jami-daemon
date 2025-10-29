@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #
 # Copyright (C) 2004-2025 Savoir-faire Linux Inc.
-# Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +37,7 @@ from tester import libjamiTester
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--get-all-accounts', help='Get all accounts (of optionaly given type)',
+    parser.add_argument('--get-all-accounts', help='Get all accounts (of optionally given type)',
                         nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
     parser.add_argument('--get-registered-accounts', help='Get all registered accounts',
                         action='store_true')
@@ -47,9 +46,9 @@ if __name__ == "__main__":
     parser.add_argument('--get-all-accounts-details', help='Get all accounts details',
                         action='store_true')
 
-    parser.add_argument('--add-ring-account', help='Add new Ring account',
+    parser.add_argument('--add-jami-account', help='Add new Jami account',
                         metavar='<account>', type=str)
-    parser.add_argument('--remove-ring-account', help='Remove Ring account',
+    parser.add_argument('--remove-jami-account', help='Remove Jami account',
                         metavar='<account>', type=str)
     parser.add_argument('--get-account-details', help='Get account details',
                         metavar='<account>', type=str)
@@ -69,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument('--get-all-codecs', help='Get all codecs', action='store_true')
     parser.add_argument('--get-active-codecs', help='Get active codecs for the account',
                         nargs='?', metavar='<account>', type=str, default=argparse.SUPPRESS)
-    parser.add_argument('--get-active-codecs-details', help='Get active codecs details for the account',
+    parser.add_argument('--get-active-codecs-details', help='Get active codec details for the account',
                         metavar='<account>',type=str)
     parser.add_argument('--set-active-codecs', help='Set active codecs for active account',
                         metavar='<codec list>', type=str)
@@ -84,13 +83,13 @@ if __name__ == "__main__":
     #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--accept', help='Accept the call', metavar='<call>')
-    group.add_argument('--hangup', help='Hangup the call', metavar='<call>')
-    group.add_argument('--refuse', help='Refuse the call', metavar='<call>')
+    group.add_argument('--accept', help='Accept call', metavar='<call>')
+    group.add_argument('--hangup', help='End call', metavar='<call>')
+    group.add_argument('--refuse', help='Decline call', metavar='<call>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--hold', help='Hold the call', metavar='<call>')
-    group.add_argument('--unhold', help='Unhold the call', metavar='<call>')
+    group.add_argument('--hold', help='Hold call', metavar='<call>')
+    group.add_argument('--unhold', help='Unhold call', metavar='<call>')
 
     parser.add_argument('--list-audio-devices', help='List audio input and output devices', action='store_true')
     parser.add_argument('--set-input', help='Set active input audio device',
@@ -102,18 +101,18 @@ if __name__ == "__main__":
     parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
 
     parser.add_argument('--test', help=' '.join(str(test) for test in libjamiTester().getTestName() ), metavar='<testName>')
-    parser.add_argument('--auto-answer', help='Keep running and auto-answer the calls', action='store_true')
+    parser.add_argument('--auto-answer', help='Keep running and automatically accept calls', action='store_true')
 
     args = parser.parse_args()
 
     ctrl = libjamiCtrl(sys.argv[0], args.auto_answer)
 
-    if args.add_ring_account:
-        accDetails = {'Account.type':'RING', 'Account.alias':args.add_ring_account if args.add_ring_account!='' else 'RingAccount'}
+    if args.add_jami_account:
+        accDetails = {'Account.type':'JAMI', 'Account.alias':args.add_jami_account if args.add_jami_account!='' else 'JamiAccount'}
         accountID = ctrl.addAccount(accDetails)
 
-    if args.remove_ring_account and args.remove_ring_account != '':
-        ctrl.removeAccount(args.remove_ring_account)
+    if args.remove_jami_account and args.remove_jami_account != '':
+        ctrl.removeAccount(args.remove_jami_account)
 
     if args.get_all_codecs:
         print(ctrl.getAllCodecs())
