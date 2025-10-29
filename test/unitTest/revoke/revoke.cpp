@@ -46,7 +46,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("djami-sample.yml"));
     }
     ~RevokeTest() { libjami::fini(); }
     static std::string name() { return "Revoke"; }
@@ -89,7 +89,7 @@ RevokeTest::testRevokeDevice()
 
     CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
     details[ConfProperties::ARCHIVE_PATH] = "test.gz";
 
     std::mutex mtx;
