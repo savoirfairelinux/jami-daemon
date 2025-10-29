@@ -71,7 +71,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("djami-sample.yml"));
     }
     ~SipSrtpTest() { libjami::fini(); }
 
@@ -415,7 +415,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::IncomingCallWithMedia::name));
 
-    // Answer the call.
+    // Accept the call.
     libjami::acceptWithMedia(bobData_.accountId_, bobData_.callId_, MediaAttribute::mediaAttributesToMediaMaps(answer));
 
     // Wait for media negotiation complete signal.
@@ -426,7 +426,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", bobData_.callId_.c_str());
+    JAMI_INFO("BOB accepted the call [%s]", bobData_.callId_.c_str());
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(aliceData_,
