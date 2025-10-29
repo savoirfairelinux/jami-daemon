@@ -540,6 +540,13 @@ private:
      * Unbind call's audio from the conference
      */
     void unbindSubCallAudio(const std::string& callId);
+
+    /**
+     * Helper to clear all conference state for a leaving participant
+     */
+    void clearParticipantFromConference(const std::string& callId,
+                                        const std::string& peerUri,
+                                        const std::string& deviceId);
 };
 
 } // namespace jami

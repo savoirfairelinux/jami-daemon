@@ -758,17 +758,24 @@ Conference::addSubCall(const std::string& callId)
 void
 Conference::removeSubCall(const std::string& callId)
 {
-    JAMI_DEBUG("Remove call {:s} in conference {:s}", callId, id_);
+    JAMI_DEBUG("[conf:{:s}] Removing subcall {:s} from conference", id_, callId);
     {
         std::lock_guard lk(subcallsMtx_);
         if (!subCalls_.erase(callId))
             return;
     }
     if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
-        const auto& peerId = getRemoteId(call);
+        const auto peerUri = call->getPeerNumber();
+        auto* transport = call->getTransport();
+        std::string deviceId = transport ? std::string(transport->deviceId()) : std::string {};
+
         participantsMuted_.erase(call->getCallId());
-        if (auto* transport = call->getTransport())
-            handsRaised_.erase(std::string(transport->deviceId()));
+        if (!deviceId.empty())
+            handsRaised_.erase(deviceId);
+
+        // clear participant from conference state/layout
+        clearParticipantFromConference(callId, peerUri, deviceId);
+
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
             for (auto const& rtpSession : call->getRtpSessionList()) {
@@ -778,13 +785,11 @@ Conference::removeSubCall(const std::string& callId)
                     videoMixer_->resetActiveStream();
             }
         }
-
-        auto sinkId = getConfId() + peerId;
+#endif // ENABLE_VIDEO
         unbindSubCallAudio(callId);
         call->exitConference();
         if (call->isPeerRecording())
             call->peerRecording(false);
-#endif // ENABLE_VIDEO
     }
 }
 
@@ -1919,5 +1924,80 @@ Conference::unbindSubCallAudio(const std::string& callId)
     }
 }
 
+void
+Conference::clearParticipantFromConference(const std::string& callId,
+                                           const std::string& peerUri,
+                                           const std::string& deviceId)
+{
+    JAMI_DEBUG("[conf:{:s}] Clearing participant from conference: callId='{}', peerUri='{}', deviceId='{}'",
+               id_,
+               callId,
+               peerUri,
+               deviceId);
+    bool layoutChanged = false;
+    {
+        std::lock_guard lk(confInfoMutex_);
+        auto shouldRemovePeer = [&](const ParticipantInfo& info) {
+            if (info.uri.empty())
+                return false;
+            if (!info.sinkId.empty() && info.sinkId.rfind(callId, 0) == 0)
+                return true;
+            if (!deviceId.empty() && info.device == deviceId)
+                return true;
+            if (!peerUri.empty() && info.uri == peerUri)
+                return true;
+            auto infoPeerId = string_remove_suffix(info.uri, '@');
+            auto peerId = string_remove_suffix(peerUri, '@');
+            return !peerId.empty() && infoPeerId == peerId;
+        };
+
+        for (auto it = confInfo_.begin(); it != confInfo_.end();) {
+            if (shouldRemovePeer(*it)) {
+                JAMI_DEBUG("[conf:{:s}] Removing ParticipantInfo: uri='{}', device='{}', sinkId='{}'",
+                           id_,
+                           it->uri,
+                           it->device,
+                           it->sinkId);
+                if (streamsVoiceActive.erase(it->sinkId))
+                    JAMI_DEBUG("[conf:{:s}] Removed voice activity for sinkId '{}'", id_, it->sinkId);
+                it = confInfo_.erase(it);
+                layoutChanged = true;
+            } else {
+                ++it;
+            }
+        }
+
+        auto remoteIt = remoteHosts_.find(peerUri);
+        if (remoteIt != remoteHosts_.end()) {
+            for (const auto& info : remoteIt->second) {
+                if (streamsVoiceActive.erase(info.sinkId))
+                    JAMI_DEBUG("[conf:{:s}] Removed voice activity for remote sinkId '{}'", id_, info.sinkId);
+                JAMI_DEBUG("[conf:{:s}] Removing remote ParticipantInfo: uri='{}', device='{}', sinkId='{}'",
+                           id_,
+                           info.uri,
+                           info.device,
+                           info.sinkId);
+            }
+            remoteHosts_.erase(remoteIt);
+            layoutChanged = true;
+        }
+
+        if (layoutChanged) {
+            JAMI_DEBUG("[conf:{:s}] Conference layout changed, sending updated infos", id_);
+            sendConferenceInfos();
+        }
+    }
+
+    if (!callId.empty()) {
+        for (auto it = streamsVoiceActive.begin(); it != streamsVoiceActive.end();) {
+            if (it->rfind(callId, 0) == 0) {
+                JAMI_DEBUG("[conf:{:s}] Removing lingering voice activity for stream '{}'", id_, *it);
+                it = streamsVoiceActive.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+}
 
 } // namespace jami
