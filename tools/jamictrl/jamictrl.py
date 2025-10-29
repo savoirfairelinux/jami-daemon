@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #
 # Copyright (C) 2004-2025 Savoir-faire Linux Inc.
-# Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,13 +83,13 @@ if __name__ == "__main__":
     #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--accept', help='Accept the call', metavar='<call>')
-    group.add_argument('--hangup', help='Hangup the call', metavar='<call>')
-    group.add_argument('--refuse', help='Refuse the call', metavar='<call>')
+    group.add_argument('--accept', help='Accept call', metavar='<call>')
+    group.add_argument('--hangup', help='End call', metavar='<call>')
+    group.add_argument('--refuse', help='Decline call', metavar='<call>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--hold', help='Hold the call', metavar='<call>')
-    group.add_argument('--unhold', help='Unhold the call', metavar='<call>')
+    group.add_argument('--hold', help='Hold call', metavar='<call>')
+    group.add_argument('--unhold', help='Unhold call', metavar='<call>')
 
     parser.add_argument('--list-audio-devices', help='List audio input and output devices', action='store_true')
     parser.add_argument('--set-input', help='Set active input audio device',
@@ -102,7 +101,7 @@ if __name__ == "__main__":
     parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
 
     parser.add_argument('--test', help=' '.join(str(test) for test in libjamiTester().getTestName() ), metavar='<testName>')
-    parser.add_argument('--auto-answer', help='Keep running and auto-answer the calls', action='store_true')
+    parser.add_argument('--auto-answer', help='Keep running and automatically accept calls', action='store_true')
 
     args = parser.parse_args()
 
