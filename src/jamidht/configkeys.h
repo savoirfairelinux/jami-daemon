@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 namespace jami {
@@ -30,13 +31,13 @@ constexpr const char* const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTruste
 constexpr const char* const ETH_KEY = "ethKey";
 constexpr const char* const ETH_PATH = "ethPath";
 constexpr const char* const ETH_ACCOUNT = "ethAccount";
-constexpr const char* const RING_CA_KEY = "ringCaKey";
-constexpr const char* const RING_ACCOUNT_KEY = "ringAccountKey";
-constexpr const char* const RING_ACCOUNT_CERT = "ringAccountCert";
-constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
-constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
-constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
-constexpr const char* const RING_ACCOUNT_CONTACTS = "ringAccountContacts";
+constexpr const char* const JAMI_CA_KEY = "jamiCaKey";
+constexpr const char* const JAMI_ACCOUNT_KEY = "jamiAccountKey";
+constexpr const char* const JAMI_ACCOUNT_CERT = "jamiAccountCert";
+constexpr const char* const JAMI_ACCOUNT_RECEIPT = "jamiAccountReceipt";
+constexpr const char* const JAMI_ACCOUNT_RECEIPT_SIG = "jamiAccountReceiptSignature";
+constexpr const char* const JAMI_ACCOUNT_CRL = "jamiAccountCRL";
+constexpr const char* const JAMI_ACCOUNT_CONTACTS = "jamiAccountContacts";
 constexpr const char* const CONVERSATIONS_KEY = "conversations";
 constexpr const char* const CONVERSATIONS_REQUESTS_KEY = "conversationsRequests";
 constexpr const char* const PROXY_ENABLED_KEY = "proxyEnabled";
