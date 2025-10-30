@@ -73,11 +73,15 @@ MessageChannelHandler::Impl::onChannelShutdown(const std::shared_ptr<dhtnet::Cha
 {
     std::lock_guard lk(connectionsMtx_);
     auto peerIt = connections_.find(peerId);
-    if (peerIt == connections_.end())
+    if (peerIt == connections_.end()) {
+        JAMI_WARNING("onChannelShutdown: No connections found for peer {}", peerId);
         return;
+    }
     auto connectionsIt = peerIt->second.find(device);
-    if (connectionsIt == peerIt->second.end())
+    if (connectionsIt == peerIt->second.end()) {
+        JAMI_WARNING("onChannelShutdown: No connections found for device {} of peer {}", device.toString(), peerId);
         return;
+    }
     auto& connections = connectionsIt->second;
     auto conn = std::find(connections.begin(), connections.end(), socket);
     if (conn != connections.end())
@@ -148,11 +152,6 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     if (newPeerConnection)
         pimpl_->onPeerStateChanged_(peerId, true);
 
-    socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)]() {
-        if (auto shared = w.lock())
-            shared->onChannelShutdown(s.lock(), peerId, device);
-    });
-
     struct DecodingContext
     {
         msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 16 * 1024};
@@ -180,6 +179,11 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
             }
             return len;
         });
+
+    socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)]() {
+        if (auto shared = w.lock())
+            shared->onChannelShutdown(s.lock(), peerId, device);
+    });
 }
 
 void
@@ -200,6 +204,7 @@ MessageChannelHandler::closeChannel(const std::string& peer,
                 it->second.erase(deviceIt);
                 if (it->second.empty()) {
                     pimpl_->connections_.erase(it);
+                    pimpl_->onPeerStateChanged_(peer, false);
                 }
             }
         }
