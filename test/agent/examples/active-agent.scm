@@ -22,7 +22,7 @@
 (define* (make-a-call from to #:key (timeout 30) (media-flow 10))
   "Make a call from account id FROM to peer id TO.
 If call is not in state CURRENT before TIMEOUT, returns #f, otherwise the call is
-hang up after MEDIA-FLOW seconds and #t is returned.
+ended after MEDIA-FLOW seconds and #t is returned.
 "
   (jami:info "Placing call from:~a to:~a" from to)
 
