@@ -1047,7 +1047,6 @@ connectivityChanged()
 bool
 lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
 {
-#ifdef ENABLE_NAMESERVER
     if (account.empty()) {
         auto cb =
             [name](const std::string& regName, const std::string& address, jami::NameDirectory::Response response) {
@@ -1066,14 +1065,11 @@ lookupName(const std::string& account, const std::string& nameserver, const std:
         acc->lookupName(name);
         return true;
     }
-#endif
-    return false;
 }
 
 bool
 lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address)
 {
-#ifdef ENABLE_NAMESERVER
     if (account.empty()) {
         jami::NameDirectory::instance(nameserver)
             .lookupAddress(address,
@@ -1091,8 +1087,6 @@ lookupAddress(const std::string& account, const std::string& nameserver, const s
         acc->lookupAddress(address);
         return true;
     }
-#endif
-    return false;
 }
 
 bool
@@ -1107,13 +1101,10 @@ searchUser(const std::string& account, const std::string& query)
 bool
 registerName(const std::string& account, const std::string& name, const std::string& scheme, const std::string& password)
 {
-#ifdef ENABLE_NAMESERVER
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
         acc->registerName(name, scheme, password);
         return true;
     }
-#endif
-    return false;
 }
 
 void

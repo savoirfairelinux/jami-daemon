@@ -378,11 +378,10 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 void
 JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri)
 {
-    JAMI_DBG() << this << "Calling peer " << uri.authority();
+    JAMI_LOG("[Account {}] Calling peer {}", getAccountID(), uri.authority());
     try {
         startOutgoingCall(call, uri.authority());
     } catch (...) {
-#ifdef ENABLE_NAMESERVER
         auto suffix = stripPrefix(uri.toString());
         NameDirectory::lookupUri(suffix,
                                  config().nameServer,
@@ -407,9 +406,6 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
                                          }
                                      });
                                  });
-#else
-        call->onFailure(ENOENT);
-#endif
     }
 }
 
@@ -606,7 +602,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
-#ifdef ENABLE_NAMESERVER
     accountManager_->lookupAddress(toUri,
                                    [wCall](const std::string& regName,
                                            const std::string& address,
@@ -616,7 +611,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                                                call->setPeerRegisteredName(regName);
                                            }
                                    });
-#endif
 
     dht::InfoHash peer_account(toUri);
 
@@ -1345,9 +1339,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
                         if (not conf.managerUri.empty()) {
                             conf.registeredName = conf.managerUsername;
-#ifdef ENABLE_NAMESERVER
                             registeredName_ = conf.managerUsername;
-#endif
                         }
                         conf.username = info.accountId;
                         conf.deviceName = accountManager_->getAccountDeviceName();
@@ -1380,9 +1372,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                             const auto& profiles = idPath_ / "profiles";
                             const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(info.accountId));
                             vCard::utils::save(newProfile, vCardPath, profilePath());
-                            emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(),
-                                                                                      info.accountId,
-                                                                                      profilePath().string());
+                            runOnMainThread([w = weak(), id = info.accountId, vCardPath]() {
+                                if (auto shared = w.lock()) {
+                                    emitSignal<libjami::ConfigurationSignal::ProfileReceived>(shared->getAccountID(),
+                                                                                              id,
+                                                                                              vCardPath.string());
+                                }
+                            });
                         } catch (const std::exception& e) {
                             JAMI_WARNING("[Account {}] Unable to save profile after authentication: {}",
                                          getAccountID(),
@@ -1423,11 +1419,9 @@ JamiAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(libjami::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
-#ifdef ENABLE_NAMESERVER
     auto registeredName = getRegisteredName();
     if (not registeredName.empty())
         a.emplace(libjami::Account::VolatileProperties::REGISTERED_NAME, registeredName);
-#endif
     a.emplace(libjami::Account::ConfProperties::PROXY_SERVER, proxyServerCached_);
     a.emplace(libjami::Account::VolatileProperties::DHT_BOUND_PORT, std::to_string(dhtBoundPort_));
     a.emplace(libjami::Account::VolatileProperties::DEVICE_ANNOUNCED, deviceAnnounced_ ? TRUE_STR : FALSE_STR);
@@ -1439,7 +1433,6 @@ JamiAccount::getVolatileAccountDetails() const
     return a;
 }
 
-#ifdef ENABLE_NAMESERVER
 void
 JamiAccount::lookupName(const std::string& name)
 {
@@ -1501,7 +1494,6 @@ JamiAccount::registerName(const std::string& name, const std::string& scheme, co
                                emitSignal<libjami::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
                            });
 }
-#endif
 
 bool
 JamiAccount::searchUser(const std::string& query)
@@ -1839,7 +1831,6 @@ JamiAccount::doRegister_()
 
         convModule()->clearPendingFetch();
 
-#ifdef ENABLE_NAMESERVER
         // Look for registered name
         accountManager_->lookupAddress(accountManager_->getInfo()->accountId,
                                        [w = weak()](const std::string& regName,
@@ -1861,7 +1852,6 @@ JamiAccount::doRegister_()
                                                }
                                            }
                                        });
-#endif
 
         dht::DhtRunner::Config config {};
         config.dht_config.node_config.network = 0;
@@ -3335,10 +3325,8 @@ JamiAccount::pushNotificationReceived(const std::string& from, const std::map<st
 std::string
 JamiAccount::getUserUri() const
 {
-#ifdef ENABLE_NAMESERVER
     if (not registeredName_.empty())
         return JAMI_URI_PREFIX + registeredName_;
-#endif
     return JAMI_URI_PREFIX + config().username;
 }
 
