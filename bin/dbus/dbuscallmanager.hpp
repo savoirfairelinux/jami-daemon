@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #include "dbuscallmanager.adaptor.h"
@@ -51,9 +52,9 @@ public:
         return libjami::requestMediaChange(accountId, callId, mediaList);
     }
 
-    auto refuse(const std::string& accountId, const std::string& callId) -> decltype(libjami::refuse(accountId, callId))
+    auto decline(const std::string& accountId, const std::string& callId) -> decltype(libjami::decline(accountId, callId))
     {
-        return libjami::refuse(accountId, callId);
+        return libjami::decline(accountId, callId);
     }
 
     auto accept(const std::string& accountId, const std::string& callId) -> decltype(libjami::accept(accountId, callId))
@@ -77,9 +78,9 @@ public:
         return libjami::answerMediaChangeRequest(accountId, callId, mediaList);
     }
 
-    auto hangUp(const std::string& accountId, const std::string& callId) -> decltype(libjami::hangUp(accountId, callId))
+    auto end(const std::string& accountId, const std::string& callId) -> decltype(libjami::end(accountId, callId))
     {
-        return libjami::hangUp(accountId, callId);
+        return libjami::end(accountId, callId);
     }
 
     auto hold(const std::string& accountId, const std::string& callId) -> decltype(libjami::hold(accountId, callId))
@@ -87,9 +88,9 @@ public:
         return libjami::hold(accountId, callId);
     }
 
-    auto unhold(const std::string& accountId, const std::string& callId) -> decltype(libjami::unhold(accountId, callId))
+    auto resume(const std::string& accountId, const std::string& callId) -> decltype(libjami::resume(accountId, callId))
     {
-        return libjami::unhold(accountId, callId);
+        return libjami::resume(accountId, callId);
     }
 
     auto muteLocalMedia(const std::string& accountId,
@@ -225,10 +226,10 @@ public:
         return libjami::joinConference(accountId, sel_confId, account2Id, drag_confId);
     }
 
-    auto hangUpConference(const std::string& accountId,
-                          const std::string& confId) -> decltype(libjami::hangUpConference(accountId, confId))
+    auto disconnectConference(const std::string& accountId,
+                          const std::string& confId) -> decltype(libjami::disconnectConference(accountId, confId))
     {
-        return libjami::hangUpConference(accountId, confId);
+        return libjami::disconnectConference(accountId, confId);
     }
 
     auto holdConference(const std::string& accountId,
@@ -237,10 +238,10 @@ public:
         return libjami::holdConference(accountId, confId);
     }
 
-    auto unholdConference(const std::string& accountId,
-                          const std::string& confId) -> decltype(libjami::unholdConference(accountId, confId))
+    auto resumeConference(const std::string& accountId,
+                          const std::string& confId) -> decltype(libjami::resumeConference(accountId, confId))
     {
-        return libjami::unholdConference(accountId, confId);
+        return libjami::resumeConference(accountId, confId);
     }
 
     auto getConferenceList(const std::string& accountId) -> decltype(libjami::getConferenceList(accountId))
@@ -340,12 +341,12 @@ public:
         libjami::muteParticipant(accountId, confId, peerId, state);
     }
 
-    void hangupParticipant(const std::string& accountId,
+    void disconnectParticipant(const std::string& accountId,
                            const std::string& confId,
                            const std::string& peerId,
                            const std::string& deviceId)
     {
-        libjami::hangupParticipant(accountId, confId, peerId, deviceId);
+        libjami::disconnectParticipant(accountId, confId, peerId, deviceId);
     }
 
     void raiseParticipantHand(const std::string& accountId,
