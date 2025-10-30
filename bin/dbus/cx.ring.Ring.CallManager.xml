@@ -190,10 +190,10 @@
             <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
-        <method name="unhold" tp:name-for-bindings="unhold">
+        <method name="resume" tp:name-for-bindings="resume">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Take a call off hold, and place this call in state CURRENT.
+              To resume a call on hold, and place this call in state CURRENT.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="callId" direction="in">
@@ -201,7 +201,7 @@
                 The callId.
               </tp:docstring>
             </arg>
-            <arg type="b" name="unHoldSucceeded" direction="out"/>
+            <arg type="b" name="resumeSucceeded" direction="out"/>
         </method>
 
         <method name="muteLocalMedia" tp:name-for-bindings="muteLocalMedia">
@@ -269,7 +269,7 @@
 
         <method name="playDTMF" tp:name-for-bindings="playDTMF">
             <tp:docstring>
-              Dual-Tone multi-frequency. Tell the core to play dialtones. A SIP INFO message is sent to notify the server.
+              Dual-tone multi-frequency (DTMF). Tell the core to play dialtones. A SIP INFO message is sent to notify the server.
             </tp:docstring>
             <arg type="s" name="key" direction="in">
               <tp:docstring>
@@ -519,7 +519,7 @@
         <method name="getConferenceId" tp:name-for-bindings="getConferenceId">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-                If this call participate to a conference, return the conference id.
+                If this call participate to a conference, return the conference ID.
                 Return an empty string elsewhere.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
@@ -832,12 +832,12 @@
                   <li>CONNECTING: Peer found, contacting him</li>
                   <li>RINGING: Initial state of received outgoing call</li>
                   <li>CURRENT: The normal active state of an answered call</li>
-                  <li>HUNGUP: Notify that the call has been hungup by peer</li>
+                  <li>ENDED: Notify that the call has been ended by peer</li>
                   <li>BUSY: Notify that we terminated an incoming call after timeout</li>
                   <li>PEER_BUSY: Notify that peer replied BUSY to this call</li>
                   <li>FAILURE: Error when processing a call</li>
                   <li>HOLD</li>
-                  <li>UNHOLD</li>
+                  <li>RESUME</li>
                 </ul>
               </tp:docstring>
             </arg>
@@ -939,10 +939,10 @@
             <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
-        <method name="unholdConference" tp:name-for-bindings="unholdConference">
+        <method name="resumeConference" tp:name-for-bindings="resumeConference">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Hold off every call participating in this conference.
+              Resume every call participating in this conference.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confID" direction="in">
@@ -950,7 +950,7 @@
                 The conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="unholdSucceeded" direction="out"/>
+            <arg type="b" name="resumeSucceeded" direction="out"/>
         </method>
 
         <method name="startRecordedFilePlayback" tp:name-for-bindings="startRecordedFilePlayback">
@@ -1091,22 +1091,22 @@
         <method name="currentMediaList" tp:name-for-bindings="currentMediaList">
             <tp:added version="13.3.0"/>
             <tp:docstring>
-              <p>Retrieve current medias for call.</p>
+              <p>Retrieve current media for call.</p>
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
               <tp:docstring>
-                The local account Id.
+                The local account ID.
               </tp:docstring>
             </arg>
             <arg type="s" name="callId" direction="in">
               <tp:docstring>
-                Call's id (or conference's id)
+                Call's ID (or conference's ID)
               </tp:docstring>
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="mediaList" direction="out">
               <tp:docstring>
-                List of active medias in the call.
+                List of active media in the call.
               </tp:docstring>
             </arg>
         </method>
