@@ -1546,6 +1546,15 @@ ConversationMembersEventTest::testRemoveRequestBannedMultiDevices()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
 
+    if (!bobData.registered) {
+        Manager::instance().sendRegister(bobId, true);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.registered; }));
+    }
+
+    if (!bobData.deviceAnnounced) {
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.deviceAnnounced; }));
+    }
+
     // Alice adds bob
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
@@ -1581,6 +1590,15 @@ ConversationMembersEventTest::testBanUnbanMultiDevice()
     bob2Id = Manager::instance().addAccount(details);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
+
+    if (!bobData.registered) {
+        Manager::instance().sendRegister(bobId, true);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.registered; }));
+    }
+
+    if (!bobData.deviceAnnounced) {
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.deviceAnnounced; }));
+    }
 
     // Alice adds bob
     libjami::addConversationMember(aliceId, convId, bobUri);
