@@ -306,7 +306,7 @@ struct Manager::ManagerPimpl
 
     void addMainParticipant(Conference& conf);
 
-    bool hangupConference(Conference& conf);
+    bool endConference(Conference& conf);
 
     template<class T>
     std::shared_ptr<T> findAccount(const std::function<bool(const std::shared_ptr<T>&)>&);
@@ -890,7 +890,7 @@ Manager::finish() noexcept
         // End all remaining active calls
         JAMI_DBG("End %zu remaining call(s)", callFactory.callCount());
         for (const auto& call : callFactory.getAllCalls())
-            hangupCall(call->getAccountId(), call->getCallId());
+            endCall(call->getAccountId(), call->getCallId());
         callFactory.clear();
 
         for (const auto& account : getAllAccounts<JamiAccount>()) {
@@ -1157,7 +1157,7 @@ Manager::acceptCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
 
 // THREAD=Main
 bool
-Manager::hangupCall(const std::string& accountId, const std::string& callId)
+Manager::endCall(const std::string& accountId, const std::string& callId)
 {
     auto account = getAccount(accountId);
     if (not account)
@@ -1185,9 +1185,9 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
     }
 
     try {
-        call->hangup(0);
+        call->end(0);
     } catch (const VoipLinkException& e) {
-        JAMI_ERROR("[call:{}] Failed to hangup: {}", call->getCallId(), e.what());
+        JAMI_ERROR("[call:{}] Failed to end call: {}", call->getCallId(), e.what());
         return false;
     }
 
@@ -1195,11 +1195,11 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
 }
 
 bool
-Manager::hangupConference(const std::string& accountId, const std::string& confId)
+Manager::endConference(const std::string& accountId, const std::string& confId)
 {
     if (auto account = getAccount(accountId)) {
         if (auto conference = account->getConference(confId)) {
-            return pimpl_->hangupConference(*conference);
+            return pimpl_->endConference(*conference);
         } else {
             JAMI_ERROR("[conf:{}] Conference not found", confId);
         }
@@ -1313,12 +1313,12 @@ Manager::transferSucceeded()
 
 // THREAD=Main : Call:Incoming
 bool
-Manager::refuseCall(const std::string& accountId, const std::string& id)
+Manager::declineCall(const std::string& accountId, const std::string& id)
 {
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(id)) {
             stopTone();
-            call->refuse();
+            call->decline();
             pimpl_->removeWaitingCall(id);
             removeAudio(*call);
             return true;
@@ -1421,7 +1421,7 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 }
 
 bool
-Manager::ManagerPimpl::hangupConference(Conference& conference)
+Manager::ManagerPimpl::endConference(Conference& conference)
 {
     JAMI_DEBUG("[conf:{}] Hanging up conference", conference.getConfId());
     CallIdSet subcalls(conference.getSubCalls());
@@ -1432,7 +1432,7 @@ Manager::ManagerPimpl::hangupConference(Conference& conference)
     }
     for (const auto& callId : subcalls) {
         if (auto call = base_.getCallFromCallID(callId))
-            base_.hangupCall(call->getAccountId(), callId);
+            base_.endCall(call->getAccountId(), callId);
     }
     unsetCurrentCall();
     return true;
@@ -2581,7 +2581,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 #endif
     } else {
         if (account->isDenySecondCallEnabled()) {
-            base_.refuseCall(account->getAccountID(), incomCallId);
+            base_.declineCall(account->getAccountID(), incomCallId);
             return;
         }
     }
@@ -2647,7 +2647,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                  incomCall = incomCall.shared_from_this()] {
                     auto& mgr = Manager::instance();
                     mgr.acceptCall(*incomCall);
-                    mgr.hangupCall(accountId, currentCallID);
+                    mgr.endCall(accountId, currentCallID);
                 });
             }
         }
@@ -2825,7 +2825,7 @@ Manager::removeAccount(const std::string& accountID, bool flush)
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
         if (auto acc = std::dynamic_pointer_cast<JamiAccount>(remAccount)) {
-            acc->hangupCalls();
+            acc->endCalls();
         }
         remAccount->doUnregister(true);
         if (flush)
