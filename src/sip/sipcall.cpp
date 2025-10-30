@@ -3043,10 +3043,8 @@ SIPCall::getDetails() const
         }
     }
 
-#ifdef ENABLE_NAMESERVER
     if (not peerRegisteredName_.empty())
         details.emplace(libjami::Call::Details::REGISTERED_NAME, peerRegisteredName_);
-#endif
 
 #ifdef ENABLE_CLIENT_CERT
     std::lock_guard lk {callMutex_};
