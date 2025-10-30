@@ -758,17 +758,16 @@ Conference::addSubCall(const std::string& callId)
 void
 Conference::removeSubCall(const std::string& callId)
 {
-    JAMI_DEBUG("Remove call {:s} in conference {:s}", callId, id_);
+    JAMI_DEBUG("[conf:{:s}] Removing subcall {:s} from conference", id_, callId);
     {
         std::lock_guard lk(subcallsMtx_);
         if (!subCalls_.erase(callId))
             return;
     }
+
+    clearParticipantDataFromConference(callId);
+
     if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
-        const auto& peerId = getRemoteId(call);
-        participantsMuted_.erase(call->getCallId());
-        if (auto* transport = call->getTransport())
-            handsRaised_.erase(std::string(transport->deviceId()));
 #ifdef ENABLE_VIDEO
         if (videoMixer_) {
             for (auto const& rtpSession : call->getRtpSessionList()) {
@@ -778,13 +777,11 @@ Conference::removeSubCall(const std::string& callId)
                     videoMixer_->resetActiveStream();
             }
         }
-
-        auto sinkId = getConfId() + peerId;
+#endif // ENABLE_VIDEO
         unbindSubCallAudio(callId);
         call->exitConference();
         if (call->isPeerRecording())
             call->peerRecording(false);
-#endif // ENABLE_VIDEO
     }
 }
 
@@ -1919,5 +1916,58 @@ Conference::unbindSubCallAudio(const std::string& callId)
     }
 }
 
+void
+Conference::clearParticipantDataFromConference(const std::string& callId)
+{
+    JAMI_DEBUG("[conf:{:s}] Attempting to clear participant data from conference (subcall:{:s})", id_, callId);
+
+    if (callId.empty()) {
+        JAMI_WARNING("[conf:{:s}] Cannot clear participant data from conference: empty call id", id_);
+        return;
+    }
+
+    auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId));
+    if (!call) {
+        JAMI_WARNING("[conf:{:s}] Unable to find call {:s} to clear participant", id_, callId);
+        return;
+    }
+
+    auto* transport = call->getTransport();
+    if (!transport) {
+        JAMI_WARNING("[conf:{:s}] Unable to find transport for call {:s} to clear participant", id_, callId);
+        return;
+    }
+
+    const std::string deviceId = std::string(transport->deviceId());
+    const std::string participantId = getRemoteId(call);
+
+    {
+        std::lock_guard lk(confInfoMutex_);
+        for (auto it = confInfo_.begin(); it != confInfo_.end();) {
+            if (it->uri == participantId) {
+                JAMI_DEBUG("[conf:{:s}] Removing participant {:s} from confInfo_", id_, it->uri);
+                it = confInfo_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        auto remoteIt = remoteHosts_.find(participantId);
+        if (remoteIt != remoteHosts_.end()) {
+            JAMI_DEBUG("[conf:{:s}] Removing participant {:s} from remoteHosts_", id_, participantId);
+            remoteHosts_.erase(remoteIt);
+        }
+        if (handsRaised_.erase(deviceId)) {
+            JAMI_DEBUG("[conf:{:s}] Removing raised hand for participant {:s}", id_, participantId);
+        }
+        if (moderators_.erase(participantId)) {
+            JAMI_DEBUG("[conf:{:s}] Removing moderator status for participant {:s}", id_, participantId);
+        }
+        if (participantsMuted_.erase(callId)) {
+            JAMI_DEBUG("[conf:{:s}] Removing muted status for participant {:s}", id_, participantId);
+        }
+    }
+
+    sendConferenceInfos();
+}
 
 } // namespace jami
