@@ -49,7 +49,7 @@ public:
      * Start local recording. Return true if recording was successfully
      * started, false otherwise.
      */
-    bool startRecording();
+    bool start();
 
     /**
      * Stops recording.
