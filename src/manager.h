@@ -75,7 +75,7 @@ public:
     // TODO LIBJAMI_PUBLIC only if tests
     static LIBJAMI_TEST_EXPORT Manager& instance();
 
-    void setAutoAnswer(bool enable);
+    void setAutoAccept(bool enable);
 
     /**
      * General preferences configuration
@@ -174,7 +174,7 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Answer the call
+     * Accept call
      * @param callId
      */
     bool acceptCall(const std::string& accountId,
@@ -191,18 +191,18 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Hangup the call
+     * End call
      * @param accountId
      * @param callId  The call identifier
      */
-    bool hangupCall(const std::string& accountId, const std::string& callId);
+    bool endCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
-     * Hangup the conference (hangup every participants)
+     * End conference (detach every participant)
      * @param id  The call identifier
      */
-    bool hangupConference(const std::string& accountId, const std::string& confId);
+    bool endConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Functions which occur with a user's action
@@ -240,10 +240,10 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Refuse the call
+     * Decline call
      * @param id  The call identifier
      */
-    bool refuseCall(const std::string& accountId, const std::string& id);
+    bool declineCall(const std::string& accountId, const std::string& id);
 
     /**
      * Hold all conference participants
@@ -293,7 +293,7 @@ public:
     void createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>&);
 
     /**
-     * Detach a participant from a conference, put the call on hold, do not hangup it
+     * Detach a participant from a conference, put the call on hold, do not end call
      * @param call id
      * @param the current call id
      */
@@ -345,24 +345,24 @@ public:
     void stopTone();
 
     /**
-     * Notify the user that the recipient of the call has answered and the put the
-     * call in Current state
+     * Notify the user that the recipient of the call has accepted the call and the put
+     * the call in CURRENT state
      * @param id  The call identifier
      */
-    void peerAnsweredCall(Call& call);
+    void peerAcceptedCall(Call& call);
 
     /**
      * Rings back because the outgoing call is ringing and the put the
-     * call in Ringing state
+     * call in RINGING state
      * @param id  The call identifier
      */
     void peerRingingCall(Call& call);
 
     /**
-     * Put the call in Hungup state, remove the call from the list
+     * Put the call in ENDED state, remove the call from the list
      * @param id  The call identifier
      */
-    void peerHungupCall(Call& call);
+    void peerEndedCall(Call& call);
 
     /**
      * Notify the client with an incoming message
@@ -570,8 +570,8 @@ public:
     bool getIsAlwaysRecording() const;
 
     /**
-     * Set is always recording functionality, every calls will then be set in RECORDING mode
-     * once answered
+     * Set is always recording functionality, every accepted call will then be set in
+     * RECORDING mode
      */
     void setIsAlwaysRecording(bool isAlwaysRec);
 
@@ -610,14 +610,14 @@ public:
 
     /**
      * Set ringing timeout (number of seconds after which a call will
-     * enter BUSY state if not answered).
+     * enter BUSY state if not accepted).
      * @param timeout in seconds
      */
     void setRingingTimeout(std::chrono::seconds timeout);
 
     /**
      * Get ringing timeout (number of seconds after which a call will
-     * enter BUSY state if not answered).
+     * enter BUSY state if not accepted).
      * @return timeout in seconds
      */
     std::chrono::seconds getRingingTimeout() const;
@@ -696,7 +696,7 @@ public:
 
     /**
      * @return true is there is one or many incoming call waiting
-     * new call, not answered or refused
+     * new call, not accepted or not declined
      */
     bool incomingCallsWaiting();
 
