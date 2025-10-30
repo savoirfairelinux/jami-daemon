@@ -495,7 +495,7 @@ startLocalMediaRecorder(const std::string& videoInputId, const std::string& file
         return "";
     }
 
-    auto ret = recordManager.getRecorderByPath(path)->startRecording();
+    auto ret = recordManager.getRecorderByPath(path)->start();
     if (!ret) {
         recordManager.removeRecorderByPath(filepath);
         return "";
