@@ -22,9 +22,7 @@
 
 #include "contact_list.h"
 #include "logger.h"
-#ifdef ENABLE_NAMESERVER
 #include "namedirectory.h"
-#endif
 
 #include <opendht/crypto.h>
 #include <optional>

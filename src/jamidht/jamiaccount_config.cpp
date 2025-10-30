@@ -153,9 +153,7 @@ JamiAccountConfig::toMap() const
     a.emplace(libjami::Account::ConfProperties::MANAGER_URI, managerUri);
     a.emplace(libjami::Account::ConfProperties::MANAGER_USERNAME, managerUsername);
     a.emplace(libjami::Account::ConfProperties::DHT::PUBLIC_IN_CALLS, dhtPublicInCalls ? TRUE_STR : FALSE_STR);
-#ifdef ENABLE_NAMESERVER
     a.emplace(libjami::Account::ConfProperties::Nameserver::URI, nameServer);
-#endif
     return a;
 }
 
@@ -202,9 +200,7 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
         managerUri = "https://" + managerUri;
     }
 
-#ifdef ENABLE_NAMESERVER
     parseString(details, libjami::Account::ConfProperties::Nameserver::URI, nameServer);
-#endif
 }
 
 } // namespace jami
