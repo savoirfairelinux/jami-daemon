@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #ifdef HAVE_CONFIG_H
@@ -183,7 +184,7 @@ using clock = std::chrono::steady_clock;
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
 {
 public:
-    enum class State { ACTIVE_ATTACHED, ACTIVE_DETACHED, HOLD };
+    enum class State { ACTIVE_CONNECTED, ACTIVE_DISCONNECTED, HOLD };
 
     /**
      * Constructor for this class, increment static counter
@@ -225,10 +226,10 @@ public:
     static constexpr const char* getStateStr(State state)
     {
         switch (state) {
-        case State::ACTIVE_ATTACHED:
-            return "ACTIVE_ATTACHED";
-        case State::ACTIVE_DETACHED:
-            return "ACTIVE_DETACHED";
+        case State::ACTIVE_CONNECTED:
+            return "ACTIVE_CONNECTED";
+        case State::ACTIVE_DISCONNECTED:
+            return "ACTIVE_DISCONNECTED";
         case State::HOLD:
             return "HOLD";
         default:
@@ -277,14 +278,14 @@ public:
     void removeSubCall(const std::string& callId);
 
     /**
-     * Attach host
+     * Connect host
      */
-    void attachHost(const std::vector<libjami::MediaMap>& mediaList);
+    void connectHost(const std::vector<libjami::MediaMap>& mediaList);
 
     /**
      * Detach local audio/video from the conference
      */
-    void detachHost();
+    void disconnectHost();
 
     /**
      * Get the participant list for this conference
@@ -395,7 +396,7 @@ private:
 
     std::string id_;
     std::weak_ptr<Account> account_;
-    State confState_ {State::ACTIVE_DETACHED};
+    State confState_ {State::ACTIVE_DISCONNECTED};
     mutable std::mutex subcallsMtx_ {};
     CallIdSet subCalls_;
     std::string mediaPlayerId_ {};

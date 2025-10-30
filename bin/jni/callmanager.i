@@ -64,11 +64,11 @@ std::string placeCallWithMedia(const std::string& accountId,
                                const std::string& to,
                                const std::vector<std::map<std::string, std::string>>& mediaList);
 bool requestMediaChange(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
-bool refuse(const std::string& accountId, const std::string& callId);
+bool decline(const std::string& accountId, const std::string& callId);
 bool accept(const std::string& accountId, const std::string& callId);
 bool acceptWithMedia(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool answerMediaChangeRequest(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
-bool hangUp(const std::string& accountId, const std::string& callId);
+bool end(const std::string& accountId, const std::string& callId);
 bool hold(const std::string& accountId, const std::string& callId);
 bool resume(const std::string& accountId, const std::string& callId);
 bool muteLocalMedia(const std::string& accountId, const std::string& callId, const std::string& mediaType, bool mute);
@@ -85,9 +85,9 @@ void setActiveParticipant(const std::string& accountId, const std::string& confI
 bool isConferenceParticipant(const std::string& accountId, const std::string& callId);
 bool addParticipant(const std::string& accountId, const std::string& callId, const std::string& account2Id, const std::string& confId);
 bool addMainParticipant(const std::string& accountId, const std::string& confId);
-bool detachParticipant(const std::string& accountId, const std::string& callId);
+bool disconnectParticipant(const std::string& accountId, const std::string& callId);
 bool joinConference(const std::string& accountId, const std::string& sel_confId, const std::string& account2Id, const std::string& drag_confId);
-bool hangUpConference(const std::string& accountId, const std::string& confId);
+bool endConference(const std::string& accountId, const std::string& confId);
 bool holdConference(const std::string& accountId, const std::string& confId);
 bool resumeConference(const std::string& accountId, const std::string& confId);
 std::vector<std::string> getConferenceList(const std::string& accountId);
@@ -98,26 +98,26 @@ std::vector<libjami::MediaMap> currentMediaList(const std::string& accountId, co
 std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& accountId, const std::string& confId);
 void setModerator(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
 void muteStream(const std::string& accountId,
-                    const std::string& confId,
-                    const std::string& accountUri,
-                    const std::string& deviceId,
-                    const std::string& streamId,
-                    const bool& state);
-void setActiveStream(const std::string& accountId,
-                    const std::string& confId,
-                    const std::string& accountUri,
-                    const std::string& deviceId,
-                    const std::string& streamId,
-                    const bool& state);
-void hangupParticipant(const std::string& accountId,
-                const std::string& confId,
-                const std::string& accountUri,
-                const std::string& deviceId);
-void raiseHand(const std::string& accountId,
                 const std::string& confId,
                 const std::string& accountUri,
                 const std::string& deviceId,
+                const std::string& streamId,
                 const bool& state);
+void setActiveStream(const std::string& accountId,
+                     const std::string& confId,
+                     const std::string& accountUri,
+                     const std::string& deviceId,
+                     const std::string& streamId,
+                     const bool& state);
+void disconnectParticipant(const std::string& accountId,
+                           const std::string& confId,
+                           const std::string& accountUri,
+                           const std::string& deviceId);
+void raiseHand(const std::string& accountId,
+               const std::string& confId,
+               const std::string& accountUri,
+               const std::string& deviceId,
+               const bool& state);
 // DEPRECATED
 void muteParticipant(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);
 void raiseParticipantHand(const std::string& accountId, const std::string& confId, const std::string& peerId, const bool& state);

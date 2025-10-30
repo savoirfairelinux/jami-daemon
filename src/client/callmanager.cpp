@@ -225,7 +225,7 @@ addMainParticipant(const std::string& accountId, const std::string& confId)
 bool
 detachLocalParticipant()
 {
-    return jami::Manager::instance().detachHost();
+    return jami::Manager::instance().disconnectHost();
 }
 
 bool
