@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
 
 import sys
 import os
@@ -37,7 +38,7 @@ from tester import libjamiTester
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--get-all-accounts', help='Get all accounts (of optionaly given type)',
+    parser.add_argument('--get-all-accounts', help='Get all accounts (of optionally given type)',
                         nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
     parser.add_argument('--get-registered-accounts', help='Get all registered accounts',
                         action='store_true')
@@ -46,21 +47,21 @@ if __name__ == "__main__":
     parser.add_argument('--get-all-accounts-details', help='Get all accounts details',
                         action='store_true')
 
-    parser.add_argument('--add-ring-account', help='Add new Ring account',
+    parser.add_argument('--add-jami-account', help='Create Jami account',
                         metavar='<account>', type=str)
-    parser.add_argument('--remove-ring-account', help='Remove Ring account',
+    parser.add_argument('--remove-jami-account', help='Remove Jami account',
                         metavar='<account>', type=str)
     parser.add_argument('--get-account-details', help='Get account details',
                         metavar='<account>', type=str)
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--enable', help='Enable the account',
+    group.add_argument('--enable', help='Enable account',
                        metavar='<account>', type=str)
-    group.add_argument('--disable', help='Disable the account',
+    group.add_argument('--disable', help='Disable account',
                        metavar='<account>', type=str)
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--register', help='Register the account',
+    group.add_argument('--register', help='Register account',
                        metavar='<account>', type=str)
-    group.add_argument('--unregister', help='Unregister the account',
+    group.add_argument('--unregister', help='Unregister account',
                        metavar='<account>', type=str)
     parser.add_argument('--set-active-account', help='Set active account',
                         metavar='<account>', type=str)
@@ -68,7 +69,7 @@ if __name__ == "__main__":
     parser.add_argument('--get-all-codecs', help='Get all codecs', action='store_true')
     parser.add_argument('--get-active-codecs', help='Get active codecs for the account',
                         nargs='?', metavar='<account>', type=str, default=argparse.SUPPRESS)
-    parser.add_argument('--get-active-codecs-details', help='Get active codecs details for the account',
+    parser.add_argument('--get-active-codecs-details', help='Get active codec details for the account',
                         metavar='<account>',type=str)
     parser.add_argument('--set-active-codecs', help='Set active codecs for active account',
                         metavar='<codec list>', type=str)
@@ -79,8 +80,8 @@ if __name__ == "__main__":
     parser.add_argument('--get-conference-details', help='Get conference details', metavar='<conference-id>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--call', help='Call to number', metavar='<destination>')
-    #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
+    group.add_argument('--call', help='Call number', metavar='<destination>')
+    #group.add_argument('--transfer', help='Unattended call transfer', metavar='<destination>')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--accept', help='Accept call', metavar='<call>')
@@ -98,21 +99,21 @@ if __name__ == "__main__":
                         metavar='<device-index>', type=int)
 
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
-    parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
+    parser.add_argument('--toggle-video', help='Launch toggle video tests', action='store_true')
 
     parser.add_argument('--test', help=' '.join(str(test) for test in libjamiTester().getTestName() ), metavar='<testName>')
-    parser.add_argument('--auto-answer', help='Keep running and auto-answer the calls', action='store_true')
+    parser.add_argument('--auto-answer', help='Automatically answer calls', action='store_true')
 
     args = parser.parse_args()
 
     ctrl = libjamiCtrl(sys.argv[0], args.auto_answer)
 
-    if args.add_ring_account:
-        accDetails = {'Account.type':'RING', 'Account.alias':args.add_ring_account if args.add_ring_account!='' else 'RingAccount'}
+    if args.add_jami_account:
+        accDetails = {'Account.type':'JAMI', 'Account.alias':args.add_jami_account if args.add_jami_account!='' else 'JamiAccount'}
         accountID = ctrl.addAccount(accDetails)
 
-    if args.remove_ring_account and args.remove_ring_account != '':
-        ctrl.removeAccount(args.remove_ring_account)
+    if args.remove_jami_account and args.remove_jami_account != '':
+        ctrl.removeAccount(args.remove_jami_account)
 
     if args.get_all_codecs:
         print(ctrl.getAllCodecs())

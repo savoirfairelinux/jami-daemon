@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -257,9 +257,9 @@ ConversationFetchSentTest::connectSignals()
 void
 ConversationFetchSentTest::tearDown()
 {
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     std::remove(aliceArchive.c_str());
     if (!alice2Id.empty()) {
         wait_for_removal_of(alice2Id);
@@ -284,11 +284,11 @@ ConversationFetchSentTest::testSyncAfterDisconnection()
     auto aliceUri = aliceAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -398,11 +398,11 @@ ConversationFetchSentTest::testSyncFetch()
     auto aliceUri = aliceAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
