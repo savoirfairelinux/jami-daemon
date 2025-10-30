@@ -85,10 +85,10 @@ SFLphoned (0.9.9) / 2010-28-09
 
 SFLphoned (0.7.0) / 2006-...
 	* adding reload (sound driver) button
-	* fix: peer hangup remove flashing buttons
+	* fix: peer end call remove flashing buttons
 	* removing old packaging stuff like FIXME or sflphone.spec.in
 	* fix: click on flashing buttons
-	* fix: send ringing, hangup, busy message
+	* fix: send ringing, end call, busy message
 	* fix for using call command two times in a row
 	* add --disable-sflphoneqt 2006-05-01
 	* remove libexosip2 internally, it's in debian unstable 2005-01-01
@@ -100,7 +100,7 @@ SFLphoned (0.7.0) / 2006-...
 	* fix nat handling (use the same port that it test)
 	* add register/unregister in qt
 	* add test audio driver button
-	* add hold/unhold/hangup to sflphone-cli
+	* add hold call, resume call, end call to sflphone-cli
 
 SFLphoned (0.6.2) / 2005-11-29
 	* integral mono support
