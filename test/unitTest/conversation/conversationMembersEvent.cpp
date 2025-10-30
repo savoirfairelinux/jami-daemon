@@ -1550,6 +1550,15 @@ ConversationMembersEventTest::testBanUnbanMultiDevice()
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bob2Data.deviceAnnounced; }));
 
+    if (!bobData.registered) {
+        Manager::instance().sendRegister(bobId, true);
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.registered; }));
+    }
+
+    if (!bobData.deviceAnnounced) {
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.deviceAnnounced; }));
+    }
+
     // Alice adds bob
     libjami::addConversationMember(aliceId, convId, bobUri);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived && bob2Data.requestReceived; }));
