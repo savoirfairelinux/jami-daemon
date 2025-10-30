@@ -84,7 +84,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jamid-sample.yml"));
     }
     ~SipBasicCallTest() { libjami::fini(); }
 
@@ -103,7 +103,7 @@ private:
     CPPUNIT_TEST_SUITE(SipBasicCallTest);
     CPPUNIT_TEST(audio_only_test);
     CPPUNIT_TEST(audio_video_test);
-    // Test when the peer answers with all the media disabled (RTP port = 0)
+    // Test when the peer accepts with all the media disabled (RTP port = 0)
     CPPUNIT_TEST(peer_answer_with_all_media_disabled);
     CPPUNIT_TEST(hold_resume_test);
     CPPUNIT_TEST(blind_transfer_test);
@@ -296,7 +296,7 @@ SipBasicCallTest::onCallStateChange(const std::string& accountId,
     }
     // NOTE. Only states that we are interested on will notify the CV. If this
     // unit test is modified to process other states, they must be added here.
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP" or state == "RINGING") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED" or state == "RINGING") {
         callData.cv_.notify_one();
     }
 }
@@ -443,7 +443,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
     std::string bobUri = callDataMap_["BOB"].userName_
                          + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
-    callDataMap_["ALICE"].callId_ = libjami::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+    callDataMap_["ALICE"].callId_ = libjami::startCallWithMedia(callDataMap_["ALICE"].accountId_,
                                                                 bobUri,
                                                                 MediaAttribute::mediaAttributesToMediaMaps(offer));
 
@@ -462,7 +462,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::IncomingCall::name));
 
-    // Answer the call.
+    // Bob accepts the call.
     libjami::acceptWithMedia(callDataMap_["BOB"].accountId_,
                              callDataMap_["BOB"].callId_,
                              MediaAttribute::mediaAttributesToMediaMaps(answer));
@@ -476,7 +476,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
         // Wait for the StateChange signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-        JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
+        JAMI_INFO("BOB accepted the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
@@ -517,19 +517,19 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
         // Give some time to media to start and flow
         std::this_thread::sleep_for(std::chrono::seconds(3));
 
-        // Bob hang-up.
-        JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        libjami::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
+        // End Bob's call.
+        JAMI_INFO("End BOB's call and wait for ALICE to end call");
+        libjami::end(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
     } else {
         // The media negotiation for the call is expected to fail, so we
         // should receive the signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::FAILURE));
     }
 
-    // The hang-up signal will be emitted on caller's side (Alice) in both
+    // The end call signal will be emitted on caller's side (Alice) in both
     // success failure scenarios.
 
-    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_INFO("Call terminated on both sides");
 }
@@ -677,7 +677,7 @@ SipBasicCallTest::hold_resume_test()
         std::string bobUri = callDataMap_["BOB"].userName_
                              + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
-        callDataMap_["ALICE"].callId_ = libjami::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+        callDataMap_["ALICE"].callId_ = libjami::startCallWithMedia(callDataMap_["ALICE"].accountId_,
                                                                     bobUri,
                                                                     MediaAttribute::mediaAttributesToMediaMaps(offer));
 
@@ -697,7 +697,7 @@ SipBasicCallTest::hold_resume_test()
         // Wait for incoming call signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::IncomingCall::name));
 
-        // Answer the call.
+        // Bob accepts the call.
         libjami::acceptWithMedia(callDataMap_["BOB"].accountId_,
                                  callDataMap_["BOB"].callId_,
                                  MediaAttribute::mediaAttributesToMediaMaps(answer));
@@ -710,7 +710,7 @@ SipBasicCallTest::hold_resume_test()
         // Wait for the StateChange signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-        JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
+        JAMI_INFO("BOB accepted the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
         // Wait for media negotiation complete signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
@@ -821,14 +821,14 @@ SipBasicCallTest::hold_resume_test()
             }
         }
 
-        // Bob hang-up.
-        JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        libjami::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
+        // End Bob's call.
+        JAMI_INFO("End BOB's call and wait for ALICE to end call");
+        libjami::end(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
 
-        // The hang-up signal will be emitted on caller's side (Alice) in both
+        // The end call signal will be emitted on caller's side (Alice) in both
         // success and failure scenarios.
 
-        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
         JAMI_INFO("Call terminated on both sides");
     }
@@ -901,13 +901,13 @@ SipBasicCallTest::blind_transfer_test()
     std::string bobUri = callDataMap_["BOB"].userName_
                          + "@127.0.0.1:" + std::to_string(callDataMap_["BOB"].listeningPort_);
 
-    callDataMap_["ALICE"].callId_ = libjami::placeCallWithMedia(callDataMap_["ALICE"].accountId_,
+    callDataMap_["ALICE"].callId_ = libjami::startCallWithMedia(callDataMap_["ALICE"].accountId_,
                                                                 bobUri,
                                                                 MediaAttribute::mediaAttributesToMediaMaps(offer));
 
     CPPUNIT_ASSERT(not callDataMap_["ALICE"].callId_.empty());
 
-    JAMI_INFO("ALICE [%s] started a call with BOB [%s] and wait for answer",
+    JAMI_INFO("ALICE [%s] started call with BOB [%s] and wait for answer",
               callDataMap_["ALICE"].accountId_.c_str(),
               callDataMap_["BOB"].accountId_.c_str());
 
@@ -920,7 +920,7 @@ SipBasicCallTest::blind_transfer_test()
     // Wait for incoming call signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::IncomingCall::name));
 
-    // Answer the call.
+    // Bob accepts call.
     libjami::acceptWithMedia(callDataMap_["BOB"].accountId_,
                              callDataMap_["BOB"].callId_,
                              MediaAttribute::mediaAttributesToMediaMaps(answer));
@@ -933,7 +933,7 @@ SipBasicCallTest::blind_transfer_test()
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("BOB answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
+    JAMI_INFO("BOB accepted the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"],
@@ -951,7 +951,7 @@ SipBasicCallTest::blind_transfer_test()
                       carlaUri); // TODO. Check trim
 
     // Expect Alice's call to end.
-    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     // Wait for the new call to be processed.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::RINGING));
@@ -962,7 +962,7 @@ SipBasicCallTest::blind_transfer_test()
     // Let it ring
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    // Carla answers the call.
+    // Carla accepts the call.
     libjami::acceptWithMedia(callDataMap_["CARLA"].accountId_,
                              callDataMap_["CARLA"].callId_,
                              MediaAttribute::mediaAttributesToMediaMaps(answer));
@@ -975,7 +975,7 @@ SipBasicCallTest::blind_transfer_test()
     // Wait for the StateChange signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"], libjami::CallSignal::StateChange::name, StateEvent::CURRENT));
 
-    JAMI_INFO("CARLA answered the call [%s]", callDataMap_["BOB"].callId_.c_str());
+    JAMI_INFO("CARLA accepted the call [%s]", callDataMap_["BOB"].callId_.c_str());
 
     // Wait for media negotiation complete signal.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"],
@@ -997,8 +997,8 @@ SipBasicCallTest::blind_transfer_test()
     }
 
     // NOTE:
-    // For now, we dont validate Bob's media because currently
-    // test does not update BOB's call ID (callDataMap_["BOB"].callId_
+    // For now, we do not validate Bob's media because currently
+    // test do not update BOB's call ID (callDataMap_["BOB"].callId_
     // still point to the first call).
     // It seems there is no easy way to get the ID of the new call
     // made by Bob to Carla.
@@ -1006,12 +1006,12 @@ SipBasicCallTest::blind_transfer_test()
     // Give some time to media to start and flow
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    // Bob hang-up.
-    JAMI_INFO("Hang up CARLA's call and wait for CARLA to hang up");
-    libjami::hangUp(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
+    // End Bob's call.
+    JAMI_INFO("End BOB's call and wait for CARLA to end call");
+    libjami::end(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
 
     // Expect end call on Carla's side.
-    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_INFO("Calls normally ended on both sides");
 }

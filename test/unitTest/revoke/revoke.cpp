@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -46,7 +46,7 @@ public:
         // Init daemon
         libjami::init(libjami::InitFlag(libjami::LIBJAMI_FLAG_DEBUG | libjami::LIBJAMI_FLAG_CONSOLE_LOG));
         if (not Manager::instance().initialized)
-            CPPUNIT_ASSERT(libjami::start("dring-sample.yml"));
+            CPPUNIT_ASSERT(libjami::start("jamid-sample.yml"));
     }
     ~RevokeTest() { libjami::fini(); }
     static std::string name() { return "Revoke"; }
@@ -87,10 +87,10 @@ RevokeTest::testRevokeDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
-    CPPUNIT_ASSERT(aliceAccount->exportArchive("test.gz"));
+    CPPUNIT_ASSERT(aliceAccount->exportArchive("test.jac"));
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::ARCHIVE_PATH] = "test.gz";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::ARCHIVE_PATH] = "test.jac";
 
     std::mutex mtx;
     std::unique_lock lk {mtx};
@@ -119,7 +119,7 @@ RevokeTest::testRevokeDevice()
     aliceAccount->revokeDevice(alice2Device);
     CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(10), [&] { return deviceRevoked; }));
 
-    std::remove("test.gz");
+    std::remove("test.jac");
     wait_for_removal_of(alice2Id);
 }
 

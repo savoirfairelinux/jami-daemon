@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -96,7 +96,7 @@ public:
     void testMemberAddedNoCertificate();
     void testMemberJoinsInviteRemoved();
     void testFailAddMemberInOneToOne();
-    void testOneToOneFetchWithNewMemberRefused();
+    void testOneToOneFetchWithNewMemberDeclined();
     void testConversationMemberEvent();
     void testGetConversationsMembersWhileSyncing();
     void testGetConversationMembersWithSelfOneOne();
@@ -150,7 +150,7 @@ private:
     CPPUNIT_TEST(testMemberAddedNoCertificate);
     CPPUNIT_TEST(testMemberJoinsInviteRemoved);
     CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    CPPUNIT_TEST(testOneToOneFetchWithNewMemberDeclined);
     CPPUNIT_TEST(testConversationMemberEvent);
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
     CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
@@ -194,7 +194,7 @@ ConversationMembersEventTest::setUp()
 void
 ConversationMembersEventTest::tearDown()
 {
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     if (bob2Id.empty()) {
         wait_for_removal_of({aliceId, bobId, carlaId});
@@ -1301,7 +1301,7 @@ ConversationMembersEventTest::testFailAddMemberInOneToOne()
 }
 
 void
-ConversationMembersEventTest::testOneToOneFetchWithNewMemberRefused()
+ConversationMembersEventTest::testOneToOneFetchWithNewMemberDeclined()
 {
     connectSignals();
 
@@ -1446,11 +1446,11 @@ ConversationMembersEventTest::testAvoidTwoOneToOneMultiDevices()
     auto aliceUri = aliceAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1498,11 +1498,11 @@ ConversationMembersEventTest::testRemoveRequestBannedMultiDevices()
     auto aliceUri = aliceAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1534,11 +1534,11 @@ ConversationMembersEventTest::testBanUnbanMultiDevice()
     auto convId = libjami::startConversation(aliceId);
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1590,11 +1590,11 @@ ConversationMembersEventTest::testBanUnbanGotFirstConv()
     auto aliceUri = aliceAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1659,7 +1659,7 @@ ConversationMembersEventTest::testBanHostWhileHosting()
 
     // Now, Bob starts a call
     aliceMsgSize = aliceData.messages.size();
-    auto callId = libjami::placeCallWithMedia(bobId, "swarm:" + convId, {});
+    auto callId = libjami::startCallWithMedia(bobId, "swarm:" + convId, {});
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize != aliceData.messages.size(); }));
 
@@ -1753,11 +1753,11 @@ ConversationMembersEventTest::testBanFromNewDevice()
     Manager::instance().sendRegister(carlaId, false);
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
