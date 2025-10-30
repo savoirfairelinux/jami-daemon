@@ -160,15 +160,15 @@ IncomingFile::IncomingFile(const std::shared_ptr<dhtnet::ChannelSocket>& channel
 
 IncomingFile::~IncomingFile()
 {
-    if (channel_)
-        channel_->setOnRecv({});
+    // if (channel_)
+    //     channel_->setOnRecv({});
     {
         std::lock_guard<std::mutex> lk(streamMtx_);
         if (stream_ && stream_.is_open())
             stream_.close();
     }
     if (channel_)
-        channel_->shutdown();
+        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
 }
 
 void
@@ -177,7 +177,7 @@ IncomingFile::cancel()
     isUserCancelled_ = true;
     emit(libjami::DataTransferEventCode::closed_by_peer);
     if (channel_)
-        channel_->shutdown();
+        dht::ThreadPool::io().run([channel = std::move(channel_)] { channel->shutdown(); });
 }
 
 void
@@ -186,6 +186,7 @@ IncomingFile::process()
     channel_->setOnRecv([w = weak_from_this()](const uint8_t* buf, size_t len) {
         if (auto shared = w.lock()) {
             // No need to lock, setOnRecv is resetted before closing
+            std::lock_guard<std::mutex> lk(shared->streamMtx_);
             if (shared->stream_.is_open())
                 shared->stream_.write(reinterpret_cast<const char*>(buf), len);
             shared->info_.bytesProgress = shared->stream_.tellp();
@@ -207,7 +208,7 @@ IncomingFile::process()
             if (shared->isUserCancelled_) {
                 std::filesystem::remove(shared->path_, ec);
             } else if (shared->info_.bytesProgress < shared->info_.totalSize) {
-                JAMI_WARNING("Channel for {} shut down before transfer was complete (progress: {}/{})",
+                JAMI_WARNING("Channel for {} shutdown before transfer was complete (progress: {}/{})",
                              shared->info_.path,
                              shared->info_.bytesProgress,
                              shared->info_.totalSize);
@@ -247,6 +248,7 @@ IncomingFile::process()
             return;
         auto code = correct ? libjami::DataTransferEventCode::finished : libjami::DataTransferEventCode::closed_by_host;
         shared->emit(code);
+        dht::ThreadPool::io().run([s = std::move(shared)] {});
     });
 }
 
@@ -274,8 +276,8 @@ public:
     ~Impl()
     {
         std::lock_guard lk {mapMutex_};
-        for (const auto& [channel, _of] : outgoings_) {
-            channel->shutdown();
+        for (auto& [channel, _] : outgoings_) {
+            dht::ThreadPool::io().run([c = std::move(channel)] { c->shutdown(); });
         }
         outgoings_.clear();
         incomings_.clear();
@@ -359,8 +361,8 @@ TransferManager::transferFile(const std::shared_ptr<dhtnet::ChannelSocket>& chan
             }
         });
     });
-    pimpl_->outgoings_.emplace(channel, f);
-    dht::ThreadPool::io().run([w = std::weak_ptr<OutgoingFile>(f)] {
+    auto [outFile, _] = pimpl_->outgoings_.emplace(channel, std::move(f));
+    dht::ThreadPool::io().run([w = std::weak_ptr<OutgoingFile>(outFile->second)] {
         if (auto of = w.lock())
             of->process();
     });
@@ -443,7 +445,7 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itC = pimpl_->incomings_.find(fileId);
     if (itC != pimpl_->incomings_.end()) {
-        channel->shutdown();
+        dht::ThreadPool().io().run([channel] { channel->shutdown(); });
         return;
     }
     auto itW = pimpl_->waitingIds_.find(fileId);
@@ -535,7 +537,7 @@ TransferManager::onIncomingProfile(const std::shared_ptr<dhtnet::ChannelSocket>&
     // Check if not already an incoming file for this id and that we are waiting this file
     auto itV = pimpl_->vcards_.find(idx);
     if (itV != pimpl_->vcards_.end()) {
-        channel->shutdown();
+        dht::ThreadPool().io().run([channel] { channel->shutdown(); });
         return;
     }
 

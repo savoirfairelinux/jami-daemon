@@ -19,6 +19,7 @@
 
 #include <dhtnet/multiplexed_socket.h>
 #include <opendht/infohash.h>
+#include <opendht/thread_pool.h>
 
 #include <math.h>
 #include <stdio.h>
@@ -167,11 +168,11 @@ bool
 Bucket::shutdownNode(const NodeId& nodeId)
 {
     auto node = nodes.find(nodeId);
-
     if (node != nodes.end()) {
-        auto socket = node->second.socket;
+        auto& socket = node->second.socket;
         auto node = socket->deviceId();
-        socket->shutdown();
+        dht::ThreadPool::io().run([socket] { socket->shutdown(); });
+        // socket->shutdown();
         removeNode(node);
         return true;
     }
@@ -183,7 +184,8 @@ Bucket::shutdownAllNodes()
 {
     while (not nodes.empty()) {
         auto it = nodes.begin();
-        it->second.socket->shutdown();
+        dht::ThreadPool::io().run([socket = it->second.socket] { socket->shutdown(); });
+        // it->second.socket->shutdown();
         auto nodeId = it->first;
         removeNode(nodeId);
     }
