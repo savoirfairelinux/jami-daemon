@@ -117,14 +117,14 @@ public:
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) override;
-    void hangup(int code) override;
-    void refuse() override;
+    void end(int code) override;
+    void decline() override;
     void transfer(const std::string& to) override;
     bool attendedTransfer(const std::string& to) override;
     bool hold(OnReadyCb&& cb) override;
     bool resume(OnReadyCb&& cb) override;
     void switchInput(const std::string& resource = {}) override;
-    void peerHungup() override;
+    void peerEnded() override;
     void carryingDTMFdigits(char code) override;
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) override;
     std::vector<libjami::MediaMap> currentMediaList() const override;

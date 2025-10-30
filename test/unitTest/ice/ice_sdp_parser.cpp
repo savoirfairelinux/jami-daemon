@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -290,7 +290,7 @@ IceSdpParsingTest::onCallStateChange(const std::string&,
         callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED") {
         callData.cv_.notify_one();
     }
 }
@@ -498,7 +498,7 @@ IceSdpParsingTest::test_call()
     auto bobAddr = dhtnet::ip_utils::getLocalAddr(AF_INET);
     bobAddr.setPort(bobData_.listeningPort_);
 
-    aliceData_.callId_ = libjami::placeCallWithMedia(aliceData_.accountId_,
+    aliceData_.callId_ = libjami::startCallWithMedia(aliceData_.accountId_,
                                                      bobAddr.toString(true),
                                                      MediaAttribute::mediaAttributesToMediaMaps(offer));
     CPPUNIT_ASSERT(not aliceData_.callId_.empty());
@@ -567,13 +567,13 @@ IceSdpParsingTest::test_call()
         CPPUNIT_ASSERT(detachReceiver(mediaReceivers_[i], rtpList[i]));
     }
 
-    // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    Manager::instance().hangupCall(bobData_.accountId_, bobData_.callId_);
+    // End Bob's call.
+    JAMI_INFO("End BOB's call and wait for ALICE to end call");
+    Manager::instance().endCall(bobData_.accountId_, bobData_.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_INFO("Call terminated on both sides");
 }
