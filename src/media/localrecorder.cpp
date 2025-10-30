@@ -52,7 +52,7 @@ LocalRecorder::setPath(const std::string& path)
 }
 
 bool
-LocalRecorder::startRecording()
+LocalRecorder::start()
 {
     if (isRecording()) {
         JAMI_ERR("Recording already started!");
