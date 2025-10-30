@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "fileutils.h"
@@ -455,7 +455,7 @@ FileTransferTest::testBadSha3sumIn()
     auto fileId = bobData.messages.rbegin()->body["fileId"];
     libjami::downloadFile(bobId, convId, id, fileId, recvPath);
 
-    // The file transfer will be sent but refused by bob
+    // The file transfer will be sent but declined by BOB
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData.code == static_cast<int>(libjami::DataTransferEventCode::finished);
     }));

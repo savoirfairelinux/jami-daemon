@@ -39,15 +39,15 @@ registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapper
 }
 
 std::string
-placeCall(const std::string& accountId, const std::string& to)
+startCall(const std::string& accountId, const std::string& to)
 {
     // TODO. Remove ASAP.
-    JAMI_WARN("This API is deprecated, use placeCallWithMedia() instead");
-    return placeCallWithMedia(accountId, to, {});
+    JAMI_WARN("This API is deprecated, use startCallWithMedia() instead");
+    return startCallWithMedia(accountId, to, {});
 }
 
 std::string
-placeCallWithMedia(const std::string& accountId, const std::string& to, const std::vector<libjami::MediaMap>& mediaList)
+startCallWithMedia(const std::string& accountId, const std::string& to, const std::vector<libjami::MediaMap>& mediaList)
 {
     // Check if a destination number is available
     if (to.empty()) {
@@ -74,9 +74,9 @@ requestMediaChange(const std::string& accountId,
 }
 
 bool
-refuse(const std::string& accountId, const std::string& callId)
+decline(const std::string& accountId, const std::string& callId)
 {
-    return jami::Manager::instance().refuseCall(accountId, callId);
+    return jami::Manager::instance().declineCall(accountId, callId);
 }
 
 bool
@@ -109,15 +109,15 @@ answerMediaChangeRequest(const std::string& accountId,
 }
 
 bool
-hangUp(const std::string& accountId, const std::string& callId)
+end(const std::string& accountId, const std::string& callId)
 {
-    return jami::Manager::instance().hangupCall(accountId, callId);
+    return jami::Manager::instance().endCall(accountId, callId);
 }
 
 bool
-hangUpConference(const std::string& accountId, const std::string& confId)
+endConference(const std::string& accountId, const std::string& confId)
 {
-    return jami::Manager::instance().hangupConference(accountId, confId);
+    return jami::Manager::instance().endConference(accountId, confId);
 }
 
 bool
@@ -222,7 +222,7 @@ addMainParticipant(const std::string& accountId, const std::string& confId)
 bool
 detachLocalParticipant()
 {
-    return jami::Manager::instance().detachHost();
+    return jami::Manager::instance().disconnectHost();
 }
 
 bool
@@ -537,18 +537,18 @@ setActiveStream(const std::string& accountId,
 }
 
 void
-hangupParticipant(const std::string& accountId,
+disconnectParticipant(const std::string& accountId,
                   const std::string& confId,
                   const std::string& accountUri,
                   const std::string& deviceId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->hangupParticipant(accountUri, deviceId);
+            conf->disconnectParticipant(accountUri, deviceId);
         } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value deviceVal;
-                deviceVal["hangup"] = jami::TRUE_STR;
+                deviceVal["end"] = jami::TRUE_STR;
                 Json::Value deviceObj;
                 deviceObj[deviceId] = deviceVal;
                 Json::Value accountVal;
@@ -559,7 +559,7 @@ hangupParticipant(const std::string& accountId,
                 call->sendConfOrder(root);
             } else if (call->conferenceProtocolVersion() == 0) {
                 Json::Value root;
-                root["hangupParticipant"] = accountUri;
+                root["disconnectParticipant"] = accountUri;
                 call->sendConfOrder(root);
             }
         }

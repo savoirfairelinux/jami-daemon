@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
@@ -75,14 +75,14 @@ private:
 static constexpr const auto MIXER_FRAMERATE = 30;
 static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1. / MIXER_FRAMERATE);
 
-VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool attachHost)
+VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, bool connectHost)
     : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_(Manager::instance().createSinkClient(id, true))
     , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
     // Local video camera is the main participant
-    if (not localInput.empty() && attachHost) {
+    if (not localInput.empty() && connectHost) {
         auto videoInput = getVideoInput(localInput);
         localInputs_.emplace_back(videoInput);
         attachVideo(videoInput.get(), "", sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));

@@ -3147,7 +3147,7 @@ ConversationModule::hostConference(const std::string& conversationId,
         conf->addSubCall(callId);
 
     if (callId.empty())
-        conf->attachHost(mediaList);
+        conf->connectHost(mediaList);
 
     if (createConf) {
         emitSignal<libjami::CallSignal::ConferenceCreated>(acc->getAccountID(), conversationId, conf->getConfId());

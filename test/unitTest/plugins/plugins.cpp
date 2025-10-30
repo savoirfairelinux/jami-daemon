@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -205,7 +205,7 @@ PluginsTest::onCallStateChange(const std::string& accountId,
     // NOTE. Only states that we are interested in will notify the CV.
     // If this unit test is modified to process other states, they must
     // be added here.
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP" or state == "RINGING") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED" or state == "RINGING") {
         callData.cv_.notify_one();
     }
 }
@@ -622,7 +622,7 @@ PluginsTest::testCall()
     answer.emplace_back(MediaAttribute(defaultVideo));
 
     JAMI_INFO("Start call between alice and Bob");
-    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_,
+    aliceData.callId_ = libjami::startCallWithMedia(aliceData.accountId_,
                                                     bobData.userName_,
                                                     MediaAttribute::mediaAttributesToMediaMaps(request));
     CPPUNIT_ASSERT(not aliceData.callId_.empty());
@@ -679,14 +679,14 @@ PluginsTest::testCall()
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
-    // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData.accountId_, bobData.callId_);
+    // End Bob's call.
+    JAMI_INFO("End BOB's call and wait for ALICE to end call");
+    libjami::end(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData,
                                        libjami::CallSignal::StateChange::name,
-                                       libjami::Call::StateEvent::HUNGUP));
+                                       libjami::Call::StateEvent::ENDED));
 
     JAMI_INFO("Call terminated on both sides");
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
