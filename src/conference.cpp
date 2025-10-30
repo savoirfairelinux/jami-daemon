@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <regex>
@@ -320,7 +320,7 @@ Conference::initSourcesForHost()
     hostSources_.clear();
     // Setup local audio source
     MediaAttribute audioAttr;
-    if (confState_ == State::ACTIVE_ATTACHED) {
+    if (confState_ == State::ACTIVE_CONNECTED) {
         audioAttr = {MediaType::MEDIA_AUDIO, false, false, true, {}, sip_utils::DEFAULT_AUDIO_STREAMID};
     }
 
@@ -331,7 +331,7 @@ Conference::initSourcesForHost()
     if (isVideoEnabled()) {
         MediaAttribute videoAttr;
         // Setup local video source
-        if (confState_ == State::ACTIVE_ATTACHED) {
+        if (confState_ == State::ACTIVE_CONNECTED) {
             videoAttr = {MediaType::MEDIA_VIDEO,
                          false,
                          false,
@@ -430,8 +430,8 @@ Conference::setLocalHostMuteState(MediaType type, bool muted)
 bool
 Conference::isMediaSourceMuted(MediaType type) const
 {
-    if (getState() != State::ACTIVE_ATTACHED) {
-        // Assume muted if not attached.
+    if (getState() != State::ACTIVE_CONNECTED) {
+        // Assume media is muted if not connected.
         return true;
     }
 
@@ -494,7 +494,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
             continue;
         }
 
-        if (getState() == State::ACTIVE_ATTACHED) {
+        if (getState() == State::ACTIVE_CONNECTED) {
             // To mute the local source, all the sources of the participating
             // calls must be muted. If it's the first participant, just use
             // its mute state.
@@ -532,7 +532,7 @@ Conference::takeOverMediaSourceControl(const std::string& callId)
 bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
-    if (getState() != State::ACTIVE_ATTACHED) {
+    if (getState() != State::ACTIVE_CONNECTED) {
         JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode", getConfId());
         return false;
     }
@@ -1040,12 +1040,12 @@ Conference::createSinks(const ConfInfo& infos)
 #endif
 
 void
-Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
+Conference::connectHost(const std::vector<libjami::MediaMap>& mediaList)
 {
     JAMI_DEBUG("[conf:{}] Attaching host", id_);
 
-    if (getState() == State::ACTIVE_DETACHED) {
-        setState(State::ACTIVE_ATTACHED);
+    if (getState() == State::ACTIVE_DISCONNECTED) {
+        setState(State::ACTIVE_CONNECTED);
         if (mediaList.empty()) {
             JAMI_DEBUG("[conf:{}] Empty media list, initializing default sources", id_);
             initSourcesForHost();
@@ -1071,18 +1071,18 @@ Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
         JAMI_WARNING("[conf:{}] Invalid conference state in attach participant: current \"{}\" - expected \"{}\"",
                      id_,
                      getStateStr(),
-                     "ACTIVE_DETACHED");
+                     "ACTIVE_DISCONNECTED");
     }
 }
 
 void
-Conference::detachHost()
+Conference::disconnectHost()
 {
-    JAMI_LOG("[conf:{}] Detaching host", id_);
+    JAMI_LOG("[conf:{}] Disconnecting host", id_);
 
     lastMediaList_ = currentMediaList();
 
-    if (getState() == State::ACTIVE_ATTACHED) {
+    if (getState() == State::ACTIVE_CONNECTED) {
         unbindHostAudio();
 
 #ifdef ENABLE_VIDEO
@@ -1090,14 +1090,14 @@ Conference::detachHost()
             videoMixer_->stopInputs();
 #endif
     } else {
-        JAMI_WARNING("[conf:{}] Invalid conference state in detach participant: current \"{}\" - expected \"{}\"",
+        JAMI_WARNING("[conf:{}] Invalid conference state for disconnected participant: current \"{}\" - expected \"{}\"",
                      id_,
                      getStateStr(),
-                     "ACTIVE_ATTACHED");
+                     "ACTIVE_CONNECTED");
         return;
     }
 
-    setState(State::ACTIVE_DETACHED);
+    setState(State::ACTIVE_DISCONNECTED);
     initSourcesForHost();
 }
 
@@ -1559,7 +1559,7 @@ Conference::getConfInfoHostUri(std::string_view localHostURI, std::string_view d
             // fill the empty uri with the local host URI, let void for local client
             it->uri = localHostURI;
             // If we're detached, remove the host
-            if (getState() == State::ACTIVE_DETACHED) {
+            if (getState() == State::ACTIVE_DISCONNECTED) {
                 it = newInfo.erase(it);
                 continue;
             }
@@ -1632,7 +1632,7 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
             return;
         } else {
             if (accountUri == acc->getUsername() && deviceId == acc->currentDeviceId()) {
-                Manager::instance().detachHost(shared_from_this());
+                Manager::instance().disconnectHost(shared_from_this());
                 return;
             } else if (auto call = getCallWith(accountUri, deviceId)) {
                 Manager::instance().hangupCall(acc->getAccountID(), call->getCallId());
@@ -2090,7 +2090,7 @@ Conference::bindSubCallAudio(const std::string& callId)
     }
 
     // --- Bind with host (if attached) ---
-    if (getState() == State::ACTIVE_ATTACHED) {
+    if (getState() == State::ACTIVE_CONNECTED) {
         const bool hostCanSend = !(isMuted("host"sv) || isMediaSourceMuted(MediaType::MEDIA_AUDIO));
 
         // Primary <-> host default buffer (bidirectional with mute logic)
