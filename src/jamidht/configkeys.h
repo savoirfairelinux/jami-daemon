@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 namespace jami {
@@ -30,13 +31,13 @@ constexpr const char* const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTruste
 constexpr const char* const ETH_KEY = "ethKey";
 constexpr const char* const ETH_PATH = "ethPath";
 constexpr const char* const ETH_ACCOUNT = "ethAccount";
-constexpr const char* const RING_CA_KEY = "ringCaKey";
-constexpr const char* const RING_ACCOUNT_KEY = "ringAccountKey";
-constexpr const char* const RING_ACCOUNT_CERT = "ringAccountCert";
-constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
-constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
-constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
-constexpr const char* const RING_ACCOUNT_CONTACTS = "ringAccountContacts";
+constexpr const char* const JAMI_CA_KEY = "ringCaKey";
+constexpr const char* const JAMI_ACCOUNT_KEY = "ringAccountKey";
+constexpr const char* const JAMI_ACCOUNT_CERT = "ringAccountCert";
+constexpr const char* const JAMI_ACCOUNT_RECEIPT = "ringAccountReceipt";
+constexpr const char* const JAMI_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
+constexpr const char* const JAMI_ACCOUNT_CRL = "ringAccountCRL";
+constexpr const char* const JAMI_ACCOUNT_CONTACTS = "ringAccountContacts";
 constexpr const char* const CONVERSATIONS_KEY = "conversations";
 constexpr const char* const CONVERSATIONS_REQUESTS_KEY = "conversationsRequests";
 constexpr const char* const PROXY_ENABLED_KEY = "proxyEnabled";
