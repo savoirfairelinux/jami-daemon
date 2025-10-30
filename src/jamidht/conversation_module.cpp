@@ -396,6 +396,8 @@ public:
     // Replay conversations (after erasing/re-adding)
     std::mutex replayMtx_;
     std::map<std::string, std::vector<std::map<std::string, std::string>>> replay_;
+
+    std::mutex refreshMtx_;
     std::map<std::string, uint64_t> refreshMessage;
     std::atomic_int syncCnt {0};
 
@@ -1050,22 +1052,22 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
     auto acc = account_.lock();
     if (!acc)
         return;
-    Json::Value message;
     auto commit = commitId == "" ? conversation.lastCommitId() : commitId;
+    Json::Value message;
     message["id"] = conversation.id();
     message["commit"] = commit;
     message["deviceId"] = deviceId_;
     const auto text = json::toString(message);
 
     // Send message notification will announce the new commit in 3 steps.
+    const auto messageMap = std::map<std::string, std::string> {{MIME_TYPE_GIT, text}};
 
     // First, because our account can have several devices, announce to other devices
     if (sync) {
         // Announce to our devices
-        refreshMessage[username_] = sendMsgCb_(username_,
-                                               {},
-                                               std::map<std::string, std::string> {{MIME_TYPE_GIT, text}},
-                                               refreshMessage[username_]);
+        std::lock_guard lk(refreshMtx_);
+        auto& refresh = refreshMessage[username_];
+        refresh = sendMsgCb_(username_, {}, messageMap, refresh);
     }
 
     // Then, we announce to 2 random members in the conversation that aren't in the DRT
@@ -1101,11 +1103,10 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         }
     }
 
+    std::lock_guard lk(refreshMtx_);
     for (const auto& member : nonConnectedMembers) {
-        refreshMessage[member] = sendMsgCb_(member,
-                                            {},
-                                            std::map<std::string, std::string> {{MIME_TYPE_GIT, text}},
-                                            refreshMessage[member]);
+        auto& refresh = refreshMessage[member];
+        refresh = sendMsgCb_(member, {}, messageMap, refresh);
     }
 
     // Finally we send to devices that the DRT choose.
@@ -1114,10 +1115,8 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
         auto memberUri = conversation.uriFromDevice(deviceIdStr);
         if (memberUri.empty() || deviceIdStr == deviceId)
             continue;
-        refreshMessage[deviceIdStr] = sendMsgCb_(memberUri,
-                                                 device,
-                                                 std::map<std::string, std::string> {{MIME_TYPE_GIT, text}},
-                                                 refreshMessage[deviceIdStr]);
+        auto& refresh = refreshMessage[deviceIdStr];
+        refresh = sendMsgCb_(memberUri, device, messageMap, refresh);
     }
 }
 
