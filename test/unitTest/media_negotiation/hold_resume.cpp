@@ -287,7 +287,7 @@ HoldResumeTest::onCallStateChange(const std::string& callId, const std::string& 
         callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED") {
         callData.cv_.notify_one();
     }
 }
@@ -602,11 +602,11 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    Manager::instance().hangupCall(bobData.accountId_, bobData.callId_);
+    // End Bob's call.
+    JAMI_INFO("End BOB's call and wait for ALICE to end call");
+    Manager::instance().endCall(bobData.accountId_, bobData.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_INFO("Call terminated on both sides");
 }
