@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -308,7 +308,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
     }
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto call1 = libjami::startCallWithMedia(aliceId, bobUri, mediaList);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -320,7 +320,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
     }
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
+    auto call2 = libjami::startCallWithMedia(aliceId, carlaUri, mediaList);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
@@ -345,7 +345,7 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
 
     if (addDavi) {
         JAMI_INFO("Start call between Alice and Davi");
-        auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, mediaList);
+        auto call1 = libjami::startCallWithMedia(aliceId, daviUri, mediaList);
         {
             std::unique_lock lk {mtx};
             CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
@@ -462,7 +462,7 @@ ConferenceTest::testAudioVideoMutedStates()
     auto carlaUri = carlaAccount->getUsername();
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1Id = libjami::placeCallWithMedia(aliceId, bobUri, {});
+    auto call1Id = libjami::startCallWithMedia(aliceId, bobUri, {});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -477,7 +477,7 @@ ConferenceTest::testAudioVideoMutedStates()
     call1->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2Id = libjami::placeCallWithMedia(aliceId, carlaUri, {});
+    auto call2Id = libjami::startCallWithMedia(aliceId, carlaUri, {});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
@@ -534,7 +534,7 @@ ConferenceTest::testMuteStatusAfterAdd()
     mediaList.emplace_back(mediaAttribute);
 
     JAMI_INFO("Start call between Alice and Bob");
-    auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    auto call1 = libjami::startCallWithMedia(aliceId, bobUri, mediaList);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -546,7 +546,7 @@ ConferenceTest::testMuteStatusAfterAdd()
     }
 
     JAMI_INFO("Start call between Alice and Carla");
-    auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
+    auto call2 = libjami::startCallWithMedia(aliceId, carlaUri, mediaList);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
@@ -564,7 +564,7 @@ ConferenceTest::testMuteStatusAfterAdd()
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
     }
     JAMI_INFO("Add Davi");
-    auto call3 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call3 = libjami::startCallWithMedia(aliceId, daviUri, {});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
@@ -670,7 +670,7 @@ ConferenceTest::testMuteStatusAfterRemove()
     }
     daviCall.reset();
 
-    auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call2 = libjami::startCallWithMedia(aliceId, daviUri, {});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
@@ -731,7 +731,7 @@ ConferenceTest::testActiveStatusAfterRemove()
     }
     daviCall.reset();
 
-    auto call2 = libjami::placeCallWithMedia(aliceId,
+    auto call2 = libjami::startCallWithMedia(aliceId,
                                              daviUri,
                                              MediaAttribute::mediaAttributesToMediaMaps({defaultAudio}));
     {
@@ -839,7 +839,7 @@ ConferenceTest::testHandsUp()
     }
     daviCall.reset();
 
-    auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call2 = libjami::startCallWithMedia(aliceId, daviUri, {});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
@@ -911,7 +911,7 @@ ConferenceTest::testJoinCallFromOtherAccount()
         CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand; }));
     }
     JAMI_INFO("Start call between Alice and Davi");
-    auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, {});
+    auto call1 = libjami::startCallWithMedia(aliceId, daviUri, {});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
