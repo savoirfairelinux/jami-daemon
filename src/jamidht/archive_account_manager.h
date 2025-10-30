@@ -86,12 +86,10 @@ public:
 
     bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& scheme);
 
-#ifdef ENABLE_NAMESERVER
     void registerName(const std::string& name,
                       std::string_view scheme,
                       const std::string& password,
                       RegistrationCallback cb) override;
-#endif
 
     /**
      * Change the validity of a certificate. If hash is empty, update all certificates

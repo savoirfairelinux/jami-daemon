@@ -36,6 +36,7 @@
 #include "conversation_module.h"
 #include "sync_module.h"
 #include "conversationrepository.h"
+#include "namedirectory.h"
 
 #include <dhtnet/diffie-hellman.h>
 #include <dhtnet/tls_session.h>
@@ -61,10 +62,6 @@
 #include <vector>
 #include <filesystem>
 #include <shared_mutex>
-
-#ifdef ENABLE_NAMESERVER
-#include "namedirectory.h"
-#endif
 
 namespace dev {
 template<unsigned N>
@@ -348,11 +345,9 @@ public:
     // overloaded methods
     void flush() override;
 
-#ifdef ENABLE_NAMESERVER
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
     void registerName(const std::string& name, const std::string& scheme, const std::string& password);
-#endif
     bool searchUser(const std::string& nameQuery);
 
     /// \return true if the given DHT message identifier has been treated
@@ -683,7 +678,6 @@ private:
     std::filesystem::path cachePath_ {};
     std::filesystem::path dataPath_ {};
 
-#ifdef ENABLE_NAMESERVER
     mutable std::mutex registeredNameMutex_;
     std::string registeredName_;
 
@@ -701,7 +695,7 @@ private:
         std::lock_guard<std::mutex> lock(registeredNameMutex_);
         return registeredName_;
     }
-#endif
+
     std::shared_ptr<dht::Logger> logger_;
     std::shared_ptr<dhtnet::tls::CertificateStore> certStore_;
 

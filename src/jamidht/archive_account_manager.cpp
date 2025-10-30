@@ -1567,7 +1567,6 @@ ArchiveAccountManager::isPasswordValid(const std::string& password)
     }
 }
 
-#ifdef ENABLE_NAMESERVER
 void
 ArchiveAccountManager::registerName(const std::string& name,
                                     std::string_view scheme,
@@ -1597,6 +1596,5 @@ ArchiveAccountManager::registerName(const std::string& name,
 
     nameDir_.get().registerName(accountId, nameLowercase, ethAccount, cb, signedName, publickey);
 }
-#endif
 
 } // namespace jami
