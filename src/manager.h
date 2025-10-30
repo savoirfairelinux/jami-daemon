@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #ifdef HAVE_CONFIG_H
@@ -177,18 +178,18 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Hangup the call
+     * End call
      * @param accountId
      * @param callId  The call identifier
      */
-    bool hangupCall(const std::string& accountId, const std::string& callId);
+    bool endCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
-     * Hangup the conference (hangup every participants)
+     * End the conference (detach every participant)
      * @param id  The call identifier
      */
-    bool hangupConference(const std::string& accountId, const std::string& confId);
+    bool endConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Functions which occur with a user's action
@@ -200,11 +201,11 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Put the call off hold
+     * Resume call which is on hold
      * @param accountId
      * @param id  The call identifier
      */
-    bool offHoldCall(const std::string& accountId, const std::string& callId);
+    bool resumeCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
@@ -226,10 +227,10 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Refuse the call
+     * Decline call
      * @param id  The call identifier
      */
-    bool refuseCall(const std::string& accountId, const std::string& id);
+    bool declineCall(const std::string& accountId, const std::string& id);
 
     /**
      * Hold every participant to a conference
@@ -238,10 +239,10 @@ public:
     bool holdConference(const std::string& accountId, const std::string& confId);
 
     /**
-     * Unhold all conference participants
+     * Resume all conference participants which are on hold
      * @param the conference id
      */
-    bool unHoldConference(const std::string& accountId, const std::string& confId);
+    bool resumeConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Add a subcall to a conference
@@ -280,7 +281,7 @@ public:
                                        const std::vector<std::string>&);
 
     /**
-     * Detach a participant from a conference, put the call on hold, do not hangup it
+     * Detach a participant from a conference, put the call on hold, do not end call
      * @param call id
      * @param the current call id
      */
@@ -332,24 +333,24 @@ public:
     void stopTone();
 
     /**
-     * Notify the user that the recipient of the call has answered and the put the
-     * call in Current state
+     * Notify the user that the recipient of the call has accepted the call and the
+     * call is in the CURRENT state
      * @param id  The call identifier
      */
-    void peerAnsweredCall(Call& call);
+    void peerAcceptedCall(Call& call);
 
     /**
      * Rings back because the outgoing call is ringing and the put the
-     * call in Ringing state
+     * call in RINGING state
      * @param id  The call identifier
      */
     void peerRingingCall(Call& call);
 
     /**
-     * Put the call in Hungup state, remove the call from the list
+     * Put the call in HUNGUP state, remove the call from the list
      * @param id  The call identifier
      */
-    void peerHungupCall(Call& call);
+    void peerEndedCall(Call& call);
 
     /**
      * Notify the client with an incoming message
