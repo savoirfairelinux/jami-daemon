@@ -878,11 +878,12 @@ Conference::createSinks(const ConfInfo& infos)
 void
 Conference::attachHost(const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_LOG("Attach local participant to conference {}", id_);
+    JAMI_DEBUG("[conf:{:s}] Attaching host to conference", id_);
 
     if (getState() == State::ACTIVE_DETACHED) {
         setState(State::ACTIVE_ATTACHED);
         if (mediaList.empty()) {
+            JAMI_DEBUG("[conf:{:s}] Empty media list provided to attach host, initializing default sources", id_);
             initSourcesForHost();
             bindHostAudio();
 #ifdef ENABLE_VIDEO
@@ -913,6 +914,8 @@ void
 Conference::detachHost()
 {
     JAMI_LOG("Detach local participant from conference {}", id_);
+
+    lastMediaList_ = currentMediaList();
 
     if (getState() == State::ACTIVE_ATTACHED) {
         unbindHostAudio();
