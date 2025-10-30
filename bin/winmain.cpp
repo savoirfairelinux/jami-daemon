@@ -43,14 +43,14 @@ bool loop = true;
 static void
 print_title()
 {
-    std::cout << "Jami Core " << libjami::version() << ", by Savoir-faire Linux Inc. Copyright (C) 2004-2025"
+    std::cout << "Jami Core " << libjami::version() << ", Copyright (C) 2004-2026 Savoir-faire Linux Inc."
               << std::endl
               << "https://jami.net/" << std::endl
 #ifdef ENABLE_VIDEO
               << "[Video support enabled]" << std::endl
 #endif
 #ifdef ENABLE_PLUGIN
-              << "[Plugins support enabled]" << std::endl
+              << "[Extension support enabled]" << std::endl
 #endif
               << std::endl;
 }
@@ -62,7 +62,7 @@ print_usage()
               << "-c, --console \t- Log in console (instead of syslog)" << std::endl
               << "-d, --debug \t- Debug mode (more verbose)" << std::endl
               << "-p, --persistent \t- Stay alive after client quits" << std::endl
-              << "--auto-answer \t- Force automatic answer to incoming calls" << std::endl
+              << "--auto-answer \t- Automatically accept calls" << std::endl
               << "-h, --help \t- Print help" << std::endl;
 }
 
@@ -132,7 +132,7 @@ parse_args(int argc, char* argv[], bool& persistent)
     }
 
     if (versionFlag) {
-        // We've always print the title/version, so we can just exit
+        // We've always printed the title/version, so we can just exit.
         return true;
     }
 
@@ -160,7 +160,7 @@ IncomingCall(const std::string& accountId,
         libjami::accept(accountId, callId);
         isActive = true;
     } else
-        libjami::refuse(accountId, callId);
+        libjami::decline(accountId, callId);
 }
 
 static int
@@ -197,7 +197,7 @@ interrupt()
 static void
 signal_handler(int code)
 {
-    std::cerr << "Caught signal " << code << ", terminating..." << std::endl;
+    std::cerr << "Caught signal " << code << ", terminating…" << std::endl;
     // Unset signal handlers
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
