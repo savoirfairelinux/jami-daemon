@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "call.h"
@@ -45,10 +45,10 @@
 
 namespace jami {
 
-/// Hangup many calls with same error code, filtered by a predicate
+/// End many calls with same error code, filtered by a predicate
 ///
 /// For each call pointer given by iterating on given \a callptr_list
-/// calls the unary predicate \a pred with this call pointer and hangup the call with given error
+/// calls the unary predicate \a pred with this call pointer and end call with given error
 /// code \a errcode when the predicate return true.
 /// The predicate should have <code>bool(Call*) signature</code>.
 template<typename T>
@@ -58,17 +58,17 @@ hangupCallsIf(Call::SubcallSet&& calls, int errcode, T pred)
     for (auto& call : calls) {
         if (not pred(call.get()))
             continue;
-        dht::ThreadPool::io().run([call = std::move(call), errcode] { call->hangup(errcode); });
+        dht::ThreadPool::io().run([call = std::move(call), errcode] { call->end(errcode); });
     }
 }
 
-/// Hangup many calls with same error code.
+/// End many calls with same error code.
 ///
-/// Works as hangupCallsIf() with a predicate that always return true.
+/// Works as endCallsIf() with a predicate that always return true.
 inline void
-hangupCalls(Call::SubcallSet&& callptr_list, int errcode)
+endCalls(Call::SubcallSet&& callptr_list, int errcode)
 {
-    hangupCallsIf(std::move(callptr_list), errcode, [](Call*) { return true; });
+    endCallsIf(std::move(callptr_list), errcode, [](Call*) { return true; });
 }
 
 //==============================================================================
@@ -96,7 +96,7 @@ Call::Call(const std::shared_ptr<Account>& account, const std::string& id, Call:
                     if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
                         JAMI_LOG("Call {} is still ringing after timeout, setting state to BUSY",
                                  callShPtr->getCallId());
-                        callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                        callShPtr->end(PJSIP_SC_BUSY_HERE);
                         Manager::instance().callFailure(*callShPtr);
                     }
                 }
@@ -122,7 +122,7 @@ Call::Call(const std::shared_ptr<Account>& account, const std::string& id, Call:
 
         // kill pending subcalls at disconnect
         if (call_state == CallState::OVER)
-            hangupCalls(safePopSubcalls(), 0);
+            endCalls(safePopSubcalls(), 0);
 
         return true;
     });
@@ -301,7 +301,7 @@ Call::getStateStr() const
             return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
 
         case ConnectionState::DISCONNECTED:
-            return StateEvent::HUNGUP;
+            return StateEvent::ENDED;
 
         case ConnectionState::CONNECTED:
         default:
@@ -310,7 +310,7 @@ Call::getStateStr() const
 
     case CallState::HOLD:
         if (getConnectionState() == ConnectionState::DISCONNECTED)
-            return StateEvent::HUNGUP;
+            return StateEvent::ENDED;
         return StateEvent::HOLD;
 
     case CallState::BUSY:
@@ -403,7 +403,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 }
 
 void
-Call::peerHungup()
+Call::peerEnded()
 {
     const auto state = getState();
     const auto aborted = state == CallState::ACTIVE or state == CallState::HOLD;
@@ -416,7 +416,7 @@ Call::addSubCall(Call& subcall)
     std::lock_guard lk {callMutex_};
 
     // Add subCall only if call is not connected or terminated
-    // Because we only want to addSubCall if the peer didn't answer
+    // Because we only want to addSubCall if the peer didn't accept
     // So till it's <= RINGING
     if (connectionState_ == ConnectionState::CONNECTED || connectionState_ == ConnectionState::DISCONNECTED
         || callState_ == CallState::OVER) {
@@ -458,7 +458,7 @@ void
 Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::ConnectionState new_cstate, int code)
 {
     {
-        // This condition happens when a subcall hangups/fails after removed from parent's list.
+        // This condition happens when a subcall ends/fails after removed from parent's list.
         // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
         // as an subcall and not a master call.
         // XXX: having a way to unsubscribe the state listener could be better than such test
@@ -468,23 +468,23 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
             return;
     }
 
-    // We found a responding device: hangup all other subcalls and merge
+    // We found a responding device: end all other subcalls and merge
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
         JAMI_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(), subcall.getCallId().c_str());
 
-        hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call) { return call != &subcall; });
+        endCallsIf(safePopSubcalls(), 0, [&](const Call* call) { return call != &subcall; });
         merge(subcall);
         Manager::instance().peerAnsweredCall(*this);
         return;
     }
 
-    // Hangup the call if any device hangup or send busy
+    // End call if any device ended or busy
     if ((new_state == CallState::ACTIVE or new_state == CallState::PEER_BUSY)
         and new_cstate == ConnectionState::DISCONNECTED) {
-        JAMI_WARN("[call:%s] subcall %s hangup by peer", getCallId().c_str(), subcall.getCallId().c_str());
+        JAMI_WARN("[call:%s] subcall %s ended by peer", getCallId().c_str(), subcall.getCallId().c_str());
         reason_ = new_state == CallState::ACTIVE ? "declined" : "busy";
-        hangupCalls(safePopSubcalls(), 0);
-        Manager::instance().peerHungupCall(*this);
+        endCalls(safePopSubcalls(), 0);
+        Manager::instance().peerEndedCall(*this);
         removeCall();
         return;
     }

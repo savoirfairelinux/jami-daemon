@@ -1,8 +1,6 @@
 #! /usr/bin/env python3
 #
-#  Copyright (C) 2004-2026 Savoir-faire Linux Inc. Inc
-#
-# Author: Mohamed Fenjiro <mohamed.fenjiro@savoirfairelinux.com>
+# Copyright (C) 2004-2026 Savoir-faire Linux Inc. Inc
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +23,7 @@ import time
 import argparse
 
 from gi.repository import GLib
-from errorsDring import libjamiCtrlError
+from errorsDjami import libjamiCtrlError
 from controller import libjamiCtrl
 
 class JamiTest(libjamiCtrl):
@@ -37,13 +35,13 @@ class JamiTest(libjamiCtrl):
         self.failureCount = 0
         self.failureRate = 0
         self.callsCompleted = 0
-        ringAccounts = self.getAllAccounts('RING')
+        jamiAccounts = self.getAllAccounts('JAMI')
 
-        if len (ringAccounts) < 1:
-            callerDetails = {'Account.type':'RING', 'Account.alias':'testringaccount3'}
+        if len (jamiAccounts) < 1:
+            callerDetails = {'Account.type':'JAMI', 'Account.alias':'testjamiaccount3'}
             self.addAccount(callerDetails)
 
-        self.setAccount(ringAccounts[0])
+        self.setAccount(jamiAccounts[0])
         volatileCallerDetails = self.getVolatileAccountDetails(self.account)
 
         if volatileCallerDetails['Account.registrationStatus'] != 'REGISTERED':
@@ -113,14 +111,14 @@ class JamiTest(libjamiCtrl):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='Monitor Jami reliabilty by mesuring failure rate for making Calls/Messages and receiving them.')
+    parser = argparse.ArgumentParser(description='Monitor Jami reliability by measuring the failure rate for starting calls and sending and receiving messages.')
     optional = parser._action_groups.pop()
     required = parser.add_argument_group('required arguments')
     optional.add_argument('--messages', help = 'Number of messages to send', type = int)
     optional.add_argument('--duration', help = 'Specify the duration of the test (seconds)', default = 600, type = int)
     optional.add_argument('--interval', help = 'Specify the test interval (seconds)', default = 10, type = int)
     required.add_argument('--peer', help = 'Specify the peer account ID', required = True)
-    required.add_argument('--calls', help = 'Number of calls to make', type = int, required = True)
+    required.add_argument('--calls', help = 'Number of calls to start', type = int, required = True)
     parser._action_groups.append(optional)
     args = parser.parse_args()
 

@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "fileutils.h"
@@ -138,7 +138,7 @@ SyncHistoryTest::setUp()
 void
 SyncHistoryTest::tearDown()
 {
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     std::remove(aliceArchive.c_str());
     if (alice2Id.empty()) {
         wait_for_removal_of({aliceId, bobId});
@@ -350,10 +350,10 @@ SyncHistoryTest::testCreateConversationThenSync()
     auto convId = libjami::startConversation(aliceId);
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -371,10 +371,10 @@ SyncHistoryTest::testCreateConversationWithOnlineDevice()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -402,10 +402,10 @@ SyncHistoryTest::testCreateConversationWithMessagesThenAddDevice()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceMsgSize + 3 == aliceData.messages.size(); }));
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -449,10 +449,10 @@ SyncHistoryTest::testCreateMultipleConversationThenAddDevice()
     libjami::sendMessage(aliceId, convId4, std::string("Message 3"), "");
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -486,7 +486,7 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Export alice
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto uri = aliceAccount->getUsername();
@@ -498,8 +498,8 @@ SyncHistoryTest::testReceivesInviteThenAddDevice()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.requestReceived; }));
 
     // Now create alice2
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -517,10 +517,10 @@ SyncHistoryTest::testRemoveConversationOnAllDevices()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -543,7 +543,7 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     auto bobUri = bobAccount->getUsername();
 
     // Backup alice before start conversation, worst scenario for invites
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
 
     // Start conversation
@@ -561,8 +561,8 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportOldBackup()
     Manager::instance().sendRegister(aliceId, false);
     std::this_thread::sleep_for(5s);
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -606,15 +606,15 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvId()
     bobAccount->trackBuddyPresence(aliceUri, true);
 
     // Backup alice after startConversation with member
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
 
     // disable account (same as removed)
     Manager::instance().sendRegister(aliceId, false);
     std::this_thread::sleep_for(5s);
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -643,15 +643,15 @@ SyncHistoryTest::testSyncCreateAccountExportDeleteReimportWithConvReq()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.requestReceived; }));
 
     // Backup alice after startConversation with member
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
 
     // disable account (same as removed)
     Manager::instance().sendRegister(aliceId, false);
     std::this_thread::sleep_for(5s);
 
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -675,10 +675,10 @@ SyncHistoryTest::testSyncOneToOne()
 
     aliceAccount->addContact(bobAccount->getUsername());
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -697,7 +697,7 @@ SyncHistoryTest::testConversationRequestRemoved()
     auto uri = aliceAccount->getUsername();
 
     // Export alice
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
 
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
@@ -710,8 +710,8 @@ SyncHistoryTest::testConversationRequestRemoved()
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceData.requestReceived; }));
 
     // Now create alice2
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -736,7 +736,7 @@ SyncHistoryTest::testProfileReceivedMultiDevice()
     auto bobUri = bobAccount->getUsername();
 
     // Export alice
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
 
     // Set VCards
@@ -774,8 +774,8 @@ END:VCARD";
     CPPUNIT_ASSERT(std::filesystem::is_regular_file(bobData.profilePath));
 
     // Now create alice2
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -820,10 +820,10 @@ SyncHistoryTest::testLastInteractionAfterClone()
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceData.sent; }));
 
     // Now create alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -851,10 +851,10 @@ SyncHistoryTest::testLastInteractionAfterSomeMessages()
     auto bobUri = bobAccount->getUsername();
 
     // Creates alice2
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "ALICE2";
     details[ConfProperties::ALIAS] = "ALICE2";
     details[ConfProperties::UPNP_ENABLED] = "true";

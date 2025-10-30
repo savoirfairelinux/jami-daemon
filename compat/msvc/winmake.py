@@ -769,7 +769,7 @@ def parse_args():
         help='Use specified platform toolset version')
     ap.add_argument(
         '-P', '--plugin', default=False, action='store_true',
-        help="Defines if we're building a plugin"
+        help="Defines if we're building an extension"
     )
 
     parsed_args = ap.parse_args()
