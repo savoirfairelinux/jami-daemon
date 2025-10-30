@@ -470,9 +470,9 @@ ConversationTest::connectSignals()
 void
 ConversationTest::tearDown()
 {
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     std::remove(aliceArchive.c_str());
     if (!alice2Id.empty()) {
         wait_for_removal_of(alice2Id);
@@ -998,11 +998,11 @@ ConversationTest::testSetMessageDisplayedAfterClone()
     aliceAccount->setMessageDisplayed("swarm:" + convId, convId, 3);
 
     // Alice creates a second device
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "alice2";
     details[ConfProperties::ALIAS] = "alice2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1029,11 +1029,11 @@ ConversationTest::testSendMessageWithLotOfKnownDevices()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
 
     // Alice creates a second device
-    auto aliceArchive = std::filesystem::current_path().string() + "/alice.gz";
+    auto aliceArchive = std::filesystem::current_path().string() + "/alice.jac";
     std::remove(aliceArchive.c_str());
     aliceAccount->exportArchive(aliceArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "alice2";
     details[ConfProperties::ALIAS] = "alice2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1790,11 +1790,11 @@ ConversationTest::testSyncWithoutPinnedCert()
     auto aliceUri = aliceAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1837,11 +1837,11 @@ ConversationTest::testImportMalformedContacts()
 
     auto malformedContacts = fileutils::loadFile(std::filesystem::current_path().string()
                                                  + "/conversation/rsc/incorrectContacts");
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     archiver::compressGzip(malformedContacts, bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -1865,11 +1865,11 @@ ConversationTest::testCloneFromMultipleDevice()
     auto bobUri = bobAccount->getUsername();
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -2034,7 +2034,7 @@ ConversationTest::testConversationPreferencesBeforeClone()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
     // Alice adds bob
@@ -2051,8 +2051,8 @@ ConversationTest::testConversationPreferencesBeforeClone()
     CPPUNIT_ASSERT(bobData.preferences["foo"] == "bar" && bobData.preferences["bar"] == "foo");
 
     // Bob2 should sync preferences
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -2075,11 +2075,11 @@ ConversationTest::testConversationPreferencesMultiDevices()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
     auto bobUri = bobAccount->getUsername();
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
@@ -2348,11 +2348,11 @@ ConversationTest::testUpdateProfileMultiDevice()
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
 
     // Bob creates a second device
-    auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
+    auto bobArchive = std::filesystem::current_path().string() + "/bob.jac";
     std::remove(bobArchive.c_str());
     bobAccount->exportArchive(bobArchive);
-    std::map<std::string, std::string> details = libjami::getAccountTemplate("RING");
-    details[ConfProperties::TYPE] = "RING";
+    std::map<std::string, std::string> details = libjami::getAccountTemplate("JAMI");
+    details[ConfProperties::TYPE] = "JAMI";
     details[ConfProperties::DISPLAYNAME] = "BOB2";
     details[ConfProperties::ALIAS] = "BOB2";
     details[ConfProperties::UPNP_ENABLED] = "true";
