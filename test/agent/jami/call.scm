@@ -1,8 +1,8 @@
 (define-module (jami call)
   #:use-module (jami)
   #:export (accept
-            hang-up
+            end
             hold
-            place-call/media
-            refuse
+            start-call/media
+            decline
             resume))

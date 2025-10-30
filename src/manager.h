@@ -161,10 +161,10 @@ public:
     }
 
     /**
-     * Place a new call
+     * Start call
      * @param accountId the user's account ID
      * @param callee the callee's ID/URI. Depends on the account type.
-     * Refer to placeCall/placeCallWithMedia documentations.
+     * Refer to startCall/startCallWithMedia documentations.
      * @param mediaList a list of media to include
      * @return the call ID on success, empty string otherwise
      */
@@ -174,7 +174,7 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Answer the call
+     * Accept call
      * @param callId
      */
     bool acceptCall(const std::string& accountId,
@@ -191,18 +191,18 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Hangup the call
+     * End call
      * @param accountId
      * @param callId  The call identifier
      */
-    bool hangupCall(const std::string& accountId, const std::string& callId);
+    bool endCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
-     * Hangup the conference (hangup every participants)
+     * End conference (disconnect every participant)
      * @param id  The call identifier
      */
-    bool hangupConference(const std::string& accountId, const std::string& confId);
+    bool endConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Functions which occur with a user's action
@@ -222,7 +222,7 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Transfer the call
+     * Transfer call
      * @param id  The call identifier
      * @param to  The recipient of the transfer
      */
@@ -240,10 +240,10 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Refuse the call
+     * Decline call
      * @param id  The call identifier
      */
-    bool refuseCall(const std::string& accountId, const std::string& id);
+    bool declineCall(const std::string& accountId, const std::string& id);
 
     /**
      * Hold all conference participants
@@ -293,21 +293,21 @@ public:
     void createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>&);
 
     /**
-     * Detach a participant from a conference, put the call on hold, do not hangup it
+     * Disconnect participant from conference, put the call on HOLD, do not end call
      * @param call id
-     * @param the current call id
+     * @param the current call ID
      */
-    bool detachParticipant(const std::string& callId);
+    bool disconnectParticipant(const std::string& callId);
 
     /**
-     * Detach the local participant from curent conference.
-     * Remote participants are placed on hold.
+     * Disconnect the local participant from curent conference.
+     * Remote participants are placed on HOLD.
      */
-    bool detachHost(const std::shared_ptr<Conference>& conf = {});
+    bool disconnectHost(const std::shared_ptr<Conference>& conf = {});
 
     /**
      * Remove the conference participant from a conference
-     * @param call id
+     * @param call ID
      */
     void removeParticipant(Call& call);
 
@@ -345,24 +345,24 @@ public:
     void stopTone();
 
     /**
-     * Notify the user that the recipient of the call has answered and the put the
-     * call in Current state
+     * Notify the user that the recipient of the call has answered the call and the put
+     * the call in CURRENT state
      * @param id  The call identifier
      */
     void peerAnsweredCall(Call& call);
 
     /**
      * Rings back because the outgoing call is ringing and the put the
-     * call in Ringing state
-     * @param id  The call identifier
+     * call in RINGING state
+     * @param ID  The call identifier
      */
     void peerRingingCall(Call& call);
 
     /**
-     * Put the call in Hungup state, remove the call from the list
-     * @param id  The call identifier
+     * Put the call in ENDED state, remove the call from the list
+     * @param ID  The call identifier
      */
-    void peerHungupCall(Call& call);
+    void peerEndedCall(Call& call);
 
     /**
      * Notify the client with an incoming message
@@ -380,7 +380,7 @@ public:
      * @param accountId
      * @param callId        The call to send the message
      * @param message       A list of pair of mime types and payloads
-     * @param from           The sender of this message (could be another participant of a conference)
+     * @param from          The sender of this message (could be another participant of a conference)
      */
     void sendCallTextMessage(const std::string& accountId,
                              const std::string& callID,
@@ -461,7 +461,7 @@ public:
      * Add a new account, and give it a new account ID automatically
      * @param details The new account parameters
      * @param accountId optionnal predetermined accountid to use
-     * @return The account Id given to the new account
+     * @return The account ID given to the new account
      */
     std::string addAccount(const std::map<std::string, std::string>& details, const std::string& accountId = {});
 
@@ -570,8 +570,8 @@ public:
     bool getIsAlwaysRecording() const;
 
     /**
-     * Set is always recording functionality, every calls will then be set in RECORDING mode
-     * once answered
+     * Set is always recording functionality, every answered call will then be set in
+     * RECORDING mode
      */
     void setIsAlwaysRecording(bool isAlwaysRec);
 
@@ -696,7 +696,7 @@ public:
 
     /**
      * @return true is there is one or many incoming call waiting
-     * new call, not answered or refused
+     * new call, not answered or not declined
      */
     bool incomingCallsWaiting();
 
@@ -707,8 +707,8 @@ public:
     std::shared_ptr<Call> getCurrentCall() const;
 
     /**
-     * Get the current call id
-     * @return std::string  The call id or ""
+     * Get the current call ID
+     * @return std::string  The call ID or ""
      */
     const std::string& getCurrentCallId() const;
 
@@ -721,7 +721,7 @@ public:
 
     /**
      * Load the accounts order set by the user from the jamirc config file
-     * @return std::vector<std::string> A vector containing the account ID's
+     * @return std::vector<std::string> A vector containing the account ID
      */
     std::vector<std::string_view> loadAccountOrder() const;
 
@@ -838,7 +838,7 @@ public:
 #ifdef ENABLE_VIDEO
     /**
      * Create a new SinkClient instance, store it in an internal cache as a weak_ptr
-     * and return it as a shared_ptr. If a SinkClient is already stored for the given id,
+     * and return it as a shared_ptr. If a SinkClient is already stored for the given ID,
      * this method returns this instance.
      * @param id SinkClient identifier as a string. Default is empty.
      * @param mixer true if the SinkCient is the sink of a VideoMixer node. Default is false.
@@ -848,11 +848,11 @@ public:
 
     /**
      * Create a SinkClient instance for each participant in a conference, store it in an internal
-     * cache as a weak_ptr and populates sinksMap with sink ids and shared_ptrs.
+     * cache as a weak_ptr and populates sinksMap with sink IDs and shared_ptrs.
      * @param callId
      * @param infos ConferenceInfos that will create the sinks
      * @param videoStream the the VideoFrameActiveWriter to which the sinks should be attached
-     * @param sinksMap A map between sink ids and the respective shared pointer.
+     * @param sinksMap A map between sink IDs and the respective shared pointer.
      */
     void createSinkClients(const std::string& callId,
                            const ConfInfo& infos,

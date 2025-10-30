@@ -456,7 +456,7 @@ AutoAnswerMediaNegoTest::onCallStateChange(const std::string& accountId UNUSED,
         callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED") {
         callData.cv_.notify_one();
     }
 }
@@ -659,7 +659,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
     auto mediaCount = scenario.offer_.size();
     CPPUNIT_ASSERT_EQUAL(mediaCount, scenario.answer_.size());
 
-    aliceData.callId_ = libjami::placeCallWithMedia(aliceData.accountId_,
+    aliceData.callId_ = libjami::startCallWithMedia(aliceData.accountId_,
                                                     isSipAccount_ ? bobData.toUri_ : bobData_.userName_,
                                                     MediaAttribute::mediaAttributesToMediaMaps(scenario.offer_));
     CPPUNIT_ASSERT(not aliceData.callId_.empty());
@@ -791,11 +791,11 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    // Bob hang-up.
-    JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
+    // Bob ended the call.
+    JAMI_INFO("End BOB's call and wait for ALICE to end call");
     libjami::hangUp(bobData.accountId_, bobData.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_INFO("Call terminated on both sides");
 }

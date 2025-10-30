@@ -577,7 +577,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
 
     if (isNotHosting && !canHost) {
         JAMI_DEBUG("Request for hosting a conference declined");
-        Manager::instance().hangupCall(getAccountID(), callId);
+        Manager::instance().endCall(getAccountID(), callId);
         return;
     }
     // Due to the fact that in a conference, the host is not the one who
@@ -1300,7 +1300,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         sm->syncWithConnected(syncDataPtr);
                     }
                 },
-                conf.archivePath.empty() ? "archive.gz" : conf.archivePath,
+                conf.archivePath.empty() ? "archive.jac" : conf.archivePath,
                 conf.nameServer);
         } else {
             accountManager_ = std::make_shared<ServerAccountManager>(getAccountID(),
