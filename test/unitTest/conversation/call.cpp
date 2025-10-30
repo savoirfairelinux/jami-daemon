@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -295,7 +295,7 @@ ConversationCallTest::testActiveCalls()
 
     // start call
     aliceData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.conferenceChanged && !aliceData_.messages.empty(); });
     CPPUNIT_ASSERT(aliceData_.messages.rbegin()->type == "application/call-history+json");
@@ -346,7 +346,7 @@ ConversationCallTest::testActiveCalls3Peers()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -362,12 +362,12 @@ ConversationCallTest::testActiveCalls3Peers()
                                    confId);
 
     aliceData_.conferenceChanged = false;
-    libjami::placeCallWithMedia(bobId, destination, {});
+    libjami::startCallWithMedia(bobId, destination, {});
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"; }));
     aliceData_.conferenceChanged = false;
     // get 2 other participants
-    libjami::placeCallWithMedia(carlaId, destination, {});
+    libjami::startCallWithMedia(carlaId, destination, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT"
                && libjami::getParticipantList(aliceId, confId).size() == 2;
@@ -425,7 +425,7 @@ ConversationCallTest::testRejoinCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -442,12 +442,12 @@ ConversationCallTest::testRejoinCall()
                                    confId);
 
     aliceData_.conferenceChanged = false;
-    libjami::placeCallWithMedia(bobId, destination, {});
+    libjami::startCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT" && bobData_.state == "CURRENT";
     });
     aliceData_.conferenceChanged = false;
-    libjami::placeCallWithMedia(carlaId, destination, {});
+    libjami::startCallWithMedia(carlaId, destination, {});
     cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT" && carlaData_.state == "CURRENT";
     });
@@ -464,7 +464,7 @@ ConversationCallTest::testRejoinCall()
     CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 1);
 
     aliceData_.conferenceChanged = false;
-    libjami::placeCallWithMedia(bobId, destination, {});
+    libjami::startCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"; });
 
     CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 2);
@@ -512,7 +512,7 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
     // start call
     aliceData_.messages.clear();
     bobData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -526,7 +526,7 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
                                    bobData_.messages.rbegin()->body.at("confId"));
 
     aliceData_.conferenceChanged = false;
-    auto bobCallId = libjami::placeCallWithMedia(bobId, destination, {});
+    auto bobCallId = libjami::startCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"; });
 
     // hangup bob MUST NOT stop the conference
@@ -565,7 +565,7 @@ ConversationCallTest::testJoinFinishedCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -594,7 +594,7 @@ ConversationCallTest::testJoinFinishedCall()
     carlaData_.messages.clear();
     // If bob try to join the call, it will re-host a new conference
     // and commit a new active call.
-    auto bobCall = libjami::placeCallWithMedia(bobId, destination, {});
+    auto bobCall = libjami::startCallWithMedia(bobId, destination, {});
     // should get message
     cv.wait_for(lk, 30s, [&]() {
         return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_) && lastCommitIsCall(carlaData_)
@@ -652,7 +652,7 @@ ConversationCallTest::testJoinFinishedCallForbidden()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -686,7 +686,7 @@ ConversationCallTest::testJoinFinishedCallForbidden()
     carlaData_.messages.clear();
     // If bob try to join the call, it will re-host a new conference
     // and commit a new active call.
-    auto bobCall = libjami::placeCallWithMedia(bobId, destination, {});
+    auto bobCall = libjami::startCallWithMedia(bobId, destination, {});
     // should get message
     cv.wait_for(lk, 30s, [&]() {
         return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_) && lastCommitIsCall(carlaData_)
@@ -752,7 +752,7 @@ ConversationCallTest::testUsePreference()
     // start call
     aliceData_.messages.clear();
     bobData_.messages.clear();
-    libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -784,7 +784,7 @@ ConversationCallTest::testJoinWhileActiveCall()
 
     // start call
     aliceData_.messages.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -845,7 +845,7 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     pInfos_.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
     };
@@ -893,7 +893,7 @@ ConversationCallTest::testNeedsHost()
     // Disable Host
     Manager::instance().sendRegister(aliceId, false);
     // start call
-    libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
+    libjami::startCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
     // Can fail after 30 seconds if it triggers a new ICE request (before No response from DHT)
     CPPUNIT_ASSERT(cv.wait_for(lk, 40s, [&]() { return bobData_.needsHost; }));
 }
@@ -925,7 +925,7 @@ ConversationCallTest::testAudioOnly()
                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
     pInfos_.clear();
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty() && !pInfos_.empty(); });
     CPPUNIT_ASSERT(aliceData_.messages[0].type == "application/call-history+json");
@@ -976,7 +976,7 @@ ConversationCallTest::testJoinAfterMuteHost()
                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""},
                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
+    libjami::startCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
     };
@@ -1003,7 +1003,7 @@ ConversationCallTest::testJoinAfterMuteHost()
 
     aliceData_.conferenceChanged = false;
     pInfos_.clear();
-    auto bobCall = libjami::placeCallWithMedia(bobId, destination, mediaList);
+    auto bobCall = libjami::startCallWithMedia(bobId, destination, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT" && bobData_.state == "CURRENT"
                && pInfos_.size() == 2;
@@ -1041,7 +1041,7 @@ ConversationCallTest::testBusy()
                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""},
                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    libjami::startCallWithMedia(aliceId, bobUri, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
     };
@@ -1079,10 +1079,10 @@ ConversationCallTest::testDecline()
                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""},
                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
+    libjami::startCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData_.callId.empty() && bobData_.state == "INCOMING"; }));
 
-    libjami::refuse(bobId, bobData_.callId);
+    libjami::decline(bobId, bobData_.callId);
 
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
@@ -1116,7 +1116,7 @@ ConversationCallTest::testNoDevice()
                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""},
                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
-    libjami::placeCallWithMedia(aliceId, "e2eb225c76be68713d4874d290200849436c6355", mediaList);
+    libjami::startCallWithMedia(aliceId, "e2eb225c76be68713d4874d290200849436c6355", mediaList);
 
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
