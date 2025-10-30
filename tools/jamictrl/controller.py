@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 #
 # Copyright (C) 2004-2025 Savoir-faire Linux Inc. Inc
 #
@@ -86,7 +86,7 @@ class libjamiCtrl(Thread):
 
         if not bus.name_has_owner(DBUS_DEAMON_OBJECT) :
             raise libjamiCtrlDBusError(("Unable to find %s in DBUS." % DBUS_DEAMON_OBJECT)
-                                     + " Check if jami is running")
+                                     + " Check if Jami is running")
 
         try:
             proxy_instance = bus.get_object(DBUS_DEAMON_OBJECT,
@@ -130,7 +130,7 @@ class libjamiCtrl(Thread):
             proxy_confmgr.connect_to_signal('swarmMessageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
-            raise libjamiCtrlDBusError("Unable to connect to jami DBus signals")
+            raise libjamiCtrlDBusError("Unable to connect to Jami DBus signals")
 
 
     def unregister(self):
@@ -156,7 +156,7 @@ class libjamiCtrl(Thread):
             self.Accept(callId)
         pass
 
-    def onCallHangup_cb(self, callId):
+    def onCallEnd_cb(self, callId):
         pass
 
     def onCallConnecting_cb(self, callId):
@@ -199,11 +199,11 @@ class libjamiCtrl(Thread):
         self.currentCallId = callid
         self.onIncomingCall_cb(callid)
 
-    def onCallHangUp(self, callid, state):
+    def onCallEnd(self, callid, state):
         """ Remove callid from call list """
 
         self.activeCalls[callid]['State'] = state
-        self.onCallHangup_cb(callid)
+        self.onCallEnd_cb(callid)
         self.currentCallId = ""
 
     def onCallConnecting(self, callid, state):
@@ -280,7 +280,7 @@ class libjamiCtrl(Thread):
         self.currentCallId = callid
 
         if state == "HUNGUP":
-            self.onCallHangUp(callid, state)
+            self.onCallEnd(callid, state)
         elif state == "CONNECTING":
             self.onCallConnecting(callid, state)
         elif state == "RINGING":
@@ -526,7 +526,7 @@ class libjamiCtrl(Thread):
         return [int(x) for x in self.configurationmanager.getActiveCodecList(account)]
 
     def setVideoCodecBitrate(self, account, bitrate):
-        """ Change bitrate for all codecs  on given account"""
+        """ Change bitrate for all codecs on given account"""
 
         for codecId in self.configurationmanager.getActiveCodecList(account):
             details = self.configurationmanager.getCodecDetails(account, codecId)
@@ -591,7 +591,7 @@ class libjamiCtrl(Thread):
         return callid
 
 
-    def HangUp(self, callid):
+    def EndCall(self, callid):
         """End a call identified by a CallID"""
 
         if not self.account:
@@ -600,7 +600,7 @@ class libjamiCtrl(Thread):
         if callid is None or callid == "":
             pass # just to see
 
-        self.callmanager.hangUp(callid)
+        self.callmanager.endCall(callid)
 
 
     def Transfer(self, callid, to):
@@ -611,15 +611,16 @@ class libjamiCtrl(Thread):
 
         self.callmanager.transfert(callid, to)
 
-    def Refuse(self, callid):
-        """Refuse an incoming call identified by a CallID"""
+  
+    def Decline(self, callid):
+        """Decline an incoming call identified by a CallID"""
 
-        print("Refuse call " + callid)
+        print("Decline call " + callid)
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.refuse(callid)
+        self.callmanager.decline(callid)
 
 
     def Accept(self, callid):
@@ -695,10 +696,10 @@ class libjamiCtrl(Thread):
         self.callmanager.joinParticipant(call1Id, call2Id)
         return self.callmanager.getConferenceId(call1Id)
 
-    def hangupConference(self, confId):
-        """ Hang up each call for this conference """
+    def endConference(self, confId):
+        """ End each call for this conference """
 
-        self.callmanager.hangUpConference(confId)
+        self.callmanager.endConference(confId)
 
     def switchInput(self, callid, inputName):
         """switch to input if exist"""
