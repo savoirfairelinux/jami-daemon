@@ -986,7 +986,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
 }
 
 void
-SIPCall::hangup(int code)
+SIPCall::end(int code)
 {
     std::lock_guard lk {callMutex_};
     pendingRecord_ = false;
@@ -1039,7 +1039,7 @@ SIPCall::detachAudioFromConference()
 }
 
 void
-SIPCall::refuse()
+SIPCall::decline()
 {
     if (!isIncoming() or getConnectionState() == ConnectionState::CONNECTED or !inviteSession_)
         return;
@@ -1110,7 +1110,7 @@ transfer_client_cb(pjsip_evsub* sub, pjsip_event* event)
         if (status_line.code / 100 == 2) {
             if (call->inviteSession_)
                 call->terminateSipSession(PJSIP_SC_GONE);
-            Manager::instance().hangupCall(call->getAccountId(), call->getCallId());
+            Manager::instance().endCall(call->getAccountId(), call->getCallId());
             pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
         }
 
@@ -1372,7 +1372,7 @@ SIPCall::switchInput(const std::string& source)
 }
 
 void
-SIPCall::peerHungup()
+SIPCall::peerEnded()
 {
     pendingRecord_ = false;
     // Stop all RTP streams
@@ -1381,7 +1381,7 @@ SIPCall::peerHungup()
     if (inviteSession_)
         terminateSipSession(PJSIP_SC_NOT_FOUND);
     detachAudioFromConference();
-    Call::peerHungup();
+    Call::peerEnded();
 }
 
 void
@@ -1525,7 +1525,7 @@ SIPCall::onClosed()
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
-            Manager::instance().peerHungupCall(call);
+            Manager::instance().peerEndedCall(call);
             call.removeCall();
         }
     });
