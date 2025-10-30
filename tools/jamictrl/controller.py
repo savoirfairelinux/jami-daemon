@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#!/usr/bin/env python3
 #
 # Copyright (C) 2004-2026 Savoir-faire Linux Inc. Inc
 #
@@ -26,7 +26,7 @@ import hashlib
 
 from threading import Thread
 from functools import partial
-from errorsDring import libjamiCtrlAccountError, libjamiCtrlError, libjamiCtrlDBusError, libjamiCtrlDeamonError
+from errorsDjami import libjamiCtrlAccountError, libjamiCtrlError, libjamiCtrlDBusError, libjamiCtrlDeamonError
 from gi.repository import GLib
 
 try:
@@ -86,7 +86,7 @@ class libjamiCtrl(Thread):
 
         if not bus.name_has_owner(DBUS_DEAMON_OBJECT) :
             raise libjamiCtrlDBusError(("Unable to find %s in DBUS." % DBUS_DEAMON_OBJECT)
-                                     + " Check if jami is running")
+                                       + " Check if Jami is running")
 
         try:
             proxy_instance = bus.get_object(DBUS_DEAMON_OBJECT,
@@ -130,7 +130,7 @@ class libjamiCtrl(Thread):
             proxy_confmgr.connect_to_signal('swarmMessageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
-            raise libjamiCtrlDBusError("Unable to connect to jami DBus signals")
+            raise libjamiCtrlDBusError("Unable to connect to Jami DBus signals")
 
 
     def unregister(self):
@@ -156,7 +156,7 @@ class libjamiCtrl(Thread):
             self.Accept(callId)
         pass
 
-    def onCallHangup_cb(self, callId):
+    def onCallEnd_cb(self, callId):
         pass
 
     def onCallConnecting_cb(self, callId):
@@ -184,7 +184,7 @@ class libjamiCtrl(Thread):
         pass
 
     def onIncomingCall(self, account, callid, to):
-        """ On incoming call event, add the call to the list of active calls """
+        """On incoming call event, add the call to the list of active calls"""
 
         self.activeCalls[callid] = {'Account': account,
                                          'To': to,
@@ -193,66 +193,66 @@ class libjamiCtrl(Thread):
         self.onIncomingCall_cb(callid)
 
     def onCallIncoming(self, callid, state):
-        """ Update state for this call to Incoming """
+        """Update state for this call to Incoming"""
 
         self.activeCalls[callid]['State'] = state
         self.currentCallId = callid
         self.onIncomingCall_cb(callid)
 
-    def onCallHangUp(self, callid, state):
-        """ Remove callid from call list """
+    def onCallEnd(self, callid, state):
+        """Remove callid from call list"""
 
         self.activeCalls[callid]['State'] = state
-        self.onCallHangup_cb(callid)
+        self.onCallEnd_cb(callid)
         self.currentCallId = ""
 
     def onCallConnecting(self, callid, state):
-        """ Update state for this call to Ringing """
+        """Update state for this call to Ringing"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallConnecting_cb(callid)
 
     def onCallRinging(self, callid, state):
-        """ Update state for this call to Ringing """
+        """Update state for this call to RINGING"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallRinging_cb(callid)
 
 
     def onCallHold(self, callid, state):
-        """ Update state for this call to Hold """
+        """Update state for this call to Hold"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallHold_cb()
 
 
     def onCallCurrent(self, callid, state):
-        """ Update state for this call to current """
+        """Update state for this call to current"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallCurrent_cb()
 
     def onCallInactive(self, callid, state):
-        """ Update state for this call to current """
+        """Update state for this call to current"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallInactive_cb()
 
     def onCallBusy(self, callid, state):
-        """ Update state for this call to busy """
+        """Update state for this call to busy"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallBusy_cb()
 
 
     def onCallFailure(self, callid, state):
-        """ Handle call failure """
+        """Handle call failure"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallFailure_cb()
 
     def onCallOver(self, callid):
-        """ Handle call failure """
+        """Handle call failure"""
 
         self.onCallOver_cb()
         del self.activeCalls[callid]
@@ -262,7 +262,7 @@ class libjamiCtrl(Thread):
         pass
 
     def onCallStateChanged(self, account, callid, state, code):
-        """ On call state changed event, set the values for new calls,
+        """On call state changed event, set the values for new calls,
         or delete the call from the list of active calls
         """
         print(("On call state changed " + str(account) + "; " + str(callid) + "; " + str(state) + "; " + str(code)))
@@ -279,8 +279,8 @@ class libjamiCtrl(Thread):
 
         self.currentCallId = callid
 
-        if state == "HUNGUP":
-            self.onCallHangUp(callid, state)
+        if state == "END":
+            self.onCallEnd(callid, state)
         elif state == "CONNECTING":
             self.onCallConnecting(callid, state)
         elif state == "RINGING":
@@ -338,11 +338,11 @@ class libjamiCtrl(Thread):
     def _valid_account(self, account):
         account = account or self.account
         if account is None:
-            raise libjamiCtrlError("No provided or current account!")
+            raise libjamiCtrlError("Not provided or no current account!")
         return account
 
     def isAccountExists(self, account):
-        """ Checks if the account exists"""
+        """Checks if the account exists"""
 
         return account in self.getAllAccounts()
 
@@ -497,7 +497,7 @@ class libjamiCtrl(Thread):
             self.configurationmanager.setAccountDetails(account, details)
 
     def setAccountRegistered(self, account=None, register=False):
-        """ Tries to register the account"""
+        """Tries to register the account"""
 
         account = self._valid_account(account)
         self.configurationmanager.sendRegister(account, register)
@@ -510,23 +510,23 @@ class libjamiCtrl(Thread):
     #
 
     def getAllCodecs(self):
-        """ Return all codecs"""
+        """Return all codecs"""
 
         return [int(x) for x in self.configurationmanager.getCodecList()]
 
     def getCodecDetails(self, account, codecId):
-        """ Return codec details"""
+        """Return codec details"""
         codecId=dbus.UInt32(codecId)
         return self.configurationmanager.getCodecDetails(account, codecId)
 
     def getActiveCodecs(self, account=None):
-        """ Return all active codecs on given account"""
+        """Return all active codecs on given account"""
 
         account = self._valid_account(account)
         return [int(x) for x in self.configurationmanager.getActiveCodecList(account)]
 
     def setVideoCodecBitrate(self, account, bitrate):
-        """ Change bitrate for all codecs  on given account"""
+        """Change bitrate for all codecs  on given account"""
 
         for codecId in self.configurationmanager.getActiveCodecList(account):
             details = self.configurationmanager.getCodecDetails(account, codecId)
@@ -564,7 +564,7 @@ class libjamiCtrl(Thread):
             print("\t" + call)
 
     def Call(self, dest, account=None):
-        """Start a call and return a CallID
+        """Start call and return a CallID
 
         Use the current account previously set using setAccount().
         If no account specified, first registered one in account list is used.
@@ -580,10 +580,10 @@ class libjamiCtrl(Thread):
             self.setFirstRegisteredAccount()
 
         if self.account != "IP2IP" and not self.isAccountRegistered():
-            raise libjamiCtrlAccountError("Unable to place a call without a registered account")
+            raise libjamiCtrlAccountError("Unable to start call without a registered account")
 
         # Send the request to the CallManager
-        callid = self.callmanager.placeCall(self.account, dest)
+        callid = self.callmanager.startCall(self.account, dest)
         if callid:
             # Add the call to the list of active calls and set status to SENT
             self.activeCalls[callid] = {'Account': self.account, 'To': dest, 'State': 'SENT' }
@@ -591,8 +591,8 @@ class libjamiCtrl(Thread):
         return callid
 
 
-    def HangUp(self, callid):
-        """End a call identified by a CallID"""
+    def EndCall(self, callid):
+        """End call identified by CallID"""
 
         if not self.account:
             self.setFirstRegisteredAccount()
@@ -600,37 +600,38 @@ class libjamiCtrl(Thread):
         if callid is None or callid == "":
             pass # just to see
 
-        self.callmanager.hangUp(callid)
+        self.callmanager.endCall(callid)
 
 
     def Transfer(self, callid, to):
-        """Transfert a call identified by a CallID"""
+        """Transfer call identified by a CallID"""
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.transfert(callid, to)
+        self.callmanager.transfer(callid, to)
 
-    def Refuse(self, callid):
-        """Refuse an incoming call identified by a CallID"""
 
-        print("Refuse call " + callid)
+    def Decline(self, callid):
+        """Decline call identified by CallID"""
+
+        print("Decline call " + callid)
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.refuse(callid)
+        self.callmanager.decline(callid)
 
 
     def Accept(self, callid):
-        """Accept an incoming call identified by a CallID"""
+        """Accept call identified by CallID"""
 
         print("Accept call " + callid)
         if not self.account:
             self.setFirstRegisteredAccount()
 
         if not self.isAccountRegistered():
-            raise libjamiCtrlAccountError("Unable to accept a call without a registered account")
+            raise libjamiCtrlAccountError("Unable to accept call without a registered account")
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
@@ -639,7 +640,7 @@ class libjamiCtrl(Thread):
 
 
     def Hold(self, callid):
-        """Hold call identified by a CallID"""
+        """Hold call identified by CallID"""
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
@@ -648,7 +649,7 @@ class libjamiCtrl(Thread):
 
 
     def Resume(self, callid):
-        """Resume call identified by a CallID"""
+        """Resume call identified by CallID"""
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
@@ -690,15 +691,15 @@ class libjamiCtrl(Thread):
 
 
     def createConference(self, call1Id, call2Id):
-        """ Create a conference given the two call ids """
+        """Create a conference given the two call ids"""
 
         self.callmanager.joinParticipant(call1Id, call2Id)
         return self.callmanager.getConferenceId(call1Id)
 
-    def hangupConference(self, confId):
-        """ Hang up each call for this conference """
+    def endConference(self, confId):
+        """End each call for this conference"""
 
-        self.callmanager.hangUpConference(confId)
+        self.callmanager.endConference(confId)
 
     def switchInput(self, callid, inputName):
         """switch to input if exist"""
