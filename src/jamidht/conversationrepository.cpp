@@ -277,7 +277,9 @@ public:
                        std::function<void(ConversationCommit&&)>&& emplaceCb,
                        PostConditionCb&& postCondition,
                        const std::string& from = "",
-                       bool logIfNotFound = true) const;
+                       bool logIfNotFound = false,
+                       bool includeTo = true,
+                       const std::string& to = "") const;
     std::vector<ConversationCommit> log(const LogOptions& options) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -2297,7 +2299,9 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
                                             std::function<void(ConversationCommit&&)>&& emplaceCb,
                                             PostConditionCb&& postCondition,
                                             const std::string& from,
-                                            bool logIfNotFound) const
+                                            bool logIfNotFound,
+                                            bool includeTo,
+                                            const std::string& to) const
 {
     git_oid oid, oidFrom, oidMerge;
 
@@ -2328,6 +2332,16 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     }
 
     GitRevWalker walker {walker_ptr};
+
+    if (!includeTo && to != "") {
+        git_oid oidTo;
+        if (git_oid_fromstr(&oidTo, to.c_str()) < 0) {
+            JAMI_DEBUG("[Account {}] [Conversation {}] Unable to get oid for TO", accountId_, id_);
+            return;
+        }
+        git_revwalk_hide(walker.get(), &oidTo);
+    }
+
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
 
     while (!git_revwalk_next(&oid, walker.get())) {
@@ -2432,7 +2446,9 @@ ConversationRepository::Impl::log(const LogOptions& options) const
         [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
         [](auto, auto, auto) { return false; },
         options.from,
-        options.logIfNotFound);
+        options.logIfNotFound,
+        options.includeTo,
+        options.to);
     return commits;
 }
 
