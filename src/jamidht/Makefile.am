@@ -34,6 +34,8 @@ libjamiacc_la_SOURCES = \
 	./jamidht/message_channel_handler.cpp \
 	./jamidht/archive_account_manager.h \
 	./jamidht/archive_account_manager.cpp \
+	./jamidht/device_verification.h \
+	./jamidht/device_verification.cpp \
 	./jamidht/server_account_manager.h \
 	./jamidht/server_account_manager.cpp \
 	./jamidht/sync_channel_handler.h \

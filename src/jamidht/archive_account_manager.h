@@ -130,6 +130,7 @@ private:
         AuthFailureCallback onFailure;
         std::unique_ptr<asio::steady_timer> timeout;
         bool canceled {false};
+        bool useEmojiVerification {false}; // Negotiated verification protocol
     };
     struct DecodingContext;
     struct AuthMsg;
@@ -159,7 +160,8 @@ private:
 
     bool doAddDevice(std::string_view scheme,
                      const std::shared_ptr<AuthContext>& ctx,
-                     const std::shared_ptr<dhtnet::ChannelSocket>& channel);
+                     const std::shared_ptr<dhtnet::ChannelSocket>& channel,
+                     uint64_t operationId);
 
     void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool isLinkDevProtocol);
 
