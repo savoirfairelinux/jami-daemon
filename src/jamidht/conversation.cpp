@@ -1192,30 +1192,32 @@ Conversation::Impl::addToHistory(History& history,
             for (auto it = sharedCommits.rbegin(); it != sharedCommits.rend(); it++) {
                 auto sharedCommit = *it;
                 auto previousStatus = status;
+                auto& messageStatus = messagesStatus_[member.uri];
+                auto& commitStatus = sharedCommit->status[member.uri];
 
                 // Compute status for the current commit.
-                if (status < SENT && messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
+                if (status < SENT && messageStatus["fetched"] == sharedCommit->id) {
                     status = SENT;
                 }
-                if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
+                if (messageStatus["read"] == sharedCommit->id) {
                     status = DISPLAYED;
                 }
                 if (member.uri == sharedCommit->body.at("author")) {
                     status = DISPLAYED;
                 }
-                if (status < sharedCommit->status[member.uri]) {
-                    status = sharedCommit->status[member.uri];
+                if (status < commitStatus) {
+                    status = commitStatus;
                 }
 
                 // Store computed value.
-                sharedCommit->status[member.uri] = status;
+                commitStatus = status;
 
                 // Update messagesStatus_ if needed.
                 if (previousStatus == SENDING && status >= SENT) {
-                    messagesStatus_[member.uri]["fetched"] = sharedCommit->id;
+                    messageStatus["fetched"] = sharedCommit->id;
                 }
                 if (previousStatus <= SENT && status == DISPLAYED) {
-                    messagesStatus_[member.uri]["read"] = sharedCommit->id;
+                    messageStatus["read"] = sharedCommit->id;
                 }
             }
 
@@ -2189,8 +2191,10 @@ Conversation::Impl::updateStatus(const std::string& uri,
     options.logIfNotFound = false;
     options.fastLog = true;
     History optHistory;
-    std::lock_guard lk(optHistory.mutex); // Avoid to announce messages while updating status.
+    std::unique_lock lk(optHistory.mutex); // Avoid to announce messages while updating status.
     auto res = loadMessages2(options, &optHistory);
+    lk.unlock();
+    std::lock_guard lk2(loadedHistory_.mutex);
     if (res.size() == 0) {
         // In this case, commit is not received yet, so we cache it
         futureStatus[commitId][uri] = static_cast<int32_t>(st);
