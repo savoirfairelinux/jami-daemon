@@ -391,6 +391,13 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              int /*state*/,
                              const std::map<std::string, std::string>& /*detail*/);
     };
+    // used for device verification emoji display
+    struct LIBJAMI_PUBLIC DeviceVerificationEmojiGenerated
+    {
+        constexpr static const char* name = "DeviceVerificationEmojiGenerated";
+        using cb_type = void(const std::string& /*account_id*/,
+                             const std::vector<std::string>& /*emoji_list*/);
+    };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged
     {

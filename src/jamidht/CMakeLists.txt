@@ -12,6 +12,8 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/accountarchive.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/archive_account_manager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/archive_account_manager.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/device_verification.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/device_verification.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/configkeys.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversationrepository.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/conversationrepository.h"
