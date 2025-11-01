@@ -134,6 +134,8 @@ std::string_view
 trim(std::string_view s)
 {
     auto wsfront = std::find_if_not(s.cbegin(), s.cend(), [](int c) { return std::isspace(c); });
+    if (wsfront == s.cend())
+        return std::string_view {};
     return std::string_view(&*wsfront,
                             std::find_if_not(s.rbegin(),
                                              std::string_view::const_reverse_iterator(wsfront),
