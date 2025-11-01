@@ -53,14 +53,9 @@ libjamiacc_la_SOURCES = \
 	./jamidht/typers.h \
 	./jamidht/typers.cpp \
 	./jamidht/auth_channel_handler.h \
-	./jamidht/auth_channel_handler.cpp
-
-
-if RINGNS
-libjamiacc_la_SOURCES += \
+	./jamidht/auth_channel_handler.cpp \
 	./jamidht/namedirectory.cpp \
 	./jamidht/namedirectory.h
-endif
 
 include ./jamidht/eth/libdevcore/Makefile.am
 include ./jamidht/eth/libdevcrypto/Makefile.am
