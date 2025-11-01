@@ -15,8 +15,11 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "jamidht/message_channel_handler.h"
+#include <string_view>
 
-static constexpr const char MESSAGE_SCHEME[] {"msg:"};
+using namespace std::literals;
+
+static constexpr auto MESSAGE_SCHEME = "msg:"sv;
 
 namespace jami {
 
@@ -48,7 +51,16 @@ MessageChannelHandler::MessageChannelHandler(dhtnet::ConnectionManager& cm,
     , pimpl_(std::make_shared<Impl>(cm, std::move(onMessage), std::move(onPeer)))
 {}
 
-MessageChannelHandler::~MessageChannelHandler() {}
+MessageChannelHandler::~MessageChannelHandler()
+{
+    std::unique_lock lk(pimpl_->connectionsMtx_);
+    for (const auto& [peerId, _] : pimpl_->connections_) {
+        pimpl_->onPeerStateChanged_(peerId, false);
+    }
+    auto connections = std::move(pimpl_->connections_);
+    pimpl_->connections_.clear();
+    lk.unlock();
+}
 
 void
 MessageChannelHandler::connect(const DeviceId& deviceId,
@@ -57,7 +69,7 @@ MessageChannelHandler::connect(const DeviceId& deviceId,
                                const std::string& connectionType,
                                bool forceNewConnection)
 {
-    auto channelName = MESSAGE_SCHEME + deviceId.toString();
+    auto channelName = concat(MESSAGE_SCHEME, deviceId.to_view());
     if (pimpl_->connectionManager_.isConnecting(deviceId, channelName)) {
         JAMI_LOG("Already connecting to {}", deviceId);
         return;
