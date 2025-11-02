@@ -1311,9 +1311,10 @@ ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConv
                     return true;
                 } else if (auto sthis = wthis.lock()) {
                     conv->stopFetch(deviceId);
-                    JAMI_WARNING("[Account {}] [Conversation {}] Clone failed. Re-clone in {}s",
+                    JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Clone failed. Re-clone in {}s",
                                  sthis->accountId_,
                                  conversationId,
+                                 deviceId,
                                  conv->fallbackTimer.count());
                     conv->fallbackClone->expires_at(std::chrono::steady_clock::now() + conv->fallbackTimer);
                     conv->fallbackTimer *= 2;
@@ -1989,7 +1990,10 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
                 pimpl_->cloneConversationFrom(conv, deviceId);
             }
         }
-        JAMI_WARNING("[Account {}] Request not found for conversation {}", pimpl_->accountId_, conversationId);
+        JAMI_WARNING("[Account {}] [Conversation {}] [device {}] Request not found.",
+                     pimpl_->accountId_,
+                     conversationId,
+                     deviceId);
         return;
     }
     pimpl_->rmConversationRequest(conversationId);

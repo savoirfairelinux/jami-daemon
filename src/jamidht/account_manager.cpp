@@ -328,44 +328,44 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
             return true;
 
         // allowPublic always true for trust requests (only forbidden if banned)
-        onPeerMessage(*v.owner,
-                      true,
-                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                          JAMI_WARNING("[Account {}] Got trust request (confirm: {}) from: {} / {}. ConversationId: {}",
-                                       accountId_,
-                                       v.confirm,
-                                       peer_account.toString(),
-                                       v.from.toString(),
-                                       v.conversationId);
-                          if (info_)
-                              if (info_->contacts->onTrustRequest(peer_account,
-                                                                  v.owner,
-                                                                  time(nullptr),
-                                                                  v.confirm,
-                                                                  v.conversationId,
-                                                                  std::move(v.payload))) {
-                                  if (v.confirm) // No need to send a confirmation as already accepted here
-                                      return;
-                                  auto conversationId = v.conversationId;
-                                  // Check if there was an old active conversation.
-                                  if (auto details = info_->contacts->getContactInfo(peer_account)) {
-                                      if (!details->conversationId.empty()) {
-                                          if (details->conversationId == conversationId) {
-                                              // Here, it's possible that we already have accepted the conversation
-                                              // but contact were offline and sync failed.
-                                              // So, retrigger the callback so upper layer will clone conversation if
-                                              // needed instead of getting stuck in sync.
-                                              info_->contacts->acceptConversation(conversationId,
-                                                                                  v.owner->getLongId().toString());
-                                              return;
-                                          }
-                                          conversationId = details->conversationId;
-                                          JAMI_WARNING("Accept with old convId: {}", conversationId);
-                                      }
-                                  }
-                                  sendTrustRequestConfirm(peer_account, conversationId);
-                              }
-                      });
+        onPeerMessage(
+            *v.owner,
+            true,
+            [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
+                JAMI_WARNING("[Account {}] [device {}] Got trust request (confirm: {}) from: {}. ConversationId: {}",
+                             accountId_,
+                             v.owner->getLongId().toString(),
+                             v.confirm,
+                             peer_account.toString(),
+                             v.conversationId);
+                if (info_)
+                    if (info_->contacts->onTrustRequest(peer_account,
+                                                        v.owner,
+                                                        time(nullptr),
+                                                        v.confirm,
+                                                        v.conversationId,
+                                                        std::move(v.payload))) {
+                        if (v.confirm) // No need to send a confirmation as already accepted here
+                            return;
+                        auto conversationId = v.conversationId;
+                        // Check if there was an old active conversation.
+                        if (auto details = info_->contacts->getContactInfo(peer_account)) {
+                            if (!details->conversationId.empty()) {
+                                if (details->conversationId == conversationId) {
+                                    // Here, it's possible that we already have accepted the conversation
+                                    // but contact were offline and sync failed.
+                                    // So, retrigger the callback so upper layer will clone conversation if
+                                    // needed instead of getting stuck in sync.
+                                    info_->contacts->acceptConversation(conversationId, v.owner->getLongId().toString());
+                                    return;
+                                }
+                                conversationId = details->conversationId;
+                                JAMI_WARNING("Accept with old convId: {}", conversationId);
+                            }
+                        }
+                        sendTrustRequestConfirm(peer_account, conversationId);
+                    }
+            });
         return true;
     });
 }
@@ -433,7 +433,7 @@ AccountManager::foundPeerDevice(const std::string& accountId,
     }
 
     peer_id = crt->issuer->getId();
-    JAMI_LOG("[Account {}] Found peer device: {} account:{} CA:{}",
+    JAMI_LOG("[Account {}] [device {}] Found device for peer: {} CA:{}",
              accountId,
              crt->getLongId().toString(),
              peer_id.toString(),
@@ -720,11 +720,11 @@ AccountManager::sendTrustRequest(const std::string& to, const std::string& convI
     }
     forEachDevice(toH, [this, toH, convId, payload](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
         auto to = toH.toString();
-        JAMI_WARNING("[Account {}] Sending trust request to: {:s} / {:s} of size {:d}",
+        JAMI_WARNING("[Account {}] [device {}] Sending trust request (size {:d}) to: {:s}",
                      accountId_,
-                     to,
                      dev->getLongId(),
-                     payload.size());
+                     payload.size(),
+                     to);
         dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
                            dev,
                            dht::TrustRequest(DHT_TYPE_NS, convId, payload),
