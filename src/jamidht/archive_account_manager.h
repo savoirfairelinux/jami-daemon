@@ -123,7 +123,6 @@ private:
         std::unique_ptr<asio::steady_timer> timeout;
         bool canceled {false};
     };
-    struct DecodingContext;
     struct AuthMsg;
     struct DeviceAuthInfo;
     std::shared_ptr<AuthContext> authCtx_;
