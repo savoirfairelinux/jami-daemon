@@ -15,6 +15,8 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "jamidht/message_channel_handler.h"
+
+#include <dhtnet/channel_utils.h>
 #include <string_view>
 
 using namespace std::literals;
@@ -164,33 +166,8 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
     if (newPeerConnection)
         pimpl_->onPeerStateChanged_(peerId, true);
 
-    struct DecodingContext
-    {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 16 * 1024};
-    };
-
-    socket->setOnRecv(
-        [onMessage = pimpl_->onMessage_, peerId, cert, ctx = std::make_shared<DecodingContext>()](const uint8_t* buf,
-                                                                                                  size_t len) {
-            if (!buf)
-                return len;
-
-            ctx->pac.reserve_buffer(len);
-            std::copy_n(buf, len, ctx->pac.buffer());
-            ctx->pac.buffer_consumed(len);
-
-            msgpack::object_handle oh;
-            try {
-                while (ctx->pac.next(oh)) {
-                    Message msg;
-                    oh.get().convert(msg);
-                    onMessage(cert, msg.t, msg.c);
-                }
-            } catch (const std::exception& e) {
-                JAMI_WARNING("[convInfo] error on sync: {:s}", e.what());
-            }
-            return len;
-        });
+    socket->setOnRecv(dhtnet::buildMsgpackReader<Message>(
+        [onMessage = pimpl_->onMessage_, cert](Message&& msg) { onMessage(cert, msg.t, msg.c); }));
 
     socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)](const std::error_code& /*ec*/) {
         if (auto shared = w.lock())
