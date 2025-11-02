@@ -15,25 +15,26 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../../test_runner.h"
+#include "jami.h"
+#include "../common.h"
+#include "jamidht/swarm/swarm_manager.h"
+#include "nodes.h"
+
 #include <cppunit/TestAssert.h>
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include <algorithm>
 #include <msgpack.hpp>
+#include <dhtnet/channel_utils.h>
+#include <dhtnet/multiplexed_socket.h>
 #include <opendht/thread_pool.h>
 #include <opendht/utils.h>
 
 #include <iostream>
 #include <fstream>
 #include <string>
-
-#include "../../test_runner.h"
-#include "jami.h"
-#include "../common.h"
-#include "jamidht/swarm/swarm_manager.h"
-#include <dhtnet/multiplexed_socket.h>
-#include "nodes.h"
+#include <algorithm>
 
 using namespace std::string_literals;
 using namespace std::chrono_literals;
@@ -115,7 +116,7 @@ private:
     std::map<NodeId, int> requestsReceived;
     std::map<NodeId, int> answersSent;
 
-    int iterations = 0;
+    unsigned iterations = 0;
 
     void generateSwarmManagers();
     void needSocketCallBack(const std::shared_ptr<SwarmManager>& sm);
@@ -205,56 +206,26 @@ SwarmMessageSpread::sendMessage(const std::shared_ptr<dhtnet::ChannelSocketInter
 void
 SwarmMessageSpread::receiveMessage(const NodeId nodeId, const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
-    struct DecodingContext
-    {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 32};
-    };
+    socket->setOnRecv(dhtnet::buildMsgpackReader([this, nodeId](Message&& msg) {
+        if (msg.identifier_ == 1) {
+            std::lock_guard lk(channelSocketsMtx_);
+            auto var = numberTimesReceived.find(nodeId);
+            iterations++;
 
-    socket->setOnRecv([this,
-                       wsocket = std::weak_ptr<dhtnet::ChannelSocketInterface>(socket),
-                       ctx = std::make_shared<DecodingContext>(),
-                       nodeId](const uint8_t* buf, size_t len) {
-        auto socket = wsocket.lock();
-        if (!socket)
-            return 0lu;
-
-        ctx->pac.reserve_buffer(len);
-        std::copy_n(buf, len, ctx->pac.buffer());
-        ctx->pac.buffer_consumed(len);
-
-        msgpack::object_handle oh;
-        while (ctx->pac.next(oh)) {
-            try {
-                Message msg;
-                oh.get().convert(msg);
-
-                if (msg.identifier_ == 1) {
-                    std::lock_guard lk(channelSocketsMtx_);
-                    auto var = numberTimesReceived.find(nodeId);
-                    iterations = iterations + 1;
-
-                    if (var != numberTimesReceived.end()) {
-                        var->second += 1;
-                    } else {
-                        Message msgToSend;
-                        msgToSend.identifier_ = 1;
-                        msgToSend.hops_ = msg.hops_ + 1;
-                        numberTimesReceived[nodeId] = 1;
-                        updateHops(msgToSend.hops_);
-                        relayMessageToRoutingTable(nodeId, socket->deviceId(), msgToSend);
-                    }
-                    channelSocketsCv_.notify_all();
-                }
-
-            } catch (const std::exception& e) {
-                JAMI_WARNING("Error DRT recv: {}", e.what());
-                return 0lu;
+            if (var != numberTimesReceived.end()) {
+                var->second += 1;
+            } else {
+                Message msgToSend;
+                msgToSend.identifier_ = 1;
+                msgToSend.hops_ = msg.hops_ + 1;
+                numberTimesReceived[nodeId] = 1;
+                updateHops(msgToSend.hops_);
+                relayMessageToRoutingTable(nodeId, socket->deviceId(), msgToSend);
             }
+            channelSocketsCv_.notify_all();
         }
-
-        return 0lu;
-    });
-};
+    }));
+}
 
 void
 SwarmMessageSpread::updateHops(int hops)
@@ -466,7 +437,6 @@ SwarmMessageSpread::testWriteMessage()
 
     CPPUNIT_ASSERT(true);
 }
-
 }; // namespace test
 } // namespace jami
 CORE_TEST_RUNNER(jami::test::SwarmMessageSpread::name())

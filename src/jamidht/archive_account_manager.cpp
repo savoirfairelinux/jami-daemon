@@ -28,6 +28,7 @@
 #include "client/ring_signal.h"
 
 #include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/channel_utils.h>
 #include <opendht/dhtrunner.h>
 #include <opendht/thread_pool.h>
 
@@ -519,11 +520,6 @@ ArchiveAccountManager::provideAccountAuthentication(const std::string& key, cons
     return true;
 }
 
-struct ArchiveAccountManager::DecodingContext
-{
-    msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 512};
-};
-
 // link device: newDev: creates a new temporary account on the DHT for establishing a TLS connection
 void
 ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthContext>& ctx)
@@ -678,30 +674,9 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                                                                                  DeviceAuthInfo::createError(error));
             });
 
-            socket->setOnRecv([ctx, decodingCtx = std::make_shared<DecodingContext>(), wthis](const uint8_t* buf,
-                                                                                              size_t len) {
-                if (!buf) {
-                    return len;
-                }
-
-                decodingCtx->pac.reserve_buffer(len);
-                std::copy_n(buf, len, decodingCtx->pac.buffer());
-                decodingCtx->pac.buffer_consumed(len);
-                AuthMsg toRecv;
-                try {
-                    msgpack::object_handle oh;
-                    if (decodingCtx->pac.next(oh)) {
-                        JAMI_DEBUG("[LinkDevice] NEW: Unpacking message.");
-                        oh.get().convert(toRecv);
-                    } else {
-                        return len;
-                    }
-                } catch (const std::exception& e) {
-                    ctx->linkDevCtx->state = AuthDecodingState::ERR;
-                    JAMI_ERROR("[LinkDevice] Error unpacking message from source device: {}", e.what());
-                    return len;
-                }
-
+            socket->setOnRecv(dhtnet::buildMsgpackReader<AuthMsg>([ctx, wthis](AuthMsg&& toRecv) {
+                if (!ctx || !wthis.lock())
+                    return;
                 JAMI_DEBUG("[LinkDevice] NEW: Successfully unpacked message from source\n{}", toRecv.formatMsg());
                 JAMI_DEBUG("[LinkDevice] NEW: State is {}:{}",
                            ctx->linkDevCtx->scheme,
@@ -711,13 +686,13 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 if (toRecv.schemeId != 0) {
                     JAMI_WARNING("[LinkDevice] NEW: Unsupported scheme received from source");
                     ctx->linkDevCtx->state = AuthDecodingState::ERR;
-                    return len;
+                    return;
                 }
 
                 // handle the protocol logic
                 if (ctx->linkDevCtx->handleCanceledMessage(toRecv)) {
                     // import canceled. Will be handeled onShutdown
-                    return len;
+                    return;
                 }
                 AuthMsg toSend;
                 bool shouldShutdown = false;
@@ -747,7 +722,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                         JAMI_DEBUG("[LinkDevice] Authentication failed: maximum retry attempts "
                                    "reached");
                         ctx->linkDevCtx->state = AuthDecodingState::AUTH_ERROR;
-                        return len;
+                        return;
                     }
 
                     // If the password was incorrect but we can still retry
@@ -768,7 +743,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
 
                         emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
                             ctx->accountId, static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING), info);
-                        return len;
+                        return;
                     }
 
                     if (!shouldLoadArchive) {
@@ -810,8 +785,8 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                     ctx->linkDevCtx->channel->shutdown();
                 }
 
-                return len;
-            }); // !onConnectionReady // TODO emit AuthStateChanged+"connection ready" signal
+                return;
+            })); // !onConnectionReady // TODO emit AuthStateChanged+"connection ready" signal
 
             ctx->linkDevCtx->state = AuthDecodingState::HANDSHAKE;
             // send first message to establish scheme
@@ -968,53 +943,23 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     // for now we only have one valid protocol (version is AuthMsg::scheme = 0) but can later
     // add in more schemes inside this callback function
     JAMI_DEBUG("[LinkDevice] Setting up receiving logic callback.");
-    channel->setOnRecv([ctx,
-                        wthis = weak(),
-                        decodeCtx = std::make_shared<ArchiveAccountManager::DecodingContext>()](const uint8_t* buf,
-                                                                                                size_t len) {
-        JAMI_DEBUG("[LinkDevice] Setting up receiver callback for communication logic on SOURCE "
-                   "device.");
+    channel->setOnRecv(dhtnet::buildMsgpackReader<AuthMsg>([ctx, wthis = weak()](AuthMsg&& toRecv) {
+        JAMI_DEBUG("[LinkDevice] Setting up receiver callback for communication logic on SOURCE device.");
         // when archive is sent to newDev we will get back a success or fail response before the
         // connection closes and we need to handle this and pass it to the shutdown callback
         auto this_ = wthis.lock();
         if (!this_) {
             JAMI_ERROR("[LinkDevice] Invalid state for ArchiveAccountManager.");
-            return (size_t) 0;
-        }
-
-        if (!buf) {
-            JAMI_ERROR("[LinkDevice] Invalid buffer.");
-            return (size_t) 0;
+            return;
         }
 
         if (ctx->canceled || ctx->addDeviceCtx->state == AuthDecodingState::ERR) {
             JAMI_ERROR("[LinkDevice] Error.");
-            return (size_t) 0;
+            return;
         }
-
-        decodeCtx->pac.reserve_buffer(len);
-        std::copy_n(buf, len, decodeCtx->pac.buffer());
-        decodeCtx->pac.buffer_consumed(len);
 
         // handle unpacking the data from the peer
         JAMI_DEBUG("[LinkDevice] SOURCE: addDevice: setOnRecv: handling msg from NEW");
-        msgpack::object_handle oh;
-        AuthMsg toRecv;
-        try {
-            if (decodeCtx->pac.next(oh)) {
-                oh.get().convert(toRecv);
-                JAMI_DEBUG("[LinkDevice] SOURCE: Successfully unpacked message from NEW "
-                           "(NEW->SOURCE)\n{}",
-                           toRecv.formatMsg());
-            } else {
-                return len;
-            }
-        } catch (const std::exception& e) {
-            // set the generic error state in the context
-            ctx->addDeviceCtx->state = AuthDecodingState::ERR;
-            JAMI_ERROR("[LinkDevice] error unpacking message from new device: {}", e.what()); // also warn in logs
-        }
-
         JAMI_DEBUG("[LinkDevice] SOURCE: State is '{}'", ctx->addDeviceCtx->formattedAuthState());
 
         // It's possible to start handling different protocol scheme numbers here
@@ -1029,11 +974,11 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             || ctx->addDeviceCtx->state == AuthDecodingState::AUTH_ERROR) {
             JAMI_WARNING("[LinkDevice] Undefined behavior encountered during a link auth session.");
             // ctx->addDeviceCtx->channel->shutdown();
-            return (size_t) -1;
+            return;
         }
         // Check for timeout message
         if (ctx->addDeviceCtx->handleTimeoutMessage(toRecv)) {
-            return len;
+            return;
         }
         AuthMsg toSend;
         bool shouldSendMsg = false;
@@ -1107,8 +1052,8 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             ctx->addDeviceCtx->channel->shutdown();
         }
 
-        return len;
-    }); // !channel onRecv closure
+        return;
+    })); // !channel onRecv closure
 
     if (ctx->addDeviceCtx->state == AuthDecodingState::HANDSHAKE) {
         ctx->addDeviceCtx->state = AuthDecodingState::EST;
