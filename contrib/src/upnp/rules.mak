@@ -1,5 +1,5 @@
 # UPNP
-UPNP_VERSION := 1.14.18
+UPNP_VERSION := 1.14.25
 PKG_CPE += cpe:2.3:a:pupnp_project:pupnp:$(UPNP_VERSION):*:*:*:*:*:*:*
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
@@ -19,18 +19,23 @@ ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
 endif
 	$(APPLY) $(SRC)/upnp/poll.patch
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv -f config.guess config.sub
 	$(MOVE)
 
-PUPNP_OPTIONS=--disable-blocking_tcp_connections --disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation
+PUPNP_CONF = \
+	-DBUILD_TESTING=OFF \
+	-DUPNP_BUILD_SHARED=OFF \
+	-DUPNP_BUILD_STATIC=ON \
+	-DUPNP_BUILD_SAMPLES=OFF \
+	-DUPNP_ENABLE_CLIENT_API=ON \
+	-DUPNP_ENABLE_DEVICE_API=OFF \
+	-DUPNP_ENABLE_WEBSERVER=OFF \
+	-DUPNP_ENABLE_SSDP=OFF \
+	-DUPNP_ENABLE_SOAP=OFF \
+	-DUPNP_ENABLE_GENA=OFF \
+	-DUPNP_ENABLE_BLOCKING_TCP_CONNECTIONS=OFF
 
 .upnp: upnp
-ifdef HAVE_WIN32
-	$(RECONF)
-	cd $< && $(HOSTVARS) CFLAGS="-DUPNP_STATIC_LIB" ./configure $(PUPNP_OPTIONS) $(HOSTCONF)
-else
-	$(RECONF)
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure $(PUPNP_OPTIONS) $(HOSTCONF)
-endif
-	cd $< && $(MAKE) install
+	cd $< && mkdir -p build
+	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(PUPNP_CONF) ..
+	cd $< && cd build && $(MAKE) install
 	touch $@
