@@ -1906,6 +1906,13 @@ JamiAccount::doRegister_()
             JAMI_LOG("Query for local certificate store: {}: {} found.", pk_id.toString(), ret.size());
             return ret;
         };
+        context.certificateStorePkId = [&](const DeviceId& pk_id) {
+            std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
+            if (auto cert = certStore().getCertificate(pk_id.toString()))
+                ret.emplace_back(std::move(cert));
+            JAMI_LOG("Query for local certificate store: {}: {} found.", pk_id.toString(), ret.size());
+            return ret;
+        };
 
         context.statusChangedCallback = [this](dht::NodeStatus s4, dht::NodeStatus s6) {
             JAMI_LOG("[Account {}] DHT status: IPv4 {}; IPv6 {}", getAccountID(), dhtStatusStr(s4), dhtStatusStr(s6));
