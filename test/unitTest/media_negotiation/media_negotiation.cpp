@@ -333,12 +333,12 @@ MediaNegotiationTest::inferInitialDirection(const MediaAttribute& mediaAttr)
         return MediaDirection::INACTIVE;
 
     if (mediaAttr.muted_) {
-        if (mediaAttr.onHold_)
+        if (mediaAttr.hold_)
             return MediaDirection::INACTIVE;
         return MediaDirection::RECVONLY;
     }
 
-    if (mediaAttr.onHold_)
+    if (mediaAttr.hold_)
         return MediaDirection::SENDONLY;
 
     return MediaDirection::SENDRECV;
