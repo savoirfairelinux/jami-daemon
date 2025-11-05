@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #ifdef HAVE_CONFIG_H
@@ -206,7 +207,7 @@ public:
     std::vector<libjami::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
     // Build the list of medias to be included in the SDP (offer/answer)
-    std::vector<MediaAttribute> createDefaultMediaList(bool addVideo, bool onHold = false);
+    std::vector<MediaAttribute> createDefaultMediaList(bool addVideo, bool hold = false);
 
 public: // overloaded methods
     virtual void flush() override;
