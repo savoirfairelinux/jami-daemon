@@ -100,7 +100,7 @@ SFLphoned (0.7.0) / 2006-...
 	* fix nat handling (use the same port that it test)
 	* add register/unregister in qt
 	* add test audio driver button
-	* add hold/unhold/hangup to sflphone-cli
+	* add hold/resume/hangup to sflphone-cli
 
 SFLphoned (0.6.2) / 2005-11-29
 	* integral mono support
