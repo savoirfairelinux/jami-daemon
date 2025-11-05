@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 /* Jami */
@@ -76,11 +77,11 @@ hold_binding(SCM accountID_str, SCM callID_str)
 }
 
 static SCM
-unhold_binding(SCM accountID_str, SCM callID_str)
+resume_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::unhold(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::resume(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static void
@@ -91,5 +92,5 @@ install_call_primitives(void*)
     define_primitive("accept", 2, 1, 0, (void*) accept_binding);
     define_primitive("refuse", 2, 0, 0, (void*) refuse_binding);
     define_primitive("hold", 2, 0, 0, (void*) hold_binding);
-    define_primitive("unhold", 2, 0, 0, (void*) unhold_binding);
+    define_primitive("resume", 2, 0, 0, (void*) resume_binding);
 }
