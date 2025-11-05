@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 %header %{
@@ -71,7 +71,7 @@ bool acceptWithMedia(const std::string& accountId, const std::string& callId, co
 bool answerMediaChangeRequest(const std::string& accountId, const std::string& callId, const std::vector<std::map<std::string, std::string>>& mediaList);
 bool hangUp(const std::string& accountId, const std::string& callId);
 bool hold(const std::string& accountId, const std::string& callId);
-bool unhold(const std::string& accountId, const std::string& callId);
+bool resume(const std::string& accountId, const std::string& callId);
 bool muteLocalMedia(const std::string& accountId, const std::string& callId, const std::string& mediaType, bool mute);
 bool transfer(const std::string& accountId, const std::string& callId, const std::string& to);
 bool attendedTransfer(const std::string& accountId, const std::string& transferID, const std::string& targetID);
@@ -90,7 +90,7 @@ bool detachParticipant(const std::string& accountId, const std::string& callId);
 bool joinConference(const std::string& accountId, const std::string& sel_confId, const std::string& account2Id, const std::string& drag_confId);
 bool hangUpConference(const std::string& accountId, const std::string& confId);
 bool holdConference(const std::string& accountId, const std::string& confId);
-bool unholdConference(const std::string& accountId, const std::string& confId);
+bool resumeConference(const std::string& accountId, const std::string& confId);
 std::vector<std::string> getConferenceList(const std::string& accountId);
 std::vector<std::string> getParticipantList(const std::string& accountId, const std::string& confId);
 std::string getConferenceId(const std::string& accountId, const std::string& callId);
