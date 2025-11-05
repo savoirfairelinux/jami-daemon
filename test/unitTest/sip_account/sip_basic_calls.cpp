@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <cppunit/TestAssert.h>
@@ -759,7 +759,7 @@ SipBasicCallTest::hold_resume_test()
             auto call = Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_);
             auto activeMediaList = call->getMediaAttributeList();
             for (const auto& mediaAttr : activeMediaList) {
-                CPPUNIT_ASSERT(mediaAttr.onHold_);
+                CPPUNIT_ASSERT(mediaAttr.hold_);
             }
         }
 
@@ -800,7 +800,7 @@ SipBasicCallTest::hold_resume_test()
         std::this_thread::sleep_for(std::chrono::seconds(2));
 
         JAMI_INFO("Resume Alice's call");
-        libjami::unhold(callDataMap_["ALICE"].accountId_, callDataMap_["ALICE"].callId_);
+        libjami::resume(callDataMap_["ALICE"].accountId_, callDataMap_["ALICE"].callId_);
 
         // Wait for the StateChange signal.
         CPPUNIT_ASSERT(
@@ -817,7 +817,7 @@ SipBasicCallTest::hold_resume_test()
             auto call = Manager::instance().getCallFromCallID(callDataMap_["ALICE"].callId_);
             auto activeMediaList = call->getMediaAttributeList();
             for (const auto& mediaAttr : activeMediaList) {
-                CPPUNIT_ASSERT(not mediaAttr.onHold_);
+                CPPUNIT_ASSERT(not mediaAttr.hold_);
             }
         }
 
