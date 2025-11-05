@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "call_factory.h"
@@ -1219,12 +1219,12 @@ SIPCall::attendedTransfer(const std::string& to)
 }
 
 bool
-SIPCall::onhold(OnReadyCb&& cb)
+SIPCall::hold(OnReadyCb&& cb)
 {
     // If ICE is currently negotiating, we must wait before hold the call
     if (isWaitingForIceAndMedia_) {
         holdCb_ = std::move(cb);
-        remainingRequest_ = Request::HoldingOn;
+        remainingRequest_ = Request::Hold;
         return false;
     }
 
@@ -1252,7 +1252,7 @@ SIPCall::hold()
     stopAllMedia();
 
     for (auto& stream : rtpStreams_) {
-        stream.mediaAttribute_->onHold_ = true;
+        stream.mediaAttribute_->hold_ = true;
     }
 
     if (SIPSessionReinvite() != PJ_SUCCESS) {
@@ -1268,19 +1268,19 @@ SIPCall::hold()
 }
 
 bool
-SIPCall::offhold(OnReadyCb&& cb)
+SIPCall::resume(OnReadyCb&& cb)
 {
-    // If ICE is currently negotiating, we must wait before unhold the call
+    // If ICE is currently negotiating, we must wait before attempting to resume the call
     if (isWaitingForIceAndMedia_) {
         JAMI_DEBUG("[call:{}] ICE negotiation in progress. Resume request will be once ICE "
                    "negotiation completes",
                    getCallId());
-        offHoldCb_ = std::move(cb);
-        remainingRequest_ = Request::HoldingOff;
+        resumeCb_ = std::move(cb);
+        remainingRequest_ = Request::Resume;
         return false;
     }
     JAMI_DEBUG("[call:{}] Resuming the call", getCallId());
-    auto result = unhold();
+    auto result = resume();
 
     if (cb)
         cb(result);
@@ -1289,7 +1289,7 @@ SIPCall::offhold(OnReadyCb&& cb)
 }
 
 bool
-SIPCall::unhold()
+SIPCall::resume()
 {
     auto account = getSIPAccount();
     if (!account) {
@@ -1299,10 +1299,10 @@ SIPCall::unhold()
 
     bool success = false;
     try {
-        success = internalOffHold([] {});
+        success = internalResume([] {});
     } catch (const SdpException& e) {
         JAMI_ERROR("[call:{}] {}", getCallId(), e.what());
-        throw VoipLinkException("SDP issue in offhold");
+        throw VoipLinkException("SDP issue in resume");
     }
 
     // Only wait for ICE if we have an ICE re-invite in progress
@@ -1312,7 +1312,7 @@ SIPCall::unhold()
 }
 
 bool
-SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
+SIPCall::internalResume(const std::function<void()>& sdp_cb)
 {
     if (getConnectionState() != ConnectionState::CONNECTED) {
         JAMI_WARNING("[call:{}] Not connected, ignoring resume request", getCallId());
@@ -1325,13 +1325,13 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 
     {
         for (auto& stream : rtpStreams_) {
-            stream.mediaAttribute_->onHold_ = false;
+            stream.mediaAttribute_->hold_ = false;
         }
         // For now, call resume will always require new ICE negotiation.
         if (SIPSessionReinvite(getMediaAttributeList(), true) != PJ_SUCCESS) {
             JAMI_WARNING("[call:{}] Resuming hold", getCallId());
             if (isWaitingForIceAndMedia_) {
-                remainingRequest_ = Request::HoldingOn;
+                remainingRequest_ = Request::Hold;
             } else {
                 hold();
             }
@@ -1931,7 +1931,7 @@ SIPCall::setupNegotiatedMedia()
     }
 
     auto slots = sdp_->getMediaSlots();
-    bool peer_holding {true};
+    bool peer_hold {true};
     int streamIdx = -1;
 
     for (const auto& slot : slots) {
@@ -1999,16 +1999,16 @@ SIPCall::setupNegotiatedMedia()
             continue;
         }
 
-        // Aggregate holding info over all remote streams
-        peer_holding &= remote.onHold;
+        // Aggregate hold info over all remote streams
+        peer_hold &= remote.hold;
 
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
     }
 
     // TODO. Do we really use this?
-    if (not isSubcall() and peerHolding_ != peer_holding) {
-        peerHolding_ = peer_holding;
-        emitSignal<libjami::CallSignal::PeerHold>(getCallId(), peerHolding_);
+    if (not isSubcall() and peerHold_ != peer_hold) {
+        peerHold_ = peer_hold;
+        emitSignal<libjami::CallSignal::PeerHold>(getCallId(), peerHold_);
     }
 }
 
@@ -2085,23 +2085,23 @@ SIPCall::startAllMedia()
         }
     }
 
-    // Media is restarted, we can process the last holding request.
+    // Media is restarted, we can process the last hold request.
     isWaitingForIceAndMedia_ = false;
     if (remainingRequest_ != Request::NoRequest) {
         bool result = true;
         switch (remainingRequest_) {
-        case Request::HoldingOn:
+        case Request::Hold:
             result = hold();
             if (holdCb_) {
                 holdCb_(result);
                 holdCb_ = nullptr;
             }
             break;
-        case Request::HoldingOff:
-            result = unhold();
-            if (offHoldCb_) {
-                offHoldCb_(result);
-                offHoldCb_ = nullptr;
+        case Request::Resume:
+            result = resume();
+            if (resumeCb_) {
+                resumeCb_(result);
+                resumeCb_ = nullptr;
             }
             break;
         case Request::SwitchInput:
@@ -2979,7 +2979,7 @@ SIPCall::getDetails() const
 
     auto details = Call::getDetails();
 
-    details.emplace(libjami::Call::Details::PEER_HOLDING, peerHolding_ ? TRUE_STR : FALSE_STR);
+    details.emplace(libjami::Call::Details::PEER_HOLD, peerHold_ ? TRUE_STR : FALSE_STR);
 
     for (auto const& stream : rtpStreams_) {
         if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO) {
@@ -3422,7 +3422,7 @@ SIPCall::merge(Call& call)
         inviteSession_->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
     setSipTransport(std::move(subcall.sipTransport_), std::move(subcall.contactHeader_));
     sdp_ = std::move(subcall.sdp_);
-    peerHolding_ = subcall.peerHolding_;
+    peerHold_ = subcall.peerHold_;
     upnp_ = std::move(subcall.upnp_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
