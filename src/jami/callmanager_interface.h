@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef LIBJAMI_CALLMANAGERI_H
@@ -44,7 +44,7 @@ LIBJAMI_PUBLIC bool refuse(const std::string& accountId, const std::string& call
 LIBJAMI_PUBLIC bool accept(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool hangUp(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool hold(const std::string& accountId, const std::string& callId);
-LIBJAMI_PUBLIC bool unhold(const std::string& accountId, const std::string& callId);
+LIBJAMI_PUBLIC bool resume(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool muteLocalMedia(const std::string& accountId,
                                    const std::string& callId,
                                    const std::string& mediaType,
@@ -101,7 +101,7 @@ LIBJAMI_PUBLIC bool joinConference(const std::string& accountId,
                                    const std::string& drag_confId);
 LIBJAMI_PUBLIC bool hangUpConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
-LIBJAMI_PUBLIC bool unholdConference(const std::string& accountId, const std::string& confId);
+LIBJAMI_PUBLIC bool resumeConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
 /// NOTE: Despite its name, this returns the list of call IDs (subcalls) in the conference,
 /// not the actual participant URIs. This naming is historical.
