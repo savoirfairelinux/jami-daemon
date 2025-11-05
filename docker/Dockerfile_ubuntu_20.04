@@ -57,7 +57,6 @@ RUN add-apt-repository universe && \
         libmsgpack-dev \
         libnatpmp-dev \
         libayatana-appindicator3-dev \
-        libqrencode-dev \
         libnm-dev \
         libcrypto++-dev \
         libva-dev \
