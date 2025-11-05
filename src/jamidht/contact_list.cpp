@@ -612,8 +612,7 @@ ContactList::getSyncData() const
             JAMI_WARNING("[Account {}] [Contacts] No certificate found for {}", accountId_, dev.first);
             continue;
         }
-        sync_data.devices.emplace(dev.second.certificate->getLongId(),
-                                  KnownDeviceSync {dev.second.name, dev.second.certificate->getId()});
+        sync_data.devices.emplace(dev.second.certificate->getLongId(), KnownDeviceSync {dev.second.name});
     }
     return sync_data;
 }

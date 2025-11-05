@@ -70,20 +70,12 @@ AccountManager::onSyncData(DeviceSync&& sync, bool checkDevice)
     // Sync known devices
     JAMI_DEBUG("[Account {}] [Contacts] received device sync data ({:d} devices, {:d} contacts, {:d} requests)",
                accountId_,
-               sync.devices_known.size() + sync.devices.size(),
+               sync.devices.size(),
                sync.peers.size(),
                sync.trust_requests.size());
-    for (const auto& d : sync.devices_known) {
+    for (const auto& d : sync.devices) {
         findCertificate(d.first, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
-                return;
-            // std::lock_guard lock(deviceListMutex_);
-            foundAccountDevice(crt, d.second);
-        });
-    }
-    for (const auto& d : sync.devices) {
-        findCertificate(d.second.sha1, [this, d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (not crt || crt->getLongId() != d.first)
                 return;
             // std::lock_guard lock(deviceListMutex_);
             foundAccountDevice(crt, d.second.name);
