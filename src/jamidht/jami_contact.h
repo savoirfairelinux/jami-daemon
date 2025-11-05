@@ -151,8 +151,7 @@ public:
 struct KnownDeviceSync
 {
     std::string name;
-    dht::InfoHash sha1;
-    MSGPACK_DEFINE_MAP(name, sha1)
+    MSGPACK_DEFINE_MAP(name)
 };
 
 struct DeviceSync : public dht::EncryptedValue<DeviceSync>
@@ -160,11 +159,10 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
     uint64_t date;
     std::string device_name;
-    std::map<dht::InfoHash, std::string> devices_known; // Legacy
     std::map<dht::PkId, KnownDeviceSync> devices;
     std::map<dht::InfoHash, Contact> peers;
     std::map<dht::InfoHash, TrustRequest> trust_requests;
-    MSGPACK_DEFINE_MAP(date, device_name, devices_known, devices, peers, trust_requests)
+    MSGPACK_DEFINE_MAP(date, device_name, devices, peers, trust_requests)
 };
 
 struct KnownDevice
