@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "sdp.h"
@@ -165,13 +165,13 @@ Sdp::mediaDirection(const MediaAttribute& mediaAttr)
     }
 
     if (mediaAttr.muted_) {
-        if (mediaAttr.onHold_) {
+        if (mediaAttr.hold_) {
             return DIRECTION_STR[MediaDirection::INACTIVE];
         }
         return DIRECTION_STR[MediaDirection::RECVONLY];
     }
 
-    if (mediaAttr.onHold_) {
+    if (mediaAttr.hold_) {
         return DIRECTION_STR[MediaDirection::SENDONLY];
     }
 
@@ -759,14 +759,14 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             }
         }
 
-        descr.onHold = pjmedia_sdp_attr_find2(media->attr_count,
-                                              media->attr,
-                                              DIRECTION_STR[MediaDirection::SENDONLY],
-                                              nullptr)
-                       || pjmedia_sdp_attr_find2(media->attr_count,
-                                                 media->attr,
-                                                 DIRECTION_STR[MediaDirection::INACTIVE],
-                                                 nullptr);
+        descr.hold = pjmedia_sdp_attr_find2(media->attr_count,
+                                            media->attr,
+                                            DIRECTION_STR[MediaDirection::SENDONLY],
+                                            nullptr)
+                     || pjmedia_sdp_attr_find2(media->attr_count,
+                                               media->attr,
+                                               DIRECTION_STR[MediaDirection::INACTIVE],
+                                               nullptr);
 
         descr.direction_ = getMediaDirection(media);
 
