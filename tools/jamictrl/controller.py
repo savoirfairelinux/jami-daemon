@@ -639,7 +639,7 @@ class libjamiCtrl(Thread):
 
 
     def Hold(self, callid):
-        """Hold a call identified by a CallID"""
+        """Hold call identified by a CallID"""
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
@@ -647,13 +647,13 @@ class libjamiCtrl(Thread):
         self.callmanager.hold(callid)
 
 
-    def UnHold(self, callid):
-        """Unhold an incoming call identified by a CallID"""
+    def Resume(self, callid):
+        """Resume call identified by a CallID"""
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.unhold(callid)
+        self.callmanager.resume(callid)
 
     def SetAudioOutputDevice(self, index):
         self.configurationmanager.setAudioOutputDevice(int (index ))
