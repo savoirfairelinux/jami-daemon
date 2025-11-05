@@ -70,26 +70,19 @@ struct Contact
     bool update(const Contact& c)
     {
         const auto copy = *this;
-        if (c.added > added) {
+        auto isMoreRecent = std::max(c.added, c.removed) > std::max(added, removed);
+        if (isMoreRecent) {
             added = c.added;
-            conversationId = c.conversationId;
-        }
-        if (c.removed > removed) {
             removed = c.removed;
             banned = c.banned;
-        }
-        if (c.confirmed != confirmed) {
-            confirmed = c.confirmed;
-        }
-        if (isActive()) {
-            removed = 0;
-            banned = 0;
-        }
-        if (c.isActive() and conversationId.empty() and not c.conversationId.empty()) {
             conversationId = c.conversationId;
+            confirmed = c.confirmed;
+        } else if (isActive() && added == c.added) {
+            confirmed = confirmed or c.confirmed;
         }
         return hasDifferentState(copy);
     }
+
     bool hasDifferentState(const Contact& other) const
     {
         return other.isActive() != isActive() or other.isBanned() != isBanned() or other.confirmed != confirmed;
