@@ -203,7 +203,7 @@ class SflPhoneTests():
 
     # SCENARIO 3 Test 1
     def test_ip2ip_send_hold_offhold(self):
-        """Send new call, hold this call, offhold, hangup"""
+        """Start call, hold call, resume call, end call"""
         i = 0
         while(i < 10):
 
@@ -213,7 +213,7 @@ class SflPhoneTests():
             self.sflphone.Hold(callid)
             time.sleep(0.5)
 
-            self.sflphone.UnHold(callid)
+            self.sflphone.Resume(callid)
             time.sleep(0.5)
 
             self.sflphone.HangUp(callid)
