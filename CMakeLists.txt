@@ -714,6 +714,10 @@ else()
 
     install (TARGETS ${PROJECT_NAME})
 
+    # Install ringtones
+    file(GLOB RINGTONES ${CMAKE_CURRENT_SOURCE_DIR}/ringtones/*.opus)
+    install(FILES ${RINGTONES} DESTINATION ${JAMI_DATADIR}/ringtones)
+
     if (JAMI_NODEJS)
         # Build nodejs binding
         include (UseSWIG)
