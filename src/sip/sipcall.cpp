@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2025 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "call_factory.h"
@@ -1278,7 +1278,7 @@ SIPCall::attendedTransfer(const std::string& to)
 }
 
 bool
-SIPCall::onhold(OnReadyCb&& cb)
+SIPCall::hold(OnReadyCb&& cb)
 {
     // If ICE is currently negotiating, we must wait before hold the call
     if (isWaitingForIceAndMedia_) {
@@ -1311,7 +1311,7 @@ SIPCall::hold()
     stopAllMedia();
 
     for (auto& stream : rtpStreams_) {
-        stream.mediaAttribute_->onHold_ = true;
+        stream.mediaAttribute_->hold_ = true;
     }
 
     if (SIPSessionReinvite() != PJ_SUCCESS) {
@@ -1327,19 +1327,19 @@ SIPCall::hold()
 }
 
 bool
-SIPCall::offhold(OnReadyCb&& cb)
+SIPCall::resume(OnReadyCb&& cb)
 {
-    // If ICE is currently negotiating, we must wait before unhold the call
+    // If ICE is currently negotiating, we must wait before attempting to resume the call
     if (isWaitingForIceAndMedia_) {
         JAMI_DBG("[call:%s] ICE negotiation in progress. Resume request will be once ICE "
                  "negotiation completes",
                  getCallId().c_str());
-        offHoldCb_ = std::move(cb);
+        resumeCb_ = std::move(cb);
         remainingRequest_ = Request::HoldingOff;
         return false;
     }
     JAMI_DBG("[call:%s] Resuming the call", getCallId().c_str());
-    auto result = unhold();
+    auto result = resume();
 
     if (cb)
         cb(result);
@@ -1348,7 +1348,7 @@ SIPCall::offhold(OnReadyCb&& cb)
 }
 
 bool
-SIPCall::unhold()
+SIPCall::resume()
 {
     auto account = getSIPAccount();
     if (!account) {
@@ -1358,10 +1358,10 @@ SIPCall::unhold()
 
     bool success = false;
     try {
-        success = internalOffHold([] {});
+        success = internalResume([] {});
     } catch (const SdpException& e) {
         JAMI_ERR("[call:%s] %s", getCallId().c_str(), e.what());
-        throw VoipLinkException("SDP issue in offhold");
+        throw VoipLinkException("SDP issue in resume");
     }
 
     // Only wait for ICE if we have an ICE re-invite in progress
@@ -1371,7 +1371,7 @@ SIPCall::unhold()
 }
 
 bool
-SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
+SIPCall::internalResume(const std::function<void()>& sdp_cb)
 {
     if (getConnectionState() != ConnectionState::CONNECTED) {
         JAMI_WARN("[call:%s] Not connected, ignoring resume request", getCallId().c_str());
@@ -1384,7 +1384,7 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 
     {
         for (auto& stream : rtpStreams_) {
-            stream.mediaAttribute_->onHold_ = false;
+            stream.mediaAttribute_->hold_ = false;
         }
         // For now, call resume will always require new ICE negotiation.
         if (SIPSessionReinvite(getMediaAttributeList(), true) != PJ_SUCCESS) {
@@ -2059,7 +2059,7 @@ SIPCall::setupNegotiatedMedia()
         }
 
         // Aggregate holding info over all remote streams
-        peer_holding &= remote.onHold;
+        peer_holding &= remote.hold;
 
         configureRtpSession(rtpStream.rtpSession_, rtpStream.mediaAttribute_, local, remote);
     }
@@ -2157,10 +2157,10 @@ SIPCall::startAllMedia()
             }
             break;
         case Request::HoldingOff:
-            result = unhold();
-            if (offHoldCb_) {
-                offHoldCb_(result);
-                offHoldCb_ = nullptr;
+            result = resume();
+            if (resumeCb_) {
+                resumeCb_(result);
+                resumeCb_ = nullptr;
             }
             break;
         case Request::SwitchInput:
