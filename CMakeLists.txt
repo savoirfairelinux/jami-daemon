@@ -21,6 +21,7 @@ option(JAMI_VIDEO "Build with video support" ON)
 option(JAMI_VIDEO_ACCEL "Build video hardware acceleration support" ON)
 option(BUILD_CONTRIB "Build contrib to CONTRIB_PATH" ON)
 option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
+option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
 
@@ -364,7 +365,7 @@ elseif(MSVC)
    endif()
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${ALL_FILES})
+add_library(${PROJECT_NAME} ${ALL_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
 
@@ -380,6 +381,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
 )
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE jami_EXPORTS)
+endif()
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     ASIO_STANDALONE
     MSGPACK_NO_BOOST
