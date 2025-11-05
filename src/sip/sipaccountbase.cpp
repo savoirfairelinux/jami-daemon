@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "sip/sipaccountbase.h"
@@ -347,19 +347,19 @@ SIPAccountBase::getLastMessages(const uint64_t& base_timestamp)
 }
 
 std::vector<MediaAttribute>
-SIPAccountBase::createDefaultMediaList(bool addVideo, bool onHold)
+SIPAccountBase::createDefaultMediaList(bool addVideo, bool hold)
 {
     std::vector<MediaAttribute> mediaList;
     bool secure = isSrtpEnabled();
     // Add audio and DTMF events
     mediaList.emplace_back(
-        MediaAttribute(MediaType::MEDIA_AUDIO, false, secure, true, "", sip_utils::DEFAULT_AUDIO_STREAMID, onHold));
+        MediaAttribute(MediaType::MEDIA_AUDIO, false, secure, true, "", sip_utils::DEFAULT_AUDIO_STREAMID, hold));
 
 #ifdef ENABLE_VIDEO
     // Add video if allowed.
     if (isVideoEnabled() and addVideo) {
         mediaList.emplace_back(
-            MediaAttribute(MediaType::MEDIA_VIDEO, false, secure, true, "", sip_utils::DEFAULT_VIDEO_STREAMID, onHold));
+            MediaAttribute(MediaType::MEDIA_VIDEO, false, secure, true, "", sip_utils::DEFAULT_VIDEO_STREAMID, hold));
     }
 #endif
     return mediaList;
