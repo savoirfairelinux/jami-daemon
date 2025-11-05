@@ -713,6 +713,23 @@ else()
     endif()
 
     install (TARGETS ${PROJECT_NAME})
+    install(
+        DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/jami
+        FILES_MATCHING PATTERN "*.h"
+    )
+
+    # Install ringtones
+    file(GLOB RINGTONES ${CMAKE_CURRENT_SOURCE_DIR}/ringtones/*.opus)
+    install(FILES ${RINGTONES} DESTINATION ${JAMI_DATADIR}/ringtones)
+
+    # Generate and install jami.pc file
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/jami.pc.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/jami.pc
+        @ONLY
+    )
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/jami.pc DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
     if (JAMI_NODEJS)
         # Build nodejs binding
@@ -850,6 +867,12 @@ else()
         )
         target_link_libraries(jamid ${PROJECT_NAME} PkgConfig::DBusCpp)
         install (TARGETS jamid DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+
+        # Install service file
+        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/bin/dbus/cx.ring.Ring.service DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/dbus-1/services")
+
+        # Install interface XML files
+        install(FILES ${DBUS_XML_FILES} DESTINATION "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/dbus-1/interfaces")
     endif()
 
     if (BUILD_TESTING)
