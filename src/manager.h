@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #ifdef HAVE_CONFIG_H
@@ -205,19 +206,19 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Put the call on hold
+     * Hold call
      * @param accountId
      * @param callId  The call identifier
      */
-    bool onHoldCall(const std::string& accountId, const std::string& callId);
+    bool holdCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
-     * Put the call off hold
+     * Resume call
      * @param accountId
      * @param id  The call identifier
      */
-    bool offHoldCall(const std::string& accountId, const std::string& callId);
+    bool resumeCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
@@ -245,16 +246,16 @@ public:
     bool refuseCall(const std::string& accountId, const std::string& id);
 
     /**
-     * Hold every participant to a conference
+     * Hold all conference participants
      * @param the conference id
      */
     bool holdConference(const std::string& accountId, const std::string& confId);
 
     /**
-     * Unhold all conference participants
+     * Resume all conference participants
      * @param the conference id
      */
-    bool unHoldConference(const std::string& accountId, const std::string& confId);
+    bool resumeConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Add a subcall to a conference
@@ -300,7 +301,7 @@ public:
 
     /**
      * Detach the local participant from curent conference.
-     * Remote participants are placed in hold.
+     * Remote participants are placed on hold.
      */
     bool detachHost(const std::shared_ptr<Conference>& conf = {});
 
