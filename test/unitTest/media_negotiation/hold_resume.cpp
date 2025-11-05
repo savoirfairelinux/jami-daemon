@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "manager.h"
@@ -533,7 +533,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
             auto mediaAttr = aliceCall->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
             for (size_t idx = 0; idx < mediaCount; idx++) {
-                CPPUNIT_ASSERT(mediaAttr[idx].onHold_);
+                CPPUNIT_ASSERT(mediaAttr[idx].hold_);
                 CPPUNIT_ASSERT_EQUAL(scenario.offerUpdate_[idx].muted_, mediaAttr[idx].muted_);
                 // Check isCaptureDeviceMuted API
                 CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, aliceCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
@@ -547,7 +547,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
             auto mediaAttr = bobCall->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
             for (size_t idx = 0; idx < mediaCount; idx++) {
-                CPPUNIT_ASSERT(not mediaAttr[idx].onHold_);
+                CPPUNIT_ASSERT(not mediaAttr[idx].hold_);
                 CPPUNIT_ASSERT_EQUAL(scenario.answerUpdate_[idx].muted_, mediaAttr[idx].muted_);
                 // Check isCaptureDeviceMuted API
                 CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, bobCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
@@ -560,7 +560,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
     JAMI_INFO("=== Resume the call and validate ===");
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.offerUpdate_);
-        libjami::unhold(aliceData.accountId_, aliceData.callId_);
+        libjami::resume(aliceData.accountId_, aliceData.callId_);
     }
 
     // Update and validate media count.
@@ -578,7 +578,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
             auto mediaAttr = aliceCall->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
             for (size_t idx = 0; idx < mediaCount; idx++) {
-                CPPUNIT_ASSERT(not mediaAttr[idx].onHold_);
+                CPPUNIT_ASSERT(not mediaAttr[idx].hold_);
                 CPPUNIT_ASSERT_EQUAL(scenario.offerUpdate_[idx].muted_, mediaAttr[idx].muted_);
                 // Check isCaptureDeviceMuted API
                 CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, aliceCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
@@ -592,7 +592,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
             auto mediaAttr = bobCall->getMediaAttributeList();
             CPPUNIT_ASSERT_EQUAL(mediaCount, mediaAttr.size());
             for (size_t idx = 0; idx < mediaCount; idx++) {
-                CPPUNIT_ASSERT(not mediaAttr[idx].onHold_);
+                CPPUNIT_ASSERT(not mediaAttr[idx].hold_);
                 CPPUNIT_ASSERT_EQUAL(scenario.answerUpdate_[idx].muted_, mediaAttr[idx].muted_);
                 // Check isCaptureDeviceMuted API
                 CPPUNIT_ASSERT_EQUAL(mediaAttr[idx].muted_, bobCall->isCaptureDeviceMuted(mediaAttr[idx].type_));
