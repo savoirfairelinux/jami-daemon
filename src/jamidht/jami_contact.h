@@ -70,6 +70,9 @@ struct Contact
     bool update(const Contact& c)
     {
         const auto copy = *this;
+        auto hasChanged = c.added > added or c.removed > removed;
+        // or:
+        // auto hasChanged = std::max(c.added, c.removed) > std::max(added, removed);
         if (c.added > added) {
             added = c.added;
             conversationId = c.conversationId;
@@ -78,18 +81,21 @@ struct Contact
             removed = c.removed;
             banned = c.banned;
         }
-        if (c.confirmed != confirmed) {
+        if (hasChanged and c.confirmed != confirmed) {
             confirmed = c.confirmed;
         }
         if (isActive()) {
             removed = 0;
             banned = 0;
+        } else {
+            conversationId = "";
         }
         if (c.isActive() and conversationId.empty() and not c.conversationId.empty()) {
             conversationId = c.conversationId;
         }
         return hasDifferentState(copy);
     }
+
     bool hasDifferentState(const Contact& other) const
     {
         return other.isActive() != isActive() or other.isBanned() != isBanned() or other.confirmed != confirmed;
