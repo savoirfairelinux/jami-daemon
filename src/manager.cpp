@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -532,7 +532,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                     return;
                 }
                 if (currentCallId != conf.getConfId())
-                    base_.onHoldCall(account->getAccountID(), call->getCallId());
+                    base_.holdCall(account->getAccountID(), call->getCallId());
                 else
                     switchCall(call->getCallId());
             }
@@ -683,7 +683,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     conf.addSubCall(callId);
 
     if (state == "HOLD") {
-        base_.offHoldCall(call.getAccountId(), callId);
+        base_.resumeCall(call.getAccountId(), callId);
     } else if (state == "INCOMING") {
         base_.acceptCall(call);
     } else if (state == "CURRENT") {
@@ -1211,7 +1211,7 @@ Manager::hangupConference(const std::string& accountId, const std::string& confI
 
 // THREAD=Main
 bool
-Manager::onHoldCall(const std::string&, const std::string& callId)
+Manager::holdCall(const std::string&, const std::string& callId)
 {
     bool result = true;
 
@@ -1221,16 +1221,16 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
 
     if (auto call = getCallFromCallID(callId)) {
         try {
-            result = call->onhold([=](bool ok) {
+            result = call->hold([=](bool ok) {
                 if (!ok) {
-                    JAMI_ERR("Hold failed for call %s", callId.c_str());
+                    JAMI_ERR("CallID %s holdCall failed", callId.c_str());
                     return;
                 }
                 removeAudio(*call); // Unbind calls in main buffer
                 // Remove call from the queue if it was still there
                 pimpl_->removeWaitingCall(callId);
 
-                // keeps current call id if the action is not holding this call
+                // Keeps current call ID if the action does not hold this call
                 // or a new outgoing call. This could happen in case of a conference
                 if (current_callId == callId)
                     pimpl_->unsetCurrentCall();
@@ -1240,7 +1240,7 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
             result = false;
         }
     } else {
-        JAMI_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
+        JAMI_DBG("CallID %s doesn't exist in call holdCall", callId.c_str())
         return false;
     }
 
@@ -1249,7 +1249,7 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
 
 // THREAD=Main
 bool
-Manager::offHoldCall(const std::string&, const std::string& callId)
+Manager::resumeCall(const std::string&, const std::string& callId)
 {
     bool result = true;
 
@@ -1260,9 +1260,9 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
         return false;
 
     try {
-        result = call->offhold([=](bool ok) {
+        result = call->resume([=](bool ok) {
             if (!ok) {
-                JAMI_ERR("offHold failed for call %s", callId.c_str());
+                JAMI_ERR("CallID %s resumeCall failed", callId.c_str());
                 return;
             }
 
@@ -1274,7 +1274,7 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
             addAudio(*call);
         });
     } catch (const VoipLinkException& e) {
-        JAMI_ERROR("[call] Failed to unhold: {}", e.what());
+        JAMI_ERROR("[call] Failed to resume: {}", e.what());
         return false;
     }
 
@@ -1332,7 +1332,7 @@ Manager::refuseCall(const std::string& accountId, const std::string& id)
 bool
 Manager::holdConference(const std::string& accountId, const std::string& confId)
 {
-    JAMI_LOG("[conf:{}] Holding conference", confId);
+    JAMI_LOG("[conf:{}] Hold conference", confId);
 
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
@@ -1345,17 +1345,17 @@ Manager::holdConference(const std::string& accountId, const std::string& confId)
 }
 
 bool
-Manager::unHoldConference(const std::string& accountId, const std::string& confId)
+Manager::resumeConference(const std::string& accountId, const std::string& confId)
 {
-    JAMI_DEBUG("[conf:{}] Unholding conference", confId);
+    JAMI_DEBUG("[conf:{}] Resuming conference", confId);
 
     if (const auto account = getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            // Unhold conf only if it was in hold state otherwise…
+            // Resume conf only if it was in hold state otherwise…
             // all participants are restarted
             if (conf->getState() == Conference::State::HOLD) {
                 for (const auto& item : conf->getSubCalls())
-                    offHoldCall(accountId, item);
+                    resumeCall(accountId, item);
 
                 pimpl_->switchCall(confId);
                 conf->setState(Conference::State::ACTIVE_ATTACHED);
@@ -1394,7 +1394,7 @@ Manager::addSubCall(Call& call, Conference& conference)
 {
     JAMI_DEBUG("[conf:{}] Adding participant {}", conference.getConfId(), call.getCallId());
 
-    // store the current call id (it will change in offHoldCall or in acceptCall)
+    // Store the current call ID (it will change in resumeCall or in acceptCall)
     pimpl_->bindCallToConference(call, conference);
 
     // Don't attach current user yet
@@ -1616,7 +1616,7 @@ Manager::detachParticipant(const std::string& callId)
 
     // Don't hold ringing calls when detaching them from conferences
     if (call->getStateStr() != "RINGING")
-        onHoldCall(call->getAccountId(), callId);
+        holdCall(call->getAccountId(), callId);
 
     removeParticipant(*call);
     return true;
