@@ -213,7 +213,7 @@ class SflPhoneTests():
             self.sflphone.Hold(callid)
             time.sleep(0.5)
 
-            self.sflphone.UnHold(callid)
+            self.sflphone.Resume(callid)
             time.sleep(0.5)
 
             self.sflphone.HangUp(callid)
