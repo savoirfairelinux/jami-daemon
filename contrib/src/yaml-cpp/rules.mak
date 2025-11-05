@@ -1,5 +1,5 @@
 # YAML
-YAML_CPP_VERSION := 28f93bdec6387d42332220afa9558060c8016795
+YAML_CPP_VERSION := a83cd31548b19d50f3f983b069dceb4f4d50756d
 PKG_CPE += cpe:2.3:a:*:yaml-cpp:$(YAML_CPP_VERSION):*:*:*:*:*:*:*
 YAML_CPP_URL := https://github.com/jbeder/yaml-cpp/archive/$(YAML_CPP_VERSION).tar.gz
 
