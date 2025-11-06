@@ -106,7 +106,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     return true;
 }
 
-void
+bool
 ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId, bool added)
 {
     auto c = contacts_.find(h);
@@ -116,7 +116,9 @@ ContactList::updateConversation(const dht::InfoHash& h, const std::string& conve
             c->second.added = std::time(nullptr);
         }
         saveContacts();
+        return true;
     }
+    return false;
 }
 
 bool

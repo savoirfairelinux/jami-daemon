@@ -71,7 +71,7 @@ public:
     bool removeContact(const dht::InfoHash&, bool ban);
     bool removeContactConversation(const dht::InfoHash&);
     bool addContact(const dht::InfoHash&, bool confirmed = false, const std::string& conversationId = "");
-    void updateConversation(const dht::InfoHash& h, const std::string& conversationId, bool added = false);
+    bool updateConversation(const dht::InfoHash& h, const std::string& conversationId, bool added = false);
 
     bool setCertificateStatus(const std::string& cert_id, const dhtnet::tls::TrustStore::PermissionStatus status);
 
