@@ -536,14 +536,15 @@ AccountManager::updateContactConversation(const std::string& uri, const std::str
         JAMI_ERROR("[Account {}] updateContactConversation: account not loaded", accountId_);
         return;
     }
-    info_->contacts->updateConversation(h, convId, added);
-    // Also decline trust request if there is one
-    auto req = info_->contacts->getTrustRequest(h);
-    if (req.find(libjami::Account::TrustRequest::CONVERSATIONID) != req.end()
-        && req.at(libjami::Account::TrustRequest::CONVERSATIONID) == convId) {
-        discardTrustRequest(uri);
+    if (info_->contacts->updateConversation(h, convId, added)) {
+        // Also decline trust request if there is one
+        auto req = info_->contacts->getTrustRequest(h);
+        auto convIt = req.find(libjami::Account::TrustRequest::CONVERSATIONID);
+        if (convIt != req.end() && convIt->second == convId) {
+            discardTrustRequest(uri);
+        }
+        syncDevices();
     }
-    syncDevices();
 }
 
 std::map<dht::InfoHash, Contact>
