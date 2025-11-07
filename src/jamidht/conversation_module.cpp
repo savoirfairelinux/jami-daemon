@@ -241,6 +241,36 @@ public:
         saveConvInfos();
     }
 
+    void createConvInfo(const std::string& convId, const std::string& uri)
+    {
+        std::lock_guard lk(convInfosMtx_);
+        if (convInfos_.find(convId) == convInfos_.end()) {
+            ConvInfo info;
+            info.id = convId;
+            info.created = std::time(nullptr);
+            info.members.emplace(username_);
+            info.members.emplace(uri);
+            convInfos_[convId] = info;
+            saveConvInfos();
+        }
+    }
+
+    bool updateConv(std::shared_ptr<SyncedConversation>& conv)
+    {
+        if (!conv)
+            return false;
+
+        std::lock_guard lkConv(conv->mtx);
+        std::lock_guard lkInfo(convInfosMtx_);
+        auto it = convInfos_.find(conv->info.id);
+        if (it != convInfos_.end()) {
+            conv->info = it->second;
+            return true;
+        }
+
+        return false;
+    }
+
     std::string getOneToOneConversation(const std::string& uri) const noexcept;
 
     bool updateConvForContact(const std::string& uri, const std::string& oldConv, const std::string& newConv);
@@ -1413,11 +1443,11 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
-    std::lock_guard lk(conv->mtx);
-    conv->info = {conversationId};
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace(username_);
-    conv->info.members.emplace(uri);
+    if (!updateConv(conv)) {
+        createConvInfo(conversationId, uri);
+        updateConv(conv);
+    }
+
     accountManager_->forEachDevice(memberHash,
                                    [w = weak(), conv, conversationId, oldConvId](
                                        const std::shared_ptr<dht::crypto::PublicKey>& pk) {
@@ -1427,7 +1457,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
                                            return;
                                        sthis->cloneConversationFrom(conv, deviceId, oldConvId);
                                    });
-    addConvInfo(conv->info);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1882,6 +1911,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
             JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, uri, conversationId);
             lk.unlock();
             updateConvForContact(uri, contactInfo->conversationId, conversationId);
+            pimpl_->createConvInfo(conversationId, uri);
             cloneConversationFrom(conversationId, uri);
             return;
         }
@@ -1933,6 +1963,7 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
             JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, from, convId);
             lk.unlock();
             updateConvForContact(from, contactInfo->conversationId, convId);
+            pimpl_->createConvInfo(convId, from);
             cloneConversationFrom(convId, from);
             return;
         }
@@ -1996,6 +2027,7 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
     pimpl_->accountManager_->acceptTrustRequest(request->from, true);
+    pimpl_->createConvInfo(conversationId, request->from);
     cloneConversationFrom(conversationId, request->from);
 }
 
