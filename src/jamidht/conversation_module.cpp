@@ -2407,6 +2407,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
             if (!conv->info.removed) {
                 update = true;
                 conv->info.removed = std::time(nullptr);
+                emitSignal<libjami::ConversationSignal::ConversationRemoved>(pimpl_->accountId_, convId);
             }
             if (convInfo.erased && !conv->info.erased) {
                 conv->info.erased = std::time(nullptr);
