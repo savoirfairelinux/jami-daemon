@@ -241,6 +241,35 @@ public:
         saveConvInfos();
     }
 
+    std::shared_ptr<SyncedConversation> getSyncedConversationWithLatestInfo(const std::string& convId,
+                                                                            const std::string& uri)
+    {
+        ConvInfo info;
+
+        {
+            std::lock_guard lkInfo(convInfosMtx_);
+            auto it = convInfos_.find(convId);
+            if (it != convInfos_.end()) {
+                info = it->second;
+            } else {
+                info.id = convId;
+                info.created = std::time(nullptr);
+                info.members.emplace(username_);
+                info.members.emplace(uri);
+                convInfos_[convId] = info;
+                saveConvInfos();
+            }
+        }
+
+        auto conv = startConversation(convId);
+        {
+            std::lock_guard lkConv(conv->mtx);
+            conv->info = info;
+        }
+
+        return conv;
+    }
+
     std::string getOneToOneConversation(const std::string& uri) const noexcept;
 
     bool updateConvForContact(const std::string& uri, const std::string& oldConv, const std::string& newConv);
@@ -1412,12 +1441,7 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         JAMI_WARNING("Invalid member detected: {}", uri);
         return;
     }
-    auto conv = startConversation(conversationId);
-    std::lock_guard lk(conv->mtx);
-    conv->info = {conversationId};
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace(username_);
-    conv->info.members.emplace(uri);
+    auto conv = getSyncedConversationWithLatestInfo(conversationId, uri);
     accountManager_->forEachDevice(memberHash,
                                    [w = weak(), conv, conversationId, oldConvId](
                                        const std::shared_ptr<dht::crypto::PublicKey>& pk) {
@@ -1427,7 +1451,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
                                            return;
                                        sthis->cloneConversationFrom(conv, deviceId, oldConvId);
                                    });
-    addConvInfo(conv->info);
 }
 
 ////////////////////////////////////////////////////////////////
