@@ -1460,6 +1460,7 @@ ConversationModule::saveConvInfos(const std::string& accountId, const ConvInfoMa
 void
 ConversationModule::saveConvInfosToPath(const std::filesystem::path& path, const ConvInfoMap& conversations)
 {
+    std::lock_guard lock(dhtnet::fileutils::getFileLock(path / "convInfo"));
     std::ofstream file(path / "convInfo", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, conversations);
 }
