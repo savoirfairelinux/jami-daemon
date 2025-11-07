@@ -1415,9 +1415,16 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
     auto conv = startConversation(conversationId);
     std::lock_guard lk(conv->mtx);
     conv->info = {conversationId};
-    conv->info.created = std::time(nullptr);
     conv->info.members.emplace(username_);
     conv->info.members.emplace(uri);
+    if (conv->info.created == 0) {
+        auto it = convInfos_.find(conversationId);
+        if (it != convInfos_.end() && it->second.created != 0) {
+            conv->info.created = it->second.created;
+        } else {
+            conv->info.created = std::time(nullptr);
+        }
+    }
     accountManager_->forEachDevice(memberHash,
                                    [w = weak(), conv, conversationId, oldConvId](
                                        const std::shared_ptr<dht::crypto::PublicKey>& pk) {
