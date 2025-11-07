@@ -246,6 +246,7 @@ ContactList::loadContacts()
 {
     decltype(contacts_) contacts;
     try {
+        std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
         // read file
         auto file = fileutils::loadFile("contacts", path_);
         // load values
@@ -265,6 +266,7 @@ void
 ContactList::saveContacts() const
 {
     JAMI_LOG("[Account {}] [Contacts] saving {} contacts", accountId_, contacts_.size());
+    std::lock_guard fileLock(dhtnet::fileutils::getFileLock(path_ / "contacts"));
     std::ofstream file(path_ / "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
 }
