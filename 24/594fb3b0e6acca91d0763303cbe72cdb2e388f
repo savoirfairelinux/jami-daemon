@@ -1,0 +1,10 @@
+Verified+1: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Code-Review-1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Fri, 07 Nov 2025 13:22:07 -0500
+Reviewed-on: https://review.jami.net/c/jami-daemon/+/32332
+Comments-Total: 1
+Comments-Unresolved: 1
+Project: jami-daemon
+Branch: refs/heads/master
