@@ -66,6 +66,7 @@ ContactList::save()
 bool
 ContactList::setCertificateStatus(const std::string& cert_id, const dhtnet::tls::TrustStore::PermissionStatus status)
 {
+    std::unique_lock lk(mutex_);
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
         JAMI_LOG("[Account {}] [Contacts] Unable to set certificate status for existing contacts {}",
                  accountId_,
@@ -86,6 +87,7 @@ ContactList::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& ce
 bool
 ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::string& conversationId)
 {
+    std::unique_lock lk(mutex_);
     JAMI_WARNING("[Account {}] [Contacts] addContact: {}, conversation: {}", accountId_, h, conversationId);
     auto c = contacts_.find(h);
     if (c == contacts_.end())
@@ -102,6 +104,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
     auto hStr = h.toString();
     trust_->setCertificateStatus(hStr, dhtnet::tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
+    lk.unlock();
     callbacks_.contactAdded(hStr, c->second.confirmed);
     return true;
 }
@@ -109,6 +112,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed, const std::strin
 bool
 ContactList::updateConversation(const dht::InfoHash& h, const std::string& conversationId, bool added)
 {
+    std::lock_guard lk(mutex_);
     auto c = contacts_.find(h);
     if (c != contacts_.end() && c->second.conversationId != conversationId) {
         c->second.conversationId = conversationId;
@@ -151,6 +155,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
 bool
 ContactList::removeContactConversation(const dht::InfoHash& h)
 {
+    std::unique_lock lk(mutex_);
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         return false;
@@ -162,6 +167,7 @@ ContactList::removeContactConversation(const dht::InfoHash& h)
 std::map<std::string, std::string>
 ContactList::getContactDetails(const dht::InfoHash& h) const
 {
+    std::unique_lock lk(mutex_);
     const auto c = contacts_.find(h);
     if (c == std::end(contacts_)) {
         JAMI_WARNING("[Account {}] [Contacts] Contact '{}' not found", accountId_, h.to_view());
