@@ -367,6 +367,15 @@ cancelAddDevice(const std::string& accountId, uint32_t op_id)
 }
 
 bool
+verifyDeviceLinkCode(const std::string& accountId, bool matches)
+{
+    if (const auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return account->verifyDeviceLinkCode(matches);
+    }
+    return false;
+}
+
+bool
 provideAccountAuthentication(const std::string& accountId,
                              const std::string& credentialsFromUser,
                              const std::string& scheme)
