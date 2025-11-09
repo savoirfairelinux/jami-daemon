@@ -292,7 +292,8 @@ struct ArchiveAccountManager::AuthMsg
 {
     uint8_t schemeId {0};
     std::map<std::string, std::string> payload;
-    MSGPACK_DEFINE_MAP(schemeId, payload)
+    std::vector<uint8_t> supportedVersions;
+    MSGPACK_DEFINE_MAP(schemeId, payload, supportedVersions)
 
     void set(std::string_view key, std::string_view value) { payload.emplace(std::string(key), std::string(value)); }
 
@@ -372,6 +373,48 @@ struct ArchiveAccountManager::DeviceAuthInfo : public std::map<std::string, std:
     }
 };
 
+namespace ProtocolVersion {
+static constexpr uint8_t v0 = 0;
+static constexpr uint8_t v1 = 1;
+static const std::vector<uint8_t> supportedVersions = {v0, v1};
+} // namespace ProtocolVersion
+
+/**
+ * Negotiate protocol version between two devices.
+ * @param localVersions Versions supported by this device
+ * @param remoteVersions Versions supported by the remote device
+ * @return Negotiated version (highest common version), or 0 if no common version
+ */
+static uint8_t
+negotiateProtocolVersion(const std::vector<uint8_t>& localVersions, const std::vector<uint8_t>& remoteVersions)
+{
+    if (remoteVersions.empty()) {
+        // Old device without version negotiation support, fall back to v0
+        JAMI_DEBUG("[LinkDevice] Remote device does not support version negotiation, using version {}",
+                   ProtocolVersion::v0);
+        return ProtocolVersion::v0;
+    }
+
+    uint8_t negotiated = ProtocolVersion::v0;
+    for (auto localVer : localVersions) {
+        for (auto remoteVer : remoteVersions) {
+            if (localVer == remoteVer && localVer > negotiated) {
+                negotiated = localVer;
+            }
+        }
+    }
+
+    if (negotiated == ProtocolVersion::v0) {
+        JAMI_WARNING("[LinkDevice] No common protocol version found between local {:s} and remote {:s}",
+                     fmt::join(localVersions, ","),
+                     fmt::join(remoteVersions, ","));
+    } else {
+        JAMI_LOG("[LinkDevice] Negotiated protocol version: {}", negotiated);
+    }
+
+    return negotiated;
+}
+
 struct ArchiveAccountManager::DeviceContextBase
 {
     uint64_t opId;
@@ -380,6 +423,7 @@ struct ArchiveAccountManager::DeviceContextBase
     bool authEnabled {false};
     bool archiveTransferredWithoutFailure {false};
     std::string accData;
+    uint8_t negotiatedVersion {ProtocolVersion::v0};
 
     DeviceContextBase(uint64_t operationId, AuthDecodingState initialState)
         : opId(operationId)
@@ -725,6 +769,18 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 bool shouldLoadArchive = accDataIt != toRecv.payload.end();
 
                 if (ctx->linkDevCtx->state == AuthDecodingState::HANDSHAKE) {
+                    // check protocol version
+                    ctx->linkDevCtx->negotiatedVersion = negotiateProtocolVersion(ProtocolVersion::supportedVersions,
+                                                                                  toRecv.supportedVersions);
+                    if (ctx->linkDevCtx->negotiatedVersion >= ProtocolVersion::v1) {
+                        JAMI_LOG("[LinkDevice] NEW: Protocol version negotiated: {}",
+                                 ctx->linkDevCtx->negotiatedVersion);
+                        emitSignal<libjami::ConfigurationSignal::DeviceLinkProtocolNegotiated>(
+                            ctx->accountId,
+                            0, // op_id is 0 for NEW device
+                            ctx->linkDevCtx->negotiatedVersion);
+                        return len;
+                    }
                     auto peerCert = ctx->linkDevCtx->channel->peerCertificate();
                     auto authScheme = toRecv.at(PayloadKey::authScheme);
                     ctx->linkDevCtx->authEnabled = authScheme != fileutils::ARCHIVE_AUTH_SCHEME_NONE;
@@ -738,6 +794,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                                                                                      static_cast<uint8_t>(
                                                                                          DeviceAuthState::AUTHENTICATING),
                                                                                      info);
+
                 } else if (ctx->linkDevCtx->state == AuthDecodingState::DATA) {
                     auto passwordCorrectIt = toRecv.find(PayloadKey::passwordCorrect);
                     auto canRetry = toRecv.find(PayloadKey::canRetry);
@@ -817,6 +874,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             // send first message to establish scheme
             AuthMsg toSend;
             toSend.schemeId = 0; // set latest scheme here
+            toSend.supportedVersions = ProtocolVersion::supportedVersions;
             JAMI_DEBUG("[LinkDevice] NEW: Packing first message for SOURCE.\nCurrent state is: "
                        "\n\tauth "
                        "state = {}:{}",
@@ -1024,6 +1082,29 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             JAMI_WARNING("[LinkDevice] Unsupported scheme received from a connection.");
         }
 
+        // Perform protocol version negotiation
+        if (ctx->addDeviceCtx->state == AuthDecodingState::HANDSHAKE) {
+            ctx->addDeviceCtx->negotiatedVersion = negotiateProtocolVersion(ProtocolVersion::supportedVersions,
+                                                                            toRecv.supportedVersions);
+            JAMI_LOG("[LinkDevice] SOURCE: Protocol version negotiated: {}", ctx->addDeviceCtx->negotiatedVersion);
+
+            emitSignal<libjami::ConfigurationSignal::DeviceLinkProtocolNegotiated>(ctx->accountId,
+                                                                                   ctx->token,
+                                                                                   ctx->addDeviceCtx->negotiatedVersion);
+
+            // Send HANDSHAKE response back to NEW device with our supported versions
+            AuthMsg handshakeResponse;
+            handshakeResponse.schemeId = 0;
+            handshakeResponse.supportedVersions = ProtocolVersion::supportedVersions;
+            JAMI_DEBUG("[LinkDevice] SOURCE: Sending HANDSHAKE response to NEW with supportedVersions = [{}]",
+                       fmt::join(handshakeResponse.supportedVersions, ","));
+            msgpack::sbuffer buffer(UINT16_MAX);
+            msgpack::pack(buffer, handshakeResponse);
+            std::error_code ec;
+            ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            return len;
+        }
+
         if (ctx->addDeviceCtx->state == AuthDecodingState::ERR
             || ctx->addDeviceCtx->state == AuthDecodingState::AUTH_ERROR) {
             JAMI_WARNING("[LinkDevice] Undefined behavior encountered during a link auth session.");
@@ -1159,9 +1240,10 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
             dht::ThreadPool::io().run([ctx] {
                 ctx->addDeviceCtx->state = AuthDecodingState::AUTH;
                 AuthMsg toSend;
-                JAMI_DEBUG("[LinkDevice] SOURCE: Packing first message for NEW and switching to "
-                           "state: {}",
-                           ctx->addDeviceCtx->formattedAuthState());
+                JAMI_DEBUG("[LinkDevice] SOURCE: Packing AUTH message for NEW and switching to "
+                           "state: {}, negotiated version: {}",
+                           ctx->addDeviceCtx->formattedAuthState(),
+                           ctx->addDeviceCtx->negotiatedVersion);
                 toSend.set(PayloadKey::authScheme, ctx->addDeviceCtx->authScheme);
                 msgpack::sbuffer buffer(UINT16_MAX);
                 msgpack::pack(buffer, toSend);

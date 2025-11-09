@@ -366,6 +366,14 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
                              int /*state*/,
                              const std::map<std::string, std::string>& /*detail*/);
     };
+    // used when link device protocol version has been negotiated
+    struct LIBJAMI_PUBLIC DeviceLinkProtocolNegotiated
+    {
+        constexpr static const char* name = "DeviceLinkProtocolNegotiated";
+        using cb_type = void(const std::string& /*account_id*/,
+                             uint32_t /*op_id*/,
+                             uint8_t /*protocol_version*/);
+    };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged
     {
