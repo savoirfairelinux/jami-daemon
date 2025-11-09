@@ -76,6 +76,7 @@ public:
     int32_t addDevice(const std::string& uri, std::string_view auth_scheme, AuthChannelHandler*) override;
     bool cancelAddDevice(uint32_t token) override;
     bool confirmAddDevice(uint32_t token) override;
+    bool verifyDeviceLinkCode(bool matches);
 
     bool revokeDevice(const std::string& device,
                       std::string_view scheme,
@@ -153,6 +154,19 @@ private:
                      const std::shared_ptr<dhtnet::ChannelSocket>& channel);
 
     void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool isLinkDevProtocol);
+
+    // Protocol version handlers for NEW device (importing)
+    void handleHandshakeV0ForNewDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv);
+    void handleHandshakeV1ForNewDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv);
+
+    // Protocol version handlers for SOURCE device (exporting)
+    void handleHandshakeV0ForSourceDevice(const std::shared_ptr<AuthContext>& ctx,
+                                          const AuthMsg& toRecv,
+                                          const std::string& address);
+    void handleHandshakeV1ForSourceDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv);
+
+    // Helper function to generate verification code from TLS keying material
+    std::string generateVerificationCode(const std::shared_ptr<dhtnet::ChannelSocket>& channel) const;
 
     inline std::weak_ptr<ArchiveAccountManager> weak()
     {

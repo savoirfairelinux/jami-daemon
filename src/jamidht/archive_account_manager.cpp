@@ -33,6 +33,8 @@
 
 #include <memory>
 #include <fstream>
+#include <sstream>
+#include <iomanip>
 
 #include "config/yamlparser.h"
 
@@ -286,13 +288,15 @@ static constexpr auto accData = "accData"sv;
 static constexpr auto authScheme = "authScheme"sv;
 static constexpr auto password = "password"sv;
 static constexpr auto stateMsg = "stateMsg"sv;
+static constexpr auto codeVerified = "codeVerified"sv; // authenticated?
 } // namespace PayloadKey
 
 struct ArchiveAccountManager::AuthMsg
 {
     uint8_t schemeId {0};
     std::map<std::string, std::string> payload;
-    MSGPACK_DEFINE_MAP(schemeId, payload)
+    std::vector<uint8_t> supportedVersions;
+    MSGPACK_DEFINE_MAP(schemeId, payload, supportedVersions)
 
     void set(std::string_view key, std::string_view value) { payload.emplace(std::string(key), std::string(value)); }
 
@@ -372,6 +376,57 @@ struct ArchiveAccountManager::DeviceAuthInfo : public std::map<std::string, std:
     }
 };
 
+/**
+ * Protocol v1
+ * 1. **Connection** - NEW device creates a temporary identity and displays a QR code/URI. SOURCE scans it and establishes a TLS connection.
+ * 2. **Negotiation** - Both devices exchange supported protocol versions and agree on V1.
+ * 3. **Code Generation** - Both devices generate identical 8-digit verification codes from TLS session keys.
+ * 4. **User Verification** - Users manually compare codes on both devices and confirm they match.
+ * 5. **Archive Transfer** - SOURCE device directly sends the account archive to NEW device (password-protected if configured) once both devices confirm.
+*/
+
+namespace ProtocolVersion {
+static constexpr uint8_t v0 = 0;
+static constexpr uint8_t v1 = 1;
+static const std::vector<uint8_t> supportedVersions = {v0, v1};
+} // namespace ProtocolVersion
+
+/**
+ * Negotiate protocol version between two devices.
+ * @param localVersions Versions supported by this device
+ * @param remoteVersions Versions supported by the remote device
+ * @return Negotiated version (highest common version), or 0 if no common version
+ */
+static uint8_t
+negotiateProtocolVersion(const std::vector<uint8_t>& localVersions, const std::vector<uint8_t>& remoteVersions)
+{
+    if (remoteVersions.empty()) {
+        // Old device without version negotiation support, fall back to v0
+        JAMI_DEBUG("[LinkDevice] Remote device does not support version negotiation, using version {}",
+                   ProtocolVersion::v0);
+        return ProtocolVersion::v0;
+    }
+
+    uint8_t negotiated = ProtocolVersion::v0;
+    for (auto localVer : localVersions) {
+        for (auto remoteVer : remoteVersions) {
+            if (localVer == remoteVer && localVer > negotiated) {
+                negotiated = localVer;
+            }
+        }
+    }
+
+    if (negotiated == ProtocolVersion::v0) {
+        JAMI_WARNING("[LinkDevice] No common protocol version found between local {:s} and remote {:s}",
+                     fmt::join(localVersions, ","),
+                     fmt::join(remoteVersions, ","));
+    } else {
+        JAMI_LOG("[LinkDevice] Negotiated protocol version: {}", negotiated);
+    }
+
+    return negotiated;
+}
+
 struct ArchiveAccountManager::DeviceContextBase
 {
     uint64_t opId;
@@ -380,6 +435,7 @@ struct ArchiveAccountManager::DeviceContextBase
     bool authEnabled {false};
     bool archiveTransferredWithoutFailure {false};
     std::string accData;
+    uint8_t negotiatedVersion {ProtocolVersion::v0};
 
     DeviceContextBase(uint64_t operationId, AuthDecodingState initialState)
         : opId(operationId)
@@ -461,6 +517,12 @@ struct ArchiveAccountManager::AddDeviceContext : public DeviceContextBase
     std::shared_ptr<dhtnet::ChannelSocket> channel;
     std::string_view authScheme;
     std::string credentials;
+
+    struct ProtocolV1State
+    {
+        bool peerCodeConfirmed {false};
+    };
+    std::unique_ptr<ProtocolV1State> v1State;
 
     AddDeviceContext(std::shared_ptr<dhtnet::ChannelSocket> c)
         : DeviceContextBase(0, AuthDecodingState::EST)
@@ -725,20 +787,21 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 bool shouldLoadArchive = accDataIt != toRecv.payload.end();
 
                 if (ctx->linkDevCtx->state == AuthDecodingState::HANDSHAKE) {
-                    auto peerCert = ctx->linkDevCtx->channel->peerCertificate();
-                    auto authScheme = toRecv.at(PayloadKey::authScheme);
-                    ctx->linkDevCtx->authEnabled = authScheme != fileutils::ARCHIVE_AUTH_SCHEME_NONE;
+                    // check protocol version
+                    ctx->linkDevCtx->negotiatedVersion = negotiateProtocolVersion(ProtocolVersion::supportedVersions,
+                                                                                  toRecv.supportedVersions);
+                    if (auto this_ = wthis.lock()) {
+                        if (ctx->linkDevCtx->negotiatedVersion == ProtocolVersion::v1) {
+                            this_->handleHandshakeV1ForNewDevice(ctx, toRecv);
+                        } else {
+                            this_->handleHandshakeV0ForNewDevice(ctx, toRecv);
+                        }
+                    }
 
-                    JAMI_DEBUG("[LinkDevice] NEW: Auth scheme from payload is '{}'", authScheme);
-                    ctx->linkDevCtx->state = AuthDecodingState::AUTH;
-                    DeviceAuthInfo info;
-                    info.set(DeviceAuthInfo::auth_scheme, authScheme);
-                    info.set(DeviceAuthInfo::peer_id, peerCert->issuer->getId().toString());
-                    emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
-                                                                                     static_cast<uint8_t>(
-                                                                                         DeviceAuthState::AUTHENTICATING),
-                                                                                     info);
                 } else if (ctx->linkDevCtx->state == AuthDecodingState::DATA) {
+                    if (ctx->linkDevCtx->negotiatedVersion == ProtocolVersion::v1) {
+                        return;
+                    }
                     auto passwordCorrectIt = toRecv.find(PayloadKey::passwordCorrect);
                     auto canRetry = toRecv.find(PayloadKey::canRetry);
 
@@ -817,6 +880,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             // send first message to establish scheme
             AuthMsg toSend;
             toSend.schemeId = 0; // set latest scheme here
+            toSend.supportedVersions = ProtocolVersion::supportedVersions;
             JAMI_DEBUG("[LinkDevice] NEW: Packing first message for SOURCE.\nCurrent state is: "
                        "\n\tauth "
                        "state = {}:{}",
@@ -968,6 +1032,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     // add in more schemes inside this callback function
     JAMI_DEBUG("[LinkDevice] Setting up receiving logic callback.");
     channel->setOnRecv([ctx,
+                        channel,
                         wthis = weak(),
                         decodeCtx = std::make_shared<ArchiveAccountManager::DecodingContext>()](const uint8_t* buf,
                                                                                                 size_t len) {
@@ -1024,6 +1089,19 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             JAMI_WARNING("[LinkDevice] Unsupported scheme received from a connection.");
         }
 
+        // Perform protocol version negotiation
+        if (ctx->addDeviceCtx->state == AuthDecodingState::HANDSHAKE) {
+            ctx->addDeviceCtx->negotiatedVersion = negotiateProtocolVersion(ProtocolVersion::supportedVersions,
+                                                                            toRecv.supportedVersions);
+            JAMI_LOG("[LinkDevice] SOURCE: Protocol version negotiated: {}", ctx->addDeviceCtx->negotiatedVersion);
+            if (ctx->addDeviceCtx->negotiatedVersion == ProtocolVersion::v1) {
+                this_->handleHandshakeV1ForSourceDevice(ctx, toRecv);
+            } else {
+                this_->handleHandshakeV0ForSourceDevice(ctx, toRecv, channel->getRemoteAddress().toString(true));
+            }
+            return len;
+        }
+
         if (ctx->addDeviceCtx->state == AuthDecodingState::ERR
             || ctx->addDeviceCtx->state == AuthDecodingState::AUTH_ERROR) {
             JAMI_WARNING("[LinkDevice] Undefined behavior encountered during a link auth session.");
@@ -1040,42 +1118,76 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
 
         // we expect to be receiving credentials in this state and we know the archive is encrypted
         if (ctx->addDeviceCtx->state == AuthDecodingState::AUTH) {
-            // receive the incoming password, check if the password is right, and send back the
-            // archive if it is correct
-            JAMI_DEBUG("[LinkDevice] SOURCE: addDevice: setOnRecv: verifying sent "
-                       "credentials from NEW");
-            shouldSendMsg = true;
-            const auto& passwordIt = toRecv.find(PayloadKey::password);
-            if (passwordIt != toRecv.payload.end()) {
-                // try and decompress archive for xfer
-                try {
-                    JAMI_DEBUG("[LinkDevice] Injecting account archive into outbound message.");
-                    ctx->addDeviceCtx->accData
-                        = this_->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD, passwordIt->second).serialize();
-                    shouldSendArchive = true;
-                    JAMI_DEBUG("[LinkDevice] Sending account archive.");
-                } catch (const std::exception& e) {
-                    JAMI_DEBUG("[LinkDevice] Finished reading archive: FAILURE: {}", e.what());
-                    shouldSendArchive = false;
-                }
-            }
-            if (!shouldSendArchive) {
-                // pass is not valid
-                ctx->addDeviceCtx->numTries++;
-                if (ctx->addDeviceCtx->numTries < ctx->addDeviceCtx->maxTries) {
-                    // can retry auth
-                    JAMI_DEBUG("[LinkDevice] Incorrect password received. "
-                               "Attempt {} out of {}.",
-                               ctx->addDeviceCtx->numTries,
-                               ctx->addDeviceCtx->maxTries);
-                    toSend.set(PayloadKey::passwordCorrect, "false");
-                    toSend.set(PayloadKey::canRetry, "true");
+            if (ctx->addDeviceCtx->negotiatedVersion == ProtocolVersion::v1) {
+                // Protocol v1: Check for code verification confirmation
+                auto codeVerifiedIt = toRecv.find(PayloadKey::codeVerified);
+                if (codeVerifiedIt != toRecv.payload.end() && codeVerifiedIt->second == "true") {
+                    JAMI_LOG("[LinkDevice] SOURCE: Received code verification confirmation from NEW");
+
+                    // Mark that peer confirmed
+                    if (ctx->addDeviceCtx->v1State) {
+                        ctx->addDeviceCtx->v1State->peerCodeConfirmed = true;
+                    }
+
+                    // If account uses password, emit signal to prompt user for password
+                    if (ctx->addDeviceCtx->authScheme == fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD) {
+                        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                                                                                        ctx->accountId,
+                                                                                        ctx->token,
+                                                                                        static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING),
+                                                                                        DeviceAuthInfo {});
+                        shouldSendMsg = false;
+                        shouldSendArchive = false;
+                    } else {
+                        shouldSendMsg = true;
+                        shouldSendArchive = true;
+                    }
                 } else {
-                    // cannot retry auth
-                    JAMI_WARNING("[LinkDevice] Incorrect password received, maximum attempts reached.");
-                    toSend.set(PayloadKey::canRetry, "false");
-                    ctx->addDeviceCtx->state = AuthDecodingState::AUTH_ERROR;
-                    shouldShutdown = true;
+                    // codeVerified not present or not "true" - still waiting for peer confirmation
+                    // Note: If peer rejects, they will shutdown channel directly (no message needed)
+                    JAMI_DEBUG("[LinkDevice] SOURCE: Waiting for code verification from NEW device");
+                    return len;
+                }
+            } else {
+                // receive the incoming password, check if the password is right, and send back the
+                // archive if it is correct
+                JAMI_DEBUG("[LinkDevice] SOURCE: addDevice: setOnRecv: verifying sent "
+                           "credentials from NEW");
+                shouldSendMsg = true;
+                const auto& passwordIt = toRecv.find(PayloadKey::password);
+                if (passwordIt != toRecv.payload.end()) {
+                    // try and decompress archive for xfer
+                    try {
+                        JAMI_DEBUG("[LinkDevice] Injecting account archive into outbound message.");
+                        ctx->addDeviceCtx->accData = this_
+                                                         ->readArchive(fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD,
+                                                                       passwordIt->second)
+                                                         .serialize();
+                        shouldSendArchive = true;
+                        JAMI_DEBUG("[LinkDevice] Sending account archive.");
+                    } catch (const std::exception& e) {
+                        JAMI_DEBUG("[LinkDevice] Finished reading archive: FAILURE: {}", e.what());
+                        shouldSendArchive = false;
+                    }
+                }
+                if (!shouldSendArchive) {
+                    // pass is not valid
+                    ctx->addDeviceCtx->numTries++;
+                    if (ctx->addDeviceCtx->numTries < ctx->addDeviceCtx->maxTries) {
+                        // can retry auth
+                        JAMI_DEBUG("[LinkDevice] Incorrect password received. "
+                                   "Attempt {} out of {}.",
+                                   ctx->addDeviceCtx->numTries,
+                                   ctx->addDeviceCtx->maxTries);
+                        toSend.set(PayloadKey::passwordCorrect, "false");
+                        toSend.set(PayloadKey::canRetry, "true");
+                    } else {
+                        // cannot retry auth
+                        JAMI_WARNING("[LinkDevice] Incorrect password received, maximum attempts reached.");
+                        toSend.set(PayloadKey::canRetry, "false");
+                        ctx->addDeviceCtx->state = AuthDecodingState::AUTH_ERROR;
+                        shouldShutdown = true;
+                    }
                 }
             }
         }
@@ -1107,17 +1219,6 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
 
         return len;
     }); // !channel onRecv closure
-
-    if (ctx->addDeviceCtx->state == AuthDecodingState::HANDSHAKE) {
-        ctx->addDeviceCtx->state = AuthDecodingState::EST;
-        DeviceAuthInfo info;
-        info.set(DeviceAuthInfo::peer_address, channel->getRemoteAddress().toString(true));
-        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(ctx->accountId,
-                                                                        ctx->token,
-                                                                        static_cast<uint8_t>(
-                                                                            DeviceAuthState::AUTHENTICATING),
-                                                                        info);
-    }
 
     return true;
 }
@@ -1159,9 +1260,10 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
             dht::ThreadPool::io().run([ctx] {
                 ctx->addDeviceCtx->state = AuthDecodingState::AUTH;
                 AuthMsg toSend;
-                JAMI_DEBUG("[LinkDevice] SOURCE: Packing first message for NEW and switching to "
-                           "state: {}",
-                           ctx->addDeviceCtx->formattedAuthState());
+                JAMI_DEBUG("[LinkDevice] SOURCE: Packing AUTH message for NEW and switching to "
+                           "state: {}, negotiated version: {}",
+                           ctx->addDeviceCtx->formattedAuthState(),
+                           ctx->addDeviceCtx->negotiatedVersion);
                 toSend.set(PayloadKey::authScheme, ctx->addDeviceCtx->authScheme);
                 msgpack::sbuffer buffer(UINT16_MAX);
                 msgpack::pack(buffer, toSend);
@@ -1173,6 +1275,100 @@ ArchiveAccountManager::confirmAddDevice(uint32_t token)
             return true;
         }
     }
+    return false;
+}
+
+bool
+ArchiveAccountManager::verifyDeviceLinkCode(bool matches)
+{
+    if (!authCtx_) {
+        JAMI_WARNING("[LinkDevice] No active auth context");
+        return false;
+    }
+
+    auto ctx = authCtx_;
+
+    // Determine which side we're on
+    bool isSourceDevice = ctx->addDeviceCtx != nullptr;
+    bool isNewDevice = ctx->linkDevCtx != nullptr;
+
+    if (!matches) {
+        // Codes don't match - abort with AUTH_ERROR
+        JAMI_LOG("[LinkDevice] {}: Verification code mismatch, aborting", isSourceDevice ? "SOURCE" : "NEW");
+
+        if (isSourceDevice && ctx->addDeviceCtx) {
+            ctx->addDeviceCtx->state = AuthDecodingState::AUTH_ERROR;
+            AuthMsg errorMsg;
+            errorMsg.set(PayloadKey::stateMsg, toString(AuthDecodingState::AUTH_ERROR));
+            msgpack::sbuffer buffer(UINT16_MAX);
+            msgpack::pack(buffer, errorMsg);
+            std::error_code ec;
+            ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            ctx->addDeviceCtx->channel->shutdown();
+        } else if (isNewDevice && ctx->linkDevCtx) {
+            ctx->linkDevCtx->state = AuthDecodingState::AUTH_ERROR;
+            AuthMsg errorMsg;
+            errorMsg.set(PayloadKey::stateMsg, toString(AuthDecodingState::AUTH_ERROR));
+            msgpack::sbuffer buffer(UINT16_MAX);
+            msgpack::pack(buffer, errorMsg);
+            std::error_code ec;
+            ctx->linkDevCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+            ctx->linkDevCtx->channel->shutdown();
+        }
+
+        if (ctx->onFailure)
+            ctx->onFailure(AuthError::INVALID_ARGUMENTS, "Verification code mismatch");
+        authCtx_.reset();
+        return true;
+    }
+
+    JAMI_LOG("[LinkDevice] {}: Verification code matches, sending confirmation", isSourceDevice ? "SOURCE" : "NEW");
+
+    if (isSourceDevice && ctx->addDeviceCtx) {
+        // SOURCE device - check if peer already confirmed
+        dht::ThreadPool::io().run([ctx] {
+            ctx->addDeviceCtx->state = AuthDecodingState::AUTH;
+            AuthMsg toSend;
+            toSend.set(PayloadKey::codeVerified, "true");
+            JAMI_DEBUG("[LinkDevice] SOURCE: Sending code verification confirmation to NEW");
+            msgpack::sbuffer buffer(UINT16_MAX);
+            msgpack::pack(buffer, toSend);
+            std::error_code ec;
+            ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+
+            if (ctx->addDeviceCtx->v1State && ctx->addDeviceCtx->v1State->peerCodeConfirmed) {
+                JAMI_LOG("[LinkDevice] SOURCE: Peer already confirmed, immediately proceeding to EST");
+
+                if (ctx->addDeviceCtx->authScheme == fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD) {
+                    emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
+                                                                                    ctx->accountId,
+                                                                                    ctx->token,
+                                                                                    static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING),
+                                                                                    DeviceAuthInfo {});
+                } else {
+                    // send archive
+                }
+            }
+        });
+        return true;
+    } else if (isNewDevice && ctx->linkDevCtx) {
+        dht::ThreadPool::io().run([ctx] {
+            ctx->linkDevCtx->state = AuthDecodingState::DATA;
+            emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
+                                                                             static_cast<uint8_t>(
+                                                                                 DeviceAuthState::IN_PROGRESS),
+                                                                             DeviceAuthInfo {});
+            AuthMsg toSend;
+            toSend.set(PayloadKey::codeVerified, "true");
+            JAMI_DEBUG("[LinkDevice] NEW: Sending code verification confirmation to SOURCE");
+            msgpack::sbuffer buffer(UINT16_MAX);
+            msgpack::pack(buffer, toSend);
+            std::error_code ec;
+            ctx->linkDevCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+        });
+        return true;
+    }
+
     return false;
 }
 
@@ -1286,6 +1482,118 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, boo
     info_ = std::move(info);
 
     ctx.onSuccess(*info_, std::move(a.config), std::move(receipt.first), std::move(receiptSignature));
+}
+
+void
+ArchiveAccountManager::handleHandshakeV0ForNewDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv)
+{
+    auto peerCert = ctx->linkDevCtx->channel->peerCertificate();
+    auto authScheme = toRecv.at(PayloadKey::authScheme);
+    ctx->linkDevCtx->authEnabled = authScheme != fileutils::ARCHIVE_AUTH_SCHEME_NONE;
+
+    JAMI_DEBUG("[LinkDevice] NEW: Auth scheme from payload is '{}'", authScheme);
+    ctx->linkDevCtx->state = AuthDecodingState::AUTH;
+    DeviceAuthInfo info;
+    info.set(DeviceAuthInfo::auth_scheme, authScheme);
+    info.set(DeviceAuthInfo::peer_id, peerCert->issuer->getId().toString());
+    emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
+                                                                     static_cast<uint8_t>(
+                                                                         DeviceAuthState::AUTHENTICATING),
+                                                                     info);
+}
+
+std::string
+ArchiveAccountManager::generateVerificationCode(const std::shared_ptr<dhtnet::ChannelSocket>& channel) const
+{
+    if (!channel) {
+        return {};
+    }
+
+    try {
+        auto keyingMaterial = channel->exportKeyingMaterial("EXPORTER-jami-device-link-verification", "", 4);
+
+        if (keyingMaterial.empty() || keyingMaterial.size() < 4) {
+            JAMI_WARNING("[LinkDevice] Failed to export sufficient keying material");
+            return {};
+        }
+
+        uint32_t verificationNumber = 0;
+        verificationNumber |= static_cast<uint32_t>(keyingMaterial[0]) << 24;
+        verificationNumber |= static_cast<uint32_t>(keyingMaterial[1]) << 16;
+        verificationNumber |= static_cast<uint32_t>(keyingMaterial[2]) << 8;
+        verificationNumber |= static_cast<uint32_t>(keyingMaterial[3]);
+
+        // Reduce to an 8-digit number for easier verification
+        verificationNumber = verificationNumber % 100000000;
+
+        // Format as 8-digit string with leading zeros
+        std::ostringstream oss;
+        oss << std::setfill('0') << std::setw(8) << verificationNumber;
+        return oss.str();
+    } catch (const std::exception& e) {
+        JAMI_ERROR("[LinkDevice] Error generating verification code: {}", e.what());
+        return {};
+    }
+}
+
+void
+ArchiveAccountManager::handleHandshakeV1ForNewDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv)
+{
+    emitSignal<libjami::ConfigurationSignal::DeviceLinkProtocolNegotiated>(ctx->accountId,
+                                                                           0, // op_id is 0 for NEW device
+                                                                           ctx->linkDevCtx->negotiatedVersion);
+
+    auto verificationCode = generateVerificationCode(ctx->linkDevCtx->channel);
+    if (!verificationCode.empty()) {
+        JAMI_LOG("[LinkDevice] NEW: Generated verification code: {}", verificationCode);
+        emitSignal<libjami::ConfigurationSignal::DeviceLinkVerificationCode>(ctx->accountId,
+                                                                             0, // op_id is 0 for NEW device
+                                                                             verificationCode);
+    }
+}
+
+void
+ArchiveAccountManager::handleHandshakeV0ForSourceDevice(const std::shared_ptr<AuthContext>& ctx,
+                                                        const AuthMsg& toRecv,
+                                                        const std::string& address)
+{
+    ctx->addDeviceCtx->state = AuthDecodingState::EST;
+    DeviceAuthInfo info;
+    info.set(DeviceAuthInfo::peer_address, address);
+    emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(ctx->accountId,
+                                                                    ctx->token,
+                                                                    static_cast<uint8_t>(
+                                                                        DeviceAuthState::AUTHENTICATING),
+                                                                    info);
+}
+
+void
+ArchiveAccountManager::handleHandshakeV1ForSourceDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv)
+{
+    emitSignal<libjami::ConfigurationSignal::DeviceLinkProtocolNegotiated>(ctx->accountId,
+                                                                           ctx->token,
+                                                                           ctx->addDeviceCtx->negotiatedVersion);
+
+    // Initialize v1-specific state
+    ctx->addDeviceCtx->v1State = std::make_unique<AddDeviceContext::ProtocolV1State>();
+
+    // Send HANDSHAKE response back to NEW device with our supported versions
+    AuthMsg handshakeResponse;
+    handshakeResponse.schemeId = 0;
+    handshakeResponse.supportedVersions = ProtocolVersion::supportedVersions;
+    JAMI_DEBUG("[LinkDevice] SOURCE: Sending HANDSHAKE response to NEW with supportedVersions = [{}]",
+               fmt::join(handshakeResponse.supportedVersions, ","));
+    msgpack::sbuffer buffer(UINT16_MAX);
+    msgpack::pack(buffer, handshakeResponse);
+    std::error_code ec;
+    ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()), buffer.size(), ec);
+    auto verificationCode = generateVerificationCode(ctx->addDeviceCtx->channel);
+    if (!verificationCode.empty()) {
+        JAMI_LOG("[LinkDevice] SOURCE: Generated verification code: {}", verificationCode);
+        emitSignal<libjami::ConfigurationSignal::DeviceLinkVerificationCode>(ctx->accountId,
+                                                                             ctx->token,
+                                                                             verificationCode);
+    }
 }
 
 std::pair<std::vector<uint8_t>, dht::InfoHash>
