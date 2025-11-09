@@ -1006,6 +1006,15 @@ JamiAccount::confirmAddDevice(uint32_t op_token)
 }
 
 bool
+JamiAccount::verifyDeviceLinkCode(bool matches)
+{
+    if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
+        return manager->verifyDeviceLinkCode(matches);
+    }
+    return false;
+}
+
+bool
 JamiAccount::exportArchive(const std::string& destinationPath, std::string_view scheme, const std::string& password)
 {
     if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
