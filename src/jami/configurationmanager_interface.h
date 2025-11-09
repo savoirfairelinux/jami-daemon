@@ -64,6 +64,7 @@ LIBJAMI_PUBLIC bool provideAccountAuthentication(const std::string& accountId,
 LIBJAMI_PUBLIC int32_t addDevice(const std::string& accountId, const std::string& uri);
 LIBJAMI_PUBLIC bool confirmAddDevice(const std::string& accountId, uint32_t op_id);
 LIBJAMI_PUBLIC bool cancelAddDevice(const std::string& accountId, uint32_t op_id);
+LIBJAMI_PUBLIC bool verifyDeviceLinkCode(const std::string& accountId, bool matches);
 
 LIBJAMI_PUBLIC bool exportToFile(const std::string& accountID,
                                  const std::string& destinationPath,
@@ -365,6 +366,20 @@ struct LIBJAMI_PUBLIC ConfigurationSignal
         using cb_type = void(const std::string& /*account_id*/,
                              int /*state*/,
                              const std::map<std::string, std::string>& /*detail*/);
+    };
+    // used when link device protocol version has been negotiated
+    struct LIBJAMI_PUBLIC DeviceLinkProtocolNegotiated
+    {
+        constexpr static const char* name = "DeviceLinkProtocolNegotiated";
+        using cb_type = void(const std::string& /*account_id*/, uint32_t /*op_id*/, uint8_t /*protocol_version*/);
+    };
+    // used when verification code is generated from TLS keying material during device linking
+    struct LIBJAMI_PUBLIC DeviceLinkVerificationCode
+    {
+        constexpr static const char* name = "DeviceLinkVerificationCode";
+        using cb_type = void(const std::string& /*account_id*/,
+                             uint32_t /*op_id*/,
+                             const std::string& /*verification_code*/);
     };
     // TODO: move those to AccountSignal in next API breakage
     struct LIBJAMI_PUBLIC AccountDetailsChanged

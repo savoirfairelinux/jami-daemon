@@ -319,6 +319,7 @@ public:
     int32_t addDevice(const std::string& uriProvided);
     bool cancelAddDevice(uint32_t op_token);
     bool confirmAddDevice(uint32_t op_token);
+    bool verifyDeviceLinkCode(bool matches);
     /* Devices - new device */
     bool provideAccountAuthentication(const std::string& credentialsFromUser, const std::string& scheme);
 
