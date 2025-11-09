@@ -154,6 +154,19 @@ private:
 
     void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool isLinkDevProtocol);
 
+    // Protocol version handlers for NEW device (importing)
+    void handleHandshakeV0ForNewDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv);
+    void handleHandshakeV1ForNewDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv);
+
+    // Protocol version handlers for SOURCE device (exporting)
+    void handleHandshakeV0ForSourceDevice(const std::shared_ptr<AuthContext>& ctx,
+                                          const AuthMsg& toRecv,
+                                          const std::string& address);
+    void handleHandshakeV1ForSourceDevice(const std::shared_ptr<AuthContext>& ctx, const AuthMsg& toRecv);
+
+    // Helper function to generate verification code from TLS keying material
+    std::string generateVerificationCode(const std::shared_ptr<dhtnet::ChannelSocket>& channel) const;
+
     inline std::weak_ptr<ArchiveAccountManager> weak()
     {
         return std::static_pointer_cast<ArchiveAccountManager>(shared_from_this());
