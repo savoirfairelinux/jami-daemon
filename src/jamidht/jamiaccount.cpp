@@ -3078,9 +3078,11 @@ JamiAccount::sendMessage(const std::string& to,
             if (started && (devices.empty() || successCount)) {
                 if (onComplete) {
                     auto cb = std::move(onComplete);
+                    auto success = successCount != 0;
+                    auto complete = completeCount != 0;
                     onComplete = {};
                     lk.unlock();
-                    cb(successCount != 0, completeCount != 0);
+                    cb(success, complete);
                 }
             }
         }
