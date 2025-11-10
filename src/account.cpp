@@ -158,9 +158,10 @@ Account::loadConfig()
     // JAMI_DATADIR that was set at build time.
     auto ringtoneDir = fileutils::get_resource_dir_path() / RINGDIR;
     ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
-    // If the user defined a custom ringtone, the file may not exists
+    // If the user defined a custom ringtone, the file may not exists or may not allow access
     // In this case, fallback on the default ringtone path
-    if (not std::filesystem::is_regular_file(ringtonePath_)) {
+    std::ifstream f(ringtonePath_);
+    if (not std::filesystem::is_regular_file(ringtonePath_) || !f.is_open()) {
         JAMI_WARNING("Ringtone {} is not a valid file", ringtonePath_);
         config_->ringtonePath = DEFAULT_RINGTONE_PATH;
         ringtonePath_ = fileutils::getFullPath(ringtoneDir, config_->ringtonePath);
