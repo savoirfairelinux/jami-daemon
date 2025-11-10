@@ -921,26 +921,27 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
     ctx->timeout->expires_after(OP_TIMEOUT);
     ctx->timeout->async_wait([wthis = weak(), wctx = std::weak_ptr(ctx)](const std::error_code& ec) {
-        if (ec) {
+        if (ec)
             return;
-        }
-        if (auto ctx = wctx.lock()) {
-            if (!ctx->addDeviceCtx->isCompleted()) {
-                if (auto this_ = wthis.lock()) {
-                    ctx->addDeviceCtx->state = AuthDecodingState::TIMEOUT;
-                    JAMI_WARNING("[LinkDevice] Timeout for addDevice.");
+        dht::ThreadPool::io().run([wthis, wctx]() {
+            if (auto ctx = wctx.lock()) {
+                if (!ctx->addDeviceCtx->isCompleted()) {
+                    if (auto this_ = wthis.lock()) {
+                        ctx->addDeviceCtx->state = AuthDecodingState::TIMEOUT;
+                        JAMI_WARNING("[LinkDevice] Timeout for addDevice.");
 
-                    // Create and send timeout message
-                    msgpack::sbuffer buffer(UINT16_MAX);
-                    msgpack::pack(buffer, AuthMsg::timeout());
-                    std::error_code ec;
-                    ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()),
-                                                      buffer.size(),
-                                                      ec);
-                    ctx->addDeviceCtx->channel->shutdown();
+                        // Create and send timeout message
+                        msgpack::sbuffer buffer(UINT16_MAX);
+                        msgpack::pack(buffer, AuthMsg::timeout());
+                        std::error_code ec;
+                        ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()),
+                                                          buffer.size(),
+                                                          ec);
+                        ctx->addDeviceCtx->channel->shutdown();
+                    }
                 }
             }
-        }
+        });
     });
 
     JAMI_DEBUG("[LinkDevice] SOURCE: Creating callbacks.");
@@ -1027,7 +1028,8 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         if (ctx->addDeviceCtx->state == AuthDecodingState::ERR
             || ctx->addDeviceCtx->state == AuthDecodingState::AUTH_ERROR) {
             JAMI_WARNING("[LinkDevice] Undefined behavior encountered during a link auth session.");
-            ctx->addDeviceCtx->channel->shutdown();
+            // ctx->addDeviceCtx->channel->shutdown();
+            return (size_t) -1;
         }
         // Check for timeout message
         if (ctx->addDeviceCtx->handleTimeoutMessage(toRecv)) {
