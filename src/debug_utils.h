@@ -95,7 +95,11 @@ public:
         auto [avg, count] = inc(duration);
         JAMI_LOG("{}: end after {}", Tag::name(), dht::print_duration(duration));
         if (count > 1) {
-            JAMI_LOG("{}: Average duration: {} ({})", Tag::name(), dht::print_duration(avg), count);
+            JAMI_LOG("{}: Average duration: {} ({}) Total: {}",
+                     Tag::name(),
+                     dht::print_duration(avg),
+                     count,
+                     dht::print_duration(total_duration_));
         }
     }
 
@@ -117,10 +121,7 @@ private:
 #define STATS_TIMER(tag) \
     struct StatsTimerTag_##tag \
     { \
-        static constexpr std::string_view name() \
-        { \
-            return #tag; \
-        } \
+        static constexpr std::string_view name() { return #tag; } \
     }; \
     jami::debug::StatsTimer<StatsTimerTag_##tag> stats_timer_##tag
 
