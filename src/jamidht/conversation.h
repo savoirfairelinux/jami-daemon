@@ -42,22 +42,28 @@ class ChannelSocket;
 namespace jami {
 
 namespace ConversationMapKeys {
-static constexpr const char* ID = "id";
-static constexpr const char* CREATED = "created";
-static constexpr const char* REMOVED = "removed";
-static constexpr const char* ERASED = "erased";
-static constexpr const char* MEMBERS = "members";
-static constexpr const char* LAST_DISPLAYED = "lastDisplayed";
-static constexpr const char* PREFERENCES = "preferences";
-static constexpr const char* ACTIVE_CALLS = "activeCalls";
-static constexpr const char* HOSTED_CALLS = "hostedCalls";
-static constexpr const char* CACHED = "cached";
-static constexpr const char* RECEIVED = "received";
-static constexpr const char* DECLINED = "declined";
-static constexpr const char* FROM = "from";
-static constexpr const char* CONVERSATIONID = "conversationId";
-static constexpr const char* METADATAS = "metadatas";
+static constexpr const char* ID {"id"};
+static constexpr const char* CREATED {"created"};
+static constexpr const char* REMOVED {"removed"};
+static constexpr const char* ERASED {"erased"};
+static constexpr const char* MEMBERS {"members"};
+static constexpr const char* LAST_DISPLAYED {"lastDisplayed"};
+static constexpr const char* RECEIVED {"received"};
+static constexpr const char* DECLINED {"declined"};
+static constexpr const char* FROM {"from"};
+static constexpr const char* CONVERSATIONID {"conversationId"};
+static constexpr const char* METADATAS {"metadatas"};
 } // namespace ConversationMapKeys
+
+namespace ConversationDirectories {
+static constexpr std::string_view PREFERENCES {"preferences"};
+static constexpr std::string_view STATUS {"status"};
+static constexpr std::string_view SENDING {"sending"};
+static constexpr std::string_view FETCHED {"fetched"};
+static constexpr std::string_view ACTIVE_CALLS {"activeCalls"};
+static constexpr std::string_view HOSTED_CALLS {"hostedCalls"};
+static constexpr std::string_view CACHED {"cached"};
+} // namespace ConversationDirectories
 
 namespace ConversationPreferences {
 static constexpr const char* HOST_CONFERENCES = "hostConferences";
