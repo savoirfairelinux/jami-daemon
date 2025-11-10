@@ -134,85 +134,61 @@ struct History
 
 class Conversation::Impl
 {
-public:
-    Impl(const std::shared_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "")
-        : repository_(ConversationRepository::createConversation(account, mode, otherMember))
+private:
+    Impl(std::unique_ptr<ConversationRepository>&& repository,
+         const std::shared_ptr<JamiAccount>& account,
+         std::vector<ConversationCommit>&& commits = {})
+        : repository_(std::move(repository ? repository : throw std::logic_error("Invalid repository")))
         , account_(account)
         , accountId_(account->getAccountID())
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
-    {
-        if (!repository_) {
-            throw std::logic_error("Unable to create repository");
-        }
-        init(account);
-    }
-
-    Impl(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId)
-        : account_(account)
-        , accountId_(account->getAccountID())
-        , userId_(account->getUsername())
-        , deviceId_(account->currentDeviceId())
-    {
-        repository_ = std::make_unique<ConversationRepository>(account, conversationId);
-        if (!repository_) {
-            throw std::logic_error("Unable to create repository");
-        }
-        init(account);
-    }
-
-    Impl(const std::shared_ptr<JamiAccount>& account, const std::string& remoteDevice, const std::string& conversationId)
-        : account_(account)
-        , accountId_(account->getAccountID())
-        , userId_(account->getUsername())
-        , deviceId_(account->currentDeviceId())
-    {
-        std::vector<ConversationCommit> commits;
-        repository_ = ConversationRepository::cloneConversation(account, remoteDevice, conversationId, [&](auto c) {
-            commits = std::move(c);
-        });
-        if (!repository_) {
-            emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
-                                                                         conversationId,
-                                                                         EFETCH,
-                                                                         "Unable to clone repository");
-            throw std::logic_error("Unable to clone repository");
-        }
-        // To detect current active calls, we need to check history
-        conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / conversationId;
-        activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
-        initActiveCalls(repository_->convCommitsToMap(commits));
-        init(account);
-    }
-
-    void init(const std::shared_ptr<JamiAccount>& account)
-    {
-        ioContext_ = Manager::instance().ioContext();
-        fallbackTimer_ = std::make_unique<asio::steady_timer>(*ioContext_);
-        swarmManager_ = std::make_shared<SwarmManager>(NodeId(deviceId_),
+        , swarmManager_(std::make_shared<SwarmManager>(NodeId(deviceId_),
                                                        Manager::instance().getSeededRandomEngine(),
                                                        [account = account_](const DeviceId& deviceId) {
                                                            if (auto acc = account.lock()) {
                                                                return acc->isConnectedWith(deviceId);
                                                            }
                                                            return false;
-                                                       });
-        swarmManager_->setMobility(account->isMobile());
-        transferManager_ = std::make_shared<TransferManager>(accountId_,
+                                                       }))
+        , transferManager_(std::make_shared<TransferManager>(accountId_,
                                                              "",
                                                              repository_->id(),
-                                                             Manager::instance().getSeededRandomEngine());
-        conversationDataPath_ = fileutils::get_data_dir() / accountId_ / "conversation_data" / repository_->id();
-        fetchedPath_ = conversationDataPath_ / "fetched";
-        statusPath_ = conversationDataPath_ / "status";
-        sendingPath_ = conversationDataPath_ / "sending";
-        preferencesPath_ = conversationDataPath_ / ConversationMapKeys::PREFERENCES;
-        activeCallsPath_ = conversationDataPath_ / ConversationMapKeys::ACTIVE_CALLS;
-        hostedCallsPath_ = conversationDataPath_ / ConversationMapKeys::HOSTED_CALLS;
-        loadActiveCalls();
+                                                             Manager::instance().getSeededRandomEngine()))
+        , repoPath_(fileutils::get_data_dir() / accountId_ / "conversations" / repository_->id())
+        , conversationDataPath_(fileutils::get_data_dir() / accountId_ / "conversation_data" / repository_->id())
+        , fetchedPath_(conversationDataPath_ / ConversationDirectories::FETCHED)
+        , sendingPath_(conversationDataPath_ / ConversationDirectories::SENDING)
+        , preferencesPath_(conversationDataPath_ / ConversationDirectories::PREFERENCES)
+        , statusPath_(conversationDataPath_ / ConversationDirectories::STATUS)
+        , hostedCallsPath_(conversationDataPath_ / ConversationDirectories::HOSTED_CALLS)
+        , activeCallsPath_(conversationDataPath_ / ConversationDirectories::ACTIVE_CALLS)
+        , ioContext_(Manager::instance().ioContext())
+        , fallbackTimer_(std::make_unique<asio::steady_timer>(*ioContext_))
+        , typers_(std::make_shared<Typers>(account, repository_->id()))
+    {
+        if (!commits.empty())
+            initActiveCalls(repository_->convCommitsToMap(commits));
         loadStatus();
-        typers_ = std::make_shared<Typers>(account, repository_->id());
     }
+
+    Impl(std::pair<std::unique_ptr<ConversationRepository>, std::vector<ConversationCommit>>&& repoAndCommits,
+         const std::shared_ptr<JamiAccount>& account)
+        : Impl(std::move(repoAndCommits.first), account, std::move(repoAndCommits.second))
+    {}
+
+public:
+    Impl(const std::shared_ptr<JamiAccount>& account, ConversationMode mode, const std::string& otherMember = "")
+        : Impl(ConversationRepository::createConversation(account, mode, otherMember), account)
+    {}
+
+    Impl(const std::shared_ptr<JamiAccount>& account, const std::string& conversationId)
+        : Impl(std::make_unique<ConversationRepository>(account, conversationId), account)
+    {}
+
+    Impl(const std::shared_ptr<JamiAccount>& account, const std::string& remoteDevice, const std::string& conversationId)
+        : Impl(ConversationRepository::cloneConversation(account, remoteDevice, conversationId), account)
+    {}
 
     std::string toString() const
     {
@@ -237,7 +213,6 @@ public:
      */
     std::vector<std::string> commitsEndedCalls();
     bool isAdmin() const;
-    std::filesystem::path repoPath() const;
 
     void announce(const std::string& commitId, bool commitFromSelf = false)
     {
@@ -252,8 +227,7 @@ public:
         std::vector<ConversationCommit> convcommits;
         convcommits.reserve(commits.size());
         for (const auto& cid : commits) {
-            auto commit = repository_->getCommit(cid);
-            if (commit != std::nullopt) {
+            if (auto commit = repository_->getCommit(cid)) {
                 convcommits.emplace_back(*commit);
             }
         }
@@ -543,18 +517,17 @@ public:
 
     std::string_view bannedType(const std::string& uri) const
     {
-        auto repo = repoPath();
         auto crt = fmt::format("{}.crt", uri);
-        auto bannedMember = repo / "banned" / "members" / crt;
+        auto bannedMember = repoPath_ / "banned" / "members" / crt;
         if (std::filesystem::is_regular_file(bannedMember))
             return "members"sv;
-        auto bannedAdmin = repo / "banned" / "admins" / crt;
+        auto bannedAdmin = repoPath_ / "banned" / "admins" / crt;
         if (std::filesystem::is_regular_file(bannedAdmin))
             return "admins"sv;
-        auto bannedInvited = repo / "banned" / "invited" / uri;
+        auto bannedInvited = repoPath_ / "banned" / "invited" / uri;
         if (std::filesystem::is_regular_file(bannedInvited))
             return "invited"sv;
-        auto bannedDevice = repo / "banned" / "devices" / crt;
+        auto bannedDevice = repoPath_ / "banned" / "devices" / crt;
         if (std::filesystem::is_regular_file(bannedDevice))
             return "devices"sv;
         return {};
@@ -595,12 +568,12 @@ public:
 #endif
 
     std::mutex writeMtx_ {};
-    std::unique_ptr<ConversationRepository> repository_;
-    std::shared_ptr<SwarmManager> swarmManager_;
-    std::weak_ptr<JamiAccount> account_;
-    std::string accountId_ {};
-    std::string userId_;
-    std::string deviceId_;
+    const std::unique_ptr<ConversationRepository> repository_;
+    const std::weak_ptr<JamiAccount> account_;
+    const std::string accountId_;
+    const std::string userId_;
+    const std::string deviceId_;
+    const std::shared_ptr<SwarmManager> swarmManager_;
     std::atomic_bool isRemoving_ {false};
     std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
     std::vector<libjami::SwarmMessage> loadMessages2(const LogOptions& options, History* optHistory = nullptr);
@@ -609,15 +582,18 @@ public:
 
     // Avoid multiple fetch/merges at the same time.
     std::mutex pullcbsMtx_ {};
-    std::map<std::string, std::deque<std::pair<std::string, OnPullCb>>>
-        fetchingRemotes_ {}; // store current remote in fetch
-    std::shared_ptr<TransferManager> transferManager_ {};
-    std::filesystem::path conversationDataPath_ {};
-    std::filesystem::path fetchedPath_ {};
+    // store current remote in fetch
+    std::map<std::string, std::deque<std::pair<std::string, OnPullCb>>> fetchingRemotes_ {};
+    const std::shared_ptr<TransferManager> transferManager_ {};
+    const std::filesystem::path repoPath_ {};
+    const std::filesystem::path conversationDataPath_ {};
+    const std::filesystem::path fetchedPath_ {};
 
     // Manage last message displayed and status
-    std::filesystem::path sendingPath_ {};
-    std::filesystem::path preferencesPath_ {};
+    const std::filesystem::path sendingPath_ {};
+    const std::filesystem::path preferencesPath_ {};
+    const std::filesystem::path statusPath_ {};
+
     OnMembersChanged onMembersChanged_ {};
 
     // Manage hosted calls on this device
@@ -631,8 +607,8 @@ public:
     GitSocketList gitSocketList_ {};
 
     // Bootstrap
-    std::shared_ptr<asio::io_context> ioContext_;
-    std::unique_ptr<asio::steady_timer> fallbackTimer_;
+    const std::shared_ptr<asio::io_context> ioContext_;
+    const std::unique_ptr<asio::steady_timer> fallbackTimer_;
 
     /**
      * Loaded history represents the linearized history to show for clients
@@ -663,7 +639,6 @@ public:
      */
     mutable std::mutex messageStatusMtx_;
     std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)> messageStatusCb_ {};
-    std::filesystem::path statusPath_ {};
     mutable std::map<std::string, std::map<std::string, std::string>> messagesStatus_ {};
     /**
      * Status: 0 = commited, 1 = fetched, 2 = read
@@ -689,7 +664,7 @@ public:
 bool
 Conversation::Impl::isAdmin() const
 {
-    auto adminsPath = repoPath() / "admins";
+    auto adminsPath = repoPath_ / "admins";
     return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, userId_ + ".crt"));
 }
 
@@ -770,12 +745,6 @@ Conversation::Impl::commitsEndedCalls()
     saveActiveCalls();
     saveHostedCalls();
     return commits;
-}
-
-std::filesystem::path
-Conversation::Impl::repoPath() const
-{
-    return fileutils::get_data_dir() / accountId_ / "conversations" / repository_->id();
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -1540,35 +1509,22 @@ Conversation::join()
 bool
 Conversation::isMember(const std::string& uri, bool includeInvited) const
 {
-    auto repoPath = pimpl_->repoPath();
-    auto invitedPath = repoPath / "invited";
-    auto adminsPath = repoPath / "admins";
-    auto membersPath = repoPath / "members";
-    std::vector<std::filesystem::path> pathsToCheck = {adminsPath, membersPath};
-    if (includeInvited)
-        pathsToCheck.emplace_back(invitedPath);
-    for (const auto& path : pathsToCheck) {
-        for (const auto& certificate : dhtnet::fileutils::readDirectory(path)) {
-            std::string_view crtUri = certificate;
-            auto crtIt = crtUri.find(".crt");
-            if (path != invitedPath && crtIt == std::string_view::npos) {
-                JAMI_WARNING("Incorrect file found: {}/{}", path, certificate);
-                continue;
+    auto uriCrt = uri + ".crt"sv;
+    if (std::filesystem::is_regular_file(pimpl_->repoPath_ / "admins" / uriCrt)
+        || std::filesystem::is_regular_file(pimpl_->repoPath_ / "members" / uriCrt)) {
+        return true;
+    }
+    if (includeInvited) {
+        if (std::filesystem::is_regular_file(pimpl_->repoPath_ / "invited" / uri)) {
+            return true;
+        }
+        if (mode() == ConversationMode::ONE_TO_ONE) {
+            for (const auto& member : getInitialMembers()) {
+                if (member == uri)
+                    return true;
             }
-            if (crtIt != std::string_view::npos)
-                crtUri = crtUri.substr(0, crtIt);
-            if (crtUri == uri)
-                return true;
         }
     }
-
-    if (includeInvited && mode() == ConversationMode::ONE_TO_ONE) {
-        for (const auto& member : getInitialMembers()) {
-            if (member == uri)
-                return true;
-        }
-    }
-
     return false;
 }
 
@@ -1992,14 +1948,15 @@ Conversation::infos() const
 void
 Conversation::updatePreferences(const std::map<std::string, std::string>& map)
 {
-    auto filePath = pimpl_->conversationDataPath_ / "preferences";
+    const auto& filePath = pimpl_->preferencesPath_;
     auto prefs = map;
     auto itLast = prefs.find(LAST_MODIFIED);
     if (itLast != prefs.end()) {
-        if (std::filesystem::is_regular_file(filePath)) {
+        std::error_code ec;
+        if (std::filesystem::is_regular_file(filePath, ec)) {
             auto lastModified = fileutils::lastWriteTimeInSeconds(filePath);
             try {
-                if (lastModified >= std::stoul(itLast->second))
+                if (lastModified >= to_int<uint64_t>(itLast->second))
                     return;
             } catch (...) {
                 return;
@@ -2018,7 +1975,7 @@ Conversation::preferences(bool includeLastModified) const
 {
     try {
         std::map<std::string, std::string> preferences;
-        auto filePath = pimpl_->conversationDataPath_ / "preferences";
+        const auto& filePath = pimpl_->preferencesPath_;
         auto file = fileutils::loadFile(filePath);
         msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(preferences);
@@ -2034,7 +1991,7 @@ std::vector<uint8_t>
 Conversation::vCard() const
 {
     try {
-        return fileutils::loadFile(pimpl_->repoPath() / "profile.vcf");
+        return fileutils::loadFile(pimpl_->repoPath_ / "profile.vcf");
     } catch (...) {
     }
     return {};
@@ -2163,8 +2120,8 @@ Conversation::Impl::updateStatus(const std::string& uri,
                                  const std::string& ts,
                                  bool emit)
 {
-    // This method can be called if peer send us a status or if another device sync. Emit will be true if a peer send us
-    // a status and will emit to other connected devices.
+    // This method can be called if peer send us a status or if another device sync. Emit will be true if a peer
+    // send us a status and will emit to other connected devices.
     LogOptions options;
     std::map<std::string, std::map<std::string, std::string>> newStatus;
     {

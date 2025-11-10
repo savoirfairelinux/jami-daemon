@@ -598,7 +598,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
             return;
         }
         if (!conv->conversation->isMember(peer, true)) {
-            JAMI_WARNING("[Account {}] [Conversation {}] {} is not a membe", accountId_, conversationId, peer);
+            JAMI_WARNING("[Account {}] [Conversation {}] {} is not a member", accountId_, conversationId, peer);
             return;
         }
         if (conv->conversation->isBanned(deviceId)) {

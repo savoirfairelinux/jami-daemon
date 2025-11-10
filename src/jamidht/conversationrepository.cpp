@@ -179,7 +179,7 @@ public:
     // TODO: check why git_remote_fetch() leaves pack-data opened
     GitRepository repository() const
     {
-        auto path = fileutils::get_data_dir().string() + "/" + accountId_ + "/" + "conversations" + "/" + id_;
+        auto path = fmt::format("{}/{}/conversations/{}", fileutils::get_data_dir(), accountId_, id_);
         git_repository* repo = nullptr;
         auto err = git_repository_open(&repo, path.c_str());
         if (err < 0) {
@@ -2302,7 +2302,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         // This fail can be permitted in the case we check if a commit exists before pulling (so can fail
         // there). Only log if the fail is unwanted.
         if (logIfNotFound)
-            JAMI_DEBUG("[Account {}] [Conversation {}] Unable to init revwalker", accountId_, id_);
+            JAMI_DEBUG("[Account {}] [Conversation {}] Unable to init revwalker from {}", accountId_, id_, from);
         return;
     }
 
@@ -2728,16 +2728,15 @@ ConversationRepository::createConversation(const std::shared_ptr<JamiAccount>& a
     return std::make_unique<ConversationRepository>(account, id);
 }
 
-std::unique_ptr<ConversationRepository>
+std::pair<std::unique_ptr<ConversationRepository>, std::vector<ConversationCommit>>
 ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& account,
                                           const std::string& deviceId,
-                                          const std::string& conversationId,
-                                          std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb)
+                                          const std::string& conversationId)
 {
     // Verify conversationId is not empty to avoid deleting the entire conversations directory
     if (conversationId.empty()) {
         JAMI_ERROR("[Account {}] Clone conversation with empty conversationId", account->getAccountID());
-        return nullptr;
+        return {};
     }
 
     auto conversationsPath = fileutils::get_data_dir() / account->getAccountID() / "conversations";
@@ -2766,9 +2765,12 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
 
     if (std::filesystem::is_directory(path)) {
         // If a crash occurs during a previous clone, just in case
-        JAMI_WARNING("Removing existing directory {} (the dir exists and non empty)", path);
+        JAMI_WARNING("[Account {}] [Conversation {}] Removing non empty directory {}",
+                     account->getAccountID(),
+                     conversationId,
+                     path);
         if (dhtnet::fileutils::removeAll(path, true) != 0)
-            return nullptr;
+            return {};
     }
 
     JAMI_DEBUG("[Account {}] [Conversation {}] Start clone of {:s} to {}",
@@ -2791,23 +2793,24 @@ ConversationRepository::cloneConversation(const std::shared_ptr<JamiAccount>& ac
                        account->getAccountID(),
                        conversationId,
                        err);
-        return nullptr;
+        return {};
     }
     git_repository_free(rep);
     auto repo = std::make_unique<ConversationRepository>(account, conversationId);
     repo->pinCertificates(true); // need to load certificates to validate unknown members
-    if (!repo->validClone(std::move(checkCommitCb))) {
+    std::vector<ConversationCommit> commitsToValidate;
+    if (!repo->validClone([&](auto cc) { commitsToValidate = std::move(cc); })) {
         repo->erase();
         JAMI_ERROR("[Account {}] [Conversation {}] An error occurred while validating remote conversation.",
                    account->getAccountID(),
                    conversationId);
-        return nullptr;
+        return {};
     }
     JAMI_LOG("[Account {}] [Conversation {}] New conversation cloned in {}",
              account->getAccountID(),
              conversationId,
              path);
-    return repo;
+    return {std::move(repo), std::move(commitsToValidate)};
 }
 
 bool
@@ -2905,14 +2908,13 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
 
                 dht::InfoHash h(uriMember);
                 if (not h) {
-                    JAMI_WARNING(
-                        "[Account {}] [Conversation {}] Commit {} with invalid member URI {}. Please ensure that you "
-                        "are using the latest "
-                        "version of Jami, or that one of your contacts is not performing any unwanted actions.",
-                        accountId_,
-                        id_,
-                        commit.id,
-                        uriMember);
+                    JAMI_WARNING("[Account {}] [Conversation {}] Commit {} with invalid member URI {}. Please ensure "
+                                 "that you are using the latest version of Jami, or that one of your contacts is not "
+                                 "performing any unwanted actions.",
+                                 accountId_,
+                                 id_,
+                                 commit.id,
+                                 uriMember);
 
                     emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_,
                                                                                  id_,
@@ -2922,9 +2924,8 @@ ConversationRepository::Impl::validCommits(const std::vector<ConversationCommit>
                 }
                 if (action == "add") {
                     if (!checkValidAdd(userDevice, uriMember, commit.id, commit.parents[0])) {
-                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed add commit {}. "
-                                     "Please ensure that you are using the latest "
-                                     "version of Jami, or that one of your contacts is not "
+                        JAMI_WARNING("[Account {}] [Conversation {}] Malformed add commit {}. Please ensure that you "
+                                     "are using the latest version of Jami, or that one of your contacts is not "
                                      "performing any unwanted actions.",
                                      accountId_,
                                      id_,
@@ -4261,10 +4262,8 @@ ConversationRepository::convCommitsToMap(const std::vector<ConversationCommit>& 
     std::vector<std::map<std::string, std::string>> result = {};
     result.reserve(commits.size());
     for (const auto& commit : commits) {
-        auto message = pimpl_->convCommitToMap(commit);
-        if (message == std::nullopt)
-            continue;
-        result.emplace_back(*message);
+        if (auto message = pimpl_->convCommitToMap(commit))
+            result.emplace_back(*message);
     }
     return result;
 }
