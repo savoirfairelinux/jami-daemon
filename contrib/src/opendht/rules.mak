@@ -1,6 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := 3.5.5rc1
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/v$(OPENDHT_VERSION).tar.gz
+OPENDHT_VERSION := 6884fbc6e9e85250b0f96dd45a32142e3fa34d68
+OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht >= 3.3.0'),)
@@ -8,7 +8,7 @@ PKGS_FOUND += opendht
 endif
 
 # Avoid building distro-provided dependencies in case opendht was built manually
-DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio
+DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio simdutf
 
 OPENDHT_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_TESTING=Off \
