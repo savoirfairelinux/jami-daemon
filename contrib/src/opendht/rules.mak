@@ -7,7 +7,7 @@ ifeq ($(call need_pkg,'opendht >= 3.3.0'),)
 PKGS_FOUND += opendht
 endif
 
-DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio fmt
+DEPS_opendht += msgpack argon2 libressl restinio jsoncpp gnutls asio fmt simdutf
 
 OPENDHT_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_TESTING=Off \
