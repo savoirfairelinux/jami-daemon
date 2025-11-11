@@ -17,7 +17,6 @@
 
 #include "ringbufferpool.h"
 #include "ringbuffer.h"
-#include "ring_types.h" // for SIZEBUF
 #include "logger.h"
 
 #include <limits>
@@ -110,7 +109,7 @@ RingBufferPool::createRingBuffer(const std::string& id)
         return rbuf;
     }
 
-    rbuf.reset(new RingBuffer(id, SIZEBUF, internalAudioFormat_));
+    rbuf.reset(new RingBuffer(id, internalAudioFormat_));
     ringBufferMap_.emplace(id, std::weak_ptr<RingBuffer>(rbuf));
     return rbuf;
 }

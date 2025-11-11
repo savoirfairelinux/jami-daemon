@@ -46,7 +46,7 @@ AudioLayer::AudioLayer(const AudioPreference& pref)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
-    , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
+    , urgentRingBuffer_("urgentRingBuffer_id", audioFormat_)
     , resampler_(new Resampler)
     , lastNotificationTime_()
 {
