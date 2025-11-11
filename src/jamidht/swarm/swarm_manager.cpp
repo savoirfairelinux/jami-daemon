@@ -364,6 +364,13 @@ SwarmManager::getAllNodes() const
     return routing_table.getAllNodes();
 }
 
+bool
+SwarmManager::isConnected() const
+{
+    std::lock_guard lock(mutex);
+    return !routing_table.isEmpty();
+}
+
 void
 SwarmManager::deleteNode(std::vector<NodeId> nodes)
 {
