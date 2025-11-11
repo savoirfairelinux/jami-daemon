@@ -66,11 +66,7 @@ Base64Test::decodingTestSuccess()
 void
 Base64Test::decodingTestFail()
 {
-    // Currently, the input is not validated, i.e. the function most not throw an
-    // exception if decoding fails to make sure calling code not expecting any
-    // is no broken. (Some validation should be implemented sometimes later, though.
-    jami::base64::decode(test_invalid_base64);
-    CPPUNIT_ASSERT(true);
+    CPPUNIT_ASSERT_THROW(jami::base64::decode(test_invalid_base64), jami::base64::base64_exception);
 }
 
 } // namespace test
