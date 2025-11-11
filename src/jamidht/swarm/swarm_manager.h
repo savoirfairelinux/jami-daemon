@@ -80,6 +80,12 @@ public:
     void changeMobility(const NodeId& nodeId, bool isMobile);
 
     /**
+     * Check if swarm manager is connected
+     * @return true if the swarm has at least one connected node, false if not
+     */
+    bool isConnected() const;
+
+    /**
      * get all nodes from the different tables in bucket
      */
     std::vector<NodeId> getAllNodes() const;
@@ -123,7 +129,7 @@ public:
     {
         JAMI_DEBUG("SwarmManager {:s} has {:d} nodes in table [P = {}]",
                    getId().to_c_str(),
-                   routing_table.getRoutingTableNodeCount(),
+                   routing_table.getNodeCount(),
                    isMobile_);
         // print nodes of routingtable
         for (auto& bucket : routing_table.getBuckets()) {

@@ -272,7 +272,7 @@ RoutingTableTest::distribution()
 {
     std::vector<unsigned> dist(8);
     for (const auto& sm : swarmManagers) {
-        auto val = sm.second->getRoutingTable().getRoutingTableNodeCount();
+        auto val = sm.second->getRoutingTable().getNodeCount();
         if (dist.size() <= val)
             dist.resize(val + 1);
         dist[val]++;

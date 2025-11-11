@@ -697,7 +697,7 @@ void
 Conversation::Impl::disconnectFromPeer(const std::string& peerUri)
 {
     // Remove nodes from swarmManager
-    const auto nodes = swarmManager_->getRoutingTable().getAllNodes();
+    const auto nodes = swarmManager_->getAllNodes();
     std::vector<NodeId> toRemove;
     for (const auto node : nodes)
         if (peerUri == repository_->uriFromDevice(node.toString()))
@@ -1365,7 +1365,7 @@ Conversation::connectivityChanged()
 std::vector<jami::DeviceId>
 Conversation::getDeviceIdList() const
 {
-    return pimpl_->swarmManager_->getRoutingTable().getAllNodes();
+    return pimpl_->swarmManager_->getAllNodes();
 }
 
 std::shared_ptr<Typers>
@@ -1515,8 +1515,7 @@ Conversation::peersToSyncWith() const
 bool
 Conversation::isBootstrapped() const
 {
-    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
-    return !routingTable.getNodes().empty();
+    return pimpl_->swarmManager_->isConnected();
 }
 
 std::string
@@ -2294,7 +2293,7 @@ Conversation::checkBootstrapMember(const asio::error_code& ec, std::vector<std::
     if (ec == asio::error::operation_aborted)
         return;
     auto acc = pimpl_->account_.lock();
-    if (pimpl_->swarmManager_->getRoutingTable().getNodes().size() > 0 or not acc)
+    if (pimpl_->swarmManager_->isConnected() or not acc)
         return;
     // We bootstrap the DRT with devices who already wrote in the repository.
     // However, in a conversation, a large number of devices may just watch
