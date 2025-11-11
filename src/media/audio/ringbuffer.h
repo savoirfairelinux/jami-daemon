@@ -45,7 +45,7 @@ public:
      * Constructor
      * @param size  Size of the buffer to create
      */
-    RingBuffer(const std::string& id, size_t size, AudioFormat format = AudioFormat::MONO());
+    RingBuffer(const std::string& id, AudioFormat format = AudioFormat::MONO());
 
     /**
      * Destructor

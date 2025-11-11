@@ -30,7 +30,7 @@ namespace jami {
 
 static constexpr const int RMS_SIGNAL_INTERVAL = 5;
 
-RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat format)
+RingBuffer::RingBuffer(const std::string& rbuf_id, AudioFormat format)
     : id(rbuf_id)
     , endPos_(0)
     , format_(format)

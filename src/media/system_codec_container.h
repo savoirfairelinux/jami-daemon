@@ -15,11 +15,10 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __SYSTEM_CODEC_CONTAINER_H__
-#define __SYSTEM_CODEC_CONTAINER_H__
+#pragma once
 
 #include "media_codec.h"
-#include "ring_types.h"
+#include "global_instance.h"
 
 #include <string>
 #include <vector>
@@ -60,5 +59,3 @@ private:
 };
 
 } // namespace jami
-
-#endif // SYSTEM_CODEC_CONTAINER

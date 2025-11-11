@@ -99,7 +99,7 @@ libjami_la_SOURCES = \
 		fileutils.h \
 		archiver.h \
 		noncopyable.h \
-		ring_types.h \
+		global_instance.h \
 		compiler_intrinsics.h \
 		account_schema.h \
 		registration_states.h \

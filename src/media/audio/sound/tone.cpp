@@ -20,7 +20,6 @@
  */
 #include "tone.h"
 #include "logger.h"
-#include "ring_types.h"
 #include "string_utils.h"
 
 #include <vector>

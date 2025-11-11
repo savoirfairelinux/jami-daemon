@@ -44,7 +44,7 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/rational.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/registration_states.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/ring_api.cpp"
-      "${CMAKE_CURRENT_SOURCE_DIR}/ring_types.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/global_instance.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/scheduled_executor.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/scheduled_executor.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/string_utils.cpp"
