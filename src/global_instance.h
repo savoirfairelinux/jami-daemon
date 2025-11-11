@@ -15,8 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RING_TYPES_H_
-#define RING_TYPES_H_
+#pragma once
 
 #include <type_traits>
 #include <memory>
@@ -26,15 +25,6 @@
 #include <ciso646> // fix windows compiler bug
 
 namespace jami {
-
-static constexpr size_t SIZEBUF = 16000; /** About 62.5ms of buffering at 48kHz */
-
-/**
- * This meta-function is used to enable a template overload
- * only if given class T is a base of class U
- */
-template<class T, class U>
-using enable_if_base_of = typename std::enable_if<std::is_base_of<T, U>::value, T>::type;
 
 /**
  * Return a shared pointer on an auto-generated global instance of class T.
@@ -54,7 +44,7 @@ getGlobalInstance()
     static std::recursive_mutex mutex; // recursive as instance calls recursively
     static std::weak_ptr<T> wlink;
 
-    std::unique_lock<std::recursive_mutex> lock(mutex);
+    std::unique_lock lock(mutex);
 
     if (wlink.expired()) {
         static signed counter {MaxRespawn};
@@ -71,5 +61,3 @@ getGlobalInstance()
 }
 
 } // namespace jami
-
-#endif // RING_TYPES_H_

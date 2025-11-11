@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include "ring_types.h"
 #include "noncopyable.h"
 #include "audio_format.h"
 #include "media_buffer.h"

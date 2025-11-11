@@ -23,7 +23,6 @@
 #include "sip/sipaccountbase.h"
 #include "sip/siptransport.h"
 #include "noncopyable.h"
-#include "ring_types.h" // enable_if_base_of
 #include "sipaccount_config.h"
 
 #include <pjsip/sip_transport_tls.h>

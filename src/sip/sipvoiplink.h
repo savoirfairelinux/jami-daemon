@@ -20,7 +20,6 @@
 #include "config.h"
 #endif
 
-#include "ring_types.h"
 #include "noncopyable.h"
 
 #include <dhtnet/ip_utils.h>
