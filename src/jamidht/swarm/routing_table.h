@@ -54,7 +54,6 @@ struct NodeInfo
 };
 
 class Bucket
-
 {
 public:
     static constexpr int BUCKET_MAX_SIZE = 2;
@@ -303,6 +302,8 @@ class RoutingTable
 public:
     RoutingTable();
 
+    bool isEmpty() const;
+
     /**
      * Add socket to bucket
      * @param socket
@@ -426,13 +427,13 @@ public:
      * Returns number of buckets in routing table
      * @return size of buckets
      */
-    unsigned getRoutingTableSize() const { return buckets.size(); }
+    unsigned size() const { return buckets.size(); }
 
     /**
      * Returns number of total nodes in routing table
      * @return size of nodes
      */
-    unsigned getRoutingTableNodeCount() const
+    unsigned getNodeCount() const
     {
         size_t count = 0;
         for (const auto& b : buckets)

@@ -251,6 +251,17 @@ RoutingTable::RoutingTable()
 }
 
 bool
+RoutingTable::isEmpty() const
+{
+    for (const auto& bucket : buckets) {
+        if (!bucket.isEmpty()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
 RoutingTable::addNode(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
     auto bucket = findBucket(socket->deviceId());
