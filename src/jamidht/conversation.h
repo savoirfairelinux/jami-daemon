@@ -63,6 +63,11 @@ namespace ConversationPreferences {
 static constexpr const char* HOST_CONFERENCES = "hostConferences";
 }
 
+class JamiAccount;
+class ConversationRepository;
+class TransferManager;
+enum class ConversationMode;
+
 /**
  * A ConversationRequest is a request which corresponds to a trust request, but for conversations
  * It's signed by the sender and contains the members list, the conversationId, and the metadatas
@@ -111,6 +116,7 @@ struct ConvInfo
     time_t erased {0};
     std::set<std::string> members;
     std::string lastDisplayed {};
+    ConversationMode mode {0};
 
     ConvInfo() = default;
     ConvInfo(const ConvInfo&) = default;
@@ -126,13 +132,8 @@ struct ConvInfo
 
     Json::Value toJson() const;
 
-    MSGPACK_DEFINE_MAP(id, created, removed, erased, members, lastDisplayed)
+    MSGPACK_DEFINE_MAP(id, created, removed, erased, members, lastDisplayed, mode)
 };
-
-class JamiAccount;
-class ConversationRepository;
-class TransferManager;
-enum class ConversationMode;
 
 using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
