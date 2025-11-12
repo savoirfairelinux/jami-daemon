@@ -105,6 +105,15 @@ struct ConversationRequest
         return true;
     }
 
+    ConversationMode mode() const
+    {
+        try {
+            return static_cast<ConversationMode>(to_int<int>(metadatas.at("mode")));
+        } catch (...) {
+        }
+        return ConversationMode::ONE_TO_ONE;
+    }
+
     MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
 };
 
