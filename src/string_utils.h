@@ -123,6 +123,20 @@ to_int(std::string_view str)
     throw std::system_error(std::make_error_code(ec));
 }
 
+template<typename T>
+T
+to_enum(std::string_view str, T defaultValue)
+{
+    return static_cast<T>(to_int<std::underlying_type_t<T>>(str, static_cast<std::underlying_type_t<T>>(defaultValue)));
+}
+
+template<typename T>
+T
+to_enum(std::string_view str)
+{
+    return static_cast<T>(to_int<std::underlying_type_t<T>>(str));
+}
+
 static inline bool
 starts_with(std::string_view str, std::string_view prefix)
 {
