@@ -437,3 +437,4 @@ private:
 
 } // namespace jami
 MSGPACK_ADD_ENUM(jami::MemberRole);
+MSGPACK_ADD_ENUM(jami::ConversationMode);
