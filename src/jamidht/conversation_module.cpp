@@ -753,6 +753,20 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         setConversationMembers(conversationId, conversation->memberUris("", {}));
 
         lk.lock();
+        if (conv->info.mode != conversation->mode()) {
+            JAMI_ERROR(
+                "[Account {}] [Conversation {}] Cloned conversation mode is {}, but {} was expected from invite.",
+                accountId_,
+                conversationId,
+                static_cast<int>(conversation->mode()),
+                static_cast<int>(conv->info.mode));
+            // TODO: erase conversation after transition period
+            // conversation->erase();
+            // erasePending();
+            // return;
+            conv->info.mode = conversation->mode();
+            addConvInfo(conv->info);
+        }
 
         if (conv->pending && conv->pending->socket)
             conversation->addGitSocket(DeviceId(deviceId), std::move(conv->pending->socket));
@@ -1624,8 +1638,7 @@ ConversationModule::loadConversations()
                                     std::lock_guard lkMtx {ctx->toRmMtx};
                                     ctx->toRm.insert(repository);
                                 } else {
-                                    JAMI_ERROR("No conversation detected for {} but one exists ({}). "
-                                               "Update details",
+                                    JAMI_ERROR("No conversation detected for {} but one exists ({}). Update details",
                                                otherUri,
                                                repository);
                                     std::lock_guard lkMtx {ctx->toRmMtx};
@@ -1919,9 +1932,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
         emitSignal<libjami::ConversationSignal::ConversationRequestReceived>(pimpl_->accountId_, conversationId, reqMap);
         pimpl_->needsSyncingCb_({});
     } else {
-        JAMI_DEBUG("[Account {}] Received a request for a conversation "
-                   "already existing. Ignore",
-                   pimpl_->accountId_);
+        JAMI_DEBUG("[Account {}] Received a request for a conversation already existing. Ignore", pimpl_->accountId_);
     }
 }
 
