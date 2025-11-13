@@ -136,6 +136,7 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     c->second.removed = std::time(nullptr);
     c->second.confirmed = false;
     c->second.banned = ban;
+    c->second.conversationId = "";
     auto uri = h.toString();
     trust_->setCertificateStatus(uri,
                                  ban ? dhtnet::tls::TrustStore::PermissionStatus::BANNED
