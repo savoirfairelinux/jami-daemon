@@ -37,6 +37,42 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "d16e5ded_8b63812a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-11-13T20:28:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0c7852a4_e09fc618",
+      "revId": "5e0b00d37af3de31d803700ce3a2df32ecfe2a65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d18612c4_727510c3",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 138,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-11-13T20:28:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b79bfd61_1f273758",
+      "revId": "5e0b00d37af3de31d803700ce3a2df32ecfe2a65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "c5c14e31_ccded6c9",
