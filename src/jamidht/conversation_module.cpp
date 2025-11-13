@@ -414,6 +414,9 @@ public:
                                const std::string& oldConvId = "");
     void bootstrap(const std::string& convId);
     void fallbackClone(const asio::error_code& ec, const std::string& conversationId);
+
+    void cloneConversationFrom(const ConversationRequest& request);
+
     void cloneConversationFrom(const std::string& conversationId,
                                const std::string& uri,
                                const std::string& oldConvId = "");
@@ -1403,6 +1406,33 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
 }
 
 void
+ConversationModule::Impl::cloneConversationFrom(const ConversationRequest& request)
+{
+    auto memberHash = dht::InfoHash(request.from);
+    if (!memberHash) {
+        JAMI_WARNING("Invalid member detected: {}", request.from);
+        return;
+    }
+    auto conv = startConversation(request.conversationId);
+    std::lock_guard lk(conv->mtx);
+    if (conv->info.created == 0) {
+        conv->info = {request.conversationId};
+        conv->info.created = request.received;
+        conv->info.members.emplace(username_);
+        conv->info.members.emplace(request.from);
+        conv->info.mode = request.mode();
+        addConvInfo(conv->info);
+    }
+    accountManager_->forEachDevice(memberHash, [w = weak(), conv](const auto& pk) {
+        auto sthis = w.lock();
+        auto deviceId = pk->getLongId().toString();
+        if (!sthis or deviceId == sthis->deviceId_)
+            return;
+        sthis->cloneConversationFrom(conv, deviceId);
+    });
+}
+
+void
 ConversationModule::Impl::cloneConversationFrom(const std::string& conversationId,
                                                 const std::string& uri,
                                                 const std::string& oldConvId)
@@ -1413,11 +1443,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
         return;
     }
     auto conv = startConversation(conversationId);
-    std::lock_guard lk(conv->mtx);
-    conv->info = {conversationId};
-    conv->info.created = std::time(nullptr);
-    conv->info.members.emplace(username_);
-    conv->info.members.emplace(uri);
     accountManager_->forEachDevice(memberHash,
                                    [w = weak(), conv, conversationId, oldConvId](
                                        const std::shared_ptr<dht::crypto::PublicKey>& pk) {
@@ -1427,7 +1452,6 @@ ConversationModule::Impl::cloneConversationFrom(const std::string& conversationI
                                            return;
                                        sthis->cloneConversationFrom(conv, deviceId, oldConvId);
                                    });
-    addConvInfo(conv->info);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1882,7 +1906,7 @@ ConversationModule::onTrustRequest(const std::string& uri,
             JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, uri, conversationId);
             lk.unlock();
             updateConvForContact(uri, contactInfo->conversationId, conversationId);
-            cloneConversationFrom(conversationId, uri);
+            pimpl_->cloneConversationFrom(req);
             return;
         }
     }
@@ -1933,7 +1957,7 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
             JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, from, convId);
             lk.unlock();
             updateConvForContact(from, contactInfo->conversationId, convId);
-            cloneConversationFrom(convId, from);
+            pimpl_->cloneConversationFrom(req);
             return;
         }
     }
@@ -1996,7 +2020,7 @@ ConversationModule::acceptConversationRequest(const std::string& conversationId,
     pimpl_->rmConversationRequest(conversationId);
     lkCr.unlock();
     pimpl_->accountManager_->acceptTrustRequest(request->from, true);
-    cloneConversationFrom(conversationId, request->from);
+    pimpl_->cloneConversationFrom(*request);
 }
 
 void
