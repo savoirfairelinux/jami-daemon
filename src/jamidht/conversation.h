@@ -22,6 +22,7 @@
 #include "swarm/swarm_protocol.h"
 #include "jami/conversation_interface.h"
 #include "jamidht/typers.h"
+#include "string_utils.h"
 
 #include <json/json.h>
 #include <msgpack.hpp>
@@ -103,6 +104,15 @@ struct ConversationRequest
         } catch (...) {
         }
         return true;
+    }
+
+    ConversationMode mode() const
+    {
+        try {
+            return to_enum<ConversationMode>(metadatas.at("mode"));
+        } catch (...) {
+        }
+        return ConversationMode::ONE_TO_ONE;
     }
 
     MSGPACK_DEFINE_MAP(from, conversationId, metadatas, received, declined)
