@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "fb15abc4_117a52a1",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1517,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-11-13T21:31:45Z",
+      "side": 1,
+      "message": "done in following commit",
+      "parentUuid": "3d26ea28_d16fd169",
+      "range": {
+        "startLine": 1512,
+        "startChar": 4,
+        "endLine": 1517,
+        "endChar": 84
+      },
+      "revId": "05fc0ac19a2bc3ce6655037d383298501f5cea7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "548ba3f6_1cbfbebb",
