@@ -555,9 +555,9 @@ add_initial_files(GitRepository& repo,
 {
     auto deviceId = account->currentDeviceId();
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
-    auto adminsPath = repoPath / "admins";
-    auto devicesPath = repoPath / "devices";
-    auto invitedPath = repoPath / "invited";
+    auto adminsPath = repoPath / MemberPath::ADMINS;
+    auto devicesPath = repoPath / MemberPath::DEVICES;
+    auto invitedPath = repoPath / MemberPath::INVITED;
     auto crlsPath = repoPath / "CRLs" / deviceId;
 
     if (!dhtnet::fileutils::recursive_mkdir(adminsPath, 0700)) {
@@ -1305,7 +1305,7 @@ ConversationRepository::Impl::checkValidAdd(const std::string& userDevice,
     }
 
     // Check that user not in /banned
-    std::string bannedFile = std::string("banned") + "/" + "members" + "/" + uriMember + ".crt";
+    std::string bannedFile = fmt::format("{}/{}/{}.crt", MemberPath::BANNED, MemberPath::MEMBERS, uriMember);
     if (fileAtTree(bannedFile, treeOld)) {
         JAMI_ERROR("Tried to add banned member: {}", bannedFile);
         return false;
@@ -2566,11 +2566,13 @@ ConversationRepository::Impl::initMembers()
     members_.clear();
     path repoPath = git_repository_workdir(repo.get());
 
-    static const std::vector<std::pair<MemberRole, path>> paths = {{MemberRole::ADMIN, "admins"},
-                                                                   {MemberRole::MEMBER, "members"},
-                                                                   {MemberRole::INVITED, "invited"},
-                                                                   {MemberRole::BANNED, path("banned") / "members"},
-                                                                   {MemberRole::BANNED, path("banned") / "invited"}};
+    static const std::vector<std::pair<MemberRole, path>> paths = {{MemberRole::ADMIN, MemberPath::ADMINS},
+                                                                   {MemberRole::MEMBER, MemberPath::MEMBERS},
+                                                                   {MemberRole::INVITED, MemberPath::INVITED},
+                                                                   {MemberRole::BANNED,
+                                                                    MemberPath::BANNED / MemberPath::MEMBERS},
+                                                                   {MemberRole::BANNED,
+                                                                    MemberPath::BANNED / MemberPath::INVITED}};
 
     std::error_code ec;
     for (const auto& [role, p] : paths) {
@@ -3137,7 +3139,7 @@ ConversationRepository::addMember(const std::string& uri)
     // First, we need to add the member file to the repository if not present
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
 
-    std::filesystem::path invitedPath = repoPath / "invited";
+    std::filesystem::path invitedPath = repoPath / MemberPath::INVITED;
     if (!dhtnet::fileutils::recursive_mkdir(invitedPath, 0700)) {
         JAMI_ERROR("Error when creating {}.", invitedPath);
         return {};
@@ -3614,15 +3616,15 @@ ConversationRepository::join()
         return {};
     }
     auto uri = parentCert->getId().toString();
-    auto membersPath = repoPath / "members";
+    auto membersPath = repoPath / MemberPath::MEMBERS;
     auto memberFile = membersPath / (uri + ".crt");
-    auto adminsPath = repoPath / "admins" / (uri + ".crt");
+    auto adminsPath = repoPath / MemberPath::ADMINS / (uri + ".crt");
     if (std::filesystem::is_regular_file(memberFile) or std::filesystem::is_regular_file(adminsPath)) {
         // Already member, nothing to commit
         return {};
     }
     // Remove invited/uri.crt
-    auto invitedPath = repoPath / "invited";
+    auto invitedPath = repoPath / MemberPath::INVITED;
     dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, uri));
     // Add members/uri.crt
     if (!dhtnet::fileutils::recursive_mkdir(membersPath, 0700)) {
@@ -3678,8 +3680,8 @@ ConversationRepository::leave()
     // Remove related files
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
     auto crt = fmt::format("{}.crt", pimpl_->userId_);
-    auto adminFile = repoPath / "admins" / crt;
-    auto memberFile = repoPath / "members" / crt;
+    auto adminFile = repoPath / MemberPath::ADMINS / crt;
+    auto memberFile = repoPath / MemberPath::MEMBERS / crt;
     auto crlsPath = repoPath / "CRLs";
     std::error_code ec;
 
@@ -3954,7 +3956,7 @@ ConversationRepository::resolveVote(const std::string& uri, const std::string_vi
     if (!repo)
         return {};
     std::filesystem::path repoPath = git_repository_workdir(repo.get());
-    auto adminsPath = repoPath / "admins";
+    auto adminsPath = repoPath / MemberPath::ADMINS;
     auto voteDirectory = repoPath / "votes" / voteType / type / uri;
     for (const auto& certificate : dhtnet::fileutils::readDirectory(adminsPath)) {
         if (certificate.find(".crt") == std::string::npos) {
@@ -4090,7 +4092,9 @@ ConversationRepository::pinCertificates(bool blocking)
         return;
 
     std::string repoPath = git_repository_workdir(repo.get());
-    std::vector<std::string> paths = {repoPath + "admins", repoPath + "members", repoPath + "devices"};
+    std::vector<std::string> paths = {repoPath + MemberPath::ADMINS,
+                                      repoPath + MemberPath::MEMBERS,
+                                      repoPath + MemberPath::DEVICES};
 
     for (const auto& path : paths) {
         if (blocking) {
