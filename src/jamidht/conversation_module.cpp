@@ -1900,15 +1900,13 @@ ConversationModule::onTrustRequest(const std::string& uri,
         vCard::utils::toMap(std::string_view(reinterpret_cast<const char*>(payload.data()), payload.size())));
     auto reqMap = req.toMap();
 
-    if (req.isOneToOne()) {
-        auto contactInfo = pimpl_->accountManager_->getContactInfo(uri);
-        if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() && contactInfo->isActive()) {
-            JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, uri, conversationId);
-            lk.unlock();
-            updateConvForContact(uri, contactInfo->conversationId, conversationId);
-            pimpl_->cloneConversationFrom(req);
-            return;
-        }
+    auto contactInfo = pimpl_->accountManager_->getContactInfo(uri);
+    if (contactInfo && contactInfo->confirmed && !contactInfo->isBanned() && contactInfo->isActive()) {
+        JAMI_LOG("[Account {}] Contact {} is confirmed, cloning {}", pimpl_->accountId_, uri, conversationId);
+        lk.unlock();
+        updateConvForContact(uri, contactInfo->conversationId, conversationId);
+        pimpl_->cloneConversationFrom(req);
+        return;
     }
 
     if (pimpl_->addConversationRequest(conversationId, std::move(req))) {
@@ -1950,6 +1948,8 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
                    static_cast<int>(oldReq->declined));
         return;
     }
+    req.received = std::time(nullptr);
+    req.from = from;
 
     if (isOneToOne) {
         auto contactInfo = pimpl_->accountManager_->getContactInfo(from);
@@ -1962,8 +1962,6 @@ ConversationModule::onConversationRequest(const std::string& from, const Json::V
         }
     }
 
-    req.received = std::time(nullptr);
-    req.from = from;
     auto reqMap = req.toMap();
     if (pimpl_->addConversationRequest(convId, std::move(req))) {
         lk.unlock();
