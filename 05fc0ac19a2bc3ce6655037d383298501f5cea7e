@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3d26ea28_d16fd169",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1517,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-13T18:56:46Z",
+      "side": 1,
+      "message": "Should we also add named constants for \"admins\", \"members\" and \"invited\"?",
+      "range": {
+        "startLine": 1512,
+        "startChar": 4,
+        "endLine": 1517,
+        "endChar": 84
+      },
+      "revId": "05fc0ac19a2bc3ce6655037d383298501f5cea7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "548ba3f6_1cbfbebb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2802,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-13T18:56:46Z",
+      "side": 1,
+      "message": "Can we also get rid of the callback in `validClone`? The function could either take a reference to a vector as argument, or return a pair like `validFetch` does.",
+      "range": {
+        "startLine": 2801,
+        "startChar": 4,
+        "endLine": 2802,
+        "endChar": 81
+      },
+      "revId": "05fc0ac19a2bc3ce6655037d383298501f5cea7e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
