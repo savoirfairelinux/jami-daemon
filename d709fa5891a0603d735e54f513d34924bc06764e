@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b5668b59_5d8de1ef",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2194,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-13T19:30:52Z",
+      "side": 1,
+      "message": "Given that `optHistory` is a local variable, isn\u0027t locking the mutex unnecessary?",
+      "range": {
+        "startLine": 2193,
+        "startChar": 4,
+        "endLine": 2194,
+        "endChar": 42
+      },
+      "revId": "d709fa5891a0603d735e54f513d34924bc06764e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
