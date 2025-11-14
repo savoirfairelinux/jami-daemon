@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b3937c40_ac054af2",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1308,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-14T15:05:56Z",
+      "side": 1,
+      "message": "Same issue as https://review.jami.net/c/jami-daemon/+/32347/comment/692a6ee4_61827e6b/, this produces something like\n```\n\"banned\"/\"members\"/2b08706b1eda593c19b8b57e66a411e7810a5f23.crt\n```\ninstead of the expected\n```\nbanned/members/2b08706b1eda593c19b8b57e66a411e7810a5f23.crt\n```",
+      "range": {
+        "startLine": 1308,
+        "startChar": 4,
+        "endLine": 1308,
+        "endChar": 109
+      },
+      "revId": "58afc2cdbd1d2747d30868141662ec59610dd5ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7caa5fe7_77736536",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 4097,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-14T15:05:56Z",
+      "side": 1,
+      "message": "Looks like this doesn\u0027t compile on MSVC.",
+      "range": {
+        "startLine": 4095,
+        "startChar": 38,
+        "endLine": 4097,
+        "endChar": 68
+      },
+      "revId": "58afc2cdbd1d2747d30868141662ec59610dd5ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
