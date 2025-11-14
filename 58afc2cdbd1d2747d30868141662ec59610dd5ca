@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0cd84941_7c09f24f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1308,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-14T16:04:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b3937c40_ac054af2",
+      "range": {
+        "startLine": 1308,
+        "startChar": 4,
+        "endLine": 1308,
+        "endChar": 109
+      },
+      "revId": "58afc2cdbd1d2747d30868141662ec59610dd5ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "7caa5fe7_77736536",
@@ -37,6 +61,30 @@
       "writtenOn": "2025-11-14T15:05:56Z",
       "side": 1,
       "message": "Looks like this doesn\u0027t compile on MSVC.",
+      "range": {
+        "startLine": 4095,
+        "startChar": 38,
+        "endLine": 4097,
+        "endChar": 68
+      },
+      "revId": "58afc2cdbd1d2747d30868141662ec59610dd5ca",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4fb8be67_bcd0b574",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 4097,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-14T16:04:30Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7caa5fe7_77736536",
       "range": {
         "startLine": 4095,
         "startChar": 38,
