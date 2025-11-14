@@ -1,10 +1,10 @@
 # FMT
-FMT_VERSION := 10.1.0
+FMT_VERSION := 12.1.0
 PKG_CPE += cpe:2.3:a:fmt:fmt:$(FMT_VERSION):*:*:*:*:*:*:*
 FMT_URL := https://github.com/fmtlib/fmt/archive/$(FMT_VERSION).tar.gz
 
 PKGS += fmt
-ifeq ($(call need_pkg,'fmt >= 7.0'),)
+ifeq ($(call need_pkg,'fmt >= 10.1'),)
 PKGS_FOUND += fmt
 endif
 
