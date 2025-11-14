@@ -518,16 +518,16 @@ public:
     std::string_view bannedType(const std::string& uri) const
     {
         auto crt = fmt::format("{}.crt", uri);
-        auto bannedMember = repoPath_ / "banned" / "members" / crt;
+        auto bannedMember = repoPath_ / MemberPath::BANNED / MemberPath::MEMBERS / crt;
         if (std::filesystem::is_regular_file(bannedMember))
             return "members"sv;
-        auto bannedAdmin = repoPath_ / "banned" / "admins" / crt;
+        auto bannedAdmin = repoPath_ / MemberPath::BANNED / MemberPath::ADMINS / crt;
         if (std::filesystem::is_regular_file(bannedAdmin))
             return "admins"sv;
-        auto bannedInvited = repoPath_ / "banned" / "invited" / uri;
+        auto bannedInvited = repoPath_ / MemberPath::BANNED / MemberPath::INVITED / uri;
         if (std::filesystem::is_regular_file(bannedInvited))
             return "invited"sv;
-        auto bannedDevice = repoPath_ / "banned" / "devices" / crt;
+        auto bannedDevice = repoPath_ / MemberPath::BANNED / MemberPath::DEVICES / crt;
         if (std::filesystem::is_regular_file(bannedDevice))
             return "devices"sv;
         return {};
@@ -664,7 +664,7 @@ public:
 bool
 Conversation::Impl::isAdmin() const
 {
-    auto adminsPath = repoPath_ / "admins";
+    auto adminsPath = repoPath_ / MemberPath::ADMINS;
     return std::filesystem::is_regular_file(fileutils::getFullPath(adminsPath, userId_ + ".crt"));
 }
 
@@ -1509,12 +1509,12 @@ bool
 Conversation::isMember(const std::string& uri, bool includeInvited) const
 {
     auto uriCrt = uri + ".crt"sv;
-    if (std::filesystem::is_regular_file(pimpl_->repoPath_ / "admins" / uriCrt)
-        || std::filesystem::is_regular_file(pimpl_->repoPath_ / "members" / uriCrt)) {
+    if (std::filesystem::is_regular_file(pimpl_->repoPath_ / MemberPath::ADMINS / uriCrt)
+        || std::filesystem::is_regular_file(pimpl_->repoPath_ / MemberPath::MEMBERS / uriCrt)) {
         return true;
     }
     if (includeInvited) {
-        if (std::filesystem::is_regular_file(pimpl_->repoPath_ / "invited" / uri)) {
+        if (std::filesystem::is_regular_file(pimpl_->repoPath_ / MemberPath::INVITED / uri)) {
             return true;
         }
         if (mode() == ConversationMode::ONE_TO_ONE) {

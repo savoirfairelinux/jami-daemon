@@ -102,6 +102,16 @@ struct ConversationCommit
 
 enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
 
+namespace MemberPath {
+
+static const std::filesystem::path ADMINS {"admins"};
+static const std::filesystem::path MEMBERS {"members"};
+static const std::filesystem::path INVITED {"invited"};
+static const std::filesystem::path BANNED {"banned"};
+static const std::filesystem::path DEVICES {"devices"};
+
+} // namespace MemberPath
+
 struct ConversationMember
 {
     std::string uri;
