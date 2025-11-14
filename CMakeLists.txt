@@ -539,6 +539,7 @@ if(MSVC)
            /wd4244;
            /wd4267;
            /Zc:__cplusplus;
+           /utf-8;
            ${DEFAULT_CXX_EXCEPTION_HANDLING}
        )
    endif()
