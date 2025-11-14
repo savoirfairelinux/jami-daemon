@@ -2475,7 +2475,6 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
         // New request
         if (!pimpl_->addConversationRequest(convId, req))
             continue;
-        lk.unlock();
 
         if (req.declined != 0) {
             // Request declined
@@ -2485,9 +2484,11 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
                      deviceId);
             pimpl_->syncingMetadatas_.erase(convId);
             pimpl_->saveMetadata();
+            lk.unlock();
             emitSignal<libjami::ConversationSignal::ConversationRequestDeclined>(pimpl_->accountId_, convId);
             continue;
         }
+        lk.unlock();
 
         JAMI_LOG("[Account {:s}] New request detected for conversation {:s} (device {:s})",
                  pimpl_->accountId_,
@@ -2703,6 +2704,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
         std::lock_guard lk(conv->mtx);
         std::map<std::string, std::string> md;
         {
+            std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
             auto syncingMetadatasIt = pimpl_->syncingMetadatas_.find(conversationId);
             if (syncingMetadatasIt != pimpl_->syncingMetadatas_.end()) {
                 if (conv->conversation) {
