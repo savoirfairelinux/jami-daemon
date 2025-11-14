@@ -2703,6 +2703,7 @@ ConversationModule::conversationInfos(const std::string& conversationId) const
         std::lock_guard lk(conv->mtx);
         std::map<std::string, std::string> md;
         {
+            std::lock_guard lk(pimpl_->conversationsRequestsMtx_);
             auto syncingMetadatasIt = pimpl_->syncingMetadatas_.find(conversationId);
             if (syncingMetadatasIt != pimpl_->syncingMetadatas_.end()) {
                 if (conv->conversation) {
