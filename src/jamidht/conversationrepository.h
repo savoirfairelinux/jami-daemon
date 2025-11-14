@@ -160,13 +160,11 @@ public:
      * @param account           The account getting the conversation
      * @param deviceId          Remote device
      * @param conversationId    Conversation to clone
-     * @param checkCommitCb     Used if commits should be treated
      */
-    static LIBJAMI_TEST_EXPORT std::unique_ptr<ConversationRepository> cloneConversation(
-        const std::shared_ptr<JamiAccount>& account,
-        const std::string& deviceId,
-        const std::string& conversationId,
-        std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb = {});
+    static LIBJAMI_TEST_EXPORT std::pair<std::unique_ptr<ConversationRepository>, std::vector<ConversationCommit>>
+    cloneConversation(const std::shared_ptr<JamiAccount>& account,
+                      const std::string& deviceId,
+                      const std::string& conversationId);
 
     /**
      * Open a conversation repository for an account and an id
@@ -332,7 +330,12 @@ public:
      * @return the validated commits and if an error occurs
      */
     std::pair<std::vector<ConversationCommit>, bool> validFetch(const std::string& remoteDevice) const;
-    bool validClone(std::function<void(std::vector<ConversationCommit>)>&& checkCommitCb) const;
+
+    /**
+     * Validate a clone
+     * @return the validated commits and false if an error occurs
+     */
+    std::pair<std::vector<ConversationCommit>, bool> validClone() const;
 
     /**
      * Verify the signature against the given commit
