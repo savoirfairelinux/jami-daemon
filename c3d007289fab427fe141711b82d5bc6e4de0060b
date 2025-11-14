@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "633de90e_060e1414",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-14T20:51:43Z",
+      "side": 1,
+      "message": "`syncingMetadatas_` is also modified without a lock in `ConversationModule::onSyncData`, does that need to be changed as well?",
+      "revId": "c3d007289fab427fe141711b82d5bc6e4de0060b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
