@@ -1,6 +1,6 @@
 {
     "name": "dhtnet",
-    "version": "6c5ee3a21556d668d047cdedb5c4b746c3c6bdb2",
+    "version": "03c6ce608daf906fc98b82f114b61ebfdeae5dc6",
     "url": "https://review.jami.net/plugins/gitiles/dhtnet/+archive/__VERSION__.tar.gz",
     "deps": [
         "opendht",
@@ -10,7 +10,7 @@
         "upnp",
         "natpmp"
     ],
-    "use_cmake" : true,
+    "use_cmake": true,
     "defines": [
         "BUILD_SHARED_LIBS=0",
         "BUILD_TESTING=0",
@@ -19,7 +19,7 @@
     "patches": [],
     "win_patches": [],
     "project_paths": [],
-    "with_env" : "",
+    "with_env": "",
     "custom_scripts": {
         "pre_build": [
             "IF exist \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" ( rmdir /S /Q \"%DAEMON_DIR%\\contrib\\msvc\\include\\dhtnet\" )"
