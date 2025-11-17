@@ -56,28 +56,6 @@ index dce30c70..1e7661d8 100644
  # Options
  option (BUILD_SHARED_LIBS "Build shared library" ON)
  option (OPENDHT_USE_PKGCONFIG "Use pkg-config to find installed libraries where possible" ${POSSIBLE_PKGCONFIG})
-@@ -127,10 +137,10 @@ if (NOT MSVC)
-             set(JSONCPP_INCLUDE_DIRS ${Jsoncpp_INCLUDE_DIRS})
-             set(JSONCPP_FOUND ${Jsoncpp_FOUND})
-         endif()
--        #  libfmt 
-+        #  libfmt
-         pkg_search_module (fmt REQUIRED IMPORTED_TARGET fmt)
-         # libreadline
--        if (OPENDHT_TOOLS AND NOT APPLE)   
-+        if (OPENDHT_TOOLS AND NOT APPLE)
-             pkg_search_module(readline REQUIRED IMPORTED_TARGET readline)
-             message(STATUS "libreadline: version ${readline_VERSION}")
-             set(READLINE_VERSION ${readline_VERSION})
-@@ -218,7 +228,7 @@ if (NOT MSVC)
-                     FetchContent_Declare(msgpack-c
-                         GIT_REPOSITORY "https://github.com/msgpack/msgpack-c.git"
-                         GIT_TAG        "cpp-7.0.0"
--                        FIND_PACKAGE_ARGS NAMES msgpack-c 
-+                        FIND_PACKAGE_ARGS NAMES msgpack-c
-                     )
-                     set(MSGPACK_USE_BOOST OFF CACHE INTERNAL "Workaround for Boost")
-                     FetchContent_MakeAvailable(msgpack-c)
 @@ -287,32 +297,57 @@ if (NOT MSVC)
  else () # MSVC
      include_directories(src/compat/msvc)
@@ -225,87 +203,6 @@ index dce30c70..1e7661d8 100644
  endif ()
  
  # Definitions
-@@ -544,7 +591,7 @@ if (MSVC)
-     message(STATUS "Build pipeline: Windows/MSVC + vcpkg")
-     message(STATUS "Used GnuTLS library: ${GNUTLS_LIBRARIES}")
-     message(STATUS "Used NETTLE library: ${NETTLE_LIBRARY}")
--    target_link_libraries(opendht 
-+    target_link_libraries(opendht
-         PRIVATE
-             unofficial::argon2::libargon2
-             nettle_lib
-@@ -574,7 +621,7 @@ else()
-         target_link_libraries(opendht PRIVATE "-framework CoreFoundation" "-framework Security")
-     endif ()
-     # Generalized UNIX/MSYS2 build pipeline
--    if (OPENDHT_USE_PKGCONFIG) 
-+    if (OPENDHT_USE_PKGCONFIG)
-         target_link_libraries(opendht
-             PRIVATE
-                 PkgConfig::argon2
-@@ -585,7 +632,7 @@ else()
-                 PkgConfig::fmt
-                 ${JSONCPP_LIBRARIES}
-         )
--        if(OPENDHT_TOOLS) 
-+        if(OPENDHT_TOOLS)
-             message(STATUS ${READLINE_LIBRARIES})
-             target_link_libraries(opendht PUBLIC ${READLINE_LIBRARIES})
-         endif()
-@@ -612,7 +659,7 @@ else()
-         else()
-             target_link_libraries(opendht PUBLIC fmt::fmt-header-only)
-         endif()
--        if(OPENDHT_TOOLS) 
-+        if(OPENDHT_TOOLS)
-             target_link_libraries(opendht PUBLIC ${READLINE_LIBRARIES})
-         endif()
-         if (OPENDHT_PROXY_OPENSSL)
-@@ -623,7 +670,7 @@ else()
-         target_link_libraries(opendht PUBLIC ${MSGPACK_TARGET})
-     endif()
-     if(OPENDHT_HTTP)
--        target_link_libraries(opendht 
-+        target_link_libraries(opendht
-             PUBLIC # Required for linking tests
-                 ${llhttp_target}
-                 ${restinio_target}
-@@ -649,7 +696,7 @@ endif()
- if (BUILD_SHARED_LIBS)
-     set_target_properties (opendht PROPERTIES IMPORT_SUFFIX "_import.lib")
-     set_target_properties (opendht PROPERTIES SOVERSION ${opendht_VERSION_MAJOR} VERSION ${opendht_VERSION})
--    target_compile_definitions(opendht PRIVATE OPENDHT_BUILD) 
-+    target_compile_definitions(opendht PRIVATE OPENDHT_BUILD)
-     target_compile_definitions(opendht PUBLIC opendht_EXPORTS)
- endif ()
- 
-@@ -684,7 +731,7 @@ if (WIN32)
-             "winspool\\.drv"
-             "mpr\\.dll"
-             "version\\.dll"
--            "ws2_32\\.dll" 
-+            "ws2_32\\.dll"
-             "vcruntime.*\\.dll"
-             "msvcp.*\\.dll"
-             "wpax.*\\.dll"
-@@ -741,7 +788,7 @@ if (OPENDHT_PYTHON)
-             list(APPEND OPENDHT_PYTHON_LIBRARY_DIRS_LIST ${MSGPACK_LIBRARY_DIRS})
-         endif()
-     endif()
--    
-+
-     # Add the directory where the OpenDHT library is built
-     if(WIN32)
-         # Append actual configuration-specific build directories instead of an unevaluated $<CONFIG> generator expression
-@@ -763,7 +810,7 @@ if (OPENDHT_PYTHON)
-             endif()
-         endif()
-     endif()
--    
-+
-     if (OPENDHT_PYTHON_INCLUDE_DIRS_LIST)
-         list(REMOVE_DUPLICATES OPENDHT_PYTHON_INCLUDE_DIRS_LIST)
-         string(JOIN "\", \"" OPENDHT_PYTHON_INCLUDE_DIRS ${OPENDHT_PYTHON_INCLUDE_DIRS_LIST})
 diff --git a/find_package/FindGnuTLS.cmake b/find_package/FindGnuTLS.cmake
 new file mode 100644
 index 00000000..2a48912b
