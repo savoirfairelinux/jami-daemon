@@ -1,6 +1,6 @@
 {
     "name": "opendht",
-    "version": "deee57b6dd8c32e3706a413a74733f2ed5c6de12",
+    "version": "v3.5.5rc2",
     "url": "https://github.com/savoirfairelinux/opendht/archive/__VERSION__.tar.gz",
     "deps": [
         "argon2",
@@ -10,7 +10,7 @@
         "msgpack",
         "restinio"
     ],
-    "use_cmake" : true,
+    "use_cmake": true,
     "defines": [
         "BUILD_SHARED_LIBS=0",
         "BUILD_TESTING=0",
@@ -22,10 +22,12 @@
         "OPENDHT_TOOLS=0",
         "CMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"
     ],
-    "patches": ["0001-cmake-fix-jami-contrib-linking.patch"],
+    "patches": [
+        "0001-cmake-fix-jami-contrib-linking.patch"
+    ],
     "win_patches": [],
     "project_paths": [],
-    "with_env" : "",
+    "with_env": "",
     "custom_scripts": {
         "pre_build": [],
         "build": [],
