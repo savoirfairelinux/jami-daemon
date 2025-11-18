@@ -447,10 +447,10 @@ struct ArchiveAccountManager::LinkDeviceContext : public DeviceContextBase
     std::string authScheme {fileutils::ARCHIVE_AUTH_SCHEME_NONE};
     std::string credentialsFromUser {""};
 
-    LinkDeviceContext(dht::crypto::Identity id)
+    LinkDeviceContext(std::shared_ptr<dhtnet::ConnectionManager::Config> config)
         : DeviceContextBase(0, AuthDecodingState::HANDSHAKE)
-        , tmpId(std::move(id))
-        , tempConnMgr(tmpId)
+        , tmpId(config->id)
+        , tempConnMgr(config)
     {}
 };
 
@@ -552,18 +552,25 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
             JAMI_WARNING("[LinkDevice] Failed to get the ArchiveAccountManager.");
             return;
         }
-
         // establish linkDevCtx
-        ctx->linkDevCtx = std::make_shared<LinkDeviceContext>(
-            dht::crypto::generateIdentity("Jami Temporary device", user));
+        auto config = std::make_shared<dhtnet::ConnectionManager::Config>();
+        config->id = dht::crypto::generateIdentity("Jami Temporary device", user);
+        config->ioContext = Manager::instance().ioContext();
+        config->factory = Manager::instance().getIceTransportFactory();
+        config->rng = std::make_unique<std::mt19937_64>(Manager::instance().getSeededRandomEngine());
+        config->turnServer = DEFAULT_TURN_SERVER;
+        config->turnServerUserName = DEFAULT_TURN_USERNAME;
+        config->turnServerPwd = DEFAULT_TURN_PWD;
+        config->turnServerRealm = DEFAULT_TURN_REALM;
+
+        ctx->linkDevCtx = std::make_shared<LinkDeviceContext>(config);
         JAMI_LOG("[LinkDevice] Established linkDevCtx. {} {} {}.",
                  fmt::ptr(this_),
                  fmt::ptr(ctx),
                  fmt::ptr(ctx->linkDevCtx));
 
         // set up auth channel code and also use it as opId
-        auto gen = Manager::instance().getSeededRandomEngine();
-        ctx->linkDevCtx->opId = std::uniform_int_distribution<uint64_t>(100000, 999999)(gen);
+        ctx->linkDevCtx->opId = std::uniform_int_distribution<uint64_t>(100000, 999999)(*config->rng);
 #if TARGET_OS_IOS
         ctx->linkDevCtx->tempConnMgr.oniOSConnected(
             [&](const std::string& connType, dht::InfoHash peer_h) { return false; });
