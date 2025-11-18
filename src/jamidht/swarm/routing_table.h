@@ -88,6 +88,7 @@ public:
      * Get connected nodes from bucket
      * @return map of NodeId and NodeInfo
      */
+    const std::map<NodeId, NodeInfo>& getNodes() const { return nodes; }
     std::map<NodeId, NodeInfo>& getNodes() { return nodes; }
 
     /**
@@ -508,6 +509,8 @@ public:
      * @return vector of nodeIds
      */
     std::vector<NodeId> getBucketMobileNodes() const;
+
+    std::vector<NodeId> getConnectedNodes() const;
 
     /**
      * Test if connected nodeId is in specific bucket

@@ -1468,13 +1468,7 @@ Conversation::memberUris(std::string_view filter, const std::set<MemberRole>& fi
 std::vector<NodeId>
 Conversation::peersToSyncWith() const
 {
-    const auto& routingTable = pimpl_->swarmManager_->getRoutingTable();
-    const auto& nodes = routingTable.getNodes();
-    const auto& mobiles = routingTable.getMobileNodes();
-    std::vector<NodeId> s;
-    s.reserve(nodes.size() + mobiles.size());
-    s.insert(s.end(), nodes.begin(), nodes.end());
-    s.insert(s.end(), mobiles.begin(), mobiles.end());
+    auto s = pimpl_->swarmManager_->getConnectedNodes();
     for (const auto& [deviceId, _] : pimpl_->gitSocketList_)
         if (std::find(s.cbegin(), s.cend(), deviceId) == s.cend())
             s.emplace_back(deviceId);

@@ -90,6 +90,8 @@ public:
      */
     std::vector<NodeId> getAllNodes() const;
 
+    std::vector<NodeId> getConnectedNodes() const;
+
     /**
      * Delete nodes from the different tables in bucket
      */

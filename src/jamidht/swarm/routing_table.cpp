@@ -324,10 +324,10 @@ RoutingTable::addMobileNode(const NodeId& nodeId)
     auto bucket = findBucket(nodeId);
 
     if (bucket == buckets.end())
-        return 0;
+        return false;
 
     bucket->addMobileNode(nodeId);
-    return 1;
+    return true;
 }
 
 void
@@ -509,11 +509,26 @@ RoutingTable::getAllNodes() const
         const auto& knownNodes = b.getKnownNodes();
         const auto& mobileNodes = b.getMobileNodes();
         const auto& connectingNodes = b.getConnectingNodes();
-        ret.reserve(nodes.size() + knownNodes.size() + mobileNodes.size() + connectingNodes.size());
+        ret.reserve(ret.size() + nodes.size() + knownNodes.size() + mobileNodes.size() + connectingNodes.size());
         ret.insert(ret.end(), nodes.begin(), nodes.end());
         ret.insert(ret.end(), knownNodes.begin(), knownNodes.end());
         ret.insert(ret.end(), mobileNodes.begin(), mobileNodes.end());
         ret.insert(ret.end(), connectingNodes.begin(), connectingNodes.end());
+    }
+    return ret;
+}
+
+std::vector<NodeId>
+RoutingTable::getConnectedNodes() const
+{
+    std::vector<NodeId> ret;
+    for (const auto& b : buckets) {
+        const auto& nodes = b.getNodes();
+        const auto& mobiles = b.getMobileNodes();
+        ret.reserve(ret.size() + nodes.size() + mobiles.size());
+        for (const auto& n : nodes)
+            ret.emplace_back(n.first);
+        ret.insert(ret.end(), mobiles.begin(), mobiles.end());
     }
     return ret;
 }
