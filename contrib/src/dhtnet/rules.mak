@@ -3,7 +3,7 @@ DHTNET_VERSION := 03c6ce608daf906fc98b82f114b61ebfdeae5dc6
 DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
-DEPS_dhtnet += opendht pjproject asio upnp
+DEPS_dhtnet += opendht pjproject asio upnp fmt
 
 ifndef HAVE_WIN32
 DEPS_dhtnet += natpmp
