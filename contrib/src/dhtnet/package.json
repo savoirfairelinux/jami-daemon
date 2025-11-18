@@ -1,6 +1,6 @@
 {
     "name": "dhtnet",
-    "version": "03c6ce608daf906fc98b82f114b61ebfdeae5dc6",
+    "version": "cad89e2240a029acda10e619158c09d90876e989",
     "url": "https://review.jami.net/plugins/gitiles/dhtnet/+archive/__VERSION__.tar.gz",
     "deps": [
         "opendht",
