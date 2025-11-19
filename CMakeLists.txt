@@ -11,8 +11,6 @@ set(PROJECT_LABEL "libjami")
 ################################################################################
 # Build options
 ################################################################################
-option(JAMI_NATPMP "Build with NAT-PMP" ON)
-option(JAMI_PUPNP "Build with PUPNP" ON)
 option(JAMI_PLUGIN "Build with plugin support" ON)
 option(JAMI_NODEJS "Build the NODEJS binding" OFF)
 option(JAMI_JNI "Build the JNI binding" OFF)
@@ -396,9 +394,6 @@ if (JAMI_VIDEO)
 endif()
 if (JAMI_PLUGIN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
-endif()
-if (JAMI_NATPMP)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_LIBNATPMP)
 endif()
 if (ANDROID)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENSL)
