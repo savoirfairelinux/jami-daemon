@@ -1,5 +1,5 @@
 # libnatpmp
-NATPMP_VERSION := 007c3a53165a0551c877130eea4d966885ce19ae
+NATPMP_VERSION := 0c56980a3dcfab08bd7dd145d49fb4868fbaf1ca
 NATPMP_URL := https://github.com/miniupnp/libnatpmp/archive/${NATPMP_VERSION}.tar.gz
 
 ifndef HAVE_WIN32
@@ -20,10 +20,12 @@ natpmp: libnatpmp-$(NATPMP_VERSION).tar.gz .sum-natpmp
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/natpmp/disable_sysctl_on_ios.patch
 endif
+	$(APPLY) $(SRC)/natpmp/0001-avoid-SIGPIPE-on-macOS-iOS.patch
+	$(APPLY) $(SRC)/natpmp/0001-Add-NATPMP_BUILD_TOOLS-option-to-conditionally-build.patch
 	$(MOVE)
 
 .natpmp: natpmp toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE) .
+	cd $< && $(HOSTVARS) $(CMAKE) -DNATPMP_BUILD_TOOLS=OFF .
 	cd $< && $(MAKE) install
 	cd $< && cp natpmp_declspec.h $(PREFIX)/include/
 	touch $@

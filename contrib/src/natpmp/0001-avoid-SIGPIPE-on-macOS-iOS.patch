@@ -1,0 +1,27 @@
+From 104e42e2bd4c204bfd76e00fd5756f23d49f18f4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Adrien=20B=C3=A9raud?= <adrien.beraud@savoirfairelinux.com>
+Date: Wed, 19 Nov 2025 14:45:39 -0500
+Subject: [PATCH] avoid SIGPIPE on macOS/iOS
+
+---
+ natpmp.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/natpmp.c b/natpmp.c
+index 0fa6fc2..4d8e592 100644
+--- a/natpmp.c
++++ b/natpmp.c
+@@ -84,6 +84,10 @@ NATPMP_LIBSPEC int initnatpmp(natpmp_t * p, int forcegw, in_addr_t forcedgw)
+ 	if(fcntl(p->s, F_SETFL, flags | O_NONBLOCK) < 0)
+ 		return NATPMP_ERR_FCNTLERROR;
+ #endif
++#ifdef SO_NOSIGPIPE
++	int set = 1;
++	setsockopt(p->s, SOL_SOCKET, SO_NOSIGPIPE, (void *)&set, sizeof(int));
++#endif
+ 
+ 	if(forcegw) {
+ 		p->gateway = forcedgw;
+-- 
+2.50.1 (Apple Git-155)
+
