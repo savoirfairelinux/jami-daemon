@@ -175,7 +175,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     std::lock_guard lk(pimpl_->syncConnectionsMtx_);
     pimpl_->syncConnections_[device].emplace_back(socket);
 
-    socket->onShutdown([w = pimpl_->weak_from_this(), device, s = std::weak_ptr(socket)]() {
+    socket->onShutdown([w = pimpl_->weak_from_this(), device, s = std::weak_ptr(socket)](const std::error_code&) {
         if (auto shared = w.lock())
             shared->onChannelShutdown(s.lock(), device);
     });
