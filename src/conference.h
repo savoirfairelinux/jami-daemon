@@ -527,6 +527,11 @@ private:
      * Unbind call's audio from the conference
      */
     void unbindSubCallAudio(const std::string& callId);
+
+    /**
+     * Clear all participant data from the conference
+     */
+    void clearParticipantData(const std::string& callId);
 };
 
 } // namespace jami
