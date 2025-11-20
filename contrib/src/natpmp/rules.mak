@@ -27,5 +27,4 @@ endif
 .natpmp: natpmp toolchain.cmake
 	cd $< && $(HOSTVARS) $(CMAKE) -DNATPMP_BUILD_TOOLS=OFF .
 	cd $< && $(MAKE) install
-	cd $< && cp natpmp_declspec.h $(PREFIX)/include/
 	touch $@
