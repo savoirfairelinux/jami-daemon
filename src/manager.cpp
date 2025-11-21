@@ -484,10 +484,11 @@ Manager::ManagerPimpl::getCurrentDeviceIndex(AudioDeviceType type)
 void
 Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 {
-    const std::string current_callId(base_.getCurrentCallId());
+    const std::string currentCallId(base_.getCurrentCallId());
     CallIdSet subcalls(conf.getSubCalls());
     const size_t n = subcalls.size();
-    JAMI_DEBUG("Process remaining {} participant(s) from conference {}", n, conf.getConfId());
+    JAMI_DEBUG("[conf:{:s}] Process remaining {} subcalls(s)", conf.getConfId(), n);
+    JAMI_DEBUG("[conf:{:s}] Process remaining {} participant(s)", conf.getConfId(), conf.getConferenceInfos().size());
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
@@ -523,20 +524,20 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
                 auto w = call->getAccount();
                 auto account = w.lock();
                 if (!account) {
-                    JAMI_ERR("No account detected");
+                    JAMI_ERROR("[conf:{:s}] Tried to access account but it is no longer available", conf.getConfId());
                     return;
                 }
-                if (current_callId != conf.getConfId())
+                if (currentCallId != conf.getConfId())
                     base_.onHoldCall(account->getAccountID(), call->getCallId());
                 else
                     switchCall(call->getCallId());
             }
 
-            JAMI_DBG("No remaining participants, remove conference");
+            JAMI_DEBUG("[conf:{:s}] Only one participant left, removing conference", conf.getConfId());
             if (auto account = conf.getAccount())
                 account->removeConference(conf.getConfId());
         } else {
-            JAMI_DBG("No remaining participants, remove conference");
+            JAMI_DEBUG("[conf:{:s}] No remaining participants, removing conference", conf.getConfId());
             if (auto account = conf.getAccount())
                 account->removeConference(conf.getConfId());
             unsetCurrentCall();
