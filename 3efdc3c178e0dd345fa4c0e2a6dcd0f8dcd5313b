@@ -18,6 +18,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "e1fb3301_5bdf3e27",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2025-11-21T15:12:41Z",
+      "side": 1,
+      "message": "Hi, I don\u0027t think it will fix the issue you linked. This patch only acts when a subcall is removed from a conference, whereas the issue you linked seems to target the addition of a subcall to a conference. AFAIK other clients don\u0027t share this issue, so I would suspect that it is a android client-side problem and not a daemon-side problem. Might have to do with the way the client updates video renderers on participant addition",
+      "parentUuid": "611c5496_039845e2",
+      "revId": "3efdc3c178e0dd345fa4c0e2a6dcd0f8dcd5313b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e71e5811_c2dd0b14",
