@@ -2260,11 +2260,14 @@ JamiAccount::convModule(bool noCreation)
                                                                 return;
                                                             auto remoteCert = socket->peerCertificate();
                                                             auto uri = remoteCert->issuer->getId().toString();
+                                                            std::unique_lock lk(shared->configurationMutex_);
                                                             if (shared->accountManager()->getCertificateStatus(uri)
                                                                 == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                                                                lk.unlock();
                                                                 cb(nullptr);
                                                                 return;
                                                             }
+                                                            lk.unlock();
                                                             shared->requestMessageConnection(uri, deviceId, "");
                                                         }
                                                         cb(socket);
