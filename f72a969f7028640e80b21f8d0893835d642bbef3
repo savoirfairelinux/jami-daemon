@@ -16,6 +16,98 @@
       "message": "!build",
       "revId": "f72a969f7028640e80b21f8d0893835d642bbef3",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "daee470e_f7f881c8",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 186,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-24T21:14:43Z",
+      "side": 1,
+      "message": "Outdated comment",
+      "range": {
+        "startLine": 186,
+        "startChar": 12,
+        "endLine": 186,
+        "endChar": 68
+      },
+      "revId": "f72a969f7028640e80b21f8d0893835d642bbef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2bc0c0f7_9ab2801d",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-24T21:14:43Z",
+      "side": 1,
+      "message": "Doesn\u0027t really matter but: \"shutdown\" is a noun whereas \"shut down\" is a verb, so the original sentence was correct.",
+      "range": {
+        "startLine": 209,
+        "startChar": 45,
+        "endLine": 209,
+        "endChar": 53
+      },
+      "revId": "f72a969f7028640e80b21f8d0893835d642bbef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "11c7ff7a_ba03d176",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1038,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-24T21:14:43Z",
+      "side": 1,
+      "message": "Can be deleted",
+      "range": {
+        "startLine": 1038,
+        "startChar": 12,
+        "endLine": 1038,
+        "endChar": 54
+      },
+      "revId": "f72a969f7028640e80b21f8d0893835d642bbef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5619ad7e_f1a310e2",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 1039,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-11-24T21:14:43Z",
+      "side": 1,
+      "message": "Isn\u0027t the return value of type `ssize_t`?",
+      "range": {
+        "startLine": 1039,
+        "startChar": 12,
+        "endLine": 1039,
+        "endChar": 31
+      },
+      "revId": "f72a969f7028640e80b21f8d0893835d642bbef3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
