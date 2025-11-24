@@ -535,12 +535,13 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
             // with. We need to add video media to the host before accepting the offer
             // This can happen if we host an audio call and someone joins with video
             currentMediaList = hostMedias;
-            currentMediaList.push_back(
-                {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
-                 {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                 {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
-                 {libjami::Media::MediaAttributeKey::SOURCE, ""},
-                 {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
+            currentMediaList.push_back({
+                {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+                {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+                {libjami::Media::MediaAttributeKey::MUTED,      TRUE_STR                                  },
+                {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        },
+                {libjami::Media::MediaAttributeKey::LABEL,      "video_0"                                 }
+            });
         } else {
             bool hasVideo = false;
             if (sipCall) {
@@ -1998,7 +1999,7 @@ JamiAccount::doRegister_()
 
         std::unique_lock lkCM(connManagerMtx_);
         initConnectionManager();
-        connectionManager_->onDhtConnected(*accountManager_->getInfo()->devicePk);
+        connectionManager_->dhtStarted();
         connectionManager_->onICERequest([this](const DeviceId& deviceId) {
             std::promise<bool> accept;
             std::future<bool> fut = accept.get_future();
@@ -2108,7 +2109,7 @@ JamiAccount::doRegister_()
                             std::lock_guard lk(gitServersMtx_);
                             gitServers_[serverId] = std::move(gs);
                         }
-                        channel->onShutdown([w = weak(), serverId]() {
+                        channel->onShutdown([w = weak(), serverId](const std::error_code&) {
                             // Run on main thread to avoid to be in mxSock's eventLoop
                             runOnMainThread([serverId, w]() {
                                 if (auto sthis = w.lock()) {
@@ -2217,12 +2218,13 @@ JamiAccount::convModule(bool noCreation)
                         [w, cb = std::move(cb), convId](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
                             dht::ThreadPool::io().run([w, cb = std::move(cb), socket = std::move(socket), convId] {
                                 if (socket) {
-                                    socket->onShutdown([w, deviceId = socket->deviceId(), convId] {
-                                        dht::ThreadPool::io().run([w, deviceId, convId] {
-                                            if (auto shared = w.lock())
-                                                shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                                    socket->onShutdown(
+                                        [w, deviceId = socket->deviceId(), convId](const std::error_code&) {
+                                            dht::ThreadPool::io().run([w, deviceId, convId] {
+                                                if (auto shared = w.lock())
+                                                    shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                                            });
                                         });
-                                    });
                                     if (!cb(socket))
                                         socket->shutdown();
                                 } else
@@ -2756,7 +2758,10 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri, const std::
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
     if (sendMessage)
-        sendInstantMessage(uri.authority(), {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
+        sendInstantMessage(uri.authority(),
+                           {
+                               {MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}
+        });
     return true;
 }
 
@@ -3718,7 +3723,9 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
                         if (!acc->presenceNote_.empty()) {
                             // If a presence note is set, send it to this device.
                             auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
-                            std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}};
+                            std::map<std::string, std::string> msg = {
+                                {MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}
+                            };
                             acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
                         }
                         acc->convModule()->syncConversations(peerId, deviceId.toString());
@@ -3819,7 +3826,9 @@ JamiAccount::sendPresenceNote(const std::string& note)
             }
         }
         auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
-        std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(presenceNote_)}};
+        std::map<std::string, std::string> msg = {
+            {MIME_TYPE_PIDF, getPIDF(presenceNote_)}
+        };
         for (auto& key : keys) {
             sendMessage(key.first, key.second.toString(), msg, token, false, true);
         }
@@ -4391,7 +4400,12 @@ JamiAccount::initConnectionManager()
         channelHandlers_[Uri::Scheme::MESSAGE] = std::make_unique<MessageChannelHandler>(
             *connectionManager_.get(),
             [this](const auto& cert, std::string& type, const std::string& content) {
-                onTextMessage("", cert->issuer->getId().toString(), cert, {{type, content}});
+                onTextMessage("",
+                              cert->issuer->getId().toString(),
+                              cert,
+                              {
+                                  {type, content}
+                });
             },
             [w = weak()](const std::string& peer, bool connected) {
                 asio::post(*Manager::instance().ioContext(), [w, peer, connected] {

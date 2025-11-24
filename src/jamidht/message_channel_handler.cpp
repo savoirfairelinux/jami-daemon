@@ -192,7 +192,7 @@ MessageChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& 
             return len;
         });
 
-    socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)]() {
+    socket->onShutdown([w = pimpl_->weak_from_this(), peerId, device, s = std::weak_ptr(socket)](const std::error_code& /*ec*/) {
         if (auto shared = w.lock())
             shared->onChannelShutdown(s.lock(), peerId, device);
     });
