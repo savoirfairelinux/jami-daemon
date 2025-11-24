@@ -18,49 +18,28 @@
 #include "base64.h"
 #include "connectivity/sip_utils.h"
 
-#include <pjlib.h>
-#include <pjlib-util/base64.h>
+#include <simdutf.h>
 
 namespace jami {
 namespace base64 {
 
 std::string
-encode(std::string_view dat)
+encode(std::string_view str)
 {
-    if (dat.empty() || dat.size() > INT_MAX)
-        return {};
-
-    int input_length = (int) dat.size();
-    int output_length = PJ_BASE256_TO_BASE64_LEN(input_length);
-    std::string out;
-    out.resize(output_length);
-
-    if (pj_base64_encode((const uint8_t*) dat.data(), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
-        throw base64_exception();
-    }
-
-    out.resize(output_length);
-    return out;
+    std::string buffer(simdutf::base64_length_from_binary(str.size()), '\0');
+    simdutf::binary_to_base64((const char*) str.data(), str.size(), buffer.data());
+    return buffer;
 }
 
-std::vector<uint8_t>
+std::vector<unsigned char>
 decode(std::string_view str)
 {
-    if (str.empty())
-        return {};
-
-    int output_length = PJ_BASE64_TO_BASE256_LEN(str.length());
-    auto input = sip_utils::CONST_PJ_STR(str);
-
-    std::vector<uint8_t> out;
-    out.resize(output_length);
-
-    if (pj_base64_decode(&input, &(*out.begin()), &output_length) != PJ_SUCCESS) {
+    std::vector<unsigned char> buffer(simdutf::maximal_binary_length_from_base64(str.data(), str.size()));
+    const simdutf::result r = simdutf::base64_to_binary(str.data(), str.size(), (char*) buffer.data());
+    if (r.error)
         throw base64_exception();
-    }
-
-    out.resize(output_length);
-    return out;
+    buffer.resize(r.count); // resize the buffer according to actual number of bytes
+    return buffer;
 }
 
 } // namespace base64
