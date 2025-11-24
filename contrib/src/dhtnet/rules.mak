@@ -25,8 +25,7 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 	touch $@
 
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
-	mkdir -p $(UNPACK_DIR)
-	$(UNPACK) -C $(UNPACK_DIR)
+	$(UNPACK)
 	$(MOVE)
 
 .dhtnet: dhtnet toolchain.cmake .sum-dhtnet
