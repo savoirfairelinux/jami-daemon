@@ -639,18 +639,18 @@ public:
      */
     mutable std::mutex messageStatusMtx_;
     std::function<void(const std::map<std::string, std::map<std::string, std::string>>&)> messageStatusCb_ {};
-    mutable std::map<std::string, std::map<std::string, std::string>> messagesStatus_ {};
+    std::map<std::string, std::map<std::string, std::string>> messagesStatus_ {};
     /**
      * Status: 0 = commited, 1 = fetched, 2 = read
      * This cache the curent status to add in the messages
      */
     // Note: only store int32_t cause it's easy to pass to dbus this way
     // memberToStatus serves as a cache for loading messages
-    mutable std::map<std::string, int32_t> memberToStatus;
+    std::map<std::string, int32_t> memberToStatus;
 
     // futureStatus is used to store the status for receiving messages
     // (because we're not sure to fetch the commit before receiving a status change for this)
-    mutable std::map<std::string, std::map<std::string, int32_t>> futureStatus;
+    std::map<std::string, std::map<std::string, int32_t>> futureStatus;
     // Update internal structures regarding status
     void updateStatus(const std::string& uri,
                       libjami::Account::MessageStates status,
@@ -703,7 +703,12 @@ Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool inclu
         if (member.role == MemberRole::LEFT && !includeLeft)
             continue;
         auto mm = member.map();
-        mm[ConversationMapKeys::LAST_DISPLAYED] = messagesStatus_[member.uri]["read"];
+        auto it = messagesStatus_.find(member.uri);
+        if (it != messagesStatus_.end()) {
+            auto readIt = it->second.find("read");
+            if (readIt != it->second.end())
+                mm[ConversationMapKeys::LAST_DISPLAYED] = readIt->second;
+        }
         result.emplace_back(std::move(mm));
     }
     return result;
@@ -1118,6 +1123,7 @@ Conversation::Impl::addToHistory(History& history,
         sharedCommit->fromMapStringString(commit);
 
         if (needToSetMessageStatus) {
+            std::lock_guard lk(messageStatusMtx_);
             // Check if we already have status information for the commit.
             auto itFuture = futureStatus.find(sharedCommit->id);
             if (itFuture != futureStatus.end()) {
@@ -1125,7 +1131,6 @@ Conversation::Impl::addToHistory(History& history,
                 futureStatus.erase(itFuture);
             }
         }
-
         sharedCommits.emplace_back(sharedCommit);
     }
 
@@ -1157,34 +1162,36 @@ Conversation::Impl::addToHistory(History& history,
                 if (cache > status)
                     status = cache;
             }
+            auto& messagesStatus = messagesStatus_[member.uri];
 
             for (auto it = sharedCommits.rbegin(); it != sharedCommits.rend(); it++) {
                 auto sharedCommit = *it;
                 auto previousStatus = status;
+                auto& commitStatus = sharedCommit->status[member.uri];
 
                 // Compute status for the current commit.
-                if (status < SENT && messagesStatus_[member.uri]["fetched"] == sharedCommit->id) {
+                if (status < SENT && messagesStatus["fetched"] == sharedCommit->id) {
                     status = SENT;
                 }
-                if (messagesStatus_[member.uri]["read"] == sharedCommit->id) {
+                if (messagesStatus["read"] == sharedCommit->id) {
                     status = DISPLAYED;
                 }
                 if (member.uri == sharedCommit->body.at("author")) {
                     status = DISPLAYED;
                 }
-                if (status < sharedCommit->status[member.uri]) {
-                    status = sharedCommit->status[member.uri];
+                if (status < commitStatus) {
+                    status = commitStatus;
                 }
 
                 // Store computed value.
-                sharedCommit->status[member.uri] = status;
+                commitStatus = status;
 
                 // Update messagesStatus_ if needed.
                 if (previousStatus == SENDING && status >= SENT) {
-                    messagesStatus_[member.uri]["fetched"] = sharedCommit->id;
+                    messagesStatus["fetched"] = sharedCommit->id;
                 }
                 if (previousStatus <= SENT && status == DISPLAYED) {
-                    messagesStatus_[member.uri]["read"] = sharedCommit->id;
+                    messagesStatus["read"] = sharedCommit->id;
                 }
             }
 
@@ -2139,8 +2146,10 @@ Conversation::Impl::updateStatus(const std::string& uri,
     options.logIfNotFound = false;
     options.fastLog = true;
     History optHistory;
-    std::lock_guard lk(optHistory.mutex); // Avoid to announce messages while updating status.
+    std::unique_lock lk(optHistory.mutex); // Avoid to announce messages while updating status.
     auto res = loadMessages2(options, &optHistory);
+    std::unique_lock mlk(messageStatusMtx_);
+    std::vector<std::pair<std::string, int32_t>> statusToUpdate;
     if (res.size() == 0) {
         // In this case, commit is not received yet, so we cache it
         futureStatus[commitId][uri] = static_cast<int32_t>(st);
@@ -2151,11 +2160,7 @@ Conversation::Impl::updateStatus(const std::string& uri,
             // Update message and emit to client,
             if (static_cast<int32_t>(st) > message->second->status[uri]) {
                 message->second->status[uri] = static_cast<int32_t>(st);
-                emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(accountId_,
-                                                                                      repository_->id(),
-                                                                                      uri,
-                                                                                      cid,
-                                                                                      static_cast<int>(st));
+                statusToUpdate.emplace_back(cid, static_cast<int32_t>(st));
             }
         } else {
             // In this case, commit is not loaded by client, so we cache it
@@ -2163,6 +2168,14 @@ Conversation::Impl::updateStatus(const std::string& uri,
             futureStatus[cid][uri] = static_cast<int32_t>(st);
         }
     }
+    mlk.unlock();
+    lk.unlock();
+    for (const auto& [cid, status] : statusToUpdate)
+        emitSignal<libjami::ConfigurationSignal::AccountMessageStatusChanged>(accountId_,
+                                                                              repository_->id(),
+                                                                              uri,
+                                                                              cid,
+                                                                              static_cast<int>(status));
 }
 
 bool
