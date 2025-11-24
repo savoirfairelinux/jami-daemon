@@ -56,7 +56,7 @@ public:
         // Check at least if repository is correct
         git_repository* repo;
         if (git_repository_open(&repo, repository_.c_str()) != 0) {
-            socket_->shutdown();
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
             return;
         }
         git_repository_free(repo);
@@ -81,7 +81,7 @@ public:
         std::lock_guard lk(destroyMtx_);
         if (isDestroying_.exchange(true)) {
             socket_->setOnRecv({});
-            socket_->shutdown();
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
         }
     }
     bool parseOrder(std::string_view buf = {});
@@ -263,7 +263,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                      repositoryId_,
                      fmt::ptr(this),
                      repository_);
-        socket_->shutdown();
+        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
         return;
     }
     GitRepository rep {repo, git_repository_free};
@@ -282,7 +282,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                          fmt::ptr(this),
                          repository_,
                          ec.message());
-            socket_->shutdown();
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
             return;
         }
     }
@@ -293,7 +293,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                    accountId_,
                    repositoryId_,
                    fmt::ptr(this));
-        socket_->shutdown();
+        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
         return;
     }
     std::string_view currentHead = git_oid_tostr_s(&commit_id);
@@ -335,7 +335,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
                      fmt::ptr(this),
                      repository_,
                      ec.message());
-        socket_->shutdown();
+        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
     }
 }
 
@@ -356,7 +356,7 @@ GitServer::Impl::ACKCommon()
                          fmt::ptr(this),
                          repository_,
                          ec.message());
-            socket_->shutdown();
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
         }
     }
 }
@@ -378,7 +378,7 @@ GitServer::Impl::ACKFirst()
                          fmt::ptr(this),
                          repository_,
                          ec.message());
-            socket_->shutdown();
+            dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
             return false;
         }
     }
@@ -398,7 +398,7 @@ GitServer::Impl::NAK()
                      fmt::ptr(this),
                      repository_,
                      ec.message());
-        socket_->shutdown();
+        dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
         return false;
     }
     return true;

@@ -576,7 +576,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
         ctx->linkDevCtx->tempConnMgr.oniOSConnected(
             [&](const std::string& connType, dht::InfoHash peer_h) { return false; });
 #endif
-        ctx->linkDevCtx->tempConnMgr.onDhtConnected(ctx->linkDevCtx->tmpId.second->getPublicKey());
+        ctx->linkDevCtx->tempConnMgr.dhtStarted();
 
         auto accountScheme = fmt::format("{}{}/{}",
                                          AUTH_URI_SCHEME,
@@ -669,7 +669,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 }
             });
 
-            socket->onShutdown([ctx, name, wthis]() {
+            socket->onShutdown([ctx, name, wthis](const std::error_code& ec) {
                 JAMI_WARNING("[LinkDevice] Temporary connection manager closing socket: {}", name);
                 if (ctx->timeout)
                     ctx->timeout->cancel();
@@ -928,30 +928,31 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     ctx->timeout = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
     ctx->timeout->expires_after(OP_TIMEOUT);
     ctx->timeout->async_wait([wthis = weak(), wctx = std::weak_ptr(ctx)](const std::error_code& ec) {
-        if (ec) {
+        if (ec)
             return;
-        }
-        if (auto ctx = wctx.lock()) {
-            if (!ctx->addDeviceCtx->isCompleted()) {
-                if (auto this_ = wthis.lock()) {
-                    ctx->addDeviceCtx->state = AuthDecodingState::TIMEOUT;
-                    JAMI_WARNING("[LinkDevice] Timeout for addDevice.");
+        dht::ThreadPool::io().run([wthis, wctx]() {
+            if (auto ctx = wctx.lock()) {
+                if (!ctx->addDeviceCtx->isCompleted()) {
+                    if (auto this_ = wthis.lock()) {
+                        ctx->addDeviceCtx->state = AuthDecodingState::TIMEOUT;
+                        JAMI_WARNING("[LinkDevice] Timeout for addDevice.");
 
-                    // Create and send timeout message
-                    msgpack::sbuffer buffer(UINT16_MAX);
-                    msgpack::pack(buffer, AuthMsg::timeout());
-                    std::error_code ec;
-                    ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()),
-                                                      buffer.size(),
-                                                      ec);
-                    ctx->addDeviceCtx->channel->shutdown();
+                        // Create and send timeout message
+                        msgpack::sbuffer buffer(UINT16_MAX);
+                        msgpack::pack(buffer, AuthMsg::timeout());
+                        std::error_code ec;
+                        ctx->addDeviceCtx->channel->write(reinterpret_cast<const unsigned char*>(buffer.data()),
+                                                          buffer.size(),
+                                                          ec);
+                        ctx->addDeviceCtx->channel->shutdown();
+                    }
                 }
             }
-        }
+        });
     });
 
     JAMI_DEBUG("[LinkDevice] SOURCE: Creating callbacks.");
-    channel->onShutdown([ctx, w = weak()]() {
+    channel->onShutdown([ctx, w = weak()](const std::error_code& ec) {
         JAMI_DEBUG("[LinkDevice] SOURCE: Shutdown with state {}... xfer {}uccessful",
                    ctx->addDeviceCtx->formattedAuthState(),
                    ctx->addDeviceCtx->archiveTransferredWithoutFailure ? "s" : "uns");
@@ -985,17 +986,17 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         auto this_ = wthis.lock();
         if (!this_) {
             JAMI_ERROR("[LinkDevice] Invalid state for ArchiveAccountManager.");
-            return (size_t) 0;
+            return (ssize_t) 0;
         }
 
         if (!buf) {
             JAMI_ERROR("[LinkDevice] Invalid buffer.");
-            return (size_t) 0;
+            return (ssize_t) 0;
         }
 
         if (ctx->canceled || ctx->addDeviceCtx->state == AuthDecodingState::ERR) {
             JAMI_ERROR("[LinkDevice] Error.");
-            return (size_t) 0;
+            return (ssize_t) 0;
         }
 
         decodeCtx->pac.reserve_buffer(len);
@@ -1013,7 +1014,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                            "(NEW->SOURCE)\n{}",
                            toRecv.formatMsg());
             } else {
-                return len;
+                return (ssize_t) len;
             }
         } catch (const std::exception& e) {
             // set the generic error state in the context
@@ -1034,11 +1035,11 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
         if (ctx->addDeviceCtx->state == AuthDecodingState::ERR
             || ctx->addDeviceCtx->state == AuthDecodingState::AUTH_ERROR) {
             JAMI_WARNING("[LinkDevice] Undefined behavior encountered during a link auth session.");
-            ctx->addDeviceCtx->channel->shutdown();
+            return (ssize_t) -1;
         }
         // Check for timeout message
         if (ctx->addDeviceCtx->handleTimeoutMessage(toRecv)) {
-            return len;
+            return (ssize_t) len;
         }
         AuthMsg toSend;
         bool shouldSendMsg = false;
@@ -1112,7 +1113,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
             ctx->addDeviceCtx->channel->shutdown();
         }
 
-        return len;
+        return (ssize_t) len;
     }); // !channel onRecv closure
 
     if (ctx->addDeviceCtx->state == AuthDecodingState::HANDSHAKE) {

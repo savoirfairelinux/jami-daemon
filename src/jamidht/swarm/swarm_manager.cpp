@@ -281,7 +281,7 @@ SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterfac
         return len;
     });
 
-    socket->onShutdown([w = weak(), deviceId = socket->deviceId()] {
+    socket->onShutdown([w = weak(), deviceId = socket->deviceId()](const std::error_code&) {
         dht::ThreadPool::io().run([w, deviceId] {
             auto shared = w.lock();
             if (shared && !shared->isShutdown_) {
