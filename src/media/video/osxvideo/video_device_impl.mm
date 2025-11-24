@@ -59,16 +59,18 @@ class VideoDeviceImpl {
         FrameRate rate_ {};
         std::map<VideoSize, std::vector<FrameRate>> available_rates_;
         FrameRate desktopFrameRate_ = {30};
-        std::vector<FrameRate> desktopFrameRates_ = {FrameRate(1),
-                                                     FrameRate(5),
-                                                     FrameRate(10),
-                                                     FrameRate(15),
-                                                     FrameRate(20),
-                                                     FrameRate(25),
-                                                     FrameRate(30),
-                                                     FrameRate(60),
-                                                     FrameRate(120),
-                                                     FrameRate(144)};
+        static constexpr std::array<FrameRate, 10> desktopFrameRates_ {
+            FrameRate(1),
+            FrameRate(5),
+            FrameRate(10),
+            FrameRate(15),
+            FrameRate(20),
+            FrameRate(25),
+            FrameRate(30),
+            FrameRate(60),
+            FrameRate(120),
+            FrameRate(144)
+        };
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
@@ -82,7 +84,7 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
           name = DEVICE_DESKTOP;
           VideoSize size {0, 0};
           available_sizes_.emplace_back(size);
-          available_rates_[size] = desktopFrameRates_;
+          available_rates_[size] = std::vector<FrameRate>(desktopFrameRates_.begin(), desktopFrameRates_.end());
           return;
       }
     name = [[avDevice_ localizedName] UTF8String];
@@ -90,7 +92,8 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
     available_sizes_.reserve(avDevice_.formats.count);
     for (AVCaptureDeviceFormat* format in avDevice_.formats) {
         auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-        available_sizes_.emplace_back(dimensions.width, dimensions.height);
+        VideoSize size {dimensions.width, dimensions.height};
+        available_sizes_.emplace_back(size);
         std::vector<FrameRate> v;
         v.reserve(format.videoSupportedFrameRateRanges.count);
         for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges) {
@@ -100,11 +103,7 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
         }
         // if we have multiple formats with the same resolution use video supported framerates from last one
         // because this format will be selected by ffmpeg
-        if (available_rates_.find( VideoSize(dimensions.width, dimensions.height) ) == available_rates_.end()) {
-            available_rates_.emplace(VideoSize(dimensions.width, dimensions.height), v);
-        } else {
-            available_rates_.at(VideoSize(dimensions.width, dimensions.height)) = v;
-        }
+        available_rates_[size] = std::move(v);
     }
 }
 

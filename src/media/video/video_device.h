@@ -123,7 +123,7 @@ public:
         if (max_size.second > 0) {
             settings.video_size = fmt::format("{}x{}", max_size.first, max_size.second);
             settings.framerate = jami::to_string(max_size_rate.real());
-            JAMI_WARN("Default video settings: %s, %s FPS", settings.video_size.c_str(), settings.framerate.c_str());
+            JAMI_WARNING("[{}] Default video settings: {}, {} FPS", name, settings.video_size, settings.framerate);
         }
 
         return settings;
