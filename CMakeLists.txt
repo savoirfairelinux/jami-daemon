@@ -632,6 +632,7 @@ else()
     pkg_search_module (swscale REQUIRED IMPORTED_TARGET libswscale)
     pkg_search_module (avutil REQUIRED IMPORTED_TARGET libavutil)
     pkg_search_module (speexdsp REQUIRED IMPORTED_TARGET speexdsp)
+    pkg_search_module (simdutf REQUIRED IMPORTED_TARGET simdutf)
     if (JAMI_PLUGIN)
         if (APPLE)
             pkg_search_module (archive REQUIRED IMPORTED_TARGET minizip)
@@ -655,6 +656,7 @@ else()
         PkgConfig::swscale
         PkgConfig::jsoncpp
         PkgConfig::secp256k1
+        PkgConfig::simdutf
         PUBLIC
         PkgConfig::fmt
         PkgConfig::avutil

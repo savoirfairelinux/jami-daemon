@@ -1,9 +1,5 @@
 /*
- *  Copyright (C) 1999 Tom Tromey
- *  Copyright (C) 2000 Red Hat, Inc.
  *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
- *
- *  Author: Pascal Potvin <pascal.potvin@extenway.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
