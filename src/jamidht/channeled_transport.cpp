@@ -162,13 +162,13 @@ ChanneledSIPTransport::start()
         }
         return len;
     });
-    socket_->onShutdown([this] {
+    socket_->onShutdown([this](const std::error_code& ec) {
         disconnected_ = true;
         if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
             // JAMI_LOG("[SIPS] process disconnect event");
             pjsip_transport_state_info state_info;
             std::memset(&state_info, 0, sizeof(state_info));
-            state_info.status = PJ_SUCCESS;
+            state_info.status = ec ? PJ_STATUS_FROM_OS(ec.value()) : PJ_SUCCESS;
             (*state_cb)(&trData_.base, PJSIP_TP_STATE_DISCONNECTED, &state_info);
         }
         shutdownCb_();
@@ -182,7 +182,7 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
     // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available
     socket_->setOnRecv([](const uint8_t*, size_t len) { return len; });
-    socket_->onShutdown([]() {});
+    socket_->onShutdown([](const std::error_code&) {});
     // Stop low-level transport first
     socket_->shutdown();
     socket_.reset();
