@@ -17,6 +17,7 @@
 
 #include "swarm_manager.h"
 #include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/channel_utils.h>
 #include <opendht/thread_pool.h>
 
 namespace jami {
@@ -238,48 +239,25 @@ SwarmManager::sendAnswer(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
 void
 SwarmManager::receiveMessage(const std::shared_ptr<dhtnet::ChannelSocketInterface>& socket)
 {
-    struct DecodingContext
-    {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 512};
-    };
-
-    socket->setOnRecv([w = weak(),
-                       wsocket = std::weak_ptr<dhtnet::ChannelSocketInterface>(socket),
-                       ctx = std::make_shared<DecodingContext>()](const uint8_t* buf, size_t len) {
-        ctx->pac.reserve_buffer(len);
-        std::copy_n(buf, len, ctx->pac.buffer());
-        ctx->pac.buffer_consumed(len);
-
-        msgpack::object_handle oh;
-        while (ctx->pac.next(oh)) {
+    socket->setOnRecv(dhtnet::buildMsgpackReader<Message>(
+        [w = weak(), wsocket = std::weak_ptr<dhtnet::ChannelSocketInterface>(socket)](Message&& msg) {
             auto shared = w.lock();
             auto socket = wsocket.lock();
             if (!shared || !socket)
-                return size_t {0};
+                return std::make_error_code(std::errc::operation_canceled);
 
-            try {
-                Message msg;
-                oh.get().convert(msg);
+            if (msg.is_mobile)
+                shared->changeMobility(socket->deviceId(), msg.is_mobile);
 
-                if (msg.is_mobile)
-                    shared->changeMobility(socket->deviceId(), msg.is_mobile);
+            if (msg.request) {
+                shared->sendAnswer(socket, msg);
 
-                if (msg.request) {
-                    shared->sendAnswer(socket, msg);
-
-                } else if (msg.response) {
-                    shared->setKnownNodes(msg.response->nodes);
-                    shared->setMobileNodes(msg.response->mobile_nodes);
-                }
-
-            } catch (const std::exception& e) {
-                JAMI_WARNING("Error DRT recv: {}", e.what());
-                return len;
+            } else if (msg.response) {
+                shared->setKnownNodes(msg.response->nodes);
+                shared->setMobileNodes(msg.response->mobile_nodes);
             }
-        }
-
-        return len;
-    });
+            return std::error_code();
+        }));
 
     socket->onShutdown([w = weak(), deviceId = socket->deviceId()](const std::error_code&) {
         dht::ThreadPool::io().run([w, deviceId] {
