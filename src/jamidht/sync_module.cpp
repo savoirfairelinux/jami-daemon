@@ -21,6 +21,7 @@
 #include "jamidht/archive_account_manager.h"
 
 #include <dhtnet/multiplexed_socket.h>
+#include <dhtnet/channel_utils.h>
 #include <opendht/thread_pool.h>
 
 namespace jami {
@@ -175,47 +176,30 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
     std::lock_guard lk(pimpl_->syncConnectionsMtx_);
     pimpl_->syncConnections_[device].emplace_back(socket);
 
+    socket->setOnRecv(dhtnet::buildMsgpackReader<SyncMsg>([acc = pimpl_->account_, device, peerId](SyncMsg&& msg) {
+        auto account = acc.lock();
+        if (!account)
+            return std::make_error_code(std::errc::operation_canceled);
+
+        try {
+            if (auto manager = account->accountManager())
+                manager->onSyncData(std::move(msg.ds), false);
+
+            if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
+                if (auto cm = account->convModule(true))
+                    cm->onSyncData(msg, peerId, device.toString());
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",
+                         account->getAccountID(),
+                         device.to_view(),
+                         e.what());
+        }
+        return std::error_code();
+    }));
     socket->onShutdown([w = pimpl_->weak_from_this(), device, s = std::weak_ptr(socket)](const std::error_code&) {
         if (auto shared = w.lock())
             shared->onChannelShutdown(s.lock(), device);
     });
-
-    struct DecodingContext
-    {
-        msgpack::unpacker pac {[](msgpack::type::object_type, std::size_t, void*) { return true; }, nullptr, 512};
-    };
-
-    socket->setOnRecv(
-        [acc = pimpl_->account_.lock(), device, peerId, ctx = std::make_shared<DecodingContext>()](const uint8_t* buf,
-                                                                                                   size_t len) {
-            if (!buf || !acc)
-                return len;
-
-            ctx->pac.reserve_buffer(len);
-            std::copy_n(buf, len, ctx->pac.buffer());
-            ctx->pac.buffer_consumed(len);
-
-            msgpack::object_handle oh;
-            try {
-                while (ctx->pac.next(oh)) {
-                    SyncMsg msg;
-                    oh.get().convert(msg);
-                    if (auto manager = acc->accountManager())
-                        manager->onSyncData(std::move(msg.ds), false);
-
-                    if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
-                        if (auto cm = acc->convModule(true))
-                            cm->onSyncData(msg, peerId, device.toString());
-                }
-            } catch (const std::exception& e) {
-                JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",
-                             acc->getAccountID(),
-                             device.to_view(),
-                             e.what());
-            }
-
-            return len;
-        });
 
     dht::ThreadPool::io().run([w = pimpl_->weak_from_this(), socket = std::move(socket)]() {
         if (auto s = w.lock())
