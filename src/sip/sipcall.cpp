@@ -1910,7 +1910,7 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
 
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
-    if (stream.mediaAttribute_->sourceUri_.empty()) {
+    if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO && stream.mediaAttribute_->sourceUri_.empty()) {
         if (auto videoManager = Manager::instance().getVideoManager()) {
             stream.mediaAttribute_->sourceUri_ = videoManager->videoDeviceMonitor.getMRLForDefaultDevice();
         }
