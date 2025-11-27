@@ -83,6 +83,9 @@ struct ConversationCommit
     CommitMessage commitMsg {};
     std::string linearized_parent {};
     int64_t timestamp {0};
+    bool reannounce {false};
+
+    bool operator<(const ConversationCommit& otherConversationCommit) const { return id < otherConversationCommit.id; }
 };
 
 enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
@@ -247,6 +250,7 @@ public:
      */
     bool hasCommit(const std::string& commitId) const;
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
+    std::optional<ConversationCommit> getCommit2(const std::string& commitId) const;
 
     /**
      * Get parent via topological + date sort in branch main of a commit
@@ -330,13 +334,6 @@ public:
      * @return the commit id or empty if failed
      */
     std::string resolveVote(const std::string& uri, const std::string_view type, const std::string& voteType);
-
-    /**
-     * Validate a fetch with remote device
-     * @param remotedevice
-     * @return the validated commits and if an error occurs
-     */
-    std::pair<std::vector<ConversationCommit>, bool> validFetch(const std::string& remoteDevice) const;
 
     /**
      * Validate a clone
