@@ -42,12 +42,15 @@ struct SwarmMessage
     // Id of the edition commit that last set the current body (empty = no editions yet).
     // Used to correctly tag superseded bodies when new editions arrive.
     std::string latestEditionId;
+    std::string reannounce {"0"};
 
     void fromMapStringString(const std::map<std::string, std::string>& commit)
     {
         id = commit.at("id");
         type = commit.at("type");
+        linearizedParent = commit.at("linearizedParent");
         body = commit; // TODO erase type/id?
+        reannounce = commit.at("reannounce");
     }
 };
 
