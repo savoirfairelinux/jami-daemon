@@ -49,10 +49,10 @@ struct CallData
     std::string device {};
     std::string streamId {};
     std::string hostState {};
-    std::atomic_bool moderatorMuted {false};
-    std::atomic_bool raisedHand {false};
-    std::atomic_bool active {false};
-    std::atomic_bool recording {false};
+    bool moderatorMuted {false};
+    bool raisedHand {false};
+    bool active {false};
+    bool recording {false};
 
     void reset()
     {
@@ -136,12 +136,11 @@ private:
 
     // Common parts
     std::string aliceId;
-    std::atomic_bool hostRecording {false};
+    bool hostRecording {false};
     std::string bobId;
     std::string carlaId;
     std::string daviId;
     std::string confId {};
-    std::mutex pInfosMtx_ {};
     std::vector<std::map<std::string, std::string>> pInfos_ {};
     bool confChanged {false};
 
@@ -150,7 +149,6 @@ private:
     CallData daviCall {};
 
     std::mutex mtx;
-    std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
 
     void registerSignalHandlers();
@@ -202,6 +200,7 @@ ConferenceTest::registerSignalHandlers()
             const std::string& callId,
             const std::string&,
             const std::vector<std::map<std::string, std::string>>&) {
+            std::lock_guard lk(mtx);
             if (accountId == bobId) {
                 bobCall.callId = callId;
             } else if (accountId == carlaId) {
@@ -213,6 +212,7 @@ ConferenceTest::registerSignalHandlers()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
         [=](const std::string& accountId, const std::string& callId, const std::string& state, signed) {
+            std::lock_guard lk(mtx);
             if (accountId == aliceId) {
                 auto details = libjami::getCallDetails(aliceId, callId);
                 if (details["PEER_NUMBER"].find(bobUri) != std::string::npos)
@@ -231,24 +231,27 @@ ConferenceTest::registerSignalHandlers()
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceCreated>(
         [=](const std::string&, const std::string&, const std::string& conferenceId) {
+            std::lock_guard lk(mtx);
             confId = conferenceId;
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceRemoved>(
         [=](const std::string&, const std::string& conferenceId) {
+            std::lock_guard lk(mtx);
             if (confId == conferenceId)
                 confId = "";
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::ConferenceChanged>(
         [=](const std::string&, const std::string& conferenceId, const std::string&) {
+            std::lock_guard lk(mtx);
             if (confId == conferenceId)
                 confChanged = true;
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::OnConferenceInfosUpdated>(
         [=](const std::string&, const std::vector<std::map<std::string, std::string>> participantsInfos) {
-            std::lock_guard lock(pInfosMtx_);
+            std::lock_guard lock(mtx);
             pInfos_ = participantsInfos;
             for (const auto& infos : participantsInfos) {
                 if (infos.at("uri").find(bobUri) != std::string::npos) {
@@ -306,33 +309,57 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
 
     JAMI_INFO("Start call between Alice and Bob");
     auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    }
 
     JAMI_INFO("Start call between Alice and Carla");
     auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(carlaId, carlaCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+    }
 
     JAMI_INFO("Start conference");
     confChanged = false;
     Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
     // ConfChanged is the signal emitted when the 2 calls will be added to the conference
     // Also, wait for participants to appear in conf info to get all good information
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
-        return !confId.empty() && confChanged && !carlaCall.device.empty() && !bobCall.device.empty();
-    }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
+            return !confId.empty() && confChanged && !carlaCall.device.empty() && !bobCall.device.empty();
+        }));
+    }
 
     if (addDavi) {
         JAMI_INFO("Start call between Alice and Davi");
         auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, mediaList);
-        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+        {
+            std::unique_lock lk {mtx};
+            CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+        }
         Manager::instance().acceptCall(daviId, daviCall.callId);
-        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+        {
+            std::unique_lock lk {mtx};
+            CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+        }
         Manager::instance().addSubCall(aliceId, call1, aliceId, confId);
-        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+        {
+            std::unique_lock lk {mtx};
+            CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+        }
     }
 }
 
@@ -341,6 +368,7 @@ ConferenceTest::hangupConference()
 {
     JAMI_INFO("Stop conference");
     Manager::instance().hangupConference(aliceId, confId);
+    std::unique_lock lk {mtx};
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 30s, [&] { return bobCall.state == "OVER" && carlaCall.state == "OVER" && confId.empty(); }));
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return daviCall.callId.empty() ? true : daviCall.state == "OVER"; }));
@@ -351,17 +379,25 @@ ConferenceTest::testGetConference()
 {
     registerSignalHandlers();
 
-    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
+    }
 
     startConference();
 
-    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 1);
-    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId)[0] == confId);
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 1);
+        CPPUNIT_ASSERT(libjami::getConferenceList(aliceId)[0] == confId);
+    }
 
     hangupConference();
 
-    CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
-
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(libjami::getConferenceList(aliceId).size() == 0);
+    }
     libjami::unregisterSignalHandlers();
 }
 
@@ -377,11 +413,16 @@ ConferenceTest::testModeratorMuteUpdateParticipantsInfos()
 
     JAMI_INFO("Play with mute from the moderator");
     libjami::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.moderatorMuted.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.moderatorMuted; }));
+    }
 
     libjami::muteStream(aliceId, confId, bobUri, bobCall.device, bobCall.streamId, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.moderatorMuted.load(); }));
-
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.moderatorMuted; }));
+    }
     hangupConference();
 
     libjami::unregisterSignalHandlers();
@@ -399,7 +440,10 @@ ConferenceTest::testUnauthorizedMute()
 
     JAMI_INFO("Play with mute from unauthorized");
     libjami::muteStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return bobCall.moderatorMuted.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return bobCall.moderatorMuted; }));
+    }
 
     hangupConference();
 
@@ -419,18 +463,30 @@ ConferenceTest::testAudioVideoMutedStates()
 
     JAMI_INFO("Start call between Alice and Bob");
     auto call1Id = libjami::placeCallWithMedia(aliceId, bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    }
     auto call1 = aliceAccount->getCall(call1Id);
     call1->muteMedia(libjami::Media::MediaAttributeValue::AUDIO, true);
     call1->muteMedia(libjami::Media::MediaAttributeValue::VIDEO, true);
 
     JAMI_INFO("Start call between Alice and Carla");
     auto call2Id = libjami::placeCallWithMedia(aliceId, carlaUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(carlaId, carlaCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+    }
 
     auto call2 = aliceAccount->getCall(call2Id);
     call2->muteMedia(libjami::Media::MediaAttributeValue::AUDIO, true);
@@ -438,11 +494,17 @@ ConferenceTest::testAudioVideoMutedStates()
 
     JAMI_INFO("Start conference");
     Manager::instance().joinParticipant(aliceId, call1Id, aliceId, call2Id);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
+    }
 
     auto conf = aliceAccount->getConference(confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return conf->isMediaSourceMuted(jami::MediaType::MEDIA_AUDIO); }));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return conf->isMediaSourceMuted(jami::MediaType::MEDIA_VIDEO); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return conf->isMediaSourceMuted(jami::MediaType::MEDIA_AUDIO); }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return conf->isMediaSourceMuted(jami::MediaType::MEDIA_VIDEO); }));
+    }
 
     hangupConference();
 
@@ -473,30 +535,55 @@ ConferenceTest::testMuteStatusAfterAdd()
 
     JAMI_INFO("Start call between Alice and Bob");
     auto call1 = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.hostState == "CURRENT"; }));
+    }
 
     JAMI_INFO("Start call between Alice and Carla");
     auto call2 = libjami::placeCallWithMedia(aliceId, carlaUri, mediaList);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !carlaCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(carlaId, carlaCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return carlaCall.hostState == "CURRENT"; }));
+    }
 
     JAMI_INFO("Start conference");
     Manager::instance().joinParticipant(aliceId, call1, aliceId, call2);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
-
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !confId.empty(); }));
+    }
     JAMI_INFO("Add Davi");
     auto call3 = libjami::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    }
     Manager::instance().addSubCall(aliceId, call3, aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
-
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    }
     auto aliceConf = aliceAccount->getConference(confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return aliceConf->isMediaSourceMuted(jami::MediaType::MEDIA_AUDIO); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return aliceConf->isMediaSourceMuted(jami::MediaType::MEDIA_AUDIO); }));
+    }
 
     hangupConference();
 
@@ -518,12 +605,15 @@ ConferenceTest::testCreateParticipantsSinks()
     auto expectedNumberOfParticipants = 3u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    }
 
     auto dm = jami::getVideoDeviceMonitor();
     if (dm && !dm->getDeviceList().empty()) {
         JAMI_INFO() << "Check sinks if video device available.";
-        std::lock_guard lock(pInfosMtx_);
+        std::unique_lock lk {mtx};
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
@@ -536,7 +626,7 @@ ConferenceTest::testCreateParticipantsSinks()
         }
     } else {
         JAMI_INFO() << "Check sinks if no video device available.";
-        std::lock_guard lock(pInfosMtx_);
+        std::unique_lock lk {mtx};
         for (auto& info : pInfos_) {
             auto uri = string_remove_suffix(info["uri"], '@');
             if (uri == bobUri) {
@@ -568,23 +658,44 @@ ConferenceTest::testMuteStatusAfterRemove()
     startConference(false, true);
 
     libjami::muteStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.moderatorMuted.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.moderatorMuted; }));
+    }
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    }
     daviCall.reset();
 
     auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    }
     Manager::instance().addSubCall(aliceId, call2, aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    }
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.moderatorMuted.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.moderatorMuted; }));
+    }
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    }
     hangupConference();
 
     libjami::unregisterSignalHandlers();
@@ -608,25 +719,46 @@ ConferenceTest::testActiveStatusAfterRemove()
     defaultAudio.enabled_ = true;
 
     libjami::setActiveStream(aliceId, confId, daviUri, daviCall.device, daviCall.streamId, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.active.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.active; }));
+    }
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    }
     daviCall.reset();
 
     auto call2 = libjami::placeCallWithMedia(aliceId,
                                              daviUri,
                                              MediaAttribute::mediaAttributesToMediaMaps({defaultAudio}));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    }
     Manager::instance().addSubCall(aliceId, call2, aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    }
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.active.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.active; }));
+    }
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    }
     hangupConference();
 
     libjami::unregisterSignalHandlers();
@@ -649,48 +781,86 @@ ConferenceTest::testHandsUp()
 
     JAMI_INFO("Play with raise hand");
     libjami::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.raisedHand; }));
+    }
 
     libjami::raiseHand(bobId, bobCall.callId, bobUri, bobCall.device, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand; }));
+    }
 
     // Remove davi from moderators
     libjami::setModerator(aliceId, confId, daviUri, false);
 
     // Test to raise hand
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+    }
     libjami::raiseHand(daviId, daviCall.callId, daviUri, daviCall.device, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return daviCall.raisedHand; }));
+    }
 
     // Test to raise hand for another one (should fail)
     libjami::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, true);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand; }));
+    }
 
     // However, a moderator should be able to lower the hand (but not a non moderator)
     libjami::raiseHand(carlaId, carlaCall.callId, carlaUri, carlaCall.device, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return carlaCall.raisedHand; }));
+    }
 
     libjami::raiseHand(daviId, carlaCall.callId, carlaUri, carlaCall.device, false);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(!cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand; }));
+    }
 
     libjami::raiseHand(bobId, bobCall.callId, carlaUri, carlaCall.device, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !carlaCall.raisedHand; }));
+    }
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    }
     daviCall.reset();
 
     auto call2 = libjami::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    }
     Manager::instance().addSubCall(aliceId, call2, aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
-
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.device.empty(); }));
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !daviCall.raisedHand; }));
+    }
 
     Manager::instance().hangupCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.state == "OVER"; }));
+    }
     hangupConference();
 
     libjami::unregisterSignalHandlers();
@@ -707,7 +877,10 @@ ConferenceTest::testPeerLeaveConference()
 
     startConference();
     Manager::instance().hangupCall(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && confId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER" && confId.empty(); }));
+    }
 
     libjami::unregisterSignalHandlers();
 }
@@ -727,16 +900,27 @@ ConferenceTest::testJoinCallFromOtherAccount()
 
     JAMI_INFO("Play with raise hand");
     libjami::raiseHand(aliceId, confId, bobUri, bobCall.device, true);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.raisedHand.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.raisedHand; }));
+    }
 
     libjami::raiseHand(aliceId, confId, bobUri, bobCall.device, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand.load(); }));
-
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.raisedHand; }));
+    }
     JAMI_INFO("Start call between Alice and Davi");
     auto call1 = libjami::placeCallWithMedia(aliceId, daviUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !daviCall.callId.empty(); }));
+    }
     Manager::instance().acceptCall(daviId, daviCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return daviCall.hostState == "CURRENT"; }));
+    }
     CPPUNIT_ASSERT(Manager::instance().addSubCall(daviId, daviCall.callId, aliceId, confId));
     hangupConference();
 
@@ -755,7 +939,11 @@ ConferenceTest::testDevices()
 
     startConference();
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.device == bobDevice && carlaDevice == carlaCall.device; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(
+            cv.wait_for(lk, 5s, [&] { return bobCall.device == bobDevice && carlaDevice == carlaCall.device; }));
+    }
 
     hangupConference();
 
@@ -775,7 +963,10 @@ ConferenceTest::testUnauthorizedSetActive()
     startConference();
 
     libjami::setActiveStream(carlaId, confId, bobUri, bobCall.device, bobCall.streamId, true);
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return bobCall.active.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(!cv.wait_for(lk, 15s, [&] { return bobCall.active; }));
+    }
 
     hangupConference();
 
@@ -796,9 +987,15 @@ ConferenceTest::testHangup()
     startConference(false, true);
 
     libjami::hangupParticipant(carlaId, confId, daviUri, daviCall.device); // Unauthorized
-    CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
+    }
     libjami::hangupParticipant(aliceId, confId, daviUri, daviCall.device);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
+    }
 
     hangupConference();
 
@@ -826,7 +1023,10 @@ ConferenceTest::testIsConferenceParticipant()
 
     // hangup bob will stop the conference
     Manager::instance().hangupCall(aliceId, call1);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty(); }));
+    }
     CPPUNIT_ASSERT(!aliceAccount->getCall(call2)->isConferenceParticipant());
     Manager::instance().hangupCall(aliceId, call2);
 
@@ -865,24 +1065,29 @@ ConferenceTest::testHostAddRmSecondVideo()
     // Check that alice has two videos attached to the conference
     auto aliceVideos = [&]() {
         int result = 0;
-        std::lock_guard lock(pInfosMtx_);
         for (auto i = 0u; i < pInfos_.size(); ++i)
             if (pInfos_[i]["uri"].find(aliceUri) != std::string::npos)
                 result += 1;
         return result;
     };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 2; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 2; }));
+    }
 
     // Alice removes her second video
     {
-        std::lock_guard lock(pInfosMtx_);
+        std::lock_guard lock(mtx);
         pInfos_.clear();
     }
     mediaList.pop_back();
     libjami::requestMediaChange(aliceId, confId, mediaList);
 
     // Check that alice has ont video attached to the conference
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 1; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideos() == 1; }));
+    }
 
     hangupConference();
 
@@ -901,7 +1106,6 @@ ConferenceTest::testAudioConferenceConfInfo()
     // Check that alice's video is muted
     auto aliceVideoMuted = [&]() {
         int result = 0;
-        std::lock_guard lock(pInfosMtx_);
         for (auto i = 0u; i < pInfos_.size(); ++i) {
             if (pInfos_[i]["uri"].find(aliceUri) != std::string::npos && pInfos_[i]["videoMuted"] == "true"
                 && pInfos_[i]["sinkId"] == "host_video_0")
@@ -909,7 +1113,10 @@ ConferenceTest::testAudioConferenceConfInfo()
         }
         return result;
     };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideoMuted() == 1; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return aliceVideoMuted() == 1; }));
+    }
 
     libjami::unregisterSignalHandlers();
 }
@@ -945,25 +1152,30 @@ ConferenceTest::testParticipantAddRmSecondVideo()
 
     // Check that bob has two videos attached to the conference
     auto bobVideos = [&]() {
-        std::lock_guard lock(pInfosMtx_);
         int result = 0;
         for (auto i = 0u; i < pInfos_.size(); ++i)
             if (pInfos_[i]["uri"].find(bobUri) != std::string::npos)
                 result += 1;
         return result;
     };
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 2; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 2; }));
+    }
 
     // Bob removes his second video
     {
-        std::lock_guard lock(pInfosMtx_);
+        std::lock_guard lock(mtx);
         pInfos_.clear();
     }
     mediaList.pop_back();
     libjami::requestMediaChange(bobId, bobCall.callId, mediaList);
 
     // Check that bob has ont video attached to the conference
-    CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return bobVideos() == 1; }));
+    }
 
     hangupConference();
 
@@ -979,16 +1191,27 @@ ConferenceTest::testPropagateRecording()
 
     JAMI_INFO("Play with recording state");
     libjami::toggleRecording(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.recording.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return bobCall.recording; }));
+    }
 
     libjami::toggleRecording(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.recording.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !bobCall.recording; }));
+    }
+    libjami::toggleRecording(aliceId, confId);
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return hostRecording; }));
+    }
 
     libjami::toggleRecording(aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return hostRecording.load(); }));
-
-    libjami::toggleRecording(aliceId, confId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !hostRecording.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&] { return !hostRecording; }));
+    }
 
     hangupConference();
 
@@ -1005,7 +1228,10 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
     auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    }
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -1014,7 +1240,10 @@ ConferenceTest::testBrokenParticipantAudioAndVideo()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    }
 
     hangupConference();
 
@@ -1031,7 +1260,10 @@ ConferenceTest::testBrokenParticipantAudioOnly()
     auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    }
 
     // Crash participant
     auto daviAccount = Manager::instance().getAccount<JamiAccount>(daviId);
@@ -1040,7 +1272,10 @@ ConferenceTest::testBrokenParticipantAudioOnly()
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    }
 
     hangupConference();
     libjami::unregisterSignalHandlers();
@@ -1056,14 +1291,20 @@ ConferenceTest::testAudioOnlyLeaveLayout()
     auto expectedNumberOfParticipants = 4u;
 
     // Check participants number
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return pInfos_.size() == expectedNumberOfParticipants; }));
+    }
 
     // Carla Leave
     Manager::instance().hangupCall(carlaId, carlaCall.callId);
 
     // Check participants number
     // It should have one less participant than in the conference start
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return expectedNumberOfParticipants - 1 == pInfos_.size(); }));
+    }
 
     hangupConference();
     libjami::unregisterSignalHandlers();
@@ -1077,9 +1318,15 @@ ConferenceTest::testRemoveConferenceInOneOne()
     // Here it's 1:1 calls we merged, so we can close the conference
     JAMI_INFO("Hangup Bob");
     Manager::instance().hangupCall(bobId, bobCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return confId.empty() && bobCall.state == "OVER"; }));
+    }
     Manager::instance().hangupCall(carlaId, carlaCall.callId);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return carlaCall.state == "OVER"; }));
+    }
     libjami::unregisterSignalHandlers();
 }
 
