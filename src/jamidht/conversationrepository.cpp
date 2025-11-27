@@ -280,6 +280,9 @@ public:
                        bool logIfNotFound = false,
                        bool includeTo = true,
                        const std::string& to = "") const;
+
+    std::vector<jami::ConversationCommit> doubleBranchLog(const std::string& localHead,
+                                                          const std::string& remoteHead) const;
     std::vector<ConversationCommit> log(const LogOptions& options) const;
 
     GitObject fileAtTree(const std::string& path, const GitTree& tree) const;
@@ -2275,23 +2278,67 @@ ConversationRepository::Impl::behind(const std::string& from) const
         return {};
     }
 
-    git_oidarray bases;
-    if (git_merge_bases(&bases, repo.get(), &oid_local, &oid_remote) != 0) {
-        JAMI_ERROR("Unable to get any merge base for commit {} and {}", from, head);
+    std::string local = git_oid_tostr_s(&oid_local);
+    std::string remote = git_oid_tostr_s(&oid_remote);
+    if (local == from)
         return {};
-    }
-    for (std::size_t i = 0; i < bases.count; ++i) {
-        std::string oid = git_oid_tostr_s(&bases.ids[i]);
-        if (oid != head) {
-            oid_local = bases.ids[i];
+
+    // All the new commits from the the remote head to the common merge base
+    auto messagesFromFetch = log(LogOptions {from, local});
+
+    // Perform a git log HEAD FETCH_HEAD
+    auto doubleBranchRes = doubleBranchLog(local, remote);
+
+    // Invariants:
+    // - `previousCommit` is *not* a merge commit
+    // - if `commit` is not a merge commit, then it is the linearized parent of `previousCommit`
+    // - `counter` is the number of new commits that have been added to the list of commits to validate
+    //
+    // Merge commits must be validated if they are new.
+    // Non-merge commits must be announced if they are new or if they have a new linearized parent.
+    jami::ConversationCommit previousCommit = {};
+    std::vector<jami::ConversationCommit> commitsToAnnounce = {};
+    size_t counter = 0;
+    for (jami::ConversationCommit& commit : doubleBranchRes) {
+        if (counter == messagesFromFetch.size()) {
             break;
         }
+
+        auto checkCurrent = std::find_if(messagesFromFetch.begin(),
+                                         messagesFromFetch.end(),
+                                         [&](const jami::ConversationCommit& c) { return c.id == commit.id; });
+        if (commit.parents.size() > 1) {
+            if (checkCurrent != messagesFromFetch.end()) {
+                // We will still add merge commits to the return of this function, as they are required for commit
+                // validation. However, it should be noted that we do not recalculate their linearized parent as merge
+                // commits are skipped during the announcement phase.
+                commitsToAnnounce.emplace_back(commit);
+                counter++;
+            }
+            continue;
+        }
+
+        if (previousCommit.id != "") {
+            previousCommit.linearized_parent = commit.id;
+            auto checkPrevious = std::find_if(messagesFromFetch.begin(),
+                                              messagesFromFetch.end(),
+                                              [&](const jami::ConversationCommit& c) {
+                                                  return c.id == previousCommit.id;
+                                              });
+            if (checkCurrent != messagesFromFetch.end() || checkPrevious != messagesFromFetch.end()) {
+                if (checkPrevious == messagesFromFetch.end()) {
+                    previousCommit.reannounce = true;
+                } else {
+                    counter++;
+                }
+                commitsToAnnounce.emplace_back(previousCommit);
+            }
+        }
+
+        previousCommit = commit;
     }
-    git_oidarray_free(&bases);
-    std::string to = git_oid_tostr_s(&oid_local);
-    if (to == from)
-        return {};
-    return log(LogOptions {from, to});
+
+    return commitsToAnnounce;
 }
 
 void
@@ -2377,6 +2424,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         cc.commit_msg = git_commit_message(commit.get());
         cc.author = std::move(author);
         cc.parents = std::move(parents);
+
         git_buf signature = {}, signed_data = {};
         if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature") < 0) {
             JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}",
@@ -2397,6 +2445,99 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         if (post)
             break;
     }
+}
+
+std::vector<jami::ConversationCommit>
+ConversationRepository::Impl::doubleBranchLog(const std::string& localHead, const std::string& remoteHead) const
+{
+    if (localHead.empty() || remoteHead.empty())
+        return {};
+    auto repo = repository();
+    if (!repo) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get repo!", accountId_, id_);
+    }
+
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repo.get()) < 0) {
+        GitRevWalker walker {walker_ptr};
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to start revwalker!", accountId_, id_);
+        return {};
+    }
+
+    git_oid local_oid, remote_oid;
+
+    if (git_oid_fromstr(&local_oid, localHead.c_str()) < 0 || git_oid_fromstr(&remote_oid, remoteHead.c_str()) < 0) {
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to get create oids from strings {} and {}",
+                   accountId_,
+                   id_,
+                   localHead,
+                   remoteHead);
+    }
+
+    if (git_revwalk_push(walker_ptr, &local_oid) < 0 || git_revwalk_push(walker_ptr, &remote_oid) < 0) {
+        GitRevWalker walker {walker_ptr};
+        JAMI_ERROR("[Account {}] [Conversation {}] Unable to push given oids {} and {} to revwalker!",
+                   accountId_,
+                   id_,
+                   localHead,
+                   remoteHead);
+    }
+
+    GitRevWalker walker {walker_ptr};
+
+    // Identical to --date-order
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL | GIT_SORT_TIME);
+
+    git_oid oid;
+
+    std::vector<jami::ConversationCommit> res;
+    for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
+        git_commit* commit_ptr = nullptr;
+        std::string id = git_oid_tostr_s(&oid);
+        if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
+            JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, id);
+            break;
+        }
+        GitCommit commit {commit_ptr};
+
+        const git_signature* sig = git_commit_author(commit.get());
+        GitAuthor author;
+        author.name = sig->name;
+        author.email = sig->email;
+
+        std::vector<std::string> parents;
+        auto parentsCount = git_commit_parentcount(commit.get());
+        for (unsigned int p = 0; p < parentsCount; ++p) {
+            std::string parent {};
+            const git_oid* pid = git_commit_parent_id(commit.get(), p);
+            if (pid) {
+                parent = git_oid_tostr_s(pid);
+                parents.emplace_back(parent);
+            }
+        }
+
+        ConversationCommit cc;
+        cc.id = id;
+        cc.commit_msg = git_commit_message(commit.get());
+        cc.author = std::move(author);
+        cc.parents = std::move(parents);
+        git_buf signature = {}, signed_data = {};
+        if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature") < 0) {
+            JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}",
+                         accountId_,
+                         id_,
+                         id);
+        } else {
+            cc.signature = base64::decode(std::string(signature.ptr, signature.ptr + signature.size));
+            cc.signed_content = std::vector<uint8_t>(signed_data.ptr, signed_data.ptr + signed_data.size);
+        }
+        git_buf_dispose(&signature);
+        git_buf_dispose(&signed_data);
+        cc.timestamp = git_commit_time(commit.get());
+        res.emplace_back(cc);
+    }
+
+    return res;
 }
 
 std::vector<ConversationCommit>
@@ -2683,6 +2824,7 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     message["author"] = authorId;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
+    message["reannounce"] = commit.reannounce ? "1" : "0";
 
     return message;
 }
