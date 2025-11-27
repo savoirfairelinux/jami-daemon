@@ -43,6 +43,7 @@ struct SwarmMessage
     {
         id = commit.at("id");
         type = commit.at("type");
+        linearizedParent = commit.at("linearizedParent");
         body = commit; // TODO erase type/id?
     }
 };
