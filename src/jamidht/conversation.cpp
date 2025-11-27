@@ -979,18 +979,7 @@ Conversation::Impl::handleMessage(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                                   bool messageReceived) const
 {
-    if (messageReceived) {
-        // For a received message, we place it at the beginning of the list
-        if (!history.messageList.empty())
-            sharedCommit->linearizedParent = (*history.messageList.begin())->id;
-        history.messageList.emplace_front(sharedCommit);
-    } else {
-        // For a loaded message, we load from newest to oldest
-        // So we change the parent of the last message.
-        if (!history.messageList.empty())
-            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
-        history.messageList.emplace_back(sharedCommit);
-    }
+    history.messageList.emplace_back(sharedCommit);
     // Handle pending reactions/editions
     auto reactIt = history.pendingReactions.find(sharedCommit->id);
     if (reactIt != history.pendingReactions.end()) {
@@ -1078,8 +1067,11 @@ Conversation::Impl::addToHistory(History& history,
     std::vector<std::shared_ptr<libjami::SwarmMessage>> sharedCommits;
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
-        if (history.quickAccess.find(commitId) != history.quickAccess.end())
-            continue; // Already present
+        auto quickAccessIt = history.quickAccess.find(commitId);
+        if (quickAccessIt != history.quickAccess.end()
+            && quickAccessIt->second->linearizedParent == commit.at("linearizedParent")) {
+            continue; // Already present with unchanged parent
+        }
         auto typeIt = commit.find("type");
         // Nothing to show for the client, skip
         if (typeIt != commit.end() && typeIt->second == "merge")
