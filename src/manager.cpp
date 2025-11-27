@@ -432,11 +432,11 @@ Manager::ManagerPimpl::parseConfiguration()
         const int error_count = base_.loadAccountMap(parsedFile);
 
         if (error_count > 0) {
-            JAMI_WARN("Error while parsing %s", path_.c_str());
+            JAMI_WARNING("[config] Error while parsing {}", path_);
             result = false;
         }
     } catch (const YAML::BadFile& e) {
-        JAMI_WARN("Unable to open configuration file");
+        JAMI_WARNING("[config] Unable to open configuration file");
         result = false;
     }
 
@@ -454,7 +454,7 @@ Manager::ManagerPimpl::playATone(Tone::ToneId toneId)
 
     std::lock_guard lock(audioLayerMutex_);
     if (not audiodriver_) {
-        JAMI_ERR("Uninitialized audio layer");
+        JAMI_ERROR("[audio] Uninitialized audio layer");
         return;
     }
 
@@ -679,7 +679,7 @@ Manager::instance()
     // This will give a warning that can be ignored the first time instance()
     // is called… subsequent warnings are more serious
     if (not Manager::initialized)
-        JAMI_DBG("Uninitialized");
+        JAMI_WARNING("Manager accessed before initialization");
 
     return instance;
 }
@@ -787,12 +787,12 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
         autoLoad = false;
-        JAMI_DBG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts will neither be loaded nor backed up");
+        JAMI_DEBUG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts will neither be loaded nor backed up");
     } else {
         try {
             no_errors = pimpl_->parseConfiguration();
         } catch (const YAML::Exception& e) {
-            JAMI_ERR("%s", e.what());
+            JAMI_ERROR("[config] Failed to parse configuration: {}", e.what());
             no_errors = false;
         }
 
@@ -832,7 +832,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
             auto work = asio::make_work_guard(*context);
             context->run();
         } catch (const std::exception& ex) {
-            JAMI_ERR("Unexpected io_context thread exception: %s", ex.what());
+            JAMI_ERROR("[io] Unexpected io_context thread exception: {}", ex.what());
         }
     });
     // Create video manager
@@ -841,7 +841,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     }
 
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
-        JAMI_DBG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts and conversations will not be loaded");
+        JAMI_DEBUG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts and conversations will not be loaded");
         return;
     } else {
         registerAccounts();
@@ -884,7 +884,7 @@ Manager::finish() noexcept
             pimpl_->audiodriver_.reset();
         }
 
-        JAMI_DBG("Stopping schedulers and worker threads");
+        JAMI_DEBUG("Stopping schedulers and worker threads");
 
         // Flush remaining tasks (free lambda' with capture)
         pimpl_->scheduler_.stop();
@@ -919,7 +919,7 @@ Manager::finish() noexcept
 #endif
 
     } catch (const VoipLinkException& err) {
-        JAMI_ERR("%s", err.what());
+        JAMI_ERROR("[voip] {}", err.what());
     }
 }
 
@@ -927,16 +927,16 @@ void
 Manager::monitor(bool continuous)
 {
     Logger::setMonitorLog(true);
-    JAMI_DBG("############## START MONITORING ##############");
-    JAMI_DBG("Using PJSIP version: %s for %s", pj_get_version(), PJ_OS_NAME);
-    JAMI_DBG("Using GnuTLS version: %s", gnutls_check_version(nullptr));
-    JAMI_DBG("Using OpenDHT version: %s", dht::version());
+    JAMI_DEBUG("############## START MONITORING ##############");
+    JAMI_DEBUG("Using PJSIP version: {} for {}", pj_get_version(), PJ_OS_NAME);
+    JAMI_DEBUG("Using GnuTLS version: {}", gnutls_check_version(nullptr));
+    JAMI_DEBUG("Using OpenDHT version: {}", dht::version());
 
 #ifdef __linux__
 #if defined(__ANDROID__)
 #else
     auto opened_files = dhtnet::fileutils::readDirectory("/proc/" + std::to_string(getpid()) + "/fd").size();
-    JAMI_DBG("Opened files: %lu", opened_files);
+    JAMI_DEBUG("Opened files: {}", opened_files);
 #endif
 #endif
 
@@ -945,7 +945,7 @@ Manager::monitor(bool continuous)
     for (const auto& account : getAllAccounts())
         if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account))
             acc->monitor();
-    JAMI_DBG("############## END MONITORING ##############");
+    JAMI_DEBUG("############## END MONITORING ##############");
     Logger::setMonitorLog(continuous);
 }
 
@@ -1110,7 +1110,7 @@ Manager::acceptCall(Call& call, const std::vector<libjami::MediaMap>& mediaList)
     try {
         call.answer(mediaList);
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("[call:{}] Failed to answer: {}", call.getCallId(), e.what());
         return false;
     }
 
@@ -1163,7 +1163,7 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
     try {
         call->hangup(0);
     } catch (const VoipLinkException& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("[call:{}] Failed to hangup: {}", call->getCallId(), e.what());
         return false;
     }
 
@@ -1210,7 +1210,7 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
                     pimpl_->unsetCurrentCall();
             });
         } catch (const VoipLinkException& e) {
-            JAMI_ERR("%s", e.what());
+            JAMI_ERROR("[call:{}] Failed to hold: {}", callId, e.what());
             result = false;
         }
     } else {
@@ -1248,7 +1248,7 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
             addAudio(*call);
         });
     } catch (const VoipLinkException& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("[call] Failed to unhold: {}", e.what());
         return false;
     }
 
@@ -1500,13 +1500,13 @@ Manager::createConfFromParticipantList(const std::string& accountId, const std::
 {
     auto account = getAccount(accountId);
     if (not account) {
-        JAMI_WARN("Unable to find account");
+        JAMI_WARNING("[account:{}] Account not found", accountId);
         return;
     }
 
     // we must have at least 2 participant for a conference
     if (participantList.size() <= 1) {
-        JAMI_ERR("Participant number must be greater than or equal to 2");
+        JAMI_ERROR("[conf] Participant number must be greater than or equal to 2");
         return;
     }
 
@@ -1775,9 +1775,9 @@ Manager::saveConfig()
         std::ofstream fout(pimpl_->path_);
         fout.write(out.c_str(), out.size());
     } catch (const YAML::Exception& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("[config] YAML error: {}", e.what());
     } catch (const std::runtime_error& e) {
-        JAMI_ERR("%s", e.what());
+        JAMI_ERROR("[config] {}", e.what());
     }
 }
 
@@ -1788,7 +1788,6 @@ Manager::playDtmf(char code)
     stopTone();
 
     if (not voipPreferences.getPlayDtmf()) {
-        JAMI_DBG("Do not have to play a tone…");
         return;
     }
 
@@ -1796,7 +1795,6 @@ Manager::playDtmf(char code)
     int pulselen = voipPreferences.getPulseLength();
 
     if (pulselen == 0) {
-        JAMI_DBG("Pulse length is not set…");
         return;
     }
 
@@ -1804,13 +1802,12 @@ Manager::playDtmf(char code)
 
     // fast return, no sound, so no dtmf
     if (not pimpl_->audiodriver_ or not pimpl_->dtmfKey_) {
-        JAMI_DBG("No audio layer…");
         return;
     }
 
     std::shared_ptr<AudioDeviceGuard> audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
     if (not pimpl_->audiodriver_->waitForStart(std::chrono::seconds(1))) {
-        JAMI_ERR("Failed to start audio layer…");
+        JAMI_ERROR("[audio] Failed to start audio layer for DTMF");
         return;
     }
 
@@ -1835,7 +1832,7 @@ Manager::playDtmf(char code)
         pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
     }
 
-    scheduler().scheduleIn([audioGuard] { JAMI_WARN("End of dtmf"); }, std::chrono::milliseconds(pulselen));
+    scheduler().scheduleIn([audioGuard] {}, std::chrono::milliseconds(pulselen));
 
     // TODO Cache the DTMF
 }
@@ -2086,7 +2083,7 @@ Manager::playRingtone(const std::string& accountID)
 {
     const auto account = getAccount(accountID);
     if (!account) {
-        JAMI_WARN("Invalid account in ringtone");
+        JAMI_WARNING("[account:{}] Invalid account for ringtone", accountID);
         return;
     }
 
@@ -2099,7 +2096,7 @@ Manager::playRingtone(const std::string& accountID)
         std::lock_guard lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
-            JAMI_ERR("No audio layer in ringtone");
+            JAMI_ERROR("[audio] No audio layer for ringtone");
             return;
         }
         // start audio if not started AND flush all buffers (main and urgent)
@@ -2150,11 +2147,11 @@ Manager::setAudioDevice(int index, AudioDeviceType type)
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Uninitialized audio driver");
+        JAMI_ERROR("[audio] Uninitialized audio driver");
         return;
     }
     if (pimpl_->getCurrentDeviceIndex(type) == index) {
-        JAMI_WARN("Audio device already selected, doing nothing.");
+        JAMI_DEBUG("[audio] Audio device already selected, doing nothing");
         return;
     }
 
@@ -2175,7 +2172,7 @@ Manager::getAudioOutputDeviceList()
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Uninitialized audio layer");
+        JAMI_ERROR("[audio] Uninitialized audio layer");
         return {};
     }
 
@@ -2191,7 +2188,7 @@ Manager::getAudioInputDeviceList()
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Uninitialized audio layer");
+        JAMI_ERROR("[audio] Uninitialized audio layer");
         return {};
     }
 
@@ -2206,7 +2203,7 @@ Manager::getCurrentAudioDevicesIndex()
 {
     std::lock_guard lock(pimpl_->audioLayerMutex_);
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Uninitialized audio layer");
+        JAMI_ERROR("[audio] Uninitialized audio layer");
         return {};
     }
 
@@ -2289,13 +2286,13 @@ Manager::toggleRecordingCall(const std::string& accountId, const std::string& id
 bool
 Manager::startRecordedFilePlayback(const std::string& filepath)
 {
-    JAMI_DBG("Start recorded file playback %s", filepath.c_str());
+    JAMI_DEBUG("[audio] Start recorded file playback: {}", filepath);
 
     {
         std::lock_guard lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
-            JAMI_ERR("No audio layer in start recorded file playback");
+            JAMI_ERROR("[audio] No audio layer for recorded file playback");
             return false;
         }
 
@@ -2317,7 +2314,7 @@ Manager::recordingPlaybackSeek(const double value)
 void
 Manager::stopRecordedFilePlayback()
 {
-    JAMI_DBG("Stop recorded file playback");
+    JAMI_DEBUG("[audio] Stop recorded file playback");
 
     pimpl_->toneCtrl_.stopAudioFile();
     pimpl_->toneDeviceGuard_.reset();
@@ -2326,7 +2323,7 @@ Manager::stopRecordedFilePlayback()
 void
 Manager::setHistoryLimit(int days)
 {
-    JAMI_DBG("Set history limit");
+    JAMI_DEBUG("[config] Set history limit to {} days", days);
     preferences.setHistoryLimit(days);
     saveConfig();
 }
@@ -2340,7 +2337,7 @@ Manager::getHistoryLimit() const
 void
 Manager::setRingingTimeout(int timeout)
 {
-    JAMI_DBG("Set ringing timeout");
+    JAMI_DEBUG("[config] Set ringing timeout to {} seconds", timeout);
     preferences.setRingingTimeout(timeout);
     saveConfig();
 }
@@ -2361,7 +2358,7 @@ Manager::setAudioManager(const std::string& api)
             return false;
 
         if (api == audioPreference.getAudioApi()) {
-            JAMI_DBG("Audio manager chosen already in use. No changes made.");
+            JAMI_DEBUG("[audio] Audio manager '{}' already in use", api);
             return true;
         }
     }
@@ -2391,7 +2388,7 @@ Manager::getAudioInputDeviceIndex(const std::string& name)
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Uninitialized audio layer");
+        JAMI_ERROR("[audio] Uninitialized audio layer");
         return 0;
     }
 
@@ -2404,7 +2401,7 @@ Manager::getAudioOutputDeviceIndex(const std::string& name)
     std::lock_guard lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        JAMI_ERR("Uninitialized audio layer");
+        JAMI_ERROR("[audio] Uninitialized audio layer");
         return 0;
     }
 
@@ -2506,7 +2503,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     auto account = incomCall.getAccount().lock();
     if (!account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", incomCallId);
         return;
     }
 
@@ -2662,7 +2659,7 @@ Manager::getAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getAccountDetails();
     } else {
-        JAMI_ERR("Unable to get account details on a nonexistent accountID %s", accountID.c_str());
+        JAMI_ERROR("[account:{}] Unable to get account details on nonexistent account", accountID);
         // return an empty map since unable to throw an exception to D-Bus
         return {};
     }
@@ -2676,7 +2673,7 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getVolatileAccountDetails();
     } else {
-        JAMI_ERR("Unable to get volatile account details on a nonexistent accountID %s", accountID.c_str());
+        JAMI_ERROR("[account:{}] Unable to get volatile account details on nonexistent account", accountID);
         return {};
     }
 }
@@ -2684,11 +2681,11 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
 void
 Manager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
-    JAMI_DBG("Set account details for %s", accountID.c_str());
+    JAMI_DEBUG("[account:{}] Set account details", accountID);
 
     auto account = getAccount(accountID);
     if (not account) {
-        JAMI_ERR("Unable to find account %s", accountID.c_str());
+        JAMI_ERROR("[account:{}] Unable to find account", accountID);
         return;
     }
 
@@ -2811,13 +2808,13 @@ Manager::loadAccountMap(const YAML::Node& node)
         pluginPreferences.unserialize(node);
 #endif
     } catch (const YAML::Exception& e) {
-        JAMI_ERR("Preferences node unserialize YAML exception: %s", e.what());
+        JAMI_ERROR("[config] Preferences unserialize YAML exception: {}", e.what());
         ++errorCount;
     } catch (const std::exception& e) {
-        JAMI_ERR("Preferences node unserialize standard exception: %s", e.what());
+        JAMI_ERROR("[config] Preferences unserialize exception: {}", e.what());
         ++errorCount;
     } catch (...) {
-        JAMI_ERR("Preferences node unserialize unknown exception");
+        JAMI_ERROR("[config] Preferences unserialize unknown exception");
         ++errorCount;
     }
 
@@ -2853,7 +2850,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                             a->setConfig(std::move(config));
                         }
                     } catch (const std::exception& e) {
-                        JAMI_ERR("Unable to import account %s: %s", dir.c_str(), e.what());
+                        JAMI_ERROR("[account:{}] Unable to import account: {}", dir, e.what());
                     }
                 }
                 std::lock_guard l(lock);
@@ -2927,7 +2924,7 @@ Manager::sendTextMessage(const std::string& accountID,
 #endif // ENABLE_PLUGIN
                 return acc->sendTextMessage(to, "", payloads, 0, onlyConnected);
         } catch (const std::exception& e) {
-            JAMI_ERR("Exception during text message sending: %s", e.what());
+            JAMI_ERROR("[account:{}] Exception during text message sending: {}", accountID, e.what());
         }
     }
     return 0;
@@ -2987,13 +2984,13 @@ Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, 
                 account->setConfig(std::move(config));
             }
         } catch (const std::runtime_error& e) {
-            JAMI_WARN("Failed to load account: %s", e.what());
+            JAMI_WARNING("[account:{}] Failed to load account: {}", accountId, e.what());
             return;
         }
     }
 
     if (!account) {
-        JAMI_WARN("Unable to load account %s", accountId.c_str());
+        JAMI_WARNING("[account:{}] Unable to load account", accountId);
         return;
     }
 
@@ -3026,12 +3023,12 @@ Manager::newOutgoingCall(std::string_view toUrl,
 {
     auto account = getAccount(accountId);
     if (not account) {
-        JAMI_WARN("No account matches ID %s", accountId.c_str());
+        JAMI_WARNING("[account:{}] No account matches ID", accountId);
         return {};
     }
 
     if (not account->isUsable()) {
-        JAMI_WARN("Account %s is unusable", accountId.c_str());
+        JAMI_WARNING("[account:{}] Account is unusable", accountId);
         return {};
     }
 
@@ -3197,7 +3194,7 @@ Manager::setDefaultModerator(const std::string& accountID, const std::string& pe
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Failed to change default moderator, account %s not found", accountID.c_str());
+        JAMI_ERROR("[account:{}] Failed to change default moderator: account not found", accountID);
         return;
     }
 
@@ -3213,7 +3210,7 @@ Manager::getDefaultModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Failed to get default moderators, account %s not found", accountID.c_str());
+        JAMI_ERROR("[account:{}] Failed to get default moderators: account not found", accountID);
         return {};
     }
 
@@ -3233,7 +3230,7 @@ Manager::isLocalModeratorsEnabled(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Failed to get local moderators, account %s not found", accountID.c_str());
+        JAMI_ERROR("[account:{}] Failed to get local moderators: account not found", accountID);
         return true; // Default value
     }
     return acc->isLocalModeratorsEnabled();
@@ -3251,7 +3248,7 @@ Manager::isAllModerators(const std::string& accountID)
 {
     auto acc = getAccount(accountID);
     if (!acc) {
-        JAMI_ERR("Failed to get all moderators, account %s not found", accountID.c_str());
+        JAMI_ERROR("[account:{}] Failed to get all moderators: account not found", accountID);
         return true; // Default value
     }
     return acc->isAllModerators();
