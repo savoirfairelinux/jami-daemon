@@ -522,7 +522,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
     if (!isNotHosting) {
         conf = getConference(confId);
         if (!conf) {
-            JAMI_ERROR("Conference {} not found", confId);
+            JAMI_ERROR("[conf:{}] Conference not found", confId);
             return;
         }
         auto hostMedias = conf->currentMediaList();
@@ -535,13 +535,12 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
             // with. We need to add video media to the host before accepting the offer
             // This can happen if we host an audio call and someone joins with video
             currentMediaList = hostMedias;
-            currentMediaList.push_back({
-                {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
-                {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
-                {libjami::Media::MediaAttributeKey::MUTED,      TRUE_STR                                  },
-                {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        },
-                {libjami::Media::MediaAttributeKey::LABEL,      "video_0"                                 }
-            });
+            currentMediaList.push_back(
+                {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+                 {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                 {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
+                 {libjami::Media::MediaAttributeKey::SOURCE, ""},
+                 {libjami::Media::MediaAttributeKey::LABEL, "video_0"}});
         } else {
             bool hasVideo = false;
             if (sipCall) {
