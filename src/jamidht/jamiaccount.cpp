@@ -320,7 +320,7 @@ JamiAccount::newIncomingCall(const std::string& from,
         return call;
     }
 
-    JAMI_ERR("newIncomingCall: unable to find matching call for %s", from.c_str());
+    JAMI_ERROR("newIncomingCall: unable to find matching call for {}", from);
     return nullptr;
 }
 
@@ -365,7 +365,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
         auto shared = w.lock();
         if (!shared)
             return;
-        JAMI_DBG() << "New outgoing call with " << uri.toString();
+        JAMI_DEBUG("New outgoing call with {}", uri.toString());
         call->setPeerNumber(uri.authority());
         call->setPeerUri(uri.toString());
 
@@ -456,7 +456,7 @@ JamiAccount::newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjam
 
             // Else, ask for a channel (for future calls/text messages)
             auto type = call->hasVideo() ? "videoCall" : "audioCall";
-            JAMI_WARNING("[call {}] No channeled socket with this peer. Send request", call->getCallId());
+            JAMI_WARNING("[call:{}] No channeled socket with this peer. Send request", call->getCallId());
             requestSIPConnection(accountUri, deviceId, type, true, call);
         });
 }
@@ -501,7 +501,7 @@ JamiAccount::handleIncomingConversationCall(const std::string& callId, const std
 
     auto call = getCall(callId);
     if (!call) {
-        JAMI_ERROR("Call {} not found", callId);
+        JAMI_ERROR("[call:{}] Call not found", callId);
         return;
     }
 
@@ -656,7 +656,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             pendingCalls_[deviceId].emplace_back(dev_call);
         }
 
-        JAMI_WARNING("[call {}] No channeled socket with this peer. Send request", call->getCallId());
+        JAMI_WARNING("[call:{}] No channeled socket with this peer. Send request", call->getCallId());
         // Else, ask for a channel (for future calls/text messages)
         auto type = call->hasVideo() ? "videoCall" : "audioCall";
         requestSIPConnection(toUri, deviceId, type, true, dev_call);
@@ -682,7 +682,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         channels.emplace_back(sipConn.channel);
 
-        JAMI_WARNING("[call {}] A channeled socket is detected with this peer.", call->getCallId());
+        JAMI_WARNING("[call:{}] A channeled socket is detected with this peer", call->getCallId());
 
         auto dev_call = createSubCall(call);
         dev_call->setPeerNumber(call->getPeerNumber());

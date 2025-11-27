@@ -243,7 +243,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         setTransport(t);
         call->setSipTransport(t, getContactHeader());
 
-        JAMI_DBG("New %s IP to IP call to %s", ipv6 ? "IPv6" : "IPv4", to.c_str());
+        JAMI_DEBUG("New {} IP to IP call to {}", ipv6 ? "IPv6" : "IPv4", to);
     } else {
         to = toUrl;
         call->setSipTransport(transport_, getContactHeader());
@@ -296,7 +296,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
         manager.scheduler().run([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
-                    JAMI_ERR("Unable to send outgoing INVITE request for new call");
+                    JAMI_ERROR("[call:{}] Unable to send outgoing INVITE request for new call", call->getCallId());
                     call->onFailure();
                 }
             }
@@ -392,7 +392,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     auto transport = call->getTransport();
     if (!transport) {
-        JAMI_ERROR("Unable to start call without transport");
+        JAMI_ERROR("[call:{}] Unable to start call without transport", call->getCallId());
         return false;
     }
 
@@ -424,13 +424,13 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     pjsip_tx_data* tdata;
 
     if (pjsip_inv_invite(call->inviteSession_.get(), &tdata) != PJ_SUCCESS) {
-        JAMI_ERROR("Unable to initialize invite messager for this call");
+        JAMI_ERROR("[call:{}] Unable to initialize invite messager for this call", call->getCallId());
         return false;
     }
 
     const pjsip_tpselector tp_sel = link_.getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        JAMI_ERROR("Unable to associate transport for invite session dialog");
+        JAMI_ERROR("[call:{}] Unable to associate transport for invite session dialog", call->getCallId());
         return false;
     }
 
@@ -438,7 +438,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     sip_utils::addUserAgentHeader(getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(call->inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERROR("Unable to send invite message for this call");
+        JAMI_ERROR("[call:{}] Unable to send invite message for this call", call->getCallId());
         return false;
     }
 

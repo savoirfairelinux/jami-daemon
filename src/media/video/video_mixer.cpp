@@ -190,7 +190,7 @@ VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
     std::unique_lock lk(videoToStreamInfoMtx_);
     auto it = videoToStreamInfo_.find(frame);
     if (it != videoToStreamInfo_.end()) {
-        JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());
+        JAMI_DEBUG("[call:{}] Detaching video", it->second.callId);
         detach = true;
         // Handle the case where the current shown source leave the conference
         // Note, do not call resetActiveStream() to avoid multiple updates

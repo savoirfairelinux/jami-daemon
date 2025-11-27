@@ -564,7 +564,7 @@ void
 Manager::ManagerPimpl::switchCall(const std::string& id)
 {
     std::lock_guard m(currentCallMutex_);
-    JAMI_DBG("----- Switch current call ID to '%s' -----", not id.empty() ? id.c_str() : "none");
+    JAMI_DEBUG("Switch current call ID to '{}'", not id.empty() ? id : "none");
     currentCall_ = id;
 }
 
@@ -863,7 +863,7 @@ Manager::finish() noexcept
         callFactory.forbid();
 
         // End all remaining active calls
-        JAMI_DBG("End %zu remaining call(s)", callFactory.callCount());
+        JAMI_DEBUG("End {} remaining call(s)", callFactory.callCount());
         for (const auto& call : callFactory.getAllCalls())
             hangupCall(call->getAccountId(), call->getCallId());
         callFactory.clear();
@@ -1058,7 +1058,7 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
                       const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_DBG() << "Attempt outgoing call to '" << to << "'" << " with account '" << account_id << "'";
+    JAMI_LOG("Attempt outgoing call to '{}' with account '{}'", to, account_id);
 
     std::shared_ptr<Call> call;
 
@@ -1145,7 +1145,7 @@ Manager::hangupCall(const std::string& accountId, const std::string& callId)
     /* We often get here when the call was hungup before being created */
     auto call = account->getCall(callId);
     if (not call) {
-        JAMI_WARN("Unable to hang up nonexistent call %s", callId.c_str());
+        JAMI_WARNING("[call:{}] Unable to hang up nonexistent call", callId);
         return false;
     }
 
@@ -1197,7 +1197,7 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
         try {
             result = call->onhold([=](bool ok) {
                 if (!ok) {
-                    JAMI_ERR("Hold failed for call %s", callId.c_str());
+                    JAMI_ERROR("[call:{}] Hold failed", callId);
                     return;
                 }
                 removeAudio(*call); // Unbind calls in main buffer
@@ -1214,7 +1214,7 @@ Manager::onHoldCall(const std::string&, const std::string& callId)
             result = false;
         }
     } else {
-        JAMI_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
+        JAMI_DEBUG("[call:{}] Call doesn't exist in onHold", callId);
         return false;
     }
 
@@ -1236,7 +1236,7 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
     try {
         result = call->offhold([=](bool ok) {
             if (!ok) {
-                JAMI_ERR("offHold failed for call %s", callId.c_str());
+                JAMI_ERROR("[call:{}] offHold failed", callId);
                 return;
             }
 
@@ -1459,14 +1459,14 @@ Manager::joinParticipant(const std::string& accountId,
     // Set corresponding conference ids for call 1
     auto call1 = account->getCall(callId1);
     if (!call1) {
-        JAMI_ERROR("Unable to find call {}", callId1);
+        JAMI_ERROR("[call:{}] Unable to find call", callId1);
         return false;
     }
 
     // Set corresponding conference details
     auto call2 = account2->getCall(callId2);
     if (!call2) {
-        JAMI_ERROR("Unable to find call {}", callId2);
+        JAMI_ERROR("[call:{}] Unable to find call", callId2);
         return false;
     }
 
@@ -1559,7 +1559,7 @@ Manager::detachParticipant(const std::string& callId)
 
     auto call = getCallFromCallID(callId);
     if (!call) {
-        JAMI_ERROR("Unable to find call {}", callId);
+        JAMI_ERROR("[call:{}] Unable to find call", callId);
         return false;
     }
 
@@ -1634,7 +1634,7 @@ Manager::joinConference(const std::string& accountId,
             removeAudio(*call);
             calls.emplace_back(std::move(call));
         } else {
-            JAMI_ERROR("Unable to find call {}", callId);
+            JAMI_ERROR("[call:{}] Unable to find call", callId);
         }
     }
     // Remove conf1
@@ -1857,7 +1857,7 @@ Manager::incomingCall(const std::string& accountId, Call& call)
 
     auto const& account = getAccount(accountId);
     if (not account) {
-        JAMI_ERROR("Incoming call {} on unknown account {}", call.getCallId(), accountId);
+        JAMI_ERROR("[call:{}] Incoming call on unknown account {}", call.getCallId(), accountId);
         return;
     }
 
@@ -1926,11 +1926,11 @@ Manager::sendCallTextMessage(const std::string& accountId,
             try {
                 call->sendTextMessage(messages, from);
             } catch (const im::InstantMessageException& e) {
-                JAMI_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
+                JAMI_ERROR("[call:{}] Failed to send message: {}", call->getCallId(), e.what());
             }
         }
     } else {
-        JAMI_ERR("Failed to send message to %s: nonexistent call ID", callID.c_str());
+        JAMI_ERROR("[call:{}] Failed to send message: nonexistent call ID", callID);
     }
 }
 
@@ -1939,7 +1939,7 @@ void
 Manager::peerAnsweredCall(Call& call)
 {
     const auto& callId = call.getCallId();
-    JAMI_DBG("[call:%s] Peer answered", callId.c_str());
+    JAMI_DEBUG("[call:{}] Peer answered", callId);
 
     // The if statement is useful only if we sent two calls at the same time.
     if (isCurrentCall(call))
@@ -2523,9 +2523,9 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
     auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(incomCall.getMediaAttributeList());
 
     if (mediaList.empty())
-        JAMI_WARNING("Incoming call {} has an empty media list", incomCallId);
+        JAMI_WARNING("[call:{}] Incoming call has an empty media list", incomCallId);
 
-    JAMI_DEBUG("Incoming call {} on account {} with {} media", incomCallId, accountId, mediaList.size());
+    JAMI_DEBUG("[call:{}] Incoming call on account {} with {} media", incomCallId, accountId, mediaList.size());
 
     emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
 

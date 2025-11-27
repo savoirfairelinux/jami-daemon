@@ -265,7 +265,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
             return PJ_FALSE;
         if (not transport and account->getAccountType() == SIPAccount::ACCOUNT_TYPE) {
             if (not(transport = std::static_pointer_cast<SIPAccount>(account)->getTransport())) {
-                JAMI_ERR("No suitable transport to answer this call.");
+                JAMI_ERROR("No suitable transport to answer this call");
                 return PJ_FALSE;
             }
             JAMI_WARN("Using transport from account.");
@@ -456,7 +456,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     // accepted and the media attributes of the answer are known.
     pjsip_inv_create_uas(dialog, rdata, NULL, PJSIP_INV_SUPPORT_ICE, &inv);
     if (!inv) {
-        JAMI_ERR("Call invite is not initialized");
+        JAMI_ERROR("Call invite is not initialized");
         pjsip_dlg_dec_lock(dialog);
         return PJ_FALSE;
     }
@@ -699,7 +699,7 @@ SIPVoIPLink::shutdown()
     // may be called and another instance of SIPVoIPLink can be re-created!
 
     if (not Manager::instance().callFactory.empty(Call::LinkType::SIP))
-        JAMI_ERR("%zu SIP calls remains!", Manager::instance().callFactory.callCount(Call::LinkType::SIP));
+        JAMI_ERROR("{} SIP calls remains!", Manager::instance().callFactory.callCount(Call::LinkType::SIP));
 
     sipTransportBroker->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
@@ -808,12 +808,12 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         return;
 
     if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG and ev->type != PJSIP_EVENT_RX_MSG) {
-        JAMI_WARN("[call:%s] INVITE@%p state changed to %d (%s): unexpected event type %d",
-                  call->getCallId().c_str(),
-                  inv,
-                  inv->state,
-                  pjsip_inv_state_name(inv->state),
-                  ev->type);
+        JAMI_WARNING("[call:{}] INVITE@{} state changed to {} ({}): unexpected event type {}",
+                     call->getCallId(),
+                     fmt::ptr(inv),
+                     static_cast<int>(inv->state),
+                     pjsip_inv_state_name(inv->state),
+                     static_cast<int>(ev->type));
         return;
     }
 
@@ -996,9 +996,9 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
         throw VoipLinkException("Unexpected empty media attribute list");
     }
 
-    JAMI_DBG("Creating a SDP offer using the following media:");
+    JAMI_DEBUG("[call:{}] Creating SDP offer with following media:", call->getCallId());
     for (auto const& media : mediaList) {
-        JAMI_DBG("[call %s] Media %s", call->getCallId().c_str(), media.toString(true).c_str());
+        JAMI_DEBUG("[call:{}] Media: {}", call->getCallId(), media.toString(true));
     }
 
     const bool created = sdp.createOffer(mediaList);
@@ -1051,14 +1051,14 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     if (not call)
         return;
 
-    JAMI_DBG("[call:%s] INVITE@%p media update: status %d", call->getCallId().c_str(), inv, status);
+    JAMI_DEBUG("[call:{}] INVITE@{} media update: status {}", call->getCallId(), fmt::ptr(inv), status);
 
     if (status != PJ_SUCCESS) {
         const int reason = inv->state != PJSIP_INV_STATE_NULL and inv->state != PJSIP_INV_STATE_CONFIRMED
                                ? PJSIP_SC_UNSUPPORTED_MEDIA_TYPE
                                : 0;
 
-        JAMI_WARN("[call:%s] SDP offer failed, reason %d", call->getCallId().c_str(), reason);
+        JAMI_WARNING("[call:{}] SDP offer failed, reason {}", call->getCallId(), reason);
 
         call->hangup(reason);
         return;
@@ -1204,14 +1204,14 @@ static bool
 transferCall(SIPCall& call, const std::string& refer_to)
 {
     const auto& callId = call.getCallId();
-    JAMI_WARN("[call:%s] Attempting to transfer to %s", callId.c_str(), refer_to.c_str());
+    JAMI_WARNING("[call:{}] Attempting to transfer to {}", callId, refer_to);
     try {
         Manager::instance().newOutgoingCall(refer_to,
                                             call.getAccountId(),
                                             MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList()));
         Manager::instance().hangupCall(call.getAccountId(), callId);
     } catch (const std::exception& e) {
-        JAMI_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());
+        JAMI_ERROR("[call:{}] SIP transfer failed: {}", callId, e.what());
         return false;
     }
     return true;
@@ -1242,9 +1242,9 @@ onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, SIP
             // But your current design doesn't permit that
             return;
         } else
-            JAMI_ERR("[call:%s] REFER: too many Refer-To headers", call.getCallId().c_str());
+            JAMI_ERROR("[call:{}] REFER: too many Refer-To headers", call.getCallId());
     } else
-        JAMI_ERR("[call:%s] REFER: no Refer-To header", call.getCallId().c_str());
+        JAMI_ERROR("[call:{}] REFER: no Refer-To header", call.getCallId());
 
     replyToRequest(inv, rdata, PJSIP_SC_BAD_REQUEST);
 }
@@ -1263,12 +1263,12 @@ onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg*
         return;
 
     const std::string bodyText {static_cast<char*>(msg->body->data), msg->body->len};
-    JAMI_DBG("[call:%s] NOTIFY body start - %p\n%s\n[call:%s] NOTIFY body end - %p",
-             call.getCallId().c_str(),
-             msg->body,
-             bodyText.c_str(),
-             call.getCallId().c_str(),
-             msg->body);
+    JAMI_DEBUG("[call:{}] NOTIFY body start - {}\n{}\n[call:{}] NOTIFY body end - {}",
+               call.getCallId(),
+               fmt::ptr(msg->body),
+               bodyText,
+               call.getCallId(),
+               fmt::ptr(msg->body));
 
     // TODO
 }

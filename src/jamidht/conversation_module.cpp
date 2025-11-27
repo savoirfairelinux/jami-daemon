@@ -3170,7 +3170,7 @@ ConversationModule::hostConference(const std::string& conversationId,
     if (!callId.empty()) {
         call = std::dynamic_pointer_cast<SIPCall>(acc->getCall(callId));
         if (!call) {
-            JAMI_WARNING("No call with id {} found", callId);
+            JAMI_WARNING("[call:{}] No call with id found", callId);
             return;
         }
     }

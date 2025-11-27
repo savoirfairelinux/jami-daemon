@@ -129,12 +129,10 @@ SIPCall::SIPCall(const std::shared_ptr<SIPAccountBase>& account,
     if (mediaAttrList.size() == 0) {
         if (type_ == Call::CallType::INCOMING) {
             // Handle incoming call without media offer.
-            JAMI_WARN("[call:%s] No media offered in the incoming invite. An offer will be provided in "
-                      "the answer",
-                      getCallId().c_str());
+            JAMI_WARNING("[call:{}] No media offered in invite, will provide answer", getCallId());
             mediaAttrList = getSIPAccount()->createDefaultMediaList(false, getState() == CallState::HOLD);
         } else {
-            JAMI_WARN("[call:%s] Creating an outgoing call with empty offer", getCallId().c_str());
+            JAMI_WARNING("[call:{}] Creating outgoing call with empty offer", getCallId());
         }
     }
 
@@ -207,9 +205,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
                              const MediaDescription& localMedia,
                              const MediaDescription& remoteMedia)
 {
-    JAMI_DBG("[call:%s] Configuring [%s] RTP session",
-             getCallId().c_str(),
-             MediaAttribute::mediaTypeToString(mediaAttr->type_));
+    JAMI_DEBUG("[call:{}] Configuring {} RTP session", getCallId(), MediaAttribute::mediaTypeToString(mediaAttr->type_));
 
     if (not rtpSession)
         throw std::runtime_error("Must have a valid RTP session");
@@ -305,7 +301,7 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                     // TODO: maybe emit signal here for local voice activity
                 }
             } else {
-                JAMI_ERR("Voice activity callback unable to lock weak ptr to SIPCall");
+                JAMI_ERROR("Voice activity callback unable to lock call");
             }
         });
     });
@@ -406,7 +402,7 @@ SIPCall::generateMediaPorts()
 {
     auto account = getSIPAccount();
     if (!account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
@@ -443,7 +439,7 @@ void
 SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport, const std::string& contactHdr)
 {
     if (transport != sipTransport_) {
-        JAMI_DBG("[call:%s] Setting transport to [%p]", getCallId().c_str(), transport.get());
+        JAMI_DEBUG("[call:{}] Setting transport to [{}]", getCallId(), fmt::ptr(transport.get()));
     }
 
     sipTransport_ = transport;
@@ -455,46 +451,47 @@ SIPCall::setSipTransport(const std::shared_ptr<SipTransport>& transport, const s
     }
 
     if (contactHeader_.empty()) {
-        JAMI_WARN("[call:%s] Contact header is empty", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Contact header is empty", getCallId());
     }
 
     if (isSrtpEnabled() and not sipTransport_->isSecure()) {
-        JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an unencrypted signaling channel", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Crypto (SRTP) negotiated over unencrypted signaling", getCallId());
     }
 
     if (not isSrtpEnabled() and sipTransport_->isSecure()) {
-        JAMI_WARN("[call:%s] The signaling channel is encrypted but the media is unencrypted", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Signaling encrypted but media unencrypted", getCallId());
     }
 
     const auto list_id = reinterpret_cast<uintptr_t>(this);
     sipTransport_->removeStateListener(list_id);
 
     // Listen for transport destruction
-    sipTransport_
-        ->addStateListener(list_id, [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
-            if (auto this_ = wthis_.lock()) {
-                JAMI_DBG("[call:%s] SIP transport state [%i] - connection state [%u]",
-                         this_->getCallId().c_str(),
-                         state,
-                         static_cast<unsigned>(this_->getConnectionState()));
+    sipTransport_->addStateListener(list_id,
+                                    [wthis_ = weak()](pjsip_transport_state state, const pjsip_transport_state_info*) {
+                                        if (auto this_ = wthis_.lock()) {
+                                            JAMI_DEBUG("[call:{}] SIP transport state={}, connection state={}",
+                                                       this_->getCallId(),
+                                                       static_cast<int>(state),
+                                                       static_cast<unsigned>(this_->getConnectionState()));
 
-                // End the call if the SIP transport was shut down
-                auto isAlive = SipTransport::isAlive(state);
-                if (not isAlive and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
-                    JAMI_WARN("[call:%s] Ending call because underlying SIP transport was closed",
-                              this_->getCallId().c_str());
-                    this_->stopAllMedia();
-                    this_->detachAudioFromConference();
-                    this_->onFailure(ECONNRESET);
-                }
-            }
-        });
+                                            // End the call if the SIP transport was shut down
+                                            auto isAlive = SipTransport::isAlive(state);
+                                            if (not isAlive
+                                                and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
+                                                JAMI_WARNING("[call:{}] Ending call, SIP transport closed",
+                                                             this_->getCallId());
+                                                this_->stopAllMedia();
+                                                this_->detachAudioFromConference();
+                                                this_->onFailure(ECONNRESET);
+                                            }
+                                        }
+                                    });
 }
 
 void
 SIPCall::requestReinvite(const std::vector<MediaAttribute>& mediaAttrList, bool needNewIce)
 {
-    JAMI_DBG("[call:%s] Sending a SIP re-invite to request media change", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Sending re-invite to request media change", getCallId());
 
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
@@ -520,10 +517,8 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
     if (not inviteSession_ or inviteSession_->invite_tsx)
         return PJ_SUCCESS;
 
-    JAMI_DBG("[call:%s] Preparing and sending a re-invite (state=%s)",
-             getCallId().c_str(),
-             pjsip_inv_state_name(inviteSession_->state));
-    JAMI_DBG("[call:%s] New ICE required for this re-invite: [%s]", getCallId().c_str(), needNewIce ? "Yes" : "No");
+    JAMI_DEBUG("[call:{}] Preparing re-invite (state={})", getCallId(), pjsip_inv_state_name(inviteSession_->state));
+    JAMI_DEBUG("[call:{}] New ICE required: {}", getCallId(), needNewIce);
 
     // Generate new ports to receive the new media stream
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
@@ -535,7 +530,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
 
     auto acc = getSIPAccount();
     if (not acc) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return !PJ_SUCCESS;
     }
 
@@ -564,15 +559,11 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
         result = pjsip_inv_send_msg(inviteSession_.get(), tdata);
         if (result == PJ_SUCCESS)
             return PJ_SUCCESS;
-        JAMI_ERR("[call:%s] Failed to send REINVITE msg (pjsip: %s)",
-                 getCallId().c_str(),
-                 sip_utils::sip_strerror(result).c_str());
+        JAMI_ERROR("[call:{}] Failed to send REINVITE: {}", getCallId(), sip_utils::sip_strerror(result));
         // Canceling internals without sending (anyways the send has just failed!)
         pjsip_inv_cancel_reinvite(inviteSession_.get(), &tdata);
     } else
-        JAMI_ERR("[call:%s] Failed to create REINVITE msg (pjsip: %s)",
-                 getCallId().c_str(),
-                 sip_utils::sip_strerror(result).c_str());
+        JAMI_ERROR("[call:{}] Failed to create REINVITE: {}", getCallId(), sip_utils::sip_strerror(result));
 
     return !PJ_SUCCESS;
 }
@@ -600,7 +591,7 @@ SIPCall::sendSIPInfo(std::string_view body, std::string_view subtype)
     /* Create request message. */
     pjsip_tx_data* tdata;
     if (pjsip_dlg_create_request(inviteSession_->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Unable to create dialog", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to create dialog", getCallId());
         return;
     }
 
@@ -625,12 +616,12 @@ SIPCall::updateRecState(bool state)
                          "</to_encoder></vc_primitive></media_control>";
     // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
 
-    JAMI_DBG("Sending recording state via SIP INFO");
+    JAMI_DEBUG("[call:{}] Sending recording state via SIP INFO", getCallId());
 
     try {
         sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
-        JAMI_ERR("Error sending recording state: %s", e.what());
+        JAMI_ERROR("[call:{}] Error sending recording state: {}", getCallId(), e.what());
     }
 }
 
@@ -649,11 +640,11 @@ SIPCall::requestKeyframe(int streamIdx)
                        + streamIdPart + "<to_encoder>"
                        + "<picture_fast_update/>"
                          "</to_encoder></vc_primitive></media_control>";
-    JAMI_DBG("Sending video keyframe request via SIP INFO");
+    JAMI_DEBUG("[call:{}] Sending video keyframe request via SIP INFO", getCallId());
     try {
         sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
-        JAMI_ERR("Error sending video keyframe request: %s", e.what());
+        JAMI_ERROR("[call:{}] Error sending video keyframe request: {}", getCallId(), e.what());
     }
     lastKeyFrameReq_ = now;
 }
@@ -669,12 +660,12 @@ SIPCall::sendMuteState(bool state)
                          "</to_encoder></vc_primitive></media_control>";
     // see https://tools.ietf.org/html/rfc5168 for XML Schema for Media Control details
 
-    JAMI_DBG("Sending mute state via SIP INFO");
+    JAMI_DEBUG("[call:{}] Sending mute state via SIP INFO", getCallId());
 
     try {
         sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
-        JAMI_ERR("Error sending mute state: %s", e.what());
+        JAMI_ERROR("[call:{}] Error sending mute state: {}", getCallId(), e.what());
     }
 }
 
@@ -699,7 +690,7 @@ SIPCall::sendVoiceActivity(std::string_view streamId, bool state)
     try {
         sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
-        JAMI_ERR("Error sending voice activity state: %s", e.what());
+        JAMI_ERROR("[call:{}] Error sending voice activity: {}", getCallId(), e.what());
     }
 }
 
@@ -709,7 +700,7 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
     std::lock_guard lk {callMutex_};
 
     if (inviteSession == nullptr and inviteSession_) {
-        JAMI_DBG("[call:%s] Delete current invite session", getCallId().c_str());
+        JAMI_DEBUG("[call:{}] Delete current invite session", getCallId());
     } else if (inviteSession != nullptr) {
         // NOTE: The first reference of the invite session is owned by pjsip. If
         // that counter goes down to zero the invite will be destroyed, and the
@@ -717,11 +708,13 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
         // ref counter and let our unique_ptr share the ownership of the session
         // with pjsip.
         if (PJ_SUCCESS != pjsip_inv_add_ref(inviteSession)) {
-            JAMI_WARN("[call:%s] Attempting to set invalid invite session [%p]", getCallId().c_str(), inviteSession);
+            JAMI_WARNING("[call:{}] Attempting to set invalid invite session [{}]",
+                         getCallId(),
+                         fmt::ptr(inviteSession));
             inviteSession_.reset(nullptr);
             return;
         }
-        JAMI_DBG("[call:%s] Set new invite session [%p]", getCallId().c_str(), inviteSession);
+        JAMI_DEBUG("[call:{}] Set new invite session [{}]", getCallId(), fmt::ptr(inviteSession));
     } else {
         // Nothing to do.
         return;
@@ -733,7 +726,7 @@ SIPCall::setInviteSession(pjsip_inv_session* inviteSession)
 void
 SIPCall::terminateSipSession(int status)
 {
-    JAMI_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Terminate SIP session", getCallId());
     std::lock_guard lk {callMutex_};
     if (inviteSession_ and inviteSession_->state != PJSIP_INV_STATE_DISCONNECTED) {
         pjsip_tx_data* tdata = nullptr;
@@ -746,22 +739,20 @@ SIPCall::terminateSipSession(int status)
                     // Add user-agent header
                     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
                 } else {
-                    JAMI_ERR("No account detected");
+                    JAMI_ERROR("[call:{}] No account detected", getCallId());
                     throw std::runtime_error(
                         fmt::format("[call:{}] The account owning this call is invalid", getCallId()));
                 }
 
                 ret = pjsip_inv_send_msg(inviteSession_.get(), tdata);
                 if (ret != PJ_SUCCESS)
-                    JAMI_ERR("[call:%s] Failed to send terminate msg, SIP error (%s)",
-                             getCallId().c_str(),
-                             sip_utils::sip_strerror(ret).c_str());
+                    JAMI_ERROR("[call:{}] Failed to send terminate: {}", getCallId(), sip_utils::sip_strerror(ret));
             }
         } else
-            JAMI_ERR("[call:%s] Failed to terminate INVITE@%p, SIP error (%s)",
-                     getCallId().c_str(),
-                     inviteSession_.get(),
-                     sip_utils::sip_strerror(ret).c_str());
+            JAMI_ERROR("[call:{}] Failed to terminate INVITE@{}: {}",
+                       getCallId(),
+                       fmt::ptr(inviteSession_.get()),
+                       sip_utils::sip_strerror(ret));
     }
     setInviteSession();
 }
@@ -772,7 +763,7 @@ SIPCall::answer()
     std::lock_guard lk {callMutex_};
     auto account = getSIPAccount();
     if (!account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
@@ -780,7 +771,7 @@ SIPCall::answer()
         throw VoipLinkException("[call:" + getCallId() + "] Answer: no invite session for this call");
 
     if (!inviteSession_->neg) {
-        JAMI_WARN("[call:%s] Negotiator is NULL, INVITE received without an SDP", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Negotiator is NULL, INVITE received without SDP", getCallId());
 
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
     }
@@ -802,7 +793,7 @@ SIPCall::answer()
         throw std::runtime_error("Unable to answer with an invalid contact header");
     }
 
-    JAMI_DBG("[call:%s] Answering with contact header: %s", getCallId().c_str(), contactHeader_.c_str());
+    JAMI_DEBUG("[call:{}] Answering with contact header: {}", getCallId(), contactHeader_);
 
     sip_utils::addContactHeader(contactHeader_, tdata);
 
@@ -823,31 +814,31 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
     std::lock_guard lk {callMutex_};
     auto account = getSIPAccount();
     if (not account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
     if (not inviteSession_) {
-        JAMI_ERR("[call:%s] No invite session for this call", getCallId().c_str());
+        JAMI_ERROR("[call:{}] No invite session for this call", getCallId());
         return;
     }
 
     if (not sdp_) {
-        JAMI_ERR("[call:%s] No SDP session for this call", getCallId().c_str());
+        JAMI_ERROR("[call:{}] No SDP session for this call", getCallId());
         return;
     }
 
     auto newMediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
 
     if (newMediaAttrList.empty() and rtpStreams_.empty()) {
-        JAMI_ERR("[call:%s] Media list must not be empty!", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Media list must not be empty", getCallId());
         return;
     }
 
     // If the media list is empty, use the current media (this could happen
     // with auto-answer for instance), otherwise update the current media.
     if (newMediaAttrList.empty()) {
-        JAMI_DBG("[call:%s] Media list is empty, using current media", getCallId().c_str());
+        JAMI_DEBUG("[call:{}] Media list is empty, using current media", getCallId());
     } else if (newMediaAttrList.size() != rtpStreams_.size()) {
         // This should never happen, as we make sure that the sizes match earlier
         // in handleIncomingConversationCall.
@@ -860,10 +851,10 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 
     auto const& mediaAttrList = newMediaAttrList.empty() ? getMediaAttributeList() : newMediaAttrList;
 
-    JAMI_DBG("[call:%s] Answering incoming call with following media:", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Answering incoming call with following media:", getCallId());
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
-        JAMI_DEBUG("[call:{:s}] Media @{:d} - {:s}", getCallId(), idx, mediaAttr.toString(true));
+        JAMI_DEBUG("[call:{}] Media @{} - {}", getCallId(), idx, mediaAttr.toString(true));
     }
 
     // Apply the media attributes.
@@ -889,7 +880,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
         // TODO. This code should be unified with the code used by accounts to create
         // SDP offers.
 
-        JAMI_WARN("[call:%s] No negotiator session, peer sent an empty INVITE (without SDP)", getCallId().c_str());
+        JAMI_WARNING("[call:{}] No negotiator session, peer sent empty INVITE without SDP", getCallId());
 
         Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
 
@@ -914,10 +905,10 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
                         addLocalIceAttributes();
                     }
                 } else {
-                    JAMI_WARN("[call:%s] Unable to init ICE transport, missing local address", getCallId().c_str());
+                    JAMI_WARNING("[call:{}] Unable to init ICE transport, missing local address", getCallId());
                 }
             } else {
-                JAMI_WARN("[call:%s] Unable to init ICE transport, missing public address", getCallId().c_str());
+                JAMI_WARNING("[call:{}] Unable to init ICE transport, missing public address", getCallId());
             }
         }
     }
@@ -934,7 +925,7 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
         throw std::runtime_error("Unable to answer with an invalid contact header");
     }
 
-    JAMI_DBG("[call:%s] Answering with contact header: %s", getCallId().c_str(), contactHeader_.c_str());
+    JAMI_DEBUG("[call:{}] Answering with contact header: {}", getCallId(), contactHeader_);
 
     sip_utils::addContactHeader(contactHeader_, tdata);
 
@@ -956,7 +947,7 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
 
     auto account = getSIPAccount();
     if (not account) {
-        JAMI_ERR("[call:%s] No account detected", getCallId().c_str());
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
@@ -973,58 +964,58 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     }
 
     if (mediaAttrList.empty()) {
-        JAMI_WARN("[call:%s] Media list is empty. Ignoring the media change request", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Media list is empty, ignoring media change request", getCallId());
         return;
     }
 
     if (not sdp_) {
-        JAMI_ERR("[call:%s] No valid SDP session", getCallId().c_str());
+        JAMI_ERROR("[call:{}] No valid SDP session", getCallId());
         return;
     }
 
-    JAMI_DBG("[call:%s] Current media", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Current media", getCallId());
     unsigned idx = 0;
     for (auto const& rtp : rtpStreams_) {
-        JAMI_DBG("[call:%s] Media @%u: %s", getCallId().c_str(), idx++, rtp.mediaAttribute_->toString(true).c_str());
+        JAMI_DEBUG("[call:{}] Media @{}: {}", getCallId(), idx++, rtp.mediaAttribute_->toString(true));
     }
 
-    JAMI_DBG("[call:%s] Answering to media change request with new media", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Answering media change request with new media", getCallId());
     idx = 0;
     for (auto const& newMediaAttr : mediaAttrList) {
-        JAMI_DBG("[call:%s] Media @%u: %s", getCallId().c_str(), idx++, newMediaAttr.toString(true).c_str());
+        JAMI_DEBUG("[call:{}] Media @{}: {}", getCallId(), idx++, newMediaAttr.toString(true));
     }
 
     if (!updateAllMediaStreams(mediaAttrList, isRemote))
         return;
 
     if (not sdp_->processIncomingOffer(mediaAttrList)) {
-        JAMI_WARN("[call:%s] Unable to process the new offer, ignoring", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Unable to process new offer, ignoring", getCallId());
         return;
     }
 
     if (not sdp_->getRemoteSdpSession()) {
-        JAMI_ERR("[call:%s] No valid remote SDP session", getCallId().c_str());
+        JAMI_ERROR("[call:{}] No valid remote SDP session", getCallId());
         return;
     }
 
     if (isIceEnabled() and remoteHasValidIceAttributes()) {
-        JAMI_WARN("[call:%s] Requesting a new ICE media", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Requesting new ICE media", getCallId());
         setupIceResponse(true);
     }
 
     if (not sdp_->startNegotiation()) {
-        JAMI_ERR("[call:%s] Unable to start media negotiation for a re-invite request", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to start media negotiation for re-invite", getCallId());
         return;
     }
 
     if (pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession()) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Unable to start media negotiation for a re-invite request", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to set SDP answer for re-invite", getCallId());
         return;
     }
 
     pjsip_tx_data* tdata;
     if (pjsip_inv_answer(inviteSession_.get(), PJSIP_SC_OK, NULL, NULL, &tdata) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Unable to init answer to a re-invite request", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to init answer to re-invite", getCallId());
         return;
     }
 
@@ -1036,12 +1027,12 @@ SIPCall::answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaLis
     sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
 
     if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Unable to send answer to a re-invite request", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to send answer to re-invite", getCallId());
         setInviteSession();
         return;
     }
 
-    JAMI_DBG("[call:%s] Successfully answered the media change request", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Successfully answered media change request", getCallId());
 }
 
 void
@@ -1056,7 +1047,7 @@ SIPCall::hangup(int reason)
             int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
             if (printed >= 0) {
                 buf[printed] = '\0';
-                JAMI_DBG("[call:%s] Route header %s", getCallId().c_str(), buf);
+                JAMI_DEBUG("[call:{}] Route header {}", getCallId(), buf);
             }
             route = route->next;
         }
@@ -1227,7 +1218,7 @@ SIPCall::transfer(const std::string& to)
 {
     auto account = getSIPAccount();
     if (!account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
@@ -1238,7 +1229,7 @@ SIPCall::transfer(const std::string& to)
     std::string toUri = account->getToUri(to);
     const pj_str_t dst(CONST_PJ_STR(toUri));
 
-    JAMI_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int) dst.slen, dst.ptr);
+    JAMI_DEBUG("[call:{}] Transferring to {}", getCallId(), std::string_view(dst.ptr, dst.slen));
 
     if (!transferCommon(&dst))
         throw VoipLinkException("Unable to transfer");
@@ -1299,12 +1290,12 @@ bool
 SIPCall::hold()
 {
     if (getConnectionState() != ConnectionState::CONNECTED) {
-        JAMI_WARN("[call:%s] Not connected, ignoring hold request", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Not connected, ignoring hold request", getCallId());
         return false;
     }
 
     if (not setState(CallState::HOLD)) {
-        JAMI_WARN("[call:%s] Failed to set state to HOLD", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Failed to set state to HOLD", getCallId());
         return false;
     }
 
@@ -1315,14 +1306,14 @@ SIPCall::hold()
     }
 
     if (SIPSessionReinvite() != PJ_SUCCESS) {
-        JAMI_WARN("[call:%s] Reinvite failed", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Reinvite failed", getCallId());
         return false;
     }
 
     // TODO. Do we need to check for reinvIceMedia_ ?
     isWaitingForIceAndMedia_ = (reinvIceMedia_ != nullptr);
 
-    JAMI_DBG("[call:%s] Set state to HOLD", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Set state to HOLD", getCallId());
     return true;
 }
 
@@ -1331,14 +1322,12 @@ SIPCall::offhold(OnReadyCb&& cb)
 {
     // If ICE is currently negotiating, we must wait before unhold the call
     if (isWaitingForIceAndMedia_) {
-        JAMI_DBG("[call:%s] ICE negotiation in progress. Resume request will be once ICE "
-                 "negotiation completes",
-                 getCallId().c_str());
+        JAMI_DEBUG("[call:{}] ICE negotiation in progress, resume after completion", getCallId());
         offHoldCb_ = std::move(cb);
         remainingRequest_ = Request::HoldingOff;
         return false;
     }
-    JAMI_DBG("[call:%s] Resuming the call", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Resuming the call", getCallId());
     auto result = unhold();
 
     if (cb)
@@ -1352,7 +1341,7 @@ SIPCall::unhold()
 {
     auto account = getSIPAccount();
     if (!account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return false;
     }
 
@@ -1360,7 +1349,7 @@ SIPCall::unhold()
     try {
         success = internalOffHold([] {});
     } catch (const SdpException& e) {
-        JAMI_ERR("[call:%s] %s", getCallId().c_str(), e.what());
+        JAMI_ERROR("[call:{}] {}", getCallId(), e.what());
         throw VoipLinkException("SDP issue in offhold");
     }
 
@@ -1374,7 +1363,7 @@ bool
 SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 {
     if (getConnectionState() != ConnectionState::CONNECTED) {
-        JAMI_WARN("[call:%s] Not connected, ignoring resume request", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Not connected, ignoring resume request", getCallId());
     }
 
     if (not setState(CallState::ACTIVE))
@@ -1388,7 +1377,7 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
         }
         // For now, call resume will always require new ICE negotiation.
         if (SIPSessionReinvite(getMediaAttributeList(), true) != PJ_SUCCESS) {
-            JAMI_WARN("[call:%s] Resuming hold", getCallId().c_str());
+            JAMI_WARNING("[call:{}] Resuming hold", getCallId());
             if (isWaitingForIceAndMedia_) {
                 remainingRequest_ = Request::HoldingOn;
             } else {
@@ -1404,7 +1393,7 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& source)
 {
-    JAMI_DBG("[call:%s] Set selected source to %s", getCallId().c_str(), source.c_str());
+    JAMI_DEBUG("[call:{}] Set selected source to {}", getCallId(), source);
 
     for (auto const& stream : rtpStreams_) {
         auto mediaAttr = stream.mediaAttribute_;
@@ -1460,7 +1449,7 @@ SIPCall::carryingDTMFdigits(char code)
     try {
         sendSIPInfo({dtmf_body, (size_t) ret}, "dtmf-relay");
     } catch (const std::exception& e) {
-        JAMI_ERR("Error sending DTMF: %s", e.what());
+        JAMI_ERROR("[call:{}] Error sending DTMF: {}", getCallId(), e.what());
     }
 }
 
@@ -1476,7 +1465,7 @@ SIPCall::setVideoOrientation(int streamIdx, int rotation)
                            + std::to_string(-rotation) + "/>" + "</to_encoder>" + streamIdPart
                            + "</vc_primitive></media_control>";
 
-    JAMI_DBG("Sending device orientation via SIP INFO %d for stream %u", rotation, streamIdx);
+    JAMI_DEBUG("[call:{}] Sending device orientation {} for stream {}", getCallId(), rotation, streamIdx);
 
     sendSIPInfo(sip_body, "media_control+xml");
 }
@@ -1502,23 +1491,23 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
                 // method to prevent unexpected behavior when interoperating with
                 // some SIP implementations.
                 if (not isSipMethodAllowedByPeer(sip_utils::SIP_METHODS::MESSAGE)) {
-                    JAMI_WARN() << fmt::format("[call:{}] Peer does not allow \"{}\" method",
-                                               getCallId(),
-                                               sip_utils::SIP_METHODS::MESSAGE);
+                    JAMI_WARNING("[call:{}] Peer does not allow \"{}\" method",
+                                 getCallId(),
+                                 sip_utils::SIP_METHODS::MESSAGE);
 
                     // Print peer's allowed methods
-                    JAMI_INFO() << fmt::format("[call:{}] Peer's allowed methods: {}", getCallId(), peerAllowedMethods_);
+                    JAMI_LOG("[call:{}] Peer's allowed methods: {}", getCallId(), peerAllowedMethods_);
                     return;
                 }
 
                 im::sendSipMessage(inviteSession_.get(), messages);
 
             } catch (...) {
-                JAMI_ERR("[call:%s] Failed to send SIP text message", getCallId().c_str());
+                JAMI_ERROR("[call:{}] Failed to send SIP text message", getCallId());
             }
         } else {
             pendingOutMessages_.emplace_back(messages, from);
-            JAMI_ERR("[call:%s] sendTextMessage: no invite session for this call", getCallId().c_str());
+            JAMI_ERROR("[call:{}] No invite session for this call", getCallId());
         }
     }
 }
@@ -1530,7 +1519,7 @@ SIPCall::removeCall()
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(getCallId());
 #endif
     std::lock_guard lk {callMutex_};
-    JAMI_DBG("[call:%s] removeCall()", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] removeCall()", getCallId());
     if (sdp_) {
         sdp_->setActiveLocalSdpSession(nullptr);
         sdp_->setActiveRemoteSdpSession(nullptr);
@@ -1593,7 +1582,7 @@ SIPCall::onClosed()
 void
 SIPCall::onAnswered()
 {
-    JAMI_WARN("[call:%s] onAnswered()", getCallId().c_str());
+    JAMI_WARNING("[call:{}] onAnswered()", getCallId());
     runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             if (shared->getConnectionState() != ConnectionState::CONNECTED) {
@@ -1612,7 +1601,7 @@ SIPCall::sendKeyframe(int streamIdx)
 #ifdef ENABLE_VIDEO
     dht::ThreadPool::computation().run([w = weak(), streamIdx] {
         if (auto sthis = w.lock()) {
-            JAMI_DBG("Handling picture fast update request");
+            JAMI_DEBUG("[call:{}] Handling picture fast update request", sthis->getCallId());
             if (streamIdx == -1) {
                 for (const auto& videoRtp : sthis->getRtpSessionList(MediaType::MEDIA_VIDEO))
                     std::static_pointer_cast<video::VideoRtpSession>(videoRtp)->forceKeyFrame();
@@ -1659,7 +1648,7 @@ SIPCall::setPeerUaVersion(std::string_view ua)
     auto pos = ua.find(PACK_NAME);
     if (pos == std::string_view::npos) {
         // Must have the expected package name.
-        JAMI_WARN("Unable to find the expected package name in peer's User-Agent");
+        JAMI_WARNING("[call:{}] Unable to find expected package name in peer's User-Agent", getCallId());
         return;
     }
 
@@ -1747,7 +1736,7 @@ SIPCall::isSipMethodAllowedByPeer(const std::string_view method) const
 void
 SIPCall::onPeerRinging()
 {
-    JAMI_DBG("[call:%s] Peer ringing", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Peer ringing", getCallId());
     setState(ConnectionState::RINGING);
 }
 
@@ -1760,17 +1749,17 @@ SIPCall::addLocalIceAttributes()
     auto iceMedia = getIceMedia();
 
     if (not iceMedia) {
-        JAMI_ERR("[call:%s] Invalid ICE instance", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Invalid ICE instance", getCallId());
         return;
     }
 
     auto start = std::chrono::steady_clock::now();
 
     if (not iceMedia->isInitialized()) {
-        JAMI_DBG("[call:%s] Waiting for ICE initialization", getCallId().c_str());
+        JAMI_DEBUG("[call:{}] Waiting for ICE initialization", getCallId());
         // we need an initialized ICE to progress further
         if (iceMedia->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
-            JAMI_ERR("[call:%s] ICE initialization timed out", getCallId().c_str());
+            JAMI_ERROR("[call:{}] ICE initialization timed out", getCallId());
             return;
         }
         // ICE initialization may take longer than usual in some cases,
@@ -1786,28 +1775,28 @@ SIPCall::addLocalIceAttributes()
 
     // Check the state of ICE instance, the initialization may have failed.
     if (not iceMedia->isInitialized()) {
-        JAMI_ERR("[call:%s] ICE session is uninitialized", getCallId().c_str());
+        JAMI_ERROR("[call:{}] ICE session is uninitialized", getCallId());
         return;
     }
 
     // Check the state, the call might have been canceled while waiting.
     // for initialization.
     if (getState() == Call::CallState::OVER) {
-        JAMI_WARN("[call:%s] The call was terminated while waiting for ICE initialization", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Call terminated while waiting for ICE initialization", getCallId());
         return;
     }
 
     auto account = getSIPAccount();
     if (not account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
     if (not sdp_) {
-        JAMI_ERR("No sdp detected");
+        JAMI_ERROR("[call:{}] No SDP detected", getCallId());
         return;
     }
 
-    JAMI_DBG("[call:%s] Add local attributes for ICE instance [%p]", getCallId().c_str(), iceMedia.get());
+    JAMI_DEBUG("[call:{}] Add local attributes for ICE instance [{}]", getCallId(), fmt::ptr(iceMedia.get()));
 
     sdp_->addIceAttributes(iceMedia->getLocalAttributes());
 
@@ -1816,16 +1805,16 @@ SIPCall::addLocalIceAttributes()
         for (auto const& stream : rtpStreams_) {
             if (not stream.mediaAttribute_->enabled_) {
                 // Dont add ICE candidates if the media is disabled
-                JAMI_DBG("[call:%s] Media [%s] @ %u is disabled, don't add local candidates",
-                         getCallId().c_str(),
-                         stream.mediaAttribute_->toString().c_str(),
-                         streamIdx);
+                JAMI_DEBUG("[call:{}] Media {} @ {} is disabled, don't add local candidates",
+                           getCallId(),
+                           stream.mediaAttribute_->toString(),
+                           streamIdx);
                 continue;
             }
-            JAMI_DBG("[call:%s] Add ICE local candidates for media [%s] @ %u",
-                     getCallId().c_str(),
-                     stream.mediaAttribute_->toString().c_str(),
-                     streamIdx);
+            JAMI_DEBUG("[call:{}] Add ICE local candidates for media {} @ {}",
+                       getCallId(),
+                       stream.mediaAttribute_->toString(),
+                       streamIdx);
             // RTP
             sdp_->addIceCandidates(streamIdx, iceMedia->getLocalCandidates(streamIdx, ICE_COMP_ID_RTP));
             // RTCP if it has its own port
@@ -1843,10 +1832,10 @@ SIPCall::addLocalIceAttributes()
                 // Skipping local ICE candidates if the media is disabled
                 continue;
             }
-            JAMI_DBG("[call:%s] Add ICE local candidates for media [%s] @ %u",
-                     getCallId().c_str(),
-                     stream.mediaAttribute_->toString().c_str(),
-                     idx);
+            JAMI_DEBUG("[call:{}] Add ICE local candidates for media {} @ {}",
+                       getCallId(),
+                       stream.mediaAttribute_->toString(),
+                       idx);
             // RTP
             sdp_->addIceCandidates(idx, iceMedia->getLocalCandidates(compId));
             compId++;
@@ -1870,7 +1859,7 @@ SIPCall::getAllRemoteCandidates(dhtnet::IceTransport& transport) const
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(mediaIdx)) {
             if (transport.parseIceAttributeLine(mediaIdx, line, cand)) {
-                JAMI_DBG("[call:%s] Add remote ICE candidate: %s", getCallId().c_str(), line.c_str());
+                JAMI_DEBUG("[call:{}] Add remote ICE candidate: {}", getCallId(), line);
                 rem_candidates.emplace_back(std::move(cand));
             }
         }
@@ -1926,7 +1915,7 @@ SIPCall::initMediaStreams(const std::vector<MediaAttribute>& mediaAttrList)
     for (size_t idx = 0; idx < mediaAttrList.size(); idx++) {
         auto const& mediaAttr = mediaAttrList.at(idx);
         if (mediaAttr.type_ != MEDIA_AUDIO && mediaAttr.type_ != MEDIA_VIDEO) {
-            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), mediaAttr.type_);
+            JAMI_ERROR("[call:{}] Unexpected media type {}", getCallId(), static_cast<unsigned>(mediaAttr.type_));
             assert(false);
         }
 
@@ -1982,10 +1971,10 @@ SIPCall::isCaptureDeviceMuted(const MediaType& mediaType) const
 void
 SIPCall::setupNegotiatedMedia()
 {
-    JAMI_DBG("[call:%s] Updating negotiated media", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Updating negotiated media", getCallId());
 
     if (not sipTransport_ or not sdp_) {
-        JAMI_ERR("[call:%s] Call is in an invalid state", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Call is in an invalid state", getCallId());
         return;
     }
 
@@ -2000,7 +1989,7 @@ SIPCall::setupNegotiatedMedia()
 
         // Skip disabled media
         if (not local.enabled) {
-            JAMI_DBG("[call:%s] [SDP:slot#%u] The media is disabled, skipping", getCallId().c_str(), streamIdx);
+            JAMI_DEBUG("[call:{}] [SDP:slot#{}] Media is disabled, skipping", getCallId(), streamIdx);
             continue;
         }
 
@@ -2021,40 +2010,38 @@ SIPCall::setupNegotiatedMedia()
             throw std::runtime_error("Must have a valid RTP session");
 
         if (local.type != MEDIA_AUDIO && local.type != MEDIA_VIDEO) {
-            JAMI_ERR("[call:%s] Unexpected media type %u", getCallId().c_str(), local.type);
+            JAMI_ERROR("[call:{}] Unexpected media type {}", getCallId(), static_cast<unsigned>(local.type));
             throw std::runtime_error("Invalid media attribute");
         }
 
         if (local.type != remote.type) {
-            JAMI_ERR("[call:%s] [SDP:slot#%u] Inconsistent media type between local and remote",
-                     getCallId().c_str(),
-                     streamIdx);
+            JAMI_ERROR("[call:{}] [SDP:slot#{}] Inconsistent media type between local and remote",
+                       getCallId(),
+                       streamIdx);
             continue;
         }
 
         if (local.enabled and not local.codec) {
-            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), streamIdx);
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Missing local codec", getCallId(), streamIdx);
             continue;
         }
 
         if (remote.enabled and not remote.codec) {
-            JAMI_WARN("[call:%s] [SDP:slot#%u] Missing remote codec", getCallId().c_str(), streamIdx);
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Missing remote codec", getCallId(), streamIdx);
             continue;
         }
 
         if (isSrtpEnabled() and local.enabled and not local.crypto) {
-            JAMI_WARN("[call:%s] [SDP:slot#%u] Secure mode but no local crypto attributes. "
-                      "Ignoring the media",
-                      getCallId().c_str(),
-                      streamIdx);
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Secure mode but no local crypto attributes, ignoring media",
+                         getCallId(),
+                         streamIdx);
             continue;
         }
 
         if (isSrtpEnabled() and remote.enabled and not remote.crypto) {
-            JAMI_WARN("[call:%s] [SDP:slot#%u] Secure mode but no crypto remote attributes. "
-                      "Ignoring the media",
-                      getCallId().c_str(),
-                      streamIdx);
+            JAMI_WARNING("[call:{}] [SDP:slot#{}] Secure mode but no remote crypto attributes, ignoring media",
+                         getCallId(),
+                         streamIdx);
             continue;
         }
 
@@ -2074,15 +2061,15 @@ SIPCall::setupNegotiatedMedia()
 void
 SIPCall::startAllMedia()
 {
-    JAMI_DBG("[call:%s] Starting all media", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Starting all media", getCallId());
 
     if (not sipTransport_ or not sdp_) {
-        JAMI_ERR("[call:%s] The call is in invalid state", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Call is in invalid state", getCallId());
         return;
     }
 
     if (isSrtpEnabled() && not sipTransport_->isSecure()) {
-        JAMI_WARN("[call:%s] Crypto (SRTP) is negotiated over an insecure signaling transport", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Crypto (SRTP) negotiated over insecure signaling transport", getCallId());
     }
 
     // reset
@@ -2098,10 +2085,10 @@ SIPCall::startAllMedia()
                 throw std::runtime_error("Missing media attribute");
             }
             if (idx >= remoteMediaList.size()) {
-                JAMI_ERR("[call:%s] Remote media list smaller than streams (idx=%zu, size=%zu)",
-                         getCallId().c_str(),
-                         idx,
-                         remoteMediaList.size());
+                JAMI_ERROR("[call:{}] Remote media list smaller than streams (idx={}, size={})",
+                           getCallId(),
+                           idx,
+                           remoteMediaList.size());
                 break;
             }
             rtpStream.remoteMediaAttribute_ = std::make_shared<MediaAttribute>(remoteMediaList[idx]);
@@ -2134,10 +2121,10 @@ SIPCall::startAllMedia()
                         }
 #endif
                     } catch (const std::exception& e) {
-                        JAMI_ERR("[call:%s] Failed to start RTP session %zu: %s",
-                                 w.lock() ? w.lock()->getCallId().c_str() : "unknown",
-                                 idx,
-                                 e.what());
+                        JAMI_ERROR("[call:{}] Failed to start RTP session {}: {}",
+                                   w.lock() ? w.lock()->getCallId() : "unknown",
+                                   idx,
+                                   e.what());
                     }
                 });
             idx++;
@@ -2178,7 +2165,7 @@ SIPCall::startAllMedia()
 void
 SIPCall::restartMediaSender()
 {
-    JAMI_DBG("[call:%s] Restarting TX media streams", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Restarting TX media streams", getCallId());
     for (const auto& rtpSession : getRtpSessionList())
         rtpSession->restartSender();
 }
@@ -2186,7 +2173,7 @@ SIPCall::restartMediaSender()
 void
 SIPCall::stopAllMedia()
 {
-    JAMI_DBG("[call:%s] Stopping all media", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Stopping all media", getCallId());
 
 #ifdef ENABLE_VIDEO
     {
@@ -2211,11 +2198,13 @@ SIPCall::stopAllMedia()
     unsigned int totalStreams = rtpStreams_.size();
 
     for (const auto& rtpSession : getRtpSessionList()) {
-        dht::ThreadPool::io().run([&, rtpSession]() {
+        dht::ThreadPool::io().run([&, rtpSession, w = weak()]() {
             try {
                 rtpSession->stop();
             } catch (const std::exception& e) {
-                JAMI_ERR("Failed to stop RTP session: %s", e.what());
+                JAMI_ERROR("[call:{}] Failed to stop RTP session: {}",
+                           w.lock() ? w.lock()->getCallId() : "unknown",
+                           e.what());
             }
 
             std::lock_guard lk(mtx);
@@ -2243,12 +2232,12 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
     auto type = MediaAttribute::stringToMediaType(mediaType);
 
     if (type == MediaType::MEDIA_AUDIO) {
-        JAMI_WARN("[call:%s] %s all audio media", getCallId().c_str(), mute ? "muting " : "unmuting ");
+        JAMI_WARNING("[call:{}] {} all audio media", getCallId(), mute ? "muting" : "unmuting");
 
     } else if (type == MediaType::MEDIA_VIDEO) {
-        JAMI_WARN("[call:%s] %s all video media", getCallId().c_str(), mute ? "muting" : "unmuting");
+        JAMI_WARNING("[call:{}] {} all video media", getCallId(), mute ? "muting" : "unmuting");
     } else {
-        JAMI_ERR("[call:%s] Invalid media type %s", getCallId().c_str(), mediaType.c_str());
+        JAMI_ERROR("[call:{}] Invalid media type {}", getCallId(), mediaType);
         assert(false);
     }
 
@@ -2320,11 +2309,11 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 bool
 SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList, bool isRemote)
 {
-    JAMI_DBG("[call:%s] New local media", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] New local media", getCallId());
 
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
-        JAMI_DEBUG("[call:{:s}] Too many media streams, limit it ({:d} vs {:d})",
-                   getCallId().c_str(),
+        JAMI_DEBUG("[call:{}] Too many media streams, limit it ({} vs {})",
+                   getCallId(),
                    mediaAttrList.size(),
                    PJ_ICE_MAX_COMP);
         return false;
@@ -2332,10 +2321,10 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
 
     unsigned idx = 0;
     for (auto const& newMediaAttr : mediaAttrList) {
-        JAMI_DBG("[call:%s] Media @%u: %s", getCallId().c_str(), idx++, newMediaAttr.toString(true).c_str());
+        JAMI_DEBUG("[call:{}] Media @{}: {}", getCallId(), idx++, newMediaAttr.toString(true));
     }
 
-    JAMI_DBG("[call:%s] Updating local media streams", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Updating local media streams", getCallId());
 
     for (auto const& newAttr : mediaAttrList) {
         auto streamIdx = findRtpStreamIndex(newAttr.label_);
@@ -2512,14 +2501,14 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     // media list is different from the current media list, the media
     // change request will be ignored.
     if (not peerSupportMultiStream_ and rtpStreams_.size() != mediaAttrList.size()) {
-        JAMI_WARNING("[call:{}] Peer does not support multi-stream. Media change request ignored", getCallId());
+        JAMI_WARNING("[call:{}] Peer does not support multi-stream, media change request ignored", getCallId());
         return false;
     }
 
     // If the peer does not support multi-audio-stream and the new
     // media list has more than one audio. Ignore the one that comes from a file.
     if (not peerSupportMultiAudioStream_ and rtpStreams_.size() != mediaAttrList.size() and hasFileSharing) {
-        JAMI_WARNING("[call:{}] Peer does not support multi-audio-stream. New Audio will be ignored", getCallId());
+        JAMI_WARNING("[call:{}] Peer does not support multi-audio-stream, new audio will be ignored", getCallId());
         for (auto it = mediaAttrList.begin(); it != mediaAttrList.end();) {
             if (it->type_ == MediaType::MEDIA_AUDIO and !it->sourceUri_.empty() and mediaPlayerId_ == it->sourceUri_) {
                 it = mediaAttrList.erase(it);
@@ -2533,8 +2522,7 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     // This keep the old behaviour (if sharing both camera + sharing a file, will keep the shared file)
     if (!peerSupportMultiIce_) {
         if (mediaList.size() > 2)
-            JAMI_WARNING("[call:{}] Peer does not support more than 2 ICE medias. "
-                         "Media change request modified",
+            JAMI_WARNING("[call:{}] Peer does not support more than 2 ICE medias, media change request modified",
                          getCallId());
         MediaAttribute audioAttr;
         MediaAttribute videoAttr;
@@ -2624,7 +2612,7 @@ SIPCall::onMediaNegotiationComplete()
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
             std::lock_guard lk {this_->callMutex_};
-            JAMI_DBG("[call:%s] Media negotiation complete", this_->getCallId().c_str());
+            JAMI_DEBUG("[call:{}] Media negotiation complete", this_->getCallId());
 
             // If the call has already ended, we don't need to start the media.
             if (not this_->inviteSession_ or this_->inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED
@@ -2648,7 +2636,7 @@ SIPCall::onMediaNegotiationComplete()
                 if (this_->mediaRestartRequired_) {
                     this_->setupNegotiatedMedia();
                     // No ICE, start media now.
-                    JAMI_WARN("[call:%s] ICE media disabled, using default media ports", this_->getCallId().c_str());
+                    JAMI_WARNING("[call:{}] ICE media disabled, using default media ports", this_->getCallId());
                     // Start the media.
                     this_->stopAllMedia();
                     this_->startAllMedia();
@@ -2691,10 +2679,10 @@ SIPCall::reportMediaNegotiationStatus()
 void
 SIPCall::startIceMedia()
 {
-    JAMI_DBG("[call:%s] Starting ICE", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Starting ICE", getCallId());
     auto iceMedia = getIceMedia();
     if (not iceMedia or iceMedia->isFailed()) {
-        JAMI_ERR("[call:%s] Media ICE init failed", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Media ICE init failed", getCallId());
         onFailure(EIO);
         return;
     }
@@ -2717,12 +2705,12 @@ SIPCall::startIceMedia()
         return;
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-        JAMI_ERR("[call:%s] Missing remote media ICE attributes", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Missing remote media ICE attributes", getCallId());
         onFailure(EIO);
         return;
     }
     if (not iceMedia->startIce(rem_ice_attrs, getAllRemoteCandidates(*iceMedia))) {
-        JAMI_ERR("[call:%s] ICE media failed to start", getCallId().c_str());
+        JAMI_ERROR("[call:{}] ICE media failed to start", getCallId());
         onFailure(EIO);
     }
 }
@@ -2732,13 +2720,13 @@ SIPCall::onIceNegoSucceed()
 {
     std::lock_guard lk {callMutex_};
 
-    JAMI_DBG("[call:%s] ICE negotiation succeeded", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] ICE negotiation succeeded", getCallId());
 
     // Check if the call is already ended, so we don't need to restart medias
     // This is typically the case in a multi-device context where one device
     // can stop a call. So do not start medias
     if (not inviteSession_ or inviteSession_->state == PJSIP_INV_STATE_DISCONNECTED or not sdp_) {
-        JAMI_ERR("[call:%s] ICE negotiation succeeded, but call is in invalid state", getCallId().c_str());
+        JAMI_ERROR("[call:{}] ICE negotiation succeeded, but call is in invalid state", getCallId());
         return;
     }
 
@@ -2776,7 +2764,7 @@ SIPCall::checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMed
     // - the type of one of the media changed (unlikely)
     // - one of the media was enabled/disabled
 
-    JAMI_DBG("[call:%s] Received a media change request", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Received a media change request", getCallId());
 
     auto remoteMediaAttrList = MediaAttribute::buildMediaAttributesList(remoteMediaList, isSrtpEnabled());
     if (remoteMediaAttrList.size() != rtpStreams_.size())
@@ -2795,11 +2783,11 @@ SIPCall::checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMed
 void
 SIPCall::handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList)
 {
-    JAMI_DBG("[call:%s] Handling media change request", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Handling media change request", getCallId());
 
     auto account = getAccount().lock();
     if (not account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
@@ -2841,12 +2829,12 @@ SIPCall::handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMe
 pj_status_t
 SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdata)
 {
-    JAMI_DBG("[call:%s] Received a re-invite", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Received a re-invite", getCallId());
 
     pj_status_t res = PJ_SUCCESS;
 
     if (not sdp_) {
-        JAMI_ERR("SDP session is invalid");
+        JAMI_ERROR("[call:{}] SDP session is invalid", getCallId());
         return res;
     }
 
@@ -2856,7 +2844,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 
     auto acc = getSIPAccount();
     if (not acc) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return res;
     }
 
@@ -2873,7 +2861,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
     // cf. pjmedia_sdp_neg_modify_local_offer2 for more details.
     auto const& mediaAttrList = Sdp::getMediaAttributeListFromSdp(offer, true);
     if (mediaAttrList.empty()) {
-        JAMI_WARN("[call:%s] Media list is empty, ignoring", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Media list is empty, ignoring", getCallId());
         return res;
     }
 
@@ -2883,7 +2871,7 @@ SIPCall::onReceiveReinvite(const pjmedia_sdp_session* offer, pjsip_rx_data* rdat
 
     pjsip_tx_data* tdata = nullptr;
     if (pjsip_inv_initial_answer(inviteSession_.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Unable to create answer TRYING", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to create answer TRYING", getCallId());
         return res;
     }
 
@@ -2906,28 +2894,28 @@ void
 SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
 {
     if (not rtpStreams_.empty()) {
-        JAMI_ERR("[call:%s] Unexpected offer in '200 OK' answer", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unexpected offer in '200 OK' answer", getCallId());
         return;
     }
 
     auto acc = getSIPAccount();
     if (not acc) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
 
     if (not sdp_) {
-        JAMI_ERR("Invalid SDP session");
+        JAMI_ERROR("[call:{}] Invalid SDP session", getCallId());
         return;
     }
 
-    JAMI_DBG("[call:%s] Received an offer in '200 OK' answer", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Received an offer in '200 OK' answer", getCallId());
 
     auto mediaList = Sdp::getMediaAttributeListFromSdp(offer);
     // If this method is called, it means we are expecting an offer
     // in the 200OK answer.
     if (mediaList.empty()) {
-        JAMI_WARN("[call:%s] Remote media list is empty, ignoring", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Remote media list is empty, ignoring", getCallId());
         return;
     }
 
@@ -2962,7 +2950,7 @@ SIPCall::onReceiveOfferIn200OK(const pjmedia_sdp_session* offer)
     sdp_->startNegotiation();
 
     if (pjsip_inv_set_sdp_answer(inviteSession_.get(), sdp_->getLocalSdpSession()) != PJ_SUCCESS) {
-        JAMI_ERR("[call:%s] Unable to start media negotiation for a re-invite request", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Unable to start media negotiation for re-invite", getCallId());
     }
 }
 
@@ -2970,7 +2958,7 @@ void
 SIPCall::openPortsUPnP()
 {
     if (not sdp_) {
-        JAMI_ERR("[call:%s] Current SDP instance is invalid", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Current SDP instance is invalid", getCallId());
         return;
     }
 
@@ -2983,7 +2971,7 @@ SIPCall::openPortsUPnP()
      * No need to request mappings for specfic port numbers. Set the port to '0' to
      * request the first available port (faster and more likely to succeed).
      */
-    JAMI_DBG("[call:%s] Opening ports via UPnP for SDP session", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Opening ports via UPnP for SDP session", getCallId());
 
     // RTP port.
     upnp_->reserveMapping(sdp_->getLocalAudioPort(), dhtnet::upnp::PortType::UDP);
@@ -3003,7 +2991,7 @@ SIPCall::getDetails() const
 {
     auto acc = getSIPAccount();
     if (!acc) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return {};
     }
 
@@ -3262,7 +3250,7 @@ SIPCall::monitor() const
         return;
     auto acc = getSIPAccount();
     if (!acc) {
-        JAMI_ERROR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return;
     }
     JAMI_LOG("- Call {} with {}:", getCallId(), getPeerNumber());
@@ -3290,7 +3278,7 @@ SIPCall::toggleRecording()
     if (not Call::isRecording()) {
         auto account = getSIPAccount();
         if (!account) {
-            JAMI_ERR("No account detected");
+            JAMI_ERROR("[call:{}] No account detected", getCallId());
             return false;
         }
         auto title = fmt::format("Conversation at %TIMESTAMP between {} and {}", account->getUserUri(), peerUri_);
@@ -3331,11 +3319,11 @@ SIPCall::createIceMediaTransport(bool isReinvite)
 {
     auto mediaTransport = Manager::instance().getIceTransportFactory()->createTransport(getCallId());
     if (mediaTransport) {
-        JAMI_DBG("[call:%s] Successfully created media ICE transport [ice:%p]",
-                 getCallId().c_str(),
-                 mediaTransport.get());
+        JAMI_DEBUG("[call:{}] Successfully created media ICE transport [ice:{}]",
+                   getCallId(),
+                   fmt::ptr(mediaTransport.get()));
     } else {
-        JAMI_ERR("[call:%s] Failed to create media ICE transport", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Failed to create media ICE transport", getCallId());
         return {};
     }
 
@@ -3349,15 +3337,15 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
 {
     auto acc = getSIPAccount();
     if (!acc) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
         return false;
     }
 
-    JAMI_DBG("[call:%s] Init media ICE transport", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Init media ICE transport", getCallId());
 
     auto const& iceMedia = getIceMedia();
     if (not iceMedia) {
-        JAMI_ERR("[call:%s] Invalid media ICE transport", getCallId().c_str());
+        JAMI_ERROR("[call:{}] Invalid media ICE transport", getCallId());
         return false;
     }
 
@@ -3390,7 +3378,7 @@ SIPCall::initIceMediaTransport(bool master, std::optional<dhtnet::IceTransportOp
                 std::lock_guard lk {call->callMutex_};
                 call = call->isSubcall() ? std::dynamic_pointer_cast<SIPCall>(call->parent_) : call;
                 if (!ok) {
-                    JAMI_ERR("[call:%s] Media ICE negotiation failed", call->getCallId().c_str());
+                    JAMI_ERROR("[call:{}] Media ICE negotiation failed", call->getCallId());
                     call->onFailure(EIO);
                     return;
                 }
@@ -3421,7 +3409,7 @@ SIPCall::getLocalIceCandidates(unsigned compId) const
 {
     std::lock_guard lk(transportMtx_);
     if (not iceMedia_) {
-        JAMI_WARN("[call:%s] No media ICE transport", getCallId().c_str());
+        JAMI_WARNING("[call:{}] No media ICE transport", getCallId());
         return {};
     }
     return iceMedia_->getLocalCandidates(compId);
@@ -3439,7 +3427,7 @@ SIPCall::resetTransport(std::shared_ptr<dhtnet::IceTransport>&& transport)
 void
 SIPCall::merge(Call& call)
 {
-    JAMI_DBG("[call:%s] Merge subcall %s", getCallId().c_str(), call.getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Merge subcall {}", getCallId(), call.getCallId());
 
     // This static cast is safe as this method is private and overload Call::merge
     auto& subcall = static_cast<SIPCall&>(call);
@@ -3477,12 +3465,12 @@ SIPCall::remoteHasValidIceAttributes() const
 
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty()) {
-        JAMI_DBG("[call:%s] No ICE username fragment attribute in remote SDP", getCallId().c_str());
+        JAMI_DEBUG("[call:{}] No ICE username fragment in remote SDP", getCallId());
         return false;
     }
 
     if (rem_ice_attrs.pwd.empty()) {
-        JAMI_DBG("[call:%s] No ICE password attribute in remote SDP", getCallId().c_str());
+        JAMI_DEBUG("[call:{}] No ICE password in remote SDP", getCallId());
         return false;
     }
 
@@ -3495,11 +3483,11 @@ SIPCall::setIceMedia(std::shared_ptr<dhtnet::IceTransport> ice, bool isReinvite)
     std::lock_guard lk(transportMtx_);
 
     if (isReinvite) {
-        JAMI_DBG("[call:%s] Setting re-invite ICE session [%p]", getCallId().c_str(), ice.get());
+        JAMI_DEBUG("[call:{}] Setting re-invite ICE session [{}]", getCallId(), fmt::ptr(ice.get()));
         resetTransport(std::move(reinvIceMedia_));
         reinvIceMedia_ = std::move(ice);
     } else {
-        JAMI_DBG("[call:%s] Setting ICE session [%p]", getCallId().c_str(), ice.get());
+        JAMI_DEBUG("[call:{}] Setting ICE session [{}]", getCallId(), fmt::ptr(ice.get()));
         resetTransport(std::move(iceMedia_));
         iceMedia_ = std::move(ice);
     }
@@ -3511,7 +3499,7 @@ SIPCall::switchToIceReinviteIfNeeded()
     std::lock_guard lk(transportMtx_);
 
     if (reinvIceMedia_) {
-        JAMI_DBG("[call:%s] Switching to re-invite ICE session [%p]", getCallId().c_str(), reinvIceMedia_.get());
+        JAMI_DEBUG("[call:{}] Switching to re-invite ICE session [{}]", getCallId(), fmt::ptr(reinvIceMedia_.get()));
         std::swap(reinvIceMedia_, iceMedia_);
     }
 
@@ -3521,11 +3509,11 @@ SIPCall::switchToIceReinviteIfNeeded()
 void
 SIPCall::setupIceResponse(bool isReinvite)
 {
-    JAMI_DBG("[call:%s] Setup ICE response", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Setup ICE response", getCallId());
 
     auto account = getSIPAccount();
     if (not account) {
-        JAMI_ERR("No account detected");
+        JAMI_ERROR("[call:{}] No account detected", getCallId());
     }
 
     auto opt = account->getIceOptions();
@@ -3544,13 +3532,13 @@ SIPCall::setupIceResponse(bool isReinvite)
     }
 
     if (not opt.accountLocalAddr) {
-        JAMI_ERR("[call:%s] No local address, unable to initialize ICE", getCallId().c_str());
+        JAMI_ERROR("[call:{}] No local address, unable to initialize ICE", getCallId());
         onFailure(EIO);
         return;
     }
 
     if (not createIceMediaTransport(isReinvite) or not initIceMediaTransport(false, opt)) {
-        JAMI_ERR("[call:%s] ICE initialization failed", getCallId().c_str());
+        JAMI_ERROR("[call:{}] ICE initialization failed", getCallId());
         // Fatal condition
         // TODO: what's SIP rfc says about that?
         // (same question in startIceMedia)
@@ -3605,10 +3593,10 @@ SIPCall::peerRecording(bool state)
     auto conference = conf_.lock();
     const std::string& id = conference ? conference->getConfId() : getCallId();
     if (state) {
-        JAMI_WARN("[call:%s] Peer is recording", getCallId().c_str());
+        JAMI_WARNING("[call:{}] Peer is recording", getCallId());
         emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), true);
     } else {
-        JAMI_WARN("Peer stopped recording");
+        JAMI_WARNING("[call:{}] Peer stopped recording", getCallId());
         emitSignal<libjami::CallSignal::RemoteRecordingChanged>(id, getPeerNumber(), false);
     }
     peerRecording_ = state;
@@ -3620,9 +3608,9 @@ void
 SIPCall::peerMuted(bool muted, int streamIdx)
 {
     if (muted) {
-        JAMI_WARN("Peer muted");
+        JAMI_WARNING("[call:{}] Peer muted", getCallId());
     } else {
-        JAMI_WARN("Peer unmuted");
+        JAMI_WARNING("[call:{}] Peer unmuted", getCallId());
     }
 
     if (streamIdx == -1) {
