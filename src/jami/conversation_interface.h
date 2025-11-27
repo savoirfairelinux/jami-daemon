@@ -38,12 +38,15 @@ struct SwarmMessage
     std::vector<std::map<std::string, std::string>> reactions;
     std::vector<std::map<std::string, std::string>> editions;
     std::map<std::string, int32_t> status;
+    std::string reannounce {"0"};
 
     void fromMapStringString(const std::map<std::string, std::string>& commit)
     {
         id = commit.at("id");
         type = commit.at("type");
+        linearizedParent = commit.at("linearizedParent");
         body = commit; // TODO erase type/id?
+        reannounce = commit.at("reannounce");
     }
 };
 
