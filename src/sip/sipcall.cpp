@@ -3111,7 +3111,7 @@ void
 SIPCall::exitConference()
 {
     std::lock_guard lk {callMutex_};
-    JAMI_DBG("[call:%s] Leaving conference", getCallId().c_str());
+    JAMI_DEBUG("[call:{}] Leaving conference", getCallId());
 
     auto const hasAudio = !getRtpSessionList(MediaType::MEDIA_AUDIO).empty();
     if (hasAudio) {

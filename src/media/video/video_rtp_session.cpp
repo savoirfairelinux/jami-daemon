@@ -536,10 +536,7 @@ void
 VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction dir)
 {
     if (dir == Direction::SEND) {
-        JAMI_DBG("[%p] Setup video sender pipeline on conference %s for call %s",
-                 this,
-                 conference.getConfId().c_str(),
-                 callId_.c_str());
+        JAMI_DEBUG("[conf:{}] Setup video sender pipeline for call {}", conference.getConfId(), callId_);
         videoMixer_ = conference.getVideoMixer();
         if (sender_) {
             // Swap sender from local video to conference video mixer
@@ -551,10 +548,7 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction 
             JAMI_WARN("[%p] no sender", this);
         }
     } else {
-        JAMI_DBG("[%p] Setup video receiver pipeline on conference %s for call %s",
-                 this,
-                 conference.getConfId().c_str(),
-                 callId_.c_str());
+        JAMI_DEBUG("[conf:{}] Setup video receiver pipeline for call {}", conference.getConfId(), callId_);
         if (receiveThread_) {
             receiveThread_->stopSink();
             if (videoMixer_)
@@ -574,7 +568,7 @@ VideoRtpSession::enterConference(Conference& conference)
 
     conference_ = &conference;
     videoMixer_ = conference.getVideoMixer();
-    JAMI_DBG("[%p] enterConference (conf: %s)", this, conference.getConfId().c_str());
+    JAMI_DEBUG("[conf:{}] Entering conference", conference.getConfId());
 
     if (send_.enabled or receiveThread_) {
         // Restart encoder with conference parameter ON in order to unlink HW encoder
@@ -594,7 +588,7 @@ VideoRtpSession::exitConference()
     if (!conference_)
         return;
 
-    JAMI_DBG("[%p] exitConference (conf: %s)", this, conference_->getConfId().c_str());
+    JAMI_DEBUG("[conf:{}] Exiting conference", conference_->getConfId());
 
     if (videoMixer_) {
         if (sender_)

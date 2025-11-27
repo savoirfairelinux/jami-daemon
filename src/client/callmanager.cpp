@@ -143,11 +143,11 @@ muteLocalMedia(const std::string& accountId, const std::string& callId, const st
             call->muteMedia(mediaType, mute);
             return true;
         } else if (auto conf = account->getConference(callId)) {
-            JAMI_DBG("Muting local host [%s] for conference %s", mediaType.c_str(), callId.c_str());
+            JAMI_DEBUG("[conf:{}] Muting local host [{}]", callId, mediaType);
             conf->muteLocalHost(mute, mediaType);
             return true;
         } else {
-            JAMI_WARN("ID %s doesn't match any call or conference", callId.c_str());
+            JAMI_WARNING("ID {} doesn't match any call or conference", callId);
         }
     }
     return false;
@@ -467,7 +467,7 @@ setModerator(const std::string& accountId, const std::string& confId, const std:
         if (auto conf = account->getConference(confId)) {
             conf->setModerator(peerId, state);
         } else {
-            JAMI_WARN("Fail to change moderator %s, conference %s not found", peerId.c_str(), confId.c_str());
+            JAMI_WARNING("[conf:{}] Failed to change moderator {} (conference not found)", confId, peerId);
         }
     }
 }
