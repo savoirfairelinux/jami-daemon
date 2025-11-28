@@ -95,6 +95,11 @@ SwarmManager::addChannel(const std::shared_ptr<dhtnet::ChannelSocketInterface>& 
             if (routing_table.addNode(channel, bucket)) {
                 std::error_code ec;
                 resetNodeExpiry(ec, channel, id_);
+            } else {
+                JAMI_ERROR("[SwarmManager {}] addChannel: Node {} already exists in routing table",
+                           fmt::ptr(this),
+                           channel->deviceId());
+                return;
             }
         }
         receiveMessage(channel);
