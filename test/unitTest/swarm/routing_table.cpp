@@ -42,7 +42,7 @@ constexpr size_t mNodes = 3;
 constexpr size_t kNodes = 4;
 
 constexpr size_t BOOTSTRAP_SIZE = 2;
-constexpr int time = 10;
+constexpr std::chrono::seconds WAIT_TIME {5};
 
 struct Counter
 {
@@ -92,6 +92,12 @@ private:
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagers;
     std::map<NodeId, std::set<NodeId>> nodesToConnect;
     std::set<NodeId> messageNode;
+
+    std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels1_1;
+    std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels1_2;
+
+    std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels2;
+    std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels3;
 
     void generaterandomNodeIds();
     void generateSwarmManagers();
@@ -167,6 +173,10 @@ RoutingTableTest::setUp()
 
     generaterandomNodeIds();
     generateSwarmManagers();
+    nodeTestChannels1_1 = buildChannels(nodeTestIds1);
+    nodeTestChannels1_2 = buildChannels(nodeTestIds1);
+    nodeTestChannels2 = buildChannels(nodeTestIds2);
+    nodeTestChannels3 = buildChannels(nodeTestIds3);
 }
 
 void
@@ -245,6 +255,7 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                     return;
                 }
                 auto myId = sm->getId();
+                std::cout << "needSocketCallBack: Connecting " << myId << " to " << node << std::endl;
                 auto& cstRemote = channelSockets_[node][myId];
                 auto& cstMe = channelSockets_[myId][node];
                 if (!cstRemote) {
@@ -293,9 +304,9 @@ RoutingTableTest::testBucketMainFunctions()
     NodeId node2 = nodeTestIds1.at(2);
     NodeId node3 = nodeTestIds1.at(3);
 
-    auto sNode1 = nodeTestChannels1.at(1);
-    auto sNode2 = nodeTestChannels1.at(2);
-    auto sNode3 = nodeTestChannels1.at(3);
+    auto sNode1 = nodeTestChannels1_1.at(1);
+    auto sNode2 = nodeTestChannels1_1.at(2);
+    auto sNode3 = nodeTestChannels1_1.at(3);
 
     NodeInfo InfoNode1(true, sNode2);
 
@@ -421,9 +432,9 @@ RoutingTableTest::testRoutingTableMainFunctions()
     auto bucket2 = rt.findBucket(node2);
     auto bucket3 = rt.findBucket(node3);
 
-    rt.addNode(nodeTestChannels1.at(0), bucket1);
-    rt.addNode(nodeTestChannels1.at(1), bucket2);
-    rt.addNode(nodeTestChannels1.at(2), bucket3);
+    rt.addNode(nodeTestChannels1_1.at(0), bucket1);
+    rt.addNode(nodeTestChannels1_1.at(1), bucket2);
+    rt.addNode(nodeTestChannels1_1.at(2), bucket3);
 
     CPPUNIT_ASSERT(!rt.hasNode(node1));
     CPPUNIT_ASSERT(rt.hasNode(node2));
@@ -516,7 +527,7 @@ RoutingTableTest::testClosestNodes_1b()
     auto bucket2 = rt2.findBucket(nodeTestIds2.at(0));
 
     for (size_t i = 0; i < nodeTestIds2.size(); i++) {
-        bucket1->addNode(nodeTestChannels1.at(i));
+        bucket1->addNode(nodeTestChannels1_1.at(i));
         bucket2->addNode(nodeTestChannels2.at(i));
     }
 
@@ -551,9 +562,9 @@ RoutingTableTest::testClosestNodes_multipleb()
     auto sm1 = std::make_shared<SwarmManager>(nodeTestIds1.at(2), rd, [](auto) { return false; });
     auto sm2 = std::make_shared<SwarmManager>(nodeTestIds1.at(6), rd, [](auto) { return false; });
 
-    for (size_t i = 0; i < nodeTestChannels1.size(); i++) {
-        sm1->addChannel(nodeTestChannels1.at(i));
-        sm2->addChannel(nodeTestChannels1.at(i));
+    for (size_t i = 0; i < nodeTestChannels1_1.size(); i++) {
+        sm1->addChannel(nodeTestChannels1_1.at(i));
+        sm2->addChannel(nodeTestChannels1_2.at(i));
     }
 
     std::vector<NodeId> closestNodes1 {NodeId("2dd1dd976c7dc234ca737c85e4ea48ad09423067a77405254424c4cdd845720d"),
@@ -879,7 +890,7 @@ RoutingTableTest::testMobileNodeSplit()
     auto& rt1 = sm1.getRoutingTable();
 
     for (size_t i = 0; i < nodeTestIds1.size(); i++) {
-        rt1.addNode(nodeTestChannels1.at(i));
+        rt1.addNode(nodeTestChannels1_1.at(i));
     }
 
     sm1.setMobileNodes(nodeTestIds2);
@@ -1005,7 +1016,7 @@ RoutingTableTest::testSwarmManagersSmallBootstrapList()
 
     counter.wait();
 
-    sleep(time * 2);
+    std::this_thread::sleep_for(WAIT_TIME);
 
     crossNodes(swarmManagers.begin()->first);
     // distribution();
@@ -1137,7 +1148,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
     }
     counter.wait();
 
-    sleep(time * 2);
+    std::this_thread::sleep_for(WAIT_TIME);
 
     crossNodes(swarmManagers.begin()->first);
 
@@ -1153,7 +1164,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
         sm->setKnownNodes(knownNodesSm);
     }
 
-    sleep(time * 3);
+    std::this_thread::sleep_for(WAIT_TIME);
     crossNodes(swarmManagers.begin()->first);
 
     CPPUNIT_ASSERT_EQUAL(swarmManagers.size(), discoveredNodes.size());
@@ -1169,7 +1180,7 @@ RoutingTableTest::testRoutingTableForMassShuttingsNodes()
         }
     }
 
-    sleep(time * 2);
+    std::this_thread::sleep_for(WAIT_TIME);
 
     crossNodes(swarmManagers.begin()->first);
 
@@ -1209,12 +1220,12 @@ RoutingTableTest::testSwarmManagersWMobileModes()
 
     counter.wait();
 
-    sleep(time);
+    std::this_thread::sleep_for(WAIT_TIME);
 
     // distribution();
 
     crossNodes(swarmManagers.begin()->first);
-    sleep(2);
+    std::this_thread::sleep_for(WAIT_TIME);
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Supposed to be equal with mobile nodes", swarmManagers.size(), discoveredNodes.size());
 
     // Shutting down Mobile Nodes
@@ -1232,7 +1243,7 @@ RoutingTableTest::testSwarmManagersWMobileModes()
         }
     }
 
-    sleep(20);
+    std::this_thread::sleep_for(WAIT_TIME);
 
     {
         if (!swarmManagers.empty()) {
