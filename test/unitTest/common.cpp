@@ -100,26 +100,28 @@ wait_for_announcement_of(const std::string& accountId, std::chrono::seconds time
 void
 wait_for_removal_of(const std::vector<std::string> accounts, std::chrono::seconds timeout)
 {
-    JAMI_INFO("Removing %zu accounts...", accounts.size());
+    JAMI_LOG("Removing {} accounts: {}", accounts.size(), fmt::join(accounts, ", "));
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     std::mutex mtx;
-    std::unique_lock lk {mtx};
+
     std::condition_variable cv;
-    std::atomic_bool accountsRemoved {false};
+    bool accountsRemoved {false};
 
     size_t current = jami::Manager::instance().getAccountList().size();
 
     /* Prevent overflow */
     CPPUNIT_ASSERT(current >= accounts.size());
 
-    size_t target = current - accounts.size();
-
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AccountsChanged>([&]() {
-        if (jami::Manager::instance().getAccountList().size() <= target) {
-            accountsRemoved = true;
-            cv.notify_one();
+        auto newAccounts = jami::Manager::instance().getAccountList();
+        for (const auto& account : accounts) {
+            if (std::find(newAccounts.cbegin(), newAccounts.cend(), account) != newAccounts.cend())
+                return;
         }
+        std::unique_lock lk {mtx};
+        accountsRemoved = true;
+        cv.notify_one();
     }));
 
     libjami::unregisterSignalHandlers();
@@ -129,7 +131,10 @@ wait_for_removal_of(const std::vector<std::string> accounts, std::chrono::second
         jami::Manager::instance().removeAccount(account, true);
     }
 
-    CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] { return accountsRemoved.load(); }));
+    {
+        std::unique_lock lk {mtx};
+        CPPUNIT_ASSERT(cv.wait_for(lk, timeout, [&] { return accountsRemoved; }));
+    }
 
     libjami::unregisterSignalHandlers();
 }
