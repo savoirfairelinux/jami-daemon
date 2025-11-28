@@ -22,7 +22,6 @@ std::vector<NodeId> nodeTestIds1({
 });
 
 std::vector<NodeId> nodeTestIds2({
-
     NodeId("053927d831827a9f7e606d4c9c9fe833922c0d35b3960dd2250085f46c0e4f41"), // 0
     NodeId("41a05179e4b3e42c3409b10280bb448d5bbd5ef64784b997d2d1663457bb6ba8"), // 1
     NodeId("77a9fba2c5a65812d9290c567897131b20a723e0ca2f65ef5c6b421585e4da2b"), // 2
@@ -33,7 +32,6 @@ std::vector<NodeId> nodeTestIds2({
     NodeId("a3b1b35be59ed62926569479d72718ccca553710f2a22490d1155d834d972525"), // 7
     NodeId("4f76e769061f343b2caf9eea35632d28cde8d7a67e5e0f59857733cabc538997"), // 8
     NodeId("fda3516c620bf55511ed0184fc3e32fc346ea0f3a2c6bc19257bd98e19734307")  // 9
-
 });
 
 std::vector<NodeId> nodeTestIds3({
@@ -51,44 +49,14 @@ std::vector<NodeId> nodeTestIds3({
 
 });
 
-std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels1(
-    {std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(0), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(1), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(2), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(3), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(4), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(5), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(6), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(7), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(8), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds1.at(9), "test1", 0)
-
-    });
-
-std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels2(
-    {std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(0), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(1), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(2), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(3), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(4), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(5), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(6), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(7), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(8), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds2.at(9), "test1", 0)
-
-    });
-
-std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels3(
-    {std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(0), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(1), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(2), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(3), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(4), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(5), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(6), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(7), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(8), "test1", 0),
-     std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), nodeTestIds3.at(9), "test1", 0)
-
-    });
+std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>>
+buildChannels(const std::vector<NodeId>& ids)
+{
+    std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> channels;
+    channels.reserve(ids.size());
+    for (const auto& id : ids) {
+        channels.emplace_back(
+            std::make_shared<dhtnet::ChannelSocketTest>(jami::Manager::instance().ioContext(), id, "test1", 0));
+    }
+    return channels;
+}
