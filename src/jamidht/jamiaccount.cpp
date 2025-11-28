@@ -1904,14 +1904,20 @@ JamiAccount::doRegister_()
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
             if (auto cert = certStore().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
-            JAMI_LOG("Query for local certificate store: {}: {} found.", pk_id.toString(), ret.size());
+            JAMI_LOG("[Account {}] Query for local certificate store: {}: {} found.",
+                     getAccountID(),
+                     pk_id.toString(),
+                     ret.size());
             return ret;
         };
         context.certificateStorePkId = [&](const DeviceId& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
             if (auto cert = certStore().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
-            JAMI_LOG("Query for local certificate store: {}: {} found.", pk_id.toString(), ret.size());
+            JAMI_LOG("[Account {}] Query for local certificate store: {}: {} found.",
+                     getAccountID(),
+                     pk_id.toString(),
+                     ret.size());
             return ret;
         };
 
@@ -1937,8 +1943,11 @@ JamiAccount::doRegister_()
             setRegistrationState(state);
         };
         context.identityAnnouncedCb = [this](bool ok) {
-            if (!ok)
+            if (!ok) {
+                JAMI_ERROR("[Account {}] Identity announcement failed", getAccountID());
                 return;
+            }
+            JAMI_WARNING("[Account {}] Identity announcement succeeded", getAccountID());
             accountManager_->startSync(
                 [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                     if (jami::Manager::instance().syncOnRegister) {
@@ -2761,10 +2770,7 @@ JamiAccount::setMessageDisplayed(const std::string& conversationUri, const std::
     if (!conversationId.empty())
         sendMessage &= convModule()->onMessageDisplayed(getUsername(), conversationId, messageId);
     if (sendMessage)
-        sendInstantMessage(uri.authority(),
-                           {
-                               {MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}
-        });
+        sendInstantMessage(uri.authority(), {{MIME_TYPE_IMDN, getDisplayed(conversationId, messageId)}});
     return true;
 }
 
@@ -3726,9 +3732,7 @@ JamiAccount::requestMessageConnection(const std::string& peerId,
                         if (!acc->presenceNote_.empty()) {
                             // If a presence note is set, send it to this device.
                             auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(acc->rand);
-                            std::map<std::string, std::string> msg = {
-                                {MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}
-                            };
+                            std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(acc->presenceNote_)}};
                             acc->sendMessage(peerId, deviceId.toString(), msg, token, false, true);
                         }
                         acc->convModule()->syncConversations(peerId, deviceId.toString());
@@ -3829,9 +3833,7 @@ JamiAccount::sendPresenceNote(const std::string& note)
             }
         }
         auto token = std::uniform_int_distribution<uint64_t> {1, JAMI_ID_MAX_VAL}(rand);
-        std::map<std::string, std::string> msg = {
-            {MIME_TYPE_PIDF, getPIDF(presenceNote_)}
-        };
+        std::map<std::string, std::string> msg = {{MIME_TYPE_PIDF, getPIDF(presenceNote_)}};
         for (auto& key : keys) {
             sendMessage(key.first, key.second.toString(), msg, token, false, true);
         }
@@ -4403,12 +4405,7 @@ JamiAccount::initConnectionManager()
         channelHandlers_[Uri::Scheme::MESSAGE] = std::make_unique<MessageChannelHandler>(
             *connectionManager_.get(),
             [this](const auto& cert, std::string& type, const std::string& content) {
-                onTextMessage("",
-                              cert->issuer->getId().toString(),
-                              cert,
-                              {
-                                  {type, content}
-                });
+                onTextMessage("", cert->issuer->getId().toString(), cert, {{type, content}});
             },
             [w = weak()](const std::string& peer, bool connected) {
                 asio::post(*Manager::instance().ioContext(), [w, peer, connected] {
