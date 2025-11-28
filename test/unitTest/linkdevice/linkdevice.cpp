@@ -109,7 +109,7 @@ LinkDeviceTest::tearDown()
         // to newDeviceId already being destroyed and same with oldDeviceId
         wait_for_removal_of({oldDeviceId, newDeviceId});
     } catch (const std::exception& e) {
-        JAMI_WARNING("[ut_linkdevice] Error during account cleanup... this should be ok.");
+        JAMI_WARNING("[ut_linkdevice] Error during account cleanup...: {} this should be ok.", e.what());
     }
 }
 
@@ -523,19 +523,19 @@ LinkDeviceTest::testExportWithCorrectPassword()
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Validating password on old device.", testTag);
     CPPUNIT_ASSERT(oldAcc->isPasswordValid(correctPassword));
 
-    JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
-    std::this_thread::sleep_for(std::chrono::seconds(20)); // wait for the old device to be fully initialized
-
     JAMI_DEBUG("[ut_linkdevice:{}] [New Device] Creating new device account.", testTag);
     auto detailsNewDevice = libjami::getAccountTemplate("RING");
     detailsNewDevice[ConfProperties::ARCHIVE_URL] = "jami-auth";
     auto newDeviceId = jami::Manager::instance().addAccount(detailsNewDevice);
 
+    JAMI_DEBUG("[ut_linkdevice:{}] Waiting 20s for some reason (FIXME).", testTag);
+    std::this_thread::sleep_for(std::chrono::seconds(15)); // wait for the old device to be fully initialized
+
     // Wait for QR code
-    { // Lock mtxNew
+    {
         std::unique_lock lkNew {mtxNew};
         CPPUNIT_ASSERT(cvNew.wait_for(lkNew, 30s, [&] { return !qrInfo.empty(); }));
-    } // Unlock mtxNew
+    }
 
     JAMI_DEBUG("[ut_linkdevice:{}] [OldDevice] Simulating QR scan... testing libjami::addDevice({}, {})",
                testTag,
