@@ -70,11 +70,39 @@ init(enum InitFlag flags) noexcept
 #endif
         if (flags & LIBJAMI_FLAG_NO_AUTOSYNC)
             manager.syncOnRegister = false;
-
-        return true;
     } catch (...) {
         return false;
     }
+
+#ifdef __linux__
+    // HACK: ignore system-wide GnuTLS configuration
+    //
+    // Since version 3.6.9, GnuTLS makes it possible to selectively disable algorithms
+    // and protocols via a global configuration file. In particular, RSA PKCS1 v1.5
+    // encryption can be disabled by setting the "allow-rsa-pkcs1-encrypt" option to
+    // false. Doing this makes OpenDHT's putEncrypted function fail systematically and
+    // therefore breaks several major features in Jami (e.g. sending contact requests).
+    // As of December 2025, this is an issue on AlmaLinux 10 (there are other distributions
+    // supported by Jami, including Ubuntu and Fedora, that include a system-wide
+    // configuration file for GnuTLS, but for now they don't disable RSA PKCS1 v1.5).
+    //
+    // Some of the options in the configuration file can be bypassed by calling the right
+    // function, but GnuTLS currently does not allow this in the case of RSA PKCS1 v1.5.
+    // As a workaround, we take advantage of the fact that the location of the configuration
+    // file can be changed at runtime via the GNUTLS_SYSTEM_PRIORITY_FILE environment
+    // variable.
+    setenv("GNUTLS_SYSTEM_PRIORITY_FILE", "/dev/null", 1);
+    // GnuTLS has already been initialized (in a library constructor) by the time we set
+    // GNUTLS_SYSTEM_PRIORITY_FILE, so we need to reinitialize it in order for the new
+    // value to be taken into account.
+    gnutls_global_deinit();
+    if (gnutls_global_init() < 0) {
+        JAMI_ERROR("Failed to intialize gnutls");
+        return false;
+    }
+#endif
+
+    return true;
 }
 
 bool
