@@ -2355,7 +2355,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
                          id_,
                          id);
         } else {
-            cc.signature = base64::decode(std::string(signature.ptr, signature.ptr + signature.size));
+            cc.signature = base64::decode(std::string_view(signature.ptr, signature.size));
             cc.signed_content = std::vector<uint8_t>(signed_data.ptr, signed_data.ptr + signed_data.size);
         }
         git_buf_dispose(&signature);
