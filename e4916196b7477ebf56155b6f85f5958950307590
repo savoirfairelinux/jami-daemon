@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e3b2317_31b78a61",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T16:21:32Z",
+      "side": 1,
+      "message": "I launched Jami with this patch and saw this log quite a few times... is there a known reason for this, or is there a potential bug there that we need to investigate?",
+      "range": {
+        "startLine": 99,
+        "startChar": 28,
+        "endLine": 99,
+        "endChar": 98
+      },
+      "revId": "e4916196b7477ebf56155b6f85f5958950307590",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
