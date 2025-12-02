@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "559542c9_19a9d6f4",
+        "filename": "test/unitTest/common.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T15:55:06Z",
+      "side": 1,
+      "message": "Missing header:\n```\n/foo/test/unitTest/common.cpp: In function \u0027void wait_for_removal_of(std::vector\u003cstd::__cxx11::basic_string\u003cchar\u003e \u003e, std::chrono::seconds)\u0027:\n/foo/test/unitTest/common.cpp:103:64: error: \u0027join\u0027 is not a member of \u0027fmt\u0027\n  103 |     JAMI_LOG(\"Removing {} accounts: {}\", accounts.size(), fmt::join(accounts, \", \"));\n      |                                                                ^~~~   \n```",
+      "range": {
+        "startLine": 103,
+        "startChar": 58,
+        "endLine": 103,
+        "endChar": 67
+      },
+      "revId": "79f49ecda5cf81ceb8e01438c80afaca25d190fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7e201c0d_39b3a094",
+        "filename": "test/unitTest/linkdevice/linkdevice.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 531,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T15:55:06Z",
+      "side": 1,
+      "message": "Log doesn\u0027t match code",
+      "range": {
+        "startLine": 531,
+        "startChar": 35,
+        "endLine": 531,
+        "endChar": 46
+      },
+      "revId": "79f49ecda5cf81ceb8e01438c80afaca25d190fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "65067ca4_417e4ef3",
+        "filename": "test/unitTest/linkdevice/linkdevice.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 532,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T15:55:06Z",
+      "side": 1,
+      "message": "This comment should probably be updated?",
+      "range": {
+        "startLine": 532,
+        "startChar": 62,
+        "endLine": 532,
+        "endChar": 85
+      },
+      "revId": "79f49ecda5cf81ceb8e01438c80afaca25d190fa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
