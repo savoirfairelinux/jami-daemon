@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c5b1821f_c5c1c89c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 2266,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T15:29:24Z",
+      "side": 1,
+      "message": "What\u0027s the reason for protecting this particular call to `accountManager()` (but not the other ones elsewhere in the file)?",
+      "range": {
+        "startLine": 2266,
+        "startChar": 60,
+        "endLine": 2266,
+        "endChar": 115
+      },
+      "revId": "8141b29f5c6592ce01eff80752961d968500ce8d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
