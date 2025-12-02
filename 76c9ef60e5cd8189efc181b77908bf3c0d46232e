@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4097ab98_c425762d",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 1685,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T20:16:43Z",
+      "side": 1,
+      "message": "`newHead` is no longer being set, so the check `if (oldHead !\u003d newHead)` below will always succeed even if the head didn\u0027t actually change.",
+      "range": {
+        "startLine": 1685,
+        "startChar": 8,
+        "endLine": 1685,
+        "endChar": 27
+      },
+      "revId": "76c9ef60e5cd8189efc181b77908bf3c0d46232e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "92388190_a7dc7db2",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 27
+      },
+      "lineNbr": 3341,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-02T20:16:43Z",
+      "side": 1,
+      "message": "In the original code there were `continue` statements after the callbacks in these two `if` blocks. In order to get the same behavior after the refactoring we need to return early after calling `cb`.",
+      "range": {
+        "startLine": 3332,
+        "startChar": 4,
+        "endLine": 3341,
+        "endChar": 5
+      },
+      "revId": "76c9ef60e5cd8189efc181b77908bf3c0d46232e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
