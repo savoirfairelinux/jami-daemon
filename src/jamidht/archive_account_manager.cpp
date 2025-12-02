@@ -576,7 +576,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
 
         auto accountScheme = fmt::format("{}{}/{}",
                                          AUTH_URI_SCHEME,
-                                         ctx->linkDevCtx->tmpId.second->getId(),
+                                         ctx->linkDevCtx->tmpId.second->getLongId(),
                                          ctx->linkDevCtx->opId);
         JAMI_LOG("[LinkDevice] auth scheme will be: {}", accountScheme);
 
