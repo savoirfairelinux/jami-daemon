@@ -17,10 +17,14 @@
 
 #include "libav_deps.h"
 #include "logger.h"
+#include <libavutil/frame.h>
+#include <libavutil/mathematics.h>
 #include "resampler.h"
 
 extern "C" {
 #include <libswresample/swresample.h>
+
+#include <cstddef>
 }
 
 namespace jami {
@@ -110,6 +114,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
 int
 Resampler::resample(const AVFrame* input, AVFrame* output)
 {
+    bool firstFrame = !initCount_;
     if (!initCount_)
         reinit(input, output);
 
@@ -124,10 +129,70 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
         }
         reinit(input, output);
         return resample(input, output);
-    } else if (ret < 0) {
+    }
+    if (ret < 0) {
         JAMI_ERROR("Failed to resample frame");
         return -1;
     }
+
+    if (firstFrame) {
+        // we just resampled the first frame
+        JAMI_DEBUG("Resampled: {} samples {} Hz, {} channels -> {} samples {} Hz, {} channels",
+                   input->nb_samples,
+                   input->sample_rate,
+                   av_get_channel_layout_nb_channels(input->ch_layout.u.mask),
+                   output->nb_samples,
+                   output->sample_rate,
+                   av_get_channel_layout_nb_channels(output->ch_layout.u.mask));
+        auto targetOutputLength = av_rescale_rnd(input->nb_samples,
+                                                 output->sample_rate,
+                                                 input->sample_rate,
+                                                 AV_ROUND_UP);
+        JAMI_DEBUG("Expected output samples: {}, got {}", targetOutputLength, output->nb_samples);
+        if (output->nb_samples < targetOutputLength) {
+            // create new frame with more samples, padded with silence
+            JAMI_DEBUG("Output frame too small, reallocating with {} samples", targetOutputLength);
+            auto* newOutput = av_frame_alloc();
+            if (!newOutput) {
+                JAMI_ERR() << "Failed to clone output frame for resizing";
+                return -1;
+            }
+            av_frame_copy_props(newOutput, output);
+            newOutput->format = output->format;
+            newOutput->nb_samples = targetOutputLength;
+            newOutput->ch_layout = output->ch_layout;
+            newOutput->channel_layout = output->channel_layout;
+            newOutput->sample_rate = output->sample_rate;
+            if (av_frame_get_buffer(newOutput, 0) < 0) {
+                JAMI_ERR() << "Failed to allocate new output frame buffer";
+                av_frame_free(&newOutput);
+                return -1;
+            }
+            auto sampleOffset = targetOutputLength - output->nb_samples;
+            av_samples_set_silence(newOutput->data,
+                                   0,
+                                   sampleOffset,
+                                   output->ch_layout.nb_channels,
+                                   static_cast<AVSampleFormat>(output->format));
+            // copy old data to new frame at offset sampleOffset
+            av_samples_copy(newOutput->data,
+                            output->data,
+                            sampleOffset,
+                            0,
+                            output->nb_samples,
+                            output->ch_layout.nb_channels,
+                            static_cast<AVSampleFormat>(output->format));
+            JAMI_DEBUG("Resampled output frame resized from {} to {} samples",
+                       output->nb_samples,
+                       newOutput->nb_samples);
+            // replace output frame buffer
+            av_frame_unref(output);
+            av_frame_move_ref(output, newOutput);
+            av_frame_free(&newOutput);
+        }
+    }
+
+    JAMI_DEBUG("Resampled output frame has {} samples", output->nb_samples);
 
     // Resampling worked, reset count to 1 so reinit isn't called again
     initCount_ = 1;

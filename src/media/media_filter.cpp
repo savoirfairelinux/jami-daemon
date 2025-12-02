@@ -60,7 +60,9 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
 
     AVFilterInOut* in;
     AVFilterInOut* out;
-    if ((ret = avfilter_graph_parse2(graph_, desc_.c_str(), &in, &out)) < 0)
+
+    ret = avfilter_graph_parse2(graph_, desc_.c_str(), &in, &out);
+    if (ret < 0)
         return fail("Failed to parse filter graph", ret);
 
     using AVFilterInOutPtr = std::unique_ptr<AVFilterInOut, std::function<void(AVFilterInOut*)>>;
@@ -70,7 +72,8 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
     if (outputs && outputs->next)
         return fail("Filters with multiple outputs are not supported", AVERROR(ENOTSUP));
 
-    if ((ret = initOutputFilter(outputs.get())) < 0)
+    ret = initOutputFilter(outputs.get());
+    if (ret < 0)
         return fail("Failed to create output for filter graph", ret);
 
     // make sure inputs linked list is the same size as msps
@@ -87,7 +90,8 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
         std::string_view name = current->name;
         auto it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp) { return msp.name == name; });
         if (it != msps.end()) {
-            if ((ret = initInputFilter(current, *it)) < 0) {
+            ret = initInputFilter(current, *it);
+            if (ret < 0) {
                 return fail(fmt::format("Failed to initialize input: {}", name), ret);
             }
         } else {
@@ -95,7 +99,8 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
         }
     }
 
-    if ((ret = avfilter_graph_config(graph_, nullptr)) < 0)
+    ret = avfilter_graph_config(graph_, nullptr);
+    if (ret < 0)
         return fail("Failed to configure filter graph", ret);
 
     JAMI_DBG() << "Filter graph initialized with: " << desc_;
@@ -171,8 +176,20 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
         if (ms.name != inputName)
             continue;
 
-        if (ms.format != frame->format || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
-            || (!ms.isVideo && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->ch_layout.nb_channels))) {
+        JAMI_DEBUG("Feeding frame to filter input '{}': format={}, nb={}, sample_rate={}, nb_channels={}",
+                   inputName,
+                   frame->format,
+                   frame->nb_samples,
+                   frame->sample_rate,
+                   frame->ch_layout.nb_channels);
+
+        bool formatChanged = ms.format != frame->format;
+        bool videoParamsChanged = ms.isVideo && (ms.width != frame->width || ms.height != frame->height);
+        bool audioParamsChanged = !ms.isVideo
+                                  && (ms.sampleRate != frame->sample_rate
+                                      || ms.nbChannels != frame->ch_layout.nb_channels);
+
+        if (formatChanged || videoParamsChanged || audioParamsChanged) {
             ms.update(frame);
             if ((ret = reinitialize()) < 0)
                 return fail("Failed to reinitialize filter with new input parameters", ret);
@@ -209,6 +226,7 @@ MediaFilter::readOutput()
         return {};
     }
     auto err = av_buffersink_get_frame(output_, frame->pointer());
+    JAMI_DEBUG("Just read frame with {} samples", frame->pointer()->nb_samples); // first 912 samples, then 960
     if (err >= 0) {
         return frame;
     } else if (err == AVERROR(EAGAIN)) {
@@ -245,12 +263,14 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
     else
         buffersink = avfilter_get_by_name("abuffersink");
 
-    if ((ret = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out", nullptr, nullptr, graph_)) < 0) {
+    ret = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out", nullptr, nullptr, graph_);
+    if (ret < 0) {
         avfilter_free(buffersinkCtx);
         return fail("Failed to create buffer sink", ret);
     }
 
-    if ((ret = avfilter_link(out->filter_ctx, out->pad_idx, buffersinkCtx, 0)) < 0) {
+    ret = avfilter_link(out->filter_ctx, out->pad_idx, buffersinkCtx, 0);
+    if (ret < 0) {
         avfilter_free(buffersinkCtx);
         return fail("Unable to link buffer sink to graph", ret);
     }

@@ -44,6 +44,8 @@ CONF_TARBALLS=
 ENABLE_ASAN=
 IGNORE_SYSTEM_LIBS=
 
+ENABLE_DEBUG=1
+
 if test ! -f "../src/main.mak"
 then
 	echo "$0 must be run from a subdirectory"

@@ -492,6 +492,8 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     if (!encoderCtx)
         return -1;
 
+    JAMI_DEBUG("About to encode frame with {} samples", frame ? frame->nb_samples : 0);
+
     ret = avcodec_send_frame(encoderCtx, frame);
     if (ret < 0)
         return -1;
@@ -1030,6 +1032,7 @@ MediaEncoder::initOpus(AVCodecContext* encoderCtx)
     // Enable FEC support by default with 10% packet loss
     av_opt_set_int(encoderCtx, "fec", fecEnabled_ ? 1 : 0, AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(encoderCtx, "packet_loss", 10, AV_OPT_SEARCH_CHILDREN);
+    JAMI_DEBUG("Opus encoder setup: fec={}, packet_loss=10", fecEnabled_ ? 1 : 0);
 }
 
 void
