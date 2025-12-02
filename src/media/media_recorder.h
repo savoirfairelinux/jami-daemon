@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include "audio/resampler.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -152,7 +153,7 @@ private:
     std::unique_ptr<MediaEncoder> encoder_;
     std::mutex encoderMtx_;
     std::unique_ptr<MediaFilter> outputVideoFilter_;
-    std::unique_ptr<MediaFilter> outputAudioFilter_;
+    std::unique_ptr<Resampler> outputAudioFilter_;
 
     std::unique_ptr<MediaFilter> videoFilter_;
     std::unique_ptr<MediaFilter> audioFilter_;

@@ -15,16 +15,19 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "audio/audio_format.h"
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"
+#include "media_buffer.h"
 #include "media_io_handle.h"
 #include "media_recorder.h"
 #include "media_filter.h"
 #include "system_codec_container.h"
 #include "video/filter_transpose.h"
+#include <memory>
 #ifdef ENABLE_VIDEO
 #ifdef ENABLE_HWACCEL
 #include "video/accel.h"
@@ -382,9 +385,9 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     if (ms.isVideo && videoFilter_ && outputVideoFilter_) {
         std::lock_guard lk(mutexFilterVideo_);
         videoFilter_->feedInput(clone->pointer(), name);
-        auto videoFilterOutput = videoFilter_->readOutput();
-        if (videoFilterOutput) {
-            outputVideoFilter_->feedInput(videoFilterOutput->pointer(), "input");
+        auto filteredVideoOutput = videoFilter_->readOutput();
+        if (filteredVideoOutput) {
+            outputVideoFilter_->feedInput(filteredVideoOutput->pointer(), "input");
             while (auto fFrame = outputVideoFilter_->readOutput()) {
                 filteredFrames.emplace_back(std::move(fFrame));
             }
@@ -393,10 +396,18 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 #endif // ENABLE_VIDEO
         std::lock_guard lkA(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
-        auto audioFilterOutput = audioFilter_->readOutput();
-        if (audioFilterOutput) {
-            outputAudioFilter_->feedInput(audioFilterOutput->pointer(), "input");
-            filteredFrames.emplace_back(outputAudioFilter_->readOutput());
+        if (auto filteredAudioOutput = audioFilter_->readOutput()) {
+            JAMI_DEBUG("Resampling frame from {}Hz, {} channels to {}Hz, {} channels",
+                       filteredAudioOutput.get()->pointer()->sample_rate,
+                       filteredAudioOutput.get()->pointer()->ch_layout.nb_channels,
+                       48000,
+                       2);
+            filteredFrames.emplace_back(
+                outputAudioFilter_->resample(std::unique_ptr<AudioFrame>(
+                                                 static_cast<AudioFrame*>(filteredAudioOutput.release())),
+                                             AudioFormat(48000, 2)));
+        } else {
+            JAMI_WARNING("No filtered audio output available");
         }
 #ifdef ENABLE_VIDEO
     }
@@ -644,7 +655,7 @@ MediaRecorder::setupAudioOutput()
         return;
     MediaStream secondaryFilter = audioFilter_->getOutputParams();
     secondaryFilter.name = "input";
-    if (outputAudioFilter_) {
+    /*if (outputAudioFilter_) {
         outputAudioFilter_->flush();
         outputAudioFilter_.reset();
     }
@@ -655,7 +666,8 @@ MediaRecorder::setupAudioOutput()
 
     if (ret < 0) {
         JAMI_ERR() << "Failed to initialize output audio filter";
-    }
+    }*/
+    outputAudioFilter_ = std::make_unique<Resampler>();
 
     return;
 }
@@ -663,12 +675,12 @@ MediaRecorder::setupAudioOutput()
 std::string
 MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers) const
 {
-    std::string baseFilter = "aresample=osr=48000:ochl=stereo:osf=s16";
+    // std::string baseFilter = "aresample=osr=48000:ochl=stereo:osf=s16";
     std::ostringstream a;
 
     for (const auto& ms : peers)
         a << "[" << ms.name << "] ";
-    a << " amix=inputs=" << peers.size() << ", " << baseFilter;
+    a << " amix=inputs=" << peers.size(); // << ", " << baseFilter;
     return a.str();
 }
 
@@ -686,8 +698,6 @@ MediaRecorder::flush()
         std::lock_guard lk(mutexFilterAudio_);
         if (audioFilter_)
             audioFilter_->flush();
-        if (outputAudioFilter_)
-            outputAudioFilter_->flush();
     }
     if (encoder_)
         encoder_->flush();
