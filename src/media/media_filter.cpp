@@ -171,8 +171,13 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
         if (ms.name != inputName)
             continue;
 
-        if (ms.format != frame->format || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
-            || (!ms.isVideo && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->ch_layout.nb_channels))) {
+        bool formatChanged = ms.format != frame->format;
+        bool videoParamsChanged = ms.isVideo && (ms.width != frame->width || ms.height != frame->height);
+        bool audioParamsChanged = !ms.isVideo
+                                  && (ms.sampleRate != frame->sample_rate
+                                      || ms.nbChannels != frame->ch_layout.nb_channels);
+
+        if (formatChanged || videoParamsChanged || audioParamsChanged) {
             ms.update(frame);
             if ((ret = reinitialize()) < 0)
                 return fail("Failed to reinitialize filter with new input parameters", ret);
