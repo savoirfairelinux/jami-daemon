@@ -115,6 +115,8 @@ public:
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
+    int getCurrentAudioAVCtxFrameSize();
+
 private:
     NON_COPYABLE(MediaEncoder);
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);

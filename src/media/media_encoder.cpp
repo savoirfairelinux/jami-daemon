@@ -762,6 +762,15 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
     return ms;
 }
 
+int
+MediaEncoder::getCurrentAudioAVCtxFrameSize()
+{
+    if (auto* ctx = getCurrentAudioAVCtx()) {
+        return ctx->frame_size;
+    }
+    return 0;
+}
+
 AVCodecContext*
 MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
 {

@@ -20,11 +20,14 @@
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"
+#include "media_buffer.h"
 #include "media_io_handle.h"
 #include "media_recorder.h"
 #include "media_filter.h"
 #include "system_codec_container.h"
 #include "video/filter_transpose.h"
+#include "audio/audio_format.h"
+
 #ifdef ENABLE_VIDEO
 #ifdef ENABLE_HWACCEL
 #include "video/accel.h"
@@ -37,6 +40,7 @@
 #include <iomanip>
 #include <sstream>
 #include <sys/types.h>
+#include <memory>
 #include <ctime>
 
 namespace jami {
@@ -382,21 +386,22 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     if (ms.isVideo && videoFilter_ && outputVideoFilter_) {
         std::lock_guard lk(mutexFilterVideo_);
         videoFilter_->feedInput(clone->pointer(), name);
-        auto videoFilterOutput = videoFilter_->readOutput();
-        if (videoFilterOutput) {
-            outputVideoFilter_->feedInput(videoFilterOutput->pointer(), "input");
+        auto filteredVideoOutput = videoFilter_->readOutput();
+        if (filteredVideoOutput) {
+            outputVideoFilter_->feedInput(filteredVideoOutput->pointer(), "input");
             while (auto fFrame = outputVideoFilter_->readOutput()) {
                 filteredFrames.emplace_back(std::move(fFrame));
             }
         }
-    } else if (audioFilter_ && outputAudioFilter_) {
+    } else if (audioFilter_ && outputAudioResampler_) {
 #endif // ENABLE_VIDEO
         std::lock_guard lkA(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
-        auto audioFilterOutput = audioFilter_->readOutput();
-        if (audioFilterOutput) {
-            outputAudioFilter_->feedInput(audioFilterOutput->pointer(), "input");
-            filteredFrames.emplace_back(outputAudioFilter_->readOutput());
+        if (auto filteredAudioOutput = audioFilter_->readOutput()) {
+            filteredFrames.emplace_back(
+                outputAudioResampler_->resample(std::unique_ptr<AudioFrame>(
+                                                    static_cast<AudioFrame*>(filteredAudioOutput.release())),
+                                                AudioFormat(48000, 2)));
         }
 #ifdef ENABLE_VIDEO
     }
@@ -644,18 +649,10 @@ MediaRecorder::setupAudioOutput()
         return;
     MediaStream secondaryFilter = audioFilter_->getOutputParams();
     secondaryFilter.name = "input";
-    if (outputAudioFilter_) {
-        outputAudioFilter_->flush();
-        outputAudioFilter_.reset();
-    }
 
-    outputAudioFilter_.reset(new MediaFilter);
-    ret = outputAudioFilter_->initialize("[input]aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo",
-                                         {secondaryFilter});
-
-    if (ret < 0) {
-        JAMI_ERR() << "Failed to initialize output audio filter";
-    }
+    outputAudioResampler_ = std::make_unique<Resampler>(encoder_->getCurrentAudioAVCtxFrameSize());
+    if (!outputAudioResampler_)
+        JAMI_ERROR("Failed to initialize audio resampler");
 
     return;
 }
@@ -663,12 +660,12 @@ MediaRecorder::setupAudioOutput()
 std::string
 MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers) const
 {
-    std::string baseFilter = "aresample=osr=48000:ochl=stereo:osf=s16";
+    // resampling is handled by outputAudioResampler_
     std::ostringstream a;
 
     for (const auto& ms : peers)
         a << "[" << ms.name << "] ";
-    a << " amix=inputs=" << peers.size() << ", " << baseFilter;
+    a << " amix=inputs=" << peers.size();
     return a.str();
 }
 
@@ -686,8 +683,6 @@ MediaRecorder::flush()
         std::lock_guard lk(mutexFilterAudio_);
         if (audioFilter_)
             audioFilter_->flush();
-        if (outputAudioFilter_)
-            outputAudioFilter_->flush();
     }
     if (encoder_)
         encoder_->flush();
@@ -711,7 +706,7 @@ MediaRecorder::reset()
         {
             std::lock_guard lk2(mutexFilterAudio_);
             audioFilter_.reset();
-            outputAudioFilter_.reset();
+            outputAudioResampler_.reset();
         }
     }
     encoder_.reset();
