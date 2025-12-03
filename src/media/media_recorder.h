@@ -25,6 +25,7 @@
 #include "media_stream.h"
 #include "noncopyable.h"
 #include "observer.h"
+#include "audio/resampler.h"
 
 #include <map>
 #include <memory>
@@ -152,7 +153,7 @@ private:
     std::unique_ptr<MediaEncoder> encoder_;
     std::mutex encoderMtx_;
     std::unique_ptr<MediaFilter> outputVideoFilter_;
-    std::unique_ptr<MediaFilter> outputAudioFilter_;
+    std::unique_ptr<Resampler> outputAudioResampler_;
 
     std::unique_ptr<MediaFilter> videoFilter_;
     std::unique_ptr<MediaFilter> audioFilter_;

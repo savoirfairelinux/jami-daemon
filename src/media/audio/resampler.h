@@ -36,6 +36,7 @@ class Resampler
 {
 public:
     Resampler();
+    Resampler(const unsigned targetFrameSize);
     ~Resampler();
 
     /**
@@ -83,6 +84,8 @@ private:
      * >1: Invalid frames or formats, reinit is going to be called in an infinite loop
      */
     unsigned initCount_;
+
+    unsigned targetFrameSize_;
 };
 
 } // namespace jami
