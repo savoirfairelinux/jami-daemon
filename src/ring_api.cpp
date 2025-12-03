@@ -91,14 +91,18 @@ init(enum InitFlag flags) noexcept
     // As a workaround, we take advantage of the fact that the location of the configuration
     // file can be changed at runtime via the GNUTLS_SYSTEM_PRIORITY_FILE environment
     // variable.
-    setenv("GNUTLS_SYSTEM_PRIORITY_FILE", "/dev/null", 1);
-    // GnuTLS has already been initialized (in a library constructor) by the time we set
-    // GNUTLS_SYSTEM_PRIORITY_FILE, so we need to reinitialize it in order for the new
-    // value to be taken into account.
-    gnutls_global_deinit();
-    if (gnutls_global_init() < 0) {
-        JAMI_ERROR("Failed to intialize gnutls");
-        return false;
+    static bool gnutlsInitialized = false;
+    if (!gnutlsInitialized) {
+        setenv("GNUTLS_SYSTEM_PRIORITY_FILE", "/dev/null", 1);
+        // GnuTLS has already been initialized (in a library constructor) by the time we set
+        // GNUTLS_SYSTEM_PRIORITY_FILE, so we need to reinitialize it in order for the new
+        // value to be taken into account.
+        gnutls_global_deinit();
+        if (gnutls_global_init() < 0) {
+            JAMI_ERROR("Failed to intialize gnutls");
+            return false;
+        }
+        gnutlsInitialized = true;
     }
 #endif
 
