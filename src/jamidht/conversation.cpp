@@ -356,8 +356,8 @@ public:
                                device,
                                uri);
                     activeCalls_.emplace_back(std::map<std::string, std::string> {
-                        {"id",     confId},
-                        {"uri",    uri   },
+                        {"id", confId},
+                        {"uri", uri},
                         {"device", device},
                     });
                     saveActiveCalls();
@@ -878,6 +878,14 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
     for (const auto& msg : msgList) {
         ret.emplace_back(*msg);
     }
+
+    // Set the linearized parent of the ith commit to be that of the i+1'th commit
+    for (size_t i = 0; i + 1 < ret.size(); ++i) {
+        ret[i].linearizedParent = ret[i + 1].id;
+        // Log the linearized parent for debugging purposes
+        JAMI_LOG("Setting linearized parent of commit {:s} to {:s}", ret[i].id, ret[i].linearizedParent);
+    }
+
     return ret;
 }
 
@@ -979,6 +987,11 @@ Conversation::Impl::handleMessage(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                                   bool messageReceived) const
 {
+    if (!messageReceived) {
+        if (!history.messageList.empty()) {
+            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
+        }
+    }
     history.messageList.emplace_back(sharedCommit);
     // Handle pending reactions/editions
     auto reactIt = history.pendingReactions.find(sharedCommit->id);
@@ -1004,8 +1017,15 @@ Conversation::Impl::handleMessage(History& history,
         history.pendingEditions.erase(peditIt);
     }
     // Announce to client
-    if (messageReceived)
-        emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
+    if (messageReceived) {
+        if (sharedCommit->reannounce == "1") {
+            JAMI_DEBUG("Updating message: {}", sharedCommit->body.at("id"));
+            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *sharedCommit);
+        } else {
+            JAMI_DEBUG("New message: {}", sharedCommit->body.at("id"));
+            emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
+        }
+    }
     return !messageReceived;
 }
 
@@ -1068,9 +1088,11 @@ Conversation::Impl::addToHistory(History& history,
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
         auto quickAccessIt = history.quickAccess.find(commitId);
-        if (quickAccessIt != history.quickAccess.end()
-            && quickAccessIt->second->linearizedParent == commit.at("linearizedParent")) {
-            continue; // Already present with unchanged parent
+        if (quickAccessIt != history.quickAccess.end()) {
+            auto reannounceIt = commit.find("reannounce");
+            if (reannounceIt == commit.end() || reannounceIt->second == "0") {
+                continue; // Already present and not forced to reannounce
+            }
         }
         auto typeIt = commit.find("type");
         // Nothing to show for the client, skip
