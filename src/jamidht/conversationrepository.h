@@ -98,6 +98,7 @@ struct ConversationCommit
     std::string commit_msg {};
     std::string linearized_parent {};
     int64_t timestamp {0};
+    bool reannounce {false};
 
     bool operator<(const ConversationCommit& otherConversationCommit) const { return id < otherConversationCommit.id; }
 };
