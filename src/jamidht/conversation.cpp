@@ -356,8 +356,8 @@ public:
                                device,
                                uri);
                     activeCalls_.emplace_back(std::map<std::string, std::string> {
-                        {"id",     confId},
-                        {"uri",    uri   },
+                        {"id", confId},
+                        {"uri", uri},
                         {"device", device},
                     });
                     saveActiveCalls();
@@ -878,6 +878,14 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
     for (const auto& msg : msgList) {
         ret.emplace_back(*msg);
     }
+
+    // Set the linearized parent of the ith commit to be that of the i+1'th commit
+    for (size_t i = 0; i + 1 < ret.size(); ++i) {
+        ret[i].linearizedParent = ret[i + 1].id;
+        // Log the linearized parent for debugging purposes
+        JAMI_LOG("Setting linearized parent of commit {:s} to {:s}", ret[i].id, ret[i].linearizedParent);
+    }
+
     return ret;
 }
 
@@ -979,7 +987,36 @@ Conversation::Impl::handleMessage(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                                   bool messageReceived) const
 {
-    history.messageList.emplace_back(sharedCommit);
+    if (!messageReceived) {
+        if (!history.messageList.empty()) {
+            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
+        }
+    } else {
+        // For commits from sendMessage, its linearizedParent may have been determined to be a merge commit. We should
+        // check whether or not the linearized parent exists in the existing history. If not found, we can only assume
+        // it's a merge commit, and we set the linearized parent of this single commit to be the last sent message.
+        if (std::find_if(history.messageList.begin(),
+                         history.messageList.end(),
+                         [&](const std::shared_ptr<libjami::SwarmMessage>& msg) {
+                             return sharedCommit->linearizedParent == msg->id;
+                         })
+            == history.messageList.end()) {
+            if (!history.messageList.empty()) {
+                sharedCommit->linearizedParent = (*history.messageList.rbegin())->id;
+            }
+        }
+    }
+
+    if (sharedCommit->reannounce == "1") {
+        // Replace the existing commit in the history.messageList with the new sharedCommit
+        std::replace_if(
+            history.messageList.begin(),
+            history.messageList.end(),
+            [&](const std::shared_ptr<libjami::SwarmMessage>& msg) { return sharedCommit->id == msg->id; },
+            sharedCommit);
+    } else {
+        history.messageList.emplace_back(sharedCommit);
+    }
     // Handle pending reactions/editions
     auto reactIt = history.pendingReactions.find(sharedCommit->id);
     if (reactIt != history.pendingReactions.end()) {
@@ -1004,8 +1041,15 @@ Conversation::Impl::handleMessage(History& history,
         history.pendingEditions.erase(peditIt);
     }
     // Announce to client
-    if (messageReceived)
-        emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
+    if (messageReceived) {
+        if (sharedCommit->reannounce == "1") {
+            JAMI_DEBUG("Updating message: {}", sharedCommit->body.at("id"));
+            emitSignal<libjami::ConversationSignal::SwarmMessageUpdated>(accountId_, repository_->id(), *sharedCommit);
+        } else {
+            JAMI_DEBUG("New message: {}", sharedCommit->body.at("id"));
+            emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, repository_->id(), *sharedCommit);
+        }
+    }
     return !messageReceived;
 }
 
@@ -1068,9 +1112,11 @@ Conversation::Impl::addToHistory(History& history,
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
         auto quickAccessIt = history.quickAccess.find(commitId);
-        if (quickAccessIt != history.quickAccess.end()
-            && quickAccessIt->second->linearizedParent == commit.at("linearizedParent")) {
-            continue; // Already present with unchanged parent
+        if (quickAccessIt != history.quickAccess.end()) {
+            auto reannounceIt = commit.find("reannounce");
+            if (reannounceIt == commit.end() || reannounceIt->second == "0") {
+                continue; // Already present and not forced to reannounce
+            }
         }
         auto typeIt = commit.find("type");
         // Nothing to show for the client, skip
