@@ -2248,12 +2248,14 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
+            JAMI_LOG("Start loadMessages2");
             conv->conversation->loadMessages2(
                 [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
                 },
                 options);
-            return id;
+            JAMI_LOG("Finish loadMessages2");
+           return id;
         }
     }
     return 0;
