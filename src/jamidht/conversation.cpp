@@ -880,6 +880,12 @@ Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory
     for (const auto& msg : msgList) {
         ret.emplace_back(*msg);
     }
+
+    // Set the linearized parent of the ith commit to be that of the i+1'th commit
+    for (size_t i = 0; i + 1 < ret.size(); ++i) {
+        ret[i].linearizedParent = ret[i + 1].id;
+    }
+
     return ret;
 }
 
@@ -981,6 +987,11 @@ Conversation::Impl::handleMessage(History& history,
                                   const std::shared_ptr<libjami::SwarmMessage>& sharedCommit,
                                   bool messageReceived) const
 {
+    if (!messageReceived) {
+        if (!history.messageList.empty()) {
+            (*history.messageList.rbegin())->linearizedParent = sharedCommit->id;
+        }
+    }
     history.messageList.emplace_back(sharedCommit);
     // Handle pending reactions/editions
     auto reactIt = history.pendingReactions.find(sharedCommit->id);
@@ -1070,9 +1081,11 @@ Conversation::Impl::addToHistory(History& history,
     for (const auto& commit : commits) {
         auto commitId = commit.at("id");
         auto quickAccessIt = history.quickAccess.find(commitId);
-        if (quickAccessIt != history.quickAccess.end()
-            && quickAccessIt->second->linearizedParent == commit.at("linearizedParent")) {
-            continue; // Already present with unchanged parent
+        if (quickAccessIt != history.quickAccess.end()) {
+            auto reannounceIt = commit.find("reannounce");
+            if (reannounceIt == commit.end() || reannounceIt->second == "0") {
+                continue; // Already present and not forced to reannounce
+            }
         }
         auto typeIt = commit.find("type");
         // Nothing to show for the client, skip

@@ -2308,16 +2308,19 @@ ConversationRepository::Impl::behind(const std::string& from) const
                 commitsToAnnounce.emplace_back(commit);
                 continue;
             }
-
             previousCommit.linearized_parent = commit.id;
-            if (std::find_if(messagesFromFetch.begin(),
-                             messagesFromFetch.end(),
-                             [&](const jami::ConversationCommit& c) { return c.id == commit.id; })
-                    != messagesFromFetch.end()
-                || std::find_if(messagesFromFetch.begin(),
-                                messagesFromFetch.end(),
-                                [&](const jami::ConversationCommit& c) { return c.id == previousCommit.id; })
-                       != messagesFromFetch.end()) {
+            auto checkCurrent = std::find_if(messagesFromFetch.begin(),
+                                             messagesFromFetch.end(),
+                                             [&](const jami::ConversationCommit& c) { return c.id == commit.id; });
+            auto checkPrevious = std::find_if(messagesFromFetch.begin(),
+                                              messagesFromFetch.end(),
+                                              [&](const jami::ConversationCommit& c) {
+                                                  return c.id == previousCommit.id;
+                                              });
+            if (checkCurrent != messagesFromFetch.end() || checkPrevious != messagesFromFetch.end()) {
+                if (checkCurrent == messagesFromFetch.end() && checkPrevious != messagesFromFetch.end()) {
+                    previousCommit.reannounce = true;
+                }
                 commitsToAnnounce.emplace_back(previousCommit);
             }
         }
@@ -2824,6 +2827,7 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     message["author"] = authorId;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
+    message["reannounce"] = commit.reannounce ? "1" : "0";
 
     return message;
 }
