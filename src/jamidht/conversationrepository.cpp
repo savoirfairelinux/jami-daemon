@@ -2303,21 +2303,25 @@ ConversationRepository::Impl::behind(const std::string& from) const
             // Check if its a merge commit
             if (commit.parents.size() > 1) {
                 // We will still add merge commits to the return of this function, as they are required for commit
-                // validation. However, it should be noted that we do not recalcualte their linearized parent as merge
-                // commits are skipped during the announcment phase.
+                // validation. However, it should be noted that we do not recalculate their linearized parent as merge
+                // commits are skipped during the announcement phase.
                 commitsToAnnounce.emplace_back(commit);
                 continue;
             }
 
             previousCommit.linearized_parent = commit.id;
-            if (std::find_if(messagesFromFetch.begin(),
-                             messagesFromFetch.end(),
-                             [&](const jami::ConversationCommit& c) { return c.id == commit.id; })
-                    != messagesFromFetch.end()
-                || std::find_if(messagesFromFetch.begin(),
-                                messagesFromFetch.end(),
-                                [&](const jami::ConversationCommit& c) { return c.id == previousCommit.id; })
-                       != messagesFromFetch.end()) {
+            auto checkCurrent = std::find_if(messagesFromFetch.begin(),
+                                             messagesFromFetch.end(),
+                                             [&](const jami::ConversationCommit& c) { return c.id == commit.id; });
+            auto checkPrevious = std::find_if(messagesFromFetch.begin(),
+                                              messagesFromFetch.end(),
+                                              [&](const jami::ConversationCommit& c) {
+                                                  return c.id == previousCommit.id;
+                                              });
+            if (checkCurrent != messagesFromFetch.end() || checkPrevious != messagesFromFetch.end()) {
+                if (checkPrevious == messagesFromFetch.end()) {
+                    previousCommit.reannounce = true;
+                }
                 commitsToAnnounce.emplace_back(previousCommit);
             }
         }
@@ -2351,7 +2355,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     git_oid oid, oidFrom, oidMerge;
 
     // NOTE! Start from head to get all merge possibilities and correct linearized parent.
-    auto repo = repository();
+   auto repo = repository();
     if (!repo or git_reference_name_to_id(&oid, repo.get(), "HEAD") < 0) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", accountId_, id_);
         return;
@@ -2392,6 +2396,7 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
     for (auto idx = 0u; !git_revwalk_next(&oid, walker.get()); ++idx) {
         git_commit* commit_ptr = nullptr;
         std::string id = git_oid_tostr_s(&oid);
+        JAMI_LOG("REPO: {}, COMMIT: {}", id_, id);
         if (git_commit_lookup(&commit_ptr, repo.get(), &oid) < 0) {
             JAMI_WARNING("[Account {}] [Conversation {}] Failed to look up commit {}", accountId_, id_, id);
             break;
@@ -2425,6 +2430,8 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         cc.commit_msg = git_commit_message(commit.get());
         cc.author = std::move(author);
         cc.parents = std::move(parents);
+        // cc.linearized_parent = cc.parents.empty() ? "" : cc.parents[0];
+
         git_buf signature = {}, signed_data = {};
         if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature") < 0) {
             JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}",
@@ -2824,6 +2831,7 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     message["author"] = authorId;
     message["type"] = type;
     message["timestamp"] = std::to_string(commit.timestamp);
+    message["reannounce"] = commit.reannounce ? "1" : "0";
 
     return message;
 }
