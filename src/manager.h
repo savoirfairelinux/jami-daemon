@@ -727,10 +727,10 @@ public:
     RingBufferPool& getRingBufferPool();
 
     /**
-     * Tell if there is a current call processed
-     * @return bool True if there is a current call
+     * Tell if there is a call in the active/talking state
+     * @return bool True if there is an active call
      */
-    bool hasCurrentCall() const;
+    bool hasActiveCall() const;
 
     /**
      * Get an account pointer, looks for account of type T
