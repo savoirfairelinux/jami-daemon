@@ -2204,28 +2204,6 @@ ConversationModule::convMessageStatus() const
     return messageStatus;
 }
 
-uint32_t
-ConversationModule::loadConversationMessages(const std::string& conversationId, const std::string& fromMessage, size_t n)
-{
-    auto acc = pimpl_->account_.lock();
-    if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard lk(conv->mtx);
-        if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
-            LogOptions options;
-            options.from = fromMessage;
-            options.nbOfCommits = n;
-            conv->conversation->loadMessages(
-                [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
-                    emitSignal<libjami::ConversationSignal::ConversationLoaded>(id, accountId, conversationId, messages);
-                },
-                options);
-            return id;
-        }
-    }
-    return 0;
-}
-
 void
 ConversationModule::clearCache(const std::string& conversationId)
 {
@@ -2251,31 +2229,6 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
             conv->conversation->loadMessages2(
                 [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
-                },
-                options);
-            return id;
-        }
-    }
-    return 0;
-}
-
-uint32_t
-ConversationModule::loadConversationUntil(const std::string& conversationId,
-                                          const std::string& fromMessage,
-                                          const std::string& toMessage)
-{
-    auto acc = pimpl_->account_.lock();
-    if (auto conv = pimpl_->getConversation(conversationId)) {
-        std::lock_guard lk(conv->mtx);
-        if (conv->conversation) {
-            const uint32_t id = std::uniform_int_distribution<uint32_t> {1}(acc->rand);
-            LogOptions options;
-            options.from = fromMessage;
-            options.to = toMessage;
-            options.includeTo = true;
-            conv->conversation->loadMessages(
-                [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
-                    emitSignal<libjami::ConversationSignal::ConversationLoaded>(id, accountId, conversationId, messages);
                 },
                 options);
             return id;

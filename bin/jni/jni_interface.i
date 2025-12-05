@@ -241,8 +241,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<CallSignal::RecordPlaybackStopped>(bind(&Callback::recordPlaybackStopped, callM, _1)),
         exportable_callback<CallSignal::VoiceMailNotify>(bind(&Callback::voiceMailNotify, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&Callback::incomingMessage, callM, _1, _2, _3, _4)),
-        exportable_callback<CallSignal::IncomingCall>(bind(&Callback::incomingCall, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::IncomingCallWithMedia>(bind(&Callback::incomingCallWithMedia, callM, _1, _2, _3, _4)),
+        exportable_callback<CallSignal::IncomingCall>(bind(&Callback::incomingCall, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::MediaChangeRequested>(bind(&Callback::mediaChangeRequested, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&Callback::recordPlaybackFilepath, callM, _1, _2)),
         exportable_callback<CallSignal::ConferenceCreated>(bind(&Callback::conferenceCreated, callM, _1, _2, _3)),
@@ -322,10 +321,8 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     };
 
     const std::map<std::string, SharedCallback> conversationHandlers = {
-        exportable_callback<ConversationSignal::ConversationLoaded>(bind(&ConversationCallback::conversationLoaded, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::SwarmLoaded>(bind(&ConversationCallback::swarmLoaded, convM, _1, _2, _3, _4)),
         exportable_callback<ConversationSignal::MessagesFound>(bind(&ConversationCallback::messagesFound, convM, _1, _2, _3, _4)),
-        exportable_callback<ConversationSignal::MessageReceived>(bind(&ConversationCallback::messageReceived, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::SwarmMessageReceived>(bind(&ConversationCallback::swarmMessageReceived, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::SwarmMessageUpdated>(bind(&ConversationCallback::swarmMessageUpdated, convM, _1, _2, _3)),
         exportable_callback<ConversationSignal::ReactionAdded>(bind(&ConversationCallback::reactionAdded, convM, _1, _2, _3, _4)),

@@ -31,7 +31,6 @@ getSignalHandlers()
         exported_callback<libjami::CallSignal::VoiceMailNotify>(),
         exported_callback<libjami::CallSignal::IncomingMessage>(),
         exported_callback<libjami::CallSignal::IncomingCall>(),
-        exported_callback<libjami::CallSignal::IncomingCallWithMedia>(),
         exported_callback<libjami::CallSignal::MediaChangeRequested>(),
         exported_callback<libjami::CallSignal::RecordPlaybackFilepath>(),
         exported_callback<libjami::CallSignal::ConferenceCreated>(),
@@ -126,10 +125,8 @@ getSignalHandlers()
 #endif
 
         /* Conversation */
-        exported_callback<libjami::ConversationSignal::ConversationLoaded>(),
         exported_callback<libjami::ConversationSignal::SwarmLoaded>(),
         exported_callback<libjami::ConversationSignal::MessagesFound>(),
-        exported_callback<libjami::ConversationSignal::MessageReceived>(),
         exported_callback<libjami::ConversationSignal::SwarmMessageReceived>(),
         exported_callback<libjami::ConversationSignal::SwarmMessageUpdated>(),
         exported_callback<libjami::ConversationSignal::ReactionAdded>(),

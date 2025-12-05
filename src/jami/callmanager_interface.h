@@ -220,11 +220,6 @@ struct LIBJAMI_PUBLIC CallSignal
     struct LIBJAMI_PUBLIC IncomingCall
     {
         constexpr static const char* name = "IncomingCall";
-        using cb_type = void(const std::string&, const std::string&, const std::string&);
-    };
-    struct LIBJAMI_PUBLIC IncomingCallWithMedia
-    {
-        constexpr static const char* name = "IncomingCallWithMedia";
         using cb_type = void(const std::string&,
                              const std::string&,
                              const std::string&,

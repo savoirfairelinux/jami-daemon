@@ -341,11 +341,11 @@ public:
                                confId,
                                device,
                                uri);
-                    std::map<std::string, std::string> activeCall;
-                    activeCall["id"] = confId;
-                    activeCall["uri"] = uri;
-                    activeCall["device"] = device;
-                    activeCalls_.emplace_back(activeCall);
+                    activeCalls_.emplace_back(std::map<std::string, std::string> {
+                        {"id",     confId},
+                        {"uri",    uri   },
+                        {"device", device},
+                    });
                     saveActiveCalls();
                     if (emitSig)
                         emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
@@ -441,8 +441,6 @@ public:
                     pluginChatManager.publishMessage(std::move(cm));
                 }
 #endif
-                // announce message
-                emitSignal<libjami::ConversationSignal::MessageReceived>(accountId_, convId, c);
             }
 
             if (announceMember && onMembersChanged_) {
