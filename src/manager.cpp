@@ -1017,7 +1017,7 @@ Manager::isCurrentCall(const Call& call) const
 }
 
 bool
-Manager::hasCurrentCall() const
+Manager::hasActiveCall() const
 {
     for (const auto& call : callFactory.getAllCalls()) {
         if (!call->isSubcall() && call->getStateStr() == libjami::Call::StateEvent::CURRENT)
@@ -1965,7 +1965,7 @@ void
 Manager::peerRingingCall(Call& call)
 {
     JAMI_LOG("[call:{}] Peer ringing", call.getCallId());
-    if (!hasCurrentCall())
+    if (!hasActiveCall())
         ringback();
 }
 
@@ -2503,6 +2503,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     auto incomCallId = incomCall.getCallId();
     auto currentCall = base_.getCurrentCall();
+    // if the user just started an outgoing call, it will be considered the current call
 
     auto account = incomCall.getAccount().lock();
     if (!account) {
@@ -2529,17 +2530,27 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
 
-    if (not base_.hasCurrentCall()) {
+    JAMI_DEBUG("11111 List of calls on account {}:", accountId);
+    for (const auto& callId : base_.getCallList()) {
+        auto call = base_.getCallFromCallID(callId);
+        const auto* callType = (call->getCallType() == Call::CallType::OUTGOING)
+                                   ? "OUTGOING"
+                                   : ((call->getCallType() == Call::CallType::INCOMING) ? "INCOMING" : "MISSED");
+        JAMI_DEBUG("\t - {} ({})", callId, callType);
+    }
+
+    // if the user is not in an active call, start ringing
+    if (not base_.hasActiveCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
+        JAMI_DEBUG("22222 No current call, playing ringtone");
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         if (not account->isRendezVous())
             base_.playRingtone(accountId);
 #endif
-    } else {
-        if (account->isDenySecondCallEnabled()) {
-            base_.refuseCall(account->getAccountID(), incomCallId);
-            return;
-        }
+    } else if (account->isDenySecondCallEnabled()) { // if user is in a call and deny second call is enabled
+        base_.refuseCall(account->getAccountID(), incomCallId);
+        JAMI_DEBUG("33333 Denying second call on account {}", account->getAccountID());
+        return;
     }
 
     addWaitingCall(incomCallId);
@@ -2587,17 +2598,22 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         auto currentPeerNumber = currentCall->getPeerNumber();
         string_replace(peerNumber, "@ring.dht", "");
         string_replace(currentPeerNumber, "@ring.dht", "");
+        JAMI_DEBUG("44444 Comparing incoming call from {} with current call to {}", peerNumber, currentPeerNumber);
         if (currentCall->getAccountId() == account->getAccountID() && currentPeerNumber == peerNumber) {
             auto answerToCall = false;
             auto downgradeToAudioOnly = currentCall->isAudioOnly() != incomCall.isAudioOnly();
-            if (downgradeToAudioOnly)
+            if (downgradeToAudioOnly) {
                 // Accept the incoming audio only
                 answerToCall = incomCall.isAudioOnly();
-            else
+                JAMI_DEBUG("55555 Auto-answering incoming call (downgrade to audio only): {}",
+                           answerToCall ? "yes" : "no");
+            } else {
                 // Accept the incoming call from the higher id number
                 answerToCall = (account->getUsername().compare(peerNumber) < 0);
-
+                JAMI_DEBUG("55555 Auto-answering incoming call: {}", answerToCall ? "yes" : "no");
+            }
             if (answerToCall) {
+                JAMI_DEBUG("66666 Accepting incoming call and hanging up current call");
                 runOnMainThread([accountId = currentCall->getAccountId(),
                                  currentCallID = currentCall->getCallId(),
                                  incomCall = incomCall.shared_from_this()] {
@@ -2605,8 +2621,14 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                     mgr.acceptCall(*incomCall);
                     mgr.hangupCall(accountId, currentCallID);
                 });
+            } else {
+                JAMI_DEBUG("66666 Not accepting incoming call");
             }
+        } else {
+            JAMI_DEBUG("55555 Different call in progress, not playing ringtone");
         }
+    } else {
+        JAMI_DEBUG("44444 No current call, playing ringtone");
     }
 }
 
