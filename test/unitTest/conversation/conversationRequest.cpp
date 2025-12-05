@@ -815,10 +815,10 @@ ConversationRequestTest::testBanContactRestartAccount()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId, const std::string& conversationId, std::map<std::string, std::string> message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+        [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
             std::lock_guard lk {mtx};
-            if (accountId == aliceId && conversationId == convId && message["type"] == "member") {
+            if (accountId == aliceId && conversationId == convId && message.type == "member") {
                 memberMessageGenerated = true;
             }
             cv.notify_one();
@@ -1338,7 +1338,10 @@ ConversationRequestTest::doNotLooseMetadata()
     }
 
     auto aliceMsgSize = aliceData.messages.size();
-    aliceAccount->convModule()->updateConversationInfos(aliceData.conversationId, {{"title", "My awesome swarm"}});
+    aliceAccount->convModule()->updateConversationInfos(aliceData.conversationId,
+                                                        {
+                                                            {"title", "My awesome swarm"}
+    });
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));

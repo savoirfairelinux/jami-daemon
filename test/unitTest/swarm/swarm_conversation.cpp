@@ -50,7 +50,7 @@ struct ConvData
     bool conferenceChanged {false};
     bool conferenceRemoved {false};
     std::string hostState {};
-    std::vector<std::map<std::string, std::string>> messages {};
+    std::vector<libjami::SwarmMessage> messages {};
 };
 
 class SwarmConversationTest : public CppUnit::TestFixture
@@ -120,8 +120,8 @@ SwarmConversationTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId, const std::string& conversationId, std::map<std::string, std::string> message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+        [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
             for (const auto& accId : accountIds) {
                 if (accountId == accId && accountMap[accId].id == conversationId) {
                     accountMap[accId].messages.emplace_back(message);
@@ -190,7 +190,7 @@ SwarmConversationTest::testSendMessage()
 
         if (accountMap[accountIds.at(i)].messages.size() >= 105) {
             for (const auto& msg : accountMap[accountIds.at(i)].messages) {
-                std::cout << "Message id: " << msg.at("id") << " type: " << msg.at("type") << std::endl;
+                std::cout << "Message id: " << msg.id << " type: " << msg.type << std::endl;
             }
         }
 

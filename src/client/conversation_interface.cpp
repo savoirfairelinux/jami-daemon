@@ -189,18 +189,6 @@ sendMessage(const std::string& accountId,
 }
 
 uint32_t
-loadConversationMessages(const std::string& accountId,
-                         const std::string& conversationId,
-                         const std::string& fromMessage,
-                         size_t n)
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule(true))
-            return convModule->loadConversationMessages(conversationId, fromMessage, n);
-    return 0;
-}
-
-uint32_t
 loadConversation(const std::string& accountId,
                  const std::string& conversationId,
                  const std::string& fromMessage,
@@ -209,18 +197,6 @@ loadConversation(const std::string& accountId,
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         if (auto convModule = acc->convModule(true))
             return convModule->loadConversation(conversationId, fromMessage, n);
-    return 0;
-}
-
-uint32_t
-loadConversationUntil(const std::string& accountId,
-                      const std::string& conversationId,
-                      const std::string& fromMessage,
-                      const std::string& toMessage)
-{
-    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule(true))
-            return convModule->loadConversationUntil(conversationId, fromMessage, toMessage);
     return 0;
 }
 

@@ -147,7 +147,7 @@ RecorderTest::registerSignalHandlers()
 
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [=](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -201,18 +201,20 @@ RecorderTest::testRecordCall()
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::AUDIO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""}};
-    std::map<std::string, std::string> mediaAttributeV = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::VIDEO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
+    std::map<std::string, std::string> mediaAttributeA = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        }
+    };
+    std::map<std::string, std::string> mediaAttributeV = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "video_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     videoPath                                 }
+    };
     mediaList.emplace_back(mediaAttributeA);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -302,12 +304,13 @@ RecorderTest::testRecordAudioOnlyCall()
     JAMI_INFO("Start call between Alice and Bob");
     // Audio only call
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttribute = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                          libjami::Media::MediaAttributeValue::AUDIO},
-                                                         {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                         {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
-                                                         {libjami::Media::MediaAttributeKey::SOURCE, ""}};
+    std::map<std::string, std::string> mediaAttribute = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        }
+    };
     mediaList.emplace_back(mediaAttribute);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -355,12 +358,13 @@ RecorderTest::testRecordCallOnePersonRdv()
     JAMI_INFO("Start call between Alice and Bob");
     // Audio only call
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::AUDIO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""}};
+    std::map<std::string, std::string> mediaAttributeA = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        }
+    };
     mediaList.emplace_back(mediaAttributeA);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return !bobCall.callId.empty(); }));
@@ -397,18 +401,20 @@ RecorderTest::testStopCallWhileRecording()
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::AUDIO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""}};
-    std::map<std::string, std::string> mediaAttributeV = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::VIDEO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
+    std::map<std::string, std::string> mediaAttributeA = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        }
+    };
+    std::map<std::string, std::string> mediaAttributeV = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "video_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     videoPath                                 }
+    };
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
@@ -449,18 +455,20 @@ RecorderTest::testDaemonPreference()
 
     JAMI_INFO("Start call between Alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttributeA = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::AUDIO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "audio_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, ""}};
-    std::map<std::string, std::string> mediaAttributeV = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                           libjami::Media::MediaAttributeValue::VIDEO},
-                                                          {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                          {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                          {libjami::Media::MediaAttributeKey::LABEL, "video_0"},
-                                                          {libjami::Media::MediaAttributeKey::SOURCE, videoPath}};
+    std::map<std::string, std::string> mediaAttributeA = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        }
+    };
+    std::map<std::string, std::string> mediaAttributeV = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::LABEL,      "video_0"                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     videoPath                                 }
+    };
     mediaList.emplace_back(mediaAttributeA);
     mediaList.emplace_back(mediaAttributeV);
     auto callId = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);

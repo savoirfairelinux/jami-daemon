@@ -127,7 +127,7 @@ class libjamiCtrl(Thread):
             proxy_confmgr.connect_to_signal('conversationReady', self.onConversationReady)
             proxy_confmgr.connect_to_signal('conversationRequestReceived', self.onConversationRequestReceived)
             proxy_confmgr.connect_to_signal('conversationPreferencesUpdated', self.onConversationPreferencesUpdated)
-            proxy_confmgr.connect_to_signal('messageReceived', self.onMessageReceived)
+            proxy_confmgr.connect_to_signal('swarmMessageReceived', self.onMessageReceived)
 
         except dbus.DBusException as e:
             raise libjamiCtrlDBusError("Unable to connect to jami DBus signals")

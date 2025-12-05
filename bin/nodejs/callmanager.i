@@ -29,8 +29,7 @@ public:
     virtual void recordPlaybackStopped(const std::string& path){}
     virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
     virtual void incomingMessage(const std::string& accountId, const std::string& callId, const std::string& from, const std::map<std::string, std::string>& messages){}
-    virtual void incomingCall(const std::string& accountId, const std::string& callId, const std::string& from){}
-    virtual void incomingCallWithMedia(const std::string& accountId, const std::string& callId, const std::string& from,
+    virtual void incomingCall(const std::string& accountId, const std::string& callId, const std::string& from,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
@@ -153,8 +152,7 @@ public:
     virtual void recordPlaybackStopped(const std::string& path){}
     virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
     virtual void incomingMessage(const std::string& accountId, const std::string& callId, const std::string& from, const std::map<std::string, std::string>& messages){}
-    virtual void incomingCall(const std::string& accountId, const std::string& callId, const std::string& from){}
-    virtual void incomingCallWithMedia(const std::string& accountId, const std::string& callId, const std::string& from,
+    virtual void incomingCall(const std::string& accountId, const std::string& callId, const std::string& from,
         const std::vector<std::map<std::string, std::string>>& mediaList){}
     virtual void mediaChangeRequested(const std::string& accountId, const std::string& callId,
         const std::vector<std::map<std::string, std::string>>& mediaList){}

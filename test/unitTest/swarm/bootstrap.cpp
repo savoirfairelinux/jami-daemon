@@ -159,7 +159,7 @@ BootstrapTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId,
             const std::string& /*conversationId*/,
             std::map<std::string, std::string> message) {

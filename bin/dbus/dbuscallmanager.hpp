@@ -379,9 +379,7 @@ private:
                exportable_serialized_callback<CallSignal::IncomingMessage>(
                    std::bind(&DBusCallManager::emitIncomingMessage, this, _1, _2, _3, _4)),
                exportable_serialized_callback<CallSignal::IncomingCall>(
-                   std::bind(&DBusCallManager::emitIncomingCall, this, _1, _2, _3)),
-               exportable_serialized_callback<CallSignal::IncomingCallWithMedia>(
-                   std::bind(&DBusCallManager::emitIncomingCallWithMedia, this, _1, _2, _3, _4)),
+                   std::bind(&DBusCallManager::emitIncomingCall, this, _1, _2, _3, _4)),
                exportable_serialized_callback<CallSignal::MediaChangeRequested>(
                    std::bind(&DBusCallManager::emitMediaChangeRequested, this, _1, _2, _3)),
                exportable_serialized_callback<CallSignal::RecordPlaybackFilepath>(

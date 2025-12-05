@@ -133,10 +133,10 @@ protected:
                                   const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
-    static void onIncomingCallWithMedia(const std::string& accountId,
-                                        const std::string& callId,
-                                        const std::vector<libjami::MediaMap> mediaList,
-                                        CallData& callData);
+    static void onIncomingCall(const std::string& accountId,
+                               const std::string& callId,
+                               const std::vector<libjami::MediaMap> mediaList,
+                               CallData& callData);
     // For backward compatibility test cases.
     // TODO. Do we still need this?
     static void onIncomingCall(const std::string& accountId, const std::string& callId, CallData& callData);
@@ -413,15 +413,15 @@ MediaNegotiationTest::validateMediaDirection(std::vector<MediaDescription> descr
 }
 
 void
-MediaNegotiationTest::onIncomingCallWithMedia(const std::string& accountId,
-                                              const std::string& callId,
-                                              const std::vector<libjami::MediaMap> mediaList,
-                                              CallData& callData)
+MediaNegotiationTest::onIncomingCall(const std::string& accountId,
+                                     const std::string& callId,
+                                     const std::vector<libjami::MediaMap> mediaList,
+                                     CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCall::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -439,7 +439,7 @@ MediaNegotiationTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCall::name));
 
     callData.cv_.notify_one();
 }
@@ -675,14 +675,14 @@ MediaNegotiationTest::configureScenario()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
             const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(accountId);
             if (not user.empty())
-                onIncomingCallWithMedia(accountId, callId, mediaList, callDataMap_[user]);
+                onIncomingCall(accountId, callId, mediaList, callDataMap_[user]);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaChangeRequested>(
@@ -740,7 +740,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData, CallData& bobData, c
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));
 
     // Answer the call.
     {

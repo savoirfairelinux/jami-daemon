@@ -115,10 +115,10 @@ private:
 
     // Event/Signal handlers
     static void onCallStateChange(const std::string& callId, const std::string& state, CallData& callData);
-    static void onIncomingCallWithMedia(const std::string& accountId,
-                                        const std::string& callId,
-                                        const std::vector<libjami::MediaMap> mediaList,
-                                        CallData& callData);
+    static void onIncomingCall(const std::string& accountId,
+                               const std::string& callId,
+                               const std::vector<libjami::MediaMap> mediaList,
+                               CallData& callData);
     // For backward compatibility test cases
     static void onIncomingCall(const std::string& accountId, const std::string& callId, CallData& callData);
     static void onMediaChangeRequested(const std::string& accountId,
@@ -182,15 +182,15 @@ HoldResumeTest::getUserAlias(const std::string& callId)
 }
 
 void
-HoldResumeTest::onIncomingCallWithMedia(const std::string& accountId,
-                                        const std::string& callId,
-                                        const std::vector<libjami::MediaMap> mediaList,
-                                        CallData& callData)
+HoldResumeTest::onIncomingCall(const std::string& accountId,
+                               const std::string& callId,
+                               const std::vector<libjami::MediaMap> mediaList,
+                               CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCall::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -203,7 +203,7 @@ HoldResumeTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCall::name));
 
     callData.cv_.notify_one();
 }
@@ -387,14 +387,14 @@ HoldResumeTest::configureScenario(CallData& aliceData, CallData& bobData)
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
             const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onIncomingCallWithMedia(accountId, callId, mediaList, user == aliceData.alias_ ? aliceData : bobData);
+                onIncomingCall(accountId, callId, mediaList, user == aliceData.alias_ ? aliceData : bobData);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
@@ -449,7 +449,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));
 
     // Answer the call.
     {

@@ -28,12 +28,9 @@ Persistent<Function> callStateChangedCb;
 Persistent<Function> mediaChangeRequestedCb;
 Persistent<Function> incomingMessageCb;
 Persistent<Function> incomingCallCb;
-Persistent<Function> incomingCallWithMediaCb;
 Persistent<Function> dataTransferEventCb;
-Persistent<Function> conversationLoadedCb;
 Persistent<Function> swarmLoadedCb;
 Persistent<Function> messagesFoundCb;
-Persistent<Function> messageReceivedCb;
 Persistent<Function> swarmMessageReceivedCb;
 Persistent<Function> swarmMessageUpdatedCb;
 Persistent<Function> reactionAddedCb;
@@ -109,18 +106,12 @@ getPresistentCb(std::string_view signal)
         return &incomingMessageCb;
     else if (signal == "IncomingCall")
         return &incomingCallCb;
-    else if (signal == "IncomingCallWithMedia")
-        return &incomingCallWithMediaCb;
     else if (signal == "DataTransferEvent")
         return &dataTransferEventCb;
-    else if (signal == "ConversationLoaded")
-        return &conversationLoadedCb;
     else if (signal == "SwarmLoaded")
         return &swarmLoadedCb;
     else if (signal == "MessagesFound")
         return &messagesFoundCb;
-    else if (signal == "MessageReceived")
-        return &messageReceivedCb;
     else if (signal == "SwarmMessageReceived")
         return &swarmMessageReceivedCb;
     else if (signal == "SwarmMessageUpdated")
@@ -704,37 +695,20 @@ incomingMessage(const std::string& accountId,
 }
 
 void
-incomingCall(const std::string& accountId, const std::string& callId, const std::string& from)
-{
-    std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, callId, from]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallCb);
-        if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
-                                            V8_STRING_NEW_LOCAL(callId),
-                                            V8_STRING_NEW_LOCAL(from)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
-        }
-    });
-
-    uv_async_send(&signalAsync);
-}
-
-void
-incomingCallWithMedia(const std::string& accountId,
-                      const std::string& callId,
-                      const std::string& from,
-                      const std::vector<std::map<std::string, std::string>>& mediaList)
+incomingCall(const std::string& accountId,
+             const std::string& callId,
+             const std::string& from,
+             const std::vector<std::map<std::string, std::string>>& mediaList)
 {
     std::lock_guard lock(pendingSignalsLock);
     pendingSignals.emplace([accountId, callId, from, mediaList]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallWithMediaCb);
+        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallCb);
         if (!func.IsEmpty()) {
             SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
                                             V8_STRING_NEW_LOCAL(callId),
                                             V8_STRING_NEW_LOCAL(from),
                                             stringMapVecToJsMapArray(mediaList)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
+            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
         }
     });
 
@@ -766,26 +740,6 @@ dataTransferEvent(const std::string& accountId,
 }
 
 /** Conversations */
-
-void
-conversationLoaded(uint32_t id,
-                   const std::string& accountId,
-                   const std::string& conversationId,
-                   const std::vector<std::map<std::string, std::string>>& message)
-{
-    std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([id, accountId, conversationId, message]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), conversationLoadedCb);
-        if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {SWIGV8_INTEGER_NEW_UNS(id),
-                                            V8_STRING_NEW_LOCAL(accountId),
-                                            V8_STRING_NEW_LOCAL(conversationId),
-                                            stringMapVecToJsMapArray(message)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
-        }
-    });
-    uv_async_send(&signalAsync);
-}
 
 void
 swarmLoaded(uint32_t id,
@@ -898,24 +852,6 @@ messagesFound(uint32_t id,
                                             V8_STRING_NEW_LOCAL(conversationId),
                                             stringMapVecToJsMapArray(messages)};
             func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 4, callback_args);
-        }
-    });
-    uv_async_send(&signalAsync);
-}
-
-void
-messageReceived(const std::string& accountId,
-                const std::string& conversationId,
-                const std::map<std::string, std::string>& message)
-{
-    std::lock_guard lock(pendingSignalsLock);
-    pendingSignals.emplace([accountId, conversationId, message]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), messageReceivedCb);
-        if (!func.IsEmpty()) {
-            SWIGV8_VALUE callback_args[] = {V8_STRING_NEW_LOCAL(accountId),
-                                            V8_STRING_NEW_LOCAL(conversationId),
-                                            stringMapToJsMap(message)};
-            func->Call(SWIGV8_CURRENT_CONTEXT(), SWIGV8_NULL(), 3, callback_args);
         }
     });
     uv_async_send(&signalAsync);
