@@ -678,28 +678,12 @@ public:
         libjami::sendMessage(accountId, conversationId, message, replyTo, flag);
     }
 
-    uint32_t loadConversationMessages(const std::string& accountId,
-                                      const std::string& conversationId,
-                                      const std::string& fromMessage,
-                                      const uint32_t& n)
-    {
-        return libjami::loadConversationMessages(accountId, conversationId, fromMessage, n);
-    }
-
     uint32_t loadConversation(const std::string& accountId,
                               const std::string& conversationId,
                               const std::string& fromMessage,
                               const uint32_t& n)
     {
         return libjami::loadConversation(accountId, conversationId, fromMessage, n);
-    }
-
-    uint32_t loadConversationUntil(const std::string& accountId,
-                                   const std::string& conversationId,
-                                   const std::string& fromMessage,
-                                   const std::string& to)
-    {
-        return libjami::loadConversationUntil(accountId, conversationId, fromMessage, to);
     }
 
     uint32_t loadSwarmUntil(const std::string& accountId,
@@ -861,8 +845,6 @@ private:
         };
 
         const std::map<std::string, SharedCallback> convEvHandlers = {
-            exportable_serialized_callback<ConversationSignal::ConversationLoaded>(
-                std::bind(&DBusConfigurationManager::emitConversationLoaded, this, _1, _2, _3, _4)),
             exportable_serialized_callback<ConversationSignal::SwarmLoaded>(
                 [this](const uint32_t& id,
                        const std::string& account_id,
@@ -883,8 +865,6 @@ private:
                 }),
             exportable_serialized_callback<ConversationSignal::MessagesFound>(
                 std::bind(&DBusConfigurationManager::emitMessagesFound, this, _1, _2, _3, _4)),
-            exportable_serialized_callback<ConversationSignal::MessageReceived>(
-                std::bind(&DBusConfigurationManager::emitMessageReceived, this, _1, _2, _3)),
             exportable_serialized_callback<ConversationSignal::SwarmMessageReceived>(
                 [this](const std::string& account_id,
                        const std::string& conversation_id,

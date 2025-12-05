@@ -101,7 +101,7 @@ SIPCallTest::testCall()
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string&,
             const std::string&,
             const std::string&,
@@ -121,12 +121,13 @@ SIPCallTest::testCall()
 
     JAMI_INFO("Start call between alice and Bob");
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttribute = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
-                                                          libjami::Media::MediaAttributeValue::AUDIO},
-                                                         {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
-                                                         {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
-                                                         {libjami::Media::MediaAttributeKey::SOURCE, ""},
-                                                         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
+    std::map<std::string, std::string> mediaAttribute = {
+        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
+        {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
+        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        },
+        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 }
+    };
     mediaList.emplace_back(mediaAttribute);
 
     auto call = libjami::placeCallWithMedia(aliceId, bobUri, mediaList);

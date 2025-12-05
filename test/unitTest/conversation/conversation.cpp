@@ -555,10 +555,10 @@ ConversationTest::testCreateConversationInvalidDisplayName()
             }
         }));
     auto messageAliceReceived = 0;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*message*/) {
+            const libjami::SwarmMessage& /*message*/) {
             if (accountId == aliceId) {
                 messageAliceReceived += 1;
             }
@@ -821,10 +821,10 @@ ConversationTest::testSendMessageToMultipleParticipants()
     auto messageReceivedCarla = 0;
     auto requestReceived = 0;
     auto conversationReady = 0;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*message*/) {
+            const libjami::SwarmMessage& /*message*/) {
             if (accountId == aliceId)
                 messageReceivedAlice += 1;
             if (accountId == bobId)

@@ -112,10 +112,10 @@ protected:
                                   const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
-    static void onIncomingCallWithMedia(const std::string& accountId,
-                                        const std::string& callId,
-                                        const std::vector<libjami::MediaMap> mediaList,
-                                        CallData& callData);
+    static void onIncomingCall(const std::string& accountId,
+                               const std::string& callId,
+                               const std::vector<libjami::MediaMap> mediaList,
+                               CallData& callData);
     static void onMediaChangeRequested(const std::string& accountId,
                                        const std::string& callId,
                                        const std::vector<libjami::MediaMap> mediaList,
@@ -369,15 +369,15 @@ AutoAnswerMediaNegoTest::validateMediaDirection(std::vector<MediaDescription> de
 }
 
 void
-AutoAnswerMediaNegoTest::onIncomingCallWithMedia(const std::string& accountId,
-                                                 const std::string& callId,
-                                                 const std::vector<libjami::MediaMap> mediaList,
-                                                 CallData& callData)
+AutoAnswerMediaNegoTest::onIncomingCall(const std::string& accountId,
+                                        const std::string& callId,
+                                        const std::vector<libjami::MediaMap> mediaList,
+                                        CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCall::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -390,7 +390,7 @@ AutoAnswerMediaNegoTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCall::name));
 
     callData.cv_.notify_one();
 }
@@ -609,14 +609,14 @@ AutoAnswerMediaNegoTest::configureScenario()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
             const std::vector<libjami::MediaMap> mediaList) {
             auto user = getUserAlias(callId);
             if (not user.empty())
-                onIncomingCallWithMedia(accountId, callId, mediaList, user == aliceData_.alias_ ? aliceData_ : bobData_);
+                onIncomingCall(accountId, callId, mediaList, user == aliceData_.alias_ ? aliceData_ : bobData_);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaChangeRequested>(
@@ -672,7 +672,7 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));
 
     // Bob automatically answers the call.
 

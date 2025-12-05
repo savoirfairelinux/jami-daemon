@@ -185,7 +185,7 @@ install_signal_primitives(void*)
     add_handler<libjami::CallSignal::IncomingCall, const std::string&, const std::string&, const std::string&>(
         handlers, "incoming-call");
 
-    add_handler<libjami::CallSignal::IncomingCallWithMedia,
+    add_handler<libjami::CallSignal::IncomingCall,
                 const std::string&,
                 const std::string&,
                 const std::string&,
@@ -432,7 +432,7 @@ install_signal_primitives(void*)
 #endif
 
     /* Conversation */
-    add_handler<libjami::ConversationSignal::ConversationLoaded,
+    add_handler<libjami::ConversationSignal::SwarmLoaded,
                 uint32_t,
                 const std::string&,
                 const std::string&,
@@ -444,7 +444,7 @@ install_signal_primitives(void*)
                 const std::string&,
                 std::vector<std::map<std::string, std::string>>>(handlers, "messages-found");
 
-    add_handler<libjami::ConversationSignal::MessageReceived,
+    add_handler<libjami::ConversationSignal::SwarmMessageReceived,
                 const std::string&,
                 const std::string&,
                 std::map<std::string, std::string>>(handlers, "message-received");

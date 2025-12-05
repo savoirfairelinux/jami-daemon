@@ -87,18 +87,10 @@ LIBJAMI_PUBLIC void sendMessage(const std::string& accountId,
                                 const std::string& message,
                                 const std::string& replyTo,
                                 const int32_t& flag = 0);
-LIBJAMI_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
-                                                 const std::string& conversationId,
-                                                 const std::string& fromMessage,
-                                                 size_t n);
 LIBJAMI_PUBLIC uint32_t loadConversation(const std::string& accountId,
                                          const std::string& conversationId,
                                          const std::string& fromMessage,
                                          size_t n);
-LIBJAMI_PUBLIC uint32_t loadConversationUntil(const std::string& accountId,
-                                              const std::string& conversationId,
-                                              const std::string& fromMessage,
-                                              const std::string& toMessage);
 LIBJAMI_PUBLIC uint32_t loadSwarmUntil(const std::string& accountId,
                                        const std::string& conversationId,
                                        const std::string& fromMessage,
@@ -123,14 +115,6 @@ LIBJAMI_PUBLIC void reloadConversationsAndRequests(const std::string& accountId)
 
 struct LIBJAMI_PUBLIC ConversationSignal
 {
-    struct LIBJAMI_PUBLIC ConversationLoaded
-    {
-        constexpr static const char* name = "ConversationLoaded";
-        using cb_type = void(uint32_t /* id */,
-                             const std::string& /*accountId*/,
-                             const std::string& /* conversationId */,
-                             std::vector<std::map<std::string, std::string>> /*messages*/);
-    };
     struct LIBJAMI_PUBLIC SwarmLoaded
     {
         constexpr static const char* name = "SwarmLoaded";
@@ -146,13 +130,6 @@ struct LIBJAMI_PUBLIC ConversationSignal
                              const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
                              std::vector<std::map<std::string, std::string>> /*messages*/);
-    };
-    struct LIBJAMI_PUBLIC MessageReceived
-    {
-        constexpr static const char* name = "MessageReceived";
-        using cb_type = void(const std::string& /*accountId*/,
-                             const std::string& /* conversationId */,
-                             std::map<std::string, std::string> /*message*/);
     };
     struct LIBJAMI_PUBLIC SwarmMessageReceived
     {

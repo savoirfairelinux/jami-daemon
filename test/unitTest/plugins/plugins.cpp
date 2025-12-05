@@ -106,10 +106,10 @@ private:
                                   const std::string& callId,
                                   const std::string& state,
                                   CallData& callData);
-    static void onIncomingCallWithMedia(const std::string& accountId,
-                                        const std::string& callId,
-                                        const std::vector<libjami::MediaMap> mediaList,
-                                        CallData& callData);
+    static void onIncomingCall(const std::string& accountId,
+                               const std::string& callId,
+                               const std::vector<libjami::MediaMap> mediaList,
+                               CallData& callData);
 
     std::string name_ {};
     std::string jplPath_ {};
@@ -153,15 +153,15 @@ private:
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(PluginsTest, PluginsTest::name());
 
 void
-PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
-                                     const std::string& callId,
-                                     const std::vector<libjami::MediaMap> mediaList,
-                                     CallData& callData)
+PluginsTest::onIncomingCall(const std::string& accountId,
+                            const std::string& callId,
+                            const std::vector<libjami::MediaMap> mediaList,
+                            CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
 
     JAMI_INFO("Signal [%s] - user [%s] - call [%s] - media count [%lu]",
-              libjami::CallSignal::IncomingCallWithMedia::name,
+              libjami::CallSignal::IncomingCall::name,
               callData.alias_.c_str(),
               callId.c_str(),
               mediaList.size());
@@ -179,7 +179,7 @@ PluginsTest::onIncomingCallWithMedia(const std::string& accountId,
 
     std::unique_lock lock {callData.mtx_};
     callData.callId_ = callId;
-    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCallWithMedia::name));
+    callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::IncomingCall::name));
 
     callData.cv_.notify_one();
 }
@@ -237,15 +237,15 @@ PluginsTest::setUp()
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> signalHandlers;
 
     // Insert needed signal handlers.
-    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
             const std::vector<libjami::MediaMap> mediaList) {
             if (aliceData.accountId_ == accountId)
-                onIncomingCallWithMedia(accountId, callId, mediaList, aliceData);
+                onIncomingCall(accountId, callId, mediaList, aliceData);
             else if (bobData.accountId_ == accountId)
-                onIncomingCallWithMedia(accountId, callId, mediaList, bobData);
+                onIncomingCall(accountId, callId, mediaList, bobData);
         }));
 
     signalHandlers.insert(libjami::exportable_callback<libjami::CallSignal::StateChange>(
@@ -637,7 +637,7 @@ PluginsTest::testCall()
               bobData.accountId_.c_str());
 
     // Wait for incoming call signal.
-    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCallWithMedia::name));
+    CPPUNIT_ASSERT(waitForSignal(bobData, libjami::CallSignal::IncomingCall::name));
 
     // Answer the call.
     {
@@ -709,10 +709,10 @@ PluginsTest::testMessage()
     auto messageBobReceived = 0, messageAliceReceived = 0;
     bool requestReceived = false;
     bool conversationReady = false;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*message*/) {
+            const libjami::SwarmMessage& /*message*/) {
             if (accountId == bobData.accountId_) {
                 messageBobReceived += 1;
             } else {

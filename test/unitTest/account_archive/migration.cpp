@@ -230,10 +230,10 @@ MigrationTest::testExpiredDeviceInSwarm()
     std::condition_variable cv;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     auto messageBobReceived = 0, messageAliceReceived = 0;
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId,
             const std::string& /* conversationId */,
-            std::map<std::string, std::string> /*message*/) {
+            const libjami::SwarmMessage& /*message*/) {
             if (accountId == bobId) {
                 messageBobReceived += 1;
             } else {

@@ -126,7 +126,7 @@ CallTest::testCall()
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string&,
             const std::string&,
             const std::string&,
@@ -175,7 +175,7 @@ CallTest::testCachedCall()
     std::atomic_bool callReceived {false}, successfullyConnected {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string&,
             const std::string&,
             const std::string&,
@@ -281,7 +281,7 @@ CallTest::testDeclineMultiDevice()
     std::atomic<int> callStopped {0};
     std::string callIdBob;
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -330,7 +330,7 @@ CallTest::testTlsInfosPeerCertificate()
     std::string bobCallId;
     std::string aliceCallState;
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -388,7 +388,7 @@ CallTest::testSocketInfos()
     std::string bobCallId;
     std::string aliceCallState;
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
@@ -458,7 +458,7 @@ CallTest::testInvalidTurn()
     std::atomic<int> callStopped {0};
     bool aliceReady = false;
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string&,
             const std::string&,
             const std::string&,
@@ -531,7 +531,7 @@ CallTest::testTransfer()
     std::string carlaCallId;
     std::string carlaCallPeer;
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string& peerId,
@@ -595,7 +595,7 @@ CallTest::testDhtPublicInCall()
     std::atomic_bool callReceived {false};
     std::atomic<int> callStopped {0};
     // Watch signals
-    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCallWithMedia>(
+    confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::IncomingCall>(
         [&](const std::string&,
             const std::string&,
             const std::string&,

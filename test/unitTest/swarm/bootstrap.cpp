@@ -159,18 +159,16 @@ BootstrapTest::connectSignals()
             }
             cv.notify_one();
         }));
-    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::MessageReceived>(
-        [&](const std::string& accountId,
-            const std::string& /*conversationId*/,
-            std::map<std::string, std::string> message) {
+    confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
+        [&](const std::string& accountId, const std::string& /*conversationId*/, const libjami::SwarmMessage& message) {
             if (accountId == aliceData.accountId) {
-                aliceData.messages.emplace_back(message);
+                aliceData.messages.emplace_back(message.body);
             } else if (accountId == bobData.accountId) {
-                bobData.messages.emplace_back(message);
+                bobData.messages.emplace_back(message.body);
             } else if (accountId == bob2Data.accountId) {
-                bob2Data.messages.emplace_back(message);
+                bob2Data.messages.emplace_back(message.body);
             } else if (accountId == carlaData.accountId) {
-                carlaData.messages.emplace_back(message);
+                carlaData.messages.emplace_back(message.body);
             }
             cv.notify_one();
         }));
