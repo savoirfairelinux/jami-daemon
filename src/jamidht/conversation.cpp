@@ -341,11 +341,11 @@ public:
                                confId,
                                device,
                                uri);
-                    std::map<std::string, std::string> activeCall;
-                    activeCall["id"] = confId;
-                    activeCall["uri"] = uri;
-                    activeCall["device"] = device;
-                    activeCalls_.emplace_back(activeCall);
+                    activeCalls_.emplace_back(std::map<std::string, std::string> {
+                        {"id",     confId},
+                        {"uri",    uri   },
+                        {"device", device},
+                    });
                     saveActiveCalls();
                     if (emitSig)
                         emitSignal<libjami::ConfigurationSignal::ActiveCallsChanged>(accountId_,
@@ -397,15 +397,15 @@ public:
         auto convId = repository_->id();
         auto ok = !commits.empty();
         auto lastId = ok ? commits.rbegin()->at(ConversationMapKeys::ID) : "";
-        addToHistory(loadedHistory_, commits, true, commitFromSelf);
+        auto messages = addToHistory(loadedHistory_, commits, true, commitFromSelf);
         if (ok) {
             bool announceMember = false;
-            for (const auto& c : commits) {
+            for (const auto& c : messages) {
                 // Announce member events
-                if (c.at("type") == "member") {
-                    if (c.find("uri") != c.end() && c.find("action") != c.end()) {
-                        const auto& uri = c.at("uri");
-                        const auto& actionStr = c.at("action");
+                if (c->type == "member") {
+                    if (c->body.find("uri") != c->body.end() && c->body.find("action") != c->body.end()) {
+                        const auto& uri = c->body.at("uri");
+                        const auto& actionStr = c->body.at("action");
                         auto action = -1;
                         if (actionStr == "add")
                             action = 0;
@@ -419,7 +419,7 @@ public:
                             action = 4;
                         if (actionStr == "ban" || actionStr == "remove") {
                             // In this case, a potential host was removed during a call.
-                            updateActiveCalls(c);
+                            updateActiveCalls(c->body);
                             typers_->removeTyper(uri);
                         }
                         if (action != -1) {
@@ -430,19 +430,23 @@ public:
                                                                                              action);
                         }
                     }
-                } else if (c.at("type") == "application/call-history+json") {
-                    updateActiveCalls(c);
+                } else if (c->type == "application/call-history+json") {
+                    updateActiveCalls(c->body);
                 }
 #ifdef ENABLE_PLUGIN
                 auto& pluginChatManager = Manager::instance().getJamiPluginManager().getChatServicesManager();
                 if (pluginChatManager.hasHandlers()) {
-                    auto cm = std::make_shared<JamiMessage>(accountId_, convId, c.at("author") != userId_, c, false);
+                    auto cm = std::make_shared<JamiMessage>(accountId_,
+                                                            convId,
+                                                            c->body.at("author") != userId_,
+                                                            c->body,
+                                                            false);
                     cm->isSwarm = true;
                     pluginChatManager.publishMessage(std::move(cm));
                 }
 #endif
                 // announce message
-                emitSignal<libjami::ConversationSignal::MessageReceived>(accountId_, convId, c);
+                emitSignal<libjami::ConversationSignal::SwarmMessageReceived>(accountId_, convId, *c);
             }
 
             if (announceMember && onMembersChanged_) {
