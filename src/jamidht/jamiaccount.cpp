@@ -3429,12 +3429,18 @@ JamiAccount::sendProfileToPeers()
         if (!peers.emplace(peer).second)
             continue;
         if (peer == accountUri) {
-            sendProfile("", accountUri, device);
+            dht::ThreadPool::io().run([w = weak(), accountUri, device] {
+                if (auto acc = w.lock())
+                    acc->sendProfile("", accountUri, device);
+            });
             continue;
         }
         const auto& conversationId = convModule()->getOneToOneConversation(peer);
         if (!conversationId.empty()) {
-            sendProfile(conversationId, peer, device);
+            dht::ThreadPool::io().run([w = weak(), conversationId, peer, device] {
+                if (auto acc = w.lock())
+                    acc->sendProfile(conversationId, peer, device);
+            });
         }
     }
 }
