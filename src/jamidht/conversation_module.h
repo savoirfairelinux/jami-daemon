@@ -240,13 +240,7 @@ public:
      * @param n                 Max interactions to load
      * @return id of the operation
      */
-    uint32_t loadConversationMessages(const std::string& conversationId,
-                                      const std::string& fromMessage = "",
-                                      size_t n = 0);
     uint32_t loadConversation(const std::string& conversationId, const std::string& fromMessage = "", size_t n = 0);
-    uint32_t loadConversationUntil(const std::string& conversationId,
-                                   const std::string& fromMessage,
-                                   const std::string& to);
     uint32_t loadSwarmUntil(const std::string& conversationId,
                             const std::string& fromMessage,
                             const std::string& toMessage);

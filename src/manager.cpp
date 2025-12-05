@@ -2527,7 +2527,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
 
     JAMI_DEBUG("Incoming call {} on account {} with {} media", incomCallId, accountId, mediaList.size());
 
-    emitSignal<libjami::CallSignal::IncomingCallWithMedia>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
+    emitSignal<libjami::CallSignal::IncomingCall>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
 
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);

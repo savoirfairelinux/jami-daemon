@@ -79,13 +79,13 @@ parse_args(int argc, char* argv[], bool& persistent)
 
     const struct option long_options[] = {
         /* These options set a flag. */
-        {"debug", no_argument, NULL, 'd'},
-        {"console", no_argument, NULL, 'c'},
-        {"persistent", no_argument, NULL, 'p'},
-        {"help", no_argument, NULL, 'h'},
-        {"version", no_argument, NULL, 'v'},
+        {"debug",       no_argument, NULL,        'd' },
+        {"console",     no_argument, NULL,        'c' },
+        {"persistent",  no_argument, NULL,        'p' },
+        {"help",        no_argument, NULL,        'h' },
+        {"version",     no_argument, NULL,        'v' },
         {"auto-answer", no_argument, &autoAnswer, true},
-        {0, 0, 0, 0} /* Sentinel */
+        {0,             0,           0,           0   }  /* Sentinel */
     };
 
     while (true) {
@@ -148,15 +148,18 @@ parse_args(int argc, char* argv[], bool& persistent)
 }
 
 void
-IncomingCall(const std::string& accountId, const std::string& callId, const std::string& message)
+IncomingCall(const std::string& accountId,
+             const std::string& callId,
+             const std::string& message,
+             const std::vector<std::map<std::string, std::string>>& /*mediaList*/)
 {
     (void) accountId;
     (void) message;
     if (not isActive) {
-        libjami::accept(callId);
+        libjami::accept(accountId, callId);
         isActive = true;
     } else
-        libjami::refuse(callId);
+        libjami::refuse(accountId, callId);
 }
 
 static int
@@ -168,7 +171,7 @@ run()
 
     std::map<std::string, SharedCallback> callHandlers;
     callHandlers.insert(
-        libjami::exportable_callback<libjami::CallSignal::IncomingCall>(std::bind(&IncomingCall, _1, _2, _3)));
+        libjami::exportable_callback<libjami::CallSignal::IncomingCall>(std::bind(&IncomingCall, _1, _2, _3, _4)));
 
     registerSignalHandlers(callHandlers);
 
