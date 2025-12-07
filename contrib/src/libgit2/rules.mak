@@ -37,6 +37,6 @@ LIBGIT2_CONF = -DCMAKE_BUILD_TYPE=Release \
 # TODO windows pcre?
 .libgit2: libgit2
 	cd $< && mkdir -p build && cd build \
-    && $(CMAKE) $(LIBGIT2_CONF) .. \
+    && $(HOSTVARS) $(CMAKE) $(LIBGIT2_CONF) .. \
     && $(MAKE) install
 	touch $@
