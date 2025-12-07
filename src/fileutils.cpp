@@ -454,7 +454,7 @@ writeArchive(const std::string& archive_str,
 }
 
 std::filesystem::path
-get_cache_dir(const char* pkg)
+get_cache_dir([[maybe_unused]] const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
@@ -530,7 +530,7 @@ get_home_dir()
 }
 
 std::filesystem::path
-get_data_dir(const char* pkg)
+get_data_dir([[maybe_unused]] const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
@@ -569,7 +569,7 @@ get_data_dir()
 }
 
 std::filesystem::path
-get_config_dir(const char* pkg)
+get_config_dir([[maybe_unused]] const char* pkg)
 {
     std::filesystem::path configdir;
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
