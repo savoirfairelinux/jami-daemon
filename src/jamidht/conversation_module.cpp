@@ -426,6 +426,7 @@ public:
     void saveMetadata()
     {
         auto path = fileutils::get_data_dir() / accountId_;
+        std::lock_guard lock(dhtnet::fileutils::getFileLock(path / "syncingMetadatas"));
         std::ofstream file(path / "syncingMetadatas", std::ios::trunc | std::ios::binary);
         msgpack::pack(file, syncingMetadatas_);
     }
@@ -3234,8 +3235,7 @@ ConversationModule::convInfosFromPath(const std::filesystem::path& path)
 std::map<std::string, ConversationRequest>
 ConversationModule::convRequests(const std::string& accountId)
 {
-    auto path = fileutils::get_data_dir() / accountId;
-    return convRequestsFromPath(path.string());
+    return convRequestsFromPath(fileutils::get_data_dir() / accountId);
 }
 
 std::map<std::string, ConversationRequest>
