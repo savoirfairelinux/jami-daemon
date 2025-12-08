@@ -421,6 +421,12 @@ transaction_request_cb(pjsip_rx_data* rdata)
         }
     }
 
+    emitSignal<libjami::CallSignal::IncomingCall>(account->getAccountID(),
+                                                  call->getCallId(),
+                                                  peerNumber,
+                                                  MediaAttribute::mediaAttributesToMediaMaps(
+                                                      call->getMediaAttributeList()));
+
     call->setPeerNumber(peerNumber);
     call->setPeerUri(account->getToUri(peerNumber));
     call->setPeerDisplayName(peerDisplayName);
@@ -516,9 +522,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    call->setState(Call::ConnectionState::RINGING);
-
     Manager::instance().incomingCall(account->getAccountID(), *call);
+
+    if (call->getConnectionState() == Call::ConnectionState::TRYING)
+        call->setState(Call::ConnectionState::RINGING);
 
     if (replaced_dlg) {
         // Get the INVITE session associated with the replaced dialog.
