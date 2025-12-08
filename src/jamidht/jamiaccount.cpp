@@ -3494,6 +3494,10 @@ JamiAccount::updateProfile(const std::string& displayName,
     try {
         vCard::utils::save(profile, vCardPath, path);
         emitSignal<libjami::ConfigurationSignal::ProfileReceived>(getAccountID(), accountUri, path.string());
+
+        // Delete all profile sent markers:
+        std::error_code ec;
+        std::filesystem::remove_all(cachePath_ / "vcard", ec);
         sendProfileToPeers();
     } catch (const std::exception& e) {
         JAMI_ERROR("Error writing profile: {}", e.what());
