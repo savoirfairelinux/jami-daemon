@@ -467,6 +467,13 @@ transaction_request_cb(pjsip_rx_data* rdata)
     inv->mod_data[mod_ua_.id] = call.get();
     call->setInviteSession(inv);
 
+    // Emit signal after the call is fully initialized with dialog and invite session
+    emitSignal<libjami::CallSignal::IncomingCall>(account->getAccountID(),
+                                                  call->getCallId(),
+                                                  peerNumber,
+                                                  MediaAttribute::mediaAttributesToMediaMaps(
+                                                      call->getMediaAttributeList()));
+
     // Check whether Replaces header is present in the request and process accordingly.
     pjsip_dialog* replaced_dlg;
     pjsip_tx_data* response;
@@ -516,9 +523,10 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    call->setState(Call::ConnectionState::RINGING);
-
     Manager::instance().incomingCall(account->getAccountID(), *call);
+
+    if (call->getConnectionState() == Call::ConnectionState::TRYING)
+        call->setState(Call::ConnectionState::RINGING);
 
     if (replaced_dlg) {
         // Get the INVITE session associated with the replaced dialog.
