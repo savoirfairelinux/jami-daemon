@@ -2593,8 +2593,9 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                                  currentCallID = currentCall->getCallId(),
                                  incomCall = incomCall.shared_from_this()] {
                     auto& mgr = Manager::instance();
+                    if (mgr.getCurrentCallId() == currentCallID)
+                        mgr.hangupCall(accountId, currentCallID);
                     mgr.acceptCall(*incomCall);
-                    mgr.hangupCall(accountId, currentCallID);
                 });
             }
         }
