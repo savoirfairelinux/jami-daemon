@@ -2579,6 +2579,7 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         string_replace(peerNumber, "@ring.dht", "");
         string_replace(currentPeerNumber, "@ring.dht", "");
         if (currentCall->getAccountId() == account->getAccountID() && currentPeerNumber == peerNumber) {
+            JAMI_DEBUG("Simultaneous calls detected with peer {}, deciding what to do", peerNumber);
             auto answerToCall = false;
             auto downgradeToAudioOnly = currentCall->isAudioOnly() != incomCall.isAudioOnly();
             if (downgradeToAudioOnly)
@@ -2589,6 +2590,9 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                 answerToCall = (account->getUsername().compare(peerNumber) < 0);
 
             if (answerToCall) {
+                JAMI_DEBUG("Accepting incoming call {} and hanging up outgoing call {}",
+                           incomCallId,
+                           currentCall->getCallId());
                 runOnMainThread([accountId = currentCall->getAccountId(),
                                  currentCallID = currentCall->getCallId(),
                                  incomCall = incomCall.shared_from_this()] {
@@ -2597,6 +2601,8 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
                         mgr.hangupCall(accountId, currentCallID);
                     mgr.acceptCall(*incomCall);
                 });
+            } else {
+                JAMI_DEBUG("Ignoring simultaneous calls, letting remote peer handle them");
             }
         }
     }
