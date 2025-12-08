@@ -2517,15 +2517,6 @@ Manager::ManagerPimpl::processIncomingCall(const std::string& accountId, Call& i
         return;
     }
 
-    auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(incomCall.getMediaAttributeList());
-
-    if (mediaList.empty())
-        JAMI_WARNING("Incoming call {} has an empty media list", incomCallId);
-
-    JAMI_DEBUG("Incoming call {} on account {} with {} media", incomCallId, accountId, mediaList.size());
-
-    emitSignal<libjami::CallSignal::IncomingCall>(accountId, incomCallId, incomCall.getPeerNumber(), mediaList);
-
     if (not base_.hasCurrentCall()) {
         incomCall.setState(Call::ConnectionState::RINGING);
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
