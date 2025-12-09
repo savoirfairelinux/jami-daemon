@@ -327,10 +327,12 @@ MediaRecorder::removeStream(const MediaStream& ms)
     } else {
         JAMI_LOG("[Recorder: {:p}] Recorder removing '{:s}'", fmt::ptr(this), ms.name);
         streams_.erase(it);
-        if (ms.isVideo)
-            setupVideoOutput();
-        else
-            setupAudioOutput();
+        if (isRecording_) {
+            if (ms.isVideo)
+                setupVideoOutput();
+            else
+                setupAudioOutput();
+        }
     }
     return;
 }
