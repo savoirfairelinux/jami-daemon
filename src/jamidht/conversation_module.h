@@ -429,7 +429,7 @@ public:
      */
     std::string findMatchingOneToOneConversation(const std::string& excludedConversationId,
                                                  const std::set<std::string>& targetUris) const;
-    void initReplay(const std::string& oldConvId, const std::string& newConvId);
+    //void initReplay(const std::string& oldConvId, const std::string& newConvId);
     /**
      * Check if we're hosting a specific conference
      * @param conversationId (empty to search all conv)

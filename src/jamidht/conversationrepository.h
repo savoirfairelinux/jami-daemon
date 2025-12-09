@@ -232,7 +232,7 @@ public:
      *
      * @return          A vector of media maps representing the messages loaded
      */
-    std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options) const;
+    //std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options) const;
 
     /**
      * Retrieve remote head. Can be useful after a fetch operation
