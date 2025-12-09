@@ -4517,57 +4517,6 @@ ConversationRepository::getHead() const
     return {};
 }
 
-std::vector<std::map<std::string, std::string>>
-ConversationRepository::loadMessages(const LogOptions& options) const
-{
-    std::vector<ConversationCommit> commits;
-    auto startLogging = options.from == "";
-    auto breakLogging = false;
-    log(
-        [&](const auto& id, const auto& author, const auto& commit) {
-            if (!commits.empty()) {
-                // Set linearized parent
-                commits.rbegin()->linearized_parent = id;
-            }
-            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
-                return CallbackResult::Skip;
-            }
-            if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
-                return CallbackResult::Break; // Stop logging
-            if (breakLogging)
-                return CallbackResult::Break; // Stop logging
-            if (id == options.to) {
-                if (options.includeTo)
-                    breakLogging = true; // For the next commit
-                else
-                    return CallbackResult::Break; // Stop logging
-            }
-
-            if (!startLogging && options.from != "" && options.from == id)
-                startLogging = true;
-            if (!startLogging)
-                return CallbackResult::Skip; // Start logging after this one
-
-            if (options.fastLog) {
-                if (options.authorUri != "") {
-                    if (options.authorUri == uriFromDevice(author.email)) {
-                        return CallbackResult::Break; // Found author, stop
-                    }
-                }
-                // Used to only count commit
-                commits.emplace(commits.end(), ConversationCommit {});
-                return CallbackResult::Skip;
-            }
-
-            return CallbackResult::Ok; // Continue
-        },
-        [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
-        [](auto, auto, auto) { return false; },
-        options.from,
-        options.logIfNotFound);
-    return convCommitsToMap(commits);
-}
-
 std::optional<std::map<std::string, std::string>>
 ConversationRepository::convCommitToMap(const ConversationCommit& commit) const
 {

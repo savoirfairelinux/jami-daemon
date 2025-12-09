@@ -2226,7 +2226,7 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
-            conv->conversation->loadMessages2(
+            conv->conversation->loadMessages(
                 [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
                 },
@@ -2251,7 +2251,7 @@ ConversationModule::loadSwarmUntil(const std::string& conversationId,
             options.from = fromMessage;
             options.to = toMessage;
             options.includeTo = true;
-            conv->conversation->loadMessages2(
+            conv->conversation->loadMessages(
                 [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
                 },
@@ -2946,6 +2946,7 @@ ConversationModule::findMatchingOneToOneConversation(const std::string& excluded
     return {};
 }
 
+/*
 void
 ConversationModule::initReplay(const std::string& oldConvId, const std::string& newConvId)
 {
@@ -2968,6 +2969,7 @@ ConversationModule::initReplay(const std::string& oldConvId, const std::string& 
         }
     }
 }
+*/
 
 bool
 ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
