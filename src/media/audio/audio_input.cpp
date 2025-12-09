@@ -316,7 +316,8 @@ AudioInput::switchInput(const std::string& resource)
     futureDevOpts_ = foundDevOpts_.get_future().share();
     wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
     lk.unlock();
-    loop_.start();
+    if (not loop_.isRunning())
+        loop_.start();
     if (onSuccessfulSetup_)
         onSuccessfulSetup_(MEDIA_AUDIO, 0);
     return futureDevOpts_;
