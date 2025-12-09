@@ -587,7 +587,6 @@ public:
     const std::string deviceId_;
     const std::shared_ptr<SwarmManager> swarmManager_;
     std::atomic_bool isRemoving_ {false};
-    std::vector<std::map<std::string, std::string>> loadMessages(const LogOptions& options);
     std::vector<libjami::SwarmMessage> loadMessages2(const LogOptions& options, History* optHistory = nullptr);
     void pull(const std::string& deviceId);
 
@@ -761,59 +760,6 @@ Conversation::Impl::commitsEndedCalls()
     saveActiveCalls();
     saveHostedCalls();
     return commits;
-}
-
-std::vector<std::map<std::string, std::string>>
-Conversation::Impl::loadMessages(const LogOptions& options)
-{
-    if (!repository_)
-        return {};
-    std::vector<ConversationCommit> commits;
-    auto startLogging = options.from == "";
-    auto breakLogging = false;
-    repository_->log(
-        [&](const auto& id, const auto& author, const auto& commit) {
-            if (!commits.empty()) {
-                // Set linearized parent
-                commits.rbegin()->linearized_parent = id;
-            }
-            if (options.skipMerge && git_commit_parentcount(commit.get()) > 1) {
-                return CallbackResult::Skip;
-            }
-            if ((options.nbOfCommits != 0 && commits.size() == options.nbOfCommits))
-                return CallbackResult::Break; // Stop logging
-            if (breakLogging)
-                return CallbackResult::Break; // Stop logging
-            if (id == options.to) {
-                if (options.includeTo)
-                    breakLogging = true; // For the next commit
-                else
-                    return CallbackResult::Break; // Stop logging
-            }
-
-            if (!startLogging && options.from != "" && options.from == id)
-                startLogging = true;
-            if (!startLogging)
-                return CallbackResult::Skip; // Start logging after this one
-
-            if (options.fastLog) {
-                if (options.authorUri != "") {
-                    if (options.authorUri == repository_->uriFromDevice(author.email)) {
-                        return CallbackResult::Break; // Found author, stop
-                    }
-                }
-                // Used to only count commit
-                commits.emplace(commits.end(), ConversationCommit {});
-                return CallbackResult::Skip;
-            }
-
-            return CallbackResult::Ok; // Continue
-        },
-        [&](auto&& cc) { commits.emplace(commits.end(), std::forward<decltype(cc)>(cc)); },
-        [](auto, auto, auto) { return false; },
-        options.from,
-        options.logIfNotFound);
-    return repository_->convCommitsToMap(commits);
 }
 
 std::vector<libjami::SwarmMessage>
@@ -1614,18 +1560,6 @@ Conversation::getCommit(const std::string& commitId) const
     if (commit == std::nullopt)
         return std::nullopt;
     return pimpl_->repository_->convCommitToMap(*commit);
-}
-
-void
-Conversation::loadMessages(OnLoadMessages cb, const LogOptions& options)
-{
-    if (!cb)
-        return;
-    dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), options] {
-        if (auto sthis = w.lock()) {
-            cb(sthis->pimpl_->loadMessages(options));
-        }
-    });
 }
 
 void

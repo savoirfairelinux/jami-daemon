@@ -152,7 +152,6 @@ struct ConvInfo
 };
 
 using OnPullCb = std::function<void(bool fetchOk)>;
-using OnLoadMessages = std::function<void(std::vector<std::map<std::string, std::string>>&& messages)>;
 using OnLoadMessages2 = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
@@ -304,12 +303,6 @@ public:
                      OnDoneCb&& cb = {});
     // Note: used for replay. Should not be used by clients
     void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
-    /**
-     * Get a range of messages
-     * @param cb        The callback when loaded
-     * @param options   The log options
-     */
-    void loadMessages(OnLoadMessages cb, const LogOptions& options);
     /**
      * Get a range of messages
      * @param cb        The callback when loaded
