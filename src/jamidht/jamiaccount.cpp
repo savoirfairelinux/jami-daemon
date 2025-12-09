@@ -4091,7 +4091,9 @@ JamiAccount::dataTransfer(const std::string& id)
 {
     if (id.empty())
         return nonSwarmTransferManager_;
-    return convModule()->dataTransfer(id);
+    if (auto cm = convModule())
+        return cm->dataTransfer(id);
+    return {};
 }
 
 void
@@ -4168,7 +4170,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                               [accId = shared->getAccountID(), conversationId, tid, path](const std::string& commitId) {
                                   // Create a symlink to answer to re-ask
                                   auto filelinkPath = fileutils::get_data_dir() / accId / "conversation_data"
-                                                      / conversationId / (commitId + "_" + std::to_string(tid));
+                                                      / conversationId / fmt::format("{}_{}", commitId, tid);
                                   filelinkPath += path.extension();
                                   if (path != filelinkPath && !std::filesystem::is_symlink(filelinkPath)) {
                                       if (!fileutils::createFileLink(filelinkPath, path, true)) {
