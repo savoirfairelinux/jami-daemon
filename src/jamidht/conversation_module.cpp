@@ -2980,29 +2980,6 @@ ConversationModule::findMatchingOneToOneConversation(const std::string& excluded
     return {};
 }
 
-void
-ConversationModule::initReplay(const std::string& oldConvId, const std::string& newConvId)
-{
-    if (auto conv = pimpl_->getConversation(oldConvId)) {
-        std::lock_guard lk(conv->mtx);
-        if (conv->conversation) {
-            std::promise<bool> waitLoad;
-            std::future<bool> fut = waitLoad.get_future();
-            // we should wait for loadMessage, because it will be deleted after this.
-            conv->conversation->loadMessages(
-                [&](auto&& messages) {
-                    std::reverse(messages.begin(),
-                                 messages.end()); // Log is inverted as we want to replay
-                    std::lock_guard lk(pimpl_->replayMtx_);
-                    pimpl_->replay_[newConvId] = std::move(messages);
-                    waitLoad.set_value(true);
-                },
-                {});
-            fut.wait();
-        }
-    }
-}
-
 bool
 ConversationModule::isHosting(const std::string& conversationId, const std::string& confId) const
 {
