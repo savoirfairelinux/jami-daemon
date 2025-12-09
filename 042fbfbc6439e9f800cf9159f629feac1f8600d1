@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a1c40ef2_b052bddc",
+        "filename": "src/jamidht/account_manager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 298,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-09T19:27:19Z",
+      "side": 1,
+      "message": "The version of `findCertificate` that takes a `dht::InfoHash` as argument looks for the certificate on the DHT if it\u0027s not in the cache, but the version that takes a `dht::PkId` doesn\u0027t do that, so it will always fail for new certificates.",
+      "range": {
+        "startLine": 298,
+        "startChar": 16,
+        "endLine": 298,
+        "endChar": 117
+      },
+      "revId": "042fbfbc6439e9f800cf9159f629feac1f8600d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
