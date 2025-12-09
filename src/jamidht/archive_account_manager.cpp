@@ -821,68 +821,87 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
         return static_cast<int32_t>(AccountManager::AddDeviceError::ALREADY_LINKING);
     }
     JAMI_LOG("[LinkDevice] ArchiveAccountManager::addDevice({}, {})", accountId_, uriProvided);
-    try {
-        std::string_view url(uriProvided);
-        if (!starts_with(url, AUTH_URI_SCHEME)) {
-            JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
-            return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
-        }
-        auto peerTempAcc = url.substr(AUTH_URI_SCHEME.length(), 40);
-        auto peerCodeS = url.substr(AUTH_URI_SCHEME.length() + peerTempAcc.length() + 1, 6);
-        JAMI_LOG("[LinkDevice] ======\n * tempAcc =  {}\n * code = {}", peerTempAcc, peerCodeS);
-
-        auto gen = Manager::instance().getSeededRandomEngine();
-        auto token = std::uniform_int_distribution<int32_t>(1, INT32_MAX)(gen);
-        JAMI_WARNING("[LinkDevice] SOURCE: Creating auth context, token: {}.", token);
-        auto ctx = std::make_shared<AuthContext>();
-        ctx->accountId = accountId_;
-        ctx->token = token;
-        ctx->credentials = std::make_unique<ArchiveAccountCredentials>();
-        authCtx_ = ctx;
-
-        channelHandler->connect(
-            dht::InfoHash(peerTempAcc),
-            fmt::format("{}{}", CHANNEL_SCHEME, peerCodeS),
-            [wthis = weak(), auth_scheme, ctx, accountId = accountId_](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                                       const dht::InfoHash& infoHash) {
-                auto this_ = wthis.lock();
-                if (!socket || !this_) {
-                    JAMI_WARNING("[LinkDevice] Invalid socket event while AccountManager connecting.");
-                    if (this_)
-                        this_->authCtx_.reset();
-                    emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(accountId,
-                                                                                    ctx->token,
-                                                                                    static_cast<uint8_t>(
-                                                                                        DeviceAuthState::DONE),
-                                                                                    DeviceAuthInfo::createError(
-                                                                                        DeviceAuthInfo::Error::NETWORK));
-                } else {
-                    if (!this_->doAddDevice(auth_scheme, ctx, socket))
-                        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-                            accountId,
-                            ctx->token,
-                            static_cast<uint8_t>(DeviceAuthState::DONE),
-                            DeviceAuthInfo::createError(DeviceAuthInfo::Error::UNKNOWN));
-                }
-            });
-        runOnMainThread([token, id = accountId_] {
-            emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(id,
-                                                                            token,
-                                                                            static_cast<uint8_t>(
-                                                                                DeviceAuthState::CONNECTING),
-                                                                            DeviceAuthInfo {});
-        });
-        return token;
-    } catch (const std::exception& e) {
-        JAMI_ERROR("[LinkDevice] Parsing uri failed: {}", uriProvided);
-        return static_cast<int32_t>(AccountManager::AddDeviceError::GENERIC);
+    std::string_view url(uriProvided);
+    if (!starts_with(url, AUTH_URI_SCHEME)) {
+        JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+        return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
     }
+
+    url.remove_prefix(AUTH_URI_SCHEME.length());
+    auto slashPos = url.find('/');
+    if (slashPos == std::string_view::npos || (slashPos != 40 && slashPos != 64)) {
+        JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+        return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
+    }
+    auto peerTempAcc = url.substr(0, slashPos);
+    url.remove_prefix(slashPos + 1);
+    auto peerCodeS = url.substr(0, url.find('/'));
+    if (peerCodeS.size() != 6) {
+        JAMI_ERROR("[LinkDevice] Invalid uri provided: {}", uriProvided);
+        return static_cast<int32_t>(AccountManager::AddDeviceError::INVALID_URI);
+    }
+    JAMI_LOG("[LinkDevice] ======\n * tempAcc =  {}\n * code = {}", peerTempAcc, peerCodeS);
+
+    auto gen = Manager::instance().getSeededRandomEngine();
+    auto token = std::uniform_int_distribution<int32_t>(1, std::numeric_limits<int32_t>::max())(gen);
+    JAMI_WARNING("[LinkDevice] SOURCE: Creating auth context, token: {}.", token);
+    auto ctx = std::make_shared<AuthContext>();
+    ctx->accountId = accountId_;
+    ctx->token = token;
+    ctx->credentials = std::make_unique<ArchiveAccountCredentials>();
+    authCtx_ = ctx;
+
+    auto onConnect = [wthis = weak(), auth_scheme, ctx, accountId = accountId_](
+                         std::shared_ptr<dhtnet::ChannelSocket> socket) {
+        auto this_ = wthis.lock();
+        if (!socket || !this_) {
+            JAMI_WARNING("[LinkDevice] Invalid socket event while AccountManager connecting.");
+            if (this_)
+                this_->authCtx_.reset();
+            emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(accountId,
+                                                                            ctx->token,
+                                                                            static_cast<uint8_t>(DeviceAuthState::DONE),
+                                                                            DeviceAuthInfo::createError(
+                                                                                DeviceAuthInfo::Error::NETWORK));
+        } else {
+            if (!this_->doAddDevice(auth_scheme, ctx, std::move(socket)))
+                emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(accountId,
+                                                                                ctx->token,
+                                                                                static_cast<uint8_t>(
+                                                                                    DeviceAuthState::DONE),
+                                                                                DeviceAuthInfo::createError(
+                                                                                    DeviceAuthInfo::Error::UNKNOWN));
+        }
+    };
+
+    auto channelName = fmt::format("{}{}", CHANNEL_SCHEME, peerCodeS);
+    if (peerTempAcc.size() == 40) {
+        channelHandler->connect(dht::InfoHash(peerTempAcc),
+                                channelName,
+                                [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                            const dht::InfoHash& infoHash) { onConnect(std::move(socket)); });
+    } else {
+        channelHandler->connect(dht::PkId(peerTempAcc),
+                                channelName,
+                                [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket, const dht::PkId& infoHash) {
+                                    onConnect(std::move(socket));
+                                });
+    }
+
+    runOnMainThread([token, id = accountId_] {
+        emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(id,
+                                                                        token,
+                                                                        static_cast<uint8_t>(
+                                                                            DeviceAuthState::CONNECTING),
+                                                                        DeviceAuthInfo {});
+    });
+    return token;
 }
 
 bool
 ArchiveAccountManager::doAddDevice(std::string_view scheme,
                                    const std::shared_ptr<AuthContext>& ctx,
-                                   const std::shared_ptr<dhtnet::ChannelSocket>& channel)
+                                   std::shared_ptr<dhtnet::ChannelSocket> channel)
 {
     if (ctx->canceled) {
         JAMI_WARNING("[LinkDevice] SOURCE: addDevice canceled.");
@@ -891,7 +910,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     }
     JAMI_DEBUG("[LinkDevice] Setting up addDevice logic on SOURCE device.");
     JAMI_DEBUG("[LinkDevice] SOURCE: Creating addDeviceCtx.");
-    ctx->addDeviceCtx = std::make_unique<AddDeviceContext>(channel);
+    ctx->addDeviceCtx = std::make_unique<AddDeviceContext>(std::move(channel));
     ctx->addDeviceCtx->authScheme = scheme;
     ctx->addDeviceCtx->state = AuthDecodingState::HANDSHAKE;
 
@@ -922,7 +941,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     });
 
     JAMI_DEBUG("[LinkDevice] SOURCE: Creating callbacks.");
-    channel->onShutdown([ctx, w = weak()](const std::error_code& ec) {
+    ctx->addDeviceCtx->channel->onShutdown([ctx, w = weak()](const std::error_code& ec) {
         JAMI_DEBUG("[LinkDevice] SOURCE: Shutdown with state {}... xfer {}uccessful",
                    ctx->addDeviceCtx->formattedAuthState(),
                    ctx->addDeviceCtx->archiveTransferredWithoutFailure ? "s" : "uns");
@@ -945,7 +964,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     // for now we only have one valid protocol (version is AuthMsg::scheme = 0) but can later
     // add in more schemes inside this callback function
     JAMI_DEBUG("[LinkDevice] Setting up receiving logic callback.");
-    channel->setOnRecv(dhtnet::buildMsgpackReader<AuthMsg>([ctx, wthis = weak()](AuthMsg&& toRecv) {
+    ctx->addDeviceCtx->channel->setOnRecv(dhtnet::buildMsgpackReader<AuthMsg>([ctx, wthis = weak()](AuthMsg&& toRecv) {
         JAMI_DEBUG("[LinkDevice] Setting up receiver callback for communication logic on SOURCE device.");
         // when archive is sent to newDev we will get back a success or fail response before the
         // connection closes and we need to handle this and pass it to the shutdown callback
@@ -1011,8 +1030,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
                 ctx->addDeviceCtx->numTries++;
                 if (ctx->addDeviceCtx->numTries < ctx->addDeviceCtx->maxTries) {
                     // can retry auth
-                    JAMI_DEBUG("[LinkDevice] Incorrect password received. "
-                               "Attempt {} out of {}.",
+                    JAMI_DEBUG("[LinkDevice] Incorrect password received. Attempt {} out of {}.",
                                ctx->addDeviceCtx->numTries,
                                ctx->addDeviceCtx->maxTries);
                     toSend.set(PayloadKey::passwordCorrect, "false");
@@ -1054,7 +1072,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     if (ctx->addDeviceCtx->state == AuthDecodingState::HANDSHAKE) {
         ctx->addDeviceCtx->state = AuthDecodingState::EST;
         DeviceAuthInfo info;
-        info.set(DeviceAuthInfo::peer_address, channel->getRemoteAddress().toString(true));
+        info.set(DeviceAuthInfo::peer_address, ctx->addDeviceCtx->channel->getRemoteAddress().toString(true));
         emitSignal<libjami::ConfigurationSignal::AddDeviceStateChanged>(ctx->accountId,
                                                                         ctx->token,
                                                                         static_cast<uint8_t>(

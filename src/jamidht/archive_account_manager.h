@@ -149,7 +149,7 @@ private:
 
     bool doAddDevice(std::string_view scheme,
                      const std::shared_ptr<AuthContext>& ctx,
-                     const std::shared_ptr<dhtnet::ChannelSocket>& channel);
+                     std::shared_ptr<dhtnet::ChannelSocket> channel);
 
     void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, bool isLinkDevProtocol);
 
