@@ -294,11 +294,19 @@ AccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dc
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
             dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this, cb = std::move(cb)](DeviceAnnouncement&& dev) {
-            findCertificate(dev.dev, [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                foundAccountDevice(crt);
-                if (cb)
-                    cb(crt);
-            });
+            if (dev.pk) {
+                findCertificate(dev.pk->getLongId(), [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                    foundAccountDevice(crt);
+                    if (cb)
+                        cb(crt);
+                });
+            } else {
+                findCertificate(dev.dev, [this, cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                    foundAccountDevice(crt);
+                    if (cb)
+                        cb(crt);
+                });
+            }
             return true;
         });
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
@@ -813,9 +821,15 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
             if (dev.from != to)
                 return true;
             state->remaining++;
-            findCertificate(dev.dev, [state](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                state->found(cert ? cert->getSharedPublicKey() : std::shared_ptr<dht::crypto::PublicKey> {});
-            });
+            if (dev.pk) {
+                findCertificate(dev.pk->getLongId(), [state](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                    state->found(cert ? cert->getSharedPublicKey() : std::shared_ptr<dht::crypto::PublicKey> {});
+                });
+            } else {
+                findCertificate(dev.dev, [state](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                    state->found(cert ? cert->getSharedPublicKey() : std::shared_ptr<dht::crypto::PublicKey> {});
+                });
+            }
             return true;
         },
         [state](bool /*ok*/) { state->found({}); });
