@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "21510b2a_ecba0df5",
+        "filename": "src/jamidht/archive_account_manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 913,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2025-12-09T16:18:41Z",
+      "side": 1,
+      "message": "`channel` is used after being moved on lines 944, 967 and 1075.",
+      "range": {
+        "startLine": 913,
+        "startChar": 59,
+        "endLine": 913,
+        "endChar": 77
+      },
+      "revId": "a1c127fb08ae87a9456e216670b01b1205bc7870",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
