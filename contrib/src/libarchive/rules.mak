@@ -1,5 +1,5 @@
 # LIBARCHIVE
-LIBARCHIVE_VERSION := 3.7.9
+LIBARCHIVE_VERSION := 3.8.4
 PKG_CPE += cpe:2.3:a:libarchive:libarchive:$(LIBARCHIVE_VERSION):*:*:*:*:*:*:*
 LIBARCHIVE_URL := https://github.com/libarchive/libarchive/releases/download/v$(LIBARCHIVE_VERSION)/libarchive-$(LIBARCHIVE_VERSION).tar.xz
 
@@ -30,9 +30,6 @@ libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz .sum-libarchive
 
 .libarchive: libarchive toolchain.cmake .sum-libarchive
 	cd $< && mkdir -p buildlib
-ifdef HAVE_ANDROID
-	cd $< && cp -R contrib/android/include/* $(PREFIX)/include
-endif
 	cd $< && cd buildlib && $(HOSTVARS) $(CMAKE) .. $(LIBARCHIVE_CMAKECONF)
 	cd $< && cd buildlib && $(MAKE) install
 	touch $@
