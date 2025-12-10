@@ -1,23 +1,25 @@
-From 487ce4368094fd3aeb5d632e33eeec0650377f5f Mon Sep 17 00:00:00 2001
-From: Felix Boucher <felix.boucher@savoirfairelinux.com>
-Date: Thu, 25 Sep 2025 17:06:19 -0400
-Subject: [PATCH] cmake: fix jami contrib linking
+From f7f0504f09e672764e48935f5eb78dec0b6061f3 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fran=C3=A7ois-Simon=20Fauteux-Chapleau?=
+ <francois-simon.fauteux-chapleau@savoirfairelinux.com>
+Date: Wed, 10 Dec 2025 23:19:32 -0500
+Subject: [PATCH] cmake: fix Jami contrib linking
 
 This commit aims to provide cmake modules for dependencies built by the
-jami contribs. In case vcpkg is not used, the build now fallsback to
+Jami contribs. In case vcpkg is not used, the build now falls back to
 some relative paths.
 ---
- CMakeLists.txt                           | 143 +++++++++++++++--------
- find_package/FindGnuTLS.cmake            |  32 +++++
- find_package/FindOpenSSL.cmake           |  30 +++++
+ CMakeLists.txt                           | 125 ++++++++++++++++-------
+ find_package/FindGnuTLS.cmake            |  32 ++++++
+ find_package/FindOpenSSL.cmake           |  30 ++++++
  find_package/Findasio.cmake              |  13 +++
- find_package/Findfmt.cmake               |  24 ++++
- find_package/Findjsoncpp.cmake           |  25 ++++
- find_package/Findllhttp.cmake            |  24 ++++
+ find_package/Findfmt.cmake               |  24 +++++
+ find_package/Findjsoncpp.cmake           |  25 +++++
+ find_package/Findllhttp.cmake            |  24 +++++
  find_package/Findmsgpack-cxx.cmake       |   9 ++
  find_package/Findrestinio.cmake          |  13 +++
- find_package/Findunofficial-argon2.cmake |  24 ++++
- 10 files changed, 289 insertions(+), 48 deletions(-)
+ find_package/Findsimdutf.cmake           |  25 +++++
+ find_package/Findunofficial-argon2.cmake |  24 +++++
+ 11 files changed, 307 insertions(+), 37 deletions(-)
  create mode 100644 find_package/FindGnuTLS.cmake
  create mode 100644 find_package/FindOpenSSL.cmake
  create mode 100644 find_package/Findasio.cmake
@@ -26,16 +28,17 @@ some relative paths.
  create mode 100644 find_package/Findllhttp.cmake
  create mode 100644 find_package/Findmsgpack-cxx.cmake
  create mode 100644 find_package/Findrestinio.cmake
+ create mode 100644 find_package/Findsimdutf.cmake
  create mode 100644 find_package/Findunofficial-argon2.cmake
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index dce30c70..1e7661d8 100644
+index 15aa1002..5744c53a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -20,6 +20,13 @@ project (opendht
      HOMEPAGE_URL "https://opendht.net/"
  )
- 
+
 +if(DEFINED CMAKE_TOOLCHAIN_FILE AND CMAKE_TOOLCHAIN_FILE MATCHES "vcpkg[\\/].*vcpkg.cmake$|vcpkg.cmake$")
 +    set(OPENDHT_USING_VCPKG TRUE)
 +else()
@@ -49,18 +52,18 @@ index dce30c70..1e7661d8 100644
 @@ -31,6 +38,9 @@ endif()
  include(cmake/CheckAtomic.cmake)
  include(CTest)
- 
+
 +if(MSVC)
 +    list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/find_package")
 +endif()
  # Options
  option (BUILD_SHARED_LIBS "Build shared library" ON)
  option (OPENDHT_USE_PKGCONFIG "Use pkg-config to find installed libraries where possible" ${POSSIBLE_PKGCONFIG})
-@@ -287,32 +297,57 @@ if (NOT MSVC)
+@@ -322,35 +332,64 @@ if (NOT MSVC)
  else () # MSVC
      include_directories(src/compat/msvc)
      include_directories(src/compat/win32)
--    
+-
 -    find_package(unofficial-argon2 CONFIG REQUIRED)
 +
 +    if(OPENDHT_USING_VCPKG)
@@ -70,7 +73,7 @@ index dce30c70..1e7661d8 100644
 +    endif()
      include_directories(${ARGON2_INCLUDEDIR})
      set(argon2_lib ", libargon2")
- 
+
 -    find_package(GnuTLS REQUIRED)
 +    if(OPENDHT_USING_VCPKG)
 +        find_package(GnuTLS CONFIG REQUIRED)
@@ -78,7 +81,7 @@ index dce30c70..1e7661d8 100644
 +        find_package(GnuTLS MODULE REQUIRED)
 +    endif()
      include_directories(${GNUTLS_INCLUDE_DIR})
--    
+-
 -    find_package(msgpack-cxx CONFIG REQUIRED)
 +
 +    if(OPENDHT_USING_VCPKG)
@@ -88,7 +91,7 @@ index dce30c70..1e7661d8 100644
 +    endif()
      get_target_property(MSGPACK_INCLUDEDIR msgpack-cxx INTERFACE_INCLUDE_DIRECTORIES)
      include_directories(${MSGPACK_INCLUDEDIR})
--    
+-
 -    find_package(jsoncpp CONFIG REQUIRED)
 +
 +    if(OPENDHT_USING_VCPKG)
@@ -98,7 +101,15 @@ index dce30c70..1e7661d8 100644
 +    endif()
      set(JSONCPP_FOUND TRUE)
      include_directories(${JSONCPP_INCLUDE_DIRS})
--    
+
+-    find_package(simdutf CONFIG REQUIRED)
++    if(OPENDHT_USING_VCPKG)
++        find_package(simdutf CONFIG REQUIRED)
++    else()
++        find_package(simdutf MODULE REQUIRED)
++    endif()
+     include_directories(${SIMDUTF_INCLUDE_DIRS})
+-
 -    find_package(fmt CONFIG REQUIRED)
 +
 +    if(OPENDHT_USING_VCPKG)
@@ -107,13 +118,13 @@ index dce30c70..1e7661d8 100644
 +        find_package(fmt MODULE REQUIRED)
 +    endif()
      include_directories(${FMT_INCLUDEDIR})
--    
+-
 +
      if(OPENDHT_TOOLS)
          find_package(unofficial-readline-win32 CONFIG REQUIRED)
          include_directories(${READLINE_INCLUDEDIR})
      endif()
- 
+
      if (OPENDHT_HTTP OR OPENDHT_PEER_DISCOVERY)
 -        find_package(asio CONFIG REQUIRED)
 +        if(OPENDHT_USING_VCPKG)
@@ -125,9 +136,9 @@ index dce30c70..1e7661d8 100644
          find_path(ASIO_INCLUDE_DIR asio.hpp REQUIRED HINTS ${ASIO_INCLUDE_DIRS}/asio/include)
          message(STATUS "Found ASIO ${ASIO_INCLUDE_DIR}")
      else()
-@@ -320,40 +355,52 @@ else () # MSVC
+@@ -358,40 +397,52 @@ else () # MSVC
      endif ()
- 
+
      if (OPENDHT_HTTP)
 -        find_package(restinio CONFIG REQUIRED)
 +        if(OPENDHT_USING_VCPKG)
@@ -136,7 +147,7 @@ index dce30c70..1e7661d8 100644
 +            find_package(restinio MODULE REQUIRED)
 +        endif()
          set(restinio_target restinio::restinio)
- 
+
 -        find_package(llhttp CONFIG REQUIRED)
 +        if(OPENDHT_USING_VCPKG)
 +            find_package(llhttp CONFIG REQUIRED)
@@ -157,13 +168,13 @@ index dce30c70..1e7661d8 100644
      else()
          set(OPENDHT_PROXY_OPENSSL OFF)
      endif()
--    
+-
 -    message(STATUS "Discovering external non-CMake libraries")
 -    find_library(NETTLE_LIBRARY NAMES nettle libnettle REQUIRED)
 -    find_library(HOGWEED_LIBRARY NAMES hogweed REQUIRED)
 -    find_library(TASN_LIBRARY NAMES tasn1 REQUIRED)
 -    find_path(NETTLE_INCLUDE_DIR nettle/aes.h REQUIRED)
--    
+-
 -    add_library(nettle_lib STATIC IMPORTED)
 -    set_target_properties(nettle_lib PROPERTIES
 -        IMPORTED_LOCATION ${NETTLE_LIBRARY}
@@ -177,7 +188,7 @@ index dce30c70..1e7661d8 100644
 -    set_target_properties(tasn1_lib PROPERTIES
 -        IMPORTED_LOCATION ${TASN_LIBRARY}
 -    )
--    
+-
 +    if(OPENDHT_USING_VCPKG)
 +        message(STATUS "Discovering external non-CMake libraries")
 +        find_library(NETTLE_LIBRARY NAMES nettle libnettle REQUIRED HINTS ${PROJECT_SOURCE_DIR}/../)
@@ -201,11 +212,11 @@ index dce30c70..1e7661d8 100644
 +    endif()
 +
  endif ()
- 
+
  # Definitions
 diff --git a/find_package/FindGnuTLS.cmake b/find_package/FindGnuTLS.cmake
 new file mode 100644
-index 00000000..2a48912b
+index 00000000..a3897a4a
 --- /dev/null
 +++ b/find_package/FindGnuTLS.cmake
 @@ -0,0 +1,32 @@
@@ -244,7 +255,7 @@ index 00000000..2a48912b
 \ No newline at end of file
 diff --git a/find_package/FindOpenSSL.cmake b/find_package/FindOpenSSL.cmake
 new file mode 100644
-index 00000000..0a13bf3e
+index 00000000..cdc11918
 --- /dev/null
 +++ b/find_package/FindOpenSSL.cmake
 @@ -0,0 +1,30 @@
@@ -281,7 +292,7 @@ index 00000000..0a13bf3e
 \ No newline at end of file
 diff --git a/find_package/Findasio.cmake b/find_package/Findasio.cmake
 new file mode 100644
-index 00000000..189a00fc
+index 00000000..d04dd848
 --- /dev/null
 +++ b/find_package/Findasio.cmake
 @@ -0,0 +1,13 @@
@@ -301,7 +312,7 @@ index 00000000..189a00fc
 \ No newline at end of file
 diff --git a/find_package/Findfmt.cmake b/find_package/Findfmt.cmake
 new file mode 100644
-index 00000000..cfcb8e1c
+index 00000000..a7560683
 --- /dev/null
 +++ b/find_package/Findfmt.cmake
 @@ -0,0 +1,24 @@
@@ -393,7 +404,7 @@ index 00000000..34450ccc
 +endif()
 diff --git a/find_package/Findmsgpack-cxx.cmake b/find_package/Findmsgpack-cxx.cmake
 new file mode 100644
-index 00000000..5f38b9b9
+index 00000000..6a679faa
 --- /dev/null
 +++ b/find_package/Findmsgpack-cxx.cmake
 @@ -0,0 +1,9 @@
@@ -426,9 +437,41 @@ index 00000000..2c527388
 +set_target_properties(restinio::restinio PROPERTIES
 +    INTERFACE_INCLUDE_DIRECTORIES "${Restinio_INCLUDE_DIR}"
 +)
+diff --git a/find_package/Findsimdutf.cmake b/find_package/Findsimdutf.cmake
+new file mode 100644
+index 00000000..65b428ae
+--- /dev/null
++++ b/find_package/Findsimdutf.cmake
+@@ -0,0 +1,25 @@
++if(TARGET simdutf)
++    set(simdutf_FOUND TRUE)
++    return()
++endif()
++
++if(NOT simdutf_INCLUDEDIR)
++    set(simdutf_INCLUDEDIR "${PROJECT_SOURCE_DIR}/../simdutf/include" CACHE PATH "simdutf include dir")
++endif()
++
++if(NOT simdutf_LIBRARY)
++    find_library(simdutf_LIBRARY
++        NAMES simdutf
++        HINTS "${PROJECT_SOURCE_DIR}/../simdutf/build/src/Release"
++    )
++endif()
++
++if(simdutf_INCLUDEDIR AND simdutf_LIBRARY)
++    add_library(simdutf::simdutf UNKNOWN IMPORTED)
++    set_target_properties(simdutf::simdutf PROPERTIES
++        IMPORTED_LOCATION "${simdutf_LIBRARY}"
++        INTERFACE_INCLUDE_DIRECTORIES "${simdutf_INCLUDEDIR}"
++    )
++else()
++    message(FATAL_ERROR "simdutf library not found.  ${PROJECT_SOURCE_DIR}/../simdutf/build/src/Release was used")
++endif()
+\ No newline at end of file
 diff --git a/find_package/Findunofficial-argon2.cmake b/find_package/Findunofficial-argon2.cmake
 new file mode 100644
-index 00000000..07a68a77
+index 00000000..5ce72bad
 --- /dev/null
 +++ b/find_package/Findunofficial-argon2.cmake
 @@ -0,0 +1,24 @@
@@ -457,6 +500,6 @@ index 00000000..07a68a77
 +    message(FATAL_ERROR "Argon2 library not found. ${PROJECT_SOURCE_DIR}/vs2015/Argon2Ref/vs2015/build was used")
 +endif()
 \ No newline at end of file
--- 
-2.49.0.windows.1
+--
+2.40.1.windows.1
 

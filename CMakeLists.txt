@@ -483,6 +483,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/include;"
        )
    endif()
 
@@ -598,6 +599,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/build/Release/git2.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/dhtnet/build/Release/dhtnet.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/simdutf/build/src/Release/simdutf.lib
         /ignore:4006"
    )
 

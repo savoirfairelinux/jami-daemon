@@ -8,7 +8,8 @@
         "gnutls",
         "jsoncpp",
         "msgpack",
-        "restinio"
+        "restinio",
+        "simdutf"
     ],
     "use_cmake": true,
     "defines": [
