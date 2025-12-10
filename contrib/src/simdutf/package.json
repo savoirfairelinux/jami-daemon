@@ -1,0 +1,23 @@
+{
+    "name": "simdutf",
+    "version": "v7.5.0",
+    "url": "https://github.com/simdutf/simdutf/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "use_cmake": true,
+    "defines": [
+        "BUILD_SHARED_LIBS=0",
+        "BUILD_TESTING=0",
+        "SIMDUTF_TESTS=0",
+        "SIMDUTF_TOOLS=0",
+        "SIMDUTF_CXX_STANDARD=17"
+    ],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env": "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
