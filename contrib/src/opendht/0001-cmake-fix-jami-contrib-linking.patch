@@ -1,23 +1,24 @@
-From 487ce4368094fd3aeb5d632e33eeec0650377f5f Mon Sep 17 00:00:00 2001
-From: Felix Boucher <felix.boucher@savoirfairelinux.com>
-Date: Thu, 25 Sep 2025 17:06:19 -0400
-Subject: [PATCH] cmake: fix jami contrib linking
+From 89b1c300b703c1b86077a87ef4e370d6fc984d4d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Fran=C3=A7ois-Simon=20Fauteux-Chapleau?=
+ <francois-simon.fauteux-chapleau@savoirfairelinux.com>
+Date: Wed, 10 Dec 2025 15:48:40 -0500
+Subject: [PATCH] cmake: fix Jami contrib linking
 
 This commit aims to provide cmake modules for dependencies built by the
-jami contribs. In case vcpkg is not used, the build now fallsback to
+Jami contribs. In case vcpkg is not used, the build now falls back to
 some relative paths.
 ---
- CMakeLists.txt                           | 143 +++++++++++++++--------
- find_package/FindGnuTLS.cmake            |  32 +++++
- find_package/FindOpenSSL.cmake           |  30 +++++
+ CMakeLists.txt                           | 125 ++++++++++++++++-------
+ find_package/FindGnuTLS.cmake            |  32 ++++++
+ find_package/FindOpenSSL.cmake           |  30 ++++++
  find_package/Findasio.cmake              |  13 +++
- find_package/Findfmt.cmake               |  24 ++++
- find_package/Findjsoncpp.cmake           |  25 ++++
- find_package/Findllhttp.cmake            |  24 ++++
+ find_package/Findfmt.cmake               |  24 +++++
+ find_package/Findjsoncpp.cmake           |  25 +++++
+ find_package/Findllhttp.cmake            |  24 +++++
  find_package/Findmsgpack-cxx.cmake       |   9 ++
  find_package/Findrestinio.cmake          |  13 +++
- find_package/Findunofficial-argon2.cmake |  24 ++++
- 10 files changed, 289 insertions(+), 48 deletions(-)
+ find_package/Findunofficial-argon2.cmake |  24 +++++
+ 10 files changed, 282 insertions(+), 37 deletions(-)
  create mode 100644 find_package/FindGnuTLS.cmake
  create mode 100644 find_package/FindOpenSSL.cmake
  create mode 100644 find_package/Findasio.cmake
@@ -29,7 +30,7 @@ some relative paths.
  create mode 100644 find_package/Findunofficial-argon2.cmake
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index dce30c70..1e7661d8 100644
+index 15aa1002..5744c53a 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -20,6 +20,13 @@ project (opendht
@@ -56,7 +57,7 @@ index dce30c70..1e7661d8 100644
  # Options
  option (BUILD_SHARED_LIBS "Build shared library" ON)
  option (OPENDHT_USE_PKGCONFIG "Use pkg-config to find installed libraries where possible" ${POSSIBLE_PKGCONFIG})
-@@ -287,32 +297,57 @@ if (NOT MSVC)
+@@ -322,35 +332,64 @@ if (NOT MSVC)
  else () # MSVC
      include_directories(src/compat/msvc)
      include_directories(src/compat/win32)
@@ -98,6 +99,14 @@ index dce30c70..1e7661d8 100644
 +    endif()
      set(JSONCPP_FOUND TRUE)
      include_directories(${JSONCPP_INCLUDE_DIRS})
+ 
+-    find_package(simdutf CONFIG REQUIRED)
++    if(OPENDHT_USING_VCPKG)
++        find_package(simdutf CONFIG REQUIRED)
++    else()
++        find_package(simdutf MODULE REQUIRED)
++    endif()
+     include_directories(${SIMDUTF_INCLUDE_DIRS})
 -    
 -    find_package(fmt CONFIG REQUIRED)
 +
@@ -125,7 +134,7 @@ index dce30c70..1e7661d8 100644
          find_path(ASIO_INCLUDE_DIR asio.hpp REQUIRED HINTS ${ASIO_INCLUDE_DIRS}/asio/include)
          message(STATUS "Found ASIO ${ASIO_INCLUDE_DIR}")
      else()
-@@ -320,40 +355,52 @@ else () # MSVC
+@@ -358,40 +397,52 @@ else () # MSVC
      endif ()
  
      if (OPENDHT_HTTP)
@@ -458,5 +467,5 @@ index 00000000..07a68a77
 +endif()
 \ No newline at end of file
 -- 
-2.49.0.windows.1
+2.34.1
 
