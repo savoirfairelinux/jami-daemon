@@ -104,7 +104,6 @@ libjami_la_SOURCES = \
 		compiler_intrinsics.h \
 		account_schema.h \
 		registration_states.h \
-		map_utils.h \
 		ring_api.cpp \
 		rational.h \
 		base64.h \

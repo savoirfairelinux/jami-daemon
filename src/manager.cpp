@@ -26,7 +26,6 @@
 
 #include "fileutils.h"
 #include "gittransport.h"
-#include "map_utils.h"
 #include "jami.h"
 #include "media_attribute.h"
 #include "account.h"
