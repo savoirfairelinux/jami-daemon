@@ -27,7 +27,6 @@
 #include "jami/call_const.h"
 #include "client/ring_signal.h"
 #include "connectivity/sip_utils.h"
-#include "map_utils.h"
 #include "call_factory.h"
 #include "string_utils.h"
 #include "enumclass_utils.h"
@@ -360,17 +359,17 @@ Call::getDetails() const
 {
     auto conference = conf_.lock();
     return {
-        {libjami::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
-        {libjami::Call::Details::PEER_NUMBER, peerNumber_},
-        {libjami::Call::Details::DISPLAY_NAME, peerDisplayName_},
-        {libjami::Call::Details::CALL_STATE, getStateStr()},
-        {libjami::Call::Details::CONF_ID, conference ? conference->getConfId() : ""},
-        {libjami::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
-        {libjami::Call::Details::ACCOUNTID, getAccountId()},
-        {libjami::Call::Details::TO_USERNAME, toUsername()},
-        {libjami::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
-        {libjami::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
-        {libjami::Call::Details::AUDIO_ONLY, std::string(bool_to_str(not hasVideo()))},
+        {libjami::Call::Details::CALL_TYPE,       std::to_string((unsigned) type_)                                      },
+        {libjami::Call::Details::PEER_NUMBER,     peerNumber_                                                           },
+        {libjami::Call::Details::DISPLAY_NAME,    peerDisplayName_                                                      },
+        {libjami::Call::Details::CALL_STATE,      getStateStr()                                                         },
+        {libjami::Call::Details::CONF_ID,         conference ? conference->getConfId() : ""                             },
+        {libjami::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)                                      },
+        {libjami::Call::Details::ACCOUNTID,       getAccountId()                                                        },
+        {libjami::Call::Details::TO_USERNAME,     toUsername()                                                          },
+        {libjami::Call::Details::AUDIO_MUTED,     std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_AUDIO)))},
+        {libjami::Call::Details::VIDEO_MUTED,     std::string(bool_to_str(isCaptureDeviceMuted(MediaType::MEDIA_VIDEO)))},
+        {libjami::Call::Details::AUDIO_ONLY,      std::string(bool_to_str(not hasVideo()))                              },
     };
 }
 
