@@ -37,7 +37,6 @@ list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/logger.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/manager.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/manager.h"
-      "${CMAKE_CURRENT_SOURCE_DIR}/map_utils.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/noncopyable.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/preferences.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/preferences.h"
