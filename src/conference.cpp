@@ -680,15 +680,6 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     }
 #endif
 
-    auto remoteList = remoteMediaList;
-    for (auto it = remoteList.begin(); it != remoteList.end();) {
-        if (it->at(libjami::Media::MediaAttributeKey::MUTED) == TRUE_STR
-            or it->at(libjami::Media::MediaAttributeKey::ENABLED) == FALSE_STR) {
-            it = remoteList.erase(it);
-        } else {
-            ++it;
-        }
-    }
     // Create minimum media list (ignore muted and disabled medias)
     std::vector<libjami::MediaMap> newMediaList;
     newMediaList.reserve(remoteMediaList.size());
