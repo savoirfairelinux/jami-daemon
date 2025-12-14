@@ -119,7 +119,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
 
         if (params.framerate) {
 #ifdef _WIN32
-            // On windows, framerate settings don't reduce to avrational values
+            // On Windows, framerate settings don't reduce to avrational values
             // that correspond to valid video device formats.
             // e.g. A the rational<double>(10000000, 333333) or 30.000030000
             //      will be reduced by av_reduce to 999991/33333 or 30.00003000003
@@ -190,7 +190,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
     } else if (inputCtx_->nb_streams > 0 && inputCtx_->streams[0]->codecpar) {
         baseWidth_ = inputCtx_->streams[0]->codecpar->width;
         baseHeight_ = inputCtx_->streams[0]->codecpar->height;
-        JAMI_LOG("Opened input Using format {:s} and resolution {:d}x{:d}", params.format, baseWidth_, baseHeight_);
+        JAMI_LOG("Opened input using format {:s} and resolution {:d}x{:d}", params.format, baseWidth_, baseHeight_);
     }
 
     return ret;
@@ -556,7 +556,7 @@ MediaDecoder::setupStream()
                 accel_.reset();
                 continue;
             } else {
-                // Succeed to open codec
+                // Codec opened successfully.
                 JAMI_WARN("Using hardware decoding for %s with %s",
                           avcodec_get_name(decoderCtx_->codec_id),
                           it.getName().c_str());
@@ -573,7 +573,7 @@ MediaDecoder::setupStream()
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency() / 2));
     if (emulateRate_)
         JAMI_DBG() << "Using framerate emulation";
-    startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
+    startTime_ = av_gettime(); // Used to set pts after decoding, and for rate emulation
 
 #ifdef ENABLE_HWACCEL
     if (!accel_) {
