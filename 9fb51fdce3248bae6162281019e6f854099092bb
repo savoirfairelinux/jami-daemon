@@ -1,0 +1,228 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "573e968f_5dde345e",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should these spaces be removed?",
+      "range": {
+        "startLine": 32,
+        "startChar": 0,
+        "endLine": 32,
+        "endChar": 10
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a89fc821_c020f287",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should `asio` be written as `ASIO`?\n\nhttps://en.wikipedia.org/wiki/Audio_Stream_Input/Output",
+      "range": {
+        "startLine": 78,
+        "startChar": 18,
+        "endLine": 78,
+        "endChar": 22
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d116a16b_014a0ac5",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should `needed` be `required`?",
+      "range": {
+        "startLine": 78,
+        "startChar": 39,
+        "endLine": 78,
+        "endChar": 45
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ddf0c747_c85eb773",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should `Note:` be written as `NOTE:`?",
+      "range": {
+        "startLine": 78,
+        "startChar": 12,
+        "endLine": 78,
+        "endChar": 17
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1a214efd_c6f3b53f",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 228,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should the space be removed?",
+      "range": {
+        "startLine": 228,
+        "startChar": 41,
+        "endLine": 228,
+        "endChar": 42
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "860a206e_cf8599ac",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should the 3-character ellipsis `...` be replaced with a 1-character ellipsis `…`?",
+      "range": {
+        "startLine": 292,
+        "startChar": 52,
+        "endLine": 292,
+        "endChar": 55
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a6891e4b_4fdc6ea5",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should `dhtnet` be written as `DHTNet`?\n\nhttps://git.jami.net/savoirfairelinux/dhtnet",
+      "range": {
+        "startLine": 293,
+        "startChar": 34,
+        "endLine": 293,
+        "endChar": 40
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5a5fb122_c37c2b24",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 300,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should the 3-character ellipsis `...` be replaced with a 1-character ellipsis `…`?",
+      "range": {
+        "startLine": 300,
+        "startChar": 35,
+        "endLine": 300,
+        "endChar": 38
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "409a2555_8713c4cd",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 304,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Should the 3-character ellipsis `...` be replaced with a 1-character ellipsis `…`?",
+      "range": {
+        "startLine": 304,
+        "startChar": 54,
+        "endLine": 304,
+        "endChar": 57
+      },
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8f196d42_222872b1",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 330,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T11:16:11Z",
+      "side": 1,
+      "message": "Only require 1 trailing blank line?",
+      "revId": "9fb51fdce3248bae6162281019e6f854099092bb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
