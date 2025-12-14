@@ -39,6 +39,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "de093c81_1fd9f8d4",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2593,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2025-12-14T10:55:46Z",
+      "side": 1,
+      "message": "Should `hanging up` be changed to `ending`? Thank you",
+      "range": {
+        "startLine": 2593,
+        "startChar": 59,
+        "endLine": 2593,
+        "endChar": 69
+      },
+      "revId": "113aee0a181b44cdb58e4c3c2f1025cafc4a157a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "2e7c3ef9_b948041f",
         "filename": "src/manager.cpp",
         "patchSetId": 1
