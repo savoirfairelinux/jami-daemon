@@ -337,8 +337,7 @@ PluginsTest::testCertificateVerification()
     Manager::instance().getJamiPluginManager().addPluginAuthority(*pluginCert);
     CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, true)->toString()
                    == pluginCert->toString());
-    CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, false)->toString()
-                   == pluginCert->toString());
+    CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginCertificate(jplPath_, false));
     // create a plugin with not the same certificate
 
     auto pluginCertNotSignByIssuer = PluginUtils::readPluginCertificateFromArchive(pluginNotSignByIssuer_);
