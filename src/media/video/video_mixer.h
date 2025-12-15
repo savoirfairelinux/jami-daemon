@@ -51,7 +51,11 @@ struct SourceInfo
 };
 using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
-enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
+enum class Layout {
+    GRID,               // The participants are shown in equal-sized grid cells
+    ONE_BIG_WITH_SMALL, // One active (speaking) participant is shown big, others in small previews
+    ONE_BIG             // Only one active (speaking) participant is shown
+};
 
 class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
 {
@@ -84,7 +88,7 @@ public:
     void setActiveStream(const std::string& id);
     void resetActiveStream()
     {
-        activeStream_ = {};
+        activeStream_.clear();
         updateLayout();
     }
 
@@ -150,47 +154,62 @@ private:
     NON_COPYABLE(VideoMixer);
     struct VideoMixerSource;
 
-    bool render_frame(VideoFrame& output,
-                      const std::shared_ptr<VideoFrame>& input,
-                      std::unique_ptr<VideoMixerSource>& source);
+    bool renderFrame(VideoFrame& output,
+                     const std::shared_ptr<VideoFrame>& input,
+                     std::unique_ptr<VideoMixerSource>& source);
 
-    void calc_position(std::unique_ptr<VideoMixerSource>& source, const std::shared_ptr<VideoFrame>& input, int index);
+    void calculatePosition(std::unique_ptr<VideoMixerSource>& source,
+                           const std::shared_ptr<VideoFrame>& input,
+                           int index);
 
     void startSink();
     void stopSink();
 
-    void process();
-
-    const std::string id_;
-    int width_ = 0;
-    int height_ = 0;
-    AVPixelFormat format_ = AV_PIX_FMT_YUV422P;
-    std::shared_mutex rwMutex_;
-
-    std::shared_ptr<SinkClient> sink_;
-
-    std::chrono::time_point<std::chrono::steady_clock> nextProcess_;
-    std::mutex localInputsMtx_;
-    std::vector<std::shared_ptr<VideoFrameActiveWriter>> localInputs_ {};
     void stopInput(const std::shared_ptr<VideoFrameActiveWriter>& input);
 
-    VideoScaler scaler_;
+    // void setup() ?
+    void process();
+    // void cleanup() ?
 
-    ThreadLoop loop_; // as to be last member
+private:
+    // Important to keep this order for id_, sink_ and loop_
+    // Because these attributes are initialized in the member initializer list
+    const std::string id_;
+    std::shared_ptr<SinkClient> sink_;
+    ThreadLoop loop_;
 
     Layout currentLayout_ {Layout::GRID};
-    std::list<std::unique_ptr<VideoMixerSource>> sources_;
 
-    // We need to convert call to frame
-    mutable std::mutex videoToStreamInfoMtx_ {};
-    std::map<Observable<std::shared_ptr<MediaFrame>>*, StreamInfo> videoToStreamInfo_ {};
+    // Dimensions of output frames produced by the mixer
+    int frameWidth_ = 0;
+    int frameHeight_ = 0;
+
+    // Used for scaling frames
+    VideoScaler scaler_;
+
+    // Format of the pixels in the output frames
+    AVPixelFormat pixelFormat_ = AV_PIX_FMT_YUV422P;
+
+    std::shared_mutex sourcesMtx_;
+    std::list<std::unique_ptr<VideoMixerSource>> sources_;
 
     std::mutex audioOnlySourcesMtx_;
     std::set<std::pair<std::string, std::string>> audioOnlySources_;
+
+    std::mutex localInputsMtx_;
+    std::vector<std::shared_ptr<VideoFrameActiveWriter>> localInputs_ {};
+
+    mutable std::mutex videoToStreamInfoMtx_ {};
+    // Lookup table to get callId/streamId for a frame
+    std::map<Observable<std::shared_ptr<MediaFrame>>*, StreamInfo> videoToStreamInfo_ {};
+
     std::string activeStream_ {};
 
     std::atomic_int layoutUpdated_ {0};
     OnSourcesUpdatedCb onSourcesUpdated_ {};
+
+    // Target timestamp for next frame to keep consistent FPS output
+    std::chrono::time_point<std::chrono::steady_clock> nextProcess_;
 
     int64_t startTime_;
     int64_t lastTimestamp_;
