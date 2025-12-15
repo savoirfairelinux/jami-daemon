@@ -47,19 +47,20 @@ struct VideoMixer::VideoMixerSource
     Observable<std::shared_ptr<MediaFrame>>* source {nullptr};
     int rotation {0};
     std::unique_ptr<MediaFilter> rotationFilter {nullptr};
-    std::shared_ptr<VideoFrame> render_frame;
+    std::shared_ptr<VideoFrame> renderFrame;
+
     void atomic_copy(const VideoFrame& other)
     {
-        std::lock_guard lock(mutex_);
+        std::lock_guard lock(renderFrameMtx_);
         auto newFrame = std::make_shared<VideoFrame>();
         newFrame->copyFrom(other);
-        render_frame = newFrame;
+        renderFrame = newFrame;
     }
 
     std::shared_ptr<VideoFrame> getRenderFrame()
     {
-        std::lock_guard lock(mutex_);
-        return render_frame;
+        std::lock_guard lock(renderFrameMtx_);
+        return renderFrame;
     }
 
     // Current render information
@@ -70,7 +71,7 @@ struct VideoMixer::VideoMixerSource
     bool hasVideo {true};
 
 private:
-    std::mutex mutex_;
+    std::mutex renderFrameMtx_;
 };
 
 static constexpr const auto MIXER_FRAMERATE = 30;
@@ -84,6 +85,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
 {
     // Local video camera is the main participant
     if (not localInput.empty() && attachHost) {
+        // as of DEC 15 2025 this is dead code. will potentially be removed when purpose is cleared.
         auto videoInput = getVideoInput(localInput);
         localInputs_.emplace_back(videoInput);
         attachVideo(videoInput.get(), "", sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));
@@ -91,7 +93,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
 
-    JAMI_DBG("[mixer:%s] New instance created", id_.c_str());
+    JAMI_DEBUG("[mixer:{}] New instance created", id_);
 }
 
 VideoMixer::~VideoMixer()
@@ -101,7 +103,7 @@ VideoMixer::~VideoMixer()
 
     loop_.join();
 
-    JAMI_DBG("[mixer:%s] Instance destroyed", id_.c_str());
+    JAMI_DEBUG("[mixer:{}] Instance destroyed", id_);
 }
 
 void
@@ -114,17 +116,18 @@ VideoMixer::switchInputs(const std::vector<std::string>& inputs)
     newInputs.reserve(inputs.size());
     for (const auto& input : inputs) {
         auto videoInput = getVideoInput(input);
-        // Note, video can be a previously stopped device (eg. restart a screen sharing)
+        // Note, video can be a previously stopped device (eg. when restarting a screen share)
         // in this case, the videoInput will be found and must be restarted
         videoInput->restart();
         auto it = std::find(localInputs_.cbegin(), localInputs_.cend(), videoInput);
-        auto onlyDetach = it != localInputs_.cend();
-        if (onlyDetach) {
+        if (it != localInputs_.cend()) {
             videoInput->detach(this);
             localInputs_.erase(it);
         }
+
         newInputs.emplace_back(std::move(videoInput));
     }
+
     // Stop other video inputs
     stopInputs();
     localInputs_ = std::move(newInputs);
@@ -161,7 +164,7 @@ VideoMixer::setActiveStream(const std::string& id)
 void
 VideoMixer::updateLayout()
 {
-    if (activeStream_ == "")
+    if (activeStream_.empty())
         currentLayout_ = Layout::GRID;
     layoutUpdated_ += 1;
 }
@@ -173,11 +176,14 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
 {
     if (!frame)
         return;
-    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+
+    JAMI_DEBUG("[mixer:{}] Attaching video with streamId {}", id_, streamId);
+
     {
         std::lock_guard lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
     }
+
     frame->attach(this);
 }
 
@@ -186,47 +192,50 @@ VideoMixer::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
 {
     if (!frame)
         return;
-    bool detach = false;
+
+    bool shouldDetach = false;
+
     std::unique_lock lk(videoToStreamInfoMtx_);
     auto it = videoToStreamInfo_.find(frame);
     if (it != videoToStreamInfo_.end()) {
-        JAMI_DBG("Detaching video of call %s", it->second.callId.c_str());
-        detach = true;
-        // Handle the case where the current shown source leave the conference
-        // Note, do not call resetActiveStream() to avoid multiple updates
+        JAMI_DEBUG("[mixer:{}] Detaching video of call {}", id_, it->second.callId);
+        shouldDetach = true;
+        // Handle the case where the currently shown source leaves the conference
+        // Note: do not call resetActiveStream() to avoid multiple updates
         if (verifyActive(it->second.streamId))
-            activeStream_ = {};
+            activeStream_.clear();
         videoToStreamInfo_.erase(it);
     }
+
     lk.unlock();
-    if (detach)
+    if (shouldDetach)
         frame->detach(this);
 }
 
 void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    std::unique_lock lock(rwMutex_);
+    std::unique_lock lock(sourcesMtx_);
 
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
-    src->render_frame = std::make_shared<VideoFrame>();
+    src->renderFrame = std::make_shared<VideoFrame>();
     src->source = ob;
-    JAMI_DBG("Add new source [%p]", src.get());
+    JAMI_DEBUG("[mixer:{}] Adding new source [{}]", id_, fmt::ptr(src.get()));
     sources_.emplace_back(std::move(src));
-    JAMI_DEBUG("Total sources: {:d}", sources_.size());
+    JAMI_DEBUG("[mixer:{}] Total number of sources: {}", id_, sources_.size());
     updateLayout();
 }
 
 void
 VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
-    std::unique_lock lock(rwMutex_);
+    std::unique_lock lock(sourcesMtx_);
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            JAMI_DBG("Remove source [%p]", x.get());
+            JAMI_DEBUG("[mixer:{}] Removing source [{}]", id_, fmt::ptr(x.get()));
             sources_.remove(x);
-            JAMI_DEBUG("Total sources: {:d}", sources_.size());
+            JAMI_DEBUG("[mixer:{}] Total number of sources: {}", id_, sources_.size());
             updateLayout();
             break;
         }
@@ -236,7 +245,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 void
 VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& frame_p)
 {
-    std::shared_lock lock(rwMutex_);
+    std::shared_lock lock(sourcesMtx_);
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
@@ -247,7 +256,7 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::share
                                                             AV_PIX_FMT_NV12);
                 x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[mixer:%s] Accel failure: %s", id_.c_str(), e.what());
+                JAMI_ERROR("[mixer:{}] Accel failure: {}", id_, e.what());
                 return;
             }
 #else
@@ -262,20 +271,21 @@ void
 VideoMixer::process()
 {
     nextProcess_ += std::chrono::duration_cast<std::chrono::microseconds>(FRAME_DURATION);
+
     const auto delay = nextProcess_ - std::chrono::steady_clock::now();
     if (delay.count() > 0)
         std::this_thread::sleep_for(delay);
 
-    // Nothing to do.
-    if (width_ == 0 or height_ == 0) {
+    if (frameWidth_ == 0 or frameHeight_ == 0) {
+        // Nothing to do
         return;
     }
 
     VideoFrame& output = getNewFrame();
     try {
-        output.reserve(format_, width_, height_);
+        output.reserve(pixelFormat_, frameWidth_, frameHeight_);
     } catch (const std::bad_alloc& e) {
-        JAMI_ERR("[mixer:%s] VideoFrame::allocBuffer() failed", id_.c_str());
+        JAMI_ERROR("[mixer:{}] VideoFrame::allocBuffer() failed: {}", id_, e.what());
         return;
     }
 
@@ -283,7 +293,7 @@ VideoMixer::process()
 
     {
         std::lock_guard lk(audioOnlySourcesMtx_);
-        std::shared_lock lock(rwMutex_);
+        std::shared_lock lock(sourcesMtx_);
 
         int i = 0;
         bool activeFound = false;
@@ -338,7 +348,7 @@ VideoMixer::process()
 
                 if (!input->height() or !input->width()) {
                     successfullyRendered = true;
-                    fooInput->reserve(format_, width_, height_);
+                    fooInput->reserve(pixelFormat_, frameWidth_, frameHeight_);
                     blackFrame = true;
                 } else {
                     fooInput.swap(input);
@@ -352,13 +362,13 @@ VideoMixer::process()
                 }
 
                 if (needsUpdate)
-                    calc_position(x, fooInput, wantedIndex);
+                    calculatePosition(x, fooInput, wantedIndex);
 
                 if (!blackFrame) {
                     if (fooInput)
-                        successfullyRendered |= render_frame(output, fooInput, x);
+                        successfullyRendered |= renderFrame(output, fooInput, x);
                     else
-                        JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
+                        JAMI_WARNING("[mixer:{}] Nothing to render for source [{}]", id_, fmt::ptr(x->source));
                 }
 
                 x->hasVideo = !blackFrame && successfullyRendered;
@@ -366,6 +376,7 @@ VideoMixer::process()
                     updateLayout();
                     needsUpdate = true;
                 }
+
             } else if (needsUpdate) {
                 x->x = 0;
                 x->y = 0;
@@ -399,11 +410,11 @@ VideoMixer::process()
 }
 
 bool
-VideoMixer::render_frame(VideoFrame& output,
-                         const std::shared_ptr<VideoFrame>& input,
-                         std::unique_ptr<VideoMixerSource>& source)
+VideoMixer::renderFrame(VideoFrame& output,
+                        const std::shared_ptr<VideoFrame>& input,
+                        std::unique_ptr<VideoMixerSource>& source)
 {
-    if (!width_ or !height_ or !input->pointer() or input->pointer()->format == -1)
+    if (!frameWidth_ or !frameHeight_ or !input->pointer() or input->pointer()->format == -1)
         return false;
 
     int cell_width = source->w;
@@ -431,98 +442,103 @@ VideoMixer::render_frame(VideoFrame& output,
 }
 
 void
-VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::shared_ptr<VideoFrame>& input, int index)
+VideoMixer::calculatePosition(std::unique_ptr<VideoMixerSource>& source,
+                              const std::shared_ptr<VideoFrame>& input,
+                              int index)
 {
-    if (!width_ or !height_)
+    if (!frameWidth_ or !frameHeight_)
         return;
 
     // Compute cell size/position
-    int cell_width, cell_height, cellW_off, cellH_off;
+    int cellWidth, cellHeight, cellWidthOffset, cellHeightOffset;
+
+    // This function is only called by process(), which holds sourcesMtx_ :)
     const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
+
     const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n) : ceil(sqrt(n));
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
         // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
         // The rest is the active source
-        cell_width = width_;
-        cell_height = height_ - height_ / zoom;
+        cellWidth = frameWidth_;
+        cellHeight = frameHeight_ - frameHeight_ / zoom;
     } else {
-        cell_width = width_ / zoom;
-        cell_height = height_ / zoom;
+        cellWidth = frameWidth_ / zoom;
+        cellHeight = frameHeight_ / zoom;
 
         if (n == 1) {
             // On some platforms (at least macOS/android) - Having one frame at the same
             // size of the mixer cause it to be grey.
             // Removing some pixels solve this. We use 16 because it's a multiple of 8
             // (value that we prefer for video management)
-            cell_width -= 16;
-            cell_height -= 16;
+            cellWidth -= 16;
+            cellHeight -= 16;
         }
     }
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
         if (index == 0) {
-            cellW_off = 0;
-            cellH_off = height_ / zoom; // First line height
+            cellWidthOffset = 0;
+            cellHeightOffset = frameHeight_ / zoom; // First line height
         } else {
-            cellW_off = (index - 1) * cell_width;
+            cellWidthOffset = (index - 1) * cellWidth;
             // Show sources in center
-            cellW_off += (width_ - (n - 1) * cell_width) / 2;
-            cellH_off = 0;
+            cellWidthOffset += (frameWidth_ - (n - 1) * cellWidth) / 2;
+            cellHeightOffset = 0;
         }
     } else {
-        cellW_off = (index % zoom) * cell_width;
+        cellWidthOffset = (index % zoom) * cellWidth;
         if (currentLayout_ == Layout::GRID && n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
             // Last line, center participants if not full
-            cellW_off += (width_ - (n % zoom) * cell_width) / 2;
+            cellWidthOffset += (frameWidth_ - (n % zoom) * cellWidth) / 2;
         }
-        cellH_off = (index / zoom) * cell_height;
+        cellHeightOffset = (index / zoom) * cellHeight;
         if (n == 1) {
             // Centerize (cellwidth = width_ - 16)
-            cellW_off += 8;
-            cellH_off += 8;
+            cellWidthOffset += 8;
+            cellHeightOffset += 8;
         }
     }
 
     // Compute frame size/position
-    float zoomW, zoomH;
-    int frameW, frameH, frameW_off, frameH_off;
+    float zoomWidth, zoomHeight;
+    int frameWidth, frameHeight, frameWidthOffset, frameHeightOffset;
 
     if (input->getOrientation() % 180) {
         // Rotated frame
-        zoomW = (float) input->height() / cell_width;
-        zoomH = (float) input->width() / cell_height;
-        frameH = std::round(input->width() / std::max(zoomW, zoomH));
-        frameW = std::round(input->height() / std::max(zoomW, zoomH));
+        zoomWidth = static_cast<float>(input->height()) / static_cast<float>(cellWidth);
+        zoomHeight = static_cast<float>(input->width()) / static_cast<float>(cellHeight);
+        frameHeight = static_cast<int>(std::round(static_cast<float>(input->width()) / std::max(zoomWidth, zoomHeight)));
+        frameWidth = static_cast<int>(std::round(static_cast<float>(input->height()) / std::max(zoomWidth, zoomHeight)));
     } else {
-        zoomW = (float) input->width() / cell_width;
-        zoomH = (float) input->height() / cell_height;
-        frameW = std::round(input->width() / std::max(zoomW, zoomH));
-        frameH = std::round(input->height() / std::max(zoomW, zoomH));
+        zoomWidth = static_cast<float>(input->width()) / static_cast<float>(cellWidth);
+        zoomHeight = static_cast<float>(input->height()) / static_cast<float>(cellHeight);
+        frameWidth = static_cast<int>(std::round(static_cast<float>(input->width()) / std::max(zoomWidth, zoomHeight)));
+        frameHeight = static_cast<int>(
+            std::round(static_cast<float>(input->height()) / std::max(zoomWidth, zoomHeight)));
     }
 
     // Center the frame in the cell
-    frameW_off = cellW_off + (cell_width - frameW) / 2;
-    frameH_off = cellH_off + (cell_height - frameH) / 2;
+    frameWidthOffset = cellWidthOffset + (cellWidth - frameWidth) / 2;
+    frameHeightOffset = cellHeightOffset + (cellHeight - frameHeight) / 2;
 
     // Update source's cache
-    source->w = frameW;
-    source->h = frameH;
-    source->x = frameW_off;
-    source->y = frameH_off;
+    source->w = frameWidth;
+    source->h = frameHeight;
+    source->x = frameWidthOffset;
+    source->y = frameHeightOffset;
 }
 
 void
 VideoMixer::setParameters(int width, int height, AVPixelFormat format)
 {
-    std::unique_lock lock(rwMutex_);
+    std::unique_lock lock(sourcesMtx_);
 
-    width_ = width;
-    height_ = height;
-    format_ = format;
+    frameWidth_ = width;
+    frameHeight_ = height;
+    pixelFormat_ = format;
 
     // cleanup the previous frame to have a nice copy in rendering method
-    std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
-    if (previous_p)
-        libav_utils::fillWithBlack(previous_p->pointer());
+    if (auto lastFrame = obtainLastFrame())
+        libav_utils::fillWithBlack(lastFrame->pointer());
 
     startSink();
     updateLayout();
@@ -534,18 +550,24 @@ VideoMixer::startSink()
 {
     stopSink();
 
-    if (width_ == 0 or height_ == 0) {
-        JAMI_WARN("[mixer:%s] MX: unable to start with zero-sized output", id_.c_str());
+    if (frameWidth_ == 0 or frameHeight_ == 0) {
+        JAMI_WARNING("[mixer:{}] Unable to start because of invalid frame dimensions (w={}, h={})",
+                     id_,
+                     frameWidth_,
+                     frameHeight_);
         return;
     }
 
     if (not sink_->start()) {
-        JAMI_ERR("[mixer:%s] MX: sink startup failed", id_.c_str());
+        // Seems to be dead code, sink_->start() always returns true...
+        JAMI_ERROR("[mixer:{}] Sink startup failed", id_);
         return;
     }
 
     if (this->attach(sink_.get()))
-        sink_->setFrameSize(width_, height_);
+        sink_->setFrameSize(frameWidth_, frameHeight_);
+    else
+        JAMI_WARNING("[mixer:{}] Could not attach sink", id_);
 }
 
 void
@@ -558,19 +580,19 @@ VideoMixer::stopSink()
 int
 VideoMixer::getWidth() const
 {
-    return width_;
+    return frameWidth_;
 }
 
 int
 VideoMixer::getHeight() const
 {
-    return height_;
+    return frameHeight_;
 }
 
 AVPixelFormat
 VideoMixer::getPixelFormat() const
 {
-    return format_;
+    return pixelFormat_;
 }
 
 MediaStream
@@ -578,10 +600,10 @@ VideoMixer::getStream(const std::string& name) const
 {
     MediaStream ms;
     ms.name = name;
-    ms.format = format_;
+    ms.format = pixelFormat_;
     ms.isVideo = true;
-    ms.height = height_;
-    ms.width = width_;
+    ms.height = frameHeight_;
+    ms.width = frameWidth_;
     ms.frameRate = {MIXER_FRAMERATE, 1};
     ms.timeBase = {1, MIXER_FRAMERATE};
     ms.firstTimestamp = lastTimestamp_;
