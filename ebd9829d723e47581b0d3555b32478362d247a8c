@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "51129855_7776bb1a",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 428,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-12-16T17:53:55Z",
+      "side": 1,
+      "message": "comment",
+      "range": {
+        "startLine": 424,
+        "startChar": 4,
+        "endLine": 428,
+        "endChar": 86
+      },
+      "revId": "ebd9829d723e47581b0d3555b32478362d247a8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cf6f46fd_6ab9c88b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 528,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2025-12-16T17:53:55Z",
+      "side": 1,
+      "message": "why only in the case of TRYING?",
+      "range": {
+        "startLine": 527,
+        "startChar": 4,
+        "endLine": 528,
+        "endChar": 55
+      },
+      "revId": "ebd9829d723e47581b0d3555b32478362d247a8c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
