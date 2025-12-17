@@ -103,7 +103,7 @@ LIBJAMI_PUBLIC bool hangUpConference(const std::string& accountId, const std::st
 LIBJAMI_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool unholdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
-LIBJAMI_PUBLIC std::vector<std::string> getParticipantList(const std::string& accountId, const std::string& confId);
+LIBJAMI_PUBLIC std::vector<std::string> getConferenceSubCalls(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::string getConferenceId(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
                                                                        const std::string& callId);

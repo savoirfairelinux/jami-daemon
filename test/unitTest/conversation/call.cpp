@@ -370,7 +370,7 @@ ConversationCallTest::testActiveCalls3Peers()
     libjami::placeCallWithMedia(carlaId, destination, {});
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
         return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT"
-               && libjami::getParticipantList(aliceId, confId).size() == 2;
+               && libjami::getConferenceSubCalls(aliceId, confId).size() == 2;
     }));
 
     // get active calls = 1
@@ -452,7 +452,7 @@ ConversationCallTest::testRejoinCall()
         return aliceData_.conferenceChanged && carlaData_.hostState == "CURRENT" && carlaData_.state == "CURRENT";
     });
 
-    CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 2);
+    CPPUNIT_ASSERT(libjami::getConferenceSubCalls(aliceId, confId).size() == 2);
 
     // hangup 1 participant and rejoin
     aliceData_.messages.clear();
@@ -461,13 +461,13 @@ ConversationCallTest::testRejoinCall()
     Manager::instance().hangupCall(bobId, bobData_.callId);
     cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "OVER"; });
 
-    CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 1);
+    CPPUNIT_ASSERT(libjami::getConferenceSubCalls(aliceId, confId).size() == 1);
 
     aliceData_.conferenceChanged = false;
     libjami::placeCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"; });
 
-    CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 2);
+    CPPUNIT_ASSERT(libjami::getConferenceSubCalls(aliceId, confId).size() == 2);
     CPPUNIT_ASSERT(aliceData_.messages.empty());
     CPPUNIT_ASSERT(bobData_.messages.empty());
 

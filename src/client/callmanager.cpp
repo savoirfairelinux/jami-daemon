@@ -303,7 +303,7 @@ getConferenceList(const std::string& accountId)
 }
 
 std::vector<std::string>
-getParticipantList(const std::string& accountId, const std::string& confId)
+getConferenceSubCalls(const std::string& accountId, const std::string& confId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId))
         if (auto conf = account->getConference(confId)) {
