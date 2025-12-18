@@ -16,6 +16,24 @@
       "message": "Be sure this change is worth it.\n\n1. You\u0027ll need to adjust the version number.\n2. Be sure to search for all the references to the original API:\n\nhttps://git.jami.net/search?search\u003dgetParticipantList\u0026nav_source\u003dnavbar\u0026project_id\u003d9\u0026group_id\u003d9\u0026search_code\u003dtrue\u0026repository_ref\u003dmaster\n\nhttps://git.jami.net/search?search\u003dgetParticipantList\u0026nav_source\u003dnavbar\u0026project_id\u003d5\u0026group_id\u003d9\u0026search_code\u003dtrue\u0026repository_ref\u003dmaster\n\nhttps://git.jami.net/search?search\u003dgetParticipantList\u0026nav_source\u003dnavbar\u0026project_id\u003d2\u0026group_id\u003d9\u0026search_code\u003dtrue\u0026repository_ref\u003dmaster",
       "revId": "3f1e6db442dbd049e193cb7433c6a1b97f9827d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3d063b25_6724220e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2025-12-18T21:45:03Z",
+      "side": 1,
+      "message": "Instead of changing the current api, now we\u0027re only adding a new method getConferenceParticipantsUri. This way we keep getParticipantList but add a comment explaining that we know the name is confusing but it\u0027s \"\"\"\"\"legacy\"\"\"\"\" and not worth the hassle of changing its name everywhere for now",
+      "parentUuid": "66b5f73b_b6d8bff7",
+      "revId": "3f1e6db442dbd049e193cb7433c6a1b97f9827d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
