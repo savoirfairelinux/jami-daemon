@@ -313,6 +313,15 @@ getParticipantList(const std::string& accountId, const std::string& confId)
     return {};
 }
 
+std::vector<std::string>
+getConferenceParticipantsUri(const std::string& accountId, const std::string& confId)
+{
+    if (const auto account = jami::Manager::instance().getAccount(accountId))
+        if (auto conf = account->getConference(confId))
+            return conf->getParticipantsUri();
+    return {};
+}
+
 std::string
 getConferenceId(const std::string& accountId, const std::string& callId)
 {
