@@ -317,6 +317,13 @@ public:
         return confInfo_.toVectorMapStringString();
     }
 
+    /**
+     * Get stable list of participant URIs based on subcalls, not affected by stream state transitions.
+     * This returns one URI per participant (empty string for host).
+     * @return Vector of participant URIs
+     */
+    std::vector<std::string> getParticipantsUri() const;
+
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
     void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");

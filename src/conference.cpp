@@ -969,6 +969,25 @@ Conference::getSubCalls() const
     return subCalls_;
 }
 
+std::vector<std::string>
+Conference::getParticipantsUri() const
+{
+    std::vector<std::string> result;
+
+    // Add host (empty URI represents the local host)
+    result.push_back("");
+
+    // Add each subcall participant URI
+    std::lock_guard lk(subcallsMtx_);
+    for (const auto& callId : subCalls_) {
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId))) {
+            result.push_back(call->getPeerNumber());
+        }
+    }
+
+    return result;
+}
+
 bool
 Conference::toggleRecording()
 {
