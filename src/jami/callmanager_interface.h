@@ -103,6 +103,9 @@ LIBJAMI_PUBLIC bool hangUpConference(const std::string& accountId, const std::st
 LIBJAMI_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool unholdConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
+/// NOTE: Despite its name, this returns the list of call IDs (subcalls) in the conference,
+/// not the actual participant URIs. This naming is historical and changing it everywhere
+/// would be costly. Currently there is no direct API to get participants URI.
 LIBJAMI_PUBLIC std::vector<std::string> getParticipantList(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::string getConferenceId(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getConferenceDetails(const std::string& accountId,
