@@ -129,7 +129,7 @@ public:
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) override;
     std::vector<libjami::MediaMap> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from) override;
-    void removeCall() override;
+    void removeCall(int code = 0) override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
     std::map<std::string, bool> getAudioStreams() const override;
@@ -199,7 +199,7 @@ public:
      * Called to report server/internal errors
      * @param cause Optional error code
      */
-    void onFailure(signed cause = 0);
+    void onFailure(int cause = 0);
     /**
      * Peer answered busy
      */
