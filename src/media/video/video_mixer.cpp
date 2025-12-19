@@ -171,14 +171,24 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
                         const std::string& callId,
                         const std::string& streamId)
 {
-    if (!frame)
+    if (!frame) {
+        JAMI_WARNING("[mixer:{}] attachVideo called with null frame for callId='{}', streamId='{}'",
+                     id_,
+                     callId,
+                     streamId);
         return;
-    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+    }
+    JAMI_DEBUG("[mixer:{}] Attaching video source: callId='{}', streamId='{}', frame={}",
+               id_,
+               callId,
+               streamId,
+               fmt::ptr(frame));
     {
         std::lock_guard lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
     }
     frame->attach(this);
+    JAMI_DEBUG("[mixer:{}] Video source attached successfully. Participant should now appear in video layout.", id_);
 }
 
 void

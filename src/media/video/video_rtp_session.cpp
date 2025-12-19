@@ -269,11 +269,16 @@ VideoRtpSession::startReceiver()
 {
     // Concurrency protection must be done by caller.
 
-    JAMI_DBG("[%p] Starting receiver", this);
+    JAMI_DEBUG("[call:{}] startReceiver() - receive_.enabled={}, receive_.onHold={}, conference_={}",
+               callId_,
+               receive_.enabled,
+               receive_.onHold,
+               fmt::ptr(conference_));
 
     if (receive_.enabled and not receive_.onHold) {
         if (receiveThread_)
             JAMI_WARN("[%p] Already has a receiver, restarting", this);
+        JAMI_DEBUG("[call:{}] Creating new VideoReceiveThread", callId_);
         receiveThread_.reset(new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
 
         // ensure that start has been called
@@ -290,6 +295,11 @@ VideoRtpSession::startReceiver()
             // Note, this should be managed differently, this is a bit hacky
             auto audioId = streamId_;
             string_replace(audioId, "video", "audio");
+            JAMI_DEBUG("[conf:{}] [call:{}] startReceiver() - removing audio-only source '{}' (may already be removed "
+                       "by handleMediaChangeRequest)",
+                       conference_->getConfId(),
+                       callId_,
+                       audioId);
             auto activeStream = videoMixer_->verifyActive(audioId);
             videoMixer_->removeAudioOnlySource(callId_, audioId);
             if (activeStream)
@@ -413,13 +423,30 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     startSender();
 
     if (conference_) {
+        JAMI_DEBUG("[conf:{}] [call:{}] start() - conference_ is set, checking pipeline setup conditions: "
+                   "send_.enabled={}, send_.onHold={}, receive_.enabled={}, receive_.onHold={}",
+                   conference_->getConfId(),
+                   callId_,
+                   send_.enabled,
+                   send_.onHold,
+                   receive_.enabled,
+                   receive_.onHold);
         if (send_.enabled and not send_.onHold) {
+            JAMI_DEBUG("[conf:{}] [call:{}] start() - Setting up SEND pipeline", conference_->getConfId(), callId_);
             setupConferenceVideoPipeline(*conference_, Direction::SEND);
         }
         if (receive_.enabled and not receive_.onHold) {
+            JAMI_DEBUG("[conf:{}] [call:{}] start() - Setting up RECV pipeline", conference_->getConfId(), callId_);
             setupConferenceVideoPipeline(*conference_, Direction::RECV);
         }
+        if (not send_.enabled and not receive_.enabled) {
+            JAMI_WARNING("[conf:{}] [call:{}] start() - Neither SEND nor RECV pipeline set up! "
+                         "Video may not be attached to mixer.",
+                         conference_->getConfId(),
+                         callId_);
+        }
     } else {
+        JAMI_DEBUG("[call:{}] start() - No conference, setting up regular video pipeline", callId_);
         setupVideoPipeline();
     }
 }
@@ -536,25 +563,46 @@ void
 VideoRtpSession::setupConferenceVideoPipeline(Conference& conference, Direction dir)
 {
     if (dir == Direction::SEND) {
-        JAMI_DEBUG("[conf:{}] Setup video sender pipeline for call {}", conference.getConfId(), callId_);
+        JAMI_DEBUG("[conf:{}] [call:{}] Setup video SENDER pipeline - sender_={}, videoMixer_={}",
+                   conference.getConfId(),
+                   callId_,
+                   fmt::ptr(sender_.get()),
+                   fmt::ptr(videoMixer_.get()));
         videoMixer_ = conference.getVideoMixer();
         if (sender_) {
             // Swap sender from local video to conference video mixer
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
-            if (videoMixer_)
+            if (videoMixer_) {
                 videoMixer_->attach(sender_.get());
+                JAMI_DEBUG("[conf:{}] [call:{}] SENDER attached to mixer successfully", conference.getConfId(), callId_);
+            }
         } else {
-            JAMI_WARN("[%p] no sender", this);
+            JAMI_WARNING("[conf:{}] [call:{}] Cannot setup SENDER pipeline - no sender exists",
+                         conference.getConfId(),
+                         callId_);
         }
     } else {
-        JAMI_DEBUG("[conf:{}] Setup video receiver pipeline for call {}", conference.getConfId(), callId_);
+        JAMI_DEBUG("[conf:{}] [call:{}] Setup video RECEIVER pipeline - receiveThread_={}, videoMixer_={}",
+                   conference.getConfId(),
+                   callId_,
+                   fmt::ptr(receiveThread_.get()),
+                   fmt::ptr(videoMixer_.get()));
         if (receiveThread_) {
             receiveThread_->stopSink();
-            if (videoMixer_)
+            if (videoMixer_) {
                 videoMixer_->attachVideo(receiveThread_.get(), callId_, streamId_);
+                JAMI_DEBUG("[conf:{}] [call:{}] RECEIVER attached to mixer with streamId '{}' - participant should now "
+                           "appear in video layout",
+                           conference.getConfId(),
+                           callId_,
+                           streamId_);
+            }
         } else {
-            JAMI_WARN("[%p] no receiver", this);
+            JAMI_WARNING("[conf:{}] [call:{}] Cannot setup RECEIVER pipeline - no receiveThread exists. "
+                         "Participant may not appear in video layout!",
+                         conference.getConfId(),
+                         callId_);
         }
     }
 }
@@ -568,15 +616,33 @@ VideoRtpSession::enterConference(Conference& conference)
 
     conference_ = &conference;
     videoMixer_ = conference.getVideoMixer();
-    JAMI_DEBUG("[conf:{}] Entering conference", conference.getConfId());
+    JAMI_DEBUG("[conf:{}] [call:{}] Entering conference - send_.enabled={}, receiveThread_={}",
+               conference.getConfId(),
+               callId_,
+               send_.enabled,
+               fmt::ptr(receiveThread_.get()));
 
     if (send_.enabled or receiveThread_) {
         // Restart encoder with conference parameter ON in order to unlink HW encoder
         // from HW decoder.
+        JAMI_DEBUG("[conf:{}] [call:{}] Pipeline setup possible - restarting sender and setting up RECV pipeline",
+                   conference.getConfId(),
+                   callId_);
         restartSender();
         if (conference_) {
             setupConferenceVideoPipeline(conference, Direction::RECV);
         }
+    } else {
+        // This is expected for newly added video streams - the RTP session was just created
+        // but start() hasn't been called yet. Pipeline will be set up in start() after
+        // ICE negotiation completes and configureRtpSession sets send_/receive_ properly.
+        JAMI_WARNING(
+            "[conf:{}] [call:{}] Pipeline setup SKIPPED - send_.enabled={}, receiveThread_={}. "
+            "This is expected for newly added video streams. Pipeline will be set up in start() after ICE/ACK.",
+            conference.getConfId(),
+            callId_,
+            send_.enabled,
+            fmt::ptr(receiveThread_.get()));
     }
 }
 

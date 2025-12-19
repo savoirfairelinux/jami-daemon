@@ -117,18 +117,40 @@ public:
 
     void addAudioOnlySource(const std::string& callId, const std::string& streamId)
     {
+        JAMI_DEBUG("[mixer:{}] Adding audio-only source: callId='{}', streamId='{}'", id_, callId, streamId);
         std::unique_lock lk(audioOnlySourcesMtx_);
-        audioOnlySources_.insert({callId, streamId});
+        auto [it, inserted] = audioOnlySources_.insert({callId, streamId});
+        auto count = audioOnlySources_.size();
         lk.unlock();
+        if (inserted) {
+            JAMI_DEBUG("[mixer:{}] Audio-only source added successfully. Total audio-only sources: {}", id_, count);
+        } else {
+            JAMI_WARNING("[mixer:{}] Audio-only source already exists: callId='{}', streamId='{}'",
+                         id_,
+                         callId,
+                         streamId);
+        }
         updateLayout();
     }
 
     void removeAudioOnlySource(const std::string& callId, const std::string& streamId)
     {
+        JAMI_DEBUG("[mixer:{}] Removing audio-only source: callId='{}', streamId='{}'", id_, callId, streamId);
         std::unique_lock lk(audioOnlySourcesMtx_);
-        if (audioOnlySources_.erase({callId, streamId})) {
-            lk.unlock();
+        auto erased = audioOnlySources_.erase({callId, streamId});
+        auto count = audioOnlySources_.size();
+        lk.unlock();
+        if (erased) {
+            JAMI_DEBUG("[mixer:{}] Audio-only source removed successfully. Remaining audio-only sources: {}",
+                       id_,
+                       count);
             updateLayout();
+        } else {
+            JAMI_WARNING("[mixer:{}] Audio-only source NOT FOUND for removal: callId='{}', streamId='{}'. "
+                         "Participant may have already been removed or was never added.",
+                         id_,
+                         callId,
+                         streamId);
         }
     }
 

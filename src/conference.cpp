@@ -602,17 +602,27 @@ void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<libjami::MediaMap>& remoteMediaList)
 {
-    JAMI_DEBUG("[conf:{}] Answering media change request", getConfId());
+    JAMI_DEBUG("[conf:{}] Answering media change request from call {}", getConfId(), call->getCallId());
     auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
     // If the new media list has video, remove the participant from audioonlylist.
     auto remoteHasVideo = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList, false),
                                                        MediaType::MEDIA_VIDEO);
+    JAMI_DEBUG(
+        "[conf:{}] [call:{}] remoteHasVideo={}, removing from audio-only sources BEFORE media negotiation completes",
+        getConfId(),
+        call->getCallId(),
+        remoteHasVideo);
     if (videoMixer_ && remoteHasVideo) {
         auto callId = call->getCallId();
-        videoMixer_->removeAudioOnlySource(callId,
-                                           std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+        auto audioStreamId = std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID));
+        JAMI_WARNING("[conf:{}] [call:{}] Removing audio-only source '{}' - participant may briefly disappear from "
+                     "layout until video is attached",
+                     getConfId(),
+                     callId,
+                     audioStreamId);
+        videoMixer_->removeAudioOnlySource(callId, audioStreamId);
     }
 #endif
 
@@ -641,8 +651,19 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // This also means that if original call was an audio-only call,
     // the local camera will be enabled, unless the video is disabled
     // in the account settings.
+    JAMI_DEBUG("[conf:{}] [call:{}] Calling answerMediaChangeRequest - RTP session will be created but not started yet",
+               getConfId(),
+               call->getCallId());
     call->answerMediaChangeRequest(newMediaList);
+    JAMI_DEBUG("[conf:{}] [call:{}] Calling enterConference - will set conference_ pointer but pipeline setup may be "
+               "skipped for new streams",
+               getConfId(),
+               call->getCallId());
     call->enterConference(shared_from_this());
+    JAMI_DEBUG("[conf:{}] [call:{}] handleMediaChangeRequest complete - video will be attached when start() is called "
+               "after ICE/ACK",
+               getConfId(),
+               call->getCallId());
 }
 
 void
