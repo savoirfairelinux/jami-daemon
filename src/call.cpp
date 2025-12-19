@@ -138,11 +138,13 @@ Call::Call(const std::shared_ptr<Account>& account,
 Call::~Call() {}
 
 void
-Call::removeCall()
+Call::removeCall(int code)
 {
+    if (code)
+        JAMI_WARNING("[call:{}] Removing call (code={})", id_, code);
     auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
-    setState(CallState::OVER);
+    setState(CallState::OVER, code);
     if (Recordable::isRecording())
         Recordable::stopRecording();
     if (auto account = account_.lock())
@@ -440,18 +442,17 @@ Call::addSubCall(Call& subcall)
     for (const auto& msg : pendingOutMessages_)
         subcall.sendTextMessage(msg.first, msg.second);
 
-    subcall.addStateListener([sub = subcall.weak(), parent = weak()](Call::CallState new_state,
-                                                                     Call::ConnectionState new_cstate,
-                                                                     int /* code */) {
-        runOnMainThread([sub, parent, new_state, new_cstate]() {
-            if (auto p = parent.lock()) {
-                if (auto s = sub.lock()) {
-                    p->subcallStateChanged(*s, new_state, new_cstate);
+    subcall.addStateListener(
+        [sub = subcall.weak(), parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+            runOnMainThread([sub, parent, new_state, new_cstate, code]() {
+                if (auto p = parent.lock()) {
+                    if (auto s = sub.lock()) {
+                        p->subcallStateChanged(*s, new_state, new_cstate, code);
+                    }
                 }
-            }
+            });
+            return true;
         });
-        return true;
-    });
 }
 
 /// Called by a subcall when its states change (multidevice)
@@ -460,7 +461,7 @@ Call::addSubCall(Call& subcall)
 /// Parent call states are managed by these subcalls.
 /// \note this method may decrease the given \a subcall ref count.
 void
-Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::ConnectionState new_cstate)
+Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::ConnectionState new_cstate, int code)
 {
     {
         // This condition happens when a subcall hangups/fails after removed from parent's list.
@@ -514,11 +515,12 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
                          ConnectionState::DISCONNECTED,
                          static_cast<int>(std::errc::device_or_resource_busy));
             } else {
-                // XXX: first idea was to use std::errc::host_unreachable, but it's not available on
-                // some platforms like mingw.
-                setState(CallState::MERROR, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::io_error));
+                // Use the actual error code from the subcall if available, otherwise fall back to io_error
+                setState(CallState::MERROR,
+                         ConnectionState::DISCONNECTED,
+                         code != 0 ? code : static_cast<int>(std::errc::io_error));
             }
-            removeCall();
+            removeCall(code);
         } else {
             JAMI_DBG("[call:%s] remains %zu subcall(s)", getCallId().c_str(), subcalls_.size());
         }

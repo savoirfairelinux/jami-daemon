@@ -1077,9 +1077,9 @@ SIPCall::hangup(int reason)
     stopAllMedia();
     detachAudioFromConference();
     setState(Call::ConnectionState::DISCONNECTED, reason);
-    dht::ThreadPool::io().run([w = weak()] {
+    dht::ThreadPool::io().run([w = weak(), reason] {
         if (auto shared = w.lock())
-            shared->removeCall();
+            shared->removeCall(reason);
     });
 }
 
@@ -1524,7 +1524,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
 }
 
 void
-SIPCall::removeCall()
+SIPCall::removeCall(int code)
 {
 #ifdef ENABLE_PLUGIN
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(getCallId());
@@ -1535,7 +1535,7 @@ SIPCall::removeCall()
         sdp_->setActiveLocalSdpSession(nullptr);
         sdp_->setActiveRemoteSdpSession(nullptr);
     }
-    Call::removeCall();
+    Call::removeCall(code);
 
     {
         std::lock_guard lk(transportMtx_);
@@ -1548,14 +1548,14 @@ SIPCall::removeCall()
 }
 
 void
-SIPCall::onFailure(signed cause)
+SIPCall::onFailure(int cause)
 {
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause)) {
-        runOnMainThread([w = weak()] {
+        runOnMainThread([w = weak(), cause] {
             if (auto shared = w.lock()) {
                 auto& call = *shared;
                 Manager::instance().callFailure(call);
-                call.removeCall();
+                call.removeCall(cause);
             }
         });
     }
