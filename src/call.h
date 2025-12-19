@@ -301,7 +301,11 @@ public:
      */
     virtual void peerHungup();
 
-    virtual void removeCall();
+    /**
+     * Remove the call from the call factory and emit state change signal.
+     * @param code The error code to include in the state change signal (default: 0)
+     */
+    virtual void removeCall(int code = 0);
 
     /**
      * Update recording state. Typically used to send notifications
@@ -467,7 +471,7 @@ private:
 
     void checkAudio();
 
-    void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
+    void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState, int code);
 
     SubcallSet safePopSubcalls();
 
