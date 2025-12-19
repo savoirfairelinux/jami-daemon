@@ -138,11 +138,11 @@ Call::Call(const std::shared_ptr<Account>& account,
 Call::~Call() {}
 
 void
-Call::removeCall()
+Call::removeCall(signed code)
 {
     auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
-    setState(CallState::OVER);
+    setState(CallState::OVER, code);
     if (Recordable::isRecording())
         Recordable::stopRecording();
     if (auto account = account_.lock())
@@ -234,7 +234,7 @@ bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
     std::unique_lock<std::recursive_mutex> lock(callMutex_);
-    JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d",
+    JAMI_DBG("[call:%s] 00000 state change %u/%u, cnx %u/%u, code %d",
              id_.c_str(),
              (unsigned) callState_,
              (unsigned) call_state,
@@ -259,6 +259,13 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
+    if (code != 0)
+        JAMI_ERROR("[call:{}] 00000 client state change from {} to {} with code: {}",
+                   id_,
+                   old_client_state,
+                   new_client_state,
+                   code);
+
     for (auto it = stateChangedListeners_.begin(); it != stateChangedListeners_.end();) {
         if ((*it)(callState_, connectionState_, code))
             ++it;
@@ -266,7 +273,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
             it = stateChangedListeners_.erase(it);
     }
 
-    if (old_client_state != new_client_state) {
+    if (old_client_state != new_client_state /* or code != 0*/) {
         if (not parent_) {
             JAMI_DBG("[call:%s] emit client call state change %s, code %d", id_.c_str(), new_client_state.c_str(), code);
             lock.unlock();
