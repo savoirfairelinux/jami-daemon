@@ -129,7 +129,7 @@ public:
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) override;
     std::vector<libjami::MediaMap> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from) override;
-    void removeCall() override;
+    void removeCall(signed code = 0) override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
     std::map<std::string, bool> getAudioStreams() const override;

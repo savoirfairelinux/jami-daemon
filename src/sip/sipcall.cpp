@@ -1524,7 +1524,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
 }
 
 void
-SIPCall::removeCall()
+SIPCall::removeCall(signed code)
 {
 #ifdef ENABLE_PLUGIN
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().clearCallHandlerMaps(getCallId());
@@ -1535,7 +1535,7 @@ SIPCall::removeCall()
         sdp_->setActiveLocalSdpSession(nullptr);
         sdp_->setActiveRemoteSdpSession(nullptr);
     }
-    Call::removeCall();
+    Call::removeCall(code);
 
     {
         std::lock_guard lk(transportMtx_);
@@ -1550,12 +1550,14 @@ SIPCall::removeCall()
 void
 SIPCall::onFailure(signed cause)
 {
+    if (cause != 0)
+        JAMI_ERROR("[call:{}] onFailure called with cause: {}", getCallId(), cause);
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause)) {
-        runOnMainThread([w = weak()] {
+        runOnMainThread([w = weak(), cause] {
             if (auto shared = w.lock()) {
                 auto& call = *shared;
                 Manager::instance().callFailure(call);
-                call.removeCall();
+                call.removeCall(cause);
             }
         });
     }
