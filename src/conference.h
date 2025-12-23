@@ -579,6 +579,16 @@ private:
      * Clear all participant data from the conference
      */
     void clearParticipantData(const std::string& callId);
+
+#ifdef ENABLE_VIDEO
+    /**
+     * Make sure video is negotiated with all subcalls
+     * When the conference needs video (host has video or any participant has video),
+     * this method triggers renegotiation with subcalls that don't have video yet.
+     * @param excludeCallId Optional call ID to exclude from renegotiation (e.g., the call that just added video)
+     */
+    void negotiateVideoWithSubcalls(const std::string& excludeCallId = "");
+#endif
 };
 
 } // namespace jami
