@@ -511,6 +511,20 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
 
+#ifdef ENABLE_VIDEO
+    // Check if the host previously had video
+    bool hostHadVideo = MediaAttribute::hasMediaType(hostSources_, MediaType::MEDIA_VIDEO)
+                        && !isMediaSourceMuted(MediaType::MEDIA_VIDEO);
+    // Check if the host will have video after this change
+    bool hostWillHaveVideo = false;
+    for (const auto& media : mediaAttrList) {
+        if (media.type_ == MediaType::MEDIA_VIDEO && media.enabled_ && !media.muted_) {
+            hostWillHaveVideo = true;
+            break;
+        }
+    }
+#endif
+
     bool hasFileSharing {false};
     for (const auto& media : mediaAttrList) {
         if (!media.enabled_ || media.sourceUri_.empty())
@@ -593,7 +607,17 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     if (!isMuted("host"sv) && !isMediaSourceMuted(MediaType::MEDIA_AUDIO))
         bindHostAudio();
 
-    // It's host medias, so no need to negotiate anything, but inform the client.
+#ifdef ENABLE_VIDEO
+    // If the host is adding video (didn't have video before, has video now),
+    // we need to ensure all subcalls also have video negotiated so they can
+    // receive the mixed video stream.
+    if (!hostHadVideo && hostWillHaveVideo) {
+        JAMI_DEBUG("[conf:{}] Host added video, negotiating video with all subcalls", getConfId());
+        negotiateVideoWithSubcalls();
+    }
+#endif
+
+    // Inform the client about the media negotiation status.
     reportMediaNegotiationStatus();
     return true;
 }
@@ -602,17 +626,31 @@ void
 Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
                                      const std::vector<libjami::MediaMap>& remoteMediaList)
 {
-    JAMI_DEBUG("[conf:{}] Answering media change request", getConfId());
+    JAMI_DEBUG("[conf:{}] Answering media change request from call {}", getConfId(), call->getCallId());
     auto currentMediaList = hostSources_;
 
 #ifdef ENABLE_VIDEO
+    // Check if the participant previously had video
+    auto previousMediaList = call->getMediaAttributeList();
+    bool participantHadVideo = MediaAttribute::hasMediaType(previousMediaList, MediaType::MEDIA_VIDEO);
+
     // If the new media list has video, remove the participant from audioonlylist.
     auto remoteHasVideo = MediaAttribute::hasMediaType(MediaAttribute::buildMediaAttributesList(remoteMediaList, false),
                                                        MediaType::MEDIA_VIDEO);
+    JAMI_DEBUG(
+        "[conf:{}] [call:{}] remoteHasVideo={}, removing from audio-only sources BEFORE media negotiation completes",
+        getConfId(),
+        call->getCallId(),
+        remoteHasVideo);
     if (videoMixer_ && remoteHasVideo) {
         auto callId = call->getCallId();
-        videoMixer_->removeAudioOnlySource(callId,
-                                           std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID)));
+        auto audioStreamId = std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID));
+        JAMI_WARNING("[conf:{}] [call:{}] Removing audio-only source '{}' - participant may briefly disappear from "
+                     "layout until video is attached",
+                     getConfId(),
+                     callId,
+                     audioStreamId);
+        videoMixer_->removeAudioOnlySource(callId, audioStreamId);
     }
 #endif
 
@@ -643,6 +681,18 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // in the account settings.
     call->answerMediaChangeRequest(newMediaList);
     call->enterConference(shared_from_this());
+
+#ifdef ENABLE_VIDEO
+    // If a participant is adding video (didn't have it before, has it now),
+    // we need to make sure all other subcalls also have video negotiated so they
+    // can receive the mixed video stream that now includes the new participant's video
+    if (!participantHadVideo && remoteHasVideo) {
+        JAMI_DEBUG("[conf:{}] [call:{}] Participant added video, negotiating video with other subcalls",
+                   getConfId(),
+                   call->getCallId());
+        negotiateVideoWithSubcalls(call->getCallId());
+    }
+#endif
 }
 
 void
@@ -750,6 +800,60 @@ Conference::removeSubCall(const std::string& callId)
             call->peerRecording(false);
     }
 }
+
+#ifdef ENABLE_VIDEO
+void
+Conference::negotiateVideoWithSubcalls(const std::string& excludeCallId)
+{
+    if (!isVideoEnabled()) {
+        JAMI_DEBUG("[conf:{}] Video is disabled in account, skipping subcall video negotiation", id_);
+        return;
+    }
+
+    JAMI_DEBUG("[conf:{}] Negotiating video with subcalls (excluding: {})",
+               id_,
+               excludeCallId.empty() ? "none" : excludeCallId);
+
+    for (const auto& callId : getSubCalls()) {
+        if (callId == excludeCallId) {
+            continue;
+        }
+
+        auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId));
+        if (!call) {
+            continue;
+        }
+
+        auto mediaList = call->getMediaAttributeList();
+        bool hasVideo = MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO);
+
+        if (!hasVideo) {
+            JAMI_DEBUG("[conf:{}] [call:{}] Call does not have video, triggering renegotiation to add video",
+                       id_,
+                       callId);
+
+            // add video media attribute to the call's media list
+            MediaAttribute videoAttr;
+            videoAttr.type_ = MediaType::MEDIA_VIDEO;
+            videoAttr.enabled_ = true;
+            videoAttr.muted_ = false;
+            videoAttr.label_ = sip_utils::DEFAULT_VIDEO_STREAMID;
+            // Source will be set by the mixer so we don't set a local source here
+            // because the call is in a conference and will receive from the mixer
+            videoAttr.sourceUri_ = "";
+
+            mediaList.emplace_back(videoAttr);
+
+            // request the call to renegotiate with the new media list
+            call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
+
+            // Re-enter conference to ensure the new video RTP session is properly
+            // associated with the conference mixer (otherwise it would use the local camera)
+            call->enterConference(shared_from_this());
+        }
+    }
+}
+#endif
 
 void
 Conference::setActiveParticipant(const std::string& participant_id)
