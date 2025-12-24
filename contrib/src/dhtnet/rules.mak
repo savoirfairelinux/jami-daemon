@@ -9,7 +9,6 @@ ifndef HAVE_WIN32
 DEPS_dhtnet += natpmp
 endif
 
-
 DHTNET_CONF = -DBUILD_SHARED_LIBS=Off \
 	-DBUILD_BENCHMARKS=Off \
 	-DBUILD_TOOLS=Off \
@@ -28,8 +27,4 @@ dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
 
-.dhtnet: dhtnet toolchain.cmake .sum-dhtnet
-	cd $< && mkdir -p build
-	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(DHTNET_CONF) ..
-	cd $< && cd build && $(MAKE) install
-	touch $@
+CMAKE_PKGS += dhtnet
