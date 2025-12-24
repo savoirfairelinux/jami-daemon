@@ -11,7 +11,7 @@ endif
 DEPS_minizip = zlib iconv
 endif
 
-LIBMINIZIP_CMAKECONF := \
+MINIZIP_CONF := \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DMZ_LZMA=OFF \
 		-DMZ_FORCE_FETCH_LIBS=ON \
@@ -25,13 +25,8 @@ $(TARBALLS)/minizip-ng-$(LIBMINIZIP_VERSION).tar.gz:
 minizip: minizip-ng-$(LIBMINIZIP_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
-
-.minizip: minizip toolchain.cmake .sum-minizip
-	cd $< && mkdir -p buildlib
 ifdef HAVE_ANDROID
-	cd $< && cp -R contrib/android/include/* $(PREFIX)/include
+	cd $@ && cp -R contrib/android/include/* $(PREFIX)/include
 endif
-	cd $< && cd buildlib && $(HOSTVARS) $(CMAKE) .. $(LIBMINIZIP_CMAKECONF)
-	cd $< && cd buildlib && $(MAKE) install
-	cd $< && rm -r buildlib
-	touch $@
+
+CMAKE_PKGS += minizip

@@ -72,7 +72,7 @@ ifdef HAVE_WIN32
 else ifdef HAVE_WIN64
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) && $(MAKE) && $(MAKE) install
 else
-	cd $< && mkdir -p build && cd build && $(HOSTVARS) $(CMAKE) $(LIBRESSL_CONF) .. && $(MAKE) && $(MAKE) install
+	$(BUILD_CMAKE)
 endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@

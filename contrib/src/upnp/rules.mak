@@ -21,7 +21,7 @@ endif
 	$(APPLY) $(SRC)/upnp/poll.patch
 	$(MOVE)
 
-PUPNP_CONF = \
+UPNP_CONF = \
 	-DBUILD_TESTING=OFF \
 	-DUPNP_BUILD_SHARED=OFF \
 	-DUPNP_BUILD_STATIC=ON \
@@ -31,8 +31,4 @@ PUPNP_CONF = \
 	-DUPNP_ENABLE_WEBSERVER=OFF \
 	-DUPNP_ENABLE_BLOCKING_TCP_CONNECTIONS=OFF
 
-.upnp: upnp
-	cd $< && mkdir -p build
-	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(PUPNP_CONF) ..
-	cd $< && cd build && $(MAKE) install
-	touch $@
+CMAKE_PKGS += upnp
