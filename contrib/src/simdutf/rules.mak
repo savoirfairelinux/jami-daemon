@@ -22,8 +22,4 @@ simdutf: simdutf-$(SIMDUTF_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
 
-.simdutf: simdutf toolchain.cmake .sum-simdutf
-	cd $< && mkdir -p build
-	cd $< && cd build && $(HOSTVARS) $(CMAKE) $(SIMDUTF_CONF) ..
-	cd $< && cd build && $(MAKE) install
-	touch $@
+CMAKE_PKGS += simdutf

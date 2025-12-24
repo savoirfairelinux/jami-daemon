@@ -21,7 +21,7 @@ DEPS_restinio += fmt
 endif
 DEPS_restinio += llhttp
 
-RESTINIO_CMAKECONF = -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
+RESTINIO_CONF = -DRESTINIO_TEST=Off -DRESTINIO_SAMPLE=Off -DRESTINIO_BENCHMARK=Off \
 					-DRESTINIO_WITH_SOBJECTIZER=Off -DRESTINIO_DEP_STANDALONE_ASIO=system -DRESTINIO_DEP_LLHTTP=system \
 					-DRESTINIO_DEP_FMT=system -DRESTINIO_DEP_EXPECTED_LITE=system \
 					 -DZLIB_LIBRARY="$(PREFIX)/lib" -DZLIB_INCLUDE_DIR="$(PREFIX)/include"
@@ -36,12 +36,10 @@ $(TARBALLS)/expected.hpp:
 
 restinio: restinio-$(RESTINIO_VERSION).tar.bz2 expected.hpp
 	$(UNPACK)
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
+	$(UPDATE_AUTOCONFIG)
+	cd $(UNPACK_DIR) && mv dev/* .
 	$(MOVE)
 	mkdir -p $(PREFIX)/include/nonstd
 	cp $(TARBALLS)/expected.hpp $(PREFIX)/include/nonstd/expected.hpp
 
-.restinio: restinio toolchain.cmake .sum-restinio
-	cd $</dev && $(HOSTVARS) $(CMAKE) $(RESTINIO_CMAKECONF) .
-	cd $</dev && $(MAKE) install
-	touch $@
+CMAKE_PKGS += restinio

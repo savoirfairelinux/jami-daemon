@@ -428,6 +428,12 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DBUILD_SHARED_LIBS=OFF
 endif
 
+build_cmake = cd $< && mkdir -p build && cd build && \
+		$(HOSTVARS) $(CMAKE) .. $(1) && \
+		cmake --build . --target install
+
+BUILD_CMAKE = $(call build_cmake,$($(shell echo $* | tr a-z- A-Z_)_CONF))
+
 #
 # Per-package build rules
 #
@@ -456,6 +462,11 @@ dep_on = $(if $(filter $1,$2),\
   $(foreach p,$(filter-out $(PKGS_FOUND),$(1)),$(p) $(call dep_on,$(DEPS_$(p)),$2 $(p))))
 PKGS_DEPS := $(filter-out $(PKGS_MANUAL),$(call dep_on,$(PKGS_MANUAL)))
 PKGS := $(PKGS_MANUAL) $(PKGS_DEPS)
+
+# Generic CMake rule
+$(foreach p,$(CMAKE_PKGS),.$(p)): .%: % toolchain.cmake .sum-%
+	$(BUILD_CMAKE)
+	touch $@
 
 convert-static:
 	for p in $(PREFIX)/lib/pkgconfig/*.pc; do $(SRC)/pkg-static.sh $$p; done
