@@ -468,7 +468,7 @@ $(foreach p,$(CMAKE_PKGS),.$(p)): .%: % toolchain.cmake .sum-%
 	$(BUILD_CMAKE)
 	touch $@
 
-convert-static:
+convert-static: $(PKGS:%=.%)
 	for p in $(PREFIX)/lib/pkgconfig/*.pc; do $(SRC)/pkg-static.sh $$p; done
 fetch: $(PKGS:%=.sum-%)
 fetch-all: $(PKGS_ALL:%=.sum-%)
@@ -494,13 +494,13 @@ $(ENTRY)/.build:
 	$(FLOCK) $(ENTRY) $(MAKE) PREFIX=$(CACHE_PREFIX)
 	touch $@
 else
-$(ENTRY)/.build: $(PKGS:%=.%) convert-static
+$(ENTRY)/.build: convert-static
 $(PKGS:%=.%): FORCE
 FORCE:
 endif
 
 else
-install: $(PKGS:%=.%) convert-static
+install: convert-static
 endif
 
 
@@ -624,8 +624,3 @@ list-build-packages:
 $(foreach p,$(PKGS_ALL),.$(p)): .%: $$(foreach d,$$(DEPS_$$*),.dep-$$(d))
 
 .DELETE_ON_ERROR:
-
-# Disable -j option for the top Makefile as this framework doesn't support well
-# this and some contrib may be not well build or even not build at all.
-# Notice that projects' rules.mak file use parallel jobs even with this.
-.NOTPARALLEL:
