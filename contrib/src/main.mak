@@ -410,7 +410,7 @@ RECONF = mkdir -p -- $(PREFIX)/share/aclocal && \
 	cd $< && autoreconf -fiv $(ACLOCAL_AMFLAGS)
 
 ifdef HAVE_ANDROID
-CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake \
+CMAKE = cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake \
 		-DANDROID_PLATFORM=$(ANDROID_API) \
 		-DANDROID_ABI=$(ANDROID_ABI) \
 		-DANDROID_STL=c++_shared \
@@ -422,7 +422,7 @@ CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchai
 		-DCMAKE_C_FLAGS="$(CFLAGS)" \
 		-DCMAKE_CXX_FLAGS="$(CXXFLAGS)" 
 else
-CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
+CMAKE = cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 		-DCMAKE_INSTALL_LIBDIR=$(PREFIX)/lib \
 		-DBUILD_SHARED_LIBS=OFF
