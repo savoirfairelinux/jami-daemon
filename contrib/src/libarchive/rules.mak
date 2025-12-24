@@ -11,7 +11,7 @@ endif
 endif
 DEPS_libarchive += nettle gmp zlib
 
-LIBARCHIVE_CMAKECONF := \
+LIBARCHIVE_CONF := \
 		-DCMAKE_INSTALL_LIBDIR=lib \
 		-DENABLE_TEST=OFF \
 		-DENABLE_TAR=OFF \
@@ -28,8 +28,4 @@ libarchive: libarchive-$(LIBARCHIVE_VERSION).tar.xz .sum-libarchive
 	$(UNPACK)
 	$(MOVE)
 
-.libarchive: libarchive toolchain.cmake .sum-libarchive
-	cd $< && mkdir -p buildlib
-	cd $< && cd buildlib && $(HOSTVARS) $(CMAKE) .. $(LIBARCHIVE_CMAKECONF)
-	cd $< && cd buildlib && $(MAKE) install
-	touch $@
+CMAKE_PKGS += libarchive
