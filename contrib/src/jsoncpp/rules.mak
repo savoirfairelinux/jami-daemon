@@ -10,7 +10,7 @@ ifeq ($(call need_pkg,"jsoncpp >= 1.9.3"),)
 PKGS_FOUND += jsoncpp
 endif
 
-JSONCPP_CMAKECONF := -DBUILD_STATIC_LIBS:BOOL=ON \
+JSONCPP_CONF := -DBUILD_STATIC_LIBS:BOOL=ON \
                      -DBUILD_SHARED_LIBS:BOOL=OFF \
                      -DJSONCPP_WITH_TESTS:BOOL=OFF
 
@@ -23,8 +23,4 @@ jsoncpp: jsoncpp-$(JSONCPP_VERSION).tar.gz .sum-jsoncpp
 	$(UNPACK)
 	$(MOVE)
 
-.jsoncpp: jsoncpp toolchain.cmake
-	cd $< && mkdir -p build
-	cd $< && cd build && $(HOSTVARS) $(CMAKE) .. ${JSONCPP_CMAKECONF}
-	cd $< && cd build && $(MAKE) install
-	touch $@
+CMAKE_PKGS += jsoncpp

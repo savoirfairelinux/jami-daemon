@@ -19,7 +19,4 @@ opus: opus-$(OPUS_VERSION).tar.gz .sum-opus
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-.opus: opus toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE)
-	cd $< && $(MAKE) install
-	touch $@
+CMAKE_PKGS += opus

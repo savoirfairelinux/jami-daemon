@@ -19,7 +19,7 @@ LLHTTP_VERSION := 9.2.1
 PKG_CPE += cpe:2.3:a:llhttp:llhttp:$(LLHTTP_VERSION):*:*:*:*:*:*:*
 LLHTTP_URL := https://github.com/nodejs/llhttp/archive/refs/tags/release/v$(LLHTTP_VERSION).tar.gz
 
-LLHTTP_CMAKECONF := \
+LLHTTP_CONF := \
 	-DBUILD_SHARED_LIBS=Off \
 	-DBUILD_STATIC_LIBS=On
 
@@ -32,7 +32,4 @@ llhttp: llhttp-$(LLHTTP_VERSION).tar.gz
 
 .sum-llhttp: llhttp-$(LLHTTP_VERSION).tar.gz
 
-.llhttp: llhttp toolchain.cmake .sum-llhttp
-	cd $< && mkdir -p build && cd build && $(HOSTVARS) $(CMAKE) $(LLHTTP_CMAKECONF) ..
-	cd $</build && $(MAKE) && $(MAKE) install
-	touch $@
+CMAKE_PKGS += llhttp
