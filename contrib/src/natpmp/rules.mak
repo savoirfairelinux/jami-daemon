@@ -24,7 +24,6 @@ endif
 	$(APPLY) $(SRC)/natpmp/0001-Add-NATPMP_BUILD_TOOLS-option-to-conditionally-build.patch
 	$(MOVE)
 
-.natpmp: natpmp toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE) -DNATPMP_BUILD_TOOLS=OFF .
-	cd $< && $(MAKE) install
-	touch $@
+NATPMP_CONF = -DNATPMP_BUILD_TOOLS=OFF
+
+CMAKE_PKGS += natpmp

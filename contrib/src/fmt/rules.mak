@@ -8,8 +8,8 @@ ifeq ($(call need_pkg,'fmt >= 10.1'),)
 PKGS_FOUND += fmt
 endif
 
-FMT_CMAKECONF = -DBUILD_SHARED_LIBS=Off \
-				-DFMT_TEST=Off
+FMT_CONF = -DBUILD_SHARED_LIBS=Off \
+		   -DFMT_TEST=Off
 
 $(TARBALLS)/fmt-$(FMT_VERSION).tar.gz:
 	$(call download,$(FMT_URL))
@@ -21,7 +21,4 @@ fmt: fmt-$(FMT_VERSION).tar.gz
 	cd $(UNPACK_DIR)
 	$(MOVE)
 
-.fmt: fmt toolchain.cmake .sum-fmt
-	cd $< && $(HOSTVARS) $(CMAKE) $(FMT_CMAKECONF) .
-	cd $< && $(MAKE) install
-	touch $@
+CMAKE_PKGS += fmt
