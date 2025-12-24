@@ -539,8 +539,13 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
         return !PJ_SUCCESS;
     }
 
-    if (not sdp_->createOffer(mediaAttrList))
+    try {
+        if (not sdp_->createOffer(mediaAttrList))
+            return !PJ_SUCCESS;
+    } catch (const SdpException& e) {
+        JAMI_ERROR("[call:{:s}] Failed to create SDP offer: {:s}", getCallId(), e.what());
         return !PJ_SUCCESS;
+    }
 
     if (isIceEnabled() and needNewIce) {
         if (not createIceMediaTransport(true) or not initIceMediaTransport(true)) {
@@ -552,7 +557,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
     }
 
     pjsip_tx_data* tdata;
-    auto local_sdp = sdp_->getLocalSdpSession();
+    auto* local_sdp = sdp_->getLocalSdpSession();
     auto result = pjsip_inv_reinvite(inviteSession_.get(), nullptr, local_sdp, &tdata);
     if (result == PJ_SUCCESS) {
         if (!tdata)
@@ -1356,13 +1361,7 @@ SIPCall::unhold()
         return false;
     }
 
-    bool success = false;
-    try {
-        success = internalOffHold([] {});
-    } catch (const SdpException& e) {
-        JAMI_ERR("[call:%s] %s", getCallId().c_str(), e.what());
-        throw VoipLinkException("SDP issue in offhold");
-    }
+    auto success = internalOffHold([] {});
 
     // Only wait for ICE if we have an ICE re-invite in progress
     isWaitingForIceAndMedia_ = success and (reinvIceMedia_ != nullptr);
