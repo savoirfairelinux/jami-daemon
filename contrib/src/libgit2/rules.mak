@@ -35,8 +35,4 @@ LIBGIT2_CONF = -DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_C_FLAGS="-fPIC"
 
 # TODO windows pcre?
-.libgit2: libgit2
-	cd $< && mkdir -p build && cd build \
-    && $(HOSTVARS) $(CMAKE) $(LIBGIT2_CONF) .. \
-    && $(MAKE) install
-	touch $@
+CMAKE_PKGS += libgit2

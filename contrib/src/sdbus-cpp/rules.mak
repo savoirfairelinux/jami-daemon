@@ -11,7 +11,7 @@ ifeq ($(call need_pkg,"sdbus-c++ >= 2.0.0"),)
 PKGS_FOUND += sdbus-cpp
 endif
 
-SDBUS_CPP_CMAKECONF := -D CMAKE_BUILD_TYPE=Release \
+SDBUS_CPP_CONF := -D CMAKE_BUILD_TYPE=Release \
                        -D BUILD_SHARED_LIBS=OFF \
                        -D SDBUSCPP_BUILD_CODEGEN=ON \
                        -D SDBUSCPP_BUILD_DOCS=OFF
@@ -25,8 +25,4 @@ sdbus-cpp: sdbus-cpp-$(SDBUS_CPP_VERSION).tar.gz .sum-sdbus-cpp
 	$(UNPACK)
 	$(MOVE)
 
-.sdbus-cpp: sdbus-cpp
-	cd $< && $(HOSTVARS) $(CMAKE) $(SDBUS_CPP_CMAKECONF) .
-	cd $< && $(MAKE)
-	cd $< && $(MAKE) install
-	touch $@
+CMAKE_PKGS += sdbus-cpp
