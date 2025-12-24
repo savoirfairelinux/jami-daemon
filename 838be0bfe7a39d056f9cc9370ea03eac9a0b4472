@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "28373372_66b41176",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2025-12-24T14:49:26Z",
+      "side": 1,
+      "message": "looks like this would break call swarms since the signal is now emited before handling that case.",
+      "revId": "838be0bfe7a39d056f9cc9370ea03eac9a0b4472",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
