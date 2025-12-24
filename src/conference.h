@@ -48,11 +48,13 @@ namespace jami {
 
 class Call;
 class Account;
+class JamiAccount;
 
 #ifdef ENABLE_VIDEO
 namespace video {
 class VideoMixer;
-}
+struct SourceInfo;
+} // namespace video
 #endif
 
 // info for a stream
@@ -506,6 +508,44 @@ private:
      * Initialize sources for host (takes default camera/audio)
      */
     void initSourcesForHost();
+
+#ifdef ENABLE_VIDEO
+    /**
+     * Setup video mixer and its callbacks.
+     * Called during construction.
+     */
+    void setupVideoMixer();
+
+    /**
+     * Callback for when video sources are updated.
+     * @param infos The updated source information
+     */
+    void onVideoSourcesUpdated(const std::vector<video::SourceInfo>& infos);
+
+    /**
+     * Create participant info for a remote call source.
+     * @param info Source information from video mixer
+     * @return Populated ParticipantInfo
+     */
+    ParticipantInfo createParticipantInfoFromRemoteSource(const video::SourceInfo& info);
+
+    /**
+     * Create participant info for a local/host source.
+     * @param info Source information from video mixer
+     * @param acc The JamiAccount for the host
+     * @param hostAdded Output flag indicating if host was added
+     * @return Populated ParticipantInfo
+     */
+    ParticipantInfo createParticipantInfoFromLocalSource(const video::SourceInfo& info,
+                                                         const std::shared_ptr<JamiAccount>& acc,
+                                                         bool& hostAdded);
+#endif
+
+    /**
+     * Register all protocol message handlers.
+     * Called during construction.
+     */
+    void registerProtocolHandlers();
 
     /**
      * Take over media control from the call.
