@@ -2269,29 +2269,32 @@ JamiAccount::convModule(bool noCreation)
                     }
                     if (!shared->connectionManager_->isConnecting(DeviceId(deviceId),
                                                                   fmt::format("swarm://{}", convId))) {
-                        shared->connectionManager_
-                            ->connectDevice(DeviceId(deviceId),
-                                            fmt::format("swarm://{}", convId),
-                                            [w, cb = std::move(cb)](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                                    const DeviceId& deviceId) {
-                                                dht::ThreadPool::io().run(
-                                                    [w, cb = std::move(cb), socket = std::move(socket), deviceId] {
-                                                        if (socket) {
-                                                            auto shared = w.lock();
-                                                            if (!shared)
-                                                                return;
-                                                            auto remoteCert = socket->peerCertificate();
-                                                            auto uri = remoteCert->issuer->getId().toString();
-                                                            if (shared->accountManager()->getCertificateStatus(uri)
-                                                                == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
-                                                                cb(nullptr);
-                                                                return;
-                                                            }
-                                                            shared->requestMessageConnection(uri, deviceId, "");
-                                                        }
-                                                        cb(socket);
-                                                    });
-                                            });
+                        shared->connectionManager_->connectDevice(
+                            DeviceId(deviceId),
+                            fmt::format("swarm://{}", convId),
+                            [w,
+                             cb = std::move(cb),
+                             wam = std::weak_ptr(
+                                 shared->accountManager())](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                            const DeviceId& deviceId) {
+                                dht::ThreadPool::io().run(
+                                    [w, wam, cb = std::move(cb), socket = std::move(socket), deviceId] {
+                                        if (socket) {
+                                            auto shared = w.lock();
+                                            auto am = wam.lock();
+                                            auto remoteCert = socket->peerCertificate();
+                                            auto uri = remoteCert->issuer->getId().toString();
+                                            if (!shared || !am
+                                                || am->getCertificateStatus(uri)
+                                                       == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                                                cb(nullptr);
+                                                return;
+                                            }
+                                            shared->requestMessageConnection(uri, deviceId, "");
+                                        }
+                                        cb(socket);
+                                    });
+                            });
                     }
                 });
             },
@@ -3397,25 +3400,28 @@ JamiAccount::startAccountDiscovery()
                                                                                 v.accountId.toString(),
                                                                                 0,
                                                                                 v.displayName);
-                    dp.cleanupTimer = std::make_unique<asio::steady_timer>(
-                        *Manager::instance().ioContext(), PEER_DISCOVERY_EXPIRATION);
+                    dp.cleanupTimer = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext(),
+                                                                           PEER_DISCOVERY_EXPIRATION);
                 }
                 dp.cleanupTimer->expires_after(PEER_DISCOVERY_EXPIRATION);
-                dp.cleanupTimer->async_wait([w = weak(), p = v.accountId, a = v.displayName](const asio::error_code& ec) {
-                    if (ec)
-                        return;
-                    if (auto this_ = w.lock()) {
-                        {
-                            std::lock_guard lc(this_->discoveryMapMtx_);
-                            this_->discoveredPeers_.erase(p);
-                            this_->discoveredPeerMap_.erase(p.toString());
-                        }
-                        // Send deleted peer
-                        emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(
-                                this_->getAccountID(), p.toString(), 1, a);
+                dp.cleanupTimer->async_wait(
+                    [w = weak(), p = v.accountId, a = v.displayName](const asio::error_code& ec) {
+                        if (ec)
+                            return;
+                        if (auto this_ = w.lock()) {
+                            {
+                                std::lock_guard lc(this_->discoveryMapMtx_);
+                                this_->discoveredPeers_.erase(p);
+                                this_->discoveredPeerMap_.erase(p.toString());
+                            }
+                            // Send deleted peer
+                            emitSignal<libjami::PresenceSignal::NearbyPeerNotification>(this_->getAccountID(),
+                                                                                        p.toString(),
+                                                                                        1,
+                                                                                        a);
                         }
                         JAMI_INFO("Account removed from discovery list: %s", a.c_str());
-                });
+                    });
             }
         });
 }
