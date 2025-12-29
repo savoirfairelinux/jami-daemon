@@ -268,10 +268,10 @@ private:
     }
 };
 
-static constexpr const char* const RING_URI_PREFIX = "ring:";
-static constexpr const char* const JAMI_URI_PREFIX = "jami:";
+static const constexpr std::string_view RING_URI_PREFIX = "ring:";
+static const constexpr std::string_view JAMI_URI_PREFIX = "jami:";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
-static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
+static const constexpr std::string_view PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -281,11 +281,11 @@ stripPrefix(std::string_view toUrl)
 {
     auto dhtf = toUrl.find(RING_URI_PREFIX);
     if (dhtf != std::string_view::npos) {
-        dhtf = dhtf + 5;
+        dhtf += RING_URI_PREFIX.size();
     } else {
         dhtf = toUrl.find(JAMI_URI_PREFIX);
         if (dhtf != std::string_view::npos) {
-            dhtf = dhtf + 5;
+            dhtf += JAMI_URI_PREFIX.size();
         } else {
             dhtf = toUrl.find("sips:");
             dhtf = (dhtf == std::string_view::npos) ? 0 : dhtf + 5;
