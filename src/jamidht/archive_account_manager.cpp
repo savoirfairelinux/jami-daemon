@@ -1325,28 +1325,6 @@ ArchiveAccountManager::syncDevices()
     onSyncData_(info_->contacts->getSyncData());
 }
 
-void
-ArchiveAccountManager::startSync(const OnNewDeviceCb& cb, const OnDeviceAnnouncedCb& dcb, bool publishPresence)
-{
-    AccountManager::startSync(std::move(cb), std::move(dcb), publishPresence);
-
-    dht_->listen<DeviceSync>(dht::InfoHash::get("inbox:" + info_->devicePk->getId().toString()), [this](DeviceSync&& sync) {
-        // Received device sync data.
-        // check device certificate
-        findCertificate(sync.from, [this, sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
-            if (!cert or cert->getId() != sync.from) {
-                JAMI_WARNING("[Account {}] Unable to find certificate for device {}", accountId_, sync.from.toString());
-                return;
-            }
-            if (not foundAccountDevice(cert))
-                return;
-            onSyncData(std::move(sync));
-        });
-
-        return true;
-    });
-}
-
 AccountArchive
 ArchiveAccountManager::readArchive(std::string_view scheme, const std::string& pwd) const
 {
