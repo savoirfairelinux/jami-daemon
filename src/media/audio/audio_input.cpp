@@ -87,7 +87,7 @@ AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
     frame->pointer()->pts = sent_samples;
     sent_samples += frame->pointer()->nb_samples;
 
-    notify(std::static_pointer_cast<MediaFrame>(frame));
+    notify(std::static_pointer_cast<MediaFrame>(std::move(frame)));
 }
 
 void
@@ -111,10 +111,9 @@ AudioInput::readFromDevice()
                 readFromQueue();
         }
     }
-
     auto& bufferPool = Manager::instance().getRingBufferPool();
     bufferPool.waitForDataAvailable(id_, MS_PER_PACKET);
-    
+
     auto audioFrame = bufferPool.getData(id_);
     if (not audioFrame)
         return;
