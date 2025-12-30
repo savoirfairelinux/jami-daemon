@@ -87,7 +87,7 @@ AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
     frame->pointer()->pts = sent_samples;
     sent_samples += frame->pointer()->nb_samples;
 
-    notify(std::static_pointer_cast<MediaFrame>(frame));
+    notify(std::static_pointer_cast<MediaFrame>(std::move(frame)));
 }
 
 void
@@ -111,16 +111,18 @@ AudioInput::readFromDevice()
                 readFromQueue();
         }
     }
+    auto& bufferPool = Manager::instance().getRingBufferPool();
 
     // Note: read for device is called in an audio thread and we don't
     // want to have a loop which takes 100% of the CPU.
     // Here, we basically want to mix available data without any glitch
     // and even if one buffer doesn't have audio data (call in hold,
     // connections issues, etc). So mix every MS_PER_PACKET
-    std::this_thread::sleep_until(wakeUp_);
-    wakeUp_ += MS_PER_PACKET;
+    // std::this_thread::sleep_until(wakeUp_);
+    // wakeUp_ += MS_PER_PACKET;
+    jami_tracepoint(audio_input_read_from_device_start, id_.c_str());
+    bufferPool.waitForDataAvailable(id_, MS_PER_PACKET);
 
-    auto& bufferPool = Manager::instance().getRingBufferPool();
     auto audioFrame = bufferPool.getData(id_);
     if (not audioFrame)
         return;

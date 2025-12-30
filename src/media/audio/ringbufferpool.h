@@ -90,6 +90,8 @@ public:
     void unBindAll(const std::string& ringbufferId);
 
     bool waitForDataAvailable(const std::string& ringbufferId, const std::chrono::microseconds& max_wait) const;
+    bool waitForDataAvailable(const std::string& ringbufferId,
+                              const std::chrono::high_resolution_clock::time_point& deadline) const;
 
     std::shared_ptr<AudioFrame> getData(const std::string& ringbufferId);
 
