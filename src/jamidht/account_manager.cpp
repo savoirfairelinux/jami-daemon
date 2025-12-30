@@ -732,7 +732,7 @@ AccountManager::sendTrustRequest(const std::string& to, const std::string& convI
                      dev->getLongId(),
                      payload.size(),
                      to);
-        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev->getId().toString()),
+        dht_->putEncrypted(dht::InfoHash::get(concat("inbox:"sv, dev->getId().to_view())),
                            dev,
                            dht::TrustRequest(DHT_TYPE_NS, convId, payload),
                            [to, size = payload.size()](bool ok) {

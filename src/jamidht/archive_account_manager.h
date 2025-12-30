@@ -66,8 +66,6 @@ public:
                             AuthFailureCallback onFailure,
                             const OnChangeCallback& onChange) override;
 
-    void startSync(const OnNewDeviceCb&, const OnDeviceAnnouncedCb& dcb = {}, bool publishPresence = true) override;
-
     bool changePassword(const std::string& password_old, const std::string& password_new) override;
     virtual std::vector<uint8_t> getPasswordKey(const std::string& /*password*/) override;
 
