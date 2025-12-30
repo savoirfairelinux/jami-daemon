@@ -178,7 +178,6 @@ private:
         , hostedCallsPath_(conversationDataPath_ / ConversationDirectories::HOSTED_CALLS)
         , activeCallsPath_(conversationDataPath_ / ConversationDirectories::ACTIVE_CALLS)
         , ioContext_(Manager::instance().ioContext())
-        , fallbackTimer_(std::make_unique<asio::steady_timer>(*ioContext_))
         , typers_(std::make_shared<Typers>(account, repository_->id()))
     {
         if (!commits.empty())
@@ -210,15 +209,7 @@ public:
     }
     mutable std::string fmtStr_;
 
-    ~Impl()
-    {
-        try {
-            if (fallbackTimer_)
-                fallbackTimer_->cancel();
-        } catch (const std::exception& e) {
-            JAMI_ERROR("{:s} {:s}", toString(), e.what());
-        }
-    }
+    ~Impl() {}
 
     /**
      * If, for whatever reason, the daemon is stopped while hosting a conference,
@@ -571,8 +562,6 @@ public:
 
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited, bool includeLeft) const;
 
-    std::mutex membersMtx_ {};
-    std::set<std::string> checkedMembers_; // Store members we tried
     std::function<void()> bootstrapCb_;
     std::mutex bootstrapMtx_ {};
 #ifdef LIBJAMI_TEST
@@ -619,7 +608,6 @@ public:
 
     // Bootstrap
     const std::shared_ptr<asio::io_context> ioContext_;
-    const std::unique_ptr<asio::steady_timer> fallbackTimer_;
 
     /**
      * Loaded history represents the linearized history to show for clients
@@ -1335,12 +1323,9 @@ Conversation::removeGitSocket(const DeviceId& deviceId)
 void
 Conversation::shutdownConnections()
 {
-    pimpl_->fallbackTimer_->cancel();
     pimpl_->gitSocketList_.clear();
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->shutdown();
-    std::lock_guard lk(pimpl_->membersMtx_);
-    pimpl_->checkedMembers_.clear();
 }
 
 void
@@ -2200,82 +2185,10 @@ Conversation::onMessageStatusChanged(
 void
 Conversation::onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb)
 {
+    std::lock_guard lock(pimpl_->bootstrapMtx_);
     pimpl_->bootstrapCbTest_ = cb;
 }
 #endif
-
-void
-Conversation::checkBootstrapMember(const asio::error_code& ec, std::vector<std::map<std::string, std::string>> members)
-{
-    if (ec == asio::error::operation_aborted)
-        return;
-    auto acc = pimpl_->account_.lock();
-    if (pimpl_->swarmManager_->isConnected() or not acc)
-        return;
-    // We bootstrap the DRT with devices who already wrote in the repository.
-    // However, in a conversation, a large number of devices may just watch
-    // the conversation, but never write any message.
-    std::unique_lock lock(pimpl_->membersMtx_);
-
-    std::string uri;
-    while (!members.empty()) {
-        auto member = std::move(members.back());
-        members.pop_back();
-        uri = std::move(member.at("uri"));
-        if (uri != pimpl_->userId_ && pimpl_->checkedMembers_.find(uri) == pimpl_->checkedMembers_.end())
-            break;
-    }
-    auto fallbackFailed = [](auto sthis) {
-        JAMI_LOG("{} Bootstrap: Fallback failed. Wait for remote connections.", sthis->pimpl_->toString());
-#ifdef LIBJAMI_TEST
-        if (sthis->pimpl_->bootstrapCbTest_)
-            sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FAILED);
-#endif
-    };
-    // If members is empty, we finished the fallback un-successfully
-    if (members.empty() && uri.empty()) {
-        lock.unlock();
-        fallbackFailed(this);
-        return;
-    }
-
-    // Fallback, check devices of a member (we didn't check yet) in the conversation
-    pimpl_->checkedMembers_.emplace(uri);
-    auto devices = std::make_shared<std::vector<NodeId>>();
-    acc->forEachDevice(
-        dht::InfoHash(uri),
-        [w = weak(), devices](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-            // Test if already sent
-            if (auto sthis = w.lock()) {
-                if (!sthis->pimpl_->swarmManager_->getRoutingTable().hasKnownNode(dev->getLongId()))
-                    devices->emplace_back(dev->getLongId());
-            }
-        },
-        [w = weak(), devices, members = std::move(members), uri, fallbackFailed = std::move(fallbackFailed)](bool ok) {
-            auto sthis = w.lock();
-            if (!sthis)
-                return;
-            auto checkNext = true;
-            if (ok && devices->size() != 0) {
-#ifdef LIBJAMI_TEST
-                if (sthis->pimpl_->bootstrapCbTest_)
-                    sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::FALLBACK);
-#endif
-                JAMI_LOG("{} Bootstrap: Fallback with member: {}", sthis->pimpl_->toString(), uri);
-                if (sthis->pimpl_->swarmManager_->setKnownNodes(*devices))
-                    checkNext = false;
-            }
-            if (checkNext) {
-                // Check next member
-                sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
-                sthis->pimpl_->fallbackTimer_->async_wait(
-                    std::bind(&Conversation::checkBootstrapMember, sthis, std::placeholders::_1, std::move(members)));
-            } else {
-                // In this case, all members are checked. Fallback failed
-                fallbackFailed(sthis);
-            }
-        });
-}
 
 void
 Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices)
@@ -2284,7 +2197,6 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     if (!pimpl_ || !pimpl_->repository_ || !pimpl_->swarmManager_)
         return;
     // Here, we bootstrap the DRT with devices who already wrote in the conversation
-    // If this doesn't work, it will attempt to fallback with checkBootstrapMember
     // If it works, the callback onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstrapped);
     std::vector<DeviceId> devices = knownDevices;
@@ -2293,38 +2205,19 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
             devices.insert(devices.end(), memberDevices.begin(), memberDevices.end());
     }
     JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
-    // set callback
-    auto fallback = [](std::shared_ptr<Conversation> sthis, bool now = false) {
-        // Fallback
-        auto acc = sthis->pimpl_->account_.lock();
-        if (!acc)
-            return;
-        auto members = sthis->getMembers(false, false);
-        std::shuffle(members.begin(), members.end(), acc->rand);
-        if (now) {
-            sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now());
-        } else {
-            auto timeForBootstrap = std::min(static_cast<size_t>(8), members.size());
-            sthis->pimpl_->fallbackTimer_->expires_at(std::chrono::steady_clock::now() + 20s
-                                                      - std::chrono::seconds(timeForBootstrap));
-            JAMI_DEBUG("{} Fallback in {} seconds", sthis->pimpl_->toString(), (20 - timeForBootstrap));
-        }
-        sthis->pimpl_->fallbackTimer_->async_wait(
-            std::bind(&Conversation::checkBootstrapMember, sthis, std::placeholders::_1, std::move(members)));
-    };
 
-    pimpl_->swarmManager_->onConnectionChanged([w = weak(), fallback](bool ok) {
+    if (!devices.empty()) {
+        pimpl_->swarmManager_->setKnownNodes(devices);
+    }
+
+    pimpl_->swarmManager_->onConnectionChanged([w = weak()](bool ok) {
         // This will call methods from accounts, so trigger on another thread.
-        dht::ThreadPool::io().run([w, ok, fallback = std::move(fallback)] {
+        dht::ThreadPool::io().run([w, ok] {
             auto sthis = w.lock();
             if (!sthis)
                 return;
             if (ok) {
                 // Bootstrap succeeded!
-                {
-                    std::lock_guard lock(sthis->pimpl_->membersMtx_);
-                    sthis->pimpl_->checkedMembers_.clear();
-                }
                 if (sthis->pimpl_->bootstrapCb_)
                     sthis->pimpl_->bootstrapCb_();
 #ifdef LIBJAMI_TEST
@@ -2333,20 +2226,14 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
 #endif
                 return;
             }
-            fallback(sthis);
         });
     });
-    {
-        std::lock_guard lock(pimpl_->membersMtx_);
-        pimpl_->checkedMembers_.clear();
-    }
+
     // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic
     // connectivity change
     if (pimpl_->swarmManager_->isShutdown()) {
         pimpl_->swarmManager_->restart();
         pimpl_->swarmManager_->maintainBuckets();
-    } else if (!pimpl_->swarmManager_->setKnownNodes(devices)) {
-        fallback(shared_from_this(), true);
     }
 }
 
