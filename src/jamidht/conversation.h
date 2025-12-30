@@ -595,13 +595,6 @@ private:
     }
 
     // Private because of weak()
-    /**
-     * Used by bootstrap() to launch the fallback
-     * @param ec
-     * @param members       Members to try to connect
-     */
-    void checkBootstrapMember(const asio::error_code& ec, std::vector<std::map<std::string, std::string>> members);
-
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
