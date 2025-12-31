@@ -1262,6 +1262,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             } else {
                 convModule()->setAccountManager(accountManager_);
             }
+            convModule()->initPresence();
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }

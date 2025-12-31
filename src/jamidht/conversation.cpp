@@ -2351,6 +2351,13 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     }
 }
 
+void
+Conversation::addKnownDevice(const DeviceId& deviceId)
+{
+    if (pimpl_->swarmManager_)
+        pimpl_->swarmManager_->setKnownNodes({deviceId});
+}
+
 std::vector<std::string>
 Conversation::commitsEndedCalls()
 {
