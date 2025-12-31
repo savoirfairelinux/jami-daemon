@@ -23,6 +23,7 @@
 #include "fileutils.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/presence_manager.h"
 #include "manager.h"
 #include "sip/sipcall.h"
 #include "vcard.h"
@@ -405,6 +406,19 @@ public:
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
 
+    uint64_t presenceListenerToken_ {0};
+    void onBuddyOnline(const std::string& uri);
+
+    ~Impl()
+    {
+        if (auto acc = account_.lock()) {
+            if (auto pm = acc->presenceManager()) {
+                if (presenceListenerToken_)
+                    pm->removeListener(presenceListenerToken_);
+            }
+        }
+    }
+
     void fixStructures(std::shared_ptr<JamiAccount> account,
                        const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv,
                        const std::set<std::string>& toRm);
@@ -445,6 +459,19 @@ public:
         } catch (const std::exception& e) {
             JAMI_WARNING("[Account {}] [ConversationModule] unable to load syncing metadata: {}", accountId_, e.what());
         }
+    }
+
+    void initPresence()
+    {
+        if (!presenceListenerToken_)
+            if (auto acc = account_.lock())
+                presenceListenerToken_ = acc->presenceManager()->addListener(
+                    [w = weak_from_this()](const std::string& uri, bool online) {
+                        if (!online)
+                            return;
+                        if (auto sthis = w.lock())
+                            sthis->onBuddyOnline(uri);
+                    });
     }
 };
 
@@ -728,6 +755,25 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
     }
 }
 
+void
+ConversationModule::Impl::onBuddyOnline(const std::string& uri)
+{
+    auto acc = account_.lock();
+    if (!acc)
+        return;
+
+    acc->forEachDevice(dht::InfoHash(uri), [w = weak(), uri](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+        if (auto sthis = w.lock()) {
+            std::lock_guard lk(sthis->conversationsMtx_);
+            for (auto& [id, conv] : sthis->conversations_) {
+                if (conv->conversation && conv->conversation->isMember(uri)) {
+                    conv->conversation->addKnownDevice(dev->getLongId());
+                }
+            }
+        }
+    });
+}
+
 // Clone and store conversation
 void
 ConversationModule::Impl::handlePendingConversation(const std::string& conversationId, const std::string& deviceId)
@@ -735,14 +781,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
     auto acc = account_.lock();
     if (!acc)
         return;
-    std::vector<DeviceId> kd;
-    {
-        std::unique_lock lk(conversationsMtx_);
-        const auto& devices = accountManager_->getKnownDevices();
-        kd.reserve(devices.size());
-        for (const auto& [id, _] : devices)
-            kd.emplace_back(id);
-    }
     auto conv = getConversation(conversationId);
     if (!conv)
         return;
@@ -840,12 +878,21 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif
         auto id = conversation->id();
-        conversation->bootstrap(
-            [w = weak(), id = std::move(id)]() {
-                if (auto sthis = w.lock())
-                    sthis->bootstrapCb(id);
-            },
-            kd);
+        conversation->bootstrap([w = weak(), id = std::move(id)]() {
+            if (auto sthis = w.lock())
+                sthis->bootstrapCb(id);
+        });
+
+        if (auto pm = acc->presenceManager()) {
+            for (const auto& member : conversation->memberUris()) {
+                if (pm->isOnline(member)) {
+                    acc->forEachDevice(dht::InfoHash(member),
+                                       [conversation](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+                                           conversation->addKnownDevice(dev->getLongId());
+                                       });
+                }
+            }
+        }
 
         if (!preferences.empty())
             conversation->updatePreferences(preferences);
@@ -1399,14 +1446,6 @@ ConversationModule::Impl::fallbackClone(const asio::error_code& ec, const std::s
 void
 ConversationModule::Impl::bootstrap(const std::string& convId)
 {
-    std::vector<DeviceId> kd;
-    {
-        std::unique_lock lk(conversationsMtx_);
-        const auto& devices = accountManager_->getKnownDevices();
-        kd.reserve(devices.size());
-        for (const auto& [id, _] : devices)
-            kd.emplace_back(id);
-    }
     std::vector<std::string> toClone;
     std::vector<std::shared_ptr<Conversation>> conversations;
     if (convId.empty()) {
@@ -1438,12 +1477,23 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
 #ifdef LIBJAMI_TEST
         conversation->onBootstrapStatus(bootstrapCbTest_);
 #endif
-        conversation->bootstrap(
-            [w = weak(), id = conversation->id()] {
-                if (auto sthis = w.lock())
-                    sthis->bootstrapCb(id);
-            },
-            kd);
+        conversation->bootstrap([w = weak(), id = conversation->id()] {
+            if (auto sthis = w.lock())
+                sthis->bootstrapCb(id);
+        });
+
+        if (auto acc = account_.lock()) {
+            if (auto pm = acc->presenceManager()) {
+                for (const auto& member : conversation->memberUris()) {
+                    if (pm->isOnline(member)) {
+                        acc->forEachDevice(dht::InfoHash(member),
+                                           [conversation](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+                                               conversation->addKnownDevice(dev->getLongId());
+                                           });
+                    }
+                }
+            }
+        }
     }
     for (const auto& cid : toClone) {
         auto members = getConversationMembers(cid);
@@ -3379,6 +3429,12 @@ ConversationModule::getTypers(const std::string& convId)
             return c->conversation->typers();
     }
     return nullptr;
+}
+
+void
+ConversationModule::initPresence()
+{
+    pimpl_->initPresence();
 }
 
 } // namespace jami

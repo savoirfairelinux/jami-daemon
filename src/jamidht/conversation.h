@@ -193,7 +193,13 @@ public:
      * @param onBootstrapped     Callback called when connection is established successfully
      * @param knownDevices       List of account's known devices
      */
-    void bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices);
+    void bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices = {});
+
+    /**
+     * Add a known device to the swarm manager
+     * @param deviceId
+     */
+    void addKnownDevice(const DeviceId& deviceId);
 
     /**
      * Refresh active calls.
