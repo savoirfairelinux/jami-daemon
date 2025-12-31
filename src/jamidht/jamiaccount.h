@@ -356,6 +356,8 @@ public:
 
     const dht::crypto::Identity& identity() const { return id_; }
 
+    PresenceManager* presenceManager() const { return presenceManager_.get(); }
+
     void forEachDevice(const dht::InfoHash& to,
                        std::function<void(const std::shared_ptr<dht::crypto::PublicKey>&)>&& op,
                        std::function<void(bool)>&& end = {});
