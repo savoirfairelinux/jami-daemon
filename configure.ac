@@ -309,25 +309,22 @@ AS_IF([test -d "${TOOLS_DIR}"],
    export PATH="${TOOLS_DIR}":$PATH])
 
 dnl Check for zlib
-PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
+PKG_CHECK_MODULES(ZLIB, zlib)
 
-PKG_CHECK_MODULES(LIBGIT2, [libgit2 >= 1.1.0],, AC_MSG_ERROR([Missing libgit2 files]))
+PKG_CHECK_MODULES(LIBGIT2, [libgit2 >= 1.1.0])
 
 dnl Check for pjproject
-PKG_CHECK_MODULES(PJPROJECT, libpjproject,,
-  AC_MSG_ERROR([Missing pjproject files]))
+PKG_CHECK_MODULES(PJPROJECT, libpjproject)
 
 dnl Guile
 AM_COND_IF([ENABLE_AGENT],
-  [PKG_CHECK_MODULES(GUILE, [guile-3.0 >= 3.0.7],, AC_MSG_ERROR([Missing guile files]))],)
+  [PKG_CHECK_MODULES(GUILE, [guile-3.0 >= 3.0.7])],)
 
-PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],,
-  AC_MSG_ERROR([yaml-cpp not found]))
+PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1])
 
 PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 1.6.5],
   [DAEMONCPPFLAGS+=" ${JSONCPP_CFLAGS}"
-   DAEMONLDFLAGS+=" ${JSONCPP_LIBS}"],
-  AC_MSG_ERROR([jsoncpp not found]))
+   DAEMONLDFLAGS+=" ${JSONCPP_LIBS}"])
 
 if test "${HAVE_ANDROID}" = "1"; then
   dnl Check for OpenSL
@@ -354,8 +351,7 @@ if test "${SYS}" = "linux"; then
     [],
     [with_alsa=yes])
   AS_IF([test "x$with_alsa" = "xyes"],
-    [PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},,
-       AC_MSG_ERROR([Missing alsa development files]))]);
+    [PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION})]);
 
   AC_DEFINE_UNQUOTED([HAVE_ALSA],
     `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`,
@@ -373,8 +369,7 @@ if test "${SYS}" = "linux"; then
     [with_pulse=yes])
 
   AS_IF([test "x$with_pulse" = "xyes"],
-    [PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION},,
-     AC_MSG_ERROR([Missing pulseaudio development files]))]);
+    [PKG_CHECK_MODULES(PULSEAUDIO, libpulse >= ${LIBPULSE_MIN_VERSION})]);
 
   AC_DEFINE_UNQUOTED([HAVE_PULSE],
     `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`,
@@ -399,8 +394,7 @@ AC_ARG_WITH([portaudio], [AS_HELP_STRING([--without-portaudio],
             [disable support for portaudio])], [], [with_portaudio=yes])])
 AS_IF([test "x$with_portaudio" = "xyes"],
   [PKG_CHECK_MODULES(PORTAUDIO, [portaudio-2.0],
-    [AC_DEFINE([HAVE_PORTAUDIO], 1, [Define if you have portaudio])],
-    [AC_MSG_ERROR([Missing libportaudio development files])])])
+    [AC_DEFINE([HAVE_PORTAUDIO], 1, [Define if you have portaudio])])])
 
 AM_CONDITIONAL(BUILD_PORTAUDIO, test "x$with_portaudio" = "xyes")
 AM_CONDITIONAL(HAVE_PORTAUDIO, test "x$with_portaudio" = "xyes")
@@ -424,8 +418,7 @@ AC_ARG_WITH([dbus],
   [],
   [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"],
-  [PKG_CHECK_MODULES(SDBUSCPP, [sdbus-c++ >= 2.0.0],,
-     AC_MSG_ERROR([sdbus-c++ not found]))
+  [PKG_CHECK_MODULES(SDBUSCPP, [sdbus-c++ >= 2.0.0])
 
    AC_CONFIG_FILES([bin/dbus/Makefile])
 
@@ -447,27 +440,14 @@ AM_COND_IF([ENABLE_NODEJS],
    AC_CONFIG_FILES([bin/nodejs/Makefile])])
 
 dnl Check for libav
-PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 54.31.100,,
-  AC_MSG_ERROR([Missing libavutil development files]))
-
-PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 56.60.100,,
-  AC_MSG_ERROR([Missing libavcodec development files]))
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 54.31.100)
+PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 56.60.100)
 LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
-
-PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 56.40.101,,
-  AC_MSG_ERROR([Missing libavformat development files]))
-
-PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 56.4.100,,
-  AC_MSG_ERROR([Missing libavdevice development files]))
-
-PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 5.40.101,,
-  AC_MSG_ERROR([Missing libavfilter development files]))
-
-PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,,
-  AC_MSG_ERROR([Missing libswscale development files]))
-
-PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,,
-  AC_MSG_ERROR([Missing libswresample development files]))
+PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 56.40.101)
+PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 56.4.100)
+PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 5.40.101)
+PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101)
+PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101)
 
 dnl Jami Plugin is default-enabled
 AC_ARG_ENABLE([plugin], AS_HELP_STRING([--disable-plugin], [Disable plugin]))
@@ -475,11 +455,9 @@ AS_IF([test "x$enable_plugin" != "xno"],
   [AC_DEFINE(ENABLE_PLUGIN, [], [Jami Plugin support enabled])
    AM_CONDITIONAL(ENABLE_PLUGIN, true)
    AS_IF([test "$SYS" = linux],
-     [PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0],,
-      AC_MSG_ERROR([libarchive not found]))],
+     [PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0])],
      [AS_IF([test "$SYS" = darwin],
-     [PKG_CHECK_MODULES([MINIZIP], [minizip >= 3.0.0],,
-      AC_MSG_ERROR([libminizip not found]))],
+     [PKG_CHECK_MODULES([MINIZIP], [minizip >= 3.0.0])],
      [])]
      )],
   [AM_CONDITIONAL(ENABLE_PLUGIN, false)]);
@@ -491,8 +469,7 @@ AS_IF([test "x$enable_video" != "xno"],
   [AC_DEFINE(ENABLE_VIDEO, [], [Video support enabled])
    AM_CONDITIONAL(ENABLE_VIDEO, true)
    AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],
-     [PKG_CHECK_MODULES(UDEV, libudev,,
-        AC_MSG_ERROR([Missing libudev development files]))],
+     [PKG_CHECK_MODULES(UDEV, libudev)],
      [])],
   [AM_CONDITIONAL(ENABLE_VIDEO, false)]);
 
@@ -515,8 +492,8 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"],
 AM_CONDITIONAL([ENABLE_HWACCEL], [test "x${ring_accel}" = "xyes"])
 
 dnl check for GnuTLS
-PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.7.4], [], AC_MSG_ERROR([gnutls not found]))
-PKG_CHECK_MODULES([NETTLE], [nettle >= 3.0.0], [], AC_MSG_ERROR([nettle not found]))
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.7.4])
+PKG_CHECK_MODULES([NETTLE], [nettle >= 3.0.0])
 
 # PTHREAD
 # required dependency: libxpat
@@ -577,18 +554,10 @@ if test "${SYS}" = "linux"; then
 fi
 AM_CONDITIONAL([HAVE_WEBRTC_AP], test "x$with_webrtc_ap" = "xyes")
 
-dnl check for openDHT
-PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.3.2],,
-  AC_MSG_FAILURE([Missing OpenDHT]))
-
-PKG_CHECK_MODULES([DHTNET], [dhtnet],,
-  AC_MSG_FAILURE([Missing DhtNet]))
-
-PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],,
-  AC_MSG_FAILURE([Missing secp256k1]))
-
-PKG_CHECK_MODULES([FMT], [fmt >= 7.0],,
-  AC_MSG_FAILURE([Missing {fmt}]))
+PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.3.2])
+PKG_CHECK_MODULES([DHTNET], [dhtnet])
+PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1])
+PKG_CHECK_MODULES([FMT], [fmt >= 7.0])
 
 # SHM
 dnl check for shm
@@ -597,8 +566,8 @@ AS_IF([test "x$with_dbus" == xyes],
 
 # LTTNG
 AM_COND_IF([ENABLE_TRACEPOINTS],
- [PKG_CHECK_MODULES(LTTNG, [lttng-ust >= 2.13],, AC_MSG_ERROR([Missing lttng-ust]))
-  PKG_CHECK_MODULES(LIBURCU, [liburcu >= 0.13.1],, AC_MSG_ERROR([Missng liburcu]))])
+ [PKG_CHECK_MODULES(LTTNG, [lttng-ust >= 2.13])
+  PKG_CHECK_MODULES(LIBURCU, [liburcu >= 0.13.1])])
 
 # DOXYGEN
 # required dependency(ies): doxygen
