@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "28b6f67f_0381a1c6",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 9,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-01-02T21:16:15Z",
+      "side": 1,
+      "message": "Please change `Fixes` to `GitLab` to enable automatic linking.\n`GitLab: #1167`\n\nPlease see point 6 at the following link.\nhttps://docs.jami.net/contribute/index.html#commit-message-guidelines\n\nThank you",
+      "range": {
+        "startLine": 9,
+        "startChar": 0,
+        "endLine": 9,
+        "endChar": 12
+      },
+      "revId": "7383130923ada811207591caa170552de1611a25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
