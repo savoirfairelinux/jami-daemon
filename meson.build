@@ -32,6 +32,7 @@ deplibavutil      = dependency('libavutil', version: '>= 55.75.100')
 depfmt            = dependency('fmt', version: '>= 5.3')
 depyamlcpp        = dependency('yaml-cpp', version: '>= 0.5.1')
 depjsoncpp        = dependency('jsoncpp', version: '>= 1.6.5')
+depsimdutf        = dependency('simdutf')
 depzlib           = dependency('zlib')
 
 if get_option('interfaces').contains('dbus')
