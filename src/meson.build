@@ -140,6 +140,7 @@ libjami_dependencies = [
     depfmt,
     depyamlcpp,
     depjsoncpp,
+    depsimdutf,
     depzlib,
     depopenssl
 ]

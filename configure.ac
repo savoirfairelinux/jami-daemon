@@ -558,6 +558,7 @@ PKG_CHECK_MODULES([OPENDHT], [opendht >= 2.3.2])
 PKG_CHECK_MODULES([DHTNET], [dhtnet])
 PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1])
 PKG_CHECK_MODULES([FMT], [fmt >= 7.0])
+PKG_CHECK_MODULES([SIMDUTF], [simdutf])
 
 # SHM
 dnl check for shm

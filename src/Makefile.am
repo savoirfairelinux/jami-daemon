@@ -52,6 +52,7 @@ libjami_la_LIBADD += \
 	$(FMT_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBCRYPTO_LIBS) \
+	$(SIMDUTF_LIBS) \
 	$(ZLIB_LIBS)
 
 # XXX: It seems this should be the default value when otherwise left
