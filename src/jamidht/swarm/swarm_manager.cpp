@@ -182,7 +182,7 @@ SwarmManager::maintainBuckets(const std::set<NodeId>& toConnect)
         }
     }
     lock.unlock();
-    for (auto& node : nodes)
+    for (const auto& node : nodes)
         tryConnect(node);
 }
 
