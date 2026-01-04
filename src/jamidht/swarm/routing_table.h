@@ -442,6 +442,15 @@ public:
         return count;
     }
 
+
+    unsigned getActiveNodesCount() const
+    {
+        size_t count = 0;
+        for (const auto& b : buckets)
+            count += b.getNodesSize() + b.getConnectingNodesSize();
+        return count;
+    }
+
     /**
      * Prints routing table
      */
