@@ -444,6 +444,8 @@ public:
     void monitor();
     // conversationId optional
     std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& conversationId = "");
+    std::vector<std::map<std::string, std::string>> getConversationConnectivity(const std::string& conversationId);
+    std::vector<std::map<std::string, std::string>> getConversationTrackedMembers(const std::string& conversationId);
     std::vector<std::map<std::string, std::string>> getChannelList(const std::string& connectionId);
 
     // File transfer
