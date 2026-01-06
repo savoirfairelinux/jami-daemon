@@ -196,10 +196,11 @@ public:
     void bootstrap(std::function<void()> onBootstrapped, const std::vector<DeviceId>& knownDevices = {});
 
     /**
-     * Add a known device to the swarm manager
-     * @param deviceId
+     * Add known devices to the swarm manager
+     * @param devices
+     * @param memberUri
      */
-    void addKnownDevice(const DeviceId& deviceId);
+    void addKnownDevices(const std::vector<DeviceId>& devices, const std::string& memberUri = "");
 
     /**
      * Refresh active calls.
