@@ -184,7 +184,7 @@ private:
         if (!commits.empty())
             initActiveCalls(repository_->convCommitsToMap(commits));
         loadStatus();
-        monitorMembers();
+        setupMemberCallback();
     }
 
     Impl(std::pair<std::unique_ptr<ConversationRepository>, std::vector<ConversationCommit>>&& repoAndCommits,
@@ -211,15 +211,7 @@ public:
     }
     mutable std::string fmtStr_;
 
-    ~Impl()
-    {
-        std::lock_guard lk(trackedMembersMtx_);
-        if (auto acc = account_.lock()) {
-            for (const auto& uri : trackedMembers_) {
-                acc->presenceManager()->untrackBuddy(uri);
-            }
-        }
-    }
+    ~Impl() { stopTracking(); }
 
     /**
      * If, for whatever reason, the daemon is stopped while hosting a conference,
@@ -605,13 +597,22 @@ public:
     const std::filesystem::path statusPath_ {};
 
     OnMembersChanged onMembersChanged_ {};
-    std::set<std::string> trackedMembers_;
-    std::mutex trackedMembersMtx_;
+    struct TrackedMember
+    {
+        std::set<DeviceId> devices;
+        std::set<DeviceId> failedDevices;
+    };
+    std::map<std::string, TrackedMember> trackedMembers_;
+    mutable std::mutex trackedMembersMtx_;
     bool isTracking_ {false};
-    void monitorMembers();
-    void startTracking();
+    void setupMemberCallback();
+    void startTracking(std::weak_ptr<Conversation> w);
     void stopTracking();
+    void rotateTrackedMembers(const std::string& memberUri = "", const DeviceId& deviceId = {});
     void monitorConnection(std::weak_ptr<Conversation> w);
+    void onConnectionFailed(const DeviceId& deviceId, const std::string& memberUri = "");
+
+    uint64_t presenceDeviceListenerToken_ {0};
 
     // Manage hosted calls on this device
     std::filesystem::path hostedCallsPath_ {};
@@ -678,29 +679,21 @@ public:
 };
 
 void
-Conversation::Impl::monitorMembers()
+Conversation::Impl::setupMemberCallback()
 {
     repository_->onMembersChanged([this](const std::set<std::string>& memberUris) {
-        std::lock_guard lk(trackedMembersMtx_);
-        auto acc = account_.lock();
-        if (!acc)
-            return;
-
-        if (isTracking_) {
-            // Track new
-            for (const auto& uri : memberUris) {
-                if (trackedMembers_.find(uri) == trackedMembers_.end()) {
-                    acc->presenceManager()->trackBuddy(uri);
-                    trackedMembers_.emplace(uri);
-                }
-            }
-            // Untrack removed
-            for (auto it = trackedMembers_.begin(); it != trackedMembers_.end();) {
-                if (memberUris.find(*it) == memberUris.end()) {
-                    acc->presenceManager()->untrackBuddy(*it);
-                    it = trackedMembers_.erase(it);
-                } else {
-                    ++it;
+        {
+            std::lock_guard lk(trackedMembersMtx_);
+            if (isTracking_) {
+                if (auto acc = account_.lock()) {
+                    for (auto it = trackedMembers_.begin(); it != trackedMembers_.end();) {
+                        if (memberUris.find(it->first) == memberUris.end()) {
+                            acc->presenceManager()->untrackBuddy(it->first);
+                            it = trackedMembers_.erase(it);
+                        } else {
+                            ++it;
+                        }
+                    }
                 }
             }
         }
@@ -711,22 +704,29 @@ Conversation::Impl::monitorMembers()
 }
 
 void
-Conversation::Impl::startTracking()
+Conversation::Impl::startTracking(std::weak_ptr<Conversation> w)
 {
-    std::lock_guard lk(trackedMembersMtx_);
-    if (isTracking_)
-        return;
-    isTracking_ = true;
     auto acc = account_.lock();
     if (!acc)
         return;
-    auto members = repository_->members();
-    for (const auto& member : members) {
-        if (trackedMembers_.find(member.uri) == trackedMembers_.end()) {
-            acc->presenceManager()->trackBuddy(member.uri);
-            trackedMembers_.emplace(member.uri);
-        }
+
+    {
+        std::lock_guard lk(trackedMembersMtx_);
+        if (isTracking_)
+            return;
+        isTracking_ = true;
     }
+
+    presenceDeviceListenerToken_ = acc->presenceManager()->addDeviceListener(
+        [w](const std::string& uri, const DeviceId& deviceId, bool online) {
+            if (auto sthis = w.lock()) {
+                if (online && sthis->isMember(uri)) {
+                    sthis->addKnownDevices({deviceId}, uri);
+                }
+            }
+        });
+
+    rotateTrackedMembers();
 }
 
 void
@@ -739,17 +739,98 @@ Conversation::Impl::stopTracking()
     auto acc = account_.lock();
     if (!acc)
         return;
-    for (const auto& uri : trackedMembers_) {
+
+    if (presenceDeviceListenerToken_) {
+        acc->presenceManager()->removeDeviceListener(presenceDeviceListenerToken_);
+        presenceDeviceListenerToken_ = 0;
+    }
+
+    for (const auto& [uri, _] : trackedMembers_) {
         acc->presenceManager()->untrackBuddy(uri);
     }
     trackedMembers_.clear();
 }
 
 void
+Conversation::Impl::rotateTrackedMembers(const std::string& memberUri, const DeviceId& deviceId)
+{
+    auto acc = account_.lock();
+    if (!acc)
+        return;
+
+    std::lock_guard lk(trackedMembersMtx_);
+    if (!isTracking_)
+        return;
+
+    if (!memberUri.empty()) {
+        if (auto it = trackedMembers_.find(memberUri); it != trackedMembers_.end()) {
+            JAMI_WARNING("{} [device {}] Rotating tracked members after connection failure", toString(), deviceId);
+            auto& info = it->second;
+            info.failedDevices.insert(deviceId);
+            if (!info.devices.empty()
+                && std::includes(info.failedDevices.begin(),
+                                 info.failedDevices.end(),
+                                 info.devices.begin(),
+                                 info.devices.end())) {
+                acc->presenceManager()->untrackBuddy(it->first);
+                trackedMembers_.erase(it);
+            }
+        } else {
+            return;
+        }
+    }
+
+    auto members = repository_->members();
+    size_t N = members.size();
+    size_t K = std::min(N, 3 + (size_t) std::log2(N));
+
+    // If we are already trying enough devices, don't rotate
+    auto activeDevices = swarmManager_->getActiveNodesCount();
+    if (activeDevices >= 2 * K)
+        return;
+
+    JAMI_WARNING("{} Refreshing tracked members: {}/{} active ({}/{} devices)",
+                 toString(),
+                 trackedMembers_.size(),
+                 K,
+                 activeDevices,
+                 2 * K);
+
+    // Add new members if we have space
+    while (trackedMembers_.size() < K) {
+        std::vector<std::string> candidates;
+        candidates.reserve(N - trackedMembers_.size());
+        for (const auto& m : members) {
+            if (trackedMembers_.find(m.uri) == trackedMembers_.end()) {
+                candidates.push_back(m.uri);
+            }
+        }
+        if (!candidates.empty()) {
+            std::vector<std::string> chosen;
+            std::sample(candidates.begin(),
+                        candidates.end(),
+                        std::back_inserter(chosen),
+                        1,
+                        Manager::instance().getSeededRandomEngine());
+            if (!chosen.empty()) {
+                acc->presenceManager()->trackBuddy(chosen[0]);
+                trackedMembers_.emplace(chosen[0], TrackedMember {});
+            }
+        }
+    }
+}
+
+void
+Conversation::Impl::onConnectionFailed(const DeviceId& deviceId, const std::string& memberUri)
+{
+    rotateTrackedMembers(memberUri, deviceId);
+}
+
+void
 Conversation::Impl::monitorConnection(std::weak_ptr<Conversation> w)
 {
     if (!swarmManager_->isConnected()) {
-        startTracking();
+        startTracking(w);
     }
 
     swarmManager_->onConnectionChanged([w](bool ok) {
@@ -760,7 +841,7 @@ Conversation::Impl::monitorConnection(std::weak_ptr<Conversation> w)
                     if (sthis->pimpl_->bootstrapCb_)
                         sthis->pimpl_->bootstrapCb_();
                 } else {
-                    sthis->pimpl_->startTracking();
+                    sthis->pimpl_->startTracking(w);
                 }
             }
         });
@@ -2307,10 +2388,10 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     // If it works, the callback onConnectionChanged will be called with ok=true
     pimpl_->bootstrapCb_ = std::move(onBootstrapped);
     std::vector<DeviceId> devices = knownDevices;
-    for (const auto& [member, memberDevices] : pimpl_->repository_->devices()) {
+    /*for (const auto& [member, memberDevices] : pimpl_->repository_->devices()) {
         if (!isBanned(member))
             devices.insert(devices.end(), memberDevices.begin(), memberDevices.end());
-    }
+    }*/
     JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
 
     if (!devices.empty()) {
@@ -2328,10 +2409,19 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
 }
 
 void
-Conversation::addKnownDevice(const DeviceId& deviceId)
+Conversation::addKnownDevices(const std::vector<DeviceId>& devices, const std::string& memberUri)
 {
-    if (pimpl_->swarmManager_)
-        pimpl_->swarmManager_->setKnownNodes({deviceId});
+    if (devices.empty())
+        return;
+    JAMI_WARNING("{} Adding {} known devices for member {}", pimpl_->toString(), devices.size(), memberUri);
+    if (!memberUri.empty()) {
+        std::lock_guard lk(pimpl_->trackedMembersMtx_);
+        auto it = pimpl_->trackedMembers_.find(memberUri);
+        if (it != pimpl_->trackedMembers_.end()) {
+            it->second.devices.insert(devices.begin(), devices.end());
+        }
+    }
+    pimpl_->swarmManager_->setKnownNodes(devices);
 }
 
 std::vector<std::string>
@@ -2361,8 +2451,42 @@ Conversation::onNeedSocket(NeedSocketCb needSocket)
 {
     pimpl_->swarmManager_->needSocketCb_ = [needSocket = std::move(needSocket), w = weak()](const std::string& deviceId,
                                                                                             ChannelCb&& cb) {
-        if (auto sthis = w.lock())
-            needSocket(sthis->id(), deviceId, std::move(cb), "application/im-gitmessage-id");
+        if (auto sthis = w.lock()) {
+            auto wrappedCb = [cb = std::move(cb), w, deviceId](const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
+                if (auto sthis = w.lock()) {
+                    if (!socket) {
+                        /*{
+                            std::lock_guard lk(sthis->pimpl_->trackedMembersMtx_);
+                            for (const auto& [uri, info] : sthis->pimpl_->trackedMembers_) {
+                                if (info.devices.count(deviceId)) {
+                                    memberUri = uri;
+                                    break;
+                                }
+                            }
+                        }
+                        if (memberUri.empty()) {*/
+                        if (auto acc = sthis->pimpl_->account_.lock()) {
+                            if (auto cert = acc->certStore().getCertificate(deviceId)) {
+                                sthis->pimpl_->onConnectionFailed(DeviceId(deviceId), cert->issuer->getId().toString());
+                            } else {
+                                JAMI_WARNING("{} Unable to get member URI from device ID {}",
+                                             sthis->pimpl_->toString(),
+                                             deviceId);
+                            }
+                        } else {
+                            return false;
+                        }
+                        /*try {
+                            memberUri = sthis->pimpl_->repository_->uriFromDevice(deviceId);
+                        } catch (...) {
+                        }
+                        }*/
+                    }
+                }
+                return cb(socket);
+            };
+            needSocket(sthis->id(), deviceId, std::move(wrappedCb), "application/im-gitmessage-id");
+        }
     };
 }
 
