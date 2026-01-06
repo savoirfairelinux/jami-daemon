@@ -46,6 +46,30 @@
       },
       "revId": "e8053ba8661141bb98d5154e7790bce4db55ba86",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "625e0554_217cefd6",
+        "filename": "src/jamidht/configkeys.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-01-06T15:35:47Z",
+      "side": 0,
+      "message": "yes, for now please revert changes to these configuration keys.\nChanging them will need dedicated transition code and will be done separately from variable renaming.",
+      "parentUuid": "df8be1cd_e8496ac6",
+      "range": {
+        "startLine": 33,
+        "startChar": 43,
+        "endLine": 33,
+        "endChar": 52
+      },
+      "revId": "e8053ba8661141bb98d5154e7790bce4db55ba86",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
