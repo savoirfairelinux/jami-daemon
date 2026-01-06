@@ -761,16 +761,18 @@ ConversationModule::Impl::onBuddyOnline(const std::string& uri)
     if (!acc)
         return;
 
-    acc->forEachDevice(dht::InfoHash(uri), [w = weak(), uri](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-        if (auto sthis = w.lock()) {
-            std::lock_guard lk(sthis->conversationsMtx_);
-            for (auto& [id, conv] : sthis->conversations_) {
-                if (conv->conversation && conv->conversation->isMember(uri)) {
-                    conv->conversation->addKnownDevice(dev->getLongId());
-                }
-            }
+    auto toUpdate = std::make_shared<std::vector<std::shared_ptr<Conversation>>>();
+    for (auto& conv : getConversations()) {
+        if (conv->isMember(uri)) {
+            toUpdate->emplace_back(std::move(conv));
         }
-    });
+    }
+
+    if (auto pm = acc->presenceManager()) {
+        auto devices = pm->getDevices(uri);
+        for (const auto& conv : *toUpdate)
+            conv->addKnownDevices(devices, uri);
+    }
 }
 
 // Clone and store conversation
@@ -884,12 +886,7 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
 
         if (auto pm = acc->presenceManager()) {
             for (const auto& member : conversation->memberUris()) {
-                if (pm->isOnline(member)) {
-                    acc->forEachDevice(dht::InfoHash(member),
-                                       [conversation](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-                                           conversation->addKnownDevice(dev->getLongId());
-                                       });
-                }
+                conversation->addKnownDevices(pm->getDevices(member), member);
             }
         }
 
@@ -1312,7 +1309,7 @@ ConversationModule::Impl::bootstrapCb(std::string convId)
         std::lock_guard lk(notSyncedNotificationMtx_);
         auto it = notSyncedNotification_.find(convId);
         if (it != notSyncedNotification_.end()) {
-            commitId = it->second;
+            commitId = std::move(it->second);
             notSyncedNotification_.erase(it);
         }
     }
@@ -1445,7 +1442,7 @@ ConversationModule::Impl::fallbackClone(const asio::error_code& ec, const std::s
 void
 ConversationModule::Impl::bootstrap(const std::string& convId)
 {
-    std::vector<std::string> toClone;
+    std::vector<std::shared_ptr<SyncedConversation>> toClone;
     std::vector<std::shared_ptr<Conversation>> conversations;
     if (convId.empty()) {
         std::vector<std::shared_ptr<SyncedConversation>> convs;
@@ -1456,12 +1453,12 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
                     convs.emplace_back(std::move(conv));
             }
         }
-        for (const auto& conv : convs) {
+        for (auto& conv : convs) {
             std::lock_guard lk(conv->mtx);
             if (!conv->conversation && !conv->info.isRemoved()) {
                 // we need to ask to clone requests when bootstrapping all conversations
                 // otherwise it can stay syncing
-                toClone.emplace_back(conv->info.id);
+                toClone.emplace_back(std::move(conv));
             } else if (conv->conversation) {
                 conversations.emplace_back(conv->conversation);
             }
@@ -1484,21 +1481,15 @@ ConversationModule::Impl::bootstrap(const std::string& convId)
         if (auto acc = account_.lock()) {
             if (auto pm = acc->presenceManager()) {
                 for (const auto& member : conversation->memberUris()) {
-                    if (pm->isOnline(member)) {
-                        acc->forEachDevice(dht::InfoHash(member),
-                                           [conversation](const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-                                               conversation->addKnownDevice(dev->getLongId());
-                                           });
-                    }
+                    conversation->addKnownDevices(pm->getDevices(member), member);
                 }
             }
         }
     }
-    for (const auto& cid : toClone) {
-        auto members = getConversationMembers(cid);
-        for (const auto& member : members) {
+    for (const auto& conv : toClone) {
+        for (const auto& member : conv->getMembers(false, false)) {
             if (member.at("uri") != username_)
-                cloneConversationFrom(cid, member.at("uri"));
+                cloneConversationFrom(conv->info.id, member.at("uri"));
         }
     }
 }
