@@ -517,6 +517,24 @@ getConnectionList(const std::string& accountId, const std::string& conversationI
 }
 
 std::vector<std::map<std::string, std::string>>
+getConversationConnectivity(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return account->getConversationConnectivity(conversationId);
+    }
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+getConversationTrackedMembers(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto account = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId)) {
+        return account->getConversationTrackedMembers(conversationId);
+    }
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
 getChannelList(const std::string& accountId, const std::string& connectionId)
 {
     return jami::Manager::instance().getChannelList(accountId, connectionId);
