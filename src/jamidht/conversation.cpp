@@ -209,6 +209,12 @@ public:
     {
         return fmt::format(FMT_COMPILE("[Account {}] [Conversation {}]"), accountId_, repository_->id());
     }
+
+    std::vector<std::map<std::string, std::string>> getConnectivity() const
+    {
+        return swarmManager_->getRoutingTableInfo();
+    }
+
     mutable std::string fmtStr_;
 
     ~Impl() { stopTracking(); }
@@ -519,6 +525,8 @@ public:
     std::vector<std::map<std::string, std::string>> getMembers(bool includeInvited,
                                                                bool includeLeft,
                                                                bool includeBanned) const;
+
+    std::vector<std::map<std::string, std::string>> getTrackedMembers() const;
 
     std::string_view bannedType(const std::string& uri) const
     {
@@ -897,6 +905,26 @@ Conversation::Impl::getMembers(bool includeInvited, bool includeLeft, bool inclu
                 mm[ConversationMapKeys::LAST_DISPLAYED] = readIt->second;
         }
         result.emplace_back(std::move(mm));
+    }
+    return result;
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::Impl::getTrackedMembers() const
+{
+    std::vector<std::map<std::string, std::string>> result;
+    std::lock_guard lk(trackedMembersMtx_);
+    for (const auto& [uri, member] : trackedMembers_) {
+        std::map<std::string, std::string> map;
+        map["uri"] = uri;
+        std::string devicesStr;
+        for (const auto& dev : member.devices) {
+            if (!devicesStr.empty())
+                devicesStr += ";";
+            devicesStr += dev.toString();
+        }
+        map["devices"] = devicesStr;
+        result.emplace_back(std::move(map));
     }
     return result;
 }
@@ -1541,6 +1569,12 @@ Conversation::announce(const std::vector<std::map<std::string, std::string>>& co
     pimpl_->announce(commits, commitFromSelf);
 }
 
+std::vector<std::map<std::string, std::string>>
+Conversation::getConnectivity() const
+{
+    return pimpl_->getConnectivity();
+}
+
 bool
 Conversation::hasSwarmChannel(const std::string& deviceId)
 {
@@ -1655,6 +1689,12 @@ std::vector<std::map<std::string, std::string>>
 Conversation::getMembers(bool includeInvited, bool includeLeft, bool includeBanned) const
 {
     return pimpl_->getMembers(includeInvited, includeLeft, includeBanned);
+}
+
+std::vector<std::map<std::string, std::string>>
+Conversation::getTrackedMembers() const
+{
+    return pimpl_->getTrackedMembers();
 }
 
 std::set<std::string>
