@@ -349,6 +349,23 @@ SwarmManager::getConnectedNodes() const
     return routing_table.getConnectedNodes();
 }
 
+std::vector<std::map<std::string, std::string>>
+SwarmManager::getRoutingTableInfo() const
+{
+    std::lock_guard lock(mutex);
+    auto stats = routing_table.getRoutingTableStats();
+    std::vector<std::map<std::string, std::string>> result;
+    for (const auto& stat : stats) {
+        result.push_back({
+            {"id",            stat.id           },
+            {"device",        stat.id           },
+            {"status",        stat.status       },
+            {"remoteAddress", stat.remoteAddress}
+        });
+    }
+    return result;
+}
+
 bool
 SwarmManager::isConnected() const
 {
