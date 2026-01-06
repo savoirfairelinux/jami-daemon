@@ -92,10 +92,9 @@ public:
 
     std::vector<NodeId> getConnectedNodes() const;
 
-    unsigned getActiveNodesCount() const
-    {
-        return routing_table.getActiveNodesCount();
-    }
+    std::vector<std::map<std::string, std::string>> getRoutingTableInfo() const;
+
+    unsigned getActiveNodesCount() const { return routing_table.getActiveNodesCount(); }
 
     /**
      * Delete nodes from the different tables in bucket

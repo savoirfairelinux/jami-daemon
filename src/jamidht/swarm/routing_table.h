@@ -539,6 +539,13 @@ public:
      */
     void deleteNode(const NodeId& nodeId);
 
+    struct NodeStats {
+        std::string id;
+        std::string status;
+        std::string remoteAddress;
+    };
+    std::vector<NodeStats> getRoutingTableStats() const;
+
 private:
     RoutingTable(const RoutingTable&) = delete;
     RoutingTable& operator=(const RoutingTable&) = delete;

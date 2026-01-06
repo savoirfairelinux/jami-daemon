@@ -543,6 +543,29 @@ RoutingTable::deleteNode(const NodeId& nodeId)
     bucket->removeMobileNode(nodeId);
 }
 
+std::vector<RoutingTable::NodeStats>
+RoutingTable::getRoutingTableStats() const
+{
+    std::vector<NodeStats> stats;
+    std::lock_guard lock(mutex_);
+    for (const auto& bucket : buckets) {
+        for (const auto& [id, info] : bucket.getNodes()) {
+            std::string addr = info.socket ? info.socket->remoteAddr().toString() : "";
+            stats.push_back({id.toString(), "connected", addr});
+        }
+        for (const auto& id : bucket.getKnownNodes()) {
+            stats.push_back({id.toString(), "known", ""});
+        }
+        for (const auto& id : bucket.getMobileNodes()) {
+            stats.push_back({id.toString(), "mobile", ""});
+        }
+        for (const auto& id : bucket.getConnectingNodes()) {
+            stats.push_back({id.toString(), "connecting", ""});
+        }
+    }
+    return stats;
+}
+
 NodeId
 RoutingTable::middle(std::list<Bucket>::iterator& it) const
 {

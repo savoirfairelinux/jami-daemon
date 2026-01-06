@@ -263,6 +263,8 @@ public:
                                                                                   MemberRole::LEFT,
                                                                                   MemberRole::BANNED}) const;
 
+    std::vector<std::map<std::string, std::string>> getTrackedMembers() const;
+
     /**
      * Get peers to sync with. This is mostly managed by the DRT
      * @return some mobile nodes and all connected nodes
@@ -580,6 +582,12 @@ public:
      * @return Typers object
      */
     std::shared_ptr<Typers> typers() const;
+
+    /**
+     * Get connectivity information for the conversation
+     * @return map of connectivity info
+     */
+    std::vector<std::map<std::string, std::string>> getConnectivity() const;
 
 private:
     std::shared_ptr<Conversation> shared() { return std::static_pointer_cast<Conversation>(shared_from_this()); }
