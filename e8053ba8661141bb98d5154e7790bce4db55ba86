@@ -22,6 +22,30 @@
       },
       "revId": "e8053ba8661141bb98d5154e7790bce4db55ba86",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "df8be1cd_e8496ac6",
+        "filename": "src/jamidht/configkeys.h",
+        "patchSetId": 15
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-01-06T03:42:28Z",
+      "side": 0,
+      "message": "Thank you for your review.\n\nCan you please advise on the location of the configuration files?\n\nDid you want `jamiCaKey` reverted to `ringCaKey` in this patch and another patch to change `ringCaKey` to `jamiCaKey` in the `configkeys.h` and `incorrectContacts` files?\n\nThank you once again.",
+      "parentUuid": "4c4fda44_bc6de8d1",
+      "range": {
+        "startLine": 33,
+        "startChar": 43,
+        "endLine": 33,
+        "endChar": 52
+      },
+      "revId": "e8053ba8661141bb98d5154e7790bce4db55ba86",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
