@@ -4103,6 +4103,30 @@ JamiAccount::getConnectionList(const std::string& conversationId)
 }
 
 std::vector<std::map<std::string, std::string>>
+JamiAccount::getConversationConnectivity(const std::string& conversationId)
+{
+    std::shared_lock lkCM(connManagerMtx_);
+    if (convModule_) {
+        if (auto conv = convModule_->getConversation(conversationId)) {
+            return conv->getConnectivity();
+        }
+    }
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getConversationTrackedMembers(const std::string& conversationId)
+{
+    std::shared_lock lkCM(connManagerMtx_);
+    if (convModule_) {
+        if (auto conv = convModule_->getConversation(conversationId)) {
+            return conv->getTrackedMembers();
+        }
+    }
+    return {};
+}
+
+std::vector<std::map<std::string, std::string>>
 JamiAccount::getChannelList(const std::string& connectionId)
 {
     std::shared_lock lkCM(connManagerMtx_);

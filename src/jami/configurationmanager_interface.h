@@ -54,6 +54,10 @@ LIBJAMI_PUBLIC std::string addAccount(const std::map<std::string, std::string>& 
 LIBJAMI_PUBLIC void monitor(bool continuous);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConnectionList(const std::string& accountId,
                                                                                  const std::string& conversationId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationConnectivity(
+    const std::string& accountId, const std::string& conversationId);
+LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getConversationTrackedMembers(
+    const std::string& accountId, const std::string& conversationId);
 LIBJAMI_PUBLIC std::vector<std::map<std::string, std::string>> getChannelList(const std::string& accountId,
                                                                               const std::string& connectionId);
 
