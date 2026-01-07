@@ -1364,6 +1364,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                     if (migrating) {
                         Migration::setState(getAccountID(), Migration::State::SUCCESS);
                     }
+                    setRegistrationState(RegistrationState::UNREGISTERED);
                     if (not info.photo.empty() or not info.displayName.empty()) {
                         try {
                             auto newProfile = vCard::utils::initVcard();
@@ -1385,7 +1386,6 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                                          e.what());
                         }
                     }
-                    setRegistrationState(RegistrationState::UNREGISTERED);
                     doRegister();
                 },
                 [w = weak(), id, accountId = getAccountID(), migrating](AccountManager::AuthError error,
