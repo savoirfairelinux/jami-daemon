@@ -14,6 +14,7 @@ onnx: onnxruntime-$(ONNX_VERSION).tar.xz .sum-onnx
 	rm -Rf $@
 	mkdir -p $@
 	(cd $@ && tar x --strip-components=1 -f $<)
+	cd $@ && patch -flp1 < $(SRC)/onnx/fix-eigen-hash.patch
 
 .onnx:  onnx
 ifdef HAVE_ANDROID
