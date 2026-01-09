@@ -1,11 +1,13 @@
 noinst_LTLIBRARIES += libpulselayer.la
 
 libpulselayer_la_SOURCES = \
+		./media/audio/pulseaudio/pulseloopbackcapture.cpp \
 		./media/audio/pulseaudio/audiostream.cpp \
 		./media/audio/pulseaudio/pulselayer.cpp
 
 
 noinst_HEADERS += \
+		./media/audio/pulseaudio/pulseloopbackcapture.h \
 		./media/audio/pulseaudio/audiostream.h \
 		./media/audio/pulseaudio/pulselayer.h
 

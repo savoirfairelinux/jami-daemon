@@ -324,6 +324,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         list (APPEND ALL_FILES ${ALL_FILES}
             ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/audiostream.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulselayer.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/pulseaudio/pulseloopbackcapture.cpp
         )
     endif()
     if (pipewire_FOUND)

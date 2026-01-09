@@ -19,6 +19,7 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
+#include "pulseloopbackcapture.h"
 
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
@@ -211,6 +212,8 @@ private:
      * A special stream object to handle specific playback stream for ringtone
      */
     std::unique_ptr<AudioStream> ringtone_;
+
+    PulseLoopbackCapture loopbackCapture_;
 
     /**
      * Contains the list of playback devices
