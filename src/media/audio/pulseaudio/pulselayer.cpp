@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -445,15 +445,67 @@ PulseLayer::startStream(AudioDeviceType type)
 void
 PulseLayer::startCaptureStream(const std::string& id)
 {
-    (void) id;
-    JAMI_ERROR("startCaptureStream not implemented for PulseLayer");
+    if (loopbackCapture_.isRunning()) {
+        JAMI_WARNING("[pulselayer] Loopback capture already running");
+        return;
+    }
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    auto ringBuffer = rbPool.createRingBuffer(id);
+    if (!ringBuffer) {
+        JAMI_ERROR("[pulselayer] Failed to get ring buffer for id {}", id);
+        return;
+    }
+
+    JAMI_DEBUG("[pulselayer] Starting loopback capture for ID {}", id);
+
+    const auto rate = loopbackCapture_.sampleRate();
+    const auto channels = loopbackCapture_.channels();
+
+    auto started = loopbackCapture_.startCaptureAsync([ringBuffer, rate, channels](const void* data, size_t length) {
+        if (!data || length == 0) {
+            JAMI_WARNING("[pulselayer] No audio data captured");
+            return;
+        }
+
+        const size_t frameSizeBytes = channels * sizeof(int16_t);
+        if (frameSizeBytes == 0) {
+            JAMI_ERROR("[pulselayer] Invalid frame size for captured audio");
+            return;
+        }
+
+        const size_t samples = length / frameSizeBytes;
+        if (samples == 0) {
+            JAMI_WARNING("[pulselayer] Ignoring empty capture buffer");
+            return;
+        }
+
+        auto capturedFrame = std::make_shared<AudioFrame>(AudioFormat {rate, channels, AV_SAMPLE_FMT_S16}, samples);
+
+        std::memcpy(capturedFrame->pointer()->data[0], data, length);
+        ringBuffer->put(std::move(capturedFrame));
+    });
+
+    if (!started) {
+        JAMI_ERROR("[pulselayer] Failed to start loopback capture");
+        rbPool.unBindAll(id);
+    }
 }
 
 void
 PulseLayer::stopCaptureStream(const std::string& id)
 {
-    (void) id;
-    JAMI_ERROR("stopCaptureStream not implemented for PulseLayer");
+    if (!loopbackCapture_.isRunning()) {
+        JAMI_WARNING("[pulselayer] Loopback capture is not running");
+        return;
+    }
+
+    JAMI_DEBUG("[pulselayer] Stopping loopback capture for ID {}", id);
+
+    loopbackCapture_.stopCapture();
+
+    auto& rbPool = Manager::instance().getRingBufferPool();
+    rbPool.unBindAll(id);
 }
 
 void
