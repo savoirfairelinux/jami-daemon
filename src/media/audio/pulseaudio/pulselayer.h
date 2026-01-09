@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,11 +14,13 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #include "noncopyable.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
+#include "pulseloopbackcapture.h"
 
 #include <pulse/pulseaudio.h>
 #include <pulse/stream.h>
@@ -133,6 +135,8 @@ public:
     std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    virtual void startCaptureStream(const std::string& id) override;
+    virtual void stopCaptureStream(const std::string& id) override;
     virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
 private:
@@ -209,6 +213,11 @@ private:
      * A special stream object to handle specific playback stream for ringtone
      */
     std::unique_ptr<AudioStream> ringtone_;
+
+    /**
+     * A class that implements methods to capture desktop audio
+     */
+    PulseLoopbackCapture loopbackCapture_;
 
     /**
      * Contains the list of playback devices
