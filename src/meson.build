@@ -157,6 +157,7 @@ if conf.get('HAVE_PULSE') == 1
     libjami_sources += files(
         'media/audio/pulseaudio/audiostream.cpp',
         'media/audio/pulseaudio/pulselayer.cpp',
+        'media/audio/pulseaudio/pulseloopbackcapture.cpp',
     )
     libjami_dependencies += deplibpulse
 endif
