@@ -235,10 +235,6 @@ OpenSLLayer::dbgEngineGetBufCount()
     count_player += freePlayBufQueue_.size();
     count_player += playBufQueue_.size();
 
-    uint32_t count_ringtone = ringtone_->dbgGetDevBufCount();
-    count_ringtone += freeRingBufQueue_.size();
-    count_ringtone += ringBufQueue_.size();
-
     JAMI_ERR("Buf Disrtibutions: PlayerDev=%zu, PlayQ=%u, FreePlayQ=%u",
              player_->dbgGetDevBufCount(),
              playBufQueue_.size(),
@@ -414,16 +410,16 @@ OpenSLLayer::getCaptureDeviceList() const
         if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED
             and audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER
             and audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HEADSET) {
-            JAMI_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i]);
             mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
+            JAMI_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", mic_deviceID);
             break;
         } else if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_INTEGRATED
                    and audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER
                    and audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HANDSET) {
-            JAMI_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i]);
             mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
+            JAMI_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", mic_deviceID);
             break;
         }
     }
