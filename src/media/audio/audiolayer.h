@@ -76,6 +76,20 @@ public:
     virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
 
     /**
+     * Start a capture stream on the given device (eg. a window handle, or a hard-coded string like "desktop-audio").
+     * Not all audio layers will implement this method, so default implementation does nothing.
+     * @param id The identifier of the device from which audio should be captured
+     */
+    virtual void startCaptureStream(const std::string& id) { (void) id; };
+
+    /**
+     * Stop an ongoing capture stream on the given device.
+     * Not all audio layers will implement this method, so default implementation does nothing.
+     * @param id The identifier of the capture device from which audio should stop being captured
+     */
+    virtual void stopCaptureStream(const std::string& id) { (void) id; };
+
+    /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      */
