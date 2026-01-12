@@ -56,14 +56,14 @@ namespace libjami {
 
 struct LIBJAMI_PUBLIC AVFrame_deleter
 {
-    void operator()(AVFrame* frame) const { av_frame_free(&frame); }
+    inline void operator()(AVFrame* frame) const { av_frame_free(&frame); }
 };
 
 typedef std::unique_ptr<AVFrame, AVFrame_deleter> FrameBuffer;
 
 struct LIBJAMI_PUBLIC AVPacket_deleter
 {
-    void operator()(AVPacket* pkt) const { av_packet_free(&pkt); }
+    inline void operator()(AVPacket* pkt) const { av_packet_free(&pkt); }
 };
 
 typedef std::unique_ptr<AVPacket, AVPacket_deleter> PacketBuffer;

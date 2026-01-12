@@ -227,7 +227,7 @@ GitServer::Impl::parseOrder(std::string_view buf)
                              repository_);
                 return !cachedPkt_.empty();
             }
-            GitRepository rep {repo, git_repository_free};
+            GitRepository rep {repo};
             git_oid commit_id;
             if (git_oid_fromstr(&commit_id, commit.c_str()) == 0) {
                 // Reference found
@@ -266,7 +266,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
         dht::ThreadPool::io().run([socket = socket_] { socket->shutdown(); });
         return;
     }
-    GitRepository rep {repo, git_repository_free};
+    GitRepository rep {repo};
 
     // Answer with the version number
     // **** When the client initially connects the server will immediately respond
@@ -416,7 +416,7 @@ GitServer::Impl::sendPackData()
                      repository_);
         return;
     }
-    GitRepository repo {repo_ptr, git_repository_free};
+    GitRepository repo {repo_ptr};
 
     git_packbuilder* pb_ptr;
     if (git_packbuilder_new(&pb_ptr, repo.get()) != 0) {
@@ -427,7 +427,7 @@ GitServer::Impl::sendPackData()
                      repository_);
         return;
     }
-    GitPackBuilder pb {pb_ptr, git_packbuilder_free};
+    GitPackBuilder pb {pb_ptr};
 
     std::string fetched = wantedReference_;
     git_oid oid;
@@ -446,7 +446,7 @@ GitServer::Impl::sendPackData()
             git_revwalk_free(walker_ptr);
         return;
     }
-    GitRevWalker walker {walker_ptr, git_revwalk_free};
+    GitRevWalker walker {walker_ptr};
     git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
     // Add first commit
     std::set<std::string> parents;
@@ -480,7 +480,7 @@ GitServer::Impl::sendPackData()
                        fmt::ptr(this));
             return;
         }
-        GitCommit commit {commit_ptr, git_commit_free};
+        GitCommit commit {commit_ptr};
         auto parentsCount = git_commit_parentcount(commit.get());
         for (unsigned int p = 0; p < parentsCount; ++p) {
             // make sure to explore all branches

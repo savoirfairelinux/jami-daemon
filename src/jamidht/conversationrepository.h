@@ -17,30 +17,14 @@
 #pragma once
 #include "def.h"
 #include "vcard.h"
+#include "git_def.h"
 
 #include <opendht/default_types.h>
-#include <git2.h>
 
 #include <optional>
 #include <memory>
 #include <string>
 #include <vector>
-
-using GitPackBuilder = std::unique_ptr<git_packbuilder, decltype(&git_packbuilder_free)>;
-using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
-using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
-using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
-using GitAnnotatedCommit = std::unique_ptr<git_annotated_commit, decltype(&git_annotated_commit_free)>;
-using GitIndex = std::unique_ptr<git_index, decltype(&git_index_free)>;
-using GitTree = std::unique_ptr<git_tree, decltype(&git_tree_free)>;
-using GitRemote = std::unique_ptr<git_remote, decltype(&git_remote_free)>;
-using GitReference = std::unique_ptr<git_reference, decltype(&git_reference_free)>;
-using GitSignature = std::unique_ptr<git_signature, decltype(&git_signature_free)>;
-using GitObject = std::unique_ptr<git_object, decltype(&git_object_free)>;
-using GitDiff = std::unique_ptr<git_diff, decltype(&git_diff_free)>;
-using GitDiffStats = std::unique_ptr<git_diff_stats, decltype(&git_diff_stats_free)>;
-using GitIndexConflictIterator
-    = std::unique_ptr<git_index_conflict_iterator, decltype(&git_index_conflict_iterator_free)>;
 
 namespace jami {
 
@@ -132,7 +116,10 @@ struct ConversationMember
             rolestr = "left"; // For one to one
         }
 
-        return {{"uri", uri}, {"role", rolestr}};
+        return {
+            {"uri",  uri    },
+            {"role", rolestr}
+        };
     }
     MSGPACK_DEFINE(uri, role)
 };
