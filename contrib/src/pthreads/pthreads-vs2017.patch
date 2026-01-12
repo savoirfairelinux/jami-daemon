@@ -24,7 +24,7 @@
 +  <PropertyGroup Label="Globals">
 +    <ProjectGuid>{CC0B570C-7F2D-4809-98F4-57D97E2E7317}</ProjectGuid>
 +    <RootNamespace>pthreads</RootNamespace>
-+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
++    <WindowsTargetPlatformVersion>10.0.20348.0</WindowsTargetPlatformVersion>
 +  </PropertyGroup>
 +  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 +  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
