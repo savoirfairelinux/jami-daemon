@@ -38,6 +38,7 @@ libjami_sources = files(
     'jamidht/jamiaccount.cpp',
     'jamidht/jamiaccount_config.cpp',
     'jamidht/namedirectory.cpp',
+    'jamidht/presence_manager.cpp',
     'jamidht/server_account_manager.cpp',
     'jamidht/sync_channel_handler.cpp',
     'jamidht/sync_module.cpp',
