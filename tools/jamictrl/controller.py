@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (C) 2004-2025 Savoir-faire Linux Inc. Inc
+# Copyright (C) 2004-2026 Savoir-faire Linux Inc. Inc
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

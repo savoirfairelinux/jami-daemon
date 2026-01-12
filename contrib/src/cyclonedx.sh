@@ -2,7 +2,7 @@
 #
 # Take as input a list of CPE id (string), parse them and output a minimal CycloneDX SBOM file in JSON format
 #
-# Copyright (C) 2004-2025 Savoir-faire Linux, Inc.
+# Copyright (C) 2004-2026 Savoir-faire Linux, Inc.
 
 set -euo pipefail # Enable error checking
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *  Copyright (c) 2007 The FFmpeg Project
  *
  *  This program is free software: you can redistribute it and/or modify
