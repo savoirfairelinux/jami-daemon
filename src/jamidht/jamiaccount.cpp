@@ -2255,11 +2255,12 @@ JamiAccount::convModule(bool noCreation)
                         asio::post(*Manager::instance().ioContext(), [cb = std::move(cb)] { cb({}); });
                         return;
                     }
-                    if (!shared->connectionManager_->isConnecting(DeviceId(deviceId),
-                                                                  fmt::format("swarm://{}", convId))) {
+                    DeviceId device(deviceId);
+                    auto swarmUri = fmt::format("swarm://{}", convId);
+                    if (!shared->connectionManager_->isConnecting(device, swarmUri)) {
                         shared->connectionManager_->connectDevice(
-                            DeviceId(deviceId),
-                            fmt::format("swarm://{}", convId),
+                            device,
+                            swarmUri,
                             [w,
                              cb = std::move(cb),
                              wam = std::weak_ptr(
@@ -2271,6 +2272,10 @@ JamiAccount::convModule(bool noCreation)
                                             auto shared = w.lock();
                                             auto am = wam.lock();
                                             auto remoteCert = socket->peerCertificate();
+                                            if (!remoteCert || !remoteCert->issuer) {
+                                                cb(nullptr);
+                                                return;
+                                            }
                                             auto uri = remoteCert->issuer->getId().toString();
                                             if (!shared || !am
                                                 || am->getCertificateStatus(uri)
