@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 namespace jami {
 
-struct PwDeviceInfo 
+struct PwDeviceInfo
 {
     uint32_t id;
     std::string name;
@@ -32,18 +32,17 @@ struct PwDeviceInfo
     pw_stream_flags flags;
 };
 
-class PipeWireStream 
+class PipeWireStream
 {
 public:
-    PipeWireStream(
-        pw_thread_loop* loop,
-        pw_core* core,
-        const char* name,
-        AudioDeviceType type,
-        const PwDeviceInfo& dev_info,
-        std::function<void(pw_buffer* buf)>&& onData,
-        std::function<void(const AudioFormat&)>&& onFormatChange,
-        std::function<void()>&& onReady);
+    PipeWireStream(pw_thread_loop* loop,
+                   pw_core* core,
+                   const char* name,
+                   AudioDeviceType type,
+                   const PwDeviceInfo& dev_info,
+                   std::function<void(pw_buffer* buf)>&& onData,
+                   std::function<void(const AudioFormat&)>&& onFormatChange,
+                   std::function<void()>&& onReady);
     ~PipeWireStream();
 
     void start();
@@ -53,16 +52,12 @@ public:
 
     bool isReady() const;
 
-    inline size_t sampleSize() const { return av_get_bytes_per_sample(format_.sampleFormat) ; }
+    inline size_t sampleSize() const { return av_get_bytes_per_sample(format_.sampleFormat); }
     inline size_t frameSize() const { return format_.getBytesPerFrame(); }
 
     inline uint8_t channels() const { return format_.nb_channels; }
 
-    inline AudioFormat format() const
-    {
-        return format_;
-    }
-
+    inline AudioFormat format() const { return format_; }
 
 private:
     bool ready_ {false};

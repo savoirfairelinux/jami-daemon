@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2025 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
  */
 #include "pipestream.h"
 
-
 #include <spa/pod/pod.h>
 #include <spa/pod/builder.h>
 #include <spa/param/audio/format-utils.h>
@@ -31,8 +30,14 @@
 
 namespace jami {
 
-
-PipeWireStream::PipeWireStream(pw_thread_loop* loop, pw_core* core, const char* name, AudioDeviceType type, const PwDeviceInfo& dev_info, std::function<void(pw_buffer* buf)>&& onData, std::function<void(const AudioFormat&)>&& onFormatChange, std::function<void()>&& onReady)
+PipeWireStream::PipeWireStream(pw_thread_loop* loop,
+                               pw_core* core,
+                               const char* name,
+                               AudioDeviceType type,
+                               const PwDeviceInfo& dev_info,
+                               std::function<void(pw_buffer* buf)>&& onData,
+                               std::function<void(const AudioFormat&)>&& onFormatChange,
+                               std::function<void()>&& onReady)
     : loop_(loop)
     , type_(type)
     , onData_(std::move(onData))
@@ -41,14 +46,17 @@ PipeWireStream::PipeWireStream(pw_thread_loop* loop, pw_core* core, const char* 
     , format_(dev_info.rate, dev_info.channels)
 {
     JAMI_WARNING("PipeWireStream init '{}'", name);
-    pw_properties* props = pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
-                                             PW_KEY_MEDIA_CATEGORY, type == AudioDeviceType::CAPTURE ? "Capture" : "Playback",
-                                             PW_KEY_APP_NAME, name,
+    pw_properties* props = pw_properties_new(PW_KEY_MEDIA_TYPE,
+                                             "Audio",
+                                             PW_KEY_MEDIA_CATEGORY,
+                                             type == AudioDeviceType::CAPTURE ? "Capture" : "Playback",
+                                             PW_KEY_APP_NAME,
+                                             name,
                                              nullptr);
 
     stream_ = pw_stream_new(core, name, props);
 
-    //stream_events_
+    // stream_events_
     stream_events_ = pw_stream_events {
         PW_VERSION_STREAM_EVENTS,
         .destroy = nullptr,
@@ -66,10 +74,9 @@ PipeWireStream::PipeWireStream(pw_thread_loop* loop, pw_core* core, const char* 
     spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
     const spa_pod* params[1];
 
-    struct spa_audio_info_raw info = SPA_AUDIO_INFO_RAW_INIT(
-        .format = SPA_AUDIO_FORMAT_F32,
-        /*.rate = dev_info.rate,
-        .channels = dev_info.channels,*/
+    struct spa_audio_info_raw info = SPA_AUDIO_INFO_RAW_INIT(.format = SPA_AUDIO_FORMAT_F32,
+                                                             /*.rate = dev_info.rate,
+                                                             .channels = dev_info.channels,*/
     );
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
@@ -77,42 +84,48 @@ PipeWireStream::PipeWireStream(pw_thread_loop* loop, pw_core* core, const char* 
     pw_stream_connect(stream_,
                       type == AudioDeviceType::CAPTURE ? PW_DIRECTION_INPUT : PW_DIRECTION_OUTPUT,
                       dev_info.id,
-                      (pw_stream_flags) (PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_INACTIVE | PW_STREAM_FLAG_MAP_BUFFERS),
-                      params, 1);
+                      (pw_stream_flags) (PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_INACTIVE
+                                         | PW_STREAM_FLAG_MAP_BUFFERS),
+                      params,
+                      1);
 }
 
 PipeWireStream::~PipeWireStream()
 {
     if (stream_) {
-        pw_thread_loop_lock (loop_);
+        pw_thread_loop_lock(loop_);
         pw_stream_disconnect(stream_);
         pw_stream_destroy(stream_);
-        pw_thread_loop_unlock (loop_);
+        pw_thread_loop_unlock(loop_);
     }
 }
 
-void PipeWireStream::start()
+void
+PipeWireStream::start()
 {
     JAMI_LOG("Stream start()  pw_stream_set_active");
-    pw_thread_loop_lock (loop_);
+    pw_thread_loop_lock(loop_);
     pw_stream_set_active(stream_, true);
-    pw_thread_loop_unlock (loop_);
+    pw_thread_loop_unlock(loop_);
 }
 
-void PipeWireStream::stop()
+void
+PipeWireStream::stop()
 {
     JAMI_LOG("Stream stop()  pw_stream_set_active");
-    pw_thread_loop_lock (loop_);
+    pw_thread_loop_lock(loop_);
     pw_stream_set_active(stream_, false);
-    pw_thread_loop_unlock (loop_);
+    pw_thread_loop_unlock(loop_);
 }
 
-bool PipeWireStream::isReady() const
+bool
+PipeWireStream::isReady() const
 {
     return ready_;
 }
 
-void PipeWireStream::streamStateChanged(void* data, enum pw_stream_state old, enum pw_stream_state state, const char* error)
+void
+PipeWireStream::streamStateChanged(void* data, enum pw_stream_state old, enum pw_stream_state state, const char* error)
 {
     PipeWireStream* self = static_cast<PipeWireStream*>(data);
     JAMI_LOG("Stream state changed from {} to {}", pw_stream_state_as_string(old), pw_stream_state_as_string(state));
@@ -136,9 +149,9 @@ void PipeWireStream::streamStateChanged(void* data, enum pw_stream_state old, en
 }
 
 inline AVSampleFormat
-sampleFormatFromPipe(spa_audio_format format) {
-    switch (format)
-    {
+sampleFormatFromPipe(spa_audio_format format)
+{
+    switch (format) {
     case SPA_AUDIO_FORMAT_S16:
         return AV_SAMPLE_FMT_S16;
     case SPA_AUDIO_FORMAT_S32:
@@ -159,7 +172,8 @@ sampleFormatFromPipe(spa_audio_format format) {
 void printPodObject(const spa_pod_object* param);
 void printPodValue(const spa_pod* value);
 
-void printPodChoice(const spa_pod* value)
+void
+printPodChoice(const spa_pod* value)
 {
     uint32_t n_values, choice;
     const spa_pod* body = spa_pod_get_values(value, &n_values, &choice);
@@ -170,7 +184,7 @@ void printPodChoice(const spa_pod* value)
     case SPA_CHOICE_Range:
         JAMI_LOG("PipeWireStream: prop choice: range");
         if (n_values < 3)
-                break;
+            break;
         printPodValue(&body[0]);
         printPodValue(&body[1]);
         printPodValue(&body[2]);
@@ -178,7 +192,7 @@ void printPodChoice(const spa_pod* value)
     case SPA_CHOICE_Step:
         JAMI_LOG("PipeWireStream: prop choice: step");
         if (n_values < 4)
-                break;
+            break;
         printPodValue(&body[0]);
         printPodValue(&body[1]);
         printPodValue(&body[2]);
@@ -196,16 +210,18 @@ void printPodChoice(const spa_pod* value)
     }
 }
 
-void printPodStruct(const spa_pod* value)
+void
+printPodStruct(const spa_pod* value)
 {
-    struct spa_pod *iter;
-    SPA_POD_FOREACH((spa_pod*)SPA_POD_BODY(value), SPA_POD_BODY_SIZE(value), iter) {
+    struct spa_pod* iter;
+    SPA_POD_FOREACH((spa_pod*) SPA_POD_BODY(value), SPA_POD_BODY_SIZE(value), iter)
+    {
         printPodValue(iter);
     }
 }
 
-
-void printPodValue(const spa_pod* value)
+void
+printPodValue(const spa_pod* value)
 {
     uint32_t n_values, choice;
     int val;
@@ -213,8 +229,8 @@ void printPodValue(const spa_pod* value)
     long valuel;
     float f;
     double d;
-    const char *str;
-    struct spa_pod *iter;
+    const char* str;
+    struct spa_pod* iter;
 
     switch (value->type) {
     case SPA_TYPE_Bool:
@@ -248,18 +264,19 @@ void printPodValue(const spa_pod* value)
         JAMI_LOG("PipeWireStream: value: rectangle");
         break;
     case SPA_TYPE_Fraction:
-    JAMI_LOG("PipeWireStream: value: fraction");
-    break;
+        JAMI_LOG("PipeWireStream: value: fraction");
+        break;
     case SPA_TYPE_Array:
-        n_values = SPA_POD_ARRAY_N_VALUES((spa_pod_array*)value);
+        n_values = SPA_POD_ARRAY_N_VALUES((spa_pod_array*) value);
         JAMI_LOG("PipeWireStream: value: array size {}", n_values);
-        SPA_POD_ARRAY_FOREACH((spa_pod_array*)value, iter) {
+        SPA_POD_ARRAY_FOREACH((spa_pod_array*) value, iter)
+        {
             printPodValue(iter);
         }
         break;
     case SPA_TYPE_Object:
         JAMI_LOG("PipeWireStream: value: object");
-        printPodObject((spa_pod_object*)value);
+        printPodObject((spa_pod_object*) value);
         break;
     case SPA_TYPE_None:
         JAMI_LOG("PipeWireStream: value: none");
@@ -311,29 +328,37 @@ getPropIdName(uint32_t key)
     return "unknown";
 }
 
-void printPodObject(const spa_pod_object* param)
+void
+printPodObject(const spa_pod_object* param)
 {
-    spa_pod_prop *prop;
-    SPA_POD_OBJECT_FOREACH(param, prop) {
+    spa_pod_prop* prop;
+    SPA_POD_OBJECT_FOREACH(param, prop)
+    {
         JAMI_LOG("PipeWireStream: prop key: {:s}", getPropName(prop->key));
         printPodValue(&prop->value);
     }
 }
 
-void PipeWireStream::streamParamChanged(void* data, uint32_t id, const spa_pod* param)
+void
+PipeWireStream::streamParamChanged(void* data, uint32_t id, const spa_pod* param)
 {
     PipeWireStream* self = static_cast<PipeWireStream*>(data);
     JAMI_LOG("PipeWireStream: Stream param changed: {}", getPropIdName(id));
 
     if (id == SPA_PARAM_Props) {
-        printPodObject((spa_pod_object*)param);
+        printPodObject((spa_pod_object*) param);
         return;
-    }
-    else if (id == SPA_PARAM_Latency) {
+    } else if (id == SPA_PARAM_Latency) {
         spa_latency_info info;
         spa_latency_parse(param, &info);
         JAMI_LOG("PipeWireStream: Stream latency: {:d}\n  quantum: {:f} - {:f}\n  rate: {:d} - {:d}\n  ns: {:d} - {:d}",
-            (int)info.direction, info.min_quantum, info.max_quantum, info.min_rate, info.max_rate, info.min_ns, info.max_ns);
+                 (int) info.direction,
+                 info.min_quantum,
+                 info.max_quantum,
+                 info.min_rate,
+                 info.max_rate,
+                 info.min_ns,
+                 info.max_ns);
         return;
     } else if (id == SPA_PARAM_Tag) {
         if (param) {
@@ -365,8 +390,7 @@ void PipeWireStream::streamParamChanged(void* data, uint32_t id, const spa_pod* 
         return;
 
     /* only accept raw audio */
-    if (format.media_type != SPA_MEDIA_TYPE_audio ||
-        format.media_subtype != SPA_MEDIA_SUBTYPE_raw)
+    if (format.media_type != SPA_MEDIA_TYPE_audio || format.media_subtype != SPA_MEDIA_SUBTYPE_raw)
         return;
 
     /* call a helper function to parse the format for us. */
@@ -380,10 +404,11 @@ void PipeWireStream::streamParamChanged(void* data, uint32_t id, const spa_pod* 
     self->onFormatChange_(self->format_);
 }
 
-void PipeWireStream::streamProcess(void* data)
+void
+PipeWireStream::streamProcess(void* data)
 {
     PipeWireStream* self = static_cast<PipeWireStream*>(data);
-    
+
     pw_buffer* buf = pw_stream_dequeue_buffer(self->stream_);
     if (buf == nullptr) {
         JAMI_WARN("Out of buffers");
@@ -396,6 +421,5 @@ void PipeWireStream::streamProcess(void* data)
 
     pw_stream_queue_buffer(self->stream_, buf);
 }
-
 
 } // namespace jami
