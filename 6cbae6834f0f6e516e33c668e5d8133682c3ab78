@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "62edbd9c_b00c9b2d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 14
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-01-14T22:52:30Z",
+      "side": 1,
+      "message": "the steam persists when local video is restored (which removes the screen share). we expect that the shared audio stream in this case would also terminate",
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f47c38e0_513c4e00",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-01-14T22:52:30Z",
+      "side": 1,
+      "message": "clang-format",
+      "range": {
+        "startLine": 184,
+        "startChar": 0,
+        "endLine": 184,
+        "endChar": 4
+      },
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fae87f7d_32b45bdc",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-01-14T22:52:30Z",
+      "side": 1,
+      "message": "why is this done?",
+      "range": {
+        "startLine": 200,
+        "startChar": 0,
+        "endLine": 201,
+        "endChar": 101
+      },
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2d500f13_964d82c3",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-01-14T22:52:30Z",
+      "side": 1,
+      "message": "simplify?",
+      "range": {
+        "startLine": 223,
+        "startChar": 4,
+        "endLine": 227,
+        "endChar": 5
+      },
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
