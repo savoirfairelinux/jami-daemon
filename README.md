@@ -77,28 +77,6 @@ ninja
 ninja install
 ```
 
-C) With Autotools
-
-1) Compile the dependencies first
-
-```bash
-cd contrib
-mkdir native
-cd native
-../bootstrap
-make
-```
-
-2) Then the jamid application and/or libjami library
-
-```bash
-cd ../..
-./autogen.sh
-./configure
-make
-make install
-```
-
 How to compile the daemon for Android (on a Linux or macOS host)
 ----
 
