@@ -82,13 +82,13 @@ simulateRemoval(std::shared_ptr<JamiAccount> account, const std::string& convId,
     git_repository* repo = nullptr;
     if (git_repository_open(&repo, repoPath.c_str()) != 0)
         return;
-    GitRepository rep = {std::move(repo), git_repository_free};
+    GitRepository rep = GitRepository(std::move(repo));
 
     // git add -A
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0)
         return;
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
     git_strarray array = {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
@@ -125,13 +125,13 @@ addFile(std::shared_ptr<JamiAccount> account,
     git_repository* repo = nullptr;
     if (git_repository_open(&repo, repoPath.c_str()) != 0)
         return;
-    GitRepository rep = {std::move(repo), git_repository_free};
+    GitRepository rep = GitRepository(std::move(repo));
 
     // git add -A
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0)
         return;
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
     git_strarray array = {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
@@ -147,13 +147,13 @@ addAll(std::shared_ptr<JamiAccount> account, const std::string& convId)
     git_repository* repo = nullptr;
     if (git_repository_open(&repo, repoPath.c_str()) != 0)
         return;
-    GitRepository rep = {std::move(repo), git_repository_free};
+    GitRepository rep = GitRepository(std::move(repo));
 
     // git add -A
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0)
         return;
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
     git_strarray array = {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
@@ -183,7 +183,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
         JAMI_ERROR("Unable to create a commit signature.");
         return {};
     }
-    GitSignature sig {sig_ptr, git_signature_free};
+    GitSignature sig {sig_ptr};
 
     // Retrieve current index
     git_index* index_ptr = nullptr;
@@ -198,7 +198,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
         JAMI_ERROR("Unable to open repository index");
         return {};
     }
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
@@ -211,7 +211,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
         JAMI_ERROR("Unable to look up initial tree");
         return {};
     }
-    GitTree tree = {tree_ptr, git_tree_free};
+    GitTree tree = GitTree(tree_ptr);
 
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
@@ -224,7 +224,7 @@ commitInRepo(const std::string& path, std::shared_ptr<JamiAccount> account, cons
         JAMI_ERROR("Unable to look up HEAD commit");
         return {};
     }
-    GitCommit head_commit {head_ptr, git_commit_free};
+    GitCommit head_commit {head_ptr};
 
     git_buf to_sign = {};
 #if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \

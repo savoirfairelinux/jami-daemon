@@ -262,7 +262,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         JAMI_ERR("Unable to create a commit signature.");
         return {};
     }
-    GitSignature sig {sig_ptr, git_signature_free};
+    GitSignature sig {sig_ptr};
 
     // Retrieve current HEAD
     git_oid commit_id;
@@ -276,7 +276,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         JAMI_ERR("Unable to look up HEAD commit");
         return {};
     }
-    GitCommit head_commit {head_ptr, git_commit_free};
+    GitCommit head_commit {head_ptr};
 
     // Retrieve current index
     git_index* index_ptr = nullptr;
@@ -284,7 +284,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         JAMI_ERR("Unable to open repository index");
         return {};
     }
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
@@ -297,7 +297,7 @@ ConversationRepositoryTest::addCommit(git_repository* repo,
         JAMI_ERR("Unable to look up initial tree");
         return {};
     }
-    GitTree tree = {tree_ptr, git_tree_free};
+    GitTree tree = GitTree(tree_ptr);
 
     git_buf to_sign = {};
 #if LIBGIT2_VER_MAJOR == 1 && LIBGIT2_VER_MINOR == 8 \
@@ -350,7 +350,7 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.to_c_str(), std::time(nullptr), 0) < 0) {
         return {};
     }
-    GitSignature sig {sig_ptr, git_signature_free};
+    GitSignature sig {sig_ptr};
 
     // Get current HEAD (parent 1)
     git_oid head_oid;
@@ -365,7 +365,7 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
         return "";
     }
 
-    GitCommit head_commit {head_ptr, git_commit_free};
+    GitCommit head_commit {head_ptr};
 
     // Get wanted commit (parent 2)
     git_oid wanted_oid;
@@ -379,7 +379,7 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
         JAMI_ERR("Unable to look up wanted commit");
         return "";
     }
-    GitCommit wanted_commit {wanted_ptr, git_commit_free};
+    GitCommit wanted_commit {wanted_ptr};
 
     // Get current index and tree (same as addCommit)
     git_index* index_ptr = nullptr;
@@ -387,7 +387,7 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
         JAMI_ERR("Unable to get repository index");
         return {};
     }
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
 
     git_oid tree_id;
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
@@ -399,7 +399,7 @@ ConversationRepositoryTest::addMergeCommit(git_repository* repo,
         JAMI_ERR("Unable to look up tree");
         return {};
     }
-    GitTree tree = {tree_ptr, git_tree_free};
+    GitTree tree = GitTree(tree_ptr);
 
     // Create merge message
     auto commitMsg = fmt::format("Merge commit '{}'", wanted_ref);
@@ -447,7 +447,7 @@ ConversationRepositoryTest::addAll(git_repository* repo)
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0)
         return;
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
     git_strarray array = {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
@@ -667,7 +667,7 @@ ConversationRepositoryTest::testInvalidSignatureForCommit()
     // Retrieve current index
     git_index* index_ptr = nullptr;
     CPPUNIT_ASSERT(git_repository_index(&index_ptr, repo) == 0);
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
 
     // Write the index to a new tree
     git_oid tree_id;
@@ -677,7 +677,7 @@ ConversationRepositoryTest::testInvalidSignatureForCommit()
     // Lookup the newly created tree
     git_tree* tree_ptr = nullptr;
     CPPUNIT_ASSERT(git_tree_lookup(&tree_ptr, repo, &tree_id) == 0);
-    GitTree tree = {tree_ptr, git_tree_free};
+    GitTree tree = GitTree(tree_ptr);
 
     // Create a commit object
     git_oid commit_id;
@@ -686,7 +686,7 @@ ConversationRepositoryTest::testInvalidSignatureForCommit()
     // Lookup the HEAD commit
     git_commit* head_ptr = nullptr;
     CPPUNIT_ASSERT(git_commit_lookup(&head_ptr, repo, &commit_id) == 0);
-    GitCommit head_commit {head_ptr, git_commit_free};
+    GitCommit head_commit {head_ptr};
 
     // The last argument of git_commit_create_buffer is of type
     // 'const git_commit **' in all versions of libgit2 except 1.8.0,

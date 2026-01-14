@@ -1100,7 +1100,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     if (git_repository_init_ext(&repo_ptr, repoPath.c_str(), &opts) < 0) {
         JAMI_ERR("Unable to create a git repository in %s", repoPath.c_str());
     }
-    GitRepository repo {std::move(repo_ptr), git_repository_free};
+    GitRepository repo {std::move(repo_ptr)};
 
     // Add files
     auto deviceId = std::string(account->currentDeviceId());
@@ -1171,12 +1171,12 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
         JAMI_ERR("Unable to create a commit signature.");
     }
-    GitSignature sig {sig_ptr, git_signature_free};
+    GitSignature sig {sig_ptr};
 
     if (git_repository_index(&index_ptr, repo.get()) < 0) {
         JAMI_ERR("Unable to open repository index");
     }
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
 
     if (git_index_write_tree(&tree_id, index.get()) < 0) {
         JAMI_ERR("Unable to write initial tree from index");
@@ -1185,7 +1185,7 @@ ConversationTest::createFakeConversation(std::shared_ptr<JamiAccount> account, c
     if (git_tree_lookup(&tree_ptr, repo.get(), &tree_id) < 0) {
         JAMI_ERR("Unable to look up initial tree");
     }
-    GitTree tree = {tree_ptr, git_tree_free};
+    GitTree tree = GitTree(tree_ptr);
 
     Json::Value json;
     json["mode"] = 1;

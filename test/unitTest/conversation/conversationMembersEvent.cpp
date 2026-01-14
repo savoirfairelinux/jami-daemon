@@ -407,13 +407,13 @@ ConversationMembersEventTest::generateFakeInvite(std::shared_ptr<JamiAccount> ac
     git_repository* repo = nullptr;
     if (git_repository_open(&repo, repoPath.c_str()) != 0)
         return;
-    GitRepository rep = {std::move(repo), git_repository_free};
+    GitRepository rep = GitRepository(std::move(repo));
 
     // git add -A
     git_index* index_ptr = nullptr;
     if (git_repository_index(&index_ptr, repo) < 0)
         return;
-    GitIndex index {index_ptr, git_index_free};
+    GitIndex index {index_ptr};
     git_strarray array = {nullptr, 0};
     git_index_add_all(index.get(), &array, 0, nullptr, nullptr);
     git_index_write(index.get());
