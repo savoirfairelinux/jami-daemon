@@ -19,8 +19,7 @@ Makefile
 *.spec
 *.yml.bak
 
-aclocal.m4
-autom4te.cache
+
 config.guess
 config.*
 depcomp
