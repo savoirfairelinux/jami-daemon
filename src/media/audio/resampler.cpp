@@ -20,6 +20,7 @@
 #include <libavutil/frame.h>
 #include <libavutil/mathematics.h>
 #include "resampler.h"
+#include "libav_utils.h"
 
 extern "C" {
 #include <libswresample/swresample.h>
@@ -43,17 +44,69 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
     // NOTE swr_set_matrix should be called on an uninitialized context
     auto swrCtx = swr_alloc();
     if (!swrCtx) {
-        JAMI_ERR() << "Unable to allocate resampler context";
+        JAMI_ERROR("[{}] Unable to allocate resampler context", fmt::ptr(this));
         throw std::bad_alloc();
     }
 
-    av_opt_set_chlayout(swrCtx, "ichl", &in->ch_layout, 0);
-    av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
-    av_opt_set_sample_fmt(swrCtx, "isf", static_cast<AVSampleFormat>(in->format), 0);
+    int ret = av_opt_set_chlayout(swrCtx, "ichl", &in->ch_layout, 0);
+    if (ret < 0) {
+        swr_free(&swrCtx);
+        char layout_buf[64];
+        av_channel_layout_describe(&in->ch_layout, layout_buf, sizeof(layout_buf));
+        JAMI_ERROR("[{}] Failed to set input channel layout {}: {}",
+                   fmt::ptr(this),
+                   layout_buf,
+                   libav_utils::getError(ret));
+        throw std::runtime_error("Failed to set input channel layout");
+    }
+    ret = av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
+    if (ret < 0) {
+        swr_free(&swrCtx);
+        JAMI_ERROR("[{}] Failed to set input sample rate {}: {}",
+                   fmt::ptr(this),
+                   in->sample_rate,
+                   libav_utils::getError(ret));
+        throw std::runtime_error("Failed to set input sample rate");
+    }
+    ret = av_opt_set_sample_fmt(swrCtx, "isf", static_cast<AVSampleFormat>(in->format), 0);
+    if (ret < 0) {
+        swr_free(&swrCtx);
+        JAMI_ERROR("[{}] Failed to set input sample format {}: {}",
+                   fmt::ptr(this),
+                   av_get_sample_fmt_name(static_cast<AVSampleFormat>(in->format)),
+                   libav_utils::getError(ret));
+        throw std::runtime_error("Failed to set input sample format");
+    }
 
-    av_opt_set_chlayout(swrCtx, "ochl", &out->ch_layout, 0);
-    av_opt_set_int(swrCtx, "osr", out->sample_rate, 0);
-    av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
+    ret = av_opt_set_chlayout(swrCtx, "ochl", &out->ch_layout, 0);
+    if (ret < 0) {
+        swr_free(&swrCtx);
+        char layout_buf[64];
+        av_channel_layout_describe(&out->ch_layout, layout_buf, sizeof(layout_buf));
+        JAMI_ERROR("[{}] Failed to set output channel layout {}: {}",
+                   fmt::ptr(this),
+                   layout_buf,
+                   libav_utils::getError(ret));
+        throw std::runtime_error("Failed to set output channel layout");
+    }
+    ret = av_opt_set_int(swrCtx, "osr", out->sample_rate, 0);
+    if (ret < 0) {
+        swr_free(&swrCtx);
+        JAMI_ERROR("[{}] Failed to set output sample rate {}: {}",
+                   fmt::ptr(this),
+                   out->sample_rate,
+                   libav_utils::getError(ret));
+        throw std::runtime_error("Failed to set output sample rate");
+    }
+    ret = av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
+    if (ret < 0) {
+        swr_free(&swrCtx);
+        JAMI_ERROR("[{}] Failed to set output sample format {}: {}",
+                   fmt::ptr(this),
+                   av_get_sample_fmt_name(static_cast<AVSampleFormat>(out->format)),
+                   libav_utils::getError(ret));
+        throw std::runtime_error("Failed to set output sample format");
+    }
 
     /**
      * Downmixing from 5.1 requires extra setup, since libswresample is unable to do it
@@ -67,6 +120,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      * +0dB in each channel for stereo.
      */
     if (in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1 || in->ch_layout.u.mask == AV_CH_LAYOUT_5POINT1_BACK) {
+        int ret = 0;
         // NOTE: MSVC is unable to allocate dynamic size arrays on the stack
         if (out->ch_layout.nb_channels == 2) {
             double matrix[2][6];
@@ -84,7 +138,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[1][3] = 1;
             matrix[1][4] = 0;
             matrix[1][5] = 0.707;
-            swr_set_matrix(swrCtx, matrix[0], 6);
+            ret = swr_set_matrix(swrCtx, matrix[0], 6);
         } else {
             double matrix[1][6];
             // M = 1.0*FL + 1.414*FC + 1.0*FR + 0.707*BL + 0.707*BR + 2.0*LFE
@@ -94,17 +148,29 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[0][3] = 2;
             matrix[0][4] = 0.707;
             matrix[0][5] = 0.707;
-            swr_set_matrix(swrCtx, matrix[0], 6);
+            ret = swr_set_matrix(swrCtx, matrix[0], 6);
+        }
+        if (ret < 0) {
+            swr_free(&swrCtx);
+            JAMI_ERROR("[{}]  Failed to set mixing matrix: {}", fmt::ptr(this), libav_utils::getError(ret));
+            throw std::runtime_error("Failed to set mixing matrix");
         }
     }
 
-    if (swr_init(swrCtx) >= 0) {
+    ret = swr_init(swrCtx);
+    if (ret >= 0) {
         std::swap(swrCtx_, swrCtx);
         swr_free(&swrCtx);
-        JAMI_DEBUG("Succesfully (re)initialized resampler context");
+        JAMI_DEBUG("[{}] Succesfully (re)initialized resampler context from {} to {}",
+                   fmt::ptr(this),
+                   libav_utils::getFormat(in).toString(),
+                   libav_utils::getFormat(out).toString());
         ++initCount_;
     } else {
-        JAMI_ERROR("Runtime error: Failed to initialize resampler context");
+        swr_free(&swrCtx);
+        JAMI_ERROR("[{}] Runtime error: Failed to initialize resampler context: {}",
+                   fmt::ptr(this),
+                   libav_utils::getError(ret));
         throw std::runtime_error("Failed to initialize resampler context");
     }
 }
@@ -112,7 +178,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
 int
 Resampler::resample(const AVFrame* input, AVFrame* output)
 {
-    bool firstFrame = !initCount_;
+    bool firstFrame = (initCount_ == 0);
     if (!initCount_)
         reinit(input, output);
 
@@ -122,7 +188,11 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
         // indicative of an underlying problem in the code. This check is so the backtrace
         // doesn't get mangled with a bunch of calls to Resampler::resample
         if (initCount_ > 1) {
-            JAMI_ERROR("Infinite loop detected in audio resampler, please open an issue on https://git.jami.net");
+            // JAMI_ERROR("Infinite loop detected in audio resampler, please open an issue on https://git.jami.net");
+            JAMI_ERROR("[{}] Loop detected in audio resampler when resampling from {} to {}",
+                       fmt::ptr(this),
+                       libav_utils::getFormat(input).toString(),
+                       libav_utils::getFormat(output).toString());
             throw std::runtime_error("Infinite loop detected in audio resampler");
         }
         reinit(input, output);
@@ -130,7 +200,7 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
     }
 
     if (ret < 0) {
-        JAMI_ERROR("Failed to resample frame");
+        JAMI_ERROR("[{}] Failed to resample frame: {}", fmt::ptr(this), libav_utils::getError(ret));
         return -1;
     }
 
@@ -142,13 +212,13 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
                                                  AV_ROUND_UP);
         if (output->nb_samples < targetOutputLength) {
             // create new frame with more samples, padded with silence
-            JAMI_WARNING(
-                "First resampled frame too small, adding {} samples of silence at beginning to reach {} samples",
-                targetOutputLength - output->nb_samples,
-                targetOutputLength);
+            JAMI_WARNING("[{}] Adding {} samples of silence at beginning of first frame to reach {} samples",
+                         fmt::ptr(this),
+                         targetOutputLength - output->nb_samples,
+                         targetOutputLength);
             auto* newOutput = av_frame_alloc();
             if (!newOutput) {
-                JAMI_ERROR("Failed to clone output frame for resizing");
+                JAMI_ERROR("[{}] Failed to clone output frame for resizing", fmt::ptr(this));
                 return -1;
             }
             av_frame_copy_props(newOutput, output);
@@ -157,26 +227,44 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
             newOutput->ch_layout = output->ch_layout;
             newOutput->channel_layout = output->channel_layout;
             newOutput->sample_rate = output->sample_rate;
-            if (av_frame_get_buffer(newOutput, 0) < 0) {
-                JAMI_ERROR("Failed to allocate new output frame buffer");
+            int bufferRet = av_frame_get_buffer(newOutput, 0);
+            if (bufferRet < 0) {
+                JAMI_ERROR("[{}] Failed to allocate new output frame buffer: {}",
+                           fmt::ptr(this),
+                           libav_utils::getError(bufferRet));
                 av_frame_free(&newOutput);
                 return -1;
             }
             auto sampleOffset = targetOutputLength - output->nb_samples;
-            av_samples_set_silence(newOutput->data,
-                                   0,
-                                   static_cast<int>(sampleOffset),
-                                   output->ch_layout.nb_channels,
-                                   static_cast<AVSampleFormat>(output->format));
+            bufferRet = av_samples_set_silence(newOutput->data,
+                                               0,
+                                               static_cast<int>(sampleOffset),
+                                               output->ch_layout.nb_channels,
+                                               static_cast<AVSampleFormat>(output->format));
+            if (bufferRet < 0) {
+                JAMI_ERROR("[{}] Failed to set silence on new output frame: {}",
+                           fmt::ptr(this),
+                           libav_utils::getError(bufferRet));
+                av_frame_free(&newOutput);
+                return -1;
+            }
             // copy old data to new frame at offset sampleOffset
-            av_samples_copy(newOutput->data,
-                            output->data,
-                            static_cast<int>(sampleOffset),
-                            0,
-                            output->nb_samples,
-                            output->ch_layout.nb_channels,
-                            static_cast<AVSampleFormat>(output->format));
-            JAMI_DEBUG("Resampled first frame. Resized from {} to {} samples",
+            bufferRet = av_samples_copy(newOutput->data,
+                                        output->data,
+                                        static_cast<int>(sampleOffset),
+                                        0,
+                                        output->nb_samples,
+                                        output->ch_layout.nb_channels,
+                                        static_cast<AVSampleFormat>(output->format));
+            if (bufferRet < 0) {
+                JAMI_ERROR("[{}] Failed to copy data to new output frame: {}",
+                           fmt::ptr(this),
+                           libav_utils::getError(bufferRet));
+                av_frame_free(&newOutput);
+                return -1;
+            }
+            JAMI_DEBUG("[{}] Resampled first frame. Resized from {} to {} samples",
+                       fmt::ptr(this),
                        output->nb_samples,
                        newOutput->nb_samples);
             // replace output frame buffer

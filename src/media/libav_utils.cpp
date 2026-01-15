@@ -287,5 +287,13 @@ fillWithSilence(AVFrame* frame)
         JAMI_ERR() << "Failed to fill frame with silence";
 }
 
+AudioFormat
+getFormat(const AVFrame* frame)
+{
+    return AudioFormat {static_cast<unsigned>(frame->sample_rate),
+                        static_cast<unsigned>(frame->ch_layout.nb_channels),
+                        static_cast<AVSampleFormat>(frame->format)};
+}
+
 } // namespace libav_utils
 } // namespace jami

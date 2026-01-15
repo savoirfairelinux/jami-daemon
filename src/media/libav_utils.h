@@ -15,11 +15,10 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "media/audio/audio_format.h"
 
 #include <libavutil/samplefmt.h>
 
-#include <vector>
-#include <map>
 #include <string>
 #include <memory>
 
@@ -56,6 +55,8 @@ void setDictValue(AVDictionary** d, const std::string& key, const std::string& v
 void fillWithBlack(AVFrame* frame);
 
 void fillWithSilence(AVFrame* frame);
+
+AudioFormat getFormat(const AVFrame* frame);
 
 struct AVBufferRef_deleter
 {
