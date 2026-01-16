@@ -92,12 +92,6 @@ struct SipAccountConfig : public SipAccountBaseConfig
     int tlsNegotiationTimeout {2};
 
     /**
-     * Determine if the softphone should fallback on non secured media channel if SRTP negotiation
-     * fails. Make sure other SIP endpoints share the same behavior since it could result in
-     * encrypted data to be played through the audio device.
-     */
-    bool srtpFallback {false};
-    /**
      * Specifies the type of key exchange used for SRTP, if any.
      * This only determine if the media channel is secured.
      */

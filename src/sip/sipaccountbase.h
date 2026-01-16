@@ -151,8 +151,6 @@ public:
 
     virtual bool isSrtpEnabled() const = 0;
 
-    virtual bool getSrtpFallback() const = 0;
-
     virtual std::string getToUri(const std::string& username) const = 0;
 
     /**

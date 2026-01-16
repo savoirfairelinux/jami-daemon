@@ -302,8 +302,6 @@ public:
 
     virtual bool isTlsEnabled() const override { return config().tlsEnable; }
 
-    virtual bool getSrtpFallback() const override { return config().srtpFallback; }
-
     void setReceivedParameter(const std::string& received)
     {
         receivedParameter_ = received;
