@@ -122,7 +122,6 @@ SipAccountConfig::serialize(YAML::Emitter& out) const
     // srtp submap
     out << YAML::Key << Conf::SRTP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value << sip_utils::getKeyExchangeName(srtpKeyExchange);
-    out << YAML::Key << Conf::RTP_FALLBACK_KEY << YAML::Value << srtpFallback;
     out << YAML::EndMap;
 
     out << YAML::EndMap;
@@ -180,7 +179,6 @@ SipAccountConfig::unserialize(const YAML::Node& node)
     std::string tmpKey;
     parseValueOptional(srtpMap, Conf::KEY_EXCHANGE_KEY, tmpKey);
     srtpKeyExchange = sip_utils::getKeyExchangeProtocol(tmpKey);
-    parseValueOptional(srtpMap, Conf::RTP_FALLBACK_KEY, srtpFallback);
 }
 
 std::map<std::string, std::string>
@@ -216,8 +214,6 @@ SipAccountConfig::toMap() const
 
     // srtp settings
     a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE, sip_utils::getKeyExchangeName(srtpKeyExchange));
-    a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback ? TRUE_STR : FALSE_STR);
-
     a.emplace(Conf::CONFIG_TLS_ENABLE, tlsEnable ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TLS_LISTENER_PORT, std::to_string(tlsListenerPort));
     a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile);
@@ -256,7 +252,6 @@ SipAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire);
 
     // srtp settings
-    parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback);
     auto iter = details.find(Conf::CONFIG_SRTP_KEY_EXCHANGE);
     if (iter != details.end())
         srtpKeyExchange = sip_utils::getKeyExchangeProtocol(iter->second);
