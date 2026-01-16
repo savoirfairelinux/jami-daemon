@@ -322,14 +322,29 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     TRY(snd_pcm_hw_params_any(HW), "hwparams init");
 
     TRY(snd_pcm_hw_params_set_access(HW, SND_PCM_ACCESS_RW_INTERLEAVED), "access type");
-    TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
+
+    if (snd_pcm_hw_params_test_format(HW, SND_PCM_FORMAT_FLOAT_LE) == 0) {
+        TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_FLOAT_LE), "sample format");
+        format = format.withSampleFormat(AV_SAMPLE_FMT_FLT);
+    } else {
+        TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
+        format = format.withSampleFormat(AV_SAMPLE_FMT_S16);
+    }
 
     TRY(snd_pcm_hw_params_set_rate_resample(HW, 0), "hardware sample rate"); /* prevent software resampling */
     TRY(snd_pcm_hw_params_set_rate_near(HW, &format.sample_rate, nullptr), "sample rate");
 
-    // TODO: use snd_pcm_query_chmaps or similar to get hardware channel num
-    audioFormat_.nb_channels = 2;
-    format.nb_channels = 2;
+    // Query the max number of channels supported by the hardware
+    unsigned int max_channels = 0;
+    if (snd_pcm_hw_params_get_channels_max(hwparams, &max_channels) < 0) {
+        JAMI_WARN("Unable to query hardware channel number, defaulting to 2");
+        max_channels = 2;
+    }
+
+    format.nb_channels = std::min(max_channels, 2u);
+    if (format.nb_channels == 0)
+        format.nb_channels = 2;
+
     TRY(snd_pcm_hw_params_set_channels_near(HW, &format.nb_channels), "channel count");
 
     snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
@@ -535,7 +550,6 @@ AlsaLayer::getPlaybackDeviceList() const
 std::vector<HwIDPair>
 AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 {
-    snd_ctl_t* handle;
     snd_ctl_card_info_t* info;
     snd_pcm_info_t* pcminfo;
     snd_ctl_card_info_alloca(&info);
@@ -551,31 +565,27 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
     do {
         std::string name = fmt::format("hw:{}", numCard);
 
+        snd_ctl_t* handle;
         if (snd_ctl_open(&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info(handle, info) == 0) {
                 snd_pcm_info_set_device(pcminfo, 0);
                 snd_pcm_info_set_stream(pcminfo, getCapture ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
-
                 int err;
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
-                    JAMI_WARN("Unable to get info for %s %s: %s",
-                              getCapture ? "capture device" : "playback device",
-                              name.c_str(),
-                              snd_strerror(err));
+                    JAMI_LOG("[alsa] Unable to get info for {} {}: {}",
+                             getCapture ? "capture device" : "playback device",
+                             name,
+                             snd_strerror(err));
                 } else {
-                    JAMI_DBG("card %i : %s [%s]",
-                             numCard,
-                             snd_ctl_card_info_get_id(info),
-                             snd_ctl_card_info_get_name(info));
-                    std::string description = snd_ctl_card_info_get_name(info);
-                    description.append(" - ");
-                    description.append(snd_pcm_info_get_name(pcminfo));
+                    auto description = fmt::format("{} - {}",
+                                                   snd_ctl_card_info_get_name(info),
+                                                   snd_pcm_info_get_name(pcminfo));
+                    JAMI_LOG("[alsa] card {:s} : {:s} [{:s}]", name, snd_ctl_card_info_get_id(info), description);
 
                     // The number of the sound card is associated with a string description
                     audioDevice.emplace_back(numCard, std::move(description));
                 }
             }
-
             snd_ctl_close(handle);
         }
     } while (snd_card_next(&numCard) >= 0 && numCard >= 0);
