@@ -322,14 +322,29 @@ AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
     TRY(snd_pcm_hw_params_any(HW), "hwparams init");
 
     TRY(snd_pcm_hw_params_set_access(HW, SND_PCM_ACCESS_RW_INTERLEAVED), "access type");
-    TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
+
+    if (snd_pcm_hw_params_test_format(HW, SND_PCM_FORMAT_FLOAT_LE) == 0) {
+        TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_FLOAT_LE), "sample format");
+        format = format.withSampleFormat(AV_SAMPLE_FMT_FLT);
+    } else {
+        TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
+        format = format.withSampleFormat(AV_SAMPLE_FMT_S16);
+    }
 
     TRY(snd_pcm_hw_params_set_rate_resample(HW, 0), "hardware sample rate"); /* prevent software resampling */
     TRY(snd_pcm_hw_params_set_rate_near(HW, &format.sample_rate, nullptr), "sample rate");
 
-    // TODO: use snd_pcm_query_chmaps or similar to get hardware channel num
-    audioFormat_.nb_channels = 2;
-    format.nb_channels = 2;
+    // Query the max number of channels supported by the hardware
+    unsigned int max_channels = 0;
+    if (snd_pcm_hw_params_get_channels_max(hwparams, &max_channels) < 0) {
+        JAMI_WARN("Unable to query hardware channel number, defaulting to 2");
+        max_channels = 2;
+    }
+
+    format.nb_channels = std::min(max_channels, 2u);
+    if (format.nb_channels == 0)
+        format.nb_channels = 2;
+
     TRY(snd_pcm_hw_params_set_channels_near(HW, &format.nb_channels), "channel count");
 
     snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
