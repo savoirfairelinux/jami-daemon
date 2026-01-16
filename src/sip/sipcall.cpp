@@ -784,7 +784,25 @@ SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
         return;
     }
 
-    auto newMediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled());
+    auto useSrtp = isSrtpEnabled();
+    if (useSrtp and sipTransport_ and not sipTransport_->isSecure()) {
+        if (const auto* remoteSdp = sdp_->getRemoteSdpSession()) {
+            bool remoteHasSrtp = false;
+            for (unsigned i = 0; i < remoteSdp->media_count; ++i) {
+                if (pj_stricmp2(&remoteSdp->media[i]->desc.transport, "RTP/SAVP") == 0 or
+                    pj_stricmp2(&remoteSdp->media[i]->desc.transport, "RTP/SAVPF") == 0) {
+                    remoteHasSrtp = true;
+                    break;
+                }
+            }
+            if (not remoteHasSrtp) {
+                JAMI_WARNING("[call:{}] Incoming call is insecure and has no SRTP, disabling SRTP for answer",
+                             getCallId());
+                useSrtp = false;
+            }
+        }
+    }
+    auto newMediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, useSrtp);
 
     if (newMediaAttrList.empty() and rtpStreams_.empty()) {
         JAMI_ERROR("[call:{}] Media list must not be empty!", getCallId());
