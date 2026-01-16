@@ -206,18 +206,6 @@ isConferenceParticipant(const std::string& accountId, const std::string& callId)
     return false;
 }
 
-void
-startSmartInfo(uint32_t refreshTimeMs)
-{
-    JAMI_WARNING("startSmartInfo is deprecated and does nothing.");
-}
-
-void
-stopSmartInfo()
-{
-    JAMI_WARNING("stopSmartInfo is deprecated and does nothing.");
-}
-
 bool
 addParticipant(const std::string& accountId,
                const std::string& callId,

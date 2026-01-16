@@ -151,10 +151,6 @@ LIBJAMI_PUBLIC void raiseHand(const std::string& accountId,
                               const std::string& deviceId,
                               const bool& state);
 
-/* Statistic related methods */
-LIBJAMI_PUBLIC void startSmartInfo(uint32_t refreshTimeMs);
-LIBJAMI_PUBLIC void stopSmartInfo();
-
 /* File Playback methods */
 LIBJAMI_PUBLIC bool startRecordedFilePlayback(const std::string& filepath);
 LIBJAMI_PUBLIC void stopRecordedFilePlayback();
@@ -281,11 +277,6 @@ struct LIBJAMI_PUBLIC CallSignal
     {
         constexpr static const char* name = "AudioMuted";
         using cb_type = void(const std::string&, bool);
-    };
-    struct LIBJAMI_PUBLIC SmartInfo
-    {
-        constexpr static const char* name = "SmartInfo";
-        using cb_type = void(const std::map<std::string, std::string>&);
     };
     struct LIBJAMI_PUBLIC ConnectionUpdate
     {
