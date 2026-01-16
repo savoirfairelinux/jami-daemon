@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "80a00d9f_c4b8879d",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-01-16T19:53:07Z",
+      "side": 1,
+      "message": "With this patch the call starts but there is no audio:\n```\n[call:8603701043156946] [SDP:slot#0] Secure mode but no local crypto attributes. Ignoring the media\n```",
+      "revId": "688e4f6a11b5b689b5213743f375a929071fa502",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
