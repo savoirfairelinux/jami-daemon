@@ -42,7 +42,6 @@ getSignalHandlers()
         exported_callback<libjami::CallSignal::PeerHold>(),
         exported_callback<libjami::CallSignal::VideoMuted>(),
         exported_callback<libjami::CallSignal::AudioMuted>(),
-        exported_callback<libjami::CallSignal::SmartInfo>(),
         exported_callback<libjami::CallSignal::ConnectionUpdate>(),
         exported_callback<libjami::CallSignal::OnConferenceInfosUpdated>(),
         exported_callback<libjami::CallSignal::RemoteRecordingChanged>(),

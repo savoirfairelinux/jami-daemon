@@ -223,8 +223,6 @@ install_signal_primitives(void*)
 
     add_handler<libjami::CallSignal::AudioMuted, const std::string&, bool>(handlers, "audio-muted");
 
-    add_handler<libjami::CallSignal::SmartInfo, const std::map<std::string, std::string>&>(handlers, "smart-info");
-
     add_handler<libjami::CallSignal::ConnectionUpdate, const std::string&, int>(handlers, "connection-update");
 
     add_handler<libjami::CallSignal::OnConferenceInfosUpdated,

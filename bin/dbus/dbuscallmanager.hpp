@@ -320,10 +320,6 @@ public:
         libjami::sendTextMessage(accountId, callId, messages, "Me", isMixed);
     }
 
-    void startSmartInfo(const uint32_t& refreshTimeMs) { libjami::startSmartInfo(refreshTimeMs); }
-
-    void stopSmartInfo() { libjami::stopSmartInfo(); }
-
     void setModerator(const std::string& accountId,
                       const std::string& confId,
                       const std::string& peerId,
@@ -404,8 +400,6 @@ private:
                    std::bind(&DBusCallManager::emitAudioMuted, this, _1, _2)),
                exportable_serialized_callback<CallSignal::VideoMuted>(
                    std::bind(&DBusCallManager::emitVideoMuted, this, _1, _2)),
-               exportable_serialized_callback<CallSignal::SmartInfo>(
-                   std::bind(&DBusCallManager::emitSmartInfo, this, _1)),
                exportable_serialized_callback<CallSignal::RemoteRecordingChanged>(
                    std::bind(&DBusCallManager::emitRemoteRecordingChanged, this, _1, _2, _3)),
                exportable_serialized_callback<CallSignal::MediaNegotiationStatus>(
