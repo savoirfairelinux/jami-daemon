@@ -201,11 +201,6 @@ public:
     virtual std::map<std::string, std::string> getDetails() const;
 
     /**
-     * Answer the call
-     */
-    virtual void answer() = 0;
-
-    /**
      * Answer a call with a list of media attributes.
      * @param mediaList The list of the media attributes.
      * The media attributes set by the caller of this method will

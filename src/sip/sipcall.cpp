@@ -765,57 +765,6 @@ SIPCall::terminateSipSession(int status)
 }
 
 void
-SIPCall::answer()
-{
-    std::lock_guard lk {callMutex_};
-    auto account = getSIPAccount();
-    if (!account) {
-        JAMI_ERROR("[call:{}] No account detected", getCallId());
-        return;
-    }
-
-    if (not inviteSession_)
-        throw VoipLinkException("[call:" + getCallId() + "] Answer: no invite session for this call");
-
-    if (!inviteSession_->neg) {
-        JAMI_WARNING("[call:{}] Negotiator is NULL, INVITE received without an SDP", getCallId());
-
-        Manager::instance().sipVoIPLink().createSDPOffer(inviteSession_.get());
-    }
-
-    pjsip_tx_data* tdata;
-    if (!inviteSession_->last_answer)
-        throw std::runtime_error("Should only be called for initial answer");
-
-    // answer with SDP if no SDP was given in initial invite (i.e. inv->neg is NULL)
-    if (pjsip_inv_answer(inviteSession_.get(),
-                         PJSIP_SC_OK,
-                         NULL,
-                         !inviteSession_->neg ? sdp_->getLocalSdpSession() : NULL,
-                         &tdata)
-        != PJ_SUCCESS)
-        throw std::runtime_error("Unable to init invite request answer (200 OK)");
-
-    if (contactHeader_.empty()) {
-        throw std::runtime_error("Unable to answer with an invalid contact header");
-    }
-
-    JAMI_DEBUG("[call:{}] Answering with contact header: {}", getCallId(), contactHeader_);
-
-    sip_utils::addContactHeader(contactHeader_, tdata);
-
-    // Add user-agent header
-    sip_utils::addUserAgentHeader(account->getUserAgentName(), tdata);
-
-    if (pjsip_inv_send_msg(inviteSession_.get(), tdata) != PJ_SUCCESS) {
-        setInviteSession();
-        throw std::runtime_error("Unable to send invite request answer (200 OK)");
-    }
-
-    setState(CallState::ACTIVE, ConnectionState::CONNECTED);
-}
-
-void
 SIPCall::answer(const std::vector<libjami::MediaMap>& mediaList)
 {
     std::lock_guard lk {callMutex_};

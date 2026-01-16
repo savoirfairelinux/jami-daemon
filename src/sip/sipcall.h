@@ -112,7 +112,6 @@ private:
     void merge(Call& call) override; // not public - only called by Call
 
 public:
-    void answer() override;
     void answer(const std::vector<libjami::MediaMap>& mediaList) override;
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
