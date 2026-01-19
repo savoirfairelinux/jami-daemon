@@ -159,6 +159,7 @@ private:
         , userId_(account->getUsername())
         , deviceId_(account->currentDeviceId())
         , swarmManager_(std::make_shared<SwarmManager>(NodeId(deviceId_),
+                                                       account->isMobile(),
                                                        Manager::instance().getSeededRandomEngine(),
                                                        [account = account_](const DeviceId& deviceId) {
                                                            if (auto acc = account.lock()) {
@@ -355,8 +356,8 @@ public:
                                device,
                                uri);
                     activeCalls_.emplace_back(std::map<std::string, std::string> {
-                        {"id", confId},
-                        {"uri", uri},
+                        {"id",     confId},
+                        {"uri",    uri   },
                         {"device", device},
                     });
                     saveActiveCalls();
