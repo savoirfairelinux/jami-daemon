@@ -24,8 +24,9 @@ namespace jami {
 
 using namespace swarm_protocol;
 
-SwarmManager::SwarmManager(const NodeId& id, const std::mt19937_64& rand, ToConnectCb&& toConnectCb)
+SwarmManager::SwarmManager(const NodeId& id, bool isMobile, const std::mt19937_64& rand, ToConnectCb&& toConnectCb)
     : id_(id)
+    , isMobile_(isMobile)
     , rd(rand)
     , toConnectCb_(toConnectCb)
 {
