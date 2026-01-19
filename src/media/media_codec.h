@@ -214,9 +214,8 @@ private:
     std::string mkiLength_;
 };
 
-// Possible values for media direction attribute. 'UNKNOWN' means that the
-// direction was not set yet. Useful to detect errors when parsing the SDP.
-enum class MediaDirection { SENDRECV, SENDONLY, RECVONLY, INACTIVE, UNKNOWN };
+// Possible values for media direction attribute.
+enum class MediaDirection { SENDRECV, SENDONLY, RECVONLY, INACTIVE };
 
 // Possible values for media transport attribute. 'UNKNOWN' means that the
 // was not set, or not found when parsing. Useful to detect errors when
@@ -233,7 +232,7 @@ struct MediaDescription
     MediaType type {};
     bool enabled {false};
     bool onHold {false};
-    MediaDirection direction_ {MediaDirection::UNKNOWN};
+    MediaDirection direction_ {MediaDirection::SENDRECV};
 
     /** Endpoint socket address */
     dhtnet::IpAddr addr {};

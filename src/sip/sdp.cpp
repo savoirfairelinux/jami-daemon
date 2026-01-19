@@ -50,8 +50,7 @@ static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 static std::map<MediaDirection, const char*> DIRECTION_STR {{MediaDirection::SENDRECV, "sendrecv"},
                                                             {MediaDirection::SENDONLY, "sendonly"},
                                                             {MediaDirection::RECVONLY, "recvonly"},
-                                                            {MediaDirection::INACTIVE, "inactive"},
-                                                            {MediaDirection::UNKNOWN, "unknown"}};
+                                                            {MediaDirection::INACTIVE, "inactive"}};
 
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, [](pj_pool_t* pool) { pj_pool_release(pool); })
@@ -182,11 +181,6 @@ Sdp::mediaDirection(const MediaAttribute& mediaAttr)
 MediaDirection
 Sdp::getMediaDirection(pjmedia_sdp_media* media)
 {
-    if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, DIRECTION_STR[MediaDirection::SENDRECV], nullptr)
-        != nullptr) {
-        return MediaDirection::SENDRECV;
-    }
-
     if (pjmedia_sdp_attr_find2(media->attr_count, media->attr, DIRECTION_STR[MediaDirection::SENDONLY], nullptr)
         != nullptr) {
         return MediaDirection::SENDONLY;
@@ -202,7 +196,9 @@ Sdp::getMediaDirection(pjmedia_sdp_media* media)
         return MediaDirection::INACTIVE;
     }
 
-    return MediaDirection::UNKNOWN;
+    // According to RFC 3264 (https://datatracker.ietf.org/doc/html/rfc3264#section-5.1),
+    // "a=sendrecv" is the default media direction attribute.
+    return MediaDirection::SENDRECV;
 }
 
 MediaTransport
@@ -773,9 +769,6 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
                                                  nullptr);
 
         descr.direction_ = getMediaDirection(media);
-        if (descr.direction_ == MediaDirection::UNKNOWN) {
-            JAMI_ERR("Did not find media direction attribute in remote SDP");
-        }
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
