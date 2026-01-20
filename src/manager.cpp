@@ -784,6 +784,11 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
     // manager can restart without being recreated (Unit tests)
     pimpl_->finished_ = false;
 
+    // Create video manager
+    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO)) {
+        pimpl_->videoManager_.reset(new VideoManager);
+    }
+
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
         autoLoad = false;
         JAMI_DEBUG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts will neither be loaded nor backed up");
@@ -834,10 +839,6 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
             JAMI_ERROR("[io] Unexpected io_context thread exception: {}", ex.what());
         }
     });
-    // Create video manager
-    if (!(flags & libjami::LIBJAMI_FLAG_NO_LOCAL_VIDEO)) {
-        pimpl_->videoManager_.reset(new VideoManager);
-    }
 
     if (libjami::LIBJAMI_FLAG_NO_AUTOLOAD & flags) {
         JAMI_DEBUG("LIBJAMI_FLAG_NO_AUTOLOAD is set, accounts and conversations will not be loaded");
