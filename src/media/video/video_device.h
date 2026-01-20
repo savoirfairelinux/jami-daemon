@@ -142,6 +142,7 @@ public:
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
         settings.framerate = jami::to_string(params.framerate.real());
+        settings.passthrough = params.passthrough;
         return settings;
     }
 
@@ -163,6 +164,7 @@ public:
         params.width = size.first;
         params.height = size.second;
         params.framerate = rateFromString(settings.channel, size, settings.framerate);
+        params.passthrough = settings.passthrough;
         setDeviceParams(params);
     }
 

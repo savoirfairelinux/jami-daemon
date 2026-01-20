@@ -54,6 +54,7 @@ struct DeviceParams
     int is_area {};
     // Skip DTS delay while finding stream info when PTS is sufficient
     bool disable_dts_probe_delay = false;
+    bool passthrough {false};
 };
 
 } // namespace jami

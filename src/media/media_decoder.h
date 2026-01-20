@@ -214,6 +214,7 @@ private:
     AVCodecContext* decoderCtx_ = nullptr;
     AVStream* avStream_ = nullptr;
     bool emulateRate_ = false;
+    bool passthrough_ = false;
     int64_t startTime_;
     int64_t lastTimestamp_ {0};
 

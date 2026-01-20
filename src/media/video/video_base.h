@@ -100,6 +100,7 @@ struct VideoSettings
     std::string channel {};
     std::string video_size {};
     std::string framerate {};
+    bool passthrough {false};
 };
 
 } // namespace video

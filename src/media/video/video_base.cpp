@@ -89,17 +89,22 @@ VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
     channel = extractString(settings, "channel");
     video_size = extractString(settings, "size");
     framerate = extractString(settings, "rate");
+    auto n = extractString(settings, "passthrough");
+    passthrough = n == "true" || n == "1";
 }
 
 std::map<std::string, std::string>
 VideoSettings::to_map() const
 {
-    return {{"name", name},
-            {"id", unique_id},
-            {"input", input},
-            {"size", video_size},
-            {"channel", channel},
-            {"rate", framerate}};
+    return {
+        {"name",        name                          },
+        {"id",          unique_id                     },
+        {"input",       input                         },
+        {"size",        video_size                    },
+        {"channel",     channel                       },
+        {"rate",        framerate                     },
+        {"passthrough", passthrough ? "true" : "false"}
+    };
 }
 
 } // namespace video
@@ -117,6 +122,7 @@ convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rh
     node["video_size"] = rhs.video_size;
     node["channel"] = rhs.channel;
     node["framerate"] = rhs.framerate;
+    node["passthrough"] = rhs.passthrough;
     return node;
 }
 
@@ -133,6 +139,8 @@ convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::Video
     rhs.video_size = node["video_size"].as<std::string>();
     rhs.channel = node["channel"].as<std::string>();
     rhs.framerate = node["framerate"].as<std::string>();
+    if (node["passthrough"])
+        rhs.passthrough = node["passthrough"].as<bool>();
     return true;
 }
 
