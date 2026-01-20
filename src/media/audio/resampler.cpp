@@ -48,64 +48,11 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         throw std::bad_alloc();
     }
 
-    int ret = av_opt_set_chlayout(swrCtx, "ichl", &in->ch_layout, 0);
+    int ret = swr_config_frame(swrCtx, out, in);
     if (ret < 0) {
         swr_free(&swrCtx);
-        char layout_buf[64];
-        av_channel_layout_describe(&in->ch_layout, layout_buf, sizeof(layout_buf));
-        JAMI_ERROR("[{}] Failed to set input channel layout {}: {}",
-                   fmt::ptr(this),
-                   layout_buf,
-                   libav_utils::getError(ret));
-        throw std::runtime_error("Failed to set input channel layout");
-    }
-    ret = av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
-    if (ret < 0) {
-        swr_free(&swrCtx);
-        JAMI_ERROR("[{}] Failed to set input sample rate {}: {}",
-                   fmt::ptr(this),
-                   in->sample_rate,
-                   libav_utils::getError(ret));
-        throw std::runtime_error("Failed to set input sample rate");
-    }
-    ret = av_opt_set_sample_fmt(swrCtx, "isf", static_cast<AVSampleFormat>(in->format), 0);
-    if (ret < 0) {
-        swr_free(&swrCtx);
-        JAMI_ERROR("[{}] Failed to set input sample format {}: {}",
-                   fmt::ptr(this),
-                   av_get_sample_fmt_name(static_cast<AVSampleFormat>(in->format)),
-                   libav_utils::getError(ret));
-        throw std::runtime_error("Failed to set input sample format");
-    }
-
-    ret = av_opt_set_chlayout(swrCtx, "ochl", &out->ch_layout, 0);
-    if (ret < 0) {
-        swr_free(&swrCtx);
-        char layout_buf[64];
-        av_channel_layout_describe(&out->ch_layout, layout_buf, sizeof(layout_buf));
-        JAMI_ERROR("[{}] Failed to set output channel layout {}: {}",
-                   fmt::ptr(this),
-                   layout_buf,
-                   libav_utils::getError(ret));
-        throw std::runtime_error("Failed to set output channel layout");
-    }
-    ret = av_opt_set_int(swrCtx, "osr", out->sample_rate, 0);
-    if (ret < 0) {
-        swr_free(&swrCtx);
-        JAMI_ERROR("[{}] Failed to set output sample rate {}: {}",
-                   fmt::ptr(this),
-                   out->sample_rate,
-                   libav_utils::getError(ret));
-        throw std::runtime_error("Failed to set output sample rate");
-    }
-    ret = av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
-    if (ret < 0) {
-        swr_free(&swrCtx);
-        JAMI_ERROR("[{}] Failed to set output sample format {}: {}",
-                   fmt::ptr(this),
-                   av_get_sample_fmt_name(static_cast<AVSampleFormat>(out->format)),
-                   libav_utils::getError(ret));
-        throw std::runtime_error("Failed to set output sample format");
+        JAMI_ERROR("[{}] Failed to configure resampler context: {}", fmt::ptr(this), libav_utils::getError(ret));
+        throw std::runtime_error("Failed to configure resampler context");
     }
 
     /**
