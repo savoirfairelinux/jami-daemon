@@ -50,12 +50,14 @@ class VideoV4l2Rate
 public:
     VideoV4l2Rate(unsigned rate_numerator = 0, unsigned rate_denominator = 0, unsigned format = 0)
         : frame_rate(rate_denominator, rate_numerator)
-        , pixel_format(format)
-    {}
+    {
+        if (format)
+            pixel_formats.push_back(format);
+    }
 
     FrameRate frame_rate;
-    unsigned pixel_format;
-    std::string libAvPixelformat() const;
+    std::vector<unsigned> pixel_formats;
+    std::string libAvPixelformat(bool passthrough = false) const;
 };
 
 class VideoV4l2Size
@@ -142,6 +144,7 @@ private:
     VideoV4l2Channel channel_;
     VideoV4l2Size size_;
     VideoV4l2Rate rate_;
+    bool passthrough_ = false;
 };
 
 static const unsigned pixelformats_supported[] = {
@@ -291,19 +294,17 @@ VideoV4l2Size::getRate(const FrameRate& rate) const
 void
 VideoV4l2Size::addRate(VideoV4l2Rate new_rate)
 {
-    bool rate_found = false;
     for (auto& item : rates_) {
         if (item.frame_rate == new_rate.frame_rate) {
-            if (pixelformat_score(item.pixel_format) > pixelformat_score(new_rate.pixel_format)) {
-                // Make sure we will use the prefered pixelformat (lower score means prefered format)
-                item.pixel_format = new_rate.pixel_format;
+            for (auto fmt : new_rate.pixel_formats) {
+                if (std::find(item.pixel_formats.begin(), item.pixel_formats.end(), fmt) == item.pixel_formats.end())
+                    item.pixel_formats.push_back(fmt);
             }
-            rate_found = true;
+            return;
         }
     }
 
-    if (!rate_found)
-        rates_.push_back(new_rate);
+    rates_.push_back(new_rate);
 }
 
 VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char* s)
@@ -479,9 +480,31 @@ VideoDeviceImpl::VideoDeviceImpl(const string& id, const std::string& path)
 }
 
 string
-VideoV4l2Rate::libAvPixelformat() const
+VideoV4l2Rate::libAvPixelformat(bool passthrough) const
 {
-    switch (pixel_format) {
+    unsigned best_fmt = 0;
+    unsigned best_score = UINT_MAX;
+
+    for (const auto& fmt : pixel_formats) {
+        if (passthrough) {
+            // Favor H264 > HEVC > MJPEG if passthrough
+            if (fmt == V4L2_PIX_FMT_H264 || fmt == V4L2_PIX_FMT_H264_NO_SC || fmt == V4L2_PIX_FMT_H264_MVC)
+                return "h264";
+            if (fmt == V4L2_PIX_FMT_H263)
+                return "h263";
+            if (fmt == V4L2_PIX_FMT_VP8)
+                return "vp8";
+        }
+        auto score = pixelformat_score(fmt);
+        if (score < best_score) {
+            best_score = score;
+            best_fmt = fmt;
+        }
+    }
+
+    /* If passthrough was requested but no compressed format found, fallback to best found format */
+
+    switch (best_fmt) {
     // Set codec name for those pixelformats.
     // Those  names can be found in libavcodec/codec_desc.c
     case V4L2_PIX_FMT_MJPEG:
@@ -586,7 +609,15 @@ VideoDeviceImpl::getDeviceParams() const
     params.width = size_.width;
     params.height = size_.height;
     params.framerate = rate_.frame_rate;
-    params.pixel_format = rate_.libAvPixelformat();
+    params.pixel_format = rate_.libAvPixelformat(passthrough_);
+    params.passthrough = passthrough_;
+
+    // If passthrough was requested but we got a raw format, disable passthrough
+    if (passthrough_ && params.pixel_format != "h264" && params.pixel_format != "vp8" && params.pixel_format != "h263"
+        && params.pixel_format != "mjpeg" && params.pixel_format != "hevc") {
+        params.passthrough = false;
+    }
+
     return params;
 }
 
@@ -605,6 +636,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     } catch (...) {
         rate_ = {};
     }
+    passthrough_ = params.passthrough;
 }
 
 VideoDevice::VideoDevice(const std::string& id, const std::vector<std::map<std::string, std::string>>& devInfo)
