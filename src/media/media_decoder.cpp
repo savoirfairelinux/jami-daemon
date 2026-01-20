@@ -511,6 +511,7 @@ MediaDecoder::flushBuffers()
 int
 MediaDecoder::openInput(const DeviceParams& p)
 {
+    passthrough_ = p.passthrough;
     return demuxer_->openInput(p);
 }
 
@@ -671,6 +672,24 @@ MediaDecoder::updateStartTime(int64_t startTime)
 DecodeStatus
 MediaDecoder::decode(AVPacket& packet)
 {
+    if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO && passthrough_) {
+#ifdef ENABLE_VIDEO
+        // If passthrough, we don't decode, just pass the packet
+        auto f = std::static_pointer_cast<MediaFrame>(std::make_shared<VideoFrame>());
+        if (auto p = av_packet_clone(&packet)) {
+            f->setPacket(libjami::PacketBuffer(p));
+        }
+        if (callback_)
+            callback_(std::move(f));
+
+        if (contextCallback_ && firstDecode_.load()) {
+            firstDecode_.exchange(false);
+            contextCallback_();
+        }
+        return DecodeStatus::FrameFinished;
+#endif
+    }
+
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
     // TODO: Investigate avcodec_send_packet returning AVERROR_INVALIDDATA.

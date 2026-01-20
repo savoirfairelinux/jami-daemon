@@ -402,6 +402,14 @@ MediaEncoder::startIO()
 int
 MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe, int64_t frame_number)
 {
+    if (auto pkt = input->packet()) {
+        if (!initialized_) {
+            currentStreamIdx_ = initStream(videoCodec_);
+            startIO();
+        }
+        return send(*pkt, -1) ? 0 : -1;
+    }
+
     auto width = (input->width() >> 3) << 3;
     auto height = (input->height() >> 3) << 3;
     if (initialized_ && (getWidth() != width || getHeight() != height)) {
