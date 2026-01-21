@@ -20,6 +20,7 @@
 #include <filesystem>
 
 #include "logger.h"
+#include "jami/conversation_interface.h"
 
 static inline SCM
 to_guile(bool b)
@@ -31,6 +32,12 @@ static inline SCM
 to_guile(const std::string& str)
 {
     return scm_from_utf8_string(str.c_str());
+}
+
+static inline SCM
+to_guile(std::string_view str)
+{
+    return scm_from_utf8_stringn(str.data(), str.size());
 }
 
 static inline SCM
@@ -92,6 +99,24 @@ template<typename T>
 static inline SCM to_guile(const std::vector<T>& values);
 template<typename K, typename V>
 static inline SCM to_guile(const std::map<K, V>& map);
+
+static inline SCM
+to_guile(const libjami::SwarmMessage& msg)
+{
+    // Convert SwarmMessage to an association list (alist) in Guile
+    SCM alist = SCM_EOL;
+    
+    // Add all the fields from SwarmMessage
+    alist = scm_cons(scm_cons(to_guile("id"), to_guile(msg.id)), alist);
+    alist = scm_cons(scm_cons(to_guile("type"), to_guile(msg.type)), alist);
+    alist = scm_cons(scm_cons(to_guile("linearizedParent"), to_guile(msg.linearizedParent)), alist);
+    alist = scm_cons(scm_cons(to_guile("body"), to_guile(msg.body)), alist);
+    alist = scm_cons(scm_cons(to_guile("reactions"), to_guile(msg.reactions)), alist);
+    alist = scm_cons(scm_cons(to_guile("editions"), to_guile(msg.editions)), alist);
+    alist = scm_cons(scm_cons(to_guile("status"), to_guile(msg.status)), alist);
+    
+    return alist;
+}
 
 template<typename T>
 static inline SCM
