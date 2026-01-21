@@ -71,12 +71,13 @@ RUN add-apt-repository universe && \
         libxcb-shape0-dev \
         libwebrtc-audio-processing-dev \
         libcppunit-dev \
+        guile-3.0-dev \
         libarchive-dev \
         ninja-build
 
 RUN apt-get install -y python3 python3-pip python3-setuptools \
                        python3-wheel
-RUN pip3 install meson
+RUN pip3 install meson --break-system-packages
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \
