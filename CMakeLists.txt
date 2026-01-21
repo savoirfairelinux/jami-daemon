@@ -22,6 +22,7 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+option(ENABLE_AGENT "Build agent test with Guile support" OFF)
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -1019,6 +1020,11 @@ else()
         if (JAMI_PLUGIN)
             add_test_executable(plugins test/unitTest/plugins/plugins.cpp)
         endif()
+    endif()
+
+    # Agent test with Guile support
+    if (ENABLE_AGENT)
+        add_subdirectory(test/agent)
     endif()
 
 endif()
