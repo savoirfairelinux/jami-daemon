@@ -222,6 +222,17 @@ createFileLink(const std::filesystem::path& linkFile, const std::filesystem::pat
         if (std::filesystem::is_symlink(linkFile, ec) && std::filesystem::read_symlink(linkFile, ec) == target)
             return true;
         std::filesystem::remove(linkFile, ec);
+    } else {
+        auto status = std::filesystem::symlink_status(linkFile, ec);
+        if (status.type() != std::filesystem::file_type::not_found) {
+            if (status.type() == std::filesystem::file_type::symlink) {
+                if (std::filesystem::read_symlink(linkFile, ec) == target) {
+                    JAMI_DEBUG("createFileLink: {} symlink already points to target {}", linkFile, target);
+                    return true;
+                }
+            }
+            std::filesystem::remove(linkFile, ec);
+        }
     }
     if (not hard or not createHardlink(linkFile, target))
         return createSymlink(linkFile, target);
