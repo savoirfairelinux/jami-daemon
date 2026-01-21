@@ -34,6 +34,12 @@ to_guile(const std::string& str)
 }
 
 static inline SCM
+to_guile(std::string_view str)
+{
+    return scm_from_utf8_stringn(str.data(), str.size());
+}
+
+static inline SCM
 to_guile(uint8_t x)
 {
     return scm_from_uint8(x);
