@@ -150,7 +150,7 @@ add_handler(std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>>
 {
     static Handler<Args...> handler(name);
 
-    auto fn = [=](Args... args) {
+    std::function<typename T::cb_type> fn = [=](Args... args) {
         handler.execute(args...);
     };
 
@@ -182,7 +182,7 @@ install_signal_primitives(void*)
                 const std::string&,
                 const std::map<std::string, std::string>&>(handlers, "incoming-message");
 
-    add_handler<libjami::CallSignal::IncomingCall, const std::string&, const std::string&, const std::string&>(
+    add_handler<libjami::CallSignal::IncomingCall, const std::string&, const std::string&, const std::string&, const std::vector<std::map<std::string, std::string>>&>(
         handlers, "incoming-call");
 
     add_handler<libjami::CallSignal::IncomingCall,
@@ -305,6 +305,7 @@ install_signal_primitives(void*)
                 const std::map<std::string, std::string>&>(handlers, "known-devices-changed");
 
     add_handler<libjami::ConfigurationSignal::RegisteredNameFound,
+                const std::string&,
                 const std::string&,
                 int,
                 const std::string&,
@@ -436,7 +437,7 @@ install_signal_primitives(void*)
                 uint32_t,
                 const std::string&,
                 const std::string&,
-                std::vector<std::map<std::string, std::string>>>(handlers, "conversation-loaded");
+                std::vector<libjami::SwarmMessage>>(handlers, "conversation-loaded");
 
     add_handler<libjami::ConversationSignal::MessagesFound,
                 uint32_t,
@@ -447,7 +448,7 @@ install_signal_primitives(void*)
     add_handler<libjami::ConversationSignal::SwarmMessageReceived,
                 const std::string&,
                 const std::string&,
-                std::map<std::string, std::string>>(handlers, "message-received");
+                const libjami::SwarmMessage&>(handlers, "message-received");
 
     add_handler<libjami::ConversationSignal::ConversationRequestReceived,
                 const std::string&,
