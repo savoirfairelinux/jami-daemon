@@ -221,7 +221,35 @@ createFileLink(const std::filesystem::path& linkFile, const std::filesystem::pat
     if (std::filesystem::exists(linkFile, ec)) {
         if (std::filesystem::is_symlink(linkFile, ec) && std::filesystem::read_symlink(linkFile, ec) == target)
             return true;
+        if (hard && std::filesystem::equivalent(linkFile, target, ec) && !ec) {
+            auto linkCount = std::filesystem::hard_link_count(linkFile, ec);
+            JAMI_DEBUG("createFileLink: {} is already a hard link to {}, link_count={}", linkFile, target, linkCount);
+            return true;
+        }
+        auto linkCountBefore = std::filesystem::hard_link_count(linkFile, ec);
+        JAMI_DEBUG("createFileLink: Before removal - linkFile={}, link_count={}, isRegular={}, isSymlink={}",
+                   linkFile,
+                   linkCountBefore,
+                   std::filesystem::is_regular_file(linkFile, ec),
+                   std::filesystem::is_symlink(linkFile, ec));
         std::filesystem::remove(linkFile, ec);
+        if (ec) {
+            JAMI_WARNING("createFileLink: remove({}) failed - error_code={}, message={}",
+                         linkFile,
+                         ec.value(),
+                         ec.message());
+        } else {
+            if (std::filesystem::exists(linkFile, ec)) {
+                auto linkCountAfter = std::filesystem::hard_link_count(linkFile, ec);
+                JAMI_WARNING("createFileLink: remove({}) succeeded but file still exists, link_count_before={}, "
+                             "link_count_after={}",
+                             linkFile,
+                             linkCountBefore,
+                             linkCountAfter);
+            } else {
+                JAMI_DEBUG("createFileLink: remove({}) succeeded, file deleted", linkFile);
+            }
+        }
     }
     if (not hard or not createHardlink(linkFile, target))
         return createSymlink(linkFile, target);
