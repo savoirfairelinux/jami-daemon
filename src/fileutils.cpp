@@ -218,11 +218,23 @@ createFileLink(const std::filesystem::path& linkFile, const std::filesystem::pat
     if (linkFile == target)
         return true;
     std::error_code ec;
-    if (std::filesystem::exists(linkFile, ec)) {
-        if (std::filesystem::is_symlink(linkFile, ec) && std::filesystem::read_symlink(linkFile, ec) == target)
+    // Use symlink_status() because exists() could return false for broken symlinks
+    auto status = std::filesystem::symlink_status(linkFile, ec);
+    if (status.type() != std::filesystem::file_type::not_found) {
+        if (status.type() == std::filesystem::file_type::symlink
+            && std::filesystem::read_symlink(linkFile, ec) == target) {
+            JAMI_DEBUG("createFileLink: {} symlink already points to target {}", linkFile, target);
             return true;
-        std::filesystem::remove(linkFile, ec);
+        }
+        // Remove any existing file or symlink before creating a new one, as create_symlink()
+        // will fail with "File exists" error if the linkFile path already exists.
+        if (status.type() == std::filesystem::file_type::regular
+            || status.type() == std::filesystem::file_type::symlink) {
+            std::filesystem::remove(linkFile, ec);
+        }
     }
+
+    // Try to create a hard link if requested; fall back to symlink on failure
     if (not hard or not createHardlink(linkFile, target))
         return createSymlink(linkFile, target);
     return true;
