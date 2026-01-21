@@ -22,6 +22,7 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+option(ENABLE_AGENT "Build agent test with Guile support" OFF)
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -38,8 +39,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
 
 include(CTest)
 
-if(JAMI_NODEJS)
-    # Required for nodejs binding
+if(JAMI_NODEJS OR ENABLE_AGENT)
+    # Required for nodejs binding and agent (shared library needs PIC)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
@@ -366,6 +367,11 @@ endif()
 add_library(${PROJECT_NAME} ${ALL_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
+
+# Agent requires PIC for the static library to link into shared library
+if(ENABLE_AGENT)
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # Setup coverage for the main library target
 if(ENABLE_COVERAGE)
@@ -1019,6 +1025,11 @@ else()
         if (JAMI_PLUGIN)
             add_test_executable(plugins test/unitTest/plugins/plugins.cpp)
         endif()
+    endif()
+
+    # Agent test with Guile support
+    if (ENABLE_AGENT)
+        add_subdirectory(test/agent)
     endif()
 
 endif()
