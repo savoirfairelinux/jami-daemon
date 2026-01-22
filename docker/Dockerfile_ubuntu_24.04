@@ -75,8 +75,8 @@ RUN add-apt-repository universe && \
         ninja-build
 
 RUN apt-get install -y python3 python3-pip python3-setuptools \
-                       python3-wheel
-RUN pip3 install meson
+                       python3-wheel pipx
+RUN pipx install meson
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \
