@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e7ddd1ee_0217ec67",
+        "filename": "src/fileutils.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 236,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2026-01-22T18:07:15Z",
+      "side": 1,
+      "message": "I think this function has some complicated branching with code that is not self-documenting. Perhaps we could:\n- comment some of the reasons for removing the link\n- merged these checks with the above logic",
+      "range": {
+        "startLine": 227,
+        "startChar": 4,
+        "endLine": 236,
+        "endChar": 5
+      },
+      "revId": "7c60b9945db6bea19741dbbaccf7211ccfb0f305",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
