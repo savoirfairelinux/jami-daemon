@@ -172,6 +172,14 @@ string_replace(std::string& str, const std::string& from, const std::string& to)
 }
 
 std::string_view
+string_remove_prefix(std::string_view str, std::string_view prefix)
+{
+    if (starts_with(str, prefix))
+        str = str.substr(prefix.size());
+    return str;
+}
+
+std::string_view
 string_remove_suffix(std::string_view str, char separator)
 {
     auto it = str.find(separator);

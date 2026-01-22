@@ -197,7 +197,7 @@ AudioRtpSession::startReceiver()
     receiveThread_->setSuccessfulSetupCb(onSuccessfulSetup_);
     receiveThread_->startReceiver();
 
-    JAMI_DEBUG("Started audio RTP receiver: input [{}], id [{}]", input_, streamId_);
+    // Make the default ring buffer read the audio from the stream
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId_);
 }
 
@@ -256,6 +256,9 @@ AudioRtpSession::stop()
         socketPair_->setReadBlockingMode(false);
 
     receiveThread_->stopReceiver();
+
+    // Unbind all ring buffers reading from this stream
+    Manager::instance().getRingBufferPool().unBindAll(streamId_);
 
     if (audioInput_)
         audioInput_->detach(sender_.get());

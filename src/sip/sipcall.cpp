@@ -220,11 +220,7 @@ SIPCall::configureRtpSession(const std::shared_ptr<RtpSession>& rtpSession,
     rtpSession->updateMedia(remoteMedia, localMedia);
 
     // Mute/un-mute media
-    if (mediaAttr->muted_) {
-        rtpSession->setMuted(true);
-    } else {
-        rtpSession->setMuted(false);
-    }
+    rtpSession->setMuted(mediaAttr->muted_);
 
     rtpSession->setMediaSource(mediaAttr->sourceUri_);
 
@@ -2309,15 +2305,27 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
         }
     }
 
+    // If the new media list is smaller than the number of existing streams, that means some streams have been removed
+    // We need to clean them up
     if (mediaAttrList.size() < rtpStreams_.size()) {
 #ifdef ENABLE_VIDEO
-        // If new media stream list got more media streams than current size, we can remove old media streams from conference
         for (auto i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
+            // Clean up video streams that are absent from the new media list
             auto& stream = rtpStreams_[i];
             if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
                 std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->exitConference();
         }
 #endif
+        for (auto i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
+            // Clean up audio streams that are absent from the new media list
+            auto& stream = rtpStreams_[i];
+            if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_AUDIO) {
+                JAMI_WARNING("[call:{}] Audio stream {} absent from new media list, stopping RTP session",
+                             getCallId(),
+                             stream.rtpSession_->streamId());
+                std::static_pointer_cast<AudioRtpSession>(stream.rtpSession_)->stop();
+            }
+        }
         rtpStreams_.resize(mediaAttrList.size());
     }
     return true;
