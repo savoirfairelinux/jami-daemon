@@ -92,6 +92,7 @@ private:
     std::map<NodeId, std::shared_ptr<jami::SwarmManager>> swarmManagers;
     std::map<NodeId, std::set<NodeId>> nodesToConnect;
     std::set<NodeId> messageNode;
+    std::set<std::pair<NodeId, NodeId>> linkedPairs_;
 
     std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels1_1;
     std::vector<std::shared_ptr<dhtnet::ChannelSocketTest>> nodeTestChannels1_2;
@@ -241,6 +242,11 @@ RoutingTableTest::setKnownNodesToManager(const std::shared_ptr<SwarmManager>& sm
 void
 RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
 {
+    // Only set callback if not already set
+    if (sm->needSocketCb_) {
+        return;
+    }
+
     sm->needSocketCb_ = [this, wsm = std::weak_ptr<SwarmManager>(sm)](const std::string& nodeId,
                                                                       auto&& onSocket) mutable {
         asio::post(*Manager::instance().ioContext(), [this, wsm, nodeId, onSocket = std::move(onSocket)] {
@@ -255,6 +261,12 @@ RoutingTableTest::needSocketCallBack(const std::shared_ptr<SwarmManager>& sm)
                     return;
                 }
                 auto myId = sm->getId();
+                auto pairKey = std::minmax(myId, node);
+
+                // Skip duplicate link attempts for the same pair
+                if (!linkedPairs_.emplace(pairKey.first, pairKey.second).second) {
+                    return;
+                }
                 std::cout << "needSocketCallBack: Connecting " << myId << " to " << node << std::endl;
                 auto& cstRemote = channelSockets_[node][myId];
                 auto& cstMe = channelSockets_[myId][node];
