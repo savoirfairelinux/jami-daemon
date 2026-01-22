@@ -1,10 +1,284 @@
- upnp/src/genlib/net/http/httpreadwrite.c |  89 +++++++-----------
- upnp/src/genlib/net/sock.c               | 103 ++++++++-------------
- upnp/src/ssdp/ssdp_ctrlpt.c              | 152 +++++++++++--------------------
- 3 files changed, 125 insertions(+), 219 deletions(-)
+From 8e38d5b38936d1084b9a1c726aff381dec1fad30 Mon Sep 17 00:00:00 2001
+From: moc <marc-olivier.champagne@savoirfairelinux.com>
+Date: Wed, 21 Jan 2026 17:46:08 -0500
+Subject: [PATCH] upnp: adapt code to use poll() instead of select()
 
+select() has an upper-limit on file descriptor numbers it can
+monitor. This patch switches it out for poll() and makes the
+associated necessary changes.
+---
+ upnp/src/genlib/miniserver/miniserver.c  | 140 ++++++++++++---------
+ upnp/src/genlib/net/http/httpreadwrite.c |  89 +++++--------
+ upnp/src/genlib/net/sock.c               | 103 ++++++---------
+ upnp/src/ssdp/ssdp_ctrlpt.c              | 152 ++++++++---------------
+ 4 files changed, 208 insertions(+), 276 deletions(-)
+
+diff --git a/upnp/src/genlib/miniserver/miniserver.c b/upnp/src/genlib/miniserver/miniserver.c
+index c4c1a25b..e3fa7e34 100644
+--- a/upnp/src/genlib/miniserver/miniserver.c
++++ b/upnp/src/genlib/miniserver/miniserver.c
+@@ -60,6 +60,7 @@
+ 
+ 	#include <assert.h>
+ 	#include <errno.h>
++	#include <poll.h>
+ 	#include <stdio.h>
+ 	#include <stdlib.h>
+ 	#include <string.h>
+@@ -502,14 +503,19 @@ static UPNP_INLINE void schedule_request_job(
+ }
+ 	#endif
+ 
+-static UPNP_INLINE void fdset_if_valid(SOCKET sock, fd_set *set)
++static UPNP_INLINE void pollfd_if_valid(
++	SOCKET sock, struct pollfd *pfd, short events)
+ {
+ 	if (sock != INVALID_SOCKET) {
+-		FD_SET(sock, set);
++		pfd->fd = sock;
++		pfd->events = events;
++		pfd->revents = 0;
++	} else {
++		pfd->fd = -1;
+ 	}
+ }
+ 
+-static void web_server_accept(SOCKET lsock, fd_set *set)
++static void web_server_accept(SOCKET lsock, struct pollfd *pfd)
+ {
+ 	#ifdef INTERNAL_WEB_SERVER
+ 	SOCKET asock;
+@@ -517,10 +523,12 @@ static void web_server_accept(SOCKET lsock, fd_set *set)
+ 	struct sockaddr_storage clientAddr;
+ 	char errorBuffer[ERROR_BUFFER_LEN];
+ 
+-	if (lsock != INVALID_SOCKET && FD_ISSET(lsock, set)) {
++	if (lsock != INVALID_SOCKET && (pfd->revents & POLLIN)) {
++
+ 		clientLen = sizeof(clientAddr);
+ 		asock = accept(
+ 			lsock, (struct sockaddr *)&clientAddr, &clientLen);
++
+ 		if (asock == INVALID_SOCKET) {
+ 			strerror_r(errno, errorBuffer, ERROR_BUFFER_LEN);
+ 			UpnpPrintf(UPNP_INFO,
+@@ -537,9 +545,10 @@ static void web_server_accept(SOCKET lsock, fd_set *set)
+ 	#endif /* INTERNAL_WEB_SERVER */
+ }
+ 
+-static void ssdp_read(SOCKET *rsock, fd_set *set)
++static void ssdp_read(SOCKET *rsock, struct pollfd *pfd)
+ {
+-	if (*rsock != INVALID_SOCKET && FD_ISSET(*rsock, set)) {
++	if (*rsock != INVALID_SOCKET && (pfd->revents & POLLIN)) {
++
+ 		int ret = readFromSSDPSocket(*rsock);
+ 		if (ret != 0) {
+ 			UpnpPrintf(UPNP_INFO,
+@@ -555,7 +564,7 @@ static void ssdp_read(SOCKET *rsock, fd_set *set)
+ 	}
+ }
+ 
+-static int receive_from_stopSock(SOCKET ssock, fd_set *set)
++static int receive_from_stopSock(SOCKET ssock, struct pollfd *pfd)
+ {
+ 	ssize_t byteReceived;
+ 	socklen_t clientLen;
+@@ -563,21 +572,27 @@ static int receive_from_stopSock(SOCKET ssock, fd_set *set)
+ 	char requestBuf[256];
+ 	char buf_ntop[INET6_ADDRSTRLEN];
+ 
+-	if (FD_ISSET(ssock, set)) {
++	if (ssock != INVALID_SOCKET && (pfd->revents & POLLIN)) {
++
+ 		clientLen = sizeof(clientAddr);
+-		memset((char *)&clientAddr, 0, sizeof(clientAddr));
++		memset(&clientAddr, 0, sizeof(clientAddr));
++
+ 		byteReceived = recvfrom(ssock,
+ 			requestBuf,
+ 			(size_t)25,
+ 			0,
+ 			(struct sockaddr *)&clientAddr,
+ 			&clientLen);
++
+ 		if (byteReceived > 0) {
+ 			requestBuf[byteReceived] = '\0';
++
++			/* Convert IPv4 address to string */
+ 			inet_ntop(AF_INET,
+ 				&((struct sockaddr_in *)&clientAddr)->sin_addr,
+ 				buf_ntop,
+ 				sizeof(buf_ntop));
++
+ 			UpnpPrintf(UPNP_INFO,
+ 				MSERV,
+ 				__FILE__,
+@@ -585,15 +600,18 @@ static int receive_from_stopSock(SOCKET ssock, fd_set *set)
+ 				"Received response: %s From host %s \n",
+ 				requestBuf,
+ 				buf_ntop);
++
+ 			UpnpPrintf(UPNP_PACKET,
+ 				MSERV,
+ 				__FILE__,
+ 				__LINE__,
+ 				"Received multicast packet: \n %s\n",
+ 				requestBuf);
+-			if (NULL != strstr(requestBuf, "ShutDown")) {
++
++			if (strstr(requestBuf, "ShutDown") != NULL) {
+ 				return 1;
+ 			}
++
+ 		} else {
+ 			UpnpPrintf(UPNP_INFO,
+ 				MSERV,
+@@ -607,6 +625,7 @@ static int receive_from_stopSock(SOCKET ssock, fd_set *set)
+ 	return 0;
+ }
+ 
++	#define MINI_SERVER_MAX_PFDS 9
+ /*!
+  * \brief Run the miniserver.
+  *
+@@ -619,73 +638,79 @@ static void RunMiniServer(
+ 	MiniServerSockArray *miniSock)
+ {
+ 	char errorBuffer[ERROR_BUFFER_LEN];
+-	fd_set expSet;
+-	fd_set rdSet;
+-	SOCKET maxMiniSock;
+ 	int ret = 0;
+ 	int stopSock = 0;
+ 
+-	maxMiniSock = 0;
+-	maxMiniSock = max(maxMiniSock, miniSock->miniServerSock4);
+-	maxMiniSock = max(maxMiniSock, miniSock->miniServerSock6);
+-	maxMiniSock = max(maxMiniSock, miniSock->miniServerSock6UlaGua);
+-	maxMiniSock = max(maxMiniSock, miniSock->miniServerStopSock);
+-	maxMiniSock = max(maxMiniSock, miniSock->ssdpSock4);
+-	maxMiniSock = max(maxMiniSock, miniSock->ssdpSock6);
+-	maxMiniSock = max(maxMiniSock, miniSock->ssdpSock6UlaGua);
+-	#ifdef INCLUDE_CLIENT_APIS
+-	maxMiniSock = max(maxMiniSock, miniSock->ssdpReqSock4);
+-	maxMiniSock = max(maxMiniSock, miniSock->ssdpReqSock6);
+-	#endif /* INCLUDE_CLIENT_APIS */
+-	++maxMiniSock;
++	struct pollfd fds[MINI_SERVER_MAX_PFDS];
++	int nfds = 0;
+ 
+ 	gMServState = MSERV_RUNNING;
++
+ 	while (!stopSock) {
+-		FD_ZERO(&rdSet);
+-		FD_ZERO(&expSet);
+-		/* FD_SET()'s */
+-		FD_SET(miniSock->miniServerStopSock, &expSet);
+-		FD_SET(miniSock->miniServerStopSock, &rdSet);
+-		fdset_if_valid(miniSock->miniServerSock4, &rdSet);
+-		fdset_if_valid(miniSock->miniServerSock6, &rdSet);
+-		fdset_if_valid(miniSock->miniServerSock6UlaGua, &rdSet);
+-		fdset_if_valid(miniSock->ssdpSock4, &rdSet);
+-		fdset_if_valid(miniSock->ssdpSock6, &rdSet);
+-		fdset_if_valid(miniSock->ssdpSock6UlaGua, &rdSet);
++		nfds = 0;
++
++		/* Stop socket: watch for read + error */
++		pollfd_if_valid(miniSock->miniServerStopSock,
++			&fds[nfds++],
++			POLLIN | POLLERR | POLLHUP);
++
++		pollfd_if_valid(
++			miniSock->miniServerSock4, &fds[nfds++], POLLIN);
++
++		pollfd_if_valid(
++			miniSock->miniServerSock6, &fds[nfds++], POLLIN);
++
++		pollfd_if_valid(
++			miniSock->miniServerSock6UlaGua, &fds[nfds++], POLLIN);
++
++		pollfd_if_valid(miniSock->ssdpSock4, &fds[nfds++], POLLIN);
++
++		pollfd_if_valid(miniSock->ssdpSock6, &fds[nfds++], POLLIN);
++
++		pollfd_if_valid(
++			miniSock->ssdpSock6UlaGua, &fds[nfds++], POLLIN);
++
+ 	#ifdef INCLUDE_CLIENT_APIS
+-		fdset_if_valid(miniSock->ssdpReqSock4, &rdSet);
+-		fdset_if_valid(miniSock->ssdpReqSock6, &rdSet);
++		pollfd_if_valid(miniSock->ssdpReqSock4, &fds[nfds++], POLLIN);
++
++		pollfd_if_valid(miniSock->ssdpReqSock6, &fds[nfds++], POLLIN);
+ 	#endif /* INCLUDE_CLIENT_APIS */
+-		/* select() */
+-		ret = select((int)maxMiniSock, &rdSet, NULL, &expSet, NULL);
+-		if (ret == SOCKET_ERROR && errno == EINTR) {
++
++		/* poll() */
++		ret = poll(fds, nfds, -1);
++
++		if (ret < 0 && errno == EINTR) {
+ 			continue;
+ 		}
+-		if (ret == SOCKET_ERROR) {
++
++		if (ret < 0) {
+ 			strerror_r(errno, errorBuffer, ERROR_BUFFER_LEN);
+ 			UpnpPrintf(UPNP_CRITICAL,
+ 				SSDP,
+ 				__FILE__,
+ 				__LINE__,
+-				"Error in select(): %s\n",
++				"Error in poll(): %s\n",
+ 				errorBuffer);
+ 			continue;
+-		} else {
+-			web_server_accept(miniSock->miniServerSock4, &rdSet);
+-			web_server_accept(miniSock->miniServerSock6, &rdSet);
+-			web_server_accept(
+-				miniSock->miniServerSock6UlaGua, &rdSet);
++		}
++
++		web_server_accept(miniSock->miniServerSock4, &fds[1]);
++		web_server_accept(miniSock->miniServerSock6, &fds[2]);
++		web_server_accept(miniSock->miniServerSock6UlaGua, &fds[3]);
++
+ 	#ifdef INCLUDE_CLIENT_APIS
+-			ssdp_read(&miniSock->ssdpReqSock4, &rdSet);
+-			ssdp_read(&miniSock->ssdpReqSock6, &rdSet);
++		ssdp_read(&miniSock->ssdpReqSock4, &fds[7]);
++		ssdp_read(&miniSock->ssdpReqSock6, &fds[8]);
+ 	#endif /* INCLUDE_CLIENT_APIS */
+-			ssdp_read(&miniSock->ssdpSock4, &rdSet);
+-			ssdp_read(&miniSock->ssdpSock6, &rdSet);
+-			ssdp_read(&miniSock->ssdpSock6UlaGua, &rdSet);
+-			stopSock = receive_from_stopSock(
+-				miniSock->miniServerStopSock, &rdSet);
+-		}
++
++		ssdp_read(&miniSock->ssdpSock4, &fds[4]);
++		ssdp_read(&miniSock->ssdpSock6, &fds[5]);
++		ssdp_read(&miniSock->ssdpSock6UlaGua, &fds[6]);
++
++		stopSock = receive_from_stopSock(
++			miniSock->miniServerStopSock, &fds[0]);
+ 	}
++
+ 	/* Close all sockets. */
+ 	sock_close(miniSock->miniServerSock4);
+ 	sock_close(miniSock->miniServerSock6);
+@@ -698,6 +723,7 @@ static void RunMiniServer(
+ 	sock_close(miniSock->ssdpReqSock4);
+ 	sock_close(miniSock->ssdpReqSock6);
+ 	#endif /* INCLUDE_CLIENT_APIS */
++
+ 	/* Free minisock. */
+ 	free(miniSock);
+ 	gMServState = MSERV_IDLE;
 diff --git a/upnp/src/genlib/net/http/httpreadwrite.c b/upnp/src/genlib/net/http/httpreadwrite.c
-index 27e9c3a5..69eb0a1f 100644
+index 588d76d3..61240d3b 100644
 --- a/upnp/src/genlib/net/http/httpreadwrite.c
 +++ b/upnp/src/genlib/net/http/httpreadwrite.c
 @@ -58,6 +58,7 @@
@@ -13,9 +287,9 @@ index 27e9c3a5..69eb0a1f 100644
  #include <string.h>
 +#include <poll.h>
  
- #include "posix_overwrites.h"
+ #include "posix_overwrites.h" // IWYU pragma: keep
  
-@@ -97,61 +98,39 @@ const int CHUNK_TAIL_SIZE = 10;
+@@ -101,61 +102,39 @@ const int CHUNK_TAIL_SIZE = 10;
   *
   * \return 0 if successful, else -1.
   */
@@ -247,7 +521,7 @@ index 396c692a..b8a980f0 100644
  				if (info->ssl) {
  					num_written = SSL_write(info->ssl,
 diff --git a/upnp/src/ssdp/ssdp_ctrlpt.c b/upnp/src/ssdp/ssdp_ctrlpt.c
-index 8644c746..714c5b14 100644
+index d6ccf349..cce2bf8a 100644
 --- a/upnp/src/ssdp/ssdp_ctrlpt.c
 +++ b/upnp/src/ssdp/ssdp_ctrlpt.c
 @@ -40,6 +40,7 @@
@@ -275,7 +549,7 @@ index 8644c746..714c5b14 100644
  	/*ThreadData *ThData; */
  	ThreadPoolJob job;
 @@ -674,105 +675,56 @@ int SearchByTarget(int Hnd, int Mx, char *St, void *Cookie)
- 	HandleUnlock();
+ 	HandleUnlock(__FILE__, __LINE__);
  	/* End of lock */
  
 -	FD_ZERO(&wrSet);
@@ -430,3 +704,6 @@ index 8644c746..714c5b14 100644
  }
  	#endif /* EXCLUDE_SSDP */
  #endif	       /* INCLUDE_CLIENT_APIS */
+-- 
+2.34.1
+
