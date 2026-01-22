@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "612a2fce_5d7f113f",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 210,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2026-01-22T17:57:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "2bf27d50_82f72998",
+      "revId": "24f8a8695faf58318cdddabaf61186c00acd412b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5112b3a4_970f368e",

@@ -59,6 +59,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "088174d6_ea073117",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2026-01-22T17:57:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "f47c38e0_513c4e00",
+      "range": {
+        "startLine": 184,
+        "startChar": 0,
+        "endLine": 184,
+        "endChar": 4
+      },
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fae87f7d_32b45bdc",
@@ -82,6 +106,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "3030131a_09aa96d2",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 201,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2026-01-22T17:57:28Z",
+      "side": 1,
+      "message": "Acknowledged",
+      "parentUuid": "fae87f7d_32b45bdc",
+      "range": {
+        "startLine": 200,
+        "startChar": 0,
+        "endLine": 201,
+        "endChar": 101
+      },
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2d500f13_964d82c3",
@@ -95,6 +143,30 @@
       "writtenOn": "2026-01-14T22:52:30Z",
       "side": 1,
       "message": "simplify?",
+      "range": {
+        "startLine": 223,
+        "startChar": 4,
+        "endLine": 227,
+        "endChar": 5
+      },
+      "revId": "6cbae6834f0f6e516e33c668e5d8133682c3ab78",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f7ab092d_e448d0bf",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 227,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2026-01-22T17:57:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2d500f13_964d82c3",
       "range": {
         "startLine": 223,
         "startChar": 4,
