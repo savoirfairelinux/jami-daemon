@@ -222,12 +222,14 @@ Do a little dance!
 How to compile in a Docker container
 ----
 
-docker build --tag jami-daemon .
+```bash
+docker build --tag jami-daemon -f docker/Dockerfile .
+```
 
 # To build with custom build args
 
 ```bash
-docker build --tag jami-daemon --build-arg cmake_args="-DJAMI_NODEJS=On" .
+docker build --tag jami-daemon --build-arg cmake_args="-DJAMI_NODEJS=On" -f docker/Dockerfile .
 ```
 
 Common Issues
