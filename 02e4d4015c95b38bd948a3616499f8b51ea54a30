@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "20fbef10_74dec66a",
+        "filename": "src/jamidht/swarm/swarm_manager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 99,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-01-22T16:58:28Z",
+      "side": 1,
+      "message": "Couldn\u0027t `addNode()` return false for other reasons than the Node already existing in the routing table? Could there be `bucket` operation failures in `addNode()`?",
+      "revId": "02e4d4015c95b38bd948a3616499f8b51ea54a30",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
