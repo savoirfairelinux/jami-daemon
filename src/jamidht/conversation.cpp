@@ -1305,7 +1305,8 @@ Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
             // Add member files and commit
             std::unique_lock lk(sthis->pimpl_->writeMtx_);
             auto commit = sthis->pimpl_->repository_->addMember(contactUri);
-            sthis->pimpl_->announce(commit, true);
+            if (not commit.empty())
+                sthis->pimpl_->announce(commit, true);
             lk.unlock();
             if (cb)
                 cb(!commit.empty(), commit);

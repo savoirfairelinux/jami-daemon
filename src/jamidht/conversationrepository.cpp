@@ -3176,17 +3176,20 @@ ConversationRepository::addMember(const std::string& uri)
     if (!pimpl_->add(path))
         return {};
 
-    {
-        std::lock_guard lk(pimpl_->membersMtx_);
-        pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::INVITED});
-        pimpl_->saveMembers();
-    }
-
     Json::Value json;
     json["action"] = "add";
     json["uri"] = uri;
     json["type"] = "member";
-    return pimpl_->commit(json::toString(json));
+    auto commitId = pimpl_->commit(json::toString(json));
+    if (commitId.empty()) {
+        JAMI_ERROR("Unable to commit addition of member {}", uri);
+        return {};
+    }
+
+    std::lock_guard lk(pimpl_->membersMtx_);
+    pimpl_->members_.emplace_back(ConversationMember {uri, MemberRole::INVITED});
+    pimpl_->saveMembers();
+    return commitId;
 }
 
 void
