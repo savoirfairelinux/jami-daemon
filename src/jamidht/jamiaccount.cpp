@@ -4155,8 +4155,23 @@ JamiAccount::sendFile(const std::string& conversationId,
 {
     if (!std::filesystem::is_regular_file(path)) {
         JAMI_ERROR("Invalid filename '{}'", path);
+        emitSignal<libjami::ConversationSignal::OnConversationError>(getAccountID(),
+                                                                     conversationId,
+                                                                     EVALIDFETCH,
+                                                                     "Invalid filename.");
         return;
     }
+
+    if (fileutils::size(path) < 0) {
+        JAMI_ERROR("Negative file size, user probably doesn't have the appropriate permissions for '{}'", path);
+        emitSignal<libjami::ConversationSignal::OnConversationError>(
+            getAccountID(),
+            conversationId,
+            EVALIDFETCH,
+            "Negative file size, could be due to insufficient file permissions.");
+        return;
+    }
+
     // NOTE: this sendMessage is in a computation thread because
     // sha3sum can take quite some time to computer if the user decide
     // to send a big file
