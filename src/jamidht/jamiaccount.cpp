@@ -2430,11 +2430,11 @@ JamiAccount::reloadContacts()
 void
 JamiAccount::connectivityChanged()
 {
-    JAMI_WARN("connectivityChanged");
     if (not isUsable()) {
         // nothing to do
         return;
     }
+    JAMI_WARNING("[{}] connectivityChanged", getAccountID());
 
     if (auto cm = convModule())
         cm->connectivityChanged();
