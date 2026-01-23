@@ -663,11 +663,6 @@ private:
     std::string getDhtProxyServer(const std::string& serverList);
     void loadCachedProxyServer(std::function<void(const std::string&)> cb);
 
-    /**
-     * The TLS settings, used only if tls is chosen as a sip transport.
-     */
-    void generateDhParams();
-
     void newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const Uri& uri);
     std::shared_ptr<SIPCall> newSwarmOutgoingCallHelper(const Uri& uri, const std::vector<libjami::MediaMap>& mediaList);
     std::shared_ptr<SIPCall> createSubCall(const std::shared_ptr<SIPCall>& mainCall);
