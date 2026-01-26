@@ -671,10 +671,10 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden
         -Wall -Wextra
-        -Wnon-virtual-dtor
         -Wno-deprecated
         -Wno-deprecated-declarations
         -Wno-unknown-pragmas
+        $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
     )
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         JAMI_DATADIR="${JAMI_DATADIR}"
@@ -818,12 +818,12 @@ else()
         target_compile_options(${PROJECT_NAME}-jni PRIVATE
             -fvisibility=hidden
             -Wall -Wextra
-            -Wnon-virtual-dtor
             -Wno-deprecated
             -Wno-deprecated-declarations
             -Wno-unknown-pragmas
             -Wno-unused-function
             -Wno-unused-parameter
+            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
         )
         target_link_options(${PROJECT_NAME}-jni PRIVATE
             -Wl,-Bsymbolic
@@ -928,10 +928,10 @@ else()
         target_compile_options(ut_library PUBLIC
             -fvisibility=hidden
             -Wall -Wextra
-            -Wnon-virtual-dtor
             -Wno-deprecated
             -Wno-deprecated-declarations
             -Wno-unknown-pragmas
+            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
         )
         target_compile_definitions(ut_library PUBLIC
             JAMI_DATADIR="${JAMI_DATADIR}"
