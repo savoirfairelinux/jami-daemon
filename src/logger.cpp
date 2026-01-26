@@ -113,18 +113,19 @@ strErr()
 }
 
 // extract the last component of a pathname (extract a filename from its dirname)
-static const char*
-stripDirName(const char* path)
+static constexpr std::string_view
+stripDirName(std::string_view path)
 {
-    if (path) {
-        const char* occur = strrchr(path, DIR_SEPARATOR_CH);
-        return occur ? occur + 1 : path;
-    } else
-        return nullptr;
+    if (!path.empty()) {
+        size_t pos = path.find_last_of("/\\");
+        if (pos != std::string_view::npos)
+            return path.substr(pos + 1);
+    }
+    return path;
 }
 
 std::string
-formatHeader(const char* const file, int line)
+formatHeader(std::string_view file, int line)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -142,7 +143,7 @@ formatHeader(const char* const file, int line)
         milli = 0;
     }
 
-    if (file) {
+    if (!file.empty()) {
         return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "),
                            secs,
                            milli,
@@ -186,7 +187,7 @@ struct Logger::Msg
 {
     Msg() = delete;
 
-    Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
+    Msg(int level, std::string_view file, int line, bool linefeed, std::string&& message)
         : file_(stripDirName(file))
         , line_(line)
         , payload_(std::move(message))
@@ -194,7 +195,7 @@ struct Logger::Msg
         , linefeed_(linefeed)
     {}
 
-    Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+    Msg(int level, std::string_view file, int line, bool linefeed, const char* fmt, va_list ap)
         : file_(stripDirName(file))
         , line_(line)
         , payload_(formatPrintfArgs(fmt, ap))
@@ -213,7 +214,7 @@ struct Logger::Msg
 
     inline std::string header() const { return formatHeader(file_, line_); }
 
-    const char* file_;
+    std::string_view file_;
     unsigned line_;
     std::string payload_;
     int level_;
@@ -400,7 +401,7 @@ public:
     void consume(Logger::Msg& msg) override
     {
 #ifdef __ANDROID__
-        __android_log_write(msg.level_, msg.file_, msg.payload_.c_str());
+        __android_log_write(msg.level_, msg.file_.data(), msg.payload_.c_str());
 #else
         ::syslog(msg.level_, "%.*s", (int) msg.payload_.size(), msg.payload_.data());
 #endif
@@ -583,7 +584,7 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 }
 
 void
-Logger::write(int level, const char* file, int line, bool linefeed, std::string&& message)
+Logger::write(int level, std::string_view file, int line, bool linefeed, std::string&& message)
 {
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, std::move(message));

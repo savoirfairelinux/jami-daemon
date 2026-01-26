@@ -119,11 +119,14 @@ public:
     }
 
     LIBJAMI_PUBLIC
-    static void write(int level, const char* file, int line, bool linefeed, std::string&& message);
+    static void write(int level, std::string_view file, int line, bool linefeed, std::string&& message);
 
-    static inline void writeDht(dht::log::LogLevel level, std::string&& message)
+    static inline void writeDht(dht::log::source_loc loc,
+                                dht::log::LogLevel level,
+                                std::string_view tag,
+                                std::string&& message)
     {
-        write(dhtLevel(level), nullptr, 0, true, std::move(message));
+        write(dhtLevel(level), loc.file, loc.line, true, std::move(message));
     }
     static inline std::shared_ptr<dht::log::Logger> dhtLogger()
     {
