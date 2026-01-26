@@ -22,6 +22,7 @@ option(BUILD_EXTRA_TOOLS "Build extra tools" OFF)
 option(BUILD_SHARED_LIBS "Build shared library" OFF)
 option(ENABLE_ASAN "Enable address sanitization" OFF)
 option(ENABLE_COVERAGE "Enable coverage (for tests)" OFF)
+option(ENABLE_AGENT "Build agent test with Guile support" OFF)
 
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address sanitization enabled for daemon")
@@ -38,8 +39,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_FILE_OFFSET_BITS=64")
 
 include(CTest)
 
-if(JAMI_NODEJS)
-    # Required for nodejs binding
+if(JAMI_NODEJS OR ENABLE_AGENT)
+    # Required for nodejs binding or guile agent shared library
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
@@ -671,10 +672,10 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE
         -fvisibility=hidden
         -Wall -Wextra
+        $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
         -Wno-deprecated
         -Wno-deprecated-declarations
         -Wno-unknown-pragmas
-        $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
     )
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         JAMI_DATADIR="${JAMI_DATADIR}"
@@ -818,12 +819,12 @@ else()
         target_compile_options(${PROJECT_NAME}-jni PRIVATE
             -fvisibility=hidden
             -Wall -Wextra
+            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
             -Wno-deprecated
             -Wno-deprecated-declarations
             -Wno-unknown-pragmas
             -Wno-unused-function
             -Wno-unused-parameter
-            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
         )
         target_link_options(${PROJECT_NAME}-jni PRIVATE
             -Wl,-Bsymbolic
@@ -928,10 +929,10 @@ else()
         target_compile_options(ut_library PUBLIC
             -fvisibility=hidden
             -Wall -Wextra
+            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
             -Wno-deprecated
             -Wno-deprecated-declarations
             -Wno-unknown-pragmas
-            $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
         )
         target_compile_definitions(ut_library PUBLIC
             JAMI_DATADIR="${JAMI_DATADIR}"
@@ -1019,6 +1020,11 @@ else()
         if (JAMI_PLUGIN)
             add_test_executable(plugins test/unitTest/plugins/plugins.cpp)
         endif()
+    endif()
+
+    # Agent test with Guile support
+    if (ENABLE_AGENT)
+        add_subdirectory(test/agent)
     endif()
 
 endif()
