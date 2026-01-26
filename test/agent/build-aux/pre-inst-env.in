@@ -44,7 +44,7 @@ LTDL_LIBRARY_PATH="$abs_top_builddir/test/agent${LTDL_LIBRARY_PATH:+:}$LTDL_LIBR
 export LTDL_LIBRARY_PATH
 
 # Define $PATH so that `guile' and friends are easily found.
-PATH="$abs_top_srcdir/test/agent:$abs_top_srcdir/contrib/x86_64-unknown-linux-gnu/bin:$PATH"
+PATH="$abs_top_builddir/test/agent:$abs_top_srcdir/test/agent:$abs_top_srcdir/contrib/x86_64-unknown-linux-gnu/bin:$PATH"
 export PATH
 
 # Not Jami leaks
