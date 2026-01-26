@@ -18,7 +18,9 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <string_view>
 
+#include "jami/conversation_interface.h"
 #include "logger.h"
 
 static inline SCM
@@ -32,6 +34,13 @@ to_guile(const std::string& str)
 {
     return scm_from_utf8_string(str.c_str());
 }
+
+static inline SCM
+to_guile(std::string_view str)
+{
+    return scm_from_utf8_stringn(str.data(), str.size());
+}
+
 
 static inline SCM
 to_guile(uint8_t x)
@@ -92,6 +101,7 @@ template<typename T>
 static inline SCM to_guile(const std::vector<T>& values);
 template<typename K, typename V>
 static inline SCM to_guile(const std::map<K, V>& map);
+static inline SCM to_guile(const libjami::SwarmMessage& message);
 
 template<typename T>
 static inline SCM
@@ -116,6 +126,26 @@ to_guile(const std::map<K, V>& map)
         SCM pair = scm_cons(to_guile(key), to_guile(value));
         assoc = scm_cons(pair, assoc);
     }
+
+    return assoc;
+}
+
+static inline SCM
+to_guile(const libjami::SwarmMessage& message)
+{
+    SCM assoc = SCM_EOL;
+
+    auto push = [&](const char* key, SCM val) {
+        assoc = scm_cons(scm_cons(scm_from_utf8_string(key), val), assoc);
+    };
+
+    push("id", to_guile(message.id));
+    push("type", to_guile(message.type));
+    push("linearizedParent", to_guile(message.linearizedParent));
+    push("body", to_guile(message.body));
+    push("reactions", to_guile(message.reactions));
+    push("editions", to_guile(message.editions));
+    push("status", to_guile(message.status));
 
     return assoc;
 }
