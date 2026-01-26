@@ -1221,7 +1221,7 @@ ArchiveAccountManager::onArchiveLoaded(AuthContext& ctx, AccountArchive&& a, boo
     }
 
     auto receipt = makeReceipt(a.id, *deviceCertificate, ethAccount);
-    auto receiptSignature = a.id.first->sign({receipt.first.begin(), receipt.first.end()});
+    auto receiptSignature = a.id.first->sign(receipt.first);
 
     auto info = std::make_unique<AccountInfo>();
     auto pk = usePreviousIdentity ? ctx.credentials->updateIdentity.first : ctx.key.get();
