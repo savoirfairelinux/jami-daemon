@@ -4213,7 +4213,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                                                   accId,
                                                   conversationId,
                                                   commitId,
-                                                  path.u8string(),
+                                                  path.string(),
                                                   uint32_t(libjami::DataTransferEventCode::invalid));
                                           } else {
                                               // Signal to notify clients that the file is copied and can be
@@ -4223,7 +4223,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                                                   accId,
                                                   conversationId,
                                                   commitId,
-                                                  path.u8string(),
+                                                  path.string(),
                                                   uint32_t(libjami::DataTransferEventCode::created));
                                           }
                                       } else {
@@ -4231,7 +4231,7 @@ JamiAccount::sendFile(const std::string& conversationId,
                                               accId,
                                               conversationId,
                                               commitId,
-                                              path.u8string(),
+                                              path.string(),
                                               uint32_t(libjami::DataTransferEventCode::created));
                                       }
                                   }
