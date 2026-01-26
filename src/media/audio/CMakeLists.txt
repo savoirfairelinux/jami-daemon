@@ -33,7 +33,9 @@ set (Source_Files__media__audio ${Source_Files__media__audio} PARENT_SCOPE)
 
 if(MSVC)
    add_subdirectory(portaudio)
+   add_subdirectory(wasapi)
    set (Source_Files__media__audio__portaudio ${Source_Files__media__audio__portaudio} PARENT_SCOPE)
+   set (Source_Files__media__audio__wasapi ${Source_Files__media__audio__wasapi} PARENT_SCOPE)
 endif()
 
 add_subdirectory(sound)
