@@ -119,11 +119,15 @@ public:
     }
 
     LIBJAMI_PUBLIC
-    static void write(int level, const char* file, int line, bool linefeed, std::string&& message);
+    static void write(
+        int level, std::string_view file, int line, bool linefeed, std::string_view tag, std::string&& message);
 
-    static inline void writeDht(dht::log::LogLevel level, std::string&& message)
+    static inline void writeDht(dht::log::source_loc loc,
+                                dht::log::LogLevel level,
+                                std::string_view tag,
+                                std::string&& message)
     {
-        write(dhtLevel(level), nullptr, 0, true, std::move(message));
+        write(dhtLevel(level), loc.file, loc.line, true, tag, std::move(message));
     }
     static inline std::shared_ptr<dht::log::Logger> dhtLogger()
     {
@@ -155,11 +159,6 @@ public:
 
     static void fini();
 
-    ///
-    /// Stream fashion logging.
-    ///
-    /// Example: JAMI_DBG() << "Hello, World!"
-    ///
     static Logger log(int level, const char* file, int line, bool linefeed) { return {level, file, line, linefeed}; }
 
 private:
@@ -176,50 +175,50 @@ template<typename S, typename... Args>
 void
 info(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_INFO, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_INFO, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
 dbg(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_DEBUG, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_DEBUG, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
 warn(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_WARNING, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_WARNING, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
 error(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_ERR, file, line, true, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_ERR, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
 template<typename S, typename... Args>
 void
 xinfo(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_INFO, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_INFO, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
 xdbg(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_DEBUG, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_DEBUG, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
 xwarn(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_WARNING, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_WARNING, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
 xerror(const char* file, int line, S&& format, Args&&... args)
 {
-    Logger::write(LOG_ERR, file, line, false, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
+    Logger::write(LOG_ERR, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
 } // namespace log
