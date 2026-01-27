@@ -46,6 +46,7 @@
 #include "fileutils.h"
 #include "logger.h"
 
+#include <stdio.h>
 #ifdef __linux__
 #include <unistd.h>
 #include <syslog.h>
@@ -113,18 +114,19 @@ strErr()
 }
 
 // extract the last component of a pathname (extract a filename from its dirname)
-static const char*
-stripDirName(const char* path)
+static constexpr std::string_view
+stripDirName(std::string_view path)
 {
-    if (path) {
-        const char* occur = strrchr(path, DIR_SEPARATOR_CH);
-        return occur ? occur + 1 : path;
-    } else
-        return nullptr;
+    if (!path.empty()) {
+        size_t pos = path.find_last_of("/\\");
+        if (pos != std::string_view::npos)
+            return path.substr(pos + 1);
+    }
+    return path;
 }
 
 std::string
-formatHeader(const char* const file, int line)
+formatHeader(std::string_view file, int line)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -142,7 +144,7 @@ formatHeader(const char* const file, int line)
         milli = 0;
     }
 
-    if (file) {
+    if (!file.empty()) {
         return fmt::format(FMT_COMPILE("[{: >3d}.{:0<3d}|{: >4}|{: <24s}:{: <4d}] "),
                            secs,
                            milli,
@@ -186,17 +188,19 @@ struct Logger::Msg
 {
     Msg() = delete;
 
-    Msg(int level, const char* file, int line, bool linefeed, std::string&& message)
+    Msg(int level, std::string_view file, int line, bool linefeed, std::string_view tag, std::string&& message)
         : file_(stripDirName(file))
         , line_(line)
+        , tag_(tag)
         , payload_(std::move(message))
         , level_(level)
         , linefeed_(linefeed)
     {}
 
-    Msg(int level, const char* file, int line, bool linefeed, const char* fmt, va_list ap)
+    Msg(int level, std::string_view file, int line, bool linefeed, std::string_view tag, const char* fmt, va_list ap)
         : file_(stripDirName(file))
         , line_(line)
+        , tag_(tag)
         , payload_(formatPrintfArgs(fmt, ap))
         , level_(level)
         , linefeed_(linefeed)
@@ -206,6 +210,7 @@ struct Logger::Msg
     {
         file_ = other.file_;
         line_ = other.line_;
+        tag_ = other.tag_;
         payload_ = std::move(other.payload_);
         level_ = other.level_;
         linefeed_ = other.linefeed_;
@@ -213,8 +218,9 @@ struct Logger::Msg
 
     inline std::string header() const { return formatHeader(file_, line_); }
 
-    const char* file_;
+    std::string_view file_;
     unsigned line_;
+    std::string_view tag_;
     std::string payload_;
     int level_;
     bool linefeed_;
@@ -308,7 +314,7 @@ public:
     {
         auto header = msg.header();
         if (with_color) {
-            const char* color_header = CYAN;
+            constexpr const char* color_header = CYAN;
             const char* color_prefix = "";
 
             switch (msg.level_) {
@@ -329,6 +335,8 @@ public:
             fwrite(header.c_str(), 1, header.size(), stderr);
         }
 
+        if (!msg.tag_.empty())
+            fwrite(msg.tag_.data(), 1, msg.tag_.size(), stderr);
         fputs(msg.payload_.c_str(), stderr);
 
         if (with_color) {
@@ -400,7 +408,7 @@ public:
     void consume(Logger::Msg& msg) override
     {
 #ifdef __ANDROID__
-        __android_log_write(msg.level_, msg.file_, msg.payload_.c_str());
+        __android_log_write(msg.level_, msg.file_.data(), msg.payload_.c_str());
 #else
         ::syslog(msg.level_, "%.*s", (int) msg.payload_.size(), msg.payload_.data());
 #endif
@@ -530,11 +538,8 @@ LIBJAMI_PUBLIC void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* fmt, ...)
 {
     va_list ap;
-
     va_start(ap, fmt);
-
     vlog(level, file, line, linefeed, fmt, ap);
-
     va_end(ap);
 }
 
@@ -574,7 +579,7 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
     }
 
     /* Timestamp is generated here. */
-    Msg msg(level, file, line, linefeed, fmt, ap);
+    Msg msg(level, file, line, linefeed, {}, fmt, ap);
 
     log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(SysLog::instance(), msg);
@@ -583,10 +588,10 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
 }
 
 void
-Logger::write(int level, const char* file, int line, bool linefeed, std::string&& message)
+Logger::write(int level, std::string_view file, int line, bool linefeed, std::string_view tag, std::string&& message)
 {
     /* Timestamp is generated here. */
-    Msg msg(level, file, line, linefeed, std::move(message));
+    Msg msg(level, file, line, linefeed, tag, std::move(message));
 
     log_to_if_enabled(ConsoleLog::instance(), msg);
     log_to_if_enabled(SysLog::instance(), msg);
