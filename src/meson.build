@@ -6,7 +6,7 @@ libjami_sources = files(
     'client/conversation_interface.cpp',
     'client/datatransfer.cpp',
     'client/presencemanager.cpp',
-    'client/ring_signal.cpp',
+    'client/signal.cpp',
     'client/videomanager.cpp',
     'config/yamlparser.cpp',
     'connectivity/ip_utils.cpp',

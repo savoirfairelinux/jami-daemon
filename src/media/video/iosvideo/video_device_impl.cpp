@@ -24,7 +24,7 @@ extern "C" {
 #include "logger.h"
 #include "../video_device.h"
 
-#include "client/ring_signal.h"
+#include "client/signal.h"
 
 namespace jami {
 namespace video {
@@ -35,9 +35,11 @@ typedef struct
     enum AVPixelFormat pixfmt;
 } ios_fmt;
 
-static const std::array<ios_fmt, 4> ios_formats {ios_fmt {"RGBA", AV_PIX_FMT_RGBA},
-                                                 ios_fmt {"BGRA", AV_PIX_FMT_BGRA},
-                                                 ios_fmt {"YUV420P", AV_PIX_FMT_YUV420P}};
+static const std::array<ios_fmt, 4> ios_formats {
+    ios_fmt {"RGBA",    AV_PIX_FMT_RGBA   },
+     ios_fmt {"BGRA",    AV_PIX_FMT_BGRA   },
+     ios_fmt {"YUV420P", AV_PIX_FMT_YUV420P}
+};
 
 class VideoDeviceImpl
 {

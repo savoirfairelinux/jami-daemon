@@ -35,7 +35,7 @@
 
 #include <opendht/rng.h>
 
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "account_schema.h"
 #include "jami/account_const.h"
 #include "string_utils.h"
@@ -179,8 +179,10 @@ Account::saveConfig() const
 std::map<std::string, std::string>
 Account::getVolatileAccountDetails() const
 {
-    return {{Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)},
-            {libjami::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}};
+    return {
+        {Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS,     mapStateNumberToString(registrationState_)},
+        {libjami::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR            }
+    };
 }
 
 vCard::utils::VCardData

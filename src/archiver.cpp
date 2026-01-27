@@ -17,7 +17,7 @@
 
 #include "archiver.h"
 
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "account_const.h"
 #include "configurationmanager_interface.h"
 

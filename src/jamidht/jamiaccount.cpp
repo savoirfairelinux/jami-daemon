@@ -46,7 +46,7 @@
 
 #include "uri.h"
 
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "jami/call_const.h"
 #include "jami/account_const.h"
 

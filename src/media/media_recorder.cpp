@@ -16,7 +16,7 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"

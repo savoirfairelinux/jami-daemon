@@ -21,7 +21,7 @@
 #include <ctime>
 #include <ciso646> // fix windows compiler bug
 
-#include "client/ring_signal.h"
+#include "client/signal.h"
 
 #include <fmt/core.h>
 #include <fmt/format.h>

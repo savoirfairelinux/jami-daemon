@@ -25,7 +25,7 @@
 #include "account_schema.h"
 #include "manager.h"
 #include "config/yamlparser.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "jami/account_const.h"
 #include "string_utils.h"
 #include "fileutils.h"

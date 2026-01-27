@@ -29,7 +29,7 @@
 #ifdef ENABLE_VIDEO
 #include "video/sinkclient.h"
 #endif
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "audio/ringbufferpool.h"
 #include "jami/media_const.h"
 #include "libav_utils.h"
@@ -412,10 +412,12 @@ getDeviceParams(const std::string& deviceId)
 {
     if (auto vm = jami::Manager::instance().getVideoManager()) {
         auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
-        return {{"format", params.format},
-                {"width", std::to_string(params.width)},
-                {"height", std::to_string(params.height)},
-                {"rate", params.framerate.to_string()}};
+        return {
+            {"format", params.format                },
+            {"width",  std::to_string(params.width) },
+            {"height", std::to_string(params.height)},
+            {"rate",   params.framerate.to_string() }
+        };
     }
     return {};
 }
@@ -549,18 +551,18 @@ getRenderer(const std::string& callId)
 #ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(callId))
         return {
-            {libjami::Media::Details::CALL_ID, callId},
-            {libjami::Media::Details::SHM_PATH, sink->openedName()},
-            {libjami::Media::Details::WIDTH, std::to_string(sink->getWidth())},
-            {libjami::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
+            {libjami::Media::Details::CALL_ID,  callId                           },
+            {libjami::Media::Details::SHM_PATH, sink->openedName()               },
+            {libjami::Media::Details::WIDTH,    std::to_string(sink->getWidth()) },
+            {libjami::Media::Details::HEIGHT,   std::to_string(sink->getHeight())},
         };
     else
 #endif
         return {
-            {libjami::Media::Details::CALL_ID, callId},
-            {libjami::Media::Details::SHM_PATH, ""},
-            {libjami::Media::Details::WIDTH, "0"},
-            {libjami::Media::Details::HEIGHT, "0"},
+            {libjami::Media::Details::CALL_ID,  callId},
+            {libjami::Media::Details::SHM_PATH, ""    },
+            {libjami::Media::Details::WIDTH,    "0"   },
+            {libjami::Media::Details::HEIGHT,   "0"   },
         };
 }
 

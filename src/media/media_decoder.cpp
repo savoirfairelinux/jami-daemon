@@ -33,7 +33,7 @@
 
 #include "string_utils.h"
 #include "logger.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 
 #include <iostream>
 #include <unistd.h>

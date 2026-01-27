@@ -19,7 +19,7 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include <string>
 #include <map>
 #include <set>

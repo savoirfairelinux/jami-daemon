@@ -16,7 +16,7 @@
  */
 
 #include "webviewservicesmanager.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "pluginmanager.h"
 #include "logger.h"
 #include "manager.h"

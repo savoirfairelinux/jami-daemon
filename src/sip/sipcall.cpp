@@ -33,7 +33,7 @@
 #include "jami/account_const.h"
 #include "jami/call_const.h"
 #include "jami/media_const.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "pjsip-ua/sip_inv.h"
 
 #ifdef ENABLE_PLUGIN
