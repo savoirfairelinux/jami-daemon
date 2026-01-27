@@ -14,7 +14,9 @@
     "defines": [
         "BUILD_SHARED_LIBS=0",
         "BUILD_TESTING=0",
-        "BUILD_BENCHMARKS=0"
+        "BUILD_BENCHMARKS=0",
+        "BUILD_EXAMPLE=0",
+        "CMAKE_CXX_STANDARD=20"
     ],
     "patches": [],
     "win_patches": [],

@@ -3,10 +3,10 @@
     "version": "cpp-7.0.0",
     "cpe": "cpe:2.3:a:*:msgpack:7.0.0:*:*:*:*:*:*:*",
     "url": "https://github.com/msgpack/msgpack-c/archive/__VERSION__.tar.gz",
-    "use_cmake" : true,
+    "use_cmake": true,
     "defines": [
         "MSGPACK_USE_BOOST=OFF",
-        "MSGPACK_CXX17=ON",
+        "MSGPACK_CXX20=ON",
         "MSGPACK_BUILD_EXAMPLES=OFF"
     ]
 }
