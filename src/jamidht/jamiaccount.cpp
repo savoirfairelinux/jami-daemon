@@ -251,7 +251,8 @@ JamiAccount::JamiAccount(const std::string& accountId)
     : SIPAccountBase(accountId)
     , cachePath_(fileutils::get_cache_dir() / accountId)
     , dataPath_(cachePath_ / "values")
-    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, Logger::dhtLogger())}
+    , logger_(Logger::dhtLogger(fmt::format("Account {}", accountId)))
+    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, logger_)}
     , dht_(new dht::DhtRunner)
     , treatedMessages_(cachePath_ / TREATED_PATH)
     , connectionManager_ {}
@@ -1897,7 +1898,7 @@ JamiAccount::doRegister_()
 
         auto dht_log_level = Manager::instance().dhtLogLevel;
         if (dht_log_level > 0) {
-            context.logger = Logger::dhtLogger();
+            context.logger = logger_;
         }
         context.certificateStore = [&](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
@@ -4415,7 +4416,7 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->turnServerRealm = config().turnServerRealm;
         connectionManagerConfig->turnEnabled = config().turnEnabled;
         connectionManagerConfig->cachePath = cachePath_;
-        connectionManagerConfig->logger = Logger::dhtLogger();
+        connectionManagerConfig->logger = logger_;
         connectionManagerConfig->factory = Manager::instance().getIceTransportFactory();
         connectionManagerConfig->turnCache = turnCache_;
         connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));

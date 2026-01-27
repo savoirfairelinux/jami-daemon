@@ -1,6 +1,6 @@
 {
     "name": "opendht",
-    "version": "v3.6.2",
+    "version": "v3.7.0rc3",
     "url": "https://github.com/savoirfairelinux/opendht/archive/__VERSION__.tar.gz",
     "deps": [
         "argon2",
@@ -13,6 +13,7 @@
     ],
     "use_cmake": true,
     "defines": [
+        "CMAKE_CXX_STANDARD=20",
         "BUILD_SHARED_LIBS=0",
         "BUILD_TESTING=0",
         "OPENDHT_DOCUMENTATION=0",
