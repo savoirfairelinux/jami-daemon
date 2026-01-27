@@ -10,6 +10,7 @@
     ],
     "use_cmake": true,
     "defines": [
+        "RESTINIO_EXPLICIT_CPPSTD=20",
         "RESTINIO_TEST=OFF",
         "RESTINIO_SAMPLE=OFF",
         "RESTINIO_BENCHMARK=OFF",

@@ -8,7 +8,7 @@ ifeq ($(call need_pkg,'fmt >= 10.1'),)
 PKGS_FOUND += fmt
 endif
 
-FMT_CONF = -DBUILD_SHARED_LIBS=Off \
+FMT_CONF = -DCMAKE_CXX_STANDARD=20 \
 		   -DFMT_TEST=Off
 
 $(TARBALLS)/fmt-$(FMT_VERSION).tar.gz:

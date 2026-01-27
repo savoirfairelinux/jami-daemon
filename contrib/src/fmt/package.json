@@ -4,10 +4,15 @@
     "cpe": "cpe:2.3:a:fmt:fmt:12.1.0:*:*:*:*:*:*:*",
     "url": "https://github.com/fmtlib/fmt/archive/__VERSION__.tar.gz",
     "deps": [],
+    "defines": [
+        "CMAKE_CXX_STANDARD=20"
+    ],
     "patches": [],
     "win_patches": [],
-    "project_paths": ["msvc/fmt.vcxproj"],
-    "with_env" : "",
+    "project_paths": [
+        "msvc/fmt.vcxproj"
+    ],
+    "with_env": "",
     "custom_scripts": {
         "pre_build": [
             "mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR% -DBUILD_SHARED_LIBS=Off -DFMT_TEST=Off"
