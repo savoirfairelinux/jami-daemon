@@ -24,9 +24,9 @@
 #include "config.h"
 #endif
 
+#include "jami.h"
 #include "manager.h"
 #include "logger.h"
-#include "jami.h"
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"
