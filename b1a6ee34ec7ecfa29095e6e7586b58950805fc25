@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3b4f3093_4c8e79a8",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-01-27T15:21:32Z",
+      "side": 1,
+      "message": "Is this actually needed?",
+      "range": {
+        "startLine": 182,
+        "startChar": 4,
+        "endLine": 182,
+        "endChar": 13
+      },
+      "revId": "b1a6ee34ec7ecfa29095e6e7586b58950805fc25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
