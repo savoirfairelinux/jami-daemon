@@ -19,7 +19,7 @@
 
 #include "account_const.h"
 #include "call.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "fileutils.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/jamiaccount.h"

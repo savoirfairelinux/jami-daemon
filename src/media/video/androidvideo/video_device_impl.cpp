@@ -18,7 +18,7 @@
 #include "logger.h"
 #include "../video_device.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include <algorithm>
 #include <map>

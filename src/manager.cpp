@@ -62,7 +62,7 @@
 
 #include "conference.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "jami/call_const.h"
 #include "jami/account_const.h"
 

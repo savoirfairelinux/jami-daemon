@@ -16,7 +16,7 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"

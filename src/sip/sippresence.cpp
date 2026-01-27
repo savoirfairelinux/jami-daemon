@@ -24,7 +24,7 @@
 #include "pres_sub_server.h"
 #include "pres_sub_client.h"
 #include "sip/sipvoiplink.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "connectivity/sip_utils.h"
 
 #include <opendht/crypto.h>

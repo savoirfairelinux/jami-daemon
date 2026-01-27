@@ -23,7 +23,7 @@
 #include "fileutils.h"
 #include "gittransport.h"
 #include "string_utils.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "vcard.h"
 #include "json_utils.h"
 #include "fileutils.h"

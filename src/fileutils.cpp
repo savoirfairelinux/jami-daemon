@@ -32,7 +32,7 @@
 #endif
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #endif
 
 #ifdef _WIN32

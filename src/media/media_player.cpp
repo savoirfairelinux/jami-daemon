@@ -17,7 +17,7 @@
 
 #include "media_player.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "jami/media_const.h"
 #include "manager.h"
 #include <string>

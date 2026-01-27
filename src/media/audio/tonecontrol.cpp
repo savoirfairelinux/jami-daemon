@@ -21,7 +21,7 @@
 
 #include "audio/tonecontrol.h"
 #include "sound/tonelist.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "jami/callmanager_interface.h" // for CallSignal
 
 namespace jami {

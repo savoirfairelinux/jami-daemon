@@ -29,7 +29,7 @@
 #ifdef ENABLE_VIDEO
 #include "video/sinkclient.h"
 #endif
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "audio/ringbufferpool.h"
 #include "jami/media_const.h"
 #include "libav_utils.h"

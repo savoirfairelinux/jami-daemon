@@ -30,7 +30,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "compiler_intrinsics.h"
 
 #include "jamidht/jamiaccount.h"

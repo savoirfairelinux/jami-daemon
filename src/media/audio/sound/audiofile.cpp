@@ -28,7 +28,7 @@
 #include "audio/resampler.h"
 #include "manager.h"
 #include "media_decoder.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include "logger.h"
 

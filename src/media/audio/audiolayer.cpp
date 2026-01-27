@@ -21,7 +21,7 @@
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "tonecontrol.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include "audio-processing/null_audio_processor.h"
 #include "tracepoint.h"

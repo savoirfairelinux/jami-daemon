@@ -33,7 +33,7 @@
 
 #include "string_utils.h"
 #include "logger.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include <iostream>
 #include <unistd.h>

@@ -25,7 +25,7 @@
 #endif
 #include "audio/ringbufferpool.h"
 #include "jami/call_const.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "connectivity/sip_utils.h"
 #include "call_factory.h"
 #include "string_utils.h"

@@ -17,7 +17,7 @@
 
 #include "archiver.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "account_const.h"
 #include "configurationmanager_interface.h"
 

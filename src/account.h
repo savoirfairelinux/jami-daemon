@@ -20,7 +20,7 @@
 #include "config.h"
 #endif
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "configurationmanager_interface.h"
 #include "noncopyable.h"
 #include "config/serializable.h"

@@ -23,7 +23,7 @@
 #include "sip/sippresence.h"
 #include "logger.h"
 #include "pres_sub_server.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "connectivity/sip_utils.h"
 #include "compiler_intrinsics.h"
 

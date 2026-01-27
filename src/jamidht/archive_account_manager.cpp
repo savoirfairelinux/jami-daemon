@@ -25,7 +25,7 @@
 #include "jamidht/conversation_module.h"
 #include "manager.h"
 #include "jamidht/auth_channel_handler.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include <dhtnet/multiplexed_socket.h>
 #include <dhtnet/channel_utils.h>

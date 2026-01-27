@@ -35,7 +35,7 @@
 
 #include <opendht/rng.h>
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "account_schema.h"
 #include "jami/account_const.h"
 #include "string_utils.h"

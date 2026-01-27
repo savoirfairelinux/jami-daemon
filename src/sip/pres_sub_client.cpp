@@ -40,7 +40,7 @@
 #include "sip/sipvoiplink.h"
 #include "connectivity/sip_utils.h"
 #include "manager.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include "logger.h"
 

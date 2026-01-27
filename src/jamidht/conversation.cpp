@@ -19,7 +19,7 @@
 
 #include "account_const.h"
 #include "jamiaccount.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "swarm/swarm_manager.h"
 #include "conversationrepository.h"
 #ifdef ENABLE_PLUGIN

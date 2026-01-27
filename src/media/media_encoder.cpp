@@ -19,7 +19,7 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"

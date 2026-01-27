@@ -20,7 +20,7 @@
 #include "manager.h"
 #include "fileutils.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "jami/account_const.h"
 
 #include <opendht/thread_pool.h>

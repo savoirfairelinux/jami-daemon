@@ -19,7 +19,7 @@
 #include "logger.h"
 #include "noncopyable.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include <algorithm>
 #include <mutex>

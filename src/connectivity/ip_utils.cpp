@@ -22,7 +22,7 @@
 #endif
 
 #if JAMI_DEVICE_SIGNAL
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #endif
 
 #include <dhtnet/ip_utils.h>

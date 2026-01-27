@@ -17,7 +17,7 @@
 
 #include "opensllayer.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"

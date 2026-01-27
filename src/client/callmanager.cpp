@@ -19,7 +19,7 @@
 
 #include "callmanager_interface.h"
 #include "call_factory.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include "sip/siptransport.h"
 #include "sip/sipvoiplink.h"

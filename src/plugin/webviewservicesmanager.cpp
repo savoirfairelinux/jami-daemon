@@ -16,7 +16,7 @@
  */
 
 #include "webviewservicesmanager.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "pluginmanager.h"
 #include "logger.h"
 #include "manager.h"

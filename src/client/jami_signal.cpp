@@ -15,7 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "signal.h"
+#include "jami_signal.h"
 
 namespace jami {
 

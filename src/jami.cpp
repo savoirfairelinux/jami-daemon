@@ -30,7 +30,7 @@
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"

@@ -21,7 +21,7 @@
 #include <ctime>
 #include <ciso646> // fix windows compiler bug
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 #include <fmt/core.h>
 #include <fmt/format.h>

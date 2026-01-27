@@ -19,7 +19,7 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include <string>
 #include <map>
 #include <set>

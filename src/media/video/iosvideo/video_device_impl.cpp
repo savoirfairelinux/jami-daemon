@@ -24,7 +24,7 @@ extern "C" {
 #include "logger.h"
 #include "../video_device.h"
 
-#include "client/signal.h"
+#include "client/jami_signal.h"
 
 namespace jami {
 namespace video {

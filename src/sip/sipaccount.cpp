@@ -45,7 +45,7 @@
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "jami/account_const.h"
 
 #ifdef ENABLE_VIDEO

@@ -17,7 +17,7 @@
 
 #include "ringbuffer.h"
 #include "logger.h"
-#include "client/signal.h"
+#include "client/jami_signal.h"
 #include "media_buffer.h"
 #include "libav_deps.h"
 
