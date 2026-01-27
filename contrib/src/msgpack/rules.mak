@@ -9,7 +9,7 @@ ifeq ($(call need_pkg,"msgpack >= 5.0.0"),)
 PKGS_FOUND += msgpack
 endif
 
-MSGPACK_CONF := -DMSGPACK_CXX17=ON \
+MSGPACK_CONF := -DMSGPACK_CXX20=ON \
 		-DMSGPACK_USE_BOOST=Off \
 		-DMSGPACK_BUILD_EXAMPLES=OFF \
 		-DCMAKE_INSTALL_LIBDIR=lib

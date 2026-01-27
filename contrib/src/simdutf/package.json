@@ -1,6 +1,6 @@
 {
     "name": "simdutf",
-    "version": "v7.5.0",
+    "version": "v8.0.0",
     "url": "https://github.com/simdutf/simdutf/archive/__VERSION__.tar.gz",
     "deps": [],
     "use_cmake": true,
@@ -9,7 +9,7 @@
         "BUILD_TESTING=0",
         "SIMDUTF_TESTS=0",
         "SIMDUTF_TOOLS=0",
-        "SIMDUTF_CXX_STANDARD=17"
+        "CMAKE_CXX_STANDARD=20"
     ],
     "patches": [],
     "win_patches": [],
