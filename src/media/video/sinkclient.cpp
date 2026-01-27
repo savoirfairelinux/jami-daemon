@@ -28,7 +28,7 @@
 #include "media_buffer.h"
 #include "logger.h"
 #include "noncopyable.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "jami/videomanager_interface.h"
 #include "libav_utils.h"
 #include "video_scaler.h"

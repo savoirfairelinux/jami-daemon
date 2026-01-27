@@ -20,7 +20,7 @@
 #include "base64.h"
 #include "fileutils.h"
 #include "manager.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 
 #include <mutex>
 #include <cstdlib> // mkstemp

@@ -30,7 +30,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "compiler_intrinsics.h"
 
 #include "jamidht/jamiaccount.h"
@@ -118,10 +118,12 @@ getSubscriptions(const std::string& accountId)
             const auto& subs = pres->getClientSubscriptions();
             ret.reserve(subs.size());
             for (const auto& s : subs) {
-                ret.push_back({{libjami::Presence::BUDDY_KEY, std::string(s->getURI())},
-                               {libjami::Presence::STATUS_KEY,
-                                s->isPresent() ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY},
-                               {libjami::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())}});
+                ret.push_back({
+                    {libjami::Presence::BUDDY_KEY,      std::string(s->getURI())                    },
+                    {libjami::Presence::STATUS_KEY,
+                     s->isPresent() ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY},
+                    {libjami::Presence::LINESTATUS_KEY, std::string(s->getLineStatus())             }
+                });
             }
         } else
             JAMI_ERROR("Presence not initialized");
@@ -129,9 +131,11 @@ getSubscriptions(const std::string& accountId)
         const auto& trackedBuddies = acc->getTrackedBuddyPresence();
         ret.reserve(trackedBuddies.size());
         for (const auto& tracked_id : trackedBuddies) {
-            ret.push_back({{libjami::Presence::BUDDY_KEY, tracked_id.first},
-                           {libjami::Presence::STATUS_KEY,
-                            tracked_id.second ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY}});
+            ret.push_back({
+                {libjami::Presence::BUDDY_KEY,  tracked_id.first                                   },
+                {libjami::Presence::STATUS_KEY,
+                 tracked_id.second ? libjami::Presence::ONLINE_KEY : libjami::Presence::OFFLINE_KEY}
+            });
         }
     } else
         JAMI_ERROR("Unable to find account {}", accountId);

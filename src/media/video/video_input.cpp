@@ -25,7 +25,7 @@
 #include "media_const.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "sinkclient.h"
 #include "logger.h"
 #include "media/media_buffer.h"
@@ -138,9 +138,8 @@ VideoInput::getPixelFormat() const
 void
 VideoInput::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9), [](AVBufferRef* buf) {
-                                                    av_buffer_unref(&buf);
-                                                }};
+    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
+                                                [](AVBufferRef* buf) { av_buffer_unref(&buf); }};
     if (displayMatrix) {
         av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
         displayMatrix_ = std::move(displayMatrix);

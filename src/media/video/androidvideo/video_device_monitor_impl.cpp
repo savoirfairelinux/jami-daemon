@@ -19,7 +19,7 @@
 #include "logger.h"
 #include "noncopyable.h"
 
-#include "client/ring_signal.h"
+#include "client/signal.h"
 
 #include <algorithm>
 #include <mutex>

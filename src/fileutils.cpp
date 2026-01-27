@@ -32,7 +32,7 @@
 #endif
 
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #endif
 
 #ifdef _WIN32

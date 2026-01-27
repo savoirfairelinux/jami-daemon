@@ -19,7 +19,7 @@
 
 #include "manager.h"
 #include "data_transfer.h"
-#include "client/ring_signal.h"
+#include "client/signal.h"
 #include "jamidht/jamiaccount.h"
 
 namespace libjami {
