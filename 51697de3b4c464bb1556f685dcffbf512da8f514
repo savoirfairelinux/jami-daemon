@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "929332ac_2c46a172",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1262,
+      "author": {
+        "id": 1141
+      },
+      "writtenOn": "2026-01-28T19:13:13Z",
+      "side": 1,
+      "message": "Maybe this only apply in for mode type `ADMIN_INVITES_ONLY` ? TBD",
+      "revId": "51697de3b4c464bb1556f685dcffbf512da8f514",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
