@@ -212,6 +212,16 @@ SpeexAudioProcessor::getProcessed()
 
     // add stabilized voice activity to the AudioFrame
     processed->has_voice = shouldDetectVoice && getStabilizedVoiceActivity(overallVad);
+
+    AVFrame* frame = processed->pointer();
+    JAMI_WARNING("@speex frame:{} channel_layout:{} channels:{} order:{} nb_channels:{} [echo:{}]",
+                 fmt::ptr(frame),
+                 frame->channel_layout,
+                 frame->channels,
+                 static_cast<int>(frame->ch_layout.order),
+                 frame->ch_layout.nb_channels,
+                 shouldAEC);
+
     return processed;
 }
 

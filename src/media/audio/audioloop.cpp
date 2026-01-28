@@ -100,6 +100,14 @@ AudioLoop::getNext(size_t samples, bool mute)
     }
     auto buffer = std::make_unique<AudioFrame>(format_, samples);
     getNext(buffer->pointer(), mute);
+
+    AVFrame* frame = buffer->pointer();
+    JAMI_WARNING("@audioloop frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                 fmt::ptr(frame),
+                 frame->channel_layout,
+                 frame->channels,
+                 static_cast<int>(frame->ch_layout.order),
+                 frame->ch_layout.nb_channels);
     return buffer;
 }
 

@@ -163,6 +163,15 @@ WebRTCAudioProcessor::getProcessed()
     analogLevel_ = apm->gain_control()->stream_analog_level();
     record->has_voice = apm->voice_detection()->is_enabled()
                         && getStabilizedVoiceActivity(apm->voice_detection()->stream_has_voice());
+
+    AVFrame* frame = record->pointer();
+    JAMI_WARNING("@webrtc frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                 fmt::ptr(frame),
+                 frame->channel_layout,
+                 frame->channels,
+                 static_cast<int>(frame->ch_layout.order),
+                 frame->ch_layout.nb_channels);
+
     return record;
 }
 

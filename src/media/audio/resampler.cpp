@@ -157,6 +157,12 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         }
     }
 
+    JAMI_WARNING("@resampler frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                 fmt::ptr(in),
+                 in->channel_layout,
+                 in->channels,
+                 static_cast<int>(in->ch_layout.order),
+                 in->ch_layout.nb_channels);
     ret = swr_init(swrCtx);
     if (ret >= 0) {
         std::swap(swrCtx_, swrCtx);

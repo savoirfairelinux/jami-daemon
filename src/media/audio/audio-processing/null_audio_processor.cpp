@@ -38,7 +38,17 @@ NullAudioProcessor::getProcessed()
     }
 
     playbackQueue_.dequeue();
-    return recordQueue_.dequeue();
+    auto ret = recordQueue_.dequeue();
+
+    AVFrame* frame = ret->pointer();
+    JAMI_WARNING("@null frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                 fmt::ptr(frame),
+                 frame->channel_layout,
+                 frame->channels,
+                 static_cast<int>(frame->ch_layout.order),
+                 frame->ch_layout.nb_channels);
+
+    return ret;
 };
 
 } // namespace jami

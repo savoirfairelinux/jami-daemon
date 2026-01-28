@@ -137,6 +137,15 @@ AudioFrameResizer::dequeue()
     frame->pointer()->pts = nextOutputPts_;
     frame->has_voice = hasVoice_;
     nextOutputPts_ += frameSize_;
+
+    AVFrame* framePtr = frame->pointer();
+    JAMI_WARNING("@resizer frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                 fmt::ptr(framePtr),
+                 framePtr->channel_layout,
+                 framePtr->channels,
+                 static_cast<int>(framePtr->ch_layout.order),
+                 framePtr->ch_layout.nb_channels);
+
     return frame;
 }
 

@@ -19,6 +19,8 @@
 #include "ringbuffer.h"
 #include "logger.h"
 
+#include <libavutil/frame.h>
+
 #include <limits>
 #include <utility> // for std::pair
 #include <cstring>
@@ -304,6 +306,15 @@ RingBufferPool::getData(const std::string& ringbufferId)
         }
     }
 
+    if (mixed) {
+        AVFrame* frame = mixBuffer->pointer();
+        JAMI_WARNING("@getData frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                     fmt::ptr(frame),
+                     frame->channel_layout,
+                     frame->channels,
+                     static_cast<int>(frame->ch_layout.order),
+                     frame->ch_layout.nb_channels);
+    }
     return mixed ? mixBuffer : nullptr;
 }
 

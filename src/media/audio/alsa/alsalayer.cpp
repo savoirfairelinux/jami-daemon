@@ -466,6 +466,14 @@ AlsaLayer::read(unsigned frames)
 
     if (err >= 0) {
         ret->pointer()->nb_samples = err;
+
+        AVFrame* frame = ret->pointer();
+        JAMI_WARNING("@read frame:{} channel_layout:{} channels:{} order:{} nb_channels:{}",
+                     fmt::ptr(frame),
+                     frame->channel_layout,
+                     frame->channels,
+                     static_cast<int>(frame->ch_layout.order),
+                     frame->ch_layout.nb_channels);
         return ret;
     }
 
