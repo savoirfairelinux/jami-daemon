@@ -694,8 +694,19 @@ MediaDecoder::decode(AVPacket& packet)
         frameFinished = 1;
 
     if (frameFinished) {
-        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
+        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
             frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+        } else {
+            // It's possible (albeit rare) for avcodec_receive_frame to return a frame with
+            // unspecified channel order. This can cause issues later on in the resampler
+            // because swr_convert_frame expects the ch_layout of the input frame to match
+            // the in_ch_layout of the SwrContext, but swr_init sets in_ch_layout to a default
+            // value based on the number of channels if the channel order of the input frame
+            // is unspecified.
+            if (frame->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC) {
+                av_channel_layout_default(&frame->ch_layout, frame->ch_layout.nb_channels);
+            }
+        }
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
