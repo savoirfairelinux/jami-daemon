@@ -297,7 +297,7 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     JAMI_ERR("Unable to send outgoing INVITE request for new call");
-                    call->onFailure();
+                    call->onFailure(PJSIP_SC_INTERNAL_SERVER_ERROR);
                 }
             }
             return false;
