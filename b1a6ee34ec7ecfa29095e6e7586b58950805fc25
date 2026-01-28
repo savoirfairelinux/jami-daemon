@@ -46,6 +46,30 @@
       },
       "revId": "b1a6ee34ec7ecfa29095e6e7586b58950805fc25",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d811c66_66a98806",
+        "filename": "test/unitTest/swarm/routing_table.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-01-28T15:42:36Z",
+      "side": 1,
+      "message": "Great, thanks!",
+      "parentUuid": "557c7d2b_f3c1b3fb",
+      "range": {
+        "startLine": 182,
+        "startChar": 4,
+        "endLine": 182,
+        "endChar": 13
+      },
+      "revId": "b1a6ee34ec7ecfa29095e6e7586b58950805fc25",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
