@@ -694,8 +694,13 @@ MediaDecoder::decode(AVPacket& packet)
         frameFinished = 1;
 
     if (frameFinished) {
-        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
+        if (inputDecoder_->type == AVMEDIA_TYPE_VIDEO) {
             frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+        } else {
+            if (frame->ch_layout.order == AV_CHANNEL_ORDER_UNSPEC) {
+                av_channel_layout_default(&frame->ch_layout, frame->ch_layout.nb_channels);
+            }
+        }
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
                                       {1, AV_TIME_BASE},
