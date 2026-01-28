@@ -1259,6 +1259,11 @@ Conversation::id() const
 void
 Conversation::addMember(const std::string& contactUri, const OnDoneCb& cb)
 {
+    if (!pimpl_->isAdmin()) {
+        JAMI_WARN("Unable to add member %s because I'm not an admin", contactUri.c_str());
+        cb(false, "");
+        return;
+    }
     try {
         if (mode() == ConversationMode::ONE_TO_ONE) {
             // Only authorize to add left members
