@@ -543,24 +543,42 @@ RoutingTable::deleteNode(const NodeId& nodeId)
     bucket->removeMobileNode(nodeId);
 }
 
+inline std::chrono::system_clock::time_point
+systemTimeFromSteady(std::chrono::steady_clock::time_point t,
+                     const std::chrono::steady_clock::time_point& now,
+                     const std::chrono::system_clock::time_point& nowSystem)
+{
+    return nowSystem + std::chrono::duration_cast<std::chrono::system_clock::duration>(t - now);
+}
+
 std::vector<RoutingTable::NodeStats>
 RoutingTable::getRoutingTableStats() const
 {
     std::vector<NodeStats> stats;
+    auto now = std::chrono::steady_clock::now();
+    auto nowSystem = std::chrono::system_clock::now();
     std::lock_guard lock(mutex_);
     for (const auto& bucket : buckets) {
         for (const auto& [id, info] : bucket.getNodes()) {
-            std::string addr = info.socket ? info.socket->remoteAddr().toString() : "";
-            stats.push_back({id.toString(), "connected", addr});
+            if (auto channel = std::dynamic_pointer_cast<dhtnet::ChannelSocket>(info.socket)) {
+                stats.push_back({id.toString(),
+                                 "connected",
+                                 channel->getRemoteAddress().toString(true),
+                                 systemTimeFromSteady(channel->getStartTime(), now, nowSystem),
+                                 info.isMobile_});
+            } else {
+                stats.push_back(
+                    {id.toString(), "connected", "", std::chrono::system_clock::time_point::min(), info.isMobile_});
+            }
         }
         for (const auto& id : bucket.getKnownNodes()) {
-            stats.push_back({id.toString(), "known", ""});
+            stats.push_back({id.toString(), "known", "", std::chrono::system_clock::time_point::min(), false});
         }
         for (const auto& id : bucket.getMobileNodes()) {
-            stats.push_back({id.toString(), "mobile", ""});
+            stats.push_back({id.toString(), "mobile", "", std::chrono::system_clock::time_point::min(), true});
         }
         for (const auto& id : bucket.getConnectingNodes()) {
-            stats.push_back({id.toString(), "connecting", ""});
+            stats.push_back({id.toString(), "connecting", "", std::chrono::system_clock::time_point::min(), false});
         }
     }
     return stats;
