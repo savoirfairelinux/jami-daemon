@@ -442,7 +442,6 @@ public:
         return count;
     }
 
-
     unsigned getActiveNodesCount() const
     {
         size_t count = 0;
@@ -539,10 +538,13 @@ public:
      */
     void deleteNode(const NodeId& nodeId);
 
-    struct NodeStats {
+    struct NodeStats
+    {
         std::string id;
         std::string status;
         std::string remoteAddress;
+        std::chrono::system_clock::time_point connectionTime;
+        bool isMobile;
     };
     std::vector<NodeStats> getRoutingTableStats() const;
 
