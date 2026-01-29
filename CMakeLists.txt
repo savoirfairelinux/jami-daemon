@@ -8,6 +8,8 @@ set (CMAKE_CXX_STANDARD 20)
 
 set(PROJECT_LABEL "libjami")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 ################################################################################
 # Build options
 ################################################################################
