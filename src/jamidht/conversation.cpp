@@ -33,6 +33,7 @@
 #include "fileutils.h"
 #include "json_utils.h"
 #include "logger.h"
+#include "presence_manager.h"
 
 #include <opendht/thread_pool.h>
 #include <opendht/infohash.h>
@@ -183,6 +184,7 @@ private:
         if (!commits.empty())
             initActiveCalls(repository_->convCommitsToMap(commits));
         loadStatus();
+        monitorMembers();
     }
 
     Impl(std::pair<std::unique_ptr<ConversationRepository>, std::vector<ConversationCommit>>&& repoAndCommits,
@@ -209,7 +211,15 @@ public:
     }
     mutable std::string fmtStr_;
 
-    ~Impl() {}
+    ~Impl()
+    {
+        std::lock_guard lk(trackedMembersMtx_);
+        if (auto acc = account_.lock()) {
+            for (const auto& uri : trackedMembers_) {
+                acc->presenceManager()->untrackBuddy(uri);
+            }
+        }
+    }
 
     /**
      * If, for whatever reason, the daemon is stopped while hosting a conference,
@@ -595,6 +605,13 @@ public:
     const std::filesystem::path statusPath_ {};
 
     OnMembersChanged onMembersChanged_ {};
+    std::set<std::string> trackedMembers_;
+    std::mutex trackedMembersMtx_;
+    bool isTracking_ {false};
+    void monitorMembers();
+    void startTracking();
+    void stopTracking();
+    void monitorConnection(std::weak_ptr<Conversation> w);
 
     // Manage hosted calls on this device
     std::filesystem::path hostedCallsPath_ {};
@@ -659,6 +676,96 @@ public:
 
     std::shared_ptr<Typers> typers_;
 };
+
+void
+Conversation::Impl::monitorMembers()
+{
+    repository_->onMembersChanged([this](const std::set<std::string>& memberUris) {
+        std::lock_guard lk(trackedMembersMtx_);
+        auto acc = account_.lock();
+        if (!acc)
+            return;
+
+        if (isTracking_) {
+            // Track new
+            for (const auto& uri : memberUris) {
+                if (trackedMembers_.find(uri) == trackedMembers_.end()) {
+                    acc->presenceManager()->trackBuddy(uri);
+                    trackedMembers_.emplace(uri);
+                }
+            }
+            // Untrack removed
+            for (auto it = trackedMembers_.begin(); it != trackedMembers_.end();) {
+                if (memberUris.find(*it) == memberUris.end()) {
+                    acc->presenceManager()->untrackBuddy(*it);
+                    it = trackedMembers_.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+
+        if (onMembersChanged_)
+            onMembersChanged_(memberUris);
+    });
+}
+
+void
+Conversation::Impl::startTracking()
+{
+    std::lock_guard lk(trackedMembersMtx_);
+    if (isTracking_)
+        return;
+    isTracking_ = true;
+    auto acc = account_.lock();
+    if (!acc)
+        return;
+    auto members = repository_->members();
+    for (const auto& member : members) {
+        if (trackedMembers_.find(member.uri) == trackedMembers_.end()) {
+            acc->presenceManager()->trackBuddy(member.uri);
+            trackedMembers_.emplace(member.uri);
+        }
+    }
+}
+
+void
+Conversation::Impl::stopTracking()
+{
+    std::lock_guard lk(trackedMembersMtx_);
+    if (!isTracking_)
+        return;
+    isTracking_ = false;
+    auto acc = account_.lock();
+    if (!acc)
+        return;
+    for (const auto& uri : trackedMembers_) {
+        acc->presenceManager()->untrackBuddy(uri);
+    }
+    trackedMembers_.clear();
+}
+
+void
+Conversation::Impl::monitorConnection(std::weak_ptr<Conversation> w)
+{
+    if (!swarmManager_->isConnected()) {
+        startTracking();
+    }
+
+    swarmManager_->onConnectionChanged([w](bool ok) {
+        dht::ThreadPool::io().run([w, ok] {
+            if (auto sthis = w.lock()) {
+                if (ok) {
+                    sthis->pimpl_->stopTracking();
+                    if (sthis->pimpl_->bootstrapCb_)
+                        sthis->pimpl_->bootstrapCb_();
+                } else {
+                    sthis->pimpl_->startTracking();
+                }
+            }
+        });
+    });
+}
 
 bool
 Conversation::Impl::isAdmin() const
@@ -2211,24 +2318,7 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
         pimpl_->swarmManager_->setKnownNodes(devices);
     }
 
-    pimpl_->swarmManager_->onConnectionChanged([w = weak()](bool ok) {
-        // This will call methods from accounts, so trigger on another thread.
-        dht::ThreadPool::io().run([w, ok] {
-            auto sthis = w.lock();
-            if (!sthis)
-                return;
-            if (ok) {
-                // Bootstrap succeeded!
-                if (sthis->pimpl_->bootstrapCb_)
-                    sthis->pimpl_->bootstrapCb_();
-#ifdef LIBJAMI_TEST
-                if (sthis->pimpl_->bootstrapCbTest_)
-                    sthis->pimpl_->bootstrapCbTest_(sthis->id(), BootstrapStatus::SUCCESS);
-#endif
-                return;
-            }
-        });
-    });
+    pimpl_->monitorConnection(weak_from_this());
 
     // If is shutdown, the conversation was re-added, causing no new nodes to be connected, but just a classic
     // connectivity change
@@ -2265,10 +2355,6 @@ void
 Conversation::onMembersChanged(OnMembersChanged&& cb)
 {
     pimpl_->onMembersChanged_ = std::move(cb);
-    pimpl_->repository_->onMembersChanged([w = weak()](const std::set<std::string>& memberUris) {
-        if (auto sthis = w.lock())
-            sthis->pimpl_->onMembersChanged_(memberUris);
-    });
 }
 
 void
