@@ -231,11 +231,11 @@ parseJamiUri(std::string_view toUrl)
 {
     auto sufix = stripPrefix(toUrl);
     if (sufix.length() < 40)
-        throw std::invalid_argument("ID must be a Jami infohash");
+        throw std::invalid_argument("Not a valid Jami URI: " + toUrl);
 
     const std::string_view toUri = sufix.substr(0, 40);
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
-        throw std::invalid_argument("ID must be a Jami infohash");
+        throw std::invalid_argument("Not a valid Jami URI: " + toUrl);
     return toUri;
 }
 
