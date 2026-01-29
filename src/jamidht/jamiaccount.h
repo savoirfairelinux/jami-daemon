@@ -79,6 +79,7 @@ struct AccountInfo;
 class SipTransport;
 class ChanneledOutgoingTransfer;
 class SyncModule;
+class PresenceManager;
 
 using SipConnectionKey = std::pair<std::string /* uri */, DeviceId>;
 
@@ -601,7 +602,6 @@ private:
      */
     struct PendingCall;
     struct PendingMessage;
-    struct BuddyInfo;
     struct DiscoveredPeer;
     class SendMessageContext;
 
@@ -611,14 +611,6 @@ private:
         return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
     }
 
-    /**
-     * Compute archive encryption key and DHT storage location from password and PIN.
-     */
-    /* static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string&
-       password, const std::string& pin, bool previous = false);
-                                      */
-
-    void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
     void onPeerConnected(const std::string& peerId, bool connected);
 
     void doRegister_();
@@ -729,8 +721,8 @@ private:
     dhtnet::fileutils::IdList treatedMessages_;
 
     /* tracked buddies presence */
-    mutable std::mutex buddyInfoMtx;
-    std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
+    std::unique_ptr<PresenceManager> presenceManager_;
+    uint64_t presenceListenerToken_ {0};
 
     mutable std::mutex dhtValuesMtx_;
 
@@ -870,6 +862,7 @@ private:
 
     enum class PresenceState : int { DISCONNECTED = 0, AVAILABLE, CONNECTED };
     std::map<std::string, PresenceState> presenceState_;
+    mutable std::mutex presenceStateMtx_;
     std::string presenceNote_;
 };
 
