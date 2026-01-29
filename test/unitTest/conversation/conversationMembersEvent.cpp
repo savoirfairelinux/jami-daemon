@@ -194,8 +194,6 @@ ConversationMembersEventTest::setUp()
 void
 ConversationMembersEventTest::tearDown()
 {
-    connectSignals();
-
     auto bobArchive = std::filesystem::current_path().string() + "/bob.gz";
     std::remove(bobArchive.c_str());
     if (bob2Id.empty()) {
