@@ -173,12 +173,26 @@ public:
     /**
      * Set the state of the call (protected by mutex)
      * @param call_state The call state
-     * @param cnx_state The call connection state
-     * @param code Optional error-dependent code (used to report more information)
+     * @param code Optional SIP response code (see RFC3261)
      * @return true if the requested state change was valid, false otherwise
      */
     bool setState(CallState call_state, signed code = 0);
+
+    /**
+     * Set the state of the call (protected by mutex)
+     * @param call_state The call state
+     * @param cnx_state The call connection state
+     * @param code Optional SIP response code (see RFC3261)
+     * @return true if the requested state change was valid, false otherwise
+     */
     bool setState(CallState call_state, ConnectionState cnx_state, signed code = 0);
+
+    /**
+     * Set the state of the call (protected by mutex)
+     * @param cnx_state The call connection state
+     * @param code Optional SIP response code (see RFC3261)
+     * @return true if the requested state change was valid, false otherwise
+     */
     bool setState(ConnectionState cnx_state, signed code = 0);
 
     /**
@@ -295,7 +309,10 @@ public:
      */
     virtual void peerHungup();
 
-    virtual void removeCall();
+    /**
+     * @param code Optional SIP response code (see RFC3261)
+     */
+    virtual void removeCall(int code = 0);
 
     /**
      * Update recording state. Typically used to send notifications
@@ -461,7 +478,7 @@ private:
 
     void checkAudio();
 
-    void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
+    void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState, int code);
 
     SubcallSet safePopSubcalls();
 
