@@ -23,7 +23,6 @@
 #include <mutex>
 #include <utility>
 #include <functional>
-#include <ciso646>
 
 namespace jami {
 

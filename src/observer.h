@@ -25,8 +25,8 @@
 #include <list>
 #include <mutex>
 #include <functional>
-#include <ciso646> // fix windows compiler bug
-#ifndef __DEBUG__  // this is only defined on plugins build for debugging
+
+#ifndef __DEBUG__ // this is only defined on plugins build for debugging
 #include "logger.h"
 #endif
 

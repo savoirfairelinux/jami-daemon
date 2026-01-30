@@ -79,7 +79,6 @@
 #include <cstring>
 #include <cerrno>
 #include <cstddef>
-#include <ciso646>
 
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>

@@ -19,7 +19,6 @@
 #include <cstring>
 #include <cerrno>
 #include <ctime>
-#include <ciso646> // fix windows compiler bug
 
 #include "client/jami_signal.h"
 

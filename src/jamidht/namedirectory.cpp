@@ -40,7 +40,7 @@
 #include "json_utils.h"
 
 /* for Visual Studio */
-#include <ciso646>
+
 #include <sstream>
 #include <regex>
 #include <fstream>

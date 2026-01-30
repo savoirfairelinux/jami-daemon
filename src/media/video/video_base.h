@@ -30,7 +30,6 @@
 #include <memory>
 #include <set>
 #include <mutex>
-#include <ciso646> // fix windows compiler bug
 
 extern "C" {
 #include <libavutil/pixfmt.h>

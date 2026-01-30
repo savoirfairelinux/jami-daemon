@@ -23,8 +23,6 @@
 #include "string_utils.h"
 #include <string>
 
-#include <ciso646> // fix windows compiler bug
-
 #ifndef JAMI_REVISION
 #define JAMI_REVISION ""
 #endif

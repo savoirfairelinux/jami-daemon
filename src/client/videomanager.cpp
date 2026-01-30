@@ -44,7 +44,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring> // std::memset
-#include <ciso646> // fix windows compiler bug
 
 extern "C" {
 #include <libavutil/display.h>
