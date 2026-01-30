@@ -116,7 +116,7 @@ public:
     bool checkMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) override;
-    void hangup(int reason) override;
+    void hangup(int code) override;
     void refuse() override;
     void transfer(const std::string& to) override;
     bool attendedTransfer(const std::string& to) override;
@@ -128,7 +128,7 @@ public:
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList) override;
     std::vector<libjami::MediaMap> currentMediaList() const override;
     void sendTextMessage(const std::map<std::string, std::string>& messages, const std::string& from) override;
-    void removeCall() override;
+    void removeCall(int code = 0) override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
     std::map<std::string, bool> getAudioStreams() const override;
@@ -196,9 +196,9 @@ public:
     void onAnswered();
     /**
      * Called to report server/internal errors
-     * @param cause Optional error code
+     * @param code Optional SIP response code (see RFC3261)
      */
-    void onFailure(signed cause = 0);
+    void onFailure(int code = 0);
     /**
      * Peer answered busy
      */
