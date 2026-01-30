@@ -1186,7 +1186,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
         [this](const std::string& uri, const std::string& convFromReq) {
             dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
                 if (auto shared = w.lock()) {
-                    auto cm = shared->convModule(true);
+                    shared->convModule(true);
                     // Remove cached payload if there is one
                     auto requestPath = shared->cachePath_ / "requests" / uri;
                     dhtnet::fileutils::remove(requestPath);
