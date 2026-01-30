@@ -393,17 +393,17 @@ JamiAccount::newOutgoingCallHelper(const std::shared_ptr<SIPCall>& call, const U
                                      // be called in main thread
                                      runOnMainThread([wthis_, regName, address, response, call]() {
                                          if (response != NameDirectory::Response::found) {
-                                             call->onFailure(EINVAL);
+                                             call->onFailure(PJSIP_SC_NOT_FOUND);
                                              return;
                                          }
                                          if (auto sthis = wthis_.lock()) {
                                              try {
                                                  sthis->startOutgoingCall(call, regName);
                                              } catch (...) {
-                                                 call->onFailure(ENOENT);
+                                                 call->onFailure(PJSIP_SC_NOT_FOUND);
                                              }
                                          } else {
-                                             call->onFailure();
+                                             call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
                                          }
                                      });
                                  });
@@ -593,7 +593,7 @@ void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
     if (not accountManager_ or not dht_) {
-        call->onFailure(ENETDOWN);
+        call->onFailure(PJSIP_SC_SERVICE_UNAVAILABLE);
         return;
     }
 
@@ -629,7 +629,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         if (eraseDummy) {
             // Mark the temp call as failed to stop the main call if necessary
             if (dummyCall)
-                dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+                dummyCall->onFailure(PJSIP_SC_TEMPORARILY_UNAVAILABLE);
             return;
         }
         auto call = wCall.lock();
@@ -750,7 +750,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                     JAMI_WARNING("[call:{}] No devices found", call->getCallId());
                     // Note: if a P2P connection exists, the call will be at least in CONNECTING
                     if (call->getConnectionState() == Call::ConnectionState::TRYING)
-                        call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
+                        call->onFailure(PJSIP_SC_TEMPORARILY_UNAVAILABLE);
                 }
             }
         });
@@ -3809,7 +3809,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
             // Stop searching pending call.
             shared->callConnectionClosed(id.second, true);
             if (pc)
-                pc->onFailure();
+                pc->onFailure(PJSIP_SC_TEMPORARILY_UNAVAILABLE);
         },
         options);
 }

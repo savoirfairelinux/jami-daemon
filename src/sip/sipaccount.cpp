@@ -292,11 +292,11 @@ SIPAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::M
     const bool created = sdp.createOffer(MediaAttribute::buildMediaAttributesList(mediaList, isSrtpEnabled()));
 
     if (created) {
-        runOnMainThread([this, weak_call=std::weak_ptr(call)] {
+        runOnMainThread([this, weak_call = std::weak_ptr(call)] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
-                    JAMI_ERR("Unable to send outgoing INVITE request for new call");
-                    call->onFailure();
+                    JAMI_ERROR("Unable to send outgoing INVITE request for new call");
+                    call->onFailure(PJSIP_SC_INTERNAL_SERVER_ERROR);
                 }
             }
             return false;
