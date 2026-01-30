@@ -93,13 +93,17 @@ public:
     {
         auto duration = Clock::now() - start_;
         auto [avg, count] = inc(duration);
-        JAMI_LOG("{}: end after {}", Tag::name(), dht::print_duration(duration));
         if (count > 1) {
-            JAMI_LOG("{}: Average duration: {} ({}) Total: {}",
+            JAMI_LOG("{}: end after {} - Average duration: {} ({}) Total: {} Min: {} Max: {}",
                      Tag::name(),
+                     dht::print_duration(duration),
                      dht::print_duration(avg),
                      count,
-                     dht::print_duration(total_duration_));
+                     dht::print_duration(total_duration_),
+                     dht::print_duration(min_duration_),
+                     dht::print_duration(max_duration_));
+        } else {
+            JAMI_LOG("{}: end after {}", Tag::name(), dht::print_duration(duration));
         }
     }
 
@@ -107,6 +111,8 @@ private:
     time_point start_;
     static inline std::mutex mutex_;
     static inline duration total_duration_ {};
+    static inline duration min_duration_ {duration::max()};
+    static inline duration max_duration_ {duration::min()};
     static inline duration::rep count_ {0};
 
     std::pair<duration, duration::rep> inc(duration dt)
@@ -114,6 +120,10 @@ private:
         std::lock_guard lock(mutex_);
         total_duration_ += dt;
         count_++;
+        if (dt < min_duration_)
+            min_duration_ = dt;
+        if (dt > max_duration_)
+            max_duration_ = dt;
         return {total_duration_ / count_, count_};
     }
 };
