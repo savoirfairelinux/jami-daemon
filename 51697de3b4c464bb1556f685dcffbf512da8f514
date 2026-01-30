@@ -16,6 +16,24 @@
       "message": "Maybe this only apply in for mode type `ADMIN_INVITES_ONLY` ? TBD",
       "revId": "51697de3b4c464bb1556f685dcffbf512da8f514",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fa99abbd_d54ca4fc",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1262,
+      "author": {
+        "id": 1118
+      },
+      "writtenOn": "2026-01-30T20:35:56Z",
+      "side": 1,
+      "message": "I tested, and the conversation mode when admin exists is `INVITES_ONLY`",
+      "parentUuid": "929332ac_2c46a172",
+      "revId": "51697de3b4c464bb1556f685dcffbf512da8f514",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
