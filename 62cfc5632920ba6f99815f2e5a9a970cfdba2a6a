@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "a3da0bfa_5dff8ed5",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 8
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2026-01-30T16:21:45Z",
+      "side": 1,
+      "message": "Qt and Kotlin clients do not appear to rely on them. No idea for iOS/Swift",
+      "parentUuid": "9bc47b37_6239cb0a",
+      "revId": "62cfc5632920ba6f99815f2e5a9a970cfdba2a6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "055f4d16_29c26f74",
         "filename": "src/call.cpp",
         "patchSetId": 8
@@ -31,6 +49,30 @@
       "writtenOn": "2026-01-29T16:38:31Z",
       "side": 1,
       "message": "is this logged elsewhere? if so, avoid over logging",
+      "range": {
+        "startLine": 142,
+        "startChar": 4,
+        "endLine": 143,
+        "endChar": 69
+      },
+      "revId": "62cfc5632920ba6f99815f2e5a9a970cfdba2a6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "15999fe8_a980be03",
+        "filename": "src/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 143,
+      "author": {
+        "id": 1147
+      },
+      "writtenOn": "2026-01-30T16:21:45Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "055f4d16_29c26f74",
       "range": {
         "startLine": 142,
         "startChar": 4,
