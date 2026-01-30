@@ -40,7 +40,6 @@ extern "C" {
 #include <stdexcept>
 #include <unistd.h>
 #include <sys/types.h>
-#include <ciso646> // fix windows compiler bug
 
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
@@ -392,7 +391,10 @@ SocketPair::waitForData()
             }
 
             // work with system socket
-            struct pollfd p[2] = {{rtpHandle_, POLLIN, 0}, {rtcpHandle_, POLLIN, 0}};
+            struct pollfd p[2] = {
+                {rtpHandle_,  POLLIN, 0},
+                {rtcpHandle_, POLLIN, 0}
+            };
             ret = poll(p, 2, NET_POLL_TIMEOUT);
             if (ret > 0) {
                 ret = 0;

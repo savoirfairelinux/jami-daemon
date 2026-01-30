@@ -21,7 +21,7 @@
 #include <iostream>
 #include <cmath>      // std::fmod
 #include <functional> // std::modulus
-#include <ciso646>    // and, or ...
+
 #include <fmt/format.h>
 
 extern "C" {

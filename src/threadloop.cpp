@@ -18,8 +18,6 @@
 #include "threadloop.h"
 #include "logger.h"
 
-#include <ciso646> // fix windows compiler bug
-
 namespace jami {
 
 void

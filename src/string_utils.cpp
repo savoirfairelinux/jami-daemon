@@ -37,8 +37,6 @@
 #include <oleauto.h>
 #endif
 
-#include <ciso646> // fix windows compiler bug
-
 #include "json_utils.h"
 
 namespace jami {

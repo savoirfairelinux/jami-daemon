@@ -19,8 +19,6 @@
  */
 #include "tonelist.h"
 
-#include <ciso646> // fix windows compiler bug
-
 namespace jami {
 
 TelephoneTone::CountryId

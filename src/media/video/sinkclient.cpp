@@ -42,7 +42,7 @@
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
-#include <ciso646> // fix windows compiler bug
+
 #include <fcntl.h>
 #include <cstdio>
 #include <sstream>

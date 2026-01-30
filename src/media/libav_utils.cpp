@@ -30,7 +30,6 @@
 #include <thread>
 #include <mutex>
 #include <exception>
-#include <ciso646> // fix windows compiler bug
 
 extern "C" {
 #if LIBAVUTIL_VERSION_MAJOR < 56
