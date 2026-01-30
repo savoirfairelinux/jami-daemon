@@ -22,6 +22,7 @@
 
 #include <opendht/utils.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
@@ -43,7 +44,8 @@ namespace debug {
  * Ex:
  * Timer t;
  * std::this_thread::sleep_for(std::chrono::milliseconds(10));
- * JAMI_DBG() << "Task took " << t.getDuration<std::chrono::nanoseconds>() << " ns";
+ * JAMI_LOG("Task took {} ns", t.getDuration<std::chrono::nanoseconds>());
+ * // Timer also automatically prints duration on destruction
  */
 class Timer
 {
@@ -72,13 +74,20 @@ private:
     std::chrono::time_point<Clock> start_;
 };
 
+template<size_t N>
+struct StringLiteral
+{
+    consteval StringLiteral(const char (&str)[N]) { std::copy_n(str, N, value); }
+    char value[N];
+};
+
 /*
  * Ex:
- * STATS_TIMER(TaskName);
+ * StatsTimer<"TaskName"> timer;
  * std::this_thread::sleep_for(std::chrono::milliseconds(10));
  * // Timer automatically prints stats on destruction
  */
-template<typename Tag>
+template<StringLiteral Tag>
 class StatsTimer
 {
     using time_point = std::chrono::time_point<Clock>;
@@ -91,39 +100,47 @@ public:
 
     ~StatsTimer()
     {
-        auto duration = Clock::now() - start_;
-        auto [avg, count] = inc(duration);
-        JAMI_LOG("{}: end after {}", Tag::name(), dht::print_duration(duration));
-        if (count > 1) {
-            JAMI_LOG("{}: Average duration: {} ({}) Total: {}",
-                     Tag::name(),
-                     dht::print_duration(avg),
-                     count,
-                     dht::print_duration(total_duration_));
+        auto dt = Clock::now() - start_;
+        auto stats = inc(dt);
+        if (stats.count > 1) {
+            JAMI_LOG("{}: end after {} - Average duration: {} ({}) Total: {} Min: {} Max: {}",
+                     Tag.value,
+                     dht::print_duration(dt),
+                     dht::print_duration(stats.total_duration / stats.count),
+                     stats.count,
+                     dht::print_duration(stats.total_duration),
+                     dht::print_duration(stats.min_duration),
+                     dht::print_duration(stats.max_duration));
+        } else {
+            JAMI_LOG("{}: end after {}", Tag.value, dht::print_duration(dt));
         }
     }
 
 private:
+    struct Stats
+    {
+        duration total_duration {};
+        duration min_duration {duration::max()};
+        duration max_duration {duration::min()};
+        duration::rep count {0};
+    };
+
     time_point start_;
     static inline std::mutex mutex_;
-    static inline duration total_duration_ {};
-    static inline duration::rep count_ {0};
+    static inline Stats stats_;
 
-    std::pair<duration, duration::rep> inc(duration dt)
+    Stats inc(duration dt)
     {
         std::lock_guard lock(mutex_);
-        total_duration_ += dt;
-        count_++;
-        return {total_duration_ / count_, count_};
+        stats_.total_duration += dt;
+        stats_.count++;
+        if (dt < stats_.min_duration)
+            stats_.min_duration = dt;
+        if (dt > stats_.max_duration)
+            stats_.max_duration = dt;
+        return stats_;
     }
 };
-
-#define STATS_TIMER(tag) \
-    struct StatsTimerTag_##tag \
-    { \
-        static constexpr std::string_view name() { return #tag; } \
-    }; \
-    jami::debug::StatsTimer<StatsTimerTag_##tag> stats_timer_##tag
 
 /**
  * Audio logger. Writes a wav file from raw PCM or AVFrame. Helps debug what goes wrong with audio.
