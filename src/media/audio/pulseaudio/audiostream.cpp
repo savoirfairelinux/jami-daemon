@@ -162,11 +162,11 @@ AudioStream::stop()
     }
     audiostream_ = nullptr;
 
-    std::unique_lock lock(mutex_);
-    for (auto op : ongoing_ops)
+    // pa_operation_cancel calls the operation's state callback synchronously, so
+    // copy ongoing_ops to avoid erasing its elements while iterating over it.
+    auto ops = ongoing_ops;
+    for (auto op : ops)
         pa_operation_cancel(op);
-    // wait for all operations to end
-    cond_.wait(lock, [this] { return ongoing_ops.empty(); });
 }
 
 void
@@ -208,7 +208,6 @@ AudioStream::moved(pa_stream* s)
             },
             this);
 
-        std::lock_guard lock(mutex_);
         pa_operation_set_state_callback(
             op, [](pa_operation* op, void* userdata) { static_cast<AudioStream*>(userdata)->opEnded(op); }, this);
         ongoing_ops.emplace(op);
@@ -218,10 +217,8 @@ AudioStream::moved(pa_stream* s)
 void
 AudioStream::opEnded(pa_operation* op)
 {
-    std::lock_guard lock(mutex_);
     ongoing_ops.erase(op);
     pa_operation_unref(op);
-    cond_.notify_all();
 }
 
 void
