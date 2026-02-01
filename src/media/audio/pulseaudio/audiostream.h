@@ -154,8 +154,6 @@ private:
      */
     std::function<void(bool)> echoCancelCb;
 
-    std::mutex mutex_;
-    std::condition_variable cond_;
     std::set<pa_operation*> ongoing_ops;
 };
 
