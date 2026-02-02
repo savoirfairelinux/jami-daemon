@@ -22,10 +22,18 @@
 
 namespace jami {
 
+/** Struct to handle a DTMF */
+struct DTMFTone
+{
+    unsigned char code; /** Code of the tone */
+    unsigned lower;     /** Lower frequency */
+    unsigned higher;    /** Higher frequency */
+};
+
 /*
  * Tone frequencies
  */
-const DTMFGenerator::DTMFTone DTMFGenerator::tones_[] = {
+constexpr DTMFTone TONES[] = {
     {'0', 941, 1336},
     {'1', 697, 1209},
     {'2', 697, 1336},
@@ -119,7 +127,7 @@ DTMFGenerator::getNextSamples(AVFrame* frame)
 }
 
 libjami::FrameBuffer
-DTMFGenerator::fillToneBuffer(int index)
+DTMFGenerator::fillToneBuffer(unsigned index)
 {
     assert(index >= 0 and index < NUM_TONES);
     libjami::FrameBuffer ptr(av_frame_alloc());
@@ -129,7 +137,7 @@ DTMFGenerator::fillToneBuffer(int index)
     ptr->channel_layout = AV_CH_LAYOUT_MONO;
     av_channel_layout_from_mask(&ptr->ch_layout, AV_CH_LAYOUT_MONO);
     av_frame_get_buffer(ptr.get(), 0);
-    tone_.genSin(ptr.get(), 0, ptr->nb_samples, tones_[index].higher, tones_[index].lower);
+    tone_.genSin(ptr.get(), 0, ptr->nb_samples, TONES[index].higher, TONES[index].lower);
     return ptr;
 }
 
