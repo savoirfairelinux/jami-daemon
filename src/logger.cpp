@@ -41,6 +41,7 @@
 #include <mutex>
 #include <thread>
 #include <array>
+#include <list>
 
 #include "fileutils.h"
 #include "logger.h"
@@ -194,6 +195,7 @@ struct Logger::Msg
         , payload_(std::move(message))
         , level_(level)
         , linefeed_(linefeed)
+        , header_(formatHeader(file_, line_))
     {}
 
     Msg(int level, std::string_view file, int line, bool linefeed, std::string_view tag, const char* fmt, va_list ap)
@@ -203,19 +205,11 @@ struct Logger::Msg
         , payload_(formatPrintfArgs(fmt, ap))
         , level_(level)
         , linefeed_(linefeed)
+        , header_(formatHeader(file_, line_))
     {}
 
-    Msg(Msg&& other)
-    {
-        file_ = other.file_;
-        line_ = other.line_;
-        tag_ = other.tag_;
-        payload_ = std::move(other.payload_);
-        level_ = other.level_;
-        linefeed_ = other.linefeed_;
-    }
-
-    inline std::string header() const { return formatHeader(file_, line_); }
+    Msg(Msg&& other) = default;
+    Msg& operator=(Msg&& other) = default;
 
     std::string_view file_;
     unsigned line_;
@@ -223,6 +217,7 @@ struct Logger::Msg
     std::string payload_;
     int level_;
     bool linefeed_;
+    std::string header_;
 };
 
 class Logger::Handler
@@ -230,28 +225,22 @@ class Logger::Handler
 public:
     virtual ~Handler() = default;
 
-    virtual void consume(Msg& msg) = 0;
+    virtual void consume(const Msg& msg) = 0;
 
-    void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
+    virtual void enable(bool en) { enabled_.store(en, std::memory_order_relaxed); }
     bool isEnable() { return enabled_.load(std::memory_order_relaxed); }
 
-private:
+protected:
     std::atomic_bool enabled_ {false};
 };
 
-class ConsoleLog : public Logger::Handler
+class ConsoleLog final : public Logger::Handler
 {
 public:
-    static ConsoleLog& instance()
-    {
-        // Intentional memory leak:
-        // Some thread can still be logging even during static destructors.
-        static ConsoleLog* self = new ConsoleLog();
-        return *self;
-    }
+    ConsoleLog() = default;
 
 #ifdef _WIN32
-    void printLogImpl(Logger::Msg& msg, bool with_color)
+    void printLogImpl(const Logger::Msg& msg, bool with_color)
     {
         // If we are using Visual Studio, we can use OutputDebugString to print
         // to the "Output" window. Otherwise, we just use fputs to stderr.
@@ -270,7 +259,7 @@ public:
 
         WORD saved_attributes;
         static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        auto header = msg.header();
+        auto& header = msg.header_;
         if (with_color) {
             static WORD color_header = CYAN;
             WORD color_prefix = LIGHT_GREEN;
@@ -298,6 +287,8 @@ public:
             printFunc(header.c_str());
         }
 
+        if (!msg.tag_.empty())
+            printFunc(msg.tag_.data());
         printFunc(msg.payload_.c_str());
 
         if (msg.linefeed_) {
@@ -311,7 +302,6 @@ public:
 #else
     void printLogImpl(const Logger::Msg& msg, bool with_color)
     {
-        auto header = msg.header();
         if (with_color) {
             constexpr const char* color_header = CYAN;
             const char* color_prefix = "";
@@ -327,11 +317,11 @@ public:
             }
 
             fputs(color_header, stderr);
-            fwrite(header.c_str(), 1, header.size(), stderr);
+            fwrite(msg.header_.c_str(), 1, msg.header_.size(), stderr);
             fputs(END_COLOR, stderr);
             fputs(color_prefix, stderr);
         } else {
-            fwrite(header.c_str(), 1, header.size(), stderr);
+            fwrite(msg.header_.c_str(), 1, msg.header_.size(), stderr);
         }
 
         if (!msg.tag_.empty())
@@ -347,52 +337,14 @@ public:
     }
 #endif /* _WIN32 */
 
-    void consume(Logger::Msg& msg) override
-    {
-        static bool with_color = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR")
-                                   || getenv("NO_COLOURS"));
+    bool withColor_ = !(getenv("NO_COLOR") || getenv("NO_COLORS") || getenv("NO_COLOUR") || getenv("NO_COLOURS"));
 
-        printLogImpl(msg, with_color);
-    }
+    void consume(const Logger::Msg& msg) override { printLogImpl(msg, withColor_); }
 };
 
-void
-Logger::setConsoleLog(bool en)
-{
-    ConsoleLog::instance().enable(en);
-#ifdef _WIN32
-    static WORD original_attributes;
-    if (en) {
-        if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()) {
-            FILE *fpstdout = stdout, *fpstderr = stderr;
-            freopen_s(&fpstdout, "CONOUT$", "w", stdout);
-            freopen_s(&fpstderr, "CONOUT$", "w", stderr);
-            // Save the original state of the console window(in case AttachConsole worked).
-            CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-            GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
-            original_attributes = consoleInfo.wAttributes;
-            SetConsoleCP(CP_UTF8);
-            SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
-        }
-    } else {
-        // Restore the original state of the console window in case we attached.
-        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), original_attributes);
-        FreeConsole();
-    }
-#endif
-}
-
-class SysLog : public Logger::Handler
+class SysLog final : public Logger::Handler
 {
 public:
-    static SysLog& instance()
-    {
-        // Intentional memory leak:
-        // Some thread can still be logging even during static destructors.
-        static SysLog* self = new SysLog();
-        return *self;
-    }
-
     SysLog()
     {
 #ifdef _WIN32
@@ -404,133 +356,245 @@ public:
 #endif /* _WIN32 */
     }
 
-    void consume(Logger::Msg& msg) override
+    void consume(const Logger::Msg& msg) override
     {
 #ifdef __ANDROID__
         __android_log_write(msg.level_, msg.file_.data(), msg.payload_.c_str());
 #else
-        ::syslog(msg.level_, "%.*s", (int) msg.payload_.size(), msg.payload_.data());
+        ::syslog(msg.level_,
+                 "%.*s%.*s",
+                 (int) msg.tag_.size(),
+                 msg.tag_.data(),
+                 (int) msg.payload_.size(),
+                 msg.payload_.data());
 #endif
     }
 };
 
-void
-Logger::setSysLog(bool en)
-{
-    SysLog::instance().enable(en);
-}
-
-class MonitorLog : public Logger::Handler
+class MonitorLog final : public Logger::Handler
 {
 public:
-    static MonitorLog& instance()
-    {
-        // Intentional memory leak
-        // Some thread can still be logging even during static destructors.
-        static MonitorLog* self = new MonitorLog();
-        return *self;
-    }
+    MonitorLog() = default;
 
-    void consume(Logger::Msg& msg) override
+    void consume(const Logger::Msg& msg) override
     {
-        auto message = msg.header() + msg.payload_;
+        auto message = msg.header_ + msg.payload_;
         emitSignal<libjami::ConfigurationSignal::MessageSend>(message);
     }
 };
 
-void
-Logger::setMonitorLog(bool en)
-{
-    MonitorLog::instance().enable(en);
-}
-
-class FileLog : public Logger::Handler
+class FileLog final : public Logger::Handler
 {
 public:
-    static FileLog& instance()
-    {
-        // Intentional memory leak:
-        // Some thread can still be logging even during static destructors.
-        static FileLog* self = new FileLog();
-        return *self;
-    }
+    FileLog() = default;
 
     void setFile(const std::string& path)
     {
-        if (thread_.joinable()) {
-            notify([this] { enable(false); });
-            thread_.join();
-        }
+        std::lock_guard lk(mtx_);
+        if (file_.is_open())
+            file_.close();
 
-        std::ofstream file;
         if (not path.empty()) {
-            file.open(path, std::ofstream::out | std::ofstream::app);
-            enable(true);
+            file_.open(path, std::ofstream::out | std::ofstream::app);
+            if (file_)
+                enable(true);
+            else
+                enable(false);
         } else {
             enable(false);
-            return;
         }
-
-        thread_ = std::thread([this, file = std::move(file)]() mutable {
-            std::vector<Logger::Msg> pendingQ_;
-            while (isEnable()) {
-                {
-                    std::unique_lock lk(mtx_);
-                    cv_.wait(lk, [&] { return not isEnable() or not currentQ_.empty(); });
-                    if (not isEnable())
-                        break;
-
-                    std::swap(currentQ_, pendingQ_);
-                }
-
-                do_consume(file, pendingQ_);
-                pendingQ_.clear();
-            }
-            file.close();
-        });
     }
 
-    ~FileLog()
+    void consume(const Logger::Msg& msg) override
     {
-        notify([=] { enable(false); });
-        if (thread_.joinable())
-            thread_.join();
-    }
-
-    void consume(Logger::Msg& msg) override
-    {
-        notify([&, this] { currentQ_.emplace_back(std::move(msg)); });
+        std::lock_guard lk(mtx_);
+        if (file_.is_open()) {
+            file_ << msg.header_ << msg.tag_ << msg.payload_;
+            if (msg.linefeed_)
+                file_ << ENDL;
+            file_.flush();
+        }
     }
 
 private:
-    template<typename T>
-    void notify(T func)
+    std::mutex mtx_;
+    std::ofstream file_;
+};
+
+class LogDispatcher final
+{
+public:
+    static LogDispatcher& instance()
     {
-        std::lock_guard lk(mtx_);
-        func();
+        static LogDispatcher* self = new LogDispatcher();
+        return *self;
+    }
+
+    void log(Logger::Msg&& msg)
+    {
+        {
+            std::lock_guard lk(mtx_);
+            if (!running_)
+                return;
+            if (!recycleQueue_.empty()) {
+                msgQueue_.splice(msgQueue_.end(), recycleQueue_, recycleQueue_.begin());
+                msgQueue_.back() = std::move(msg);
+            } else {
+                msgQueue_.emplace_back(std::move(msg));
+            }
+        }
         cv_.notify_one();
     }
 
-    void do_consume(std::ofstream& file, const std::vector<Logger::Msg>& messages)
+    void stop()
     {
-        for (const auto& msg : messages) {
-            file << msg.header() << msg.payload_;
-            if (msg.linefeed_)
-                file << ENDL;
+        {
+            std::lock_guard lk(mtx_);
+            if (!running_)
+                return;
+            running_ = false;
         }
-        file.flush();
+        cv_.notify_all();
+        if (thread_.joinable())
+            thread_.join();
+        recycleQueue_.splice(recycleQueue_.end(), std::move(msgQueue_));
     }
 
-    std::vector<Logger::Msg> currentQ_;
+    ConsoleLog consoleLog;
+    SysLog sysLog;
+    MonitorLog monitorLog;
+    FileLog fileLog;
+
+    void enableFileLog(const std::string& path)
+    {
+        fileLog.setFile(path);
+        checkStatus();
+    }
+
+    void enableConsoleLog(bool en)
+    {
+        consoleLog.enable(en);
+        checkStatus();
+#ifdef _WIN32
+        static WORD original_attributes;
+        if (en) {
+            if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()) {
+                FILE *fpstdout = stdout, *fpstderr = stderr;
+                freopen_s(&fpstdout, "CONOUT$", "w", stdout);
+                freopen_s(&fpstderr, "CONOUT$", "w", stderr);
+                // Save the original state of the console window(in case AttachConsole worked).
+                CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+                GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo);
+                original_attributes = consoleInfo.wAttributes;
+                SetConsoleCP(CP_UTF8);
+                SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), ENABLE_QUICK_EDIT_MODE | ENABLE_EXTENDED_FLAGS);
+            }
+        } else {
+            // Restore the original state of the console window in case we attached.
+            SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), original_attributes);
+            FreeConsole();
+        }
+#endif
+    }
+
+    void enableSysLog(bool en)
+    {
+        sysLog.enable(en);
+        checkStatus();
+    }
+
+    void enableMonitorLog(bool en)
+    {
+        monitorLog.enable(en);
+        checkStatus();
+    }
+
+    bool isEnabled()
+    {
+        return consoleLog.isEnable() || sysLog.isEnable() || monitorLog.isEnable() || fileLog.isEnable();
+    }
+
+private:
+    LogDispatcher() = default;
+
+    void checkStatus()
+    {
+        bool en = isEnabled();
+        std::thread t;
+        {
+            std::lock_guard lk(mtx_);
+            if (en && !running_) {
+                running_ = true;
+                thread_ = std::thread(&LogDispatcher::loop, this);
+            } else if (!en && running_) {
+                running_ = false;
+                t = std::move(thread_);
+            }
+        }
+        if (t.joinable()) {
+            cv_.notify_all();
+            t.join();
+            std::lock_guard lk(mtx_);
+            recycleQueue_.splice(recycleQueue_.end(), std::move(msgQueue_));
+        }
+    }
+
+    void loop()
+    {
+        std::unique_lock lk(mtx_);
+        while (running_) {
+            cv_.wait(lk, [this] { return not msgQueue_.empty() or not running_; });
+            auto local = std::move(msgQueue_);
+            lk.unlock();
+            for (auto& msg : local) {
+                if (sysLog.isEnable())
+                    sysLog.consume(msg);
+                if (monitorLog.isEnable())
+                    monitorLog.consume(msg);
+                if (consoleLog.isEnable())
+                    consoleLog.consume(msg);
+                if (fileLog.isEnable())
+                    fileLog.consume(msg);
+
+                msg.payload_ = {};
+                msg.header_ = {};
+            }
+            lk.lock();
+            if (recycleQueue_.size() < 128)
+                recycleQueue_.splice(recycleQueue_.end(), local);
+        }
+    }
+
     std::mutex mtx_;
     std::condition_variable cv_;
+    std::list<Logger::Msg> msgQueue_;
+    std::list<Logger::Msg> recycleQueue_;
+    bool running_ {false};
     std::thread thread_;
 };
 
 void
+Logger::setConsoleLog(bool en)
+{
+    LogDispatcher::instance().enableConsoleLog(en);
+}
+
+void
+Logger::setSysLog(bool en)
+{
+    LogDispatcher::instance().enableSysLog(en);
+}
+
+void
+Logger::setMonitorLog(bool en)
+{
+    LogDispatcher::instance().enableMonitorLog(en);
+}
+
+void
 Logger::setFileLog(const std::string& path)
 {
-    FileLog::instance().setFile(path);
+    LogDispatcher::instance().enableFileLog(path);
 }
 
 LIBJAMI_PUBLIC void
@@ -540,15 +604,6 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* fm
     va_start(ap, fmt);
     vlog(level, file, line, linefeed, fmt, ap);
     va_end(ap);
-}
-
-template<typename T>
-void
-log_to_if_enabled(T& handler, Logger::Msg& msg)
-{
-    if (handler.isEnable()) {
-        handler.consume(msg);
-    }
 }
 
 static std::atomic_bool debugEnabled_ {false};
@@ -572,37 +627,32 @@ Logger::vlog(int level, const char* file, int line, bool linefeed, const char* f
         return;
     }
 
-    if (not(ConsoleLog::instance().isEnable() or SysLog::instance().isEnable() or MonitorLog::instance().isEnable()
-            or FileLog::instance().isEnable())) {
+    if (!LogDispatcher::instance().isEnabled()) {
         return;
     }
 
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, {}, fmt, ap);
-
-    log_to_if_enabled(ConsoleLog::instance(), msg);
-    log_to_if_enabled(SysLog::instance(), msg);
-    log_to_if_enabled(MonitorLog::instance(), msg);
-    log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
+    LogDispatcher::instance().log(std::move(msg));
 }
 
 void
 Logger::write(int level, std::string_view file, int line, bool linefeed, std::string_view tag, std::string&& message)
 {
+    if (!LogDispatcher::instance().isEnabled()) {
+        return;
+    }
     /* Timestamp is generated here. */
     Msg msg(level, file, line, linefeed, tag, std::move(message));
-
-    log_to_if_enabled(ConsoleLog::instance(), msg);
-    log_to_if_enabled(SysLog::instance(), msg);
-    log_to_if_enabled(MonitorLog::instance(), msg);
-    log_to_if_enabled(FileLog::instance(), msg); // Takes ownership of msg if enabled
+    LogDispatcher::instance().log(std::move(msg));
 }
 
 void
 Logger::fini()
 {
     // Force close on file and join thread
-    FileLog::instance().setFile({});
+    LogDispatcher::instance().enableFileLog({});
+    LogDispatcher::instance().stop();
 
 #ifdef _WIN32
     Logger::setConsoleLog(false);
