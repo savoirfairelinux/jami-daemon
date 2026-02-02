@@ -129,7 +129,10 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 #endif
     }
 
-    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override { observablesFrames_.insert(obs); }
+    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override
+    {
+        observablesFrames_.insert(obs);
+    }
 
     void detached(Observable<std::shared_ptr<MediaFrame>>* obs) override
     {
@@ -274,66 +277,80 @@ Observer<std::shared_ptr<MediaFrame>>*
 MediaRecorder::addStream(const MediaStream& ms)
 {
     bool streamIsNew = false;
-    std::lock_guard lk(mutexStreamSetup_);
-    if (audioOnly_ && ms.isVideo) {
-        JAMI_ERR() << "Attempting to add video stream to audio only recording";
-        return nullptr;
-    }
-    if (ms.format < 0 || ms.name.empty()) {
-        JAMI_ERR() << "Attempting to add invalid stream to recording";
-        return nullptr;
-    }
+    std::unique_ptr<StreamObserver> oldObserver; // destroy after unlock
 
-    auto it = streams_.find(ms.name);
-    if (it == streams_.end()) {
-        auto streamPtr = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
-            onFrame(ms.name, frame);
-        });
-        it = streams_.insert(std::make_pair(ms.name, std::move(streamPtr))).first;
-        JAMI_LOG("[Recorder: {:p}] Recorder input #{}: {:s}", fmt::ptr(this), streams_.size(), ms.name);
-        streamIsNew = true;
-    } else {
-        if (ms == it->second->info)
-            JAMI_LOG("[Recorder: {:p}] Recorder already has '{:s}' as input", fmt::ptr(this), ms.name);
-        else {
-            it->second = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
+    {
+        std::lock_guard lk(mutexStreamSetup_);
+        if (audioOnly_ && ms.isVideo) {
+            JAMI_ERR() << "Attempting to add video stream to audio only recording";
+            return nullptr;
+        }
+        if (ms.format < 0 || ms.name.empty()) {
+            JAMI_ERR() << "Attempting to add invalid stream to recording";
+            return nullptr;
+        }
+
+        auto it = streams_.find(ms.name);
+        if (it == streams_.end()) {
+            auto streamPtr = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
                 onFrame(ms.name, frame);
             });
+            it = streams_.insert(std::make_pair(ms.name, std::move(streamPtr))).first;
+            JAMI_LOG("[Recorder: {:p}] Recorder input #{}: {:s}", fmt::ptr(this), streams_.size(), ms.name);
+            streamIsNew = true;
+        } else {
+            if (ms == it->second->info) {
+                JAMI_LOG("[Recorder: {:p}] Recorder already has '{:s}' as input", fmt::ptr(this), ms.name);
+            } else {
+                oldObserver = std::move(it->second);
+                it->second = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
+                    onFrame(ms.name, frame);
+                });
+            }
+            streamIsNew = false;
         }
-        streamIsNew = false;
+
+        if (streamIsNew && isRecording_) {
+            if (ms.isVideo) {
+                if (!videoFilter_ || videoFilter_->needsReinitForNewStream(ms.name))
+                    setupVideoOutput();
+            } else {
+                if (!audioFilter_ || audioFilter_->needsReinitForNewStream(ms.name))
+                    setupAudioOutput();
+            }
+        }
+        it->second->isEnabled = isRecording_;
+        return it->second.get();
     }
 
-    if (streamIsNew && isRecording_) {
-        if (ms.isVideo) {
-            if (!videoFilter_ || videoFilter_->needsReinitForNewStream(ms.name))
-                setupVideoOutput();
-        } else {
-            if (!audioFilter_ || audioFilter_->needsReinitForNewStream(ms.name))
-                setupAudioOutput();
-        }
-    }
-    it->second->isEnabled = isRecording_;
-    return it->second.get();
+    // oldObserver destroyed here, after mutexStreamSetup_ is released
 }
 
 void
 MediaRecorder::removeStream(const MediaStream& ms)
 {
-    std::lock_guard lk(mutexStreamSetup_);
+    std::unique_ptr<StreamObserver> oldObserver; // destroy after unlock
 
-    auto it = streams_.find(ms.name);
-    if (it == streams_.end()) {
-        JAMI_LOG("[Recorder: {:p}] Recorder no stream to remove", fmt::ptr(this));
-    } else {
-        JAMI_LOG("[Recorder: {:p}] Recorder removing '{:s}'", fmt::ptr(this), ms.name);
-        streams_.erase(it);
-        if (isRecording_) {
-            if (ms.isVideo)
-                setupVideoOutput();
-            else
-                setupAudioOutput();
+    {
+        std::lock_guard lk(mutexStreamSetup_);
+
+        auto it = streams_.find(ms.name);
+        if (it == streams_.end()) {
+            JAMI_LOG("[Recorder: {:p}] Recorder no stream to remove", fmt::ptr(this));
+        } else {
+            JAMI_LOG("[Recorder: {:p}] Recorder removing '{:s}'", fmt::ptr(this), ms.name);
+            oldObserver = std::move(it->second);
+            streams_.erase(it);
+            if (isRecording_) {
+                if (ms.isVideo)
+                    setupVideoOutput();
+                else
+                    setupAudioOutput();
+            }
         }
     }
+
+    // oldObserver destroyed here, after mutexStreamSetup_ is released
     return;
 }
 
@@ -608,7 +625,8 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
 
         v << "[" << local.name << "] fps=30, scale=-2:" << newHeight / 5 << " [v:o]; ";
 
-        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h" << ", format=pix_fmts=yuv420p";
+        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h"
+          << ", format=pix_fmts=yuv420p";
     } break;
     default:
         JAMI_ERR() << "Video recordings with more than 2 video streams are not supported";
