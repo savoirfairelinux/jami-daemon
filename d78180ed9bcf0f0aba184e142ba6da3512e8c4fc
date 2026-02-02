@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f2202e69_ef042d60",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 237,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-02T19:12:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "95ffd457_260cfc7a",
+      "range": {
+        "startLine": 237,
+        "startChar": 0,
+        "endLine": 237,
+        "endChar": 23
+      },
+      "revId": "d78180ed9bcf0f0aba184e142ba6da3512e8c4fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "de9c7015_f18f52c2",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-01-30T19:29:21Z",
       "side": 1,
       "message": "This seems a bit low, I did some quick tests and it looks like the number of elements in `msgQueue_` regularly gets in the 150-200 range.",
+      "range": {
+        "startLine": 562,
+        "startChar": 39,
+        "endLine": 562,
+        "endChar": 41
+      },
+      "revId": "d78180ed9bcf0f0aba184e142ba6da3512e8c4fc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "fc4b8c14_4b52d1a6",
+        "filename": "src/logger.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 562,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-02T19:12:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "de9c7015_f18f52c2",
       "range": {
         "startLine": 562,
         "startChar": 39,
