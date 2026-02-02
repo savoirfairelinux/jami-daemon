@@ -19,9 +19,7 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
-ifdef HAVE_LINUX
 	$(APPLY) $(SRC)/gnutls/0001-fix-autotools-build-errors.patch
-endif
 ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
