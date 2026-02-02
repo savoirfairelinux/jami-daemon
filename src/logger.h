@@ -85,7 +85,7 @@ public:
     class Handler;
     struct Msg;
 
-    Logger(int level, const char* file, int line, bool linefeed)
+    Logger(int level, const char* file, unsigned line, bool linefeed)
         : level_ {level}
         , file_ {file}
         , line_ {line}
@@ -120,7 +120,7 @@ public:
 
     LIBJAMI_PUBLIC
     static void write(
-        int level, std::string_view file, int line, bool linefeed, std::string_view tag, std::string&& message);
+        int level, std::string_view file, unsigned line, bool linefeed, std::string_view tag, std::string&& message);
 
     static inline void writeDht(dht::log::source_loc loc,
                                 dht::log::LogLevel level,
@@ -140,14 +140,14 @@ public:
     /// Example: JAMI_DBG("%s", "Hello, World!")
     ///
     LIBJAMI_PUBLIC
-    static void log(int level, const char* file, int line, bool linefeed, const char* const fmt, ...)
+    static void log(int level, const char* file, unsigned line, bool linefeed, const char* const fmt, ...)
         PRINTF_ATTRIBUTE(5, 6);
 
     ///
     /// Printf fashion logging (using va_list parameters)
     ///
     LIBJAMI_PUBLIC
-    static void vlog(int level, const char* file, int line, bool linefeed, const char* fmt, va_list);
+    static void vlog(int level, const char* file, unsigned line, bool linefeed, const char* fmt, va_list);
 
     static void setConsoleLog(bool enable);
     static void setSysLog(bool enable);
@@ -159,12 +159,15 @@ public:
 
     static void fini();
 
-    static Logger log(int level, const char* file, int line, bool linefeed) { return {level, file, line, linefeed}; }
+    static Logger log(int level, const char* file, unsigned line, bool linefeed)
+    {
+        return {level, file, line, linefeed};
+    }
 
 private:
     int level_;              ///< LOG_XXXX values
     const char* const file_; ///< contextual filename (printed as header)
-    const int line_;         ///< contextual line number (printed as header)
+    const unsigned line_;    ///< contextual line number (printed as header)
     bool linefeed_ {true};   ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
     std::ostringstream os_;  ///< string stream used with C++ stream style (stream operator<<)
 };
@@ -173,50 +176,50 @@ namespace log {
 
 template<typename S, typename... Args>
 void
-info(const char* file, int line, S&& format, Args&&... args)
+info(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_INFO, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
-dbg(const char* file, int line, S&& format, Args&&... args)
+dbg(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_DEBUG, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
-warn(const char* file, int line, S&& format, Args&&... args)
+warn(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_WARNING, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
-error(const char* file, int line, S&& format, Args&&... args)
+error(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_ERR, file, line, true, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 
 template<typename S, typename... Args>
 void
-xinfo(const char* file, int line, S&& format, Args&&... args)
+xinfo(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_INFO, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
-xdbg(const char* file, int line, S&& format, Args&&... args)
+xdbg(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_DEBUG, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
-xwarn(const char* file, int line, S&& format, Args&&... args)
+xwarn(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_WARNING, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
 template<typename S, typename... Args>
 void
-xerror(const char* file, int line, S&& format, Args&&... args)
+xerror(const char* file, unsigned line, S&& format, Args&&... args)
 {
     Logger::write(LOG_ERR, file, line, false, {}, fmt::format(std::forward<S>(format), std::forward<Args>(args)...));
 }
