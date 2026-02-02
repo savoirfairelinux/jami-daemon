@@ -529,11 +529,11 @@ bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     if (getState() != State::ACTIVE_ATTACHED) {
-        JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode", getConfId());
+        JAMI_ERROR("[conf:{}] Media change request can only be performed in attached mode", getConfId());
         return false;
     }
 
-    JAMI_DEBUG("[conf:{}] Processing media change request", getConfId());
+    JAMI_DEBUG("[conf:{}] Processing media change request from local user (host)", getConfId());
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
 
@@ -549,10 +549,12 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
             break;
         }
     }
+    JAMI_WARNING("[conf:{}] hostHadVideo: {}, hostWillHaveVideo: {}", getConfId(), hostHadVideo, hostWillHaveVideo);
 #endif
 
     bool hasFileSharing {false};
     for (const auto& media : mediaAttrList) {
+        // if one of the medias is file sharing, create media player for it
         if (!media.enabled_ || media.sourceUri_.empty())
             continue;
 
@@ -576,7 +578,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
     if (!hasFileSharing) {
         closeMediaPlayer(mediaPlayerId_);
-        mediaPlayerId_ = "";
+        mediaPlayerId_.clear();
     }
 
     for (auto const& mediaAttr : mediaAttrList) {
