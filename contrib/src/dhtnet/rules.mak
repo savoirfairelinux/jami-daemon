@@ -1,6 +1,6 @@
 # DHTNET
-DHTNET_VERSION := c541f16426aae71121b3f8c2d29e41e8954e6218
-DHTNET_URL := https://git.jami.net/savoirfairelinux/dhtnet/-/archive/$(DHTNET_VERSION)/dhtnet-$(DHTNET_VERSION).tar.gz
+DHTNET_VERSION := cff03260fa037f59d6768bac26014b01c07b3fb9
+DHTNET_URL := https://review.jami.net/plugins/gitiles/dhtnet/+archive/$(DHTNET_VERSION).tar.gz
 
 PKGS += dhtnet
 DEPS_dhtnet += opendht pjproject asio upnp fmt
@@ -24,7 +24,8 @@ $(TARBALLS)/dhtnet-$(DHTNET_VERSION).tar.gz:
 	touch $@
 
 dhtnet: dhtnet-$(DHTNET_VERSION).tar.gz
-	$(UNPACK)
+	mkdir -p $(UNPACK_DIR)
+	$(UNPACK) -C $(UNPACK_DIR)
 	$(MOVE)
 
 CMAKE_PKGS += dhtnet
