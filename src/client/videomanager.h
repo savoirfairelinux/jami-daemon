@@ -41,6 +41,8 @@ struct VideoManager
 public:
     // Client-managed video inputs and players
     std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
+    std::mutex mediaPlayersMutex;
+
     // Client-managed audio preview
     std::shared_ptr<AudioInput> audioPreview;
 
