@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <shared_mutex>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -36,11 +37,51 @@
 
 namespace jami {
 
+template<typename T>
+class ThreadSafeMap
+{
+    mutable std::shared_mutex mutex_;
+    std::map<std::string, T> map_;
+
+public:
+    void insert(const std::string& key, T value)
+    {
+        std::unique_lock lock(mutex_);
+        map_[key] = std::move(value);
+    }
+
+    std::optional<T> get(const std::string& key) const
+    {
+        std::shared_lock lock(mutex_);
+        auto it = map_.find(key);
+        return (it != map_.end()) ? std::optional<T>(it->second) : std::nullopt;
+    }
+
+    bool erase(const std::string& key)
+    {
+        std::unique_lock lock(mutex_);
+        return map_.erase(key) > 0;
+    }
+
+    bool empty() const
+    {
+        std::shared_lock lock(mutex_);
+        return map_.empty();
+    }
+
+    template<typename Func>
+    void withLock(Func&& func)
+    {
+        std::unique_lock lock(mutex_);
+        func(map_);
+    }
+};
+
 struct VideoManager
 {
 public:
     // Client-managed video inputs and players
-    std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
+    ThreadSafeMap<std::shared_ptr<MediaPlayer>> mediaPlayers;
     // Client-managed audio preview
     std::shared_ptr<AudioInput> audioPreview;
 

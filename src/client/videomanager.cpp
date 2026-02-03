@@ -411,12 +411,10 @@ getDeviceParams(const std::string& deviceId)
 {
     if (auto vm = jami::Manager::instance().getVideoManager()) {
         auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
-        return {
-            {"format", params.format                },
-            {"width",  std::to_string(params.width) },
-            {"height", std::to_string(params.height)},
-            {"rate",   params.framerate.to_string() }
-        };
+        return {{"format", params.format},
+                {"width", std::to_string(params.width)},
+                {"height", std::to_string(params.height)},
+                {"rate", params.framerate.to_string()}};
     }
     return {};
 }
@@ -550,25 +548,34 @@ getRenderer(const std::string& callId)
 #ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(callId))
         return {
-            {libjami::Media::Details::CALL_ID,  callId                           },
-            {libjami::Media::Details::SHM_PATH, sink->openedName()               },
-            {libjami::Media::Details::WIDTH,    std::to_string(sink->getWidth()) },
-            {libjami::Media::Details::HEIGHT,   std::to_string(sink->getHeight())},
+            {libjami::Media::Details::CALL_ID, callId},
+            {libjami::Media::Details::SHM_PATH, sink->openedName()},
+            {libjami::Media::Details::WIDTH, std::to_string(sink->getWidth())},
+            {libjami::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
         };
     else
 #endif
         return {
-            {libjami::Media::Details::CALL_ID,  callId},
-            {libjami::Media::Details::SHM_PATH, ""    },
-            {libjami::Media::Details::WIDTH,    "0"   },
-            {libjami::Media::Details::HEIGHT,   "0"   },
+            {libjami::Media::Details::CALL_ID, callId},
+            {libjami::Media::Details::SHM_PATH, ""},
+            {libjami::Media::Details::WIDTH, "0"},
+            {libjami::Media::Details::HEIGHT, "0"},
         };
 }
 
 std::string
 createMediaPlayer(const std::string& path)
 {
-    return jami::createMediaPlayer(path);
+    if (auto vmgr = jami::Manager::instance().getVideoManager()) {
+        vmgr->mediaPlayers.withLock([path](auto& map) {
+            auto it = map.find(path);
+            if (it == map.end()) {
+                map[path] = std::make_shared<jami::MediaPlayer>(path);
+            }
+        });
+        return path;
+    }
+    return {};
 }
 
 bool
@@ -762,10 +769,7 @@ std::shared_ptr<MediaPlayer>
 getMediaPlayer(const std::string& id)
 {
     if (auto vmgr = Manager::instance().getVideoManager()) {
-        auto it = vmgr->mediaPlayers.find(id);
-        if (it != vmgr->mediaPlayers.end()) {
-            return it->second;
-        }
+        return vmgr->mediaPlayers.get(id).value_or(nullptr);
     }
     return {};
 }
@@ -774,10 +778,12 @@ std::string
 createMediaPlayer(const std::string& path)
 {
     if (auto vmgr = Manager::instance().getVideoManager()) {
-        auto& player = vmgr->mediaPlayers[path];
-        if (!player) {
-            player = std::make_shared<MediaPlayer>(path);
-        }
+        vmgr->mediaPlayers.withLock([path](auto& map) {
+            auto it = map.find(path);
+            if (it == map.end()) {
+                map[path] = std::make_shared<MediaPlayer>(path);
+            }
+        });
         return path;
     }
     return {};
@@ -797,7 +803,7 @@ bool
 closeMediaPlayer(const std::string& id)
 {
     if (auto vm = Manager::instance().getVideoManager())
-        return vm->mediaPlayers.erase(id) > 0;
+        return vm->mediaPlayers.erase(id);
     return false;
 }
 
