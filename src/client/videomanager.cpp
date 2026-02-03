@@ -411,12 +411,10 @@ getDeviceParams(const std::string& deviceId)
 {
     if (auto vm = jami::Manager::instance().getVideoManager()) {
         auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
-        return {
-            {"format", params.format                },
-            {"width",  std::to_string(params.width) },
-            {"height", std::to_string(params.height)},
-            {"rate",   params.framerate.to_string() }
-        };
+        return {{"format", params.format},
+                {"width", std::to_string(params.width)},
+                {"height", std::to_string(params.height)},
+                {"rate", params.framerate.to_string()}};
     }
     return {};
 }
@@ -550,18 +548,18 @@ getRenderer(const std::string& callId)
 #ifdef ENABLE_VIDEO
     if (auto sink = jami::Manager::instance().getSinkClient(callId))
         return {
-            {libjami::Media::Details::CALL_ID,  callId                           },
-            {libjami::Media::Details::SHM_PATH, sink->openedName()               },
-            {libjami::Media::Details::WIDTH,    std::to_string(sink->getWidth()) },
-            {libjami::Media::Details::HEIGHT,   std::to_string(sink->getHeight())},
+            {libjami::Media::Details::CALL_ID, callId},
+            {libjami::Media::Details::SHM_PATH, sink->openedName()},
+            {libjami::Media::Details::WIDTH, std::to_string(sink->getWidth())},
+            {libjami::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
         };
     else
 #endif
         return {
-            {libjami::Media::Details::CALL_ID,  callId},
-            {libjami::Media::Details::SHM_PATH, ""    },
-            {libjami::Media::Details::WIDTH,    "0"   },
-            {libjami::Media::Details::HEIGHT,   "0"   },
+            {libjami::Media::Details::CALL_ID, callId},
+            {libjami::Media::Details::SHM_PATH, ""},
+            {libjami::Media::Details::WIDTH, "0"},
+            {libjami::Media::Details::HEIGHT, "0"},
         };
 }
 
@@ -753,8 +751,10 @@ getAudioInput(const std::string& device)
 bool
 VideoManager::hasRunningPlayers()
 {
-    if (auto vmgr = Manager::instance().getVideoManager())
+    if (auto vmgr = Manager::instance().getVideoManager()) {
+        std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
         return !vmgr->mediaPlayers.empty();
+    }
     return false;
 }
 
@@ -762,6 +762,7 @@ std::shared_ptr<MediaPlayer>
 getMediaPlayer(const std::string& id)
 {
     if (auto vmgr = Manager::instance().getVideoManager()) {
+        std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
         auto it = vmgr->mediaPlayers.find(id);
         if (it != vmgr->mediaPlayers.end()) {
             return it->second;
@@ -774,6 +775,7 @@ std::string
 createMediaPlayer(const std::string& path)
 {
     if (auto vmgr = Manager::instance().getVideoManager()) {
+        std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
         auto& player = vmgr->mediaPlayers[path];
         if (!player) {
             player = std::make_shared<MediaPlayer>(path);
@@ -796,8 +798,10 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closeMediaPlayer(const std::string& id)
 {
-    if (auto vm = Manager::instance().getVideoManager())
+    if (auto vm = Manager::instance().getVideoManager()) {
+        std::scoped_lock<std::mutex> lk(vm->mediaPlayersMutex);
         return vm->mediaPlayers.erase(id) > 0;
+    }
     return false;
 }
 
