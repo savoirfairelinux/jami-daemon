@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d9df1abe_77dc01c9",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-03T21:15:03Z",
+      "side": 1,
+      "message": "duplicates code",
+      "range": {
+        "startLine": 569,
+        "startChar": 4,
+        "endLine": 578,
+        "endChar": 14
+      },
+      "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "e87569e9_e52401cc",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 785,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-03T21:15:03Z",
+      "side": 1,
+      "message": "previous logic only performed a single lookup instead of two here.",
+      "range": {
+        "startLine": 782,
+        "startChar": 12,
+        "endLine": 785,
+        "endChar": 13
+      },
+      "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d2b18aaf_77a732a1",
+        "filename": "src/client/videomanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-03T21:15:03Z",
+      "side": 1,
+      "message": "Cool class, but I believe not needed for this case :)\nThe map could more simply be protected by a mutex, similarly to videoInputs and audioInputs.\nAlso, all map operations are short and non-blocking, and we don\u0027t expect this map to be accessed frequently, so it\u0027s likely not a contention point and the overhead of shared read ownership is not needed.\n\nHowever, the pattern of protecting a single map with a mutex is indeed common through Jami, so it may make sense to add this class as a common utility. This could be done in a separate commit.",
+      "range": {
+        "startLine": 40,
+        "startChar": 0,
+        "endLine": 78,
+        "endChar": 2
+      },
+      "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
