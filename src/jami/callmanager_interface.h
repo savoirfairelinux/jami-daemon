@@ -61,6 +61,17 @@ LIBJAMI_PUBLIC std::vector<std::string> getCallList(const std::string& accountId
 LIBJAMI_PUBLIC bool acceptWithMedia(const std::string& accountId,
                                     const std::string& callId,
                                     const std::vector<libjami::MediaMap>& mediaList);
+
+/**
+ * Handle media change request coming from the local client.
+ * If callId maps to a conference hosted by the local user, the request will be forwarded to the conference
+ * stack. Else, if callId maps to a call, the request will be forwarded to the call/SIP stack.
+ * @param accountId
+ * @param callId ID of the call. If the user is hosting a conference, it should be a conference ID. Otherwise, it should
+ * be a regular call ID.
+ * @param mediaList the local user's new media list
+ * @return true on success, false otherwise
+ */
 LIBJAMI_PUBLIC bool requestMediaChange(const std::string& accountId,
                                        const std::string& callId,
                                        const std::vector<libjami::MediaMap>& mediaList);
