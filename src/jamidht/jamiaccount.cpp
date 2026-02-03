@@ -3788,6 +3788,11 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         return;
     }
     JAMI_LOG("[Account {}] Ask {} for a new SIP channel", getAccountID(), deviceId);
+    dhtnet::ConnectDeviceOptions options;
+    options.noNewSocket = false;
+    options.forceNewSocket = forceNewConnection;
+    options.connType = connectionType;
+    options.channelTimeout = 3s;
     connectionManager_->connectDevice(
         deviceId,
         "sip",
@@ -3805,9 +3810,7 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
             if (pc)
                 pc->onFailure();
         },
-        false,
-        forceNewConnection,
-        connectionType);
+        options);
 }
 
 bool
