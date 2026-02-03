@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac97e147_34e87f7c",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-03T22:00:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d9df1abe_77dc01c9",
+      "range": {
+        "startLine": 569,
+        "startChar": 4,
+        "endLine": 578,
+        "endChar": 14
+      },
+      "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "e87569e9_e52401cc",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-02-03T21:15:03Z",
       "side": 1,
       "message": "previous logic only performed a single lookup instead of two here.",
+      "range": {
+        "startLine": 782,
+        "startChar": 12,
+        "endLine": 785,
+        "endChar": 13
+      },
+      "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "308f5c32_8a5a413b",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 785,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-03T22:00:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "e87569e9_e52401cc",
       "range": {
         "startLine": 782,
         "startChar": 12,
