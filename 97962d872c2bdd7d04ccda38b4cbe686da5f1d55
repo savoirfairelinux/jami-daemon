@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ac93231_876c8020",
+        "filename": "src/jamidht/jamiaccount_config.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-02-03T08:24:49Z",
+      "side": 1,
+      "message": "Remove trailing space ` `?",
+      "range": {
+        "startLine": 161,
+        "startChar": 73,
+        "endLine": 161,
+        "endChar": 74
+      },
+      "revId": "97962d872c2bdd7d04ccda38b4cbe686da5f1d55",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
