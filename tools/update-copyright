@@ -19,16 +19,15 @@
 #
 
 # List all files in current directory
-FILES=`find -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.i" -o -name "*.sh" -o -name "*.py" -o -name "*.mm" -o -name "*.patch" -o -name "README"`
-FILES+=" ./configure.ac ./tools/update-copyright"
-year=`date +%Y`
+FILES=$(find -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.i" -o -name "*.sh" -o -name "*.py" -o -name "*.mm" -o -name "*.patch" -o -name "README")
+FILES+="./tools/update-copyright"
+year=$(date +%Y)
 
 # Loop and replace
-for f in $FILES
-do
+for f in $FILES; do
   sed -i "/$year/b; s/\-[0-9]\+ \(by \)\?Savoir-[fF]aire Linux/-$year Savoir-faire Linux/g" $f
   sed -i "/$year/b; s/ \([0-9]\+\) \(by \)\?Savoir-[fF]aire Linux/ \1-$year Savoir-faire Linux/g" $f
   sed -i "/$year/b; s/Savoir-[fF]aire Linux \([0-9]\+\)\-[0-9]\+/Savoir-faire Linux \1-$year/g" $f
 done
 
-exit 0;
+exit 0
