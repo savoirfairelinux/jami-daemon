@@ -423,7 +423,8 @@ private:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec);
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec);
 
-    bool isMuted(std::string_view uri) const;
+    // Returns true if callId is present in the set of muted participants.
+    bool isMuted(std::string_view callId) const;
 
     ConfInfo getConfInfoHostUri(std::string_view localHostURI, std::string_view destURI);
     bool isHost(std::string_view uri) const;
