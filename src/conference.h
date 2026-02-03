@@ -249,11 +249,10 @@ public:
     bool isMediaSourceMuted(MediaType type) const;
 
     /**
-     * Process a media change request.
-     * Used to change the media attributes of the host.
+     * Process a media change request from the local user (conference host).
      *
-     * @param remoteMediaList new media list from the remote
-     * @return true on success
+     * @param mediaList new media list built by the client
+     * @return true on success, false otherwise
      */
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList);
 
