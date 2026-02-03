@@ -3769,12 +3769,14 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
                                   bool forceNewConnection,
                                   const std::shared_ptr<SIPCall>& pc)
 {
-    if (peerId == getUsername()) {
-        if (!syncModule()->isConnected(deviceId))
-            channelHandlers_[Uri::Scheme::SYNC]->connect(deviceId,
-                                                         "",
-                                                         [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
-                                                            const DeviceId& /*deviceId*/) {});
+    if (jami::Manager::instance().syncOnRegister) {
+        if (peerId == getUsername()) {
+            if (!syncModule()->isConnected(deviceId))
+                channelHandlers_[Uri::Scheme::SYNC]->connect(deviceId,
+                                                             "",
+                                                             [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
+                                                                const DeviceId& /*deviceId*/) {});
+        }
     }
 
     JAMI_LOG("[Account {}] Request SIP connection to peer {} on device {}", getAccountID(), peerId, deviceId);
@@ -4394,7 +4396,9 @@ JamiAccount::initConnectionManager()
                                                                                      *connectionManager_.get());
         channelHandlers_[Uri::Scheme::GIT] = std::make_unique<ConversationChannelHandler>(shared(),
                                                                                           *connectionManager_.get());
-        channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
+        if (jami::Manager::instance().syncOnRegister) {
+            channelHandlers_[Uri::Scheme::SYNC] = std::make_unique<SyncChannelHandler>(shared(), *connectionManager_.get());
+        }
         channelHandlers_[Uri::Scheme::DATA_TRANSFER]
             = std::make_unique<TransferChannelHandler>(shared(), *connectionManager_.get());
         channelHandlers_[Uri::Scheme::MESSAGE] = std::make_unique<MessageChannelHandler>(
