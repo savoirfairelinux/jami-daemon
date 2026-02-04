@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "15cbf44b_fc410b1e",
+        "filename": "src/media/audio/sound/dtmfgenerator.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-04T21:22:30Z",
+      "side": 1,
+      "message": "This check is no longer relevant.",
+      "range": {
+        "startLine": 132,
+        "startChar": 11,
+        "endLine": 132,
+        "endChar": 21
+      },
+      "revId": "0fde7a95655ddf094ea2d438f5b506da0d7d0b97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
