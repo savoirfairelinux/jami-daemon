@@ -77,7 +77,7 @@ public:
      */
     void switchInputs(const std::vector<std::string>& inputs);
     /**
-     * Stop all inputs
+     * Stop all inputs and clear the list of local inputs.
      */
     void stopInputs();
 

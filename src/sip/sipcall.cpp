@@ -2226,39 +2226,37 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 
     bool notifyMute = false;
 
-    if (newMediaAttr.muted_ == mediaAttr->muted_) {
-        // Nothing to do. Already in the desired state.
-        JAMI_DEBUG("[call:{}] [{}] already {}",
-                   getCallId(),
-                   mediaAttr->label_,
-                   mediaAttr->muted_ ? "muted " : "unmuted ");
+    JAMI_DEBUG("[call:{}] Updating RTP stream @{} for [{}]", getCallId(), streamIdx, mediaAttr->label_);
 
-    } else {
-        // Update
+    if (newMediaAttr.muted_ != mediaAttr->muted_) {
+        // Update media's mute state
         mediaAttr->muted_ = newMediaAttr.muted_;
         notifyMute = true;
-        JAMI_DEBUG("[call:{}] {} [{}]", getCallId(), mediaAttr->muted_ ? "muting" : "unmuting", mediaAttr->label_);
+        JAMI_DEBUG("[call:{}] {} [{}]", getCallId(), mediaAttr->muted_ ? "Muting" : "Unmuting", mediaAttr->label_);
     }
 
     // Only update source and type if actually set.
-    if (not newMediaAttr.sourceUri_.empty())
+    if (!newMediaAttr.sourceUri_.empty() && newMediaAttr.sourceUri_ != mediaAttr->sourceUri_) {
+        JAMI_DEBUG("[call:{}] Updating source URI for media '{}' to '{}'",
+                   getCallId(),
+                   mediaAttr->label_,
+                   newMediaAttr.sourceUri_);
         mediaAttr->sourceUri_ = newMediaAttr.sourceUri_;
+    }
 
-    if (notifyMute and mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
+    if (notifyMute && mediaAttr->type_ == MediaType::MEDIA_AUDIO) {
         rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
         sendMuteState(mediaAttr->muted_);
-        if (not isSubcall())
+        if (!isSubcall())
             emitSignal<libjami::CallSignal::AudioMuted>(getCallId(), mediaAttr->muted_);
-        return;
     }
 
 #ifdef ENABLE_VIDEO
-    if (notifyMute and mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
+    if (notifyMute && mediaAttr->type_ == MediaType::MEDIA_VIDEO) {
         rtpStream.rtpSession_->setMediaSource(mediaAttr->sourceUri_);
         rtpStream.rtpSession_->setMuted(mediaAttr->muted_);
-
-        if (not isSubcall())
+        if (!isSubcall())
             emitSignal<libjami::CallSignal::VideoMuted>(getCallId(), mediaAttr->muted_);
     }
 #endif
@@ -2267,54 +2265,44 @@ SIPCall::updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx)
 bool
 SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList, bool isRemote)
 {
-    JAMI_DEBUG("[call:{}] New local media", getCallId());
-
     if (mediaAttrList.size() > PJ_ICE_MAX_COMP / 2) {
-        JAMI_DEBUG("[call:{:s}] Too many media streams, limit it ({:d} vs {:d})",
-                   getCallId().c_str(),
+        JAMI_ERROR("[call:{:s}] {} streams requested, maximum is {}",
+                   getCallId(),
                    mediaAttrList.size(),
-                   PJ_ICE_MAX_COMP);
+                   PJ_ICE_MAX_COMP / 2);
         return false;
     }
 
-    unsigned idx = 0;
-    for (auto const& newMediaAttr : mediaAttrList) {
-        JAMI_DEBUG("[call:{}] Media @{}: {}", getCallId(), idx++, newMediaAttr.toString(true));
-    }
+    JAMI_DEBUG("[call:{}] Updating RTP streams (nb={}) based on media changes", getCallId(), rtpStreams_.size());
 
-    JAMI_DEBUG("[call:{}] Updating local media streams", getCallId());
+    for (const auto& media : mediaAttrList) {
+        int streamIdx = findRtpStreamIndex(media.label_); // -1 if not found
 
-    for (auto const& newAttr : mediaAttrList) {
-        auto streamIdx = findRtpStreamIndex(newAttr.label_);
-
-        if (streamIdx < 0) {
-            // Media does not exist, add a new one.
-            addMediaStream(newAttr);
+        if (streamIdx >= 0) {
+            updateMediaStream(media, streamIdx);
+        } else {
+            addMediaStream(media);
+            JAMI_DEBUG("[call:{}] Added new RTP stream for [{}]", getCallId(), media.label_);
             auto& stream = rtpStreams_.back();
-            // If the remote asks for a new stream, our side sends nothing
-            stream.mediaAttribute_->muted_ = isRemote ? true : stream.mediaAttribute_->muted_;
+
+            // If the request comes from the remote peer, mute the new media stream on our side by default
+            if (isRemote)
+                stream.mediaAttribute_->muted_ = true;
+
             try {
                 createRtpSession(stream);
-                JAMI_DEBUG("[call:{:s}] Added a new media stream @{:d}: {:s}",
-                           getCallId(),
-                           idx,
-                           stream.mediaAttribute_->toString(true));
+                JAMI_DEBUG("[call:{}] Created an RTP session for [{}]", getCallId(), media.label_);
             } catch (const std::exception& e) {
-                JAMI_ERROR("[call:{:s}] Failed to create RTP session for media @{:d}: {:s}. Ignoring the media",
-                           getCallId(),
-                           idx,
-                           e.what());
+                JAMI_ERROR("[call:{}] Failed to create RTP session for [{}]: {}", getCallId(), media.label_, e.what());
                 rtpStreams_.pop_back();
             }
-        } else {
-            updateMediaStream(newAttr, streamIdx);
         }
     }
 
-    if (mediaAttrList.size() < rtpStreams_.size()) {
+    // If we have more RTP streams than requested medias, remove the extra streams.
+    if (rtpStreams_.size() > mediaAttrList.size()) {
 #ifdef ENABLE_VIDEO
-        // If new media stream list got more media streams than current size, we can remove old media streams from conference
-        for (auto i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
+        for (size_t i = mediaAttrList.size(); i < rtpStreams_.size(); ++i) {
             auto& stream = rtpStreams_[i];
             if (stream.rtpSession_->getMediaType() == MediaType::MEDIA_VIDEO)
                 std::static_pointer_cast<video::VideoRtpSession>(stream.rtpSession_)->exitConference();
@@ -2322,6 +2310,9 @@ SIPCall::updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList,
 #endif
         rtpStreams_.resize(mediaAttrList.size());
     }
+
+    JAMI_DEBUG("[call:{}] Successfully updated RTP streams based on media changes", getCallId(), rtpStreams_.size());
+
     return true;
 }
 
@@ -2511,11 +2502,11 @@ SIPCall::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         JAMI_ERROR("[call:{}] Invalid media change request: new media list is empty", getCallId());
         return false;
     }
-    JAMI_DEBUG("[call:{}] Requesting media change. List of new media:", getCallId());
 
+    JAMI_DEBUG("[call:{}] Requesting media change. List of new media (size={}):", getCallId(), mediaAttrList.size());
     unsigned idx = 0;
     for (auto const& newMediaAttr : mediaAttrList) {
-        JAMI_DEBUG("[call:{}] Media @{:d}: {}", getCallId(), idx++, newMediaAttr.toString(true));
+        JAMI_DEBUG("- Media @{}: {}", idx++, newMediaAttr.toString(true));
     }
 
     auto needReinvite = isReinviteRequired(mediaAttrList);
@@ -2559,8 +2550,8 @@ SIPCall::getAudioStreams() const
     auto medias = getMediaAttributeList();
     for (const auto& media : medias) {
         if (media.type_ == MEDIA_AUDIO) {
-            auto label = fmt::format("{}_{}", getCallId(), media.label_);
-            audioMedias.emplace(label, media.muted_);
+            auto streamId = fmt::format("{}_{}", getCallId(), media.label_);
+            audioMedias.emplace(streamId, media.muted_);
         }
     }
     return audioMedias;

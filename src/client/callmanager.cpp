@@ -68,7 +68,8 @@ requestMediaChange(const std::string& accountId,
     if (auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto call = account->getCall(callId)) {
             return call->requestMediaChange(mediaList);
-        } else if (auto conf = account->getConference(callId)) {
+        }
+        if (auto conf = account->getConference(callId)) {
             return conf->requestMediaChange(mediaList);
         }
     }
@@ -259,14 +260,12 @@ getConferenceDetails(const std::string& accountId, const std::string& confId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId))
         if (auto conf = account->getConference(confId))
-            return {
-                {"ID",           confId                                                },
-                {"STATE",        conf->getStateStr()                                   },
+            return {{"ID", confId},
+                    {"STATE", conf->getStateStr()},
 #ifdef ENABLE_VIDEO
-                {"VIDEO_SOURCE", conf->getVideoInput()                                 },
+                    {"VIDEO_SOURCE", conf->getVideoInput()},
 #endif
-                {"RECORDING",    conf->isRecording() ? jami::TRUE_STR : jami::FALSE_STR}
-            };
+                    {"RECORDING", conf->isRecording() ? jami::TRUE_STR : jami::FALSE_STR}};
     return {};
 }
 

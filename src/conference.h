@@ -244,16 +244,18 @@ public:
     void setLocalHostMuteState(MediaType type, bool muted);
 
     /**
-     * Get the mute state of the local host
+     * Get the mute state of the host for a given media type
+     * @param type Media type to check mute state for
+     * @return true if host state is detached, or if given type is neither audio or video, or if any source of the given
+     * type is muted, or if no source of the given type was found; false otherwise
      */
     bool isMediaSourceMuted(MediaType type) const;
 
     /**
-     * Process a media change request.
-     * Used to change the media attributes of the host.
+     * Process a media change request from the local user (conference host).
      *
-     * @param remoteMediaList new media list from the remote
-     * @return true on success
+     * @param mediaList new media list to apply
+     * @return true on success, false otherwise
      */
     bool requestMediaChange(const std::vector<libjami::MediaMap>& mediaList);
 
@@ -436,7 +438,9 @@ private:
      * of the local host.
      */
     std::vector<MediaAttribute> hostSources_;
-    // Because host doesn't have a call, we need to store the audio inputs
+
+    // Because host doesn't have a call, we need to store the audio inputs.
+    // The keys are media labels (e.g 'audio_0', 'audio_1', etc).
     std::map<std::string, std::shared_ptr<jami::AudioInput>> hostAudioInputs_;
 
     // Last media list before detaching from a conference

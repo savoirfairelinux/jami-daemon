@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <ranges>
 #include <regex>
 #include <sstream>
 
@@ -111,9 +112,11 @@ Conference::onVideoSourcesUpdated(const std::vector<video::SourceInfo>& infos)
     bool hostAdded = false;
     for (const auto& info : infos) {
         if (!info.callId.empty()) {
-            newInfo.emplace_back(createParticipantInfoFromRemoteSource(info));
+            auto peerInfo = createParticipantInfoFromRemoteSource(info);
+            newInfo.emplace_back(peerInfo);
         } else {
-            newInfo.emplace_back(createParticipantInfoFromLocalSource(info, acc, hostAdded));
+            auto hostInfo = createParticipantInfoFromLocalSource(info, acc, hostAdded);
+            newInfo.emplace_back(hostInfo);
         }
     }
 
@@ -529,19 +532,19 @@ bool
 Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 {
     if (getState() != State::ACTIVE_ATTACHED) {
-        JAMI_ERROR("[conf {}] Request media change can be performed only in attached mode", getConfId());
+        JAMI_ERROR("[conf:{}] &&&&& Media change request can only be performed in attached mode", getConfId());
         return false;
     }
 
-    JAMI_DEBUG("[conf:{}] Processing media change request", getConfId());
+    JAMI_DEBUG("[conf:{}] &&&&& Processing media change request from local user (conference host)", getConfId());
 
     auto mediaAttrList = MediaAttribute::buildMediaAttributesList(mediaList, false);
 
 #ifdef ENABLE_VIDEO
-    // Check if the host previously had video
+    // Check if the host previously had a video media and if they will have one after the media change
+    // This information is used to device whether video negotiation with subcalls should be done
     bool hostHadVideo = MediaAttribute::hasMediaType(hostSources_, MediaType::MEDIA_VIDEO)
                         && !isMediaSourceMuted(MediaType::MEDIA_VIDEO);
-    // Check if the host will have video after this change
     bool hostWillHaveVideo = false;
     for (const auto& media : mediaAttrList) {
         if (media.type_ == MediaType::MEDIA_VIDEO && media.enabled_ && !media.muted_) {
@@ -549,10 +552,15 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
             break;
         }
     }
+    JAMI_WARNING("[conf:{}] &&&&& hostHadVideo: {}, hostWillHaveVideo: {}",
+                 getConfId(),
+                 hostHadVideo,
+                 hostWillHaveVideo);
 #endif
 
     bool hasFileSharing {false};
     for (const auto& media : mediaAttrList) {
+        // If one of the medias is file sharing, we want to create a media player for it
         if (!media.enabled_ || media.sourceUri_.empty())
             continue;
 
@@ -576,43 +584,56 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
     if (!hasFileSharing) {
         closeMediaPlayer(mediaPlayerId_);
-        mediaPlayerId_ = "";
+        mediaPlayerId_.clear();
     }
 
+    JAMI_DEBUG("[conf:{}] &&&&& List of requested media by host:", getConfId());
     for (auto const& mediaAttr : mediaAttrList) {
-        JAMI_DEBUG("[conf:{}] Requested media: {}", getConfId(), mediaAttr.toString(true));
+        JAMI_DEBUG("- {}", mediaAttr.toString(true));
     }
 
-    std::vector<std::string> newVideoInputs;
+    std::vector<std::string> newVideoSources;
+    JAMI_DEBUG("[conf:{}] &&&&& Updating host media sources", getConfId());
     for (auto const& mediaAttr : mediaAttrList) {
-        // Find media
-        auto oldIdx = std::find_if(hostSources_.begin(), hostSources_.end(), [&](auto oldAttr) {
-            return oldAttr.label_ == mediaAttr.label_;
-        });
-        // If video, add to newVideoInputs
 #ifdef ENABLE_VIDEO
+        // If media is video, add it to newVideoSources
         if (mediaAttr.type_ == MediaType::MEDIA_VIDEO) {
-            auto srcUri = mediaAttr.sourceUri_;
-            // If no sourceUri, use the default video device
-            if (srcUri.empty()) {
-                if (auto vm = Manager::instance().getVideoManager())
-                    srcUri = vm->videoDeviceMonitor.getMRLForDefaultDevice();
-                else
+            auto videoSource = mediaAttr.sourceUri_;
+            // If source is empty, use the default video device
+            if (videoSource.empty()) {
+                if (auto* vm = Manager::instance().getVideoManager()) {
+                    videoSource = vm->videoDeviceMonitor.getMRLForDefaultDevice();
+                } else {
+                    JAMI_WARNING("[conf:{}] &&&&& Found empty video source in new media list, but video manager is not "
+                                 "available, cannot set video source to default video "
+                                 "device. Skipping.",
+                                 getConfId());
                     continue;
+                }
             }
             if (!mediaAttr.muted_)
-                newVideoInputs.emplace_back(std::move(srcUri));
+                newVideoSources.emplace_back(std::move(videoSource));
         } else {
 #endif
+            JAMI_DEBUG("[conf:{}] &&&&& Creating host audio input with label '{}'", getConfId(), mediaAttr.label_);
             hostAudioInputs_[mediaAttr.label_] = jami::getAudioInput(mediaAttr.label_);
+            // should it always overwrite existing inputs ? e.g if hostAudioInputs_[label] already exists
 #ifdef ENABLE_VIDEO
         }
 #endif
-        if (oldIdx != hostSources_.end()) {
-            // Check if muted status changes
-            if (mediaAttr.muted_ != oldIdx->muted_) {
-                // If the current media source is muted, just call un-mute, it
-                // will set the new source as input.
+
+        // For each media in the requested list, see if the host already has a media with the same label
+        auto matchingMedia = std::find_if(hostSources_.begin(), hostSources_.end(), [&](const auto& oldAttr) {
+            return oldAttr.label_ == mediaAttr.label_;
+        });
+
+        if (matchingMedia != hostSources_.end()) {
+            JAMI_DEBUG("[conf:{}] &&&&& Host already has a media with label '{}'. Updating media if needed.",
+                       getConfId(),
+                       mediaAttr.label_);
+            // If the new media list updates the mute state of an existing media, apply the change
+            if (mediaAttr.muted_ != matchingMedia->muted_) {
+                // gotta dig into muteLocalHost....
                 muteLocalHost(mediaAttr.muted_,
                               mediaAttr.type_ == MediaType::MEDIA_AUDIO ? libjami::Media::Details::MEDIA_TYPE_AUDIO
                                                                         : libjami::Media::Details::MEDIA_TYPE_VIDEO);
@@ -622,14 +643,27 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
 
 #ifdef ENABLE_VIDEO
     if (videoMixer_) {
-        if (newVideoInputs.empty()) {
+        if (newVideoSources.empty()) {
+            JAMI_DEBUG(
+                "[conf:{}] &&&&& No active video sources for host, adding host as audio-only source in video mixer",
+                getConfId());
             videoMixer_->addAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
         } else {
-            videoMixer_->switchInputs(newVideoInputs);
+            JAMI_DEBUG("[conf:{}] &&&&& Video sources found for host: {}. Updating video inputs in video mixer.",
+                       getConfId(),
+                       newVideoSources.size());
+            // Remove host from audio-only sources since they now have video
+            videoMixer_->removeAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
+            videoMixer_->switchInputs(newVideoSources);
         }
     }
 #endif
-    hostSources_ = mediaAttrList; // New medias
+
+    // Replace host sources with the new media list
+    hostSources_ = mediaAttrList;
+
+    // If host is not part of muted participants, and host's audio sources are not muted, bind host audio
+    // Trust the process :pray:
     if (!isMuted("host"sv) && !isMediaSourceMuted(MediaType::MEDIA_AUDIO))
         bindHostAudio();
 
@@ -638,7 +672,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     // we need to ensure all subcalls also have video negotiated so they can
     // receive the mixed video stream.
     if (!hostHadVideo && hostWillHaveVideo) {
-        JAMI_DEBUG("[conf:{}] Host added video, negotiating video with all subcalls", getConfId());
+        JAMI_DEBUG("[conf:{}] &&&&& Host added video media, negotiating video with all subcalls", getConfId());
         negotiateVideoWithSubcalls();
     }
 #endif
@@ -848,16 +882,30 @@ Conference::negotiateVideoWithSubcalls(const std::string& excludeCallId)
 
         auto call = std::dynamic_pointer_cast<SIPCall>(getCall(callId));
         if (!call) {
+            JAMI_WARNING("[conf:{}] [call:{}] Call not found, skipping video negotiation", id_, callId);
             continue;
         }
 
         auto mediaList = call->getMediaAttributeList();
+        JAMI_DEBUG("[conf:{}] [call:{}] Current media list:", id_, callId);
+        for (auto const& mediaAttr : mediaList) {
+            JAMI_DEBUG("- {}", mediaAttr.toString(true));
+        }
+
+        // Check if call has any video media
         bool hasVideo = MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO);
+        // Check if call has an active (enabled, unmuted) video media
+        bool hasActiveVideo = false;
+        for (const auto& media : mediaList) {
+            if (media.type_ == MediaType::MEDIA_VIDEO && media.enabled_ && !media.muted_) {
+                hasActiveVideo = true;
+                break;
+            }
+        }
 
         if (!hasVideo) {
-            JAMI_DEBUG("[conf:{}] [call:{}] Call does not have video, triggering renegotiation to add video",
-                       id_,
-                       callId);
+            // Case 1: No video media at all - add one
+            JAMI_DEBUG("[conf:{}] [call:{}] Call does not have video, triggering negotiation to add video", id_, callId);
 
             MediaAttribute videoAttr;
             videoAttr.type_ = MediaType::MEDIA_VIDEO;
@@ -868,10 +916,21 @@ Conference::negotiateVideoWithSubcalls(const std::string& excludeCallId)
             videoAttr.sourceUri_ = "";
 
             mediaList.emplace_back(videoAttr);
+        } else if (!hasActiveVideo) {
+            // Case 2: Video media exists but is muted - unmute it to enable sending
+            JAMI_DEBUG("[conf:{}] [call:{}] Call has muted video, unmuting to enable conference video sending",
+                       id_,
+                       callId);
 
+            for (auto& media : mediaList) {
+                if (media.type_ == MediaType::MEDIA_VIDEO) {
+                    media.muted_ = false;
+                    media.enabled_ = true;
+                }
+            }
             call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
-            call->enterConference(shared_from_this());
         }
+        // call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
     }
 }
 #endif
@@ -1349,6 +1408,7 @@ Conference::updateModerators()
     for (auto& info : confInfo_) {
         info.isModerator = isModerator(string_remove_suffix(info.uri, '@'));
     }
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from updateModerators");
     sendConferenceInfos();
 }
 
@@ -1358,6 +1418,7 @@ Conference::updateHandsRaised()
     std::lock_guard lk(confInfoMutex_);
     for (auto& info : confInfo_)
         info.handRaised = isHandRaised(info.device);
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from updateHandsRaised");
     sendConferenceInfos();
 }
 
@@ -1384,6 +1445,7 @@ Conference::updateVoiceActivity()
             participantInfo.voiceActivity = newActivity;
         }
     }
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from updateVoiceActivity");
     sendConferenceInfos(); // also emits signal to client
 }
 
@@ -1489,6 +1551,7 @@ Conference::updateRecording()
             info.recording = call->isPeerRecording();
         }
     }
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from updateRecording");
     sendConferenceInfos();
 }
 
@@ -1505,6 +1568,7 @@ Conference::updateMuted()
             info.audioLocalMuted = call->isPeerMuted();
         }
     }
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from updateMuted");
     sendConferenceInfos();
 }
 
@@ -1576,7 +1640,27 @@ void
 Conference::updateConferenceInfo(ConfInfo confInfo)
 {
     std::lock_guard lk(confInfoMutex_);
+    // for (auto& info : confInfo) {
+    //     if (info.uri.empty()) {
+    //         info.videoMuted = false;
+    //     }
+    // }
     confInfo_ = std::move(confInfo);
+    JAMI_DEBUG("[conf:{}] &&&&& Updating conference info with {} participants", id_, confInfo_.size());
+    for (const auto& info : confInfo_) {
+        if (info.uri.empty())
+            JAMI_DEBUG(
+                "\n[conf:{}] Participant info:\n uri: {}\n device: {}\n sinkId: {}\n active: {}\n videoMuted: {}\n "
+                "audioLocalMuted: {}\n",
+                id_,
+                info.uri,
+                info.device,
+                info.sinkId,
+                info.active,
+                info.videoMuted,
+                info.audioLocalMuted);
+    }
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from updateConferenceInfo");
     sendConferenceInfos();
 }
 
@@ -1654,8 +1738,14 @@ Conference::muteLocalHost(bool is_muted, const std::string& mediaType)
                     if (source.type_ == MediaType::MEDIA_VIDEO)
                         videoInputs.emplace_back(source.sourceUri_);
                 }
+                // Remove host from audio-only sources since they now have video
+                mixer->removeAudioOnlySource("", sip_utils::streamId("", sip_utils::DEFAULT_AUDIO_STREAMID));
                 mixer->switchInputs(videoInputs);
             }
+            // When the host unmutes video, we need to ensure all subcalls
+            // have proper video direction negotiated (SENDRECV) so the
+            // mixer output can be sent to remote participants.
+            negotiateVideoWithSubcalls();
         }
         emitSignal<libjami::CallSignal::VideoMuted>(id_, is_muted);
         return;
@@ -1720,6 +1810,7 @@ Conference::mergeConfInfo(ConfInfo& newInfo, const std::string& peerURI)
         JAMI_DEBUG("[conf:{}] confInfo empty, removing remoteHost {}", id_, peerURI);
         std::lock_guard lk(confInfoMutex_);
         remoteHosts_.erase(peerURI);
+        JAMI_DEBUG("&&&&& calling sendConferenceInfos from mergeConfInfo");
         sendConferenceInfos();
         return;
     }
@@ -2019,6 +2110,7 @@ Conference::clearParticipantData(const std::string& callId)
         participantsMuted_.erase(callId);
     }
 
+    JAMI_DEBUG("&&&&& calling sendConferenceInfos from clearParticipantData");
     sendConferenceInfos();
 }
 

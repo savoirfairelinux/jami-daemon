@@ -131,7 +131,10 @@ public:
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     std::vector<MediaAttribute> getMediaAttributeList() const override;
+
+    // Returns a map where the keys are audio streams and the values are their mute states
     std::map<std::string, bool> getAudioStreams() const override;
+
     void restartMediaSender() override;
     std::shared_ptr<SystemCodecInfo> getAudioCodec() const override;
     std::shared_ptr<SystemCodecInfo> getVideoCodec() const override;
@@ -385,7 +388,17 @@ private:
 
     // Update the attributes of a media stream
     void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);
+
+    /**
+     * Update the media streams of the call according to a new list of media attributes. New RTP streams will be created
+     * or removed if needed. If the media change request comes from the remote peer, new media streams will be muted by
+     * default on our side.
+     * @param mediaAttrList The new list of media attributes to apply to the call
+     * @param isRemote Indicates if the media change request comes from the remote peer (true)
+     * @return false if too many media streams are requested, true otherwise on success
+     */
     bool updateAllMediaStreams(const std::vector<MediaAttribute>& mediaAttrList, bool isRemote);
+
     // Check if a SIP re-invite must be sent to negotiate the new media
     bool isReinviteRequired(const std::vector<MediaAttribute>& mediaAttrList);
     // Check if a new ICE media session is needed when performing a re-invite
@@ -404,7 +417,12 @@ private:
                              const std::shared_ptr<MediaAttribute>& mediaAttr,
                              const MediaDescription& localMedia,
                              const MediaDescription& remoteMedia);
-    // Find the stream index with the matching label
+
+    /**
+     * Find the index of a RTP stream by its label
+     * @param label The label of the RTP stream
+     * @return The index of the RTP stream, or -1 if not found
+     */
     int findRtpStreamIndex(const std::string& label) const;
 
     std::vector<IceCandidate> getAllRemoteCandidates(dhtnet::IceTransport& transport) const;

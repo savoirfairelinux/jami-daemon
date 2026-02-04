@@ -107,29 +107,33 @@ VideoMixer::~VideoMixer()
 void
 VideoMixer::switchInputs(const std::vector<std::string>& inputs)
 {
-    // Do not stop video inputs that are already there
-    // But only detach it to get new index
+    // Do not stop video inputs that are already present and active
+    // Simply detach them from the mixer before re-attaching them later
     std::lock_guard lk(localInputsMtx_);
     decltype(localInputs_) newInputs;
     newInputs.reserve(inputs.size());
     for (const auto& input : inputs) {
         auto videoInput = getVideoInput(input);
-        // Note, video can be a previously stopped device (eg. restart a screen sharing)
-        // in this case, the videoInput will be found and must be restarted
+
+        // Note: videoInput may be a previously stopped input (e.g when restarting a screenshare)
+        // In this case, the videoInput should be restarted
         videoInput->restart();
+
+        // Detach inputs that are already present and remove them from the current list
         auto it = std::find(localInputs_.cbegin(), localInputs_.cend(), videoInput);
-        auto onlyDetach = it != localInputs_.cend();
-        if (onlyDetach) {
+        if (it != localInputs_.cend()) {
             videoInput->detach(this);
             localInputs_.erase(it);
         }
+
         newInputs.emplace_back(std::move(videoInput));
     }
-    // Stop other video inputs
+
+    // Stop the remaining video inputs that should be dropped and update the list with the new inputs
     stopInputs();
     localInputs_ = std::move(newInputs);
 
-    // Re-attach videoInput to mixer
+    // Attach updated inputs list to mixer
     for (size_t i = 0; i < localInputs_.size(); ++i) {
         auto& input = localInputs_[i];
         attachVideo(input.get(), "", sip_utils::streamId("", fmt::format("video_{}", i)));
@@ -173,7 +177,7 @@ VideoMixer::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame,
 {
     if (!frame)
         return;
-    JAMI_DBG("Attaching video with streamId %s", streamId.c_str());
+    JAMI_DEBUG("[call:{}] Attaching video with streamId {}", callId, streamId);
     {
         std::lock_guard lk(videoToStreamInfoMtx_);
         videoToStreamInfo_[frame] = StreamInfo {callId, streamId};
@@ -240,6 +244,8 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::share
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
+            StreamInfo s = streamInfo(ob);
+            // JAMI_DEBUG("[mixer:{}] Incoming frame from source call {} stream {}", id_, s.callId, s.streamId);
 #ifdef ENABLE_HWACCEL
             std::shared_ptr<VideoFrame> frame;
             try {
@@ -247,7 +253,7 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::share
                                                             AV_PIX_FMT_NV12);
                 x->atomic_copy(*std::static_pointer_cast<VideoFrame>(frame));
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[mixer:%s] Accel failure: %s", id_.c_str(), e.what());
+                JAMI_ERROR("[mixer:{}] Accel failure: {}", id_, e.what());
                 return;
             }
 #else
@@ -355,9 +361,14 @@ VideoMixer::process()
                     calc_position(x, fooInput, wantedIndex);
 
                 if (!blackFrame) {
-                    if (fooInput)
+                    if (fooInput) {
                         successfullyRendered |= render_frame(output, fooInput, x);
-                    else
+                        // if (successfullyRendered) {
+                        //     JAMI_DEBUG(
+                        //         "[mixer:{}] Rendered frame from source call {} stream {} at pos ({}, {}) size
+                        //         ({}x{})", id_, sinfo.callId, sinfo.streamId, x->x, x->y, x->w, x->h);
+                        // }
+                    } else
                         JAMI_WARN("[mixer:%s] Nothing to render for %p", id_.c_str(), x->source);
                 }
 

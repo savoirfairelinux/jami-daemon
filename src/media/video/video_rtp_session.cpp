@@ -127,7 +127,11 @@ VideoRtpSession::startSender()
         return;
     }
 
-    if (send_.enabled and not send_.onHold) {
+    // In conference mode, always create sender regardless of onHold state
+    // because the mixer output should be sent to remote participants even
+    // if the host's local video is muted.
+    if (send_.enabled and (conference_ or not send_.onHold)) {
+        // if (send_.enabled and not send_.onHold) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -413,7 +417,11 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     startSender();
 
     if (conference_) {
-        if (send_.enabled and not send_.onHold) {
+        // In conference mode, always set up the send pipeline regardless of
+        // onHold state because the mixer output should be sent to remote
+        // participants even if the host's local video is muted.
+        if (send_.enabled) {
+            // if (send_.enabled and not send_.onHold) {
             setupConferenceVideoPipeline(*conference_, Direction::SEND);
         }
         if (receive_.enabled and not receive_.onHold) {
