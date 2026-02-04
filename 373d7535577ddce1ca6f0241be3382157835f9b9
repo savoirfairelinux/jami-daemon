@@ -116,6 +116,30 @@
       },
       "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "f884a611_9763779c",
+        "filename": "src/client/videomanager.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 78,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-04T20:56:18Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d2b18aaf_77a732a1",
+      "range": {
+        "startLine": 40,
+        "startChar": 0,
+        "endLine": 78,
+        "endChar": 2
+      },
+      "revId": "373d7535577ddce1ca6f0241be3382157835f9b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
