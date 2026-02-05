@@ -104,6 +104,31 @@ if(NOT MSVC)
     endif()
 endif()
 
+# Windows SDK selection for MSVC
+if (MSVC)
+    # NB: SDK 10.0.22621.0 does not have the required Core Audio headers.
+    # Enforce minimum SDK 10.0.20348.0 and avoid 10.0.22621.0.
+    set(MIN_WIN_SDK "10.0.20348.0")
+    set(BAD_WIN_SDK "10.0.22621.0")
+
+    # Set minimum SDK version hint
+    set(CMAKE_SYSTEM_VERSION "${MIN_WIN_SDK}" CACHE STRING "" FORCE)
+
+    # After SDK selection, validate what CMake chose
+    if (DEFINED CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
+        if (CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION STREQUAL BAD_WIN_SDK)
+            message(FATAL_ERROR
+                "Windows SDK ${BAD_WIN_SDK} is not supported (missing Core Audio headers). "
+                "Please use a different SDK version.")
+        endif()
+        if (CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION VERSION_LESS MIN_WIN_SDK)
+            message(FATAL_ERROR
+                "Windows SDK ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION} is too old. "
+                "Minimum required: ${MIN_WIN_SDK}")
+        endif()
+    endif()
+endif()
+
 if (BUILD_CONTRIB)
     if (NOT MSVC)
         set(CONTRIB_BUILD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build-${TARGET})
