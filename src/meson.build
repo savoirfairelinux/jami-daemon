@@ -333,6 +333,7 @@ if get_option('interfaces').contains('library')
 
     modpkgconfig.generate(
         libjami,
+        requires_private : ['zlib'],
         name: 'jami',
         version: meson.project_version(),
         description: 'The Jami core library',

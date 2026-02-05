@@ -6,5 +6,6 @@ includedir=@includedir@
 Name: jami
 Description: Jami core library and daemon
 Version: @PACKAGE_VERSION@
+Requires.private: zlib
 Libs: -L${libdir} -ljami
 Cflags: -I${includedir}
