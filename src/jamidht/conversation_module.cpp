@@ -547,12 +547,68 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
                                           const std::string& commitId)
 {
     {
-        std::lock_guard lk(convInfosMtx_);
-        auto itConv = convInfos_.find(conversationId);
-        if (itConv != convInfos_.end() && itConv->second.isRemoved()) {
-            // If the conversation is removed and we receives a new commit,
-            // it means that the contact was removed but not banned.
-            // If he wants a new conversation, they must removes/re-add the contact who declined.
+        std::shared_ptr<SyncedConversation> conv;
+        bool needReclone = false;
+        bool hasRepo = false;
+
+        std::unique_lock lkConv(conversationsMtx_);
+        std::unique_lock lkInfos(convInfosMtx_);
+
+        auto itConvInfo = convInfos_.find(conversationId);
+        if (itConvInfo != convInfos_.end() && itConvInfo->second.isRemoved()) {
+            const bool isOneToOne =
+                    (itConvInfo->second.mode == ConversationMode::ONE_TO_ONE);
+
+            auto contactInfo = accountManager_->getContactInfo(peer);
+            const bool shouldReadd =
+                    isOneToOne &&
+                    contactInfo &&
+                    contactInfo->confirmed &&
+                    contactInfo->isActive() &&
+                    !contactInfo->isBanned() &&
+                    contactInfo->added > itConvInfo->second.removed &&
+                    contactInfo->conversationId != conversationId;
+
+            if (shouldReadd) {
+
+                JAMI_WARNING("[Account {:s}] [Conversation {}] Restoring the conversation after re-adding contact",
+                             accountId_,
+                             conversationId);
+
+                auto it = conversations_.find(conversationId);
+                if (it != conversations_.end())
+                    conv = it->second;
+
+                lkConv.unlock();
+
+                if (conv) {
+                    std::unique_lock lkSynced(conv->mtx);
+                    hasRepo = (conv->conversation != nullptr);
+
+                    if (!hasRepo) {
+                        conv->info.created = std::time(nullptr);
+                        conv->info.removed = 0;
+                        conv->info.erased  = 0;
+
+                        convInfos_[conversationId] = conv->info;
+                        saveConvInfos();
+
+                        needReclone = true;
+                    }
+                }
+
+                lkInfos.unlock();
+
+                if (needReclone && conv) {
+                    {
+                        std::unique_lock lkSynced(conv->mtx);
+                        cloneConversation(deviceId, peer, conv);
+                    }
+                }
+
+                return;
+            }
+
             JAMI_WARNING("[Account {:s}] [Conversation {}] Received a commit, but conversation is removed",
                          accountId_,
                          conversationId);
