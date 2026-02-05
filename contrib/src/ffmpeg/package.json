@@ -24,9 +24,16 @@
     ],
     "project_paths": [],
     "with_env" : "",
+    "host_vars": {
+        "min_sdk_version": "10.0.20348.0",
+        "excluded_sdks": [
+            "10.0.22621.0"
+        ]
+    },
     "custom_scripts": {
         "pre_build": [],
         "build": [
+            "del /F /Q VERSION",
             "call \"%CONTRIB_SRC_DIR%\\ffmpeg\\build_ffmpeg.bat\"",
             "cd Build/win32/x64/lib & for %f in (*.a) do if not exist \"%~nf.lib\" ren \"%f\" \"%~nf.lib\""
         ],
