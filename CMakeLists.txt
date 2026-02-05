@@ -45,6 +45,8 @@ if(JAMI_NODEJS)
     set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+find_package(ZLIB REQUIRED)
+
 if(NOT MSVC)
     ################################################################################
     # Contrib
@@ -1161,3 +1163,5 @@ else()
     endif()
 
 endif()
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ZLIB::ZLIB)
