@@ -1998,11 +1998,10 @@ JamiAccount::doRegister_()
         };
 
         dht_->run(dhtPortUsed(), config, std::move(context));
+        dhtBoundPort_ = dht_->getBoundPort();
 
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
-
-        dhtBoundPort_ = dht_->getBoundPort();
 
         accountManager_->setDht(dht_);
 
