@@ -45,14 +45,6 @@ public:
 class DTMFGenerator
 {
 private:
-    /** Struct to handle a DTMF */
-    struct DTMFTone
-    {
-        unsigned char code; /** Code of the tone */
-        unsigned lower;     /** Lower frequency */
-        unsigned higher;    /** Higher frequency */
-    };
-
     /** State of the DTMF generator */
     struct DTMFState
     {
@@ -62,9 +54,6 @@ private:
 
     /** State of the DTMF generator */
     DTMFState state;
-
-    /** The different kind of tones */
-    static const DTMFTone tones_[NUM_TONES];
 
     /** Generated samples for each tone */
     std::array<libjami::FrameBuffer, NUM_TONES> toneBuffers_;
@@ -107,7 +96,7 @@ private:
      * @param index of the tone in the array tones_
      * @return AudioSample* The generated data
      */
-    libjami::FrameBuffer fillToneBuffer(int index);
+    libjami::FrameBuffer fillToneBuffer(unsigned index);
 };
 
 } // namespace jami
