@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8b90edc1_e8ee1b63",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-06T08:48:19Z",
+      "side": 1,
+      "message": "Sorry, this ended up being incorrect. There\u0027s a subdirs argument for pkgconfig generation in meson that should make it work the way it was.",
+      "revId": "ee6111f1ef7d6f4802221aac59cf563000e4d00e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
