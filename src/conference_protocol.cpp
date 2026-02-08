@@ -32,7 +32,7 @@ constexpr static const char* HANDSTATE = "handState";
 constexpr static const char* ACTIVEPART = "activeParticipant";
 constexpr static const char* MUTEPART = "muteParticipant";
 constexpr static const char* MUTESTATE = "muteState";
-constexpr static const char* HANGUPPART = "hangupParticipant";
+constexpr static const char* HANGUPPART = "disconnectParticipant";
 // V1
 constexpr static const char* DEVICES = "devices";
 constexpr static const char* MEDIAS = "medias";
@@ -106,7 +106,7 @@ ConfProtocolParser::parseV0()
 void
 ConfProtocolParser::parseV1()
 {
-    if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !hangupParticipant_ || !muteStreamAudio_
+    if (!checkAuthorization_ || !setLayout_ || !raiseHand_ || !disconnectParticipant_ || !muteStreamAudio_
         || !setActiveStream_) {
         JAMI_ERROR("Missing methods for ConfProtocolParser");
         return;
@@ -136,7 +136,7 @@ ConfProtocolParser::parseV1()
                             raiseHand_(deviceId, newState);
                     }
                     if (isPeerModerator && deviceValue.isMember(ProtocolKeys::HANGUP)) {
-                        hangupParticipant_(accountUri, deviceId);
+                        disconnectParticipant_(accountUri, deviceId);
                     }
                     if (deviceValue.isMember(ProtocolKeys::MEDIAS)) {
                         for (Json::Value::const_iterator itrm = accValue[ProtocolKeys::MEDIAS].begin();

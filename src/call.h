@@ -264,7 +264,7 @@ public:
     /**
      * Refuse incoming call
      */
-    virtual void refuse() = 0;
+    virtual void decline() = 0;
 
     /**
      * Transfer a call to specified URI

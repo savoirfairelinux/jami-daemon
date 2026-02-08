@@ -243,7 +243,7 @@ class SflPhoneTests():
 
     # SCENARIO 5 Test 1
     def test_ip2ip_recv_refuse(self):
-        """Receive an incoming IP2IP call, refuse it"""
+        """Receive an incoming IP2IP call, decline it"""
 
         # Add callback for this test
         self.sflphone.onIncomingCall_cb = refuseOnIncomingCall

@@ -42,7 +42,7 @@ hang up after MEDIA-FLOW seconds and #t is returned.
                             (signal-condition-variable cnd))
                           continue)))
 
-      (set! this-call-id (call:place-call/media from to))
+      (set! this-call-id (call:start-call/media from to))
 
       (let ([success (wait-condition-variable cnd mtx
                                               (+ (current-time) timeout))])

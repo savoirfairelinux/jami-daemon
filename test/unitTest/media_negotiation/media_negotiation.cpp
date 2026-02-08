@@ -862,7 +862,7 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData, CallData& bobData, c
 
     // Bob hang-up.
     JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData.accountId_, bobData.callId_);
+    libjami::end(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 

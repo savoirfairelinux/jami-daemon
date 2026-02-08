@@ -117,7 +117,7 @@ public:
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) override;
     void hangup(int code) override;
-    void refuse() override;
+    void decline() override;
     void transfer(const std::string& to) override;
     bool attendedTransfer(const std::string& to) override;
     bool hold(OnReadyCb&& cb) override;
