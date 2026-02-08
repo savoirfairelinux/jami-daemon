@@ -25,7 +25,7 @@ PHONE3="14142"
 
 
 # Define function callback to emulate UA behavior on
-# receiving a call (peer hangup))
+# receiving a call (peer end))
 def acceptOnIncomingCall(sflphone):
 
     sflphone.Accept(sflphone.currentCallId)
@@ -33,17 +33,17 @@ def acceptOnIncomingCall(sflphone):
 
 # Define function callback to emulate UA behavior on
 # receiving a call and hanging up
-def acceptOnIncomingCallHangup(sflphone):
+def acceptOnIncomingCallEnd(sflphone):
 
     sflphone.Accept(sflphone.currentCallId)
-    sflphone.HangUp(sflphone.currentCallId)
+    sflphone.End(sflphone.currentCallId)
 
 
 # Define function callback to emulate UA behavior on
 # refusing a call
 def refuseOnIncomingCall(sflphone):
     # time.sleep(0.5)
-    sflphone.Refuse(sflphone.currentCallId)
+    sflphone.Decline(sflphone.currentCallId)
 
 
 class SflPhoneTests():
@@ -91,7 +91,7 @@ class SflPhoneTests():
 
 
     # SCENARIO 1 Test 1
-    def test_ip2ip_send_hangup(self):
+    def test_ip2ip_send_end(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
         while(i < 500):
@@ -99,7 +99,7 @@ class SflPhoneTests():
             callid = self.sflphone.Call("sip:test@" + REMOTEADDR_lo)
             time.sleep(0.5)
 
-            self.sflphone.HangUp(callid)
+            self.sflphone.End(callid)
             time.sleep(0.5)
 
             i = i+1
@@ -109,7 +109,7 @@ class SflPhoneTests():
 
 
     # SCENARIO 1 Test 2
-    def test_ip2ip_send_peer_hungup(self):
+    def test_ip2ip_send_peer_ended(self):
         """Make a call to a server (sipp) on port 5062"""
         i = 0
         while(i < 10):
@@ -123,11 +123,11 @@ class SflPhoneTests():
 
 
     # SCENARIO 1 Test 3
-    def test_ip2ip_recv_hangup(self):
-        """Wait for calls, answer then hangup"""
+    def test_ip2ip_recv_end(self):
+        """Wait for calls, answer then end"""
 
         # Add callback for this test
-        self.sflphone.onIncomingCall_cb = acceptOnIncomingCallHangup
+        self.sflphone.onIncomingCall_cb = acceptOnIncomingCallEnd
 
         # Start Glib mainloop
         self.sflphone.start()
@@ -136,8 +136,8 @@ class SflPhoneTests():
 
 
     # SCENARIO 1 Test 4
-    def test_ip2ip_recv_peer_hungup(self):
-        """Wait for calls, answer, peer hangup"""
+    def test_ip2ip_recv_peer_ended(self):
+        """Wait for calls, answer, peer end"""
 
         # Add callback for this test
         self.sflphone.onIncomingCall_cb = acceptOnIncomingCall
@@ -147,8 +147,8 @@ class SflPhoneTests():
 
 
     # SCENARIO 2 Test 1
-    def test_account_send_hangup(self):
-        """Send new account call, hangup once peer answered"""
+    def test_account_send_end(self):
+        """Send new account call, end once peer answered"""
 
         i = 0
         while(i < 10):
@@ -156,7 +156,7 @@ class SflPhoneTests():
             callid = self.sflphone.Call(PHONE1)
             time.sleep(0.2)
 
-            self.sflphone.HangUp(callid)
+            self.sflphone.End(callid)
             time.sleep(0.2)
 
             i = i+1
@@ -165,8 +165,8 @@ class SflPhoneTests():
 
 
     # SCENARIO 2 Test 2
-    def test_account_send_peer_hungup(self):
-        """Send new account call, hangup once peer answered"""
+    def test_account_send_peer_ended(self):
+        """Send new account call, end once peer answered"""
 
         i = 0
         while(i < 10):
@@ -180,18 +180,18 @@ class SflPhoneTests():
 
 
     # SCENARIO 2 Test 3
-    def test_account_recv_hangup(self):
+    def test_account_recv_end(self):
         """Register an account and wait for incoming calls"""
 
         # Add callback for this test
-        self.sflphone.onIncomingCall_cb = acceptOnIncomingCallHangup
+        self.sflphone.onIncomingCall_cb = acceptOnIncomingCallEnd
 
         # Start Glib mainloop
         self.sflphone.start()
 
 
     # SCENARIO 2 Test 4
-    def test_account_recv_peer_hungup(self):
+    def test_account_recv_peer_ended(self):
         """Register an account and wait for incoming calls"""
 
         # Add callback for this test
@@ -216,7 +216,7 @@ class SflPhoneTests():
             self.sflphone.Resume(callid)
             time.sleep(0.5)
 
-            self.sflphone.HangUp(callid)
+            self.sflphone.End(callid)
             time.sleep(0.5)
 
             i = i+1
@@ -235,7 +235,7 @@ class SflPhoneTests():
             time.sleep(1.0)
 
             self.sflphone.Transfer(callid,PHONE3)
-            # self.sflphone.HangUp(callid)
+            # self.sflphone.End(callid)
             # time.sleep(1.0)
 
             i = i+1
@@ -243,7 +243,7 @@ class SflPhoneTests():
 
     # SCENARIO 5 Test 1
     def test_ip2ip_recv_refuse(self):
-        """Receive an incoming IP2IP call, refuse it"""
+        """Receive an incoming IP2IP call, decline it"""
 
         # Add callback for this test
         self.sflphone.onIncomingCall_cb = refuseOnIncomingCall
@@ -253,7 +253,7 @@ class SflPhoneTests():
 
 
     # SCENARIO 6 Test 1
-    def test_mult_ip2ip_send_hangup(self):
+    def test_mult_ip2ip_send_end(self):
         """Make a first call to a sipp server (5062) and a second to sipp server (5064)"""
         i = 0
         while(i < 500):
@@ -267,13 +267,13 @@ class SflPhoneTests():
             callid3 = self.sflphone.Call("sip:test@" + REMOTEADDR_lo3)
             time.sleep(0.1)
 
-            self.sflphone.HangUp(callid1)
+            self.sflphone.End(callid1)
             time.sleep(0.1)
 
-            self.sflphone.HangUp(callid2)
+            self.sflphone.End(callid2)
             time.sleep(0.1)
 
-            self.sflphone.HangUp(callid3)
+            self.sflphone.End(callid3)
             time.sleep(0.1)
 
             i = i+1
@@ -282,8 +282,8 @@ class SflPhoneTests():
 
 
     # SCENARIO 6 Test 2
-    def test_mult_ip2ip_send_hangup(self):
-        """Receive multiple calls peer hangup"""
+    def test_mult_ip2ip_send_end(self):
+        """Receive multiple calls peer end"""
 
         # Add callback for this test
         self.sflphone.onIncomingCall_cb = acceptOnIncomingCall
@@ -312,40 +312,40 @@ sflphone.setFirstRegisteredAccount();
 # SCENARIO 1: IP2IP Normal flow calls
 
 # Test 1: - Send an IP2IP call
-#         - Hangup
-# testsuite.test_ip2ip_send_hangup()
+#         - End
+# testsuite.test_ip2ip_send_end()
 
 # Test 2: - Send an IP2IP call
-#         - Peer Hangup
-# testsuite.test_ip2ip_send_peer_hungup()
+#         - Peer End
+# testsuite.test_ip2ip_send_peer_ended()
 
 # Test 3: - Receive an IP2IP call
-#         - Hangup
-testsuite.test_ip2ip_recv_hangup()
+#         - End
+testsuite.test_ip2ip_recv_end()
 
 # Test 4: - Receive an IP2IP call
-#         - Peer Hangup
-# testsuite.test_ip2ip_recv_peer_hungup()
+#         - Peer End
+# testsuite.test_ip2ip_recv_peer_ended()
 
 
 
 # SCENARIO 2: ACCOUNT Normal flow calls
 
 # Test 1: - Send an ACCOUNT call
-#         - Hangup
-# testsuite.test_account_send_hangup()
+#         - End
+# testsuite.test_account_send_end()
 
 # Test 2: - Send an ACCOUNT call
-#         - Peer Hangup
-# testsuite.test_account_send_peer_hungup()
+#         - Peer End
+# testsuite.test_account_send_peer_ended()
 
 # Test 3: - Receive an ACCOUNT call
-#         - Hangup
-# testsuite.test_account_recv_hangup()
+#         - End
+# testsuite.test_account_recv_end()
 
 # Test 4: - Receive an ACCOUNT call
-#         - Peer Hangup
-# testsuite.test_account_recv_peer_hungup()
+#         - Peer End
+# testsuite.test_account_recv_peer_ended()
 
 
 
@@ -354,7 +354,7 @@ testsuite.test_ip2ip_recv_hangup()
 # Test 1: - Send an IP2IP call
 #         - Put this call on HOLD
 #         - Off HOLD this call
-#         - Hangup
+#         - End
 # testsuite.test_ip2ip_send_hold_offhold()
 
 
@@ -363,15 +363,15 @@ testsuite.test_ip2ip_recv_hangup()
 
 # Test 1: - Send an IP2IP call
 #         - Transfer this call to another sipp instance
-#         - Hangup
+#         - End
 # testsuite.test_account_send_transfer()
 
 
 
-# SCENARIO 5: IP2IP Call, Refuse
+# SCENARIO 5: IP2IP Call, Decline
 
 # Test 1: - Receive an incoming call
-#         - Hangup without answer
+#         - End without answer
 # testsuite.test_ip2ip_recv_refuse()
 
 
@@ -379,9 +379,9 @@ testsuite.test_ip2ip_recv_hangup()
 # SCENARIO 6: Multiple simultaneous calls
 
 # Test 1: - Send multiple simultaneous IP2IP call
-#         - Hangup
-# testsuite.test_mult_ip2ip_send_hangup()
+#         - End
+# testsuite.test_mult_ip2ip_send_end()
 
 # Test 2: - Receive simultaneous IP2IP call
-#         - Hangup
-# testsuite.test_mult_ip2ip_send_hangup()
+#         - End
+# testsuite.test_mult_ip2ip_send_end()

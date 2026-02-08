@@ -296,7 +296,7 @@ SipBasicCallTest::onCallStateChange(const std::string& accountId,
     }
     // NOTE. Only states that we are interested on will notify the CV. If this
     // unit test is modified to process other states, they must be added here.
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP" or state == "RINGING") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED" or state == "RINGING") {
         callData.cv_.notify_one();
     }
 }
@@ -517,19 +517,19 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
         // Give some time to media to start and flow
         std::this_thread::sleep_for(std::chrono::seconds(3));
 
-        // Bob hang-up.
-        JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-        libjami::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
+        // Bob ended call.
+        JAMI_LOG("End BOB's call and wait for ALICE to end call");
+        libjami::end(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
     } else {
         // The media negotiation for the call is expected to fail, so we
         // should receive the signal.
         CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::FAILURE));
     }
 
-    // The hang-up signal will be emitted on caller's side (Alice) in both
+    // The end signal will be emitted on caller's side (Alice) in both
     // success failure scenarios.
 
-    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_LOG("Call terminated on both sides");
 }
@@ -821,14 +821,14 @@ SipBasicCallTest::hold_resume_test()
             }
         }
 
-        // Bob hang-up.
-        JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-        libjami::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
+        // Bob ended call.
+        JAMI_LOG("End BOB's call and wait for ALICE to end call");
+        libjami::end(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
 
-        // The hang-up signal will be emitted on caller's side (Alice) in both
+        // The end signal will be emitted on caller's side (Alice) in both
         // success and failure scenarios.
 
-        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+        CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
         JAMI_LOG("Call terminated on both sides");
     }
@@ -951,7 +951,7 @@ SipBasicCallTest::blind_transfer_test()
                       carlaUri); // TODO. Check trim
 
     // Expect Alice's call to end.
-    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["ALICE"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     // Wait for the new call to be processed.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["BOB"], libjami::CallSignal::StateChange::name, StateEvent::RINGING));
@@ -1006,12 +1006,12 @@ SipBasicCallTest::blind_transfer_test()
     // Give some time to media to start and flow
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    // Bob hang-up.
-    JAMI_LOG("Hang up CARLA's call and wait for CARLA to hang up");
-    libjami::hangUp(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
+    // Bob ended call.
+    JAMI_LOG("End CARLA's call and wait for CARLA to end call");
+    libjami::end(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
 
     // Expect end call on Carla's side.
-    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"], libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_LOG("Calls normally ended on both sides");
 }

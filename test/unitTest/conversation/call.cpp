@@ -79,7 +79,7 @@ private:
     void testActiveCalls();
     void testActiveCalls3Peers();
     void testRejoinCall();
-    void testParticipantHangupConfNotRemoved();
+    void testParticipantEndConfNotRemoved();
     void testJoinFinishedCall();
     void testJoinFinishedCallForbidden();
     void testUsePreference();
@@ -96,7 +96,7 @@ private:
     CPPUNIT_TEST(testActiveCalls);
     CPPUNIT_TEST(testActiveCalls3Peers);
     CPPUNIT_TEST(testRejoinCall);
-    CPPUNIT_TEST(testParticipantHangupConfNotRemoved);
+    CPPUNIT_TEST(testParticipantEndConfNotRemoved);
     CPPUNIT_TEST(testJoinFinishedCall);
     CPPUNIT_TEST(testJoinFinishedCallForbidden);
     CPPUNIT_TEST(testUsePreference);
@@ -303,9 +303,9 @@ ConversationCallTest::testActiveCalls()
     // get active calls = 1
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 1);
 
-    // hangup
+    // end
     aliceData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, aliceData_.confId);
+    Manager::instance().endConference(aliceId, aliceData_.confId);
 
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); }));
@@ -377,11 +377,11 @@ ConversationCallTest::testActiveCalls3Peers()
     // get active calls = 1
     CPPUNIT_ASSERT(libjami::getActiveCalls(bobId, bobData_.id).size() == 1);
 
-    // hangup
+    // end
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, confId);
+    Manager::instance().endConference(aliceId, confId);
 
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -455,11 +455,11 @@ ConversationCallTest::testRejoinCall()
 
     CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 2);
 
-    // hangup 1 participant and rejoin
+    // end 1 participant and rejoin
     aliceData_.messages.clear();
     bobData_.messages.clear();
     aliceData_.conferenceChanged = false;
-    Manager::instance().hangupCall(bobId, bobData_.callId);
+    Manager::instance().endCall(bobId, bobData_.callId);
     cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "OVER"; });
 
     CPPUNIT_ASSERT(libjami::getParticipantList(aliceId, confId).size() == 1);
@@ -472,11 +472,11 @@ ConversationCallTest::testRejoinCall()
     CPPUNIT_ASSERT(aliceData_.messages.empty());
     CPPUNIT_ASSERT(bobData_.messages.empty());
 
-    // hangup
+    // end
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, confId);
+    Manager::instance().endConference(aliceId, confId);
 
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
@@ -491,7 +491,7 @@ ConversationCallTest::testRejoinCall()
 }
 
 void
-ConversationCallTest::testParticipantHangupConfNotRemoved()
+ConversationCallTest::testParticipantEndConfNotRemoved()
 {
     connectSignals();
 
@@ -530,11 +530,11 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
     auto bobCallId = libjami::placeCallWithMedia(bobId, destination, {});
     cv.wait_for(lk, 30s, [&]() { return aliceData_.conferenceChanged && bobData_.hostState == "CURRENT"; });
 
-    // hangup bob MUST NOT stop the conference
+    // end bob MUST NOT stop the conference
     aliceData_.messages.clear();
     bobData_.messages.clear();
     aliceData_.conferenceChanged = false;
-    Manager::instance().hangupCall(bobId, bobCallId);
+    Manager::instance().endCall(bobId, bobCallId);
 
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return aliceData_.conferenceRemoved; }));
 }
@@ -580,11 +580,11 @@ ConversationCallTest::testJoinFinishedCall()
                                    bobData_.messages.rbegin()->body.at(CommitKey::URI),
                                    bobData_.messages.rbegin()->body.at(CommitKey::DEVICE),
                                    bobData_.messages.rbegin()->body.at(CommitKey::CONF_ID));
-    // hangup
+    // end
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, aliceData_.confId);
+    Manager::instance().endConference(aliceId, aliceData_.confId);
     // should get message
     cv.wait_for(lk, 30s, [&]() {
         return !aliceData_.messages.empty() && !bobData_.messages.empty() && !carlaData_.messages.empty();
@@ -603,11 +603,11 @@ ConversationCallTest::testJoinFinishedCall()
     });
     confId = bobData_.messages.rbegin()->body.at(CommitKey::CONF_ID);
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 1);
-    // hangup
+    // end
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, confId);
+    Manager::instance().endConference(aliceId, confId);
     // should get message
     cv.wait_for(lk, 30s, [&]() {
         return !aliceData_.messages.empty() && !bobData_.messages.empty() && !carlaData_.messages.empty();
@@ -669,11 +669,11 @@ ConversationCallTest::testJoinFinishedCallForbidden()
                                    bobData_.messages.rbegin()->body.at(CommitKey::DEVICE),
                                    bobData_.messages.rbegin()->body.at(CommitKey::CONF_ID));
 
-    // hangup
+    // end
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, aliceData_.confId);
+    Manager::instance().endConference(aliceId, aliceData_.confId);
 
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -698,11 +698,11 @@ ConversationCallTest::testJoinFinishedCallForbidden()
 
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 1);
 
-    // hangup
+    // end
     aliceData_.messages.clear();
     bobData_.messages.clear();
     carlaData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, confId);
+    Manager::instance().endConference(aliceId, confId);
 
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -767,7 +767,7 @@ ConversationCallTest::testUsePreference()
     CPPUNIT_ASSERT(cv.wait_for(lk, 5s, [&]() { return pInfos_.size() == 1; }));
     auto uri = string_remove_suffix(pInfos_[0]["uri"], '@');
     CPPUNIT_ASSERT(uri == bobUri);
-    Manager::instance().hangupConference(bobId, bobData_.confId);
+    Manager::instance().endConference(bobId, bobData_.confId);
 }
 
 void
@@ -805,7 +805,7 @@ ConversationCallTest::testJoinWhileActiveCall()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     aliceData_.conferenceChanged = false;
-    Manager::instance().hangupConference(aliceId, confId);
+    Manager::instance().endConference(aliceId, confId);
 
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData_.conferenceRemoved; }));
 }
@@ -855,7 +855,7 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     auto confId = aliceData_.messages.rbegin()->body.at(CommitKey::CONF_ID);
     // Alice should be the host
     CPPUNIT_ASSERT(aliceAccount->getConference(confId));
-    Manager::instance().hangupConference(aliceId, confId);
+    Manager::instance().endConference(aliceId, confId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return aliceData_.conferenceRemoved; }));
 }
 
@@ -933,9 +933,9 @@ ConversationCallTest::testAudioOnly()
     CPPUNIT_ASSERT(pInfos_.size() == 1);
     CPPUNIT_ASSERT(pInfos_[0]["videoMuted"] == "true");
 
-    // hangup
+    // end
     aliceData_.messages.clear();
-    Manager::instance().hangupConference(aliceId, aliceData_.confId);
+    Manager::instance().endConference(aliceId, aliceData_.confId);
 
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty(); });
@@ -1083,7 +1083,7 @@ ConversationCallTest::testDecline()
     libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData_.callId.empty() && bobData_.state == "INCOMING"; }));
 
-    libjami::refuse(bobId, bobData_.callId);
+    libjami::decline(bobId, bobData_.callId);
 
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->type == CommitType::CALL_HISTORY;

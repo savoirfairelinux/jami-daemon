@@ -151,7 +151,7 @@ CallTest::testCall()
 
     JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(aliceId, call);
+    Manager::instance().endCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 
@@ -210,7 +210,7 @@ CallTest::testCachedCall()
 
     callStopped = 0;
     JAMI_LOG("Stop call between alice and Bob");
-    Manager::instance().hangupCall(aliceId, call);
+    Manager::instance().endCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 
@@ -368,7 +368,7 @@ CallTest::testTlsInfosPeerCertificate()
 
     JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 
@@ -440,7 +440,7 @@ CallTest::testSocketInfos()
 
     JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 
@@ -504,7 +504,7 @@ CallTest::testInvalidTurn()
 
     JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(aliceId, call);
+    Manager::instance().endCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 
@@ -578,7 +578,7 @@ CallTest::testTransfer()
 
     JAMI_LOG("Stop call between alice and carla");
     aliceCallStopped = 0;
-    Manager::instance().hangupCall(carlaId, carlaCallId);
+    Manager::instance().endCall(carlaId, carlaCallId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return aliceCallStopped.load(); }));
 }
 

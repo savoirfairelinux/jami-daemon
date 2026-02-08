@@ -89,7 +89,7 @@ public:
      * Free all ressources related to this account.
      *   ***Current calls using this account are HANG-UP***
      */
-    void hangupCalls();
+    void endCalls();
 
     virtual std::unique_ptr<AccountConfig> buildConfig() const = 0;
 

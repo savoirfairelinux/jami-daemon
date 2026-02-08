@@ -254,7 +254,7 @@ SipSrtpTest::onCallStateChange(const std::string&,
     }
     // NOTE. Only states that we are interested on will notify the CV. If this
     // unit test is modified to process other states, they must be added here.
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP" or state == "RINGING") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED" or state == "RINGING") {
         callData.cv_.notify_one();
     }
 }
@@ -466,11 +466,11 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
     // Give some time to media to start and flow
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    // Bob hang-up.
-    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData_.accountId_, bobData_.callId_);
+    // Bob ended call.
+    JAMI_LOG("End BOB's call and wait for ALICE to end call");
+    libjami::end(bobData_.accountId_, bobData_.callId_);
 
-    CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_LOG("Call terminated on both sides");
 }

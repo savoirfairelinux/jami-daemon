@@ -135,7 +135,7 @@ SIPCallTest::testCall()
 
     JAMI_LOG("Stop call between alice and Bob");
     callStopped = 0;
-    Manager::instance().hangupCall(aliceId, call);
+    Manager::instance().endCall(aliceId, call);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&] { return callStopped == 2; }));
 }
 

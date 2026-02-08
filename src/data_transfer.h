@@ -141,7 +141,7 @@ public:
                       OnFinishedCb onFinished = {});
 
     /**
-     * Refuse a transfer
+     * Decline a transfer
      * @param id        of the transfer
      */
     bool cancel(const std::string& fileId);

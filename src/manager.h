@@ -194,18 +194,18 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Hangup the call
+     * End the call
      * @param accountId
      * @param callId  The call identifier
      */
-    bool hangupCall(const std::string& accountId, const std::string& callId);
+    bool endCall(const std::string& accountId, const std::string& callId);
 
     /**
      * Functions which occur with a user's action
-     * Hangup the conference (hangup every participants)
+     * End the conference (end every participants)
      * @param id  The call identifier
      */
-    bool hangupConference(const std::string& accountId, const std::string& confId);
+    bool endConference(const std::string& accountId, const std::string& confId);
 
     /**
      * Functions which occur with a user's action
@@ -243,7 +243,7 @@ public:
 
     /**
      * Functions which occur with a user's action
-     * Refuse the call
+     * Decline the call
      * @param id  The call identifier
      */
     bool refuseCall(const std::string& accountId, const std::string& id);
@@ -296,7 +296,7 @@ public:
     void createConfFromParticipantList(const std::string& accountId, const std::vector<std::string>&);
 
     /**
-     * Detach a participant from a conference, put the call on hold, do not hangup it
+     * Detach a participant from a conference, put the call on hold, do not end it
      * @param call id
      * @param the current call id
      */
@@ -362,10 +362,10 @@ public:
     void peerRingingCall(Call& call);
 
     /**
-     * Put the call in Hungup state, remove the call from the list
+     * Put the call in Ended state, remove the call from the list
      * @param id  The call identifier
      */
-    void peerHungupCall(Call& call);
+    void peerEndedCall(Call& call);
 
     /**
      * Notify the client with an incoming message

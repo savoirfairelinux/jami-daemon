@@ -96,7 +96,7 @@ public:
     void testMemberAddedNoCertificate();
     void testMemberJoinsInviteRemoved();
     void testFailAddMemberInOneToOne();
-    void testOneToOneFetchWithNewMemberRefused();
+    void testOneToOneFetchWithNewMemberDeclined();
     void testConversationMemberEvent();
     void testGetConversationsMembersWhileSyncing();
     void testGetConversationMembersWithSelfOneOne();
@@ -150,7 +150,7 @@ private:
     CPPUNIT_TEST(testMemberAddedNoCertificate);
     CPPUNIT_TEST(testMemberJoinsInviteRemoved);
     CPPUNIT_TEST(testFailAddMemberInOneToOne);
-    CPPUNIT_TEST(testOneToOneFetchWithNewMemberRefused);
+    CPPUNIT_TEST(testOneToOneFetchWithNewMemberDeclined);
     CPPUNIT_TEST(testConversationMemberEvent);
     CPPUNIT_TEST(testGetConversationsMembersWhileSyncing);
     CPPUNIT_TEST(testGetConversationMembersWithSelfOneOne);
@@ -1281,7 +1281,7 @@ ConversationMembersEventTest::testFailAddMemberInOneToOne()
 }
 
 void
-ConversationMembersEventTest::testOneToOneFetchWithNewMemberRefused()
+ConversationMembersEventTest::testOneToOneFetchWithNewMemberDeclined()
 {
     connectSignals();
 

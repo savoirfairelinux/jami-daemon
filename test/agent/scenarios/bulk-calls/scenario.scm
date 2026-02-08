@@ -10,7 +10,7 @@
 ;;;   while call-count < CALL-COUNT:
 ;;;     call bob
 ;;;     wait GRACE-PERIOD
-;;;     hangup bob
+;;;     end bob
 ;;;     wait GRACE-PERIOD
 ;;;   exit okay
 ;;;
@@ -66,7 +66,7 @@
 
   ;; Synchronize with bob a first time.
   (jami:info "Alice sending call #~a" 1)
-  (call:hang-up (agent:account-id me)
+  (call:end (agent:account-id me)
                 (call-bob #f))
 
   (let loop ((cnt 2))
@@ -74,7 +74,7 @@
       (jami:info "Alice sending call #~a" cnt)
       (let ((call-id (call-bob GRACE-PERIOD)))
         (sleep GRACE-PERIOD)
-        (call:hang-up (agent:account-id me) call-id)
+        (call:end (agent:account-id me) call-id)
         (sleep GRACE-PERIOD))
       (loop (1+ cnt)))))
 

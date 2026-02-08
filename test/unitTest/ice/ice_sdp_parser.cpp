@@ -290,7 +290,7 @@ IceSdpParsingTest::onCallStateChange(const std::string& /* accountId */,
         callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED") {
         callData.cv_.notify_one();
     }
 }
@@ -565,13 +565,13 @@ IceSdpParsingTest::test_call()
         CPPUNIT_ASSERT(detachReceiver(mediaReceivers_[i], rtpList[i]));
     }
 
-    // Bob hang-up.
-    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-    Manager::instance().hangupCall(bobData_.accountId_, bobData_.callId_);
+    // Bob ended call.
+    JAMI_LOG("End BOB's call and wait for ALICE to end call");
+    Manager::instance().endCall(bobData_.accountId_, bobData_.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(bobData_, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_LOG("Call terminated on both sides");
 }

@@ -256,18 +256,18 @@ public:
      */
     virtual void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) = 0;
     /**
-     * Hang up the call
+     * End call
      * @param reason
      */
-    virtual void hangup(int reason) = 0;
+    virtual void end(int reason) = 0;
 
     /**
-     * Refuse incoming call
+     * Decline call
      */
-    virtual void refuse() = 0;
+    virtual void decline() = 0;
 
     /**
-     * Transfer a call to specified URI
+     * Transfer call to specified URI
      * @param to The recipient of the call
      */
     virtual void transfer(const std::string& to) = 0;
@@ -301,9 +301,9 @@ public:
     virtual bool isIceEnabled() const = 0;
 
     /**
-     * Peer has hung up a call
+     * Peer has ended a call
      */
-    virtual void peerHungup();
+    virtual void peerEnded();
 
     /**
      * @param code Optional SIP response code (see RFC3261)

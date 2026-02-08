@@ -522,7 +522,7 @@ MediaNegotiationTest::onCallStateChange(const std::string& accountId,
     // NOTE. Only states that we are interested in will notify the CV.
     // If this unit test is modified to process other states, they must
     // be added here.
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP" or state == "RINGING") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED" or state == "RINGING") {
         callData.cv_.notify_one();
     }
 }
@@ -860,11 +860,11 @@ MediaNegotiationTest::testWithScenario(CallData& aliceData, CallData& bobData, c
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    // Bob hang-up.
-    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData.accountId_, bobData.callId_);
+    // Bob ended call.
+    JAMI_LOG("End BOB's call and wait for ALICE's call to end");
+    libjami::end(bobData.accountId_, bobData.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_LOG("Call terminated on both sides");
 }

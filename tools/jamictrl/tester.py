@@ -177,7 +177,7 @@ class libjamiTester():
 
             time.sleep(delay)
 
-            ctrl.HangUp(callId)
+            ctrl.End(callId)
             count += 1
 
         print("**[SUCCESS] DHT Call Test")
@@ -210,7 +210,7 @@ class libjamiTester():
                 countHold = countHold + 1
 
 
-            ctrl.HangUp(callId)
+            ctrl.End(callId)
             count += 1
 
         print("**[SUCCESS] DHT Call Test With Hold")
@@ -241,7 +241,7 @@ class libjamiTester():
 
             time.sleep(delay)
 
-            ctrl.HangUp(callId)
+            ctrl.End(callId)
             count += 1
 
             currBitrate += self.incBitrate
@@ -271,9 +271,9 @@ class libjamiTester():
 
                 time.sleep(delay)
 
-            # hangup each call
+            # end each call
             for callId in ctrl.getAllCalls():
-                ctrl.HangUp(callId)
+                ctrl.End(callId)
 
             count += 1
 

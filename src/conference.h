@@ -319,7 +319,7 @@ public:
 
     void updateConferenceInfo(ConfInfo confInfo);
     void setModerator(const std::string& uri, const bool& state);
-    void hangupParticipant(const std::string& accountUri, const std::string& deviceId = "");
+    void disconnectParticipant(const std::string& accountUri, const std::string& deviceId = "");
     void setHandRaised(const std::string& uri, const bool& state);
     void setVoiceActivity(const std::string& streamId, const bool& newState);
 

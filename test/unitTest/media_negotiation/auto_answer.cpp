@@ -457,7 +457,7 @@ AutoAnswerMediaNegoTest::onCallStateChange(const std::string& accountId UNUSED,
         callData.signals_.emplace_back(CallData::Signal(libjami::CallSignal::StateChange::name, state));
     }
 
-    if (state == "CURRENT" or state == "OVER" or state == "HUNGUP") {
+    if (state == "CURRENT" or state == "OVER" or state == "ENDED") {
         callData.cv_.notify_one();
     }
 }
@@ -790,11 +790,11 @@ AutoAnswerMediaNegoTest::testWithScenario(CallData& aliceData, CallData& bobData
 
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
-    // Bob hang-up.
-    JAMI_LOG("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData.accountId_, bobData.callId_);
+    // Bob ended call.
+    JAMI_LOG("End BOB's call and wait for ALICE to end call");
+    libjami::end(bobData.accountId_, bobData.callId_);
 
-    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
+    CPPUNIT_ASSERT_EQUAL(true, waitForSignal(aliceData, libjami::CallSignal::StateChange::name, StateEvent::ENDED));
 
     JAMI_LOG("Call terminated on both sides");
 }

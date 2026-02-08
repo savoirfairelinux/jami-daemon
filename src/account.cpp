@@ -74,10 +74,10 @@ Account::Account(const std::string& accountId)
 Account::~Account() {}
 
 void
-Account::hangupCalls()
+Account::endCalls()
 {
     for (const auto& callId : callSet_.getCallIds())
-        Manager::instance().hangupCall(getAccountID(), callId);
+        Manager::instance().endCall(getAccountID(), callId);
 }
 
 void

@@ -10,7 +10,7 @@
         </tp:docstring>
         <method name="placeCall" tp:name-for-bindings="placeCall">
             <tp:docstring>
-              <p>This is the main method in order to place a new call. The call is registered with the daemon using this method.</p>
+              <p>This is the main method in order to start a new call. The call is registered with the daemon using this method.</p>
             </tp:docstring>
             <arg type="s" name="accountId" direction="in">
               <tp:docstring>
@@ -69,10 +69,10 @@
             <arg type="b" name="requestMediaChangeSucceeded" direction="out"/>
         </method>
 
-        <method name="refuse" tp:name-for-bindings="refuse">
+        <method name="decline" tp:name-for-bindings="decline">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Refuse an incoming call.
+              Decline an incoming call.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="callId" direction="in">
@@ -140,10 +140,10 @@
             <arg type="b" name="answerMediaChangeRequestSucceeded" direction="out"/>
         </method>
 
-        <method name="hangUp" tp:name-for-bindings="hangUp">
+        <method name="end" tp:name-for-bindings="end">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Hangup a call in state "CURRENT" or "HOLD".
+              End a call in state "CURRENT" or "HOLD".
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="callId" direction="in">
@@ -151,13 +151,13 @@
                 The callId.
               </tp:docstring>
             </arg>
-            <arg type="b" name="hangupSucceeded" direction="out"/>
+            <arg type="b" name="endSucceeded" direction="out"/>
         </method>
 
-        <method name="hangUpConference" tp:name-for-bindings="hangUpConference">
+        <method name="endConference" tp:name-for-bindings="endConference">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Hangup a conference, and every call participating to the conference.
+              End a conference, and every call participating to the conference.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confID" direction="in">
@@ -165,7 +165,7 @@
                 The unique conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="hangupSucceeded" direction="out"/>
+            <arg type="b" name="endSucceeded" direction="out"/>
         </method>
 
         <method name="hold" tp:name-for-bindings="hold">
@@ -386,7 +386,7 @@
             <arg type="b" name="state" direction="in"/>
         </method>
 
-        <method name="hangupParticipant" tp:name-for-bindings="hangupParticipant">
+        <method name="disconnectParticipant" tp:name-for-bindings="disconnectParticipant">
             <tp:added version="11.0.0"/>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confId" direction="in"/>
@@ -772,7 +772,7 @@
                   <li>CONNECTING: Peer found, contacting him</li>
                   <li>RINGING: Initial state of received outgoing call</li>
                   <li>CURRENT: The normal active state of an answered call</li>
-                  <li>HUNGUP: Notify that the call has been hungup by peer</li>
+                  <li>ENDED: Notify that the call has been ended by peer</li>
                   <li>BUSY: Notify that we terminated an incoming call after timeout</li>
                   <li>PEER_BUSY: Notify that peer replied BUSY to this call</li>
                   <li>FAILURE: Error when processing a call</li>

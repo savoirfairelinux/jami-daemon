@@ -123,7 +123,7 @@ LIBJAMI_PUBLIC bool downloadFile(const std::string& accountId,
                                  const std::string& fileId,
                                  const std::string& path) noexcept;
 
-/// Refuse or abort an outgoing or an incoming file transfer.
+/// Decline or abort an outgoing or an incoming file transfer.
 ///
 /// Use this function when you receive an incoming or when you want to abort an outgoing
 /// data transfer.

@@ -136,7 +136,7 @@
         (let ([success (wait-condition-variable cnd mtx
                                                 (+ (current-time) timeout))])
           (when success
-            (call:hang-up me this-call-id))
+            (call:end me this-call-id))
           (set! continue #f)
           success))))
 

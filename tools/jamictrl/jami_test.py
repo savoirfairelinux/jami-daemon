@@ -73,7 +73,7 @@ class JamiTest(libjamiCtrl):
         return self.keepGoing()
 
     def checkCall(self, callId):
-        self.HangUp(callId)
+        self.End(callId)
         if callId in self.testCalls:
             self.testFailed(callId)
         return False
@@ -83,7 +83,7 @@ class JamiTest(libjamiCtrl):
         if callId in self.testCalls:
             if state == "RINGING":
                 self.testSucceeded(callId)
-                self.HangUp(callId)
+                self.End(callId)
 
     def testEnded(self, callId):
         self.testCalls.remove(callId)

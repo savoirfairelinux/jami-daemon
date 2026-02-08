@@ -662,7 +662,7 @@ SIPAccount::doRegister2_()
 
         // Dropping current calls already using the transport is currently required
         // with TLS.
-        hangupCalls();
+        endCalls();
         initTlsConfiguration();
 
         if (!tlsListener_) {

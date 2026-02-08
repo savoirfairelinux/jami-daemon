@@ -56,7 +56,7 @@ plugins:
   loadedPlugins:
     []
 shortcuts:
-  hangUp: ""
+  end: ""
   pickUp: ""
   popupWindow: ""
   toggleHold: ""

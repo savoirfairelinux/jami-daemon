@@ -293,7 +293,7 @@ RecorderTest::testRecordCall()
         return !recordedFile.empty() && recordingFinalized && recordedFile.find(".ogg") != std::string::npos;
     }));
 
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
     JAMI_LOG("End testRecordCall");
 }
@@ -336,7 +336,7 @@ RecorderTest::testRecordAudioOnlyCall()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 20s, [&] { return !recordedFile.empty() && recordedFile.find(".ogg") != std::string::npos; }));
 
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
     JAMI_LOG("End testRecordAudioOnlyCall");
 }
@@ -387,7 +387,7 @@ RecorderTest::testRecordCallOnePersonRdv()
     CPPUNIT_ASSERT(
         cv.wait_for(lk, 20s, [&] { return !recordedFile.empty() && recordedFile.find(".ogg") != std::string::npos; }));
 
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] { return bobCall.state == "OVER"; }));
     JAMI_LOG("End testRecordCallOnePersonRdv");
 }
@@ -433,8 +433,8 @@ RecorderTest::testStopCallWhileRecording()
     std::this_thread::sleep_for(10s);
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
 
-    // Hangup call
-    Manager::instance().hangupCall(aliceId, callId);
+    // End call
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.state == "OVER" && !recordedFile.empty() && recordingFinalized
                && recordedFile.find(".webm") != std::string::npos;
@@ -481,7 +481,7 @@ RecorderTest::testDaemonPreference()
     CPPUNIT_ASSERT(libjami::getIsRecording(aliceId, callId));
     std::this_thread::sleep_for(10s);
 
-    Manager::instance().hangupCall(aliceId, callId);
+    Manager::instance().endCall(aliceId, callId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 20s, [&] {
         return bobCall.state == "OVER" && !recordedFile.empty() && recordedFile.find(".webm") != std::string::npos;
     }));

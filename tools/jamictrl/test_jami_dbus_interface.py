@@ -217,10 +217,10 @@ class TestSFLPhoneRegisteredCalls(SflPhoneCtrl, SippCtrl):
 
 
     def onCallCurrent_cb(self):
-        """ On incoming call, answer the callm, then hangup """
+        """ On incoming call, answer the callm, then end """
 
-        print "Hangup Call with id " + self.currentCallId
-        self.HangUp(self.currentCallId)
+        print "End Call with id " + self.currentCallId
+        self.End(self.currentCallId)
 
         print "Stopping Thread"
         self.stopThread()
@@ -304,7 +304,7 @@ class TestSFLPhoneConferenceCalls(SflPhoneCtrl, SippCtrl):
 
 
     def onCallCurrent_cb(self):
-        """ On incoming call, answer the call, then hangup """
+        """ On incoming call, answer the call, then end """
 
         self.callCount += 1
 
@@ -321,7 +321,7 @@ class TestSFLPhoneConferenceCalls(SflPhoneCtrl, SippCtrl):
         print "The call is ringing"
 
 
-    def onCallHangup_cb(self, callId):
+    def onCallEnd_cb(self, callId):
         """ Exit thread when all call are finished """
 
         if callId in self.accountCalls:
@@ -343,9 +343,9 @@ class TestSFLPhoneConferenceCalls(SflPhoneCtrl, SippCtrl):
         """ Called once the conference is created """
 
         print "Conference Created ", self.currentConfId
-        print "Conference Hangup ", self.currentConfId
+        print "Conference End ", self.currentConfId
 
-        self.hangupConference(self.currentConfId)
+        self.endConference(self.currentConfId)
 
 
     def test_conference_call(self):

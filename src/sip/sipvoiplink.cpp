@@ -534,7 +534,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
         // Close call at application level
         if (auto replacedCall = getCallFromInvite(replaced_inv))
-            replacedCall->hangup(PJSIP_SC_OK);
+            replacedCall->end(PJSIP_SC_OK);
     }
 
     return PJ_FALSE;
@@ -875,7 +875,7 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         case PJSIP_SC_BUSY_HERE:
             call->onBusyHere();
             break;
-        // When the peer manually refuse the call
+        // When the peer manually decline the call
         case PJSIP_SC_DECLINE:
         case PJSIP_SC_BUSY_EVERYWHERE:
             if (inv->role != PJSIP_ROLE_UAC)
@@ -1068,7 +1068,7 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
 
         JAMI_WARNING("[call:{}] SDP offer failed, reason {}", call->getCallId(), reason);
 
-        call->hangup(reason);
+        call->end(reason);
         return;
     }
 
@@ -1217,7 +1217,7 @@ transferCall(SIPCall& call, const std::string& refer_to)
         Manager::instance().newOutgoingCall(refer_to,
                                             call.getAccountId(),
                                             MediaAttribute::mediaAttributesToMediaMaps(call.getMediaAttributeList()));
-        Manager::instance().hangupCall(call.getAccountId(), callId);
+        Manager::instance().endCall(call.getAccountId(), callId);
     } catch (const std::exception& e) {
         JAMI_ERROR("[call:{}] SIP transfer failed: {}", callId, e.what());
         return false;
