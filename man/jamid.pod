@@ -18,7 +18,13 @@ B<jamid> is the core of Jami; it provides the DBus service "cx.ring.Ring". You n
 
 =item B<-c, --console>
 
-Output the log to the console instead of syslog.
+Log to the console. This is the implicit default when the daemon is
+connected to a TTY.
+
+=item B<--syslog>
+
+Log via syslog. This is the implicit default when the daemon
+is B<not> connected to a TTY.
 
 =item B<-d, --debug>
 
