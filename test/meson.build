@@ -113,8 +113,8 @@ test(
 ut_conversation = executable(
     'ut_conversation',
     sources: files(
-        'unitTest/conversation/conversation.cpp'
-        'unitTest/conversation/conversationcommon.cpp',,
+        'unitTest/conversation/conversation.cpp',
+        'unitTest/conversation/conversationcommon.cpp',
     ),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
@@ -131,8 +131,8 @@ test(
 ut_conversation_call = executable(
     'ut_conversation_call',
     sources: files(
-        'unitTest/conversation/call.cpp'
-        'unitTest/conversation/conversationcommon.cpp',,
+        'unitTest/conversation/call.cpp',
+        'unitTest/conversation/conversationcommon.cpp',
     ),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
@@ -149,8 +149,8 @@ test(
 ut_conversation_fetch_sent = executable(
     'ut_conversation_fetch_sent',
     sources: files(
-        'unitTest/conversation/conversationFetchSent.cpp'
-        'unitTest/conversation/conversationcommon.cpp',,
+        'unitTest/conversation/conversationFetchSent.cpp',
+        'unitTest/conversation/conversationcommon.cpp',
     ),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
@@ -455,8 +455,8 @@ test(
 ut_typers = executable(
     'ut_typers',
     sources: files(
-        'unitTest/conversation/conversationcommon.cpp'
-        'unitTest/conversation/typers.cpp',,
+        'unitTest/conversation/conversationcommon.cpp',
+        'unitTest/conversation/typers.cpp',
     ),
     include_directories: ut_includedirs,
     dependencies: ut_dependencies,
