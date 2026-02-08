@@ -159,7 +159,7 @@ IncomingCall(const std::string& accountId,
         libjami::accept(accountId, callId);
         isActive = true;
     } else
-        libjami::refuse(accountId, callId);
+        libjami::decline(accountId, callId);
 }
 
 static int

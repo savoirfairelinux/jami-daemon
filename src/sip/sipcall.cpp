@@ -1045,7 +1045,7 @@ SIPCall::detachAudioFromConference()
 }
 
 void
-SIPCall::refuse()
+SIPCall::decline()
 {
     if (!isIncoming() or getConnectionState() == ConnectionState::CONNECTED or !inviteSession_)
         return;
@@ -1286,7 +1286,7 @@ SIPCall::offhold(OnReadyCb&& cb)
         return false;
     }
     JAMI_DEBUG("[call:{}] Resuming the call", getCallId());
-    auto result = unhold();
+    auto result = resume();
 
     if (cb)
         cb(result);
@@ -1295,7 +1295,7 @@ SIPCall::offhold(OnReadyCb&& cb)
 }
 
 bool
-SIPCall::unhold()
+SIPCall::resume()
 {
     auto account = getSIPAccount();
     if (!account) {
@@ -2104,7 +2104,7 @@ SIPCall::startAllMedia()
             }
             break;
         case Request::HoldingOff:
-            result = unhold();
+            result = resume();
             if (offHoldCb_) {
                 offHoldCb_(result);
                 offHoldCb_ = nullptr;

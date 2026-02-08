@@ -42,7 +42,7 @@ hang_up_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::hangUp(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::end(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -64,7 +64,7 @@ refuse_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::refuse(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::decline(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -80,7 +80,7 @@ unhold_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::unhold(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::resume(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static void
