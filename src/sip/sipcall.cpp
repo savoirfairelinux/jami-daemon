@@ -1031,7 +1031,7 @@ SIPCall::detachAudioFromConference()
 }
 
 void
-SIPCall::refuse()
+SIPCall::decline()
 {
     if (!isIncoming() or getConnectionState() == ConnectionState::CONNECTED or !inviteSession_)
         return;

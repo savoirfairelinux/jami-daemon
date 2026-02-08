@@ -1325,7 +1325,7 @@ Manager::refuseCall(const std::string& accountId, const std::string& id)
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(id)) {
             stopTone();
-            call->refuse();
+            call->decline();
             pimpl_->removeWaitingCall(id);
             removeAudio(*call);
             return true;

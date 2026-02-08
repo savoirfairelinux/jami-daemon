@@ -470,7 +470,7 @@ SipSrtpTest::audio_video_call(std::vector<MediaAttribute> offer, std::vector<Med
 
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData_.accountId_, bobData_.callId_);
+    libjami::end(bobData_.accountId_, bobData_.callId_);
 
     CPPUNIT_ASSERT(waitForSignal(aliceData_, libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
 

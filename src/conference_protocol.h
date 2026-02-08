@@ -45,7 +45,7 @@ public:
 
     void onHangupParticipant(std::function<void(const std::string&, const std::string&)>&& cb)
     {
-        hangupParticipant_ = std::move(cb);
+        disconnectParticipant_ = std::move(cb);
     }
     void onRaiseHand(std::function<void(const std::string&, bool)>&& cb) { raiseHand_ = std::move(cb); }
     void onSetActiveStream(std::function<void(const std::string&, bool)>&& cb) { setActiveStream_ = std::move(cb); }
@@ -90,7 +90,7 @@ private:
     std::function<void(uint32_t)> version_;
 
     std::function<bool(std::string_view)> checkAuthorization_;
-    std::function<void(const std::string&, const std::string&)> hangupParticipant_;
+    std::function<void(const std::string&, const std::string&)> disconnectParticipant_;
     std::function<void(const std::string&, bool)> raiseHand_;
     std::function<void(const std::string&, bool)> setActiveStream_;
     std::function<void(const std::string&, const std::string&, const std::string&, bool)> muteStreamAudio_;

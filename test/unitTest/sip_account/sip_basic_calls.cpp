@@ -519,7 +519,7 @@ SipBasicCallTest::audio_video_call(std::vector<MediaAttribute> offer,
 
         // Bob hang-up.
         JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        libjami::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
+        libjami::end(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
     } else {
         // The media negotiation for the call is expected to fail, so we
         // should receive the signal.
@@ -823,7 +823,7 @@ SipBasicCallTest::hold_resume_test()
 
         // Bob hang-up.
         JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-        libjami::hangUp(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
+        libjami::end(callDataMap_["BOB"].accountId_, callDataMap_["BOB"].callId_);
 
         // The hang-up signal will be emitted on caller's side (Alice) in both
         // success and failure scenarios.
@@ -1008,7 +1008,7 @@ SipBasicCallTest::blind_transfer_test()
 
     // Bob hang-up.
     JAMI_INFO("Hang up CARLA's call and wait for CARLA to hang up");
-    libjami::hangUp(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
+    libjami::end(callDataMap_["CARLA"].accountId_, callDataMap_["CARLA"].callId_);
 
     // Expect end call on Carla's side.
     CPPUNIT_ASSERT(waitForSignal(callDataMap_["CARLA"], libjami::CallSignal::StateChange::name, StateEvent::HUNGUP));
