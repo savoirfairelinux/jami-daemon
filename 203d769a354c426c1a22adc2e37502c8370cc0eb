@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "4253c495_93a29c7c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-08T08:20:00Z",
+      "side": 1,
+      "message": "A small commit on Jami (client) side needs to be committed with this one (not yet pushed for review)",
+      "revId": "203d769a354c426c1a22adc2e37502c8370cc0eb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
