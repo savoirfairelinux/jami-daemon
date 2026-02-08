@@ -37,6 +37,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <memory>
+#include <unistd.h>
 
 bool persistent = false;
 std::unique_ptr<sdbus::IConnection> connection;
@@ -62,7 +63,8 @@ static void
 print_usage()
 {
     std::cout << std::endl
-              << "-c, --console \t- Log in console (instead of syslog)" << std::endl
+              << "-c, --console \t- Log in console" << std::endl
+              << "--syslog \t- Log to syslog" << std::endl
               << "-d, --debug \t- Debug mode (more verbose)" << std::endl
               << "-p, --persistent \t- Stay alive after client quits" << std::endl
               << "--auto-answer \t- Force automatic answer to incoming calls" << std::endl
@@ -76,6 +78,7 @@ static bool
 parse_args(int argc, char* argv[])
 {
     int consoleFlag = false;
+    int syslogFlag = false;
     int debugFlag = false;
     int helpFlag = false;
     int versionFlag = false;
@@ -85,6 +88,7 @@ parse_args(int argc, char* argv[])
         /* These options set a flag. */
         {"debug", no_argument, nullptr, 'd'},
         {"console", no_argument, nullptr, 'c'},
+        {"syslog", no_argument, &syslogFlag, true},
         {"persistent", no_argument, nullptr, 'p'},
         {"help", no_argument, nullptr, 'h'},
         {"version", no_argument, nullptr, 'v'},
@@ -141,6 +145,19 @@ parse_args(int argc, char* argv[])
 
     if (consoleFlag)
         initFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
+
+    if (syslogFlag)
+        initFlags |= libjami::LIBJAMI_FLAG_SYSLOG;
+
+    // If neither --console or --syslog was provided, attempt to do
+    // the right thing.
+    if (not(consoleFlag or syslogFlag)) {
+        if (isatty(STDERR_FILENO)) {
+            initFlags |= libjami::LIBJAMI_FLAG_CONSOLE_LOG;
+        } else {
+            initFlags |= libjami::LIBJAMI_FLAG_SYSLOG;
+        }
+    }
 
     if (debugFlag)
         initFlags |= libjami::LIBJAMI_FLAG_DEBUG;
