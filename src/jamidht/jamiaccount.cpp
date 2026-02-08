@@ -330,7 +330,7 @@ JamiAccount::newOutgoingCall(std::string_view toUrl, const std::vector<libjami::
 {
     auto uri = Uri(toUrl);
     if (uri.scheme() == Uri::Scheme::SWARM || uri.scheme() == Uri::Scheme::RENDEZVOUS) {
-        // NOTE: In this case newOutgoingCall can act as "unholdConference" and just attach the
+        // NOTE: In this case newOutgoingCall can act as "resumeConference" and just attach the
         // host to the current hosted conference. So, no call will be returned in that case.
         return newSwarmOutgoingCallHelper(uri, mediaList);
     }

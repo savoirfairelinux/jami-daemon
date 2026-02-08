@@ -3,6 +3,6 @@
   #:export (accept
             hang-up
             hold
-            place-call/media
-            refuse
-            unhold))
+            start-call/media
+            decline
+            resume))

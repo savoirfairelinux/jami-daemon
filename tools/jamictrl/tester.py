@@ -187,7 +187,7 @@ class libjamiTester():
 
 # testLoopCallDhtWithHold
 # perform <nbIteration> DHT calls using <delay> between each call
-# perform stress hold/unhold between each call
+# perform stress hold/resume between each call
 
     def testLoopCallDhtWithHold(self, ctrl, nbIteration, delay):
         print("**[BEGIN] DHT Call Test With Hold")

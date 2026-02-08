@@ -600,7 +600,7 @@ class libjamiCtrl(Thread):
         if callid is None or callid == "":
             pass # just to see
 
-        self.callmanager.hangUp(callid)
+        self.callmanager.end(callid)
 
 
     def Transfer(self, callid, to):
@@ -619,7 +619,7 @@ class libjamiCtrl(Thread):
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.refuse(callid)
+        self.callmanager.decline(callid)
 
 
     def Accept(self, callid):
@@ -653,7 +653,7 @@ class libjamiCtrl(Thread):
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.unhold(callid)
+        self.callmanager.resume(callid)
 
     def SetAudioOutputDevice(self, index):
         self.configurationmanager.setAudioOutputDevice(int (index ))
@@ -698,7 +698,7 @@ class libjamiCtrl(Thread):
     def hangupConference(self, confId):
         """ Hang up each call for this conference """
 
-        self.callmanager.hangUpConference(confId)
+        self.callmanager.endConference(confId)
 
     def switchInput(self, callid, inputName):
         """switch to input if exist"""

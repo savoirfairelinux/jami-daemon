@@ -1246,7 +1246,7 @@ Manager::offHoldCall(const std::string&, const std::string& callId)
             addAudio(*call);
         });
     } catch (const VoipLinkException& e) {
-        JAMI_ERROR("[call] Failed to unhold: {}", e.what());
+        JAMI_ERROR("[call] Failed to resume: {}", e.what());
         return false;
     }
 
@@ -1292,7 +1292,7 @@ Manager::refuseCall(const std::string& accountId, const std::string& id)
     if (auto account = getAccount(accountId)) {
         if (auto call = account->getCall(id)) {
             stopTone();
-            call->refuse();
+            call->decline();
             pimpl_->removeWaitingCall(id);
             removeAudio(*call);
             return true;

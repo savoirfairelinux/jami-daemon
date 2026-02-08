@@ -42,7 +42,7 @@ hang_up_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::hangUp(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::end(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -64,7 +64,7 @@ refuse_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::refuse(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::decline(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static SCM
@@ -80,16 +80,16 @@ unhold_binding(SCM accountID_str, SCM callID_str)
 {
     LOG_BINDING();
 
-    return to_guile(libjami::unhold(from_guile(accountID_str), from_guile(callID_str)));
+    return to_guile(libjami::resume(from_guile(accountID_str), from_guile(callID_str)));
 }
 
 static void
 install_call_primitives(void*)
 {
-    define_primitive("place-call/media", 2, 1, 0, (void*) place_call_with_media_binding);
+    define_primitive("start-call/media", 2, 1, 0, (void*) place_call_with_media_binding);
     define_primitive("hang-up", 2, 0, 0, (void*) hang_up_binding);
     define_primitive("accept", 2, 1, 0, (void*) accept_binding);
-    define_primitive("refuse", 2, 0, 0, (void*) refuse_binding);
+    define_primitive("decline", 2, 0, 0, (void*) refuse_binding);
     define_primitive("hold", 2, 0, 0, (void*) hold_binding);
-    define_primitive("unhold", 2, 0, 0, (void*) unhold_binding);
+    define_primitive("resume", 2, 0, 0, (void*) unhold_binding);
 }

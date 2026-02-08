@@ -227,7 +227,7 @@ Conference::registerProtocolHandlers()
     parser_.onVersion([&](uint32_t) {}); // TODO
     parser_.onCheckAuthorization([&](std::string_view peerId) { return isModerator(peerId); });
     parser_.onHangupParticipant(
-        [&](const auto& accountUri, const auto& deviceId) { hangupParticipant(accountUri, deviceId); });
+        [&](const auto& accountUri, const auto& deviceId) { disconnectParticipant(accountUri, deviceId); });
     parser_.onRaiseHand([&](const auto& deviceId, bool state) { setHandRaised(deviceId, state); });
     parser_.onSetActiveStream([&](const auto& streamId, bool state) { setActiveStream(streamId, state); });
     parser_.onMuteStreamAudio([&](const auto& accountUri, const auto& deviceId, const auto& streamId, bool state) {
@@ -236,7 +236,7 @@ Conference::registerProtocolHandlers()
     parser_.onSetLayout([&](int layout) { setLayout(layout); });
 
     // Version 0, deprecated
-    parser_.onKickParticipant([&](const auto& participantId) { hangupParticipant(participantId); });
+    parser_.onKickParticipant([&](const auto& participantId) { disconnectParticipant(participantId); });
     parser_.onSetActiveParticipant([&](const auto& participantId) { setActiveParticipant(participantId); });
     parser_.onMuteParticipant([&](const auto& participantId, bool state) { muteParticipant(participantId, state); });
     parser_.onRaiseHandUri([&](const auto& uri, bool state) {
@@ -1581,7 +1581,7 @@ Conference::updateConferenceInfo(ConfInfo confInfo)
 }
 
 void
-Conference::hangupParticipant(const std::string& accountUri, const std::string& deviceId)
+Conference::disconnectParticipant(const std::string& accountUri, const std::string& deviceId)
 {
     if (auto acc = std::dynamic_pointer_cast<JamiAccount>(account_.lock())) {
         if (deviceId.empty()) {
@@ -1607,7 +1607,7 @@ Conference::hangupParticipant(const std::string& accountUri, const std::string& 
         }
         if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {
             // Forward to the remote host.
-            libjami::hangupParticipant(acc->getAccountID(), call->getCallId(), accountUri, deviceId);
+            libjami::disconnectParticipant(acc->getAccountID(), call->getCallId(), accountUri, deviceId);
         }
     }
 }

@@ -681,7 +681,7 @@ PluginsTest::testCall()
     std::this_thread::sleep_for(std::chrono::seconds(3));
     // Bob hang-up.
     JAMI_INFO("Hang up BOB's call and wait for ALICE to hang up");
-    libjami::hangUp(bobData.accountId_, bobData.callId_);
+    libjami::end(bobData.accountId_, bobData.callId_);
 
     CPPUNIT_ASSERT_EQUAL(true,
                          waitForSignal(aliceData,

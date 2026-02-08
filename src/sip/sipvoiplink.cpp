@@ -872,7 +872,7 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
         case PJSIP_SC_BUSY_HERE:
             call->onBusyHere();
             break;
-        // When the peer manually refuse the call
+        // When the peer manually decline the call
         case PJSIP_SC_DECLINE:
         case PJSIP_SC_BUSY_EVERYWHERE:
             if (inv->role != PJSIP_ROLE_UAC)

@@ -988,12 +988,12 @@ ConferenceTest::testHangup()
 
     startConference(false, true);
 
-    libjami::hangupParticipant(carlaId, confId, daviUri, daviCall.device); // Unauthorized
+    libjami::disconnectParticipant(carlaId, confId, daviUri, daviCall.device); // Unauthorized
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));
     }
-    libjami::hangupParticipant(aliceId, confId, daviUri, daviCall.device);
+    libjami::disconnectParticipant(aliceId, confId, daviUri, daviCall.device);
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&] { return daviCall.state == "OVER"; }));

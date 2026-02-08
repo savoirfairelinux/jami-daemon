@@ -69,7 +69,7 @@
             <arg type="b" name="requestMediaChangeSucceeded" direction="out"/>
         </method>
 
-        <method name="refuse" tp:name-for-bindings="refuse">
+        <method name="decline" tp:name-for-bindings="decline">
             <tp:added version="11.0.0"/>
             <tp:docstring>
               Refuse an incoming call.
@@ -140,7 +140,7 @@
             <arg type="b" name="answerMediaChangeRequestSucceeded" direction="out"/>
         </method>
 
-        <method name="hangUp" tp:name-for-bindings="hangUp">
+        <method name="end" tp:name-for-bindings="end">
             <tp:added version="11.0.0"/>
             <tp:docstring>
               Hangup a call in state "CURRENT" or "HOLD".
@@ -154,7 +154,7 @@
             <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
-        <method name="hangUpConference" tp:name-for-bindings="hangUpConference">
+        <method name="endConference" tp:name-for-bindings="endConference">
             <tp:added version="11.0.0"/>
             <tp:docstring>
               Hangup a conference, and every call participating to the conference.
@@ -182,7 +182,7 @@
             <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
-        <method name="unhold" tp:name-for-bindings="unhold">
+        <method name="resume" tp:name-for-bindings="resume">
             <tp:added version="11.0.0"/>
             <tp:docstring>
               Take a call off hold, and place this call in state CURRENT.
@@ -386,7 +386,7 @@
             <arg type="b" name="state" direction="in"/>
         </method>
 
-        <method name="hangupParticipant" tp:name-for-bindings="hangupParticipant">
+        <method name="disconnectParticipant" tp:name-for-bindings="disconnectParticipant">
             <tp:added version="11.0.0"/>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confId" direction="in"/>
@@ -889,7 +889,7 @@
             <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
-        <method name="unholdConference" tp:name-for-bindings="unholdConference">
+        <method name="resumeConference" tp:name-for-bindings="resumeConference">
             <tp:added version="11.0.0"/>
             <tp:docstring>
               Hold off every call participating in this conference.

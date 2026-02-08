@@ -76,7 +76,7 @@ requestMediaChange(const std::string& accountId,
 }
 
 bool
-refuse(const std::string& accountId, const std::string& callId)
+decline(const std::string& accountId, const std::string& callId)
 {
     return jami::Manager::instance().refuseCall(accountId, callId);
 }
@@ -111,13 +111,13 @@ answerMediaChangeRequest(const std::string& accountId,
 }
 
 bool
-hangUp(const std::string& accountId, const std::string& callId)
+end(const std::string& accountId, const std::string& callId)
 {
     return jami::Manager::instance().hangupCall(accountId, callId);
 }
 
 bool
-hangUpConference(const std::string& accountId, const std::string& confId)
+endConference(const std::string& accountId, const std::string& confId)
 {
     return jami::Manager::instance().hangupConference(accountId, confId);
 }
@@ -129,7 +129,7 @@ hold(const std::string& accountId, const std::string& callId)
 }
 
 bool
-unhold(const std::string& accountId, const std::string& callId)
+resume(const std::string& accountId, const std::string& callId)
 {
     return jami::Manager::instance().offHoldCall(accountId, callId);
 }
@@ -249,7 +249,7 @@ holdConference(const std::string& accountId, const std::string& confId)
 }
 
 bool
-unholdConference(const std::string& accountId, const std::string& confId)
+resumeConference(const std::string& accountId, const std::string& confId)
 {
     return jami::Manager::instance().unHoldConference(accountId, confId);
 }
@@ -548,14 +548,14 @@ setActiveStream(const std::string& accountId,
 }
 
 void
-hangupParticipant(const std::string& accountId,
+disconnectParticipant(const std::string& accountId,
                   const std::string& confId,
                   const std::string& accountUri,
                   const std::string& deviceId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->hangupParticipant(accountUri, deviceId);
+            conf->disconnectParticipant(accountUri, deviceId);
         } else if (auto call = std::static_pointer_cast<jami::SIPCall>(account->getCall(confId))) {
             if (call->conferenceProtocolVersion() == 1) {
                 Json::Value deviceVal;
@@ -570,7 +570,7 @@ hangupParticipant(const std::string& accountId,
                 call->sendConfOrder(root);
             } else if (call->conferenceProtocolVersion() == 0) {
                 Json::Value root;
-                root["hangupParticipant"] = accountUri;
+                root["disconnectParticipant"] = accountUri;
                 call->sendConfOrder(root);
             }
         }

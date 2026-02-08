@@ -1082,7 +1082,7 @@ ConversationCallTest::testDecline()
     libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     CPPUNIT_ASSERT(cv.wait_for(lk, 10s, [&]() { return !bobData_.callId.empty() && bobData_.state == "INCOMING"; }));
 
-    libjami::refuse(bobId, bobData_.callId);
+    libjami::decline(bobId, bobData_.callId);
 
     auto lastCommitIsCall = [&](const auto& data) {
         return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";

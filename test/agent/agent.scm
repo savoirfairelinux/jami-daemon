@@ -102,7 +102,7 @@ the DHT before TIMEOUT, throw 'make-account-timeout."
 
 (define-method (call-friend (A <agent>) (peer <string>))
   "Agent A calls  PEER.  Returns the call id."
-  (call:place-call/media (account-id A) peer))
+  (call:start-call/media (account-id A) peer))
 
 (define-method (call-friend (A <agent>) (B <agent>))
   "Agent A calls agent B.  Returns the call id."

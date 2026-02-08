@@ -40,11 +40,11 @@ LIBJAMI_PUBLIC std::string placeCall(const std::string& accountId, const std::st
 LIBJAMI_PUBLIC std::string placeCallWithMedia(const std::string& accountId,
                                               const std::string& to,
                                               const std::vector<std::map<std::string, std::string>>& mediaList);
-LIBJAMI_PUBLIC bool refuse(const std::string& accountId, const std::string& callId);
+LIBJAMI_PUBLIC bool decline(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool accept(const std::string& accountId, const std::string& callId);
-LIBJAMI_PUBLIC bool hangUp(const std::string& accountId, const std::string& callId);
+LIBJAMI_PUBLIC bool end(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool hold(const std::string& accountId, const std::string& callId);
-LIBJAMI_PUBLIC bool unhold(const std::string& accountId, const std::string& callId);
+LIBJAMI_PUBLIC bool resume(const std::string& accountId, const std::string& callId);
 LIBJAMI_PUBLIC bool muteLocalMedia(const std::string& accountId,
                                    const std::string& callId,
                                    const std::string& mediaType,
@@ -99,9 +99,9 @@ LIBJAMI_PUBLIC bool joinConference(const std::string& accountId,
                                    const std::string& sel_confId,
                                    const std::string& account2Id,
                                    const std::string& drag_confId);
-LIBJAMI_PUBLIC bool hangUpConference(const std::string& accountId, const std::string& confId);
+LIBJAMI_PUBLIC bool endConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC bool holdConference(const std::string& accountId, const std::string& confId);
-LIBJAMI_PUBLIC bool unholdConference(const std::string& accountId, const std::string& confId);
+LIBJAMI_PUBLIC bool resumeConference(const std::string& accountId, const std::string& confId);
 LIBJAMI_PUBLIC std::vector<std::string> getConferenceList(const std::string& accountId);
 /// NOTE: Despite its name, this returns the list of call IDs (subcalls) in the conference,
 /// not the actual participant URIs. This naming is historical.
@@ -142,7 +142,7 @@ LIBJAMI_PUBLIC void setActiveStream(const std::string& accountId,
                                     const std::string& deviceId,
                                     const std::string& streamId,
                                     const bool& state);
-LIBJAMI_PUBLIC void hangupParticipant(const std::string& accountId,
+LIBJAMI_PUBLIC void disconnectParticipant(const std::string& accountId,
                                       const std::string& confId,
                                       const std::string& accountUri,
                                       const std::string& deviceId);

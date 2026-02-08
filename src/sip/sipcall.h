@@ -117,7 +117,7 @@ public:
     void handleMediaChangeRequest(const std::vector<libjami::MediaMap>& remoteMediaList) override;
     void answerMediaChangeRequest(const std::vector<libjami::MediaMap>& mediaList, bool isRemote = false) override;
     void hangup(int reason) override;
-    void refuse() override;
+    void decline() override;
     void transfer(const std::string& to) override;
     bool attendedTransfer(const std::string& to) override;
     bool onhold(OnReadyCb&& cb) override;
@@ -381,7 +381,7 @@ private:
 
     bool hold();
 
-    bool unhold();
+    bool resume();
 
     // Update the attributes of a media stream
     void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);

@@ -560,7 +560,7 @@ HoldResumeTest::testWithScenario(CallData& aliceData, CallData& bobData, const T
     JAMI_INFO("=== Resume the call and validate ===");
     {
         auto const& mediaList = MediaAttribute::mediaAttributesToMediaMaps(scenario.offerUpdate_);
-        libjami::unhold(aliceData.accountId_, aliceData.callId_);
+        libjami::resume(aliceData.accountId_, aliceData.callId_);
     }
 
     // Update and validate media count.
