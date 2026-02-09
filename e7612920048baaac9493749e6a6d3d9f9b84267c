@@ -16,6 +16,24 @@
       "message": "Marking as WIP as I discovered this causes the jami-service-type in Guix System to hang for reasons to be investigated.",
       "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "67328b03_d09def31",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-09T07:05:47Z",
+      "side": 1,
+      "message": "It appears the deadlock occurs in the daemon when syslog is enabled very early, and when there\u0027s dbus communication (e.g. provisioning an account as the jami-service-type in Guix does).",
+      "parentUuid": "9e112069_38a08fbf",
+      "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
