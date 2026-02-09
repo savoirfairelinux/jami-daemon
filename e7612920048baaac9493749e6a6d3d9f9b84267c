@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e112069_38a08fbf",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-09T05:15:08Z",
+      "side": 1,
+      "message": "Marking as WIP as I discovered this causes the jami-service-type in Guix System to hang for reasons to be investigated.",
+      "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
