@@ -303,7 +303,7 @@ BootstrapTest::testBootstrapNeverNewDevice()
         [&](const std::string&, const std::map<std::string, std::string>&) {
             auto details = bob2Account->getVolatileAccountDetails();
             auto daemonStatus = details[libjami::Account::ConfProperties::Registration::STATUS];
-            if (daemonStatus != "UNREGISTERED")
+            if (daemonStatus == "REGISTERED")
                 bob2Connected = true;
             cv.notify_one();
         }));
