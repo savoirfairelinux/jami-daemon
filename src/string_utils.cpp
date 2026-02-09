@@ -22,6 +22,7 @@
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
+#include <fmt/compile.h>
 
 #include <sstream>
 #include <cctype>
@@ -105,17 +106,13 @@ to_string(const std::wstring& wstr, int codePage)
 std::string
 to_string(double value)
 {
-    char buf[64];
-    int len = snprintf(buf, sizeof(buf), "%-.*G", 16, value);
-    if (len <= 0)
-        throw std::invalid_argument {"Unable to parse double"};
-    return {buf, (size_t) len};
+    return fmt::format(FMT_COMPILE("{:.16G}"), value);
 }
 
 std::string
 to_hex_string(uint64_t id)
 {
-    return fmt::format("{:016x}", id);
+    return fmt::format(FMT_COMPILE("{:016x}"), id);
 }
 
 uint64_t
@@ -204,7 +201,7 @@ urlEncode(std::string_view input)
         return {};
     }
 
-    auto isAsciiAlnum = [](unsigned char c) {
+    constexpr auto isAsciiAlnum = [](unsigned char c) {
         return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
     };
 
