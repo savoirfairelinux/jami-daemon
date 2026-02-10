@@ -34,6 +34,41 @@
       "parentUuid": "9e112069_38a08fbf",
       "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b68e7b1_43c87c37",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-10T05:37:32Z",
+      "side": 1,
+      "message": "I think it\u0027s an issue in the init used by Guix System, which implements its own syslog service and is somehow susceptible to deadlocks in that situation; if I run the same service code outside of Shepherd it works.",
+      "parentUuid": "67328b03_d09def31",
+      "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "db4e64a4_88cb1655",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-10T05:37:32Z",
+      "side": 1,
+      "message": "Leaving as WIP because I\u0027ll add support to log to a file from the CLI.",
+      "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
