@@ -69,6 +69,24 @@
       "message": "Leaving as WIP because I\u0027ll add support to log to a file from the CLI.",
       "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "596e4308_d4387bb3",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-02-10T07:21:19Z",
+      "side": 1,
+      "message": "I\u0027ve reported the issue to Shepherd here: https://codeberg.org/shepherd/shepherd/issues/106\n\nI think this change is still a good change for Jami.",
+      "parentUuid": "1b68e7b1_43c87c37",
+      "revId": "e7612920048baaac9493749e6a6d3d9f9b84267c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
