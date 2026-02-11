@@ -597,16 +597,24 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     std::string accountType(ACCOUNT_TYPE_SIP);
     parseValueOptional(node, "type", accountType);
 
-    if (!accountid.empty()) {
-        if (auto a = base_.accountFactory.createAccount(accountType, accountid)) {
-            auto config = a->buildConfig();
-            config->unserialize(node);
-            a->setConfig(std::move(config));
-        } else {
-            JAMI_ERROR("Failed to create account of type \"{:s}\"", accountType);
-            ++errorCount;
-        }
+    if (accountid.empty())
+        return;
+
+    if (base_.preferences.isAccountPending(accountid)) {
+        JAMI_INFO("[account:%s] Removing pending account from disk", accountid.c_str());
+        base_.removeAccount(accountid, true);
+        return;
     }
+
+    if (auto a = base_.accountFactory.createAccount(accountType, accountid)) {
+        auto config = a->buildConfig();
+        config->unserialize(node);
+        a->setConfig(std::move(config));
+        return;
+    }
+
+    JAMI_ERROR("Failed to create account of type \"{:s}\"", accountType);
+    ++errorCount;
 }
 
 // THREAD=VoIP
@@ -2735,11 +2743,24 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     newAccount->doRegister();
 
     preferences.addAccount(newAccountID);
+    markAccountPending(newAccountID);
     saveConfig();
 
     emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 
     return newAccountID;
+}
+
+bool
+Manager::markAccountPending(const std::string& accountId)
+{
+    return preferences.addPendingAccountId(accountId);
+}
+
+bool
+Manager::markAccountReady(const std::string& accountId)
+{
+    return preferences.removePendingAccountId(accountId);
 }
 
 void
@@ -2757,6 +2778,7 @@ Manager::removeAccount(const std::string& accountID, bool flush)
     }
 
     preferences.removeAccount(accountID);
+    preferences.removePendingAccountId(accountID);
 
     saveConfig();
 
@@ -2822,6 +2844,13 @@ Manager::loadAccountMap(const YAML::Node& node)
         if (accountFactory.hasAccount<JamiAccount>(dir)) {
             continue;
         }
+
+        if (preferences.isAccountPending(dir)) {
+            JAMI_INFO("[account:%s] Removing pending account from disk", dir.c_str());
+            removeAccount(dir, true);
+            continue;
+        }
+
         remaining++;
         dht::ThreadPool::computation().run(
             [this, dir, &cv, &remaining, &lock, configFile = accountBaseDir / dir / "config.yml"] {
@@ -2961,6 +2990,8 @@ Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, 
         auto configFile = accountBaseDir / accountId / "config.yml";
         try {
             if ((account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountId))) {
+                if (markAccountPending(accountId))
+                    saveConfig();
                 account->enableAutoLoadConversations(false);
                 auto configNode = YAML::LoadFile(configFile.string());
                 auto config = account->buildConfig();
