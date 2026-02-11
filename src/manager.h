@@ -452,6 +452,9 @@ public:
      */
     std::string addAccount(const std::map<std::string, std::string>& details, const std::string& accountId = {});
 
+    bool markAccountPending(const std::string& accountId);
+    bool markAccountReady(const std::string& accountId);
+
     /**
      * Delete an existing account, unregister VoIPLink associated, and
      * purge from configuration.

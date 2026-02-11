@@ -60,6 +60,10 @@ public:
 
     void setAccountOrder(const std::string& ord) { accountOrder_ = ord; }
 
+    bool isAccountReadyToLoad(const std::string& accountId) const;
+    bool addPendingAccountId(const std::string& accountId);
+    bool removePendingAccountId(const std::string& accountId);
+
     int getHistoryLimit() const { return historyLimit_; }
 
     void setHistoryLimit(int lim) { historyLimit_ = lim; }
@@ -96,6 +100,7 @@ private:
     int portNum_;
     bool searchBarDisplay_;
     bool md5Hash_;
+    std::set<std::string> pendingAccountIds_;
     constexpr static const char* const CONFIG_LABEL = "preferences";
 };
 
