@@ -551,16 +551,19 @@ public:
 
     std::shared_ptr<dhtnet::ChannelSocket> gitSocket(const DeviceId& deviceId) const
     {
+        std::lock_guard lk(gitSocketMtx_);
         auto deviceSockets = gitSocketList_.find(deviceId);
         return (deviceSockets != gitSocketList_.end()) ? deviceSockets->second : nullptr;
     }
 
     void addGitSocket(const DeviceId& deviceId, const std::shared_ptr<dhtnet::ChannelSocket>& socket)
     {
+        std::lock_guard lk(gitSocketMtx_);
         gitSocketList_[deviceId] = socket;
     }
     void removeGitSocket(const DeviceId& deviceId)
     {
+        std::lock_guard lk(gitSocketMtx_);
         auto deviceSockets = gitSocketList_.find(deviceId);
         if (deviceSockets != gitSocketList_.end())
             gitSocketList_.erase(deviceSockets);
@@ -632,6 +635,7 @@ public:
     mutable std::mutex activeCallsMtx_ {};
     mutable std::vector<std::map<std::string, std::string>> activeCalls_ {};
 
+    mutable std::mutex gitSocketMtx_ {};
     GitSocketList gitSocketList_ {};
 
     // Bootstrap
@@ -901,6 +905,7 @@ Conversation::Impl::disconnectFromPeer(const std::string& peerUri)
     swarmManager_->deleteNode(toRemove);
 
     // Remove git sockets with this member
+    std::lock_guard lk(gitSocketMtx_);
     for (auto it = gitSocketList_.begin(); it != gitSocketList_.end();) {
         if (peerUri == repository_->uriFromDevice(it->first.toString()))
             it = gitSocketList_.erase(it);
@@ -1509,7 +1514,10 @@ Conversation::removeGitSocket(const DeviceId& deviceId)
 void
 Conversation::shutdownConnections()
 {
-    pimpl_->gitSocketList_.clear();
+    {
+        std::lock_guard lk(pimpl_->gitSocketMtx_);
+        pimpl_->gitSocketList_.clear();
+    }
     if (pimpl_->swarmManager_)
         pimpl_->swarmManager_->shutdown();
 }
@@ -1663,6 +1671,7 @@ std::vector<NodeId>
 Conversation::peersToSyncWith() const
 {
     auto s = pimpl_->swarmManager_->getConnectedNodes();
+    std::lock_guard lk(pimpl_->gitSocketMtx_);
     for (const auto& [deviceId, _] : pimpl_->gitSocketList_)
         if (std::find(s.cbegin(), s.cend(), deviceId) == s.cend())
             s.emplace_back(deviceId);
