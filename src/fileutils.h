@@ -143,5 +143,7 @@ int accessFile(const std::string& file, int mode);
  */
 uint64_t lastWriteTimeInSeconds(const std::filesystem::path& filePath);
 
+std::string getOrCreateLocalDeviceId();
+
 } // namespace fileutils
 } // namespace jami
