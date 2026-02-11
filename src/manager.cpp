@@ -415,6 +415,8 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , videoManager_(nullptr)
 #endif
 {
+    std::string localMappingLabel = "JAMI-" + fileutils::getOrCreateLocalDeviceId();
+    upnpContext_->setMappingLabel(localMappingLabel);
     jami::libav_utils::av_init();
 }
 
@@ -1056,7 +1058,8 @@ Manager::outgoingCall(const std::string& account_id,
                       const std::string& to,
                       const std::vector<libjami::MediaMap>& mediaList)
 {
-    JAMI_DBG() << "Attempt outgoing call to '" << to << "'" << " with account '" << account_id << "'";
+    JAMI_DBG() << "Attempt outgoing call to '" << to << "'"
+               << " with account '" << account_id << "'";
 
     std::shared_ptr<Call> call;
 

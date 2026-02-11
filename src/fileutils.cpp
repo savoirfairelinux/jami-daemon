@@ -839,5 +839,38 @@ lastWriteTimeInSeconds(const std::filesystem::path& filePath)
     return std::chrono::duration_cast<std::chrono::seconds>(lastWrite.time_since_epoch()).count();
 }
 
+std::string
+getOrCreateLocalDeviceId()
+{
+    auto& localDir = get_data_dir(); // ~/.local/share/jami/
+    auto fullIdPath = localDir / "local_device_id";
+    std::string localDeviceId;
+
+    if (std::filesystem::exists(fullIdPath)) {
+        // Get the id inside the file
+        std::ifstream inStream(fullIdPath);
+        std::getline(inStream, localDeviceId);
+        inStream.close();
+        if (!localDeviceId.empty())
+            return localDeviceId;
+    }
+
+    // Generate a random hex string
+    std::random_device randomDevice;
+    std::mt19937_64 engine(randomDevice());
+    std::uniform_int_distribution<uint64_t> distribution;
+    std::stringstream stringStream;
+    stringStream << std::hex << distribution(engine);
+    localDeviceId = stringStream.str();
+
+    // Create a new file and write the id in it
+    std::filesystem::create_directories(localDir);
+    std::ofstream outStream(fullIdPath);
+    outStream << localDeviceId << std::endl;
+    outStream.close();
+
+    return localDeviceId;
+}
+
 } // namespace fileutils
 } // namespace jami
