@@ -1102,6 +1102,12 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
         return;
 
     JAMI_DEBUG("[Account {:s}] Loading account", getAccountID());
+    const auto scheduleAccountReady = [accountId = getAccountID()] {
+        runOnMainThread([accountId] {
+            auto& manager = Manager::instance();
+            manager.markAccountReady(accountId);
+        });
+    };
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
             if (!id_.first)
@@ -1257,6 +1263,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
+            scheduleAccountReady();
         } else if (isEnabled()) {
             JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
             if (not conf.managerUri.empty() and archive_password.empty()) {
@@ -1314,10 +1321,14 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                 fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
-                [w = weak(), this, migrating, hasPassword](const AccountInfo& info,
-                                                           const std::map<std::string, std::string>& config,
-                                                           std::string&& receipt,
-                                                           std::vector<uint8_t>&& receipt_signature) {
+                [w = weak(),
+                 this,
+                 migrating,
+                 hasPassword,
+                 scheduleAccountReady](const AccountInfo& info,
+                                       const std::map<std::string, std::string>& config,
+                                       std::string&& receipt,
+                                       std::vector<uint8_t>&& receipt_signature) {
                     auto sthis = w.lock();
                     if (not sthis)
                         return;
@@ -1388,6 +1399,7 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
                         }
                     }
                     doRegister();
+                    scheduleAccountReady();
                 },
                 [w = weak(), id, accountId = getAccountID(), migrating](AccountManager::AuthError error,
                                                                         const std::string& message) {
