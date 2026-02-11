@@ -77,6 +77,7 @@ constexpr std::string_view DEFAULT_CONFERENCE_RESOLUTION {"1280x720"};
 
 // general preferences
 static constexpr const char* ORDER_KEY {"order"};
+static constexpr const char* PENDING_ACCOUNTS_KEY {"pendingAccounts"};
 static constexpr const char* AUDIO_API_KEY {"audioApi"};
 static constexpr const char* HISTORY_LIMIT_KEY {"historyLimit"};
 static constexpr const char* RINGING_TIMEOUT {"ringingTimeout"};
@@ -200,6 +201,28 @@ Preferences::removeAccount(const std::string& oldAccountID)
         accountOrder_.erase(start, oldAccountID.length() + 1);
 }
 
+bool
+Preferences::isAccountReadyToLoad(const std::string& accountId) const
+{
+    return pendingAccountIds_.count(accountId) == 0;
+}
+
+bool
+Preferences::addPendingAccountId(const std::string& accountId)
+{
+    if (accountId.empty())
+        return false;
+    return pendingAccountIds_.insert(accountId).second;
+}
+
+bool
+Preferences::removePendingAccountId(const std::string& accountId)
+{
+    if (accountId.empty())
+        return false;
+    return pendingAccountIds_.erase(accountId) > 0;
+}
+
 void
 Preferences::serialize(YAML::Emitter& out) const
 {
@@ -213,6 +236,10 @@ Preferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << PORT_NUM_KEY << YAML::Value << portNum_;
     out << YAML::Key << SEARCH_BAR_DISPLAY_KEY << YAML::Value << searchBarDisplay_;
     out << YAML::Key << ZONE_TONE_CHOICE_KEY << YAML::Value << zoneToneChoice_;
+    out << YAML::Key << PENDING_ACCOUNTS_KEY << YAML::Value << YAML::BeginSeq;
+    for (const auto& accountId : pendingAccountIds_)
+        out << accountId;
+    out << YAML::EndSeq;
     out << YAML::EndMap;
 }
 
@@ -229,6 +256,17 @@ Preferences::unserialize(const YAML::Node& in)
     parseValue(node, PORT_NUM_KEY, portNum_);
     parseValue(node, SEARCH_BAR_DISPLAY_KEY, searchBarDisplay_);
     parseValue(node, MD5_HASH_KEY, md5Hash_);
+
+    pendingAccountIds_.clear();
+    if (const auto& pending = node[PENDING_ACCOUNTS_KEY]; pending && pending.IsSequence()) {
+        for (const auto& entry : pending) {
+            try {
+                pendingAccountIds_.insert(entry.as<std::string>());
+            } catch (const YAML::Exception& e) {
+                JAMI_WARN("[config] Unable to read pending account id: {}", e.what());
+            }
+        }
+    }
 }
 
 VoipPreference::VoipPreference()
