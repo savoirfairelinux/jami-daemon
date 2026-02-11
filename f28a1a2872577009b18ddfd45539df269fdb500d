@@ -22,6 +22,30 @@
       },
       "revId": "f28a1a2872577009b18ddfd45539df269fdb500d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "813f700a_280319d4",
+        "filename": "CMakeLists.txt",
+        "patchSetId": 2
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-11T20:09:13Z",
+      "side": 1,
+      "message": "Is that currently supported by the `build.py` script of `jami-client-qt`?",
+      "parentUuid": "ede12ab2_da616340",
+      "range": {
+        "startLine": 11,
+        "startChar": 0,
+        "endLine": 12,
+        "endChar": 2
+      },
+      "revId": "f28a1a2872577009b18ddfd45539df269fdb500d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
