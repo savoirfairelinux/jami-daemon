@@ -296,6 +296,7 @@ struct Manager::ManagerPimpl
     void removeWaitingCall(const std::string& id);
 
     void loadAccount(const YAML::Node& item, int& errorCount);
+    void cleanupAccountStorage(const std::string& accountId);
 
     void sendTextMessageToConference(const Conference& conf,
                                      const std::map<std::string, std::string>& messages,
@@ -597,16 +598,36 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
     std::string accountType(ACCOUNT_TYPE_SIP);
     parseValueOptional(node, "type", accountType);
 
-    if (!accountid.empty()) {
-        if (auto a = base_.accountFactory.createAccount(accountType, accountid)) {
-            auto config = a->buildConfig();
-            config->unserialize(node);
-            a->setConfig(std::move(config));
-        } else {
-            JAMI_ERROR("Failed to create account of type \"{:s}\"", accountType);
-            ++errorCount;
-        }
+    if (accountid.empty())
+        return;
+
+    if (base_.preferences.isAccountPending(accountid)) {
+        JAMI_INFO("[account:%s] Removing pending account from disk", accountid.c_str());
+        base_.removeAccount(accountid, true);
+        cleanupAccountStorage(accountid);
+        return;
     }
+
+    if (auto a = base_.accountFactory.createAccount(accountType, accountid)) {
+        auto config = a->buildConfig();
+        config->unserialize(node);
+        a->setConfig(std::move(config));
+        return;
+    }
+
+    JAMI_ERROR("Failed to create account of type \"{:s}\"", accountType);
+    ++errorCount;
+}
+
+void
+Manager::ManagerPimpl::cleanupAccountStorage(const std::string& accountId)
+{
+    const auto cachePath = fileutils::get_cache_dir() / accountId;
+    const auto dataPath = cachePath / "values";
+    const auto idPath = fileutils::get_data_dir() / accountId;
+    dhtnet::fileutils::removeAll(dataPath);
+    dhtnet::fileutils::removeAll(cachePath);
+    dhtnet::fileutils::removeAll(idPath, true);
 }
 
 // THREAD=VoIP
@@ -2735,11 +2756,25 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     newAccount->doRegister();
 
     preferences.addAccount(newAccountID);
-    saveConfig();
+    markAccountPending(newAccountID);
 
     emitSignal<libjami::ConfigurationSignal::AccountsChanged>();
 
     return newAccountID;
+}
+
+void
+Manager::markAccountPending(const std::string& accountId)
+{
+    if (preferences.addPendingAccountId(accountId))
+        saveConfig();
+}
+
+void
+Manager::markAccountReady(const std::string& accountId)
+{
+    if (preferences.removePendingAccountId(accountId))
+        saveConfig();
 }
 
 void
@@ -2757,6 +2792,7 @@ Manager::removeAccount(const std::string& accountID, bool flush)
     }
 
     preferences.removeAccount(accountID);
+    preferences.removePendingAccountId(accountID);
 
     saveConfig();
 
@@ -2822,6 +2858,14 @@ Manager::loadAccountMap(const YAML::Node& node)
         if (accountFactory.hasAccount<JamiAccount>(dir)) {
             continue;
         }
+
+        if (preferences.isAccountPending(dir)) {
+            JAMI_INFO("[account:%s] Removing pending account from disk", dir.c_str());
+            removeAccount(dir, true);
+            pimpl_->cleanupAccountStorage(dir);
+            continue;
+        }
+
         remaining++;
         dht::ThreadPool::computation().run(
             [this, dir, &cv, &remaining, &lock, configFile = accountBaseDir / dir / "config.yml"] {
