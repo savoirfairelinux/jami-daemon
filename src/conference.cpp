@@ -852,9 +852,11 @@ Conference::negotiateVideoWithSubcalls(const std::string& excludeCallId)
         }
 
         auto mediaList = call->getMediaAttributeList();
-        bool hasVideo = MediaAttribute::hasMediaType(mediaList, MediaType::MEDIA_VIDEO);
+        auto videoIt = std::find_if(mediaList.begin(), mediaList.end(), [](const auto& media) {
+            return media.type_ == MediaType::MEDIA_VIDEO;
+        });
 
-        if (!hasVideo) {
+        if (videoIt == mediaList.end()) {
             JAMI_DEBUG("[conf:{}] [call:{}] Call does not have video, triggering renegotiation to add video",
                        id_,
                        callId);
@@ -865,12 +867,33 @@ Conference::negotiateVideoWithSubcalls(const std::string& excludeCallId)
             videoAttr.muted_ = false;
             videoAttr.label_ = sip_utils::DEFAULT_VIDEO_STREAMID;
             // Source not needed because the mixer becomes the data source for the video stream
-            videoAttr.sourceUri_ = "";
+            videoAttr.sourceUri_.clear();
 
             mediaList.emplace_back(videoAttr);
 
             call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
             call->enterConference(shared_from_this());
+        } else {
+            bool needsUpdate = false;
+            if (!videoIt->enabled_) {
+                videoIt->enabled_ = true;
+                needsUpdate = true;
+            }
+            if (videoIt->muted_) {
+                videoIt->muted_ = false;
+                needsUpdate = true;
+            }
+            if (!videoIt->sourceUri_.empty()) {
+                // Source not needed because the mixer becomes the data source for the video stream
+                videoIt->sourceUri_.clear();
+                needsUpdate = true;
+            }
+
+            if (needsUpdate) {
+                JAMI_DEBUG("[conf:{}] [call:{}] Unmuting existing video stream for renegotiation", id_, callId);
+                call->requestMediaChange(MediaAttribute::mediaAttributesToMediaMaps(mediaList));
+                call->enterConference(shared_from_this());
+            }
         }
     }
 }
@@ -1843,6 +1866,7 @@ Conference::bindHostAudio()
                         if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
                             hostAudioInput->second->switchInput(source.sourceUri_);
                         }
+
                         // Bind audio
                         if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
                             bool isParticipantMuted = isMuted(call->getCallId());
