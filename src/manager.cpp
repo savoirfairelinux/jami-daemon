@@ -1473,8 +1473,33 @@ Manager::joinParticipant(const std::string& accountId,
     }
 
     auto mediaAttr = call1->getMediaAttributeList();
-    if (mediaAttr.empty())
+    if (mediaAttr.empty()) {
+        JAMI_WARNING("[call:{}] No media attribute found, using media attribute from call [{}]", callId1, callId2);
         mediaAttr = call2->getMediaAttributeList();
+    }
+
+    // Filter out secondary audio streams that are muted: these are SDP
+    // negotiation artifacts (the host answered a participant's extra audio
+    // offer with a muted slot) and do not represent real host audio sources.
+    {
+        bool audioFound = false;
+        mediaAttr.erase(std::remove_if(mediaAttr.begin(),
+                                       mediaAttr.end(),
+                                       [&audioFound](const MediaAttribute& attr) {
+                                           if (attr.type_ == MediaType::MEDIA_AUDIO) {
+                                               if (audioFound && attr.muted_)
+                                                   return true; // remove secondary audio streams
+                                               audioFound = true;
+                                           }
+                                           return false;
+                                       }),
+                        mediaAttr.end());
+    }
+
+    JAMI_DEBUG("[call:{}] Media attributes for conference:", callId1);
+    for (const auto& media : mediaAttr) {
+        JAMI_DEBUG("- {}", media.toString(true));
+    }
 
     auto conf = std::make_shared<Conference>(account);
     conf->attachHost(MediaAttribute::mediaAttributesToMediaMaps(mediaAttr));
@@ -1810,9 +1835,8 @@ Manager::playDtmf(char code)
         pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
     }
 
-    auto dtmfTimer = std::make_unique<asio::steady_timer>(*pimpl_->ioContext_,
-                                                      std::chrono::milliseconds(pulselen));
-    dtmfTimer->async_wait([this,audioGuard,t=dtmfTimer.get()](const asio::error_code& ec) {
+    auto dtmfTimer = std::make_unique<asio::steady_timer>(*pimpl_->ioContext_, std::chrono::milliseconds(pulselen));
+    dtmfTimer->async_wait([this, audioGuard, t = dtmfTimer.get()](const asio::error_code& ec) {
         if (ec)
             return;
         JAMI_DBG("End of dtmf");
