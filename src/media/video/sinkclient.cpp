@@ -478,7 +478,9 @@ SinkClient::setFrameSize(int width, int height)
 void
 SinkClient::setCrop(int x, int y, int w, int h)
 {
-    JAMI_DBG("[Sink:%p] Change crop to [%dx%d at (%d, %d)]", this, w, h, x, y);
+    if (x != crop_.x || y != crop_.y || w != crop_.w || h != crop_.h) {
+        JAMI_DBG("[Sink:%p] Change crop to [%dx%d at (%d, %d)]", this, w, h, x, y);
+    }
     crop_.x = x;
     crop_.y = y;
     crop_.w = w;
