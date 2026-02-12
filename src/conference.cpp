@@ -439,18 +439,21 @@ Conference::isMediaSourceMuted(MediaType type) const
         return true;
     }
 
-    // if one is muted, then consider that all are
+    // Check only the primary (first) source of the given type.
+    // Secondary sources (e.g. additional audio streams) being muted
+    // should not affect the overall mute state of the host.
     for (const auto& source : hostSources_) {
-        if (source.muted_ && source.type_ == type)
-            return true;
-        if (source.type_ == MediaType::MEDIA_NONE) {
-            JAMI_WARNING("The host source for {} is not set. The mute state is meaningless",
-                         source.mediaTypeToString(source.type_));
-            // Assume muted if the media is not present.
-            return true;
+        if (source.type_ == type) {
+            if (source.type_ == MediaType::MEDIA_NONE) {
+                JAMI_WARNING("The host source for {} is not set. The mute state is meaningless",
+                             source.mediaTypeToString(source.type_));
+                return true;
+            }
+            return source.muted_;
         }
     }
-    return false;
+    // No source of this type found — assume muted.
+    return true;
 }
 
 void
@@ -671,7 +674,7 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
         participantWillHaveVideo);
     if (videoMixer_ && participantWillHaveVideo) {
         auto callId = call->getCallId();
-        auto audioStreamId = std::string(sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID));
+        auto audioStreamId = sip_utils::streamId(callId, sip_utils::DEFAULT_AUDIO_STREAMID);
         JAMI_WARNING("[conf:{}] [call:{}] Removing audio-only source '{}' - participant may briefly disappear from "
                      "layout until video is attached",
                      getConfId(),
@@ -708,6 +711,11 @@ Conference::handleMediaChangeRequest(const std::shared_ptr<Call>& call,
     // in the account settings.
     call->answerMediaChangeRequest(newMediaList);
     call->enterConference(shared_from_this());
+
+    // Rebind audio after media renegotiation so that any newly added
+    // audio streams are wired into the conference mixing mesh.
+    unbindSubCallAudio(call->getCallId());
+    bindSubCallAudio(call->getCallId());
 
 #ifdef ENABLE_VIDEO
     // If a participant is adding video (didn't have it before, has it now),
@@ -1843,6 +1851,22 @@ Conference::startRecording(const std::string& path)
 
 /// PRIVATE
 
+namespace {
+// Get the ring buffer ID for a host audio source.
+std::string
+getHostSourceBufferId(const MediaAttribute& source)
+{
+    if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID)
+        return std::string(RingBufferPool::DEFAULT_ID);
+    auto buffer = source.sourceUri_;
+    constexpr std::string_view sep {libjami::Media::VideoProtocolPrefix::SEPARATOR};
+    const auto pos = source.sourceUri_.find(sep);
+    if (pos != std::string::npos)
+        buffer = source.sourceUri_.substr(pos + sep.size());
+    return buffer;
+}
+} // anonymous namespace
+
 void
 Conference::bindHostAudio()
 {
@@ -1850,141 +1874,240 @@ Conference::bindHostAudio()
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    for (const auto& item : getSubCalls()) {
-        if (auto call = getCall(item)) {
-            auto medias = call->getAudioStreams();
-            for (const auto& [id, muted] : medias) {
-                for (const auto& source : hostSources_) {
-                    if (source.type_ == MediaType::MEDIA_AUDIO) {
-                        // Start audio input
-                        auto hostAudioInput = hostAudioInputs_.find(source.label_);
-                        if (hostAudioInput == hostAudioInputs_.end()) {
-                            hostAudioInput = hostAudioInputs_
-                                                 .emplace(source.label_, std::make_shared<AudioInput>(source.label_))
-                                                 .first;
-                        }
-                        if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
-                            hostAudioInput->second->switchInput(source.sourceUri_);
-                        }
+    // Collect and start host audio sources, separating primary from secondary.
+    // The primary host buffer (DEFAULT_ID) forms the bidirectional link with
+    // each subcall's primary stream. Secondary host buffers are added as
+    // half-duplex sources so that participants hear the mix of all host streams.
+    std::string hostPrimaryBuffer;
+    std::vector<std::string> hostSecondaryBuffers;
 
-                        // Bind audio
-                        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                            bool isParticipantMuted = isMuted(call->getCallId());
-                            if (isParticipantMuted)
-                                rbPool.bindHalfDuplexOut(id, RingBufferPool::DEFAULT_ID);
-                            else
-                                rbPool.bindRingBuffers(id, RingBufferPool::DEFAULT_ID);
-                        } else {
-                            auto buffer = source.sourceUri_;
-                            static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-                            const auto pos = source.sourceUri_.find(sep);
-                            if (pos != std::string::npos)
-                                buffer = source.sourceUri_.substr(pos + sep.size());
+    for (const auto& source : hostSources_) {
+        if (source.type_ != MediaType::MEDIA_AUDIO)
+            continue;
 
-                            rbPool.bindRingBuffers(id, buffer);
-                        }
-                    }
-                }
-                rbPool.flush(id);
-            }
-        }
+        // Start audio input
+        auto& hostAudioInput = hostAudioInputs_[source.label_];
+        if (!hostAudioInput)
+            hostAudioInput = std::make_shared<AudioInput>(source.label_);
+        hostAudioInput->switchInput(source.sourceUri_);
+
+        auto bufferId = getHostSourceBufferId(source);
+        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID)
+            hostPrimaryBuffer = bufferId;
+        else
+            hostSecondaryBuffers.push_back(bufferId);
     }
-    rbPool.flush(RingBufferPool::DEFAULT_ID);
+
+    if (hostPrimaryBuffer.empty())
+        return;
+
+    for (const auto& item : getSubCalls()) {
+        auto call = getCall(item);
+        if (!call)
+            continue;
+
+        const bool participantMuted = isMuted(call->getCallId());
+        const auto medias = call->getRemoteAudioStreams();
+
+        // Identify participant's primary (first) and secondary audio streams.
+        // Only the primary stream receives the conference mix (bidirectional).
+        // Secondary streams are mixed in as sources for other participants.
+        std::string participantPrimary;
+        std::vector<std::string> participantSecondaries;
+        for (const auto& [id, muted] : medias) {
+            if (participantPrimary.empty())
+                participantPrimary = id;
+            else
+                participantSecondaries.push_back(id);
+        }
+
+        if (participantPrimary.empty())
+            continue;
+
+        const bool primaryMuted = medias.at(participantPrimary);
+        const bool participantCanSend = !(participantMuted || primaryMuted);
+
+        // Host primary <-> participant primary (bidirectional with mute logic)
+        if (participantCanSend)
+            rbPool.bindRingBuffers(participantPrimary, hostPrimaryBuffer);
+        else
+            rbPool.bindHalfDuplexOut(participantPrimary, hostPrimaryBuffer);
+
+        // Host secondary sources -> participant primary
+        // (participant hears all host audio streams mixed together)
+        for (const auto& secBuffer : hostSecondaryBuffers)
+            rbPool.bindHalfDuplexOut(participantPrimary, secBuffer);
+
+        // Participant secondary streams -> host primary
+        // (host hears all participant audio streams mixed together)
+        for (const auto& secId : participantSecondaries) {
+            const bool secMuted = medias.at(secId);
+            if (!(participantMuted || secMuted))
+                rbPool.bindHalfDuplexOut(hostPrimaryBuffer, secId);
+        }
+
+        rbPool.flush(participantPrimary);
+        for (const auto& secId : participantSecondaries)
+            rbPool.flush(secId);
+    }
+
+    rbPool.flush(hostPrimaryBuffer);
+    for (const auto& secBuffer : hostSecondaryBuffers)
+        rbPool.flush(secBuffer);
 }
 
 void
 Conference::unbindHostAudio()
 {
     JAMI_DEBUG("[conf:{}] Unbinding host audio", id_);
-    for (const auto& source : hostSources_) {
-        if (source.type_ == MediaType::MEDIA_AUDIO) {
-            // Stop audio input
-            auto hostAudioInput = hostAudioInputs_.find(source.label_);
-            if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
-                hostAudioInput->second->switchInput("");
-            }
-            // Unbind audio
-            if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
-                Manager::instance().getRingBufferPool().unBindAllHalfDuplexIn(RingBufferPool::DEFAULT_ID);
-            } else {
-                auto buffer = source.sourceUri_;
-                static const std::string& sep = libjami::Media::VideoProtocolPrefix::SEPARATOR;
-                const auto pos = source.sourceUri_.find(sep);
-                if (pos != std::string::npos)
-                    buffer = source.sourceUri_.substr(pos + sep.size());
+    auto& rbPool = Manager::instance().getRingBufferPool();
 
-                Manager::instance().getRingBufferPool().unBindAllHalfDuplexIn(buffer);
-            }
+    for (const auto& source : hostSources_) {
+        if (source.type_ != MediaType::MEDIA_AUDIO)
+            continue;
+
+        // Stop audio input
+        auto hostAudioInput = hostAudioInputs_.find(source.label_);
+        if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
+            hostAudioInput->second->switchInput("");
         }
+
+        // Unbind audio: remove this buffer as a source from all readers.
+        auto bufferId = getHostSourceBufferId(source);
+        if (!bufferId.empty())
+            rbPool.unBindAllHalfDuplexIn(bufferId);
     }
 }
 
 void
 Conference::bindSubCallAudio(const std::string& callId)
 {
-    JAMI_DEBUG("[conf:{}] Binding participant audio: {}", id_, callId);
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    if (auto participantCall = getCall(callId)) {
-        const bool participantMuted = isMuted(callId);
-        const auto participantStreams = participantCall->getAudioStreams();
+    auto participantCall = getCall(callId);
+    if (!participantCall)
+        return;
 
-        for (const auto& [streamId, streamMutedFlag] : participantStreams) {
-            // if either the participant or the specific stream is muted, they should not transmit audio
-            const bool participantCanSend = !(participantMuted || streamMutedFlag);
+    const bool participantMuted = isMuted(callId);
+    const auto participantStreams = participantCall->getRemoteAudioStreams();
+    JAMI_DEBUG("[conf:{}] Binding participant audio: {} with {} streams", id_, callId, participantStreams.size());
 
-            // bind each of the new participant's audio streams to each of the other participants audio streams
-            for (const auto& otherId : getSubCalls()) {
-                if (otherId == callId)
-                    continue;
+    // Identify participant's primary (first) and secondary audio streams.
+    // The primary stream forms the bidirectional link with other participants'
+    // primary streams and the host. Secondary streams are mixed in as
+    // half-duplex sources so that other participants (and the host) hear the
+    // combined audio from all of this participant's streams.
+    std::string primaryStreamId;
+    std::vector<std::string> secondaryStreamIds;
+    for (const auto& [streamId, muted] : participantStreams) {
+        if (primaryStreamId.empty())
+            primaryStreamId = streamId;
+        else
+            secondaryStreamIds.push_back(streamId);
+    }
 
-                auto otherCall = getCall(otherId);
-                if (!otherCall)
-                    continue;
+    if (primaryStreamId.empty())
+        return;
 
-                const bool otherMuted = isMuted(otherId);
-                const auto otherStreams = otherCall->getAudioStreams();
+    const bool primaryMuted = participantStreams.at(primaryStreamId);
+    const bool participantPrimaryCanSend = !(participantMuted || primaryMuted);
 
-                for (const auto& [otherStreamId, otherStreamMutedFlag] : otherStreams) {
-                    const bool otherCanSend = !(otherMuted || otherStreamMutedFlag);
+    // --- Bind with other subcalls ---
+    for (const auto& otherId : getSubCalls()) {
+        if (otherId == callId)
+            continue;
 
-                    if (participantCanSend && otherCanSend) {
-                        rbPool.bindRingBuffers(streamId, otherStreamId);
-                        rbPool.flush(streamId);
-                        rbPool.flush(otherStreamId);
-                    } else {
-                        if (participantCanSend) {
-                            rbPool.bindHalfDuplexOut(otherStreamId, streamId);
-                            rbPool.flush(otherStreamId);
-                        }
-                        if (otherCanSend) {
-                            rbPool.bindHalfDuplexOut(streamId, otherStreamId);
-                            rbPool.flush(streamId);
-                        }
-                    }
-                }
-            }
+        auto otherCall = getCall(otherId);
+        if (!otherCall)
+            continue;
 
-            if (getState() == State::ACTIVE_ATTACHED) {
-                const bool hostCanSend = !(isMuted("host"sv) || isMediaSourceMuted(MediaType::MEDIA_AUDIO));
+        const bool otherMuted = isMuted(otherId);
+        const auto otherStreams = otherCall->getRemoteAudioStreams();
 
-                if (participantCanSend && hostCanSend) {
-                    rbPool.bindRingBuffers(streamId, RingBufferPool::DEFAULT_ID);
-                    rbPool.flush(streamId);
-                    rbPool.flush(RingBufferPool::DEFAULT_ID);
-                } else {
-                    if (participantCanSend) {
-                        rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, streamId);
-                        rbPool.flush(RingBufferPool::DEFAULT_ID);
-                    }
-                    if (hostCanSend) {
-                        rbPool.bindHalfDuplexOut(streamId, RingBufferPool::DEFAULT_ID);
-                        rbPool.flush(streamId);
-                    }
-                }
+        // Identify the other participant's primary and secondary streams
+        std::string otherPrimaryId;
+        std::vector<std::string> otherSecondaryIds;
+        for (const auto& [streamId, muted] : otherStreams) {
+            if (otherPrimaryId.empty())
+                otherPrimaryId = streamId;
+            else
+                otherSecondaryIds.push_back(streamId);
+        }
+
+        if (otherPrimaryId.empty())
+            continue;
+
+        const bool otherPrimaryMuted = otherStreams.at(otherPrimaryId);
+        const bool otherPrimaryCanSend = !(otherMuted || otherPrimaryMuted);
+
+        // Primary <-> primary (bidirectional with mute logic)
+        if (participantPrimaryCanSend && otherPrimaryCanSend) {
+            rbPool.bindRingBuffers(primaryStreamId, otherPrimaryId);
+        } else {
+            if (participantPrimaryCanSend)
+                rbPool.bindHalfDuplexOut(otherPrimaryId, primaryStreamId);
+            if (otherPrimaryCanSend)
+                rbPool.bindHalfDuplexOut(primaryStreamId, otherPrimaryId);
+        }
+
+        // Participant's secondaries -> other's primary
+        // (other participant hears all of this participant's streams mixed)
+        for (const auto& secId : secondaryStreamIds) {
+            const bool secMuted = participantStreams.at(secId);
+            if (!(participantMuted || secMuted))
+                rbPool.bindHalfDuplexOut(otherPrimaryId, secId);
+        }
+
+        // Other's secondaries -> participant's primary
+        // (this participant hears all of the other's streams mixed)
+        for (const auto& otherSecId : otherSecondaryIds) {
+            const bool otherSecMuted = otherStreams.at(otherSecId);
+            if (!(otherMuted || otherSecMuted))
+                rbPool.bindHalfDuplexOut(primaryStreamId, otherSecId);
+        }
+
+        rbPool.flush(primaryStreamId);
+        rbPool.flush(otherPrimaryId);
+    }
+
+    // --- Bind with host (if attached) ---
+    if (getState() == State::ACTIVE_ATTACHED) {
+        const bool hostCanSend = !(isMuted("host"sv) || isMediaSourceMuted(MediaType::MEDIA_AUDIO));
+
+        // Primary <-> host default buffer (bidirectional with mute logic)
+        if (participantPrimaryCanSend && hostCanSend) {
+            rbPool.bindRingBuffers(primaryStreamId, RingBufferPool::DEFAULT_ID);
+        } else {
+            if (participantPrimaryCanSend)
+                rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, primaryStreamId);
+            if (hostCanSend)
+                rbPool.bindHalfDuplexOut(primaryStreamId, RingBufferPool::DEFAULT_ID);
+        }
+
+        // Participant's secondaries -> host
+        // (host hears all of this participant's streams mixed)
+        for (const auto& secId : secondaryStreamIds) {
+            const bool secMuted = participantStreams.at(secId);
+            if (!(participantMuted || secMuted))
+                rbPool.bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, secId);
+        }
+
+        // Host's secondary sources -> participant primary
+        // (participant hears all host audio sources mixed)
+        for (const auto& source : hostSources_) {
+            if (source.type_ == MediaType::MEDIA_AUDIO && source.label_ != sip_utils::DEFAULT_AUDIO_STREAMID) {
+                auto buffer = getHostSourceBufferId(source);
+                rbPool.bindHalfDuplexOut(primaryStreamId, buffer);
             }
         }
+
+        rbPool.flush(primaryStreamId);
+        rbPool.flush(RingBufferPool::DEFAULT_ID);
     }
+
+    // Flush secondary streams
+    for (const auto& secId : secondaryStreamIds)
+        rbPool.flush(secId);
 }
 
 void
@@ -1994,8 +2117,17 @@ Conference::unbindSubCallAudio(const std::string& callId)
     if (auto call = getCall(callId)) {
         auto medias = call->getAudioStreams();
         auto& rbPool = Manager::instance().getRingBufferPool();
+
+        bool isPrimary = true;
         for (const auto& [id, muted] : medias) {
+            // Remove this stream as a source from all readers.
             rbPool.unBindAllHalfDuplexIn(id);
+            // For the primary stream, also remove its reader bindings
+            // (it was the only stream receiving the conference mix).
+            if (isPrimary) {
+                rbPool.unBindAllHalfDuplexOut(id);
+                isPrimary = false;
+            }
         }
     }
 }
