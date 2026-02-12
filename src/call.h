@@ -358,6 +358,13 @@ public:
 
     virtual std::map<std::string, bool> getAudioStreams() const = 0;
 
+    /**
+     * Return a map of audio stream IDs to their remote (peer-side) muted state.
+     * Unlike getAudioStreams() which returns the local send muted state,
+     * this returns whether the remote peer is sending audio on each stream.
+     */
+    virtual std::map<std::string, bool> getRemoteAudioStreams() const = 0;
+
 #ifdef ENABLE_VIDEO
     virtual void createSinks(ConfInfo& infos) = 0;
 #endif

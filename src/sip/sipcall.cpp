@@ -2572,6 +2572,22 @@ SIPCall::getAudioStreams() const
     return audioMedias;
 }
 
+std::map<std::string, bool>
+SIPCall::getRemoteAudioStreams() const
+{
+    std::lock_guard lk {callMutex_};
+    std::map<std::string, bool> audioMedias {};
+    for (const auto& stream : rtpStreams_) {
+        if (stream.mediaAttribute_ && stream.mediaAttribute_->type_ == MEDIA_AUDIO) {
+            auto label = fmt::format("{}_{}", getCallId(), stream.mediaAttribute_->label_);
+            bool muted = stream.remoteMediaAttribute_ ? stream.remoteMediaAttribute_->muted_
+                                                      : stream.mediaAttribute_->muted_;
+            audioMedias.emplace(label, muted);
+        }
+    }
+    return audioMedias;
+}
+
 void
 SIPCall::onMediaNegotiationComplete()
 {
