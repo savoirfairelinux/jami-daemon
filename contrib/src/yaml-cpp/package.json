@@ -1,12 +1,15 @@
 {
     "name": "yaml-cpp",
-    "version": "24fa1b33805c9a91df0f32c46c28e314dd7ad96f",
-    "cpe": "cpe:2.3:a:*:yaml-cpp:0.8.0:*:*:*:*:*:*:*",
+    "version": "yaml-cpp-0.9.0",
+    "cpe": "cpe:2.3:a:*:yaml-cpp:0.9.0:*:*:*:*:*:*:*",
     "url": "https://github.com/jbeder/yaml-cpp/archive/__VERSION__.tar.gz",
     "use_cmake": true,
     "defines": [
+        "CMAKE_CXX_STANDARD=20",
         "YAML_BUILD_SHARED_LIBS=OFF",
         "YAML_CPP_BUILD_TOOLS=OFF",
-        "YAML_CPP_BUILD_CONTRIB=OFF"
+        "YAML_CPP_BUILD_CONTRIB=OFF",
+        "YAML_CPP_BUILD_TESTS=OFF",
+        "YAML_CPP_FORMAT_SOURCE=OFF"
     ]
 }
