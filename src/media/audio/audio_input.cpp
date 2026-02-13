@@ -224,6 +224,7 @@ AudioInput::initCapture(const std::string& device)
     // Then the audio RTP session will handle sending the audio over the network
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, targetId);
 
+    sourceRingBufferId_ = targetId;
     playingDevice_ = true;
     return true;
 }
@@ -262,6 +263,7 @@ AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
     // Bind to itself to be able to read from the ringbuffer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, id_);
 
+    sourceRingBufferId_ = id_;
     deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
 
     wakeUp_ = std::chrono::steady_clock::now() + MS_PER_PACKET;
@@ -313,6 +315,7 @@ AudioInput::initFile(const std::string& path)
 
     // have file audio mixed into the local buffer so it gets played
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    sourceRingBufferId_ = id_;
     decodingFile_ = true;
     deviceGuard_ = Manager::instance().startAudioStream(AudioDeviceType::PLAYBACK);
     return true;
@@ -324,7 +327,7 @@ AudioInput::switchInput(const std::string& resource)
     // Always switch inputs, even if it's the same resource, so audio will be in sync with video
     std::unique_lock lk(resourceMutex_);
 
-    JAMI_DEBUG("Switching audio source from {} to {}", resource_, resource);
+    JAMI_DEBUG("Switching audio source from [{}] to [{}]", resource_, resource);
 
     auto oldGuard = std::move(deviceGuard_);
 
@@ -336,6 +339,7 @@ AudioInput::switchInput(const std::string& resource)
 
     playingDevice_ = false;
     resource_ = resource;
+    sourceRingBufferId_.clear();
     devOptsFound_ = false;
 
     std::promise<DeviceParams> p;

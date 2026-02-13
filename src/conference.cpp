@@ -422,8 +422,9 @@ void
 Conference::setLocalHostMuteState(MediaType type, bool muted)
 {
     for (auto& source : hostSources_)
-        if (source.type_ == type)
+        if (source.type_ == type) {
             source.muted_ = muted;
+        }
 }
 
 bool
@@ -614,11 +615,19 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
         if (oldIdx != hostSources_.end()) {
             // Check if muted status changes
             if (mediaAttr.muted_ != oldIdx->muted_) {
-                // If the current media source is muted, just call un-mute, it
-                // will set the new source as input.
-                muteLocalHost(mediaAttr.muted_,
-                              mediaAttr.type_ == MediaType::MEDIA_AUDIO ? libjami::Media::Details::MEDIA_TYPE_AUDIO
-                                                                        : libjami::Media::Details::MEDIA_TYPE_VIDEO);
+                // Secondary audio sources (e.g. screenshare audio) must be
+                // handled per-stream.  The global muteLocalHost() would
+                // mute/unmute ALL audio sources (including the microphone),
+                // so we skip it here and let bindHostAudio() apply the
+                // per-source mute state after hostSources_ is updated.
+                if (mediaAttr.type_ == MediaType::MEDIA_AUDIO && mediaAttr.label_ != sip_utils::DEFAULT_AUDIO_STREAMID) {
+                    JAMI_DEBUG("[conf:{}] Secondary audio mute handled per-stream", getConfId());
+                } else {
+                    muteLocalHost(mediaAttr.muted_,
+                                  mediaAttr.type_ == MediaType::MEDIA_AUDIO
+                                      ? libjami::Media::Details::MEDIA_TYPE_AUDIO
+                                      : libjami::Media::Details::MEDIA_TYPE_VIDEO);
+                }
             }
         }
     }
@@ -1851,22 +1860,6 @@ Conference::startRecording(const std::string& path)
 
 /// PRIVATE
 
-namespace {
-// Get the ring buffer ID for a host audio source.
-std::string
-getHostSourceBufferId(const MediaAttribute& source)
-{
-    if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID)
-        return std::string(RingBufferPool::DEFAULT_ID);
-    auto buffer = source.sourceUri_;
-    constexpr std::string_view sep {libjami::Media::VideoProtocolPrefix::SEPARATOR};
-    const auto pos = source.sourceUri_.find(sep);
-    if (pos != std::string::npos)
-        buffer = source.sourceUri_.substr(pos + sep.size());
-    return buffer;
-}
-} // anonymous namespace
-
 void
 Conference::bindHostAudio()
 {
@@ -1891,11 +1884,31 @@ Conference::bindHostAudio()
             hostAudioInput = std::make_shared<AudioInput>(source.label_);
         hostAudioInput->switchInput(source.sourceUri_);
 
-        auto bufferId = getHostSourceBufferId(source);
-        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID)
-            hostPrimaryBuffer = bufferId;
-        else
-            hostSecondaryBuffers.push_back(bufferId);
+        if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID) {
+            hostPrimaryBuffer = std::string(RingBufferPool::DEFAULT_ID);
+            JAMI_DEBUG("[conf:{}] Primary host buffer: {}", id_, hostPrimaryBuffer);
+        } else {
+            // Use the ring buffer ID that initCapture/initFile actually
+            // created, not the raw sourceUri which may differ (e.g.
+            // "display://:0+0,0 1920x1080" vs the normalized "desktop").
+            auto bufferId = hostAudioInput->getSourceRingBufferId();
+            if (!bufferId.empty()) {
+                if (source.muted_) {
+                    // Muted secondary source: silence the AudioInput and
+                    // remove its buffer from the mix so participants no
+                    // longer receive data from it.
+                    JAMI_DEBUG("[conf:{}] Secondary host buffer {} is muted – unbinding", id_, bufferId);
+                    hostAudioInput->setMuted(true);
+                    rbPool.unBindAllHalfDuplexIn(bufferId);
+                } else {
+                    JAMI_DEBUG("[conf:{}] Secondary host buffer: {}", id_, bufferId);
+                    hostAudioInput->setMuted(false);
+                    hostSecondaryBuffers.push_back(std::move(bufferId));
+                }
+            } else {
+                JAMI_WARNING("[conf:{}] No source ring buffer for host audio {}", id_, source.label_);
+            }
+        }
     }
 
     if (hostPrimaryBuffer.empty())
@@ -1966,14 +1979,20 @@ Conference::unbindHostAudio()
         if (source.type_ != MediaType::MEDIA_AUDIO)
             continue;
 
-        // Stop audio input
+        // Determine the buffer ID to unbind before stopping the input,
+        // since switchInput("") resets the source ring buffer ID.
+        std::string bufferId;
         auto hostAudioInput = hostAudioInputs_.find(source.label_);
         if (hostAudioInput != hostAudioInputs_.end() && hostAudioInput->second) {
+            if (source.label_ == sip_utils::DEFAULT_AUDIO_STREAMID)
+                bufferId = std::string(RingBufferPool::DEFAULT_ID);
+            else
+                bufferId = hostAudioInput->second->getSourceRingBufferId();
+            // Stop audio input
             hostAudioInput->second->switchInput("");
         }
 
         // Unbind audio: remove this buffer as a source from all readers.
-        auto bufferId = getHostSourceBufferId(source);
         if (!bufferId.empty())
             rbPool.unBindAllHalfDuplexIn(bufferId);
     }
@@ -2096,8 +2115,12 @@ Conference::bindSubCallAudio(const std::string& callId)
         // (participant hears all host audio sources mixed)
         for (const auto& source : hostSources_) {
             if (source.type_ == MediaType::MEDIA_AUDIO && source.label_ != sip_utils::DEFAULT_AUDIO_STREAMID) {
-                auto buffer = getHostSourceBufferId(source);
-                rbPool.bindHalfDuplexOut(primaryStreamId, buffer);
+                auto it = hostAudioInputs_.find(source.label_);
+                if (it != hostAudioInputs_.end() && it->second) {
+                    auto buffer = it->second->getSourceRingBufferId();
+                    if (!buffer.empty())
+                        rbPool.bindHalfDuplexOut(primaryStreamId, buffer);
+                }
             }
         }
 
