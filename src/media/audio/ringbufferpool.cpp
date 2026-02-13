@@ -314,22 +314,42 @@ RingBufferPool::getData(const std::string& ringbufferId)
 bool
 RingBufferPool::waitForDataAvailable(const std::string& ringbufferId, const std::chrono::microseconds& max_wait) const
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    std::unique_lock lk(stateLock_);
 
     // convert to absolute time
     const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
 
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
-        return 0;
+        return false;
 
     const auto bindings_copy = *bindings; // temporary copy
-    for (const auto& rbuf : bindings_copy) {
+    if (bindings_copy.empty())
+        return false;
+
+    // Single binding (typical 1-1 call): wait directly on it.
+    if (bindings_copy.size() == 1) {
         lk.unlock();
-        if (rbuf->waitForDataAvailable(ringbufferId, deadline) == 0)
-            return false;
-        lk.lock();
+        return (*bindings_copy.begin())->waitForDataAvailable(ringbufferId, deadline) != 0;
     }
+
+    // Multiple bindings (conference): return as soon as ANY source has data
+    // instead of waiting sequentially on ALL of them.  Waiting for every
+    // source makes the read cadence dependent on the slowest participant,
+    // which stretches the effective period beyond one packet and causes
+    // downstream buffer underruns / audio glitches.
+    // getData() already handles partial availability by mixing only the
+    // sources that have data ready.
+    for (const auto& rbuf : bindings_copy) {
+        if (rbuf->getLength(ringbufferId) > 0)
+            return true;
+    }
+
+    // No binding has data yet – block-wait on the first one until data
+    // arrives or the deadline expires, then let getData() collect what
+    // is available from all sources.
+    lk.unlock();
+    (*bindings_copy.begin())->waitForDataAvailable(ringbufferId, deadline);
     return true;
 }
 
