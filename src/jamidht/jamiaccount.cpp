@@ -2507,9 +2507,9 @@ JamiAccount::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& ce
 {
     bool done = accountManager_ ? accountManager_->setCertificateStatus(cert, status, local) : false;
     if (done) {
-        findCertificate(cert->getId().toString());
+        findCertificate(cert->getLongId().toString());
         emitSignal<libjami::ConfigurationSignal::CertificateStateChanged>(getAccountID(),
-                                                                          cert->getId().toString(),
+                                                                          cert->getLongId().toString(),
                                                                           dhtnet::tls::TrustStore::statusToStr(status));
     }
     return done;
