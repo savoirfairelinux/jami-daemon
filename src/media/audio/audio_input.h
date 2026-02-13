@@ -65,6 +65,14 @@ public:
 
     std::string getId() const { return id_; };
 
+    /**
+     * Return the ring-buffer ID that other components should read from
+     * to get this input's audio data.  For capture streams this is the
+     * target device ID (e.g. "desktop"); for files it is the
+     * AudioInput's own ID (where the decoder writes).
+     */
+    std::string getSourceRingBufferId() const { return sourceRingBufferId_; };
+
 private:
     void readFromDevice();
     void readFromFile();
@@ -76,6 +84,7 @@ private:
     void frameResized(std::shared_ptr<AudioFrame>&& ptr);
 
     std::string id_;
+    std::string sourceRingBufferId_; // ring buffer ID to read this input's audio from
     std::shared_ptr<RingBuffer> ringBuf_;
     bool muteState_ {false};
     uint64_t sent_samples = 0;
