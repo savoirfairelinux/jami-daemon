@@ -448,13 +448,15 @@ AccountManager::onPeerMessage(
     std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
 {
     // quick check in case we already explicilty banned this device
-    auto trustStatus = getCertificateStatus(peer_device.toString());
+    auto trustStatus = getCertificateStatus(peer_device.getLongId().toString());
     if (trustStatus == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
-        JAMI_WARNING("[Account {}] [Auth] Discarding message from banned device {}", accountId_, peer_device.toString());
+        JAMI_WARNING("[Account {}] [Auth] Discarding message from banned device {}",
+                     accountId_,
+                     peer_device.getLongId().to_view());
         return;
     }
 
-    findCertificate(peer_device.getId(),
+    findCertificate(peer_device.getLongId(),
                     [this, cb = std::move(cb), allowPublic](const std::shared_ptr<dht::crypto::Certificate>& cert) {
                         dht::InfoHash peer_account_id;
                         if (onPeerCertificate(cert, allowPublic, peer_account_id)) {
