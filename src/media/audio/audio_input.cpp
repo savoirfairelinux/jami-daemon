@@ -114,8 +114,9 @@ AudioInput::readFromDevice()
         }
     }
 
+    std::this_thread::sleep_until(wakeUp_);
+    wakeUp_ += MS_PER_PACKET;
     auto& bufferPool = Manager::instance().getRingBufferPool();
-    bufferPool.waitForDataAvailable(id_, MS_PER_PACKET);
 
     auto audioFrame = bufferPool.getData(id_);
     if (not audioFrame)
