@@ -842,7 +842,7 @@ lastWriteTimeInSeconds(const std::filesystem::path& filePath)
 std::string
 getOrCreateLocalDeviceId()
 {
-    auto& localDir = get_data_dir(); // ~/.local/share/jami/
+    const auto& localDir = get_data_dir(); // ~/.local/share/jami/
     auto fullIdPath = localDir / "local_device_id";
     std::string localDeviceId;
 
@@ -856,12 +856,10 @@ getOrCreateLocalDeviceId()
     }
 
     // Generate a random hex string
-    std::random_device randomDevice;
-    std::mt19937_64 engine(randomDevice());
-    std::uniform_int_distribution<uint64_t> distribution;
-    std::stringstream stringStream;
-    stringStream << std::hex << distribution(engine);
-    localDeviceId = stringStream.str();
+    {
+        std::random_device randomDevice;
+        localDeviceId = to_hex_string(std::uniform_int_distribution<uint64_t>()(randomDevice));
+    }
 
     // Create a new file and write the id in it
     std::filesystem::create_directories(localDir);
