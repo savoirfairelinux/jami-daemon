@@ -862,11 +862,15 @@ getOrCreateLocalDeviceId()
     }
 
     // Create a new file and write the id in it
-    std::filesystem::create_directories(localDir);
+    std::error_code ec;
+    std::filesystem::create_directories(localDir, ec);
     std::ofstream outStream(fullIdPath);
-    outStream << localDeviceId << std::endl;
-    outStream.close();
-
+    if (outStream) {
+        outStream << localDeviceId << std::endl;
+        outStream.close();
+    } else {
+        JAMI_ERROR("Unable to create local device id file: {}", fullIdPath);
+    }
     return localDeviceId;
 }
 

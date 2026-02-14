@@ -420,8 +420,6 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , videoManager_(nullptr)
 #endif
 {
-    std::string localMappingLabel = "JAMI-" + fileutils::getOrCreateLocalDeviceId();
-    upnpContext_->setMappingLabel(localMappingLabel);
     jami::libav_utils::av_init();
 }
 
@@ -778,6 +776,7 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 
     setGnuTlsLogLevel();
     dhtLogLevel = setDhtLogLevel();
+    pimpl_->upnpContext_->setMappingLabel("JAMI-" + fileutils::getOrCreateLocalDeviceId());
 
     JAMI_LOG("Using PJSIP version: {:s} for {:s}", pj_get_version(), PJ_OS_NAME);
     JAMI_LOG("Using GnuTLS version: {:s}", gnutls_check_version(nullptr));
