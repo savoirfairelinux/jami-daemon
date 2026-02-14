@@ -142,6 +142,14 @@ private:
     void removeReadBindings(const std::string& ringbufferId);
 
     /**
+     * Internal versions that assume stateLock_ is already held by caller.
+     * These methods do not acquire the lock themselves.
+     */
+    std::shared_ptr<RingBuffer> getRingBufferLocked(const std::string& id);
+    std::shared_ptr<RingBuffer> getRingBufferLocked(const std::string& id) const;
+    void flushAllBuffersLocked();
+
+    /**
      * Attaches a reader to the specified source.
      * @param sourceBuffer The RingBuffer that will be the source (to be read from).
      * @param readerBufferId The ID of the RingBuffer that will act as the reader of the
@@ -163,7 +171,7 @@ private:
     // A map of which RingBuffers a call has some ReadOffsets
     std::map<std::string, ReadBindings> readBindingsMap_ {};
 
-    mutable std::recursive_mutex stateLock_ {};
+    mutable std::mutex stateLock_ {};
 
     AudioFormat internalAudioFormat_ {AudioFormat::DEFAULT()};
 

@@ -19,10 +19,7 @@
 #include "ringbuffer.h"
 #include "logger.h"
 
-#include <limits>
-#include <utility> // for std::pair
 #include <cstring>
-#include <algorithm>
 
 namespace jami {
 
@@ -52,7 +49,7 @@ RingBufferPool::setInternalSamplingRate(unsigned sr)
     std::lock_guard lk(stateLock_);
 
     if (sr != internalAudioFormat_.sample_rate) {
-        flushAllBuffers();
+        flushAllBuffersLocked();
         internalAudioFormat_.sample_rate = sr;
     }
 }
@@ -63,7 +60,7 @@ RingBufferPool::setInternalAudioFormat(AudioFormat format)
     std::lock_guard lk(stateLock_);
 
     if (format != internalAudioFormat_) {
-        flushAllBuffers();
+        flushAllBuffersLocked();
         internalAudioFormat_ = format;
         for (auto& wrb : ringBufferMap_)
             if (auto rb = wrb.second.lock())
@@ -72,10 +69,8 @@ RingBufferPool::setInternalAudioFormat(AudioFormat format)
 }
 
 std::shared_ptr<RingBuffer>
-RingBufferPool::getRingBuffer(const std::string& id)
+RingBufferPool::getRingBufferLocked(const std::string& id)
 {
-    std::lock_guard lk(stateLock_);
-
     const auto& it = ringBufferMap_.find(id);
     if (it != ringBufferMap_.cend()) {
         if (const auto& sptr = it->second.lock())
@@ -87,10 +82,8 @@ RingBufferPool::getRingBuffer(const std::string& id)
 }
 
 std::shared_ptr<RingBuffer>
-RingBufferPool::getRingBuffer(const std::string& id) const
+RingBufferPool::getRingBufferLocked(const std::string& id) const
 {
-    std::lock_guard lk(stateLock_);
-
     const auto& it = ringBufferMap_.find(id);
     if (it != ringBufferMap_.cend())
         return it->second.lock();
@@ -99,11 +92,25 @@ RingBufferPool::getRingBuffer(const std::string& id) const
 }
 
 std::shared_ptr<RingBuffer>
+RingBufferPool::getRingBuffer(const std::string& id)
+{
+    std::lock_guard lk(stateLock_);
+    return getRingBufferLocked(id);
+}
+
+std::shared_ptr<RingBuffer>
+RingBufferPool::getRingBuffer(const std::string& id) const
+{
+    std::lock_guard lk(stateLock_);
+    return getRingBufferLocked(id);
+}
+
+std::shared_ptr<RingBuffer>
 RingBufferPool::createRingBuffer(const std::string& id)
 {
     std::lock_guard lk(stateLock_);
 
-    auto rbuf = getRingBuffer(id);
+    auto rbuf = getRingBufferLocked(id);
     if (rbuf) {
         JAMI_DEBUG("Ringbuffer already exists for id '{}'", id);
         return rbuf;
@@ -163,19 +170,19 @@ RingBufferPool::bindRingBuffers(const std::string& ringbufferId1, const std::str
 {
     JAMI_LOG("Bind ringbuffer {} to ringbuffer {}", ringbufferId1, ringbufferId2);
 
-    const auto& rb1 = getRingBuffer(ringbufferId1);
+    std::lock_guard lk(stateLock_);
+
+    const auto& rb1 = getRingBufferLocked(ringbufferId1);
     if (not rb1) {
         JAMI_ERROR("No ringbuffer associated with id '{}'", ringbufferId1);
         return;
     }
 
-    const auto& rb2 = getRingBuffer(ringbufferId2);
+    const auto& rb2 = getRingBufferLocked(ringbufferId2);
     if (not rb2) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId2);
         return;
     }
-
-    std::lock_guard lk(stateLock_);
 
     addReaderToRingBuffer(rb1, ringbufferId2);
     addReaderToRingBuffer(rb2, ringbufferId1);
@@ -186,9 +193,9 @@ RingBufferPool::bindHalfDuplexOut(const std::string& readerBufferId, const std::
 {
     /* This method is used only for active ringbuffers, if this ringbuffer does not exist,
      * do nothing */
-    if (const auto& rb = getRingBuffer(sourceBufferId)) {
-        std::lock_guard lk(stateLock_);
+    std::lock_guard lk(stateLock_);
 
+    if (const auto& rb = getRingBufferLocked(sourceBufferId)) {
         // p1 est le binding de p2 (p2 lit le stream de p1)
         addReaderToRingBuffer(rb, readerBufferId);
     }
@@ -199,19 +206,19 @@ RingBufferPool::unbindRingBuffers(const std::string& ringbufferId1, const std::s
 {
     JAMI_LOG("Unbind ringbuffers {} and {}", ringbufferId1, ringbufferId2);
 
-    const auto& rb1 = getRingBuffer(ringbufferId1);
+    std::lock_guard lk(stateLock_);
+
+    const auto& rb1 = getRingBufferLocked(ringbufferId1);
     if (not rb1) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId1);
         return;
     }
 
-    const auto& rb2 = getRingBuffer(ringbufferId2);
+    const auto& rb2 = getRingBufferLocked(ringbufferId2);
     if (not rb2) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId2);
         return;
     }
-
-    std::lock_guard lk(stateLock_);
 
     removeReaderFromRingBuffer(rb1, ringbufferId2);
     removeReaderFromRingBuffer(rb2, ringbufferId1);
@@ -222,19 +229,21 @@ RingBufferPool::unBindHalfDuplexOut(const std::string& readerBufferId, const std
 {
     std::lock_guard lk(stateLock_);
 
-    if (const auto& rb = getRingBuffer(sourceBufferId))
+    if (const auto& rb = getRingBufferLocked(sourceBufferId))
         removeReaderFromRingBuffer(rb, readerBufferId);
 }
 
 void
 RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
 {
-    const auto& rb = getRingBuffer(ringbufferId);
+    std::lock_guard lk(stateLock_);
+
+    const auto& rb = getRingBufferLocked(ringbufferId);
     if (not rb) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
     }
-    std::lock_guard lk(stateLock_);
+
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
@@ -247,12 +256,14 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
 void
 RingBufferPool::unBindAllHalfDuplexIn(const std::string& sourceBufferId)
 {
-    auto ringBuffer = getRingBuffer(sourceBufferId);
+    std::lock_guard lk(stateLock_);
+
+    auto ringBuffer = getRingBufferLocked(sourceBufferId);
     if (not ringBuffer) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", sourceBufferId);
         return;
     }
-    std::lock_guard lk(stateLock_);
+
     const std::vector<std::string>& subscribers = ringBuffer->getSubscribers();
     for (const auto& subscriber : subscribers) {
         removeReaderFromRingBuffer(ringBuffer, subscriber);
@@ -264,13 +275,13 @@ RingBufferPool::unBindAll(const std::string& ringbufferId)
 {
     JAMI_LOG("Unbind ringbuffer {} from all bound ringbuffers", ringbufferId);
 
-    const auto& rb = getRingBuffer(ringbufferId);
+    std::lock_guard lk(stateLock_);
+
+    const auto& rb = getRingBufferLocked(ringbufferId);
     if (not rb) {
         JAMI_ERROR("No ringbuffer associated to id '{}'", ringbufferId);
         return;
     }
-
-    std::lock_guard lk(stateLock_);
 
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
@@ -423,10 +434,8 @@ RingBufferPool::flush(const std::string& ringbufferId)
 }
 
 void
-RingBufferPool::flushAllBuffers()
+RingBufferPool::flushAllBuffersLocked()
 {
-    std::lock_guard lk(stateLock_);
-
     for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end();) {
         if (const auto rb = item->second.lock()) {
             rb->flushAll();
@@ -438,12 +447,19 @@ RingBufferPool::flushAllBuffers()
     }
 }
 
+void
+RingBufferPool::flushAllBuffers()
+{
+    std::lock_guard lk(stateLock_);
+    flushAllBuffersLocked();
+}
+
 bool
 RingBufferPool::isAudioMeterActive(const std::string& id)
 {
     std::lock_guard lk(stateLock_);
     if (!id.empty()) {
-        if (auto rb = getRingBuffer(id)) {
+        if (auto rb = getRingBufferLocked(id)) {
             return rb->isAudioMeterActive();
         }
     } else {
@@ -463,7 +479,7 @@ RingBufferPool::setAudioMeterState(const std::string& id, bool state)
 {
     std::lock_guard lk(stateLock_);
     if (!id.empty()) {
-        if (auto rb = getRingBuffer(id)) {
+        if (auto rb = getRingBufferLocked(id)) {
             rb->setAudioMeterState(state);
         }
     } else {
