@@ -95,6 +95,7 @@ private:
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
     bool isVideoConfigured_ {false};
+    bool gotFirstKeyFrame_ {false};
     uint16_t mtu_;
     int rotation_ {0};
 

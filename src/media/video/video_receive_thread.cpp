@@ -92,6 +92,22 @@ VideoReceiveThread::setup()
         }
         if (displayMatrix)
             av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, displayMatrix.release());
+
+        if (auto avFrame = frame ? frame->pointer() : nullptr) {
+            const bool isKeyFrame = avFrame->key_frame;
+
+            // Wait for first keyframe before publishing any frames
+            if (!gotFirstKeyFrame_) {
+                if (isKeyFrame) {
+                    gotFirstKeyFrame_ = true;
+                } else {
+                    if (keyFrameRequestCallback_)
+                        keyFrameRequestCallback_();
+                    return;
+                }
+            }
+        }
+
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
     videoDecoder_->setContextCallback([this]() {
