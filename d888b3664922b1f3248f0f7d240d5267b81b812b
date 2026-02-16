@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8ed2de56_95f3b150",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-16T21:18:42Z",
+      "side": 1,
+      "message": "I get a build error here (and so does the CI on Linux and Node.js):\n```\n/home/fsimon/jami-client-qt/daemon/src/media/audio/audio_input.cpp: In member function ‘void jami::AudioInput::readFromDevice()’:\n/home/fsimon/jami-client-qt/daemon/src/media/audio/audio_input.cpp:118:36: error: no matching function for call to ‘jami::RingBufferPool::waitForDataAvailable(std::string\u0026, std::chrono::time_point\u003cstd::chrono::_V2::steady_clock, std::chrono::duration\u003clong int, std::ratio\u003c1, 1000000000\u003e \u003e \u003e\u0026)’\n  118 |     bufferPool.waitForDataAvailable(id_, wakeUp_);\n      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~\nIn file included from /home/fsimon/jami-client-qt/daemon/src/media/audio/audio_input.cpp:27:\n/home/fsimon/jami-client-qt/daemon/src/media/audio/ringbufferpool.h:92:10: note: candidate: ‘bool jami::RingBufferPool::waitForDataAvailable(const string\u0026, const microseconds\u0026) const’\n   92 |     bool waitForDataAvailable(const std::string\u0026 ringbufferId, const std::chrono::microseconds\u0026 max_wait) const;\n      |          ^~~~~~~~~~~~~~~~~~~~\n/home/fsimon/jami-client-qt/daemon/src/media/audio/ringbufferpool.h:92:97: note:   no known conversion for argument 2 from ‘std::chrono::time_point\u003cstd::chrono::_V2::steady_clock, std::chrono::duration\u003clong int, std::ratio\u003c1, 1000000000\u003e \u003e \u003e’ to ‘const microseconds\u0026’ {aka ‘const std::chrono::duration\u003clong int, std::ratio\u003c1, 1000000\u003e \u003e\u0026’}\n   92 |     bool waitForDataAvailable(const std::string\u0026 ringbufferId, const std::chrono::microseconds\u0026 max_wait) const;\n      |                                                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~\n/home/fsimon/jami-client-qt/daemon/src/media/audio/ringbufferpool.h:93:10: note: candidate: ‘bool jami::RingBufferPool::waitForDataAvailable(const string\u0026, const time_point\u0026) const’\n   93 |     bool waitForDataAvailable(const std::string\u0026 ringbufferId,\n      |          ^~~~~~~~~~~~~~~~~~~~\n/home/fsimon/jami-client-qt/daemon/src/media/audio/ringbufferpool.h:94:85: note:   no known conversion for argument 2 from ‘std::chrono::time_point\u003cstd::chrono::_V2::steady_clock, std::chrono::duration\u003clong int, std::ratio\u003c1, 1000000000\u003e \u003e \u003e’ to ‘const time_point\u0026’ {aka ‘const std::chrono::time_point\u003cstd::chrono::_V2::system_clock, std::chrono::duration\u003clong int, std::ratio\u003c1, 1000000000\u003e \u003e \u003e\u0026’}\n   94 |                               const std::chrono::high_resolution_clock::time_point\u0026 deadline) const;\n      |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~\n\n```",
+      "range": {
+        "startLine": 118,
+        "startChar": 4,
+        "endLine": 118,
+        "endChar": 50
+      },
+      "revId": "d888b3664922b1f3248f0f7d240d5267b81b812b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
