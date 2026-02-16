@@ -754,20 +754,6 @@ remove(const std::filesystem::path& path, bool erase)
     return std::remove(path.string().c_str());
 }
 
-int64_t
-size(const std::filesystem::path& path)
-{
-    int64_t size = 0;
-    try {
-        std::ifstream file(path, std::ios::binary | std::ios::in);
-        file.seekg(0, std::ios_base::end);
-        size = file.tellg();
-        file.close();
-    } catch (...) {
-    }
-    return size;
-}
-
 std::string
 sha3File(const std::filesystem::path& path)
 {
@@ -784,11 +770,10 @@ sha3File(const std::filesystem::path& path)
             JAMI_ERROR("Unable to compute sha3sum of {}: failed to open file", path);
             return {};
         }
-        std::vector<char> buffer(8192, 0);
-        while (!file.eof()) {
-            file.read(buffer.data(), buffer.size());
-            std::streamsize readSize = file.gcount();
-            sha3_512_update(&ctx, readSize, (const uint8_t*) buffer.data());
+        constexpr size_t BUFFER_SIZE = 64 * 1024ul;
+        std::vector<char> buffer(BUFFER_SIZE, 0);
+        while (file.read(reinterpret_cast<char*>(buffer.data()), BUFFER_SIZE) || file.gcount() > 0) {
+            sha3_512_update(&ctx, file.gcount(), (const uint8_t *)buffer.data());
         }
     } catch (const std::exception& e) {
         JAMI_ERROR("Unable to compute sha3sum of {}: {}", path, e.what());
@@ -797,13 +782,7 @@ sha3File(const std::filesystem::path& path)
 
     unsigned char digest[SHA3_512_DIGEST_SIZE];
     sha3_512_digest(&ctx, SHA3_512_DIGEST_SIZE, digest);
-
-    char hash[SHA3_512_DIGEST_SIZE * 2];
-
-    for (int i = 0; i < SHA3_512_DIGEST_SIZE; ++i)
-        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
-
-    return {hash, SHA3_512_DIGEST_SIZE * 2};
+    return dht::toHex(digest, SHA3_512_DIGEST_SIZE);
 }
 
 std::string
@@ -866,7 +845,7 @@ getOrCreateLocalDeviceId()
     std::filesystem::create_directories(localDir, ec);
     std::ofstream outStream(fullIdPath);
     if (outStream) {
-        outStream << localDeviceId << std::endl;
+        outStream << localDeviceId << '\n';
         outStream.close();
     } else {
         JAMI_ERROR("Unable to create local device id file: {}", fullIdPath);
