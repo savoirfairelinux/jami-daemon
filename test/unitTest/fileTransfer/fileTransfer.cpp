@@ -604,7 +604,9 @@ FileTransferTest::testResumeTransferAfterInterruption()
         return bobData.code == static_cast<int>(libjami::DataTransferEventCode::closed_by_host);
     }));
 
-    int64_t receivedSize = fileutils::size(recvPath + std::string(".tmp"));
+    std::error_code ec;
+    auto receivedSize = std::filesystem::file_size(recvPath + std::string(".tmp"), ec);
+    CPPUNIT_ASSERT(!ec);
     CPPUNIT_ASSERT(receivedSize < totalSize);
     CPPUNIT_ASSERT(0 < receivedSize);
     CPPUNIT_ASSERT(bobAccount->dataTransfer(convId)->isWaiting(fileId));
@@ -653,7 +655,7 @@ FileTransferTest::testDontDownloadExistingFile()
     libjami::downloadFile(bobId, convId, id, fileId, recvPath);
     CPPUNIT_ASSERT(!cv.wait_for(lk, 10s, [&]() { return bobData.code > 0; }));
     CPPUNIT_ASSERT(!bobAccount->dataTransfer(convId)->isWaiting(fileId));
-    CPPUNIT_ASSERT(fileutils::size(recvPath) == totalSize);
+    CPPUNIT_ASSERT(std::filesystem::file_size(recvPath) == totalSize);
 }
 
 void
