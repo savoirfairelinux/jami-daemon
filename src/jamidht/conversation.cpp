@@ -2022,18 +2022,19 @@ Conversation::downloadFile(const std::string& interactionId,
                     filePath = shared->dataTransfer()->path(fileId);
                 }
 
-                if (fileutils::size(filePath) == totalSize) {
+                std::error_code ec;
+                if (std::filesystem::file_size(filePath, ec) == totalSize) {
                     if (fileutils::sha3File(filePath) == sha3sum) {
                         JAMI_WARNING("Ignoring request to download existing file: {}", filePath);
                         return;
                     }
                 }
 
-                std::filesystem::path tempFilePath(filePath);
-                tempFilePath += ".tmp";
-                auto start = fileutils::size(tempFilePath);
-                if (start < 0)
+                std::filesystem::path tempFilePath(filePath + ".tmp"sv);
+                auto start = std::filesystem::file_size(tempFilePath, ec);
+                if (ec || start == static_cast<decltype(start)>(-1)) {
                     start = 0;
+                }
                 size_t end = 0;
 
                 auto acc = shared->pimpl_->account_.lock();
