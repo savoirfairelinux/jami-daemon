@@ -511,6 +511,7 @@ Call::subcallStateChanged(Call& subcall, Call::CallState new_state, Call::Connec
                 // Subcall failed with a non-busy state so we send a generic server error
                 setState(CallState::MERROR, ConnectionState::DISCONNECTED, PJSIP_SC_INTERNAL_SERVER_ERROR);
             }
+            Manager::instance().callFailure(*this);
             removeCall(code);
         } else {
             JAMI_DEBUG("[call:{}] Subcalls remaining : {}", getCallId(), subcalls_.size());
