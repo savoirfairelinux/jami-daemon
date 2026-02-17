@@ -2247,19 +2247,6 @@ Manager::getCurrentAudioDevicesIndex()
             std::to_string(pimpl_->audiodriver_->getIndexRingtone())};
 }
 
-void
-Manager::startAudio()
-{
-    if (!pimpl_->audiodriver_)
-        pimpl_->audiodriver_.reset(pimpl_->base_.audioPreference.createAudioLayer());
-    constexpr std::array<AudioDeviceType, 3> TYPES {AudioDeviceType::CAPTURE,
-                                                    AudioDeviceType::PLAYBACK,
-                                                    AudioDeviceType::RINGTONE};
-    for (const auto& type : TYPES)
-        if (pimpl_->audioStreamUsers_[(unsigned) type])
-            pimpl_->audiodriver_->startStream(type);
-}
-
 AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
     : manager_(manager)
     , type_(type)
