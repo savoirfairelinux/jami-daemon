@@ -770,7 +770,10 @@ ConversationRepositoryTest::testMalformedCommit()
 
     // Signals for malformed commits in validCommits function
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId, const std::string& conversationId, int code, auto malformedSpec) {
+        [&](const std::string& /*accountId*/,
+            const std::string& /*conversationId*/,
+            int code,
+            const std::string& /*malformedSpec*/) {
             if (code == EVALIDFETCH) {
                 isMalformed = true;
             }
@@ -821,7 +824,10 @@ ConversationRepositoryTest::testMalformedCommitUri()
 
     // Signals for malformed commits in validCommits function
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId, const std::string& conversationId, int code, auto malformedSpec) {
+        [&](const std::string& /*accountId*/,
+            const std::string& /*conversationId*/,
+            int code,
+            const std::string& /*malformedSpec*/) {
             if (code == EVALIDFETCH) {
                 isMalformed = true;
             }
@@ -893,7 +899,10 @@ ConversationRepositoryTest::testInvalidJoin()
 
     // Signals for malformed commits in validCommits function
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId, const std::string& conversationId, int code, auto malformedSpec) {
+        [&](const std::string& /*accountId*/,
+            const std::string& /*conversationId*/,
+            int code,
+            const std::string& /*malformedSpec*/) {
             if (code == EVALIDFETCH) {
                 isInvalid = true;
             }
@@ -946,7 +955,10 @@ ConversationRepositoryTest::testInvalidFile()
 
     // Signals for malformed commits in validCommits function
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId, const std::string& conversationId, int code, auto malformedSpec) {
+        [&](const std::string& /*accountId*/,
+            const std::string& /*conversationId*/,
+            int code,
+            const std::string& /*malformedSpec*/) {
             if (code == EVALIDFETCH) {
                 isInvalid = true;
             }
@@ -1011,7 +1023,10 @@ ConversationRepositoryTest::testMergeWithInvalidFile()
     std::vector<libjami::SwarmMessage> aliceMessages = {};
 
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::OnConversationError>(
-        [&](const std::string& accountId, const std::string& conversationId, int code, auto malformedSpec) {
+        [&](const std::string& /*accountId*/,
+            const std::string& /*conversationId*/,
+            int code,
+            const std::string& /*malformedSpec*/) {
             if (code == EVALIDFETCH) {
                 isInvalid = true;
             }

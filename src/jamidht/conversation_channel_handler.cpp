@@ -31,8 +31,8 @@ void
 ConversationChannelHandler::connect(const DeviceId& deviceId,
                                     const std::string& channelName,
                                     ConnectCb&& cb,
-                                    const std::string& connectionType,
-                                    bool forceNewConnection)
+                                    const std::string& /*connectionType*/,
+                                    bool /*forceNewConnection*/)
 {
     connectionManager_.connectDevice(deviceId, "git://" + deviceId.toString() + "/" + channelName, std::move(cb));
 }

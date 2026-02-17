@@ -226,7 +226,7 @@ FileTransferTest::connectSignals()
         [&](const std::string& accountId,
             const std::string& conversationId,
             const std::string&,
-            const std::string& fileId,
+            const std::string& /*fileId*/,
             int code) {
             if (conversationId.empty())
                 return;

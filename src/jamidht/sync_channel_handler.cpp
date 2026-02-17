@@ -33,8 +33,8 @@ void
 SyncChannelHandler::connect(const DeviceId& deviceId,
                             const std::string&,
                             ConnectCb&& cb,
-                            const std::string& connectionType,
-                            bool forceNewConnection)
+                            const std::string& /*connectionType*/,
+                            bool /*forceNewConnection*/)
 {
     auto channelName = SYNC_SCHEME + deviceId.toString();
     if (connectionManager_.isConnecting(deviceId, channelName)) {

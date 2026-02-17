@@ -227,8 +227,6 @@ public:
      */
     virtual im::MessageStatus getMessageStatus(uint64_t /*id*/) const { return im::MessageStatus::UNKNOWN; }
 
-    virtual bool cancelMessage(uint64_t /*id*/) { return false; }
-
     virtual bool setPushNotificationToken(const std::string& pushDeviceToken = "")
     {
         std::lock_guard lock(configurationMutex_);
@@ -429,7 +427,7 @@ public:
      * This method is called to request removal of possible account traces on the system,
      * like internal account setup files.
      */
-    virtual void flush() { /* nothing to do here - overload */ };
+    virtual void flush() {/* nothing to do here - overload */};
 
 private:
     NON_COPYABLE(Account);

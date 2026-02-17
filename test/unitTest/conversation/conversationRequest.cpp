@@ -1100,7 +1100,7 @@ ConversationRequestTest::testNeedsSyncingWithForCloning()
     auto aliceUri = aliceAccount->getUsername();
     auto aliceDevice = std::string(aliceAccount->currentDeviceId());
 
-    CPPUNIT_ASSERT(!bobAccount->convModule()->needsSyncingWith(aliceUri, aliceDevice));
+    CPPUNIT_ASSERT(!bobAccount->convModule()->needsSyncingWith(aliceUri));
     aliceAccount->addContact(bobUri);
     aliceAccount->sendTrustRequest(bobUri, {});
     {
@@ -1117,7 +1117,7 @@ ConversationRequestTest::testNeedsSyncingWithForCloning()
     // At this point the conversation should be there and syncing.
 
     CPPUNIT_ASSERT(libjami::getConversations(bobId).size() == 1);
-    CPPUNIT_ASSERT(bobAccount->convModule()->needsSyncingWith(aliceUri, aliceDevice));
+    CPPUNIT_ASSERT(bobAccount->convModule()->needsSyncingWith(aliceUri));
 }
 
 void
@@ -1338,10 +1338,7 @@ ConversationRequestTest::doNotLooseMetadata()
     }
 
     auto aliceMsgSize = aliceData.messages.size();
-    aliceAccount->convModule()->updateConversationInfos(aliceData.conversationId,
-                                                        {
-                                                            {"title", "My awesome swarm"}
-    });
+    aliceAccount->convModule()->updateConversationInfos(aliceData.conversationId, {{"title", "My awesome swarm"}});
     {
         std::unique_lock lk {mtx};
         CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));

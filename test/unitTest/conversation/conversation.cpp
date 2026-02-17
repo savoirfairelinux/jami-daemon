@@ -438,14 +438,14 @@ ConversationTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
-        [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
+        [&](const std::string& accountId, const std::string& /*peerId*/, const std::string& path) {
             if (accountId == bobId)
                 bobData.profilePath = path;
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationPreferencesUpdated>(
         [&](const std::string& accountId,
-            const std::string& conversationId,
+            const std::string& /*conversationId*/,
             std::map<std::string, std::string> preferences) {
             if (accountId == bobId)
                 bobData.preferences = preferences;
@@ -1045,7 +1045,7 @@ ConversationTest::testSendMessageWithLotOfKnownDevices()
     bool conversationAlice2Ready = false;
     std::map<std::string, std::shared_ptr<libjami::CallbackWrapperBase>> confHandlers;
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationReady>(
-        [&](const std::string& accountId, const std::string& conversationId) {
+        [&](const std::string& accountId, const std::string& /*conversationId*/) {
             if (accountId == alice2Id) {
                 conversationAlice2Ready = true;
             }

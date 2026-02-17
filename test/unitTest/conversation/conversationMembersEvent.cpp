@@ -270,7 +270,7 @@ ConversationMembersEventTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
-        [&](const std::string& accountId, const std::string& conversationId, const auto& member, auto status) {
+        [&](const std::string& accountId, const std::string& /*conversationId*/, const std::string& member, int status) {
             if (accountId == aliceId) {
                 aliceData.members[member] = status;
             } else if (accountId == bobId) {

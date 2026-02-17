@@ -2435,7 +2435,7 @@ Conversation::search(uint32_t req, const Filter& filter, const std::shared_ptr<s
             auto re = std::regex(filter.regexSearch,
                                  filter.caseSensitive ? std::regex_constants::ECMAScript : std::regex_constants::icase);
             sthis->pimpl_->repository_->log(
-                [&](const auto& id, const auto& author, auto& commit) {
+                [&](const std::string& /*id*/, const GitAuthor& author, const GitCommit& commit) {
                     if (!filter.author.empty() && filter.author != sthis->uriFromDevice(author.email)) {
                         // Filter author
                         return CallbackResult::Skip;
@@ -2456,11 +2456,11 @@ Conversation::search(uint32_t req, const Filter& filter, const std::shared_ptr<s
 
                     return CallbackResult::Ok; // Continue
                 },
-                [&](auto&& cc) {
+                [&](ConversationCommit&& cc) {
                     if (auto optMessage = sthis->pimpl_->repository_->convCommitToMap(cc))
                         sthis->pimpl_->addToHistory(history, {optMessage.value()}, false, false);
                 },
-                [&](auto id, auto, auto) {
+                [&](const std::string& id, const GitAuthor&, ConversationCommit&) {
                     if (id == filter.lastId)
                         return true;
                     return false;

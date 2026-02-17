@@ -409,7 +409,9 @@ CallTest::testSocketInfos()
         }));
     auto mediaReady = false;
     confHandlers.insert(libjami::exportable_callback<libjami::CallSignal::MediaNegotiationStatus>(
-        [&](const std::string& callId, const std::string& event, const std::vector<std::map<std::string, std::string>>&) {
+        [&](const std::string& /*callId*/,
+            const std::string& event,
+            const std::vector<std::map<std::string, std::string>>&) {
             if (event == libjami::Media::MediaNegotiationStatusEvents::NEGOTIATION_SUCCESS) {
                 mediaReady = true;
                 cv.notify_one();

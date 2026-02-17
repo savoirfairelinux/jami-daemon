@@ -625,17 +625,6 @@
             </arg>
         </method>
 
-        <method name="cancelMessage" tp:name-for-bindings="cancelMessage">
-            <arg type="s" name="accountId" direction="in"/>
-            <arg type="t" name="id" direction="in"/>
-            <arg type="b" name="success" direction="out">
-                <tp:docstring>
-                DEPRECATED
-                Cancel pending message.
-                </tp:docstring>
-            </arg>
-        </method>
-
         <method name="getLastMessages" tp:name-for-bindings="getLastMessages">
             <arg type="s" name="accountId" direction="in"/>
             <arg type="t" name="base_timestamp" direction="in"/>

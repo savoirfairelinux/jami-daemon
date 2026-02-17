@@ -37,12 +37,14 @@ TransferChannelHandler::TransferChannelHandler(const std::shared_ptr<JamiAccount
 TransferChannelHandler::~TransferChannelHandler() {}
 
 void
-TransferChannelHandler::connect(const DeviceId& deviceId,
-                                const std::string& channelName,
-                                ConnectCb&& cb,
-                                const std::string& connectionType,
-                                bool forceNewConnection)
-{}
+TransferChannelHandler::connect(const DeviceId& /*deviceId*/,
+                                const std::string& /*channelName*/,
+                                ConnectCb&& /*cb*/,
+                                const std::string& /*connectionType*/,
+                                bool /*forceNewConnection*/)
+{
+    throw std::runtime_error("connect is not supported in TransferChannelHandler");
+}
 
 bool
 TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name)

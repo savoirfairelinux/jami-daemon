@@ -300,7 +300,7 @@ public:
      * @param memberUri
      * @param deviceId
      */
-    bool needsSyncingWith(const std::string& memberUri, const std::string& deviceId) const;
+    bool needsSyncingWith(const std::string& memberUri) const;
 
     /**
      * Notify that a peer fetched a commit

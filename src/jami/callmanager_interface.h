@@ -172,9 +172,6 @@ LIBJAMI_PUBLIC void playDTMF(const std::string& key);
 LIBJAMI_PUBLIC void startTone(int32_t start, int32_t type);
 
 LIBJAMI_PUBLIC bool switchInput(const std::string& accountId, const std::string& callId, const std::string& resource);
-LIBJAMI_PUBLIC bool switchSecondaryInput(const std::string& accountId,
-                                         const std::string& confId,
-                                         const std::string& resource);
 
 /* Instant messaging */
 LIBJAMI_PUBLIC void sendTextMessage(const std::string& accountId,

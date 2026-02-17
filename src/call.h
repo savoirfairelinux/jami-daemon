@@ -407,8 +407,14 @@ public:
 
     void onTextMessage(std::map<std::string, std::string>&& messages);
 
-    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const { return {}; }
-    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const { return {}; }
+    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const
+    {
+        return {};
+    }
+    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const
+    {
+        return {};
+    }
 
     virtual void restartMediaSender() = 0;
 
@@ -438,7 +444,10 @@ public:
 
     virtual void monitor() const = 0;
 
-    int conferenceProtocolVersion() const { return peerConfProtocol_; }
+    int conferenceProtocolVersion() const
+    {
+        return peerConfProtocol_;
+    }
 
 protected:
     using clock = std::chrono::steady_clock;
@@ -449,12 +458,8 @@ protected:
      * Constructor of a call
      * @param id Unique identifier of the call
      * @param type set definitely this call as incoming/outgoing
-     * @param details volatile details to customize the call creation
      */
-    Call(const std::shared_ptr<Account>& account,
-         const std::string& id,
-         Call::CallType type,
-         const std::map<std::string, std::string>& details = {});
+    Call(const std::shared_ptr<Account>& account, const std::string& id, Call::CallType type);
 
     // TODO all these members are not protected against multi-thread access
 
