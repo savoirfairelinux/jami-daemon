@@ -490,8 +490,6 @@ public:
      */
     void setAudioDevice(int index, AudioDeviceType streamType);
 
-    void startAudio();
-
     /**
      * Get list of supported audio output device
      * @return std::vector<std::string> A list of the audio devices supporting playback

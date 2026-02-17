@@ -127,7 +127,6 @@ LIBJAMI_PUBLIC std::vector<std::string> getAudioPluginList();
 LIBJAMI_PUBLIC void setAudioPlugin(const std::string& audioPlugin);
 LIBJAMI_PUBLIC std::vector<std::string> getAudioOutputDeviceList();
 LIBJAMI_PUBLIC void setAudioOutputDevice(int32_t index);
-LIBJAMI_PUBLIC void startAudio();
 LIBJAMI_PUBLIC void setAudioInputDevice(int32_t index);
 LIBJAMI_PUBLIC void setAudioRingtoneDevice(int32_t index);
 LIBJAMI_PUBLIC std::vector<std::string> getAudioInputDeviceList();
