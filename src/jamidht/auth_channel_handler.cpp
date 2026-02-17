@@ -34,8 +34,8 @@ void
 AuthChannelHandler::connect(const DeviceId& deviceId,
                             const std::string& name,
                             ConnectCb&& cb,
-                            const std::string& connectionType,
-                            bool forceNewConnection)
+                            const std::string& /*connectionType*/,
+                            bool /*forceNewConnection*/)
 {
     JAMI_DEBUG("[AuthChannel {}] connecting to name = {}", deviceId.toString(), name);
     connectionManager_.connectDevice(deviceId, name, std::move(cb));
@@ -67,7 +67,7 @@ AuthChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& c
 void
 AuthChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cert,
                             const std::string& deviceId,
-                            std::shared_ptr<dhtnet::ChannelSocket> channel)
+                            std::shared_ptr<dhtnet::ChannelSocket> /*channel*/)
 {
     JAMI_DEBUG("[AuthChannel] Auth channel with {}/{} ready.", cert->getId().toString(), deviceId);
 }

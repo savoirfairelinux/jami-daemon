@@ -605,7 +605,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     accountManager_->lookupAddress(toUri,
                                    [wCall](const std::string& regName,
-                                           const std::string& address,
+                                           const std::string& /*address*/,
                                            const NameDirectory::Response& response) {
                                        if (response == NameDirectory::Response::found)
                                            if (auto call = wCall.lock()) {
@@ -1847,7 +1847,7 @@ JamiAccount::doRegister_()
         // Look for registered name
         accountManager_->lookupAddress(accountManager_->getInfo()->accountId,
                                        [w = weak()](const std::string& regName,
-                                                    const std::string& address,
+                                                    const std::string& /*address*/,
                                                     const NameDirectory::Response& response) {
                                            if (auto this_ = w.lock()) {
                                                if (response == NameDirectory::Response::found
@@ -1987,8 +1987,8 @@ JamiAccount::doRegister_()
                                 shared->channelHandlers_[Uri::Scheme::SYNC]
                                     ->connect(crt->getLongId(),
                                               "",
-                                              [](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                 const DeviceId& deviceId) {});
+                                              [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
+                                                 const DeviceId& /*deviceId*/) {});
                             }
                         });
                     }
@@ -3353,7 +3353,7 @@ JamiAccount::setPushNotificationConfig(const std::map<std::string, std::string>&
  * To be called by clients with relevant data when a push notification is received.
  */
 void
-JamiAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+JamiAccount::pushNotificationReceived(const std::string& /*from*/, const std::map<std::string, std::string>& data)
 {
     auto ret_future = dht_->pushNotificationReceived(data);
     dht::ThreadPool::computation().run([id = getAccountID(), ret_future = ret_future.share()] {
@@ -3775,8 +3775,8 @@ JamiAccount::requestSIPConnection(const std::string& peerId,
         if (!syncModule()->isConnected(deviceId))
             channelHandlers_[Uri::Scheme::SYNC]->connect(deviceId,
                                                          "",
-                                                         [](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                            const DeviceId& deviceId) {});
+                                                         [](const std::shared_ptr<dhtnet::ChannelSocket>& /*socket*/,
+                                                            const DeviceId& /*deviceId*/) {});
     }
 
     JAMI_LOG("[Account {}] Request SIP connection to peer {} on device {}", getAccountID(), peerId, deviceId);

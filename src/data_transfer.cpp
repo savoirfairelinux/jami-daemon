@@ -193,7 +193,7 @@ IncomingFile::process()
         JAMI_ERROR("{} bytes received after IncomingFile destruction.", len);
         return (ssize_t) -1;
     });
-    channel_->onShutdown([w = weak_from_this()](const std::error_code& sock_ec) {
+    channel_->onShutdown([w = weak_from_this()](const std::error_code& /*error_code*/) {
         auto shared = w.lock();
         if (!shared)
             return;

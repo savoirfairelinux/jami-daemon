@@ -32,21 +32,6 @@ public:
     ~TransferChannelHandler();
 
     /**
-     * Ask for a new channel
-     * This replaces the connectDevice() in jamiaccount
-     * @param deviceId      The device to connect
-     * @param channelName   The name of the channel
-     * @param cb            The callback to call when connected (can be immediate if already connected)
-     * @param connectionType  The connection type used by iOS notifications (not used)
-     * @param forceNewConnection  If we want a new SIP connection (not used)
-     */
-    void connect(const DeviceId& deviceId,
-                 const std::string& channelName,
-                 ConnectCb&& cb,
-                 const std::string& connectionType = "",
-                 bool forceNewConnection = false) override;
-
-    /**
      * Determine if we accept or not the request
      * @param deviceId      device who asked
      * @param name          name asked
@@ -65,6 +50,21 @@ public:
                  std::shared_ptr<dhtnet::ChannelSocket> channel) override;
 
 private:
+    /**
+     * Ask for a new channel
+     * This replaces the connectDevice() in jamiaccount
+     * @param deviceId      The device to connect
+     * @param channelName   The name of the channel
+     * @param cb            The callback to call when connected (can be immediate if already connected)
+     * @param connectionType  The connection type used by iOS notifications (not used)
+     * @param forceNewConnection  If we want a new SIP connection (not used)
+     */
+    void connect(const DeviceId& deviceId,
+                 const std::string& channelName,
+                 ConnectCb&& cb,
+                 const std::string& connectionType = "",
+                 bool forceNewConnection = false) override;
+
     std::weak_ptr<JamiAccount> account_;
     dhtnet::ConnectionManager& connectionManager_;
 

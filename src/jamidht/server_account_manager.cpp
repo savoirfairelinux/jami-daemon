@@ -654,7 +654,7 @@ ServerAccountManager::revokeDevice(const std::string& device,
 
 void
 ServerAccountManager::registerName(const std::string& name,
-                                   std::string_view scheme,
+                                   std::string_view /*scheme*/,
                                    const std::string&,
                                    RegistrationCallback cb)
 {

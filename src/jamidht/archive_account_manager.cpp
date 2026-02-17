@@ -588,7 +588,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                                                                              DeviceAuthState::TOKEN_AVAILABLE),
                                                                          info);
 
-        ctx->linkDevCtx->tempConnMgr.onICERequest([wctx = std::weak_ptr(ctx)](const DeviceId& deviceId) {
+        ctx->linkDevCtx->tempConnMgr.onICERequest([wctx = std::weak_ptr(ctx)](const DeviceId& /*deviceId*/) {
             if (auto ctx = wctx.lock()) {
                 emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
                                                                                  static_cast<uint8_t>(
@@ -600,7 +600,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
         });
 
         ctx->linkDevCtx->tempConnMgr.onChannelRequest(
-            [wthis, ctx](const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name) {
+            [wthis, ctx](const std::shared_ptr<dht::crypto::Certificate>& /*cert*/, const std::string& name) {
                 std::string_view url(name);
                 if (!starts_with(url, CHANNEL_SCHEME)) {
                     JAMI_WARNING("[LinkDevice] Temporary connection manager received invalid scheme: {}", name);
@@ -623,9 +623,9 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
 
         ctx->linkDevCtx->tempConnMgr.onConnectionReady([ctx,
                                                         accountScheme,
-                                                        wthis](const DeviceId& deviceId,
+                                                        wthis](const DeviceId& /*deviceId*/,
                                                                const std::string& name,
-                                                               std::shared_ptr<dhtnet::ChannelSocket> socket) {
+                                                               const std::shared_ptr<dhtnet::ChannelSocket>& socket) {
             if (!socket) {
                 JAMI_WARNING("[LinkDevice] Temporary connection manager received invalid socket.");
                 if (ctx->timeout)
@@ -665,7 +665,7 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
                 }
             });
 
-            socket->onShutdown([ctx, name, wthis](const std::error_code& ec) {
+            socket->onShutdown([ctx, name, wthis](const std::error_code& /*error_code*/) {
                 JAMI_WARNING("[LinkDevice] Temporary connection manager closing socket: {}", name);
                 if (ctx->timeout)
                     ctx->timeout->cancel();
@@ -879,13 +879,12 @@ ArchiveAccountManager::addDevice(const std::string& uriProvided,
         channelHandler->connect(dht::InfoHash(peerTempAcc),
                                 channelName,
                                 [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                            const dht::InfoHash& infoHash) { onConnect(std::move(socket)); });
+                                            const dht::InfoHash& /*infoHash*/) { onConnect(std::move(socket)); });
     } else {
         channelHandler->connect(dht::PkId(peerTempAcc),
                                 channelName,
-                                [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket, const dht::PkId& infoHash) {
-                                    onConnect(std::move(socket));
-                                });
+                                [onConnect](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                            const dht::PkId& /*infoHash*/) { onConnect(std::move(socket)); });
     }
 
     runOnMainThread([token, id = accountId_] {
@@ -941,7 +940,7 @@ ArchiveAccountManager::doAddDevice(std::string_view scheme,
     });
 
     JAMI_DEBUG("[LinkDevice] SOURCE: Creating callbacks.");
-    ctx->addDeviceCtx->channel->onShutdown([ctx, w = weak()](const std::error_code& ec) {
+    ctx->addDeviceCtx->channel->onShutdown([ctx, w = weak()](const std::error_code& /*error_code*/) {
         JAMI_DEBUG("[LinkDevice] SOURCE: Shutdown with state {}... xfer {}uccessful",
                    ctx->addDeviceCtx->formattedAuthState(),
                    ctx->addDeviceCtx->archiveTransferredWithoutFailure ? "s" : "uns");

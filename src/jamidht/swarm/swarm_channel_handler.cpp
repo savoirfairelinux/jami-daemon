@@ -31,8 +31,8 @@ void
 SwarmChannelHandler::connect(const DeviceId& deviceId,
                              const std::string& conversationId,
                              ConnectCb&& cb,
-                             const std::string& connectionType,
-                             bool forceNewConnection)
+                             const std::string& /*connectionType*/,
+                             bool /*forceNewConnection*/)
 {
 #ifdef LIBJAMI_TEST
     if (disableSwarmManager)

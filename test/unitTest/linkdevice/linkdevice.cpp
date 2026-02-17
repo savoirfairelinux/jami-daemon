@@ -195,7 +195,7 @@ LinkDeviceTest::testQrConnection()
 
     // Monitor QR code generation
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-        [&](const std::string& accountId, int status, const std::map<std::string, std::string>& details) {
+        [&](const std::string& /*accountId*/, int /*status*/, const std::map<std::string, std::string>& details) {
             if (details.find("token") != details.end()) {
                 std::lock_guard lock(mtxNew);
                 qrInfo = details.at("token");
@@ -207,7 +207,10 @@ LinkDeviceTest::testQrConnection()
 
     // Monitor device linking progress
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-        [&](const std::string& accountId, uint32_t opId, int status, const std::map<std::string, std::string>& details) {
+        [&](const std::string& /*accountId*/,
+            uint32_t /*opId*/,
+            int status,
+            const std::map<std::string, std::string>& /*details*/) {
             std::lock_guard lock(mtxOld);
             ++authSignalCount;
 
@@ -308,7 +311,7 @@ LinkDeviceTest::testExportNoPassword()
         }));
     // Simulate user input on new device
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+        [&](const std::string& /*accountId*/, uint8_t status, const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxNew);
             // Auth status
             if (status == static_cast<uint8_t>(DeviceAuthState::AUTHENTICATING)) {
@@ -326,7 +329,7 @@ LinkDeviceTest::testExportNoPassword()
     // Simulate add device on oldDevice
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
         [&](const std::string& accountId,
-            uint32_t opId,
+            uint32_t /*opId*/,
             uint8_t status,
             const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxOld);
@@ -456,7 +459,7 @@ LinkDeviceTest::testExportWithCorrectPassword()
 
     // Monitor QR code generation
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+        [&](const std::string& /*accountId*/, uint8_t status, const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxNew);
 
             // Auth status
@@ -474,8 +477,8 @@ LinkDeviceTest::testExportWithCorrectPassword()
 
     // Monitor device linking progress
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-        [&](const std::string& accountId,
-            uint32_t opId,
+        [&](const std::string& /*accountId*/,
+            uint32_t /*opId*/,
             uint8_t status,
             const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxOld);
@@ -620,7 +623,7 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
 
     // Monitor QR code generation
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+        [&](const std::string& /*accountId*/, uint8_t status, const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxNew);
 
             // Auth status
@@ -641,8 +644,8 @@ LinkDeviceTest::testExportWithWrongPasswordOnce()
 
     // Monitor device linking progress
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-        [&](const std::string& accountId,
-            uint32_t opId,
+        [&](const std::string& /*accountId*/,
+            uint32_t /*opId*/,
             uint8_t status,
             const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxOld);
@@ -794,7 +797,7 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
 
     // Monitor QR code generation
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::DeviceAuthStateChanged>(
-        [&](const std::string& accountId, uint8_t status, const std::map<std::string, std::string>& details) {
+        [&](const std::string& /*accountId*/, uint8_t status, const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxNew);
 
             // Auth status
@@ -816,8 +819,8 @@ LinkDeviceTest::testExportWithWrongPasswordMaxAttempts()
 
     // Monitor device linking progress
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::AddDeviceStateChanged>(
-        [&](const std::string& accountId,
-            uint32_t opId,
+        [&](const std::string& /*accountId*/,
+            uint32_t /*opId*/,
             uint8_t status,
             const std::map<std::string, std::string>& details) {
             std::lock_guard lock(mtxOld);

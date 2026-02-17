@@ -55,7 +55,7 @@ public:
 
             // Create express router for our service.
             auto router = std::make_unique<router::express_router_t<>>();
-            router->http_post(R"(/name/:name)", [](auto req, auto params) {
+            router->http_post(R"(/name/:name)", [](auto req, auto /*params*/) {
                 const auto qp = parse_query(req->header().query());
                 return req->create_response().set_body(fmt::format("{{\"success\":true}}")).done();
             });

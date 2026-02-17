@@ -201,7 +201,7 @@ SyncHistoryTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConfigurationSignal::ProfileReceived>(
-        [&](const std::string& accountId, const std::string& peerId, const std::string& path) {
+        [&](const std::string& accountId, const std::string& /*peerId*/, const std::string& path) {
             if (accountId == bobId)
                 bobData.profilePath = path;
             else if (accountId == aliceId)
@@ -211,7 +211,7 @@ SyncHistoryTest::connectSignals()
             cv.notify_one();
         }));
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::ConversationMemberEvent>(
-        [&](const std::string& accountId, const std::string& conversationId, const auto& member, auto status) {
+        [&](const std::string& accountId, const std::string& /*conversationId*/, const std::string& member, int status) {
             if (accountId == aliceId) {
                 aliceData.members[member] = status;
             } else if (accountId == bobId) {

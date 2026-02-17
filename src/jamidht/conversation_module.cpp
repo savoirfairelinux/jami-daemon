@@ -553,7 +553,8 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
         auto itConvInfo = convInfos_.find(conversationId);
         if (itConvInfo != convInfos_.end() && itConvInfo->second.isRemoved()) {
-            if (!conv) return;
+            if (!conv)
+                return;
 
             const bool isOneToOne = (itConvInfo->second.mode == ConversationMode::ONE_TO_ONE);
             auto contactInfo = accountManager_->getContactInfo(peer);
@@ -2518,7 +2519,7 @@ ConversationModule::onSyncData(const SyncMsg& msg, const std::string& peerId, co
 }
 
 bool
-ConversationModule::needsSyncingWith(const std::string& memberUri, const std::string& deviceId) const
+ConversationModule::needsSyncingWith(const std::string& memberUri) const
 {
     // Check if a conversation needs to fetch remote or to be cloned
     std::lock_guard lk(pimpl_->conversationsMtx_);
@@ -3087,8 +3088,8 @@ ConversationModule::call(const std::string& url,
 
     auto account = pimpl_->account_.lock();
     std::vector<libjami::MediaMap> mediaMap = mediaList.empty() ? MediaAttribute::mediaAttributesToMediaMaps(
-                                                                      pimpl_->account_.lock()->createDefaultMediaList(
-                                                                          pimpl_->account_.lock()->isVideoEnabled()))
+                                                  pimpl_->account_.lock()->createDefaultMediaList(
+                                                      pimpl_->account_.lock()->isVideoEnabled()))
                                                                 : mediaList;
 
     if (!sendCallRequest || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {

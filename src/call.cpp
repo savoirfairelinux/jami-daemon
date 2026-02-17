@@ -73,10 +73,7 @@ hangupCalls(Call::SubcallSet&& callptr_list, int errcode)
 
 //==============================================================================
 
-Call::Call(const std::shared_ptr<Account>& account,
-           const std::string& id,
-           Call::CallType type,
-           const std::map<std::string, std::string>& details)
+Call::Call(const std::shared_ptr<Account>& account, const std::string& id, Call::CallType type)
     : id_(id)
     , type_(type)
     , account_(account)
@@ -115,7 +112,7 @@ Call::Call(const std::shared_ptr<Account>& account,
             else if (cnx_state == ConnectionState::DISCONNECTED && call_state == CallState::OVER) {
                 if (auto jamiAccount = std::dynamic_pointer_cast<JamiAccount>(getAccount().lock())) {
                     if (toUsername().find('/') == std::string::npos && getCallType() == CallType::OUTGOING) {
-                        if (auto cm = jamiAccount->convModule(true))
+                        if (auto* cm = jamiAccount->convModule(true))
                             cm->addCallHistoryMessage(getPeerNumber(), getCallDuration().count(), reason_);
                     }
                     monitor();

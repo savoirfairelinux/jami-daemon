@@ -644,17 +644,6 @@
             <arg type="b" direction="out" />
         </method>
 
-        <method name="switchSecondaryInput" tp:name-for-bindings="switchSecondaryInput">
-            <tp:added version="11.0.0"/>
-            <tp:docstring>
-                Switch secondary input for the specified conference
-            </tp:docstring>
-            <arg type="s" name="accountId" direction="in" />
-            <arg type="s" name="conferenceId" direction="in"/>
-            <arg type="s" name="input" direction="in"/>
-            <arg type="b" direction="out" />
-        </method>
-
         <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
             <tp:added version="11.0.0"/>
             <tp:docstring>

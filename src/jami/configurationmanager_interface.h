@@ -96,7 +96,6 @@ LIBJAMI_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountId,
                                                const std::string& to,
                                                const std::map<std::string, std::string>& payloads,
                                                int32_t flags);
-LIBJAMI_PUBLIC bool cancelMessage(const std::string& accountId, uint64_t message);
 LIBJAMI_PUBLIC std::vector<Message> getLastMessages(const std::string& accountId, const uint64_t& base_timestamp);
 LIBJAMI_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountId);
 LIBJAMI_PUBLIC void updateProfile(const std::string& accountId,

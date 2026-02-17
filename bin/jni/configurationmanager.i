@@ -99,7 +99,6 @@ uint64_t sendAccountTextMessage(const std::string& accountId, const std::string&
 std::vector<libjami::Message> getLastMessages(const std::string& accountId, uint64_t base_timestamp);
 int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountId, uint64_t id);
-bool cancelMessage(const std::string& accountId, uint64_t id);
 void setIsComposing(const std::string& accountId, const std::string& conversationUri, bool isWriting);
 bool setMessageDisplayed(const std::string& accountId, const std::string& conversationUri, const std::string& messageId, int status);
 bool changeAccountPassword(const std::string& accountId, const std::string& password_old, const std::string& password_new);
