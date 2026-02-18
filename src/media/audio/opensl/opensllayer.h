@@ -64,7 +64,7 @@ public:
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
      */
-    void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
+    void startStream(AudioDeviceType stream) override;
 
     /**
      * Stop the playback and capture streams.
