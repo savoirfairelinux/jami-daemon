@@ -92,6 +92,8 @@ public:
     void setInterruptCallback(int (*cb)(void*), void* opaque);
     void setIOContext(MediaIOHandle* ioctx);
 
+    void setKeyFrameRequestCb(std::function<void()> cb);
+
     void findStreamInfo();
     int selectStream(AVMediaType type);
 
@@ -127,6 +129,7 @@ public:
 
 private:
     bool streamInfoFound_ {false};
+    std::atomic_bool streamInfoTimerScheduled_ {false};
     AVFormatContext* inputCtx_ = nullptr;
     std::vector<StreamCallback> streams_;
     int64_t startTime_;
@@ -140,6 +143,7 @@ private:
     std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>> audioBuffer_ {};
     std::function<void()> needFrameCb_;
     std::function<void(bool)> fileFinishedCb_;
+    std::function<void()> keyFrameRequestCb_;
     void clearFrames();
     bool pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
                        bool isAudio,
@@ -169,6 +173,7 @@ public:
     int setup(AVMediaType type);
     int setupAudio() { return setup(AVMEDIA_TYPE_AUDIO); }
     int setupVideo() { return setup(AVMEDIA_TYPE_VIDEO); }
+    void setKeyFrameRequestCb(std::function<void()> cb);
 
     MediaDemuxer::Status decode();
     DecodeStatus flush();
