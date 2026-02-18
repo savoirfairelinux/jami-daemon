@@ -3088,8 +3088,8 @@ ConversationModule::call(const std::string& url,
 
     auto account = pimpl_->account_.lock();
     std::vector<libjami::MediaMap> mediaMap = mediaList.empty() ? MediaAttribute::mediaAttributesToMediaMaps(
-                                                  pimpl_->account_.lock()->createDefaultMediaList(
-                                                      pimpl_->account_.lock()->isVideoEnabled()))
+                                                                      pimpl_->account_.lock()->createDefaultMediaList(
+                                                                          pimpl_->account_.lock()->isVideoEnabled()))
                                                                 : mediaList;
 
     if (!sendCallRequest || (uri == pimpl_->username_ && deviceId == pimpl_->deviceId_)) {

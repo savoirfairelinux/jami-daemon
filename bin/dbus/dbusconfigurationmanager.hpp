@@ -98,14 +98,14 @@ public:
         return libjami::addDevice(accountID, uri);
     }
 
-    auto confirmAddDevice(const std::string& accountId, const uint32_t& op_id)
-        -> decltype(libjami::confirmAddDevice(accountId, op_id))
+    auto confirmAddDevice(const std::string& accountId,
+                          const uint32_t& op_id) -> decltype(libjami::confirmAddDevice(accountId, op_id))
     {
         return libjami::confirmAddDevice(accountId, op_id);
     }
 
-    auto cancelAddDevice(const std::string& accountId, const uint32_t& op_id)
-        -> decltype(libjami::cancelAddDevice(accountId, op_id))
+    auto cancelAddDevice(const std::string& accountId,
+                         const uint32_t& op_id) -> decltype(libjami::cancelAddDevice(accountId, op_id))
     {
         return libjami::cancelAddDevice(accountId, op_id);
     }
@@ -132,14 +132,16 @@ public:
         return libjami::changeAccountPassword(accountID, password_old, password_new);
     }
 
-    auto lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
-        -> decltype(libjami::lookupName(account, nameserver, name))
+    auto lookupName(const std::string& account,
+                    const std::string& nameserver,
+                    const std::string& name) -> decltype(libjami::lookupName(account, nameserver, name))
     {
         return libjami::lookupName(account, nameserver, name);
     }
 
-    auto lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address)
-        -> decltype(libjami::lookupAddress(account, nameserver, address))
+    auto lookupAddress(const std::string& account,
+                       const std::string& nameserver,
+                       const std::string& address) -> decltype(libjami::lookupAddress(account, nameserver, address))
     {
         return libjami::lookupAddress(account, nameserver, address);
     }
@@ -152,8 +154,8 @@ public:
         return libjami::registerName(account, name, scheme, password);
     }
 
-    auto searchUser(const std::string& account, const std::string& query)
-        -> decltype(libjami::searchUser(account, query))
+    auto searchUser(const std::string& account,
+                    const std::string& query) -> decltype(libjami::searchUser(account, query))
     {
         return libjami::searchUser(account, query);
     }
@@ -208,8 +210,8 @@ public:
         return libjami::getMessageStatus(id);
     }
 
-    auto getMessageStatus(const std::string& accountID, const uint64_t& id)
-        -> decltype(libjami::getMessageStatus(accountID, id))
+    auto getMessageStatus(const std::string& accountID,
+                          const uint64_t& id) -> decltype(libjami::getMessageStatus(accountID, id))
     {
         return libjami::getMessageStatus(accountID, id);
     }
@@ -239,8 +241,8 @@ public:
         return libjami::getSupportedCiphers(accountID);
     }
 
-    auto getCodecDetails(const std::string& accountID, const unsigned& codecId)
-        -> decltype(libjami::getCodecDetails(accountID, codecId))
+    auto getCodecDetails(const std::string& accountID,
+                         const unsigned& codecId) -> decltype(libjami::getCodecDetails(accountID, codecId))
     {
         return libjami::getCodecDetails(accountID, codecId);
     }
@@ -382,8 +384,9 @@ public:
 
     void setAccountsOrder(const std::string& order) { libjami::setAccountsOrder(order); }
 
-    auto validateCertificate(const std::string& accountId, const std::string& certificate)
-        -> decltype(libjami::validateCertificate(accountId, certificate))
+    auto validateCertificate(const std::string& accountId,
+                             const std::string& certificate) -> decltype(libjami::validateCertificate(accountId,
+                                                                                                      certificate))
     {
         return libjami::validateCertificate(accountId, certificate);
     }
@@ -398,8 +401,9 @@ public:
         return libjami::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
     }
 
-    auto getCertificateDetails(const std::string& accountId, const std::string& certificate)
-        -> decltype(libjami::getCertificateDetails(accountId, certificate))
+    auto getCertificateDetails(const std::string& accountId,
+                               const std::string& certificate) -> decltype(libjami::getCertificateDetails(accountId,
+                                                                                                          certificate))
     {
         return libjami::getCertificateDetails(accountId, certificate);
     }
@@ -418,8 +422,9 @@ public:
         return libjami::getPinnedCertificates(accountId);
     }
 
-    auto pinCertificate(const std::string& accountId, const std::vector<uint8_t>& certificate, const bool& local)
-        -> decltype(libjami::pinCertificate(accountId, certificate, local))
+    auto pinCertificate(const std::string& accountId,
+                        const std::vector<uint8_t>& certificate,
+                        const bool& local) -> decltype(libjami::pinCertificate(accountId, certificate, local))
     {
         return libjami::pinCertificate(accountId, certificate, local);
     }
@@ -429,20 +434,20 @@ public:
         libjami::pinCertificatePath(accountId, certPath);
     }
 
-    auto unpinCertificate(const std::string& accountId, const std::string& certId)
-        -> decltype(libjami::unpinCertificate(accountId, certId))
+    auto unpinCertificate(const std::string& accountId,
+                          const std::string& certId) -> decltype(libjami::unpinCertificate(accountId, certId))
     {
         return libjami::unpinCertificate(accountId, certId);
     }
 
-    auto unpinCertificatePath(const std::string& accountId, const std::string& p)
-        -> decltype(libjami::unpinCertificatePath(accountId, p))
+    auto unpinCertificatePath(const std::string& accountId,
+                              const std::string& p) -> decltype(libjami::unpinCertificatePath(accountId, p))
     {
         return libjami::unpinCertificatePath(accountId, p);
     }
 
-    auto pinRemoteCertificate(const std::string& accountId, const std::string& certId)
-        -> decltype(libjami::pinRemoteCertificate(accountId, certId))
+    auto pinRemoteCertificate(const std::string& accountId,
+                              const std::string& certId) -> decltype(libjami::pinRemoteCertificate(accountId, certId))
     {
         return libjami::pinRemoteCertificate(accountId, certId);
     }
@@ -453,8 +458,9 @@ public:
         return libjami::setCertificateStatus(accountId, certId, status);
     }
 
-    auto getCertificatesByStatus(const std::string& accountId, const std::string& status)
-        -> decltype(libjami::getCertificatesByStatus(accountId, status))
+    auto getCertificatesByStatus(const std::string& accountId,
+                                 const std::string& status) -> decltype(libjami::getCertificatesByStatus(accountId,
+                                                                                                         status))
     {
         return libjami::getCertificatesByStatus(accountId, status);
     }
@@ -464,14 +470,14 @@ public:
         return libjami::getTrustRequests(accountId);
     }
 
-    auto acceptTrustRequest(const std::string& accountId, const std::string& from)
-        -> decltype(libjami::acceptTrustRequest(accountId, from))
+    auto acceptTrustRequest(const std::string& accountId,
+                            const std::string& from) -> decltype(libjami::acceptTrustRequest(accountId, from))
     {
         return libjami::acceptTrustRequest(accountId, from);
     }
 
-    auto discardTrustRequest(const std::string& accountId, const std::string& from)
-        -> decltype(libjami::discardTrustRequest(accountId, from))
+    auto discardTrustRequest(const std::string& accountId,
+                             const std::string& from) -> decltype(libjami::discardTrustRequest(accountId, from))
     {
         return libjami::discardTrustRequest(accountId, from);
     }
@@ -488,20 +494,21 @@ public:
         libjami::removeContact(accountId, uri, ban);
     }
 
-    auto getContactDetails(const std::string& accountId, const std::string& uri)
-        -> decltype(libjami::getContactDetails(accountId, uri))
+    auto getContactDetails(const std::string& accountId,
+                           const std::string& uri) -> decltype(libjami::getContactDetails(accountId, uri))
     {
         return libjami::getContactDetails(accountId, uri);
     }
 
-    auto getConnectionList(const std::string& accountId, const std::string& conversationId)
-        -> decltype(libjami::getConnectionList(accountId, conversationId))
+    auto getConnectionList(const std::string& accountId,
+                           const std::string& conversationId) -> decltype(libjami::getConnectionList(accountId,
+                                                                                                     conversationId))
     {
         return libjami::getConnectionList(accountId, conversationId);
     }
 
-    auto getChannelList(const std::string& accountId, const std::string& connectionId)
-        -> decltype(libjami::getChannelList(accountId, connectionId))
+    auto getChannelList(const std::string& accountId,
+                        const std::string& connectionId) -> decltype(libjami::getChannelList(accountId, connectionId))
     {
         return libjami::getChannelList(accountId, connectionId);
     }
@@ -521,8 +528,7 @@ public:
         libjami::setCredentials(accountID, details);
     }
 
-    auto getAddrFromInterfaceName(const std::string& interface)
-        -> decltype(libjami::getAddrFromInterfaceName(interface))
+    auto getAddrFromInterfaceName(const std::string& interface) -> decltype(libjami::getAddrFromInterfaceName(interface))
     {
         return libjami::getAddrFromInterfaceName(interface);
     }

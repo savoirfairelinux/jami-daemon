@@ -427,7 +427,7 @@ public:
      * This method is called to request removal of possible account traces on the system,
      * like internal account setup files.
      */
-    virtual void flush() {/* nothing to do here - overload */};
+    virtual void flush() { /* nothing to do here - overload */ };
 
 private:
     NON_COPYABLE(Account);

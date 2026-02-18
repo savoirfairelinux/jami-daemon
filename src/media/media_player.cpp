@@ -175,11 +175,9 @@ MediaPlayer::process()
 void
 MediaPlayer::emitInfo()
 {
-    std::map<std::string, std::string> info {
-        {"duration",     std::to_string(fileDuration_)},
-        {"audio_stream", std::to_string(audioStream_) },
-        {"video_stream", std::to_string(videoStream_) }
-    };
+    std::map<std::string, std::string> info {{"duration", std::to_string(fileDuration_)},
+                                             {"audio_stream", std::to_string(audioStream_)},
+                                             {"video_stream", std::to_string(videoStream_)}};
     emitSignal<libjami::MediaPlayerSignal::FileOpened>(path_, info);
 }
 

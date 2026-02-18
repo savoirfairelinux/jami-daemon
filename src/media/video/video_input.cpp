@@ -138,8 +138,9 @@ VideoInput::getPixelFormat() const
 void
 VideoInput::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
-                                                [](AVBufferRef* buf) { av_buffer_unref(&buf); }};
+    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9), [](AVBufferRef* buf) {
+                                                    av_buffer_unref(&buf);
+                                                }};
     if (displayMatrix) {
         av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
         displayMatrix_ = std::move(displayMatrix);

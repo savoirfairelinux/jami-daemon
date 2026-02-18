@@ -298,13 +298,12 @@ ConferenceTest::startConference(bool audioOnly, bool addDavi)
 
     std::vector<std::map<std::string, std::string>> mediaList;
     if (audioOnly) {
-        std::map<std::string, std::string> mediaAttribute = {
-            {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
-            {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
-            {libjami::Media::MediaAttributeKey::MUTED,      FALSE_STR                                 },
-            {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        },
-            {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 }
-        };
+        std::map<std::string, std::string> mediaAttribute = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                                                              libjami::Media::MediaAttributeValue::AUDIO},
+                                                             {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                                                             {libjami::Media::MediaAttributeKey::MUTED, FALSE_STR},
+                                                             {libjami::Media::MediaAttributeKey::SOURCE, ""},
+                                                             {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
         mediaList.emplace_back(mediaAttribute);
     }
 
@@ -526,13 +525,12 @@ ConferenceTest::testMuteStatusAfterAdd()
     auto daviUri = daviAccount->getUsername();
 
     std::vector<std::map<std::string, std::string>> mediaList;
-    std::map<std::string, std::string> mediaAttribute = {
-        {libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
-        {libjami::Media::MediaAttributeKey::ENABLED,    TRUE_STR                                  },
-        {libjami::Media::MediaAttributeKey::MUTED,      TRUE_STR                                  },
-        {libjami::Media::MediaAttributeKey::SOURCE,     ""                                        },
-        {libjami::Media::MediaAttributeKey::LABEL,      "audio_0"                                 }
-    };
+    std::map<std::string, std::string> mediaAttribute = {{libjami::Media::MediaAttributeKey::MEDIA_TYPE,
+                                                          libjami::Media::MediaAttributeValue::AUDIO},
+                                                         {libjami::Media::MediaAttributeKey::ENABLED, TRUE_STR},
+                                                         {libjami::Media::MediaAttributeKey::MUTED, TRUE_STR},
+                                                         {libjami::Media::MediaAttributeKey::SOURCE, ""},
+                                                         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}};
     mediaList.emplace_back(mediaAttribute);
 
     JAMI_INFO("Start call between Alice and Bob");
@@ -1046,23 +1044,22 @@ ConferenceTest::testHostAddRmSecondVideo()
 
     // Alice adds new media
     pInfos_.clear();
-    std::vector<std::map<std::string, std::string>> mediaList = {
-        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
-         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
-         {libjami::Media::MediaAttributeKey::MUTED, "false"},
-         {libjami::Media::MediaAttributeKey::SOURCE, ""},
-         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
-        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
-         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
-         {libjami::Media::MediaAttributeKey::MUTED, "false"},
-         {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
-         {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
-        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
-         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
-         {libjami::Media::MediaAttributeKey::MUTED, "false"},
-         {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
-         {libjami::Media::MediaAttributeKey::LABEL, "video_1"}}
-    };
+    std::vector<std::map<std::string, std::string>> mediaList
+        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_1"}}};
     libjami::requestMediaChange(aliceId, confId, mediaList);
 
     // Check that alice has two videos attached to the conference
@@ -1135,23 +1132,22 @@ ConferenceTest::testParticipantAddRmSecondVideo()
 
     // Bob adds new media
     pInfos_.clear();
-    std::vector<std::map<std::string, std::string>> mediaList = {
-        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
-         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
-         {libjami::Media::MediaAttributeKey::MUTED, "false"},
-         {libjami::Media::MediaAttributeKey::SOURCE, ""},
-         {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
-        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
-         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
-         {libjami::Media::MediaAttributeKey::MUTED, "false"},
-         {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
-         {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
-        {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
-         {libjami::Media::MediaAttributeKey::ENABLED, "true"},
-         {libjami::Media::MediaAttributeKey::MUTED, "false"},
-         {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
-         {libjami::Media::MediaAttributeKey::LABEL, "video_1"}}
-    };
+    std::vector<std::map<std::string, std::string>> mediaList
+        = {{{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::AUDIO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, ""},
+            {libjami::Media::MediaAttributeKey::LABEL, "audio_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "bar"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_0"}},
+           {{libjami::Media::MediaAttributeKey::MEDIA_TYPE, libjami::Media::MediaAttributeValue::VIDEO},
+            {libjami::Media::MediaAttributeKey::ENABLED, "true"},
+            {libjami::Media::MediaAttributeKey::MUTED, "false"},
+            {libjami::Media::MediaAttributeKey::SOURCE, "foo"},
+            {libjami::Media::MediaAttributeKey::LABEL, "video_1"}}};
     libjami::requestMediaChange(bobId, bobCall.callId, mediaList);
 
     // Check that bob has two videos attached to the conference

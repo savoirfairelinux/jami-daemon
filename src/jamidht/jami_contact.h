@@ -104,11 +104,9 @@ struct Contact
 
     std::map<std::string, std::string> toMap() const
     {
-        std::map<std::string, std::string> result {
-            {"added",          std::to_string(added)  },
-            {"removed",        std::to_string(removed)},
-            {"conversationId", conversationId         }
-        };
+        std::map<std::string, std::string> result {{"added", std::to_string(added)},
+                                                   {"removed", std::to_string(removed)},
+                                                   {"conversationId", conversationId}};
 
         if (isActive())
             result.emplace("confirmed", confirmed ? TRUE_STR : FALSE_STR);

@@ -80,13 +80,13 @@ parse_args(int argc, char* argv[], bool& persistent)
 
     const struct option long_options[] = {
         /* These options set a flag. */
-        {"debug",       no_argument, NULL,        'd' },
-        {"console",     no_argument, NULL,        'c' },
-        {"persistent",  no_argument, NULL,        'p' },
-        {"help",        no_argument, NULL,        'h' },
-        {"version",     no_argument, NULL,        'v' },
+        {"debug", no_argument, NULL, 'd'},
+        {"console", no_argument, NULL, 'c'},
+        {"persistent", no_argument, NULL, 'p'},
+        {"help", no_argument, NULL, 'h'},
+        {"version", no_argument, NULL, 'v'},
         {"auto-answer", no_argument, &autoAnswer, true},
-        {0,             0,           0,           0   }  /* Sentinel */
+        {0, 0, 0, 0} /* Sentinel */
     };
 
     while (true) {

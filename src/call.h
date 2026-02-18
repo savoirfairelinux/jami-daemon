@@ -407,14 +407,8 @@ public:
 
     void onTextMessage(std::map<std::string, std::string>&& messages);
 
-    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const
-    {
-        return {};
-    }
-    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const
-    {
-        return {};
-    }
+    virtual std::shared_ptr<SystemCodecInfo> getAudioCodec() const { return {}; }
+    virtual std::shared_ptr<SystemCodecInfo> getVideoCodec() const { return {}; }
 
     virtual void restartMediaSender() = 0;
 
@@ -444,10 +438,7 @@ public:
 
     virtual void monitor() const = 0;
 
-    int conferenceProtocolVersion() const
-    {
-        return peerConfProtocol_;
-    }
+    int conferenceProtocolVersion() const { return peerConfProtocol_; }
 
 protected:
     using clock = std::chrono::steady_clock;

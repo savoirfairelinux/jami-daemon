@@ -129,10 +129,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 #endif
     }
 
-    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override
-    {
-        observablesFrames_.insert(obs);
-    }
+    void attached(Observable<std::shared_ptr<MediaFrame>>* obs) override { observablesFrames_.insert(obs); }
 
     void detached(Observable<std::shared_ptr<MediaFrame>>* obs) override
     {
@@ -625,8 +622,7 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
 
         v << "[" << local.name << "] fps=30, scale=-2:" << newHeight / 5 << " [v:o]; ";
 
-        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h"
-          << ", format=pix_fmts=yuv420p";
+        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h" << ", format=pix_fmts=yuv420p";
     } break;
     default:
         JAMI_ERR() << "Video recordings with more than 2 video streams are not supported";

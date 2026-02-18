@@ -100,8 +100,9 @@ public:
         return libjami::muteLocalMedia(accountId, callId, mediaType, mute);
     }
 
-    auto transfer(const std::string& accountId, const std::string& callId, const std::string& to)
-        -> decltype(libjami::transfer(accountId, callId, to))
+    auto transfer(const std::string& accountId,
+                  const std::string& callId,
+                  const std::string& to) -> decltype(libjami::transfer(accountId, callId, to))
     {
         return libjami::transfer(accountId, callId, to);
     }
@@ -112,8 +113,8 @@ public:
         return libjami::attendedTransfer(accountId, callId, targetId);
     }
 
-    auto getCallDetails(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::getCallDetails(accountId, callId))
+    auto getCallDetails(const std::string& accountId,
+                        const std::string& callId) -> decltype(libjami::getCallDetails(accountId, callId))
     {
         return libjami::getCallDetails(accountId, callId);
     }
@@ -182,8 +183,9 @@ public:
         libjami::raiseHand(accountId, confId, accountUri, deviceId, state);
     }
 
-    auto isConferenceParticipant(const std::string& accountId, const std::string& call_id)
-        -> decltype(libjami::isConferenceParticipant(accountId, call_id))
+    auto isConferenceParticipant(const std::string& accountId,
+                                 const std::string& call_id) -> decltype(libjami::isConferenceParticipant(accountId,
+                                                                                                          call_id))
     {
         return libjami::isConferenceParticipant(accountId, call_id);
     }
@@ -197,8 +199,8 @@ public:
         return libjami::addParticipant(accountId, callId, account2Id, confId);
     }
 
-    auto addMainParticipant(const std::string& accountId, const std::string& confId)
-        -> decltype(libjami::addMainParticipant(accountId, confId))
+    auto addMainParticipant(const std::string& accountId,
+                            const std::string& confId) -> decltype(libjami::addMainParticipant(accountId, confId))
     {
         return libjami::addMainParticipant(accountId, confId);
     }
@@ -208,8 +210,8 @@ public:
         return libjami::detachLocalParticipant();
     }
 
-    auto detachParticipant(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::detachParticipant(accountId, callId))
+    auto detachParticipant(const std::string& accountId,
+                           const std::string& callId) -> decltype(libjami::detachParticipant(accountId, callId))
     {
         return libjami::detachParticipant(accountId, callId);
     }
@@ -223,20 +225,20 @@ public:
         return libjami::joinConference(accountId, sel_confId, account2Id, drag_confId);
     }
 
-    auto hangUpConference(const std::string& accountId, const std::string& confId)
-        -> decltype(libjami::hangUpConference(accountId, confId))
+    auto hangUpConference(const std::string& accountId,
+                          const std::string& confId) -> decltype(libjami::hangUpConference(accountId, confId))
     {
         return libjami::hangUpConference(accountId, confId);
     }
 
-    auto holdConference(const std::string& accountId, const std::string& confId)
-        -> decltype(libjami::holdConference(accountId, confId))
+    auto holdConference(const std::string& accountId,
+                        const std::string& confId) -> decltype(libjami::holdConference(accountId, confId))
     {
         return libjami::holdConference(accountId, confId);
     }
 
-    auto unholdConference(const std::string& accountId, const std::string& confId)
-        -> decltype(libjami::unholdConference(accountId, confId))
+    auto unholdConference(const std::string& accountId,
+                          const std::string& confId) -> decltype(libjami::unholdConference(accountId, confId))
     {
         return libjami::unholdConference(accountId, confId);
     }
@@ -246,40 +248,39 @@ public:
         return libjami::getConferenceList(accountId);
     }
 
-    auto getParticipantList(const std::string& accountId, const std::string& confId)
-        -> decltype(libjami::getParticipantList(accountId, confId))
+    auto getParticipantList(const std::string& accountId,
+                            const std::string& confId) -> decltype(libjami::getParticipantList(accountId, confId))
     {
         return libjami::getParticipantList(accountId, confId);
     }
 
-    auto getConferenceId(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::getConferenceId(accountId, callId))
+    auto getConferenceId(const std::string& accountId,
+                         const std::string& callId) -> decltype(libjami::getConferenceId(accountId, callId))
     {
         return libjami::getConferenceId(accountId, callId);
     }
 
-    auto getConferenceDetails(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::getConferenceDetails(accountId, callId))
+    auto getConferenceDetails(const std::string& accountId,
+                              const std::string& callId) -> decltype(libjami::getConferenceDetails(accountId, callId))
     {
         return libjami::getConferenceDetails(accountId, callId);
     }
 
-    auto currentMediaList(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::currentMediaList(accountId, callId))
+    auto currentMediaList(const std::string& accountId,
+                          const std::string& callId) -> decltype(libjami::currentMediaList(accountId, callId))
     {
         return libjami::currentMediaList(accountId, callId);
     }
 
-    auto startRecordedFilePlayback(const std::string& filepath)
-        -> decltype(libjami::startRecordedFilePlayback(filepath))
+    auto startRecordedFilePlayback(const std::string& filepath) -> decltype(libjami::startRecordedFilePlayback(filepath))
     {
         return libjami::startRecordedFilePlayback(filepath);
     }
 
     void stopRecordedFilePlayback() { libjami::stopRecordedFilePlayback(); }
 
-    auto toggleRecording(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::toggleRecording(accountId, callId))
+    auto toggleRecording(const std::string& accountId,
+                         const std::string& callId) -> decltype(libjami::toggleRecording(accountId, callId))
     {
         return libjami::toggleRecording(accountId, callId);
     }
@@ -291,8 +292,8 @@ public:
 
     void recordPlaybackSeek(const double& value) { libjami::recordPlaybackSeek(value); }
 
-    auto getIsRecording(const std::string& accountId, const std::string& callId)
-        -> decltype(libjami::getIsRecording(accountId, callId))
+    auto getIsRecording(const std::string& accountId,
+                        const std::string& callId) -> decltype(libjami::getIsRecording(accountId, callId))
     {
         return libjami::getIsRecording(accountId, callId);
     }

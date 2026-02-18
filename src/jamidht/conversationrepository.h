@@ -116,10 +116,7 @@ struct ConversationMember
             rolestr = "left"; // For one to one
         }
 
-        return {
-            {"uri",  uri    },
-            {"role", rolestr}
-        };
+        return {{"uri", uri}, {"role", rolestr}};
     }
     MSGPACK_DEFINE(uri, role)
 };
