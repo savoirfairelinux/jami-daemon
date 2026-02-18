@@ -16,6 +16,24 @@
       "message": "```\n/foo/src/jamidht/jamiaccount.cpp:4182:20: error: \u0027size\u0027 is not a member of \u0027jami::fileutils\u0027\n\n 4182 |     if (fileutils::size(path) \u003c 0) {\n\n      |                    ^~~~\n\n```",
       "revId": "ecf80651bfd1eabb15602c8b6929f949e3bc067d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "08309eeb_cf263163",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-18T21:32:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5fdbaf40_ea0faab0",
+      "revId": "ecf80651bfd1eabb15602c8b6929f949e3bc067d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
