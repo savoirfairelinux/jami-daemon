@@ -40,6 +40,7 @@ typedef struct SpeexEchoState_ SpeexEchoState;
 
 // Define the audio api
 #define OPENSL_API_STR     "opensl"
+#define AAUDIO_API_STR      "aaudio"
 #define PULSEAUDIO_API_STR "pulseaudio"
 #define ALSA_API_STR       "alsa"
 #define JACK_API_STR       "jack"
@@ -73,7 +74,7 @@ public:
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
      */
-    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
+    virtual void startStream(AudioDeviceType stream) = 0;
 
     /**
      * Start a capture stream on the given device (eg. a window handle, or a hard-coded string like "desktop-audio").
