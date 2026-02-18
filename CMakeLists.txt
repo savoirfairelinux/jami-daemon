@@ -325,9 +325,7 @@ if (ANDROID)
     list (APPEND ALL_FILES ${ALL_FILES}
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_impl.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/media/video/androidvideo/video_device_monitor_impl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/audio_player.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/audio_recorder.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/opensl/opensllayer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/media/audio/aaudio/aaudiolayer.cpp
     )
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     if (JAMI_VIDEO)
@@ -415,7 +413,7 @@ if (JAMI_PLUGIN)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_PLUGIN)
 endif()
 if (ANDROID)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_OPENSL)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_AAUDIO)
 elseif (APPLE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_COREAUDIO)
     target_link_libraries(${PROJECT_NAME} PRIVATE "-framework AVFoundation -framework CoreAudio -framework CoreVideo -framework VideoToolbox -framework AudioUnit -lcompression")
@@ -703,7 +701,7 @@ else()
         target_compile_definitions(${PROJECT_NAME} PRIVATE LIBJAMI_TEST)
     endif()
     if (ANDROID)
-        target_link_libraries(${PROJECT_NAME} PRIVATE OpenSLES log)
+        target_link_libraries(${PROJECT_NAME} PRIVATE AAudio log)
     elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::udev)
         if (pulseaudio_FOUND)

@@ -1,9 +1,11 @@
-project('jami-daemon', ['c', 'cpp'],
-        version: '16.0.0',
-        license: 'GPL3+',
-        default_options: ['cpp_std=gnu++20', 'buildtype=debugoptimized'],
-        meson_version:'>= 0.56'
-       )
+project(
+    'jami-daemon',
+    ['c', 'cpp'],
+    version: '16.0.0',
+    license: 'GPL3+',
+    default_options: ['cpp_std=gnu++20', 'buildtype=debugoptimized'],
+    meson_version: '>= 0.56',
+)
 
 modpkgconfig = import('pkgconfig')
 
@@ -14,26 +16,26 @@ endif
 #################################################
 # Required dependencies
 #################################################
-depthreads        = dependency('threads')
-depopendht        = dependency('opendht', version: '>= 2.1.0')
-depdhtnet         = dependency('dhtnet')
-depgnutls         = dependency('gnutls', version: '>= 3.6.7')
-depnettle         = dependency('nettle', version: '>= 3.0.0')
-deplibpjproject   = dependency('libpjproject') # a custom fork, see contrib/src/pjproject/rules.mak
-deplibgit2        = dependency('libgit2', version: '>= 1.1.0')
-deplibsecp256k1   = dependency('libsecp256k1', version: '>= 0.1')
-deplibavcodec     = dependency('libavcodec', version: '>= 56.60.100')
-deplibavfilter    = dependency('libavfilter', version: '>= 5.40.101')
-deplibavdevice    = dependency('libavdevice', version: '>= 56.4.100')
-deplibavformat    = dependency('libavformat', version: '>= 56.40.101')
-deplibswscale     = dependency('libswscale', version: '>= 3.1.101')
-deplibswresample  = dependency('libswresample', version: '>= 1.2.101')
-deplibavutil      = dependency('libavutil', version: '>= 55.75.100')
-depfmt            = dependency('fmt', version: '>= 5.3')
-depyamlcpp        = dependency('yaml-cpp', version: '>= 0.5.1')
-depjsoncpp        = dependency('jsoncpp', version: '>= 1.6.5')
-depsimdutf        = dependency('simdutf')
-depzlib           = dependency('zlib')
+depthreads = dependency('threads')
+depopendht = dependency('opendht', version: '>= 2.1.0')
+depdhtnet = dependency('dhtnet')
+depgnutls = dependency('gnutls', version: '>= 3.6.7')
+depnettle = dependency('nettle', version: '>= 3.0.0')
+deplibpjproject = dependency('libpjproject') # a custom fork, see contrib/src/pjproject/rules.mak
+deplibgit2 = dependency('libgit2', version: '>= 1.1.0')
+deplibsecp256k1 = dependency('libsecp256k1', version: '>= 0.1')
+deplibavcodec = dependency('libavcodec', version: '>= 56.60.100')
+deplibavfilter = dependency('libavfilter', version: '>= 5.40.101')
+deplibavdevice = dependency('libavdevice', version: '>= 56.4.100')
+deplibavformat = dependency('libavformat', version: '>= 56.40.101')
+deplibswscale = dependency('libswscale', version: '>= 3.1.101')
+deplibswresample = dependency('libswresample', version: '>= 1.2.101')
+deplibavutil = dependency('libavutil', version: '>= 55.75.100')
+depfmt = dependency('fmt', version: '>= 5.3')
+depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1')
+depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5')
+depsimdutf = dependency('simdutf')
+depzlib = dependency('zlib')
 
 if get_option('interfaces').contains('dbus')
     depsdbuscpp = dependency('sdbus-c++', version: '>= 2.0.0')
@@ -60,6 +62,9 @@ conf.set_quoted('PACKAGE_NAME', 'Jami Daemon')
 conf.set_quoted('PACKAGE_VERSION', meson.project_version())
 conf.set_quoted('PACKAGE_STRING', 'Jami Daemon ' + meson.project_version())
 conf.set_quoted('JAMI_DATADIR', get_option('datadir') / 'jami')
+
+depaaudio = meson.get_compiler('cpp').find_library('aaudio', has_headers: 'aaudio/AAudio.h', required: get_option('aaudio'))
+conf.set10('HAVE_AAUDIO', depaaudio.found())
 
 depopensl = meson.get_compiler('cpp').find_library('OpenSLES', has_headers: 'SLES/OpenSLES.h', required: get_option('opensl'))
 conf.set10('HAVE_OPENSL', depopensl.found())
@@ -125,10 +130,7 @@ endif
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
 conf.set('ENABLE_SHM', get_option('interfaces').contains('dbus'))
 
-configure_file(
-    output: 'config.h',
-    configuration: conf
-)
+configure_file(output: 'config.h', configuration: conf)
 add_project_arguments('-DHAVE_CONFIG_H', language: ['c', 'cpp'])
 
 #################################################
@@ -167,7 +169,7 @@ if host_machine.system() == 'linux' and meson.get_compiler('cpp').get_define('__
         provides_content += '  <dbus type="user">cx.ring.Ring</dbus>'
     endif
     if get_option('interfaces').contains('library')
-        provides_content += (provides_content == '')? '' : '\n'
+        provides_content += (provides_content == '') ? '' : '\n'
         if get_option('default_library') == 'static'
             provides_content += '  <library>libjami.a</library>'
         elif get_option('default_library') == 'shared'
@@ -183,7 +185,7 @@ if host_machine.system() == 'linux' and meson.get_compiler('cpp').get_define('__
             input: 'net.jami.daemon.metainfo.xml.in',
             output: 'net.jami.daemon.metainfo.xml',
             install: true,
-            install_dir: get_option('datadir') / 'metainfo'
+            install_dir: get_option('datadir') / 'metainfo',
         )
     endif
 endif

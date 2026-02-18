@@ -62,7 +62,7 @@ public:
      * The playback starts accordingly to its threshold
      * ALSA Library API
      */
-    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    virtual void startStream(AudioDeviceType stream);
 
     /**
      * Stop the playback and capture streams.
