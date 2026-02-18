@@ -4,7 +4,7 @@ option('hw_acceleration', type: 'boolean', value: true, description: 'Enable har
 option('plugins', type: 'boolean', value: true, description: 'Enable support for plugins')
 
 option('name_service', type: 'feature', value: 'auto', description: 'Enable Name Service')
-option('opensl', type: 'feature', value: 'auto', description: 'Enable support for OpenSL')
+option('aaudio', type: 'feature', value: 'auto', description: 'Enable support for AAudio')
 option('alsa', type: 'feature', value: 'auto', description: 'Enable support for ALSA')
 option('pulseaudio', type: 'feature', value: 'auto', description: 'Enable support for PulseAudio')
 option('jack', type: 'feature', value: 'auto', description: 'Enable support for Jack')
