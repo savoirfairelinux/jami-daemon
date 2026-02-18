@@ -140,6 +140,12 @@ VideoReceiveThread::setup()
         return false;
     }
 
+    videoDecoder_->setKeyFrameRequestCb([this]() {
+        if (keyFrameRequestCallback_) {
+            keyFrameRequestCallback_();
+        }
+    });
+
     if (args_.input == SDP_FILENAME) {
         // Now replace our custom AVIOContext with one that will read packets
         videoDecoder_->setIOContext(demuxContext_.get());

@@ -217,11 +217,32 @@ MediaDemuxer::findStreamInfo()
 {
     if (not streamInfoFound_) {
         inputCtx_->max_analyze_duration = 30 * AV_TIME_BASE;
-        int err;
-        if ((err = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
+        if (keyFrameRequestCb_) {
+            if (!streamInfoTimerScheduled_.exchange(true)) {
+                auto timer = std::make_shared<asio::steady_timer>(*Manager::instance().ioContext());
+                timer->expires_after(std::chrono::milliseconds(1500));
+                timer->async_wait([this, timer](const std::error_code& ec) {
+                    streamInfoTimerScheduled_.store(false);
+                    if (ec)
+                        return;
+                    if (!streamInfoFound_) {
+                        JAMI_DBG("findStreamInfo: 1500ms elapsed, requesting keyframe to aid probing");
+                        if (keyFrameRequestCb_)
+                            keyFrameRequestCb_();
+                    }
+                });
+            }
+        }
+
+        int err = avformat_find_stream_info(inputCtx_, nullptr);
+        if (err >= 0) {
+            streamInfoFound_ = true;
+            if (streamInfoTimerScheduled_.load())
+                streamInfoTimerScheduled_.store(false);
+            return;
+        } else {
             JAMI_ERR() << "Unable to find stream info: " << libav_utils::getError(err);
         }
-        streamInfoFound_ = true;
     }
 }
 
@@ -260,6 +281,12 @@ void
 MediaDemuxer::setFileFinishedCb(std::function<void(bool)> cb)
 {
     fileFinishedCb_ = std::move(cb);
+}
+
+void
+MediaDemuxer::setKeyFrameRequestCb(std::function<void()> cb)
+{
+    keyFrameRequestCb_ = std::move(cb);
 }
 
 void
@@ -495,6 +522,12 @@ void
 MediaDecoder::setIOContext(MediaIOHandle* ioctx)
 {
     demuxer_->setIOContext(ioctx);
+}
+
+void
+MediaDecoder::setKeyFrameRequestCb(std::function<void()> cb)
+{
+    demuxer_->setKeyFrameRequestCb(std::move(cb));
 }
 
 int
