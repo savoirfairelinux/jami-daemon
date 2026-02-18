@@ -44,6 +44,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <asio/steady_timer.hpp>
 #include <chrono>
 #include <queue>
 
@@ -74,7 +75,7 @@ class MediaDecoder;
 
 enum class DecodeStatus { Success, FrameFinished, EndOfFile, ReadError, DecodeError, RestartRequired, FallBack };
 
-class MediaDemuxer
+class MediaDemuxer : public std::enable_shared_from_this<MediaDemuxer>
 {
 public:
     MediaDemuxer();
@@ -92,7 +93,9 @@ public:
     void setInterruptCallback(int (*cb)(void*), void* opaque);
     void setIOContext(MediaIOHandle* ioctx);
 
-    void findStreamInfo();
+    void setKeyFrameRequestCb(std::function<void()> cb);
+
+    void findStreamInfo(bool videoStream = false);
     int selectStream(AVMediaType type);
 
     void setStreamCallback(unsigned stream, StreamCallback cb = {})
@@ -127,6 +130,7 @@ public:
 
 private:
     bool streamInfoFound_ {false};
+    std::unique_ptr<asio::steady_timer> streamInfoTimer_;
     AVFormatContext* inputCtx_ = nullptr;
     std::vector<StreamCallback> streams_;
     int64_t startTime_;
@@ -140,6 +144,7 @@ private:
     std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>> audioBuffer_ {};
     std::function<void()> needFrameCb_;
     std::function<void(bool)> fileFinishedCb_;
+    std::function<void()> keyFrameRequestCb_;
     void clearFrames();
     bool pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer,
                        bool isAudio,
@@ -169,6 +174,7 @@ public:
     int setup(AVMediaType type);
     int setupAudio() { return setup(AVMEDIA_TYPE_AUDIO); }
     int setupVideo() { return setup(AVMEDIA_TYPE_VIDEO); }
+    void setKeyFrameRequestCb(std::function<void()> cb);
 
     MediaDemuxer::Status decode();
     DecodeStatus flush();
