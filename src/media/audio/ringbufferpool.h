@@ -33,6 +33,9 @@ class RingBuffer;
 class RingBufferPool
 {
 public:
+    using clock = std::chrono::steady_clock;
+    using time_point = clock::time_point;
+    using duration = clock::duration;
     static const char* const DEFAULT_ID;
 
     RingBufferPool();
@@ -89,7 +92,8 @@ public:
 
     void unBindAll(const std::string& ringbufferId);
 
-    bool waitForDataAvailable(const std::string& ringbufferId, const std::chrono::microseconds& max_wait) const;
+    bool waitForDataAvailable(const std::string& ringbufferId, const duration& max_wait) const;
+    bool waitForDataAvailable(const std::string& ringbufferId, const time_point& deadline) const;
 
     std::shared_ptr<AudioFrame> getData(const std::string& ringbufferId);
 
