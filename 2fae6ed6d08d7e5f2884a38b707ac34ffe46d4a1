@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "416820d1_b33bec6e",
+        "filename": "src/media/audio/aaudio/aaudiolayer.cpp",
+        "patchSetId": 5
+      },
+      "lineNbr": 319,
+      "author": {
+        "id": 1109
+      },
+      "writtenOn": "2026-02-19T17:48:59Z",
+      "side": 1,
+      "message": "the log says “filling remaining with silence” but the code unconditionally copies numFrames * nb_channels samples from frame-\u003epointer()-\u003edata[0] and does not zero-fill the remainder. If frame-\u003epointer()-\u003enb_samples \u003c numFrames, can this read out of bound?",
+      "range": {
+        "startLine": 310,
+        "startChar": 8,
+        "endLine": 319,
+        "endChar": 16
+      },
+      "revId": "2fae6ed6d08d7e5f2884a38b707ac34ffe46d4a1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
