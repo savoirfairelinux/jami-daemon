@@ -312,23 +312,24 @@ RingBufferPool::getData(const std::string& ringbufferId)
 }
 
 bool
-RingBufferPool::waitForDataAvailable(const std::string& ringbufferId, const std::chrono::microseconds& max_wait) const
+RingBufferPool::waitForDataAvailable(const std::string& ringbufferId, const duration& max_wait) const
 {
-    std::unique_lock<std::recursive_mutex> lk(stateLock_);
+    return waitForDataAvailable(ringbufferId, clock::now() + max_wait);
+}
 
-    // convert to absolute time
-    const auto deadline = std::chrono::high_resolution_clock::now() + max_wait;
-
+bool
+RingBufferPool::waitForDataAvailable(const std::string& ringbufferId, const time_point& deadline) const
+{
+    std::unique_lock lk(stateLock_);
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
-        return 0;
-
+        return false;
     const auto bindings_copy = *bindings; // temporary copy
+
+    lk.unlock();
     for (const auto& rbuf : bindings_copy) {
-        lk.unlock();
         if (rbuf->waitForDataAvailable(ringbufferId, deadline) == 0)
             return false;
-        lk.lock();
     }
     return true;
 }
@@ -340,7 +341,7 @@ RingBufferPool::getAvailableData(const std::string& ringbufferId)
 
     auto bindings = getReadBindings(ringbufferId);
     if (not bindings)
-        return 0;
+        return {};
 
     // No mixing
     if (bindings->size() == 1) {
