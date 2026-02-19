@@ -4170,7 +4170,8 @@ JamiAccount::sendFile(const std::string& conversationId,
                       const std::string& name,
                       const std::string& replyTo)
 {
-    if (!std::filesystem::is_regular_file(path)) {
+    std::error_code ec;
+    if (!std::filesystem::is_regular_file(path, ec)) {
         JAMI_ERROR("Invalid filename '{}'", path);
         emitSignal<libjami::ConversationSignal::OnConversationError>(getAccountID(),
                                                                      conversationId,
@@ -4179,7 +4180,8 @@ JamiAccount::sendFile(const std::string& conversationId,
         return;
     }
 
-    if (fileutils::size(path) < 0) {
+    auto fileSize = std::filesystem::file_size(path, ec);
+    if (ec || fileSize == static_cast<decltype(fileSize)>(-1)) {
         JAMI_ERROR("Negative file size, user probably doesn't have the appropriate permissions for '{}'", path);
         emitSignal<libjami::ConversationSignal::OnConversationError>(
             getAccountID(),
@@ -4192,13 +4194,13 @@ JamiAccount::sendFile(const std::string& conversationId,
     // NOTE: this sendMessage is in a computation thread because
     // sha3sum can take quite some time to computer if the user decide
     // to send a big file
-    dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, replyTo]() {
+    dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, fileSize, replyTo]() {
         if (auto shared = w.lock()) {
             Json::Value value;
             auto tid = jami::generateUID(shared->rand);
             value["tid"] = std::to_string(tid);
             value["displayName"] = name.empty() ? path.filename().string() : name;
-            value["totalSize"] = std::to_string(fileutils::size(path));
+            value["totalSize"] = std::to_string(fileSize);
             value["sha3sum"] = fileutils::sha3File(path);
             value["type"] = "application/data-transfer+json";
 
