@@ -646,23 +646,32 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
 }
 
 void
-MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
+MediaEncoder::forcePresetH264(AVCodecContext* encoderCtx)
 {
 #ifdef ENABLE_HWACCEL
-    if (accel_ && accel_->getName() == "nvenc") {
-        if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set preset to 'fast'");
-        if (av_opt_set(encoderCtx, "level", "auto", AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set level to 'auto'");
-        if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
-            JAMI_WARN("Failed to set zerolatency to '1'");
+    if (accel_) {
+        if (accel_->getName() == "nvenc") {
+            if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARN("Failed to set preset to 'fast'");
+            if (av_opt_set(encoderCtx, "level", "auto", AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARN("Failed to set level to 'auto'");
+            if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
+                JAMI_WARN("Failed to set zerolatency to '1'");
+        } else if (accel_->getName() == "vaapi") {
+            // Force Main profile for VAAPI if High is requested, to improve compatibility
+            // Many older VAAPI drivers don't support Profile 100 (High)
+            if (encoderCtx->profile == FF_PROFILE_H264_HIGH) {
+                JAMI_DBG("VAAPI: Downgrading profile from High to Main for compatibility");
+                encoderCtx->profile = FF_PROFILE_H264_MAIN;
+            }
+        }
     } else
 #endif
     {
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         const char* speedPreset = "ultrafast";
 #else
-        const char* speedPreset = "veryfast";
+        const char* speedPreset = "faster";
 #endif
         if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
             JAMI_WARN("Failed to set preset '%s'", speedPreset);
@@ -705,13 +714,25 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
     ctx->level = result & 0xff;                               // xxxx0d -> 0d
     switch (profile_idc) {
     case FF_PROFILE_H264_BASELINE:
+        ctx->profile = FF_PROFILE_H264_BASELINE;
         // check constraint_set_1_flag
         if ((profile_iop & 0x40) >> 6)
             ctx->profile |= FF_PROFILE_H264_CONSTRAINED;
         break;
+    case FF_PROFILE_H264_MAIN:
+        ctx->profile = FF_PROFILE_H264_MAIN;
+        break;
+    case FF_PROFILE_H264_HIGH:
+        ctx->profile = FF_PROFILE_H264_HIGH;
+        break;
     case FF_PROFILE_H264_HIGH_10:
+        ctx->profile = FF_PROFILE_H264_HIGH_10;
+        break;
     case FF_PROFILE_H264_HIGH_422:
+        ctx->profile = FF_PROFILE_H264_HIGH_422;
+        break;
     case FF_PROFILE_H264_HIGH_444_PREDICTIVE:
+        ctx->profile = FF_PROFILE_H264_HIGH_444_PREDICTIVE;
         // check constraint_set_3_flag
         if ((profile_iop & 0x10) >> 4)
             ctx->profile |= FF_PROFILE_H264_INTRA;
@@ -825,12 +846,12 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     if (avcodecId == AV_CODEC_ID_H264) {
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
-        forcePresetX2645(encoderCtx);
+        forcePresetH264(encoderCtx);
         encoderCtx->flags2 |= AV_CODEC_FLAG2_LOCAL_HEADER;
         initH264(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_HEVC) {
         encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
-        forcePresetX2645(encoderCtx);
+        forcePresetH264(encoderCtx);
         initH265(encoderCtx, br);
         av_opt_set_int(encoderCtx, "b_ref_mode", 0, AV_OPT_SEARCH_CHILDREN);
     } else if (avcodecId == AV_CODEC_ID_VP8) {

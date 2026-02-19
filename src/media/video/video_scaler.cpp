@@ -174,5 +174,12 @@ VideoScaler::reset()
     }
 }
 
+void
+VideoScaler::setScalingMode(int mode)
+{
+    mode_ = mode;
+    reset();
+}
+
 } // namespace video
 } // namespace jami

@@ -88,6 +88,7 @@ VideoMixer::VideoMixer(const std::string& id, const std::string& localInput, boo
         localInputs_.emplace_back(videoInput);
         attachVideo(videoInput.get(), "", sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID));
     }
+    scaler_.setScalingMode(SWS_LANCZOS);
     loop_.start();
     nextProcess_ = std::chrono::steady_clock::now();
 
@@ -406,11 +407,6 @@ VideoMixer::render_frame(VideoFrame& output,
     if (!width_ or !height_ or !input->pointer() or input->pointer()->format == -1)
         return false;
 
-    int cell_width = source->w;
-    int cell_height = source->h;
-    int xoff = source->x;
-    int yoff = source->y;
-
     int angle = input->getOrientation();
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
@@ -426,7 +422,7 @@ VideoMixer::render_frame(VideoFrame& output,
         frame = input;
     }
 
-    scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
+    scaler_.scale_and_pad(*frame, output, source->x, source->y, source->w, source->h, true);
     return true;
 }
 
@@ -448,15 +444,15 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::
     } else {
         cell_width = width_ / zoom;
         cell_height = height_ / zoom;
-
+#if defined(__APPLE__) || defined(__ANDROID__)
+        // On macOS/Android, having one frame at the exact size of the mixer
+        // output causes it to render as grey. Shrink by 16 pixels (a multiple
+        // of 8, which FFmpeg prefers for alignment) to work around this.
         if (n == 1) {
-            // On some platforms (at least macOS/android) - Having one frame at the same
-            // size of the mixer cause it to be grey.
-            // Removing some pixels solve this. We use 16 because it's a multiple of 8
-            // (value that we prefer for video management)
             cell_width -= 16;
             cell_height -= 16;
         }
+#endif
     }
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
         if (index == 0) {
@@ -475,11 +471,12 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::
             cellW_off += (width_ - (n % zoom) * cell_width) / 2;
         }
         cellH_off = (index / zoom) * cell_height;
+#if defined(__APPLE__) || defined(__ANDROID__)
         if (n == 1) {
-            // Centerize (cellwidth = width_ - 16)
             cellW_off += 8;
             cellH_off += 8;
         }
+#endif
     }
 
     // Compute frame size/position

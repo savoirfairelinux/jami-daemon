@@ -70,8 +70,8 @@ struct SystemCodecInfo
     static constexpr unsigned DEFAULT_NO_QUALITY {0};
 
     static constexpr unsigned DEFAULT_MIN_BITRATE {200};
-    static constexpr unsigned DEFAULT_MAX_BITRATE {6000};
-    static constexpr unsigned DEFAULT_VIDEO_BITRATE {800}; // in Kbits/second
+    static constexpr unsigned DEFAULT_MAX_BITRATE {10000};
+    static constexpr unsigned DEFAULT_VIDEO_BITRATE {2000}; // in Kbits/second
 
     SystemCodecInfo(unsigned codecId,
                     unsigned avcodecId,

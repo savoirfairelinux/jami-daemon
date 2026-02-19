@@ -37,7 +37,7 @@ namespace libav_utils {
 void av_init();
 
 const char* const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
-const char* const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
+const char* const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=4D4029";
 
 enum AVSampleFormat choose_sample_fmt(const AVCodec* codec,
                                       const enum AVSampleFormat* preferred_formats,

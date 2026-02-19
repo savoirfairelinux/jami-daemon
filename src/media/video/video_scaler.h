@@ -47,6 +47,7 @@ public:
                        unsigned dest_height,
                        bool keep_aspect);
     std::unique_ptr<VideoFrame> convertFormat(const VideoFrame& input, AVPixelFormat pix);
+    void setScalingMode(int mode);
 
 private:
     NON_COPYABLE(VideoScaler);

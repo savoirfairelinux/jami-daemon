@@ -120,7 +120,7 @@ public:
 private:
     NON_COPYABLE(MediaEncoder);
     AVCodecContext* prepareEncoderContext(const AVCodec* outputCodec, bool is_video);
-    void forcePresetX2645(AVCodecContext* encoderCtx);
+    void forcePresetH264(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
     int initStream(const std::string& codecName, AVBufferRef* framesCtx = {});
     int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx = {});
