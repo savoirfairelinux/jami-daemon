@@ -5,6 +5,7 @@ project(jami-core
     LANGUAGES C CXX)
 set(PACKAGE_NAME "Jami Daemon")
 set (CMAKE_CXX_STANDARD 20)
+set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROJECT_LABEL "libjami")
 
