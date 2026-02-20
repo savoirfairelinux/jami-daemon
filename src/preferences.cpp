@@ -22,7 +22,10 @@
 #include "preferences.h"
 #include "logger.h"
 #include "audio/audiolayer.h"
-#if HAVE_OPENSL
+
+#if HAVE_AAUDIO
+#include "audio/aaudio/aaudiolayer.h"
+#elif HAVE_OPENSL
 #include "audio/opensl/opensllayer.h"
 #else
 #if HAVE_ALSA
@@ -334,7 +337,9 @@ checkSoundCard(int& card, AudioDeviceType type)
 AudioLayer*
 AudioPreference::createAudioLayer()
 {
-#if HAVE_OPENSL
+#if HAVE_AAUDIO
+    return new AAudioLayer(*this);
+#elif HAVE_OPENSL
     return new OpenSLLayer(*this);
 #else
 
@@ -414,6 +419,9 @@ AudioPreference::getSupportedAudioManagers()
     return {
 #if HAVE_OPENSL
         OPENSL_API_STR,
+#endif
+#if HAVE_AAUDIO
+        AAUDIO_API_STR,
 #endif
 #if HAVE_ALSA
         ALSA_API_STR,
