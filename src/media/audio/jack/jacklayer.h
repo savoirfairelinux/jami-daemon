@@ -70,7 +70,7 @@ private:
     /**
      * Start the capture and playback.
      */
-    void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    void startStream(AudioDeviceType stream);
 
     /**
      * Stop playback and capture.

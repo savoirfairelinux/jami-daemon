@@ -85,7 +85,7 @@ public:
      * CoreAudio Library API
      */
 
-    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
+    virtual void startStream(AudioDeviceType stream);
 
     void destroyAudioLayer();
 
