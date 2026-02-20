@@ -1,6 +1,6 @@
 {
     "name": "dhtnet",
-    "version": "392e9997c4e58d03502786f2c7cbaf5f2234ac31",
+    "version": "7cadae497a87df2885a6ae5797654c1a1e57b5be",
     "url": "https://git.jami.net/savoirfairelinux/dhtnet/-/archive/__VERSION__/dhtnet.tar.gz",
     "deps": [
         "opendht",
