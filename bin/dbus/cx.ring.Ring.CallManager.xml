@@ -86,7 +86,7 @@
         <method name="accept" tp:name-for-bindings="accept">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Answer an incoming call. Automatically puts the current call on HOLD.
+              Accept call. Automatically puts the current call on HOLD.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="callId" direction="in">
@@ -100,8 +100,8 @@
         <method name="acceptWithMedia" tp:name-for-bindings="acceptWithMedia">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Answer an incoming call with the list of media. This version to control
-              attributes for each media (accepted, muted, ...)
+              Accept call with the list of media. This version to control
+              attributes for each media (accepted, muted, …)
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="callId" direction="in">
@@ -171,7 +171,7 @@
         <method name="hold" tp:name-for-bindings="hold">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Place a call on hold.
+              Hold call, set call state to HOLD.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="callId" direction="in">
@@ -182,10 +182,10 @@
             <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
-        <method name="unhold" tp:name-for-bindings="unhold">
+        <method name="resume" tp:name-for-bindings="resume">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              Take a call off hold, and place this call in state CURRENT.
+              Resume call, change call state from HOLD to CURRENT.
             </tp:docstring>
             <arg type="s" name="accountId" direction="in"/>
             <arg type="s" name="callId" direction="in">
@@ -193,7 +193,7 @@
                 The callId.
               </tp:docstring>
             </arg>
-            <arg type="b" name="unHoldSucceeded" direction="out"/>
+            <arg type="b" name="resumeSucceeded" direction="out"/>
         </method>
 
         <method name="muteLocalMedia" tp:name-for-bindings="muteLocalMedia">
@@ -418,8 +418,8 @@
         <method name="addMainParticipant" tp:name-for-bindings="addMainParticipant">
             <tp:added version="11.0.0"/>
             <tp:docstring>
-              <p>As the core can handle multiple calls and conferences, it may happen that the client's user leaves a conference to answer an incoming call or to start new calls. This method is used to reintroduce client's user into the conference.</p>
-              <p>Its put the current call on HOLD or detaches client's user from the another conference.</p>
+              <p>As the core can handle multiple calls and conferences, it may happen that the client's user leaves a conference to accept an incoming call or to start a new call. This method is used to reintroduce the client's user into the conference.</p>
+              <p>It puts the current call on HOLD or detaches the client's user from the other conference.</p>
             </tp:docstring>
             <arg type="s" name="accountId" direction="in" />
             <arg type="s" name="confID" direction="in">
@@ -878,7 +878,7 @@
             <arg type="b" name="holdSucceeded" direction="out"/>
         </method>
 
-        <method name="unholdConference" tp:name-for-bindings="unholdConference">
+        <method name="resumeConference" tp:name-for-bindings="resumeConference">
             <tp:added version="11.0.0"/>
             <tp:docstring>
               Hold off every call participating in this conference.
@@ -889,7 +889,7 @@
                 The conference ID.
               </tp:docstring>
             </arg>
-            <arg type="b" name="unholdSucceeded" direction="out"/>
+            <arg type="b" name="resumeSucceeded" direction="out"/>
         </method>
 
         <method name="startRecordedFilePlayback" tp:name-for-bindings="startRecordedFilePlayback">
@@ -975,7 +975,7 @@
         <signal name="peerHold" tp:name-for-bindings="peerHold">
             <tp:added version="2.0.0"/>
             <arg type="s" name="callId" />
-            <arg type="b" name="peerHolding" />
+            <arg type="b" name="peerHold" />
         </signal>
 
         <signal name="audioMuted" tp:name-for-bindings="audioMuted">

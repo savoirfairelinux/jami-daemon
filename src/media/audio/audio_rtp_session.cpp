@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
@@ -73,7 +73,7 @@ AudioRtpSession::startSender()
     std::lock_guard lock(mutex_);
     JAMI_DEBUG("Start audio RTP sender: input [{}] - muted [{}]", input_, muteState_ ? "YES" : "NO");
 
-    if (not send_.enabled or send_.onHold) {
+    if (not send_.enabled or send_.hold) {
         JAMI_WARNING("Audio sending disabled");
         if (sender_) {
             if (socketPair_)
@@ -174,7 +174,7 @@ AudioRtpSession::startReceiver()
     if (socketPair_)
         socketPair_->setReadBlockingMode(true);
 
-    if (not receive_.enabled or receive_.onHold) {
+    if ((not receive_.enabled) or receive_.hold) {
         JAMI_WARNING("Audio receiving disabled");
         receiveThread_.reset();
         return;

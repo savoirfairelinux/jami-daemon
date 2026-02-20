@@ -1,19 +1,20 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
 #pragma once
 
 #ifdef HAVE_CONFIG_H
@@ -120,8 +121,8 @@ public:
     void refuse() override;
     void transfer(const std::string& to) override;
     bool attendedTransfer(const std::string& to) override;
-    bool onhold(OnReadyCb&& cb) override;
-    bool offhold(OnReadyCb&& cb) override;
+    bool hold(OnReadyCb&& cb) override;
+    bool resume(OnReadyCb&& cb) override;
     void switchInput(const std::string& resource = {}) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
@@ -378,11 +379,11 @@ private:
      */
     bool transferCommon(const pj_str_t* dst);
 
-    bool internalOffHold(const std::function<void()>& SDPUpdateFunc);
+    bool internalResume(const std::function<void()>& SDPUpdateFunc);
 
     bool hold();
 
-    bool unhold();
+    bool resume();
 
     // Update the attributes of a media stream
     void updateMediaStream(const MediaAttribute& newMediaAttr, size_t streamIdx);
@@ -446,10 +447,10 @@ private:
      * The SDP session
      */
     std::unique_ptr<Sdp> sdp_ {};
-    bool peerHolding_ {false};
+    bool peerHold_ {false};
 
     bool isWaitingForIceAndMedia_ {false};
-    enum class Request { HoldingOn, HoldingOff, SwitchInput, NoRequest };
+    enum class Request { Hold, Resume, SwitchInput, NoRequest };
     Request remainingRequest_ {Request::NoRequest};
 
     std::string peerRegisteredName_ {};
@@ -481,7 +482,7 @@ private:
     time_point lastKeyFrameReq_ {time_point::min()};
 
     OnReadyCb holdCb_ {};
-    OnReadyCb offHoldCb_ {};
+    OnReadyCb resumeCb_ {};
 
     std::atomic_bool waitForIceInit_ {false};
 

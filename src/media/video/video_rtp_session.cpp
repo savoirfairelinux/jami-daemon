@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include "client/videomanager.h"
@@ -119,7 +119,7 @@ VideoRtpSession::startSender()
     JAMI_DBG("[%p] Start video RTP sender: input [%s] - muted [%s]",
              this,
              conference_ ? "Video Mixer" : input_.c_str(),
-             send_.onHold ? "YES" : "NO");
+             send_.hold ? "YES" : "NO");
 
     if (not socketPair_) {
         // Ignore if the transport is not set yet
@@ -127,7 +127,7 @@ VideoRtpSession::startSender()
         return;
     }
 
-    if (send_.enabled and not send_.onHold) {
+    if (send_.enabled and not send_.hold) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -245,7 +245,7 @@ VideoRtpSession::stopSender(bool forceStopSocket)
     JAMI_DBG("[%p] Stop video RTP sender: input [%s] - muted [%s]",
              this,
              conference_ ? "Video Mixer" : input_.c_str(),
-             send_.onHold ? "YES" : "NO");
+             send_.hold ? "YES" : "NO");
 
     if (sender_) {
         if (videoLocal_)
@@ -256,7 +256,7 @@ VideoRtpSession::stopSender(bool forceStopSocket)
     }
 
     if (socketPair_) {
-        bool const isReceivingVideo = receive_.enabled && !receive_.onHold;
+        bool const isReceivingVideo = receive_.enabled && !receive_.hold;
         if (forceStopSocket || !isReceivingVideo) {
             socketPair_->stopSendOp();
             socketPair_->setReadBlockingMode(false);
@@ -271,7 +271,7 @@ VideoRtpSession::startReceiver()
 
     JAMI_DBG("[%p] Starting receiver", this);
 
-    if (receive_.enabled and not receive_.onHold) {
+    if (receive_.enabled and not receive_.hold) {
         if (receiveThread_)
             JAMI_WARN("[%p] Already has a receiver, restarting", this);
         receiveThread_.reset(new VideoReceiveThread(callId_, !conference_, receive_.receiving_sdp, mtu_));
@@ -316,7 +316,7 @@ VideoRtpSession::startReceiver()
             } else {
                 // Add audio-only source when video is disabled or muted.
                 // Called after ICE negotiation, when peers can properly create video sinks.
-                if (not receive_.enabled or receive_.onHold) {
+                if (not receive_.enabled or receive_.hold) {
                     videoMixer_->addAudioOnlySource(callId_, audioId_);
                 }
             }
@@ -349,7 +349,7 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
     // We need to disable the read operation, otherwise the
     // receiver thread will block since the peer stopped sending
     // RTP packets.
-    bool const isSendingVideo = send_.enabled && !send_.onHold;
+    bool const isSendingVideo = send_.enabled && !send_.hold;
     if (socketPair_) {
         if (forceStopSocket || !isSendingVideo) {
             socketPair_->setReadBlockingMode(false);
@@ -413,10 +413,10 @@ VideoRtpSession::start(std::unique_ptr<dhtnet::IceSocket> rtp_sock, std::unique_
     startSender();
 
     if (conference_) {
-        if (send_.enabled and not send_.onHold) {
+        if (send_.enabled and not send_.hold) {
             setupConferenceVideoPipeline(*conference_, Direction::SEND);
         }
-        if (receive_.enabled and not receive_.onHold) {
+        if (receive_.enabled and not receive_.hold) {
             setupConferenceVideoPipeline(*conference_, Direction::RECV);
         }
     } else {
@@ -455,12 +455,12 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
 
     // Sender
     if (dir == Direction::SEND) {
-        if (send_.onHold == mute) {
+        if (send_.hold == mute) {
             JAMI_DBG("[%p] Local already %s", this, mute ? "muted" : "un-muted");
             return;
         }
 
-        if ((send_.onHold = mute)) {
+        if ((send_.hold = mute)) {
             if (videoLocal_) {
                 auto ms = videoLocal_->getInfo();
                 if (auto ob = recorder_->getStream(ms.name)) {
@@ -476,12 +476,12 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
     }
 
     // Receiver
-    if (receive_.onHold == mute) {
+    if (receive_.hold == mute) {
         JAMI_DBG("[%p] Remote already %s", this, mute ? "muted" : "un-muted");
         return;
     }
 
-    if ((receive_.onHold = mute)) {
+    if ((receive_.hold = mute)) {
         if (receiveThread_) {
             auto ms = receiveThread_->getInfo();
             if (auto ob = recorder_->getStream(ms.name)) {
@@ -492,7 +492,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
         stopReceiver();
     } else {
         startReceiver();
-        if (conference_ and not receive_.onHold) {
+        if (conference_ and not receive_.hold) {
             setupConferenceVideoPipeline(*conference_, Direction::RECV);
         }
     }
@@ -827,7 +827,7 @@ VideoRtpSession::initRecorder()
             });
         });
     }
-    if (videoLocal_ && !send_.onHold) {
+    if (videoLocal_ && !send_.hold) {
         videoLocal_->setRecorderCallback([w = weak_from_this()](const MediaStream& ms) {
             asio::post(*Manager::instance().ioContext(), [w = std::move(w), ms]() {
                 if (auto shared = w.lock())

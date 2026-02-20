@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 #
 # Copyright (C) 2004-2026 Savoir-faire Linux Inc.
-# Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,13 +83,13 @@ if __name__ == "__main__":
     #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--accept', help='Accept the call', metavar='<call>')
-    group.add_argument('--hangup', help='Hangup the call', metavar='<call>')
-    group.add_argument('--refuse', help='Refuse the call', metavar='<call>')
+    group.add_argument('--accept', help='Accept call', metavar='<call>')
+    group.add_argument('--end', help='End call', metavar='<call>')
+    group.add_argument('--decline', help='Decline call', metavar='<call>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--hold', help='Hold the call', metavar='<call>')
-    group.add_argument('--unhold', help='Unhold the call', metavar='<call>')
+    group.add_argument('--hold', help='Hold call', metavar='<call>')
+    group.add_argument('--resume', help='Resume call', metavar='<call>')
 
     parser.add_argument('--list-audio-devices', help='List audio input and output devices', action='store_true')
     parser.add_argument('--set-input', help='Set active input audio device',
@@ -192,17 +191,17 @@ if __name__ == "__main__":
     if args.accept:
         ctrl.Accept(args.accept)
 
-    if args.refuse:
-        ctrl.Refuse(args.refuse)
+    if args.decline:
+        ctrl.Decline(args.decline)
 
-    if args.hangup:
-        ctrl.HangUp(args.hangup)
+    if args.end:
+        ctrl.End(args.end)
 
     if args.hold:
         ctrl.Hold(args.hold)
 
-    if args.unhold:
-        ctrl.UnHold(args.unhold)
+    if args.resume:
+        ctrl.Resume(args.resume)
 
     if args.list_audio_devices:
         allDevices = ctrl.ListAudioDevices()
@@ -240,4 +239,3 @@ if __name__ == "__main__":
         signal.signal(signal.SIGINT, ctrl.interruptHandler)
         ctrl.run()
         sys.exit(0)
-
