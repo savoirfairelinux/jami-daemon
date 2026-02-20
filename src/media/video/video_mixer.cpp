@@ -37,10 +37,40 @@
 #include "videomanager_interface.h"
 #include <opendht/thread_pool.h>
 
-static constexpr auto MIN_LINE_ZOOM = 6; // Used by the ONE_BIG_WITH_SMALL layout for the small previews
-
 namespace jami {
 namespace video {
+
+// Small-tile grid parameters for ONE_BIG_WITH_SMALL layout
+struct SmallGridParams
+{
+    int rows;
+    int cols;
+    int totalHeight;
+    int cellWidth;
+    int cellHeight;
+};
+
+// Compute small-tile grid:
+//   - 2 participants (numSmall=1) : 50/50 vertical split
+//   - ≤6 small tiles              : 1 row, width divided equally, height = 16:9
+//   - >6 small tiles              : 2 rows, width divided equally, height = 16:9
+static SmallGridParams computeSmallGrid(int numSmall, int W, int H)
+{
+    // 2-participant case: equal 50/50 split (intentionally not 16:9)
+    if (numSmall == 1) {
+        return {1, 1, H / 2, W, H / 2};
+    }
+
+    int rows = (numSmall <= 6) ? 1 : 2;
+    int cols = (numSmall + rows - 1) / rows; // ceil division
+
+    // Cell width fills the strip equally; height follows 16:9 aspect ratio
+    int cellWidth  = W / cols;
+    int cellHeight = cellWidth * 9 / 16;
+    int totalH     = cellHeight * rows;
+
+    return {rows, cols, totalH, cellWidth, cellHeight};
+}
 
 struct VideoMixer::VideoMixerSource
 {
@@ -436,40 +466,46 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::
     if (!width_ or !height_)
         return;
 
-    // Compute cell size/position
+    // Compute cell size and position
     int cell_width, cell_height, cellW_off, cellH_off;
     const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
-    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n) : ceil(sqrt(n));
-    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
-        // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
-        // The rest is the active source
-        cell_width = width_;
-        cell_height = height_ - height_ / zoom;
+
+    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+        const int numSmall = std::max(1, n - 1);
+        auto sp = computeSmallGrid(numSmall, width_, height_);
+
+        if (index == 0) {
+            // Active (big) participant below the small-tile area
+            cell_width = width_;
+            cell_height = height_ - sp.totalHeight;
+            cellW_off = 0;
+            cellH_off = sp.totalHeight;
+        } else {
+            // Small participants in a rows×cols grid at the top
+            cell_width = sp.cellWidth;
+            cell_height = sp.cellHeight;
+            int row = (index - 1) / sp.cols;
+            int col = (index - 1) % sp.cols;
+            
+            // Tiles in this row (last row may be incomplete)
+            int tilesInRow = (row < sp.rows - 1) ? sp.cols
+                                                  : numSmall - (sp.rows - 1) * sp.cols;
+            cellW_off = col * sp.cellWidth + (width_ - tilesInRow * sp.cellWidth) / 2;
+            cellH_off = row * sp.cellHeight;
+        }
     } else {
+        const int zoom = std::ceil(std::sqrt(n));
         cell_width = width_ / zoom;
         cell_height = height_ / zoom;
 
         if (n == 1) {
-            // On some platforms (at least macOS/android) - Having one frame at the same
-            // size of the mixer cause it to be grey.
-            // Removing some pixels solve this. We use 16 because it's a multiple of 8
-            // (value that we prefer for video management)
+            // Shrink by 16px to avoid grey-frame bug on macOS/Android
             cell_width -= 16;
             cell_height -= 16;
         }
-    }
-    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-        if (index == 0) {
-            cellW_off = 0;
-            cellH_off = height_ / zoom; // First line height
-        } else {
-            cellW_off = (index - 1) * cell_width;
-            // Show sources in center
-            cellW_off += (width_ - (n - 1) * cell_width) / 2;
-            cellH_off = 0;
-        }
-    } else {
+        
         cellW_off = (index % zoom) * cell_width;
+        
         if (currentLayout_ == Layout::GRID && n % zoom != 0 && index >= (zoom * ((n - 1) / zoom))) {
             // Last line, center participants if not full
             cellW_off += (width_ - (n % zoom) * cell_width) / 2;
