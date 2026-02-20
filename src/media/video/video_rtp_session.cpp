@@ -100,7 +100,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
     if (codecVideo) {
         auto const pixels = localVideoParams_.height * localVideoParams_.width;
         codecVideo->bitrate = std::max((unsigned int) (pixels * 0.001), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
-        codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.0015), SystemCodecInfo::DEFAULT_MAX_BITRATE);
+        codecVideo->maxBitrate = std::max((unsigned int) (pixels * 0.002), SystemCodecInfo::DEFAULT_MAX_BITRATE);
     }
     setupVideoBitrateInfo();
 }
