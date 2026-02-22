@@ -4436,6 +4436,7 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->factory = Manager::instance().getIceTransportFactory();
         connectionManagerConfig->turnCache = turnCache_;
         connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
+        connectionManagerConfig->legacyMode = dhtnet::LegacyMode::Supported;
         connectionManager_ = std::make_unique<dhtnet::ConnectionManager>(connectionManagerConfig);
         channelHandlers_[Uri::Scheme::SWARM] = std::make_unique<SwarmChannelHandler>(shared(),
                                                                                      *connectionManager_.get());
