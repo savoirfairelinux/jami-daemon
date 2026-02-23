@@ -595,7 +595,7 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/opendht/build/Release/opendht.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib
-        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/build/Release/libyaml-cppmd.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/build/Release/yaml-cpp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/build/Release/natpmp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/archive_static.lib
