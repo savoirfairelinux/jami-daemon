@@ -26,10 +26,6 @@ PJPROJECT_OPTIONS := --disable-sound        \
 
 PKGS += pjproject
 
-ifeq ($(call need_pkg,'libpjproject'),)
-PKGS_FOUND += pjproject
-endif
-
 DEPS_pjproject += gnutls
 
 ifdef HAVE_LINUX

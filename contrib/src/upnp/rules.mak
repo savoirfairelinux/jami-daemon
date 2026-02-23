@@ -4,9 +4,6 @@ PKG_CPE += cpe:2.3:a:pupnp_project:pupnp:$(UPNP_VERSION):*:*:*:*:*:*:*
 UPNP_URL := https://github.com/pupnp/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
-ifeq ($(call need_pkg,"libupnp >= 1.14.18"),)
-PKGS_FOUND += upnp
-endif
 
 $(TARBALLS)/pupnp-release-$(UPNP_VERSION).tar.gz:
 	$(call download,$(UPNP_URL))
