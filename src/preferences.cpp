@@ -25,8 +25,6 @@
 
 #if HAVE_AAUDIO
 #include "audio/aaudio/aaudiolayer.h"
-#elif HAVE_OPENSL
-#include "audio/opensl/opensllayer.h"
 #else
 #if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
@@ -50,7 +48,7 @@
 #if HAVE_PORTAUDIO
 #include "audio/portaudio/portaudiolayer.h"
 #endif
-#endif /* HAVE_OPENSL */
+#endif /* HAVE_AAUDIO */
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -339,8 +337,6 @@ AudioPreference::createAudioLayer()
 {
 #if HAVE_AAUDIO
     return new AAudioLayer(*this);
-#elif HAVE_OPENSL
-    return new OpenSLLayer(*this);
 #else
 
 #if HAVE_JACK
@@ -407,7 +403,7 @@ AudioPreference::createAudioLayer()
     }
     return nullptr;
 #endif
-#endif // HAVE_OPENSL
+#endif // HAVE_AAUDIO
 
     JAMI_WARN("No audio layer provided");
     return nullptr;
@@ -417,9 +413,6 @@ std::vector<std::string>
 AudioPreference::getSupportedAudioManagers()
 {
     return {
-#if HAVE_OPENSL
-        OPENSL_API_STR,
-#endif
 #if HAVE_AAUDIO
         AAUDIO_API_STR,
 #endif

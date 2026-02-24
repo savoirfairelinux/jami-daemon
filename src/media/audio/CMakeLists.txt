@@ -2,7 +2,7 @@
 # Source groups - audio
 ################################################################################
 
-# alsa|coreaudio|jack|opensl|portaudio|pulseaudio|sound
+# alsa|coreaudio|jack|aaudio|portaudio|pulseaudio|sound
 
 list (APPEND Source_Files__media__audio
       "${CMAKE_CURRENT_SOURCE_DIR}/audio_frame_resizer.cpp"
