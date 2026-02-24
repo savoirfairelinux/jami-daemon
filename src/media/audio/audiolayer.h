@@ -39,7 +39,6 @@ typedef struct SpeexEchoState_ SpeexEchoState;
  */
 
 // Define the audio api
-#define OPENSL_API_STR     "opensl"
 #define AAUDIO_API_STR      "aaudio"
 #define PULSEAUDIO_API_STR "pulseaudio"
 #define ALSA_API_STR       "alsa"

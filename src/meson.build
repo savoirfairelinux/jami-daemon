@@ -139,15 +139,6 @@ libjami_dependencies = [
     depopenssl,
 ]
 
-if conf.get('HAVE_OPENSL') == 1
-    libjami_sources += files(
-        'media/audio/opensl/audio_player.cpp',
-        'media/audio/opensl/audio_recorder.cpp',
-        'media/audio/opensl/opensllayer.cpp',
-    )
-    libjami_dependencies += depopensl
-endif
-
 if conf.get('HAVE_ALSA') == 1
     libjami_sources += files('media/audio/alsa/alsalayer.cpp')
     libjami_dependencies += depalsa

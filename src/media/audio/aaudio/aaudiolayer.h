@@ -42,7 +42,6 @@ public:
     int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const override;
     std::string getAudioDeviceName(int index, AudioDeviceType type) const override;
 
-    // Fixed index logic for Android as per OpenSLLayer, unless enhanced later
     int getIndexCapture() const override { return 0; }
     int getIndexPlayback() const override { return 0; }
     int getIndexRingtone() const override { return 0; }
