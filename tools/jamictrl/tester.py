@@ -1,8 +1,6 @@
 #
 # Copyright (C) 2004-2026 Savoir-faire Linux Inc.
 #
-# Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -150,8 +148,8 @@ class libjamiTester():
         print("Holding: " + callId)
         ctrl.Hold(callId)
         time.sleep(delay)
-        print("UnHolding: " + callId)
-        ctrl.UnHold(callId)
+        print("Resuming: " + callId)
+        ctrl.Resume(callId)
 
 #
 # tests
@@ -187,7 +185,7 @@ class libjamiTester():
 
 # testLoopCallDhtWithHold
 # perform <nbIteration> DHT calls using <delay> between each call
-# perform stress hold/unhold between each call
+# perform stress hold/resume between each call
 
     def testLoopCallDhtWithHold(self, ctrl, nbIteration, delay):
         print("**[BEGIN] DHT Call Test With Hold")
