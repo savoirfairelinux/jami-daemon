@@ -1,18 +1,18 @@
 /*
- *  Copyright (C) 2004-2026 Savoir-faire Linux Inc.
+ * Copyright (C) 2004-2026 Savoir-faire Linux Inc.
  *
- *  This program is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- *  You should have received a copy of the GNU General Public License
- *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -333,7 +333,7 @@ SinkClient::configureFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p),
                                                             AV_PIX_FMT_NV12);
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s", this, e.what());
+                JAMI_ERR("[Sink:%p] Transfer to hardware acceleration memory failed: %s", this, e.what());
                 return {};
             }
             if (not frame)
@@ -372,7 +372,7 @@ SinkClient::applyTransform(VideoFrame& frame_p)
         try {
             frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s", this, e.what());
+            JAMI_ERR("[Sink:%p] Transfer to hardware acceleration memory failed: %s", this, e.what());
             return {};
         }
     } else
