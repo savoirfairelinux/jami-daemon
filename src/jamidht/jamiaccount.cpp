@@ -3123,15 +3123,6 @@ JamiAccount::sendMessage(const std::string& to,
                 acc->onMessageSent(to, token, deviceId, success, onlyConnected, sent && retryOnTimeout);
         });
 
-    struct TextMessageCtx
-    {
-        std::weak_ptr<JamiAccount> acc;
-        std::string peerId;
-        DeviceId deviceId;
-        std::shared_ptr<SendMessageContext> devices;
-        std::shared_ptr<dhtnet::ChannelSocket> sipChannel;
-    };
-
     auto completed =
         [w = weak(), to, devices](const DeviceId& device, std::shared_ptr<dhtnet::ChannelSocket> conn, bool success) {
             if (!success)
@@ -3176,59 +3167,6 @@ JamiAccount::sendMessage(const std::string& to,
     if (clk)
         clk.unlock();
 
-    std::unique_lock lk(sipConnsMtx_);
-    for (auto& [key, value] : sipConns_) {
-        if (key.first != to or value.empty())
-            continue;
-        if (!deviceId.empty() && key.second != device)
-            continue;
-        if (!devices->add(key.second))
-            continue;
-
-        auto& conn = value.back();
-        auto& channel = conn.channel;
-
-        // Set input token into callback
-        auto ctx = std::make_unique<TextMessageCtx>();
-        ctx->acc = weak();
-        ctx->peerId = to;
-        ctx->deviceId = key.second;
-        ctx->devices = devices;
-        ctx->sipChannel = channel;
-
-        try {
-            auto res = sendSIPMessage(conn, to, ctx.release(), token, payloads, [](void* token, pjsip_event* event) {
-                if (auto c = std::shared_ptr<TextMessageCtx> {(TextMessageCtx*) token})
-                    runOnMainThread([c = std::move(c), code = event->body.tsx_state.tsx->status_code] {
-                        bool success = code == PJSIP_SC_OK;
-                        // Note: This can be called from PJSIP's eventloop while
-                        // sipConnsMtx_ is locked. So we should retrigger the shutdown.
-                        if (!success) {
-                            JAMI_WARNING("Timeout when send a message, close current connection");
-                            if (auto acc = c->acc.lock())
-                                acc->shutdownSIPConnection(c->sipChannel, c->peerId, c->deviceId);
-                        }
-                        c->devices->complete(c->deviceId, code == PJSIP_SC_OK);
-                    });
-            });
-            if (!res) {
-                devices->complete(key.second, false);
-                continue;
-            }
-        } catch (const std::runtime_error& ex) {
-            JAMI_WARNING("{}", ex.what());
-            // Remove connection in incorrect state
-            shutdownSIPConnection(channel, to, key.second);
-            devices->complete(key.second, false);
-            continue;
-        }
-
-        if (key.second == device) {
-            devices->start();
-            return;
-        }
-    }
-    lk.unlock();
     devices->start();
 
     if (onlyConnected)
