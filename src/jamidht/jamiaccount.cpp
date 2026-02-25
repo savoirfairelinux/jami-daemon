@@ -198,6 +198,75 @@ struct JamiAccount::DiscoveredPeer
     std::unique_ptr<asio::steady_timer> cleanupTimer;
 };
 
+/**
+ * Track sending state for a single message to one or more devices.
+ */
+class JamiAccount::SendMessageContext
+{
+public:
+    using OnComplete = std::function<void(bool, bool)>;
+    SendMessageContext(OnComplete onComplete)
+        : onComplete(std::move(onComplete))
+    {}
+    /** Track new pending message for device */
+    bool add(const DeviceId& device)
+    {
+        std::lock_guard lk(mtx);
+        return devices.insert(device).second;
+    }
+    /** Call after all messages are sent */
+    void start()
+    {
+        std::unique_lock lk(mtx);
+        started = true;
+        checkComplete(lk);
+    }
+    /** Complete pending message for device */
+    bool complete(const DeviceId& device, bool success)
+    {
+        std::unique_lock lk(mtx);
+        if (devices.erase(device) == 0)
+            return false;
+        ++completeCount;
+        if (success)
+            ++successCount;
+        checkComplete(lk);
+        return true;
+    }
+    bool empty() const
+    {
+        std::lock_guard lk(mtx);
+        return devices.empty();
+    }
+    bool pending(const DeviceId& device) const
+    {
+        std::lock_guard lk(mtx);
+        return devices.find(device) != devices.end();
+    }
+
+private:
+    mutable std::mutex mtx;
+    OnComplete onComplete;
+    std::set<DeviceId> devices;
+    unsigned completeCount = 0;
+    unsigned successCount = 0;
+    bool started {false};
+
+    void checkComplete(std::unique_lock<std::mutex>& lk)
+    {
+        if (started && (devices.empty() || successCount)) {
+            if (onComplete) {
+                auto cb = std::move(onComplete);
+                auto success = successCount != 0;
+                auto complete = completeCount != 0;
+                onComplete = {};
+                lk.unlock();
+                cb(success, complete);
+            }
+        }
+    }
+};
+
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
@@ -3049,74 +3118,6 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    /**
-     * Track sending state for a single message to one or more devices.
-     */
-    class SendMessageContext
-    {
-    public:
-        using OnComplete = std::function<void(bool, bool)>;
-        SendMessageContext(OnComplete onComplete)
-            : onComplete(std::move(onComplete))
-        {}
-        /** Track new pending message for device */
-        bool add(const DeviceId& device)
-        {
-            std::lock_guard lk(mtx);
-            return devices.insert(device).second;
-        }
-        /** Call after all messages are sent */
-        void start()
-        {
-            std::unique_lock lk(mtx);
-            started = true;
-            checkComplete(lk);
-        }
-        /** Complete pending message for device */
-        bool complete(const DeviceId& device, bool success)
-        {
-            std::unique_lock lk(mtx);
-            if (devices.erase(device) == 0)
-                return false;
-            ++completeCount;
-            if (success)
-                ++successCount;
-            checkComplete(lk);
-            return true;
-        }
-        bool empty() const
-        {
-            std::lock_guard lk(mtx);
-            return devices.empty();
-        }
-        bool pending(const DeviceId& device) const
-        {
-            std::lock_guard lk(mtx);
-            return devices.find(device) != devices.end();
-        }
-
-    private:
-        mutable std::mutex mtx;
-        OnComplete onComplete;
-        std::set<DeviceId> devices;
-        unsigned completeCount = 0;
-        unsigned successCount = 0;
-        bool started {false};
-
-        void checkComplete(std::unique_lock<std::mutex>& lk)
-        {
-            if (started && (devices.empty() || successCount)) {
-                if (onComplete) {
-                    auto cb = std::move(onComplete);
-                    auto success = successCount != 0;
-                    auto complete = completeCount != 0;
-                    onComplete = {};
-                    lk.unlock();
-                    cb(success, complete);
-                }
-            }
-        }
-    };
     auto devices = std::make_shared<SendMessageContext>(
         [w = weak(), to, token, deviceId, onlyConnected, retryOnTimeout](bool success, bool sent) {
             if (auto acc = w.lock())
