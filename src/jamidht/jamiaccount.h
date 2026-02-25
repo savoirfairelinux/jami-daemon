@@ -623,6 +623,17 @@ private:
 
     void doRegister_();
 
+    void lookupRegisteredName(const std::string& regName, const NameDirectory::Response& response);
+    dht::DhtRunner::Config initDhtConfig(const JamiAccountConfig& conf);
+    dht::DhtRunner::Context initDhtContext();
+    void OnNewDevice(const std::shared_ptr<dht::crypto::Certificate>& crt);
+    void OnDeviceAnnounced();
+    bool onICERequest(const DeviceId& deviceId);
+    bool onChannelRequest(const std::shared_ptr<dht::crypto::Certificate>& cert, const std::string& name);
+    void onConnectionReady(const DeviceId& deviceId,
+                           const std::string& name,
+                           std::shared_ptr<dhtnet::ChannelSocket> channel);
+
     const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
     void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri);
@@ -831,23 +842,6 @@ private:
     std::mutex transfersMtx_ {};
     std::set<std::string> incomingFileTransfers_ {};
 
-    /**
-     * Helper used to send SIP messages on a channeled connection
-     * @param conn      The connection used
-     * @param to        Peer URI
-     * @param ctx       Context passed to the send request
-     * @param token     Token used
-     * @param data      Message to send
-     * @param cb        Callback to trigger when message is sent
-     * @throw runtime_error if connection is invalid
-     * @return if the request will be sent
-     */
-    bool sendSIPMessage(SipConnection& conn,
-                        const std::string& to,
-                        void* ctx,
-                        uint64_t token,
-                        const std::map<std::string, std::string>& data,
-                        pjsip_endpt_send_callback cb);
     void onMessageSent(
         const std::string& to, uint64_t id, const std::string& deviceId, bool success, bool onlyConnected, bool retry);
 
