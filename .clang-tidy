@@ -1,1 +1,16 @@
-Checks: '-*,clang-diagnostic-*,performance-*,bugprone-*,llvm-*,clang-analyzer-*,misc-*,-performance-move-const-arg,-llvm-namespace-comment,-misc-unused-parameters,-misc-non-private-member-variables-in-classes,-llvm-header-guard,-llvm-include-order,-bugprone-suspicious-string-compare,-modernize-use-override'
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-suspicious-string-compare,
+  clang-analyzer-*,
+  clang-diagnostic-*,
+  llvm-*,
+  -llvm-else-after-return,
+  -llvm-header-guard,
+  -llvm-include-order,
+  -llvm-namespace-comment,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
+  performance-*,
+  -performance-move-const-arg

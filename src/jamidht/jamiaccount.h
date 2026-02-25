@@ -112,7 +112,7 @@ public:
 
     JamiAccountConfig::Credentials consumeConfigCredentials()
     {
-        auto conf = static_cast<JamiAccountConfig*>(config_.get());
+        auto* conf = static_cast<JamiAccountConfig*>(config_.get());
         return std::move(conf->credentials);
     }
 
@@ -662,7 +662,7 @@ private:
 
     std::vector<std::string> loadBootstrap() const;
 
-    static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id,
+    static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity& id,
                                                             const std::filesystem::path& path,
                                                             const std::string& name);
 
@@ -676,7 +676,7 @@ private:
     void loadCachedUrl(const std::string& url,
                        const std::filesystem::path& cachePath,
                        const std::chrono::seconds& cacheDuration,
-                       std::function<void(const dht::http::Response& response)>);
+                       const std::function<void(const dht::http::Response& response)>& cb);
 
     std::string getDhtProxyServer(const std::string& serverList);
     void loadCachedProxyServer(std::function<void(const std::string&)> cb);
