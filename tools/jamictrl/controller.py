@@ -184,7 +184,7 @@ class libjamiCtrl(Thread):
         pass
 
     def onIncomingCall(self, account, callid, to):
-        """ On incoming call event, add the call to the list of active calls """
+        """On incoming call event, add the call to the list of active calls"""
 
         self.activeCalls[callid] = {'Account': account,
                                          'To': to,
@@ -193,66 +193,66 @@ class libjamiCtrl(Thread):
         self.onIncomingCall_cb(callid)
 
     def onCallIncoming(self, callid, state):
-        """ Update state for this call to Incoming """
+        """Update state for this call to Incoming"""
 
         self.activeCalls[callid]['State'] = state
         self.currentCallId = callid
         self.onIncomingCall_cb(callid)
 
     def onCallHangUp(self, callid, state):
-        """ Remove callid from call list """
+        """Remove callid from call list"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallHangup_cb(callid)
         self.currentCallId = ""
 
     def onCallConnecting(self, callid, state):
-        """ Update state for this call to Ringing """
+        """Update state for this call to Ringing"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallConnecting_cb(callid)
 
     def onCallRinging(self, callid, state):
-        """ Update state for this call to Ringing """
+        """Update state for this call to Ringing"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallRinging_cb(callid)
 
 
     def onCallHold(self, callid, state):
-        """ Update state for this call to Hold """
+        """Update state for this call to Hold"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallHold_cb()
 
 
     def onCallCurrent(self, callid, state):
-        """ Update state for this call to current """
+        """Update state for this call to current"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallCurrent_cb()
 
     def onCallInactive(self, callid, state):
-        """ Update state for this call to current """
+        """Update state for this call to current"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallInactive_cb()
 
     def onCallBusy(self, callid, state):
-        """ Update state for this call to busy """
+        """Update state for this call to busy"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallBusy_cb()
 
 
     def onCallFailure(self, callid, state):
-        """ Handle call failure """
+        """Handle call failure"""
 
         self.activeCalls[callid]['State'] = state
         self.onCallFailure_cb()
 
     def onCallOver(self, callid):
-        """ Handle call failure """
+        """Handle call failure"""
 
         self.onCallOver_cb()
         del self.activeCalls[callid]
@@ -262,7 +262,7 @@ class libjamiCtrl(Thread):
         pass
 
     def onCallStateChanged(self, account, callid, state, code):
-        """ On call state changed event, set the values for new calls,
+        """On call state changed event, set the values for new calls,
         or delete the call from the list of active calls
         """
         print(("On call state changed " + str(account) + "; " + str(callid) + "; " + str(state) + "; " + str(code)))
@@ -342,7 +342,7 @@ class libjamiCtrl(Thread):
         return account
 
     def isAccountExists(self, account):
-        """ Checks if the account exists"""
+        """Checks if the account exists"""
 
         return account in self.getAllAccounts()
 
@@ -515,18 +515,18 @@ class libjamiCtrl(Thread):
         return [int(x) for x in self.configurationmanager.getCodecList()]
 
     def getCodecDetails(self, account, codecId):
-        """ Return codec details"""
+        """Return codec details"""
         codecId=dbus.UInt32(codecId)
         return self.configurationmanager.getCodecDetails(account, codecId)
 
     def getActiveCodecs(self, account=None):
-        """ Return all active codecs on given account"""
+        """Return all active codecs on given account"""
 
         account = self._valid_account(account)
         return [int(x) for x in self.configurationmanager.getActiveCodecList(account)]
 
     def setVideoCodecBitrate(self, account, bitrate):
-        """ Change bitrate for all codecs  on given account"""
+        """Change bitrate for all codecs  on given account"""
 
         for codecId in self.configurationmanager.getActiveCodecList(account):
             details = self.configurationmanager.getCodecDetails(account, codecId)
@@ -604,12 +604,12 @@ class libjamiCtrl(Thread):
 
 
     def Transfer(self, callid, to):
-        """Transfert a call identified by a CallID"""
+        """Transfer call identified by a CallID"""
 
         if callid is None or callid == "":
             raise libjamiCtrlError("Invalid callID")
 
-        self.callmanager.transfert(callid, to)
+        self.callmanager.transfer(callid, to)
 
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""

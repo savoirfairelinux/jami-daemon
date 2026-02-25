@@ -1495,7 +1495,7 @@ Conference::muteParticipant(const std::string& participant_id, const bool& state
     // the conference merge (we don't send back info to remoteHost,
     // cf. getConfInfoHostUri method)
 
-    // Transfert remote participant mute
+    // Transfer remote participant mute
     auto remoteHost = findHostforRemoteParticipant(participant_id);
     if (not remoteHost.empty()) {
         if (auto call = getCallFromPeerID(string_remove_suffix(remoteHost, '@'))) {

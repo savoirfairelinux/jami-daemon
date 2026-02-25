@@ -333,7 +333,7 @@ SinkClient::configureFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_
                 frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p),
                                                             AV_PIX_FMT_NV12);
             } catch (const std::runtime_error& e) {
-                JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s", this, e.what());
+                JAMI_ERR("[Sink:%p] Transfer to hardware acceleration memory failed: %s", this, e.what());
                 return {};
             }
             if (not frame)
@@ -372,7 +372,7 @@ SinkClient::applyTransform(VideoFrame& frame_p)
         try {
             frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);
         } catch (const std::runtime_error& e) {
-            JAMI_ERR("[Sink:%p] Transfert to hardware acceleration memory failed: %s", this, e.what());
+            JAMI_ERR("[Sink:%p] Transfer to hardware acceleration memory failed: %s", this, e.what());
             return {};
         }
     } else
