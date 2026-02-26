@@ -456,7 +456,7 @@ GitServer::Impl::sendPackData()
         // log until have refs
         std::string id = git_oid_tostr_s(&oid);
         haveCommit |= std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end();
-        auto itParents = std::find(parents.begin(), parents.end(), id);
+        auto itParents = parents.find(id);
         if (itParents != parents.end())
             parents.erase(itParents);
         if (haveCommit && parents.size() == 0 /* We are sure that all commits are there */)

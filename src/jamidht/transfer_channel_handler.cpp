@@ -52,7 +52,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
         return false;
-    auto cm = acc->convModule(true);
+    auto* cm = acc->convModule(true);
     if (!cm)
         return false;
     auto uri = cert->issuer->getId().toString();

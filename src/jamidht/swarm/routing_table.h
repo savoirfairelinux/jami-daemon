@@ -25,6 +25,7 @@
 #include <asio.hpp>
 #include <asio/detail/deadline_timer_service.hpp>
 
+#include <utility>
 #include <vector>
 #include <memory>
 #include <list>
@@ -45,11 +46,11 @@ struct NodeInfo
     NodeInfo() = delete;
     NodeInfo(NodeInfo&&) = default;
     NodeInfo(std::shared_ptr<dhtnet::ChannelSocketInterface> socket_)
-        : socket(socket_)
+        : socket(std::move(socket_))
     {}
     NodeInfo(bool mobile, std::shared_ptr<dhtnet::ChannelSocketInterface> socket_)
         : isMobile_(mobile)
-        , socket(socket_)
+        , socket(std::move(socket_))
     {}
 };
 

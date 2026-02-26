@@ -95,7 +95,7 @@ public:
     /**
      * Delete nodes from the different tables in bucket
      */
-    void deleteNode(std::vector<NodeId> nodes);
+    void deleteNode(const std::vector<NodeId>& nodes);
 
     // For tests
 

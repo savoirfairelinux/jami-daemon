@@ -60,9 +60,9 @@ static const char* const LAST_MODIFIED = "lastModified";
 ConvInfo::ConvInfo(const Json::Value& json)
 {
     id = json[ConversationMapKeys::ID].asString();
-    created = json[ConversationMapKeys::CREATED].asLargestUInt();
-    removed = json[ConversationMapKeys::REMOVED].asLargestUInt();
-    erased = json[ConversationMapKeys::ERASED].asLargestUInt();
+    created = json[ConversationMapKeys::CREATED].as<time_t>();
+    removed = json[ConversationMapKeys::REMOVED].as<time_t>();
+    erased = json[ConversationMapKeys::ERASED].as<time_t>();
     for (const auto& v : json[ConversationMapKeys::MEMBERS]) {
         members.emplace(v["uri"].asString());
     }
@@ -93,8 +93,8 @@ ConvInfo::toJson() const
 // ConversationRequest
 ConversationRequest::ConversationRequest(const Json::Value& json)
 {
-    received = json[ConversationMapKeys::RECEIVED].asLargestUInt();
-    declined = json[ConversationMapKeys::DECLINED].asLargestUInt();
+    received = json[ConversationMapKeys::RECEIVED].as<time_t>();
+    declined = json[ConversationMapKeys::DECLINED].as<time_t>();
     from = json[ConversationMapKeys::FROM].asString();
     conversationId = json[ConversationMapKeys::CONVERSATIONID].asString();
     auto& md = json[ConversationMapKeys::METADATAS];
@@ -819,7 +819,7 @@ Conversation::Impl::loadMessages(const LogOptions& options)
 std::vector<libjami::SwarmMessage>
 Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
 {
-    auto history = optHistory ? optHistory : &loadedHistory_;
+    auto* history = optHistory ? optHistory : &loadedHistory_;
 
     // history->mutex is locked by the caller
     if (!repository_ || history->loading) {
@@ -1796,7 +1796,7 @@ Conversation::Impl::pull(const std::string& deviceId)
 void
 Conversation::sync(const std::string& member, const std::string& deviceId, OnPullCb&& cb, std::string commitId)
 {
-    pull(deviceId, std::move(cb), commitId);
+    pull(deviceId, std::move(cb), std::move(commitId));
     dht::ThreadPool::io().run([member, deviceId, w = weak_from_this()] {
         auto sthis = w.lock();
         // For waiting request, downloadFile
@@ -2294,7 +2294,7 @@ Conversation::bootstrap(std::function<void()> onBootstrapped, const std::vector<
     }
     JAMI_DEBUG("{} Bootstrap with {} device(s)", pimpl_->toString(), devices.size());
     // set callback
-    auto fallback = [](std::shared_ptr<Conversation> sthis, bool now = false) {
+    auto fallback = [](const std::shared_ptr<Conversation>& sthis, bool now = false) {
         // Fallback
         auto acc = sthis->pimpl_->account_.lock();
         if (!acc)

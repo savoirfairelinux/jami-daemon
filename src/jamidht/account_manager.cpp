@@ -32,6 +32,7 @@
 #include <exception>
 #include <future>
 #include <fstream>
+#include <utility>
 #include <gnutls/ocsp.h>
 
 namespace jami {
@@ -852,7 +853,7 @@ AccountManager::lookupUri(const std::string& name, const std::string& defaultSer
 void
 AccountManager::lookupAddress(const std::string& addr, LookupCallback cb)
 {
-    nameDir_.get().lookupAddress(addr, cb);
+    nameDir_.get().lookupAddress(addr, std::move(cb));
 }
 
 dhtnet::tls::CertificateStore&

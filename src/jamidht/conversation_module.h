@@ -208,7 +208,7 @@ public:
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
-                     std::string message,
+                     const std::string& message,
                      const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,

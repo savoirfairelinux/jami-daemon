@@ -178,7 +178,7 @@ public:
     virtual bool revokeDevice(const std::string& /*device*/,
                               std::string_view /*scheme*/,
                               const std::string& /*password*/,
-                              RevokeDeviceCallback)
+                              RevokeDeviceCallback /*cb*/)
     {
         return false;
     };

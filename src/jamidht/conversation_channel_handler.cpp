@@ -50,7 +50,7 @@ ConversationChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certifi
     auto conversationId = name.substr(sep + 1);
 
     if (auto acc = account_.lock()) {
-        if (auto convModule = acc->convModule(true)) {
+        if (auto* convModule = acc->convModule(true)) {
             auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
             if (!res) {
                 JAMI_WARNING("[Account {}] Received ConversationChannel request for '{}' but user {} is banned",

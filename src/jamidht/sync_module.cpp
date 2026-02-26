@@ -64,7 +64,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
         // Send contacts infos
         // This message can be big. TODO rewrite to only take UINT16_MAX bytes max or split it multiple
         // messages. For now, write 3 messages (UINT16_MAX*3 should be enough for all information).
-        if (auto info = acc->accountManager()->getInfo()) {
+        if (const auto* info = acc->accountManager()->getInfo()) {
             if (info->contacts) {
                 SyncMsg msg;
                 msg.ds = info->contacts->getSyncData();
@@ -103,7 +103,7 @@ SyncModule::Impl::syncInfos(const std::shared_ptr<dhtnet::ChannelSocket>& socket
             }
         }
         buffer.clear();
-        auto convModule = acc->convModule(true);
+        auto* convModule = acc->convModule(true);
         if (!convModule)
             return;
         // Sync conversation's preferences
@@ -186,7 +186,7 @@ SyncModule::cacheSyncConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
                 manager->onSyncData(std::move(msg.ds), false);
 
             if (!msg.c.empty() || !msg.cr.empty() || !msg.p.empty() || !msg.ld.empty() || !msg.ms.empty())
-                if (auto cm = account->convModule(true))
+                if (auto* cm = account->convModule(true))
                     cm->onSyncData(msg, peerId, device.toString());
         } catch (const std::exception& e) {
             JAMI_WARNING("[Account {}] [device {}] [convInfo] error on sync: {:s}",

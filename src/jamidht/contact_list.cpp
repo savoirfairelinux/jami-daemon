@@ -458,7 +458,10 @@ ContactList::loadKnownDevices()
         oh.get().convert(knownDevices);
         for (const auto& d : knownDevices) {
             if (auto crt = certStore.getCertificate(d.first.toString())) {
-                if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second), false))
+                if (not foundAccountDevice(crt,
+                                           d.second.first,
+                                           clock::from_time_t(static_cast<std::time_t>(d.second.second)),
+                                           false))
                     JAMI_WARNING("[Account {}] [Contacts] Unable to add device {}", accountId_, d.first);
             } else {
                 JAMI_WARNING("[Account {}] [Contacts] Unable to find certificate for device {}", accountId_, d.first);
