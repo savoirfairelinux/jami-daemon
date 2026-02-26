@@ -321,6 +321,12 @@ public:
      */
     void clearCache();
     /**
+     * Check if a commit exists in the repository
+     * @param commitId The commit id to check
+     * @return true if the commit was found, false if not or if an error occurred
+     */
+    bool hasCommit(const std::string& commitId) const;
+    /**
      * Retrieve one commit
      * @param   commitId
      * @return  The commit if found
