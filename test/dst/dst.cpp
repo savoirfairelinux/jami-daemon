@@ -527,7 +527,7 @@ ConversationDST::triggerEvent(const Event& event, EventQueue* queue)
         auto repo = receivingAccount.repository.get();
         assert(repo != nullptr);
         // Don't fetch if the commit is already there.
-        if (repo->getCommit(commitId, false) != std::nullopt) {
+        if (repo->hasCommit(commitId)) {
             return;
         }
         // Fetch from peer
