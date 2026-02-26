@@ -627,7 +627,7 @@ ConversationModule::Impl::fetchNewCommits(const std::string& peer,
 
     if (conv->conversation) {
         // Check if we already have the commit
-        if (not commitId.empty() && conv->conversation->getCommit(commitId) != std::nullopt) {
+        if (not commitId.empty() && conv->conversation->hasCommit(commitId)) {
             return;
         }
         if (conv->conversation->isRemoving()) {
