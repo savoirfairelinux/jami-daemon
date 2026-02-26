@@ -20,11 +20,9 @@
 #endif
 
 #include "configurationmanager_interface.h"
-#include "account_schema.h"
 #include "manager.h"
 #include "logger.h"
 #include "fileutils.h"
-#include "archiver.h"
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
 #include "sip/sipaccount_config.h"
@@ -40,8 +38,6 @@
 #include <dhtnet/upnp/upnp_context.h>
 #include <dhtnet/certstore.h>
 
-#include <regex>
-
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -54,13 +50,10 @@
 
 #include <cerrno>
 #include <cstring>
-#include <sstream>
 
 #ifdef _WIN32
 #undef interface
 #endif
-
-#include <string_view>
 
 namespace libjami {
 
@@ -207,7 +200,8 @@ setCertificateStatus(const std::string& accountId, const std::string& certId, co
             auto status = dhtnet::tls::TrustStore::statusFromStr(ststr.c_str());
             return acc->setCertificateStatus(certId, status);
         }
-    } catch (const std::out_of_range&) {
+    } catch (const std::out_of_range& e) {
+        JAMI_WARNING("Argument out of range when setting certificate status: {}", e);
     }
     return false;
 }
@@ -837,7 +831,7 @@ setHistoryLimit(int32_t days)
 int32_t
 getRingingTimeout()
 {
-    return jami::Manager::instance().getRingingTimeout().count();
+    return static_cast<int32_t>(jami::Manager::instance().getRingingTimeout().count());
 }
 
 void

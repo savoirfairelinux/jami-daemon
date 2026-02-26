@@ -21,7 +21,6 @@
 #endif
 
 #include <memory> // for weak/shared_ptr
-#include <vector>
 #include <map>
 #include <mutex>
 #include <string>
@@ -29,7 +28,6 @@
 #include "media/audio/audio_input.h"
 #ifdef ENABLE_VIDEO
 #include "media/video/video_device_monitor.h"
-#include "media/video/video_base.h"
 #include "media/video/video_input.h"
 #endif
 #include "media/media_player.h"

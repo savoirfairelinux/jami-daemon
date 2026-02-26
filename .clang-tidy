@@ -1,6 +1,7 @@
 Checks: >
   -*,
   bugprone-*,
+  -bugprone-assignment-in-if-condition,
   -bugprone-easily-swappable-parameters,
   -bugprone-suspicious-string-compare,
   clang-analyzer-*,
@@ -12,5 +13,6 @@ Checks: >
   -llvm-namespace-comment,
   misc-*,
   -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
   performance-*,
   -performance-move-const-arg
