@@ -18,11 +18,11 @@
 #include "message_engine.h"
 #include "sip/sipaccountbase.h"
 #include "manager.h"
-#include "fileutils.h"
 
 #include "client/jami_signal.h"
 #include "jami/account_const.h"
 
+#include <dhtnet/fileutils.h>
 #include <opendht/thread_pool.h>
 #include <fmt/std.h>
 

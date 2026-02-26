@@ -18,7 +18,6 @@
 
 #include <string>
 #include <map>
-#include <set>
 #include <chrono>
 #include <mutex>
 #include <cstdint>
@@ -35,7 +34,7 @@ namespace im {
 
 using MessageToken = uint64_t;
 
-enum class MessageStatus { UNKNOWN = 0, IDLE, SENDING, SENT, FAILURE };
+enum class MessageStatus : std::int8_t { UNKNOWN = 0, IDLE, SENDING, SENT, FAILURE };
 
 class MessageEngine
 {
