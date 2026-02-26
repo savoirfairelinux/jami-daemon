@@ -17,6 +17,7 @@
 #include "gitserver.h"
 
 #include "fileutils.h"
+#include "git_def.h"
 #include "logger.h"
 #include "gittransport.h"
 #include "manager.h"
@@ -26,9 +27,7 @@
 
 #include <charconv>
 #include <ctime>
-#include <fstream>
 #include <git2.h>
-#include <iomanip>
 
 using namespace std::string_view_literals;
 constexpr auto FLUSH_PKT = "0000"sv;
@@ -456,7 +455,7 @@ GitServer::Impl::sendPackData()
         // log until have refs
         std::string id = git_oid_tostr_s(&oid);
         haveCommit |= std::find(haveRefs_.begin(), haveRefs_.end(), id) != haveRefs_.end();
-        auto itParents = std::find(parents.begin(), parents.end(), id);
+        auto itParents = parents.find(id);
         if (itParents != parents.end())
             parents.erase(itParents);
         if (haveCommit && parents.size() == 0 /* We are sure that all commits are there */)

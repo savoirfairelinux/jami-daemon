@@ -16,13 +16,11 @@
  */
 #pragma once
 
-#include "def.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "sip/sipaccountbase.h"
-#include "jami/datatransfer_interface.h"
 #include "jamidht/conversation.h"
 #include "data_transfer.h"
 #include "uri.h"
@@ -53,8 +51,6 @@
 
 #include <chrono>
 #include <functional>
-#include <future>
-#include <list>
 #include <map>
 #include <optional>
 #include <vector>
@@ -902,7 +898,7 @@ private:
 
     void initConnectionManager();
 
-    enum class PresenceState : int { DISCONNECTED = 0, AVAILABLE, CONNECTED };
+    enum class PresenceState : uint8_t { DISCONNECTED = 0, AVAILABLE, CONNECTED };
     std::map<std::string, PresenceState> presenceState_;
     std::string presenceNote_;
 };
