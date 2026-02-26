@@ -29,7 +29,6 @@
 #include "security_const.h"
 
 #include <sstream>
-#include <iomanip>
 
 #include <cstdio>
 #include <cerrno>
@@ -313,7 +312,7 @@ TlsValidator::~TlsValidator() {}
  */
 std::string
 TlsValidator::getStringValue([[maybe_unused]] const TlsValidator::CertificateCheck check,
-                             const TlsValidator::CheckResult result)
+                             const TlsValidator::CheckResult& result)
 {
     assert(acceptedCheckValuesResult[enforcedCheckType[check]][result.first]);
 

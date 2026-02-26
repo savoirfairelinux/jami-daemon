@@ -72,7 +72,7 @@ public:
      * @enum CertificateCheck All validation fields
      *
      */
-    enum class CertificateCheck {
+    enum class CertificateCheck : std::uint8_t {
         HAS_PRIVATE_KEY,                   /** This certificate has a build in private key                          */
         EXPIRED,                           /** This certificate is past its expiration date                         */
         STRONG_SIGNING,                    /** This certificate has been signed with a brute-force-able method      */
@@ -106,7 +106,7 @@ public:
     /**
      * @enum CertificateDetails Informative fields about a certificate
      */
-    enum class CertificateDetails {
+    enum class CertificateDetails : std::uint8_t {
         EXPIRATION_DATE,              /** The certificate expiration date                                      */
         ACTIVATION_DATE,              /** The certificate activation date                                      */
         REQUIRE_PRIVATE_KEY_PASSWORD, /** Does the private key require a password */
@@ -138,7 +138,7 @@ public:
     /**
      * @enum CheckValuesType Categories of possible values for each CertificateCheck
      */
-    enum class CheckValuesType {
+    enum class CheckValuesType : std::uint8_t {
         BOOLEAN,
         ISO_DATE,
         CUSTOM,
@@ -156,7 +156,7 @@ public:
      * CUSTOM should be avoided when possible. This enum can be extended when
      * new validated types are required.
      */
-    enum class CheckValues {
+    enum class CheckValues : std::uint8_t {
         PASSED,      /** Equivalent of a boolean "true"                                    */
         FAILED,      /** Equivalent of a boolean "false"                                   */
         UNSUPPORTED, /** The operating system doesn't support or require the check         */
@@ -309,7 +309,7 @@ private:
     /**
      * Helper method to convert a CheckResult into a std::string
      */
-    std::string getStringValue(const CertificateCheck check, const CheckResult result);
+    std::string getStringValue(const CertificateCheck check, const CheckResult& result);
 
     // Helper
     unsigned int compareToCa();
