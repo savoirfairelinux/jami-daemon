@@ -611,6 +611,42 @@ private:
         return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
     }
 
+    void scheduleAccountReady() const;
+    AccountManager::OnChangeCallback setupAccountCallbacks();
+
+    void onContactAdded(const std::string& uri, bool confirmed);
+    void onContactRemoved(const std::string& uri, bool banned);
+    void onIncomingTrustRequest(const std::string& uri,
+                                const std::string& conversationId,
+                                const std::vector<uint8_t>& payload,
+                                time_t received);
+    void onKnownDevicesChanged(const std::map<DeviceId, KnownDevice>& devices);
+    void onConversationRequestAccepted(const std::string& conversationId, const std::string& deviceId);
+    void onContactConfirmed(const std::string& uri, const std::string& convFromReq);
+
+    std::unique_ptr<AccountManager::AccountCredentials> buildAccountCredentials(
+        const JamiAccountConfig& conf,
+        const dht::crypto::Identity& id,
+        const std::string& archive_password_scheme,
+        const std::string& archive_password,
+        const std::string& archive_path,
+        bool& migrating,
+        bool& hasPassword);
+
+    void onAuthenticationSuccess(bool migrating,
+                                 bool hasPassword,
+                                 const AccountInfo& info,
+                                 const std::map<std::string, std::string>& configMap,
+                                 std::string&& receipt,
+                                 std::vector<uint8_t>&& receiptSignature);
+
+    static void onAuthenticationError(const std::weak_ptr<JamiAccount>& w,
+                                      bool hadIdentity,
+                                      bool migrating,
+                                      std::string accountId,
+                                      AccountManager::AuthError error,
+                                      const std::string& message);
+
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
      */
