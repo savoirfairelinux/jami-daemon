@@ -2353,6 +2353,151 @@ JamiAccount::onConnectionReady(const DeviceId& deviceId,
     }
 }
 
+void
+JamiAccount::conversationNeedsSyncing(std::shared_ptr<SyncMsg>&& syncMsg)
+{
+    dht::ThreadPool::computation().run([w = weak(), syncMsg] {
+        if (auto shared = w.lock()) {
+            auto& config = shared->config();
+            // For JAMS account, we must update the server
+            // for now, only sync with the JAMS server for changes to the conversation list
+            if (!config.managerUri.empty() && !syncMsg)
+                if (auto am = shared->accountManager())
+                    am->syncDevices();
+            if (auto* sm = shared->syncModule())
+                sm->syncWithConnected(syncMsg);
+        }
+    });
+}
+
+uint64_t
+JamiAccount::conversationSendMessage(const std::string& uri,
+                                     const DeviceId& device,
+                                     const std::map<std::string, std::string>& msg,
+                                     uint64_t token)
+{
+    // No need to retrigger, sendTextMessage will call
+    // messageEngine_.sendMessage, already retriggering on
+    // main thread.
+    auto deviceId = device ? device.toString() : "";
+    return sendTextMessage(uri, deviceId, msg, token);
+}
+
+void
+JamiAccount::onConversationNeedSocket(const std::string& convId,
+                                      const std::string& deviceId,
+                                      ChannelCb&& cb,
+                                      const std::string& type)
+{
+    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::move(cb), type] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        if (auto socket = shared->convModule()->gitSocket(deviceId, convId)) {
+            if (!cb(socket))
+                socket->shutdown();
+            else
+                cb({});
+            return;
+        }
+        std::shared_lock lkCM(shared->connManagerMtx_);
+        if (!shared->connectionManager_) {
+            lkCM.unlock();
+            cb({});
+            return;
+        }
+
+        shared->connectionManager_->connectDevice(
+            DeviceId(deviceId),
+            fmt::format("git://{}/{}", deviceId, convId),
+            [w, cb = std::move(cb), convId](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
+                dht::ThreadPool::io().run([w, cb = std::move(cb), socket = std::move(socket), convId] {
+                    if (socket) {
+                        socket->onShutdown([w, deviceId = socket->deviceId(), convId](const std::error_code&) {
+                            dht::ThreadPool::io().run([w, deviceId, convId] {
+                                if (auto shared = w.lock())
+                                    shared->convModule()->removeGitSocket(deviceId.toString(), convId);
+                            });
+                        });
+                        if (!cb(socket))
+                            socket->shutdown();
+                    } else
+                        cb({});
+                });
+            },
+            false,
+            false,
+            type);
+    });
+}
+
+void
+JamiAccount::onConversationNeedSwarmSocket(const std::string& convId,
+                                           const std::string& deviceId,
+                                           ChannelCb&& cb,
+                                           const std::string& type)
+{
+    dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::forward<decltype(cb)>(cb), type] {
+        auto shared = w.lock();
+        if (!shared)
+            return;
+        auto* cm = shared->convModule();
+        std::shared_lock lkCM(shared->connManagerMtx_);
+        if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
+            asio::post(*Manager::instance().ioContext(), [cb = std::move(cb)] { cb({}); });
+            return;
+        }
+        DeviceId device(deviceId);
+        auto swarmUri = fmt::format("swarm://{}", convId);
+        if (!shared->connectionManager_->isConnecting(device, swarmUri)) {
+            shared->connectionManager_->connectDevice(
+                device,
+                swarmUri,
+                [w,
+                 cb = std::move(cb),
+                 wam = std::weak_ptr(shared->accountManager())](std::shared_ptr<dhtnet::ChannelSocket> socket,
+                                                                const DeviceId& deviceId) {
+                    dht::ThreadPool::io().run([w, wam, cb = std::move(cb), socket = std::move(socket), deviceId] {
+                        if (socket) {
+                            auto shared = w.lock();
+                            auto am = wam.lock();
+                            auto remoteCert = socket->peerCertificate();
+                            if (!remoteCert || !remoteCert->issuer) {
+                                cb(nullptr);
+                                return;
+                            }
+                            auto uri = remoteCert->issuer->getId().toString();
+                            if (!shared || !am
+                                || am->getCertificateStatus(uri) == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
+                                cb(nullptr);
+                                return;
+                            }
+                            shared->requestMessageConnection(uri, deviceId, "");
+                        }
+                        cb(socket);
+                    });
+                });
+        }
+    });
+}
+
+void
+JamiAccount::conversationOneToOneReceive(const std::string& convId, const std::string& from)
+{
+    accountManager_->findCertificate(dht::InfoHash(from),
+                                     [this, from, convId](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                                         const auto* info = accountManager_->getInfo();
+                                         if (!cert || !info)
+                                             return;
+                                         info->contacts->onTrustRequest(dht::InfoHash(from),
+                                                                        cert->getSharedPublicKey(),
+                                                                        time(nullptr),
+                                                                        false,
+                                                                        convId,
+                                                                        {});
+                                     });
+}
+
 ConversationModule*
 JamiAccount::convModule(bool noCreation)
 {
@@ -2368,132 +2513,8 @@ JamiAccount::convModule(bool noCreation)
         convModule_ = std::make_unique<ConversationModule>(
             shared(),
             accountManager_,
-            [this](auto&& syncMsg) {
-                dht::ThreadPool::computation().run([w = weak(), syncMsg] {
-                    if (auto shared = w.lock()) {
-                        auto& config = shared->config();
-                        // For JAMS account, we must update the server
-                        // for now, only sync with the JAMS server for changes to the conversation list
-                        if (!config.managerUri.empty() && !syncMsg)
-                            if (auto am = shared->accountManager())
-                                am->syncDevices();
-                        if (auto* sm = shared->syncModule())
-                            sm->syncWithConnected(syncMsg);
-                    }
-                });
-            },
-            [this](auto&& uri, auto&& device, auto&& msg, auto token = 0) {
-                // No need to retrigger, sendTextMessage will call
-                // messageEngine_.sendMessage, already retriggering on
-                // main thread.
-                auto deviceId = device ? device.toString() : "";
-                return sendTextMessage(uri, deviceId, msg, token);
-            },
-            [this](const auto& convId, const auto& deviceId, auto cb, const auto& type) {
-                dht::ThreadPool::io().run([w = weak(), convId, deviceId, cb = std::move(cb), type] {
-                    auto shared = w.lock();
-                    if (!shared)
-                        return;
-                    if (auto socket = shared->convModule()->gitSocket(deviceId, convId)) {
-                        if (!cb(socket))
-                            socket->shutdown();
-                        else
-                            cb({});
-                        return;
-                    }
-                    std::shared_lock lkCM(shared->connManagerMtx_);
-                    if (!shared->connectionManager_) {
-                        lkCM.unlock();
-                        cb({});
-                        return;
-                    }
-
-                    shared->connectionManager_->connectDevice(
-                        DeviceId(deviceId),
-                        fmt::format("git://{}/{}", deviceId, convId),
-                        [w, cb = std::move(cb), convId](std::shared_ptr<dhtnet::ChannelSocket> socket, const DeviceId&) {
-                            dht::ThreadPool::io().run([w, cb = std::move(cb), socket = std::move(socket), convId] {
-                                if (socket) {
-                                    socket->onShutdown(
-                                        [w, deviceId = socket->deviceId(), convId](const std::error_code&) {
-                                            dht::ThreadPool::io().run([w, deviceId, convId] {
-                                                if (auto shared = w.lock())
-                                                    shared->convModule()->removeGitSocket(deviceId.toString(), convId);
-                                            });
-                                        });
-                                    if (!cb(socket))
-                                        socket->shutdown();
-                                } else
-                                    cb({});
-                            });
-                        },
-                        false,
-                        false,
-                        type);
-                });
-            },
             [this](const auto& convId, const auto& deviceId, auto&& cb, const auto& connectionType) {
-                dht::ThreadPool::io().run(
-                    [w = weak(), convId, deviceId, cb = std::forward<decltype(cb)>(cb), connectionType] {
-                        auto shared = w.lock();
-                        if (!shared)
-                            return;
-                        auto* cm = shared->convModule();
-                        std::shared_lock lkCM(shared->connManagerMtx_);
-                        if (!shared->connectionManager_ || !cm || cm->isBanned(convId, deviceId)) {
-                            asio::post(*Manager::instance().ioContext(), [cb = std::move(cb)] { cb({}); });
-                            return;
-                        }
-                        DeviceId device(deviceId);
-                        auto swarmUri = fmt::format("swarm://{}", convId);
-                        if (!shared->connectionManager_->isConnecting(device, swarmUri)) {
-                            shared->connectionManager_->connectDevice(
-                                device,
-                                swarmUri,
-                                [w,
-                                 cb = std::move(cb),
-                                 wam = std::weak_ptr(
-                                     shared->accountManager())](std::shared_ptr<dhtnet::ChannelSocket> socket,
-                                                                const DeviceId& deviceId) {
-                                    dht::ThreadPool::io().run(
-                                        [w, wam, cb = std::move(cb), socket = std::move(socket), deviceId] {
-                                            if (socket) {
-                                                auto shared = w.lock();
-                                                auto am = wam.lock();
-                                                auto remoteCert = socket->peerCertificate();
-                                                if (!remoteCert || !remoteCert->issuer) {
-                                                    cb(nullptr);
-                                                    return;
-                                                }
-                                                auto uri = remoteCert->issuer->getId().toString();
-                                                if (!shared || !am
-                                                    || am->getCertificateStatus(uri)
-                                                           == dhtnet::tls::TrustStore::PermissionStatus::BANNED) {
-                                                    cb(nullptr);
-                                                    return;
-                                                }
-                                                shared->requestMessageConnection(uri, deviceId, "");
-                                            }
-                                            cb(socket);
-                                        });
-                                });
-                        }
-                    });
-            },
-            [this](auto&& convId, auto&& from) {
-                accountManager_->findCertificate(dht::InfoHash(from),
-                                                 [this, from, convId](
-                                                     const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                                                     const auto* info = accountManager_->getInfo();
-                                                     if (!cert || !info)
-                                                         return;
-                                                     info->contacts->onTrustRequest(dht::InfoHash(from),
-                                                                                    cert->getSharedPublicKey(),
-                                                                                    time(nullptr),
-                                                                                    false,
-                                                                                    convId,
-                                                                                    {});
-                                                 });
+                onConversationNeedSwarmSocket(convId, deviceId, std::forward<decltype(cb)>(cb), connectionType);
             },
             autoLoadConversations_);
     }

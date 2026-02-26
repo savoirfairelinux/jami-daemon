@@ -412,10 +412,7 @@ public:
                        int32_t flag) override;
 
 #ifdef LIBJAMI_TEST
-    dhtnet::ConnectionManager& connectionManager()
-    {
-        return *connectionManager_;
-    }
+    dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 
     /**
      * Only used for tests, disable sha3sum verification for transfers.
@@ -423,10 +420,7 @@ public:
      */
     void noSha3sumVerification(bool newValue);
 
-    void publishPresence(bool newValue)
-    {
-        publishPresence_ = newValue;
-    }
+    void publishPresence(bool newValue) { publishPresence_ = newValue; }
 #endif
 
     /**
@@ -490,6 +484,21 @@ public:
     ConversationModule* convModule(bool noCreation = false);
     SyncModule* syncModule();
 
+    void conversationNeedsSyncing(std::shared_ptr<SyncMsg>&& syncMsg);
+    uint64_t conversationSendMessage(const std::string& uri,
+                                     const DeviceId& device,
+                                     const std::map<std::string, std::string>& msg,
+                                     uint64_t token = 0);
+    void onConversationNeedSocket(const std::string& convId,
+                                  const std::string& deviceId,
+                                  ChannelCb&& cb,
+                                  const std::string& type);
+    void onConversationNeedSwarmSocket(const std::string& convId,
+                                       const std::string& deviceId,
+                                       ChannelCb&& cb,
+                                       const std::string& type);
+    void conversationOneToOneReceive(const std::string& convId, const std::string& from);
+
     /**
      * Check (via the cache) if we need to send our profile to a specific device
      * @param peerUri       Uri that will receive the profile
@@ -519,10 +528,7 @@ public:
 
     std::filesystem::path profilePath() const;
 
-    const std::shared_ptr<AccountManager>& accountManager()
-    {
-        return accountManager_;
-    }
+    const std::shared_ptr<AccountManager>& accountManager() { return accountManager_; }
 
     bool sha3SumVerify() const;
 
@@ -561,22 +567,13 @@ public:
      * connected. This kind of node corresponds to devices with push notifications & proxy and are
      * stored in the mobile nodes
      */
-    bool isMobile() const
-    {
-        return config().proxyEnabled and not config().deviceKey.empty();
-    }
+    bool isMobile() const { return config().proxyEnabled and not config().deviceKey.empty(); }
 
 #ifdef LIBJAMI_TEST
-    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
-    {
-        return channelHandlers_;
-    };
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() { return channelHandlers_; };
 #endif
 
-    dhtnet::tls::CertificateStore& certStore() const
-    {
-        return *certStore_;
-    }
+    dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
     /**
      * Check if a Device is connected
      * @param deviceId
