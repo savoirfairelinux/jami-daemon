@@ -199,75 +199,6 @@ struct JamiAccount::DiscoveredPeer
     std::unique_ptr<asio::steady_timer> cleanupTimer;
 };
 
-/**
- * Track sending state for a single message to one or more devices.
- */
-class JamiAccount::SendMessageContext
-{
-public:
-    using OnComplete = std::function<void(bool, bool)>;
-    SendMessageContext(OnComplete onComplete)
-        : onComplete(std::move(onComplete))
-    {}
-    /** Track new pending message for device */
-    bool add(const DeviceId& device)
-    {
-        std::lock_guard lk(mtx);
-        return devices.insert(device).second;
-    }
-    /** Call after all messages are sent */
-    void start()
-    {
-        std::unique_lock lk(mtx);
-        started = true;
-        checkComplete(lk);
-    }
-    /** Complete pending message for device */
-    bool complete(const DeviceId& device, bool success)
-    {
-        std::unique_lock lk(mtx);
-        if (devices.erase(device) == 0)
-            return false;
-        ++completeCount;
-        if (success)
-            ++successCount;
-        checkComplete(lk);
-        return true;
-    }
-    bool empty() const
-    {
-        std::lock_guard lk(mtx);
-        return devices.empty();
-    }
-    bool pending(const DeviceId& device) const
-    {
-        std::lock_guard lk(mtx);
-        return devices.find(device) != devices.end();
-    }
-
-private:
-    mutable std::mutex mtx;
-    OnComplete onComplete;
-    std::set<DeviceId> devices;
-    unsigned completeCount = 0;
-    unsigned successCount = 0;
-    bool started {false};
-
-    void checkComplete(std::unique_lock<std::mutex>& lk)
-    {
-        if (started && (devices.empty() || successCount)) {
-            if (onComplete) {
-                auto cb = std::move(onComplete);
-                auto success = successCount != 0;
-                auto complete = completeCount != 0;
-                onComplete = {};
-                lk.unlock();
-                cb(success, complete);
-            }
-        }
-    }
-};
-
 static constexpr const char* const RING_URI_PREFIX = "ring:";
 static constexpr const char* const JAMI_URI_PREFIX = "jami:";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.\\-_\\~]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
@@ -3146,6 +3077,33 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
+    if (deviceId.empty()) {
+        auto toH = dht::InfoHash(toUri);
+        // Find listening devices for this account
+        accountManager_->forEachDevice(
+            toH,
+            [this, to, payloads, currentDevice = DeviceId(currentDeviceId())](
+                const std::shared_ptr<dht::crypto::PublicKey>& dev) {
+                // Test if already sent
+                auto deviceId = dev->getLongId().toString();
+                if (deviceId == currentDevice.toString()) {
+                    return;
+                }
+
+                // Else, ask for a channel to send the message
+                dht::ThreadPool::io().run([this, to, deviceId, payloads]() {
+                    // Have the engine take on the task of ensuring the delivery of per
+                    // device messages
+                    messageEngine_.sendMessage(to, deviceId, payloads, 0);
+                });
+            },
+            [this, to, token, onlyConnected](bool success) {
+                // Inform the Message Engine of the completion of forEachDevice for the original peer message
+                onMessageSent(to, token, "", success, onlyConnected, false);
+            });
+        return;
+    }
+
     // Use the Message channel if available
     std::shared_lock clk(connManagerMtx_);
     auto* handler = static_cast<MessageChannelHandler*>(channelHandlers_[Uri::Scheme::MESSAGE].get());
@@ -3156,107 +3114,69 @@ JamiAccount::sendMessage(const std::string& to,
         return;
     }
 
-    auto devices = std::make_shared<SendMessageContext>(
-        [w = weak(), to, token, deviceId, onlyConnected, retryOnTimeout](bool success, bool sent) {
-            if (auto acc = w.lock())
-                acc->onMessageSent(to, token, deviceId, success, onlyConnected, sent && retryOnTimeout);
-        });
-
-    auto completed = [w = weak(), to, devices](const DeviceId& device,
-                                               const std::shared_ptr<dhtnet::ChannelSocket>& conn,
-                                               bool success) {
-        if (!success)
-            if (auto acc = w.lock()) {
-                std::shared_lock clk(acc->connManagerMtx_);
-                if (auto* handler = static_cast<MessageChannelHandler*>(
-                        acc->channelHandlers_[Uri::Scheme::MESSAGE].get())) {
-                    handler->closeChannel(to, device, conn);
-                }
-            }
-        devices->complete(device, success);
-    };
+    auto device = DeviceId(deviceId);
 
     const auto& payload = *payloads.begin();
     auto msg = std::make_shared<MessageChannelHandler::Message>();
     msg->id = token;
     msg->t = payload.first;
     msg->c = payload.second;
-    auto device = deviceId.empty() ? DeviceId() : DeviceId(deviceId);
-    if (deviceId.empty()) {
-        auto conns = handler->getChannels(toUri);
+
+    if (auto conn = handler->getChannel(toUri, device)) {
         clk.unlock();
-        for (const auto& conn : conns) {
-            auto connDevice = conn->deviceId();
-            if (!devices->add(connDevice))
-                continue;
-            dht::ThreadPool::io().run([completed, connDevice, conn, msg] {
-                completed(connDevice, conn, MessageChannelHandler::sendMessage(conn, *msg));
-            });
-        }
-    } else {
-        if (auto conn = handler->getChannel(toUri, device)) {
-            clk.unlock();
-            devices->add(device);
-            dht::ThreadPool::io().run([completed, device, conn, msg] {
-                completed(device, conn, MessageChannelHandler::sendMessage(conn, *msg));
-            });
-            devices->start();
-            return;
-        }
+        dht::ThreadPool::io().run([w = weak(), to, deviceId, conn, msg, onlyConnected, retryOnTimeout] {
+            bool success = MessageChannelHandler::sendMessage(conn, *msg);
+            if (auto acc = w.lock()) {
+                if (!success) {
+                    std::shared_lock clk(acc->connManagerMtx_);
+                    if (auto* handler = static_cast<MessageChannelHandler*>(
+                            acc->channelHandlers_[Uri::Scheme::MESSAGE].get())) {
+                        handler->closeChannel(to, conn->deviceId(), conn);
+                    }
+                }
+                acc->onMessageSent(to, msg->id, deviceId, success, onlyConnected, retryOnTimeout);
+            }
+        });
+        return;
     }
+
     if (clk)
         clk.unlock();
 
-    devices->start();
+    // Advise the message engine the per-device message wasn't sent
+    onMessageSent(to, token, deviceId, false, onlyConnected, false);
 
     if (onlyConnected)
         return;
-    // We are unable to send the message directly, try connecting
-
-    // Get conversation id, which will be used by the iOS notification extension
-    // to load the conversation.
-    auto extractIdFromJson = [](const std::string& jsonData) -> std::string {
-        Json::Value parsed;
-        if (json::parse(jsonData, parsed)) {
-            auto value = parsed.get("id", Json::nullValue);
-            if (value && value.isString()) {
-                return value.asString();
-            }
-        } else {
-            JAMI_WARNING("Unable to parse jsonData to get conversation ID");
-        }
-        return "";
-    };
 
     // get request type
     auto payload_type = msg->t;
     if (payload_type == MIME_TYPE_GIT) {
+        // Get conversation id, which will be used by the iOS notification extension
+        // to load the conversation.
         std::string id = extractIdFromJson(msg->c);
         if (!id.empty()) {
             payload_type += "/" + id;
         }
     }
 
-    if (deviceId.empty()) {
-        auto toH = dht::InfoHash(toUri);
-        // Find listening devices for this account
-        accountManager_->forEachDevice(toH,
-                                       [this, to, devices, payload_type, currentDevice = DeviceId(currentDeviceId())](
-                                           const std::shared_ptr<dht::crypto::PublicKey>& dev) {
-                                           // Test if already sent
-                                           auto deviceId = dev->getLongId();
-                                           if (deviceId == currentDevice || devices->pending(deviceId)) {
-                                               return;
-                                           }
+    // We are unable to send the message directly, try connecting instead
+    requestMessageConnection(to, device, payload_type);
+}
 
-                                           // Else, ask for a channel to send the message
-                                           dht::ThreadPool::io().run([this, to, deviceId, payload_type]() {
-                                               requestMessageConnection(to, deviceId, payload_type);
-                                           });
-                                       });
+std::string
+JamiAccount::extractIdFromJson(const std::string& jsonData)
+{
+    Json::Value parsed;
+    if (json::parse(jsonData, parsed)) {
+        auto value = parsed.get("id", Json::nullValue);
+        if (value && value.isString()) {
+            return value.asString();
+        }
     } else {
-        requestMessageConnection(to, device, payload_type);
+        JAMI_WARNING("Unable to parse jsonData to get conversation ID");
     }
+    return "";
 }
 
 void
