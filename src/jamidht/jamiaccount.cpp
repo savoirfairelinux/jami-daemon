@@ -2015,6 +2015,32 @@ JamiAccount::doRegister_()
                 return itHandler->second->onRequest(cert, name);
             return name == "sip";
         });
+        connectionManager_->onChannelList([this](const DeviceId& deviceId, const std::vector<std::string>& channels) {
+            bool hasMsgChannel = false;
+
+            for (const auto& name : channels) {
+                if (name.size() >= 4 && name.compare(0, 4, "msg:") == 0) {
+                    hasMsgChannel = true;
+                    break;
+                }
+            }
+
+            if (!hasMsgChannel) {
+                JAMI_DEBUG("[Account {}] No message channel with {}, requesting", getAccountID(), deviceId.toString());
+
+                accountManager_->findCertificate(deviceId,
+                                                 [w = weak(),
+                                                  deviceId](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                                                     if (auto shared = w.lock()) {
+                                                         if (!cert || !cert->issuer)
+                                                             return;
+
+                                                         auto peerId = cert->issuer->getId().toString();
+                                                         shared->requestMessageConnection(peerId, deviceId, "");
+                                                     }
+                                                 });
+            }
+        });
         connectionManager_->onConnectionReady(
             [this](const DeviceId& deviceId, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> channel) {
                 if (channel) {
