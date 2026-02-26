@@ -22,7 +22,6 @@
 #include "presencemanager_interface.h"
 
 #include <cerrno>
-#include <sstream>
 #include <cstring>
 
 #include "logger.h"
@@ -30,7 +29,6 @@
 #include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
-#include "client/jami_signal.h"
 #include "compiler_intrinsics.h"
 
 #include "jamidht/jamiaccount.h"
@@ -52,7 +50,7 @@ void
 subscribeBuddy(const std::string& accountId, const std::string& uri, bool flag)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
-        auto pres = sipaccount->getPresence();
+        auto* pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
             JAMI_DEBUG("{}ubscribePresence (acc:{}, buddy:{})", flag ? "S" : "Uns", accountId, uri);
             pres->subscribeClient(uri, flag);
@@ -72,7 +70,7 @@ void
 publish(const std::string& accountId, bool status, const std::string& note)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
-        auto pres = sipaccount->getPresence();
+        auto* pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
             JAMI_DEBUG("Send Presence (acc:{}, status {}).", accountId, status ? "online" : "offline");
             pres->sendPresence(status, note);
@@ -114,7 +112,7 @@ getSubscriptions(const std::string& accountId)
     std::vector<std::map<std::string, std::string>> ret;
 
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
-        if (auto pres = sipaccount->getPresence()) {
+        if (auto* pres = sipaccount->getPresence()) {
             const auto& subs = pres->getClientSubscriptions();
             ret.reserve(subs.size());
             for (const auto& s : subs) {
@@ -146,7 +144,7 @@ void
 setSubscriptions(const std::string& accountId, const std::vector<std::string>& uris)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountId)) {
-        if (auto pres = sipaccount->getPresence()) {
+        if (auto* pres = sipaccount->getPresence()) {
             for (const auto& u : uris)
                 pres->subscribeClient(u, true);
         } else

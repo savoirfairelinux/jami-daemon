@@ -36,7 +36,6 @@
 
 #include "jami.h"
 #include "logger.h"
-#include "trace-tools.h"
 #include "tracepoint.h"
 
 #ifdef __APPLE__
