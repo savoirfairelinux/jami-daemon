@@ -19,6 +19,24 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "8d8d16ba_e2594e64",
+        "filename": "test/dst/dst.cpp",
+        "patchSetId": 58
+      },
+      "lineNbr": 48,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-26T18:35:22Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c056ae63_417ae221",
+      "revId": "c1735527038370aa6c6aed3338073f0a554f4752",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "5e00c004_65c4a621",
