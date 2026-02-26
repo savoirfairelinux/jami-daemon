@@ -189,7 +189,7 @@ setConferenceLayout(const std::string& accountId, const std::string& confId, uin
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId)) {
         if (auto conf = account->getConference(confId)) {
-            conf->setLayout(layout);
+            conf->setLayout(static_cast<int>(layout));
         } else if (auto call = account->getCall(confId)) {
             Json::Value root;
             root["layout"] = layout;
@@ -260,14 +260,12 @@ getConferenceDetails(const std::string& accountId, const std::string& confId)
 {
     if (const auto account = jami::Manager::instance().getAccount(accountId))
         if (auto conf = account->getConference(confId))
-            return {
-                {"ID",           confId                                                },
-                {"STATE",        conf->getStateStr()                                   },
+            return {{"ID", confId},
+                    {"STATE", conf->getStateStr()},
 #ifdef ENABLE_VIDEO
-                {"VIDEO_SOURCE", conf->getVideoInput()                                 },
+                    {"VIDEO_SOURCE", conf->getVideoInput()},
 #endif
-                {"RECORDING",    conf->isRecording() ? jami::TRUE_STR : jami::FALSE_STR}
-            };
+                    {"RECORDING", conf->isRecording() ? jami::TRUE_STR : jami::FALSE_STR}};
     return {};
 }
 

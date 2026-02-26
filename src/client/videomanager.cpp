@@ -98,9 +98,9 @@ AudioFrame::AudioFrame(const jami::AudioFormat& format, size_t nb_samples)
 void
 AudioFrame::setFormat(const jami::AudioFormat& format)
 {
-    auto d = pointer();
-    av_channel_layout_default(&d->ch_layout, format.nb_channels);
-    d->sample_rate = format.sample_rate;
+    auto* d = pointer();
+    av_channel_layout_default(&d->ch_layout, static_cast<int>(format.nb_channels));
+    d->sample_rate = static_cast<int>(format.sample_rate);
     d->format = format.sampleFormat;
 }
 
@@ -120,8 +120,8 @@ void
 AudioFrame::reserve(size_t nb_samples)
 {
     if (nb_samples != 0) {
-        auto d = pointer();
-        d->nb_samples = nb_samples;
+        auto* d = pointer();
+        d->nb_samples = static_cast<int>(nb_samples);
         int err;
         if ((err = av_frame_get_buffer(d, 0)) < 0) {
             throw std::bad_alloc();
@@ -150,18 +150,18 @@ AudioFrame::mix(const AudioFrame& frame)
     unsigned channels = isPlanar ? f.ch_layout.nb_channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (unsigned i = 0; i < channels; i++) {
-            auto c = (int16_t*) f.extended_data[i];
-            auto cIn = (int16_t*) fIn.extended_data[i];
+            auto* c = (int16_t*) f.extended_data[i];
+            auto* cIn = (int16_t*) fIn.extended_data[i];
             for (unsigned s = 0; s < samplesPerChannel; s++) {
-                c[s] = std::clamp((int32_t) c[s] + (int32_t) cIn[s],
-                                  (int32_t) std::numeric_limits<int16_t>::min(),
-                                  (int32_t) std::numeric_limits<int16_t>::max());
+                c[s] = static_cast<int16_t>(std::clamp((int32_t) c[s] + (int32_t) cIn[s],
+                                                       (int32_t) std::numeric_limits<int16_t>::min(),
+                                                       (int32_t) std::numeric_limits<int16_t>::max()));
             }
         }
     } else if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP) {
         for (unsigned i = 0; i < channels; i++) {
-            auto c = (float*) f.extended_data[i];
-            auto cIn = (float*) fIn.extended_data[i];
+            auto* c = (float*) f.extended_data[i];
+            auto* cIn = (float*) fIn.extended_data[i];
             for (unsigned s = 0; s < samplesPerChannel; s++) {
                 c[s] += cIn[s];
             }
@@ -181,15 +181,15 @@ AudioFrame::calcRMS() const
     int channels = planar ? frame_->ch_layout.nb_channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
         for (int c = 0; c < channels; ++c) {
-            auto buf = reinterpret_cast<int16_t*>(frame_->extended_data[c]);
+            auto* buf = reinterpret_cast<int16_t*>(frame_->extended_data[c]);
             for (int i = 0; i < perChannel; ++i) {
-                auto sample = buf[i] * 0.000030517578125f;
+                auto sample = static_cast<float>(buf[i]) * 0.000030517578125f;
                 rms += sample * sample;
             }
         }
     } else if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP) {
         for (int c = 0; c < channels; ++c) {
-            auto buf = reinterpret_cast<float*>(frame_->extended_data[c]);
+            auto* buf = reinterpret_cast<float*>(frame_->extended_data[c]);
             for (int i = 0; i < perChannel; ++i) {
                 rms += buf[i] * buf[i];
             }
@@ -200,7 +200,7 @@ AudioFrame::calcRMS() const
         return 0.0;
     }
     // divide by the number of multi-byte samples
-    return sqrt(rms / (frame_->nb_samples * frame_->ch_layout.nb_channels));
+    return static_cast<float>(sqrt(rms / (frame_->nb_samples * frame_->ch_layout.nb_channels)));
 }
 
 #ifdef ENABLE_VIDEO
@@ -262,7 +262,7 @@ VideoFrame::setGeometry(int format, int width, int height) noexcept
 void
 VideoFrame::reserve(int format, int width, int height)
 {
-    auto libav_frame = frame_.get();
+    auto* libav_frame = frame_.get();
 
     if (allocated_) {
         // nothing to do if same properties
@@ -315,7 +315,7 @@ VideoFrame::setReleaseCb(const std::function<void(uint8_t*)>& cb) noexcept
 void
 VideoFrame::noise()
 {
-    auto f = frame_.get();
+    auto* f = frame_.get();
     if (f->data[0] == nullptr)
         return;
     for (std::size_t i = 0; i < size(); ++i) {
@@ -327,9 +327,9 @@ int
 VideoFrame::getOrientation() const
 {
     int32_t* matrix {nullptr};
-    if (auto p = packet()) {
+    if (auto* p = packet()) {
         matrix = reinterpret_cast<int32_t*>(av_packet_get_side_data(p, AV_PKT_DATA_DISPLAYMATRIX, nullptr));
-    } else if (auto p = pointer()) {
+    } else if (const auto* p = pointer()) {
         if (AVFrameSideData* side_data = av_frame_get_side_data(p, AV_FRAME_DATA_DISPLAYMATRIX)) {
             matrix = reinterpret_cast<int32_t*>(side_data->data);
         }
@@ -344,7 +344,7 @@ VideoFrame::getOrientation() const
 VideoFrame*
 getNewFrame(std::string_view id)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         if (auto input = vm->getVideoInput(id))
             return &input->getNewFrame();
     JAMI_WARNING("getNewFrame: Unable to find input {}", id);
@@ -354,7 +354,7 @@ getNewFrame(std::string_view id)
 void
 publishFrame(std::string_view id)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         if (auto input = vm->getVideoInput(id))
             input->publishFrame();
 }
@@ -368,7 +368,7 @@ registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrappe
 std::vector<std::string>
 getDeviceList()
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         return vm->videoDeviceMonitor.getDeviceList();
     return {};
 }
@@ -376,7 +376,7 @@ getDeviceList()
 VideoCapabilities
 getCapabilities(const std::string& deviceId)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         return vm->videoDeviceMonitor.getCapabilities(deviceId);
     return {};
 }
@@ -384,7 +384,7 @@ getCapabilities(const std::string& deviceId)
 std::string
 getDefaultDevice()
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         return vm->videoDeviceMonitor.getDefaultDevice();
     return {};
 }
@@ -393,7 +393,7 @@ void
 setDefaultDevice(const std::string& deviceId)
 {
     JAMI_DBG("Setting default device to %s", deviceId.c_str());
-    if (auto vm = jami::Manager::instance().getVideoManager()) {
+    if (auto* vm = jami::Manager::instance().getVideoManager()) {
         if (vm->videoDeviceMonitor.setDefaultDevice(deviceId))
             jami::Manager::instance().saveConfig();
     }
@@ -402,14 +402,14 @@ setDefaultDevice(const std::string& deviceId)
 void
 setDeviceOrientation(const std::string& deviceId, int angle)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         vm->setDeviceOrientation(deviceId, angle);
 }
 
 std::map<std::string, std::string>
 getDeviceParams(const std::string& deviceId)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager()) {
+    if (auto* vm = jami::Manager::instance().getVideoManager()) {
         auto params = vm->videoDeviceMonitor.getDeviceParams(deviceId);
         return {{"format", params.format},
                 {"width", std::to_string(params.width)},
@@ -422,7 +422,7 @@ getDeviceParams(const std::string& deviceId)
 std::map<std::string, std::string>
 getSettings(const std::string& deviceId)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager()) {
+    if (auto* vm = jami::Manager::instance().getVideoManager()) {
         return vm->videoDeviceMonitor.getSettings(deviceId).to_map();
     }
     return {};
@@ -431,7 +431,7 @@ getSettings(const std::string& deviceId)
 void
 applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager()) {
+    if (auto* vm = jami::Manager::instance().getVideoManager()) {
         vm->videoDeviceMonitor.applySettings(deviceId, settings);
         jami::Manager::instance().saveConfig();
     }
@@ -440,7 +440,7 @@ applySettings(const std::string& deviceId, const std::map<std::string, std::stri
 std::string
 openVideoInput(const std::string& path)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager()) {
+    if (auto* vm = jami::Manager::instance().getVideoManager()) {
         auto id = path.empty() ? vm->videoDeviceMonitor.getMRLForDefaultDevice() : path;
         auto& input = vm->clientVideoInputs[id];
         if (not input) {
@@ -454,7 +454,7 @@ openVideoInput(const std::string& path)
 bool
 closeVideoInput(const std::string& id)
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         return vm->clientVideoInputs.erase(id) > 0;
     return false;
 }
@@ -464,7 +464,7 @@ void
 startAudioDevice()
 {
     if (auto newPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID)) {
-        if (auto vm = jami::Manager::instance().getVideoManager())
+        if (auto* vm = jami::Manager::instance().getVideoManager())
             vm->audioPreview = newPreview;
         newPreview->switchInput("");
     }
@@ -473,7 +473,7 @@ startAudioDevice()
 void
 stopAudioDevice()
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         vm->audioPreview.reset();
 }
 
@@ -688,7 +688,7 @@ namespace jami {
 video::VideoDeviceMonitor*
 getVideoDeviceMonitor()
 {
-    if (auto vm = jami::Manager::instance().getVideoManager())
+    if (auto* vm = jami::Manager::instance().getVideoManager())
         return &vm->videoDeviceMonitor;
     return {};
 }
@@ -697,7 +697,7 @@ std::shared_ptr<video::VideoInput>
 getVideoInput(const std::string& resource, video::VideoInputMode inputMode, const std::string& sink)
 {
     auto sinkId = sink.empty() ? resource : sink;
-    auto vmgr = Manager::instance().getVideoManager();
+    auto* vmgr = Manager::instance().getVideoManager();
     if (!vmgr)
         return {};
     std::lock_guard<std::mutex> lk(vmgr->videoMutex);
@@ -723,7 +723,7 @@ VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 std::shared_ptr<AudioInput>
 getAudioInput(const std::string& device)
 {
-    auto vmgr = Manager::instance().getVideoManager();
+    auto* vmgr = Manager::instance().getVideoManager();
     if (!vmgr)
         return {};
     std::lock_guard<std::mutex> lk(vmgr->audioMutex);
@@ -751,7 +751,7 @@ getAudioInput(const std::string& device)
 bool
 VideoManager::hasRunningPlayers()
 {
-    if (auto vmgr = Manager::instance().getVideoManager()) {
+    if (auto* vmgr = Manager::instance().getVideoManager()) {
         std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
         return !vmgr->mediaPlayers.empty();
     }
@@ -761,7 +761,7 @@ VideoManager::hasRunningPlayers()
 std::shared_ptr<MediaPlayer>
 getMediaPlayer(const std::string& id)
 {
-    if (auto vmgr = Manager::instance().getVideoManager()) {
+    if (auto* vmgr = Manager::instance().getVideoManager()) {
         std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
         auto it = vmgr->mediaPlayers.find(id);
         if (it != vmgr->mediaPlayers.end()) {
@@ -774,7 +774,7 @@ getMediaPlayer(const std::string& id)
 std::string
 createMediaPlayer(const std::string& path)
 {
-    if (auto vmgr = Manager::instance().getVideoManager()) {
+    if (auto* vmgr = Manager::instance().getVideoManager()) {
         std::scoped_lock<std::mutex> lk(vmgr->mediaPlayersMutex);
         auto& player = vmgr->mediaPlayers[path];
         if (!player) {
@@ -798,7 +798,7 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closeMediaPlayer(const std::string& id)
 {
-    if (auto vm = Manager::instance().getVideoManager()) {
+    if (auto* vm = Manager::instance().getVideoManager()) {
         std::scoped_lock<std::mutex> lk(vm->mediaPlayersMutex);
         return vm->mediaPlayers.erase(id) > 0;
     }

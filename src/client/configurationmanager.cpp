@@ -837,7 +837,7 @@ setHistoryLimit(int32_t days)
 int32_t
 getRingingTimeout()
 {
-    return jami::Manager::instance().getRingingTimeout().count();
+    return static_cast<int32_t>(jami::Manager::instance().getRingingTimeout().count());
 }
 
 void
