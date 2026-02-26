@@ -238,7 +238,14 @@ public:
              PostConditionCb&& postCondition,
              const std::string& from = "",
              bool logIfNotFound = true) const;
-    std::optional<ConversationCommit> getCommit(const std::string& commitId, bool logIfNotFound = true) const;
+
+    /**
+     * Check if a commit exists in the repository
+     * @param commitId The commit id to check
+     * @return true if the commit was found, false if not or if an error occurred
+     */
+    bool hasCommit(const std::string& commitId) const;
+    std::optional<ConversationCommit> getCommit(const std::string& commitId) const;
 
     /**
      * Get parent via topological + date sort in branch main of a commit

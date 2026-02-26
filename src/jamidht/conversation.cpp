@@ -1560,8 +1560,7 @@ void
 Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
-        auto commit = pimpl_->repository_->getCommit(replyTo);
-        if (commit == std::nullopt) {
+        if (!pimpl_->repository_->hasCommit(replyTo)) {
             JAMI_ERR("Replying to invalid commit %s", replyTo.c_str());
             return;
         }
@@ -1600,6 +1599,12 @@ Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& 
                 cb(commits);
         }
     });
+}
+
+bool
+Conversation::hasCommit(const std::string& commitId) const
+{
+    return pimpl_->repository_->hasCommit(commitId);
 }
 
 std::optional<std::map<std::string, std::string>>
@@ -1725,7 +1730,7 @@ Conversation::Impl::pull(const std::string& deviceId)
             pullcbs.pop_front();
         }
         // If recently fetched, the commit can already be there, so no need to do complex operations
-        if (commitId != "" && repo->getCommit(commitId, false) != std::nullopt) {
+        if (commitId != "" && repo->hasCommit(commitId)) {
             cb(true);
             continue;
         }

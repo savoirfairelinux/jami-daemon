@@ -350,12 +350,27 @@ public:
         return memberDevices;
     }
 
-    std::optional<ConversationCommit> getCommit(const std::string& commitId, bool logIfNotFound = true) const
+    bool hasCommit(const std::string& commitId) const
+    {
+        auto repo = repository();
+        if (!repo)
+            return false;
+
+        git_oid oid;
+        if (git_oid_fromstr(&oid, commitId.c_str()) < 0)
+            return false;
+        git_commit* commitPtr = nullptr;
+        if (git_commit_lookup(&commitPtr, repo.get(), &oid) < 0)
+            return false;
+        git_commit_free(commitPtr);
+        return true;
+    }
+
+    std::optional<ConversationCommit> getCommit(const std::string& commitId) const
     {
         LogOptions options;
         options.from = commitId;
         options.nbOfCommits = 1;
-        options.logIfNotFound = logIfNotFound;
         auto commits = log(options);
         if (commits.empty())
             return std::nullopt;
@@ -3497,10 +3512,16 @@ ConversationRepository::log(PreConditionCb&& preCondition,
     pimpl_->forEachCommit(std::move(preCondition), std::move(emplaceCb), std::move(postCondition), from, logIfNotFound);
 }
 
-std::optional<ConversationCommit>
-ConversationRepository::getCommit(const std::string& commitId, bool logIfNotFound) const
+bool
+ConversationRepository::hasCommit(const std::string& commitId) const
 {
-    return pimpl_->getCommit(commitId, logIfNotFound);
+    return pimpl_->hasCommit(commitId);
+}
+
+std::optional<ConversationCommit>
+ConversationRepository::getCommit(const std::string& commitId) const
+{
+    return pimpl_->getCommit(commitId);
 }
 
 std::pair<bool, std::string>
