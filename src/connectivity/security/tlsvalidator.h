@@ -309,7 +309,7 @@ private:
     /**
      * Helper method to convert a CheckResult into a std::string
      */
-    std::string getStringValue(const CertificateCheck check, const CheckResult result);
+    std::string getStringValue(const CertificateCheck check, const CheckResult& result);
 
     // Helper
     unsigned int compareToCa();

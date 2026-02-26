@@ -207,7 +207,7 @@ addUserAgentHeader(const std::string& userAgent, pjsip_tx_data* tdata)
     }
 
     // Add Header
-    auto hdr = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &USER_AGENT_STR, &pjUserAgent));
+    auto* hdr = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &USER_AGENT_STR, &pjUserAgent));
 
     if (hdr != nullptr) {
         pjsip_msg_add_hdr(tdata->msg, hdr);
@@ -222,9 +222,9 @@ getPeerUserAgent(const pjsip_rx_data* rdata)
         return {};
     }
 
-    if (auto uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
-                                                                            &USER_AGENT_STR,
-                                                                            nullptr)) {
+    if (auto* uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
+                                                                             &USER_AGENT_STR,
+                                                                             nullptr)) {
         return as_view(uaHdr->hvalue);
     }
     return {};
