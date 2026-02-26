@@ -19,6 +19,7 @@
 
 #include "jamidht/conversationrepository.h"
 #include "conversationrepository.h"
+#include "logger.h"
 #include "swarm/swarm_protocol.h"
 #include "jami/conversation_interface.h"
 #include "jamidht/typers.h"
@@ -73,7 +74,7 @@ static constexpr const char* HOST_CONFERENCES = "hostConferences";
 class JamiAccount;
 class ConversationRepository;
 class TransferManager;
-enum class ConversationMode;
+enum class ConversationMode : int8_t;
 
 /**
  * A ConversationRequest is a request which corresponds to a trust request, but for conversations
@@ -107,7 +108,8 @@ struct ConversationRequest
     {
         try {
             return metadatas.at("mode") == "0";
-        } catch (...) {
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Conversation {}] Caught exception: {}", conversationId, e.what());
         }
         return true;
     }
@@ -116,7 +118,8 @@ struct ConversationRequest
     {
         try {
             return to_enum<ConversationMode>(metadatas.at("mode"));
-        } catch (...) {
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Conversation {}] Caught exception: {}", conversationId, e.what());
         }
         return ConversationMode::ONE_TO_ONE;
     }
@@ -181,7 +184,7 @@ public:
     void monitor();
 
 #ifdef LIBJAMI_TEST
-    enum class BootstrapStatus { FAILED, FALLBACK, SUCCESS };
+    enum class BootstrapStatus : uint8_t { FAILED, FALLBACK, SUCCESS };
     /**
      * Used by the tests to get whenever the DRT is connected/disconnected
      */

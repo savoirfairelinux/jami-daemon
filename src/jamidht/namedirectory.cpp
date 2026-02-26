@@ -34,13 +34,11 @@
 #include <opendht/logger.h>
 #include <opendht/thread_pool.h>
 
-#include <cstddef>
 #include <msgpack.hpp>
 #include "json_utils.h"
 
 /* for Visual Studio */
 
-#include <sstream>
 #include <regex>
 #include <fstream>
 
@@ -65,8 +63,6 @@ constexpr std::chrono::seconds SAVE_INTERVAL {5};
  *  3. `([^\s@]+)` → Domain or standalone name (Unicode allowed, no spaces or "@").
  */
 const std::regex URI_VALIDATOR {R"(^([a-zA-Z]+:(?://)?)?(?:([\w\-.~%!$&'()*+,;=]{1,64}|[^\s@]{1,64})@)?([^\s@]+)$)"};
-
-constexpr size_t MAX_RESPONSE_SIZE {1024ul * 1024};
 
 using Request = dht::http::Request;
 
