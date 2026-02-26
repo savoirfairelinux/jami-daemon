@@ -1162,6 +1162,290 @@ JamiAccount::saveIdentity(const dht::crypto::Identity& id, const std::filesystem
     return names;
 }
 
+void
+JamiAccount::scheduleAccountReady() const
+{
+    const auto accountId = getAccountID();
+    runOnMainThread([accountId] { Manager::instance().markAccountReady(accountId); });
+}
+
+AccountManager::OnChangeCallback
+JamiAccount::setupAccountCallbacks()
+{
+    return AccountManager::OnChangeCallback {[this](const std::string& uri, bool confirmed) {
+                                                 onContactAdded(uri, confirmed);
+                                             },
+                                             [this](const std::string& uri, bool banned) {
+                                                 onContactRemoved(uri, banned);
+                                             },
+                                             [this](const std::string& uri,
+                                                    const std::string& conversationId,
+                                                    const std::vector<uint8_t>& payload,
+                                                    time_t received) {
+                                                 onIncomingTrustRequest(uri, conversationId, payload, received);
+                                             },
+                                             [this](const std::map<DeviceId, KnownDevice>& devices) {
+                                                 onKnownDevicesChanged(devices);
+                                             },
+                                             [this](const std::string& conversationId, const std::string& deviceId) {
+                                                 onConversationRequestAccepted(conversationId, deviceId);
+                                             },
+                                             [this](const std::string& uri, const std::string& convFromReq) {
+                                                 onContactConfirmed(uri, convFromReq);
+                                             }};
+}
+
+void
+JamiAccount::onContactAdded(const std::string& uri, bool confirmed)
+{
+    if (!id_.first)
+        return;
+    if (!jami::Manager::instance().syncOnRegister)
+        return;
+
+    dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
+        if (auto shared = w.lock()) {
+            if (auto* cm = shared->convModule(true)) {
+                auto activeConv = cm->getOneToOneConversation(uri);
+                if (!activeConv.empty())
+                    cm->bootstrap(activeConv);
+            }
+            emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(), uri, confirmed);
+        }
+    });
+}
+
+void
+JamiAccount::onContactRemoved(const std::string& uri, bool banned)
+{
+    if (!id_.first)
+        return;
+
+    dht::ThreadPool::io().run([w = weak(), uri, banned] {
+        if (auto shared = w.lock()) {
+            if (auto* cm = shared->convModule(true))
+                cm->removeContact(uri, banned);
+
+            if (shared->connectionManager_ && uri != shared->getUsername())
+                shared->connectionManager_->closeConnectionsWith(uri);
+
+            emitSignal<libjami::ConfigurationSignal::ContactRemoved>(shared->getAccountID(), uri, banned);
+        }
+    });
+}
+
+void
+JamiAccount::onIncomingTrustRequest(const std::string& uri,
+                                    const std::string& conversationId,
+                                    const std::vector<uint8_t>& payload,
+                                    time_t received)
+{
+    if (!id_.first)
+        return;
+
+    dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received] {
+        if (auto shared = w.lock()) {
+            shared->clearProfileCache(uri);
+
+            if (conversationId.empty()) {
+                emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(shared->getAccountID(),
+                                                                               conversationId,
+                                                                               uri,
+                                                                               payload,
+                                                                               received);
+                return;
+            }
+
+            if (auto* cm = shared->convModule(true)) {
+                auto activeConv = cm->getOneToOneConversation(uri);
+                if (activeConv != conversationId)
+                    cm->onTrustRequest(uri, conversationId, payload, received);
+            }
+        }
+    });
+}
+
+void
+JamiAccount::onKnownDevicesChanged(const std::map<DeviceId, KnownDevice>& devices)
+{
+    std::map<std::string, std::string> ids;
+    for (auto& d : devices) {
+        auto id = d.first.toString();
+        auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
+        ids.emplace(std::move(id), std::move(label));
+    }
+
+    runOnMainThread([id = getAccountID(), devices = std::move(ids)] {
+        emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
+    });
+}
+
+void
+JamiAccount::onConversationRequestAccepted(const std::string& conversationId, const std::string& deviceId)
+{
+    if (auto* cm = convModule(true))
+        cm->acceptConversationRequest(conversationId, deviceId);
+}
+
+void
+JamiAccount::onContactConfirmed(const std::string& uri, const std::string& /*convFromReq*/)
+{
+    dht::ThreadPool::io().run([w = weak(), uri] {
+        if (auto shared = w.lock()) {
+            shared->convModule(true);
+            auto requestPath = shared->cachePath_ / "requests" / uri;
+            dhtnet::fileutils::remove(requestPath);
+        }
+    });
+}
+
+std::unique_ptr<AccountManager::AccountCredentials>
+JamiAccount::buildAccountCredentials(const JamiAccountConfig& conf,
+                                     const dht::crypto::Identity& id,
+                                     const std::string& archive_password_scheme,
+                                     const std::string& archive_password,
+                                     const std::string& archive_path,
+                                     bool& migrating,
+                                     bool& hasPassword)
+{
+    std::unique_ptr<AccountManager::AccountCredentials> creds;
+
+    if (conf.managerUri.empty()) {
+        auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
+        auto archivePath = fileutils::getFullPath(idPath_, conf.archivePath);
+
+        if (!archive_path.empty()) {
+            acreds->scheme = "file";
+            acreds->uri = archive_path;
+        } else if (!conf.archive_url.empty() && conf.archive_url == "jami-auth") {
+            JAMI_DEBUG("[Account {}] [LinkDevice] scheme p2p & uri {}", getAccountID(), conf.archive_url);
+            acreds->scheme = "p2p";
+            acreds->uri = conf.archive_url;
+        } else if (std::filesystem::is_regular_file(archivePath)) {
+            acreds->scheme = "local";
+            acreds->uri = archivePath.string();
+            acreds->updateIdentity = id;
+            migrating = true;
+        }
+
+        creds = std::move(acreds);
+    } else {
+        auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
+        screds->username = conf.managerUsername;
+        creds = std::move(screds);
+    }
+
+    creds->password = archive_password;
+    hasPassword = !archive_password.empty();
+    creds->password_scheme = (hasPassword && archive_password_scheme.empty()) ? fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD
+                                                                              : archive_password_scheme;
+
+    return creds;
+}
+
+void
+JamiAccount::onAuthenticationSuccess(bool migrating,
+                                     bool hasPassword,
+                                     const AccountInfo& info,
+                                     const std::map<std::string, std::string>& configMap,
+                                     std::string&& receipt,
+                                     std::vector<uint8_t>&& receiptSignature)
+{
+    JAMI_LOG("[Account {}] Auth success! Device: {}", getAccountID(), info.deviceId);
+
+    dhtnet::fileutils::check_dir(idPath_, 0700);
+
+    auto id = info.identity;
+    editConfig([&](JamiAccountConfig& conf) {
+        std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id, idPath_, DEVICE_ID_PATH);
+        conf.tlsPassword = {};
+
+        auto passwordIt = configMap.find(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD);
+        conf.archiveHasPassword = (passwordIt != configMap.end() && !passwordIt->second.empty())
+                                      ? passwordIt->second == "true"
+                                      : hasPassword;
+
+        if (not conf.managerUri.empty()) {
+            conf.registeredName = conf.managerUsername;
+            registeredName_ = conf.managerUsername;
+        }
+
+        conf.username = info.accountId;
+        conf.deviceName = accountManager_->getAccountDeviceName();
+
+        auto nameServerIt = configMap.find(libjami::Account::ConfProperties::Nameserver::URI);
+        if (nameServerIt != configMap.end() && !nameServerIt->second.empty())
+            conf.nameServer = nameServerIt->second;
+
+        auto displayNameIt = configMap.find(libjami::Account::ConfProperties::DISPLAYNAME);
+        if (displayNameIt != configMap.end() && !displayNameIt->second.empty())
+            conf.displayName = displayNameIt->second;
+
+        conf.receipt = std::move(receipt);
+        conf.receiptSignature = std::move(receiptSignature);
+        conf.fromMap(configMap);
+    });
+
+    id_ = std::move(id);
+    {
+        std::lock_guard lk(moduleMtx_);
+        convModule_.reset();
+    }
+
+    if (migrating)
+        Migration::setState(getAccountID(), Migration::State::SUCCESS);
+
+    setRegistrationState(RegistrationState::UNREGISTERED);
+
+    if (!info.photo.empty() || !info.displayName.empty()) {
+        try {
+            auto newProfile = vCard::utils::initVcard();
+            newProfile[std::string(vCard::Property::FORMATTED_NAME)] = info.displayName;
+            newProfile[std::string(vCard::Property::PHOTO)] = info.photo;
+
+            const auto& profiles = idPath_ / "profiles";
+            const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(info.accountId));
+            vCard::utils::save(newProfile, vCardPath, profilePath());
+
+            runOnMainThread([w = weak(), id = info.accountId, vCardPath] {
+                if (auto shared = w.lock()) {
+                    emitSignal<libjami::ConfigurationSignal::ProfileReceived>(shared->getAccountID(),
+                                                                              id,
+                                                                              vCardPath.string());
+                }
+            });
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {}] Unable to save profile after authentication: {}", getAccountID(), e.what());
+        }
+    }
+
+    doRegister();
+    scheduleAccountReady();
+}
+
+void
+JamiAccount::onAuthenticationError(const std::weak_ptr<JamiAccount>& w,
+                                   bool hadIdentity,
+                                   bool migrating,
+                                   std::string accountId,
+                                   AccountManager::AuthError error,
+                                   const std::string& message)
+{
+    JAMI_WARNING("[Account {}] Auth error: {} {}", accountId, (int) error, message);
+
+    if ((hadIdentity || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
+        Migration::setState(accountId, Migration::State::INVALID);
+        if (auto acc = w.lock())
+            acc->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+        return;
+    }
+
+    if (auto acc = w.lock())
+        acc->setRegistrationState(RegistrationState::ERROR_GENERIC);
+
+    runOnMainThread([accountId = std::move(accountId)] { Manager::instance().removeAccount(accountId, true); });
+}
+
 // must be called while configurationMutex_ is locked
 void
 JamiAccount::loadAccount(const std::string& archive_password_scheme,
@@ -1172,123 +1456,13 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
         return;
 
     JAMI_DEBUG("[Account {:s}] Loading account", getAccountID());
-    const auto scheduleAccountReady = [accountId = getAccountID()] {
-        runOnMainThread([accountId] {
-            auto& manager = Manager::instance();
-            manager.markAccountReady(accountId);
-        });
-    };
-    AccountManager::OnChangeCallback callbacks {
-        [this](const std::string& uri, bool confirmed) {
-            if (!id_.first)
-                return;
-            if (jami::Manager::instance().syncOnRegister) {
-                dht::ThreadPool::io().run([w = weak(), uri, confirmed] {
-                    if (auto shared = w.lock()) {
-                        if (auto* cm = shared->convModule(true)) {
-                            auto activeConv = cm->getOneToOneConversation(uri);
-                            if (!activeConv.empty())
-                                cm->bootstrap(activeConv);
-                        }
-                        emitSignal<libjami::ConfigurationSignal::ContactAdded>(shared->getAccountID(), uri, confirmed);
-                    }
-                });
-            }
-        },
-        [this](const std::string& uri, bool banned) {
-            if (!id_.first)
-                return;
-            dht::ThreadPool::io().run([w = weak(), uri, banned] {
-                if (auto shared = w.lock()) {
-                    // Erase linked conversation's requests
-                    if (auto* convModule = shared->convModule(true))
-                        convModule->removeContact(uri, banned);
-                    // Remove current connections with contact
-                    // Note: if contact is ourself, we don't close the connection
-                    // because it's used for syncing other conversations.
-                    if (shared->connectionManager_ && uri != shared->getUsername()) {
-                        shared->connectionManager_->closeConnectionsWith(uri);
-                    }
-                    // Update client.
-                    emitSignal<libjami::ConfigurationSignal::ContactRemoved>(shared->getAccountID(), uri, banned);
-                }
-            });
-        },
-        [this](const std::string& uri,
-               const std::string& conversationId,
-               const std::vector<uint8_t>& payload,
-               time_t received) {
-            if (!id_.first)
-                return;
-            dht::ThreadPool::io().run([w = weak(), uri, conversationId, payload, received] {
-                if (auto shared = w.lock()) {
-                    shared->clearProfileCache(uri);
-                    if (conversationId.empty()) {
-                        // Old path
-                        emitSignal<libjami::ConfigurationSignal::IncomingTrustRequest>(shared->getAccountID(),
-                                                                                       conversationId,
-                                                                                       uri,
-                                                                                       payload,
-                                                                                       received);
-                        return;
-                    }
-                    // Here account can be initializing
-                    if (auto* cm = shared->convModule(true)) {
-                        auto activeConv = cm->getOneToOneConversation(uri);
-                        if (activeConv != conversationId)
-                            cm->onTrustRequest(uri, conversationId, payload, received);
-                    }
-                }
-            });
-        },
-        [this](const std::map<DeviceId, KnownDevice>& devices) {
-            std::map<std::string, std::string> ids;
-            for (auto& d : devices) {
-                auto id = d.first.toString();
-                auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
-                ids.emplace(std::move(id), std::move(label));
-            }
-            runOnMainThread([id = getAccountID(), devices = std::move(ids)] {
-                emitSignal<libjami::ConfigurationSignal::KnownDevicesChanged>(id, devices);
-            });
-        },
-        [this](const std::string& conversationId, const std::string& deviceId) {
-            // Note: Do not retrigger on another thread. This has to be done
-            // at the same time of acceptTrustRequest a synced state between TrustRequest
-            // and convRequests.
-            if (auto* cm = convModule(true))
-                cm->acceptConversationRequest(conversationId, deviceId);
-        },
-        [this](const std::string& uri, const std::string& convFromReq) {
-            dht::ThreadPool::io().run([w = weak(), convFromReq, uri] {
-                if (auto shared = w.lock()) {
-                    shared->convModule(true);
-                    // Remove cached payload if there is one
-                    auto requestPath = shared->cachePath_ / "requests" / uri;
-                    dhtnet::fileutils::remove(requestPath);
-                    // Following replay logic could incorrectly be triggered for conversations
-                    // already fetched and used by other devices, so it is disabled for now.
-                    /*if (!convFromReq.empty()) {
-                        auto oldConv = cm->getOneToOneConversation(uri);
-                        // If we previously removed the contact, and re-add it, we may
-                        // receive a convId different from the request. In that case,
-                        // we need to remove the current conversation and clone the old
-                        // one (given by convFromReq).
-                        // TODO: In the future, we may want to re-commit the messages we
-                        // may have send in the request we sent.
-                        if (oldConv != convFromReq
-                            && cm->updateConvForContact(uri, oldConv, convFromReq)) {
-                            cm->initReplay(oldConv, convFromReq);
-                            cm->cloneConversationFrom(convFromReq, uri, oldConv);
-                        }
-                    }*/
-                }
-            });
-        }};
 
     const auto& conf = config();
+    auto callbacks = setupAccountCallbacks();
+
     try {
         auto oldIdentity = id_.first ? id_.first->getPublicKey().getLongId() : DeviceId();
+
         if (conf.managerUri.empty()) {
             accountManager_ = std::make_shared<ArchiveAccountManager>(
                 getAccountID(),
@@ -1314,182 +1488,78 @@ JamiAccount::loadAccount(const std::string& archive_password_scheme,
 
         if (const auto* info
             = accountManager_->useIdentity(id, conf.receipt, conf.receiptSignature, conf.managerUsername, callbacks)) {
-            // normal loading path
             id_ = std::move(id);
             config_->username = info->accountId;
             JAMI_WARNING("[Account {:s}] Loaded account identity", getAccountID());
+
             if (info->identity.first->getPublicKey().getLongId() != oldIdentity) {
                 JAMI_WARNING("[Account {:s}] Identity changed", getAccountID());
                 {
                     std::lock_guard lk(moduleMtx_);
                     convModule_.reset();
                 }
-                convModule(); // convModule must absolutely be initialized in
-                              // both branches of the if statement here in order
-                              // for it to exist for subsequent use.
+                convModule();
             } else {
                 convModule()->setAccountManager(accountManager_);
             }
-            if (not isEnabled()) {
+
+            if (not isEnabled())
                 setRegistrationState(RegistrationState::UNREGISTERED);
-            }
+
             scheduleAccountReady();
-        } else if (isEnabled()) {
-            JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
-            if (not conf.managerUri.empty() and archive_password.empty()) {
-                Migration::setState(accountID_, Migration::State::INVALID);
-                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
-                return;
-            }
-
-            bool migrating = registrationState_ == RegistrationState::ERROR_NEED_MIGRATION;
-            setRegistrationState(RegistrationState::INITIALIZING);
-            auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
-                []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
-
-            std::unique_ptr<AccountManager::AccountCredentials> creds;
-            if (conf.managerUri.empty()) {
-                auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
-                auto archivePath = fileutils::getFullPath(idPath_, conf.archivePath);
-                // bool hasArchive = std::filesystem::is_regular_file(archivePath);
-
-                if (!archive_path.empty()) {
-                    // Importing external archive
-                    acreds->scheme = "file";
-                    acreds->uri = archive_path;
-                } else if (!conf.archive_url.empty() && conf.archive_url == "jami-auth") {
-                    // Importing over a Peer2Peer TLS connection with DHT as DNS
-                    JAMI_DEBUG("[Account {}] [LinkDevice] scheme p2p & uri {}", getAccountID(), conf.archive_url);
-                    acreds->scheme = "p2p";
-                    acreds->uri = conf.archive_url;
-                } else if (std::filesystem::is_regular_file(archivePath)) {
-                    // Migrating local account
-                    acreds->scheme = "local";
-                    acreds->uri = archivePath.string();
-                    acreds->updateIdentity = id;
-                    migrating = true;
-                }
-                creds = std::move(acreds);
-            } else {
-                auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
-                screds->username = conf.managerUsername;
-                creds = std::move(screds);
-            }
-            creds->password = archive_password;
-            bool hasPassword = !archive_password.empty();
-            if (hasPassword && archive_password_scheme.empty())
-                creds->password_scheme = fileutils::ARCHIVE_AUTH_SCHEME_PASSWORD;
-            else
-                creds->password_scheme = archive_password_scheme;
-
-            JAMI_WARNING("[Account {}] initAuthentication {} {}",
-                         getAccountID(),
-                         fmt::ptr(this),
-                         fmt::ptr(accountManager_));
-
-            accountManager_->initAuthentication(
-                fDeviceKey,
-                ip_utils::getDeviceName(),
-                std::move(creds),
-                [w = weak(),
-                 this,
-                 migrating,
-                 hasPassword,
-                 scheduleAccountReady](const AccountInfo& info,
-                                       const std::map<std::string, std::string>& config,
-                                       std::string&& receipt,
-                                       std::vector<uint8_t>&& receipt_signature) {
-                    auto sthis = w.lock();
-                    if (not sthis)
-                        return;
-                    JAMI_LOG("[Account {}] Auth success! Device: {}", getAccountID(), info.deviceId);
-
-                    dhtnet::fileutils::check_dir(idPath_, 0700);
-
-                    auto id = info.identity;
-                    editConfig([&](JamiAccountConfig& conf) {
-                        std::tie(conf.tlsPrivateKeyFile, conf.tlsCertificateFile) = saveIdentity(id,
-                                                                                                 idPath_,
-                                                                                                 DEVICE_ID_PATH);
-                        conf.tlsPassword = {};
-                        auto passwordIt = config.find(libjami::Account::ConfProperties::ARCHIVE_HAS_PASSWORD);
-                        if (passwordIt != config.end() && !passwordIt->second.empty()) {
-                            conf.archiveHasPassword = passwordIt->second == "true";
-                        } else {
-                            conf.archiveHasPassword = hasPassword;
-                        }
-
-                        if (not conf.managerUri.empty()) {
-                            conf.registeredName = conf.managerUsername;
-                            registeredName_ = conf.managerUsername;
-                        }
-                        conf.username = info.accountId;
-                        conf.deviceName = accountManager_->getAccountDeviceName();
-
-                        auto nameServerIt = config.find(libjami::Account::ConfProperties::Nameserver::URI);
-                        if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
-                            conf.nameServer = nameServerIt->second;
-                        }
-                        auto displayNameIt = config.find(libjami::Account::ConfProperties::DISPLAYNAME);
-                        if (displayNameIt != config.end() && !displayNameIt->second.empty()) {
-                            conf.displayName = displayNameIt->second;
-                        }
-                        conf.receipt = std::move(receipt);
-                        conf.receiptSignature = std::move(receipt_signature);
-                        conf.fromMap(config);
-                    });
-                    id_ = std::move(id);
-                    {
-                        std::lock_guard lk(moduleMtx_);
-                        convModule_.reset();
-                    }
-                    if (migrating) {
-                        Migration::setState(getAccountID(), Migration::State::SUCCESS);
-                    }
-                    setRegistrationState(RegistrationState::UNREGISTERED);
-                    if (not info.photo.empty() or not info.displayName.empty()) {
-                        try {
-                            auto newProfile = vCard::utils::initVcard();
-                            newProfile[std::string(vCard::Property::FORMATTED_NAME)] = info.displayName;
-                            newProfile[std::string(vCard::Property::PHOTO)] = info.photo;
-                            const auto& profiles = idPath_ / "profiles";
-                            const auto& vCardPath = profiles / fmt::format("{}.vcf", base64::encode(info.accountId));
-                            vCard::utils::save(newProfile, vCardPath, profilePath());
-                            runOnMainThread([w = weak(), id = info.accountId, vCardPath]() {
-                                if (auto shared = w.lock()) {
-                                    emitSignal<libjami::ConfigurationSignal::ProfileReceived>(shared->getAccountID(),
-                                                                                              id,
-                                                                                              vCardPath.string());
-                                }
-                            });
-                        } catch (const std::exception& e) {
-                            JAMI_WARNING("[Account {}] Unable to save profile after authentication: {}",
-                                         getAccountID(),
-                                         e.what());
-                        }
-                    }
-                    doRegister();
-                    scheduleAccountReady();
-                },
-                [w = weak(), id, accountId = getAccountID(), migrating](AccountManager::AuthError error,
-                                                                        const std::string& message) {
-                    JAMI_WARNING("[Account {}] Auth error: {} {}", accountId, (int) error, message);
-                    if ((id.first || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
-                        // In cast of a migration or manager connexion failure stop the migration
-                        // and block the account
-                        Migration::setState(accountId, Migration::State::INVALID);
-                        if (auto acc = w.lock())
-                            acc->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
-                    } else {
-                        // In case of a DHT or backup import failure, just remove the account
-                        if (auto acc = w.lock())
-                            acc->setRegistrationState(RegistrationState::ERROR_GENERIC);
-                        runOnMainThread(
-                            [accountId = std::move(accountId)] { Manager::instance().removeAccount(accountId, true); });
-                    }
-                },
-                callbacks);
+            return;
         }
+
+        if (!isEnabled())
+            return;
+
+        JAMI_WARNING("[Account {}] useIdentity failed!", getAccountID());
+
+        if (not conf.managerUri.empty() && archive_password.empty()) {
+            Migration::setState(accountID_, Migration::State::INVALID);
+            setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+            return;
+        }
+
+        bool migrating = registrationState_ == RegistrationState::ERROR_NEED_MIGRATION;
+        setRegistrationState(RegistrationState::INITIALIZING);
+
+        auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>(
+            []() { return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate()); });
+
+        bool hasPassword = false;
+        auto creds = buildAccountCredentials(conf,
+                                             id,
+                                             archive_password_scheme,
+                                             archive_password,
+                                             archive_path,
+                                             migrating,
+                                             hasPassword);
+
+        JAMI_WARNING("[Account {}] initAuthentication {}", getAccountID(), fmt::ptr(this));
+
+        const bool hadIdentity = static_cast<bool>(id.first);
+        accountManager_->initAuthentication(
+            fDeviceKey,
+            ip_utils::getDeviceName(),
+            std::move(creds),
+            [w = weak(), migrating, hasPassword](const AccountInfo& info,
+                                                 const std::map<std::string, std::string>& configMap,
+                                                 std::string&& receipt,
+                                                 std::vector<uint8_t>&& receiptSignature) {
+                if (auto self = w.lock())
+                    self->onAuthenticationSuccess(migrating,
+                                                  hasPassword,
+                                                  info,
+                                                  configMap,
+                                                  std::move(receipt),
+                                                  std::move(receiptSignature));
+            },
+            [w = weak(), hadIdentity, accountId = getAccountID(), migrating](AccountManager::AuthError error,
+                                                                             const std::string& message) {
+                JamiAccount::onAuthenticationError(w, hadIdentity, migrating, accountId, error, message);
+            },
+            callbacks);
     } catch (const std::exception& e) {
         JAMI_WARNING("[Account {}] Error loading account: {}", getAccountID(), e.what());
         accountManager_.reset();
