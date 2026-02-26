@@ -490,6 +490,21 @@ public:
     ConversationModule* convModule(bool noCreation = false);
     SyncModule* syncModule();
 
+    void conversationNeedsSyncing(std::shared_ptr<SyncMsg>&& syncMsg);
+    uint64_t conversationSendMessage(const std::string& uri,
+                                     const DeviceId& device,
+                                     const std::map<std::string, std::string>& msg,
+                                     uint64_t token = 0);
+    void onConversationNeedSocket(const std::string& convId,
+                                  const std::string& deviceId,
+                                  ChannelCb&& cb,
+                                  const std::string& type);
+    void onConversationNeedSwarmSocket(const std::string& convId,
+                                       const std::string& deviceId,
+                                       ChannelCb&& cb,
+                                       const std::string& type);
+    void conversationOneToOneReceive(const std::string& convId, const std::string& from);
+
     /**
      * Check (via the cache) if we need to send our profile to a specific device
      * @param peerUri       Uri that will receive the profile
