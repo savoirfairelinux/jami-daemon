@@ -89,7 +89,8 @@ JamiAccountConfig::unserialize(const YAML::Node& node)
         parsePathOptional(tlsMap, Conf::CALIST_KEY, tlsCaListFile, path);
         parseValueOptional(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword);
         parsePathOptional(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile, path);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Caught exception: {}", e.what());
     }
     parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort);
     parseValueOptional(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory);
@@ -190,7 +191,6 @@ JamiAccountConfig::fromMap(const std::map<std::string, std::string>& details)
     parseString(details, libjami::Account::ConfProperties::DEVICE_NAME, deviceName);
     parseString(details, libjami::Account::ConfProperties::ARCHIVE_URL, archive_url);
 
-    auto oldProxyServer = proxyServer, oldProxyServerList = proxyListUrl;
     parseString(details, libjami::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl);
     parseBool(details, libjami::Account::ConfProperties::PROXY_ENABLED, proxyEnabled);
     parseBool(details, libjami::Account::ConfProperties::PROXY_LIST_ENABLED, proxyListEnabled);
