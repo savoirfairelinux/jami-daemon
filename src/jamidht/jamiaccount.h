@@ -585,7 +585,6 @@ private:
     struct PendingMessage;
     struct BuddyInfo;
     struct DiscoveredPeer;
-    class SendMessageContext;
 
     inline std::string getProxyConfigKey() const
     {
@@ -859,6 +858,8 @@ private:
     // File transfers
     std::mutex transfersMtx_ {};
     std::set<std::string> incomingFileTransfers_ {};
+
+    std::string extractIdFromJson(const std::string& jsonData);
 
     void onMessageSent(
         const std::string& to, uint64_t id, const std::string& deviceId, bool success, bool onlyConnected, bool retry);
