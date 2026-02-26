@@ -18,8 +18,6 @@
 #include "datatransfer_interface.h"
 
 #include "manager.h"
-#include "data_transfer.h"
-#include "client/jami_signal.h"
 #include "jamidht/jamiaccount.h"
 
 namespace libjami {
@@ -50,7 +48,7 @@ downloadFile(const std::string& accountId,
              const std::string& path) noexcept
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        if (auto convModule = acc->convModule(true))
+        if (auto* convModule = acc->convModule(true))
             return convModule->downloadFile(conversationId, interactionId, fileId, path);
     return {};
 }
