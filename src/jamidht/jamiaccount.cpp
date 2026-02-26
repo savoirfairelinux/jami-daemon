@@ -2015,6 +2015,16 @@ JamiAccount::doRegister_()
                 return itHandler->second->onRequest(cert, name);
             return name == "sip";
         });
+        connectionManager_->onFirstConnection(
+            [this](const DeviceId& deviceId, const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                if (!cert || !cert->issuer)
+                    return;
+                auto peerId = cert->issuer->getId().toString();
+                requestMessageConnection(peerId, deviceId, "");
+                if (auto* cm = convModule(true)) {
+                    cm->ensureSwarmChannel(peerId, deviceId);
+                }
+            });
         connectionManager_->onConnectionReady(
             [this](const DeviceId& deviceId, const std::string& name, std::shared_ptr<dhtnet::ChannelSocket> channel) {
                 if (channel) {

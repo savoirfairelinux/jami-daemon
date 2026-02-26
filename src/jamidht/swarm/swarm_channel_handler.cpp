@@ -56,6 +56,13 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
     auto conversationId = name.substr(sep + 1);
     if (auto acc = account_.lock())
         if (auto convModule = acc->convModule(true)) {
+            if (convModule->hasSwarmChannel(conversationId, cert->getLongId().toString())) {
+                JAMI_DEBUG("onRequest: already have swarm channel for "
+                           "conv {} device {} — rejecting duplicate",
+                           conversationId,
+                           cert->getLongId().toString());
+                return false;
+            }
             auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
             res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
             return res;
