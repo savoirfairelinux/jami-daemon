@@ -117,7 +117,7 @@ im::fillPJSIPMessageBody(pjsip_tx_data& tdata, const std::map<std::string, std::
     tdata.msg->body = pjsip_multipart_create(tdata.pool, nullptr, nullptr);
 
     for (const auto& pair : payloads) {
-        auto part = pjsip_multipart_create_part(tdata.pool);
+        auto* part = pjsip_multipart_create_part(tdata.pool);
         if (not part) {
             JAMI_ERR("pjsip_multipart_create_part failed: not enough memory");
             throw InstantMessageException("Internal SIP error");
@@ -144,7 +144,7 @@ im::sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR(sip_utils::SIP_METHODS::MESSAGE)};
 
     {
-        auto dialog = session->dlg;
+        auto* dialog = session->dlg;
         sip_utils::PJDialogLock dialog_lock {dialog};
 
         pjsip_tx_data* tdata = nullptr;
@@ -179,7 +179,7 @@ parseMessageBody(const pjsip_msg_body* body)
                          + sip_utils::as_view(body->content_type.subtype);
 
     // iterate over parameters
-    auto param = body->content_type.param.next;
+    auto* param = body->content_type.param.next;
     while (param != &body->content_type.param) {
         header += ";" + sip_utils::as_view(param->name) + "=" + sip_utils::as_view(param->value);
         param = param->next;
@@ -217,7 +217,7 @@ im::parseSipMessage(const pjsip_msg* msg)
         /* multipart type message, we will treat it as multipart/mixed even if the subtype is
          * something else, eg: related
          */
-        auto part = pjsip_multipart_get_first_part(msg->body);
+        auto* part = pjsip_multipart_get_first_part(msg->body);
         while (part != nullptr) {
             ret.emplace(parseMessageBody(part->body));
             part = pjsip_multipart_get_next_part(msg->body, part);
