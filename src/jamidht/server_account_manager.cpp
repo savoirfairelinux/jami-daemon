@@ -28,7 +28,6 @@
 #include "jamiaccount.h"
 #include "manager.h"
 
-#include <algorithm>
 #include <string_view>
 
 using namespace std::literals;
@@ -171,6 +170,7 @@ ServerAccountManager::initAuthentication(PrivateKey key,
                                 if (name == "nameServer"sv) {
                                     auto nameServer = json["nameServer"].asString();
                                     if (!nameServer.empty() && nameServer[0] == '/')
+                                        // NOLINTNEXTLINE: The concatenation is a prepend
                                         nameServer = this_->managerHostname_ + nameServer;
                                     this_->nameDir_ = NameDirectory::instance(nameServer);
                                     config.emplace(libjami::Account::ConfProperties::Nameserver::URI,
@@ -226,7 +226,7 @@ ServerAccountManager::onAuthEnded(const Json::Value& json, const dht::http::Resp
                      accountId_,
                      response.status_code,
                      response.body.size());
-        authFailed(expectedScope, response.status_code);
+        authFailed(expectedScope, static_cast<int>(response.status_code));
     }
     clearRequest(response.request);
 }
@@ -243,7 +243,7 @@ ServerAccountManager::authenticateDevice()
         *Manager::instance().ioContext(),
         url,
         Json::Value {Json::objectValue},
-        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](const Json::Value& json, const dht::http::Response& response) {
             if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock()))
                 this_->onAuthEnded(json, response, TokenScope::Device);
         },
@@ -262,7 +262,7 @@ ServerAccountManager::authenticateAccount(const std::string& username, const std
         *Manager::instance().ioContext(),
         url,
         Json::Value {Json::objectValue},
-        [w = weak_from_this()](Json::Value json, const dht::http::Response& response) {
+        [w = weak_from_this()](const Json::Value& json, const dht::http::Response& response) {
             if (auto this_ = std::static_pointer_cast<ServerAccountManager>(w.lock()))
                 this_->onAuthEnded(json, response, TokenScope::User);
         },

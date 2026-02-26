@@ -91,7 +91,7 @@ private:
     void sendRequest(const std::shared_ptr<dht::http::Request>& request);
     void clearRequest(const std::weak_ptr<dht::http::Request>& request);
 
-    enum class TokenScope : unsigned { None = 0, Device, User, Admin };
+    enum class TokenScope : uint8_t { None = 0, Device, User, Admin };
     std::mutex tokenLock_;
     std::string token_ {};
     TokenScope tokenScope_ {};

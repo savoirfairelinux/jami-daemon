@@ -21,7 +21,6 @@
 #include "jamidht/conversationrepository.h"
 #include "jamidht/jami_contact.h"
 
-#include <mutex>
 #include <msgpack.hpp>
 
 namespace jami {
@@ -208,7 +207,7 @@ public:
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
-                     std::string message,
+                     const std::string& message,
                      const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
