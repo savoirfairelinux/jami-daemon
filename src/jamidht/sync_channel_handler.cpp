@@ -62,7 +62,7 @@ SyncChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>& cer
     if (!cert || !cert->issuer || !acc)
         return;
     auto deviceId = channel->deviceId();
-    if (auto sm = acc->syncModule())
+    if (auto* sm = acc->syncModule())
         sm->cacheSyncConnection(std::move(channel), cert->issuer->getId().toString(), cert->getLongId());
     dht::ThreadPool::io().run([account = account_, deviceId = deviceId.toString()]() {
         if (auto acc = account.lock())
