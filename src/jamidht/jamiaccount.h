@@ -16,13 +16,11 @@
  */
 #pragma once
 
-#include "def.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "sip/sipaccountbase.h"
-#include "jami/datatransfer_interface.h"
 #include "jamidht/conversation.h"
 #include "data_transfer.h"
 #include "uri.h"
@@ -53,8 +51,6 @@
 
 #include <chrono>
 #include <functional>
-#include <future>
-#include <list>
 #include <map>
 #include <optional>
 #include <vector>
@@ -412,10 +408,7 @@ public:
                        int32_t flag) override;
 
 #ifdef LIBJAMI_TEST
-    dhtnet::ConnectionManager& connectionManager()
-    {
-        return *connectionManager_;
-    }
+    dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 
     /**
      * Only used for tests, disable sha3sum verification for transfers.
@@ -423,10 +416,7 @@ public:
      */
     void noSha3sumVerification(bool newValue);
 
-    void publishPresence(bool newValue)
-    {
-        publishPresence_ = newValue;
-    }
+    void publishPresence(bool newValue) { publishPresence_ = newValue; }
 #endif
 
     /**
@@ -519,10 +509,7 @@ public:
 
     std::filesystem::path profilePath() const;
 
-    const std::shared_ptr<AccountManager>& accountManager()
-    {
-        return accountManager_;
-    }
+    const std::shared_ptr<AccountManager>& accountManager() { return accountManager_; }
 
     bool sha3SumVerify() const;
 
@@ -561,22 +548,13 @@ public:
      * connected. This kind of node corresponds to devices with push notifications & proxy and are
      * stored in the mobile nodes
      */
-    bool isMobile() const
-    {
-        return config().proxyEnabled and not config().deviceKey.empty();
-    }
+    bool isMobile() const { return config().proxyEnabled and not config().deviceKey.empty(); }
 
 #ifdef LIBJAMI_TEST
-    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
-    {
-        return channelHandlers_;
-    };
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() { return channelHandlers_; };
 #endif
 
-    dhtnet::tls::CertificateStore& certStore() const
-    {
-        return *certStore_;
-    }
+    dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
     /**
      * Check if a Device is connected
      * @param deviceId
@@ -868,7 +846,7 @@ private:
 
     void initConnectionManager();
 
-    enum class PresenceState : int { DISCONNECTED = 0, AVAILABLE, CONNECTED };
+    enum class PresenceState : uint8_t { DISCONNECTED = 0, AVAILABLE, CONNECTED };
     std::map<std::string, PresenceState> presenceState_;
     std::string presenceNote_;
 };

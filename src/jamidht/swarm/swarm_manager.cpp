@@ -357,7 +357,7 @@ SwarmManager::isConnected() const
 }
 
 void
-SwarmManager::deleteNode(std::vector<NodeId> nodes)
+SwarmManager::deleteNode(const std::vector<NodeId>& nodes)
 {
     {
         std::lock_guard lock(mutex);

@@ -15,7 +15,6 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "jamidht/auth_channel_handler.h"
-#include "archive_account_manager.h"
 
 #include <opendht/thread_pool.h>
 

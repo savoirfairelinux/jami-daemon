@@ -16,8 +16,6 @@
  */
 #pragma once
 
-#include <string>
-#include <string_view>
 #include <msgpack.hpp>
 
 #include <opendht/infohash.h>
