@@ -33,6 +33,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <utility>
 
 namespace jami {
 
@@ -304,7 +305,7 @@ public:
                      OnDoneCb&& cb = {});
 
     void sendMessage(const std::string& conversationId,
-                     std::string message,
+                     const std::string& message,
                      const std::string& replyTo = "",
                      const std::string& type = "text/plain",
                      bool announce = true,
@@ -405,11 +406,11 @@ public:
     std::function<void(std::string, Conversation::BootstrapStatus)> bootstrapCbTest_;
 #endif
 
-    void fixStructures(std::shared_ptr<JamiAccount> account,
+    void fixStructures(const std::shared_ptr<JamiAccount>& account,
                        const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv,
                        const std::set<std::string>& toRm);
 
-    void cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv,
+    void cloneConversationFrom(const std::shared_ptr<SyncedConversation>& conv,
                                const std::string& deviceId,
                                const std::string& oldConvId = "");
     void bootstrap(const std::string& convId);
@@ -1173,7 +1174,7 @@ ConversationModule::Impl::sendMessageNotification(Conversation& conversation,
 
 void
 ConversationModule::Impl::sendMessage(const std::string& conversationId,
-                                      std::string message,
+                                      const std::string& message,
                                       const std::string& replyTo,
                                       const std::string& type,
                                       bool announce,
@@ -1279,7 +1280,7 @@ ConversationModule::Impl::bootstrapCb(std::string convId)
 
 void
 ConversationModule::Impl::fixStructures(
-    std::shared_ptr<JamiAccount> acc,
+    const std::shared_ptr<JamiAccount>& acc,
     const std::vector<std::tuple<std::string, std::string, std::string>>& updateContactConv,
     const std::set<std::string>& toRm)
 {
@@ -1330,7 +1331,7 @@ ConversationModule::Impl::fixStructures(
 }
 
 void
-ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConversation> conv,
+ConversationModule::Impl::cloneConversationFrom(const std::shared_ptr<SyncedConversation>& conv,
                                                 const std::string& deviceId,
                                                 const std::string& oldConvId)
 {
@@ -1565,7 +1566,7 @@ void
 ConversationModule::setAccountManager(std::shared_ptr<AccountManager> accountManager)
 {
     std::unique_lock lk(pimpl_->conversationsMtx_);
-    pimpl_->accountManager_ = accountManager;
+    pimpl_->accountManager_ = std::move(accountManager);
 }
 
 #ifdef LIBJAMI_TEST
@@ -2152,7 +2153,7 @@ ConversationModule::cloneConversationFrom(const std::string& conversationId,
 // Message send/load
 void
 ConversationModule::sendMessage(const std::string& conversationId,
-                                std::string message,
+                                const std::string& message,
                                 const std::string& replyTo,
                                 const std::string& type,
                                 bool announce,

@@ -81,7 +81,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
 
     auto remote_addr = remote_.toString();
     pj_ansi_snprintf(base.info, sip_utils::TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name, remote_addr.c_str());
-    base.addr_len = remote_.getLength();
+    base.addr_len = static_cast<int>(remote_.getLength());
     base.dir = PJSIP_TP_DIR_NONE;
 
     // Set initial local address
@@ -126,7 +126,7 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt,
     pj_ioqueue_op_key_init(&rdata_.tp_info.op_key.op_key, sizeof(pj_ioqueue_op_key_t));
     rdata_.pkt_info.src_addr = base.key.rem_addr;
     rdata_.pkt_info.src_addr_len = sizeof(rdata_.pkt_info.src_addr);
-    auto rem_addr = &base.key.rem_addr;
+    auto* rem_addr = &base.key.rem_addr;
     pj_sockaddr_print(rem_addr, rdata_.pkt_info.src_name, sizeof(rdata_.pkt_info.src_name), 0);
     rdata_.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
 
@@ -146,7 +146,7 @@ ChanneledSIPTransport::start()
             // Build rdata
             size_t added = std::min(remaining, (size_t) PJSIP_MAX_PKT_LEN - (size_t) rdata_.pkt_info.len);
             std::copy_n(buf, added, rdata_.pkt_info.packet + rdata_.pkt_info.len);
-            rdata_.pkt_info.len += added;
+            rdata_.pkt_info.len += static_cast<pj_ssize_t>(added);
             buf += added;
             remaining -= added;
 
@@ -177,7 +177,7 @@ ChanneledSIPTransport::start()
 
 ChanneledSIPTransport::~ChanneledSIPTransport()
 {
-    auto base = getTransportBase();
+    auto* base = getTransportBase();
 
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
     // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available

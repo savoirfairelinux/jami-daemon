@@ -27,7 +27,6 @@
 #include <string>
 #include <mutex>
 #include <memory>
-#include <thread>
 #include <filesystem>
 
 namespace dht {
@@ -51,8 +50,8 @@ namespace jami {
 class NameDirectory
 {
 public:
-    enum class Response : int { found = 0, invalidResponse, notFound, error };
-    enum class RegistrationResponse : int {
+    enum class Response : uint8_t { found = 0, invalidResponse, notFound, error };
+    enum class RegistrationResponse : uint8_t {
         success = 0,
         invalidName,
         invalidCredentials,

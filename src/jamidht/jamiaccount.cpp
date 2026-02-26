@@ -23,9 +23,7 @@
 
 #include "logger.h"
 
-#include "accountarchive.h"
 #include "jami_contact.h"
-#include "configkeys.h"
 #include "contact_list.h"
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
@@ -47,14 +45,9 @@
 #include "uri.h"
 
 #include "client/jami_signal.h"
-#include "jami/call_const.h"
 #include "jami/account_const.h"
 
-#include "system_codec_container.h"
-
-#include "account_schema.h"
 #include "manager.h"
-#include "connectivity/utf8_utils.h"
 #include "connectivity/ip_utils.h"
 
 #ifdef ENABLE_PLUGIN
@@ -63,18 +56,14 @@
 #endif
 
 #ifdef ENABLE_VIDEO
-#include "libav_utils.h"
 #endif
 #include "fileutils.h"
 #include "string_utils.h"
-#include "archiver.h"
 #include "data_transfer.h"
 #include "json_utils.h"
 
-#include "libdevcrypto/Common.h"
 #include "base64.h"
 #include "vcard.h"
-#include "im/instant_messaging.h"
 
 #include <dhtnet/ice_transport.h>
 #include <dhtnet/ice_transport_factory.h>
@@ -94,13 +83,10 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <charconv>
-#include <cinttypes>
 #include <cstdarg>
 #include <initializer_list>
 #include <memory>
 #include <regex>
-#include <sstream>
 #include <string>
 #include <system_error>
 #include <utility>
@@ -109,7 +95,6 @@ using namespace std::placeholders;
 
 namespace jami {
 
-constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_PIDF[] {"application/pidf+xml"};
 static constexpr const char MIME_TYPE_INVITE_JSON[] {"application/invite+json"};
@@ -125,7 +110,7 @@ struct VCardMessageCtx
 
 namespace Migration {
 
-enum class State { // Contains all the Migration states
+enum class State : uint8_t { // Contains all the Migration states
     SUCCESS,
     INVALID
 };
@@ -1859,7 +1844,8 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
                 std::vector<uint8_t> payload;
                 try {
                     payload = fileutils::loadFile(requestPath);
-                } catch (...) {
+                } catch (const std::exception& e) {
+                    JAMI_WARNING("[Account {}] Caught exception: {}", getAccountID(), e.what());
                 }
                 if (payload.size() >= 64000) {
                     JAMI_WARNING("[Account {:s}] Trust request for contact {:s} is too big, reset payload",
@@ -2452,7 +2438,8 @@ JamiAccount::onTextMessage(const std::string& id,
     try {
         const std::string fromUri {parseJamiUri(from)};
         SIPAccountBase::onTextMessage(id, fromUri, peerCert, payloads);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("[Account {}] Caught exception: {}", getAccountID(), e.what());
     }
 }
 
@@ -2537,7 +2524,7 @@ JamiAccount::setRegistrationState(RegistrationState state, int detail_code, cons
         }
     }
     // Update registrationState_ & emit signals
-    Account::setRegistrationState(state, detail_code, detail_str);
+    jami::SIPAccountBase::setRegistrationState(state, detail_code, detail_str);
 }
 
 void
@@ -3970,6 +3957,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<dhtnet::ChannelSocket>&& socket,
         if (auto remote_address = socket->getRemoteAddress()) {
             try {
                 onConnectedOutgoingCall(pc, peerId, remote_address);
+                // NOLINTNEXTLINE
             } catch (const VoipLinkException&) {
                 // In this case, the main scenario is that SIPStartCall failed because
                 // the ICE is dead and the TLS session didn't send any packet on that dead
@@ -3991,7 +3979,7 @@ JamiAccount::shutdownSIPConnection(const std::shared_ptr<dhtnet::ChannelSocket>&
     auto it = sipConns_.find(key);
     if (it != sipConns_.end()) {
         auto& conns = it->second;
-        conns.erase(std::remove_if(conns.begin(), conns.end(), [&](auto v) { return v.channel == channel; }),
+        conns.erase(std::remove_if(conns.begin(), conns.end(), [&](const auto& v) { return v.channel == channel; }),
                     conns.end());
         if (conns.empty()) {
             sipConns_.erase(it);

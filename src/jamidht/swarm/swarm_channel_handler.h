@@ -17,10 +17,10 @@
 #pragma once
 
 #include "jamidht/channel_handler.h"
-#include "jamidht/conversation_channel_handler.h"
+#include "jamidht/jamiaccount.h"
 
+#include <dhtnet/connectionmanager.h>
 #include <dhtnet/multiplexed_socket.h>
-#include "logger.h"
 
 namespace jami {
 
