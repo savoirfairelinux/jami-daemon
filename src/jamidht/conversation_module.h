@@ -58,21 +58,13 @@ struct SyncMsg
 
 using ChannelCb = std::function<bool(const std::shared_ptr<dhtnet::ChannelSocket>&)>;
 using NeedSocketCb = std::function<void(const std::string&, const std::string&, ChannelCb&&, const std::string&)>;
-using SengMsgCb
-    = std::function<uint64_t(const std::string&, const DeviceId&, std::map<std::string, std::string>, uint64_t)>;
-using NeedsSyncingCb = std::function<void(std::shared_ptr<SyncMsg>&&)>;
-using OneToOneRecvCb = std::function<void(const std::string&, const std::string&)>;
 
 class ConversationModule
 {
 public:
     ConversationModule(std::shared_ptr<JamiAccount> account,
                        std::shared_ptr<AccountManager> accountManager,
-                       NeedsSyncingCb&& needsSyncingCb,
-                       SengMsgCb&& sendMsgCb,
-                       NeedSocketCb&& onNeedSocket,
                        NeedSocketCb&& onNeedSwarmSocket,
-                       OneToOneRecvCb&& oneToOneRecvCb,
                        bool autoLoadConversations = true);
     ~ConversationModule() = default;
 
