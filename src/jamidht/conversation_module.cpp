@@ -2260,7 +2260,7 @@ ConversationModule::loadConversation(const std::string& conversationId, const st
             LogOptions options;
             options.from = fromMessage;
             options.nbOfCommits = n;
-            conv->conversation->loadMessages2(
+            conv->conversation->loadMessages(
                 [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
                 },
@@ -2285,7 +2285,7 @@ ConversationModule::loadSwarmUntil(const std::string& conversationId,
             options.from = fromMessage;
             options.to = toMessage;
             options.includeTo = true;
-            conv->conversation->loadMessages2(
+            conv->conversation->loadMessages(
                 [accountId = pimpl_->accountId_, conversationId, id](auto&& messages) {
                     emitSignal<libjami::ConversationSignal::SwarmLoaded>(id, accountId, conversationId, messages);
                 },

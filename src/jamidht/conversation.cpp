@@ -587,7 +587,7 @@ public:
     const std::string deviceId_;
     const std::shared_ptr<SwarmManager> swarmManager_;
     std::atomic_bool isRemoving_ {false};
-    std::vector<libjami::SwarmMessage> loadMessages2(const LogOptions& options, History* optHistory = nullptr);
+    std::vector<libjami::SwarmMessage> loadMessages(const LogOptions& options, History* optHistory = nullptr);
     void pull(const std::string& deviceId);
 
     // Avoid multiple fetch/merges at the same time.
@@ -763,7 +763,7 @@ Conversation::Impl::commitsEndedCalls()
 }
 
 std::vector<libjami::SwarmMessage>
-Conversation::Impl::loadMessages2(const LogOptions& options, History* optHistory)
+Conversation::Impl::loadMessages(const LogOptions& options, History* optHistory)
 {
     auto history = optHistory ? optHistory : &loadedHistory_;
 
@@ -1563,14 +1563,14 @@ Conversation::getCommit(const std::string& commitId) const
 }
 
 void
-Conversation::loadMessages2(const OnLoadMessages2& cb, const LogOptions& options)
+Conversation::loadMessages(const OnLoadMessages& cb, const LogOptions& options)
 {
     if (!cb)
         return;
     dht::ThreadPool::io().run([w = weak(), cb = std::move(cb), options] {
         if (auto sthis = w.lock()) {
             std::unique_lock lk(sthis->pimpl_->loadedHistory_.mutex);
-            auto result = sthis->pimpl_->loadMessages2(options);
+            auto result = sthis->pimpl_->loadMessages(options);
             lk.unlock();
             cb(std::move(result));
         }
@@ -1604,7 +1604,7 @@ Conversation::lastCommitId() const
     options.skipMerge = true;
     History optHistory;
     std::scoped_lock lock(pimpl_->writeMtx_, optHistory.mutex);
-    auto res = pimpl_->loadMessages2(options, &optHistory);
+    auto res = pimpl_->loadMessages(options, &optHistory);
     if (res.empty())
         return {};
     return (*optHistory.messageList.begin())->id;
@@ -2033,7 +2033,7 @@ Conversation::Impl::updateStatus(const std::string& uri,
     options.fastLog = true;
     History optHistory;
     std::unique_lock lk(optHistory.mutex); // Avoid to announce messages while updating status.
-    auto res = loadMessages2(options, &optHistory);
+    auto res = loadMessages(options, &optHistory);
     std::unique_lock mlk(messageStatusMtx_);
     std::vector<std::pair<std::string, int32_t>> statusToUpdate;
     if (res.size() == 0) {
@@ -2140,7 +2140,7 @@ std::vector<libjami::SwarmMessage>
 Conversation::loadMessagesSync(const LogOptions& options)
 {
     std::lock_guard lk(pimpl_->loadedHistory_.mutex);
-    auto result = pimpl_->loadMessages2(options);
+    auto result = pimpl_->loadMessages(options);
     return result;
 }
 
@@ -2371,7 +2371,7 @@ Conversation::countInteractions(const std::string& toId, const std::string& from
     options.fastLog = true;
     History history;
     std::lock_guard lk(history.mutex);
-    auto res = pimpl_->loadMessages2(options, &history);
+    auto res = pimpl_->loadMessages(options, &history);
     return res.size();
 }
 
