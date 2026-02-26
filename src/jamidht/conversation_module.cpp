@@ -3404,6 +3404,29 @@ ConversationModule::addSwarmChannel(const std::string& conversationId, std::shar
     pimpl_->withConversation(conversationId, [&](auto& conv) { conv.addSwarmChannel(std::move(channel)); });
 }
 
+bool
+ConversationModule::hasSwarmChannel(const std::string& conversationId, const std::string& deviceId) const
+{
+    return pimpl_->withConversation(conversationId, [&](auto& conv) { return conv.hasSwarmChannel(deviceId); });
+}
+
+void
+ConversationModule::ensureSwarmChannel(const std::string& peerId, const DeviceId& deviceId)
+{
+    std::vector<std::shared_ptr<Conversation>> conversations;
+    for (const auto& conv : pimpl_->getSyncedConversations()) {
+        std::lock_guard lk(conv->mtx);
+        if (conv->conversation && !conv->conversation->isRemoving() && conv->conversation->isMember(peerId, false)) {
+            conversations.emplace_back(conv->conversation);
+        }
+    }
+    for (const auto& conversation : conversations) {
+        if (!conversation->hasSwarmChannel(deviceId.toString())) {
+            conversation->addKnownDevices({deviceId}, peerId);
+        }
+    }
+}
+
 void
 ConversationModule::connectivityChanged()
 {
