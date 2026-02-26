@@ -502,6 +502,20 @@ public:
      */
     void addSwarmChannel(const std::string& conversationId, std::shared_ptr<dhtnet::ChannelSocket> socket);
     /**
+     * Check if a swarm channel already exists for a specific device in a given conversation.
+     * @param conversationId
+     * @param deviceId
+     * @return true if connected
+     */
+    bool hasSwarmChannel(const std::string& conversationId, const std::string& deviceId) const;
+    /**
+     * Ensure swarm channels exist for a specific device in all conversations
+     * where the device's peer is a member.
+     * @param peerId    The account URI of the peer
+     * @param deviceId  The device to connect
+     */
+    void ensureSwarmChannel(const std::string& peerId, const DeviceId& deviceId);
+    /**
      * Triggers a bucket maintainance for DRTs
      */
     void connectivityChanged();
