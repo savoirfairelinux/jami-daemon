@@ -21,7 +21,6 @@
 #endif
 
 #include "contact_list.h"
-#include "logger.h"
 #include "namedirectory.h"
 
 #include <opendht/crypto.h>
@@ -90,7 +89,7 @@ public:
 
     // Auth
 
-    enum class AuthError { UNKNOWN, INVALID_ARGUMENTS, SERVER_ERROR, NETWORK };
+    enum class AuthError : uint8_t { UNKNOWN, INVALID_ARGUMENTS, SERVER_ERROR, NETWORK };
 
     using AuthSuccessCallback = std::function<void(const AccountInfo& info,
                                                    const std::map<std::string, std::string>& config,
@@ -149,9 +148,9 @@ public:
 
     // Device management
 
-    enum class AddDeviceError { INVALID_URI = -1, ALREADY_LINKING = -2, GENERIC = -3 };
+    enum class AddDeviceError : int8_t { INVALID_URI = -1, ALREADY_LINKING = -2, GENERIC = -3 };
 
-    enum class RevokeDeviceResult {
+    enum class RevokeDeviceResult : uint8_t {
         SUCCESS = 0,
         ERROR_CREDENTIALS,
         ERROR_NETWORK,
@@ -178,7 +177,7 @@ public:
     virtual bool revokeDevice(const std::string& /*device*/,
                               std::string_view /*scheme*/,
                               const std::string& /*password*/,
-                              RevokeDeviceCallback)
+                              RevokeDeviceCallback /*cb*/)
     {
         return false;
     };
