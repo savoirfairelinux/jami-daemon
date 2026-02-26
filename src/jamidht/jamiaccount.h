@@ -606,6 +606,21 @@ private:
     void onConversationRequestAccepted(const std::string& conversationId, const std::string& deviceId);
     void onContactConfirmed(const std::string& uri, const std::string& convFromReq);
 
+    void conversationNeedsSyncing(std::shared_ptr<SyncMsg>&& syncMsg);
+    uint64_t conversationSendMessage(const std::string& uri,
+                                     const DeviceId& device,
+                                     const std::map<std::string, std::string>& msg,
+                                     uint64_t token = 0);
+    void onConversationNeedSocket(const std::string& convId,
+                                  const std::string& deviceId,
+                                  ChannelCb&& cb,
+                                  const std::string& type);
+    void onConversationNeedSwarmSocket(const std::string& convId,
+                                       const std::string& deviceId,
+                                       ChannelCb&& cb,
+                                       const std::string& type);
+    void conversationOneToOneReceive(const std::string& convId, const std::string& from);
+
     std::unique_ptr<AccountManager::AccountCredentials> buildAccountCredentials(
         const JamiAccountConfig& conf,
         const dht::crypto::Identity& id,
