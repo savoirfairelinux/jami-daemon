@@ -17,8 +17,6 @@
 
 #include "swarm_protocol.h"
 
-#include <iostream>
-
 namespace jami {
 namespace swarm_protocol {}; // namespace swarm_protocol
 

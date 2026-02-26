@@ -18,7 +18,6 @@
 #include "accountarchive.h"
 #include "fileutils.h"
 #include "libdevcrypto/Common.h"
-#include "archiver.h"
 #include "base64.h"
 #include "jami/account_const.h"
 #include "account_schema.h"
@@ -33,9 +32,6 @@
 #include <opendht/thread_pool.h>
 
 #include <memory>
-#include <fstream>
-
-#include "config/yamlparser.h"
 
 namespace jami {
 
@@ -104,7 +100,8 @@ ArchiveAccountManager::initAuthentication(PrivateKey key,
                     try {
                         a.ca_key = std::make_shared<dht::crypto::PrivateKey>(
                             fileutils::loadFile("ca.key", this_->path_));
-                    } catch (...) {
+                    } catch (const std::exception& e) {
+                        JAMI_WARNING("[Account {}] caught exception: {}", this_->accountId_, e.what());
                     }
                     this_->updateCertificates(a, ctx->credentials->updateIdentity);
                     a.eth_key = future_keypair.get().secret().makeInsecure().asBytes();
@@ -332,7 +329,7 @@ struct ArchiveAccountManager::DeviceAuthInfo : public std::map<std::string, std:
     static constexpr auto peer_address = "peer_address"sv;
 
     // Add error enum
-    enum class Error { NETWORK, TIMEOUT, AUTH_ERROR, CANCELED, UNKNOWN, NONE };
+    enum class Error : uint8_t { NETWORK, TIMEOUT, AUTH_ERROR, CANCELED, UNKNOWN, NONE };
 
     using Map = std::map<std::string, std::string>;
 
@@ -1365,7 +1362,8 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
             })) {
             try {
                 archive.config.emplace(it.first, base64::encode(fileutils::loadFile(it.second)));
-            } catch (...) {
+            } catch (const std::exception& e) {
+                JAMI_WARNING("[Account {}] Caught exception: {}", accountId_, e.what());
             }
         } else
             archive.config[it.first] = it.second;

@@ -15,15 +15,12 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "account_manager.h"
-#include "accountarchive.h"
+#include "fileutils.h"
 #include "jamiaccount.h"
 #include "base64.h"
 #include "jami/account_const.h"
-#include "account_schema.h"
-#include "archiver.h"
 #include "manager.h"
 
-#include "libdevcrypto/Common.h"
 #include "json_utils.h"
 
 #include <opendht/thread_pool.h>
@@ -31,7 +28,7 @@
 
 #include <exception>
 #include <future>
-#include <fstream>
+#include <utility>
 #include <gnutls/ocsp.h>
 
 namespace jami {
@@ -852,7 +849,7 @@ AccountManager::lookupUri(const std::string& name, const std::string& defaultSer
 void
 AccountManager::lookupAddress(const std::string& addr, LookupCallback cb)
 {
-    nameDir_.get().lookupAddress(addr, cb);
+    nameDir_.get().lookupAddress(addr, std::move(cb));
 }
 
 dhtnet::tls::CertificateStore&

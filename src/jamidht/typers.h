@@ -19,7 +19,6 @@
 #include <asio.hpp>
 #include <map>
 #include <memory>
-#include <set>
 #include <string>
 
 namespace jami {

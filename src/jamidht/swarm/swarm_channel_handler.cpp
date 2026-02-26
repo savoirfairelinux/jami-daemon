@@ -55,7 +55,7 @@ SwarmChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate>& 
     auto sep = name.find_last_of('/');
     auto conversationId = name.substr(sep + 1);
     if (auto acc = account_.lock())
-        if (auto convModule = acc->convModule(true)) {
+        if (auto* convModule = acc->convModule(true)) {
             auto res = !convModule->isBanned(conversationId, cert->issuer->getId().toString());
             res &= !convModule->isBanned(conversationId, cert->getLongId().toString());
             return res;
@@ -71,7 +71,7 @@ SwarmChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&,
     auto sep = uri.find_last_of('/');
     auto conversationId = uri.substr(sep + 1);
     if (auto acc = account_.lock()) {
-        if (auto convModule = acc->convModule(true)) {
+        if (auto* convModule = acc->convModule(true)) {
             convModule->addSwarmChannel(conversationId, socket);
         }
     }

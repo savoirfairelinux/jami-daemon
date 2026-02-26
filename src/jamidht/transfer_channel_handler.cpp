@@ -18,7 +18,6 @@
 #include "jamidht/transfer_channel_handler.h"
 
 #include <opendht/thread_pool.h>
-#include <charconv>
 
 #include "fileutils.h"
 
@@ -52,7 +51,7 @@ TransferChannelHandler::onRequest(const std::shared_ptr<dht::crypto::Certificate
     auto acc = account_.lock();
     if (!acc || !cert || !cert->issuer)
         return false;
-    auto cm = acc->convModule(true);
+    auto* cm = acc->convModule(true);
     if (!cm)
         return false;
     auto uri = cert->issuer->getId().toString();
@@ -156,7 +155,6 @@ TransferChannelHandler::onReady(const std::shared_ptr<dht::crypto::Certificate>&
 
     // convId/fileHost/fileId or convId/profile/fileId
     auto conversationId = std::string(splitted_id[0]);
-    auto fileHost = std::string(splitted_id[1]);
     auto isContactProfile = splitted_id[1] == "profile";
     auto fileId = std::string(splitted_id[splitted_id.size() - 1]);
     if (channel->isInitiator())
