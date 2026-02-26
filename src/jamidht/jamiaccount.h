@@ -412,10 +412,7 @@ public:
                        int32_t flag) override;
 
 #ifdef LIBJAMI_TEST
-    dhtnet::ConnectionManager& connectionManager()
-    {
-        return *connectionManager_;
-    }
+    dhtnet::ConnectionManager& connectionManager() { return *connectionManager_; }
 
     /**
      * Only used for tests, disable sha3sum verification for transfers.
@@ -423,10 +420,7 @@ public:
      */
     void noSha3sumVerification(bool newValue);
 
-    void publishPresence(bool newValue)
-    {
-        publishPresence_ = newValue;
-    }
+    void publishPresence(bool newValue) { publishPresence_ = newValue; }
 #endif
 
     /**
@@ -519,10 +513,7 @@ public:
 
     std::filesystem::path profilePath() const;
 
-    const std::shared_ptr<AccountManager>& accountManager()
-    {
-        return accountManager_;
-    }
+    const std::shared_ptr<AccountManager>& accountManager() { return accountManager_; }
 
     bool sha3SumVerify() const;
 
@@ -561,22 +552,13 @@ public:
      * connected. This kind of node corresponds to devices with push notifications & proxy and are
      * stored in the mobile nodes
      */
-    bool isMobile() const
-    {
-        return config().proxyEnabled and not config().deviceKey.empty();
-    }
+    bool isMobile() const { return config().proxyEnabled and not config().deviceKey.empty(); }
 
 #ifdef LIBJAMI_TEST
-    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers()
-    {
-        return channelHandlers_;
-    };
+    std::map<Uri::Scheme, std::unique_ptr<ChannelHandlerInterface>>& channelHandlers() { return channelHandlers_; };
 #endif
 
-    dhtnet::tls::CertificateStore& certStore() const
-    {
-        return *certStore_;
-    }
+    dhtnet::tls::CertificateStore& certStore() const { return *certStore_; }
     /**
      * Check if a Device is connected
      * @param deviceId
@@ -610,6 +592,42 @@ private:
         const auto& conf = config();
         return dht::InfoHash::get(conf.proxyServer + conf.proxyListUrl).toString();
     }
+
+    void scheduleAccountReady() const;
+    AccountManager::OnChangeCallback setupAccountCallbacks();
+
+    void onContactAdded(const std::string& uri, bool confirmed);
+    void onContactRemoved(const std::string& uri, bool banned);
+    void onIncomingTrustRequest(const std::string& uri,
+                                const std::string& conversationId,
+                                const std::vector<uint8_t>& payload,
+                                time_t received);
+    void onKnownDevicesChanged(const std::map<DeviceId, KnownDevice>& devices);
+    void onConversationRequestAccepted(const std::string& conversationId, const std::string& deviceId);
+    void onContactConfirmed(const std::string& uri, const std::string& convFromReq);
+
+    std::unique_ptr<AccountManager::AccountCredentials> buildAccountCredentials(
+        const JamiAccountConfig& conf,
+        const dht::crypto::Identity& id,
+        const std::string& archive_password_scheme,
+        const std::string& archive_password,
+        const std::string& archive_path,
+        bool& migrating,
+        bool& hasPassword);
+
+    void onAuthenticationSuccess(bool migrating,
+                                 bool hasPassword,
+                                 const AccountInfo& info,
+                                 const std::map<std::string, std::string>& configMap,
+                                 std::string&& receipt,
+                                 std::vector<uint8_t>&& receiptSignature);
+
+    static void onAuthenticationError(const std::weak_ptr<JamiAccount>& w,
+                                      bool hadIdentity,
+                                      bool migrating,
+                                      std::string accountId,
+                                      AccountManager::AuthError error,
+                                      const std::string& message);
 
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
