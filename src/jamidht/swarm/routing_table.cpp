@@ -22,11 +22,8 @@
 #include <opendht/thread_pool.h>
 
 #include <math.h>
-#include <stdio.h>
-#include <iostream>
 #include <iterator>
 #include <stdlib.h>
-#include <time.h>
 
 using namespace std::placeholders;
 

@@ -16,8 +16,8 @@
  */
 #pragma once
 
+#include "conversation.h"
 #include "jamidht/channel_handler.h"
-#include "jamidht/jamiaccount.h"
 #include <dhtnet/connectionmanager.h>
 
 namespace jami {

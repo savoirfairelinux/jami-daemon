@@ -17,11 +17,9 @@
 
 #include "conversationrepository.h"
 
-#include "account_const.h"
 #include "base64.h"
 #include "jamiaccount.h"
 #include "fileutils.h"
-#include "gittransport.h"
 #include "string_utils.h"
 #include "client/jami_signal.h"
 #include "vcard.h"
@@ -57,8 +55,7 @@
 #include <utility>
 
 using namespace std::string_view_literals;
-constexpr auto DIFF_REGEX = " +\\| +[0-9]+.*"sv;
-constexpr size_t MAX_FETCH_SIZE {256 * 1024 * 1024}; // 256Mb
+constexpr size_t MAX_FETCH_SIZE {static_cast<size_t>(256 * 1024 * 1024)}; // 256Mb
 
 namespace jami {
 
@@ -175,6 +172,7 @@ public:
             std::lock_guard lk {membersMtx_};
             oh.get().convert(members_);
         } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {}] Unable to load conversation members: {}", accountId_, e.what());
         }
     }
     // Note: membersMtx_ needs to be locked when calling saveMembers
@@ -344,7 +342,8 @@ public:
                 }
                 memberDevices[cert->getIssuerUID()].emplace_back(cert->getPublicKey().getLongId());
 
-            } catch (const std::exception&) {
+            } catch (const std::exception& e) {
+                JAMI_WARNING("[Account {}] Unable to load conversation devices: {}", accountId_, e.what());
             }
         }
         return memberDevices;
@@ -763,7 +762,7 @@ initial_commit(GitRepository& repo,
         git_reference_free(ref);
     }
 
-    auto commit_str = git_oid_tostr_s(&commit_id);
+    auto* commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str)
         return commit_str;
     return {};
@@ -903,7 +902,7 @@ ConversationRepository::Impl::createMergeCommit(git_index* index, const std::str
     }
     git_buf_dispose(&to_sign);
 
-    auto commit_str = git_oid_tostr_s(&commit_oid);
+    auto* commit_str = git_oid_tostr_s(&commit_oid);
     if (commit_str) {
         JAMI_LOG("[Account {}] [Conversation {}] New merge commit added with id: {}", accountId_, id_, commit_str);
         // Move commit to main branch
@@ -999,7 +998,7 @@ ConversationRepository::Impl::mergeFastforward(const git_oid* target_oid, int is
     git_checkout_init_options(&ff_checkout_options, GIT_CHECKOUT_OPTIONS_VERSION);
     ff_checkout_options.checkout_strategy = GIT_CHECKOUT_SAFE;
     if (git_checkout_tree(repo.get(), target.get(), &ff_checkout_options) != 0) {
-        if (auto err = git_error_last())
+        if (const auto* err = git_error_last())
             JAMI_ERROR("[Account {}] [Conversation {}] failed to checkout HEAD reference: {}",
                        accountId_,
                        id_,
@@ -2134,7 +2133,7 @@ ConversationRepository::Impl::commit(const std::string& msg, bool verifyDevice)
     }
     git_reference_free(ref_ptr);
 
-    auto commit_str = git_oid_tostr_s(&commit_id);
+    auto* commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str) {
         JAMI_LOG("[Account {}] [Conversation {}] New message added with id: {}", accountId_, id_, commit_str);
     }
@@ -2503,7 +2502,7 @@ ConversationRepository::Impl::getInitialMembers() const
     if (firstCommit.size() == 0) {
         return {};
     }
-    auto commit = firstCommit[0];
+    const auto& commit = firstCommit[0];
 
     auto authorDevice = commit.author.email;
     auto cert = acc->certStore().getCertificate(authorDevice);
@@ -2538,7 +2537,7 @@ ConversationRepository::Impl::resolveConflicts(git_index* index, const std::stri
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to get reference for HEAD", accountId_, id_);
         return false;
     }
-    auto commit_str = git_oid_tostr_s(&head_commit_id);
+    auto* commit_str = git_oid_tostr_s(&head_commit_id);
     if (!commit_str)
         return false;
     auto useRemote = (other_id > commit_str); // Choose by commit version
@@ -2648,7 +2647,6 @@ ConversationRepository::Impl::convCommitToMap(const ConversationCommit& commit) 
     std::string type {};
     if (parentsSize > 1)
         type = "merge";
-    std::string body {};
     std::map<std::string, std::string> message;
     if (type.empty()) {
         Json::Value cm;
@@ -3254,7 +3252,7 @@ ConversationRepository::amend(const std::string& id, const std::string& msg)
     }
     git_reference_free(ref_ptr);
 
-    auto commit_str = git_oid_tostr_s(&commit_id);
+    auto* commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str) {
         JAMI_DEBUG("Commit {} amended (new ID: {})", id, commit_str);
         return commit_str;
@@ -3278,7 +3276,6 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     auto lastMsg = log(options);
     if (lastMsg.size() == 0)
         return false;
-    auto lastCommit = lastMsg[0].id;
 
     // Assert that repository exists
     auto repo = pimpl_->repository();
@@ -3414,7 +3411,7 @@ ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std:
     }
     GitReference head_ref {head_ref_ptr};
 
-    auto commit_str = git_oid_tostr_s(&commit_id);
+    auto* commit_str = git_oid_tostr_s(&commit_id);
     if (!commit_str)
         return {};
     return commit_str;
@@ -3630,12 +3627,12 @@ ConversationRepository::merge(const std::string& merge_id, bool force)
     }
     GitCommit head_commit {head_ptr};
 
-    git_commit* other__ptr = nullptr;
-    if (git_commit_lookup(&other__ptr, repo.get(), &commit_id) < 0) {
+    git_commit* other_ptr = nullptr;
+    if (git_commit_lookup(&other_ptr, repo.get(), &commit_id) < 0) {
         JAMI_ERROR("[Account {}] [Conversation {}] Unable to look up HEAD commit", pimpl_->accountId_, pimpl_->id_);
         return {false, ""};
     }
-    GitCommit other_commit {other__ptr};
+    GitCommit other_commit {other_ptr};
 
     git_merge_options merge_opts;
     git_merge_options_init(&merge_opts, GIT_MERGE_OPTIONS_VERSION);
@@ -3963,7 +3960,7 @@ ConversationRepository::Impl::resolveBan(const std::string_view type, const std:
     if (type != "devices") {
         std::error_code ec;
         for (const auto& certificate : std::filesystem::directory_iterator(devicesPath, ec)) {
-            auto certPath = certificate.path();
+            const auto& certPath = certificate.path();
             try {
                 crypto::Certificate cert(fileutils::loadFile(certPath));
                 if (auto issuer = cert.issuer)
@@ -4168,7 +4165,8 @@ ConversationRepository::refreshMembers() const
 {
     try {
         pimpl_->initMembers();
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("[Account {}] Caught exception: {}", pimpl_->accountId_, e.what());
     }
 }
 
@@ -4299,7 +4297,8 @@ ConversationRepository::infos() const
             }
             result["mode"] = std::to_string(static_cast<int>(mode()));
             return result;
-        } catch (...) {
+        } catch (const std::exception& e) {
+            JAMI_WARNING("[Account {}] Unable to load comversation profile: {}", pimpl_->accountId_, e.what());
         }
     }
     return {};
@@ -4334,7 +4333,7 @@ ConversationRepository::getHead() const
             JAMI_ERROR("Unable to get reference for HEAD");
             return {};
         }
-        if (auto commit_str = git_oid_tostr_s(&commit_id))
+        if (auto* commit_str = git_oid_tostr_s(&commit_id))
             return commit_str;
     }
     return {};

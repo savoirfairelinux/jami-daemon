@@ -70,7 +70,7 @@ struct GitAuthor
     std::string email {};
 };
 
-enum class ConversationMode : int { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
+enum class ConversationMode : int8_t { ONE_TO_ONE = 0, ADMIN_INVITES_ONLY, INVITES_ONLY, PUBLIC };
 
 struct ConversationCommit
 {
@@ -84,7 +84,7 @@ struct ConversationCommit
     int64_t timestamp {0};
 };
 
-enum class MemberRole { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
+enum class MemberRole : uint8_t { ADMIN = 0, MEMBER, INVITED, BANNED, LEFT };
 
 namespace MemberPath {
 
@@ -121,7 +121,7 @@ struct ConversationMember
     MSGPACK_DEFINE(uri, role)
 };
 
-enum class CallbackResult { Skip, Break, Ok };
+enum class CallbackResult : uint8_t { Skip, Break, Ok };
 
 using PreConditionCb = std::function<CallbackResult(const std::string&, const GitAuthor&, const GitCommit&)>;
 using PostConditionCb = std::function<bool(const std::string&, const GitAuthor&, ConversationCommit&)>;
