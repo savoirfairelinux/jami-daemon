@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9b9ae32c_9c79ef7e",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-27T19:01:14Z",
+      "side": 1,
+      "message": "config.h always come first.",
+      "range": {
+        "startLine": 17,
+        "startChar": 1,
+        "endLine": 18,
+        "endChar": 27
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fcdc9328_04bf5d60",
+        "filename": "src/client/presencemanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-27T19:01:14Z",
+      "side": 1,
+      "message": "config.h always come first",
+      "range": {
+        "startLine": 18,
+        "startChar": 0,
+        "endLine": 18,
+        "endChar": 27
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2b4e52b9_389c839e",
+        "filename": "src/jami/jami.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-27T19:01:14Z",
+      "side": 1,
+      "message": "my understanding is that forward is appropriate for template types",
+      "range": {
+        "startLine": 193,
+        "startChar": 27,
+        "endLine": 193,
+        "endChar": 50
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
