@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2dc152fa_70e54f06",
+        "filename": "src/jamidht/conversation_module.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 886,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T17:55:29Z",
+      "side": 1,
+      "message": "This patch changes the bootstrapping logic in `ConversationModule::Impl::handlePendingConversation` and `ConversationModule::Impl::bootstrap`, but not in `ConversationModule::startConversation`. Is this intentional? If so, what is the reason?",
+      "range": {
+        "startLine": 881,
+        "startChar": 8,
+        "endLine": 886,
+        "endChar": 47
+      },
+      "revId": "0ddf844aeb74bd72621cdf3175fac7f96c0ca844",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
