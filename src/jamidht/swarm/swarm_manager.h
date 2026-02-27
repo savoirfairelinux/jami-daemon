@@ -19,7 +19,6 @@
 #include "routing_table.h"
 #include "swarm_protocol.h"
 
-#include <iostream>
 #include <memory>
 
 namespace jami {
@@ -95,7 +94,7 @@ public:
     /**
      * Delete nodes from the different tables in bucket
      */
-    void deleteNode(std::vector<NodeId> nodes);
+    void deleteNode(const std::vector<NodeId>& nodes);
 
     // For tests
 
