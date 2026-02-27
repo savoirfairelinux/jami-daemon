@@ -70,7 +70,7 @@ MediaEncoder::~MediaEncoder()
         if (fileIO_) {
             avio_close(outputCtx_->pb);
         }
-        for (auto encoderCtx : encoders_) {
+        for (auto* encoderCtx : encoders_) {
             if (encoderCtx) {
 #ifndef _MSC_VER
                 avcodec_free_context(&encoderCtx);
@@ -179,7 +179,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
         videoCodec_ = systemCodecInfo.name;
     }
 
-    auto stream = avformat_new_stream(outputCtx_, outputCodec_);
+    auto* stream = avformat_new_stream(outputCtx_, outputCodec_);
 
     if (stream == nullptr) {
         JAMI_ERR("[%p] Failed to create coding instance for %s", this, systemCodecInfo.name.c_str());
@@ -281,7 +281,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             // if it mismatch, it means that we are using two different hardware API (nvenc and
             // vaapi for example) in this case we don't want link the APIs
             if (framesCtx) {
-                auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
+                auto* hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
                 if (encoderCtx->pix_fmt != hw->format)
                     linkableHW_ = false;
             }
@@ -336,7 +336,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 #ifdef ENABLE_HWACCEL
         if (accel_) {
             // hardware encoders require a specific pixel format
-            auto desc = av_pix_fmt_desc_get(encoderCtx->pix_fmt);
+            const auto* desc = av_pix_fmt_desc_get(encoderCtx->pix_fmt);
             if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
                 format = accel_->getSoftwareFormat();
         }
@@ -428,7 +428,7 @@ MediaEncoder::encode(const std::shared_ptr<VideoFrame>& input, bool is_keyframe,
         JAMI_ERR("Fail to get frame");
         return -1;
     }
-    auto avframe = output->pointer();
+    auto* avframe = output->pointer();
 
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     avframe->pts = frame_number;
@@ -526,7 +526,7 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
         streamIdx = currentStreamIdx_;
     if (streamIdx >= 0 and static_cast<size_t>(streamIdx) < encoders_.size()
         and static_cast<unsigned int>(streamIdx) < outputCtx_->nb_streams) {
-        auto encoderCtx = encoders_[streamIdx];
+        auto* encoderCtx = encoders_[streamIdx];
         pkt.stream_index = streamIdx;
         if (pkt.pts != AV_NOPTS_VALUE)
             pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base, outputCtx_->streams[streamIdx]->time_base);
@@ -546,9 +546,9 @@ MediaEncoder::flush()
 {
     int ret = 0;
     for (size_t i = 0; i < outputCtx_->nb_streams; ++i) {
-        if (encode(nullptr, i) < 0) {
+        if (encode(nullptr, static_cast<int>(i)) < 0) {
             JAMI_ERR() << "Unable to flush stream #" << i;
-            ret |= 1u << i; // provide a way for caller to know which streams failed
+            ret |= 1 << i; // provide a way for caller to know which streams failed
         }
     }
     return -ret;
@@ -582,9 +582,9 @@ MediaEncoder::prepareEncoderContext(const AVCodec* outputCodec, bool is_video)
 {
     AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
 
-    auto encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
+    const auto* encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
 
-    encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 16u : 4u);
+    encoderCtx->thread_count = std::min(static_cast<int>(std::thread::hardware_concurrency()), is_video ? 16 : 4);
     JAMI_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
 
     if (is_video) {
@@ -716,6 +716,8 @@ MediaEncoder::extractProfileLevelID(const std::string& parameters, AVCodecContex
         if ((profile_iop & 0x10) >> 4)
             ctx->profile |= FF_PROFILE_H264_INTRA;
         break;
+    default:
+        JAMI_DBG("Unrecognized H264 profile byte");
     }
     JAMI_DBG("Using profile %s (%x) and level %d",
              avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile),
@@ -731,7 +733,7 @@ MediaEncoder::enableAccel(bool enableAccel)
     emitSignal<libjami::ConfigurationSignal::HardwareEncodingChanged>(enableAccel_);
     if (!enableAccel_) {
         accel_.reset();
-        for (auto enc : encoders_)
+        for (auto* enc : encoders_)
             enc->opaque = nullptr;
     }
 }
@@ -752,7 +754,7 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
     // make sure streamIdx is valid
     if (getStreamCount() <= 0 || streamIdx < 0 || encoders_.size() < (unsigned) (streamIdx + 1))
         return {};
-    auto enc = encoders_[streamIdx];
+    auto* enc = encoders_[streamIdx];
     // TODO set firstTimestamp
     auto ms = MediaStream(name, enc);
 #ifdef ENABLE_HWACCEL
@@ -823,7 +825,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
 
     /* let x264 preset override our encoder settings */
     if (avcodecId == AV_CODEC_ID_H264) {
-        auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
+        const auto* profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
         forcePresetX2645(encoderCtx);
         encoderCtx->flags2 |= AV_CODEC_FLAG2_LOCAL_HEADER;
@@ -903,14 +905,14 @@ MediaEncoder::setPacketLoss(uint64_t pl)
 void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
-    uint64_t maxBitrate = 1000 * br;
+    int64_t maxBitrate = static_cast<int64_t>(1000 * br);
     // 200 Kbit/s    -> CRF40
     // 6 Mbit/s      -> CRF23
     uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * std::log(maxBitrate));
     // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit
     // peak and congestion
     // https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
-    uint64_t bufSize = maxBitrate / 2;
+    int64_t bufSize = maxBitrate / 2;
 
     // If auto quality disabled use CRF mode
     if (mode_ == RateMode::CRF_CONSTRAINED) {
@@ -937,13 +939,13 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
 {
     // If auto quality disabled use CRF mode
     if (mode_ == RateMode::CRF_CONSTRAINED) {
-        uint64_t maxBitrate = 1000 * br;
+        int64_t maxBitrate = static_cast<int64_t>(1000 * br);
         // H265 use 50% less bitrate compared to H264 (half bitrate is equivalent to a change 6 for
         // CRF) https://slhck.info/video/2017/02/24/crf-guide.html
         // 200 Kbit/s    -> CRF35
         // 6 Mbit/s      -> CRF18
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A_HEVC + LOGREG_PARAM_B_HEVC * std::log(maxBitrate));
-        uint64_t bufSize = maxBitrate / 2;
+        int64_t bufSize = maxBitrate / 2;
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
@@ -952,10 +954,11 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
                    maxBitrate / 1000,
                    bufSize / 1000);
     } else if (mode_ == RateMode::CBR) {
-        av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+        int64_t signedBr = static_cast<int64_t>(br);
+        av_opt_set_int(encoderCtx, "b", signedBr * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", signedBr * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", signedBr * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", signedBr * 500, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
         JAMI_DEBUG("H265 encoder setup cbr: bitrate={:d} kbit/s", br);
     }
@@ -981,11 +984,11 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         // 2- otherwise set rc_max_rate and rc_buffer_size
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
-        uint64_t maxBitrate = 1000 * br;
+        int64_t maxBitrate = static_cast<int64_t>(1000 * br);
         // 200 Kbit/s    -> CRF40
         // 6 Mbit/s      -> CRF23
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + LOGREG_PARAM_B * std::log(maxBitrate));
-        uint64_t bufSize = maxBitrate / 2;
+        int64_t bufSize = maxBitrate / 2;
 
         av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
@@ -1012,8 +1015,8 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
 void
 MediaEncoder::initMPEG4(AVCodecContext* encoderCtx, uint64_t br)
 {
-    uint64_t maxBitrate = 1000 * br;
-    uint64_t bufSize = maxBitrate / 2;
+    int64_t maxBitrate = static_cast<int64_t>(1000 * br);
+    int bufSize = static_cast<int>(maxBitrate / 2);
 
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
@@ -1024,8 +1027,8 @@ MediaEncoder::initMPEG4(AVCodecContext* encoderCtx, uint64_t br)
 void
 MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 {
-    uint64_t maxBitrate = 1000 * br;
-    uint64_t bufSize = maxBitrate / 2;
+    int64_t maxBitrate = static_cast<int64_t>(1000 * br);
+    int bufSize = static_cast<int>(maxBitrate) / 2;
 
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
@@ -1045,6 +1048,7 @@ void
 MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
 {
 #ifdef ENABLE_HWACCEL
+    float val = static_cast<float>(br) * 1000.0f * 0.8f;
     if (not accel_)
         return;
     if (accel_->getName() == "nvenc"sv) {
@@ -1052,13 +1056,13 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
     } else if (accel_->getName() == "vaapi"sv) {
         // Use VBR encoding with bitrate target set to 80% of the maxrate
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", static_cast<int64_t>(val), AV_OPT_SEARCH_CHILDREN);
     } else if (accel_->getName() == "videotoolbox"sv) {
-        av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", static_cast<int64_t>(val), AV_OPT_SEARCH_CHILDREN);
     } else if (accel_->getName() == "qsv"sv) {
         // Use Video Conferencing Mode
         av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", static_cast<int64_t>(val), AV_OPT_SEARCH_CHILDREN);
     }
 #endif
 }
@@ -1066,7 +1070,7 @@ MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
 AVCodecContext*
 MediaEncoder::getCurrentVideoAVCtx()
 {
-    for (auto it : encoders_) {
+    for (auto* it : encoders_) {
         if (it->codec_type == AVMEDIA_TYPE_VIDEO)
             return it;
     }
@@ -1076,7 +1080,7 @@ MediaEncoder::getCurrentVideoAVCtx()
 AVCodecContext*
 MediaEncoder::getCurrentAudioAVCtx()
 {
-    for (auto it : encoders_) {
+    for (auto* it : encoders_) {
         if (it->codec_type == AVMEDIA_TYPE_AUDIO)
             return it;
     }
@@ -1148,7 +1152,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
                 return;
             }
             for (Json::Value::const_iterator it = config.begin(); it != config.end(); ++it) {
-                Json::Value v = *it;
+                const Json::Value& v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
                     || !v.isConvertibleTo(Json::ValueType::stringValue)) {
                     JAMI_ERR() << "Invalid configuration for '" << name << "'";
@@ -1184,10 +1188,10 @@ MediaEncoder::testH265Accel()
         for (const auto& it : APIs) {
             accel = std::make_unique<video::HardwareAccel>(it); // save accel
             // Init codec need accel to init encoderCtx accelerated
-            auto outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
+            const auto* outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
 
             AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
-            encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), 16u);
+            encoderCtx->thread_count = static_cast<int>(std::min(std::thread::hardware_concurrency(), 16u));
             encoderCtx->width = 1280;
             encoderCtx->height = 720;
             AVRational framerate;
@@ -1198,7 +1202,7 @@ MediaEncoder::testH265Accel()
             encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
             encoderCtx->opaque = accel.get();
 
-            auto br = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
+            auto br = static_cast<int64_t>(SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
             av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
             av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
             av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
@@ -1253,7 +1257,7 @@ MediaEncoder::getHWFrame(const std::shared_ptr<VideoFrame>& input, std::shared_p
         }
 #elif !defined(__APPLE__) && defined(ENABLE_HWACCEL)
         // Other Platforms
-        auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format()));
+        const auto* desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format()));
         bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
         if (accel_ && accel_->isLinked() && isHardware) {
             // Fully accelerated pipeline, skip main memory
@@ -1329,7 +1333,7 @@ MediaEncoder::resetStreams(int width, int height)
         flush();
         initialized_ = false;
         if (outputCtx_) {
-            for (auto encoderCtx : encoders_) {
+            for (auto* encoderCtx : encoders_) {
                 if (encoderCtx) {
 #ifndef _MSC_VER
                     avcodec_free_context(&encoderCtx);
@@ -1340,7 +1344,8 @@ MediaEncoder::resetStreams(int width, int height)
             }
             encoders_.clear();
         }
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Couldn't reset streams: {}", e.what());
     }
 }
 

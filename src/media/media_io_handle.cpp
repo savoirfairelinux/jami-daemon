@@ -33,9 +33,9 @@ MediaIOHandle::MediaIOHandle(std::size_t buffer_size,
      * alloc it afterwards.
      * Don't directly use malloc because av_malloc is optimized for memory alignment.
      */
-    auto buf = static_cast<uint8_t*>(av_malloc(buffer_size));
-    ctx_ = avio_alloc_context(buf, buffer_size, writeable, opaque, read_cb, write_cb, seek_cb);
-    ctx_->max_packet_size = buffer_size;
+    auto* buf = static_cast<uint8_t*>(av_malloc(buffer_size));
+    ctx_ = avio_alloc_context(buf, static_cast<int>(buffer_size), writeable, opaque, read_cb, write_cb, seek_cb);
+    ctx_->max_packet_size = static_cast<int>(buffer_size);
 }
 
 MediaIOHandle::~MediaIOHandle()

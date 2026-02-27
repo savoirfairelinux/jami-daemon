@@ -19,10 +19,7 @@
 #include "media_decoder.h"
 #include "media_device.h"
 #include "media_buffer.h"
-#include "media_const.h"
 #include "media_io_handle.h"
-#include "audio/ringbuffer.h"
-#include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "decoder_finder.h"
 #include "manager.h"
@@ -35,8 +32,8 @@
 #include "logger.h"
 #include "client/jami_signal.h"
 
-#include <iostream>
 #include <unistd.h>
+#include <cstddef>
 #include <thread> // hardware_concurrency
 #include <chrono>
 #include <algorithm>
@@ -48,8 +45,6 @@ namespace jami {
 const unsigned jitterBufferMaxSize_ {1500};
 // maximum time a packet can be queued
 const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
-// maximum number of times accelerated decoding can fail in a row before falling back to software
-const constexpr unsigned MAX_ACCEL_FAILURES {5};
 
 MediaDemuxer::MediaDemuxer()
     : inputCtx_(avformat_alloc_context())
@@ -92,7 +87,7 @@ int
 MediaDemuxer::openInput(const DeviceParams& params)
 {
     inputParams_ = params;
-    auto iformat = av_find_input_format(params.format.c_str());
+    const auto* iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat && !params.format.empty())
         JAMI_WARN("Unable to find format \"%s\"", params.format.c_str());
@@ -221,7 +216,7 @@ void
 MediaDemuxer::findStreamInfo(bool videoStream)
 {
     if (not streamInfoFound_) {
-        inputCtx_->max_analyze_duration = 30 * AV_TIME_BASE;
+        inputCtx_->max_analyze_duration = 30l * AV_TIME_BASE;
         if (videoStream && keyFrameRequestCb_) {
             if (!streamInfoTimer_)
                 streamInfoTimer_ = std::make_unique<asio::steady_timer>(*Manager::instance().ioContext());
@@ -256,7 +251,7 @@ MediaDemuxer::selectStream(AVMediaType type)
 {
     auto sti = av_find_best_stream(inputCtx_, type, -1, -1, nullptr, 0);
     if (type == AVMEDIA_TYPE_VIDEO && sti >= 0) {
-        auto st = inputCtx_->streams[sti];
+        auto* st = inputCtx_->streams[sti];
         auto disposition = st->disposition;
         if (disposition & AV_DISPOSITION_ATTACHED_PIC) {
             JAMI_DBG("Skipping attached picture stream");
@@ -406,7 +401,7 @@ MediaDemuxer::decode()
             JAMI_ERR("Unable to read frame: %s\n", libav_utils::getError(ret).c_str());
             return Status::ReadError;
         }
-        auto codecpar = inputCtx_->streams[0]->codecpar;
+        auto* codecpar = inputCtx_->streams[0]->codecpar;
         if (baseHeight_ != codecpar->height || baseWidth_ != codecpar->width) {
             baseHeight_ = codecpar->height;
             baseWidth_ = codecpar->width;
@@ -440,9 +435,9 @@ MediaDemuxer::decode()
         return Status::RestartRequired;
     } else if (ret < 0) {
         auto media = inputCtx_->streams[0]->codecpar->codec_type;
-        const auto type = media == AVMediaType::AVMEDIA_TYPE_AUDIO
-                              ? "AUDIO"
-                              : (media == AVMediaType::AVMEDIA_TYPE_VIDEO ? "VIDEO" : "UNSUPPORTED");
+        const auto* const type = media == AVMediaType::AVMEDIA_TYPE_AUDIO
+                                     ? "AUDIO"
+                                     : (media == AVMediaType::AVMEDIA_TYPE_VIDEO ? "VIDEO" : "UNSUPPORTED");
         JAMI_ERR("Unable to read [%s] frame: %s\n", type, libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
@@ -608,7 +603,7 @@ MediaDecoder::setupStream()
              inputDecoder_->long_name,
              inputDecoder_->name,
              av_get_media_type_string(avStream_->codecpar->codec_type));
-    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency() / 2));
+    decoderCtx_->thread_count = std::max(1, std::min(8, static_cast<int>(std::thread::hardware_concurrency()) / 2));
     if (emulateRate_)
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // Used to set pts after decoding, and for rate emulation
@@ -705,7 +700,7 @@ MediaDecoder::decode(AVPacket& packet)
 #else
     auto f = std::static_pointer_cast<MediaFrame>(std::make_shared<AudioFrame>());
 #endif
-    auto frame = f->pointer();
+    auto* frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
     // time_base is not set in AVCodecContext for decoding
     // fail to set it causes pts to be incorrectly computed down in the function
@@ -754,7 +749,7 @@ MediaDecoder::decode(AVPacket& packet)
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
             rational<double> frame_time = rational<double>(getTimeBase())
-                                          * rational<double>(packetTimestamp - startTime);
+                                          * rational<double>(static_cast<double>(packetTimestamp - startTime));
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto target_absolute = startTime_ + target_relative;
             if (target_relative < seekTime_) {
@@ -907,7 +902,7 @@ MediaDecoder::correctPixFmt(int input_pix_fmt)
 }
 
 MediaStream
-MediaDecoder::getStream(std::string name) const
+MediaDecoder::getStream(const std::string& name) const
 {
     if (!decoderCtx_) {
         JAMI_WARN("No decoder context");

@@ -19,7 +19,6 @@
 #include "media/congestion_control.h"
 
 #include <cstdint>
-#include <utility>
 #include <cmath>
 
 namespace jami {
@@ -121,7 +120,7 @@ CongestionControl::createREMB(uint64_t bitrate_bps)
 }
 
 float
-CongestionControl::kalmanFilter(uint64_t gradiant_delay)
+CongestionControl::kalmanFilter(int gradiant_delay)
 {
     float var_n = get_var_n(gradiant_delay);
     float k = get_gain_k(Q, var_n);
@@ -138,7 +137,7 @@ CongestionControl::get_estimate_m(float k, int d_m)
 {
     // JAMI_WARN("[get_estimate_m]k:%f, last_estimate_m_:%f, d_m:%f", k, last_estimate_m_, d_m);
     // JAMI_WARN("m: %f", ((1-k) * last_estimate_m_) + (k * d_m));
-    return ((1 - k) * last_estimate_m_) + (k * d_m);
+    return ((1 - k) * last_estimate_m_) + (k * static_cast<float>(d_m));
 }
 
 float
@@ -164,10 +163,10 @@ CongestionControl::get_var_n(int d_m)
 }
 
 float
-CongestionControl::get_residual_z(float d_m)
+CongestionControl::get_residual_z(int d_m)
 {
     // JAMI_WARN("z: %f", d_m - last_estimate_m_);
-    return (d_m - last_estimate_m_);
+    return (static_cast<float>(d_m) - last_estimate_m_);
 }
 
 float
@@ -178,7 +177,7 @@ CongestionControl::update_thresh(float m, int deltaT)
         ky = kd;
     else
         ky = ku;
-    float res = last_thresh_y_ + ((deltaT * ky) * (std::fabs(m) - last_thresh_y_));
+    float res = last_thresh_y_ + ((static_cast<float>(deltaT) * ky) * (std::fabs(m) - last_thresh_y_));
     last_thresh_y_ = res;
     return res;
 }

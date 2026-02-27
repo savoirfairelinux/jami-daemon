@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <stdlib.h>
 #include <assert.h>
 #include <libavutil/common.h>
 #include <libavutil/base64.h>
@@ -27,6 +26,7 @@
 #include <libavutil/hmac.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/log.h>
+#include <stddef.h>
 #include "srtp.h"
 
 #include "connectivity/security/memory.h"
@@ -34,9 +34,9 @@
 void ff_srtp_free(struct SRTPContext *s)
 {
     uint8_t zero_buffer[32] = {0}; // WARNING: must be long enough to handle any key length
-    assert(sizeof(zero_buffer) >= sizeof(s->master_key));
-    assert(sizeof(zero_buffer) >= sizeof(s->rtp_key));
-    assert(sizeof(zero_buffer) >= sizeof(s->rtp_auth));
+    static_assert(sizeof(zero_buffer) >= sizeof(s->master_key), "");
+    static_assert(sizeof(zero_buffer) >= sizeof(s->rtp_key), "");
+    static_assert(sizeof(zero_buffer) >= sizeof(s->rtp_auth), "");
 
     if (!s)
         return;
@@ -44,7 +44,7 @@ void ff_srtp_free(struct SRTPContext *s)
     // No API to safely erase them, so just re-init with "dummy keys" to sanitize them
     if (s->aes) {
         av_aes_init(s->aes, zero_buffer, 128, 0);
-        av_freep(&s->aes);
+        av_freep((void*)&s->aes);
     }
     if (s->hmac) {
         av_hmac_init(s->hmac, zero_buffer, sizeof(s->rtp_auth));
@@ -235,7 +235,7 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
         buf += 12;
         len -= 12;
 
-        buf += 4 * csrc;
+        buf += (ptrdiff_t)4 * csrc;
         len -= 4 * csrc;
         if (len < 0)
             return AVERROR_INVALIDDATA;
@@ -308,7 +308,7 @@ int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
         buf += 12;
         len -= 12;
 
-        buf += 4 * csrc;
+        buf += (ptrdiff_t)4 * csrc;
         len -= 4 * csrc;
         if (len < 0)
             return AVERROR_INVALIDDATA;
@@ -344,5 +344,5 @@ int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
 
     memcpy(buf + len, hmac, hmac_size);
     len += hmac_size;
-    return buf + len - out;
+    return (int)(buf + len - out);
 }

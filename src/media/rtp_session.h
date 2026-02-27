@@ -17,7 +17,6 @@
 #pragma once
 
 #include "socket_pair.h"
-#include "connectivity/sip_utils.h"
 #include "media/media_codec.h"
 
 #include <functional>
@@ -33,7 +32,7 @@ class RtpSession
 {
 public:
     // Media direction
-    enum class Direction { SEND, RECV };
+    enum class Direction : uint8_t { SEND, RECV };
 
     // Note: callId is used for ring buffers and smarttools
     RtpSession(const std::string& callId, const std::string& streamId, MediaType type)

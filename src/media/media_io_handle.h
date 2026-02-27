@@ -22,7 +22,6 @@
 
 #include <cstdlib>
 #include <cstdint>
-#include <vector>
 
 #ifndef AVFORMAT_AVIO_H
 struct AVIOContext;

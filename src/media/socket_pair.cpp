@@ -21,16 +21,13 @@
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
 #include "socket_pair.h"
-#include "libav_utils.h"
 #include "logger.h"
 #include "connectivity/security/memory.h"
 
 #include <dhtnet/ice_socket.h>
 
-#include <iostream>
 #include <string>
 #include <algorithm>
-#include <iterator>
 
 extern "C" {
 #include "srtp.h"
@@ -80,7 +77,7 @@ static constexpr auto SRTP_OVERHEAD = 10;
 static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
 static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 
-enum class DataType : unsigned { RTP = 1 << 0, RTCP = 1 << 1 };
+enum class DataType : uint8_t { RTP = 1 << 0, RTCP = 1 << 1 };
 
 class SRTPProtoContext
 {
@@ -224,7 +221,7 @@ SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
     if (len < sizeof(rtcpRRHeader))
         return;
 
-    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+    auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
     if (header->pt != 201) // 201 = RR PT
         return;
 
@@ -245,7 +242,7 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
     if (len < sizeof(rtcpREMBHeader))
         return;
 
-    auto header = reinterpret_cast<rtcpREMBHeader*>(buf);
+    auto* header = reinterpret_cast<rtcpREMBHeader*>(buf);
     if (header->pt != 206) // 206 = REMB PT
         return;
 
@@ -428,12 +425,12 @@ SocketPair::readRtpData(void* buf, int buf_size)
     if (rtpHandle_ >= 0) {
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtpHandle_,
-                        static_cast<char*>(buf),
-                        buf_size,
-                        0,
-                        reinterpret_cast<struct sockaddr*>(&from),
-                        &from_len);
+        return static_cast<int>(recvfrom(rtpHandle_,
+                                         static_cast<char*>(buf),
+                                         buf_size,
+                                         0,
+                                         reinterpret_cast<struct sockaddr*>(&from),
+                                         &from_len));
     }
 
     // handle ICE
@@ -442,7 +439,7 @@ SocketPair::readRtpData(void* buf, int buf_size)
         auto pkt = std::move(rtpDataBuff_.front());
         rtpDataBuff_.pop_front();
         lk.unlock(); // to not block our ICE callbacks
-        int pkt_size = pkt.size();
+        int pkt_size = static_cast<int>(pkt.size());
         int len = std::min(pkt_size, buf_size);
         std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
         return len;
@@ -458,12 +455,12 @@ SocketPair::readRtcpData(void* buf, int buf_size)
     if (rtcpHandle_ >= 0) {
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtcpHandle_,
-                        static_cast<char*>(buf),
-                        buf_size,
-                        0,
-                        reinterpret_cast<struct sockaddr*>(&from),
-                        &from_len);
+        return static_cast<int>(recvfrom(rtcpHandle_,
+                                         static_cast<char*>(buf),
+                                         buf_size,
+                                         0,
+                                         reinterpret_cast<struct sockaddr*>(&from),
+                                         &from_len));
     }
 
     // handle ICE
@@ -472,7 +469,7 @@ SocketPair::readRtcpData(void* buf, int buf_size)
         auto pkt = std::move(rtcpDataBuff_.front());
         rtcpDataBuff_.pop_front();
         lk.unlock();
-        int pkt_size = pkt.size();
+        int pkt_size = static_cast<int>(pkt.size());
         int len = std::min(pkt_size, buf_size);
         std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
         return len;
@@ -494,7 +491,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
         if (len > 0) {
-            auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+            auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
             // 201 = RR PT
             if (header->pt == 201) {
                 lastDLSR_ = Swap4Bytes(header->dlsr);
@@ -583,7 +580,8 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 
         if (noWrite_)
             return buf_size;
-        return ::sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0, *dest_addr, dest_addr->getLength());
+        return static_cast<int>(
+            ::sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0, *dest_addr, dest_addr->getLength()));
     }
 
     if (noWrite_)
@@ -591,9 +589,9 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 
     // IceSocket
     if (isRTCP)
-        return rtcp_sock_->send(buf, buf_size);
+        return static_cast<int>(rtcp_sock_->send(buf, buf_size));
     else
-        return rtp_sock_->send(buf, buf_size);
+        return static_cast<int>(rtp_sock_->send(buf, buf_size));
 }
 
 int
@@ -625,7 +623,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // check if we're sending an RR, if so, detect packet loss
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
-        auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        auto* header = reinterpret_cast<rtcpRRHeader*>(buf);
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
@@ -637,7 +635,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 
     if (buf[1] == 200) // Sender Report
     {
-        auto header = reinterpret_cast<rtcpSRHeader*>(buf);
+        auto* header = reinterpret_cast<rtcpSRHeader*>(buf);
         ts_LSB = Swap4Bytes(header->timestampLSB);
         ts_MSB = Swap4Bytes(header->timestampMSB);
 
@@ -689,19 +687,20 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
     }
 
     // 1st frame
-    if (not lastSendTS_) {
+    if (lastSendTS_ == 0.0f) {
         lastSendTS_ = sendTS;
         lastReceiveTS_ = std::chrono::steady_clock::now();
         return 0;
     }
 
-    int32_t deltaS = (sendTS - lastSendTS_) * 1000; // milliseconds
+    int32_t deltaS = static_cast<int32_t>(sendTS - lastSendTS_) * 1000; // milliseconds
     if (deltaS < 0)
         deltaS += 64000;
     lastSendTS_ = sendTS;
 
     std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
-    auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_).count();
+    auto deltaR = static_cast<int32_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_).count());
     lastReceiveTS_ = arrival_TS;
 
     *gradient = deltaR - deltaS;
@@ -722,9 +721,9 @@ SocketPair::parse_RTP_ext(uint8_t* buf, float* abs)
 
     uint8_t sec = buf[17] >> 2;
     uint32_t fract = ((buf[17] & 0x3) << 16 | (buf[18] << 8) | buf[19]) << 14;
-    float milli = fract / pow(2, 32);
+    float milli = static_cast<float>(fract / pow(2, 32));
 
-    *abs = sec + (milli);
+    *abs = static_cast<float>(sec) + (milli);
     return true;
 }
 
