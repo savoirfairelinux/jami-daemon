@@ -25,11 +25,11 @@
 #include <asio.hpp>
 #include <asio/detail/deadline_timer_service.hpp>
 
+#include <utility>
 #include <vector>
 #include <memory>
 #include <list>
 #include <set>
-#include <algorithm>
 
 using NodeId = dht::PkId;
 
@@ -43,13 +43,13 @@ struct NodeInfo
     std::shared_ptr<dhtnet::ChannelSocketInterface> socket {};
     asio::steady_timer refresh_timer {*Manager::instance().ioContext(), FIND_PERIOD};
     NodeInfo() = delete;
-    NodeInfo(NodeInfo&&) = default;
+    NodeInfo(NodeInfo&&) noexcept = default;
     NodeInfo(std::shared_ptr<dhtnet::ChannelSocketInterface> socket_)
-        : socket(socket_)
+        : socket(std::move(socket_))
     {}
     NodeInfo(bool mobile, std::shared_ptr<dhtnet::ChannelSocketInterface> socket_)
         : isMobile_(mobile)
-        , socket(socket_)
+        , socket(std::move(socket_))
     {}
 };
 
