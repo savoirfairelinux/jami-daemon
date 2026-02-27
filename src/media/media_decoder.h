@@ -21,11 +21,9 @@
 #endif
 
 #include "rational.h"
-#include "observer.h"
 
 #ifdef ENABLE_VIDEO
 #include "video/video_base.h"
-#include "video/video_scaler.h"
 #endif // ENABLE_VIDEO
 
 #ifdef ENABLE_HWACCEL
@@ -33,20 +31,15 @@
 #endif
 #include "logger.h"
 
-#include "audio/audio_format.h"
-
 #include "media_device.h"
 #include "media_stream.h"
 #include "media_buffer.h"
-#include "media_attribute.h"
 #include "noncopyable.h"
 
 #include <asio/steady_timer.hpp>
 
-#include <map>
 #include <string>
 #include <memory>
-#include <chrono>
 #include <queue>
 
 extern "C" {
@@ -74,7 +67,15 @@ class Resampler;
 class MediaIOHandle;
 class MediaDecoder;
 
-enum class DecodeStatus { Success, FrameFinished, EndOfFile, ReadError, DecodeError, RestartRequired, FallBack };
+enum class DecodeStatus : uint8_t {
+    Success,
+    FrameFinished,
+    EndOfFile,
+    ReadError,
+    DecodeError,
+    RestartRequired,
+    FallBack
+};
 
 class MediaDemuxer : public std::enable_shared_from_this<MediaDemuxer>
 {
@@ -82,11 +83,11 @@ public:
     MediaDemuxer();
     ~MediaDemuxer();
 
-    enum class Status { Success, EndOfFile, ReadBufferOverflow, ReadError, FallBack, RestartRequired };
+    enum class Status : uint8_t { Success, EndOfFile, ReadBufferOverflow, ReadError, FallBack, RestartRequired };
 
     static const char* getStatusStr(Status status);
 
-    enum class CurrentState { Demuxing, Finished };
+    enum class CurrentState : uint8_t { Demuxing, Finished };
     using StreamCallback = std::function<DecodeStatus(AVPacket&)>;
 
     int openInput(const DeviceParams&);
@@ -196,7 +197,7 @@ public:
     void enableAccel(bool enableAccel);
 #endif
 
-    MediaStream getStream(std::string name = "") const;
+    MediaStream getStream(const std::string& name = "") const;
 
     void setResolutionChangedCallback(std::function<void(int, int)> cb) { resolutionChangedCallback_ = std::move(cb); }
 

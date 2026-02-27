@@ -20,16 +20,11 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "video/video_base.h"
 #include "logger.h"
 
-#include <vector>
 #include <algorithm>
 #include <string>
-#include <iostream>
-#include <thread>
 #include <mutex>
-#include <exception>
 
 extern "C" {
 #if LIBAVUTIL_VERSION_MAJOR < 56
@@ -54,7 +49,7 @@ choose_sample_fmt(const AVCodec* codec, const AVSampleFormat* preferred_formats,
 {
     if (codec->sample_fmts)
         for (int i = 0; i < preferred_formats_count; ++i) {
-            for (auto it = codec->sample_fmts; *it != -1; ++it) {
+            for (const auto* it = codec->sample_fmts; *it != -1; ++it) {
                 if (*it == preferred_formats[i])
                     return preferred_formats[i];
             }
@@ -245,7 +240,7 @@ getError(int err)
 const char*
 getDictValue(const AVDictionary* d, const std::string& key, int flags)
 {
-    auto kv = av_dict_get(d, key.c_str(), nullptr, flags);
+    auto* kv = av_dict_get(d, key.c_str(), nullptr, flags);
     if (kv)
         return kv->value;
     else

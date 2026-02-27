@@ -165,7 +165,7 @@ MediaAttribute::toMediaMap(const MediaAttribute& mediaAttr)
 }
 
 std::vector<libjami::MediaMap>
-MediaAttribute::mediaAttributesToMediaMaps(std::vector<MediaAttribute> mediaAttrList)
+MediaAttribute::mediaAttributesToMediaMaps(const std::vector<MediaAttribute>& mediaAttrList)
 {
     std::vector<libjami::MediaMap> mediaList;
     mediaList.reserve(mediaAttrList.size());

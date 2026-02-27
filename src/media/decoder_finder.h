@@ -26,7 +26,7 @@ namespace jami {
  * Attempt to find standalone AVCodec decoder using AVCodecID,
  * or fallback to the default decoder.
  */
-const AVCodec*
+inline const AVCodec*
 findDecoder(const enum AVCodecID codec_id)
 {
     const char* codec_name;

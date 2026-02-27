@@ -71,11 +71,11 @@ struct MediaStream
         : name(streamName)
         , format(fmt.sampleFormat)
         , isVideo(false)
-        , timeBase(1, fmt.sample_rate)
+        , timeBase(1, static_cast<int>(fmt.sample_rate))
         , firstTimestamp(startTimestamp)
-        , sampleRate(fmt.sample_rate)
-        , nbChannels(fmt.nb_channels)
-        , frameSize(fmt.sample_rate / 50) // standard frame size for our encoder is 20 ms
+        , sampleRate(static_cast<int>(fmt.sample_rate))
+        , nbChannels(static_cast<int>(fmt.nb_channels))
+        , frameSize(static_cast<int>(fmt.sample_rate) / 50) // standard frame size for our encoder is 20 ms
     {}
 
     MediaStream(const std::string& streamName, AVCodecContext* c)
@@ -94,7 +94,7 @@ struct MediaStream
                 isVideo = true;
                 width = c->width;
                 height = c->height;
-                bitrate = c->bit_rate;
+                bitrate = static_cast<int>(c->bit_rate);
                 frameRate = c->framerate;
                 break;
             case AVMEDIA_TYPE_AUDIO:
@@ -153,7 +153,7 @@ inline std::ostream&
 operator<<(std::ostream& os, const MediaStream& ms)
 {
     if (ms.isVideo) {
-        auto formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
+        const auto* formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
         os << (ms.name.empty() ? "(null)" : ms.name) << ": " << (formatName ? formatName : "(unknown format)")
            << " video, " << ms.width << "x" << ms.height << ", " << ms.frameRate << " fps (" << ms.timeBase << ")";
         if (ms.bitrate > 0)

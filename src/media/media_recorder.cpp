@@ -17,11 +17,9 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "client/jami_signal.h"
-#include "fileutils.h"
 #include "logger.h"
 #include "manager.h"
 #include "media_buffer.h"
-#include "media_io_handle.h"
 #include "media_recorder.h"
 #include "media_filter.h"
 #include "system_codec_container.h"
@@ -42,6 +40,7 @@
 #include <sys/types.h>
 #include <memory>
 #include <ctime>
+#include <utility>
 
 namespace jami {
 
@@ -68,7 +67,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
 
     StreamObserver(const MediaStream& ms, std::function<void(const std::shared_ptr<MediaFrame>&)> func)
         : info(ms)
-        , cb_(func) {};
+        , cb_(std::move(func)) {};
 
     ~StreamObserver()
     {
@@ -91,7 +90,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
         if (info.isVideo) {
             std::shared_ptr<VideoFrame> framePtr;
 #ifdef ENABLE_HWACCEL
-            auto desc = av_pix_fmt_desc_get((AVPixelFormat) (std::static_pointer_cast<VideoFrame>(m))->format());
+            const auto* desc = av_pix_fmt_desc_get((AVPixelFormat) (std::static_pointer_cast<VideoFrame>(m))->format());
             if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
                 try {
                     framePtr = jami::video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m),
@@ -373,7 +372,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     const auto& ms = streams_[name]->info;
 #if defined(ENABLE_VIDEO) && defined(ENABLE_HWACCEL)
     if (ms.isVideo) {
-        auto desc = av_pix_fmt_desc_get((AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
+        const auto* desc = av_pix_fmt_desc_get((AVPixelFormat) (std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
             try {
                 clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
@@ -609,7 +608,7 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
         v << "[" << local.name << "] fps=30, format=pix_fmts=yuv420p";
         break;
     case 1: {
-        auto p = peers[0];
+        const auto& p = peers[0];
         const constexpr int minHeight = 720;
         const bool needScale = (p.height < minHeight);
         const int newHeight = (needScale ? minHeight : p.height);

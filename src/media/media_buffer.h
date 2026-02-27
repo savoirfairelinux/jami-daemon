@@ -21,7 +21,6 @@
 #endif
 
 #include "videomanager_interface.h"
-#include "observer.h"
 
 #include <memory>
 #include <functional>

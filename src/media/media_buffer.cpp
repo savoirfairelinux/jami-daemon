@@ -16,11 +16,8 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "libav_utils.h"
 #include "media_buffer.h"
-#include "jami/videomanager_interface.h"
 
-#include <new> // std::bad_alloc
 #include <cstdlib>
 #include <cstring> // std::memset
 

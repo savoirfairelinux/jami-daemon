@@ -31,10 +31,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <queue>
-#include <stdexcept>
 #include <string>
-#include <utility>
 #include <condition_variable>
 #include <atomic>
 
