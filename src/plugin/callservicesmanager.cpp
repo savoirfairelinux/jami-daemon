@@ -42,7 +42,7 @@ CallServicesManager::~CallServicesManager()
 void
 CallServicesManager::createAVSubject(const StreamData& data, AVSubjectSPtr subject)
 {
-    auto predicate = [&data](std::pair<const StreamData, AVSubjectSPtr> item) {
+    auto predicate = [&data](const std::pair<const StreamData, AVSubjectSPtr>& item) {
         return data.id == item.first.id && data.direction == item.first.direction && data.type == item.first.type;
     };
     callAVsubjects_[data.id].remove_if(predicate);

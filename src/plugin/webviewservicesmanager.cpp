@@ -19,14 +19,9 @@
 #include "client/jami_signal.h"
 #include "pluginmanager.h"
 #include "logger.h"
-#include "manager.h"
-#include "jamidht/jamiaccount.h"
-#include "fileutils.h"
 #include "plugin_manager_interface.h"
 #include "pluginsutils.h"
 #include "webviewmessage.h"
-#include <cstdint>
-#include <vector>
 
 namespace jami {
 

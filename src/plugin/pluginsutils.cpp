@@ -282,7 +282,7 @@ std::string
 getLanguage()
 {
     std::string lang;
-    if (auto envLang = std::getenv("JAMI_LANG"))
+    if (auto* envLang = std::getenv("JAMI_LANG"))
         lang = envLang;
     else
         JAMI_INFO() << "Error getting JAMI_LANG env, attempting to get system language";

@@ -85,7 +85,7 @@ ChatServicesManager::registerChatService(PluginManager& pluginManager)
 {
     // sendTextMessage is a service that allows plugins to send a message in a conversation.
     auto sendTextMessage = [](const DLPlugin*, void* data) {
-        auto cm = static_cast<JamiMessage*>(data);
+        auto* cm = static_cast<JamiMessage*>(data);
         if (const auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(cm->accountId)) {
             try {
                 if (cm->isSwarm)
@@ -121,7 +121,7 @@ ChatServicesManager::getChatHandlers() const
 }
 
 void
-ChatServicesManager::publishMessage(pluginMessagePtr message)
+ChatServicesManager::publishMessage(const pluginMessagePtr& message)
 {
     if (message->fromPlugin or chatHandlers_.empty())
         return;

@@ -23,7 +23,6 @@
 
 #include <list>
 #include <map>
-#include <tuple>
 
 namespace jami {
 

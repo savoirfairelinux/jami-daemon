@@ -26,8 +26,6 @@
 #include <vector>
 #include <list>
 
-#include <inttypes.h>
-
 namespace jami {
 
 /**

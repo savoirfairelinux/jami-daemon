@@ -172,8 +172,8 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
     // Implements JAMI_PluginAPI.invokeService().
     // Must be C accessible.
     pluginPtr->api_.invokeService = [](const JAMI_PluginAPI* api, const char* name, void* data) {
-        auto plugin = static_cast<DLPlugin*>(api->context);
-        auto manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
+        auto* plugin = static_cast<DLPlugin*>(api->context);
+        auto* manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
             JAMI_ERR() << "invokeService called with null plugin API";
             return -1;
@@ -185,12 +185,12 @@ PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin)
     // Implements JAMI_PluginAPI.manageComponents().
     // Must be C accessible.
     pluginPtr->api_.manageComponent = [](const JAMI_PluginAPI* api, const char* name, void* data) {
-        auto plugin = static_cast<DLPlugin*>(api->context);
+        auto* plugin = static_cast<DLPlugin*>(api->context);
         if (!plugin) {
             JAMI_ERR() << "createComponent called with null context";
             return -1;
         }
-        auto manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
+        auto* manager = reinterpret_cast<PluginManager*>(plugin->apiContext_);
         if (!manager) {
             JAMI_ERR() << "createComponent called with null plugin API";
             return -1;
@@ -332,14 +332,14 @@ PluginManager::createObject(const std::string& type)
     const auto& factoryIter = exactMatchMap_.find(type);
     if (factoryIter != exactMatchMap_.end()) {
         const auto& factory = factoryIter->second;
-        auto object = factory.data.create(&op, factory.data.closure);
+        auto* object = factory.data.create(&op, factory.data.closure);
         if (object)
             return {object, factory.deleter};
     }
 
     // Try to find a wildcard match
     for (const auto& factory : wildCardVec_) {
-        auto object = factory.data.create(&op, factory.data.closure);
+        auto* object = factory.data.create(&op, factory.data.closure);
         if (object) {
             // Promote registration to exactMatch_
             // (but keep also wildcard registration for other object types)
@@ -359,7 +359,7 @@ PluginManager::createObject(const std::string& type)
 int32_t
 PluginManager::registerObjectFactory_(const JAMI_PluginAPI* api, const char* type, void* data)
 {
-    auto manager = reinterpret_cast<PluginManager*>(api->context);
+    auto* manager = reinterpret_cast<PluginManager*>(api->context);
     if (!manager) {
         JAMI_ERR() << "registerObjectFactory called with null plugin API";
         return -1;
@@ -370,7 +370,7 @@ PluginManager::registerObjectFactory_(const JAMI_PluginAPI* api, const char* typ
         return -1;
     }
 
-    const auto factory = reinterpret_cast<JAMI_PluginObjectFactory*>(data);
+    auto* const factory = reinterpret_cast<JAMI_PluginObjectFactory*>(data);
     return manager->registerObjectFactory(type, *factory) ? 0 : -1;
 }
 } // namespace jami

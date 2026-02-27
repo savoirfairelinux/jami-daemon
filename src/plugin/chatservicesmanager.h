@@ -61,7 +61,7 @@ public:
      * an active ChatHandler.
      * @param message
      */
-    void publishMessage(pluginMessagePtr message);
+    void publishMessage(const pluginMessagePtr& message);
 
     /**
      * @brief If an account is unregistered or a contact is erased, we clear all chat subjects
