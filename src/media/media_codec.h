@@ -26,31 +26,29 @@
 #include <dhtnet/ip_utils.h>
 #include <cctype>
 #include <string>
-#include <vector>
 #include <map>
 #include <memory>
-#include <iostream>
 #include <unistd.h>
 
 namespace jami {
 
-enum class KeyExchangeProtocol { NONE, SDES };
+enum class KeyExchangeProtocol : uint8_t { NONE, SDES };
 
-enum CodecType : unsigned {
+enum CodecType : uint8_t {
     CODEC_NONE = 0, // indicates that no codec is used or defined
     CODEC_ENCODER = 1,
     CODEC_DECODER = 2,
     CODEC_ENCODER_DECODER = CODEC_ENCODER | CODEC_DECODER
 };
 
-enum MediaType : unsigned {
+enum MediaType : uint8_t {
     MEDIA_NONE = 0, // indicates that no media is used or defined
     MEDIA_AUDIO = 1,
     MEDIA_VIDEO = 2,
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
-enum class RateMode : unsigned { CRF_CONSTRAINED, CQ, CBR };
+enum class RateMode : uint8_t { CRF_CONSTRAINED, CQ, CBR };
 
 /*
  * SystemCodecInfo
@@ -216,12 +214,12 @@ private:
 };
 
 // Possible values for media direction attribute.
-enum class MediaDirection { SENDRECV, SENDONLY, RECVONLY, INACTIVE };
+enum class MediaDirection : uint8_t { SENDRECV, SENDONLY, RECVONLY, INACTIVE };
 
 // Possible values for media transport attribute. 'UNKNOWN' means that the
 // was not set, or not found when parsing. Useful to detect errors when
 // parsing the SDP.
-enum class MediaTransport { RTP_AVP, RTP_SAVP, UNKNOWN };
+enum class MediaTransport : uint8_t { RTP_AVP, RTP_SAVP, UNKNOWN };
 
 /**
  * MediaDescription

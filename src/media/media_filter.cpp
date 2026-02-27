@@ -28,7 +28,6 @@ extern "C" {
 #include <algorithm>
 #include <functional>
 #include <memory>
-#include <sstream>
 #include <thread>
 
 namespace jami {
@@ -56,7 +55,7 @@ MediaFilter::initialize(const std::string& filterDesc, const std::vector<MediaSt
     if (!graph_)
         return fail("Failed to allocate filter graph", AVERROR(ENOMEM));
 
-    graph_->nb_threads = std::max(1u, std::min(8u, std::thread::hardware_concurrency() / 2));
+    graph_->nb_threads = std::max(1, std::min(8, static_cast<int>(std::thread::hardware_concurrency()) / 2));
 
     AVFilterInOut* in;
     AVFilterInOut* out;

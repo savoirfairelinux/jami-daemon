@@ -30,7 +30,6 @@
 #include "media_codec.h"
 #include "media_stream.h"
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>

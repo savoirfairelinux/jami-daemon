@@ -24,7 +24,6 @@
 #include "noncopyable.h"
 #include "video/video_base.h"
 
-#include <map>
 #include <string>
 #include <vector>
 

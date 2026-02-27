@@ -15,13 +15,10 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "audio/ringbufferpool.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "manager.h"
 #include "recordable.h"
-
-#include <iomanip>
 
 namespace jami {
 
