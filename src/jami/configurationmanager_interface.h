@@ -25,7 +25,6 @@
 #include <cstdint>
 
 #include "jami.h"
-#include "security_const.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>

@@ -19,12 +19,10 @@
 
 #include "def.h"
 
-#include <vector>
 #include <functional>
 #include <string>
 #include <map>
 #include <memory>
-#include <type_traits>
 #include <filesystem>
 
 #include "trace-tools.h"
@@ -32,7 +30,7 @@
 namespace libjami {
 
 /* flags for initialization */
-enum InitFlag {
+enum InitFlag : uint16_t {
     LIBJAMI_FLAG_DEBUG = 1 << 0,
     LIBJAMI_FLAG_CONSOLE_LOG = 1 << 1,
     LIBJAMI_FLAG_SYSLOG = 1 << 3,
@@ -192,7 +190,8 @@ private:
     template<typename TCallback>
     auto ioContextWrapper(TCallback&& fun)
     {
-        return [this, fun {std::move(fun)}](auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...)) {
+        return [this, fun {std::forward<TCallback>(fun)}](
+                   auto&&... args) -> decltype(fun(std::forward<decltype(args)>(args)...)) {
             post([fun {std::move(fun)}, forwardArgs = std::make_tuple(std::move(args)...)]() mutable {
                 std::apply(std::move(fun), std::move(forwardArgs));
             });

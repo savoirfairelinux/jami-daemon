@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include "jami.h"
 #include "jamidht/account_manager.h"
 #include "jamidht/conversation.h"
 #include "jamidht/conversationrepository.h"
