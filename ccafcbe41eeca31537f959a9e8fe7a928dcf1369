@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "c459b922_d63f1d9b",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-27T19:16:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9b9ae32c_9c79ef7e",
+      "range": {
+        "startLine": 17,
+        "startChar": 1,
+        "endLine": 18,
+        "endChar": 27
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fcdc9328_04bf5d60",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f02f7358_3cede861",
+        "filename": "src/client/presencemanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-27T19:16:59Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fcdc9328_04bf5d60",
+      "range": {
+        "startLine": 18,
+        "startChar": 0,
+        "endLine": 18,
+        "endChar": 27
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "2b4e52b9_389c839e",
@@ -60,6 +108,30 @@
       "writtenOn": "2026-02-27T19:01:14Z",
       "side": 1,
       "message": "my understanding is that forward is appropriate for template types",
+      "range": {
+        "startLine": 193,
+        "startChar": 27,
+        "endLine": 193,
+        "endChar": 50
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c3e61e27_eee70ae6",
+        "filename": "src/jami/jami.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-27T19:16:59Z",
+      "side": 1,
+      "message": "Yes, as `TCallback` is a template type here.\nFor reference, here is the rule that caused me to make the change: https://clang.llvm.org/extra/clang-tidy/checks/bugprone/move-forwarding-reference.html",
+      "parentUuid": "2b4e52b9_389c839e",
       "range": {
         "startLine": 193,
         "startChar": 27,
