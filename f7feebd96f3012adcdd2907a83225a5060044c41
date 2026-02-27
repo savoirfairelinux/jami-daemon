@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d88ce420_f1aca41a",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 756,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T21:35:44Z",
+      "side": 1,
+      "message": "I think there is technically a race condition here. If the DRT goes from disconnected to connected and then back to disconnected, then the callback will be called twice, the first time with `ok \u003d\u003d true` and the second time with `ok \u003d\u003d false`. The expected result is that `stopTracking` will be called first and `startTracking` second, but the thread pool doesn\u0027t guarantee this, and in theory `stopTracking` could end up being called after `startTracking`, resulting in an incorrect state (conversation where the DRT has no connected nodes but members aren\u0027t tracked).",
+      "range": {
+        "startLine": 755,
+        "startChar": 4,
+        "endLine": 756,
+        "endChar": 43
+      },
+      "revId": "f7feebd96f3012adcdd2907a83225a5060044c41",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
