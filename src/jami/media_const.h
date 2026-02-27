@@ -18,8 +18,6 @@
 #ifndef LIBJAMI_MEDIA_H
 #define LIBJAMI_MEDIA_H
 
-#include "def.h"
-
 namespace libjami {
 
 namespace Media {

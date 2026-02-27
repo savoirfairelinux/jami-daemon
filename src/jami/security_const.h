@@ -17,8 +17,6 @@
 #ifndef LIBJAMI_SECURITY_H
 #define LIBJAMI_SECURITY_H
 
-#include "def.h"
-
 namespace libjami {
 
 namespace Certificate {

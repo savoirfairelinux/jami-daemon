@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "presence_const.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
