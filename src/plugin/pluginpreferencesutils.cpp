@@ -19,7 +19,6 @@
 #include "pluginsutils.h"
 
 #include <msgpack.hpp>
-#include <sstream>
 #include <fstream>
 #include <fmt/core.h>
 
@@ -117,7 +116,6 @@ PluginPreferencesUtils::getPreferences(const std::filesystem::path& rootPath, co
             // Read each preference described in preference.json individually
             for (unsigned i = 0; i < root.size(); i++) {
                 const Json::Value& jsonPreference = root[i];
-                std::string category = jsonPreference.get("category", "NoCategory").asString();
                 std::string type = jsonPreference.get("type", "None").asString();
                 std::string key = jsonPreference.get("key", "None").asString();
                 // The preference must have at least type and key

@@ -16,8 +16,7 @@
  */
 #pragma once
 
-#include <inttypes.h>
-
+#include <cstdint>
 #ifdef __cplusplus
 #define EXTERNAL_C_LINKAGE extern "C"
 // clang-format off
@@ -118,5 +117,5 @@ C_INTERFACE_END;
 
 /* Default case (like POSIX/.so) */
 
-#define JAMI_PLUGIN_INIT(fname, pname) (EXTERNAL_C_LINKAGE JAMI_PluginExitFunc fname(const JAMI_PluginAPI* pname))
+#define JAMI_PLUGIN_INIT(fname, pname) (EXTERNAL_C_LINKAGE JAMI_PluginExitFunc fname(const JAMI_PluginAPI*(pname)))
 #define JAMI_PLUGIN_EXIT(fname)        (EXTERNAL_C_LINKAGE void fname(void))

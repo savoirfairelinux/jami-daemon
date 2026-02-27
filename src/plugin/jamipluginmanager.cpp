@@ -22,10 +22,10 @@
 #include "logger.h"
 #include "manager.h"
 #include "jami/plugin_manager_interface.h"
+// NOLINTNEXTLINE
 #include "store_ca_crt.cpp"
 
 #include <fstream>
-#include <stdexcept>
 #include <msgpack.hpp>
 
 #define FAILURE                         -1
@@ -502,14 +502,14 @@ JamiPluginManager::registerServices()
 {
     // Register getPluginPreferences so that plugin's can receive it's preferences
     pm_.registerService("getPluginPreferences", [](const DLPlugin* plugin, void* data) {
-        auto ppp = static_cast<std::map<std::string, std::string>*>(data);
+        auto* ppp = static_cast<std::map<std::string, std::string>*>(data);
         *ppp = PluginPreferencesUtils::getPreferencesValuesMap(PluginUtils::getRootPathFromSoPath(plugin->getPath()));
         return SUCCESS;
     });
 
     // Register getPluginDataPath so that plugin's can receive the path to it's data folder
     pm_.registerService("getPluginDataPath", [](const DLPlugin* plugin, void* data) {
-        auto dataPath = static_cast<std::string*>(data);
+        auto* dataPath = static_cast<std::string*>(data);
         dataPath->assign(PluginUtils::dataPath(plugin->getPath()).string());
         return SUCCESS;
     });
@@ -517,7 +517,7 @@ JamiPluginManager::registerServices()
     // getPluginAccPreferences is a service that allows plugins to load saved per account preferences.
     auto getPluginAccPreferences = [](const DLPlugin* plugin, void* data) {
         const auto path = PluginUtils::getRootPathFromSoPath(plugin->getPath());
-        auto preferencesPtr {(static_cast<PreferencesMap*>(data))};
+        auto* preferencesPtr {(static_cast<PreferencesMap*>(data))};
         if (!preferencesPtr)
             return FAILURE;
 

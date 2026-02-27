@@ -19,7 +19,6 @@
 #include "noncopyable.h"
 #include "plugin/webviewservicesmanager.h"
 #include "pluginmanager.h"
-#include "pluginpreferencesutils.h"
 
 #include "callservicesmanager.h"
 #include "chatservicesmanager.h"
@@ -27,8 +26,6 @@
 #include <opendht/crypto.h>
 #include <vector>
 #include <map>
-#include <list>
-#include <algorithm>
 
 namespace jami {
 

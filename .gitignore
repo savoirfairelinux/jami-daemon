@@ -34,11 +34,16 @@ build
 # Binary translation files
 *.mo
 libtool
+
 # The test binary
 *Tester
 *orig
 *.1
 *-glue.h
+
+# Unit test executables
+ut_*
+!ut_*.*
 
 # Ignored folders
 build-*/
@@ -91,6 +96,7 @@ tools/.vscode/
 .idea/
 *iml
 .history/
+.cache/
 
 # JNI generated files
 *_wrap.cpp

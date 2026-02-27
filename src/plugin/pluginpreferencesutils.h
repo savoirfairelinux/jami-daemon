@@ -18,7 +18,6 @@
 
 #include <json/json.h>
 #include <string>
-#include <set>
 #include <filesystem>
 
 namespace jami {

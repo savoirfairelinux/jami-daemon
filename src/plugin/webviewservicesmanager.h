@@ -21,11 +21,8 @@
 
 #include "noncopyable.h"
 #include "webviewhandler.h"
-#include <list>
 #include <memory>
 #include <map>
-#include <mutex>
-#include <vector>
 #include <string>
 
 namespace jami {

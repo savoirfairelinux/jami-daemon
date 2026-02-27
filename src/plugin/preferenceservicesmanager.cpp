@@ -18,12 +18,6 @@
 #include "preferenceservicesmanager.h"
 
 #include "pluginmanager.h"
-#include "pluginpreferencesutils.h"
-
-#include "manager.h"
-#include "sip/sipcall.h"
-#include "fileutils.h"
-#include "logger.h"
 
 namespace jami {
 
