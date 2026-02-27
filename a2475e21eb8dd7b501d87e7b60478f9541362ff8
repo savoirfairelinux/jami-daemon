@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "5e83cedd_b14533b8",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-27T15:25:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4d1026e4_d3eb97bf",
+      "range": {
+        "startLine": 174,
+        "startChar": 39,
+        "endLine": 174,
+        "endChar": 55
+      },
+      "revId": "a2475e21eb8dd7b501d87e7b60478f9541362ff8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f2c0ae25_437d894f",
@@ -47,6 +71,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "71a2872b_0223216e",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-27T15:25:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f2c0ae25_437d894f",
+      "range": {
+        "startLine": 345,
+        "startChar": 43,
+        "endLine": 345,
+        "endChar": 59
+      },
+      "revId": "a2475e21eb8dd7b501d87e7b60478f9541362ff8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8765bca4_cce4ea57",
@@ -60,6 +108,30 @@
       "writtenOn": "2026-02-27T15:16:18Z",
       "side": 1,
       "message": "Unable to load conversation profile: {}",
+      "range": {
+        "startLine": 4266,
+        "startChar": 39,
+        "endLine": 4266,
+        "endChar": 55
+      },
+      "revId": "a2475e21eb8dd7b501d87e7b60478f9541362ff8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "77b42398_2db4754d",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 4266,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-02-27T15:25:19Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8765bca4_cce4ea57",
       "range": {
         "startLine": 4266,
         "startChar": 39,
