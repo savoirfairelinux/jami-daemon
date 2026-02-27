@@ -26,7 +26,6 @@
 #include <memory>
 
 #include "jami.h"
-#include "presence_const.h"
 
 namespace libjami {
 

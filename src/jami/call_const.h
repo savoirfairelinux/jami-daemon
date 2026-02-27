@@ -18,8 +18,6 @@
 #ifndef LIBJAMI_CALL_H
 #define LIBJAMI_CALL_H
 
-#include "def.h"
-
 namespace libjami {
 
 namespace Call {

@@ -16,6 +16,7 @@
  */
 
 #include "sip/sipaccount.h"
+#include "security_const.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

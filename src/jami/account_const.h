@@ -17,9 +17,8 @@
 #ifndef LIBJAMI_ACCOUNT_H
 #define LIBJAMI_ACCOUNT_H
 
-#include "def.h"
-
 // Defined in windows.h
+#include <cstdint>
 #ifdef ERROR
 #undef ERROR
 #endif
@@ -58,7 +57,7 @@ constexpr static const char INITIALIZING[] = "INITIALIZING";
 
 } // namespace States
 
-enum class MessageStates : int {
+enum class MessageStates : uint8_t {
     UNKNOWN = 0,
     SENDING,
     SENT,
