@@ -186,6 +186,10 @@ public:
      * Used by the tests to get whenever the DRT is connected/disconnected
      */
     void onBootstrapStatus(const std::function<void(std::string, BootstrapStatus)>& cb);
+
+    std::vector<libjami::SwarmMessage> loadMessagesSync(const LogOptions& options);
+    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
+    void announce(const std::string& commitId, bool commitFromSelf = false);
 #endif
 
     /**
@@ -573,8 +577,6 @@ public:
      * @return Typers object
      */
     std::shared_ptr<Typers> typers() const;
-
-    void announce(const std::vector<std::map<std::string, std::string>>& commits, bool commitFromSelf = false);
 
 private:
     std::shared_ptr<Conversation> shared() { return std::static_pointer_cast<Conversation>(shared_from_this()); }

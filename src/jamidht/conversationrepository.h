@@ -135,6 +135,10 @@ class LIBJAMI_TEST_EXPORT ConversationRepository
 public:
 #ifdef LIBJAMI_TEST
     static bool DISABLE_RESET; // Some tests inject bad files so resetHard() will break the test
+
+    // If true, clone and fetch operations will be performed directly using the target repo's path,
+    // avoiding the need for setting up a GitServer and a DHTNet connection.
+    static bool FETCH_FROM_LOCAL_REPOS;
 #endif
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
