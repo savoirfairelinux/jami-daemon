@@ -42,7 +42,7 @@ AudioLoop::~AudioLoop() {}
 void
 AudioLoop::seek(double relative_position)
 {
-    pos_ = static_cast<double>(getSize() * relative_position * 0.01);
+    pos_ = static_cast<size_t>(static_cast<double>(getSize()) * relative_position * 0.01);
 }
 
 void
@@ -60,7 +60,11 @@ AudioLoop::getNext(AVFrame* output, bool mute)
 
     if (buf_samples == 0) {
         JAMI_ERR("Audio loop size is 0");
-        av_samples_set_silence(output->data, 0, output->nb_samples, format_.nb_channels, format_.sampleFormat);
+        av_samples_set_silence(output->data,
+                               0,
+                               output->nb_samples,
+                               static_cast<int>(format_.nb_channels),
+                               format_.sampleFormat);
         return;
     } else if (pos >= buf_samples) {
         JAMI_ERR("Invalid loop position %zu", pos);
@@ -72,13 +76,17 @@ AudioLoop::getNext(AVFrame* output, bool mute)
         if (not mute)
             av_samples_copy(output->data,
                             buffer_->data,
-                            output_pos,
-                            pos,
-                            samples,
-                            format_.nb_channels,
+                            static_cast<int>(output_pos),
+                            static_cast<int>(pos),
+                            static_cast<int>(samples),
+                            static_cast<int>(format_.nb_channels),
                             format_.sampleFormat);
         else
-            av_samples_set_silence(output->data, output_pos, samples, format_.nb_channels, format_.sampleFormat);
+            av_samples_set_silence(output->data,
+                                   static_cast<int>(output_pos),
+                                   static_cast<int>(samples),
+                                   static_cast<int>(format_.nb_channels),
+                                   format_.sampleFormat);
         output_pos += samples;
         pos = (pos + samples) % buf_samples;
         total_samples -= samples;

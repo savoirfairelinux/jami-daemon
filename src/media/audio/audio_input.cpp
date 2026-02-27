@@ -18,11 +18,9 @@
 #include "audio_frame_resizer.h"
 #include "audio_input.h"
 #include "jami/media_const.h"
-#include "fileutils.h" // access
 #include "manager.h"
 #include "media_decoder.h"
 #include "resampler.h"
-#include "ringbuffer.h"
 #include "logger.h"
 #include "ringbufferpool.h"
 #include "tracepoint.h"
@@ -38,7 +36,7 @@ static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 AudioInput::AudioInput(const std::string& id)
     : id_(id)
     , format_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
-    , frameSize_(format_.sample_rate * MS_PER_PACKET.count() / 1000)
+    , frameSize_(static_cast<int>(format_.sample_rate * MS_PER_PACKET.count()) / 1000)
     , resampler_(new Resampler)
     , resizer_(new AudioFrameResizer(format_,
                                      frameSize_,
@@ -86,7 +84,7 @@ void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
-    frame->pointer()->pts = sent_samples;
+    frame->pointer()->pts = static_cast<int64_t>(sent_samples);
     sent_samples += frame->pointer()->nb_samples;
 
     notify(std::static_pointer_cast<MediaFrame>(std::move(frame)));
@@ -134,7 +132,7 @@ AudioInput::readFromDevice()
     resizer_->enqueue(std::move(audioFrame));
 
     if (recorderCallback_ && settingMS_.exchange(false)) {
-        recorderCallback_(MediaStream("a:local", format_, sent_samples));
+        recorderCallback_(MediaStream("a:local", format_, static_cast<int64_t>(sent_samples)));
     }
 
     jami_tracepoint(audio_input_read_from_device_end, id_.c_str());
@@ -455,7 +453,7 @@ AudioInput::setFormat(const AudioFormat& fmt)
 {
     std::lock_guard lk(fmtMutex_);
     format_ = fmt;
-    resizer_->setFormat(format_, format_.sample_rate * MS_PER_PACKET.count() / 1000);
+    resizer_->setFormat(format_, static_cast<int>(format_.sample_rate * MS_PER_PACKET.count()) / 1000);
 }
 
 void
@@ -469,14 +467,14 @@ MediaStream
 AudioInput::getInfo() const
 {
     std::lock_guard lk(fmtMutex_);
-    return MediaStream("a:local", format_, sent_samples);
+    return MediaStream("a:local", format_, static_cast<int64_t>(sent_samples));
 }
 
 MediaStream
 AudioInput::getInfo(const std::string& name) const
 {
     std::lock_guard lk(fmtMutex_);
-    auto ms = MediaStream(name, format_, sent_samples);
+    auto ms = MediaStream(name, format_, static_cast<int64_t>(sent_samples));
     return ms;
 }
 

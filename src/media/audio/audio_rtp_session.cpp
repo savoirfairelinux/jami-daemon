@@ -20,29 +20,22 @@
 #include "audio_rtp_session.h"
 
 #include "logger.h"
-#include "noncopyable.h"
-#include "sip/sdp.h"
 
 #include "audio_receive_thread.h"
 #include "audio_sender.h"
 #include "socket_pair.h"
 #include "media_recorder.h"
 #include "media_encoder.h"
-#include "media_decoder.h"
-#include "media_io_handle.h"
 #include "media_device.h"
 #include "media_const.h"
 
 #include "audio/audio_input.h"
 #include "audio/ringbufferpool.h"
-#include "audio/resampler.h"
 #include "client/videomanager.h"
 #include "manager.h"
-#include "observer.h"
 
 #include <asio/io_context.hpp>
 #include <asio/post.hpp>
-#include <sstream>
 
 namespace jami {
 
@@ -290,12 +283,12 @@ AudioRtpSession::setMuted(bool muted, Direction dir)
                     auto ms = shared->receiveThread_->getInfo();
                     ms.name = shared->streamId_ + ":remote";
                     if (muted) {
-                        if (auto ob = shared->recorder_->getStream(ms.name)) {
+                        if (auto* ob = shared->recorder_->getStream(ms.name)) {
                             shared->receiveThread_->detach(ob);
                             shared->recorder_->removeStream(ms);
                         }
                     } else {
-                        if (auto ob = shared->recorder_->addStream(ms)) {
+                        if (auto* ob = shared->recorder_->addStream(ms)) {
                             shared->receiveThread_->attach(ob);
                         }
                     }
@@ -331,12 +324,13 @@ AudioRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
             totalLost += it.fraction_lost;
             totalJitter += ntohl(it.jitter);
         }
-        rtcpi.packetLoss = nbDropNotNull ? (float) (100 * totalLost) / (256.0 * nbDropNotNull) : 0;
+        rtcpi.packetLoss = nbDropNotNull ? static_cast<float>((100 * totalLost) / (256.0 * nbDropNotNull)) : 0;
         // Jitter is expressed in timestamp unit -> convert to milliseconds
         // https://stackoverflow.com/questions/51956520/convert-jitter-from-rtp-timestamp-unit-to-millisseconds
-        rtcpi.jitter = (totalJitter / vectSize / 90000.0f) * 1000;
+        rtcpi.jitter = static_cast<unsigned int>(
+            (static_cast<float>(totalJitter) / static_cast<float>(vectSize) / 90000.0f) * 1000.0f);
         rtcpi.nb_sample = vectSize;
-        rtcpi.latency = socketPair_->getLastLatency();
+        rtcpi.latency = static_cast<float>(socketPair_->getLastLatency());
         return true;
     }
     return false;
@@ -355,7 +349,7 @@ void
 AudioRtpSession::dropProcessing(RTCPInfo* rtcpi)
 {
     auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
-    setNewPacketLoss(pondLoss);
+    setNewPacketLoss(static_cast<unsigned int>(pondLoss));
 }
 
 void
@@ -402,7 +396,7 @@ AudioRtpSession::attachRemoteRecorder(const MediaStream& ms)
         return;
     MediaStream remoteMS = ms;
     remoteMS.name = streamId_ + ":remote";
-    if (auto ob = recorder_->addStream(remoteMS)) {
+    if (auto* ob = recorder_->addStream(remoteMS)) {
         receiveThread_->attach(ob);
     }
 }
@@ -415,7 +409,7 @@ AudioRtpSession::attachLocalRecorder(const MediaStream& ms)
         return;
     MediaStream localMS = ms;
     localMS.name = streamId_ + ":local";
-    if (auto ob = recorder_->addStream(localMS)) {
+    if (auto* ob = recorder_->addStream(localMS)) {
         audioInput_->attach(ob);
     }
 }
@@ -449,7 +443,7 @@ AudioRtpSession::deinitRecorder()
     if (receiveThread_) {
         auto ms = receiveThread_->getInfo();
         ms.name = streamId_ + ":remote";
-        if (auto ob = recorder_->getStream(ms.name)) {
+        if (auto* ob = recorder_->getStream(ms.name)) {
             receiveThread_->detach(ob);
             recorder_->removeStream(ms);
         }
@@ -457,7 +451,7 @@ AudioRtpSession::deinitRecorder()
     if (audioInput_) {
         auto ms = audioInput_->getInfo();
         ms.name = streamId_ + ":local";
-        if (auto ob = recorder_->getStream(ms.name)) {
+        if (auto* ob = recorder_->getStream(ms.name)) {
             audioInput_->detach(ob);
             recorder_->removeStream(ms);
         }

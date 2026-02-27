@@ -16,7 +16,6 @@
  */
 
 #include "audio_sender.h"
-#include "client/videomanager.h"
 #include "libav_deps.h"
 #include "logger.h"
 #include "media_encoder.h"
@@ -79,8 +78,8 @@ void
 AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
                     const std::shared_ptr<jami::MediaFrame>& framePtr)
 {
-    auto frame = framePtr->pointer();
-    frame->pts = sent_samples;
+    auto* frame = framePtr->pointer();
+    frame->pts = static_cast<int64_t>(sent_samples);
     sent_samples += frame->nb_samples;
 
     // check for change in voice activity, if so, call callback

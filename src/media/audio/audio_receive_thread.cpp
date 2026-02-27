@@ -21,8 +21,6 @@
 #include "manager.h"
 #include "media_decoder.h"
 #include "media_io_handle.h"
-#include "media_recorder.h"
-#include "ringbuffer.h"
 #include "ringbufferpool.h"
 
 #include <memory>
@@ -115,14 +113,14 @@ AudioReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
     is.read(reinterpret_cast<char*>(buf), buf_size);
 
     auto count = is.gcount();
-    return count ? count : AVERROR_EOF;
+    return count ? static_cast<int>(count) : AVERROR_EOF;
 }
 
 // This callback is used by libav internally to break out of blocking calls
 int
 AudioReceiveThread::interruptCb(void* data)
 {
-    auto context = static_cast<AudioReceiveThread*>(data);
+    auto* context = static_cast<AudioReceiveThread*>(data);
     return not context->loop_.isRunning();
 }
 

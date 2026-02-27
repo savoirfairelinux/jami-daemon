@@ -26,7 +26,6 @@
 #include <vector>
 #include <atomic>
 #include <condition_variable>
-#include <array>
 
 extern "C" {
 struct SpeexEchoState_;
@@ -39,7 +38,7 @@ typedef struct SpeexEchoState_ SpeexEchoState;
  */
 
 // Define the audio api
-#define AAUDIO_API_STR      "aaudio"
+#define AAUDIO_API_STR     "aaudio"
 #define PULSEAUDIO_API_STR "pulseaudio"
 #define ALSA_API_STR       "alsa"
 #define JACK_API_STR       "jack"
@@ -55,7 +54,7 @@ namespace jami {
 class AudioPreference;
 class Resampler;
 
-enum class AudioDeviceType { ALL = -1, PLAYBACK = 0, CAPTURE, RINGTONE };
+enum class AudioDeviceType : int8_t { ALL = -1, PLAYBACK = 0, CAPTURE, RINGTONE };
 
 class AudioLayer
 {
@@ -63,7 +62,7 @@ private:
     NON_COPYABLE(AudioLayer);
 
 protected:
-    enum class Status { Idle, Starting, Started };
+    enum class Status : uint8_t { Idle, Starting, Started };
 
 public:
     AudioLayer(const AudioPreference&);

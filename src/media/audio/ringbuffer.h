@@ -27,7 +27,6 @@
 #include <chrono>
 #include <map>
 #include <vector>
-#include <fstream>
 
 namespace jami {
 
@@ -72,7 +71,7 @@ public:
     {
         std::lock_guard l(writeLock_);
         format_ = format;
-        resizer_.setFormat(format, format.sample_rate / 50);
+        resizer_.setFormat(format, static_cast<int>(format.sample_rate) / 50);
     }
 
     /**

@@ -21,7 +21,6 @@ extern "C" {
 }
 
 #include <fmt/core.h>
-#include <sstream>
 #include <string>
 #include <cstddef> // for size_t
 
@@ -59,7 +58,10 @@ struct AudioFormat
     /**
      * Returns bytes necessary to hold one frame of audio data.
      */
-    inline size_t getBytesPerFrame() const { return av_get_bytes_per_sample(sampleFormat) * nb_channels; }
+    inline size_t getBytesPerFrame() const
+    {
+        return static_cast<size_t>(av_get_bytes_per_sample(sampleFormat)) * nb_channels;
+    }
 
     /**
      * Bytes per second (default), or bytes necessary
