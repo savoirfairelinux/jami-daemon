@@ -41,7 +41,7 @@ public:
     RingBufferPool();
     ~RingBufferPool();
 
-    int getInternalSamplingRate() const { return internalAudioFormat_.sample_rate; }
+    int getInternalSamplingRate() const { return static_cast<int>(internalAudioFormat_.sample_rate); }
 
     AudioFormat getInternalAudioFormat() const { return internalAudioFormat_; }
 

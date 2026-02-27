@@ -156,7 +156,7 @@ void
 RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& sourceBuffer,
                                            const std::string& readerBufferId)
 {
-    if (auto bindings = getReadBindings(readerBufferId)) {
+    if (auto* bindings = getReadBindings(readerBufferId)) {
         bindings->erase(sourceBuffer);
         if (bindings->empty())
             removeReadBindings(readerBufferId);
@@ -244,7 +244,7 @@ RingBufferPool::unBindAllHalfDuplexOut(const std::string& ringbufferId)
         return;
     }
 
-    auto bindings = getReadBindings(ringbufferId);
+    auto* bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
     const auto bindings_copy = *bindings; // temporary copy
@@ -283,7 +283,7 @@ RingBufferPool::unBindAll(const std::string& ringbufferId)
         return;
     }
 
-    auto bindings = getReadBindings(ringbufferId);
+    auto* bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
 
@@ -299,7 +299,7 @@ RingBufferPool::getData(const std::string& ringbufferId)
 {
     std::lock_guard lk(stateLock_);
 
-    const auto bindings = getReadBindings(ringbufferId);
+    auto* const bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return {};
 
@@ -332,7 +332,7 @@ bool
 RingBufferPool::waitForDataAvailable(const std::string& ringbufferId, const time_point& deadline) const
 {
     std::unique_lock lk(stateLock_);
-    auto bindings = getReadBindings(ringbufferId);
+    const auto* bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return false;
     const auto bindings_copy = *bindings; // temporary copy
@@ -350,7 +350,7 @@ RingBufferPool::getAvailableData(const std::string& ringbufferId)
 {
     std::lock_guard lk(stateLock_);
 
-    auto bindings = getReadBindings(ringbufferId);
+    auto* bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return {};
 
@@ -385,7 +385,7 @@ RingBufferPool::availableForGet(const std::string& ringbufferId) const
 {
     std::lock_guard lk(stateLock_);
 
-    const auto bindings = getReadBindings(ringbufferId);
+    const auto* const bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return 0;
 
@@ -410,7 +410,7 @@ RingBufferPool::discard(size_t toDiscard, const std::string& ringbufferId)
 {
     std::lock_guard lk(stateLock_);
 
-    const auto bindings = getReadBindings(ringbufferId);
+    auto* const bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return 0;
 
@@ -425,7 +425,7 @@ RingBufferPool::flush(const std::string& ringbufferId)
 {
     std::lock_guard lk(stateLock_);
 
-    const auto bindings = getReadBindings(ringbufferId);
+    auto* const bindings = getReadBindings(ringbufferId);
     if (not bindings)
         return;
 

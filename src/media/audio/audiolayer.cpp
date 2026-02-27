@@ -16,14 +16,13 @@
  */
 
 #include "audiolayer.h"
+#include "audio/sound/tone.h"
 #include "logger.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
-#include "tonecontrol.h"
 #include "client/jami_signal.h"
 
-#include "audio-processing/null_audio_processor.h"
 #include "tracepoint.h"
 #if HAVE_WEBRTC_AP
 #include "audio-processing/webrtc.h"
@@ -296,9 +295,9 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
     auto& bufferPool = Manager::instance().getRingBufferPool();
 
     if (not playbackQueue_)
-        playbackQueue_.reset(new AudioFrameResizer(format, writableSamples));
+        playbackQueue_.reset(new AudioFrameResizer(format, static_cast<int>(writableSamples)));
     else
-        playbackQueue_->setFrameSize(writableSamples);
+        playbackQueue_->setFrameSize(static_cast<int>(writableSamples));
 
     std::shared_ptr<AudioFrame> playbackBuf {};
     while (!(playbackBuf = playbackQueue_->dequeue())) {

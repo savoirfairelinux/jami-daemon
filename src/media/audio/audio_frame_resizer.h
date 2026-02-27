@@ -20,8 +20,6 @@
 #include "media/media_buffer.h"
 #include "noncopyable.h"
 
-#include <mutex>
-
 extern "C" {
 struct AVAudioFifo;
 }

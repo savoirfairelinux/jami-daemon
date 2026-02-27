@@ -19,6 +19,7 @@
 #include "logger.h"
 #include <libavutil/frame.h>
 #include <libavutil/mathematics.h>
+#include <libavutil/opt.h>
 #include "resampler.h"
 #include "libav_utils.h"
 
@@ -42,7 +43,7 @@ void
 Resampler::reinit(const AVFrame* in, const AVFrame* out)
 {
     // NOTE swr_set_matrix should be called on an uninitialized context
-    auto swrCtx = swr_alloc();
+    auto* swrCtx = swr_alloc();
     if (!swrCtx) {
         JAMI_ERROR("[{}] Unable to allocate resampler context", fmt::ptr(this));
         throw std::bad_alloc();
@@ -299,7 +300,7 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
     if (not in) {
         return {};
     }
-    auto inPtr = in->pointer();
+    auto* inPtr = in->pointer();
     if (inPtr == nullptr) {
         return {};
     }
@@ -310,7 +311,7 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
     }
 
     auto output = std::make_shared<AudioFrame>(format);
-    if (auto outPtr = output->pointer()) {
+    if (auto* outPtr = output->pointer()) {
         resample(inPtr, outPtr);
         output->has_voice = in->has_voice;
         return output;

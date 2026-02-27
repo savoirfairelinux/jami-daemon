@@ -37,7 +37,7 @@ RingBuffer::RingBuffer(const std::string& rbuf_id, AudioFormat format)
     , lock_()
     , not_empty_()
     , readoffsets_()
-    , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame) {
+    , resizer_(format_, static_cast<int>(format_.sample_rate) / 50, [this](std::shared_ptr<AudioFrame>&& frame) {
         putToBuffer(std::move(frame));
     })
 {

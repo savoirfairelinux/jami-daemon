@@ -17,13 +17,16 @@
 
 #include "audio_frame_resizer.h"
 #include "libav_deps.h"
+#include "libav_utils.h"
 #include "logger.h"
+#include <libavutil/frame.h>
 
 extern "C" {
 #include <libavutil/audio_fifo.h>
 }
 
 #include <stdexcept>
+#include <utility>
 
 namespace jami {
 
@@ -32,8 +35,8 @@ AudioFrameResizer::AudioFrameResizer(const AudioFormat& format,
                                      std::function<void(std::shared_ptr<AudioFrame>&&)> cb)
     : format_(format)
     , frameSize_(size)
-    , cb_(cb)
-    , queue_(av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_))
+    , cb_(std::move(cb))
+    , queue_(av_audio_fifo_alloc(format.sampleFormat, static_cast<int>(format.nb_channels), frameSize_))
 {}
 
 AudioFrameResizer::~AudioFrameResizer()
@@ -69,7 +72,7 @@ AudioFrameResizer::setFormat(const AudioFormat& format, int size)
             JAMI_WARN("Discarding %d samples", discarded);
         av_audio_fifo_free(queue_);
         format_ = format;
-        queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
+        queue_ = av_audio_fifo_alloc(format.sampleFormat, static_cast<int>(format.nb_channels), frameSize_);
     }
 }
 
@@ -91,7 +94,7 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
         return;
 
     int ret = 0;
-    auto f = frame->pointer();
+    auto* f = frame->pointer();
     AudioFormat format(f->sample_rate, f->ch_layout.nb_channels, (AVSampleFormat) f->format);
     if (format != format_) {
         JAMI_WARNING("Expected {} but got {}", format_.toString(), format.toString());
