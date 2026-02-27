@@ -28,7 +28,6 @@
 #include "pjsip/sip_multipart.h"
 #include "pjsip-simple/publish.h"
 #include "pjsip-simple/presence.h"
-#include "pjsip-simple/rpid.h"
 #include <pj/pool.h>
 
 #define PRESENCE_FUNCTION_PUBLISH   0

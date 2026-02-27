@@ -30,13 +30,6 @@
 #include "manager.h"
 
 #include "im/instant_messaging.h"
-#include "system_codec_container.h"
-#include "audio/audio_rtp_session.h"
-
-#ifdef ENABLE_VIDEO
-#include "video/video_rtp_session.h"
-#include "client/videomanager.h"
-#endif
 
 #include "pres_sub_server.h"
 
@@ -58,8 +51,7 @@
 #error "Unsupported PJSIP version (requires version 2.10+)"
 #endif
 
-#include <istream>
-#include <algorithm>
+#include <cstddef>
 #include <regex>
 
 namespace jami {
@@ -97,7 +89,7 @@ handleIncomingOptions(pjsip_rx_data* rdata)
 {
     pjsip_tx_data* tdata;
 
-    auto dlg = pjsip_rdata_get_dlg(rdata);
+    auto* dlg = pjsip_rdata_get_dlg(rdata);
     if (dlg) {
         JAMI_INFO("Processing in-dialog option request");
         if (pjsip_dlg_create_response(dlg, rdata, PJSIP_SC_OK, NULL, &tdata) != PJ_SUCCESS) {
@@ -201,7 +193,7 @@ try_respond_stateless(pjsip_endpoint* endpt,
 }
 
 template<typename T>
-bool
+static bool
 is_uninitialized(std::weak_ptr<T> const& weak)
 {
     using wt = std::weak_ptr<T>;
@@ -231,8 +223,8 @@ transaction_request_cb(pjsip_rx_data* rdata)
         return PJ_FALSE;
     }
 
-    const auto sip_to_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.to->uri));
-    const auto sip_from_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.from->uri));
+    auto* const sip_to_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.to->uri));
+    auto* const sip_from_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.from->uri));
     const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
     if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
@@ -328,7 +320,11 @@ transaction_request_cb(pjsip_rx_data* rdata)
                         auto acc = std::dynamic_pointer_cast<JamiAccount>(account);
                         if (acc and acc->isMessageTreated(intid))
                             return PJ_FALSE;
-                    } catch (...) {
+                    } catch (const std::exception& e) {
+                        JAMI_WARNING("[Account {}] Couldn't treat message {}: {}",
+                                     account->getAccountID(),
+                                     from_hex_string(id),
+                                     e.what());
                     }
                 }
                 account->onTextMessage(id, peerNumber, transport->getTlsInfos().peerCert, payloads);
@@ -415,7 +411,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
     // Try to obtain display name from From: header first, fallback on Contact:
     auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.from);
     if (peerDisplayName.empty()) {
-        if (auto hdr = static_cast<const pjsip_contact_hdr*>(
+        if (const auto* hdr = static_cast<const pjsip_contact_hdr*>(
                 pjsip_msg_find_hdr(rdata->msg_info.msg, PJSIP_H_CONTACT, nullptr))) {
             peerDisplayName = sip_utils::parseDisplayName(hdr);
         }
@@ -522,7 +518,7 @@ transaction_request_cb(pjsip_rx_data* rdata)
 
     if (replaced_dlg) {
         // Get the INVITE session associated with the replaced dialog.
-        auto replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
+        auto* replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
 
         // Disconnect the "replaced" INVITE session.
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, nullptr, &tdata) == PJ_SUCCESS && tdata) {
@@ -582,7 +578,7 @@ SIPVoIPLink::SIPVoIPLink()
     } while (0)
 
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
-    pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 64 * 1024, 4096, nullptr));
+    pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, static_cast<long>(64) * 1024, 4096, nullptr));
     if (!pool_)
         throw VoipLinkException("UserAgent: Unable to initialize memory pool");
 
@@ -791,7 +787,7 @@ SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 static std::shared_ptr<SIPCall>
 getCallFromInvite(pjsip_inv_session* inv)
 {
-    if (auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]))
+    if (auto* call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]))
         return std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
     return nullptr;
 }
@@ -820,7 +816,7 @@ invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
     decltype(pjsip_transaction::status_code) status_code = 0;
 
     if (ev->type == PJSIP_EVENT_TSX_STATE) {
-        const auto tsx = ev->body.tsx_state.tsx;
+        auto* const tsx = ev->body.tsx_state.tsx;
         status_code = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
         const pj_str_t* description = pjsip_get_status_text(status_code);
 
@@ -964,12 +960,12 @@ sdp_create_offer_cb(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer)
 
     auto family = pj_AF_INET();
     // FIXME: for now, use the same address family as the SIP transport
-    if (auto dlg = inv->dlg) {
+    if (auto* dlg = inv->dlg) {
         if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
-            if (auto tr = dlg->tp_sel.u.transport)
+            if (auto* tr = dlg->tp_sel.u.transport)
                 family = tr->local_addr.addr.sa_family;
         } else if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
-            if (auto tr = dlg->tp_sel.u.listener)
+            if (auto* tr = dlg->tp_sel.u.listener)
                 family = tr->local_addr.addr.sa_family;
         }
     }
@@ -1065,8 +1061,8 @@ sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
     }
 
     // Fetch SDP data from request
-    const auto localSDP = get_active_local_sdp(inv);
-    const auto remoteSDP = get_active_remote_sdp(inv);
+    const auto* const localSDP = get_active_local_sdp(inv);
+    const auto* const remoteSDP = get_active_remote_sdp(inv);
 
     // Update our SDP manager
     auto& sdp = call->getSDP();
@@ -1230,7 +1226,7 @@ onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, SIP
 {
     static constexpr pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
 
-    if (auto refer_to = static_cast<pjsip_generic_string_hdr*>(
+    if (auto* refer_to = static_cast<pjsip_generic_string_hdr*>(
             pjsip_msg_find_hdr_by_name(msg, &str_refer_to, nullptr))) {
         // RFC 3515, 2.4.2: reply bad request if no or too many refer-to header.
         if (static_cast<void*>(refer_to->next) == static_cast<void*>(&msg->hdr)
@@ -1290,13 +1286,13 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         return;
     }
 
-    const auto rdata = event->body.tsx_state.src.rdata;
+    auto* const rdata = event->body.tsx_state.src.rdata;
     if (!rdata) {
         JAMI_ERROR("[INVITE:{:p}] SIP RX request without rx data", fmt::ptr(inv));
         return;
     }
 
-    const auto msg = rdata->msg_info.msg;
+    auto* const msg = rdata->msg_info.msg;
     if (msg->type != PJSIP_REQUEST_MSG) {
         JAMI_ERROR("[INVITE:{:p}] SIP RX request without msg", fmt::ptr(inv));
         return;
@@ -1438,10 +1434,10 @@ SIPVoIPLink::resolveSrvName(const std::string& name, pjsip_transport_type_e type
     const auto n = name.rfind(':');
     if (n != std::string::npos) {
         port = std::atoi(name.c_str() + n + 1);
-        name_size = n;
+        name_size = static_cast<pj_ssize_t>(n);
     } else {
         port = 0;
-        name_size = name.size();
+        name_size = static_cast<pj_ssize_t>(name.size());
     }
     JAMI_DBG("Attempt to resolve '%s' (port: %u)", name.c_str(), port);
 
@@ -1507,7 +1503,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     RETURN_IF_NULL(transport, "Transport is NULL in findLocalAddress, using local address %s :%d", addr.c_str(), port);
 
     // get the transport manager associated with the SIP enpoint
-    auto tpmgr = pjsip_endpt_get_tpmgr(endpt_);
+    auto* tpmgr = pjsip_endpt_get_tpmgr(endpt_);
     RETURN_IF_NULL(tpmgr,
                    "Transport manager is NULL in findLocalAddress, using local address %s :%d",
                    addr.c_str(),

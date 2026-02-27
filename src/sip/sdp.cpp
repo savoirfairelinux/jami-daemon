@@ -31,8 +31,7 @@
 #include "libav_utils.h"
 
 #include "media_codec.h"
-#include "system_codec_container.h"
-#include "compiler_intrinsics.h" // for UNUSED
+#include "sdes_negotiator.h"
 
 #include <opendht/rng.h>
 
@@ -217,7 +216,7 @@ Sdp::getCrypto(pjmedia_sdp_media* media)
 {
     std::vector<std::string> crypto;
     for (unsigned j = 0; j < media->attr_count; j++) {
-        const auto attribute = media->attr[j];
+        auto* const attribute = media->attr[j];
         if (pj_stricmp2(&attribute->name, "crypto") == 0)
             crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
     }
@@ -443,7 +442,7 @@ Sdp::printSession(const pjmedia_sdp_session* session, const char* header, SdpDir
                                                BUF_SZ,
                                                nullptr));
 
-    auto cloned_session = pjmedia_sdp_session_clone(tmpPool_.get(), session);
+    auto* cloned_session = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned_session) {
         JAMI_ERROR("Unable to clone SDP for printing");
         return;
@@ -645,7 +644,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
     static constexpr size_t BUF_SZ = 4096;
     sip_utils::PoolPtr tmpPool_(
         pj_pool_create(&Manager::instance().sipVoIPLink().getCachingPool()->factory, "tmpSdp", BUF_SZ, BUF_SZ, nullptr));
-    auto cloned = pjmedia_sdp_session_clone(tmpPool_.get(), session);
+    auto* cloned = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned) {
         JAMI_ERR("Unable to clone SDP");
         return "";
@@ -675,7 +674,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
         }
 
     for (unsigned i = 0; i < cloned->media_count; i++) {
-        auto media = cloned->media[i];
+        auto* media = cloned->media[i];
 
         // filter other codecs
         for (unsigned c = 0; c < media->desc.fmt_count; c++) {
@@ -683,10 +682,10 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
             if (pj_strtoul(&pt) == pt_keep)
                 continue;
 
-            while (auto attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtpmap", &pt))
+            while (auto* attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtpmap", &pt))
                 pjmedia_sdp_attr_remove(&media->attr_count, media->attr, attr);
 
-            while (auto attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fmt", &pt))
+            while (auto* attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "fmt", &pt))
                 pjmedia_sdp_attr_remove(&media->attr_count, media->attr, attr);
 
             std::move(media->desc.fmt + c + 1, media->desc.fmt + media->desc.fmt_count, media->desc.fmt + c);
@@ -724,7 +723,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 
     std::vector<MediaDescription> ret;
     for (unsigned i = 0; i < session->media_count; i++) {
-        auto media = session->media[i];
+        auto* media = session->media[i];
         ret.emplace_back(MediaDescription());
         MediaDescription& descr = ret.back();
         if (!pj_stricmp2(&media->desc.media, "audio"))
@@ -749,7 +748,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 
         // Get the "rtcp" address from the SDP if present. Otherwise,
         // infere it from endpoint (RTP) address.
-        auto attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp", NULL);
+        auto* attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp", NULL);
         if (attr) {
             pjmedia_sdp_rtcp_attr rtcp;
             auto status = pjmedia_sdp_attr_get_rtcp(attr, &rtcp);
@@ -772,7 +771,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
 
         // get codecs infos
         for (unsigned j = 0; j < media->desc.fmt_count; j++) {
-            const auto rtpMapAttribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[j]);
+            auto* const rtpMapAttribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[j]);
             if (!rtpMapAttribute) {
                 JAMI_ERR("Unable to find rtpmap attribute");
                 descr.enabled = false;
@@ -794,7 +793,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
             }
             descr.payload_type = pj_strtoul(&rtpmap.pt);
             if (descr.type == MEDIA_VIDEO) {
-                const auto fmtpAttr = pjmedia_sdp_media_find_attr(media, &STR_FMTP, &media->desc.fmt[j]);
+                auto* const fmtpAttr = pjmedia_sdp_media_find_attr(media, &STR_FMTP, &media->desc.fmt[j]);
                 // descr.bitrate = getOutgoingVideoField(codec, "bitrate");
                 if (fmtpAttr && fmtpAttr->value.ptr && fmtpAttr->value.slen) {
                     const auto& v = fmtpAttr->value;
@@ -812,7 +811,7 @@ Sdp::getMediaDescriptions(const pjmedia_sdp_session* session, bool remote) const
         // get crypto info
         std::vector<std::string> crypto;
         for (unsigned j = 0; j < media->attr_count; j++) {
-            const auto attribute = media->attr[j];
+            auto* const attribute = media->attr[j];
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
@@ -842,7 +841,7 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
         return;
     }
 
-    auto media = localSession_->media[media_index];
+    auto* media = localSession_->media[media_index];
 
     for (const auto& item : cands) {
         const pj_str_t val = sip_utils::CONST_PJ_STR(item);
@@ -856,8 +855,8 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
 std::vector<std::string>
 Sdp::getIceCandidates(unsigned media_index) const
 {
-    auto remoteSession = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
-    auto localSession = activeLocalSession_ ? activeLocalSession_ : localSession_;
+    const auto* remoteSession = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
+    const auto* localSession = activeLocalSession_ ? activeLocalSession_ : localSession_;
     if (not remoteSession) {
         JAMI_ERR("getIceCandidates failed: no remote session");
         return {};
@@ -870,8 +869,8 @@ Sdp::getIceCandidates(unsigned media_index) const
         JAMI_ERR("getIceCandidates failed: unable to access media#%u (may be deactivated)", media_index);
         return {};
     }
-    auto media = remoteSession->media[media_index];
-    auto localMedia = localSession->media[media_index];
+    auto* media = remoteSession->media[media_index];
+    auto* localMedia = localSession->media[media_index];
     if (media->desc.port == 0 || localMedia->desc.port == 0) {
         JAMI_WARN("Media#%u is disabled. Media ports: local %u, remote %u",
                   media_index,
@@ -910,7 +909,7 @@ Sdp::addIceAttributes(const dhtnet::IceTransport::Attribute&& ice_attrs)
 dhtnet::IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
-    if (auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_)
+    if (const auto* session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_)
         return getIceAttributes(session);
     return {};
 }
@@ -966,7 +965,7 @@ Sdp::clearIce(pjmedia_sdp_session* session)
     // TODO. Why this? we should not have "candidate" attribute at session level.
     pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "candidate");
     for (unsigned i = 0; i < session->media_count; i++) {
-        auto media = session->media[i];
+        auto* media = session->media[i];
         pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "candidate");
     }
 }

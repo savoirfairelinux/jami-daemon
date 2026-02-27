@@ -23,7 +23,6 @@
 
 #include "call.h"
 #include <dhtnet/ice_transport.h>
-#include "connectivity/sip_utils.h"
 #include "media/media_codec.h" // for MediaType enum
 #include "sip/sdp.h"
 
@@ -450,7 +449,7 @@ private:
     bool peerHold_ {false};
 
     bool isWaitingForIceAndMedia_ {false};
-    enum class Request { Hold, Resume, SwitchInput, NoRequest };
+    enum class Request : uint8_t { Hold, Resume, SwitchInput, NoRequest };
     Request remainingRequest_ {Request::NoRequest};
 
     std::string peerRegisteredName_ {};

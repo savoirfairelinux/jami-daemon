@@ -30,9 +30,6 @@
 #include <opendht/crypto.h>
 #include <fmt/core.h>
 
-#include <thread>
-#include <sstream>
-
 #define MAX_N_SUB_SERVER 50
 #define MAX_N_SUB_CLIENT 50
 
@@ -409,10 +406,6 @@ SIPPresence::send_publish(SIPPresence* pres)
     SIPAccount* acc = pres->getAccount();
     std::string contactWithAngles = acc->getFromUri();
     contactWithAngles.erase(contactWithAngles.find('>'));
-    int semicolon = contactWithAngles.find_first_of(':');
-    std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
-    //    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
-    //    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
 
     /* Create PUBLISH request */
     char* bpos;
@@ -513,7 +506,9 @@ SIPPresence::publish(SIPPresence* pres)
 
     /* Add credential for authentication */
     if (acc->hasCredentials()
-        and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo())
+        and pjsip_publishc_set_credentials(pres->publish_sess_,
+                                           static_cast<int>(acc->getCredentialCount()),
+                                           acc->getCredInfo())
                 != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return status;

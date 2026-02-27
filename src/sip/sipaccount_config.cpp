@@ -15,12 +15,13 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "sipaccount_config.h"
-#include "account_const.h"
 #include "account_schema.h"
 #include "config/yamlparser.h"
 
 extern "C" {
 #include <pjlib-util/md5.h>
+
+#include <cstddef>
 }
 
 namespace jami {
@@ -29,18 +30,12 @@ namespace Conf {
 constexpr const char* ID_KEY = "id";
 constexpr const char* USERNAME_KEY = "username";
 constexpr const char* BIND_ADDRESS_KEY = "bindAddress";
-constexpr const char* INTERFACE_KEY = "interface";
 constexpr const char* PORT_KEY = "port";
-constexpr const char* PUBLISH_ADDR_KEY = "publishAddr";
 constexpr const char* PUBLISH_PORT_KEY = "publishPort";
-constexpr const char* SAME_AS_LOCAL_KEY = "sameasLocal";
-constexpr const char* DTMF_TYPE_KEY = "dtmfType";
 constexpr const char* SERVICE_ROUTE_KEY = "serviceRoute";
 constexpr const char* ALLOW_IP_AUTO_REWRITE = "allowIPAutoRewrite";
 constexpr const char* PRESENCE_PUBLISH_SUPPORTED_KEY = "presencePublishSupported";
 constexpr const char* PRESENCE_SUBSCRIBE_SUPPORTED_KEY = "presenceSubscribeSupported";
-constexpr const char* PRESENCE_STATUS_KEY = "presenceStatus";
-constexpr const char* PRESENCE_NOTE_KEY = "presenceNote";
 constexpr const char* PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
 constexpr const char* KEEP_ALIVE_ENABLED = "keepAliveEnabled";
 
@@ -65,7 +60,6 @@ constexpr const char* STUN_SERVER_KEY = "stunServer";
 constexpr const char* CRED_KEY = "credential";
 constexpr const char* SRTP_KEY = "srtp";
 constexpr const char* KEY_EXCHANGE_KEY = "keyExchange";
-constexpr const char* RTP_FALLBACK_KEY = "rtpFallback";
 } // namespace Conf
 
 static const SipAccountConfig DEFAULT_CONFIG {};
@@ -171,7 +165,8 @@ SipAccountConfig::unserialize(const YAML::Node& node)
         parseValueOptional(tlsMap, Conf::VERIFY_SERVER_KEY, tlsVerifyServer);
         parseValueOptional(tlsMap, Conf::DISABLE_SECURE_DLG_CHECK, tlsDisableSecureDlgCheck);
         parseValueOptional(tlsMap, Conf::TIMEOUT_KEY, tlsNegotiationTimeout);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Couldn't parse TLS map: {}", e.what());
     }
 
     // get srtp submap
@@ -324,7 +319,7 @@ SipAccountConfig::Credentials::computePasswordHash()
     char hash[32];
 
     for (int i = 0; i < 16; ++i)
-        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
+        pj_val_to_hex_digit(digest[i], &hash[static_cast<ptrdiff_t>(2 * i)]);
 
     password_h = {hash, 32};
 }

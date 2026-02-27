@@ -143,6 +143,9 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
                 case PJSIP_SC_PRECONDITION_FAILURE:
                     msg = "Wrong server.";
                     break;
+
+                default:
+                    JAMI_WARNING("Unrecognized status code: {}", tsx->status_code);
                 }
 
                 /*  report error:
@@ -549,7 +552,9 @@ PresSubClient::subscribe()
 
     /* Add credential for auth. */
     if (acc->hasCredentials()
-        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo())
+        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess,
+                                           static_cast<int>(acc->getCredentialCount()),
+                                           acc->getCredInfo())
                 != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize credentials for subscribe session authentication");
     }
@@ -577,7 +582,9 @@ PresSubClient::subscribe()
 
     /* Add credential for authentication */
     if (acc->hasCredentials()
-        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo())
+        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess,
+                                           static_cast<int>(acc->getCredentialCount()),
+                                           acc->getCredInfo())
                 != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize credentials for invite session authentication");
         return false;

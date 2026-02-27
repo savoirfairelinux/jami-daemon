@@ -23,7 +23,6 @@
 
 #include "account.h"
 
-#include "connectivity/sip_utils.h"
 #include "noncopyable.h"
 #include "im/message_engine.h"
 #include "sipaccountbase_config.h"
@@ -69,7 +68,7 @@ class SIPCall;
  * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
  */
 
-enum class MatchRank { NONE, PARTIAL, FULL };
+enum class MatchRank : uint8_t { NONE, PARTIAL, FULL };
 
 class SIPAccountBase : public Account
 {

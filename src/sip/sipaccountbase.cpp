@@ -18,20 +18,12 @@
 #include "sip/sipaccountbase.h"
 #include "sip/sipvoiplink.h"
 
-#ifdef ENABLE_VIDEO
-#include "libav_utils.h"
-#endif
-
 #include "account_schema.h"
 #include "manager.h"
-#include "config/yamlparser.h"
 #include "client/jami_signal.h"
-#include "jami/account_const.h"
-#include "string_utils.h"
 #include "fileutils.h"
 #include "connectivity/sip_utils.h"
 #include "connectivity/utf8_utils.h"
-#include "uri.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -49,7 +41,6 @@
 #pragma GCC diagnostic pop
 
 #include <type_traits>
-#include <regex>
 #include <ctime>
 
 using namespace std::literals;
@@ -93,7 +84,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
         return false;
     }
 
-    auto dialog = *dlg;
+    auto* dialog = *dlg;
 
     {
         // lock dialog until invite session creation; this one will own the dialog after
@@ -101,7 +92,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
 
         // Append "Subject: Phone Call" header
         constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
-        auto subj_hdr = reinterpret_cast<pjsip_hdr*>(
+        auto* subj_hdr = reinterpret_cast<pjsip_hdr*>(
             pjsip_parse_hdr(dialog->pool, &subj_hdr_name, const_cast<char*>("Phone call"), 10, nullptr));
         pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 

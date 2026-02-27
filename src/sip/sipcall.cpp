@@ -28,13 +28,13 @@
 
 #include "connectivity/sip_utils.h"
 #include "audio/audio_rtp_session.h"
-#include "system_codec_container.h"
 #include "im/instant_messaging.h"
 #include "jami/account_const.h"
 #include "jami/call_const.h"
 #include "jami/media_const.h"
 #include "client/jami_signal.h"
 #include "pjsip-ua/sip_inv.h"
+#include "video/video_mixer.h"
 
 #ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
@@ -43,16 +43,11 @@
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_rtp_session.h"
-#include "jami/videomanager_interface.h"
 #include <chrono>
 #include <libavutil/display.h>
 #include <video/sinkclient.h>
-#include "media/video/video_mixer.h"
 #endif
 #include "audio/ringbufferpool.h"
-#include "jamidht/channeled_transport.h"
-
-#include "errno.h"
 
 #include <dhtnet/upnp/upnp_control.h>
 #include <dhtnet/ice_transport_factory.h>
@@ -63,8 +58,6 @@
 
 #include "tracepoint.h"
 
-#include "media/media_decoder.h"
-
 namespace jami {
 
 using sip_utils::CONST_PJ_STR;
@@ -74,7 +67,7 @@ using namespace libjami::Call;
 static DeviceParams
 getVideoSettings()
 {
-    if (auto videomon = jami::getVideoDeviceMonitor())
+    if (auto* videomon = jami::getVideoDeviceMonitor())
         return videomon->getDeviceParams(videomon->getDefaultDevice());
     return DeviceParams {};
 }
@@ -82,7 +75,6 @@ getVideoSettings()
 
 static constexpr std::chrono::seconds DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
 static constexpr std::chrono::milliseconds EXPECTED_ICE_INIT_MAX_TIME {5000};
-static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 static constexpr int ICE_COMP_ID_RTP {1};
 static constexpr int ICE_COMP_COUNT_PER_STREAM {2};
@@ -168,7 +160,7 @@ SIPCall::findRtpStreamIndex(const std::string& label) const
 
     // Return the index if there is a match.
     if (iter != rtpStreams_.end())
-        return std::distance(rtpStreams_.begin(), iter);
+        return static_cast<int>(std::distance(rtpStreams_.begin(), iter));
 
     // No match found.
     return -1;
@@ -274,7 +266,7 @@ SIPCall::setupVoiceCallback(const std::shared_ptr<RtpSession>& rtpSession)
                 std::string streamId = "";
 
 #ifdef ENABLE_VIDEO
-                if (auto videoManager = Manager::instance().getVideoManager()) {
+                if (auto* videoManager = Manager::instance().getVideoManager()) {
                     if (not videoManager->videoDeviceMonitor.getDeviceList().empty()) {
                         // if we have a video device
                         streamId = sip_utils::streamId("", sip_utils::DEFAULT_VIDEO_STREAMID);
@@ -546,7 +538,7 @@ SIPCall::SIPSessionReinvite(const std::vector<MediaAttribute>& mediaAttrList, bo
     }
 
     pjsip_tx_data* tdata;
-    auto local_sdp = sdp_->getLocalSdpSession();
+    auto* local_sdp = sdp_->getLocalSdpSession();
     auto result = pjsip_inv_reinvite(inviteSession_.get(), nullptr, local_sdp, &tdata);
     if (result == PJ_SUCCESS) {
         if (!tdata)
@@ -1103,7 +1095,7 @@ transfer_client_cb(pjsip_evsub* sub, pjsip_event* event)
         if (!r_data->msg_info.cid)
             return;
 
-        auto call = static_cast<SIPCall*>(pjsip_evsub_get_mod_data(sub, mod_ua_id));
+        auto* call = static_cast<SIPCall*>(pjsip_evsub_get_mod_data(sub, mod_ua_id));
         if (!call)
             return;
 
@@ -1852,7 +1844,7 @@ SIPCall::addMediaStream(const MediaAttribute& mediaAttr)
     // Set default media source if empty. Kept for backward compatibility.
 #ifdef ENABLE_VIDEO
     if (stream.mediaAttribute_->type_ == MediaType::MEDIA_VIDEO && stream.mediaAttribute_->sourceUri_.empty()) {
-        if (auto videoManager = Manager::instance().getVideoManager()) {
+        if (auto* videoManager = Manager::instance().getVideoManager()) {
             stream.mediaAttribute_->sourceUri_ = videoManager->videoDeviceMonitor.getMRLForDefaultDevice();
         }
     }
@@ -2066,7 +2058,7 @@ SIPCall::startAllMedia()
                         }
                         if (isVideo) {
                             if (auto call = w.lock())
-                                call->requestKeyframe(idx);
+                                call->requestKeyframe(static_cast<int>(idx));
                         }
 #ifdef ENABLE_PLUGIN
                         if (auto call = w.lock()) {
@@ -3180,7 +3172,7 @@ SIPCall::createSinks(ConfInfo& infos)
                 if (!iter->mediaAttribute_ || iter->mediaAttribute_->type_ == MediaType::MEDIA_AUDIO) {
                     continue;
                 }
-                auto localVideo
+                auto* localVideo
                     = std::static_pointer_cast<video::VideoRtpSession>(iter->rtpSession_)->getVideoLocal().get();
                 auto size = std::make_pair(10, 10);
                 if (localVideo) {
@@ -3545,7 +3537,7 @@ SIPCall::isIceRunning() const
 std::unique_ptr<dhtnet::IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
-    return std::unique_ptr<dhtnet::IceSocket> {new dhtnet::IceSocket(getIceMedia(), compId)};
+    return std::unique_ptr<dhtnet::IceSocket> {new dhtnet::IceSocket(getIceMedia(), static_cast<int>(compId))};
 }
 
 void

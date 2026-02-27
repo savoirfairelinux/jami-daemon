@@ -15,7 +15,6 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #include "sipaccountbase_config.h"
-#include "account_const.h"
 #include "account_schema.h"
 #include "config/account_config_utils.h"
 
@@ -27,7 +26,6 @@ const char* const INTERFACE_KEY = "interface";
 const char* const PUBLISH_ADDR_KEY = "publishAddr";
 const char* const SAME_AS_LOCAL_KEY = "sameasLocal";
 const char* const DTMF_TYPE_KEY = "dtmfType";
-const char* const PRESENCE_NOTE_KEY = "presenceNote";
 const char* const TURN_ENABLED_KEY = "turnEnabled";
 const char* const TURN_SERVER_KEY = "turnServer";
 const char* const TURN_SERVER_UNAME_KEY = "turnServerUserName";
