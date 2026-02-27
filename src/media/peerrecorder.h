@@ -16,8 +16,6 @@
  */
 #pragma once
 
-#include "recordable.h"
-
 namespace jami {
 
 /*

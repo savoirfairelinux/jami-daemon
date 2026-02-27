@@ -17,7 +17,6 @@
 
 #include "localrecorder.h"
 #include "audio/ringbufferpool.h"
-#include "audio/ringbuffer.h"
 #include "client/videomanager.h"
 #include "media_stream.h"
 #include "manager.h"
@@ -97,11 +96,11 @@ LocalRecorder::start()
 void
 LocalRecorder::stopRecording()
 {
-    if (auto ob = recorder_->getStream(audioInput_->getInfo().name))
+    if (auto* ob = recorder_->getStream(audioInput_->getInfo().name))
         audioInput_->detach(ob);
 #ifdef ENABLE_VIDEO
     if (videoInput_)
-        if (auto ob = recorder_->getStream(videoInput_->getInfo().name))
+        if (auto* ob = recorder_->getStream(videoInput_->getInfo().name))
             videoInput_->detach(ob);
 #endif
     Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);

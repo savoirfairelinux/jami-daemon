@@ -67,8 +67,6 @@ DTMFGenerator::DTMFGenerator(unsigned int sampleRate, AVSampleFormat sampleForma
 
 DTMFGenerator::~DTMFGenerator() {}
 
-using std::vector;
-
 void
 DTMFGenerator::getSamples(AVFrame* frame, unsigned char code)
 {

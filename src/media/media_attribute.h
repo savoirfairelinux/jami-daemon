@@ -71,7 +71,7 @@ public:
     static libjami::MediaMap toMediaMap(const MediaAttribute& mediaAttr);
 
     // Serialize a vector of MediaAttribute to a vector of MediaMap
-    static std::vector<libjami::MediaMap> mediaAttributesToMediaMaps(std::vector<MediaAttribute> mediaAttrList);
+    static std::vector<libjami::MediaMap> mediaAttributesToMediaMaps(const std::vector<MediaAttribute>& mediaAttrList);
 
     std::string toString(bool full = false) const;
 
