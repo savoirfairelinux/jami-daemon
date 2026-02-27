@@ -28,11 +28,9 @@
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
 #include "plugin/pluginsutils.h"
-#include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "jami.h"
 #include "fileutils.h"
-#include "jami/media_const.h"
 #include "account_const.h"
 #include "sip/sipcall.h"
 #include "call_const.h"
@@ -108,7 +106,7 @@ private:
                                   CallData& callData);
     static void onIncomingCall(const std::string& accountId,
                                const std::string& callId,
-                               const std::vector<libjami::MediaMap> mediaList,
+                               const std::vector<libjami::MediaMap>& mediaList,
                                CallData& callData);
 
     std::string name_ {};
@@ -155,7 +153,7 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(PluginsTest, PluginsTest::name());
 void
 PluginsTest::onIncomingCall(const std::string& accountId,
                             const std::string& callId,
-                            const std::vector<libjami::MediaMap> mediaList,
+                            const std::vector<libjami::MediaMap>& mediaList,
                             CallData& callData)
 {
     CPPUNIT_ASSERT_EQUAL(callData.accountId_, accountId);
@@ -241,7 +239,7 @@ PluginsTest::setUp()
         [&](const std::string& accountId,
             const std::string& callId,
             const std::string&,
-            const std::vector<libjami::MediaMap> mediaList) {
+            const std::vector<libjami::MediaMap>& mediaList) {
             if (aliceData.accountId_ == accountId)
                 onIncomingCall(accountId, callId, mediaList, aliceData);
             else if (bobData.accountId_ == accountId)
@@ -311,7 +309,6 @@ PluginsTest::testSignatureVerification()
     CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginSignatureFile(jplPath_));
     CPPUNIT_ASSERT(Manager::instance().getJamiPluginManager().checkPluginSignature(jplPath_, cert_.get()));
 
-    std::string pluginNotFoundPath = "fakePlugin.jpl";
     // Test with a plugin that does not exist
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignatureFile(pluginNotFoundPath_));
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().checkPluginSignature(pluginNotFoundPath_, cert_.get()));
@@ -400,7 +397,7 @@ PluginsTest::testHandlers()
     auto chatHandlers = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlers();
 
     auto handlerLoaded = mediaHandlers_.size() + chatHandlers_.size(); // number of handlers expected
-    for (auto handler : mediaHandlers) {
+    for (const auto& handler : mediaHandlers) {
         auto details = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(
             handler);
         // check details expected for the test plugin
@@ -408,7 +405,7 @@ PluginsTest::testHandlers()
             handlerLoaded--;
         }
     }
-    for (auto handler : chatHandlers) {
+    for (const auto& handler : chatHandlers) {
         auto details = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerDetails(
             handler);
         // check details expected for the test plugin
@@ -656,7 +653,7 @@ PluginsTest::testCall()
     std::this_thread::sleep_for(std::chrono::seconds(3));
     auto mediaHandlers = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlers();
 
-    for (auto handler : mediaHandlers) {
+    for (const auto& handler : mediaHandlers) {
         auto details = Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(
             handler);
         // check details expected for the test plugin
@@ -752,7 +749,7 @@ PluginsTest::testMessage()
 
     auto chatHandlers = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlers();
 
-    for (auto handler : chatHandlers) {
+    for (const auto& handler : chatHandlers) {
         auto details = Manager::instance().getJamiPluginManager().getChatServicesManager().getChatHandlerDetails(
             handler);
         // check details expected for the test plugin
@@ -781,6 +778,9 @@ PluginsTest::testMessage()
             CPPUNIT_ASSERT(std::find(statusMap.begin(), statusMap.end(), handler) == statusMap.end());
         }
     }
+
+    // Unregister custom signal handlers to prevent segfault when uninstalling
+    libjami::unregisterSignalHandlers();
 
     CPPUNIT_ASSERT(!Manager::instance().getJamiPluginManager().uninstallPlugin(installationPath_));
 }
