@@ -39,14 +39,9 @@ public:
     {}
 };
 
-enum CipherMode { AESCounterMode, AESF8Mode };
+enum CipherMode : uint8_t { AESCounterMode, AESF8Mode };
 
-enum MACMode { HMACSHA1 };
-
-enum KeyMethod {
-    Inline
-    // url, maybe at some point
-};
+enum MACMode : uint8_t { HMACSHA1 };
 
 struct CryptoSuiteDefinition
 {

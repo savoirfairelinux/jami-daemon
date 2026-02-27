@@ -16,11 +16,10 @@
  */
 #pragma once
 
+#include <dhtnet/ip_utils.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-
-#include "connectivity/sip_utils.h"
 
 #include "noncopyable.h"
 #include "logger.h"
@@ -30,11 +29,8 @@
 
 #include <functional>
 #include <mutex>
-#include <condition_variable>
 #include <map>
 #include <string>
-#include <vector>
-#include <list>
 #include <memory>
 
 // OpenDHT
@@ -100,7 +96,7 @@ public:
 
     pjsip_transport* get() { return transport_.get(); }
 
-    void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
+    void addStateListener(uintptr_t lid, const SipTransportStateCallback& cb);
     bool removeStateListener(uintptr_t lid);
 
     bool isSecure() const { return PJSIP_TRANSPORT_IS_SECURE(transport_); }

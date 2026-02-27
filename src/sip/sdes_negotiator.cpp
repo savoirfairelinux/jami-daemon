@@ -16,11 +16,8 @@
  */
 
 #include "sdes_negotiator.h"
+#include "logger.h"
 
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-#include <stdexcept>
 #include <regex>
 
 #include <cstdio>
@@ -145,6 +142,7 @@ SdesNegotiator::negotiate(const std::vector<std::string>& attributes)
             }
         }
     } catch (const ParseError& exception) {
+        JAMI_WARNING("");
     }
     return {};
 }

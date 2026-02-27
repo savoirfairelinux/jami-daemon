@@ -32,11 +32,6 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 
-#ifdef ENABLE_VIDEO
-#include <queue>
-#endif
-#include <map>
-#include <mutex>
 #include <memory>
 #include <functional>
 #include <thread>

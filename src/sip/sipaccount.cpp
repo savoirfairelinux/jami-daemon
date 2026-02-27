@@ -42,17 +42,10 @@
 #pragma GCC diagnostic pop
 
 #include "account_schema.h"
-#include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
 #include "client/jami_signal.h"
 #include "jami/account_const.h"
-
-#ifdef ENABLE_VIDEO
-#include "libav_utils.h"
-#endif
-
-#include "system_codec_container.h"
 
 #include "string_utils.h"
 
@@ -70,10 +63,7 @@
 #include <memory>
 #include <sstream>
 #include <cstdlib>
-#include <thread>
-#include <chrono>
 #include <ctime>
-#include <charconv>
 
 #ifdef _WIN32
 #include <lmcons.h>
@@ -88,8 +78,10 @@ using sip_utils::CONST_PJ_STR;
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300;      // seconds
 static constexpr std::string_view VALID_TLS_PROTOS[] = {"Default"sv, "TLSv1.2"sv, "TLSv1.1"sv, "TLSv1"sv};
+// NOLINTBEGIN: variables are used on Android and Apple platforms
 static constexpr std::string_view PN_FCM = "fcm"sv;
 static constexpr std::string_view PN_APNS = "apns"sv;
+// NOLINTEND
 
 struct ctx
 {
@@ -110,7 +102,7 @@ registration_cb(pjsip_regc_cbparam* param)
         return;
     }
 
-    auto account = static_cast<SIPAccount*>(param->token);
+    auto* account = static_cast<SIPAccount*>(param->token);
     if (!account) {
         JAMI_ERR("Account doesn't exist in registration callback");
         return;
@@ -389,7 +381,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     std::string from(getFromUri());
     pj_str_t pjFrom = sip_utils::CONST_PJ_STR(from);
 
-    auto transport = call->getTransport();
+    auto* transport = call->getTransport();
     if (!transport) {
         JAMI_ERROR("Unable to start call without transport");
         return false;
@@ -399,7 +391,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     JAMI_DEBUG("Contact header: {:s} / {:s} → {:s}", contact, from, toUri);
 
     pj_str_t pjContact = sip_utils::CONST_PJ_STR(contact);
-    auto local_sdp = isEmptyOffersEnabled() ? nullptr : call->getSDP().getLocalSdpSession();
+    auto* local_sdp = isEmptyOffersEnabled() ? nullptr : call->getSDP().getLocalSdpSession();
 
     pjsip_dialog* dialog {nullptr};
     pjsip_inv_session* inv {nullptr};
@@ -415,7 +407,8 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inviteSession_->pool));
 
     if (hasCredentials()
-        and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo()) != PJ_SUCCESS) {
+        and pjsip_auth_clt_set_credentials(&dialog->auth_sess, static_cast<int>(getCredentialCount()), getCredInfo())
+                != PJ_SUCCESS) {
         JAMI_ERROR("Unable to initialize credentials for invite session authentication");
         return false;
     }
@@ -451,7 +444,7 @@ SIPAccount::usePublishedAddressPortInVIA()
 {
     publishedIpStr_ = getPublishedIpAddress().toString();
     via_addr_.host.ptr = (char*) publishedIpStr_.c_str();
-    via_addr_.host.slen = publishedIpStr_.size();
+    via_addr_.host.slen = static_cast<pj_ssize_t>(publishedIpStr_.size());
     via_addr_.port = publishedPortUsed_;
 }
 
@@ -460,7 +453,7 @@ SIPAccount::useUPnPAddressPortInVIA()
 {
     upnpIpAddr_ = getUPnPIpAddress().toString();
     via_addr_.host.ptr = (char*) upnpIpAddr_.c_str();
-    via_addr_.host.slen = upnpIpAddr_.size();
+    via_addr_.host.slen = static_cast<pj_ssize_t>(upnpIpAddr_.size());
     via_addr_.port = publishedPortUsed_;
 }
 
@@ -491,7 +484,7 @@ SIPAccount::getVolatileAccountDetails() const
 
     if (transport_ and transport_->isSecure() and transport_->isConnected()) {
         const auto& tlsInfos = transport_->getTlsInfos();
-        auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
+        const auto* cipher = pj_ssl_cipher_name(tlsInfos.cipher);
         if (tlsInfos.cipher and not cipher)
             JAMI_WARN("Unknown cipher: %d", tlsInfos.cipher);
         a.emplace(libjami::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
@@ -514,7 +507,7 @@ bool
 SIPAccount::mapPortUPnP()
 {
     dhtnet::upnp::Mapping map(dhtnet::upnp::PortType::UDP, config().publishedPort, config().localPort);
-    map.setNotifyCallback([w = weak()](dhtnet::upnp::Mapping::sharedPtr_t mapRes) {
+    map.setNotifyCallback([w = weak()](const dhtnet::upnp::Mapping::sharedPtr_t& mapRes) {
         if (auto accPtr = w.lock()) {
             auto oldPort = static_cast<in_port_t>(accPtr->publishedPortUsed_);
             bool success = mapRes->getState() == dhtnet::upnp::MappingState::OPEN
@@ -809,7 +802,7 @@ SIPAccount::sendRegister()
     if (hasServiceRoute())
         pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(getServiceRoute(), link_.getPool()));
 
-    pjsip_regc_set_credentials(regc, getCredentialCount(), getCredInfo());
+    pjsip_regc_set_credentials(regc, static_cast<int>(getCredentialCount()), getCredInfo());
 
     pjsip_hdr hdr_list;
     pj_list_init(&hdr_list);
@@ -845,12 +838,12 @@ void
 SIPAccount::setUpTransmissionData(pjsip_tx_data* tdata, long transportKeyType)
 {
     if (hostIp_) {
-        auto ai = &tdata->dest_info;
+        auto* ai = &tdata->dest_info;
         ai->name = pj_strdup3(tdata->pool, config().hostname.c_str());
         ai->addr.count = 1;
         ai->addr.entry[0].type = (pjsip_transport_type_e) transportKeyType;
         pj_memcpy(&ai->addr.entry[0].addr, hostIp_.pjPtr(), sizeof(pj_sockaddr));
-        ai->addr.entry[0].addr_len = hostIp_.getLength();
+        ai->addr.entry[0].addr_len = static_cast<int>(hostIp_.getLength());
         ai->cur_addr = 0;
     }
 }
@@ -1199,8 +1192,8 @@ SIPAccount::getToUri(const std::string& username) const
     if (not hostname.empty() and dhtnet::IpAddr::isIpv6(hostname))
         hostname = dhtnet::IpAddr(hostname).toString(false, true);
 
-    auto ltSymbol = username.find('<') == std::string::npos ? "<" : "";
-    auto gtSymbol = username.find('>') == std::string::npos ? ">" : "";
+    const auto* ltSymbol = username.find('<') == std::string::npos ? "<" : "";
+    const auto* gtSymbol = username.find('>') == std::string::npos ? ">" : "";
 
     return ltSymbol + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + gtSymbol;
 }
@@ -1346,8 +1339,8 @@ SIPAccount::printContactHeader(const std::string& username,
     std::string quotedDisplayName = displayName.empty() ? "" : "\"" + displayName + "\" ";
 
     std::ostringstream contact;
-    auto scheme = secure ? "sips" : "sip";
-    auto transport = secure ? ";transport=tls" : "";
+    const auto* scheme = secure ? "sips" : "sip";
+    const auto* transport = secure ? ";transport=tls" : "";
 
     contact << quotedDisplayName << "<" << scheme << ":" << username << (username.empty() ? "" : "@") << address << ":"
             << port << transport;
@@ -1822,7 +1815,7 @@ SIPAccount::sendMessage(const std::string& to,
     constexpr auto key = CONST_PJ_STR("Date");
     pjsip_hdr* hdr;
     auto time = std::time(nullptr);
-    auto date = std::ctime(&time);
+    auto* date = std::ctime(&time);
     // the erase-remove idiom for a Cstring, removes _all_ new lines with in date
     *std::remove(date, date + strlen(date), '\n') = '\0';
 
@@ -1848,7 +1841,7 @@ SIPAccount::sendMessage(const std::string& to,
         return;
     }
 
-    status = pjsip_auth_clt_set_credentials(t->auth_sess.get(), getCredentialCount(), getCredInfo());
+    status = pjsip_auth_clt_set_credentials(t->auth_sess.get(), static_cast<int>(getCredentialCount()), getCredInfo());
 
     if (status != PJ_SUCCESS) {
         JAMI_ERROR("Unable to set auth session data: {:s}", sip_utils::sip_strerror(status));

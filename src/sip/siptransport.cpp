@@ -18,10 +18,8 @@
 #include "sip/siptransport.h"
 #include "connectivity/sip_utils.h"
 
-#include "jamidht/abstract_sip_transport.h"
 #include "jamidht/channeled_transport.h"
 
-#include "compiler_intrinsics.h"
 #include "sip/sipvoiplink.h"
 
 #include <pjsip.h>
@@ -40,7 +38,6 @@
 #include <opendht/crypto.h>
 
 #include <stdexcept>
-#include <sstream>
 #include <algorithm>
 
 #define RETURN_IF_FAIL(A, VAL, ...) \
@@ -112,9 +109,9 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
 {
     connected_ = state == PJSIP_TP_STATE_CONNECTED;
 
-    auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
+    const auto* extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
     if (isSecure() && extInfo && extInfo->ssl_sock_info && extInfo->ssl_sock_info->established) {
-        auto tlsInfo = extInfo->ssl_sock_info;
+        auto* tlsInfo = extInfo->ssl_sock_info;
         tlsInfos_.proto = (pj_ssl_sock_proto) tlsInfo->proto;
         tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t) tlsInfo->verify_status;
@@ -143,7 +140,7 @@ SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_s
 }
 
 void
-SipTransport::addStateListener(uintptr_t lid, SipTransportStateCallback cb)
+SipTransport::addStateListener(uintptr_t lid, const SipTransportStateCallback& cb)
 {
     std::lock_guard lock(stateListenersMutex_);
     auto pair = stateListeners_.insert(std::make_pair(lid, cb));
@@ -355,7 +352,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l,
     pj_status_t status = pjsip_endpt_acquire_transport2(endpt_,
                                                         l->get()->type,
                                                         remoteAddr.pjPtr(),
-                                                        remoteAddr.getLength(),
+                                                        static_cast<int>(remoteAddr.getLength()),
                                                         &sel,
                                                         remote_name.empty() ? nullptr : &tx_data,
                                                         &transport);
@@ -381,7 +378,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
     if (!socket)
         return {};
     auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_, socket, std::move(cb));
-    auto tr = sips_tr->getTransportBase();
+    auto* tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr, socket->peerCertificate());
     sip_tr->setDeviceId(socket->deviceId().toString());
     sip_tr->setAccount(account);
@@ -394,6 +391,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<SIPAccountBase>&
     }
 
     sips_tr->start();
+    // NOLINTNEXTLINE: No value in capturing the released pointer
     sips_tr.release(); // managed by PJSIP now
     return sip_tr;
 }

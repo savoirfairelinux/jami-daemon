@@ -17,10 +17,8 @@
 #pragma once
 
 #include "noncopyable.h"
-#include "sdes_negotiator.h"
 #include "media/media_codec.h"
 #include "media/media_attribute.h"
-#include "connectivity/sip_utils.h"
 
 #include <dhtnet/ip_utils.h>
 #include <dhtnet/ice_transport.h>
@@ -34,7 +32,6 @@
 #include <pj/pool.h>
 #include <pj/assert.h>
 
-#include <map>
 #include <vector>
 #include <string>
 #include <stdexcept>
@@ -55,7 +52,7 @@ public:
     {}
 };
 
-enum class SdpDirection { OFFER, ANSWER, NONE };
+enum class SdpDirection : uint8_t { OFFER, ANSWER, NONE };
 
 class Sdp
 {
