@@ -23,13 +23,9 @@
 #include "media/video/video_base.h"
 #include "media/media_codec.h"
 
-#include <map>
 #include <atomic>
 #include <future>
 #include <string>
-#include <mutex>
-#include <condition_variable>
-#include <array>
 
 #if __APPLE__
 #import "TargetConditionals.h"
@@ -45,7 +41,7 @@ namespace video {
 
 class SinkClient;
 
-enum class VideoInputMode { ManagedByClient, ManagedByDaemon, Undefined };
+enum class VideoInputMode : uint8_t { ManagedByClient, ManagedByDaemon, Undefined };
 
 class VideoInput : public VideoGenerator
 {
@@ -107,7 +103,7 @@ private:
 
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);
-    bool initFile(std::string path);
+    bool initFile(const std::string& path);
 
 #ifdef __APPLE__
     bool initAVFoundation(const std::string& display);

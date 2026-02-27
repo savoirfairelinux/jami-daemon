@@ -18,10 +18,10 @@
 
 #include "libav_deps.h"
 #include "media_codec.h"
+#include "video/video_base.h"
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <list>
 
 extern "C" {
@@ -31,7 +31,7 @@ extern "C" {
 namespace jami {
 namespace video {
 
-enum class DeviceState { NOT_TESTED, USABLE, NOT_USABLE };
+enum class DeviceState : uint8_t { NOT_TESTED, USABLE, NOT_USABLE };
 
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.

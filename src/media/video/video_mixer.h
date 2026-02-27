@@ -51,7 +51,7 @@ struct SourceInfo
 };
 using OnSourcesUpdatedCb = std::function<void(std::vector<SourceInfo>&&)>;
 
-enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
+enum class Layout : uint8_t { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 
 class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
 {

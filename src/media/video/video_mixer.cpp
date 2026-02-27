@@ -34,7 +34,6 @@
 #include <unistd.h>
 #include <mutex>
 
-#include "videomanager_interface.h"
 #include <opendht/thread_pool.h>
 
 static constexpr auto MIN_LINE_ZOOM = 6; // Used by the ONE_BIG_WITH_SMALL layout for the small previews
@@ -438,8 +437,9 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::
 
     // Compute cell size/position
     int cell_width, cell_height, cellW_off, cellH_off;
-    const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
-    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n) : ceil(sqrt(n));
+    const int n = currentLayout_ == Layout::ONE_BIG ? 1 : static_cast<int>(sources_.size());
+    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(MIN_LINE_ZOOM, n)
+                                                                  : static_cast<int>(ceil(sqrt(n)));
     if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
         // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
         // The rest is the active source
@@ -483,20 +483,25 @@ VideoMixer::calc_position(std::unique_ptr<VideoMixerSource>& source, const std::
     }
 
     // Compute frame size/position
-    float zoomW, zoomH;
     int frameW, frameH, frameW_off, frameH_off;
+    float zoomW, zoomH, denom;
+
+    float inputW = static_cast<float>(input->width());
+    float inputH = static_cast<float>(input->height());
 
     if (input->getOrientation() % 180) {
         // Rotated frame
-        zoomW = (float) input->height() / cell_width;
-        zoomH = (float) input->width() / cell_height;
-        frameH = std::round(input->width() / std::max(zoomW, zoomH));
-        frameW = std::round(input->height() / std::max(zoomW, zoomH));
+        zoomW = inputH / static_cast<float>(cell_width);
+        zoomH = inputW / static_cast<float>(cell_height);
+        denom = std::max(zoomW, zoomH);
+        frameH = static_cast<int>(std::lround(inputW / denom));
+        frameW = static_cast<int>(std::lround(inputH / denom));
     } else {
-        zoomW = (float) input->width() / cell_width;
-        zoomH = (float) input->height() / cell_height;
-        frameW = std::round(input->width() / std::max(zoomW, zoomH));
-        frameH = std::round(input->height() / std::max(zoomW, zoomH));
+        zoomW = inputW / static_cast<float>(cell_width);
+        zoomH = inputH / static_cast<float>(cell_height);
+        denom = std::max(zoomW, zoomH);
+        frameW = static_cast<int>(std::lround(inputW / denom));
+        frameH = static_cast<int>(std::lround(inputH / denom));
     }
 
     // Center the frame in the cell

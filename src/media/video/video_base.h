@@ -16,7 +16,6 @@
  */
 #pragma once
 
-#include "noncopyable.h"
 #include "observer.h"
 
 #pragma GCC diagnostic push
@@ -26,9 +25,7 @@
 #pragma GCC diagnostic pop
 
 #include <cstdlib>
-#include <cstdint>
 #include <memory>
-#include <set>
 #include <mutex>
 
 extern "C" {

@@ -20,8 +20,6 @@
 #include "media/media_decoder.h"
 #include "socket_pair.h"
 #include "manager.h"
-#include "client/videomanager.h"
-#include "sinkclient.h"
 #include "logger.h"
 
 extern "C" {
@@ -29,7 +27,6 @@ extern "C" {
 }
 
 #include <unistd.h>
-#include <map>
 
 namespace jami {
 namespace video {
@@ -104,8 +101,8 @@ VideoReceiveThread::setup()
         sink_->setFrameSize(dstWidth_, dstHeight_);
     });
 
-    dstWidth_ = args_.width;
-    dstHeight_ = args_.height;
+    dstWidth_ = static_cast<int>(args_.width);
+    dstHeight_ = static_cast<int>(args_.height);
 
     static const std::string SDP_FILENAME = "dummyFilename";
     if (args_.input.empty()) {
@@ -164,7 +161,7 @@ VideoReceiveThread::cleanup()
 int
 VideoReceiveThread::interruptCb(void* data)
 {
-    const auto context = static_cast<VideoReceiveThread*>(data);
+    auto* const context = static_cast<VideoReceiveThread*>(data);
     return not context->loop_.isRunning();
 }
 
@@ -176,7 +173,7 @@ VideoReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
 
     auto count = is.gcount();
     if (count != 0)
-        return count;
+        return static_cast<int>(count);
     else
         return AVERROR_EOF;
 }
