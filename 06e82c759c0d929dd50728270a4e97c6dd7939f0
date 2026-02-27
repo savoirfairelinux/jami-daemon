@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f481ad9d_0d7b7d29",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T16:08:18Z",
+      "side": 1,
+      "message": "It might make sense to change `onTrackedBuddyOnline` and `onTrackedBuddyOffline` so that they take a string as argument instead of an `InfoHash`. Currently we go back and forth between the two:\n1. `PresenceManager::trackPresence` converts from `InfoHash` to string before calling `notifyListeners`.\n2. The callback converts back to `InfoHash` before calling `onTrackedBuddyOnline`/`onTrackedBuddyOffline`.\n3. `onTrackedBuddyOnline` and `onTrackedBuddyOffline` start by converting to string again and don\u0027t use the `InfoHash` for anything else.",
+      "range": {
+        "startLine": 321,
+        "startChar": 20,
+        "endLine": 324,
+        "endChar": 69
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "fab91110_ba7b20f6",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T16:08:18Z",
+      "side": 1,
+      "message": "2026",
+      "range": {
+        "startLine": 2,
+        "startChar": 23,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac1cc478_ad08d4a8",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T16:08:18Z",
+      "side": 1,
+      "message": "We don\u0027t want to do this if there\u0027s already an ongoing listen operation for the given hash/buddy. I think this can\u0027t happen in the current version of the code because of the refcount in `trackBuddy`/`untrackBuddy` and because `refresh` is only called after the DHT is restarted. However, maybe it\u0027d be worth adding a check and printing a warning if `listenToken` is valid to prevent this from breaking silently in the future? (This would require resetting the token in `refresh` to avoid false positives.)",
+      "range": {
+        "startLine": 160,
+        "startChar": 4,
+        "endLine": 160,
+        "endChar": 36
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d65ab1c0_ea7f4533",
+        "filename": "src/jamidht/presence_manager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T16:08:18Z",
+      "side": 1,
+      "message": "2026",
+      "range": {
+        "startLine": 2,
+        "startChar": 23,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
