@@ -16,18 +16,14 @@
  */
 
 #include "video_sender.h"
-#include "video_mixer.h"
 #include "socket_pair.h"
-#include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
-#include "media_device.h"
-#include "sip/sipcall.h"
+
 #ifdef ENABLE_HWACCEL
 #include "accel.h"
 #endif
 
-#include <map>
 #include <unistd.h>
 
 namespace jami {
@@ -45,7 +41,7 @@ VideoSender::VideoSender(const std::string& dest,
     : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
-    keyFrameFreq_ = opts.frameRate.numerator() * KEY_FRAME_PERIOD;
+    keyFrameFreq_ = static_cast<int>(opts.frameRate.numerator() * KEY_FRAME_PERIOD);
     videoEncoder_->openOutput(dest, "rtp");
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
@@ -67,7 +63,7 @@ VideoSender::encodeAndSendVideo(const std::shared_ptr<VideoFrame>& input_frame)
             changeOrientationCallback_(rotation_);
     }
 
-    if (auto packet = input_frame->packet()) {
+    if (auto* packet = input_frame->packet()) {
         videoEncoder_->send(*packet);
     } else {
         bool is_keyframe = forceKeyFrame_ > 0 or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);

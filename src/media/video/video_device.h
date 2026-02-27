@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <sstream>
 
 namespace jami {
 namespace video {
@@ -152,7 +151,7 @@ public:
      * If a key is missing, a valid default value is choosen. Thus, calling
      * this function with an empty map will reset the device to default.
      */
-    void applySettings(VideoSettings settings)
+    void applySettings(const VideoSettings& settings)
     {
         DeviceParams params {};
         params.name = settings.name;

@@ -21,12 +21,8 @@
 #include "video_receive_thread.h"
 #include "video_mixer.h"
 #include "socket_pair.h"
-#include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"
-#include "media_const.h"
 #ifdef ENABLE_PLUGIN
-#include "plugin/streamdata.h"
-#include "plugin/jamipluginmanager.h"
 #endif
 #include "logger.h"
 #include "string_utils.h"
@@ -34,16 +30,11 @@
 #include "conference.h"
 #include "congestion_control.h"
 
-#include "account_const.h"
-
 #include <dhtnet/ice_socket.h>
 #include <asio/post.hpp>
 #include <asio/io_context.hpp>
 
-#include <sstream>
-#include <map>
 #include <string>
-#include <thread>
 #include <chrono>
 
 namespace jami {
@@ -188,14 +179,18 @@ VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
-            MediaStream ms = !videoMixer_ ? MediaStream("video sender",
-                                                        AV_PIX_FMT_YUV420P,
-                                                        1 / static_cast<rational<int>>(localVideoParams_.framerate),
-                                                        localVideoParams_.width == 0 ? 1080u : localVideoParams_.width,
-                                                        localVideoParams_.height == 0 ? 720u : localVideoParams_.height,
-                                                        send_.bitrate,
-                                                        static_cast<rational<int>>(localVideoParams_.framerate))
-                                          : videoMixer_->getStream("Video Sender");
+            MediaStream ms = !videoMixer_
+                                 ? MediaStream("video sender",
+                                               AV_PIX_FMT_YUV420P,
+                                               1 / static_cast<rational<int>>(localVideoParams_.framerate),
+                                               localVideoParams_.width == 0 ? 1080
+                                                                            : static_cast<int>(localVideoParams_.width),
+                                               localVideoParams_.height == 0
+                                                   ? 720
+                                                   : static_cast<int>(localVideoParams_.height),
+                                               static_cast<int>(send_.bitrate),
+                                               static_cast<rational<int>>(localVideoParams_.framerate))
+                                 : videoMixer_->getStream("Video Sender");
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), ms, send_, *socketPair_, initSeqVal_ + 1, mtu_, allowHwAccel));
             if (changeOrientationCallback_)
@@ -358,7 +353,7 @@ VideoRtpSession::stopReceiver(bool forceStopSocket)
     }
 
     auto ms = receiveThread_->getInfo();
-    if (auto ob = recorder_->getStream(ms.name)) {
+    if (auto* ob = recorder_->getStream(ms.name)) {
         receiveThread_->detach(ob);
         recorder_->removeStream(ms);
     }
@@ -463,7 +458,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
         if ((send_.hold = mute)) {
             if (videoLocal_) {
                 auto ms = videoLocal_->getInfo();
-                if (auto ob = recorder_->getStream(ms.name)) {
+                if (auto* ob = recorder_->getStream(ms.name)) {
                     videoLocal_->detach(ob);
                     recorder_->removeStream(ms);
                 }
@@ -484,7 +479,7 @@ VideoRtpSession::setMuted(bool mute, Direction dir)
     if ((receive_.hold = mute)) {
         if (receiveThread_) {
             auto ms = receiveThread_->getInfo();
-            if (auto ob = recorder_->getStream(ms.name)) {
+            if (auto* ob = recorder_->getStream(ms.name)) {
                 receiveThread_->detach(ob);
                 recorder_->removeStream(ms);
             }
@@ -624,12 +619,13 @@ VideoRtpSession::check_RCTP_Info_RR(RTCPInfo& rtcpi)
             totalLost += it.fraction_lost;
             totalJitter += ntohl(it.jitter);
         }
-        rtcpi.packetLoss = nbDropNotNull ? (float) (100 * totalLost) / (256.0 * nbDropNotNull) : 0;
+        rtcpi.packetLoss = nbDropNotNull ? static_cast<float>((100 * totalLost) / (256.0 * nbDropNotNull)) : 0;
         // Jitter is expressed in timestamp unit -> convert to milliseconds
         // https://stackoverflow.com/questions/51956520/convert-jitter-from-rtp-timestamp-unit-to-millisseconds
-        rtcpi.jitter = (totalJitter / vectSize / 90000.0f) * 1000;
+        rtcpi.jitter = static_cast<unsigned int>(
+            (static_cast<float>(totalJitter) / static_cast<float>(vectSize) / 90000.0f) * 1000.0f);
         rtcpi.nb_sample = vectSize;
-        rtcpi.latency = socketPair_->getLastLatency();
+        rtcpi.latency = static_cast<float>(socketPair_->getLastLatency());
         return true;
     }
     return false;
@@ -656,7 +652,7 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     uint64_t br;
     if (check_RCTP_Info_REMB(&br)) {
-        delayProcessing(br);
+        delayProcessing(static_cast<int>(br));
     }
 
     RTCPInfo rtcpi {};
@@ -682,7 +678,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 #endif
     auto pondLoss = getPonderateLoss(rtcpi->packetLoss);
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    int newBitrate = oldBitrate;
+    int newBitrate = static_cast<int>(oldBitrate);
 
     // Fill histoLoss and histoJitter_ with samples
     if (restartTimer < DELAY_AFTER_RESTART + std::chrono::seconds(1)) {
@@ -692,7 +688,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
         // network...
         // ... we can increase
         if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
-            newBitrate *= 1.0f - rtcpi->packetLoss / 150.0f;
+            newBitrate *= static_cast<int>(std::lround(1.0f - rtcpi->packetLoss / 150.0f));
             histoLoss_.clear();
             lastMediaRestart_ = now;
             JAMI_DBG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from "
@@ -711,14 +707,14 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 void
 VideoRtpSession::delayProcessing(int br)
 {
-    int newBitrate = videoBitrateInfo_.videoBitrateCurrent;
+    int newBitrate = static_cast<int>(videoBitrateInfo_.videoBitrateCurrent);
     if (br == 0x6803)
-        newBitrate *= 0.85f;
+        newBitrate *= static_cast<int>(std::lround(0.85f));
     else if (br == 0x7378) {
         auto now = clock::now();
         auto msSinceLastDecrease = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBitrateDecrease);
-        auto increaseCoefficient = std::min(msSinceLastDecrease.count() / 600000.0f + 1.0f, 1.05f);
-        newBitrate *= increaseCoefficient;
+        auto increaseCoefficient = std::min(static_cast<float>(msSinceLastDecrease.count()) / 600000.0f + 1.0f, 1.05f);
+        newBitrate *= static_cast<int>(increaseCoefficient);
     } else
         return;
 
@@ -798,7 +794,7 @@ VideoRtpSession::attachRemoteRecorder(const MediaStream& ms)
     std::lock_guard lock(mutex_);
     if (!recorder_ || !receiveThread_)
         return;
-    if (auto ob = recorder_->addStream(ms)) {
+    if (auto* ob = recorder_->addStream(ms)) {
         receiveThread_->attach(ob);
     }
 }
@@ -809,7 +805,7 @@ VideoRtpSession::attachLocalRecorder(const MediaStream& ms)
     std::lock_guard lock(mutex_);
     if (!recorder_ || !videoLocal_ || !Manager::instance().videoPreferences.getRecordPreview())
         return;
-    if (auto ob = recorder_->addStream(ms)) {
+    if (auto* ob = recorder_->addStream(ms)) {
         videoLocal_->attach(ob);
     }
 }
@@ -844,14 +840,14 @@ VideoRtpSession::deinitRecorder()
         return;
     if (receiveThread_) {
         auto ms = receiveThread_->getInfo();
-        if (auto ob = recorder_->getStream(ms.name)) {
+        if (auto* ob = recorder_->getStream(ms.name)) {
             receiveThread_->detach(ob);
             recorder_->removeStream(ms);
         }
     }
     if (videoLocal_) {
         auto ms = videoLocal_->getInfo();
-        if (auto ob = recorder_->getStream(ms.name)) {
+        if (auto* ob = recorder_->getStream(ms.name)) {
             videoLocal_->detach(ob);
             recorder_->removeStream(ms);
         }
@@ -886,7 +882,7 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
             if (it->second == 0.0f)
                 pond = 20.0f; // Reduce weight of null drop
             else
-                pond = std::min(delay.count() * coefficient_a + coefficient_b, 100.0f);
+                pond = std::min(static_cast<float>(delay.count()) * coefficient_a + coefficient_b, 100.0f);
             totalPond += pond;
             pondLoss += it->second * pond;
             ++it;
@@ -925,7 +921,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             uint64_t br = 0x6803; // Decrease 3
             auto v = cc->createREMB(br);
             buf = &v[0];
-            socketPair_->writeData(buf, v.size());
+            socketPair_->writeData(buf, static_cast<int>(v.size()));
             last_REMB_inc_ = clock::now();
         }
     } else if (bwState == BandwidthUsage::bwNormal) {
@@ -935,7 +931,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             uint64_t br = 0x7378; // INcrease
             auto v = cc->createREMB(br);
             buf = &v[0];
-            socketPair_->writeData(buf, v.size());
+            socketPair_->writeData(buf, static_cast<int>(v.size()));
             last_REMB_inc_ = clock::now();
         }
     }

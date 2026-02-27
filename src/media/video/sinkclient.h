@@ -24,7 +24,6 @@
 #include <videomanager_interface.h>
 
 #include <string>
-#include <vector>
 #include <memory>
 
 // #define DEBUG_FPS

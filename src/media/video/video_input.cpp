@@ -26,14 +26,12 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/jami_signal.h"
-#include "sinkclient.h"
 #include "logger.h"
 #include "media/media_buffer.h"
 
 #include <libavformat/avio.h>
 
 #include <string>
-#include <sstream>
 #include <cassert>
 #ifdef _MSC_VER
 #include <io.h> // for access
@@ -112,7 +110,7 @@ int
 VideoInput::getWidth() const
 {
     if (videoManagedByClient()) {
-        return decOpts_.width;
+        return static_cast<int>(decOpts_.width);
     }
     return decoder_ ? decoder_->getWidth() : 0;
 }
@@ -121,7 +119,7 @@ int
 VideoInput::getHeight() const
 {
     if (videoManagedByClient()) {
-        return decOpts_.height;
+        return static_cast<int>(decOpts_.height);
     }
     return decoder_ ? decoder_->getHeight() : 0;
 }
@@ -399,7 +397,7 @@ VideoInput::isCapturing() const noexcept
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    if (auto dm = jami::getVideoDeviceMonitor()) {
+    if (auto* dm = jami::getVideoDeviceMonitor()) {
         decOpts_ = dm->getDeviceParams(device);
         return true;
     }
@@ -416,7 +414,7 @@ round2pow(unsigned i, unsigned n)
 bool
 VideoInput::initLinuxGrab(const std::string& display)
 {
-    auto deviceMonitor = jami::getVideoDeviceMonitor();
+    auto* deviceMonitor = jami::getVideoDeviceMonitor();
     if (!deviceMonitor)
         return false;
     // Patterns (all platforms except Linux with Wayland)
@@ -453,18 +451,18 @@ VideoInput::initLinuxGrab(const std::string& display)
         size_t fdPos = display.find(fdStr) + fdStr.size();
         size_t nodePos = display.find(nodeStr) + nodeStr.size();
 
-        pid_t pid = std::stol(display.substr(pidPos));
+        pid_t pid = static_cast<pid_t>(std::stol(display.substr(pidPos)));
         int fd = std::stoi(display.substr(fdPos));
         if (pid != getpid()) {
 #ifdef SYS_pidfd_getfd
             // We are unable to directly use a file descriptor that was opened in a different
             // process, so we try to duplicate it in the current process.
-            int pidfd = syscall(SYS_pidfd_open, pid, 0);
+            int pidfd = static_cast<int>(syscall(SYS_pidfd_open, pid, 0));
             if (pidfd < 0) {
                 JAMI_ERROR("Unable to duplicate PipeWire fd: call to pidfd_open failed (errno = {})", errno);
                 return false;
             }
-            fd = syscall(SYS_pidfd_getfd, pidfd, fd, 0);
+            fd = static_cast<int>(syscall(SYS_pidfd_getfd, pidfd, fd, 0));
             if (fd < 0) {
                 JAMI_ERROR("Unable to duplicate PipeWire fd: call to pidfd_getfd failed (errno = {})", errno);
                 return false;
@@ -603,9 +601,9 @@ VideoInput::initWindowsGrab(const std::string& display)
 #endif
 
 bool
-VideoInput::initFile(std::string path)
+VideoInput::initFile(const std::string& path)
 {
-    auto deviceMonitor = jami::getVideoDeviceMonitor();
+    auto* deviceMonitor = jami::getVideoDeviceMonitor();
     if (!deviceMonitor)
         return false;
 
@@ -725,8 +723,14 @@ VideoInput::getInfo() const
             return decoder_->getStream("v:local");
     }
     auto opts = futureDecOpts_.get();
-    rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
-    return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()), 1 / fr, opts.width, opts.height, 0, fr);
+    rational<int> fr(static_cast<int>(opts.framerate.numerator()), static_cast<int>(opts.framerate.denominator()));
+    return MediaStream("v:local",
+                       av_get_pix_fmt(opts.pixel_format.c_str()),
+                       1 / fr,
+                       static_cast<int>(opts.width),
+                       static_cast<int>(opts.height),
+                       0,
+                       fr);
 }
 
 void

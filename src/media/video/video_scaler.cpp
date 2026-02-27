@@ -16,12 +16,12 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "libav_utils.h"
 #include "video_scaler.h"
 #include "media_buffer.h"
 #include "logger.h"
 
 #include <cassert>
+#include <cstddef>
 
 namespace jami {
 namespace video {
@@ -82,7 +82,7 @@ VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
             output.copyFrom(input);
         }
     } else {
-        auto output_frame = output.pointer();
+        auto* output_frame = output.pointer();
         scale_and_pad(input, output, 0, 0, output_frame->width, output_frame->height, true);
     }
 }
@@ -96,23 +96,23 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
                            unsigned dest_height,
                            bool keep_aspect)
 {
-    const auto input_frame = input.pointer();
-    auto output_frame = output.pointer();
+    const auto* const input_frame = input.pointer();
+    auto* output_frame = output.pointer();
 
     /* Correct destination width/height and offset if we need to keep input
      * frame aspect.
      */
     if (keep_aspect) {
-        const float local_ratio = (float) dest_width / dest_height;
-        const float input_ratio = (float) input_frame->width / input_frame->height;
+        const float local_ratio = static_cast<float>(dest_width) / static_cast<float>(dest_height);
+        const float input_ratio = static_cast<float>(input_frame->width) / static_cast<float>(input_frame->height);
 
         if (local_ratio > input_ratio) {
             auto old_dest_width = dest_width;
-            dest_width = dest_height * input_ratio;
+            dest_width = static_cast<unsigned int>(static_cast<float>(dest_height) * input_ratio);
             xoff += (old_dest_width - dest_width) / 2;
         } else {
             auto old_dest_heigth = dest_height;
-            dest_height = dest_width / input_ratio;
+            dest_height = static_cast<unsigned int>(static_cast<float>(dest_width) / input_ratio);
             yoff += (old_dest_heigth - dest_height) / 2;
         }
     }
@@ -127,8 +127,8 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
                                 input_frame->width,
                                 input_frame->height,
                                 (AVPixelFormat) input_frame->format,
-                                dest_width,
-                                dest_height,
+                                static_cast<int>(dest_width),
+                                static_cast<int>(dest_height),
                                 (AVPixelFormat) output_frame->format,
                                 mode_,
                                 NULL,
@@ -140,16 +140,17 @@ VideoScaler::scale_and_pad(const VideoFrame& input,
     }
 
     // Make an offset'ed copy of output data from xoff and yoff
-    const auto out_desc = av_pix_fmt_desc_get((AVPixelFormat) output_frame->format);
-    memset(tmp_data_, 0, sizeof(tmp_data_));
+    const auto* const out_desc = av_pix_fmt_desc_get((AVPixelFormat) output_frame->format);
+    memset(static_cast<void*>(tmp_data_), 0, sizeof(tmp_data_));
     for (int i = 0; i < 4 && output_frame->linesize[i]; i++) {
-        signed x_shift = xoff, y_shift = yoff;
+        signed x_shift = static_cast<int>(xoff), y_shift = static_cast<int>(yoff);
         if (i == 1 || i == 2) {
             x_shift = -((-x_shift) >> out_desc->log2_chroma_w);
             y_shift = -((-y_shift) >> out_desc->log2_chroma_h);
         }
         auto x_step = out_desc->comp[i].step;
-        tmp_data_[i] = output_frame->data[i] + y_shift * output_frame->linesize[i] + x_shift * x_step;
+        tmp_data_[i] = output_frame->data[i] + static_cast<ptrdiff_t>(y_shift * output_frame->linesize[i])
+                       + static_cast<ptrdiff_t>(x_shift * x_step);
     }
 
     sws_scale(ctx_, input_frame->data, input_frame->linesize, 0, input_frame->height, tmp_data_, output_frame->linesize);

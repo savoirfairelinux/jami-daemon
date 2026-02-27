@@ -22,8 +22,6 @@
 #endif
 
 #include "media_buffer.h"
-#include "string_utils.h"
-#include "fileutils.h"
 #include "logger.h"
 #include "accel.h"
 
@@ -144,7 +142,7 @@ HardwareAccel::~HardwareAccel()
 static AVPixelFormat
 getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 {
-    auto accel = static_cast<HardwareAccel*>(codecCtx->opaque);
+    auto* accel = static_cast<HardwareAccel*>(codecCtx->opaque);
 
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
         if (accel && formats[i] == accel->getFormat()) {
@@ -260,7 +258,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
 {
     int ret = 0;
     if (type_ == CODEC_DECODER) {
-        auto input = frame.pointer();
+        const auto* input = frame.pointer();
         if (input->format != format_) {
             JAMI_ERR() << "Frame format mismatch: expected " << av_get_pix_fmt_name(format_) << ", got "
                        << av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format));
@@ -269,7 +267,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
 
         return transferToMainMemory(frame, swFormat_);
     } else if (type_ == CODEC_ENCODER) {
-        auto input = frame.pointer();
+        const auto* input = frame.pointer();
         if (input->format != swFormat_) {
             JAMI_ERR() << "Frame format mismatch: expected " << av_get_pix_fmt_name(swFormat_) << ", got "
                        << av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format));
@@ -277,7 +275,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
         }
 
         auto framePtr = std::make_unique<VideoFrame>();
-        auto hwFrame = framePtr->pointer();
+        auto* hwFrame = framePtr->pointer();
 
         if ((ret = av_hwframe_get_buffer(framesCtx_, hwFrame, 0)) < 0) {
             JAMI_ERR() << "Failed to allocate hardware buffer: " << libav_utils::getError(ret).c_str();
@@ -328,7 +326,7 @@ HardwareAccel::initFrame()
     if (!framesCtx_)
         return false;
 
-    auto ctx = reinterpret_cast<AVHWFramesContext*>(framesCtx_->data);
+    auto* ctx = reinterpret_cast<AVHWFramesContext*>(framesCtx_->data);
     ctx->format = format_;
     ctx->sw_format = swFormat_;
     ctx->width = width_;
@@ -349,7 +347,7 @@ HardwareAccel::linkHardware(AVBufferRef* framesCtx)
     if (framesCtx) {
         // Force sw_format to match swFormat_. Frame is never transferred to main
         // memory when hardware is linked, so the sw_format doesn't matter.
-        auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
+        auto* hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
         hw->sw_format = swFormat_;
 
         if (framesCtx_)
@@ -368,11 +366,11 @@ HardwareAccel::linkHardware(AVBufferRef* framesCtx)
 std::unique_ptr<VideoFrame>
 HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat)
 {
-    auto input = frame.pointer();
+    const auto* input = frame.pointer();
     if (not input)
         throw std::runtime_error("Unable to transfer null frame");
 
-    auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
+    const auto* desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
     if (!desc) {
         throw std::runtime_error("Unable to transfer frame with invalid format");
     }
@@ -383,7 +381,7 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
         return out;
     }
 
-    auto output = out->pointer();
+    auto* output = out->pointer();
     output->format = desiredFormat;
 
     int ret = av_hwframe_transfer_data(output, input, 0);

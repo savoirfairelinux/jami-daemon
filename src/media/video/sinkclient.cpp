@@ -27,7 +27,6 @@
 
 #include "media_buffer.h"
 #include "logger.h"
-#include "noncopyable.h"
 #include "client/jami_signal.h"
 #include "jami/videomanager_interface.h"
 #include "libav_utils.h"
@@ -45,7 +44,6 @@
 
 #include <fcntl.h>
 #include <cstdio>
-#include <sstream>
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
@@ -322,7 +320,7 @@ SinkClient::configureFrameDirect(const std::shared_ptr<jami::MediaFrame>& frame_
 
     if (crop_.w || crop_.h) {
 #ifdef ENABLE_HWACCEL
-        auto desc = av_pix_fmt_desc_get((AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
+        const auto* desc = av_pix_fmt_desc_get((AVPixelFormat) std::static_pointer_cast<VideoFrame>(frame_p)->format());
         /*
          Cropping does not work for hardware-decoded frames.
          They need to be transferred to main memory.
@@ -367,7 +365,7 @@ SinkClient::applyTransform(VideoFrame& frame_p)
 {
     std::shared_ptr<VideoFrame> frame = std::make_shared<VideoFrame>();
 #ifdef ENABLE_HWACCEL
-    auto desc = av_pix_fmt_desc_get((AVPixelFormat) frame_p.format());
+    const auto* desc = av_pix_fmt_desc_get((AVPixelFormat) frame_p.format());
     if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
         try {
             frame = HardwareAccel::transferToMainMemory(frame_p, AV_PIX_FMT_NV12);

@@ -15,9 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
 #include <cassert>
-#include <sstream>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -26,9 +24,7 @@
 
 #include "manager.h"
 #include "media_const.h"
-#include "client/videomanager.h"
 #include "client/jami_signal.h"
-#include "config/yamlparser.h"
 #include "logger.h"
 #include "video_device_monitor.h"
 
@@ -126,7 +122,7 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
         // place it at the begining of the prefs
         auto itPref = findPreferencesById(itDev->getDeviceId());
         if (itPref != preferences_.end()) {
-            auto settings = *itPref;
+            const auto& settings = *itPref;
             preferences_.erase(itPref);
             preferences_.insert(preferences_.begin(), settings);
         } else {

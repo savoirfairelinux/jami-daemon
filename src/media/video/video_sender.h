@@ -20,7 +20,6 @@
 #include "media_encoder.h"
 #include "media_io_handle.h"
 
-#include <map>
 #include <string>
 #include <memory>
 #include <atomic>

@@ -19,7 +19,7 @@
 #include "media/rtp_session.h"
 #include "media/media_device.h"
 
-#include "video_base.h"
+#include "media_stream.h"
 #include "threadloop.h"
 
 #include <string>
