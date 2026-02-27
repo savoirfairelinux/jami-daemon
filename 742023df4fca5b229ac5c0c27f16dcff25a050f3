@@ -3,6 +3,52 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "fbc00b41_03b45261",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 771,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T21:09:55Z",
+      "side": 1,
+      "message": "Do we really need to check if `info.devices` is empty? If I\u0027m reading the documentation correctly then `std::includes` will return true in that case, which seems to be what we want here?",
+      "range": {
+        "startLine": 770,
+        "startChar": 12,
+        "endLine": 771,
+        "endChar": 60
+      },
+      "revId": "742023df4fca5b229ac5c0c27f16dcff25a050f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5c937c4c_bba565a8",
+        "filename": "src/jamidht/conversation.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 804,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-02-27T21:09:55Z",
+      "side": 1,
+      "message": "Should we add a check for `m.uri !\u003d memberUri` here to make sure we don\u0027t restart tracking a member right after untracking it?",
+      "range": {
+        "startLine": 804,
+        "startChar": 12,
+        "endLine": 804,
+        "endChar": 71
+      },
+      "revId": "742023df4fca5b229ac5c0c27f16dcff25a050f3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "be88d4c3_e9732fa1",
         "filename": "src/jamidht/conversation.cpp",
         "patchSetId": 13
