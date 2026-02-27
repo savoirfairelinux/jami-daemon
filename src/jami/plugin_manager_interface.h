@@ -16,14 +16,11 @@
  */
 #pragma once
 
-#include "jami.h"
-
 #include "def.h"
 
 #include <string>
 #include <vector>
 #include <map>
-#include <list>
 
 #ifdef __APPLE__
 #import "TargetConditionals.h"

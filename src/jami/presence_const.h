@@ -17,8 +17,6 @@
 #ifndef LIBJAMI_PRESENCE_CONST_H
 #define LIBJAMI_PRESENCE_CONST_H
 
-#include "def.h"
-
 namespace libjami {
 
 namespace Presence {

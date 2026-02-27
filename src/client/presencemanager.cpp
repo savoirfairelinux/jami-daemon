@@ -26,6 +26,7 @@
 
 #include "logger.h"
 #include "manager.h"
+#include "presence_const.h"
 #include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"

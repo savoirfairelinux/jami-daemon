@@ -30,6 +30,7 @@
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
+#include "security_const.h"
 #include "client/jami_signal.h"
 #include "audio/ringbufferpool.h"
 #include "connectivity/security/tlsvalidator.h"
