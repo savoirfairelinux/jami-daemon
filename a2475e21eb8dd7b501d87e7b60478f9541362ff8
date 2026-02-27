@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4d1026e4_d3eb97bf",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-27T15:16:18Z",
+      "side": 1,
+      "message": "Unable to load conversation members: {}",
+      "range": {
+        "startLine": 174,
+        "startChar": 39,
+        "endLine": 174,
+        "endChar": 55
+      },
+      "revId": "a2475e21eb8dd7b501d87e7b60478f9541362ff8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f2c0ae25_437d894f",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-27T15:16:18Z",
+      "side": 1,
+      "message": "Unable to load conversation devices: {}",
+      "range": {
+        "startLine": 345,
+        "startChar": 43,
+        "endLine": 345,
+        "endChar": 59
+      },
+      "revId": "a2475e21eb8dd7b501d87e7b60478f9541362ff8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "8765bca4_cce4ea57",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 4266,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-02-27T15:16:18Z",
+      "side": 1,
+      "message": "Unable to load conversation profile: {}",
+      "range": {
+        "startLine": 4266,
+        "startChar": 39,
+        "endLine": 4266,
+        "endChar": 55
+      },
+      "revId": "a2475e21eb8dd7b501d87e7b60478f9541362ff8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
