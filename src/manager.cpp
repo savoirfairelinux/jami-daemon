@@ -196,14 +196,21 @@ check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& 
  * JAMI_LOG_DHT = 1 logging enabled
  */
 static unsigned
-setDhtLogLevel()
+getDhtLogLevel()
 {
-    unsigned level = 0;
     if (auto envvar = getenv("JAMI_LOG_DHT")) {
-        level = to_int<unsigned>(envvar, 0);
-        level = std::clamp(level, 0u, 1u);
+        return std::clamp(to_int<unsigned>(envvar, 0), 0u, 1u);
     }
-    return level;
+    return 0;
+}
+
+static unsigned
+getDhtnetLogLevel()
+{
+    if (auto envvar = getenv("JAMI_LOG_DHTNET")) {
+        return std::clamp(to_int<unsigned>(envvar, 0), 0u, 1u);
+    }
+    return 0;
 }
 
 /**
@@ -216,8 +223,7 @@ setSipLogLevel()
 {
     int level = 0;
     if (auto envvar = getenv("JAMI_LOG_SIP")) {
-        level = to_int<int>(envvar, 0);
-        level = std::clamp(level, 0, 6);
+        level = std::clamp(to_int<int>(envvar, 0), 0, 6);
     }
 
     pj_log_set_level(level);
@@ -775,7 +781,8 @@ Manager::init(const std::filesystem::path& config_file, libjami::InitFlag flags)
 #undef PJSIP_TRY
 
     setGnuTlsLogLevel();
-    dhtLogLevel = setDhtLogLevel();
+    dhtLogLevel = getDhtLogLevel();
+    dhtnetLogLevel = getDhtnetLogLevel();
     pimpl_->upnpContext_->setMappingLabel("JAMI-" + fileutils::getOrCreateLocalDeviceId());
 
     JAMI_LOG("Using PJSIP version: {:s} for {:s}", pj_get_version(), PJ_OS_NAME);

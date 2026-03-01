@@ -871,7 +871,8 @@ public:
 #endif // ENABLE_VIDEO
     VideoManager* getVideoManager() const;
 
-    unsigned dhtLogLevel {0}; // default = disable
+    unsigned dhtLogLevel {0};    // default = disable
+    unsigned dhtnetLogLevel {0}; // default = disable
     AccountFactory accountFactory;
 
     std::vector<libjami::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);

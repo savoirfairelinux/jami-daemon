@@ -4335,7 +4335,9 @@ JamiAccount::initConnectionManager()
         connectionManagerConfig->turnServerRealm = config().turnServerRealm;
         connectionManagerConfig->turnEnabled = config().turnEnabled;
         connectionManagerConfig->cachePath = cachePath_;
-        connectionManagerConfig->logger = logger_;
+        if (Manager::instance().dhtnetLogLevel > 0) {
+            connectionManagerConfig->logger = logger_;
+        }
         connectionManagerConfig->factory = Manager::instance().getIceTransportFactory();
         connectionManagerConfig->turnCache = turnCache_;
         connectionManagerConfig->rng = std::make_unique<std::mt19937_64>(dht::crypto::getDerivedRandomEngine(rand));
