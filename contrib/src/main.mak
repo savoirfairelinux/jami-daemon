@@ -200,7 +200,7 @@ EXTRA_LDFLAGS += -fsanitize=address
 endif
 
 ifdef ENABLE_DEBUG
-EXTRA_COMMON += -g -fno-omit-frame-pointer
+EXTRA_COMMON += -g -fno-omit-frame-pointer -Og
 else
 EXTRA_COMMON += -DNDEBUG=1 -O3
 endif
