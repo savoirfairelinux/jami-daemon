@@ -140,6 +140,30 @@
       },
       "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cad7a1eb_dd95b8b0",
+        "filename": "src/jami/jami.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-02T16:24:33Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c3e61e27_eee70ae6",
+      "range": {
+        "startLine": 193,
+        "startChar": 27,
+        "endLine": 193,
+        "endChar": 50
+      },
+      "revId": "ccafcbe41eeca31537f959a9e8fe7a928dcf1369",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
