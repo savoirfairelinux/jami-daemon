@@ -3288,13 +3288,6 @@ ConversationRepository::fetch(const std::string& remoteDeviceId)
     git_fetch_options_init(&fetch_opts, GIT_FETCH_OPTIONS_VERSION);
     fetch_opts.follow_redirects = GIT_REMOTE_REDIRECT_NONE;
 
-    LogOptions options;
-    options.nbOfCommits = 1;
-    auto lastMsg = log(options);
-    if (lastMsg.size() == 0)
-        return false;
-    auto lastCommit = lastMsg[0].id;
-
     // Assert that repository exists
     auto repo = pimpl_->repository();
     if (!repo)
