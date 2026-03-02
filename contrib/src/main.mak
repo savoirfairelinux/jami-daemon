@@ -425,7 +425,11 @@ else
 CMAKE = cmake -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 		-DCMAKE_INSTALL_LIBDIR=$(PREFIX)/lib \
-		-DBUILD_SHARED_LIBS=OFF
+		-DBUILD_SHARED_LIBS=OFF \
+		-DCMAKE_BUILD_TYPE=Release
+ifdef ENABLE_LTO
+CMAKE := $(CMAKE) -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
+endif
 endif
 
 build_cmake = cd $< && mkdir -p build && cd build && \
@@ -596,7 +600,6 @@ endif
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)" >> $@
-	echo "set(CMAKE_BUILD_TYPE Release)" >> $@
 
 # Default pattern rules
 .sum-%: $(SRC)/%/SHA512SUMS
