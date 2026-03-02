@@ -366,15 +366,24 @@ public:
         return true;
     }
 
+    ConversationCommit parseCommit(git_repository* repo, const git_commit* commit) const;
+
     std::optional<ConversationCommit> getCommit(const std::string& commitId) const
     {
-        LogOptions options;
-        options.from = commitId;
-        options.nbOfCommits = 1;
-        auto commits = log(options);
-        if (commits.empty())
+        auto repo = repository();
+        if (!repo)
             return std::nullopt;
-        return std::move(commits[0]);
+
+        git_oid oid;
+        if (git_oid_fromstr(&oid, commitId.c_str()) < 0)
+            return std::nullopt;
+
+        git_commit* commitPtr = nullptr;
+        if (git_commit_lookup(&commitPtr, repo.get(), &oid) < 0)
+            return std::nullopt;
+        GitCommit commit {commitPtr};
+
+        return parseCommit(repo.get(), commit.get());
     }
 
     bool resolveConflicts(git_index* index, const std::string& other_id);
@@ -2148,15 +2157,12 @@ ConversationRepository::Impl::mode() const
     if (mode_ != std::nullopt)
         return *mode_;
 
-    LogOptions options;
-    options.from = id_;
-    options.nbOfCommits = 1;
-    auto lastMsg = log(options);
-    if (lastMsg.size() == 0) {
+    auto initialCommit = getCommit(id_);
+    if (!initialCommit) {
         emitSignal<libjami::ConversationSignal::OnConversationError>(accountId_, id_, EINVALIDMODE, "No initial commit");
         throw std::logic_error("Unable to retrieve first commit");
     }
-    auto commitMsg = lastMsg[0].commit_msg;
+    auto commitMsg = initialCommit->commit_msg;
 
     Json::Value root;
     if (!json::parse(commitMsg, root)) {
@@ -2355,43 +2361,13 @@ ConversationRepository::Impl::forEachCommit(PreConditionCb&& preCondition,
         }
         GitCommit commit {commit_ptr};
 
-        const git_signature* sig = git_commit_author(commit.get());
-        GitAuthor author;
-        author.name = sig->name;
-        author.email = sig->email;
+        ConversationCommit cc = parseCommit(repo.get(), commit.get());
 
-        std::vector<std::string> parents;
-        auto parentsCount = git_commit_parentcount(commit.get());
-        for (unsigned int p = 0; p < parentsCount; ++p) {
-            if (const git_oid* pid = git_commit_parent_id(commit.get(), p)) {
-                parents.emplace_back(git_oid_tostr_s(pid));
-            }
-        }
-
-        auto result = preCondition(id, author, commit);
+        auto result = preCondition(id, cc.author, commit);
         if (result == CallbackResult::Skip)
             continue;
         else if (result == CallbackResult::Break)
             break;
-
-        ConversationCommit cc;
-        cc.id = id;
-        cc.commit_msg = git_commit_message(commit.get());
-        cc.author = std::move(author);
-        cc.parents = std::move(parents);
-        git_buf signature = {}, signed_data = {};
-        if (git_commit_extract_signature(&signature, &signed_data, repo.get(), &oid, "signature") < 0) {
-            JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}",
-                         accountId_,
-                         id_,
-                         id);
-        } else {
-            cc.signature = base64::decode(std::string_view(signature.ptr, signature.size));
-            cc.signed_content = std::vector<uint8_t>(signed_data.ptr, signed_data.ptr + signed_data.size);
-        }
-        git_buf_dispose(&signature);
-        git_buf_dispose(&signed_data);
-        cc.timestamp = git_commit_time(commit.get());
 
         auto post = postCondition(id, cc.author, cc);
         emplaceCb(std::move(cc));
@@ -2496,14 +2472,11 @@ ConversationRepository::Impl::getInitialMembers() const
     auto acc = account_.lock();
     if (!acc)
         return {};
-    LogOptions options;
-    options.from = id_;
-    options.nbOfCommits = 1;
-    auto firstCommit = log(options);
-    if (firstCommit.size() == 0) {
+    auto firstCommitOpt = getCommit(id_);
+    if (firstCommitOpt == std::nullopt) {
         return {};
     }
-    auto commit = firstCommit[0];
+    auto& commit = *firstCommitOpt;
 
     auto authorDevice = commit.author.email;
     auto cert = acc->certStore().getCertificate(authorDevice);
@@ -2707,6 +2680,48 @@ ConversationRepository::Impl::diffStats(const GitDiff& diff) const
     auto res = std::string(statsBuf.ptr, statsBuf.ptr + statsBuf.size);
     git_buf_dispose(&statsBuf);
     return res;
+}
+
+ConversationCommit
+ConversationRepository::Impl::parseCommit(git_repository* repo, const git_commit* commit) const
+{
+    git_oid oid;
+    git_oid_cpy(&oid, git_commit_id(commit));
+
+    ConversationCommit convCommit;
+    convCommit.id = git_oid_tostr_s(&oid);
+    convCommit.commit_msg = git_commit_message(commit);
+    convCommit.timestamp = git_commit_time(commit);
+
+    const git_signature* sig = git_commit_author(commit);
+    GitAuthor author;
+    author.name = sig->name;
+    author.email = sig->email;
+    convCommit.author = std::move(author);
+
+    std::vector<std::string> parents;
+    auto parentsCount = git_commit_parentcount(commit);
+    for (unsigned int p = 0; p < parentsCount; ++p) {
+        if (const git_oid* pid = git_commit_parent_id(commit, p)) {
+            parents.emplace_back(git_oid_tostr_s(pid));
+        }
+    }
+    convCommit.parents = std::move(parents);
+
+    git_buf signature = {}, signed_data = {};
+    if (git_commit_extract_signature(&signature, &signed_data, repo, &oid, "signature") < 0) {
+        JAMI_WARNING("[Account {}] [Conversation {}] Unable to extract signature for commit {}",
+                     accountId_,
+                     id_,
+                     convCommit.id);
+    } else {
+        convCommit.signature = base64::decode(std::string_view(signature.ptr, signature.size));
+        convCommit.signed_content = std::vector<uint8_t>(signed_data.ptr, signed_data.ptr + signed_data.size);
+    }
+    git_buf_dispose(&signature);
+    git_buf_dispose(&signed_data);
+
+    return convCommit;
 }
 
 //////////////////////////////////
