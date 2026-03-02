@@ -18,6 +18,7 @@
 
 #include "logger.h"
 #include "connectivity/sip_utils.h"
+#include "string_utils.h"
 
 #include <pjsip_ua.h>
 #include <pjsip.h>

@@ -21,7 +21,6 @@
 #include <vector>
 #include <memory>
 #include <mutex>
-#include <utility>
 #include <functional>
 
 namespace jami {

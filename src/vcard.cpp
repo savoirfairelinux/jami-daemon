@@ -73,7 +73,8 @@ toString(const VCardData& vCard)
     for (const auto& [key, value] : vCard) {
         if (Delimiter::BEGIN_TOKEN_KEY == key || Delimiter::END_TOKEN_KEY == key)
             continue;
-        result += key + ':' + value + '\n';
+        result += key + ':';
+        result += value + '\n';
     }
 
     result += Delimiter::END_TOKEN;

@@ -24,8 +24,6 @@
 #include <functional>
 #include <json/json.h>
 
-#include "logger.h"
-
 namespace jami {
 
 /**

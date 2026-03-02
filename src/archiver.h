@@ -16,12 +16,9 @@
  */
 #pragma once
 
-#include "noncopyable.h"
-
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <map>
 #include <functional>
 
 #ifdef HAVE_CONFIG_H

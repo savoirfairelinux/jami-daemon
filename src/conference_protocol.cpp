@@ -17,6 +17,7 @@
 
 #include "conference_protocol.h"
 
+#include "logger.h"
 #include "string_utils.h"
 
 namespace jami {
@@ -128,7 +129,7 @@ ConfProtocolParser::parseV1()
                      itrd != accValue[ProtocolKeys::DEVICES].end();
                      itrd++) {
                     auto deviceId = itrd.key().asString();
-                    auto deviceValue = *itrd;
+                    const auto& deviceValue = *itrd;
                     if (deviceValue.isMember(ProtocolKeys::RAISEHAND)) {
                         auto newState = deviceValue[ProtocolKeys::RAISEHAND].asBool();
                         if (peerId_ == accountUri || (!newState && isPeerModerator))
@@ -142,7 +143,7 @@ ConfProtocolParser::parseV1()
                              itrm != accValue[ProtocolKeys::MEDIAS].end();
                              itrm++) {
                             auto streamId = itrm.key().asString();
-                            auto mediaVal = *itrm;
+                            const auto& mediaVal = *itrm;
                             if (mediaVal.isMember(ProtocolKeys::VOICEACTIVITY)) {
                                 voiceActivity_(streamId, mediaVal[ProtocolKeys::VOICEACTIVITY].asBool());
                             }
