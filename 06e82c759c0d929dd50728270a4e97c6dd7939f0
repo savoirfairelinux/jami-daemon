@@ -24,6 +24,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "b1b478c2_6c190a6d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 324,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-02T20:30:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f481ad9d_0d7b7d29",
+      "range": {
+        "startLine": 321,
+        "startChar": 20,
+        "endLine": 324,
+        "endChar": 69
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "fab91110_ba7b20f6",
@@ -37,6 +61,30 @@
       "writtenOn": "2026-02-27T16:08:18Z",
       "side": 1,
       "message": "2026",
+      "range": {
+        "startLine": 2,
+        "startChar": 23,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "8aa697d5_13721c14",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-02T20:30:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fab91110_ba7b20f6",
       "range": {
         "startLine": 2,
         "startChar": 23,
@@ -83,6 +131,30 @@
       "writtenOn": "2026-02-27T16:08:18Z",
       "side": 1,
       "message": "2026",
+      "range": {
+        "startLine": 2,
+        "startChar": 23,
+        "endLine": 2,
+        "endChar": 27
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e152f833_45c941fd",
+        "filename": "src/jamidht/presence_manager.h",
+        "patchSetId": 13
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-02T20:30:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d65ab1c0_ea7f4533",
       "range": {
         "startLine": 2,
         "startChar": 23,
