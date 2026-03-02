@@ -23,13 +23,9 @@
 #include "client/jami_signal.h"
 #include "configurationmanager_interface.h"
 #include "noncopyable.h"
-#include "config/serializable.h"
 #include "registration_states.h"
 #include "im/message_engine.h"
 #include "media/media_codec.h"
-#include "media/media_attribute.h"
-#include "logger.h"
-#include "compiler_intrinsics.h" // include the "UNUSED" macro
 #include "call_set.h"
 #include "account_config.h"
 #include "vcard.h"
@@ -45,9 +41,7 @@
 #include <set>
 #include <random>
 #include <stdexcept>
-#include <atomic>
 #include <mutex>
-#include <chrono>
 
 namespace Json {
 class Value;

@@ -24,6 +24,7 @@
 
 #include "logger.h"
 #include "fileutils.h"
+#include "string_utils.h"
 
 namespace jami {
 

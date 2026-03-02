@@ -23,23 +23,17 @@
 #include "plugin/jamipluginmanager.h"
 #include "plugin/streamdata.h"
 #endif
-#include "audio/ringbufferpool.h"
 #include "jami/call_const.h"
 #include "client/jami_signal.h"
-#include "connectivity/sip_utils.h"
 #include "call_factory.h"
 #include "string_utils.h"
-#include "enumclass_utils.h"
 
-#include "errno.h"
 #include "json_utils.h"
 
 #include <dhtnet/ip_utils.h>
 #include <opendht/thread_pool.h>
 
-#include <stdexcept>
 #include <system_error>
-#include <algorithm>
 #include <functional>
 #include <utility>
 
@@ -52,7 +46,7 @@ namespace jami {
 /// code \a errcode when the predicate return true.
 /// The predicate should have <code>bool(Call*) signature</code>.
 template<typename T>
-inline void
+static inline void
 hangupCallsIf(Call::SubcallSet&& calls, int errcode, T pred)
 {
     for (auto& call : calls) {
@@ -65,7 +59,7 @@ hangupCallsIf(Call::SubcallSet&& calls, int errcode, T pred)
 /// Hangup many calls with same error code.
 ///
 /// Works as hangupCallsIf() with a predicate that always return true.
-inline void
+static inline void
 hangupCalls(Call::SubcallSet&& callptr_list, int errcode)
 {
     hangupCallsIf(std::move(callptr_list), errcode, [](Call*) { return true; });

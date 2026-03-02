@@ -21,7 +21,6 @@
 #include "config/serializable.h"
 #include "client/jami_signal.h"
 #include <string>
-#include <map>
 #include <set>
 #include <vector>
 #include <chrono>
@@ -70,7 +69,7 @@ public:
 
     std::chrono::seconds getRingingTimeout() const { return std::chrono::seconds(ringingTimeout_); }
 
-    void setRingingTimeout(std::chrono::seconds timeout) { ringingTimeout_ = timeout.count(); }
+    void setRingingTimeout(std::chrono::seconds timeout) { ringingTimeout_ = static_cast<int>(timeout.count()); }
 
     int getHistoryMaxCalls() const { return historyMaxCalls_; }
 

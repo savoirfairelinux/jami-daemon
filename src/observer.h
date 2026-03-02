@@ -19,7 +19,6 @@
 #include "noncopyable.h"
 
 #include <cstdlib>
-#include <cstdint>
 #include <memory>
 #include <set>
 #include <list>

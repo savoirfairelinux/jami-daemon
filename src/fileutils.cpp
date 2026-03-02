@@ -24,6 +24,7 @@
 #include "archiver.h"
 #include "compiler_intrinsics.h"
 #include "base64.h"
+#include "string_utils.h"
 
 #include <opendht/crypto.h>
 

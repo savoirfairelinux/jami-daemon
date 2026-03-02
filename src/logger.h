@@ -31,13 +31,10 @@
 #endif
 
 #include <opendht/logger.h>
-#include <cinttypes> // for PRIx64
 #include <cstdarg>
 
-#include <atomic>
 #include <sstream>
 #include <string>
-#include "string_utils.h" // to_string
 
 #ifdef __ANDROID__
 
@@ -94,7 +91,7 @@ public:
 
     Logger() = delete;
     Logger(const Logger&) = delete;
-    Logger(Logger&&) = default;
+    Logger(Logger&&) noexcept = default;
 
     ~Logger() { log(level_, file_, line_, linefeed_, "%s", os_.str().c_str()); }
 

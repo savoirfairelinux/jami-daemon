@@ -15,6 +15,7 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "connectivity/sip_utils.h"
 #include "sipaccountbase_config.h"
 
 namespace jami {
