@@ -183,7 +183,7 @@ using clock = std::chrono::steady_clock;
 class Conference : public Recordable, public std::enable_shared_from_this<Conference>
 {
 public:
-    enum class State { ACTIVE_ATTACHED, ACTIVE_DETACHED, HOLD };
+    enum class State : uint8_t { ACTIVE_ATTACHED, ACTIVE_DETACHED, HOLD };
 
     /**
      * Constructor for this class, increment static counter

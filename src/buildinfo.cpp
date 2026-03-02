@@ -21,7 +21,6 @@
 
 #include "jami.h"
 #include "string_utils.h"
-#include <string>
 
 #ifndef JAMI_REVISION
 #define JAMI_REVISION ""

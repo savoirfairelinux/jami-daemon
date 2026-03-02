@@ -27,6 +27,7 @@
 #include "fileutils.h"
 #include "logger.h"
 #include "security_const.h"
+#include "string_utils.h"
 
 #include <sstream>
 

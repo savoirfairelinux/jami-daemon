@@ -34,7 +34,7 @@ using namespace std::string_view_literals;
  * @param url       The repository's URL
  * @return 0 on success, - 1 on error
  */
-int
+static int
 generateRequest(git_buf* request, const std::string& cmd, std::string_view url)
 {
     if (cmd.empty()) {
@@ -92,7 +92,7 @@ sendCmd(P2PStream* s)
         git_buf_dispose(&request);
         return -1;
     }
-    if ((res = sock->write(reinterpret_cast<const unsigned char*>(request.ptr), request.size, ec))) {
+    if ((res = static_cast<int>(sock->write(reinterpret_cast<const unsigned char*>(request.ptr), request.size, ec)))) {
         s->sent_command = 1;
         git_buf_dispose(&request);
         return res;
@@ -163,7 +163,7 @@ P2PSubTransportAction(git_smart_subtransport_stream** out,
         return -1;
     }
 
-    auto repo = git_remote_owner(sub->remote);
+    auto* repo = git_remote_owner(sub->remote);
     if (!repo) {
         JAMI_ERROR("No repository linked to the transport");
         return -1;

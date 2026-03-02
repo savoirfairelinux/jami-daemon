@@ -27,6 +27,7 @@
 #include "sip/sipcall.h"
 #include "sip/sdp.h"
 #include "common.h"
+#include "compiler_intrinsics.h" // for UNUSED
 
 #include <dhtnet/connectionmanager.h>
 

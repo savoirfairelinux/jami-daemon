@@ -61,11 +61,9 @@
 
 #include "config/yamlparser.h"
 #include "connectivity/sip_utils.h"
-#include <sstream>
 #include <algorithm>
 #include <stdexcept>
 #include "fileutils.h"
-#include "string_utils.h"
 
 namespace jami {
 
@@ -557,7 +555,7 @@ VideoPreferences::serialize(YAML::Emitter& out) const
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
     out << YAML::Key << CONFERENCE_RESOLUTION_KEY << YAML::Value << conferenceResolution_;
-    if (auto dm = getVideoDeviceMonitor())
+    if (auto* dm = getVideoDeviceMonitor())
         dm->serialize(out);
     out << YAML::EndMap;
 }
@@ -588,7 +586,7 @@ VideoPreferences::unserialize(const YAML::Node& in)
     } catch (...) {
         conferenceResolution_ = DEFAULT_CONFERENCE_RESOLUTION;
     }
-    if (auto dm = getVideoDeviceMonitor())
+    if (auto* dm = getVideoDeviceMonitor())
         dm->unserialize(in);
 }
 #endif // ENABLE_VIDEO
@@ -622,14 +620,15 @@ PluginPreferences::unserialize(const YAML::Node& in)
     const auto& installedPluginsNode = node[JAMI_PLUGINS_INSTALLED_KEY];
     try {
         installedPlugins_ = yaml_utils::parseVector(installedPluginsNode);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Couldn't parse vector of installed plugins: {}", e.what());
     }
 
     const auto& loadedPluginsNode = node[JAMI_PLUGINS_LOADED_KEY];
     try {
         loadedPlugins_ = yaml_utils::parseVector(loadedPluginsNode);
-    } catch (...) {
-        // loadedPlugins_ = {};
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Couldn't parse vector of loaded plugins: {}", e.what());
     }
 }
 #endif // ENABLE_PLUGIN

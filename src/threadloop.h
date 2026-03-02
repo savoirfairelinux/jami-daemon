@@ -35,7 +35,7 @@ struct ThreadLoopException : public std::runtime_error
 class ThreadLoop
 {
 public:
-    enum class ThreadState { READY, RUNNING, STOPPING };
+    enum class ThreadState : uint8_t { READY, RUNNING, STOPPING };
 
     ThreadLoop(const std::function<bool()>& setup,
                const std::function<void()>& process,
@@ -64,9 +64,9 @@ private:
     std::function<void()> cleanup_;
 
     void mainloop(std::thread::id& tid,
-                  const std::function<bool()> setup,
-                  const std::function<void()> process,
-                  const std::function<void()> cleanup);
+                  const std::function<bool()>& setup,
+                  const std::function<void()>& process,
+                  const std::function<void()>& cleanup);
 
     std::atomic<ThreadState> state_ {ThreadState::READY};
     std::thread::id threadId_;

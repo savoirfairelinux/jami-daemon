@@ -17,13 +17,7 @@
 
 #include "archiver.h"
 
-#include "client/jami_signal.h"
-#include "account_const.h"
-#include "configurationmanager_interface.h"
-
-#include "manager.h"
 #include "fileutils.h"
-#include "logger.h"
 
 #include <opendht/crypto.h>
 #include <json/json.h>
@@ -45,7 +39,8 @@ extern "C" {
 #endif
 
 #include <sys/stat.h>
-#include <fstream>
+
+#include "string_utils.h" // to_string
 
 using namespace std::literals;
 
@@ -70,7 +65,7 @@ compress(const std::string& str)
 void
 compressGzip(const std::string& str, const std::string& path)
 {
-    auto fi = openGzip(path, "wb");
+    auto* fi = openGzip(path, "wb");
     gzwrite(fi, str.data(), str.size());
     gzclose(fi);
 }
@@ -78,7 +73,7 @@ compressGzip(const std::string& str, const std::string& path)
 void
 compressGzip(const std::vector<uint8_t>& dat, const std::string& path)
 {
-    auto fi = openGzip(path, "wb");
+    auto* fi = openGzip(path, "wb");
     gzwrite(fi, dat.data(), dat.size());
     gzclose(fi);
 }
@@ -87,7 +82,7 @@ std::vector<uint8_t>
 decompressGzip(const std::string& path)
 {
     std::vector<uint8_t> out;
-    auto fi = openGzip(path, "rb");
+    auto* fi = openGzip(path, "rb");
     gzrewind(fi);
     while (not gzeof(fi)) {
         std::array<uint8_t, 32768> outbuffer;
@@ -167,19 +162,19 @@ struct DataBlock
     int64_t offset;
 };
 
-long
+static long
 readDataBlock(const ArchivePtr& a, DataBlock& b)
 {
     return archive_read_data_block(a.get(), &b.buff, &b.size, &b.offset);
 }
 
-long
+static long
 writeDataBlock(const ArchivePtr& a, DataBlock& b)
 {
     return archive_write_data_block(a.get(), b.buff, b.size, b.offset);
 }
 
-ArchivePtr
+static ArchivePtr
 createArchiveReader()
 {
     ArchivePtr archivePtr {archive_read_new(), [](archive* a) {
@@ -254,7 +249,7 @@ uncompressArchive(const std::string& archivePath, const std::string& dir, const 
     mz_zip_delete(&zip_handle);
 
 #else
-    int r;
+    long r;
 
     ArchivePtr archiveReader = createArchiveReader();
     ArchivePtr archiveDiskWriter = createArchiveDiskWriter();
@@ -407,7 +402,7 @@ readFileFromArchive(const std::string& archivePath, const std::string& fileRelat
                     fileContent.resize(db.offset);
                 }
 
-                auto dat = static_cast<const uint8_t*>(db.buff);
+                const auto* dat = static_cast<const uint8_t*>(db.buff);
                 // push the buffer data in the string stream
                 fileContent.insert(fileContent.end(), dat, dat + db.size);
             }

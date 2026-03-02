@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <pjsip/sip_msg.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

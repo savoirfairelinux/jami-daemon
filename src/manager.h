@@ -35,11 +35,8 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
-
-#include "trace-tools.h"
 
 namespace asio {
 class io_context;

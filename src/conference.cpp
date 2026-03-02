@@ -15,13 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <regex>
-#include <sstream>
-
 #include "conference.h"
 #include "manager.h"
-#include "audio/audiolayer.h"
 #include "jamidht/jamiaccount.h"
+#include "connectivity/sip_utils.h"
 #include "string_utils.h"
 #include "sip/siptransport.h"
 
@@ -29,7 +26,6 @@
 #include "tracepoint.h"
 #ifdef ENABLE_VIDEO
 #include "call.h"
-#include "video/video_input.h"
 #include "video/video_mixer.h"
 #endif
 
@@ -84,9 +80,9 @@ Conference::setupVideoMixer()
     auto conf_res = split_string_to_unsigned(jami::Manager::instance().videoPreferences.getConferenceResolution(), 'x');
     if (conf_res.size() == 2u) {
 #if defined(__APPLE__) && TARGET_OS_MAC
-        videoMixer_->setParameters(conf_res[0], conf_res[1], AV_PIX_FMT_NV12);
+        videoMixer_->setParameters(static_cast<int>(conf_res[0]), static_cast<int>(conf_res[1]), AV_PIX_FMT_NV12);
 #else
-        videoMixer_->setParameters(conf_res[0], conf_res[1]);
+        videoMixer_->setParameters(static_cast<int>(conf_res[0]), static_cast<int>(conf_res[1]));
 #endif
     } else {
         JAMI_ERROR("[conf:{}] Conference resolution is invalid", id_);
@@ -253,9 +249,9 @@ Conference::~Conference()
     JAMI_LOG("[conf:{}] Destroying conference", id_);
 
 #ifdef ENABLE_VIDEO
-    auto videoManager = Manager::instance().getVideoManager();
+    auto* videoManager = Manager::instance().getVideoManager();
     auto defaultDevice = videoManager ? videoManager->videoDeviceMonitor.getMRLForDefaultDevice() : std::string {};
-    foreachCall([&](auto call) {
+    foreachCall([&](const auto& call) {
         call->exitConference();
         // Reset distant callInfo
         call->resetConfInfo();
@@ -294,7 +290,7 @@ Conference::~Conference()
     }
 #endif // ENABLE_PLUGIN
     if (shutdownCb_)
-        shutdownCb_(getDuration().count());
+        shutdownCb_(static_cast<int>(getDuration().count()));
     // do not propagate sharing from conf host to calls
     closeMediaPlayer(mediaPlayerId_);
     jami_tracepoint(conference_end, id_.c_str());
@@ -590,7 +586,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
     std::vector<std::string> newVideoInputs;
     for (auto const& mediaAttr : mediaAttrList) {
         // Find media
-        auto oldIdx = std::find_if(hostSources_.begin(), hostSources_.end(), [&](auto oldAttr) {
+        auto oldIdx = std::find_if(hostSources_.begin(), hostSources_.end(), [&](const auto& oldAttr) {
             return oldAttr.label_ == mediaAttr.label_;
         });
         // If video, add to newVideoInputs
@@ -599,7 +595,7 @@ Conference::requestMediaChange(const std::vector<libjami::MediaMap>& mediaList)
             auto srcUri = mediaAttr.sourceUri_;
             // If no sourceUri, use the default video device
             if (srcUri.empty()) {
-                if (auto vm = Manager::instance().getVideoManager())
+                if (auto* vm = Manager::instance().getVideoManager())
                     srcUri = vm->videoDeviceMonitor.getMRLForDefaultDevice();
                 else
                     continue;
@@ -1000,7 +996,7 @@ void
 Conference::sendConferenceInfos()
 {
     // Inform calls that the layout has changed
-    foreachCall([&](auto call) {
+    foreachCall([&](const auto& call) {
         // Produce specific JSON for each participant (2 separate accounts can host ...
         // a conference on a same device, the conference is not link to one account).
         auto w = call->getAccount();
@@ -1118,7 +1114,7 @@ Conference::toggleRecording()
         deinitRecorder(recorder_);
 
     // Notify each participant
-    foreachCall([&](auto call) { call->updateRecState(newState); });
+    foreachCall([&](const auto& call) { call->updateRecState(newState); });
 
     auto res = Recordable::toggleRecording();
     updateRecording();
@@ -1204,7 +1200,7 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 #ifdef ENABLE_VIDEO
     // Video
     if (videoMixer_) {
-        if (auto ob = rec->addStream(videoMixer_->getStream("v:mixer"))) {
+        if (auto* ob = rec->addStream(videoMixer_->getStream("v:mixer"))) {
             videoMixer_->attach(ob);
         }
     }
@@ -1220,7 +1216,7 @@ Conference::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 
     // Add stream to recorder
     audioMixer_ = jami::getAudioInput(getConfId());
-    if (auto ob = rec->addStream(audioMixer_->getInfo("a:mixer"))) {
+    if (auto* ob = rec->addStream(audioMixer_->getInfo("a:mixer"))) {
         audioMixer_->attach(ob);
     }
 }
@@ -1231,14 +1227,14 @@ Conference::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 #ifdef ENABLE_VIDEO
     // Video
     if (videoMixer_) {
-        if (auto ob = rec->getStream("v:mixer")) {
+        if (auto* ob = rec->getStream("v:mixer")) {
             videoMixer_->detach(ob);
         }
     }
 #endif
 
     // Audio
-    if (auto ob = rec->getStream("a:mixer"))
+    if (auto* ob = rec->getStream("a:mixer"))
         audioMixer_->detach(ob);
     audioMixer_.reset();
     Manager::instance().getRingBufferPool().unBindAll(getConfId());
@@ -1740,14 +1736,17 @@ Conference::resizeRemoteParticipants(ConfInfo& confInfo, std::string_view peerUR
         }
     }
 
-    const float zoomX = (float) remoteFrameWidth / localCell.w;
-    const float zoomY = (float) remoteFrameHeight / localCell.h;
+    const auto zoomX = static_cast<double>(remoteFrameWidth) / static_cast<double>(localCell.w);
+    const auto zoomY = static_cast<double>(remoteFrameHeight) / static_cast<double>(localCell.h);
+
     // Do the resize for each remote participant
     for (auto& remoteCell : confInfo) {
-        remoteCell.x = remoteCell.x / zoomX + localCell.x;
-        remoteCell.y = remoteCell.y / zoomY + localCell.y;
-        remoteCell.w = remoteCell.w / zoomX;
-        remoteCell.h = remoteCell.h / zoomY;
+        remoteCell.x = static_cast<int>(
+            std::lround(static_cast<double>(remoteCell.x) / zoomX + static_cast<double>(localCell.x)));
+        remoteCell.y = static_cast<int>(
+            std::lround(static_cast<double>(remoteCell.y) / zoomY + static_cast<double>(localCell.y)));
+        remoteCell.w = static_cast<int>(std::lround(static_cast<double>(remoteCell.w) / zoomX));
+        remoteCell.h = static_cast<int>(std::lround(static_cast<double>(remoteCell.h) / zoomY));
     }
 }
 #endif
