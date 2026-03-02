@@ -1,7 +1,7 @@
 # RESTINIO
-RESTINIO_VERSION := 0.7.4
+RESTINIO_VERSION := 0.7.9
 PKG_CPE += cpe:2.3:a:*:restinio:$(RESTINIO_VERSION):*:*:*:*:*:*:*
-RESTINIO_URL := https://github.com/Stiffstream/restinio/releases/download/v.$(RESTINIO_VERSION)/restinio-$(RESTINIO_VERSION).tar.bz2
+RESTINIO_URL := https://github.com/Stiffstream/restinio/releases/download/v$(RESTINIO_VERSION)/restinio-$(RESTINIO_VERSION).tar.bz2
 EXPECTED_LITE_URL := https://raw.githubusercontent.com/martinmoene/expected-lite/master/include/nonstd/expected.hpp
 
 PKGS += restinio
@@ -43,7 +43,7 @@ $(TARBALLS)/expected.hpp:
 
 restinio: restinio-$(RESTINIO_VERSION).tar.bz2 expected.hpp
 	$(UNPACK)
-	$(UPDATE_AUTOCONFIG)
+	$(APPLY) $(SRC)/restinio/0001-update-cmake-required-version.patch
 	cd $(UNPACK_DIR) && mv dev/* .
 	$(MOVE)
 	mkdir -p $(PREFIX)/include/nonstd
