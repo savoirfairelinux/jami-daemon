@@ -46,6 +46,6 @@ bool utf8_validate(std::string_view str);
  *
  * Returns: a valid utf8 string.
  */
-std::string utf8_make_valid(std::string_view str);
+std::string utf8_make_valid(std::string_view name);
 
 } // namespace jami
