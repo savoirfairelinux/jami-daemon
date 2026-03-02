@@ -28,6 +28,7 @@ usage()
 	echo "  --disable-downloads don't download packages from the internet"
     echo "  --cache-dir=DIR     the directory where contrib tarballs are cached"
 	echo "  --enable-debug      build with debug symbol and extra checks (disabled by default)"
+	echo "  --enable-lto        build with link-time optimization (disabled by default)"
 	echo "  --enable-asan       build with address sanitizer (disabled by default)"
 	echo "  --ignore-system-libs  build packages regardless of system detection (disabled by default)"
 	echo "  --disable-FOO       configure to not build package FOO"
@@ -42,6 +43,7 @@ PKGS_DISABLE=
 CACHE_BUILD=
 CONF_TARBALLS=
 ENABLE_ASAN=
+ENABLE_LTO=
 IGNORE_SYSTEM_LIBS=
 
 if test ! -f "../src/main.mak"
@@ -81,6 +83,9 @@ do
 			;;
 		--ignore-system-libs)
 			IGNORE_SYSTEM_LIBS=1
+			;;
+		--enable-lto)
+			ENABLE_LTO=1
 			;;
 		--host=*)
 			HOST="${1#--host=}"
@@ -147,6 +152,7 @@ CACHE_DIR := $CACHE_DIR
 CACHE_BUILD := $CACHE_BUILD
 ENABLE_DEBUG := $ENABLE_DEBUG
 ENABLE_ASAN := $ENABLE_ASAN
+ENABLE_LTO := $ENABLE_LTO
 IGNORE_SYSTEM_LIBS := $IGNORE_SYSTEM_LIBS
 EOF
 
