@@ -34,16 +34,12 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <functional>
 #include <fstream>
 #include <string>
-#include <ios>
 #include <mutex>
 #include <thread>
-#include <array>
 #include <list>
 
-#include "fileutils.h"
 #include "logger.h"
 
 #include <stdio.h>
@@ -125,7 +121,7 @@ stripDirName(std::string_view path)
     return path;
 }
 
-std::string
+static std::string
 formatHeader(std::string_view file, unsigned line)
 {
 #ifdef __linux__
@@ -156,7 +152,7 @@ formatHeader(std::string_view file, unsigned line)
     }
 }
 
-std::string
+static std::string
 formatPrintfArgs(const char* format, va_list ap)
 {
     std::string ret;

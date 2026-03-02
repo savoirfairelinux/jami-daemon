@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <cstdint>
 #ifdef REGISTERED
 #undef REGISTERED
 #endif
@@ -23,7 +24,7 @@
 namespace jami {
 
 /** Contains all the Registration states for an account can be in */
-enum class RegistrationState {
+enum class RegistrationState : uint8_t {
     UNLOADED,
     UNREGISTERED,
     TRYING,

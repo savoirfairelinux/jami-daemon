@@ -17,8 +17,7 @@
 #pragma once
 
 #include "libav_deps.h"
-#include "media_io_handle.h"
-#include "system_codec_container.h"
+#include "media_buffer.h"
 
 #include <opendht/utils.h>
 #include <fmt/color.h>
@@ -26,8 +25,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
-#include <fstream>
-#include <ios>
 #include <ratio>
 #include <string_view>
 
@@ -187,7 +184,7 @@ public:
             throw std::runtime_error("Unsupported audio format");
         }
 
-        auto codec = avcodec_find_encoder(codec_id);
+        const auto* codec = avcodec_find_encoder(codec_id);
         if (!codec)
             throw std::runtime_error("Failed to find audio codec");
 
@@ -303,7 +300,7 @@ public:
     {
         int ret = 0;
         uint8_t* buffer = nullptr;
-        auto f = frame.pointer();
+        auto* f = frame.pointer();
 
         if (format_ != f->format || width_ != f->width || height_ != f->height)
             return;
@@ -322,12 +319,12 @@ public:
                                            height_,
                                            1))
             < 0) {
-            av_freep(&buffer);
+            av_freep((void*) &buffer);
             return;
         }
 
         fwrite(buffer, 1, size, f_);
-        av_freep(&buffer);
+        av_freep((void*) &buffer);
     }
 
 private:

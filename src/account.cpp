@@ -26,10 +26,6 @@
 #include <mutex>
 #include <fstream>
 
-#ifdef ENABLE_VIDEO
-#include "libav_utils.h"
-#endif
-
 #include "logger.h"
 #include "manager.h"
 
@@ -40,7 +36,6 @@
 #include "jami/account_const.h"
 #include "string_utils.h"
 #include "fileutils.h"
-#include "config/yamlparser.h"
 #include "system_codec_container.h"
 #include "vcard.h"
 
@@ -49,7 +44,6 @@
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
-#include "compiler_intrinsics.h"
 #include "jami/account_const.h"
 
 #include <dhtnet/upnp/upnp_control.h>

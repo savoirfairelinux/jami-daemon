@@ -22,9 +22,9 @@ namespace jami {
 
 void
 ThreadLoop::mainloop(std::thread::id& tid,
-                     const std::function<bool()> setup,
-                     const std::function<void()> process,
-                     const std::function<void()> cleanup)
+                     const std::function<bool()>& setup,
+                     const std::function<void()>& process,
+                     const std::function<void()>& cleanup)
 {
     tid = std::this_thread::get_id();
     try {

@@ -21,8 +21,6 @@
 #include "config.h"
 #endif
 
-#include "logger.h"
-
 #include "conference.h"
 #include "media/recordable.h"
 #include "media/peerrecorder.h"
@@ -32,13 +30,10 @@
 #include <dhtnet/ip_utils.h>
 #include <asio/steady_timer.hpp>
 
-#include <atomic>
 #include <mutex>
 #include <map>
-#include <sstream>
 #include <memory>
 #include <vector>
-#include <condition_variable>
 #include <set>
 #include <list>
 #include <functional>
@@ -84,16 +79,16 @@ public:
      *
      * \note modify validStateTransition/getStateStr if this enum changes
      */
-    enum class ConnectionState : unsigned { DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED, COUNT__ };
+    enum class ConnectionState : uint8_t { DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED, COUNT__ };
 
     /**
      * The Call State.
      *
      * \note modify validStateTransition/getStateStr if this enum changes
      */
-    enum class CallState : unsigned { INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY, MERROR, OVER, COUNT__ };
+    enum class CallState : uint8_t { INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY, MERROR, OVER, COUNT__ };
 
-    enum class LinkType { GENERIC, SIP };
+    enum class LinkType : uint8_t { GENERIC, SIP };
 
     using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
     using OnReadyCb = std::function<void(bool)>;
@@ -103,7 +98,7 @@ public:
      * This determines if the call originated from the local user (OUTGOING)
      * or from some remote peer (INCOMING, MISSED).
      */
-    enum class CallType : unsigned { INCOMING, OUTGOING, MISSED };
+    enum class CallType : uint8_t { INCOMING, OUTGOING, MISSED };
 
     virtual ~Call();
 

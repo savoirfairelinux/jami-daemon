@@ -28,7 +28,7 @@ static constexpr std::string_view DATA_TRANSFER_SCHEME = "data-transfer://"sv;
 class Uri
 {
 public:
-    enum class Scheme {
+    enum class Scheme : uint8_t {
         JAMI,          // Start with "jami:" and 45 ASCII chars OR 40 ASCII chars
         SIP,           // Start with "sip:"
         SWARM,         // Start with "swarm:" and 40 ASCII chars

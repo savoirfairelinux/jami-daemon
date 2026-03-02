@@ -36,7 +36,6 @@
 
 #include "call_factory.h"
 
-#include "connectivity/sip_utils.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount_config.h"
 
@@ -48,8 +47,6 @@
 #include "audio/alsa/alsalayer.h"
 #endif
 
-#include "media/localrecordermanager.h"
-#include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
 
@@ -64,19 +61,14 @@
 
 #include "client/jami_signal.h"
 #include "jami/call_const.h"
-#include "jami/account_const.h"
 
 #include "libav_utils.h"
 #ifdef ENABLE_VIDEO
-#include "video/video_scaler.h"
 #include "video/sinkclient.h"
 #include "video/video_base.h"
 #include "media/video/video_mixer.h"
 #endif
 #include "audio/tonecontrol.h"
-
-#include "data_transfer.h"
-#include "jami/media_const.h"
 
 #include <dhtnet/ice_transport_factory.h>
 #include <dhtnet/ice_transport.h>
@@ -105,7 +97,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <algorithm>
 #include <memory>
 #include <mutex>
@@ -161,7 +152,7 @@ restore_backup(const std::filesystem::path& path)
     copy_over(backup_path, path);
 }
 
-void
+static void
 check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& new_dir)
 {
     if (old_dir == new_dir or not std::filesystem::is_directory(old_dir))
@@ -198,7 +189,7 @@ check_rename(const std::filesystem::path& old_dir, const std::filesystem::path& 
 static unsigned
 getDhtLogLevel()
 {
-    if (auto envvar = getenv("JAMI_LOG_DHT")) {
+    if (auto* envvar = getenv("JAMI_LOG_DHT")) {
         return std::clamp(to_int<unsigned>(envvar, 0), 0u, 1u);
     }
     return 0;
@@ -207,7 +198,7 @@ getDhtLogLevel()
 static unsigned
 getDhtnetLogLevel()
 {
-    if (auto envvar = getenv("JAMI_LOG_DHTNET")) {
+    if (auto* envvar = getenv("JAMI_LOG_DHTNET")) {
         return std::clamp(to_int<unsigned>(envvar, 0), 0u, 1u);
     }
     return 0;
@@ -222,7 +213,7 @@ static void
 setSipLogLevel()
 {
     int level = 0;
-    if (auto envvar = getenv("JAMI_LOG_SIP")) {
+    if (auto* envvar = getenv("JAMI_LOG_SIP")) {
         level = std::clamp(to_int<int>(envvar, 0), 0, 6);
     }
 
@@ -247,7 +238,7 @@ static void
 setGnuTlsLogLevel()
 {
     int level = 0;
-    if (auto envvar = getenv("JAMI_LOG_TLS")) {
+    if (auto* envvar = getenv("JAMI_LOG_TLS")) {
         level = to_int<int>(envvar, 0);
         level = std::clamp(level, 0, 9);
     }
@@ -514,7 +505,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
     } else {
         if (auto acc = std::dynamic_pointer_cast<JamiAccount>(conf.getAccount())) {
             // Stay in a conference if 1 participants for swarm and rendezvous
-            if (auto cm = acc->convModule(true)) {
+            if (auto* cm = acc->convModule(true)) {
                 if (acc->isRendezVous() || cm->isHosting("", conf.getConfId())) {
                     // Check if attached
                     if (conf.getState() == Conference::State::ACTIVE_ATTACHED) {
@@ -1805,7 +1796,7 @@ Manager::saveConfig()
 
         std::lock_guard lock(dhtnet::fileutils::getFileLock(pimpl_->path_));
         std::ofstream fout(pimpl_->path_);
-        fout.write(out.c_str(), out.size());
+        fout.write(out.c_str(), static_cast<long>(out.size()));
     } catch (const YAML::Exception& e) {
         JAMI_ERROR("[config] YAML error: {}", e.what());
     } catch (const std::runtime_error& e) {
@@ -2887,8 +2878,6 @@ Manager::loadAccountMap(const YAML::Node& node)
         ++errorCount;
     }
 
-    const std::string accountOrder = preferences.getAccountOrder();
-
     // load saved preferences for IP2IP account from configuration file
     const auto& accountList = node["accounts"];
 
@@ -2896,7 +2885,7 @@ Manager::loadAccountMap(const YAML::Node& node)
         pimpl_->loadAccount(a, errorCount);
     }
 
-    auto accountBaseDir = fileutils::get_data_dir();
+    const auto& accountBaseDir = fileutils::get_data_dir();
     auto dirs = dhtnet::fileutils::readDirectory(accountBaseDir);
 
     std::condition_variable cv;
@@ -3050,7 +3039,7 @@ Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, 
          creation triggers the initialization of the certStore. There why
          account creation now occurs here in response to a received notification.
          */
-        auto accountBaseDir = fileutils::get_data_dir();
+        const auto& accountBaseDir = fileutils::get_data_dir();
         auto configFile = accountBaseDir / accountId / "config.yml";
         try {
             if ((account = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, accountId))) {
@@ -3076,7 +3065,7 @@ Manager::loadAccountAndConversation(const std::string& accountId, bool loadAll, 
         jamiAcc->reloadContacts();
         if (jamiAcc->isUsable())
             jamiAcc->doRegister();
-        if (auto convModule = jamiAcc->convModule()) {
+        if (auto* convModule = jamiAcc->convModule()) {
             convModule->reloadRequests();
             if (loadAll) {
                 convModule->loadConversations();
@@ -3253,7 +3242,7 @@ std::shared_ptr<dhtnet::ChannelSocket>
 Manager::gitSocket(std::string_view accountId, std::string_view deviceId, std::string_view conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
-        if (auto convModule = acc->convModule(true))
+        if (auto* convModule = acc->convModule(true))
             return convModule->gitSocket(deviceId, conversationId);
     return nullptr;
 }
