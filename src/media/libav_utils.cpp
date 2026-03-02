@@ -16,6 +16,7 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "string_utils.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

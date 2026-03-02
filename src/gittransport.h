@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <algorithm>
 #include <git2/remote.h>
 #include <git2/sys/transport.h>
 #include <git2/errors.h>

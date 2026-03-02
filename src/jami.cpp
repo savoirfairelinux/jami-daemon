@@ -16,8 +16,6 @@
  */
 #include <asio.hpp>
 #include <string>
-#include <vector>
-#include <map>
 #include <cstdlib>
 
 #ifdef HAVE_CONFIG_H
@@ -27,18 +25,11 @@
 #include "jami.h"
 #include "manager.h"
 #include "logger.h"
-#include "callmanager_interface.h"
-#include "configurationmanager_interface.h"
-#include "presencemanager_interface.h"
 #include "client/jami_signal.h"
-
-#ifdef ENABLE_VIDEO
-#include "client/videomanager.h"
-#endif // ENABLE_VIDEO
 
 namespace libjami {
 
-InitFlag initFlags = {};
+static InitFlag initFlags = {};
 
 bool
 init(enum InitFlag flags) noexcept

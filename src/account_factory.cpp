@@ -24,8 +24,6 @@
 #include "sip/sipaccount.h"
 #include "jamidht/jamiaccount.h"
 
-#include <stdexcept>
-
 namespace jami {
 
 const std::string_view AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;

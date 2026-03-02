@@ -19,6 +19,7 @@
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
+#include "string_utils.h"
 
 #include <msgpack.hpp>
 

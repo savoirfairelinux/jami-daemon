@@ -101,13 +101,15 @@ OutgoingFile::process()
     if (!channel_ or !stream_ or !stream_.is_open())
         return;
     auto correct = false;
-    stream_.seekg(start_, std::ios::beg);
+    stream_.seekg(static_cast<long>(start_), std::ios::beg);
     try {
         std::vector<char> buffer(UINT16_MAX, 0);
         std::error_code ec;
         auto pos = start_;
         while (!stream_.eof()) {
-            stream_.read(buffer.data(), end_ > start_ ? std::min(end_ - pos, buffer.size()) : buffer.size());
+            stream_.read(buffer.data(),
+                         end_ > start_ ? static_cast<long>(std::min(end_ - pos, buffer.size()))
+                                       : static_cast<long>(buffer.size()));
             auto gcount = stream_.gcount();
             pos += gcount;
             channel_->write(reinterpret_cast<const uint8_t*>(buffer.data()), gcount, ec);
@@ -117,7 +119,8 @@ OutgoingFile::process()
         if (!ec)
             correct = true;
         stream_.close();
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_WARNING("Failed to read from stream: {}", e.what());
     }
     if (!isUserCancelled_) {
         // NOTE: emit(code) MUST be changed to improve handling of multiple destinations
@@ -185,13 +188,13 @@ IncomingFile::process()
         if (auto shared = w.lock()) {
             std::lock_guard<std::mutex> lk(shared->streamMtx_);
             if (shared->stream_.is_open())
-                shared->stream_.write(reinterpret_cast<const char*>(buf), len);
+                shared->stream_.write(reinterpret_cast<const char*>(buf), static_cast<long>(len));
             shared->info_.bytesProgress = shared->stream_.tellp();
-            return (ssize_t) len;
+            return static_cast<int>(len);
         }
         // Data received after destruction
         JAMI_ERROR("{} bytes received after IncomingFile destruction.", len);
-        return (ssize_t) -1;
+        return -1;
     });
     channel_->onShutdown([w = weak_from_this()](const std::error_code& /*error_code*/) {
         auto shared = w.lock();
@@ -405,14 +408,14 @@ TransferManager::info(const std::string& fileId, std::string& path, int64_t& tot
         transfer.seekg(0, std::ios::end);
         progress = transfer.tellg();
         if (itW != pimpl_->waitingIds_.end()) {
-            total = itW->second.totalSize;
+            total = static_cast<int64_t>(itW->second.totalSize);
         } else {
             // If not waiting it's finished
             total = progress;
         }
         return true;
     } else if (itW != pimpl_->waitingIds_.end()) {
-        total = itW->second.totalSize;
+        total = static_cast<int64_t>(itW->second.totalSize);
         progress = 0;
         return true;
     }
@@ -458,8 +461,8 @@ TransferManager::onIncomingFileTransfer(const std::string& fileId,
     info.accountId = pimpl_->accountId_;
     info.conversationId = pimpl_->to_;
     info.path = itW->second.path;
-    info.totalSize = itW->second.totalSize;
-    info.bytesProgress = start;
+    info.totalSize = static_cast<int64_t>(itW->second.totalSize);
+    info.bytesProgress = static_cast<int64_t>(start);
 
     // Generate the file path within the conversation data directory
     // using the file id if no path has been specified, otherwise create

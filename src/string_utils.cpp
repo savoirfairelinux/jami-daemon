@@ -43,7 +43,7 @@
 namespace jami {
 
 namespace json {
-Json::CharReaderBuilder
+static Json::CharReaderBuilder
 getJsonReaderBuilder()
 {
     Json::CharReaderBuilder builder;
@@ -51,7 +51,7 @@ getJsonReaderBuilder()
     return builder;
 }
 
-Json::StreamWriterBuilder
+static Json::StreamWriterBuilder
 getJsonWriterBuilder()
 {
     Json::StreamWriterBuilder builder;
@@ -128,6 +128,7 @@ from_hex_string(const std::string& str)
 std::string_view
 trim(std::string_view s)
 {
+    // NOLINTNEXTLINE(llvm-qualified-auto): MSVC can't convert to const char* from const_iterator
     auto wsfront = std::find_if_not(s.cbegin(), s.cend(), [](int c) { return std::isspace(c); });
     if (wsfront == s.cend())
         return std::string_view {};

@@ -15,12 +15,9 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdexcept>
-
 #include "call_factory.h"
 #include "sip/sipcall.h"
 #include "sip/sipaccountbase.h"
-#include "string_utils.h"
 
 namespace jami {
 
@@ -179,7 +176,7 @@ CallFactory::hasCall(const std::string& id, Call::LinkType link) const
 {
     std::lock_guard lk(callMapsMutex_);
 
-    auto const map = getMap_(link);
+    const auto* const map = getMap_(link);
     return map and map->find(id) != map->cend();
 }
 
@@ -188,7 +185,7 @@ CallFactory::empty(Call::LinkType link) const
 {
     std::lock_guard lk(callMapsMutex_);
 
-    const auto map = getMap_(link);
+    const auto* const map = getMap_(link);
     return !map or map->empty();
 }
 
@@ -197,7 +194,7 @@ CallFactory::getCall(const std::string& id, Call::LinkType link) const
 {
     std::lock_guard lk(callMapsMutex_);
 
-    const auto map = getMap_(link);
+    const auto* const map = getMap_(link);
     if (!map)
         return nullptr;
 
@@ -214,7 +211,7 @@ CallFactory::getAllCalls(Call::LinkType link) const
     std::lock_guard lk(callMapsMutex_);
     std::vector<std::shared_ptr<Call>> v;
 
-    const auto map = getMap_(link);
+    const auto* const map = getMap_(link);
     if (map) {
         for (const auto& it : *map)
             v.push_back(it.second);
@@ -230,7 +227,7 @@ CallFactory::getCallIDs(Call::LinkType link) const
     std::lock_guard lk(callMapsMutex_);
     std::vector<std::string> v;
 
-    const auto map = getMap_(link);
+    const auto* const map = getMap_(link);
     if (map) {
         for (const auto& it : *map)
             v.push_back(it.first);
@@ -245,7 +242,7 @@ CallFactory::callCount(Call::LinkType link) const
 {
     std::lock_guard lk(callMapsMutex_);
 
-    const auto map = getMap_(link);
+    const auto* const map = getMap_(link);
     if (!map)
         return 0;
 
