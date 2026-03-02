@@ -118,6 +118,30 @@
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "f31c601e_6421568e",
+        "filename": "src/jamidht/presence_manager.cpp",
+        "patchSetId": 13
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-02T21:50:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ac1cc478_ad08d4a8",
+      "range": {
+        "startLine": 160,
+        "startChar": 4,
+        "endLine": 160,
+        "endChar": 36
+      },
+      "revId": "06e82c759c0d929dd50728270a4e97c6dd7939f0",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "d65ab1c0_ea7f4533",
