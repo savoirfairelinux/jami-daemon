@@ -322,8 +322,8 @@ JamiAccount::JamiAccount(const std::string& accountId)
     , cachePath_(fileutils::get_cache_dir() / accountId)
     , dataPath_(cachePath_ / "values")
     , logger_(Logger::dhtLogger(fmt::format("Account {}", accountId)))
-    , certStore_ {std::make_unique<dhtnet::tls::CertificateStore>(idPath_, logger_)}
-    , dht_(new dht::DhtRunner)
+    , certStore_ {std::make_shared<dhtnet::tls::CertificateStore>(idPath_, logger_)}
+    , dht_(std::make_shared<dht::DhtRunner>())
     , treatedMessages_(cachePath_ / TREATED_PATH)
     , connectionManager_ {}
     , nonSwarmTransferManager_()
