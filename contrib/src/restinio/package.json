@@ -1,8 +1,8 @@
 {
     "name": "restinio",
-    "version": "0.7.2",
-    "cpe": "cpe:2.3:a:*:restinio:0.7.2:*:*:*:*:*:*:*",
-    "url": "https://github.com/Stiffstream/restinio/releases/download/v.__VERSION__/restinio-__VERSION__.tar.bz2",
+    "version": "0.7.9",
+    "cpe": "cpe:2.3:a:*:restinio:0.7.9:*:*:*:*:*:*:*",
+    "url": "https://github.com/Stiffstream/restinio/releases/download/v__VERSION__/restinio-__VERSION__.tar.bz2",
     "deps": [
         "fmt",
         "asio",
