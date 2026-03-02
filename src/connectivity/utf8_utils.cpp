@@ -40,6 +40,7 @@ utf8_make_valid(std::string_view name)
             sanitized.append(name);
             break;
         }
+        // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage): size is given through valid_bytes
         sanitized.append(name.data(), valid_bytes);
         sanitized.append("\xEF\xBF\xBD", 3); // append '�'
         name.remove_prefix(valid_bytes + 1);

@@ -83,13 +83,13 @@ std::string sip_strerror(pj_status_t code);
 // that may be statically casted into char pointer.
 // Per convention, the input array is supposed to be null terminated.
 template<typename T, std::size_t N>
-constexpr const pj_str_t
+constexpr pj_str_t
 CONST_PJ_STR(T (&a)[N]) noexcept
 {
     return {const_cast<char*>(a), N - 1};
 }
 
-inline const pj_str_t
+inline pj_str_t
 CONST_PJ_STR(const std::string& str) noexcept
 {
     return {const_cast<char*>(str.c_str()), (pj_ssize_t) str.size()};

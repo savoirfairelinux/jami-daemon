@@ -229,8 +229,9 @@ const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool> T
     }};
 
 TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
-                           const std::vector<std::vector<uint8_t>>& crtChain)
-    : TlsValidator(certStore, std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
+                           const std::vector<std::vector<uint8_t>>& certificateChainRaw)
+    : TlsValidator(certStore,
+                   std::make_shared<dht::crypto::Certificate>(certificateChainRaw.begin(), certificateChainRaw.end()))
 {}
 
 TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
@@ -243,12 +244,14 @@ TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
     , privateKeyPath_(privatekey)
     , caListPath_(caList)
     , certificateFound_(false)
+    , copy_buffer()
 {
     std::vector<uint8_t> certificate_raw;
     try {
         certificate_raw = fileutils::loadFile(certificatePath_);
         certificateFileFound_ = true;
     } catch (const std::exception& e) {
+        JAMI_WARNING("Could not load certificate: {}", e.what());
     }
 
     if (not certificate_raw.empty()) {
@@ -257,6 +260,7 @@ TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
             certificateContent_ = x509crt_->getPacked();
             certificateFound_ = true;
         } catch (const std::exception& e) {
+            JAMI_WARNING("Could not extract certificate: {}", e.what());
         }
     }
 
@@ -279,6 +283,7 @@ TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
 
 TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw)
     : certStore_(certStore)
+    , copy_buffer()
 {
     try {
         x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
@@ -293,6 +298,7 @@ TlsValidator::TlsValidator(const dhtnet::tls::CertificateStore& certStore,
                            const std::shared_ptr<dht::crypto::Certificate>& crt)
     : certStore_(certStore)
     , certificateFound_(true)
+    , copy_buffer()
 {
     try {
         if (not crt)
@@ -420,13 +426,14 @@ checkError(int err, char* copy_buffer, size_t size)
                                                    err == GNUTLS_E_SUCCESS ? std::string(copy_buffer, size) : "");
 }
 
+constexpr static const int TIMETYPE_SIZE = 12;
 /**
  * Convert a time_t to an ISO date string
  */
 static TlsValidator::CheckResult
 formatDate(const time_t time)
 {
-    char buffer[12];
+    char buffer[TIMETYPE_SIZE];
     struct tm* timeinfo = localtime(&time);
     strftime(buffer, sizeof(buffer), "%F", timeinfo);
     return TlsValidator::CheckResult(TlsValidator::CheckValues::ISO_DATE, buffer);
@@ -494,249 +501,6 @@ TlsValidator::compareToCa()
     caChecked_ = true;
     return caValidationOutput_;
 }
-
-#if 0 // disabled, see .h for reason
-/**
- * Verify if a hostname is valid
- *
- * @warning This function is blocking
- *
- * Mainly based on Fedora Defensive Coding tutorial
- * https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-GNUTLS.html
- */
-int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint16_t port)
-{
-    int err, arg, res = -1;
-    unsigned int status = (unsigned) -1;
-    const char *errptr = nullptr;
-    gnutls_session_t session = nullptr;
-    gnutls_certificate_credentials_t cred = nullptr;
-    unsigned int certslen = 0;
-    const gnutls_datum_t *certs = nullptr;
-    gnutls_x509_crt_t cert = nullptr;
-
-    char buf[4096];
-    int sockfd;
-    struct sockaddr_in name;
-    struct hostent *hostinfo;
-    const int one = 1;
-    fd_set fdset;
-    struct timeval tv;
-
-    if (!host.size() || !port) {
-        JAMI_ERR("Wrong parameters used - host %s, port %d.", host.c_str(), port);
-        return res;
-    }
-
-    /* Create the socket. */
-    sockfd = socket (PF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        JAMI_ERR("Unable to create socket.");
-        return res;
-    }
-    /* Set non-blocking so we can dected timeouts. */
-    arg = fcntl(sockfd, F_GETFL, nullptr);
-    if (arg < 0)
-        goto out;
-    arg |= O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, arg) < 0)
-        goto out;
-
-    /* Give the socket a name. */
-    memset(&name, 0, sizeof(name));
-    name.sin_family = AF_INET;
-    name.sin_port = htons(port);
-    hostinfo = gethostbyname(host.c_str());
-    if (hostinfo == nullptr) {
-        JAMI_ERR("Unknown host %s.", host.c_str());
-        goto out;
-    }
-    name.sin_addr = *(struct in_addr *)hostinfo->h_addr;
-    /* Connect to the address specified in name struct. */
-    err = connect(sockfd, (struct sockaddr *)&name, sizeof(name));
-    if (err < 0) {
-        /* Connection in progress, use select to see if timeout is reached. */
-        if (errno == EINPROGRESS) {
-            do {
-                FD_ZERO(&fdset);
-                FD_SET(sockfd, &fdset);
-                tv.tv_sec = 10;     // 10 second timeout
-                tv.tv_usec = 0;
-                err = select(sockfd + 1, nullptr, &fdset, nullptr, &tv);
-                if (err < 0 && errno != EINTR) {
-                    JAMI_ERR("Unable to connect to hostname %s at port %d",
-                          host.c_str(), port);
-                    goto out;
-                } else if (err > 0) {
-                    /* Select returned, if so_error is clean we are ready. */
-                    int so_error;
-                    socklen_t len = sizeof(so_error);
-                    getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &so_error, &len);
-
-                    if (so_error) {
-                        JAMI_ERR("Connection delayed.");
-                        goto out;
-                    }
-                    break;  // exit do-while loop
-                } else {
-                    JAMI_ERR("Connection timeout.");
-                    goto out;
-                }
-            } while(1);
-        } else {
-            JAMI_ERR("Unable to connect to hostname %s at port %d", host.c_str(), port);
-            goto out;
-        }
-    }
-    /* Set the socked blocking again. */
-    arg = fcntl(sockfd, F_GETFL, nullptr);
-    if (arg < 0)
-        goto out;
-    arg &= ~O_NONBLOCK;
-    if (fcntl(sockfd, F_SETFL, arg) < 0)
-        goto out;
-
-    /* Disable Nagle algorithm that slows down the SSL handshake. */
-    err = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
-    if (err < 0) {
-        JAMI_ERR("Unable to set TCP_NODELAY.");
-        goto out;
-    }
-
-
-    /* Load the trusted CA certificates. */
-    err = gnutls_certificate_allocate_credentials(&cred);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to allocate credentials - %s", gnutls_strerror(err));
-        goto out;
-    }
-    err = gnutls_certificate_set_x509_system_trust(cred);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to load credentials.");
-        goto out;
-    }
-
-    /* Create the session object. */
-    err = gnutls_init(&session, GNUTLS_CLIENT);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to init session -%s\n", gnutls_strerror(err));
-        goto out;
-    }
-
-    /* Configure the cipher preferences. The default set should be good enough. */
-    err = gnutls_priority_set_direct(session, "NORMAL", &errptr);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to set up ciphers - %s (%s)", gnutls_strerror(err), errptr);
-        goto out;
-    }
-
-    /* Install the trusted certificates. */
-    err = gnutls_credentials_set(session, GNUTLS_CRD_CERTIFICATE, cred);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to set up credentials - %s", gnutls_strerror(err));
-        goto out;
-    }
-
-    /* Associate the socket with the session object and set the server name. */
-    gnutls_transport_set_ptr(session, (gnutls_transport_ptr_t) (uintptr_t) sockfd);
-    err = gnutls_server_name_set(session, GNUTLS_NAME_DNS, host.c_str(), host.size());
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to set server name - %s", gnutls_strerror(err));
-        goto out;
-    }
-
-    /* Establish the connection. */
-    err = gnutls_handshake(session);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Handshake failed - %s", gnutls_strerror(err));
-        goto out;
-    }
-    /* Obtain the server certificate chain. The server certificate
-     * itself is stored in the first element of the array. */
-    certs = gnutls_certificate_get_peers(session, &certslen);
-    if (certs == nullptr || certslen == 0) {
-        JAMI_ERR("Unable to obtain peer certificate - %s", gnutls_strerror(err));
-        goto out;
-    }
-
-    /* Validate the certificate chain. */
-    err = gnutls_certificate_verify_peers2(session, &status);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to verify the certificate chain - %s", gnutls_strerror(err));
-        goto out;
-    }
-    if (status != 0) {
-        gnutls_datum_t msg;
-#if GNUTLS_VERSION_AT_LEAST_3_1_4
-        int type = gnutls_certificate_type_get(session);
-        err = gnutls_certificate_verification_status_print(status, type, &out, 0);
-#else
-        err = -1;
-#endif
-        if (err == 0) {
-            JAMI_ERR("Certificate validation failed - %s\n", msg.data);
-            gnutls_free(msg.data);
-            goto out;
-        } else {
-            JAMI_ERR("Certificate validation failed with code 0x%x.", status);
-            goto out;
-        }
-    }
-
-    /* Match the peer certificate against the hostname.
-     * We can only obtain a set of DER-encoded certificates from the
-     * session object, so we have to re-parse the peer certificate into
-     * a certificate object. */
-
-    err = gnutls_x509_crt_init(&cert);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to init certificate - %s", gnutls_strerror(err));
-        goto out;
-    }
-
-    /* The peer certificate is the first certificate in the list. */
-    err = gnutls_x509_crt_import(cert, certs, GNUTLS_X509_FMT_PEM);
-    if (err != GNUTLS_E_SUCCESS)
-        err = gnutls_x509_crt_import(cert, certs, GNUTLS_X509_FMT_DER);
-    if (err != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("Unable to read peer certificate - %s", gnutls_strerror(err));
-        goto out;
-    }
-    /* Finally check if the hostnames match. */
-    err = gnutls_x509_crt_check_hostname(cert, host.c_str());
-    if (err == 0) {
-        JAMI_ERR("Hostname %s does not match certificate.", host.c_str());
-        goto out;
-    }
-
-    /* Try sending and receiving some data through. */
-    snprintf(buf, sizeof(buf), "GET / HTTP/1.0\r\nHost: %s\r\n\r\n", host.c_str());
-    err = gnutls_record_send(session, buf, strlen(buf));
-    if (err < 0) {
-        JAMI_ERR("Send failed - %s", gnutls_strerror(err));
-        goto out;
-    }
-    err = gnutls_record_recv(session, buf, sizeof(buf));
-    if (err < 0) {
-        JAMI_ERR("Recv failed - %s", gnutls_strerror(err));
-        goto out;
-    }
-
-    JAMI_DBG("Hostname %s seems to point to a valid server.", host.c_str());
-    res = 0;
-out:
-    if (session) {
-        gnutls_bye(session, GNUTLS_SHUT_RDWR);
-        gnutls_deinit(session);
-    }
-    if (cert)
-        gnutls_x509_crt_deinit(cert);
-    if (cred)
-        gnutls_certificate_free_credentials(cred);
-    close(sockfd);
-    return res;
-}
-#endif
 
 /**
  * Check if the Validator have access to a private key
@@ -837,7 +601,7 @@ TlsValidator::keyMatch()
 TlsValidator::CheckResult
 TlsValidator::privateKeyStoragePermissions()
 {
-    struct stat statbuf;
+    struct stat statbuf {};
     int err = stat(privateKeyPath_.c_str(), &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -856,7 +620,7 @@ TlsValidator::privateKeyStoragePermissions()
 TlsValidator::CheckResult
 TlsValidator::publicKeyStoragePermissions()
 {
-    struct stat statbuf;
+    struct stat statbuf {};
     int err = stat(certificatePath_.c_str(), &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1292,7 +1056,7 @@ TlsValidator::getPublicKeyId()
     // TODO check for GNUTLS_E_SHORT_MEMORY_BUFFER and increase the buffer size
     // TODO get rid of the cast, display a HEX or something, need research
 
-    return checkBinaryError(err, (char*) unsigned_copy_buffer, resultSize);
+    return checkBinaryError(err, reinterpret_cast<char*>(unsigned_copy_buffer), resultSize);
 }
 // gnutls_x509_crt_get_authority_key_id
 

@@ -50,14 +50,14 @@ PjsipErrorCategory::message(int condition) const
 {
     std::string err_msg;
     err_msg.reserve(PJ_ERR_MSG_SIZE);
-    err_msg.resize(pj_strerror(condition, &err_msg[0], err_msg.capacity()).slen);
+    err_msg.resize(pj_strerror(condition, err_msg.data(), err_msg.capacity()).slen);
     return err_msg;
 }
 
 std::string
 fetchHeaderValue(pjsip_msg* msg, const std::string& field)
 {
-    pj_str_t name = pj_str((char*) field.c_str());
+    pj_str_t name = pj_str(const_cast<char*>(field.c_str()));
     pjsip_generic_string_hdr* hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
     if (!hdr)
@@ -90,7 +90,7 @@ createRouteSet(const std::string& route, pj_pool_t* hdr_pool)
     pjsip_route_hdr* routing = pjsip_route_hdr_create(hdr_pool);
     pjsip_sip_uri* url = pjsip_sip_uri_create(hdr_pool, 0);
     url->lr_param = 1;
-    routing->name_addr.uri = (pjsip_uri*) url;
+    routing->name_addr.uri = reinterpret_cast<pjsip_uri*>(url);
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
@@ -189,7 +189,7 @@ addContactHeader(const std::string& contactHdr, pjsip_tx_data* tdata)
     contact->uri = pjsip_parse_uri(tdata->pool, pjContact.ptr, pjContact.slen, PJSIP_PARSE_URI_AS_NAMEADDR);
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
-    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
+    pjsip_msg_add_hdr(tdata->msg, reinterpret_cast<pjsip_hdr*>(contact));
 }
 
 void
@@ -221,11 +221,11 @@ getPeerUserAgent(const pjsip_rx_data* rdata)
         return {};
     }
 
-    if (auto* uaHdr = (pjsip_generic_string_hdr*) pjsip_msg_find_hdr_by_name(rdata->msg_info.msg,
-                                                                             &USER_AGENT_STR,
-                                                                             nullptr)) {
+    if (auto* uaHdr = reinterpret_cast<pjsip_generic_string_hdr*>(
+            pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &USER_AGENT_STR, nullptr))) {
         return as_view(uaHdr->hvalue);
     }
+
     return {};
 }
 
@@ -289,7 +289,7 @@ streamId(const std::string& callId, std::string_view label)
 void
 sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr)
 {
-    host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN + 4);
+    host_port->host.ptr = reinterpret_cast<char*>(pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN + 4));
     pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN + 4, 0);
     host_port->host.slen = pj_ansi_strlen(host_port->host.ptr);
     host_port->port = pj_sockaddr_get_port(addr);

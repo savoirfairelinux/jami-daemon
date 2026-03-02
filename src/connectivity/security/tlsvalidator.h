@@ -61,7 +61,7 @@ namespace tls {
 class TlsValidatorException : public std::runtime_error
 {
 public:
-    TlsValidatorException(const std::string& str)
+    explicit TlsValidatorException(const std::string& str)
         : std::runtime_error(str) {};
 };
 
@@ -189,7 +189,7 @@ public:
                  const std::string& caList = "");
 
     TlsValidator(const dhtnet::tls::CertificateStore& certStore,
-                 const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
+                 const std::vector<std::vector<uint8_t>>& certificateChainRaw);
 
     TlsValidator(const dhtnet::tls::CertificateStore& certStore, const std::vector<uint8_t>& certificate_raw);
 
@@ -288,7 +288,7 @@ private:
     const dhtnet::tls::CertificateStore& certStore_;
     std::string certificatePath_;
     std::string privateKeyPath_;
-    std::string caListPath_ {};
+    std::string caListPath_;
 
     std::vector<uint8_t> certificateContent_;
 
@@ -309,24 +309,10 @@ private:
     /**
      * Helper method to convert a CheckResult into a std::string
      */
-    std::string getStringValue(const CertificateCheck check, const CheckResult& result);
+    static std::string getStringValue(const CertificateCheck check, const CheckResult& result);
 
     // Helper
     unsigned int compareToCa();
-
-public:
-#if 0 // TODO reimplement this method. do not use it as it
-    /**
-     * Verify that the local hostname points to a valid SSL server by
-     * establishing a connection to it and by validating its certificate.
-     *
-     * @param host the DNS domain address that the certificate should feature
-     * @return 0 if success, -1 otherwise
-     */
-    static int verifyHostnameCertificate(const std::string& host,
-                                         const uint16_t port);
-#endif
-
 }; // TlsValidator
 
 } // namespace tls
