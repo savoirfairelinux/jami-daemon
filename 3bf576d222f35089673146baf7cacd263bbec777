@@ -22,6 +22,30 @@
       },
       "revId": "3bf576d222f35089673146baf7cacd263bbec777",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ed69eaba_776a59d9",
+        "filename": "src/media/video/video_device_monitor.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1035
+      },
+      "writtenOn": "2026-03-03T15:35:18Z",
+      "side": 1,
+      "message": "Or `std::ranges::rotate(preferences_.begin(), itPref, itPref+1);` (I think...) to preserve the old behavior.",
+      "parentUuid": "e78e6c49_778e2018",
+      "range": {
+        "startLine": 125,
+        "startChar": 12,
+        "endLine": 125,
+        "endChar": 54
+      },
+      "revId": "3bf576d222f35089673146baf7cacd263bbec777",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
