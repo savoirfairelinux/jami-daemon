@@ -17,6 +17,7 @@
 #pragma once
 #include <string>
 #include <map>
+#include <cstdint>
 
 enum class StreamType : uint8_t { audio, video };
 

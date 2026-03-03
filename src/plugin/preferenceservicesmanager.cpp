@@ -19,6 +19,8 @@
 
 #include "pluginmanager.h"
 
+#include <algorithm>
+
 namespace jami {
 
 PreferenceServicesManager::PreferenceServicesManager(PluginManager& pluginManager)
