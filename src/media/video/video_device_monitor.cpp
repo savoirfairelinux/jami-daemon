@@ -122,9 +122,7 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& id)
         // place it at the begining of the prefs
         auto itPref = findPreferencesById(itDev->getDeviceId());
         if (itPref != preferences_.end()) {
-            const auto& settings = *itPref;
-            preferences_.erase(itPref);
-            preferences_.insert(preferences_.begin(), settings);
+            std::ranges::rotate(preferences_.begin(), itPref, itPref+1);
         } else {
             preferences_.insert(preferences_.begin(), itDev->getSettings());
         }
