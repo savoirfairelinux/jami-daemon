@@ -22,6 +22,7 @@
 #include "client/jami_signal.h"
 #include "fileutils.h"
 #include "jamidht/account_manager.h"
+#include "jamidht/commit_message.h"
 #include "jamidht/jamiaccount.h"
 #include "manager.h"
 #include "sip/sipcall.h"
@@ -297,7 +298,7 @@ public:
 
     // Message send/load
     void sendMessage(const std::string& conversationId,
-                     Json::Value&& value,
+                     CommitMessage&& message,
                      const std::string& replyTo = "",
                      bool announce = true,
                      OnCommitCb&& onCommit = {},
@@ -1180,15 +1181,15 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
                                       OnCommitCb&& onCommit,
                                       OnDoneCb&& cb)
 {
-    Json::Value json;
-    json["body"] = std::move(message);
-    json["type"] = type;
-    sendMessage(conversationId, std::move(json), replyTo, announce, std::move(onCommit), std::move(cb));
+    CommitMessage commitMessage;
+    commitMessage.body = std::move(message);
+    commitMessage.type = type;
+    sendMessage(conversationId, std::move(commitMessage), replyTo, announce, std::move(onCommit), std::move(cb));
 }
 
 void
 ConversationModule::Impl::sendMessage(const std::string& conversationId,
-                                      Json::Value&& value,
+                                      CommitMessage&& message,
                                       const std::string& replyTo,
                                       bool announce,
                                       OnCommitCb&& onCommit,
@@ -1197,7 +1198,7 @@ ConversationModule::Impl::sendMessage(const std::string& conversationId,
     if (auto conv = getConversation(conversationId)) {
         std::lock_guard lk(conv->mtx);
         if (conv->conversation)
-            conv->conversation->sendMessage(std::move(value),
+            conv->conversation->sendMessage(std::move(message),
                                             replyTo,
                                             std::move(onCommit),
                                             [this,
@@ -1243,19 +1244,18 @@ ConversationModule::Impl::editMessage(const std::string& conversationId,
         return;
     }
     // Commit message edition
-    Json::Value json;
+    CommitMessage commitMessage;
     if (type == "application/data-transfer+json") {
-        json["tid"] = "";
         // Remove file!
         auto path = fileutils::get_data_dir() / accountId_ / "conversation_data" / conversationId
                     / fmt::format("{}_{}", editedId, tid);
         dhtnet::fileutils::remove(path, true);
     } else {
-        json["body"] = newBody;
+        commitMessage.body = newBody;
     }
-    json["edit"] = editedId;
-    json["type"] = type;
-    sendMessage(conversationId, std::move(json));
+    commitMessage.edit = editedId;
+    commitMessage.type = type;
+    sendMessage(conversationId, std::move(commitMessage));
 }
 
 void
@@ -2164,13 +2164,13 @@ ConversationModule::sendMessage(const std::string& conversationId,
 
 void
 ConversationModule::sendMessage(const std::string& conversationId,
-                                Json::Value&& value,
+                                CommitMessage&& commitMessage,
                                 const std::string& replyTo,
                                 bool announce,
                                 OnCommitCb&& onCommit,
                                 OnDoneCb&& cb)
 {
-    pimpl_->sendMessage(conversationId, std::move(value), replyTo, announce, std::move(onCommit), std::move(cb));
+    pimpl_->sendMessage(conversationId, std::move(commitMessage), replyTo, announce, std::move(onCommit), std::move(cb));
 }
 
 void
@@ -2187,11 +2187,11 @@ ConversationModule::reactToMessage(const std::string& conversationId,
                                    const std::string& reactToId)
 {
     // Commit message edition
-    Json::Value json;
-    json["body"] = newBody;
-    json["react-to"] = reactToId;
-    json["type"] = "text/plain";
-    pimpl_->sendMessage(conversationId, std::move(json));
+    CommitMessage commitMessage;
+    commitMessage.body = newBody;
+    commitMessage.reactTo = reactToId;
+    commitMessage.type = "text/plain";
+    pimpl_->sendMessage(conversationId, std::move(commitMessage));
 }
 
 void
@@ -2201,13 +2201,13 @@ ConversationModule::addCallHistoryMessage(const std::string& uri, uint64_t durat
     finalUri = finalUri.substr(0, uri.find("@jami.dht"));
     auto convId = getOneToOneConversation(finalUri);
     if (!convId.empty()) {
-        Json::Value value;
-        value["to"] = finalUri;
-        value["type"] = "application/call-history+json";
-        value["duration"] = std::to_string(duration_ms);
+        CommitMessage commitMessage;
+        commitMessage.to = finalUri;
+        commitMessage.type = "application/call-history+json";
+        commitMessage.duration = duration_ms;
         if (!reason.empty())
-            value["reason"] = reason;
-        sendMessage(convId, std::move(value));
+            commitMessage.reason = reason;
+        sendMessage(convId, std::move(commitMessage));
     }
 }
 
@@ -3166,12 +3166,12 @@ ConversationModule::hostConference(const std::string& conversationId,
         return;
     }
     // Add commit to conversation
-    Json::Value value;
-    value["uri"] = pimpl_->username_;
-    value["device"] = pimpl_->deviceId_;
-    value["confId"] = conf->getConfId();
-    value["type"] = "application/call-history+json";
-    conv->conversation->hostConference(std::move(value),
+    CommitMessage commitMessage;
+    commitMessage.uri = pimpl_->username_;
+    commitMessage.device = pimpl_->deviceId_;
+    commitMessage.confId = conf->getConfId();
+    commitMessage.type = "application/call-history+json";
+    conv->conversation->hostConference(std::move(commitMessage),
                                        [w = pimpl_->weak(), conversationId](bool ok, const std::string& commitId) {
                                            if (ok) {
                                                if (auto shared = w.lock())
@@ -3192,28 +3192,31 @@ ConversationModule::hostConference(const std::string& conversationId,
                       conv](int duration) {
         auto shared = w.lock();
         if (shared) {
-            Json::Value value;
-            value["uri"] = accountUri;
-            value["device"] = shared->deviceId_;
-            value["confId"] = confId;
-            value["type"] = "application/call-history+json";
-            value["duration"] = std::to_string(duration);
+            CommitMessage commitMessage;
+            commitMessage.uri = accountUri;
+            commitMessage.device = shared->deviceId_;
+            commitMessage.confId = confId;
+            commitMessage.type = "application/call-history+json";
+            commitMessage.body = std::to_string(duration);
 
             std::lock_guard lk(conv->mtx);
             if (!conv->conversation) {
                 JAMI_ERROR("Conversation {} not found", conversationId);
                 return;
             }
-            conv->conversation
-                ->removeActiveConference(std::move(value), [w, conversationId](bool ok, const std::string& commitId) {
-                    if (ok) {
-                        if (auto shared = w.lock()) {
-                            shared->sendMessageNotification(conversationId, true, commitId);
-                        }
-                    } else {
-                        JAMI_ERROR("Failed to send message to conversation {}", conversationId);
-                    }
-                });
+            conv->conversation->removeActiveConference(std::move(commitMessage),
+                                                       [w, conversationId](bool ok, const std::string& commitId) {
+                                                           if (ok) {
+                                                               if (auto shared = w.lock()) {
+                                                                   shared->sendMessageNotification(conversationId,
+                                                                                                   true,
+                                                                                                   commitId);
+                                                               }
+                                                           } else {
+                                                               JAMI_ERROR("Failed to send message to conversation {}",
+                                                                          conversationId);
+                                                           }
+                                                       });
         }
     });
 }

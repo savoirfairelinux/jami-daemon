@@ -1533,27 +1533,27 @@ void
 Conversation::sendMessage(
     std::string&& message, const std::string& type, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
-    Json::Value json;
-    json["body"] = std::move(message);
-    json["type"] = type;
-    sendMessage(std::move(json), replyTo, std::move(onCommit), std::move(cb));
+    CommitMessage commitMessage;
+    commitMessage.body = std::move(message);
+    commitMessage.type = type;
+    sendMessage(std::move(commitMessage), replyTo, std::move(onCommit), std::move(cb));
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
+Conversation::sendMessage(CommitMessage&& message, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
         if (!pimpl_->repository_->hasCommit(replyTo)) {
             JAMI_ERR("Replying to invalid commit %s", replyTo.c_str());
             return;
         }
-        value["reply-to"] = replyTo;
+        message.replyTo = replyTo;
     }
     dht::ThreadPool::io().run(
-        [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
+        [w = weak(), message = std::move(message), onCommit = std::move(onCommit), cb = std::move(cb)] {
             if (auto sthis = w.lock()) {
                 std::unique_lock lk(sthis->pimpl_->writeMtx_);
-                auto commit = sthis->pimpl_->repository_->commitMessage(json::toString(value));
+                auto commit = sthis->pimpl_->repository_->commitMessage(message.toString());
                 lk.unlock();
                 if (onCommit)
                     onCommit(commit);
@@ -2501,9 +2501,9 @@ Conversation::search(uint32_t req, const Filter& filter, const std::shared_ptr<s
 }
 
 void
-Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
+Conversation::hostConference(CommitMessage&& message, OnDoneCb&& cb)
 {
-    if (!message.isMember("confId")) {
+    if (message.confId.empty()) {
         JAMI_ERROR("{}Malformed commit: no confId", pimpl_->toString());
         return;
     }
@@ -2512,7 +2512,7 @@ Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
     auto nowSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
     {
         std::lock_guard lk(pimpl_->activeCallsMtx_);
-        pimpl_->hostedCalls_[message["confId"].asString()] = nowSecs;
+        pimpl_->hostedCalls_[message.confId] = nowSecs;
         pimpl_->saveHostedCalls();
     }
 
@@ -2530,9 +2530,9 @@ Conversation::isHosting(const std::string& confId) const
 }
 
 void
-Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
+Conversation::removeActiveConference(CommitMessage&& message, OnDoneCb&& cb)
 {
-    if (!message.isMember("confId")) {
+    if (message.confId.empty()) {
         JAMI_ERROR("{}Malformed commit: no confId", pimpl_->toString());
         return;
     }
@@ -2540,7 +2540,7 @@ Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
     auto erased = false;
     {
         std::lock_guard lk(pimpl_->activeCallsMtx_);
-        erased = pimpl_->hostedCalls_.erase(message["confId"].asString());
+        erased = pimpl_->hostedCalls_.erase(message.confId);
     }
     if (erased) {
         pimpl_->saveHostedCalls();

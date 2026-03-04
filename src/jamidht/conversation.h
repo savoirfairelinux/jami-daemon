@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "jamidht/commit_message.h"
 #include "jamidht/conversationrepository.h"
 #include "conversationrepository.h"
 #include "swarm/swarm_protocol.h"
@@ -297,7 +298,7 @@ public:
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
-    void sendMessage(Json::Value&& message,
+    void sendMessage(CommitMessage&& message,
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
@@ -520,7 +521,7 @@ public:
      * @param message       message to commit
      * @param cb            callback triggered when committed
      */
-    void hostConference(Json::Value&& message, OnDoneCb&& cb = {});
+    void hostConference(CommitMessage&& message, OnDoneCb&& cb = {});
     /**
      * Announce the end of a call
      * @note the message must have "confId"
@@ -528,7 +529,7 @@ public:
      * @param message       message to commit
      * @param cb            callback triggered when committed
      */
-    void removeActiveConference(Json::Value&& message, OnDoneCb&& cb = {});
+    void removeActiveConference(CommitMessage&& message, OnDoneCb&& cb = {});
     /**
      * Check if we're currently hosting this conference
      * @param confId
