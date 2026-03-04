@@ -1,0 +1,139 @@
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+index ba81c7f4d..e74597539 100644
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -24,3 +24,5 @@
+ /* Set permanent permissions on the TURN
+    server for all peer candidates */
+ #define PJ_ICE_ST_USE_TURN_PERMANENT_PERM       PJ_TRUE
++
++#define PJ_GRP_LOCK_DEBUG                       1
+diff --git a/pjlib/src/pj/lock.c b/pjlib/src/pj/lock.c
+index 215629ae2..a31e9ec57 100644
+--- a/pjlib/src/pj/lock.c
++++ b/pjlib/src/pj/lock.c
+@@ -1,4 +1,4 @@
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -14,7 +14,7 @@
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ #include <pj/lock.h>
+ #include <pj/os.h>
+@@ -46,7 +46,7 @@ typedef pj_status_t (*FPTR)(LOCK_OBJ*);
+ /******************************************************************************
+  * Implementation of lock object with mutex.
+  */
+-static pj_lock_t mutex_lock_template = 
++static pj_lock_t mutex_lock_template =
+ {
+     NULL,
+     (FPTR) &pj_mutex_lock,
+@@ -105,7 +105,7 @@ static pj_status_t null_op(void *arg)
+     return PJ_SUCCESS;
+ }
+ 
+-static pj_lock_t null_lock_template = 
++static pj_lock_t null_lock_template =
+ {
+     NULL,
+     &null_op,
+@@ -133,7 +133,7 @@ PJ_DEF(pj_status_t) pj_lock_create_null_mutex( pj_pool_t *pool,
+  */
+ #if defined(PJ_HAS_SEMAPHORE) && PJ_HAS_SEMAPHORE != 0
+ 
+-static pj_lock_t sem_lock_template = 
++static pj_lock_t sem_lock_template =
+ {
+     NULL,
+     (FPTR) &pj_sem_wait,
+@@ -472,7 +472,7 @@ PJ_DEF(pj_status_t) pj_grp_lock_create_w_handler( pj_pool_t *pool,
+         pj_pool_t *grppool = (*p_grp_lock)->pool;
+         grp_lock_add_handler(*p_grp_lock, grppool, member, handler, PJ_FALSE);
+     }
+-    
++
+     return status;
+ }
+ 
+@@ -574,7 +574,7 @@ static pj_status_t grp_lock_dec_ref_dump(pj_grp_lock_t *glock)
+ 
+     status = grp_lock_dec_ref(glock);
+     if (status == PJ_SUCCESS) {
+-        pj_grp_lock_dump(glock);
++        // pj_grp_lock_dump(glock);
+     } else if (status == PJ_EGONE) {
+         PJ_LOG(4,(THIS_FILE, "Group lock %p destroyed.", glock));
+     }
+@@ -586,33 +586,10 @@ PJ_DEF(pj_status_t) pj_grp_lock_add_ref_dbg(pj_grp_lock_t *glock,
+                                             const char *file,
+                                             int line)
+ {
+-    grp_lock_ref *ref;
+-    pj_status_t status;
++    PJ_LOG(4,(THIS_FILE, "%s:%d add ref %p, ref_cnt=%d.",
++               file, line, glock, pj_grp_lock_get_ref(glock)));
+ 
+-    pj_enter_critical_section();
+-    if (!pj_list_empty(&glock->ref_free_list)) {
+-        ref = glock->ref_free_list.next;
+-        pj_list_erase(ref);
+-    } else {
+-        ref = PJ_POOL_ALLOC_T(glock->pool, grp_lock_ref);
+-    }
+-
+-    ref->file = file;
+-    ref->line = line;
+-    pj_list_push_back(&glock->ref_list, ref);
+-
+-    pj_leave_critical_section();
+-
+-    status = grp_lock_add_ref(glock);
+-
+-    if (status != PJ_SUCCESS) {
+-        pj_enter_critical_section();
+-        pj_list_erase(ref);
+-        pj_list_push_back(&glock->ref_free_list, ref);
+-        pj_leave_critical_section();
+-    }
+-
+-    return status;
++    return grp_lock_add_ref(glock);
+ }
+ 
+ PJ_DEF(pj_status_t) pj_grp_lock_dec_ref_dbg(pj_grp_lock_t *glock,
+@@ -621,25 +598,8 @@ PJ_DEF(pj_status_t) pj_grp_lock_dec_ref_dbg(pj_grp_lock_t *glock,
+ {
+     grp_lock_ref *ref;
+ 
+-    PJ_UNUSED_ARG(line);
+-
+-    pj_enter_critical_section();
+-    /* Find the same source file */
+-    ref = glock->ref_list.next;
+-    while (ref != &glock->ref_list) {
+-        if (strcmp(ref->file, file) == 0) {
+-            pj_list_erase(ref);
+-            pj_list_push_back(&glock->ref_free_list, ref);
+-            break;
+-        }
+-        ref = ref->next;
+-    }
+-    pj_leave_critical_section();
+-
+-    if (ref == &glock->ref_list) {
+-        PJ_LOG(2,(THIS_FILE, "pj_grp_lock_dec_ref_dbg() could not find "
+-                              "matching ref for %s", file));
+-    }
++    PJ_LOG(4,(THIS_FILE, "%s:%d dec ref %p, ref_cnt=%d.",
++               file, line, glock, pj_grp_lock_get_ref(glock)));
+ 
+     return grp_lock_dec_ref_dump(glock);
+ }

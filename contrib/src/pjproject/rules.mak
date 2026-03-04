@@ -46,6 +46,7 @@ ifdef HAVE_IOS
 	$(APPLY) $(SRC)/pjproject/0003-disable-ios-pointtopoint.patch
 	$(APPLY) $(SRC)/pjproject/0004-ios-16.patch
 endif
+	$(APPLY) $(SRC)/pjproject/lock_debug.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
