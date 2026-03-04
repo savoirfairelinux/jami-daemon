@@ -583,11 +583,6 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
         DeviceAuthInfo info;
         info.set(DeviceAuthInfo::token, accountScheme);
 
-        emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
-                                                                         static_cast<uint8_t>(
-                                                                             DeviceAuthState::TOKEN_AVAILABLE),
-                                                                         info);
-
         ctx->linkDevCtx->tempConnMgr.onICERequest([wctx = std::weak_ptr(ctx)](const DeviceId& /*deviceId*/) {
             if (auto ctx = wctx.lock()) {
                 emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
@@ -807,6 +802,11 @@ ArchiveAccountManager::startLoadArchiveFromDevice(const std::shared_ptr<AuthCont
 
             JAMI_LOG("[LinkDevice {}] Generated temporary account.", ctx->linkDevCtx->tmpId.second->getId());
         });
+
+        emitSignal<libjami::ConfigurationSignal::DeviceAuthStateChanged>(ctx->accountId,
+                                                                         static_cast<uint8_t>(
+                                                                             DeviceAuthState::TOKEN_AVAILABLE),
+                                                                         info);
     });
     JAMI_DEBUG("[LinkDevice] Starting load archive from device END {} {}.", fmt::ptr(this), fmt::ptr(ctx));
 }
