@@ -419,14 +419,11 @@ ConversationMembersEventTest::generateFakeInvite(std::shared_ptr<JamiAccount> ac
 
     ConversationRepository cr(account, convId);
 
-    Json::Value json;
-    json["action"] = "add";
-    json["uri"] = uri;
-    json["type"] = "member";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    cr.commitMessage(Json::writeString(wbuilder, json));
+    CommitMessage message;
+    message.action = "add";
+    message.uri = uri;
+    message.type = CommitType::MEMBER;
+    cr.commitMessage(message.toString());
 
     libjami::sendMessage(account->getAccountID(), convId, "trigger the fake history to be pulled"s, "");
 }
@@ -497,7 +494,7 @@ ConversationMembersEventTest::testRemoveConversationWithMember()
     auto bobMsgSize = bobData.messages.size();
     libjami::removeConversation(aliceId, convId);
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return bobMsgSize + 1 == bobData.messages.size() && bobData.messages.rbegin()->type == "member";
+        return bobMsgSize + 1 == bobData.messages.size() && bobData.messages.rbegin()->type == CommitType::MEMBER;
     }));
     std::this_thread::sleep_for(3s);
     CPPUNIT_ASSERT(!std::filesystem::is_directory(repoPath));
@@ -732,7 +729,7 @@ ConversationMembersEventTest::testRemovedMemberDoesNotReceiveMessageFromPeer()
     libjami::acceptConversationRequest(carlaId, convId);
     auto messageReceived = [](UserData& userData, const std::string& action, const std::string& uri) {
         for (auto& message : userData.messages) {
-            if (message.type == "member" && message.body["action"] == action && message.body["uri"] == uri)
+            if (message.type == CommitType::MEMBER && message.body["action"] == action && message.body["uri"] == uri)
                 return true;
         }
         return false;
@@ -1107,14 +1104,10 @@ ConversationMembersEventTest::testCommitUnauthorizedUser()
     CPPUNIT_ASSERT(std::filesystem::is_directory(repoPath));
 
     // Add commit from invalid user
-    Json::Value root;
-    root["type"] = "text/plain";
-    root["body"] = "hi";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
-    auto message = Json::writeString(wbuilder, root);
-    commitInRepo(repoPath, carlaAccount, message);
+    CommitMessage message;
+    message.type = CommitType::TEXT;
+    message.body = "hi";
+    commitInRepo(repoPath, carlaAccount, message.toString());
 
     libjami::sendMessage(bobId, convId, "hi"s, "");
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.errorDetected; }));
@@ -1205,15 +1198,12 @@ ConversationMembersEventTest::testMemberAddedNoCertificate()
     std::string invitedPath = repoPathCarla / "invited";
     dhtnet::fileutils::remove(fileutils::getFullPath(invitedPath, carlaUri));
 
-    Json::Value json;
-    json["action"] = "join";
-    json["uri"] = carlaUri;
-    json["type"] = "member";
-    Json::StreamWriterBuilder wbuilder;
-    wbuilder["commentStyle"] = "None";
-    wbuilder["indentation"] = "";
+    CommitMessage message;
+    message.action = "join";
+    message.uri = carlaUri;
+    message.type = CommitType::MEMBER;
     ConversationRepository cr(carlaAccount, convId);
-    cr.commitMessage(Json::writeString(wbuilder, json), false);
+    cr.commitMessage(message.toString(), false);
 
     // Start Carla, should merge and all messages should be there
     carlaAccount->convModule()->loadConversations(); // Because of the copy
@@ -1266,11 +1256,11 @@ ConversationMembersEventTest::testMemberJoinsInviteRemoved()
     file = std::ofstream(devicePath, std::ios::trunc | std::ios::binary);
     file << cert->toString(false);
     addAll(carlaAccount, convId);
-    Json::Value json;
-    json["action"] = "join";
-    json["uri"] = carlaUri;
-    json["type"] = "member";
-    commit(carlaAccount, convId, json);
+    CommitMessage message;
+    message.action = "join";
+    message.uri = carlaUri;
+    message.type = CommitType::MEMBER;
+    commit(carlaAccount, convId, message);
 
     // Start Carla, should merge and all messages should be there
     carlaAccount->convModule()->loadConversations(); // Because of the copy

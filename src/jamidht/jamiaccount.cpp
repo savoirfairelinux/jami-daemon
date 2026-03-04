@@ -29,6 +29,7 @@
 #include "contact_list.h"
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
+#include "jamidht/commit_message.h"
 #include "jamidht/channeled_transport.h"
 #include "conversation_channel_handler.h"
 #include "sync_channel_handler.h"
@@ -4078,17 +4079,17 @@ JamiAccount::sendFile(const std::string& conversationId,
     // to send a big file
     dht::ThreadPool::computation().run([w = weak(), conversationId, path, name, replyTo]() {
         if (auto shared = w.lock()) {
-            Json::Value value;
+            CommitMessage commitMessage;
             auto tid = jami::generateUID(shared->rand);
-            value["tid"] = std::to_string(tid);
-            value["displayName"] = name.empty() ? path.filename().string() : name;
-            value["totalSize"] = std::to_string(fileutils::size(path));
-            value["sha3sum"] = fileutils::sha3File(path);
-            value["type"] = "application/data-transfer+json";
+            commitMessage.tid = tid;
+            commitMessage.displayName = name.empty() ? path.filename().string() : name;
+            commitMessage.totalSize = fileutils::size(path);
+            commitMessage.sha3sum = fileutils::sha3File(path);
+            commitMessage.type = CommitType::DATA_TRANSFER;
 
             shared->convModule()
                 ->sendMessage(conversationId,
-                              std::move(value),
+                              std::move(commitMessage),
                               replyTo,
                               true,
                               [accId = shared->getAccountID(), conversationId, tid, path](const std::string& commitId) {

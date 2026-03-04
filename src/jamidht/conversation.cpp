@@ -259,8 +259,8 @@ public:
 
         std::lock_guard lk(activeCallsMtx_);
         for (const auto& commit : commits) {
-            if (commit.at("type") == "member") {
-                // Each commit of type "member" has an "action" field whose value can be one
+            if (commit.at("type") == CommitType::MEMBER) {
+                // Each commit of type MEMBER has an "action" field whose value can be one
                 // of the following: "add", "join", "remove", "ban", "unban"
                 // In the case of "remove" and "ban", we need to add the member's URI to
                 // invalidHostUris to ensure that any call they may have started in the past
@@ -314,7 +314,7 @@ public:
     {
         if (!repository_)
             return;
-        if (commit.at("type") == "member") {
+        if (commit.at("type") == CommitType::MEMBER) {
             // In this case, we need to check if we are not removing a hosting member or device
             std::lock_guard lk(activeCallsMtx_);
             auto it = activeCalls_.begin();
@@ -416,7 +416,7 @@ public:
             bool announceMember = false;
             for (const auto& c : commits) {
                 // Announce member events
-                if (c.at("type") == "member") {
+                if (c.at("type") == CommitType::MEMBER) {
                     if (c.find("uri") != c.end() && c.find("action") != c.end()) {
                         const auto& uri = c.at("uri");
                         const auto& actionStr = c.at("action");
@@ -444,7 +444,7 @@ public:
                                                                                              action);
                         }
                     }
-                } else if (c.at("type") == "application/call-history+json") {
+                } else if (c.at("type") == CommitType::CALL_HISTORY) {
                     updateActiveCalls(c);
                 }
 #ifdef ENABLE_PLUGIN
@@ -736,14 +736,14 @@ Conversation::Impl::commitsEndedCalls()
         // the conference while still hosting it, so activeCalls
         // will not be correctly updated
         // We don't need to send notifications there, as peers will sync with presence
-        Json::Value value;
-        value["uri"] = userId_;
-        value["device"] = deviceId_;
-        value["confId"] = hostedCall.first;
-        value["type"] = "application/call-history+json";
+        CommitMessage commitMessage;
+        commitMessage.uri = userId_;
+        commitMessage.device = deviceId_;
+        commitMessage.confId = hostedCall.first;
+        commitMessage.type = CommitType::CALL_HISTORY;
         auto now = std::chrono::system_clock::now();
         auto nowConverted = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
-        value["duration"] = std::to_string((nowConverted - hostedCall.second) * 1000);
+        commitMessage.duration = (nowConverted - hostedCall.second) * 1000;
         auto itActive = std::find_if(activeCalls_.begin(),
                                      activeCalls_.end(),
                                      [this, confId = hostedCall.first](const auto& value) {
@@ -752,8 +752,7 @@ Conversation::Impl::commitsEndedCalls()
                                      });
         if (itActive != activeCalls_.end())
             activeCalls_.erase(itActive);
-        commits.emplace_back(repository_->commitMessage(json::toString(value)));
-
+        commits.emplace_back(repository_->commitMessage(commitMessage.toString()));
         JAMI_DEBUG("Removing hosted conference... {:s}", hostedCall.first);
     }
     hostedCalls_.clear();
@@ -914,7 +913,7 @@ Conversation::Impl::handleEdition(History& history,
         auto baseCommit = it->second;
         if (baseCommit) {
             auto itReact = baseCommit->body.find("react-to");
-            std::string toReplace = (baseCommit->type == "application/data-transfer+json") ? "tid" : "body";
+            std::string toReplace = (baseCommit->type == CommitType::DATA_TRANSFER) ? "tid" : "body";
             auto body = sharedCommit->body.at(toReplace);
             // Edit reaction
             if (itReact != baseCommit->body.end()) {
@@ -1018,7 +1017,7 @@ Conversation::Impl::handleMessage(History& history,
     auto peditIt = history.pendingEditions.find(sharedCommit->id);
     if (peditIt != history.pendingEditions.end()) {
         auto oldBody = sharedCommit->body;
-        if (sharedCommit->type == "application/data-transfer+json") {
+        if (sharedCommit->type == CommitType::DATA_TRANSFER) {
             sharedCommit->body["tid"] = peditIt->second.front()->body["tid"];
             sharedCommit->body["fileId"] = "";
         } else {
@@ -1530,20 +1529,20 @@ Conversation::isBanned(const std::string& uri) const
 }
 
 void
-Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
+Conversation::sendMessage(CommitMessage&& message, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
         if (!pimpl_->repository_->hasCommit(replyTo)) {
             JAMI_ERR("Replying to invalid commit %s", replyTo.c_str());
             return;
         }
-        value["reply-to"] = replyTo;
+        message.replyTo = replyTo;
     }
     dht::ThreadPool::io().run(
-        [w = weak(), value = std::move(value), onCommit = std::move(onCommit), cb = std::move(cb)] {
+        [w = weak(), message = std::move(message), onCommit = std::move(onCommit), cb = std::move(cb)] {
             if (auto sthis = w.lock()) {
                 std::unique_lock lk(sthis->pimpl_->writeMtx_);
-                auto commit = sthis->pimpl_->repository_->commitMessage(json::toString(value));
+                auto commit = sthis->pimpl_->repository_->commitMessage(message.toString());
                 lk.unlock();
                 if (onCommit)
                     onCommit(commit);
@@ -1912,7 +1911,7 @@ Conversation::onFileChannelRequest(const std::string& member,
     auto interactionId = fileId.substr(0, sep);
     auto commit = getCommit(interactionId);
     if (commit == std::nullopt || commit->find("type") == commit->end() || commit->find("tid") == commit->end()
-        || commit->find("sha3sum") == commit->end() || commit->at("type") != "application/data-transfer+json") {
+        || commit->find("sha3sum") == commit->end() || commit->at("type") != CommitType::DATA_TRANSFER) {
         JAMI_WARNING("[Account {:s}] {} requested invalid file transfer commit {}",
                      pimpl_->accountId_,
                      member,
@@ -1934,7 +1933,7 @@ Conversation::downloadFile(const std::string& interactionId,
                            const std::string& deviceId)
 {
     auto commit = getCommit(interactionId);
-    if (commit == std::nullopt || commit->at("type") != "application/data-transfer+json") {
+    if (commit == std::nullopt || commit->at("type") != CommitType::DATA_TRANSFER) {
         JAMI_ERROR("Commit doesn't exists or is not a file transfer {} (Conversation: {}) ", interactionId, id());
         return false;
     }
@@ -2430,15 +2429,15 @@ Conversation::search(uint32_t req, const Filter& filter, const std::shared_ptr<s
             // Search on generated history
             for (auto& message : history.messageList) {
                 auto contentType = message->type;
-                auto isSearchable = contentType == "text/plain" || contentType == "application/data-transfer+json";
+                auto isSearchable = contentType == CommitType::TEXT || contentType == CommitType::DATA_TRANSFER;
                 if (filter.type.empty() && !isSearchable) {
                     // Not searchable, at least for now
                     continue;
                 } else if (contentType == filter.type || filter.type.empty()) {
                     if (isSearchable) {
                         // If it's a text match the body, else the display name
-                        auto body = contentType == "text/plain" ? message->body.at("body")
-                                                                : message->body.at("displayName");
+                        auto body = contentType == CommitType::TEXT ? message->body.at("body")
+                                                                    : message->body.at("displayName");
                         std::smatch body_match;
                         if (std::regex_search(body, body_match, re)) {
                             auto commit = message->body;
@@ -2471,9 +2470,9 @@ Conversation::search(uint32_t req, const Filter& filter, const std::shared_ptr<s
 }
 
 void
-Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
+Conversation::hostConference(CommitMessage&& message, OnDoneCb&& cb)
 {
-    if (!message.isMember("confId")) {
+    if (message.confId.empty()) {
         JAMI_ERROR("{}Malformed commit: no confId", pimpl_->toString());
         return;
     }
@@ -2482,7 +2481,7 @@ Conversation::hostConference(Json::Value&& message, OnDoneCb&& cb)
     auto nowSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
     {
         std::lock_guard lk(pimpl_->activeCallsMtx_);
-        pimpl_->hostedCalls_[message["confId"].asString()] = nowSecs;
+        pimpl_->hostedCalls_[message.confId] = nowSecs;
         pimpl_->saveHostedCalls();
     }
 
@@ -2500,9 +2499,9 @@ Conversation::isHosting(const std::string& confId) const
 }
 
 void
-Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
+Conversation::removeActiveConference(CommitMessage&& message, OnDoneCb&& cb)
 {
-    if (!message.isMember("confId")) {
+    if (message.confId.empty()) {
         JAMI_ERROR("{}Malformed commit: no confId", pimpl_->toString());
         return;
     }
@@ -2510,7 +2509,7 @@ Conversation::removeActiveConference(Json::Value&& message, OnDoneCb&& cb)
     auto erased = false;
     {
         std::lock_guard lk(pimpl_->activeCallsMtx_);
-        erased = pimpl_->hostedCalls_.erase(message["confId"].asString());
+        erased = pimpl_->hostedCalls_.erase(message.confId);
     }
     if (erased) {
         pimpl_->saveHostedCalls();
