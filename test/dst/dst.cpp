@@ -259,7 +259,10 @@ ConversationDST::displayGitLog()
                 fmt::print("Git log for account {}:\n", repositoryAccount.account->getDisplayName());
                 auto log = repositoryAccount.repository->log(LogOptions {});
                 for (const auto& entry : log) {
-                    fmt::print("  Message: {}, Author: {}, ID: {}\n", entry.commit_msg, entry.author.name, entry.id);
+                    fmt::print("  Message: {}, Author: {}, ID: {}\n",
+                               entry.commitMsg.toString(),
+                               entry.author.name,
+                               entry.id);
                 }
 
                 fmt::print("\nClient messages for account {}:\n", repositoryAccount.account->getDisplayName());
@@ -804,11 +807,14 @@ ConversationDST::checkAppearances(const RepositoryAccount& repoAcc)
                     }
                 }
                 if (clientHasCommit) {
-                    fmt::print("Message: {}, Author: {}, ID: {}\n", commit.commit_msg, commit.author.name, commit.id);
+                    fmt::print("Message: {}, Author: {}, ID: {}\n",
+                               commit.commitMsg.toString(),
+                               commit.author.name,
+                               commit.id);
                 } else {
                     fmt::print(fg(fmt::color::red),
                                "Message: {}, Author: {}, ID: {}\n",
-                               commit.commit_msg,
+                               commit.commitMsg.toString(),
                                commit.author.name,
                                commit.id);
                 }

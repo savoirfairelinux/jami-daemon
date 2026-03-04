@@ -298,7 +298,7 @@ ConversationCallTest::testActiveCalls()
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.conferenceChanged && !aliceData_.messages.empty(); });
-    CPPUNIT_ASSERT(aliceData_.messages.rbegin()->type == "application/call-history+json");
+    CPPUNIT_ASSERT(aliceData_.messages.rbegin()->type == CommitType::CALL_HISTORY);
 
     // get active calls = 1
     CPPUNIT_ASSERT(libjami::getActiveCalls(aliceId, aliceData_.id).size() == 1);
@@ -348,7 +348,7 @@ ConversationCallTest::testActiveCalls3Peers()
     carlaData_.messages.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -427,7 +427,7 @@ ConversationCallTest::testRejoinCall()
     carlaData_.messages.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -514,7 +514,7 @@ ConversationCallTest::testParticipantHangupConfNotRemoved()
     bobData_.messages.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_); });
@@ -567,7 +567,7 @@ ConversationCallTest::testJoinFinishedCall()
     carlaData_.messages.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -654,7 +654,7 @@ ConversationCallTest::testJoinFinishedCallForbidden()
     carlaData_.messages.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     cv.wait_for(lk, 30s, [&]() {
@@ -738,7 +738,7 @@ ConversationCallTest::testUsePreference()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     auto lastCommitIsProfile = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/update-profile";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::UPDATE_PROFILE;
     };
     libjami::updateConversationInfos(aliceId,
                                      aliceData_.id,
@@ -754,7 +754,7 @@ ConversationCallTest::testUsePreference()
     bobData_.messages.clear();
     libjami::placeCallWithMedia(bobId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_); });
@@ -786,7 +786,7 @@ ConversationCallTest::testJoinWhileActiveCall()
     aliceData_.messages.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_); }));
@@ -831,7 +831,7 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     auto lastCommitIsProfile = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/update-profile";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::UPDATE_PROFILE;
     };
     libjami::updateConversationInfos(aliceId,
                                      aliceData_.id,
@@ -847,7 +847,7 @@ ConversationCallTest::testCallSelfIfDefaultHost()
     pInfos_.clear();
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, {});
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::CALL_HISTORY;
     };
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return lastCommitIsCall(aliceData_) && lastCommitIsCall(bobData_); }));
@@ -880,7 +880,7 @@ ConversationCallTest::testNeedsHost()
     aliceData_.messages.clear();
     bobData_.messages.clear();
     auto lastCommitIsProfile = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == "application/update-profile";
+        return !data.messages.empty() && data.messages.rbegin()->body.at("type") == CommitType::UPDATE_PROFILE;
     };
     libjami::updateConversationInfos(aliceId,
                                      aliceData_.id,
@@ -928,7 +928,7 @@ ConversationCallTest::testAudioOnly()
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     // should get message
     cv.wait_for(lk, 30s, [&]() { return !aliceData_.messages.empty() && !pInfos_.empty(); });
-    CPPUNIT_ASSERT(aliceData_.messages[0].type == "application/call-history+json");
+    CPPUNIT_ASSERT(aliceData_.messages[0].type == CommitType::CALL_HISTORY);
     CPPUNIT_ASSERT(pInfos_.size() == 1);
     CPPUNIT_ASSERT(pInfos_[0]["videoMuted"] == "true");
 
@@ -978,7 +978,7 @@ ConversationCallTest::testJoinAfterMuteHost()
     mediaList.emplace_back(mediaAttribute);
     libjami::placeCallWithMedia(aliceId, "swarm:" + aliceData_.id, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->type == CommitType::CALL_HISTORY;
     };
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
@@ -1043,7 +1043,7 @@ ConversationCallTest::testBusy()
     mediaList.emplace_back(mediaAttribute);
     libjami::placeCallWithMedia(aliceId, bobUri, mediaList);
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->type == CommitType::CALL_HISTORY;
     };
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return lastCommitIsCall(aliceData_); }));
@@ -1085,7 +1085,7 @@ ConversationCallTest::testDecline()
     libjami::refuse(bobId, bobData_.callId);
 
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->type == CommitType::CALL_HISTORY;
     };
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return lastCommitIsCall(aliceData_); }));
@@ -1119,7 +1119,7 @@ ConversationCallTest::testNoDevice()
     libjami::placeCallWithMedia(aliceId, "e2eb225c76be68713d4874d290200849436c6355", mediaList);
 
     auto lastCommitIsCall = [&](const auto& data) {
-        return !data.messages.empty() && data.messages.rbegin()->type == "application/call-history+json";
+        return !data.messages.empty() && data.messages.rbegin()->type == CommitType::CALL_HISTORY;
     };
     // should get message
     CPPUNIT_ASSERT(cv.wait_for(lk, 60s, [&]() { return lastCommitIsCall(aliceData_); }));

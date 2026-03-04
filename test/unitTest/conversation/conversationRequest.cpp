@@ -818,7 +818,7 @@ ConversationRequestTest::testBanContactRestartAccount()
     confHandlers.insert(libjami::exportable_callback<libjami::ConversationSignal::SwarmMessageReceived>(
         [&](const std::string& accountId, const std::string& conversationId, const libjami::SwarmMessage& message) {
             std::lock_guard lk {mtx};
-            if (accountId == aliceId && conversationId == convId && message.type == "member") {
+            if (accountId == aliceId && conversationId == convId && message.type == CommitType::MEMBER) {
                 memberMessageGenerated = true;
             }
             cv.notify_one();

@@ -18,6 +18,7 @@
 #include "def.h"
 #include "vcard.h"
 #include "git_def.h"
+#include "jamidht/commit_message.h"
 
 #include <opendht/default_types.h>
 
@@ -79,7 +80,7 @@ struct ConversationCommit
     GitAuthor author {};
     std::vector<uint8_t> signed_content {};
     std::vector<uint8_t> signature {};
-    std::string commit_msg {};
+    CommitMessage commitMsg {};
     std::string linearized_parent {};
     int64_t timestamp {0};
     bool reannounce {false};
