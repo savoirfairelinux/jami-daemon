@@ -393,10 +393,6 @@ public:
 
     std::weak_ptr<Impl> weak() { return std::static_pointer_cast<Impl>(shared_from_this()); }
 
-    // Replay conversations (after erasing/re-adding)
-    std::mutex replayMtx_;
-    std::map<std::string, std::vector<std::map<std::string, std::string>>> replay_;
-
     std::mutex refreshMtx_;
     std::map<std::string, uint64_t> refreshMessage;
     std::atomic_int syncCnt {0};
@@ -823,15 +819,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         }
 
         auto commitId = conversation->join();
-        std::vector<std::map<std::string, std::string>> messages;
-        {
-            std::lock_guard lk(replayMtx_);
-            auto replayIt = replay_.find(conversationId);
-            if (replayIt != replay_.end()) {
-                messages = std::move(replayIt->second);
-                replay_.erase(replayIt);
-            }
-        }
         if (!commitId.empty())
             sendMessageNotification(*conversation, false, commitId);
         erasePending(); // Will unlock
@@ -857,24 +844,6 @@ ConversationModule::Impl::handlePendingConversation(const std::string& conversat
         // Inform user that the conversation is ready
         emitSignal<libjami::ConversationSignal::ConversationReady>(accountId_, conversationId);
         needsSyncingCb_({});
-        std::vector<Json::Value> values;
-        values.reserve(messages.size());
-        for (const auto& message : messages) {
-            // For now, only replay text messages.
-            // File transfers will need more logic, and don't care about calls for now.
-            if (message.at("type") == "text/plain" && message.at("author") == username_) {
-                Json::Value json;
-                json["body"] = message.at("body");
-                json["type"] = "text/plain";
-                values.emplace_back(std::move(json));
-            }
-        }
-        if (!values.empty())
-            conversation->sendMessages(std::move(values), [w = weak(), conversationId](const auto& commits) {
-                auto shared = w.lock();
-                if (shared and not commits.empty())
-                    shared->sendMessageNotification(conversationId, true, *commits.rbegin());
-            });
         // Download members profile on first sync
         auto isOneOne = conversation->mode() == ConversationMode::ONE_TO_ONE;
         auto askForProfile = isOneOne;

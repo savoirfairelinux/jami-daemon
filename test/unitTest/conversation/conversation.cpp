@@ -142,7 +142,6 @@ private:
     void testFetchProfileUnauthorized();
     void testSyncingWhileAccepting();
     void testCountInteractions();
-    void testReplayConversation();
     void testSyncWithoutPinnedCert();
     void testImportMalformedContacts();
     void testCloneFromMultipleDevice();
@@ -195,7 +194,6 @@ private:
     CPPUNIT_TEST(testFetchProfileUnauthorized);
     CPPUNIT_TEST(testSyncingWhileAccepting);
     CPPUNIT_TEST(testCountInteractions);
-    // CPPUNIT_TEST(testReplayConversation);
     CPPUNIT_TEST(testSyncWithoutPinnedCert);
     CPPUNIT_TEST(testImportMalformedContacts);
     CPPUNIT_TEST(testCloneFromMultipleDevice);
@@ -1733,49 +1731,6 @@ ConversationTest::testCountInteractions()
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, "", "", aliceAccount->getUsername()) == 0);
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, msgId3, "", "") == 0);
     CPPUNIT_ASSERT(libjami::countInteractions(aliceId, convId, msgId2, "", "") == 1);
-}
-
-void
-ConversationTest::testReplayConversation()
-{
-    std::cout << "\nRunning test: " << __func__ << std::endl;
-    connectSignals();
-
-    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getUsername();
-    auto aliceUri = aliceAccount->getUsername();
-
-    aliceAccount->addContact(bobUri);
-    aliceAccount->sendTrustRequest(bobUri, {});
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return bobData.requestReceived; }));
-    auto aliceMsgSize = aliceData.messages.size();
-    CPPUNIT_ASSERT(bobAccount->acceptTrustRequest(aliceUri));
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return !bobData.conversationId.empty() && aliceMsgSize + 1 == aliceData.messages.size();
-    }));
-    // removeContact
-    aliceAccount->removeContact(bobUri, false);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceData.removed; }));
-    std::this_thread::sleep_for(5s);
-    // re-add
-    CPPUNIT_ASSERT(bobData.conversationId != "");
-    auto oldConvId = bobData.conversationId;
-    aliceData.conversationId = "";
-    aliceAccount->addContact(bobUri);
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return !aliceData.conversationId.empty(); }));
-    aliceMsgSize = aliceData.messages.size();
-    libjami::sendMessage(aliceId, aliceData.conversationId, "foo"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 1 == aliceData.messages.size(); }));
-    libjami::sendMessage(aliceId, aliceData.conversationId, "bar"s, "");
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() { return aliceMsgSize + 2 == aliceData.messages.size(); }));
-    bobData.messages.clear();
-    aliceAccount->sendTrustRequest(bobUri, {});
-    // Should retrieve previous conversation
-    CPPUNIT_ASSERT(cv.wait_for(lk, 30s, [&]() {
-        return bobData.messages.size() == 2 && bobData.messages[0].body["body"] == "foo"
-               && bobData.messages[1].body["body"] == "bar";
-    }));
 }
 
 void

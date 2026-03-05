@@ -155,7 +155,6 @@ using OnPullCb = std::function<void(bool fetchOk)>;
 using OnLoadMessages = std::function<void(std::vector<libjami::SwarmMessage>&& messages)>;
 using OnCommitCb = std::function<void(const std::string&)>;
 using OnDoneCb = std::function<void(bool, const std::string&)>;
-using OnMultiDoneCb = std::function<void(const std::vector<std::string>&)>;
 using OnMembersChanged = std::function<void(const std::set<std::string>&)>;
 using DeviceId = dht::PkId;
 using GitSocketList = std::map<DeviceId, std::shared_ptr<dhtnet::ChannelSocket>>;
@@ -301,8 +300,6 @@ public:
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},
                      OnDoneCb&& cb = {});
-    // Note: used for replay. Should not be used by clients
-    void sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb = {});
     /**
      * Get a range of messages
      * @param cb        The callback when loaded

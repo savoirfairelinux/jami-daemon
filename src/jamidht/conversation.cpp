@@ -1527,26 +1527,6 @@ Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCom
         });
 }
 
-void
-Conversation::sendMessages(std::vector<Json::Value>&& messages, OnMultiDoneCb&& cb)
-{
-    dht::ThreadPool::io().run([w = weak(), messages = std::move(messages), cb = std::move(cb)] {
-        if (auto sthis = w.lock()) {
-            std::vector<std::string> commits;
-            commits.reserve(messages.size());
-            std::unique_lock lk(sthis->pimpl_->writeMtx_);
-            for (const auto& message : messages) {
-                auto commit = sthis->pimpl_->repository_->commitMessage(json::toString(message));
-                commits.emplace_back(std::move(commit));
-            }
-            lk.unlock();
-            sthis->pimpl_->announce(commits, true);
-            if (cb)
-                cb(commits);
-        }
-    });
-}
-
 bool
 Conversation::hasCommit(const std::string& commitId) const
 {
