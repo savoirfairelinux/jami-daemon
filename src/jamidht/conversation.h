@@ -291,11 +291,6 @@ public:
     bool isBanned(const std::string& uri) const;
 
     // Message send
-    void sendMessage(std::string&& message,
-                     const std::string& type = "text/plain",
-                     const std::string& replyTo = "",
-                     OnCommitCb&& onCommit = {},
-                     OnDoneCb&& cb = {});
     void sendMessage(Json::Value&& message,
                      const std::string& replyTo = "",
                      OnCommitCb&& onCommit = {},

@@ -1493,16 +1493,6 @@ Conversation::isBanned(const std::string& uri) const
 }
 
 void
-Conversation::sendMessage(
-    std::string&& message, const std::string& type, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
-{
-    Json::Value json;
-    json["body"] = std::move(message);
-    json["type"] = type;
-    sendMessage(std::move(json), replyTo, std::move(onCommit), std::move(cb));
-}
-
-void
 Conversation::sendMessage(Json::Value&& value, const std::string& replyTo, OnCommitCb&& onCommit, OnDoneCb&& cb)
 {
     if (!replyTo.empty()) {
