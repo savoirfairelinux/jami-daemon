@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "2681f004_ebfe3fd4",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2026-03-05T21:56:21Z",
+      "side": 1,
+      "message": "Ultimately we want to avoid components depending on JamiAccount to avoid circular dependencies and improve testability.",
+      "revId": "fb773550fc05582b5b6af585f4d0e8820f549ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9133a9ce_00b78ae6",
