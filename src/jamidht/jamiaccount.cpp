@@ -97,6 +97,7 @@
 #include <charconv>
 #include <cinttypes>
 #include <cstdarg>
+#include <fstream>
 #include <initializer_list>
 #include <memory>
 #include <regex>
@@ -1713,6 +1714,25 @@ JamiAccount::registerAsyncOps()
         }
 
         dhtUpnpMapping_.enableAutoUpdate(true);
+
+        // Request the UPnP mapping for the port that the DHT will actually
+        // bind on. DhtRunner persists its bound port in dhtstate_port.txt and
+        // reuses it on subsequent runs. If we don't set a desired port here,
+        // UPnPContext picks a random port from the pool, which will differ
+        // from the persisted DHT port — making the node unreachable from WAN.
+        in_port_t desiredPort = config().dhtPort;
+        if (desiredPort == 0) {
+            std::ifstream portFile(cachePath_ / "dhtstate_port.txt");
+            if (portFile.is_open() && (portFile >> desiredPort) && desiredPort != 0) {
+                JAMI_LOG("[Account {:s}] UPnP: requesting mapping for persisted DHT port {}",
+                         getAccountID(),
+                         desiredPort);
+            }
+        }
+        if (desiredPort != 0) {
+            dhtnet::upnp::Mapping desired(dhtnet::upnp::PortType::UDP, desiredPort, desiredPort);
+            dhtUpnpMapping_.updateFrom(desired);
+        }
 
         // Set the notify callback.
         dhtUpnpMapping_.setNotifyCallback([w = weak(), onLoad, update = std::make_shared<bool>(false)](
