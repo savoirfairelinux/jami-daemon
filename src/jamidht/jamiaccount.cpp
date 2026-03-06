@@ -1692,114 +1692,14 @@ JamiAccount::forEachPendingCall(const DeviceId& deviceId, const std::function<vo
 void
 JamiAccount::registerAsyncOps()
 {
-    auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()] {
-        if (++(*loaded) == 2u) {
-            runOnMainThread([w = weak()] {
-                if (auto s = w.lock()) {
-                    std::lock_guard lock(s->configurationMutex_);
-                    s->doRegister_();
-                }
-            });
-        }
-    };
-
-    loadCachedProxyServer([onLoad](const std::string&) { onLoad(); });
-
-    if (upnpCtrl_) {
-        JAMI_LOG("[Account {:s}] UPnP: attempting to map ports", getAccountID());
-
-        // Release current mapping if any.
-        if (dhtUpnpMapping_.isValid()) {
-            upnpCtrl_->releaseMapping(dhtUpnpMapping_);
-        }
-
-        dhtUpnpMapping_.enableAutoUpdate(true);
-
-        // Request the UPnP mapping for the port that the DHT will actually
-        // bind on. DhtRunner persists its bound port in dhtstate_port.txt and
-        // reuses it on subsequent runs. If we don't set a desired port here,
-        // UPnPContext picks a random port from the pool, which will differ
-        // from the persisted DHT port — making the node unreachable from WAN.
-        in_port_t desiredPort = config().dhtPort;
-        if (desiredPort == 0) {
-            std::ifstream portFile(cachePath_ / "dhtstate_port.txt");
-            if (portFile.is_open() && (portFile >> desiredPort) && desiredPort != 0) {
-                JAMI_LOG("[Account {:s}] UPnP: requesting mapping for persisted DHT port {}",
-                         getAccountID(),
-                         desiredPort);
-            }
-        }
-        if (desiredPort != 0) {
-            dhtnet::upnp::Mapping desired(dhtnet::upnp::PortType::UDP, desiredPort, desiredPort);
-            dhtUpnpMapping_.updateFrom(desired);
-        }
-
-        // Set the notify callback.
-        dhtUpnpMapping_.setNotifyCallback([w = weak(), onLoad, update = std::make_shared<bool>(false)](
-                                              const dhtnet::upnp::Mapping::sharedPtr_t& mapRes) {
-            if (auto accPtr = w.lock()) {
-                auto& dhtMap = accPtr->dhtUpnpMapping_;
-                const auto& accId = accPtr->getAccountID();
-
-                JAMI_LOG("[Account {:s}] DHT UPnP mapping changed to {:s}", accId, mapRes->toString(true));
-
-                if (*update) {
-                    // Check if we need to update the mapping and the registration.
-                    if (dhtMap.getMapKey() != mapRes->getMapKey() or dhtMap.getState() != mapRes->getState()) {
-                        // The connectivity must be restarted, if either:
-                        // - the state changed to "OPEN",
-                        // - the state changed to "FAILED" and the mapping was in use.
-                        if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN
-                            or (mapRes->getState() == dhtnet::upnp::MappingState::FAILED
-                                and dhtMap.getState() == dhtnet::upnp::MappingState::OPEN)) {
-                            // Update the mapping and restart the registration.
-                            dhtMap.updateFrom(mapRes);
-
-                            JAMI_WARNING("[Account {:s}] Allocated port changed to {}. Restarting the "
-                                         "registration",
-                                         accId,
-                                         accPtr->dhtPortUsed());
-
-                            accPtr->dht_->connectivityChanged();
-
-                        } else {
-                            // Only update the mapping.
-                            dhtMap.updateFrom(mapRes);
-                        }
-                    }
-                } else {
-                    *update = true;
-                    // Set connection info and load the account.
-                    if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
-                        dhtMap.updateFrom(mapRes);
-                        JAMI_LOG("[Account {:s}] Mapping {:s} successfully allocated: starting the DHT",
-                                 accId,
-                                 dhtMap.toString());
-                    } else {
-                        JAMI_WARNING("[Account {:s}] Mapping request is in {:s} state: starting "
-                                     "the DHT anyway",
-                                     accId,
-                                     mapRes->getStateStr());
-                    }
-
-                    // Load the account and start the DHT.
-                    onLoad();
-                }
+    loadCachedProxyServer([w = weak()](const std::string&) {
+        runOnMainThread([w] {
+            if (auto s = w.lock()) {
+                std::lock_guard lock(s->configurationMutex_);
+                s->doRegister_();
             }
         });
-
-        // Request the mapping.
-        auto map = upnpCtrl_->reserveMapping(dhtUpnpMapping_);
-        // The returned mapping is invalid. Load the account now since
-        // we may never receive the callback.
-        if (not map) {
-            onLoad();
-        }
-    } else {
-        // No UPNP. Load the account and start the DHT. The local DHT
-        // might not be reachable for peers if we are behind a NAT.
-        onLoad();
-    }
+    });
 }
 
 void
@@ -1822,8 +1722,7 @@ JamiAccount::doRegister()
 
     convModule(); // Init conv module before passing in trying
     setRegistrationState(RegistrationState::TRYING);
-    /* if UPnP is enabled, then wait for IGD to complete registration */
-    if (upnpCtrl_ or proxyServerCached_.empty()) {
+    if (proxyServerCached_.empty()) {
         registerAsyncOps();
     } else {
         doRegister_();
@@ -2039,8 +1938,46 @@ JamiAccount::doRegister_()
 
         dht::DhtRunner::Context context = initDhtContext();
 
-        dht_->run(dhtPortUsed(), config, std::move(context));
+        dht_->run(conf.dhtPort, config, std::move(context));
         dhtBoundPort_ = dht_->getBoundPort();
+
+        // Now that the DHT is running and we know the actual bound port,
+        // request a UPnP mapping for it.
+        if (upnpCtrl_) {
+            JAMI_LOG("[Account {:s}] UPnP: requesting mapping for DHT port {}", getAccountID(), dhtBoundPort_);
+
+            if (dhtUpnpMapping_.isValid()) {
+                upnpCtrl_->releaseMapping(dhtUpnpMapping_);
+            }
+
+            dhtUpnpMapping_.enableAutoUpdate(true);
+
+            dhtnet::upnp::Mapping desired(dhtnet::upnp::PortType::UDP, dhtBoundPort_, dhtBoundPort_);
+            dhtUpnpMapping_.updateFrom(desired);
+
+            dhtUpnpMapping_.setNotifyCallback([w = weak()](const dhtnet::upnp::Mapping::sharedPtr_t& mapRes) {
+                if (auto accPtr = w.lock()) {
+                    auto& dhtMap = accPtr->dhtUpnpMapping_;
+                    const auto& accId = accPtr->getAccountID();
+
+                    JAMI_LOG("[Account {:s}] DHT UPnP mapping changed to {:s}", accId, mapRes->toString(true));
+
+                    if (dhtMap.getMapKey() != mapRes->getMapKey() or dhtMap.getState() != mapRes->getState()) {
+                        dhtMap.updateFrom(mapRes);
+                        if (mapRes->getState() == dhtnet::upnp::MappingState::OPEN) {
+                            JAMI_LOG("[Account {:s}] Mapping {:s} successfully allocated", accId, dhtMap.toString());
+                            accPtr->dht_->connectivityChanged();
+                        } else if (mapRes->getState() == dhtnet::upnp::MappingState::FAILED) {
+                            JAMI_WARNING("[Account {:s}] UPnP mapping failed", accId);
+                        }
+                    } else {
+                        dhtMap.updateFrom(mapRes);
+                    }
+                }
+            });
+
+            upnpCtrl_->reserveMapping(dhtUpnpMapping_);
+        }
 
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
