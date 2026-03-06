@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2e9b9e56_1708d1be",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1143
+      },
+      "writtenOn": "2026-03-06T04:40:00Z",
+      "side": 1,
+      "message": "Rebased. Should be merged along https://review.jami.net/c/jami-client-qt/+/33146",
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
