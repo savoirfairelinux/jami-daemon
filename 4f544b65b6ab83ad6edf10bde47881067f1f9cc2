@@ -16,6 +16,667 @@
       "message": "Rebased. Should be merged along https://review.jami.net/c/jami-client-qt/+/33146",
       "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "2cf87dd2_1fe7e9fb",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Thank you",
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5de7b740_0eb7c1f8",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 264,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should this be changed to `End call`?",
+      "range": {
+        "startLine": 264,
+        "startChar": 7,
+        "endLine": 264,
+        "endChar": 23
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "de8b515a_5fd8f8e2",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hangup` be changed to `end`?",
+      "range": {
+        "startLine": 267,
+        "startChar": 17,
+        "endLine": 267,
+        "endChar": 23
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "9e273ab2_03b9019a",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Please change `Refuse incoming` to `Decline`",
+      "range": {
+        "startLine": 270,
+        "startChar": 7,
+        "endLine": 270,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cb75cc12_d3853424",
+        "filename": "src/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 275,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Transfer a call` be `Transfer call`?",
+      "range": {
+        "startLine": 275,
+        "startChar": 7,
+        "endLine": 275,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "12e2c2f2_ba8e68d0",
+        "filename": "test/agent/jami/call.scm",
+        "patchSetId": 3
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang-up` be `end`?",
+      "range": {
+        "startLine": 4,
+        "startChar": 12,
+        "endLine": 4,
+        "endChar": 19
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c36eb198_0b0981be",
+        "filename": "test/agent/src/bindings/call.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang-up` be `end`?",
+      "range": {
+        "startLine": 91,
+        "startChar": 22,
+        "endLine": 91,
+        "endChar": 29
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "50e5ec84_a38da001",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang up` be `end call`?",
+      "range": {
+        "startLine": 869,
+        "startChar": 56,
+        "endLine": 869,
+        "endChar": 63
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4f4b005c_e5593d50",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 869,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 869,
+        "startChar": 15,
+        "endLine": 869,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d2499d4_fc423091",
+        "filename": "test/unitTest/media_negotiation/media_negotiation.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 872,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `HUNGUP` be `END` or `ENDED` or `OVER`?",
+      "range": {
+        "startLine": 872,
+        "startChar": 108,
+        "endLine": 872,
+        "endChar": 114
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ea51eabd_52cc7811",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 680,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 680,
+        "startChar": 15,
+        "endLine": 680,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "1b158f40_ac52c82f",
+        "filename": "test/unitTest/plugins/plugins.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 680,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang up` be `end call`?",
+      "range": {
+        "startLine": 680,
+        "startChar": 56,
+        "endLine": 680,
+        "endChar": 63
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ee40afe3_0ec1e5bf",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 521,
+        "startChar": 19,
+        "endLine": 521,
+        "endChar": 26
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a89543d9_effaed6b",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang up` be `end call`?",
+      "range": {
+        "startLine": 521,
+        "startChar": 60,
+        "endLine": 521,
+        "endChar": 67
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "2a9f893e_8b767f4a",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 529,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang-up` be `END` or `ENDED` or `OVER`?",
+      "range": {
+        "startLine": 529,
+        "startChar": 11,
+        "endLine": 529,
+        "endChar": 18
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "5d7ee001_e0512af7",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 825,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 825,
+        "startChar": 19,
+        "endLine": 825,
+        "endChar": 26
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "0210fbc2_f9390d8b",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 825,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang up` be `end call`?",
+      "range": {
+        "startLine": 825,
+        "startChar": 60,
+        "endLine": 825,
+        "endChar": 67
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b824dcd4_30d04ad4",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 828,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang-up` be `END`, `ENDED`, or `OVER`?",
+      "range": {
+        "startLine": 828,
+        "startChar": 15,
+        "endLine": 828,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f8bea759_51d32b76",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1009,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang-up` be `ended call`?",
+      "range": {
+        "startLine": 1009,
+        "startChar": 11,
+        "endLine": 1009,
+        "endChar": 18
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b66e5d7e_6aed2742",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1010,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang up` be `end call`?",
+      "range": {
+        "startLine": 1010,
+        "startChar": 58,
+        "endLine": 1010,
+        "endChar": 65
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b32e1f5e_79dd2314",
+        "filename": "test/unitTest/sip_account/sip_basic_calls.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1010,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 1010,
+        "startChar": 15,
+        "endLine": 1010,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a3cda2b0_a5bf2fd0",
+        "filename": "test/unitTest/sip_account/sip_srtp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 471,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang-up` be `ended call`?",
+      "range": {
+        "startLine": 471,
+        "startChar": 11,
+        "endLine": 471,
+        "endChar": 18
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "c2df37ff_9d25a1e7",
+        "filename": "test/unitTest/sip_account/sip_srtp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hang up` be `end call`?",
+      "range": {
+        "startLine": 472,
+        "startChar": 56,
+        "endLine": 472,
+        "endChar": 63
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a109d8bd_5a4d0d51",
+        "filename": "test/unitTest/sip_account/sip_srtp.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 472,
+        "startChar": 15,
+        "endLine": 472,
+        "endChar": 22
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ac72e03e_62432479",
+        "filename": "tools/jamictrl/controller.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 614,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Refuse` be `Decline`?",
+      "range": {
+        "startLine": 614,
+        "startChar": 8,
+        "endLine": 614,
+        "endChar": 14
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d613c83c_7cf19040",
+        "filename": "tools/jamictrl/controller.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 615,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Refuse an incoming` be `Decline`?",
+      "range": {
+        "startLine": 615,
+        "startChar": 11,
+        "endLine": 615,
+        "endChar": 29
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "aee176a2_14684c28",
+        "filename": "tools/jamictrl/controller.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 617,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Refuse` be `Decline`?",
+      "range": {
+        "startLine": 617,
+        "startChar": 15,
+        "endLine": 617,
+        "endChar": 21
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d6c9968b_b8cbc82b",
+        "filename": "tools/jamictrl/controller.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 698,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `hangup` be `end`?",
+      "range": {
+        "startLine": 698,
+        "startChar": 8,
+        "endLine": 698,
+        "endChar": 14
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "afa4c717_424da28a",
+        "filename": "tools/jamictrl/controller.py",
+        "patchSetId": 3
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 938
+      },
+      "writtenOn": "2026-03-06T06:05:22Z",
+      "side": 1,
+      "message": "Should `Hang up` be `End`?",
+      "range": {
+        "startLine": 699,
+        "startChar": 12,
+        "endLine": 699,
+        "endChar": 19
+      },
+      "revId": "4f544b65b6ab83ad6edf10bde47881067f1f9cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
     }
   ]
 }
