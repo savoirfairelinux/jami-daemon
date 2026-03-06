@@ -97,8 +97,9 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
         std::vector<FrameRate> v;
         v.reserve(format.videoSupportedFrameRateRanges.count);
         for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges) {
-            if(std::find(v.begin(), v.end(), frameRateRange.maxFrameRate) == v.end()) {
-                v.emplace_back(frameRateRange.maxFrameRate);
+            auto maxFrameRate = std::round(frameRateRange.maxFrameRate);
+            if(std::find(v.begin(), v.end(), maxFrameRate) == v.end()) {
+                v.emplace_back(maxFrameRate);
             }
         }
         // if we have multiple formats with the same resolution use video supported framerates from last one
