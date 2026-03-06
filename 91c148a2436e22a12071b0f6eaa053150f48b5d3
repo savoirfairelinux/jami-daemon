@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "cbb9ff23_1c759bf0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-06T14:50:48Z",
+      "side": 1,
+      "message": "Tested with the network setup that found the issue.\nJust needs the formatting fix and then it\u0027s ready to merge.",
+      "revId": "91c148a2436e22a12071b0f6eaa053150f48b5d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "73bba755_e5702c6f",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1187,
+      "author": {
+        "id": 1172
+      },
+      "writtenOn": "2026-03-06T14:50:48Z",
+      "side": 1,
+      "message": "For reference, this isn\u0027t formatted according to our clang-format rules.",
+      "range": {
+        "startLine": 1176,
+        "startChar": 1,
+        "endLine": 1187,
+        "endChar": 114
+      },
+      "revId": "91c148a2436e22a12071b0f6eaa053150f48b5d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a"
+    }
+  ]
+}
